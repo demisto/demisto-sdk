@@ -31,10 +31,10 @@ class JSONObject(DictionaryBasedObject):
         Raises:
             ContentInitializeError: If path not valid.
         """
-        path = Path(path)
+        path = Path(path)  # type: ignore
         if path.is_dir():
             try:
-                path = next(path.glob(["*.json"]))
+                path = next(path.glob(["*.json"]))  # type: ignore
             except StopIteration:
                 raise exc.ContentInitializeError(JSONObject, path)
         elif not (path.is_file() and path.suffix in [".json"]) and path.name != 'metadata.json':
@@ -60,6 +60,6 @@ class JSONObject(DictionaryBasedObject):
 
     def dump(self, dest_dir: Optional[Union[Path, str]] = None):
         if self.modified:
-            return self._serialize(dest_dir)
+            return self._serialize(dest_dir)  # type: ignore
         else:
             return super().dump(dest_dir)

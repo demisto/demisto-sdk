@@ -125,7 +125,7 @@ class TimestampReplacer:
             logging.info(f'multipart_form data = {req.multipart_form.items()}')
         if req.urlencoded_form:
             logging.info(f'urlencoded_form data = {req.urlencoded_form.items()}')
-        logging.info(f'hashed_data={ServerPlayback._hash(self, flow)}')
+        logging.info(f'hashed_data={ServerPlayback._hash(self, flow)}')  # type: ignore
 
     # @record_concurrently(
     #     replaying=bool(
@@ -155,7 +155,7 @@ class TimestampReplacer:
         fixed_boundary = 'fixed_boundary'
         content_type_header, old_boundary = req.headers['Content-Type'].split('boundary=')
         req.headers['Content-Type'] = 'boundary='.join([content_type_header, fixed_boundary])
-        req.content = req.content.replace(old_boundary.encode(), fixed_boundary.encode())
+        req.content = req.content.replace(old_boundary.encode(), fixed_boundary.encode())  # type: ignore
 
     def clean_bad_keys(self, req: Request) -> None:
         """Modify the request so that values of problematic keys are constant data
@@ -236,15 +236,15 @@ class TimestampReplacer:
             json_data = content.startswith('{')
             if json_data:
                 try:
-                    content = OrderedDict(literal_eval(content))
-                    self.modify_json_body(req, content)
+                    content = OrderedDict(literal_eval(content))  # type: ignore
+                    self.modify_json_body(req, content)  # type: ignore
                     return
                 except Exception:
                     logging.exception(f'failed to run literal_eval on content {content}')
                 try:
                     logging.info('parsing the request body with "literal_eval" failed - trying with "json.loads"')
                     content = json.loads(content)
-                    self.modify_json_body(req, content)
+                    self.modify_json_body(req, content)  # type: ignore
                 except Exception:
                     logging.exception(f'failed to run json.loads on content {content}')
 
@@ -360,8 +360,8 @@ class TimestampReplacer:
             json_data = content.startswith('{')
             if json_data:
                 try:
-                    content = OrderedDict(literal_eval(content))
-                    json_keys = self.determine_problematic_keys(content)
+                    content = OrderedDict(literal_eval(content))  # type: ignore
+                    json_keys = self.determine_problematic_keys(content)  # type: ignore
                     self.json_keys.update(json_keys)
                     return
                 except Exception:
@@ -369,7 +369,7 @@ class TimestampReplacer:
                 try:
                     logging.info('parsing the request body with "literal_eval" failed - trying with "json.loads"')
                     content = json.loads(content)
-                    json_keys = self.determine_problematic_keys(content)
+                    json_keys = self.determine_problematic_keys(content)  # type: ignore
                     self.json_keys.update(json_keys)
                 except Exception:
                     logging.exception(f'failed to run json.loads on content {content}')

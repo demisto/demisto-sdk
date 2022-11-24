@@ -3,18 +3,13 @@ from typing import Dict, List, Optional, Set
 
 import pytest
 
-from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-    MarketplaceVersions)
-from demisto_sdk.commands.content_graph.common import (ContentType,
-                                                       Relationships,
-                                                       RelationshipType)
+from demisto_sdk.commands.common.constants import (DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
+                                                   MarketplaceVersions)
+from demisto_sdk.commands.content_graph.common import ContentType, Relationships, RelationshipType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
-from demisto_sdk.commands.content_graph.parsers.content_item import \
-    NotAContentItemException
-from demisto_sdk.commands.content_graph.tests.test_tools import (load_json,
-                                                                 load_yaml)
+from demisto_sdk.commands.content_graph.parsers.content_item import NotAContentItemException
+from demisto_sdk.commands.content_graph.tests.test_tools import load_json, load_yaml
 from TestSuite.pack import Pack
 from TestSuite.repo import Repo
 
@@ -260,8 +255,7 @@ class TestParsersAndModels:
         Then:
             - Verify NotAContentItemException is raised, meaning we skip parsing the classifier.
         """
-        from demisto_sdk.commands.content_graph.parsers.classifier import \
-            ClassifierParser
+        from demisto_sdk.commands.content_graph.parsers.classifier import ClassifierParser
 
         classifier = pack.create_classifier(
             "TestClassifier", load_json("classifier.json")
@@ -282,10 +276,8 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.classifier import \
-            Classifier
-        from demisto_sdk.commands.content_graph.parsers.classifier import \
-            ClassifierParser
+        from demisto_sdk.commands.content_graph.objects.classifier import Classifier
+        from demisto_sdk.commands.content_graph.parsers.classifier import ClassifierParser
 
         classifier = pack.create_classifier(
             "TestClassifier", load_json("classifier.json")
@@ -326,10 +318,8 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.correlation_rule import \
-            CorrelationRule
-        from demisto_sdk.commands.content_graph.parsers.correlation_rule import \
-            CorrelationRuleParser
+        from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
+        from demisto_sdk.commands.content_graph.parsers.correlation_rule import CorrelationRuleParser
 
         colrrelation_rule = pack.create_correlation_rule(
             "TestCorrelationRule", load_yaml("correlation_rule.yml")
@@ -361,10 +351,8 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.dashboard import \
-            Dashboard
-        from demisto_sdk.commands.content_graph.parsers.dashboard import \
-            DashboardParser
+        from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
+        from demisto_sdk.commands.content_graph.parsers.dashboard import DashboardParser
 
         dashboard = pack.create_dashboard("TestDashboard", load_json("dashboard.json"))
         dashboard_path = Path(dashboard.path)
@@ -398,10 +386,8 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.generic_definition import \
-            GenericDefinition
-        from demisto_sdk.commands.content_graph.parsers.generic_definition import \
-            GenericDefinitionParser
+        from demisto_sdk.commands.content_graph.objects.generic_definition import GenericDefinition
+        from demisto_sdk.commands.content_graph.parsers.generic_definition import GenericDefinitionParser
 
         generic_definition = pack.create_generic_definition(
             "TestGenericDefinition", load_json("generic_definition.json")
@@ -433,10 +419,8 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.generic_module import \
-            GenericModule
-        from demisto_sdk.commands.content_graph.parsers.generic_module import \
-            GenericModuleParser
+        from demisto_sdk.commands.content_graph.objects.generic_module import GenericModule
+        from demisto_sdk.commands.content_graph.parsers.generic_module import GenericModuleParser
 
         generic_module = pack.create_generic_module(
             "TestGenericModule", load_json("generic_module.json")
@@ -467,10 +451,8 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.generic_type import \
-            GenericType
-        from demisto_sdk.commands.content_graph.parsers.generic_type import \
-            GenericTypeParser
+        from demisto_sdk.commands.content_graph.objects.generic_type import GenericType
+        from demisto_sdk.commands.content_graph.parsers.generic_type import GenericTypeParser
 
         generic_type = pack.create_generic_module(
             "TestGenericType", load_json("generic_type.json")
@@ -504,10 +486,8 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.incident_field import \
-            IncidentField
-        from demisto_sdk.commands.content_graph.parsers.incident_field import \
-            IncidentFieldParser
+        from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
+        from demisto_sdk.commands.content_graph.parsers.incident_field import IncidentFieldParser
 
         incident_field = pack.create_incident_field(
             "TestIncidentField", load_json("incident_field.json")
@@ -546,10 +526,8 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.incident_type import \
-            IncidentType
-        from demisto_sdk.commands.content_graph.parsers.incident_type import \
-            IncidentTypeParser
+        from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
+        from demisto_sdk.commands.content_graph.parsers.incident_type import IncidentTypeParser
 
         incident_type = pack.create_incident_field(
             "TestIncidentType", load_json("incident_type.json")
@@ -590,10 +568,8 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.indicator_field import \
-            IndicatorField
-        from demisto_sdk.commands.content_graph.parsers.indicator_field import \
-            IndicatorFieldParser
+        from demisto_sdk.commands.content_graph.objects.indicator_field import IndicatorField
+        from demisto_sdk.commands.content_graph.parsers.indicator_field import IndicatorFieldParser
 
         indicator_field = pack.create_incident_field(
             "TestIndicatorField", load_json("indicator_field.json")
@@ -631,10 +607,8 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.indicator_type import \
-            IndicatorType
-        from demisto_sdk.commands.content_graph.parsers.indicator_type import \
-            IndicatorTypeParser
+        from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorType
+        from demisto_sdk.commands.content_graph.parsers.indicator_type import IndicatorTypeParser
 
         indicator_type = pack.create_indicator_type(
             "TestIndicatorType", load_json("indicator_type.json")
@@ -674,10 +648,8 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.integration import \
-            Integration
-        from demisto_sdk.commands.content_graph.parsers.integration import \
-            IntegrationParser
+        from demisto_sdk.commands.content_graph.objects.integration import Integration
+        from demisto_sdk.commands.content_graph.parsers.integration import IntegrationParser
 
         integration = pack.create_integration()
         integration.create_default_integration("TestIntegration")
@@ -712,10 +684,8 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.integration import \
-            Integration
-        from demisto_sdk.commands.content_graph.parsers.integration import \
-            IntegrationParser
+        from demisto_sdk.commands.content_graph.objects.integration import Integration
+        from demisto_sdk.commands.content_graph.parsers.integration import IntegrationParser
 
         integration = pack.create_integration(yml=load_yaml("unified_integration.yml"))
         integration_path = Path(integration.path)
@@ -790,8 +760,7 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.parsers.layout import \
-            LayoutParser
+        from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
 
         layout = pack.create_layout("TestLayout")
         layout_path = Path(layout.path)
@@ -810,8 +779,7 @@ class TestParsersAndModels:
             - Verify the specific properties of the content item are parsed correctly.
         """
         from demisto_sdk.commands.content_graph.objects.layout import Layout
-        from demisto_sdk.commands.content_graph.parsers.layout import \
-            LayoutParser
+        from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
 
         layout = pack.create_layoutcontainer(
             "TestLayoutscontainer", load_json("layoutscontainer.json")
@@ -853,8 +821,7 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.list import \
-            List as ListObject
+        from demisto_sdk.commands.content_graph.objects.list import List as ListObject
         from demisto_sdk.commands.content_graph.parsers.list import ListParser
 
         list_ = pack.create_list("TestList", load_json("list.json"))
@@ -886,8 +853,7 @@ class TestParsersAndModels:
             - Verify the specific properties of the content item are parsed correctly.
         """
         from demisto_sdk.commands.content_graph.objects.mapper import Mapper
-        from demisto_sdk.commands.content_graph.parsers.mapper import \
-            MapperParser
+        from demisto_sdk.commands.content_graph.parsers.mapper import MapperParser
 
         mapper = pack.create_mapper(
             "TestIncomingMapper", load_json("incoming_mapper.json")
@@ -930,8 +896,7 @@ class TestParsersAndModels:
             - Verify the specific properties of the content item are parsed correctly.
         """
         from demisto_sdk.commands.content_graph.objects.mapper import Mapper
-        from demisto_sdk.commands.content_graph.parsers.mapper import \
-            MapperParser
+        from demisto_sdk.commands.content_graph.parsers.mapper import MapperParser
 
         mapper = pack.create_mapper(
             "TestOutgoingMapper", load_json("outgoing_mapper.json")
@@ -973,10 +938,8 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.modeling_rule import \
-            ModelingRule
-        from demisto_sdk.commands.content_graph.parsers.modeling_rule import \
-            ModelingRuleParser
+        from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
+        from demisto_sdk.commands.content_graph.parsers.modeling_rule import ModelingRuleParser
 
         modeling_rule = pack.create_modeling_rule(
             "TestModelingRule", load_yaml("modeling_rule.yml")
@@ -1005,10 +968,8 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.parsing_rule import \
-            ParsingRule
-        from demisto_sdk.commands.content_graph.parsers.parsing_rule import \
-            ParsingRuleParser
+        from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
+        from demisto_sdk.commands.content_graph.parsers.parsing_rule import ParsingRuleParser
 
         parsing_rule = pack.create_parsing_rule(
             "TestParsingRule", load_yaml("parsing_rule.yml")
@@ -1038,10 +999,8 @@ class TestParsersAndModels:
               In particular, make sure redundant backslashes are removed from the playbook's description.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.playbook import \
-            Playbook
-        from demisto_sdk.commands.content_graph.parsers.playbook import \
-            PlaybookParser
+        from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+        from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
 
         playbook = pack.create_playbook()
         playbook.create_default_playbook(name="sample")
@@ -1078,8 +1037,7 @@ class TestParsersAndModels:
             - Verify the specific properties of the content item are parsed correctly.
         """
         from demisto_sdk.commands.content_graph.objects.report import Report
-        from demisto_sdk.commands.content_graph.parsers.report import \
-            ReportParser
+        from demisto_sdk.commands.content_graph.parsers.report import ReportParser
 
         report = pack.create_report("TestReport", load_json("report.json"))
         report_path = Path(report.path)
@@ -1114,8 +1072,7 @@ class TestParsersAndModels:
             - Verify the specific properties of the content item are parsed correctly.
         """
         from demisto_sdk.commands.content_graph.objects.script import Script
-        from demisto_sdk.commands.content_graph.parsers.script import \
-            ScriptParser
+        from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
 
         script = pack.create_script()
         script.create_default_script()
@@ -1151,10 +1108,8 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.test_playbook import \
-            TestPlaybook
-        from demisto_sdk.commands.content_graph.parsers.test_playbook import \
-            TestPlaybookParser
+        from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
+        from demisto_sdk.commands.content_graph.parsers.test_playbook import TestPlaybookParser
 
         test_playbook = pack.create_test_playbook()
         test_playbook.create_default_test_playbook(name="sample")
@@ -1189,8 +1144,7 @@ class TestParsersAndModels:
             - Verify the specific properties of the content item are parsed correctly.
         """
         from demisto_sdk.commands.content_graph.objects.trigger import Trigger
-        from demisto_sdk.commands.content_graph.parsers.trigger import \
-            TriggerParser
+        from demisto_sdk.commands.content_graph.parsers.trigger import TriggerParser
 
         trigger = pack.create_trigger("TestTrigger", load_json("trigger.json"))
         trigger_path = Path(trigger.path)
@@ -1224,8 +1178,7 @@ class TestParsersAndModels:
             - Verify the specific properties of the content item are parsed correctly.
         """
         from demisto_sdk.commands.content_graph.objects.widget import Widget
-        from demisto_sdk.commands.content_graph.parsers.widget import \
-            WidgetParser
+        from demisto_sdk.commands.content_graph.parsers.widget import WidgetParser
 
         widget = pack.create_widget("TestWidget", load_json("widget.json"))
         widget_path = Path(widget.path)
@@ -1259,8 +1212,7 @@ class TestParsersAndModels:
             - Verify the specific properties of the content item are parsed correctly.
         """
         from demisto_sdk.commands.content_graph.objects.wizard import Wizard
-        from demisto_sdk.commands.content_graph.parsers.wizard import \
-            WizardParser
+        from demisto_sdk.commands.content_graph.parsers.wizard import WizardParser
 
         wizard_json = load_json("wizard.json")
         wizard = pack.create_wizard(
@@ -1313,10 +1265,8 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import \
-            XSIAMDashboard
-        from demisto_sdk.commands.content_graph.parsers.xsiam_dashboard import \
-            XSIAMDashboardParser
+        from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
+        from demisto_sdk.commands.content_graph.parsers.xsiam_dashboard import XSIAMDashboardParser
 
         xsiam_dashboard = pack.create_xsiam_dashboard(
             "TestXSIAMDashboard", load_json("xsiam_dashboard.json")
@@ -1346,10 +1296,8 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.xsiam_report import \
-            XSIAMReport
-        from demisto_sdk.commands.content_graph.parsers.xsiam_report import \
-            XSIAMReportParser
+        from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
+        from demisto_sdk.commands.content_graph.parsers.xsiam_report import XSIAMReportParser
 
         xsiam_report = pack.create_xsiam_report(
             "TestXSIAMReport", load_json("xsiam_report.json")
@@ -1379,8 +1327,7 @@ class TestParsersAndModels:
             - Verify the content items are modeled correctly.
             - Verify the pack is modeled correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.pack import \
-            Pack as PackModel
+        from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
         from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
         pack = repo.create_pack("HelloWorld")
@@ -1437,10 +1384,8 @@ class TestParsersAndModels:
         Then:
             - Verify the repository is modeled correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.repository import \
-            ContentDTO
-        from demisto_sdk.commands.content_graph.parsers.repository import \
-            RepositoryParser
+        from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
+        from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
 
         pack1 = repo.create_pack("sample1")
         pack1.pack_metadata.write_json(load_json("pack_metadata.json"))

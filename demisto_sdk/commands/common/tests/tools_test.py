@@ -10,48 +10,44 @@ import pytest
 import requests
 
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_TO_VERSION, DOC_FILES_DIR, INDICATOR_TYPES_DIR,
-    INTEGRATIONS_DIR, LAYOUTS_DIR, METADATA_FILE_NAME, PACKS_DIR,
-    PACKS_PACK_IGNORE_FILE_NAME, PLAYBOOKS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, TRIGGER_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
-    XSOAR_CONFIG_FILE, FileType, MarketplaceVersions)
+from demisto_sdk.commands.common.constants import (DEFAULT_CONTENT_ITEM_TO_VERSION, DOC_FILES_DIR, INDICATOR_TYPES_DIR,
+                                                   INTEGRATIONS_DIR, LAYOUTS_DIR, METADATA_FILE_NAME, PACKS_DIR,
+                                                   PACKS_PACK_IGNORE_FILE_NAME, PLAYBOOKS_DIR, SCRIPTS_DIR,
+                                                   TEST_PLAYBOOKS_DIR, TRIGGER_DIR, XSIAM_DASHBOARDS_DIR,
+                                                   XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE, FileType, MarketplaceVersions)
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content.tests.objects.pack_objects.pack_ignore.pack_ignore_test import \
-    PACK_IGNORE
-from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
-                                                            GitCredentials)
+from demisto_sdk.commands.common.content.tests.objects.pack_objects.pack_ignore.pack_ignore_test import PACK_IGNORE
+from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitCredentials
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import (
-    LOG_COLORS, MarketplaceTagParser, TagParser, arg_to_list,
-    compare_context_path_in_yml_and_readme, field_to_cli_name,
-    filter_files_by_type, filter_files_on_pack, filter_packagify_changes,
-    find_type, find_type_by_path, generate_xsiam_normalized_name,
-    get_code_lang, get_current_repo, get_dict_from_file, get_display_name,
-    get_entity_id_by_entity_type, get_entity_name_by_entity_type,
-    get_file_displayed_name, get_file_version_suffix_if_exists,
-    get_files_in_dir, get_ignore_pack_skipped_tests, get_item_marketplaces,
-    get_last_release_version, get_last_remote_release_version,
-    get_latest_release_notes_text, get_pack_metadata,
-    get_relative_path_from_packs_dir, get_release_note_entries,
-    get_release_notes_file_path, get_scripts_and_commands_from_yml_data,
-    get_test_playbook_id, get_to_version, get_yaml, has_remote_configured,
-    is_object_in_id_set, is_origin_content_repo, is_pack_path, is_uuid,
-    retrieve_file_ending, run_command_os, server_version_compare,
-    string_to_bool, to_kebab_case)
-from demisto_sdk.tests.constants_test import (
-    DUMMY_SCRIPT_PATH, IGNORED_PNG, INDICATORFIELD_EXTRA_FIELDS,
-    SOURCE_FORMAT_INTEGRATION_COPY, TEST_PLAYBOOK, VALID_BETA_INTEGRATION_PATH,
-    VALID_DASHBOARD_PATH, VALID_GENERIC_DEFINITION_PATH,
-    VALID_GENERIC_FIELD_PATH, VALID_GENERIC_MODULE_PATH,
-    VALID_GENERIC_TYPE_PATH, VALID_INCIDENT_FIELD_PATH,
-    VALID_INCIDENT_TYPE_FILE, VALID_INCIDENT_TYPE_FILE__RAW_DOWNLOADED,
-    VALID_INCIDENT_TYPE_PATH, VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_PATH,
-    VALID_MD, VALID_PLAYBOOK_ID_PATH, VALID_REPUTATION_FILE, VALID_SCRIPT_PATH,
-    VALID_WIDGET_PATH)
-from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
-    LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, MarketplaceTagParser, TagParser, arg_to_list,
+                                               compare_context_path_in_yml_and_readme, field_to_cli_name,
+                                               filter_files_by_type, filter_files_on_pack, filter_packagify_changes,
+                                               find_type, find_type_by_path, generate_xsiam_normalized_name,
+                                               get_code_lang, get_current_repo, get_dict_from_file, get_display_name,
+                                               get_entity_id_by_entity_type, get_entity_name_by_entity_type,
+                                               get_file_displayed_name, get_file_version_suffix_if_exists,
+                                               get_files_in_dir, get_ignore_pack_skipped_tests, get_item_marketplaces,
+                                               get_last_release_version, get_last_remote_release_version,
+                                               get_latest_release_notes_text, get_pack_metadata,
+                                               get_relative_path_from_packs_dir, get_release_note_entries,
+                                               get_release_notes_file_path, get_scripts_and_commands_from_yml_data,
+                                               get_test_playbook_id, get_to_version, get_yaml, has_remote_configured,
+                                               is_object_in_id_set, is_origin_content_repo, is_pack_path, is_uuid,
+                                               retrieve_file_ending, run_command_os, server_version_compare,
+                                               string_to_bool, to_kebab_case)
+from demisto_sdk.tests.constants_test import (DUMMY_SCRIPT_PATH, IGNORED_PNG, INDICATORFIELD_EXTRA_FIELDS,
+                                              SOURCE_FORMAT_INTEGRATION_COPY, TEST_PLAYBOOK,
+                                              VALID_BETA_INTEGRATION_PATH, VALID_DASHBOARD_PATH,
+                                              VALID_GENERIC_DEFINITION_PATH, VALID_GENERIC_FIELD_PATH,
+                                              VALID_GENERIC_MODULE_PATH, VALID_GENERIC_TYPE_PATH,
+                                              VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_FILE,
+                                              VALID_INCIDENT_TYPE_FILE__RAW_DOWNLOADED, VALID_INCIDENT_TYPE_PATH,
+                                              VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_PATH, VALID_MD,
+                                              VALID_PLAYBOOK_ID_PATH, VALID_REPUTATION_FILE, VALID_SCRIPT_PATH,
+                                              VALID_WIDGET_PATH)
+from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (LAYOUT, MAPPER, OLD_CLASSIFIER,
+                                                                                REPUTATION)
 from TestSuite.file import File
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook

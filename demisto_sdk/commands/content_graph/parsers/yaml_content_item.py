@@ -2,14 +2,11 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-    MarketplaceVersions)
+from demisto_sdk.commands.common.constants import (DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
+                                                   MarketplaceVersions)
 from demisto_sdk.commands.common.tools import get_yaml, get_yml_paths_in_dir
-from demisto_sdk.commands.content_graph.common import (ContentType,
-                                                       RelationshipType)
-from demisto_sdk.commands.content_graph.parsers.content_item import (
-    ContentItemParser, NotAContentItemException)
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItemException
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -56,11 +53,11 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def marketplaces(self) -> List[MarketplaceVersions]:
-        if marketplaces := [
+        if file_marketplaces := [
             MarketplaceVersions(mp) for mp in self.yml_data.get("marketplaces", [])
         ]:
-            return marketplaces
-        return self.pack_marketplaces
+            return file_marketplaces
+        return sorted(set(self.pack_marketplaces) & self.supported_marketplaces)
 
     def connect_to_tests(self) -> None:
         """Iterates over the test playbooks registered to this content item,

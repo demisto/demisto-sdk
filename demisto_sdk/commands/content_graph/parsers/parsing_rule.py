@@ -1,10 +1,9 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.yaml_content_item import \
-    YAMLContentItemParser
+from demisto_sdk.commands.content_graph.parsers.yaml_content_item import YAMLContentItemParser
 
 
 class ParsingRuleParser(YAMLContentItemParser, content_type=ContentType.PARSING_RULE):
@@ -16,3 +15,7 @@ class ParsingRuleParser(YAMLContentItemParser, content_type=ContentType.PARSING_
     @property
     def object_id(self) -> Optional[str]:
         return self.yml_data.get("id")
+
+    @property
+    def supported_marketplaces(self) -> Set[MarketplaceVersions]:
+        return {MarketplaceVersions.MarketplaceV2}

@@ -7,7 +7,7 @@ from neo4j import graph
 
 from demisto_sdk.commands.common.tools import get_content_path
 
-REPO_PATH = Path(get_content_path())
+REPO_PATH = Path(get_content_path())  # type: ignore
 
 NEO4J_ADMIN_DOCKER = ""
 
@@ -76,6 +76,7 @@ class ContentType(str, enum.Enum):
     XSIAM_DASHBOARD = "XSIAMDashboard"
     XSIAM_REPORT = "XSIAMReport"
     WIZARD = "Wizard"
+    XDRC_TEMPLATE = 'XDRCTemplate'
 
     @property
     def labels(self) -> List[str]:

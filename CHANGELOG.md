@@ -1,10 +1,26 @@
 # Changelog
-
 ## Unreleased
+* Fixed an issue where an error message in **validate** would not include the suggested fix.
+* Added a validation that enforces predefined categories on MP Packs & integration yml files, the validation also ensures that each pack has only one category.
+ * Fixed an issue where **update-release-notes** did not generate release notes for **XDRC Templates**.
+ * Fixed an issue where **upload** failed without explaining the reason.
+ * Improved implementation of the docker_helper module.
+ * Fixed an issue where **validate** did not check changed pack_metadata.json files when running using git.
+ * Added support for **xdrctemplate** to content graph.
+
+## 1.7.8
+* Added the capability to run the MDX server in a docker container for environments without node.
 * Fixed an issue where **generate-docs** with `-c` argument updated sections of the incorrect commands.
 * Added IF113 error code to **ALLOWED_IGNORE_ERRORS**.
+* Fixed an issue where **validate** failed on playbooks with non-string input values.
+* Added the `DEMISTO_SDK_IGNORE_CONTENT_WARNING` environment variable, to allow suppressing warnings when commands are not run under a content repo folder.
 * Fixed an issue where **validate** failed to recognize integration tests that were missing from config.json
-* Fixed an issue where an error message in **validate** would not include the suggested fix.
+* Added support for **xpanse** marketplace in **create-id-set** and **create-content-artifacts** commands.
+* Fixed an issue where **split** failed on yml files.
+* Added support for marketplace-specific tags.
+* Fixed an issue where **download** would not run `isort`. @maxgubler
+* Fixed an issue where XSIAM Dashboards and Reports images failed the build.
+* Added support for **xpanse** marketplace to content graph.
 
 ## 1.7.7
 * Fixed an issue where paybooks **generate-docs** didn't parse complex input values when no accessor field is given correctly.

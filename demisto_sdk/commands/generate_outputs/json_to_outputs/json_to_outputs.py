@@ -78,8 +78,7 @@ from typing import Dict, Optional
 import dateparser
 
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
-                                               print_error)
+from demisto_sdk.commands.common.tools import LOG_COLORS, print_color, print_error
 
 json = JSON_Handler()
 yaml = YAML_Handler()

@@ -16,28 +16,23 @@ from typing import Callable, Dict, List, Optional, Tuple
 import click
 import networkx
 
-from demisto_sdk.commands.common.constants import (
-    CLASSIFIERS_DIR, COMMON_TYPES_PACK, CORRELATION_RULES_DIR, DASHBOARDS_DIR,
-    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-    GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR,
-    GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, JOBS_DIR, LAYOUTS_DIR,
-    LISTS_DIR, MAPPERS_DIR, MODELING_RULES_DIR, PARSING_RULES_DIR, REPORTS_DIR,
-    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR,
-    XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, FileType,
-    MarketplaceVersions)
-from demisto_sdk.commands.common.content_constant_paths import (
-    DEFAULT_ID_SET_PATH, MP_V2_ID_SET_PATH)
+from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, COMMON_TYPES_PACK, CORRELATION_RULES_DIR,
+                                                   DASHBOARDS_DIR, DEFAULT_CONTENT_ITEM_FROM_VERSION,
+                                                   DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_DEFINITIONS_DIR,
+                                                   GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR, GENERIC_TYPES_DIR,
+                                                   INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+                                                   INDICATOR_TYPES_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR,
+                                                   MODELING_RULES_DIR, PARSING_RULES_DIR, REPORTS_DIR, SCRIPTS_DIR,
+                                                   TEST_PLAYBOOKS_DIR, TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR,
+                                                   XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, FileType,
+                                                   MarketplaceVersions)
+from demisto_sdk.commands.common.content_constant_paths import (DEFAULT_ID_SET_PATH, MP_V2_ID_SET_PATH,
+                                                                XPANSE_ID_SET_PATH)
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
-                                               get_current_repo,
-                                               get_display_name, get_file,
-                                               get_item_marketplaces, get_json,
-                                               get_pack_name, get_yaml,
-                                               print_color, print_error,
-                                               print_warning)
-from demisto_sdk.commands.unify.integration_script_unifier import \
-    IntegrationScriptUnifier
+from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_current_repo, get_display_name, get_file,
+                                               get_item_marketplaces, get_json, get_pack_name, get_yaml, print_color,
+                                               print_error, print_warning)
+from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
 
 json = JSON_Handler()
 
@@ -62,6 +57,11 @@ ID_SET_MP_V2_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks'
                          'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                          'Layouts', 'Mappers', 'Lists', 'ParsingRules', 'ModelingRules',
                          'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'XDRCTemplates']
+
+CONTENT_XPANSE_ENTITIES = ['Packs', 'Integrations', 'Scripts', 'Playbooks', 'IncidentFields', 'IncidentTypes']
+
+ID_SET_XPANSE_ENTITIES = ['integrations', 'scripts', 'playbooks', 'IncidentFields', 'IncidentTypes']
+
 
 BUILT_IN_FIELDS = [
     "name",
@@ -2058,14 +2058,16 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
     Returns: id-set object
     """
     if id_set_path == "":
-        if marketplace == MarketplaceVersions.MarketplaceV2.value:
-            id_set_path = MP_V2_ID_SET_PATH
-        else:
-            id_set_path = DEFAULT_ID_SET_PATH
+        id_set_path = {
+            MarketplaceVersions.MarketplaceV2.value: MP_V2_ID_SET_PATH,
+            MarketplaceVersions.XPANSE.value: XPANSE_ID_SET_PATH,
+        }.get(marketplace, DEFAULT_ID_SET_PATH)
 
     if not objects_to_create:
         if marketplace == MarketplaceVersions.MarketplaceV2.value:
             objects_to_create = CONTENT_MP_V2_ENTITIES
+        elif marketplace == MarketplaceVersions.XPANSE.value:
+            objects_to_create = CONTENT_XPANSE_ENTITIES
         else:
             objects_to_create = CONTENT_ENTITIES
 
@@ -2783,8 +2785,8 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
 def find_duplicates(id_set, print_logs, marketplace):
     lists_to_return = []
-
-    entities = ID_SET_ENTITIES if marketplace != 'marketplacev2' else ID_SET_MP_V2_ENTITIES
+    entities = {MarketplaceVersions.MarketplaceV2.value: ID_SET_MP_V2_ENTITIES,
+                MarketplaceVersions.XPANSE.value: ID_SET_XPANSE_ENTITIES}.get(marketplace, ID_SET_ENTITIES)
 
     for object_type in entities:
         if print_logs:

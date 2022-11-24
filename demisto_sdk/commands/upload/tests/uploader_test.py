@@ -17,21 +17,17 @@ from packaging.version import parse
 
 from demisto_sdk.__main__ import main, upload
 from demisto_sdk.commands.common import constants
-from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
-                                                   INTEGRATIONS_DIR,
-                                                   LAYOUTS_DIR, SCRIPTS_DIR,
-                                                   TEST_PLAYBOOKS_DIR,
-                                                   FileType)
-from demisto_sdk.commands.common.content.objects.pack_objects.pack import (
-    DELETE_VERIFY_KEY_ACTION, TURN_VERIFICATION_ERROR_MSG, Pack)
+from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR, SCRIPTS_DIR,
+                                                   TEST_PLAYBOOKS_DIR, FileType)
+from demisto_sdk.commands.common.content.objects.pack_objects.pack import (DELETE_VERIFY_KEY_ACTION,
+                                                                           TURN_VERIFICATION_ERROR_MSG, Pack)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yml_paths_in_dir, src_root
 from demisto_sdk.commands.test_content import tools
 from demisto_sdk.commands.upload import uploader
-from demisto_sdk.commands.upload.uploader import (
-    ItemDetacher, Uploader, parse_error_response, print_summary,
-    sort_directories_based_on_dependencies)
+from demisto_sdk.commands.upload.uploader import (ItemDetacher, Uploader, parse_error_response, print_summary,
+                                                  sort_directories_based_on_dependencies)
 from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()

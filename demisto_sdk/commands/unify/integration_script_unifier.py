@@ -11,16 +11,12 @@ import click
 from inflection import dasherize, underscore
 from ruamel.yaml.scalarstring import FoldedScalarString
 
-from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-    DEFAULT_IMAGE_PREFIX, INTEGRATIONS_DIR, SCRIPTS_DIR, TYPE_TO_EXTENSION,
-    FileType)
+from demisto_sdk.commands.common.constants import (DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
+                                                   DEFAULT_IMAGE_PREFIX, INTEGRATIONS_DIR, SCRIPTS_DIR,
+                                                   TYPE_TO_EXTENSION, FileType)
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
-                                               find_type, get_mp_tag_parser,
-                                               get_pack_name, get_yaml,
-                                               get_yml_paths_in_dir,
-                                               print_color, print_warning,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list, find_type, get_mp_tag_parser, get_pack_name,
+                                               get_yaml, get_yml_paths_in_dir, print_color, print_warning,
                                                server_version_compare)
 from demisto_sdk.commands.unify.yaml_unifier import YAMLUnifier
 

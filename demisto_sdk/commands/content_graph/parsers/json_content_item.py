@@ -2,12 +2,10 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-    MarketplaceVersions)
+from demisto_sdk.commands.common.constants import (DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
+                                                   MarketplaceVersions)
 from demisto_sdk.commands.common.tools import get_files_in_dir, get_json
-from demisto_sdk.commands.content_graph.parsers.content_item import (
-    ContentItemParser, NotAContentItemException)
+from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItemException
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -52,11 +50,11 @@ class JSONContentItemParser(ContentItemParser):
 
     @property
     def marketplaces(self) -> List[MarketplaceVersions]:
-        if marketplaces := [
+        if file_marketplaces := [
             MarketplaceVersions(mp) for mp in self.json_data.get("marketplaces", [])
         ]:
-            return marketplaces
-        return self.pack_marketplaces
+            return file_marketplaces
+        return sorted(set(self.pack_marketplaces) & self.supported_marketplaces)
 
     def get_json(self) -> Dict[str, Any]:
         if self.path.is_dir():

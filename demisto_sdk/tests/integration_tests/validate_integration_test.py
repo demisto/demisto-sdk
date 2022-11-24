@@ -9,32 +9,28 @@ from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
-from demisto_sdk.commands.common.hook_validations.classifier import \
-    ClassifierValidator
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+from demisto_sdk.commands.common.hook_validations.classifier import ClassifierValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.hook_validations.integration import \
-    IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
-    PackUniqueFilesValidator
-from demisto_sdk.commands.common.hook_validations.playbook import \
-    PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
+from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
-from demisto_sdk.commands.find_dependencies.find_dependencies import \
-    PackDependencies
+from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
-from demisto_sdk.tests.constants_test import (CONTENT_REPO_EXAMPLE_ROOT,
-                                              NOT_VALID_IMAGE_PATH)
-from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
-    CONNECTION, DASHBOARD, EMPTY_ID_SET, GENERIC_DEFINITION, GENERIC_FIELD,
-    GENERIC_MODULE, GENERIC_TYPE, INCIDENT_FIELD, INCIDENT_TYPE,
-    INDICATOR_FIELD, LAYOUT, LAYOUTS_CONTAINER, MAPPER, NEW_CLASSIFIER,
-    OLD_CLASSIFIER, REPORT, REPUTATION, WIDGET)
+from demisto_sdk.tests.constants_test import CONTENT_REPO_EXAMPLE_ROOT, NOT_VALID_IMAGE_PATH
+from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (CONNECTION, DASHBOARD, EMPTY_ID_SET,
+                                                                                GENERIC_DEFINITION, GENERIC_FIELD,
+                                                                                GENERIC_MODULE, GENERIC_TYPE,
+                                                                                INCIDENT_FIELD, INCIDENT_TYPE,
+                                                                                INDICATOR_FIELD, LAYOUT,
+                                                                                LAYOUTS_CONTAINER, MAPPER,
+                                                                                NEW_CLASSIFIER, OLD_CLASSIFIER, REPORT,
+                                                                                REPUTATION, WIDGET)
 from TestSuite.test_tools import ChangeCWD
 
 VALIDATE_CMD = "validate"
@@ -748,6 +744,8 @@ class TestIntegrationValidation:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
+        mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
+                     return_value=[valid_integration_yml.get('category')])
         integration = pack.create_integration('integration0', yml=valid_integration_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -819,7 +817,7 @@ class TestIntegrationValidation:
         assert 'This is a feed and has wrong fromversion.' in result.stdout
         assert result.exit_code == 1
 
-    def test_negative__non_latest_docker_image(self):
+    def test_negative__non_latest_docker_image(self, mocker):
         """
         Given
         - FeedAzure integration with non-latest docker image.
@@ -832,6 +830,9 @@ class TestIntegrationValidation:
         - Ensure failure message on non-latest docker image.
         """
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+        valid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
+        mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
+                     return_value=[valid_integration_yml.get('category')])
         with ChangeCWD(CONTENT_REPO_EXAMPLE_ROOT):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, "-i", pack_integration_path, "--no-conf-json",
@@ -860,6 +861,8 @@ class TestIntegrationValidation:
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
 
         integration_path = join(TEST_FILES_PATH, 'integration-invalid-no-hidden-params.yml')
+        mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
+                     return_value=["Network Security"])
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", integration_path, "--no-conf-json",
                                       "--allow-skipped"])
@@ -986,8 +989,12 @@ class TestPackValidation:
         mocker.patch.object(ContentEntityValidator, 'validate_readme_exists', return_value=True)
         mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_usecases',
                      return_value=[])
-        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_tags',
+        mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
                      return_value=[])
+        mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
+                     return_value=["Data Enrichment & Threat Intelligence", "Analytics & SIEM"])
+        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_approved_tags_from_branch',
+                     return_value={})
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", VALID_PACK_PATH, "--no-conf-json",
                                       "--allow-skipped"])
@@ -1014,8 +1021,11 @@ class TestPackValidation:
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_usecases',
                      return_value=[])
-        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_tags',
+        mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
                      return_value=[])
+        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_approved_tags_from_branch',
+
+                     return_value={})
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_PACK_PATH, "--no-conf-json",
                                       "--allow-skipped"])
@@ -3002,6 +3012,8 @@ class TestAllFilesValidator:
         mocker.patch.object(PackUniqueFilesValidator, 'are_valid_files', return_value='')
         mocker.patch.object(ValidateManager, 'validate_readme', return_value=True)
         mocker.patch.object(ValidateManager, 'is_node_exist', return_value=True)
+        mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
+                     return_value=["Data Enrichment & Threat Intelligence"])
         pack1 = repo.create_pack('PackName1')
         pack1.author_image.write(DEFAULT_IMAGE_BASE64)
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
@@ -3048,6 +3060,7 @@ class TestAllFilesValidator:
         mocker.patch.object(PackUniqueFilesValidator, 'are_valid_files', return_value='')
         mocker.patch.object(ValidateManager, 'validate_readme', return_value=True)
         mocker.patch.object(ValidateManager, 'is_node_exist', return_value=False)
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         pack1 = repo.create_pack('PackName1')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
@@ -3062,6 +3075,7 @@ class TestAllFilesValidator:
         invalid_script_yml['name'] = invalid_script_yml['name'] + "_v2"
         pack2 = repo.create_pack('PackName2')
         script = pack2.create_script(yml=invalid_script_yml)
+        mocker.patch.object(ReadMeValidator, 'is_docker_available', return_value=False)
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -3116,6 +3130,7 @@ class TestValidationUsingGit:
         added_files = {dashboard.get_path_from_pack(), script.yml.rel_path}
         old_files = {old_integration.yml.rel_path}
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
         mocker.patch.object(ValidateManager, 'setup_prev_ver', return_value='origin/master')
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, added_files,
                                                                                          set(), old_files, True))
@@ -3174,6 +3189,7 @@ class TestValidationUsingGit:
         modified_files = {integration.yml.rel_path, incident_field.get_path_from_pack()}
         added_files = {dashboard.get_path_from_pack(), script.yml.rel_path}
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
         mocker.patch.object(ValidateManager, 'setup_prev_ver', return_value='origin/master')
         mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(modified_files, added_files,
                                                                                          set(), set(), True))
@@ -3441,6 +3457,7 @@ class TestValidationUsingGit:
         mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
         mocker.patch.object(ValidateManager, 'setup_prev_ver', return_value='origin/master')
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
 
         mocker.patch.object(PackDependencies, 'find_dependencies', return_value={})
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
@@ -3485,7 +3502,8 @@ class TestSpecificValidations:
         reputation = pack._create_json_based(name='reputation', prefix='', content=reputation_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path, '--run-specific-validations', 'BA101'], catch_exceptions=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path, '--run-specific-validations', 'BA101'],
+                                   catch_exceptions=False)
         assert f'Validating {reputation.path} as reputation' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
@@ -3509,7 +3527,8 @@ class TestSpecificValidations:
         reputation = pack._create_json_based(name='reputation', prefix='', content=reputation_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path, '--run-specific-validations', 'RP101'], catch_exceptions=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path, '--run-specific-validations', 'RP101'],
+                                   catch_exceptions=False)
         assert f'Validating {reputation.path} as reputation' in result.stdout
         assert 'RP101' in result.stdout
         assert 'Expiration field should have a positive numeric value.' in result.stdout
@@ -3534,7 +3553,8 @@ class TestSpecificValidations:
         reputation = pack._create_json_based(name='reputation', prefix='', content=reputation_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path, '--run-specific-validations', 'RP'], catch_exceptions=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path, '--run-specific-validations', 'RP'],
+                                   catch_exceptions=False)
         assert f'Validating {reputation.path} as reputation' in result.stdout
         assert 'RP101' in result.stdout
         assert 'Expiration field should have a positive numeric value.' in result.stdout

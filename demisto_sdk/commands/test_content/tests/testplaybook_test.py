@@ -3,14 +3,11 @@ from unittest.mock import ANY
 import demisto_client
 import pytest
 
-from demisto_sdk.commands.test_content.TestContentClasses import (
-    Integration, IntegrationConfiguration, TestConfiguration, TestPlaybook)
-from demisto_sdk.commands.test_content.tests.build_context_test import (
-    create_xsiam_build, get_mocked_build_context)
-from demisto_sdk.commands.test_content.tests.DemistoClientMock import \
-    DemistoClientMock
-from demisto_sdk.commands.test_content.tests.server_context_test import \
-    generate_mocked_server_context
+from demisto_sdk.commands.test_content.TestContentClasses import (Integration, IntegrationConfiguration,
+                                                                  TestConfiguration, TestPlaybook)
+from demisto_sdk.commands.test_content.tests.build_context_test import create_xsiam_build, get_mocked_build_context
+from demisto_sdk.commands.test_content.tests.DemistoClientMock import DemistoClientMock
+from demisto_sdk.commands.test_content.tests.server_context_test import generate_mocked_server_context
 
 
 def test_set_prev_server_keys(mocker, tmp_path):

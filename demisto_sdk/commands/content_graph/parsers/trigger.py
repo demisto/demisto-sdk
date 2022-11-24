@@ -1,10 +1,9 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.json_content_item import \
-    JSONContentItemParser
+from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 
 
 class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
@@ -22,6 +21,10 @@ class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
     @property
     def name(self) -> Optional[str]:
         return self.json_data.get("trigger_name")
+
+    @property
+    def supported_marketplaces(self) -> Set[MarketplaceVersions]:
+        return {MarketplaceVersions.MarketplaceV2}
 
     def connect_to_dependencies(self) -> None:
         """Collects the playbook used in the trigger as a mandatory dependency."""

@@ -1,3 +1,4 @@
+import functools
 import logging
 import os
 import shutil
@@ -64,7 +65,7 @@ class DockerBase:
     def __init__(self):
         self.tmp_dir_name = tempfile.TemporaryDirectory(prefix=os.path.join(os.getcwd(), 'tmp'))
         self.tmp_dir = Path(self.tmp_dir_name.name)
-        installation_scripts = Path(__file__).parent / 'resources' / 'installation_scripts'
+        installation_scripts = Path(__file__).parent.parent / 'lint' / 'resources' / 'installation_scripts'
         self.installation_scripts = {
             TYPE_PYTHON: installation_scripts / 'python_image.sh',
             TYPE_PWSH: installation_scripts / 'powershell_image.sh',
@@ -204,4 +205,6 @@ class MountableDocker(DockerBase):
                                                                  files_to_push=files_to_push, **kwargs)
 
 
-Docker = MountableDocker() if CAN_MOUNT_FILES else DockerBase()
+@functools.lru_cache
+def get_docker():
+    return MountableDocker() if CAN_MOUNT_FILES else DockerBase()

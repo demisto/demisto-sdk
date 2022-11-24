@@ -4,11 +4,9 @@ import os
 import re
 
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import (
-    BaseValidator, error_codes)
-from demisto_sdk.commands.common.tools import (
-    old_get_latest_release_notes_text, old_get_release_notes_file_path,
-    run_command)
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
+from demisto_sdk.commands.common.tools import (old_get_latest_release_notes_text, old_get_release_notes_file_path,
+                                               run_command)
 
 
 class OldReleaseNotesValidator(BaseValidator):

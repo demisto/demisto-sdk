@@ -1,8 +1,7 @@
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from demisto_sdk.commands.common.constants import (
-    FILETYPE_TO_DEFAULT_FROMVERSION, FileType)
+from demisto_sdk.commands.common.constants import FILETYPE_TO_DEFAULT_FROMVERSION, FileType
 from TestSuite.json_based import JSONBased
 
 

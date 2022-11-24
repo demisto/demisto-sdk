@@ -2,10 +2,8 @@ from copy import deepcopy
 
 import pytest
 
-from demisto_sdk.commands.test_content.ParallelLoggingManager import \
-    ParallelLoggingManager
-from demisto_sdk.commands.test_content.TestContentClasses import (BuildContext,
-                                                                  Integration)
+from demisto_sdk.commands.test_content.ParallelLoggingManager import ParallelLoggingManager
+from demisto_sdk.commands.test_content.TestContentClasses import BuildContext, Integration
 
 CONFIGURATION = {
     'configuration': [

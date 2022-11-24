@@ -10,31 +10,18 @@ from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version
 from tabulate import tabulate
 
-from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
-                                                   CONTENT_ENTITIES_DIRS,
-                                                   DASHBOARDS_DIR,
-                                                   INCIDENT_FIELDS_DIR,
-                                                   INCIDENT_TYPES_DIR,
-                                                   INDICATOR_FIELDS_DIR,
-                                                   INDICATOR_TYPES_DIR,
-                                                   INTEGRATIONS_DIR, JOBS_DIR,
-                                                   LAYOUTS_DIR, LISTS_DIR,
-                                                   PLAYBOOKS_DIR, REPORTS_DIR,
-                                                   SCRIPTS_DIR,
-                                                   TEST_PLAYBOOKS_DIR,
-                                                   WIDGETS_DIR, FileType)
+from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONTENT_ENTITIES_DIRS, DASHBOARDS_DIR,
+                                                   INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+                                                   INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR,
+                                                   LISTS_DIR, PLAYBOOKS_DIR, REPORTS_DIR, SCRIPTS_DIR,
+                                                   TEST_PLAYBOOKS_DIR, WIDGETS_DIR, FileType)
 from demisto_sdk.commands.common.content.errors import ContentFactoryError
-from demisto_sdk.commands.common.content.objects.abstract_objects import (
-    JSONObject, YAMLObject)
+from demisto_sdk.commands.common.content.objects.abstract_objects import JSONObject, YAMLObject
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.content.objects_factory import \
-    path_to_pack_object
+from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (find_type,
-                                               get_child_directories,
-                                               get_demisto_version, get_file,
-                                               get_parent_directory_name,
-                                               print_v)
+from demisto_sdk.commands.common.tools import (find_type, get_child_directories, get_demisto_version, get_file,
+                                               get_parent_directory_name, print_v)
 
 json = JSON_Handler()
 

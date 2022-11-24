@@ -1,3 +1,4 @@
+import functools
 import logging
 import os
 import shutil
@@ -204,4 +205,6 @@ class MountableDocker(DockerBase):
                                                                  files_to_push=files_to_push, **kwargs)
 
 
-Docker = MountableDocker() if CAN_MOUNT_FILES else DockerBase()
+@functools.lru_cache
+def get_docker():
+    return MountableDocker() if CAN_MOUNT_FILES else DockerBase()

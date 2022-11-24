@@ -14,8 +14,7 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
-from demisto_sdk.commands.unify.integration_script_unifier import \
-    IntegrationScriptUnifier
+from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
 from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
@@ -649,8 +648,7 @@ final test: hi
         Then
         - Ensure Unify command works with default output given relative path to current directory.
         """
-        from demisto_sdk.commands.unify.integration_script_unifier import \
-            IntegrationScriptUnifier
+        from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
         abs_path_mock = mocker.patch('demisto_sdk.commands.unify.integration_script_unifier.os.path.abspath')
         abs_path_mock.return_value = TESTS_DIR + '/test_files/Packs/DummyPack/Integrations/UploadTest'
         input_path_integration = '.'

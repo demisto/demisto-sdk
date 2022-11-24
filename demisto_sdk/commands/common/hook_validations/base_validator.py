@@ -4,21 +4,13 @@ from typing import Optional
 
 import click
 
-from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
-                                                   PACKS_DIR,
-                                                   PACKS_PACK_META_FILE_NAME,
-                                                   FileType)
-from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
-                                                FOUND_FILES_AND_ERRORS,
-                                                FOUND_FILES_AND_IGNORED_ERRORS,
-                                                PRESET_ERROR_TO_CHECK,
-                                                PRESET_ERROR_TO_IGNORE,
-                                                get_all_error_codes,
-                                                get_error_object)
+from demisto_sdk.commands.common.constants import PACK_METADATA_SUPPORT, PACKS_DIR, PACKS_PACK_META_FILE_NAME, FileType
+from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS, FOUND_FILES_AND_ERRORS,
+                                                FOUND_FILES_AND_IGNORED_ERRORS, PRESET_ERROR_TO_CHECK,
+                                                PRESET_ERROR_TO_IGNORE, get_all_error_codes, get_error_object)
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (
-    find_type, get_file_displayed_name, get_json, get_pack_name,
-    get_relative_path_from_packs_dir, get_yaml, print_warning)
+from demisto_sdk.commands.common.tools import (find_type, get_file_displayed_name, get_json, get_pack_name,
+                                               get_relative_path_from_packs_dir, get_yaml, print_warning)
 
 json = JSON_Handler()
 

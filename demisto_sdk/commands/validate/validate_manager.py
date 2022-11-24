@@ -12,102 +12,65 @@ from packaging import version
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, AUTHOR_IMAGE_FILE_NAME, CONTENT_ENTITIES_DIRS,
-    DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR,
-    IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
-    PACKS_PACK_META_FILE_NAME, SKIP_RELEASE_NOTES_FOR_TYPES,
-    VALIDATION_USING_GIT_IGNORABLE_DATA, FileType, FileType_ALLOWED_TO_DELETE,
-    PathLevel)
+from demisto_sdk.commands.common.constants import (API_MODULES_PACK, AUTHOR_IMAGE_FILE_NAME, CONTENT_ENTITIES_DIRS,
+                                                   DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_FIELDS_DIR,
+                                                   GENERIC_TYPES_DIR, IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION,
+                                                   PACKS_DIR, PACKS_PACK_META_FILE_NAME, SKIP_RELEASE_NOTES_FOR_TYPES,
+                                                   VALIDATION_USING_GIT_IGNORABLE_DATA, FileType,
+                                                   FileType_ALLOWED_TO_DELETE, PathLevel)
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content_constant_paths import \
-    DEFAULT_ID_SET_PATH
-from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
-                                                FOUND_FILES_AND_IGNORED_ERRORS,
-                                                PRESET_ERROR_TO_CHECK,
-                                                PRESET_ERROR_TO_IGNORE, Errors,
+from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
+from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS,
+                                                PRESET_ERROR_TO_CHECK, PRESET_ERROR_TO_IGNORE, Errors,
                                                 get_all_error_codes)
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.hook_validations.author_image import \
-    AuthorImageValidator
-from demisto_sdk.commands.common.hook_validations.base_validator import (
-    BaseValidator, error_codes)
-from demisto_sdk.commands.common.hook_validations.classifier import \
-    ClassifierValidator
-from demisto_sdk.commands.common.hook_validations.conf_json import \
-    ConfJsonValidator
-from demisto_sdk.commands.common.hook_validations.correlation_rule import \
-    CorrelationRuleValidator
-from demisto_sdk.commands.common.hook_validations.dashboard import \
-    DashboardValidator
-from demisto_sdk.commands.common.hook_validations.deprecation import \
-    DeprecationValidator
-from demisto_sdk.commands.common.hook_validations.description import \
-    DescriptionValidator
-from demisto_sdk.commands.common.hook_validations.generic_definition import \
-    GenericDefinitionValidator
-from demisto_sdk.commands.common.hook_validations.generic_field import \
-    GenericFieldValidator
-from demisto_sdk.commands.common.hook_validations.generic_module import \
-    GenericModuleValidator
-from demisto_sdk.commands.common.hook_validations.generic_type import \
-    GenericTypeValidator
+from demisto_sdk.commands.common.hook_validations.author_image import AuthorImageValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
+from demisto_sdk.commands.common.hook_validations.classifier import ClassifierValidator
+from demisto_sdk.commands.common.hook_validations.conf_json import ConfJsonValidator
+from demisto_sdk.commands.common.hook_validations.correlation_rule import CorrelationRuleValidator
+from demisto_sdk.commands.common.hook_validations.dashboard import DashboardValidator
+from demisto_sdk.commands.common.hook_validations.deprecation import DeprecationValidator
+from demisto_sdk.commands.common.hook_validations.description import DescriptionValidator
+from demisto_sdk.commands.common.hook_validations.generic_definition import GenericDefinitionValidator
+from demisto_sdk.commands.common.hook_validations.generic_field import GenericFieldValidator
+from demisto_sdk.commands.common.hook_validations.generic_module import GenericModuleValidator
+from demisto_sdk.commands.common.hook_validations.generic_type import GenericTypeValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.hook_validations.incident_field import \
-    IncidentFieldValidator
-from demisto_sdk.commands.common.hook_validations.incident_type import \
-    IncidentTypeValidator
-from demisto_sdk.commands.common.hook_validations.indicator_field import \
-    IndicatorFieldValidator
-from demisto_sdk.commands.common.hook_validations.integration import \
-    IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.incident_field import IncidentFieldValidator
+from demisto_sdk.commands.common.hook_validations.incident_type import IncidentTypeValidator
+from demisto_sdk.commands.common.hook_validations.indicator_field import IndicatorFieldValidator
+from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.job import JobValidator
-from demisto_sdk.commands.common.hook_validations.layout import (
-    LayoutsContainerValidator, LayoutValidator)
+from demisto_sdk.commands.common.hook_validations.layout import LayoutsContainerValidator, LayoutValidator
 from demisto_sdk.commands.common.hook_validations.lists import ListsValidator
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
-from demisto_sdk.commands.common.hook_validations.modeling_rule import \
-    ModelingRuleValidator
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
-    PackUniqueFilesValidator
-from demisto_sdk.commands.common.hook_validations.parsing_rule import \
-    ParsingRuleValidator
-from demisto_sdk.commands.common.hook_validations.playbook import \
-    PlaybookValidator
-from demisto_sdk.commands.common.hook_validations.pre_process_rule import \
-    PreProcessRuleValidator
-from demisto_sdk.commands.common.hook_validations.python_file import \
-    PythonFileValidator
+from demisto_sdk.commands.common.hook_validations.modeling_rule import ModelingRuleValidator
+from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
+from demisto_sdk.commands.common.hook_validations.parsing_rule import ParsingRuleValidator
+from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.pre_process_rule import PreProcessRuleValidator
+from demisto_sdk.commands.common.hook_validations.python_file import PythonFileValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.hook_validations.release_notes import \
-    ReleaseNotesValidator
-from demisto_sdk.commands.common.hook_validations.release_notes_config import \
-    ReleaseNotesConfigValidator
+from demisto_sdk.commands.common.hook_validations.release_notes import ReleaseNotesValidator
+from demisto_sdk.commands.common.hook_validations.release_notes_config import ReleaseNotesConfigValidator
 from demisto_sdk.commands.common.hook_validations.report import ReportValidator
-from demisto_sdk.commands.common.hook_validations.reputation import \
-    ReputationValidator
+from demisto_sdk.commands.common.hook_validations.reputation import ReputationValidator
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
-from demisto_sdk.commands.common.hook_validations.test_playbook import \
-    TestPlaybookValidator
-from demisto_sdk.commands.common.hook_validations.triggers import \
-    TriggersValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from demisto_sdk.commands.common.hook_validations.test_playbook import TestPlaybookValidator
+from demisto_sdk.commands.common.hook_validations.triggers import TriggersValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.hook_validations.wizard import WizardValidator
-from demisto_sdk.commands.common.hook_validations.xsiam_dashboard import \
-    XSIAMDashboardValidator
-from demisto_sdk.commands.common.hook_validations.xsiam_report import \
-    XSIAMReportValidator
-from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
-    XSOARConfigJsonValidator
-from demisto_sdk.commands.common.tools import (
-    _get_file_id, find_type, get_api_module_ids,
-    get_api_module_integrations_set, get_content_path, get_file,
-    get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
-    get_relative_path_from_packs_dir, get_remote_file, get_yaml,
-    open_id_set_file, print_warning, run_command_os)
+from demisto_sdk.commands.common.hook_validations.xsiam_dashboard import XSIAMDashboardValidator
+from demisto_sdk.commands.common.hook_validations.xsiam_report import XSIAMReportValidator
+from demisto_sdk.commands.common.hook_validations.xsoar_config_json import XSOARConfigJsonValidator
+from demisto_sdk.commands.common.tools import (_get_file_id, find_type, get_api_module_ids,
+                                               get_api_module_integrations_set, get_content_path, get_file,
+                                               get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
+                                               get_relative_path_from_packs_dir, get_remote_file, get_yaml,
+                                               open_id_set_file, print_warning, run_command_os)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 SKIPPED_FILES = ['CommonServerPython.py', 'CommonServerUserPython.py', 'demistomock.py']
@@ -1685,7 +1648,8 @@ class ValidateManager:
 
         # extract metadata files from the recognised changes
         changed_meta = self.pack_metadata_extraction(modified_files, added_files, renamed_files)
-        filtered_changed_meta, old_format_changed, _ = self.filter_to_relevant_files(changed_meta)
+        filtered_changed_meta, old_format_changed, _ = self.filter_to_relevant_files(changed_meta,
+                                                                                     check_metadata_files=True)
         old_format_files |= old_format_changed
         return filtered_modified, filtered_added, filtered_changed_meta, old_format_files, valid_types
 
@@ -1707,7 +1671,7 @@ class ValidateManager:
 
         return changed_metadata_files
 
-    def filter_to_relevant_files(self, file_set):
+    def filter_to_relevant_files(self, file_set, check_metadata_files=False):
         """Goes over file set and returns only a filtered set of only files relevant for validation"""
         filtered_set: set = set()
         old_format_files: set = set()
@@ -1722,9 +1686,11 @@ class ValidateManager:
                 file_path = str(path)
 
             try:
-                formatted_path, old_path, valid_file_extension = self.check_file_relevance_and_format_path(file_path,
-                                                                                                           old_path,
-                                                                                                           old_format_files)
+                formatted_path, old_path, valid_file_extension = self.check_file_relevance_and_format_path(
+                    file_path,
+                    old_path,
+                    old_format_files,
+                    check_metadata_files=check_metadata_files)
                 valid_types.add(valid_file_extension)
                 if formatted_path:
                     if old_path:
@@ -1741,7 +1707,7 @@ class ValidateManager:
 
         return filtered_set, old_format_files, all(valid_types)
 
-    def check_file_relevance_and_format_path(self, file_path, old_path, old_format_files):
+    def check_file_relevance_and_format_path(self, file_path, old_path, old_format_files, check_metadata_files=False):
         """
         Determines if a file is relevant for validation and create any modification to the file_path if needed
         :returns a tuple(string, string, bool) where
@@ -1755,7 +1721,7 @@ class ValidateManager:
 
         file_type = find_type(file_path)
 
-        if self.ignore_files_irrelevant_for_validation(file_path):
+        if self.ignore_files_irrelevant_for_validation(file_path, check_metadata_files=check_metadata_files):
             return irrelevant_file_output
 
         if not file_type:
@@ -1805,19 +1771,23 @@ class ValidateManager:
         else:
             return file_path, '', True
 
-    def ignore_files_irrelevant_for_validation(self, file_path: str) -> bool:
+    def ignore_files_irrelevant_for_validation(self, file_path: str, check_metadata_files: bool = False) -> bool:
         """
         Will ignore files that are not in the packs directory, are .txt files or are in the
         VALIDATION_USING_GIT_IGNORABLE_DATA tuple.
 
         Args:
             file_path: path of file to check if should be ignored.
+            check_metadata_files: If True will not ignore metadata files.
         Returns: True if file is ignored, false otherwise
         """
 
         if PACKS_DIR not in file_path:
             self.ignore_file(file_path)
             return True
+
+        if check_metadata_files and find_type(file_path) == FileType.METADATA:
+            return False
 
         if file_path.endswith(".txt"):
             self.ignore_file(file_path)

@@ -7,60 +7,51 @@ from mock import patch
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.format import (update_dashboard, update_incidenttype,
-                                         update_indicatortype)
+from demisto_sdk.commands.format import update_dashboard, update_incidenttype, update_indicatortype
 from demisto_sdk.commands.format.format_module import format_manager
-from demisto_sdk.commands.format.update_classifier import (
-    ClassifierJSONFormat, OldClassifierJSONFormat)
+from demisto_sdk.commands.format.update_classifier import ClassifierJSONFormat, OldClassifierJSONFormat
 from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-from demisto_sdk.commands.format.update_genericfield import \
-    GenericFieldJSONFormat
-from demisto_sdk.commands.format.update_incidentfields import \
-    IncidentFieldJSONFormat
-from demisto_sdk.commands.format.update_incidenttype import \
-    IncidentTypesJSONFormat
-from demisto_sdk.commands.format.update_indicatorfields import \
-    IndicatorFieldJSONFormat
-from demisto_sdk.commands.format.update_indicatortype import \
-    IndicatorTypeJSONFormat
+from demisto_sdk.commands.format.update_genericfield import GenericFieldJSONFormat
+from demisto_sdk.commands.format.update_incidentfields import IncidentFieldJSONFormat
+from demisto_sdk.commands.format.update_incidenttype import IncidentTypesJSONFormat
+from demisto_sdk.commands.format.update_indicatorfields import IndicatorFieldJSONFormat
+from demisto_sdk.commands.format.update_indicatortype import IndicatorTypeJSONFormat
 from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_lists import ListsFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
-from demisto_sdk.commands.format.update_pack_metadata import \
-    PackMetadataJsonFormat
-from demisto_sdk.commands.format.update_pre_process_rules import \
-    PreProcessRulesFormat
+from demisto_sdk.commands.format.update_pack_metadata import PackMetadataJsonFormat
+from demisto_sdk.commands.format.update_pre_process_rules import PreProcessRulesFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
-from demisto_sdk.tests.constants_test import (
-    CLASSIFIER_5_9_9_SCHEMA_PATH, CLASSIFIER_PATH, CLASSIFIER_SCHEMA_PATH,
-    CONNECTION_SCHEMA_PATH, DASHBOARD_PATH, DESTINATION_FORMAT_CLASSIFIER,
-    DESTINATION_FORMAT_CLASSIFIER_5_9_9, DESTINATION_FORMAT_DASHBOARD_COPY,
-    DESTINATION_FORMAT_INCIDENTFIELD_COPY,
-    DESTINATION_FORMAT_INCIDENTTYPE_COPY,
-    DESTINATION_FORMAT_INDICATORFIELD_COPY,
-    DESTINATION_FORMAT_INDICATORTYPE_COPY, DESTINATION_FORMAT_LAYOUT_COPY,
-    DESTINATION_FORMAT_LAYOUT_INVALID_NAME_COPY,
-    DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY, DESTINATION_FORMAT_LISTS_COPY,
-    DESTINATION_FORMAT_MAPPER, DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY,
-    DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY,
-    DESTINATION_FORMAT_REPORT, DESTINATION_FORMAT_WIDGET,
-    GENERICFIELD_SCHEMA_PATH, INCIDENTFIELD_PATH, INCIDENTFIELD_SCHEMA_PATH,
-    INCIDENTTYPE_PATH, INDICATORFIELD_PATH, INDICATORFIELD_SCHEMA_PATH,
-    INDICATORTYPE_PATH, INVALID_OUTPUT_PATH, LAYOUT_PATH, LAYOUT_SCHEMA_PATH,
-    LAYOUTS_CONTAINER_PATH, LAYOUTS_CONTAINER_SCHEMA_PATH, LISTS_PATH,
-    LISTS_SCHEMA_PATH, MAPPER_PATH, MAPPER_SCHEMA_PATH, PRE_PROCESS_RULES_PATH,
-    PRE_PROCESS_RULES_SCHEMA_PATH, REPORT_PATH, SOURCE_FORMAT_CLASSIFIER,
-    SOURCE_FORMAT_CLASSIFIER_5_9_9, SOURCE_FORMAT_DASHBOARD_COPY,
-    SOURCE_FORMAT_INCIDENTFIELD_COPY, SOURCE_FORMAT_INCIDENTTYPE_COPY,
-    SOURCE_FORMAT_INDICATORFIELD_COPY, SOURCE_FORMAT_INDICATORTYPE_COPY,
-    SOURCE_FORMAT_LAYOUT_COPY, SOURCE_FORMAT_LAYOUTS_CONTAINER,
-    SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY, SOURCE_FORMAT_LISTS_COPY,
-    SOURCE_FORMAT_MAPPER, SOURCE_FORMAT_PRE_PROCESS_RULES_COPY,
-    SOURCE_FORMAT_REPORT, SOURCE_FORMAT_WIDGET, WIDGET_PATH)
+from demisto_sdk.tests.constants_test import (CLASSIFIER_5_9_9_SCHEMA_PATH, CLASSIFIER_PATH, CLASSIFIER_SCHEMA_PATH,
+                                              CONNECTION_SCHEMA_PATH, DASHBOARD_PATH, DESTINATION_FORMAT_CLASSIFIER,
+                                              DESTINATION_FORMAT_CLASSIFIER_5_9_9, DESTINATION_FORMAT_DASHBOARD_COPY,
+                                              DESTINATION_FORMAT_INCIDENTFIELD_COPY,
+                                              DESTINATION_FORMAT_INCIDENTTYPE_COPY,
+                                              DESTINATION_FORMAT_INDICATORFIELD_COPY,
+                                              DESTINATION_FORMAT_INDICATORTYPE_COPY, DESTINATION_FORMAT_LAYOUT_COPY,
+                                              DESTINATION_FORMAT_LAYOUT_INVALID_NAME_COPY,
+                                              DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY, DESTINATION_FORMAT_LISTS_COPY,
+                                              DESTINATION_FORMAT_MAPPER, DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY,
+                                              DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY,
+                                              DESTINATION_FORMAT_REPORT, DESTINATION_FORMAT_WIDGET,
+                                              GENERICFIELD_SCHEMA_PATH, INCIDENTFIELD_PATH, INCIDENTFIELD_SCHEMA_PATH,
+                                              INCIDENTTYPE_PATH, INDICATORFIELD_PATH, INDICATORFIELD_SCHEMA_PATH,
+                                              INDICATORTYPE_PATH, INVALID_OUTPUT_PATH, LAYOUT_PATH, LAYOUT_SCHEMA_PATH,
+                                              LAYOUTS_CONTAINER_PATH, LAYOUTS_CONTAINER_SCHEMA_PATH, LISTS_PATH,
+                                              LISTS_SCHEMA_PATH, MAPPER_PATH, MAPPER_SCHEMA_PATH,
+                                              PRE_PROCESS_RULES_PATH, PRE_PROCESS_RULES_SCHEMA_PATH, REPORT_PATH,
+                                              SOURCE_FORMAT_CLASSIFIER, SOURCE_FORMAT_CLASSIFIER_5_9_9,
+                                              SOURCE_FORMAT_DASHBOARD_COPY, SOURCE_FORMAT_INCIDENTFIELD_COPY,
+                                              SOURCE_FORMAT_INCIDENTTYPE_COPY, SOURCE_FORMAT_INDICATORFIELD_COPY,
+                                              SOURCE_FORMAT_INDICATORTYPE_COPY, SOURCE_FORMAT_LAYOUT_COPY,
+                                              SOURCE_FORMAT_LAYOUTS_CONTAINER, SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY,
+                                              SOURCE_FORMAT_LISTS_COPY, SOURCE_FORMAT_MAPPER,
+                                              SOURCE_FORMAT_PRE_PROCESS_RULES_COPY, SOURCE_FORMAT_REPORT,
+                                              SOURCE_FORMAT_WIDGET, WIDGET_PATH)
 from TestSuite.json_based import JSONBased
 
 json = JSON_Handler()
@@ -767,8 +758,7 @@ class TestFormattingLayoutscontainer:
         Then
             - Ensure that fromVersion field was updated successfully with GENERAL_DEFAULT_FROMVERSION value
         """
-        from demisto_sdk.commands.common.constants import \
-            GENERAL_DEFAULT_FROMVERSION
+        from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
 
         layoutscontainer_formatter.from_version = GENERAL_DEFAULT_FROMVERSION
         layoutscontainer_formatter.set_fromVersion()
@@ -1083,8 +1073,7 @@ class TestFormattingClassifier:
         Then
             - Ensure that fromVersion field was updated successfully with '6.0.0' value
         """
-        from demisto_sdk.commands.common.constants import \
-            GENERAL_DEFAULT_FROMVERSION
+        from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
 
         classifier_formatter.from_version = GENERAL_DEFAULT_FROMVERSION
         classifier_formatter.set_fromVersion()
@@ -1276,8 +1265,7 @@ class TestFormattingMapper:
         Then
             - Ensure that fromVersion field was updated successfully with GENERAL_DEFAULT_FROMVERSION value
         """
-        from demisto_sdk.commands.common.constants import \
-            GENERAL_DEFAULT_FROMVERSION
+        from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
 
         mapper_formatter.from_version = GENERAL_DEFAULT_FROMVERSION
         mapper_formatter.set_fromVersion()
@@ -1471,8 +1459,7 @@ class TestFormattingReport:
         Then
             - Ensure that the integration fromversion is set to GENERAL_DEFAULT_FROMVERSION
         """
-        from demisto_sdk.commands.common.constants import \
-            GENERAL_DEFAULT_FROMVERSION
+        from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
 
         pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
         incident_type = pack.create_incident_type(name='TestType', content={})
@@ -1490,8 +1477,7 @@ class TestFormattingReport:
         Then
             - Ensure that the integration fromversion is set to GENERAL_DEFAULT_FROMVERSION
         """
-        from demisto_sdk.commands.common.constants import \
-            GENERAL_DEFAULT_FROMVERSION
+        from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
 
         pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
         incident_type = pack.create_incident_type(name='TestType')

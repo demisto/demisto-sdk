@@ -159,9 +159,7 @@ def test_slack_notifier_on_failed_circle_ci_jobs():
     Then -
         make sure the correct message with the correct failures is returned even if some of the jobs succeeded.
     """
-    from circle_ci_slack_notifier import (CircleCIClient,
-                                          CircleCiFailedJobsParser,
-                                          construct_failed_jobs_slack_message)
+    from circle_ci_slack_notifier import CircleCIClient, CircleCiFailedJobsParser, construct_failed_jobs_slack_message
 
     parser = CircleCiFailedJobsParser(circle_client=CircleCIClient(), workflow_id=WORKFLOW_ID)
     assert construct_failed_jobs_slack_message(parser) == [

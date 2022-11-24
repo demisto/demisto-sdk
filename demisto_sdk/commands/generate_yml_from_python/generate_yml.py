@@ -14,9 +14,9 @@ import mock  # type: ignore
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import write_yml
-from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
-    CommandMetadata, ConfKey, InputArgument, OutputArgument,
-    YMLMetadataCollector)
+from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (CommandMetadata, ConfKey,
+                                                                                  InputArgument, OutputArgument,
+                                                                                  YMLMetadataCollector)
 
 yaml = YAML_Handler()
 

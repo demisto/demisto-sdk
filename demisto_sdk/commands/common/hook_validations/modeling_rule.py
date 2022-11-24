@@ -3,13 +3,12 @@ This module is designed to validate the correctness of generic definition entiti
 """
 import json
 import os
+import re
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    error_codes
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
 from demisto_sdk.commands.common.tools import get_files_in_dir
 
 yaml = YAML_Handler()
@@ -93,10 +92,9 @@ class ModelingRuleValidator(ContentEntityValidator):
         def get_dataset_from_xif(xif_file_path):
             with open(xif_file_path, 'r') as xif_file:
                 xif_content = xif_file.readline()
-                for attr in xif_content.split(" "):
-                    if "dataset" in attr:
-                        dataset = attr.split("=")[1].strip("\",]\n")
-                        return dataset
+                dataset = re.findall("dataset=([\"a-zA-Z_0-9]+)", xif_content)
+                if dataset:
+                    return dataset[0].strip("\"")
             return None
 
         xif_file_path = get_files_in_dir(os.path.dirname(self.file_path), ['xif'], False)

@@ -16,27 +16,16 @@ import urllib3.exceptions
 from packaging.version import Version
 from wcmatch.pathlib import Path, PosixPath
 
-from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
-                                                   TYPE_PWSH, TYPE_PYTHON,
-                                                   DemistoException)
+from demisto_sdk.commands.common.constants import PACKS_PACK_META_FILE_NAME, TYPE_PWSH, TYPE_PYTHON, DemistoException
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import Colors
 from demisto_sdk.commands.common.timers import report_time_measurements
-from demisto_sdk.commands.common.tools import (find_file, find_type,
-                                               get_api_module_dependencies,
-                                               get_content_path,
-                                               get_file_displayed_name,
-                                               get_json,
-                                               is_external_repository,
-                                               print_error, print_v,
-                                               print_warning,
-                                               retrieve_file_ending)
-from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
-                                               PY_CHCEKS, SUCCESS,
-                                               build_skipped_exit_code,
-                                               generate_coverage_report,
-                                               get_test_modules)
+from demisto_sdk.commands.common.tools import (find_file, find_type, get_api_module_dependencies, get_content_path,
+                                               get_file_displayed_name, get_json, is_external_repository, print_error,
+                                               print_v, print_warning, retrieve_file_ending)
+from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS, PY_CHCEKS, SUCCESS,
+                                               build_skipped_exit_code, generate_coverage_report, get_test_modules)
 from demisto_sdk.commands.lint.linter import Linter
 
 json = JSON_Handler()

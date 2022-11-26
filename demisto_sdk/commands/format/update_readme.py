@@ -2,12 +2,9 @@ from typing import Optional, Tuple
 
 import click
 
-from demisto_sdk.commands.common.hook_validations.readme import (
-    ReadmeUrl, get_relative_urls)
+from demisto_sdk.commands.common.hook_validations.readme import ReadmeUrl, get_relative_urls
 from demisto_sdk.commands.common.tools import print_error
-from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
-                                                          SKIP_RETURN_CODE,
-                                                          SUCCESS_RETURN_CODE)
+from demisto_sdk.commands.format.format_constants import ERROR_RETURN_CODE, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
 

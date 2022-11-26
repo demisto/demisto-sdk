@@ -3,10 +3,8 @@ from typing import List, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.content_item import \
-    NotAContentItemException
-from demisto_sdk.commands.content_graph.parsers.json_content_item import \
-    JSONContentItemParser
+from demisto_sdk.commands.content_graph.parsers.content_item import NotAContentItemException
+from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 
 
 class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):

@@ -7,8 +7,8 @@ from wcmatch.pathlib import Path
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE
 from demisto_sdk.commands.common.tools import src_root
-from demisto_sdk.commands.create_artifacts.tests.content_artifacts_creator_test import (
-    destroy_by_ext, duplicate_file, same_folders, temp_dir)
+from demisto_sdk.commands.create_artifacts.tests.content_artifacts_creator_test import (destroy_by_ext, duplicate_file,
+                                                                                        same_folders, temp_dir)
 from TestSuite.test_tools import ChangeCWD
 
 ARTIFACTS_CMD = 'create-content-artifacts'

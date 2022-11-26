@@ -4,11 +4,9 @@ from typing import Any, Dict, Iterable, List, Optional
 from neo4j import Transaction
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import (SERVER_CONTENT_ITEMS,
-                                                       ContentType,
-                                                       Neo4jResult)
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
-    intersects, run_query, to_neo4j_map, versioned)
+from demisto_sdk.commands.content_graph.common import SERVER_CONTENT_ITEMS, ContentType, Neo4jResult
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (intersects, run_query, to_neo4j_map,
+                                                                               versioned)
 
 logger = logging.getLogger("demisto-sdk")
 

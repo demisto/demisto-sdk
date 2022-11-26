@@ -11,17 +11,14 @@ import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import (
-    BaseValidator, error_codes)
-from demisto_sdk.commands.common.tools import (
-    get_script_or_sub_playbook_tasks_from_playbook, get_yaml)
-from demisto_sdk.commands.common.update_id_set import (
-    get_classifier_data, get_incident_field_data, get_incident_type_data,
-    get_integration_data, get_layout_data, get_layouts_scripts_ids,
-    get_layoutscontainer_data, get_mapper_data, get_pack_metadata_data,
-    get_playbook_data, get_script_data)
-from demisto_sdk.commands.unify.integration_script_unifier import \
-    IntegrationScriptUnifier
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
+from demisto_sdk.commands.common.tools import get_script_or_sub_playbook_tasks_from_playbook, get_yaml
+from demisto_sdk.commands.common.update_id_set import (get_classifier_data, get_incident_field_data,
+                                                       get_incident_type_data, get_integration_data, get_layout_data,
+                                                       get_layouts_scripts_ids, get_layoutscontainer_data,
+                                                       get_mapper_data, get_pack_metadata_data, get_playbook_data,
+                                                       get_script_data)
+from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
 
 
 class IDSetValidations(BaseValidator):

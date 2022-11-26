@@ -5,10 +5,9 @@ from typing import Any, Dict, List, Optional, Union
 import decorator
 from requests import Response
 
-from demisto_sdk.commands.common.constants import (
-    BETA_INTEGRATION_DISCLAIMER, FILETYPE_TO_DEFAULT_FROMVERSION,
-    INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME, FileType,
-    MarketplaceVersions)
+from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER, FILETYPE_TO_DEFAULT_FROMVERSION,
+                                                   INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME,
+                                                   FileType, MarketplaceVersions)
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 
 FOUND_FILES_AND_ERRORS: list = []
@@ -315,6 +314,7 @@ ERROR_CODE = {
     "pack_metadata_version_diff_from_rn": {'code': "PA131", 'ui_applicable': False, 'related_field': ''},
     "pack_should_be_deprecated": {'code': "PA132", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_non_approved_tag_prefix": {'code': "PA133", 'ui_applicable': False, 'related_field': ''},
+    "categories_field_does_not_match_standard": {'code': "PA134", 'ui_applicable': False, 'related_field': ''},
 
     # PB - Playbooks
     "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
@@ -660,9 +660,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def wrong_category(category):
-        return "The category '{}' is not in the integration schemas, the valid options are:\n{}" \
-            .format(category, '\n'.join(INTEGRATION_CATEGORIES))
+    def wrong_category(category, approved_list):
+        return f"The category '{category}' is not in the integration schemas, the valid options are:\n{approved_list}"
 
     @staticmethod
     @error_code_decorator
@@ -2490,6 +2489,12 @@ class Errors:
                f'The description of the pack in the pack_metadata.json should be one of the following formats:\n' \
                f'1. "Deprecated. Use <PACK_NAME> instead."\n' \
                f'2. "Deprecated. <REASON> No available replacement."'
+
+    @staticmethod
+    @error_code_decorator
+    def categories_field_does_not_match_standard(approved_list):
+        return f"The pack metadata categories field doesn't match the standard,\n" \
+               f"please make sure the field contain only one category from the following options:\n{approved_list}"
 
     @staticmethod
     @error_code_decorator

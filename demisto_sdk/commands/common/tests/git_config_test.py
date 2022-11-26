@@ -5,9 +5,7 @@ import click
 import pytest
 from git import Repo
 
-from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
-                                                            GitCredentials,
-                                                            GitProvider)
+from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitCredentials, GitProvider
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 

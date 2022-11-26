@@ -10,8 +10,7 @@ import docker.errors
 import docker.models.containers
 
 from demisto_sdk.commands.common.constants import DEPENDENCIES_DOCKER
-from demisto_sdk.commands.common.docker_helper import (
-    Docker, init_global_docker_client)
+from demisto_sdk.commands.common.docker_helper import get_docker, init_global_docker_client
 from demisto_sdk.commands.common.errors import Errors
 
 EXPECTED_SUCCESS_MESSAGE = 'MDX server is listening on port'
@@ -47,12 +46,12 @@ def start_docker_MDX_server(handle_error: Optional[Callable] = None, file_path: 
 
     """
     logging.info('Starting docker mdx server')
-    Docker.pull_image(DEPENDENCIES_DOCKER)
+    get_docker().pull_image(DEPENDENCIES_DOCKER)
     if running_container := init_global_docker_client() \
             .containers.list(filters={'name': DEMISTO_DEPS_DOCKER_NAME}):
         running_container[0].stop()
     location_in_docker = f'/content/{_SERVER_SCRIPT_NAME}'
-    container: docker.models.containers.Container = Docker.create_container(
+    container: docker.models.containers.Container = get_docker().create_container(
         name=DEMISTO_DEPS_DOCKER_NAME,
         image=DEPENDENCIES_DOCKER,
         command=['node', location_in_docker],

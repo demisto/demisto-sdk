@@ -9,17 +9,13 @@ import PyPDF2
 from bs4 import BeautifulSoup
 
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (
-    PACKS_DIR, PACKS_INTEGRATION_README_REGEX, PACKS_WHITELIST_FILE_NAME,
-    FileType, re)
+from demisto_sdk.commands.common.constants import (PACKS_DIR, PACKS_INTEGRATION_README_REGEX, PACKS_WHITELIST_FILE_NAME,
+                                                   FileType, re)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
-                                               get_pack_name,
-                                               is_file_path_in_pack,
-                                               print_color, print_error,
-                                               print_warning, run_command)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_pack_name, is_file_path_in_pack, print_color,
+                                               print_error, print_warning, run_command)
 
 json = JSON_Handler()
 

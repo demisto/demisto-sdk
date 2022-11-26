@@ -8,7 +8,7 @@
 * Added support for **xdrctemplate** to content graph.
 * Fixed an issue where local copies of the newly-introduced `DemistoClassApiModule.py` were validated.
 * Fixed an issue where the **doc-review** command reviewed new files.
-* Added the `"Command XXX is deprecated. Use XXX instead."` release notes templates to **doc-review** command.
+* Added the `Command XXX is deprecated. Use XXX instead.` release notes templates to **doc-review** command.
 
 ## 1.7.8
 * Added the capability to run the MDX server in a docker container for environments without node.

@@ -144,19 +144,32 @@ class TestIntegrationValidator:
                             {"name": "command2", "outputs": [{"contextPath": "old_command2_path"}]}]
     MULTIPLE_CHANGES_NEW = [{"name": "command1", "outputs": [{"contextPath": "new_command1_path"}]},
                             {"name": "command2", "outputs": [{"contextPath": "new_command2_path"}]}]
-    MULTIPLE_COMMANDS_NO_OUTPUTS = [{"name": "command1", "outputs": [{"contextPath": "old_command1_path"}]},
-                                    {"name": "command2"}]
+    MULTIPLE_COMMANDS_NO_OUTPUTS_ONE = [{"name": "command1", "outputs": [{"contextPath": "old_command1_path"}]},
+                                        {"name": "command2"}]
+    MULTIPLE_COMMANDS_NO_OUTPUTS_ALL = [{"name": "command1"}, {"name": "command2"}]
     IS_CHANGED_CONTEXT_INPUTS = [
-        (IS_CONTEXT_CHANGED_OLD, IS_CONTEXT_CHANGED_OLD, True, []),
-        (IS_CONTEXT_CHANGED_NEW, IS_CONTEXT_CHANGED_OLD, False, ["test"]),
-        (IS_CONTEXT_CHANGED_NEW, IS_CONTEXT_CHANGED_ADDED_PATH, False, ["test"]),
-        (IS_CONTEXT_CHANGED_ADDED_PATH, IS_CONTEXT_CHANGED_NEW, True, []),
-        (IS_CONTEXT_CHANGED_ADDED_COMMAND, IS_CONTEXT_CHANGED_OLD, True, []),
-        (IS_CONTEXT_CHANGED_ADDED_COMMAND, IS_CONTEXT_CHANGED_NEW, False, ["test"]),
-        (IS_CONTEXT_CHANGED_NO_OUTPUTS, IS_CONTEXT_CHANGED_NO_OUTPUTS, True, []),
-        (IS_CONTEXT_CHANGED_NO_OUTPUTS, IS_CONTEXT_CHANGED_OLD, False, ["test"]),
-        (MULTIPLE_CHANGES_NEW, MULTIPLE_CHANGES_OLD, False, ["command1", "command2"]),
-        (MULTIPLE_CHANGES_NEW, MULTIPLE_CHANGES_OLD, False, ["command2"])
+        pytest.param(IS_CONTEXT_CHANGED_OLD, IS_CONTEXT_CHANGED_OLD, True, [],
+                     id="no change"),
+        pytest.param(IS_CONTEXT_CHANGED_NEW, IS_CONTEXT_CHANGED_OLD, False, ["test"],
+                     id="context path change"),
+        pytest.param(IS_CONTEXT_CHANGED_NEW, IS_CONTEXT_CHANGED_ADDED_PATH, False, ["test"],
+                     id="removed context path"),
+        pytest.param(IS_CONTEXT_CHANGED_ADDED_PATH, IS_CONTEXT_CHANGED_NEW, True, [],
+                     id="added context path"),
+        pytest.param(IS_CONTEXT_CHANGED_ADDED_COMMAND, IS_CONTEXT_CHANGED_OLD, True, [],
+                     id="added new command"),
+        pytest.param(IS_CONTEXT_CHANGED_ADDED_COMMAND, IS_CONTEXT_CHANGED_NEW, False, ["test"],
+                     id="added new command and changed context of old command"),
+        pytest.param(IS_CONTEXT_CHANGED_NO_OUTPUTS, IS_CONTEXT_CHANGED_NO_OUTPUTS, True, [],
+                     id="no change with no outputs"),
+        pytest.param(IS_CONTEXT_CHANGED_NO_OUTPUTS, IS_CONTEXT_CHANGED_OLD, False, ["test"],
+                     id="deleted command outputs"),
+        pytest.param(MULTIPLE_CHANGES_NEW, MULTIPLE_CHANGES_OLD, False, ["command1", "command2"],
+                     id="context changes in multiple commands"),
+        pytest.param(MULTIPLE_COMMANDS_NO_OUTPUTS_ONE, MULTIPLE_CHANGES_OLD, False, ["command2"],
+                     id="no changes in one command output and deleted outputs for other command"),
+        pytest.param(MULTIPLE_COMMANDS_NO_OUTPUTS_ALL, MULTIPLE_CHANGES_OLD, False, ["command1", "command2"],
+                     id="deleted outputs for two command")
     ]
 
     @pytest.mark.parametrize("current, old, answer, changed_command_names", IS_CHANGED_CONTEXT_INPUTS)

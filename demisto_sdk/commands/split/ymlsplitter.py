@@ -26,10 +26,10 @@ REGEX_MODULE = r"### GENERATED CODE ###((.|\s)+?)### END GENERATED CODE ###"
 INTEGRATIONS_DOCS_REFERENCE = 'https://xsoar.pan.dev/docs/reference/integrations/'
 
 
-def get_pip_requirements(docker_image: str):
-    return subprocess.check_output(["docker", "run", "--rm", docker_image,
-                                    "pip", "freeze", "--disable-pip-version-check"],
-                                   universal_newlines=True, stderr=subprocess.DEVNULL).strip()
+# def get_pip_requirements(docker_image: str):
+    # return subprocess.check_output(["docker", "run", "--rm", docker_image,
+    #                                 "pip", "freeze", "--disable-pip-version-check"],
+    #                                universal_newlines=True, stderr=subprocess.DEVNULL).strip()
 
 
 class YmlSplitter:
@@ -194,16 +194,17 @@ class YmlSplitter:
                         env = os.environ.copy()
                         env["PIPENV_IGNORE_VIRTUALENVS"] = "1"
                         try:
-                            subprocess.call(["pipenv", "install", "--dev"], cwd=output_path, env=env)
+                            # subprocess.call(["pipenv", "install", "--dev"], cwd=output_path, env=env)
                             self.print_logs("Installing all py requirements from docker: [{}] into pipenv".format(docker),
                                             LOG_COLORS.NATIVE)
-                            requirements = get_pip_requirements(docker)
+                            # requirements = get_pip_requirements(docker)
                             fp = tempfile.NamedTemporaryFile(delete=False)
-                            fp.write(requirements.encode('utf-8'))
+                            # fp.write(requirements.encode('utf-8'))
                             fp.close()
 
                             try:
-                                subprocess.check_call(["pipenv", "install", "-r", fp.name], cwd=output_path, env=env)
+                                pass
+                                # subprocess.check_call(["pipenv", "install", "-r", fp.name], cwd=output_path, env=env)
 
                             except Exception:
                                 self.print_logs("Failed installing requirements in pipenv.\n "
@@ -211,7 +212,7 @@ class YmlSplitter:
 
                             os.unlink(fp.name)
                             self.print_logs("Installing flake8 for linting", log_color=LOG_COLORS.NATIVE)
-                            subprocess.call(["pipenv", "install", "--dev", "flake8"], cwd=output_path, env=env)
+                            # subprocess.call(["pipenv", "install", "--dev", "flake8"], cwd=output_path, env=env)
                         except FileNotFoundError as err:
                             self.print_logs("pipenv install skipped! It doesn't seem you have pipenv installed.\n"
                                             "Make sure to install it with: pip3 install pipenv.\n"

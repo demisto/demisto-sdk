@@ -839,7 +839,7 @@ class BuildContext:
     def _load_conf_files(conf_path, secret_conf_path):
         with open(conf_path) as data_file:
             conf = Conf(json.load(data_file))
-
+            print(f'!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!conf: {conf}!!!!!!!!!!!!!!!!!!!!!!!!!!!')
         secret_conf = None
         if secret_conf_path:
             with open(secret_conf_path) as data_file:

@@ -7,6 +7,7 @@
 * Fixed an issue where **validate** did not check changed pack_metadata.json files when running using git.
 * Added support for **xdrctemplate** to content graph.
 * Fixed an issue where local copies of the newly-introduced `DemistoClassApiModule.py` were validated.
+* Fixed an issue where **validate** printed errors for only one change of context path instead of all.
 
 ## 1.7.8
 * Added the capability to run the MDX server in a docker container for environments without node.

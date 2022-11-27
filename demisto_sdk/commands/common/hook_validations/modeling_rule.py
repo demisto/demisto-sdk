@@ -23,13 +23,20 @@ class ModelingRuleValidator(ContentEntityValidator):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          json_file_path=json_file_path)
         self._is_valid = True
-        self.schema_content = self.get_schema_file_content()
+        self.schema_path = None
+        self.schema_content = None
+        self.xif_path = None
+        self.set_files_info()
 
-    def get_schema_file_content(self):
-        schema_file = get_files_in_dir(os.path.dirname(self.file_path), ['json'], False)
-        if schema_file:
-            with open(schema_file[0], 'r') as sf:
-                return json.load(sf)
+    def set_files_info(self):
+        files = get_files_in_dir(os.path.dirname(self.file_path), ['json', 'xif'], False)
+        for file in files:
+            if file.endswith('.json'):
+                self.schema_path = file
+                with open(file, 'r') as sf:
+                    self.schema_content = json.load(sf)
+            if file.endswith('.xif'):
+                self.xif_path = file
 
     def is_valid_file(self, validate_rn=True, is_new_file=False, use_git=False):
         """
@@ -43,7 +50,8 @@ class ModelingRuleValidator(ContentEntityValidator):
         self.is_valid_rule_names()
         self.is_schema_types_valid()
         self.is_dataset_name_similar()
-
+        self.is_files_naming_correct()
+        self.validate_xsiam_content_item_title(self.file_path)
         return self._is_valid
 
     def is_valid_version(self):
@@ -108,6 +116,16 @@ class ModelingRuleValidator(ContentEntityValidator):
         if self.handle_error(error_message, error_code, file_path=self.file_path):
             self._is_valid = False
             return False
+
+    # @error_codes("MR106")
+    def is_files_naming_correct(self):
+        """
+            Validates all types used in the schema file are valid, i.e. part of the list below.
+        """
+        invalid_files = []
+        is_valid = self.validate_xsiam_content_item_title(self.schema_path)
+        # if self.schema_path:
+        #     is_valid = is_valid and self.valida
 
     def are_keys_empty_in_yml(self):
         """

@@ -1519,6 +1519,7 @@ class ValidateManager:
             click.secho("No missing release notes found.\n", fg="bright_green")
             return True
 
+
     """ ######################################## Git Tools and filtering ####################################### """
 
     def setup_prev_ver(self, prev_ver: Optional[str]):

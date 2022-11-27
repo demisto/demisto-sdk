@@ -1,5 +1,6 @@
 import io
 import os
+from pathlib import Path
 from typing import Optional
 
 import click
@@ -16,7 +17,6 @@ json = JSON_Handler()
 
 
 def error_codes(error_codes_str: str):
-
     def error_codes_decorator(func):
 
         def wrapper(self, *args, **kwargs):
@@ -55,10 +55,10 @@ class BaseValidator:
 
     @staticmethod
     def should_ignore_error(
-        error_code,
-        ignored_errors_pack_ignore,
-        predefined_deprecated_ignored_errors,
-        predefined_by_support_ignored_errors
+            error_code,
+            ignored_errors_pack_ignore,
+            predefined_deprecated_ignored_errors,
+            predefined_by_support_ignored_errors
     ):
         """
         Determine if an error should be ignored or not. That includes all types of ignored errors,
@@ -86,10 +86,10 @@ class BaseValidator:
             return True
 
         return (
-            error_code in ignored_errors_pack_ignore or error_type in ignored_errors_pack_ignore
-        ) and (
-            error_code in ALLOWED_IGNORE_ERRORS
-        )
+                       error_code in ignored_errors_pack_ignore or error_type in ignored_errors_pack_ignore
+               ) and (
+                       error_code in ALLOWED_IGNORE_ERRORS
+               )
 
     @staticmethod
     def is_error_not_allowed_in_pack_ignore(error_code, ignored_errors_pack_ignore):
@@ -106,10 +106,10 @@ class BaseValidator:
         """
         error_type = error_code[:2]
         return (
-            error_code in ignored_errors_pack_ignore or error_type in ignored_errors_pack_ignore
-        ) and (
-            error_code not in ALLOWED_IGNORE_ERRORS
-        )
+                       error_code in ignored_errors_pack_ignore or error_type in ignored_errors_pack_ignore
+               ) and (
+                       error_code not in ALLOWED_IGNORE_ERRORS
+               )
 
     def should_run_validation(self, error_code: str):
         if not self.specific_validations:
@@ -169,17 +169,19 @@ class BaseValidator:
             rel_file_path = 'No-Name'
 
         ignored_errors_pack_ignore = self.ignored_errors.get(file_name) or self.ignored_errors.get(rel_file_path) or []
-        predefined_deprecated_ignored_errors = self.predefined_deprecated_ignored_errors.get(file_name) or self.predefined_deprecated_ignored_errors.get(rel_file_path) or []  # noqa: E501
-        predefined_by_support_ignored_errors = self.predefined_by_support_ignored_errors.get(file_path) or self.predefined_by_support_ignored_errors.get(rel_file_path) or []  # noqa: E501
+        predefined_deprecated_ignored_errors = self.predefined_deprecated_ignored_errors.get(
+            file_name) or self.predefined_deprecated_ignored_errors.get(rel_file_path) or []  # noqa: E501
+        predefined_by_support_ignored_errors = self.predefined_by_support_ignored_errors.get(
+            file_path) or self.predefined_by_support_ignored_errors.get(rel_file_path) or []  # noqa: E501
 
         is_error_not_allowed_in_pack_ignore = self.is_error_not_allowed_in_pack_ignore(
             error_code=error_code, ignored_errors_pack_ignore=ignored_errors_pack_ignore
         )
 
         if self.should_ignore_error(
-            error_code, ignored_errors_pack_ignore,
-            predefined_deprecated_ignored_errors,
-            predefined_by_support_ignored_errors
+                error_code, ignored_errors_pack_ignore,
+                predefined_deprecated_ignored_errors,
+                predefined_by_support_ignored_errors
         ) or warning:
             if self.print_as_warnings or warning:
                 click.secho(formatted_error_str('WARNING'), fg="yellow")
@@ -325,3 +327,23 @@ class BaseValidator:
         json_contents.append(formatted_error_output)
         with open(self.json_file_path, 'w') as f:
             json.dump(json_contents, f, indent=4)
+
+    @staticmethod
+    def validate_xsiam_content_item_title(file_path):
+        file_path_object = Path(file_path)
+        file_type = find_type(file_path)
+        file_name = str(file_path_object.stem)
+        dir_name = str(file_path_object.parent.stem)
+        if file_type in [FileType.XDRC_TEMPLATE, FileType.XDRC_TEMPLATE_YML, FileType.MODELING_RULE,
+                         FileType.PARSING_RULE]:
+            if file_name != dir_name:
+                return False
+        elif file_type in [FileType.CORRELATION_RULE, FileType.XSIAM_DASHBOARD, FileType.XSIAM_REPORT,
+                           FileType.XSIAM_REPORT_IMAGE, FileType.XSIAM_DASHBOARD_IMAGE]:
+            if not file_name.startswith(dir_name):
+                return False
+        elif file_type == FileType.MODELING_RULE_SCHEMA:
+            schema_expected_name = f'{dir_name}_schema'
+            if file_name != schema_expected_name:
+                return False
+        return True

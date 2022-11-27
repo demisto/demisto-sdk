@@ -9,7 +9,6 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
 
-
 class CorrelationRuleValidator(ContentEntityValidator):
     """
     CorrelationRuleValidator is designed to validate the correctness of the file structure we enter to content repo.
@@ -24,6 +23,7 @@ class CorrelationRuleValidator(ContentEntityValidator):
         logging.debug('Automatically considering XSIAM content item as valid, see issue #48151')
 
         self.is_hyphen_exists()
+        self.validate_xsiam_content_item_title(self.file_path)
         return self.is_valid
 
     def is_valid_version(self):

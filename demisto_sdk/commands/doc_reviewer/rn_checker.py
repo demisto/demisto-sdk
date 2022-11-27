@@ -63,6 +63,11 @@ class ReleaseNotesChecker:
         'Note: ',
         'Started adoption process.',
         'Completed adoption process.',
+        'Improved layout',
+        'Created a new layout',
+        'Playbook now supports',
+        'Created a new playbook',
+        'Updated the'
     }
 
     RN_FULL_LINE_TEMPLATES = {

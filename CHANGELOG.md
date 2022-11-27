@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where an error message in **validate** would not include the suggested fix.
 * Added a validation that enforces predefined categories on MP Packs & integration yml files, the validation also ensures that each pack has only one category.
 * Fixed an issue where **update-release-notes** did not generate release notes for **XDRC Templates**.
 * Fixed an issue where **upload** failed without explaining the reason.
@@ -7,6 +8,7 @@
 * Fixed an issue where **validate** did not check changed pack_metadata.json files when running using git.
 * Added support for **xdrctemplate** to content graph.
 * Fixed an issue where local copies of the newly-introduced `DemistoClassApiModule.py` were validated.
+* Added new release notes templates for the addition and modification of playbooks, layouts and types in the **doc-review** command.
 * Fixed an issue where **validate** printed errors for only one change of context path instead of all.
 
 ## 1.7.8

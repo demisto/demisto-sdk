@@ -7,6 +7,7 @@
 * Fixed an issue where **validate** did not check changed pack_metadata.json files when running using git.
 * Added support for **xdrctemplate** to content graph.
 * Fixed an issue where local copies of the newly-introduced `DemistoClassApiModule.py` were validated.
+* Added new release notes templates for the addition and modification of playbooks, layouts and types in the **doc-review** command.
 * Fixed an issue where the **doc-review** command reviewed new files.
 * Added the `Command XXX is deprecated. Use XXX instead.` release notes templates to **doc-review** command.
 

@@ -22,6 +22,11 @@ from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
     (['Maintenance and stability enhancements.'], False),
     (['Stability and maintenance enhancements.'], False),
     (['Blah.'], False),
+    (['Improved layout for ASN type.'], True),
+    (['Created a new layout for MITRE Att&ck.'], True),
+    (['Playbook now supports IPs as well as Emails.'], True),
+    (['Created a new playbook for CVE-XXXX-XXXX.'], True),
+    (['Updated the IP type regex.'], True),
     (['##### New: script',
       '***command-one***',
       '***command-two***'], True),
@@ -29,7 +34,7 @@ from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
       '***command-one***',
       '##### script',
       '***command-one***'], True),
-    ])
+])
 def test_release_notes_templates(file_content, expected_result):
     """
     Given

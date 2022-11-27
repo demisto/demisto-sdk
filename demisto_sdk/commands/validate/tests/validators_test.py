@@ -185,6 +185,23 @@ class TestValidators:
         finally:
             os.remove(PLAYBOOK_TARGET)
 
+    INPUTS_is_condition_branches_handled = [
+        (INVALID_PLAYBOOK_CONDITION_1, False),
+        (INVALID_PLAYBOOK_CONDITION_2, True),
+        (VALID_PLAYBOOK_CONDITION, True)
+    ]
+
+    @pytest.mark.parametrize('source, answer', INPUTS_is_condition_branches_handled)
+    def test_are_default_conditions_valid(self, source, answer):
+        # type: (str, str) -> None
+        try:
+            copyfile(source, PLAYBOOK_TARGET)
+            structure = StructureValidator(source)
+            validator = PlaybookValidator(structure)
+            assert validator.are_default_conditions_valid() is answer
+        finally:
+            os.remove(PLAYBOOK_TARGET)
+
     INPUTS_LOCKED_PATHS = [
         (VALID_REPUTATION_PATH, True, ReputationValidator),
         (INVALID_REPUTATION_PATH, False, ReputationValidator),

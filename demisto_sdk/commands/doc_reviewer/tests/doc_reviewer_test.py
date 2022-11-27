@@ -83,7 +83,7 @@ class TestDocReviewFilesAreFound:
 
         mocker.patch.object(
             DocReviewer,
-            'gather_files_for_doc_review',
+            'gather_all_changed_files',
             return_value=changed_files_mock
         )
         doc_review = DocReviewer(use_git=True)
@@ -182,7 +182,7 @@ class TestDocReviewOnReleaseNotesOnly:
         """
         mocker.patch.object(
             DocReviewer,
-            'gather_files_for_doc_review',
+            'gather_all_changed_files',
             return_value=[
                 malformed_integration_yml.path,
                 malformed_incident_field.path

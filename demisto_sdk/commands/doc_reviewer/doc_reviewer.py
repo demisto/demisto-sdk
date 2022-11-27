@@ -141,17 +141,16 @@ class DocReviewer:
                 ) in self.SUPPORTED_FILE_TYPES:
                     self.files.append(str(full_path))
 
-    def gather_files_for_doc_review(self):
-        # Ignoring added files since they do not require doc-review.
+    def gather_all_changed_files(self):
         modified = self.git_util.modified_files(prev_ver=self.prev_ver)  # type: ignore[union-attr]
-        renamed = self.git_util.renamed_files(prev_ver=self.prev_ver,  # type: ignore[union-attr]
-                                              get_only_current_file_names=True)
+        added = self.git_util.added_files(prev_ver=self.prev_ver)  # type: ignore[union-attr]
+        renamed = self.git_util.renamed_files(prev_ver=self.prev_ver, get_only_current_file_names=True)  # type: ignore[union-attr]
 
-        return modified.union(renamed)  # type: ignore[arg-type]
+        return modified.union(added).union(renamed)  # type: ignore[arg-type]
 
     def get_files_from_git(self):
         click.secho('Gathering all changed files from git', fg='bright_cyan')
-        for file in self.gather_files_for_doc_review():
+        for file in self.gather_all_changed_files():
             file = str(file)
             if os.path.isfile(file) and find_type(
                     file, ignore_invalid_schema_file=self.ignore_invalid_schema_file

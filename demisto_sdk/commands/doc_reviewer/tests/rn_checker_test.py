@@ -21,7 +21,15 @@ from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
     (['Documentation and metadata improvements.'], True),
     (['Maintenance and stability enhancements.'], False),
     (['Stability and maintenance enhancements.'], False),
-    (['Blah.'], False)])
+    (['Blah.'], False),
+    (['##### New: script',
+      '***command-one***',
+      '***command-two***'], True),
+    (['##### New: script',
+      '***command-one***',
+      '##### script',
+      '***command-one***'], True),
+    ])
 def test_release_notes_templates(file_content, expected_result):
     """
     Given

@@ -88,10 +88,10 @@ class IDSetCreator:
         if not self.output:
             if self.marketplace == MarketplaceVersions.MarketplaceV2:
                 self.output = MP_V2_ID_SET_PATH
-                if self.marketplace == MarketplaceVersions.XPANSE:
-                    self.output = XPANSE_ID_SET_PATH
-                else:
-                    self.output = DEFAULT_ID_SET_PATH
+            if self.marketplace == MarketplaceVersions.XPANSE:
+                self.output = XPANSE_ID_SET_PATH
+            else:
+                self.output = DEFAULT_ID_SET_PATH
         if self.output:
             if not exists(self.output):
                 intermediate_dirs = os.path.dirname(os.path.abspath(self.output))

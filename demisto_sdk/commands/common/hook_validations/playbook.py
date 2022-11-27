@@ -360,11 +360,15 @@ class PlaybookValidator(ContentEntityValidator):
         # Rename the keys in dictionary to upper case
         next_tasks_upper = {k.upper(): v for k, v in next_tasks.items()}
         default_upper = '#default#'.upper()
+        found_non_default_next_task = False
         for current_next_task_upper in next_tasks_upper:
             if default_upper != current_next_task_upper:
-                error_message, error_code = Errors.playbook_only_default_next(task.get('id'))
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    self.is_valid = is_default_not_only_condition_res = False
+                found_non_default_next_task = True
+
+        if not found_non_default_next_task:
+            error_message, error_code = Errors.playbook_only_default_next(task.get('id'))
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = is_default_not_only_condition_res = False
 
         return is_default_not_only_condition_res
 

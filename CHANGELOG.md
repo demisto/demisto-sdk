@@ -8,7 +8,7 @@
 * Added support for **xdrctemplate** to content graph.
 * Fixed an issue where local copies of the newly-introduced `DemistoClassApiModule.py` were validated.
 * Added new release notes templates for the addition and modification of playbooks, layouts and types in the **doc-review** command.
-* Fixed an issue where the **doc-review** command reviewed new files.
+* Fixed an issue where the **doc-review** command failed on descriptions of new content items.
 * Added the `Command XXX is deprecated. Use XXX instead.` release notes templates to **doc-review** command.
 
 ## 1.7.8

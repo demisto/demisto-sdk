@@ -1346,7 +1346,7 @@ class Errors:
             message_to_return += f"- {un_matching_file.get('name')}: Release notes file has dockerimage: " \
                                  f"{un_matching_file.get('rn_version')} but the YML file has dockerimage: " \
                                  f"{un_matching_file.get('yml_version')}\n"
-        message_to_return += "To fix this please run: 'demisto-sdk update-release-notes -i {pack_path}'"
+        message_to_return += f"To fix this please run: 'demisto-sdk update-release-notes -i {pack_path}'"
         return message_to_return
 
     @staticmethod

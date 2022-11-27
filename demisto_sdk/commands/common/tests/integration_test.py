@@ -1,4 +1,6 @@
+import io
 import os
+from contextlib import redirect_stdout
 from copy import deepcopy
 from typing import Any, Dict, List, Optional
 
@@ -138,24 +140,37 @@ class TestIntegrationValidator:
     IS_CONTEXT_CHANGED_ADDED_COMMAND = [{"name": "test", "outputs": [{"contextPath": "test"}]},
                                         {"name": "test2", "outputs": [{"contextPath": "new command"}]}]
     IS_CONTEXT_CHANGED_NO_OUTPUTS = [{"name": "test"}]
+    MULTIPLE_CHANGES_OLD = [{"name": "command1", "outputs": [{"contextPath": "old_command1_path"}]},
+                            {"name": "command2", "outputs": [{"contextPath": "old_command2_path"}]}]
+    MULTIPLE_CHANGES_NEW = [{"name": "command1", "outputs": [{"contextPath": "new_command1_path"}]},
+                            {"name": "command2", "outputs": [{"contextPath": "new_command2_path"}]}]
+    MULTIPLE_COMMANDS_NO_OUTPUTS = [{"name": "command1", "outputs": [{"contextPath": "old_command1_path"}]},
+                                    {"name": "command2"}]
     IS_CHANGED_CONTEXT_INPUTS = [
-        (IS_CONTEXT_CHANGED_OLD, IS_CONTEXT_CHANGED_OLD, True),
-        (IS_CONTEXT_CHANGED_NEW, IS_CONTEXT_CHANGED_OLD, False),
-        (IS_CONTEXT_CHANGED_NEW, IS_CONTEXT_CHANGED_ADDED_PATH, False),
-        (IS_CONTEXT_CHANGED_ADDED_PATH, IS_CONTEXT_CHANGED_NEW, True),
-        (IS_CONTEXT_CHANGED_ADDED_COMMAND, IS_CONTEXT_CHANGED_OLD, True),
-        (IS_CONTEXT_CHANGED_ADDED_COMMAND, IS_CONTEXT_CHANGED_NEW, False),
-        (IS_CONTEXT_CHANGED_NO_OUTPUTS, IS_CONTEXT_CHANGED_NO_OUTPUTS, True),
-        (IS_CONTEXT_CHANGED_NO_OUTPUTS, IS_CONTEXT_CHANGED_OLD, False),
+        (IS_CONTEXT_CHANGED_OLD, IS_CONTEXT_CHANGED_OLD, True, []),
+        (IS_CONTEXT_CHANGED_NEW, IS_CONTEXT_CHANGED_OLD, False, ["test"]),
+        (IS_CONTEXT_CHANGED_NEW, IS_CONTEXT_CHANGED_ADDED_PATH, False, ["test"]),
+        (IS_CONTEXT_CHANGED_ADDED_PATH, IS_CONTEXT_CHANGED_NEW, True, []),
+        (IS_CONTEXT_CHANGED_ADDED_COMMAND, IS_CONTEXT_CHANGED_OLD, True, []),
+        (IS_CONTEXT_CHANGED_ADDED_COMMAND, IS_CONTEXT_CHANGED_NEW, False, ["test"]),
+        (IS_CONTEXT_CHANGED_NO_OUTPUTS, IS_CONTEXT_CHANGED_NO_OUTPUTS, True, []),
+        (IS_CONTEXT_CHANGED_NO_OUTPUTS, IS_CONTEXT_CHANGED_OLD, False, ["test"]),
+        (MULTIPLE_CHANGES_NEW, MULTIPLE_CHANGES_OLD, False, ["command1", "command2"]),
+        (MULTIPLE_CHANGES_NEW, MULTIPLE_CHANGES_OLD, False, ["command2"])
     ]
 
-    @pytest.mark.parametrize("current, old, answer", IS_CHANGED_CONTEXT_INPUTS)
-    def test_no_change_to_context_path(self, current, old, answer):
+    @pytest.mark.parametrize("current, old, answer, changed_command_names", IS_CHANGED_CONTEXT_INPUTS)
+    def test_no_change_to_context_path(self, current, old, answer, changed_command_names):
         current = {'script': {'commands': current}}
         old = {'script': {'commands': old}}
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
-        assert validator.no_change_to_context_path() is answer
+        stdout_print = io.StringIO()
+        with redirect_stdout(stdout_print):
+            assert validator.no_change_to_context_path() is answer
+        printed_errors = stdout_print.getvalue()
+        for changed_command_name in changed_command_names:
+            assert changed_command_name in printed_errors
         structure.quiet_bc = True
         assert validator.no_change_to_context_path() is True  # if quiet_bc is true should always succeed
 

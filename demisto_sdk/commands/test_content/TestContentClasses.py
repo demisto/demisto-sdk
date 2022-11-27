@@ -31,6 +31,7 @@ from demisto_sdk.commands.test_content.Docker import Docker
 from demisto_sdk.commands.test_content.IntegrationsLock import acquire_test_lock
 from demisto_sdk.commands.test_content.mock_server import RESULT, MITMProxy, run_with_mock
 from demisto_sdk.commands.test_content.ParallelLoggingManager import ParallelLoggingManager
+from demisto_sdk.commands.test_content.tests.GoogleSecretManagerModule import GoogleSecreteManagerModule
 from demisto_sdk.commands.test_content.tools import get_ui_url, is_redhat_instance, update_server_configuration
 
 json = JSON_Handler()
@@ -83,12 +84,35 @@ class SecretConf:
         Args:
             secret_conf: The contents of the content-test-conf conf.json file.
         """
-        self.server_username = secret_conf['username']
-        self.server_password = secret_conf['userPassword']
+        print('***************************')
+        print(f'DEMISTO_USERNAME: {os.environ["DEMISTO_USERNAME"][0:3]}')
+        print(f'DEMISTO_PASSWORD: {os.environ["DEMISTO_PASSWORD"][0:3]}')
+        print('***************************')
+        self.server_username = os.environ['DEMISTO_USERNAME']
+        self.server_password = os.environ['DEMISTO_PASSWORD']
         self.integrations = [
             IntegrationConfiguration(integration_configuration=configuration) for configuration in
             secret_conf['integrations']
         ]
+        print(f'integrations: {self.integrations[0:200]}')
+        self.secret_conf = GoogleSecreteManagerModule(self.get_secret_service_account_config())
+        self.project_id = os.environ['GSM_PROJECT_ID']
+        secrets = secret_conf.list_secrets(self.project_id, with_secret=True)
+        print(f'secrets: {secrets[0:200]}')
+        secrets = [IntegrationConfiguration(integration_configuration=configuration) for configuration in
+                   secrets]
+
+        print(f'secrets_from_GSM: {secrets[0:200]}')
+
+    @staticmethod
+    def get_secret_service_account_config() -> str:
+        print('##################################')
+        print('##################################')
+        print('##################################')
+        print(os.environ['GSM_SERVICE_ACCOUNT'][0:5])
+        with open(os.environ['GSM_SERVICE_ACCOUNT']) as f:
+            creds = json.load(f)
+            return json.dumps(creds)
 
 
 class TestConfiguration:
@@ -210,7 +234,8 @@ class TestPlaybook:
             if self.configuration.playbook_id in self.build_context.conf.skipped_tests:
                 if self.configuration.playbook_id in self.build_context.filtered_tests:
                     # Add warning log, as the playbook is supposed to run according to the filters, but it's skipped
-                    self.build_context.logging_module.warning(f'Skipping test {self} because it\'s in skipped test list')
+                    self.build_context.logging_module.warning(
+                        f'Skipping test {self} because it\'s in skipped test list')
                 else:
                     self.build_context.logging_module.debug(f'Skipping test {self} because it\'s in skipped test list')
                 reason = self.build_context.conf.skipped_tests[self.configuration.playbook_id]
@@ -233,7 +258,8 @@ class TestPlaybook:
             for integration in self.configuration.test_integrations:
                 # So now we know that the test is in the filtered tests
                 if integration in self.build_context.conf.skipped_integrations:
-                    self.build_context.logging_module.debug(f'Skipping {self} because it has a skipped integration {integration}')
+                    self.build_context.logging_module.debug(
+                        f'Skipping {self} because it has a skipped integration {integration}')
                     # The playbook should be run but has a skipped integration
                     if self.build_context.filtered_tests and self.configuration.playbook_id in self.build_context.filtered_tests:
                         # Adding the playbook ID to playbook_skipped_integration so that we can send a PR comment about it
@@ -242,16 +268,17 @@ class TestPlaybook:
                             f'{self.configuration.playbook_id} - reason: {skip_reason}')
                         self.build_context.logging_module.warning(
                             f'The integration {integration} is skipped and critical for the test {self}.')
-                        skipped_tests_collected[self.configuration.playbook_id] = f'The integration {integration} is skipped'
+                        skipped_tests_collected[
+                            self.configuration.playbook_id] = f'The integration {integration} is skipped'
                     return True
 
             return False
 
         return in_filtered_tests() and \
-            not nightly_test_in_non_nightly_build() and \
-            not skipped_test() and \
-            not version_mismatch() and \
-            not test_has_skipped_integration()
+               not nightly_test_in_non_nightly_build() and \
+               not skipped_test() and \
+               not version_mismatch() and \
+               not test_has_skipped_integration()
 
     def run_test_module_on_integrations(self, client: DefaultApi) -> bool:
         """

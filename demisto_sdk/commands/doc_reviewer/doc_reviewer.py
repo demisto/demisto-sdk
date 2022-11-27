@@ -143,8 +143,8 @@ class DocReviewer:
 
     def gather_modified_and_renamed_files(self):
         modified = self.git_util.modified_files(prev_ver=self.prev_ver)  # type: ignore[union-attr]
-        renamed = self.git_util.renamed_files(prev_ver=self.prev_ver,
-                                              get_only_current_file_names=True)  # type: ignore[union-attr]
+        renamed = self.git_util.renamed_files(prev_ver=self.prev_ver,  # type: ignore[union-attr]
+                                              get_only_current_file_names=True)
 
         return modified.union(renamed)  # type: ignore[arg-type]
 

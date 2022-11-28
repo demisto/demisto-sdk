@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from time import sleep
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 import typer
@@ -12,23 +12,14 @@ from rich.syntax import Syntax
 from rich.table import Table
 from rich.theme import Theme
 
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
-    JSONContentObject
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
-    YAMLContentObject
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_unify_content_object import \
-    YAMLContentUnifiedObject
 from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (ModelingRule,
                                                                                                   SingleModelingRule)
-from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.logger import set_console_stream_handler, setup_rich_logging
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
 from demisto_sdk.commands.test_content.xsiam_tools import xsiam_interface
 from demisto_sdk.commands.test_content.xsiam_tools.xsiam_interface import XsiamApiClient, XsiamApiClientConfig
 from demisto_sdk.commands.upload.upload import upload_content_entity as upload_cmd
-
-logger = logging.getLogger('demisto-sdk')
-
+from demisto_sdk.utils.utils import get_containing_pack
 
 custom_theme = Theme({
     "info": "cyan",
@@ -43,9 +34,7 @@ console = Console(theme=custom_theme)
 
 
 app = typer.Typer()
-
-
-ContentEntity = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject]
+logger = logging.getLogger('demisto-sdk')
 
 
 def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:
@@ -234,21 +223,6 @@ def push_test_data_to_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, tes
         )
         raise typer.Exit(1)
     logger.info('[green]Test data pushed successfully[/green]', extra={'markup': True})
-
-
-def get_containing_pack(content_entity: ContentEntity) -> Pack:
-    """Get pack object that contains the content entity.
-
-    Args:
-        content_entity: Content entity object.
-
-    Returns:
-        Pack: Pack object that contains the content entity.
-    """
-    pack_path = content_entity.path
-    while pack_path.parent.name.casefold() != 'packs':
-        pack_path = pack_path.parent
-    return Pack(pack_path)
 
 
 def verify_pack_exists_on_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, interactive: bool):

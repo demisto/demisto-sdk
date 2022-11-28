@@ -172,6 +172,8 @@ def validate_expected_values(xsiam_client: XsiamApiClient, mr: ModelingRule, tes
             verify_results(results, test_data)
     if success:
         logger.info('[green]Mappings validated successfully[/green]', extra={'markup': True})
+    else:
+        raise typer.Exit(1)
 
 
 def check_dataset_exists(xsiam_client: XsiamApiClient, test_data: init_test_data.TestData, timeout: int = 60, interval: int = 5):
@@ -421,7 +423,7 @@ def validate_modeling_rule(
                 printr(execd_cmd)
                 raise typer.Exit(1)
             push_test_data_to_tenant(xsiam_client, mr_entity, test_data)
-            check_dataset_exists(xsiam_client, test_data, timeout=60, interval=5)
+            check_dataset_exists(xsiam_client, test_data)
         else:
             logger.info(
                 '[cyan]The command flag "--no-push" was passed - skipping pushing of test data[/cyan]',

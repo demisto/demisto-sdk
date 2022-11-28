@@ -63,10 +63,10 @@ from demisto_sdk.commands.common.hook_validations.test_playbook import TestPlayb
 from demisto_sdk.commands.common.hook_validations.triggers import TriggersValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.hook_validations.wizard import WizardValidator
+from demisto_sdk.commands.common.hook_validations.xdrc_templates import XDRCTemplatesValidator
 from demisto_sdk.commands.common.hook_validations.xsiam_dashboard import XSIAMDashboardValidator
 from demisto_sdk.commands.common.hook_validations.xsiam_report import XSIAMReportValidator
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import XSOARConfigJsonValidator
-from demisto_sdk.commands.common.hook_validations.xdrc_templates import XDRCTemplatesValidator
 from demisto_sdk.commands.common.tools import (_get_file_id, find_type, get_api_module_ids,
                                                get_api_module_integrations_set, get_content_path, get_file,
                                                get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
@@ -1176,8 +1176,8 @@ class ValidateManager:
 
     def validate_xdrc_templates(self, structure_validator, pack_error_ignore_list):
         xdrc_templates_validator = XDRCTemplatesValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                                            print_as_warnings=self.print_ignored_errors,
-                                                            json_file_path=self.json_file_path)
+                                                          print_as_warnings=self.print_ignored_errors,
+                                                          json_file_path=self.json_file_path)
         return xdrc_templates_validator.is_valid_file(validate_rn=False)
 
     def validate_parsing_rule(self, structure_validator, pack_error_ignore_list):
@@ -1531,7 +1531,6 @@ class ValidateManager:
         else:
             click.secho("No missing release notes found.\n", fg="bright_green")
             return True
-
 
     """ ######################################## Git Tools and filtering ####################################### """
 

@@ -86,10 +86,10 @@ class BaseValidator:
             return True
 
         return (
-                       error_code in ignored_errors_pack_ignore or error_type in ignored_errors_pack_ignore
-               ) and (
-                       error_code in ALLOWED_IGNORE_ERRORS
-               )
+            error_code in ignored_errors_pack_ignore or error_type in ignored_errors_pack_ignore
+        ) and (
+            error_code in ALLOWED_IGNORE_ERRORS
+        )
 
     @staticmethod
     def is_error_not_allowed_in_pack_ignore(error_code, ignored_errors_pack_ignore):
@@ -106,10 +106,10 @@ class BaseValidator:
         """
         error_type = error_code[:2]
         return (
-                       error_code in ignored_errors_pack_ignore or error_type in ignored_errors_pack_ignore
-               ) and (
-                       error_code not in ALLOWED_IGNORE_ERRORS
-               )
+            error_code in ignored_errors_pack_ignore or error_type in ignored_errors_pack_ignore
+        ) and (
+            error_code not in ALLOWED_IGNORE_ERRORS
+        )
 
     def should_run_validation(self, error_code: str):
         if not self.specific_validations:

@@ -2529,7 +2529,6 @@ class Errors:
     def files_naming_wrong(invalid_files: list):
         return f"Some of the files naming in the directory not following conventions. Invalid files are: {','.join(invalid_files)}"
 
-
     @staticmethod
     @error_code_decorator
     def modeling_rule_schema_xif_dataset_mismatch():

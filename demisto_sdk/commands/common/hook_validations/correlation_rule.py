@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
 
+
 class CorrelationRuleValidator(ContentEntityValidator):
     """
     CorrelationRuleValidator is designed to validate the correctness of the file structure we enter to content repo.

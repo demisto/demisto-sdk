@@ -567,15 +567,23 @@ def test_modeling_rule(
     xsiam_logger.propagate = False
 
     logger.info(f'[cyan]modeling rules directories to test: {input}[/cyan]', extra={'markup': True})
+    errors = False
     for mrule_dir in input:
-        validate_modeling_rule(
-            mrule_dir,
-            # can ignore the types since if they are not set to str values an error occurs
-            xsiam_url, api_key,  # type: ignore[arg-type]
-            auth_id, xsiam_token,  # type: ignore[arg-type]
-            collector_token,  # type: ignore[arg-type]
-            push, interactive, ctx
-        )
+        try:
+            validate_modeling_rule(
+                mrule_dir,
+                # can ignore the types since if they are not set to str values an error occurs
+                xsiam_url, api_key,  # type: ignore[arg-type]
+                auth_id, xsiam_token,  # type: ignore[arg-type]
+                collector_token,  # type: ignore[arg-type]
+                push, interactive, ctx
+            )
+        except typer.Exit as e:
+            if e.exit_code != 0:
+                errors = True
+                logger.error(f'[red]Error testing modeling rule {mrule_dir}[/red]', extra={'markup': True})
+    if errors:
+        raise typer.Exit(1)
 
 
 if __name__ == '__main__':

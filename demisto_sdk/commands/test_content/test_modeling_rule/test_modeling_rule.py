@@ -269,9 +269,10 @@ def verify_pack_exists_on_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule,
         logger.debug(f'[cyan]Found pack on tenant:\n{found_pack}[/cyan]', extra={'markup': True})
     else:
         logger.error(f'[red]Pack {containing_pack_id} was not found on tenant[/red]', extra={'markup': True})
-        # TODO: add option to interactively install pack
+
         upload_result = 0
         if interactive:
+            # interactively install pack
             upload = typer.confirm(f'Would you like to upload {containing_pack_id} to the tenant?')
             if upload:
                 logger.info(f'[cyan underline]Upload "{containing_pack_id}"[/cyan underline]', extra={'markup': True})

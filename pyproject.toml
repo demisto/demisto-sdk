@@ -122,6 +122,10 @@ ipykernel = "^6.16.1"
 [tool.poetry.extras]
 build = ["gsutil"]
 
+[tool.poetry.group.ci.dependencies]
+google-cloud-secret-manager = "^2.12.6"
+json5 = "^0.9.10"
+
 [tool.mypy]
 check_untyped_defs = true
 ignore_missing_imports = true

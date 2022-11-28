@@ -663,6 +663,7 @@ class PackUniqueFilesValidator(BaseValidator):
         return True
 
     def get_master_private_repo_meta_file(self, metadata_file_path: str):
+        relative_file_path = os.path.relpath(metadata_file_path, GitUtil().git_path())
         current_repo = Repo(Path.cwd(), search_parent_directories=True)
 
         # if running on master branch in private repo - do not run the test
@@ -671,7 +672,7 @@ class PackUniqueFilesValidator(BaseValidator):
                 click.secho("Running on master branch - skipping price change validation", fg="yellow")
             return None
         try:
-            old_meta_file_content = current_repo.git.show(f'{self.main_branch}:{metadata_file_path}')
+            old_meta_file_content = current_repo.git.show(f'{self.main_branch}:{relative_file_path}')
 
         except GitCommandError as e:
             if not self.suppress_print:

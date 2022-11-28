@@ -176,7 +176,8 @@ def validate_expected_values(xsiam_client: XsiamApiClient, mr: ModelingRule, tes
         raise typer.Exit(1)
 
 
-def check_dataset_exists(xsiam_client: XsiamApiClient, test_data: init_test_data.TestData, timeout: int = 60, interval: int = 5):
+def check_dataset_exists(xsiam_client: XsiamApiClient, test_data: init_test_data.TestData,
+                         timeout: int = 60, interval: int = 5):
     """Check if the dataset in the test data file exists in the tenant.
 
     Args:

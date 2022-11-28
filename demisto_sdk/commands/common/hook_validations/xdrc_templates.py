@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import error_co
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
 
 
-class XSIAMDashboardValidator(ContentEntityValidator):
+class XDRCTemplatesValidator(ContentEntityValidator):
     """
     XSIAMDashboardValidator is designed to validate the correctness of the file structure we enter to content repo.
     """

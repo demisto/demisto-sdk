@@ -166,6 +166,8 @@ class Pack:
 
         self._xdrc_templates_path = self._pack_path / XDRC_TEMPLATE_DIR
         self._xdrc_templates_path.mkdir()
+        self._xdrc_templates_path = self._xdrc_templates_path / self.name
+        self._xdrc_templates_path.mkdir()
 
         self.secrets = Secrets(self._pack_path)
 
@@ -562,11 +564,11 @@ class Pack:
         return contributors
 
     def create_parsing_rule(
-        self,
-        name: Optional[str] = None,
-        yml: Optional[dict] = None,
-        rules: Optional[str] = None,
-        samples: Optional[list] = None,
+            self,
+            name: Optional[str] = None,
+            yml: Optional[dict] = None,
+            rules: Optional[str] = None,
+            samples: Optional[list] = None,
     ) -> Rule:
         if not name:
             name = f'parsingrule_{len(self.parsing_rules)}'
@@ -596,11 +598,11 @@ class Pack:
         return rule
 
     def create_modeling_rule(
-        self,
-        name: Optional[str] = None,
-        yml: Optional[dict] = None,
-        rules: Optional[str] = None,
-        schema: Optional[dict] = None,
+            self,
+            name: Optional[str] = None,
+            yml: Optional[dict] = None,
+            rules: Optional[str] = None,
+            schema: Optional[dict] = None,
     ) -> Rule:
         if not name:
             name = f'modelingrule_{len(self.modeling_rules)}'

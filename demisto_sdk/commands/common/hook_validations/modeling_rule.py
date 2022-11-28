@@ -51,7 +51,6 @@ class ModelingRuleValidator(ContentEntityValidator):
         self.is_schema_types_valid()
         self.is_dataset_name_similar()
         self.is_files_naming_correct()
-        self.validate_xsiam_content_item_title(self.file_path)
         return self._is_valid
 
     def is_valid_version(self):
@@ -117,15 +116,26 @@ class ModelingRuleValidator(ContentEntityValidator):
             self._is_valid = False
             return False
 
-    # @error_codes("MR106")
+    @error_codes("BA120")
     def is_files_naming_correct(self):
         """
-            Validates all types used in the schema file are valid, i.e. part of the list below.
+        Validates all file naming is as convention.
         """
         invalid_files = []
-        is_valid = self.validate_xsiam_content_item_title(self.schema_path)
-        # if self.schema_path:
-        #     is_valid = is_valid and self.valida
+        if not self.validate_xsiam_content_item_title(self.file_path):
+            invalid_files.append(self.file_path)
+        if self.schema_path:
+            if not self.validate_xsiam_content_item_title(self.schema_path):
+                invalid_files.append(self.schema_path)
+        if self.xif_path:
+            if not self.validate_xsiam_content_item_title(self.xif_path):
+                invalid_files.append(self.xif_path)
+        if invalid_files:
+            error_message, error_code = Errors.files_naming_wrong(invalid_files)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self._is_valid = False
+                return False
+        return True
 
     def are_keys_empty_in_yml(self):
         """

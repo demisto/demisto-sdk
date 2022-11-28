@@ -14,6 +14,11 @@ class CorrelationRuleValidator(ContentEntityValidator):
     CorrelationRuleValidator is designed to validate the correctness of the file structure we enter to content repo.
     """
 
+    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, json_file_path=None):
+        super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         json_file_path=json_file_path)
+        self._is_valid = True
+
     def is_valid_file(self, validate_rn=True, is_new_file=False, use_git=False):
         """
         Check whether the correlation rule is valid or not
@@ -23,7 +28,7 @@ class CorrelationRuleValidator(ContentEntityValidator):
         logging.debug('Automatically considering XSIAM content item as valid, see issue #48151')
 
         self.is_hyphen_exists()
-        self.validate_xsiam_content_item_title(self.file_path)
+        self.is_files_naming_correct()
         return self.is_valid
 
     def is_valid_version(self):
@@ -43,5 +48,17 @@ class CorrelationRuleValidator(ContentEntityValidator):
             error_message, error_code = Errors.correlation_rule_starts_with_hyphen(self.file_path)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
+                return False
+        return True
+
+    @error_codes("BA120")
+    def is_files_naming_correct(self):
+        """
+        Validates all file naming is as convention.
+        """
+        if not self.validate_xsiam_content_item_title(self.file_path):
+            error_message, error_code = Errors.files_naming_wrong([self.file_path])
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self._is_valid = False
                 return False
         return True

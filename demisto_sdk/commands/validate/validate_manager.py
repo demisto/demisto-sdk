@@ -66,6 +66,7 @@ from demisto_sdk.commands.common.hook_validations.wizard import WizardValidator
 from demisto_sdk.commands.common.hook_validations.xsiam_dashboard import XSIAMDashboardValidator
 from demisto_sdk.commands.common.hook_validations.xsiam_report import XSIAMReportValidator
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import XSOARConfigJsonValidator
+from demisto_sdk.commands.common.hook_validations.xdrc_templates import XDRCTemplatesValidator
 from demisto_sdk.commands.common.tools import (_get_file_id, find_type, get_api_module_ids,
                                                get_api_module_integrations_set, get_content_path, get_file,
                                                get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
@@ -165,11 +166,7 @@ class ValidateManager:
         self.skipped_file_types = (FileType.CHANGELOG,
                                    FileType.DOC_IMAGE,
                                    FileType.MODELING_RULE_SCHEMA,
-                                   FileType.XSIAM_DASHBOARD_IMAGE,
-                                   FileType.XSIAM_REPORT_IMAGE,
-                                   FileType.XSIAM_DASHBOARD_IMAGE,
-                                   FileType.XDRC_TEMPLATE_YML,
-                                   FileType.XDRC_TEMPLATE,)
+                                   FileType.XSIAM_REPORT_IMAGE)
 
         self.is_external_repo = is_external_repo
         if is_external_repo:
@@ -427,13 +424,20 @@ class ValidateManager:
 
         return all(content_entities_validation_results)
 
+    @staticmethod
+    def should_validate_xsiam_content(package_path):
+        parent_name = Path(package_path).stem
+        dir_name = Path(package_path).parent.stem
+        return parent_name in ['XSIAMDashboards', 'XSIAMReports'] or dir_name == 'XDRCTemplates'
+
     def run_validation_on_package(self, package_path, pack_error_ignore_list):
         package_entities_validation_results = set()
 
         for file_name in os.listdir(package_path):
             file_path = os.path.join(package_path, file_name)
+            should_validate_xsiam_item = self.should_validate_xsiam_content(package_path)
             should_validate_py_file = file_path.endswith('.py') and file_name not in SKIPPED_FILES
-            if file_path.endswith('.yml') or file_path.endswith('.md') or should_validate_py_file:
+            if file_path.endswith('.yml') or file_path.endswith('.md') or should_validate_py_file or should_validate_xsiam_item:
                 package_entities_validation_results.add(self.run_validations_on_file(file_path, pack_error_ignore_list))
 
             else:
@@ -679,8 +683,11 @@ class ValidateManager:
         elif file_type == FileType.CORRELATION_RULE:
             return self.validate_correlation_rule(structure_validator, pack_error_ignore_list)
 
-        elif file_type == FileType.XSIAM_DASHBOARD:
+        elif file_type == FileType.XSIAM_DASHBOARD or file_type == FileType.XSIAM_DASHBOARD_IMAGE:
             return self.validate_xsiam_dashboard(structure_validator, pack_error_ignore_list)
+
+        elif file_type == FileType.XDRC_TEMPLATE or file_type == FileType.XDRC_TEMPLATE_YML:
+            return self.validate_xdrc_templates(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.XSIAM_REPORT:
             return self.validate_xsiam_report(structure_validator, pack_error_ignore_list)
@@ -1166,6 +1173,12 @@ class ValidateManager:
                                                             print_as_warnings=self.print_ignored_errors,
                                                             json_file_path=self.json_file_path)
         return xsiam_dashboard_validator.is_valid_file(validate_rn=False)
+
+    def validate_xdrc_templates(self, structure_validator, pack_error_ignore_list):
+        xdrc_templates_validator = XDRCTemplatesValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                                            print_as_warnings=self.print_ignored_errors,
+                                                            json_file_path=self.json_file_path)
+        return xdrc_templates_validator.is_valid_file(validate_rn=False)
 
     def validate_parsing_rule(self, structure_validator, pack_error_ignore_list):
         parsing_rule_validator = ParsingRuleValidator(structure_validator, ignored_errors=pack_error_ignore_list,

@@ -62,6 +62,7 @@ ERROR_CODE = {
     "incorrect_from_to_version_format": {'code': "BA117", 'ui_applicable': False, 'related_field': ''},
     "mismatching_from_to_versions": {'code': "BA118", 'ui_applicable': False, 'related_field': ''},
     "copyright_section_in_python_error": {'code': "BA119", 'ui_applicable': False, 'related_field': ''},
+    "files_naming_wrong": {'code': "BA120", 'ui_applicable': False, 'related_field': ''},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -2522,6 +2523,12 @@ class Errors:
     @error_code_decorator
     def modeling_rule_schema_types_invalid(invalid_types: list):
         return f"Some of the types in the schema file are invalid. Invalid types are: {','.join(invalid_types)}"
+
+    @staticmethod
+    @error_code_decorator
+    def files_naming_wrong(invalid_files: list):
+        return f"Some of the files naming in the directory not following conventions. Invalid files are: {','.join(invalid_files)}"
+
 
     @staticmethod
     @error_code_decorator

@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 from uuid import UUID
@@ -200,6 +201,10 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         runner = CliRunner()
+
+        # the __init__ method of the Downloader class disables logging which breaks these tests
+        # so if the tests for the Downloader class are run first, we need to re-enable logging
+        logging.disable(logging.NOTSET)
 
         # Create Test Data File
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)

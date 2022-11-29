@@ -89,30 +89,30 @@ class XsiamApiClient(XsiamApiInterface):
         self.__session: requests.Session = None  # type: ignore
 
     @property
-    def session(self) -> requests.Session:
+    def _session(self) -> requests.Session:
         if not self.__session:
-            self.session = requests.Session()
-            self.session.headers.update({
+            self._session = requests.Session()
+            self._session.headers.update({
                 'x-xdr-auth-id': self.auth_id,
                 'Authorization': self.api_key,
                 'Content-Type': 'application/json',
             })
         return self.__session
 
-    @session.setter
-    def session(self, value: requests.Session):
+    @_session.setter
+    def _session(self, value: requests.Session):
         self.__session = value
 
     @property
     def installed_packs(self) -> List[Dict[str, Any]]:
         endpoint = urljoin(self.base_url, 'xsoar/contentpacks/metadata/installed')
-        response = self.session.get(endpoint)
+        response = self._session.get(endpoint)
         response.raise_for_status()
         return response.json()
 
     def search_pack(self, pack_id):
         endpoint = urljoin(self.base_url, f'xsoar/contentpacks/marketplace/{pack_id}')
-        response = self.session.get(endpoint)
+        response = self._session.get(endpoint)
         response.raise_for_status()
         logger.debug(f'Found pack "{pack_id}" in bucket!')
         data = response.json()
@@ -125,7 +125,7 @@ class XsiamApiClient(XsiamApiInterface):
     def uninstall_packs(self, pack_ids: List[str]):
         endpoint = urljoin(self.base_url, 'xsoar/contentpacks/installed/delete')
         body = {"IDs": pack_ids}
-        response = self.session.post(endpoint, json=body)
+        response = self._session.post(endpoint, json=body)
         response.raise_for_status()
 
     def upload_packs(self, zip_path: Path):
@@ -135,13 +135,13 @@ class XsiamApiClient(XsiamApiInterface):
         }
         file_path = os.path.abspath(zip_path)
         files = {'file': file_path}
-        response = self.session.post(endpoint, files=files, headers=header_params)
+        response = self._session.post(endpoint, files=files, headers=header_params)
         response.raise_for_status()
         logging.info(f'All packs from file {zip_path} were successfully installed on server {self.base_url}')
 
     def install_packs(self, packs: List[Dict[str, Any]]):
         endpoint = urljoin(self.base_url, 'xsoar/contentpacks/marketplace/install')
-        response = self.session.post(url=endpoint, json={'packs': packs, 'ignoreWarnings': True})
+        response = self._session.post(url=endpoint, json={'packs': packs, 'ignoreWarnings': True})
         response.raise_for_status()
         if response.status_code in range(200, 300) and response.status_code != 204:
             response_data = response.json()
@@ -158,7 +158,7 @@ class XsiamApiClient(XsiamApiInterface):
 
     def sync_marketplace(self):
         endpoint = urljoin(self.base_url, 'xsoar/contentpacks/marketplace/sync')
-        response = self.session.post(endpoint)
+        response = self._session.post(endpoint)
         response.raise_for_status()
         logger.info(f'Marketplace was successfully synced on server {self.base_url}')
 
@@ -176,7 +176,7 @@ class XsiamApiClient(XsiamApiInterface):
         }
         formatted_data = '\n'.join([json.dumps(d) for d in data])
         compressed_data = gzip.compress(formatted_data.encode('utf-8'))
-        response = self.session.post(endpoint, data=compressed_data, headers=additional_headers)
+        response = self._session.post(endpoint, data=compressed_data, headers=additional_headers)
         try:
             data = response.json()
         except requests.exceptions.JSONDecodeError:
@@ -202,7 +202,7 @@ class XsiamApiClient(XsiamApiInterface):
         }
         formatted_data = '\n'.join([json.dumps(d) for d in data])
         compressed_data = gzip.compress(formatted_data.encode('utf-8'))
-        response = self.session.post(endpoint, data=compressed_data, headers=additional_headers)
+        response = self._session.post(endpoint, data=compressed_data, headers=additional_headers)
         try:
             data = response.json()
         except requests.exceptions.JSONDecodeError:
@@ -233,7 +233,7 @@ class XsiamApiClient(XsiamApiInterface):
         }
         endpoint = urljoin(self.base_url, 'public_api/v1/xql/start_xql_query/')
         logger.info(f'Starting xql query:\nendpoint={endpoint}\n{query=}')
-        response = self.session.post(endpoint, json=body)
+        response = self._session.post(endpoint, json=body)
         data = response.json()
 
         if 200 <= response.status_code < 300:
@@ -256,7 +256,7 @@ class XsiamApiClient(XsiamApiInterface):
         })
         endpoint = urljoin(self.base_url, 'public_api/v1/xql/get_query_results/')
         logger.info(f'Getting xql query results: endpoint={endpoint}')
-        response = self.session.post(endpoint, data=payload)
+        response = self._session.post(endpoint, data=payload)
         data = response.json()
         logger.debug(pformat(data))
 

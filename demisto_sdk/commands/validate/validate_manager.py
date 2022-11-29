@@ -1000,7 +1000,7 @@ class ValidateManager:
         deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
                                                                file_path=structure_validator.file_path,
                                                                current_file=integration_validator.current_file,
-                                                               is_modified=is_modified,
+                                                               is_modified=True,
                                                                is_backward_check=self.is_backward_check,
                                                                validator=integration_validator)
         if deprecated_result is not None:
@@ -1027,7 +1027,7 @@ class ValidateManager:
         deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
                                                                file_path=structure_validator.file_path,
                                                                current_file=script_validator.current_file,
-                                                               is_modified=is_modified,
+                                                               is_modified=True,
                                                                is_backward_check=self.is_backward_check,
                                                                validator=script_validator)
         if deprecated_result is not None:
@@ -2001,12 +2001,12 @@ class ValidateManager:
             if hasattr(validator, "is_valid_as_deprecated"):
                 is_valid_as_deprecated = validator.is_valid_as_deprecated()
 
-            # if is_modified and is_backward_check:
-            return all([is_valid_as_deprecated, validator.is_backward_compatible()])
+            if is_modified and is_backward_check:
+                return all([is_valid_as_deprecated, validator.is_backward_compatible()])
 
-            # self.ignored_files.add(file_path)
-            # if self.print_ignored_files:
-            #     click.echo(f"Skipping validation for: {file_path}")
+            self.ignored_files.add(file_path)
+            if self.print_ignored_files:
+                click.echo(f"Skipping validation for: {file_path}")
 
             # return is_valid_as_deprecated
         return None

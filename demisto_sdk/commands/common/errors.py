@@ -38,7 +38,7 @@ PRESET_ERROR_TO_IGNORE = {
 
 # predefined errors to be ignored in deprecated content entities even if they do not appear in .pack-ignore
 PRESET_ERROR_TO_CHECK = {
-    "deprecated": ['ST', 'BC', 'BA', 'IN127', 'IN128', 'PB104', 'SC101'],
+    "deprecated": ['ST', 'BC', 'BA', 'IN127', 'IN128', 'PB104', 'SC101', 'IN155', 'SC107', 'PB120'],
 }
 
 ERROR_CODE = {

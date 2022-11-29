@@ -16,16 +16,16 @@ logger = logging.getLogger(__name__)
 
 
 class XsiamApiClientConfig(BaseModel):
-    xsiam_url: HttpUrl = Field(default=os.getenv('DEMISTO_BASE_URL'), description="XSIAM URL")
+    base_url: HttpUrl = Field(default=os.getenv('DEMISTO_BASE_URL'), description="XSIAM Tenant Base URL")
     api_key: SecretStr = Field(default=SecretStr(os.getenv('DEMISTO_API_KEY', '')), description="XSIAM API Key")
     auth_id: str = Field(default=os.getenv('XSIAM_AUTH_ID'), description="XSIAM Auth ID")
-    xsiam_token: Optional[SecretStr] = Field(default=SecretStr(os.getenv('XSIAM_TOKEN', '')), description="XSIAM Token")
+    token: Optional[SecretStr] = Field(default=SecretStr(os.getenv('XSIAM_TOKEN', '')), description="XSIAM Token")
     collector_token: Optional[SecretStr] = Field(
-        default=SecretStr(os.getenv('COLLECTOR_TOKEN', '')),
-        description="XSIAM Collector Token"
+        default=SecretStr(os.getenv('XSIAM_COLLECTOR_TOKEN', '')),
+        description="XSIAM HTTP Collector Token"
     )
 
-    @validator('xsiam_url', 'api_key', 'auth_id', always=True)
+    @validator('base_url', 'api_key', 'auth_id', always=True)
     def validate_client_config(cls, v, field: ModelField):
         if not v:
             raise ValueError(
@@ -37,7 +37,7 @@ class XsiamApiClientConfig(BaseModel):
     @validator('collector_token', always=True)
     def validate_client_config_token(cls, v, values, field: ModelField):
         if not v:
-            other_token_name = 'xsiam_token'
+            other_token_name = 'token'
             if not values.get(other_token_name):
                 raise ValueError(
                     f"XSIAM client configuration is not complete: you must set one of \"{field.name}\" or "
@@ -79,11 +79,11 @@ class XsiamApiInterface(ABC):
 
 class XsiamApiClient(XsiamApiInterface):
     def __init__(self, config: XsiamApiClientConfig):
-        self.base_url = config.xsiam_url
+        self.base_url = config.base_url
         self.api_key = config.api_key.get_secret_value() if isinstance(config.api_key, SecretStr) else config.api_key
         self.auth_id = config.auth_id
-        self.xsiam_token = config.xsiam_token.get_secret_value() if isinstance(
-            config.xsiam_token, SecretStr) else config.xsiam_token
+        self.token = config.token.get_secret_value() if isinstance(
+            config.token, SecretStr) else config.token
         self.collector_token = config.collector_token.get_secret_value() if isinstance(
             config.collector_token, SecretStr) else config.collector_token
         self.__session: requests.Session = None  # type: ignore
@@ -168,7 +168,7 @@ class XsiamApiClient(XsiamApiInterface):
     def __push_using_xsiam_token__(self, data: List[Dict[str, Any]], vendor: str, product: str, data_format: str):
         endpoint = urljoin(self.base_url, 'logs/v1/xsiam')
         additional_headers = {
-            'authorization': self.xsiam_token,
+            'authorization': self.token,
             'format': data_format,
             'product': product,
             'vendor': vendor,
@@ -220,7 +220,7 @@ class XsiamApiClient(XsiamApiInterface):
             response.raise_for_status()
 
     def push_to_dataset(self, data: List[Dict[str, Any]], vendor: str, product: str, data_format: str = 'json'):
-        if self.xsiam_token:
+        if self.token:
             return self.__push_using_xsiam_token__(data, vendor, product, data_format)
         else:
             return self.__push_using_collector_token__(data, data_format)

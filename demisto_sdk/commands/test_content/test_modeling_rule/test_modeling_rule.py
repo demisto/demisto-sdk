@@ -375,8 +375,8 @@ def validate_modeling_rule(
 
         # initialize xsiam client
         xsiam_client_cfg = XsiamApiClientConfig(
-            xsiam_url=xsiam_url, api_key=api_key, auth_id=auth_id,  # type: ignore[arg-type]
-            xsiam_token=xsiam_token, collector_token=collector_token  # type: ignore[arg-type]
+            base_url=xsiam_url, api_key=api_key, auth_id=auth_id,  # type: ignore[arg-type]
+            token=xsiam_token, collector_token=collector_token  # type: ignore[arg-type]
         )
         xsiam_client = XsiamApiClient(xsiam_client_cfg)
         verify_pack_exists_on_tenant(xsiam_client, mr_entity, interactive)

@@ -61,10 +61,6 @@ class XsiamApiInterface(ABC):
         pass
 
     @abstractmethod
-    def copy_packs(self, *args, **kwargs):
-        pass
-
-    @abstractmethod
     def push_to_dataset(self, data: List[Dict[str, Any]], vendor: str, product: str, data_format: str = 'json'):
         pass
 
@@ -161,9 +157,6 @@ class XsiamApiClient(XsiamApiInterface):
         response = self._session.post(endpoint)
         response.raise_for_status()
         logger.info(f'Marketplace was successfully synced on server {self.base_url}')
-
-    def copy_packs(self, *args, **kwargs):
-        pass
 
     def __push_using_xsiam_token__(self, data: List[Dict[str, Any]], vendor: str, product: str, data_format: str):
         endpoint = urljoin(self.base_url, 'logs/v1/xsiam')

@@ -99,7 +99,7 @@ class ModelingRuleValidator(ContentEntityValidator):
         def get_dataset_from_xif(xif_file_path):
             with open(xif_file_path, 'r') as xif_file:
                 xif_content = xif_file.readline()
-                dataset = re.findall("dataset=([\"a-zA-Z_0-9]+)", xif_content)
+                dataset = re.findall("dataset[ ]?=[ ]?([\"a-zA-Z_0-9]+)", xif_content)
                 if dataset:
                     return dataset[0].strip("\"")
             return None

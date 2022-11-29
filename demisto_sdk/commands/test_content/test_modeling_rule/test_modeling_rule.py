@@ -71,7 +71,11 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
         logger.error(err, extra={'markup': True})
         raise typer.Exit(1)
     if len(results) != len(test_data.data):
-        raise ValueError(f'Expected {len(test_data.data)} results, got {len(results)}')
+        err = (f'[red]Expected {len(test_data.data)} results, got {len(results)}. Verify that the event'
+               ' data used in your test data file meets the criteria of the modeling rule, e.g. the filter'
+               ' condition.[/red]')
+        logger.error(err, extra={'markup': True})
+        raise typer.Exit(1)
     errors = False
     for i, result in enumerate(results):
         logger.info(f'\n[cyan underline]Result {i + 1}[/cyan underline]', extra={'markup': True})

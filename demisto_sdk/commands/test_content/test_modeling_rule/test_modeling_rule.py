@@ -16,8 +16,8 @@ from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.mode
                                                                                                   SingleModelingRule)
 from demisto_sdk.commands.common.logger import set_console_stream_handler, setup_rich_logging
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
-from demisto_sdk.commands.test_content.xsiam_tools import xsiam_interface
-from demisto_sdk.commands.test_content.xsiam_tools.xsiam_interface import XsiamApiClient, XsiamApiClientConfig
+from demisto_sdk.commands.test_content.xsiam_tools import xsiam_client
+from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import XsiamApiClient, XsiamApiClientConfig
 from demisto_sdk.commands.upload.upload import upload_content_entity as upload_cmd
 from demisto_sdk.utils.utils import get_containing_pack
 
@@ -537,7 +537,7 @@ def test_modeling_rule(
     """
     setup_rich_logging(verbosity, quiet, log_path, log_file_name)
     # override XsiamApiClient logger
-    xsiam_logger = logging.getLogger(xsiam_interface.__name__)
+    xsiam_logger = logging.getLogger(xsiam_client.__name__)
     set_console_stream_handler(xsiam_logger)
     xsiam_logger.propagate = False
 

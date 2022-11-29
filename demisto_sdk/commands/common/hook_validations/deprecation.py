@@ -1,5 +1,7 @@
 from typing import Dict, List, Optional
 
+COMMANDS_TO_IGNORE = ['ip', 'url', 'file', 'domain', 'email', 'cve']
+
 
 class DeprecationValidator:
     """
@@ -108,7 +110,7 @@ class DeprecationValidator:
         """
         for command, integration_name in command_to_integration.items():
             if command in deprecated_commands_list:
-                if integration_name == integration_id or not integration_name:
+                if integration_name == integration_id or (not integration_name and command not in COMMANDS_TO_IGNORE):
                     playbook_path: Optional[str] = playbook.get("file_path", "")
                     if command in usage_dict and playbook_path not in usage_dict.get(command, []):
                         usage_dict.get(command, []).append(playbook_path)

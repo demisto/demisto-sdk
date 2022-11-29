@@ -185,7 +185,7 @@ class XsiamApiClient(XsiamApiInterface):
             err_msg += f'\n{error}' if error else ''
             logger.error(err_msg)
             response.raise_for_status()
-        if 200 <= response.status_code < 300:
+        if response.status_code in range(200, 300):
             return data
         else:
             logger.error(
@@ -211,7 +211,7 @@ class XsiamApiClient(XsiamApiInterface):
             err_msg += f'\n{error}' if error else ''
             logger.error(err_msg)
             response.raise_for_status()
-        if 200 <= response.status_code < 300:
+        if response.status_code in range(200, 300):
             return data
         else:
             logger.error(
@@ -237,7 +237,7 @@ class XsiamApiClient(XsiamApiInterface):
         logger.debug('Request completed to start xql query')
         data = response.json()
 
-        if 200 <= response.status_code < 300:
+        if response.status_code in range(200, 300):
             execution_id: str = data.get('reply', '')
             return execution_id
         else:
@@ -262,7 +262,7 @@ class XsiamApiClient(XsiamApiInterface):
         data = response.json()
         logger.debug(pformat(data))
 
-        if 200 <= response.status_code < 300 and data.get('reply', {}).get('status', '') == 'SUCCESS':
+        if response.status_code in range(200, 300) and data.get('reply', {}).get('status', '') == 'SUCCESS':
             reply_results_data = data.get('reply', {}).get('results', {}).get('data', [])
             return reply_results_data
         else:

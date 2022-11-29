@@ -158,65 +158,44 @@ class XsiamApiClient(XsiamApiInterface):
         response.raise_for_status()
         logger.info(f'Marketplace was successfully synced on server {self.base_url}')
 
-    def __push_using_xsiam_token__(self, data: List[Dict[str, Any]], vendor: str, product: str, data_format: str):
-        endpoint = urljoin(self.base_url, 'logs/v1/xsiam')
-        additional_headers = {
-            'authorization': self.token,
-            'format': data_format,
-            'product': product,
-            'vendor': vendor,
-            'content-encoding': 'gzip'
-        }
-        formatted_data = '\n'.join([json.dumps(d) for d in data])
-        compressed_data = gzip.compress(formatted_data.encode('utf-8'))
-        response = self._session.post(endpoint, data=compressed_data, headers=additional_headers)
-        try:
-            data = response.json()
-        except requests.exceptions.JSONDecodeError:
-            error = response.text
-            err_msg = f'Failed to push using xsiam_token - with status code {response.status_code}'
-            err_msg += f'\n{error}' if error else ''
-            logger.error(err_msg)
-            response.raise_for_status()
-        if response.status_code in range(200, 300):
-            return data
-        else:
-            logger.error(
-                f'Failed to push using xsiam_token - with status code {response.status_code}\n{pformat(data)}'
-            )
-            response.raise_for_status()
-
-    def __push_using_collector_token__(self, data: List[Dict[str, Any]], data_format: str):
-        endpoint = urljoin(self.base_url, 'logs/v1/event')
-        additional_headers = {
-            'authorization': self.collector_token,
-            'content-type': 'application/json' if data_format.casefold == 'json' else 'text/plain',
-            'content-encoding': 'gzip'
-        }
-        formatted_data = '\n'.join([json.dumps(d) for d in data])
-        compressed_data = gzip.compress(formatted_data.encode('utf-8'))
-        response = self._session.post(endpoint, data=compressed_data, headers=additional_headers)
-        try:
-            data = response.json()
-        except requests.exceptions.JSONDecodeError:
-            error = response.text
-            err_msg = f'Failed to push using collector_token - with status code {response.status_code}'
-            err_msg += f'\n{error}' if error else ''
-            logger.error(err_msg)
-            response.raise_for_status()
-        if response.status_code in range(200, 300):
-            return data
-        else:
-            logger.error(
-                f'Failed to push using collector_token - with status code {response.status_code}\n{pformat(data)}'
-            )
-            response.raise_for_status()
-
     def push_to_dataset(self, data: List[Dict[str, Any]], vendor: str, product: str, data_format: str = 'json'):
         if self.token:
-            return self.__push_using_xsiam_token__(data, vendor, product, data_format)
+            endpoint = urljoin(self.base_url, 'logs/v1/xsiam')
+            additional_headers = {
+                'authorization': self.token,
+                'format': data_format,
+                'product': product,
+                'vendor': vendor,
+                'content-encoding': 'gzip'
+            }
+            token_type = 'xsiam_token'
+        elif self.collector_token:
+            endpoint = urljoin(self.base_url, 'logs/v1/event')
+            additional_headers = {
+                'authorization': self.collector_token,
+                'content-type': 'application/json' if data_format.casefold == 'json' else 'text/plain',
+                'content-encoding': 'gzip'
+            }
+            token_type = 'collector_token'
+
+        formatted_data = '\n'.join([json.dumps(d) for d in data])
+        compressed_data = gzip.compress(formatted_data.encode('utf-8'))
+        response = self._session.post(endpoint, data=compressed_data, headers=additional_headers)
+        try:
+            data = response.json()
+        except requests.exceptions.JSONDecodeError:
+            error = response.text
+            err_msg = f'Failed to push using {token_type} - with status code {response.status_code}'
+            err_msg += f'\n{error}' if error else ''
+            logger.error(err_msg)
+            response.raise_for_status()
+        if response.status_code in range(200, 300):
+            return data
         else:
-            return self.__push_using_collector_token__(data, data_format)
+            logger.error(
+                f'Failed to push using {token_type} - with status code {response.status_code}\n{pformat(data)}'
+            )
+            response.raise_for_status()
 
     def start_xql_query(self, query: str):
         body = {

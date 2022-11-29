@@ -218,7 +218,7 @@ class XsiamApiClient(XsiamApiInterface):
             )
             response.raise_for_status()
 
-    def get_xql_query_result(self, execution_id: str):
+    def get_xql_query_result(self, execution_id: str, timeout: int = 300):
         payload = json.dumps({
             "request_data": {
                 "query_id": execution_id,
@@ -229,7 +229,7 @@ class XsiamApiClient(XsiamApiInterface):
         })
         endpoint = urljoin(self.base_url, 'public_api/v1/xql/get_query_results/')
         logger.info(f'Getting xql query results: endpoint={endpoint}')
-        response = self._session.post(endpoint, data=payload)
+        response = self._session.post(endpoint, data=payload, timeout=timeout)
         logger.debug('Request completed to get xql query results')
         data = response.json()
         logger.debug(pformat(data))

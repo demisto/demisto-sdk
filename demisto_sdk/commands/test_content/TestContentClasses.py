@@ -97,7 +97,7 @@ class SecretConf:
         print(f'integrations: {self.integrations[0:200]}')
         self.secret_conf = GoogleSecreteManagerModule(self.get_secret_service_account_config())
         self.project_id = os.environ['GSM_PROJECT_ID']
-        secrets = secret_conf.list_secrets(self.project_id, with_secret=True)
+        secrets = self.secret_conf.list_secrets(self.project_id, with_secret=True)
         print(f'secrets: {secrets[0:200]}')
         secrets = [IntegrationConfiguration(integration_configuration=configuration) for configuration in
                    secrets]

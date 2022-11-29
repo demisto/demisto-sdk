@@ -154,7 +154,7 @@ class XsiamApiClient(XsiamApiInterface):
             logger.info(f'Packs were successfully installed on server {self.base_url}')
             logger.debug(f'The packs that were successfully installed on server {self.base_url}:\n{packs_data}')
         elif response.status_code == 204:
-            logger.info(f'Packs were successfully installed on server {self.base_url}')
+            logger.info(f'All packs were successfully installed on server {self.base_url}')
 
     def sync_marketplace(self):
         endpoint = urljoin(self.base_url, 'xsoar/contentpacks/marketplace/sync')
@@ -234,6 +234,7 @@ class XsiamApiClient(XsiamApiInterface):
         endpoint = urljoin(self.base_url, 'public_api/v1/xql/start_xql_query/')
         logger.info(f'Starting xql query:\nendpoint={endpoint}\n{query=}')
         response = self._session.post(endpoint, json=body)
+        logger.debug('Request completed to start xql query')
         data = response.json()
 
         if 200 <= response.status_code < 300:
@@ -257,6 +258,7 @@ class XsiamApiClient(XsiamApiInterface):
         endpoint = urljoin(self.base_url, 'public_api/v1/xql/get_query_results/')
         logger.info(f'Getting xql query results: endpoint={endpoint}')
         response = self._session.post(endpoint, data=payload)
+        logger.debug('Request completed to get xql query results')
         data = response.json()
         logger.debug(pformat(data))
 
@@ -265,6 +267,6 @@ class XsiamApiClient(XsiamApiInterface):
             return reply_results_data
         else:
             err_msg = (f'Failed to get xql query results for execution_id "{execution_id}"'
-                       f' - with status code {response.status_code}\n{pformat(data)}')
+                       f' - with status code {response.status_code}. data:\n{pformat(data)}')
             logger.error(err_msg)
             response.raise_for_status()

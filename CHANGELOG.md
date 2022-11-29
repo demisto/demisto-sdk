@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+
+## 1.7.9
 * Fixed an issue where an error message in **validate** would not include the suggested fix.
 * Added a validation that enforces predefined categories on MP Packs & integration yml files, the validation also ensures that each pack has only one category.
 * Fixed an issue where **update-release-notes** did not generate release notes for **XDRC Templates**.

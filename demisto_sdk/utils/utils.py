@@ -15,8 +15,10 @@ ContentEntity = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentOb
 
 def get_containing_pack(content_entity: ContentEntity) -> Pack:
     """Get pack object that contains the content entity.
+
     Args:
         content_entity: Content entity object.
+
     Returns:
         Pack: Pack object that contains the content entity.
     """

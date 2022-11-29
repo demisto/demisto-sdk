@@ -8,6 +8,7 @@ from typing import IO, Any, Dict
 
 import click
 import git
+import typer
 from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
@@ -19,6 +20,7 @@ from demisto_sdk.commands.common.tools import (find_type, get_last_remote_releas
                                                is_external_repository, print_error, print_success, print_warning)
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
+from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data, test_modeling_rule
 from demisto_sdk.commands.upload.upload import upload_content_entity
 from demisto_sdk.utils.utils import check_configuration_file
 
@@ -108,7 +110,8 @@ def main(config, version, release_notes):
             __version__ = get_distribution('demisto-sdk').version
         except DistributionNotFound:
             __version__ = 'dev'
-            print_warning('Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.')
+            print_warning(
+                'Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.')
         else:
             last_release = get_last_remote_release_version()
             print_warning(f'You are using demisto-sdk {__version__}.')
@@ -242,9 +245,8 @@ def extract_code(config, **kwargs):
 @click.help_option(
     '-h', '--help'
 )
-@click.option(
-    "-i", "--input", help="The directory path to the files or path to the file to unify", required=True, type=click.Path(dir_okay=True)
-)
+@click.option("-i", "--input", help="The directory path to the files or path to the file to unify", required=True,
+              type=click.Path(dir_okay=True))
 @click.option(
     "-o", "--output", help="The output dir to write the unified yml to", required=False
 )
@@ -529,7 +531,8 @@ def validate(config, **kwargs):
               help='Whether to use the id set as content items guide, meaning only include in the packs the '
                    'content items that appear in the id set.', default=False, hidden=True)
 @click.option('-af', '--alternate-fields', is_flag=True,
-              help='Use the alternative fields if such are present in the yml or json of the content item.', default=False, hidden=True)
+              help='Use the alternative fields if such are present in the yml or json of the content item.',
+              default=False, hidden=True)
 def create_content_artifacts(**kwargs) -> int:
     """Generating the following artifacts:
        1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)
@@ -643,7 +646,8 @@ def secrets(config, **kwargs):
                                             "--check-dependent-api-module flag.",
               type=click.Path(resolve_path=True),
               default='Tests/id_set.json')
-@click.option("-cdam", "--check-dependent-api-module", is_flag=True, help="Run unit tests and lint on all packages that "
+@click.option("-cdam", "--check-dependent-api-module", is_flag=True,
+              help="Run unit tests and lint on all packages that "
               "are dependent on the found "
               "modified api modules.", default=False)
 @click.option("--time-measurements-dir", help="Specify directory for the time measurements report file",
@@ -1247,10 +1251,9 @@ def generate_test_playbook(**kwargs):
     "-t", "--template", help="Create an Integration/Script based on a specific template.\n"
                              "Integration template options: HelloWorld, HelloIAMWorld, FeedHelloWorld.\n"
                              "Script template options: HelloWorldScript")
-@click.option(
-    "-a", "--author-image", help="Path of the file 'Author_image.png'. \n "
-                                 "Image will be presented in marketplace under PUBLISHER section. File should be up to 4kb and dimensions of 120x50"
-)
+@click.option("-a", "--author-image",
+              help="Path of the file 'Author_image.png'. \n "
+              "Image will be presented in marketplace under PUBLISHER section. File should be up to 4kb and dimensions of 120x50")
 @click.option(
     '--demisto_mock', is_flag=True,
     help="Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.")
@@ -1311,8 +1314,8 @@ def init(**kwargs):
     "--old-version", help="Path of the old integration version yml file.")
 @click.option(
     "--skip-breaking-changes", is_flag=True, help="Skip generating of breaking changes section.")
-@click.option(
-    "--custom-image-path", help="A custom path to a playbook image. If not stated, a default link will be added to the file.")
+@click.option("--custom-image-path",
+              help="A custom path to a playbook image. If not stated, a default link will be added to the file.")
 def generate_docs(**kwargs):
     """Generate documentation for integration, playbook or script from yaml file."""
 
@@ -2216,6 +2219,15 @@ def create_content_graph(
 @main.result_callback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
+
+
+app = typer.Typer(name='modeling-rules', hidden=True, no_args_is_help=True)
+app.command('test', no_args_is_help=True)(test_modeling_rule.test_modeling_rule)
+app.command('init-test-data', no_args_is_help=True)(init_test_data.init_test_data)
+
+
+typer_click_object = typer.main.get_command(app)
+main.add_command(typer_click_object, 'modeling-rules')
 
 
 if __name__ == '__main__':

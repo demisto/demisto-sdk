@@ -101,6 +101,7 @@ types-decorator = "^5.1.8"
 types-mock = "^4.0.15"
 types-setuptools = "^65.4.0.0"
 types-ujson = "^5.5.0"
+typer = {extras = ["all"], version = "^0.6.1"}
 
 [tool.poetry.dev-dependencies]
 mitmproxy = "^8.0.0"

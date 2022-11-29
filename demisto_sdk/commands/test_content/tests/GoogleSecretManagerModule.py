@@ -14,19 +14,20 @@ class GoogleSecreteManagerModule:
         response = self.client.access_secret_version(request={"name": name})
         return json.loads(response.payload.data.decode("UTF-8"))
 
-    def list_secrets(self, project_id: str, name_filter='', with_secret=False) -> list:
+    def list_secrets(self, project_id: str, name_filter: str = '', with_secret=False) -> list:
         secrets = []
         parent = f"projects/{project_id}"
         for secret in self.client.list_secrets(request={"parent": parent}):
             secret.name = str(secret.name).split('/')[-1]
-            if name_filter in secret.name:
-                if with_secret:
-                    try:
-                        secretfg = self.get_secret(project_id, secret.name)
-                    except google.api_core.exceptions.NotFound:
-                        secretfg = None
-                        # TODO: add log telling the secrete couldn't be found
-                secrets.append({'name': secret.name, 'secretValue': secretfg})
+            if name_filter and name_filter not in secret.name:
+                continue
+            if with_secret:
+                try:
+                    secret_value = self.get_secret(project_id, secret.name)
+                    secrets.append(secret_value)
+                except google.api_core.exceptions.NotFound:
+                    pass
+
         return secrets
 
     @staticmethod
@@ -46,4 +47,3 @@ class GoogleSecreteManagerModule:
             return client
         finally:
             os.remove(credentials_file_path)
-

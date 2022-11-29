@@ -194,10 +194,11 @@ class IntegrationValidator(ContentEntityValidator):
         skipped_integrations = conf_json_data.get('skipped_integrations', {})
         integration_id = _get_file_id('integration', self.current_file)
         if skipped_integrations and integration_id in skipped_integrations:
-            skip_comment = skipped_integrations[integration_id]
-            error_message, error_code = Errors.integration_is_skipped(integration_id, skip_comment)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self.is_valid = False
+            if "no instance" in skipped_integrations[integration_id].lower() and not self.has_unittest(self.file_path):
+                skip_comment = skipped_integrations[integration_id]
+                error_message, error_code = Errors.integration_is_skipped(integration_id, skip_comment)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self.is_valid = False
         return self.is_valid
 
     @error_codes('IN127')
@@ -1759,3 +1760,19 @@ class IntegrationValidator(ContentEntityValidator):
                     is_valid = False
 
         return is_valid
+
+    def get_test_path(self, file_path: str):
+        """ Gets a yml path and returns the matching integration's test."""
+        test_path = Path(file_path)
+        test_file_name = test_path.parts[-1].replace('.yml', '_test.py')
+        return test_path.parent / test_file_name
+
+    def has_unittest(self, file_path):
+        """ Checks if the tests file exist. If so, Test Playbook is not a must. """
+        test_path = self.get_test_path(file_path)
+
+        # We only check existence as we have coverage report to check the actual tests
+        if not test_path.exists():
+            return False
+
+        return True

@@ -9,6 +9,6 @@ def cpu_count():
         max_allowed_cpus = int(os.environ[DEMISTO_SDK_MAX_THREADS])
         requsted_cpus = min(max_allowed_cpus, max_available_cpus)
         return max(1, requsted_cpus)
-    except Exception:
+    except (TypeError, ValueError, KeyError):
         pass
     return max_available_cpus

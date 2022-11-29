@@ -98,15 +98,19 @@ class ModelingRuleValidator(ContentEntityValidator):
 
         def get_dataset_from_xif(xif_file_path):
             with open(xif_file_path, 'r') as xif_file:
-                xif_content = xif_file.readline()
+                xif_content = xif_file.read()
                 dataset = re.findall("dataset[ ]?=[ ]?([\"a-zA-Z_0-9]+)", xif_content)
                 if dataset:
-                    return dataset[0].strip("\"")
+                    return [dataset_name.strip("\"") for dataset_name in dataset]
             return None
 
         xif_file_path = get_files_in_dir(os.path.dirname(self.file_path), ['xif'], False)
         if xif_file_path and self.schema_content:
-            xif_dataset = get_dataset_from_xif(xif_file_path[0])
+            xif_dataset = set(get_dataset_from_xif(xif_file_path[0]))
+            if len(xif_dataset) > 1:
+                return False
+            else:
+                xif_dataset = xif_dataset.pop()
             schema_dataset = next(iter(self.schema_content))
             if xif_dataset and schema_dataset and xif_dataset == schema_dataset:
                 return True

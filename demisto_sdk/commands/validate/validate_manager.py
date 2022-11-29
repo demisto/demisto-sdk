@@ -272,7 +272,7 @@ class ValidateManager:
         """Initiates validation in accordance with mode (i,g,a)
         """
         if self.validate_all:
-            is_valid = self.run_validation_on_all_packs()
+            is_valid = self.run_validation_on_all_packs(validate_all=yes)
         elif self.use_git:
             is_valid = self.run_validation_using_git()
         elif self.file_path:
@@ -365,7 +365,7 @@ class ValidateManager:
                 click.secho(f'An error occurred while tried to collect result, Error: {e}', fg="bright_red")
                 raise
 
-    def run_validation_on_all_packs(self):
+    def run_validation_on_all_packs(self, validate_all):
         """Runs validations on all files in all packs in repo (-a option)
 
         Returns:
@@ -386,29 +386,29 @@ class ValidateManager:
         ReadMeValidator.add_node_env_vars()
         if self.is_possible_validate_readme:
             with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
-                return self.validate_packs(all_packs, all_packs_valid, count, num_of_packs)
+                return self.validate_packs(all_packs, all_packs_valid, count, num_of_packs, validate_all)
         else:
-            return self.validate_packs(all_packs, all_packs_valid, count, num_of_packs)
+            return self.validate_packs(all_packs, all_packs_valid, count, num_of_packs, validate_all)
 
     def validate_packs(self, all_packs: list, all_packs_valid: set,
-                       count: int, num_of_packs: int) -> bool:
+                       count: int, num_of_packs: int, validate_all: bool = False) -> bool:
 
         if self.run_with_multiprocessing:
             with pebble.ProcessPool(max_workers=4) as executor:
                 futures = []
                 for pack_path in all_packs:
-                    futures.append(executor.schedule(self.run_validations_on_pack, args=(pack_path,)))
+                    futures.append(executor.schedule(self.run_validations_on_pack, args=(pack_path, validate_all)))
                 self.wait_futures_complete(futures_list=futures,
                                            done_fn=lambda x, y: (all_packs_valid.add(x),  # type: ignore
                                                                  FOUND_FILES_AND_ERRORS.extend(y)))  # type: ignore
         else:
             for pack_path in all_packs:
                 self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
-                all_packs_valid.add(self.run_validations_on_pack(pack_path)[0])
+                all_packs_valid.add(self.run_validations_on_pack(pack_path, validate_all)[0])
                 count += 1
         return all(all_packs_valid)
 
-    def run_validations_on_pack(self, pack_path):
+    def run_validations_on_pack(self, pack_path, validate_all: bool = False):
         """Runs validation on all files in given pack. (i,g,a)
 
         Args:
@@ -426,13 +426,14 @@ class ValidateManager:
             content_entity_path = os.path.join(pack_path, content_dir)
             if content_dir in CONTENT_ENTITIES_DIRS:
                 pack_entities_validation_results.add(self.run_validation_on_content_entities(content_entity_path,
-                                                                                             pack_error_ignore_list))
+                                                                                             pack_error_ignore_list,
+                                                                                             validate_all))
             else:
                 self.ignored_files.add(content_entity_path)
 
         return all(pack_entities_validation_results), FOUND_FILES_AND_ERRORS
 
-    def run_validation_on_content_entities(self, content_entity_dir_path, pack_error_ignore_list):
+    def run_validation_on_content_entities(self, content_entity_dir_path, pack_error_ignore_list, validate_all: bool = False):
         """Gets non-pack folder and runs validation within it (Scripts, Integrations...)
 
         Returns:
@@ -454,7 +455,8 @@ class ValidateManager:
                 if os.path.isfile(file_path):
                     if file_path.endswith('.json') or file_path.endswith('.yml') or file_path.endswith('.md'):
                         content_entities_validation_results.add(self.run_validations_on_file(file_path,
-                                                                                             pack_error_ignore_list))
+                                                                                             pack_error_ignore_list,
+                                                                                             validate_all))
                     else:
                         self.ignored_files.add(file_path)
 
@@ -531,7 +533,8 @@ class ValidateManager:
 
     # flake8: noqa: C901
     def run_validations_on_file(self, file_path, pack_error_ignore_list, is_modified=False,
-                                old_file_path=None, modified_files=None, added_files=None):
+                                old_file_path=None, modified_files=None, added_files=None,
+                                validate_all: bool = False):
         """Choose a validator to run for a single file. (i)
 
         Args:
@@ -643,15 +646,15 @@ class ValidateManager:
             return self.validate_report(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.PLAYBOOK:
-            return self.validate_playbook(structure_validator, pack_error_ignore_list, file_type, is_modified)
+            return self.validate_playbook(structure_validator, pack_error_ignore_list, file_type, is_modified, validate_all)
 
         elif file_type == FileType.INTEGRATION:
             return all([self.validate_integration(structure_validator, pack_error_ignore_list, is_modified,
-                                                  file_type), valid_in_conf])
+                                                  file_type, validate_all), valid_in_conf])
 
         elif file_type == FileType.SCRIPT:
             return all([self.validate_script(structure_validator, pack_error_ignore_list, is_modified,
-                                             file_type), valid_in_conf])
+                                             file_type, validate_all), valid_in_conf])
         elif file_type == FileType.PYTHON_FILE:
             return self.validate_python_file(file_path, pack_error_ignore_list)
 
@@ -968,7 +971,7 @@ class ValidateManager:
                                                                      specific_validations=self.specific_validations)
         return release_notes_config_validator.is_file_valid()
 
-    def validate_playbook(self, structure_validator, pack_error_ignore_list, file_type, is_modified):
+    def validate_playbook(self, structure_validator, pack_error_ignore_list, file_type, is_modified, validate_all: bool = False):
         playbook_validator = PlaybookValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                print_as_warnings=self.print_ignored_errors,
                                                json_file_path=self.json_file_path,
@@ -980,7 +983,8 @@ class ValidateManager:
                                                                current_file=playbook_validator.current_file,
                                                                is_modified=True,
                                                                is_backward_check=False,
-                                                               validator=playbook_validator)
+                                                               validator=playbook_validator,
+                                                               validate_all=validate_all)
         if deprecated_result is not None:
             return deprecated_result
 
@@ -988,7 +992,7 @@ class ValidateManager:
                                                     id_set_file=self.id_set_file,
                                                     is_modified=is_modified)
 
-    def validate_integration(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
+    def validate_integration(self, structure_validator, pack_error_ignore_list, is_modified, file_type, validate_all: bool = False):
         integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                      print_as_warnings=self.print_ignored_errors,
                                                      skip_docker_check=self.skip_docker_checks,
@@ -1000,9 +1004,10 @@ class ValidateManager:
         deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
                                                                file_path=structure_validator.file_path,
                                                                current_file=integration_validator.current_file,
-                                                               is_modified=True,
+                                                               is_modified=is_modified,
                                                                is_backward_check=self.is_backward_check,
-                                                               validator=integration_validator)
+                                                               validator=integration_validator,
+                                                               validate_all=validate_all)
         if deprecated_result is not None:
             return deprecated_result
         if is_modified and self.is_backward_check:
@@ -1016,7 +1021,7 @@ class ValidateManager:
                                                        check_is_unskipped=self.check_is_unskipped,
                                                        conf_json_data=self.conf_json_data)
 
-    def validate_script(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
+    def validate_script(self, structure_validator, pack_error_ignore_list, is_modified, file_type, validate_all: bool = False):
         script_validator = ScriptValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,
                                            skip_docker_check=self.skip_docker_checks,
@@ -1027,9 +1032,10 @@ class ValidateManager:
         deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
                                                                file_path=structure_validator.file_path,
                                                                current_file=script_validator.current_file,
-                                                               is_modified=True,
+                                                               is_modified=is_modified,
                                                                is_backward_check=self.is_backward_check,
-                                                               validator=script_validator)
+                                                               validator=script_validator,
+                                                               validate_all=validate_all)
         if deprecated_result is not None:
             return deprecated_result
 
@@ -1970,7 +1976,7 @@ class ValidateManager:
         return id_set
 
     def check_and_validate_deprecated(self, file_type, file_path, current_file, is_modified, is_backward_check,
-                                      validator):
+                                      validator, validate_all: bool = False):
         """If file is deprecated, validate it. Return None otherwise.
 
         Files with 'deprecated: true' or 'toversion < OLDEST_SUPPORTED_VERSION' fields are considered deprecated.
@@ -2001,7 +2007,7 @@ class ValidateManager:
             if hasattr(validator, "is_valid_as_deprecated"):
                 is_valid_as_deprecated = validator.is_valid_as_deprecated()
 
-            if is_modified and is_backward_check:
+            if (validate_all or is_modified) and is_backward_check:
                 return all([is_valid_as_deprecated, validator.is_backward_compatible()])
 
             self.ignored_files.add(file_path)

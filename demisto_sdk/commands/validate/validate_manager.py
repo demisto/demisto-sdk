@@ -12,105 +12,68 @@ from packaging import version
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, AUTHOR_IMAGE_FILE_NAME, CONTENT_ENTITIES_DIRS,
-    DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR,
-    IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
-    PACKS_PACK_META_FILE_NAME, SKIP_RELEASE_NOTES_FOR_TYPES,
-    VALIDATION_USING_GIT_IGNORABLE_DATA, FileType, FileType_ALLOWED_TO_DELETE,
-    PathLevel)
+from demisto_sdk.commands.common.constants import (API_MODULES_PACK, AUTHOR_IMAGE_FILE_NAME, CONTENT_ENTITIES_DIRS,
+                                                   DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_FIELDS_DIR,
+                                                   GENERIC_TYPES_DIR, IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION,
+                                                   PACKS_DIR, PACKS_PACK_META_FILE_NAME, SKIP_RELEASE_NOTES_FOR_TYPES,
+                                                   VALIDATION_USING_GIT_IGNORABLE_DATA, FileType,
+                                                   FileType_ALLOWED_TO_DELETE, PathLevel)
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content_constant_paths import \
-    DEFAULT_ID_SET_PATH
-from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
-                                                FOUND_FILES_AND_IGNORED_ERRORS,
-                                                PRESET_ERROR_TO_CHECK,
-                                                PRESET_ERROR_TO_IGNORE, Errors,
+from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
+from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS,
+                                                PRESET_ERROR_TO_CHECK, PRESET_ERROR_TO_IGNORE, Errors,
                                                 get_all_error_codes)
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.hook_validations.author_image import \
-    AuthorImageValidator
-from demisto_sdk.commands.common.hook_validations.base_validator import (
-    BaseValidator, error_codes)
-from demisto_sdk.commands.common.hook_validations.classifier import \
-    ClassifierValidator
-from demisto_sdk.commands.common.hook_validations.conf_json import \
-    ConfJsonValidator
-from demisto_sdk.commands.common.hook_validations.correlation_rule import \
-    CorrelationRuleValidator
-from demisto_sdk.commands.common.hook_validations.dashboard import \
-    DashboardValidator
-from demisto_sdk.commands.common.hook_validations.deprecation import \
-    DeprecationValidator
-from demisto_sdk.commands.common.hook_validations.description import \
-    DescriptionValidator
-from demisto_sdk.commands.common.hook_validations.generic_definition import \
-    GenericDefinitionValidator
-from demisto_sdk.commands.common.hook_validations.generic_field import \
-    GenericFieldValidator
-from demisto_sdk.commands.common.hook_validations.generic_module import \
-    GenericModuleValidator
-from demisto_sdk.commands.common.hook_validations.generic_type import \
-    GenericTypeValidator
+from demisto_sdk.commands.common.hook_validations.author_image import AuthorImageValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
+from demisto_sdk.commands.common.hook_validations.classifier import ClassifierValidator
+from demisto_sdk.commands.common.hook_validations.conf_json import ConfJsonValidator
+from demisto_sdk.commands.common.hook_validations.correlation_rule import CorrelationRuleValidator
+from demisto_sdk.commands.common.hook_validations.dashboard import DashboardValidator
+from demisto_sdk.commands.common.hook_validations.deprecation import DeprecationValidator
+from demisto_sdk.commands.common.hook_validations.description import DescriptionValidator
+from demisto_sdk.commands.common.hook_validations.generic_definition import GenericDefinitionValidator
+from demisto_sdk.commands.common.hook_validations.generic_field import GenericFieldValidator
+from demisto_sdk.commands.common.hook_validations.generic_module import GenericModuleValidator
+from demisto_sdk.commands.common.hook_validations.generic_type import GenericTypeValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.hook_validations.incident_field import \
-    IncidentFieldValidator
-from demisto_sdk.commands.common.hook_validations.incident_type import \
-    IncidentTypeValidator
-from demisto_sdk.commands.common.hook_validations.indicator_field import \
-    IndicatorFieldValidator
-from demisto_sdk.commands.common.hook_validations.integration import \
-    IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.incident_field import IncidentFieldValidator
+from demisto_sdk.commands.common.hook_validations.incident_type import IncidentTypeValidator
+from demisto_sdk.commands.common.hook_validations.indicator_field import IndicatorFieldValidator
+from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.job import JobValidator
-from demisto_sdk.commands.common.hook_validations.layout import (
-    LayoutsContainerValidator, LayoutValidator)
+from demisto_sdk.commands.common.hook_validations.layout import LayoutsContainerValidator, LayoutValidator
 from demisto_sdk.commands.common.hook_validations.lists import ListsValidator
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
-from demisto_sdk.commands.common.hook_validations.modeling_rule import \
-    ModelingRuleValidator
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
-    PackUniqueFilesValidator
-from demisto_sdk.commands.common.hook_validations.parsing_rule import \
-    ParsingRuleValidator
-from demisto_sdk.commands.common.hook_validations.playbook import \
-    PlaybookValidator
-from demisto_sdk.commands.common.hook_validations.pre_process_rule import \
-    PreProcessRuleValidator
-from demisto_sdk.commands.common.hook_validations.python_file import \
-    PythonFileValidator
+from demisto_sdk.commands.common.hook_validations.modeling_rule import ModelingRuleValidator
+from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
+from demisto_sdk.commands.common.hook_validations.parsing_rule import ParsingRuleValidator
+from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.pre_process_rule import PreProcessRuleValidator
+from demisto_sdk.commands.common.hook_validations.python_file import PythonFileValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.hook_validations.release_notes import \
-    ReleaseNotesValidator
-from demisto_sdk.commands.common.hook_validations.release_notes_config import \
-    ReleaseNotesConfigValidator
+from demisto_sdk.commands.common.hook_validations.release_notes import ReleaseNotesValidator
+from demisto_sdk.commands.common.hook_validations.release_notes_config import ReleaseNotesConfigValidator
 from demisto_sdk.commands.common.hook_validations.report import ReportValidator
-from demisto_sdk.commands.common.hook_validations.reputation import \
-    ReputationValidator
+from demisto_sdk.commands.common.hook_validations.reputation import ReputationValidator
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
-from demisto_sdk.commands.common.hook_validations.test_playbook import \
-    TestPlaybookValidator
-from demisto_sdk.commands.common.hook_validations.triggers import \
-    TriggersValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from demisto_sdk.commands.common.hook_validations.test_playbook import TestPlaybookValidator
+from demisto_sdk.commands.common.hook_validations.triggers import TriggersValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.hook_validations.wizard import WizardValidator
-from demisto_sdk.commands.common.hook_validations.xsiam_dashboard import \
-    XSIAMDashboardValidator
-from demisto_sdk.commands.common.hook_validations.xsiam_report import \
-    XSIAMReportValidator
-from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
-    XSOARConfigJsonValidator
-from demisto_sdk.commands.common.tools import (
-    _get_file_id, find_type, get_api_module_ids,
-    get_api_module_integrations_set, get_content_path, get_file,
-    get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
-    get_relative_path_from_packs_dir, get_remote_file, get_yaml,
-    open_id_set_file, run_command_os)
+from demisto_sdk.commands.common.hook_validations.xsiam_dashboard import XSIAMDashboardValidator
+from demisto_sdk.commands.common.hook_validations.xsiam_report import XSIAMReportValidator
+from demisto_sdk.commands.common.hook_validations.xsoar_config_json import XSOARConfigJsonValidator
+from demisto_sdk.commands.common.tools import (_get_file_id, find_type, get_api_module_ids,
+                                               get_api_module_integrations_set, get_content_path, get_file,
+                                               get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
+                                               get_relative_path_from_packs_dir, get_remote_file, get_yaml,
+                                               open_id_set_file, print_warning, run_command_os)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
-SKIPPED_FILES = ['CommonServerPython.py', 'CommonServerUserPython.py', 'demistomock.py']
+SKIPPED_FILES = ['CommonServerPython.py', 'CommonServerUserPython.py', 'demistomock.py', 'DemistoClassApiModule.py']
 
 
 class ValidateManager:
@@ -146,7 +109,7 @@ class ValidateManager:
         self.check_is_unskipped = check_is_unskipped
         self.conf_json_data = {}
         self.run_with_multiprocessing = multiprocessing
-        self.is_possible_validate_readme = self.is_node_exist()
+        self.is_possible_validate_readme = self.is_node_exist() or ReadMeValidator.is_docker_available()
 
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
@@ -242,7 +205,7 @@ class ValidateManager:
         """
         # Check node exist
         content_path = get_content_path()
-        stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)
+        stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)  # type: ignore
         if exit_code:
             return False
         return True
@@ -272,7 +235,7 @@ class ValidateManager:
         """Initiates validation in accordance with mode (i,g,a)
         """
         if self.validate_all:
-            is_valid = self.run_validation_on_all_packs(validate_all=yes)
+            is_valid = self.run_validation_on_all_packs()
         elif self.use_git:
             is_valid = self.run_validation_using_git()
         elif self.file_path:
@@ -365,7 +328,7 @@ class ValidateManager:
                 click.secho(f'An error occurred while tried to collect result, Error: {e}', fg="bright_red")
                 raise
 
-    def run_validation_on_all_packs(self, validate_all):
+    def run_validation_on_all_packs(self):
         """Runs validations on all files in all packs in repo (-a option)
 
         Returns:
@@ -386,29 +349,29 @@ class ValidateManager:
         ReadMeValidator.add_node_env_vars()
         if self.is_possible_validate_readme:
             with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
-                return self.validate_packs(all_packs, all_packs_valid, count, num_of_packs, validate_all)
+                return self.validate_packs(all_packs, all_packs_valid, count, num_of_packs)
         else:
-            return self.validate_packs(all_packs, all_packs_valid, count, num_of_packs, validate_all)
+            return self.validate_packs(all_packs, all_packs_valid, count, num_of_packs)
 
     def validate_packs(self, all_packs: list, all_packs_valid: set,
-                       count: int, num_of_packs: int, validate_all: bool = False) -> bool:
+                       count: int, num_of_packs: int) -> bool:
 
         if self.run_with_multiprocessing:
             with pebble.ProcessPool(max_workers=4) as executor:
                 futures = []
                 for pack_path in all_packs:
-                    futures.append(executor.schedule(self.run_validations_on_pack, args=(pack_path, validate_all)))
+                    futures.append(executor.schedule(self.run_validations_on_pack, args=(pack_path,)))
                 self.wait_futures_complete(futures_list=futures,
                                            done_fn=lambda x, y: (all_packs_valid.add(x),  # type: ignore
                                                                  FOUND_FILES_AND_ERRORS.extend(y)))  # type: ignore
         else:
             for pack_path in all_packs:
                 self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
-                all_packs_valid.add(self.run_validations_on_pack(pack_path, validate_all)[0])
+                all_packs_valid.add(self.run_validations_on_pack(pack_path)[0])
                 count += 1
         return all(all_packs_valid)
 
-    def run_validations_on_pack(self, pack_path, validate_all: bool = False):
+    def run_validations_on_pack(self, pack_path):
         """Runs validation on all files in given pack. (i,g,a)
 
         Args:
@@ -426,14 +389,13 @@ class ValidateManager:
             content_entity_path = os.path.join(pack_path, content_dir)
             if content_dir in CONTENT_ENTITIES_DIRS:
                 pack_entities_validation_results.add(self.run_validation_on_content_entities(content_entity_path,
-                                                                                             pack_error_ignore_list,
-                                                                                             validate_all))
+                                                                                             pack_error_ignore_list))
             else:
                 self.ignored_files.add(content_entity_path)
 
         return all(pack_entities_validation_results), FOUND_FILES_AND_ERRORS
 
-    def run_validation_on_content_entities(self, content_entity_dir_path, pack_error_ignore_list, validate_all: bool = False):
+    def run_validation_on_content_entities(self, content_entity_dir_path, pack_error_ignore_list):
         """Gets non-pack folder and runs validation within it (Scripts, Integrations...)
 
         Returns:
@@ -455,8 +417,7 @@ class ValidateManager:
                 if os.path.isfile(file_path):
                     if file_path.endswith('.json') or file_path.endswith('.yml') or file_path.endswith('.md'):
                         content_entities_validation_results.add(self.run_validations_on_file(file_path,
-                                                                                             pack_error_ignore_list,
-                                                                                             validate_all))
+                                                                                             pack_error_ignore_list))
                     else:
                         self.ignored_files.add(file_path)
 
@@ -533,8 +494,7 @@ class ValidateManager:
 
     # flake8: noqa: C901
     def run_validations_on_file(self, file_path, pack_error_ignore_list, is_modified=False,
-                                old_file_path=None, modified_files=None, added_files=None,
-                                validate_all: bool = False):
+                                old_file_path=None, modified_files=None, added_files=None):
         """Choose a validator to run for a single file. (i)
 
         Args:
@@ -635,9 +595,11 @@ class ValidateManager:
                                      file_path=file_path):
                     return False
             if not self.validate_all:
-                if not ReadMeValidator.are_modules_installed_for_verify(get_content_path()):  # shows warning message
-                    return True
                 ReadMeValidator.add_node_env_vars()
+                if not ReadMeValidator.are_modules_installed_for_verify(
+                    get_content_path()  # type: ignore
+                ) and not ReadMeValidator.is_docker_available():  # shows warning message
+                    return True
                 with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
                     return self.validate_readme(file_path, pack_error_ignore_list)
             return self.validate_readme(file_path, pack_error_ignore_list)
@@ -646,15 +608,15 @@ class ValidateManager:
             return self.validate_report(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.PLAYBOOK:
-            return self.validate_playbook(structure_validator, pack_error_ignore_list, file_type, is_modified, validate_all)
+            return self.validate_playbook(structure_validator, pack_error_ignore_list, file_type, is_modified)
 
         elif file_type == FileType.INTEGRATION:
             return all([self.validate_integration(structure_validator, pack_error_ignore_list, is_modified,
-                                                  file_type, validate_all), valid_in_conf])
+                                                  file_type), valid_in_conf])
 
         elif file_type == FileType.SCRIPT:
             return all([self.validate_script(structure_validator, pack_error_ignore_list, is_modified,
-                                             file_type, validate_all), valid_in_conf])
+                                             file_type), valid_in_conf])
         elif file_type == FileType.PYTHON_FILE:
             return self.validate_python_file(file_path, pack_error_ignore_list)
 
@@ -971,7 +933,7 @@ class ValidateManager:
                                                                      specific_validations=self.specific_validations)
         return release_notes_config_validator.is_file_valid()
 
-    def validate_playbook(self, structure_validator, pack_error_ignore_list, file_type, is_modified, validate_all: bool = False):
+    def validate_playbook(self, structure_validator, pack_error_ignore_list, file_type, is_modified):
         playbook_validator = PlaybookValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                print_as_warnings=self.print_ignored_errors,
                                                json_file_path=self.json_file_path,
@@ -983,8 +945,7 @@ class ValidateManager:
                                                                current_file=playbook_validator.current_file,
                                                                is_modified=True,
                                                                is_backward_check=False,
-                                                               validator=playbook_validator,
-                                                               validate_all=validate_all)
+                                                               validator=playbook_validator)
         if deprecated_result is not None:
             return deprecated_result
 
@@ -992,7 +953,7 @@ class ValidateManager:
                                                     id_set_file=self.id_set_file,
                                                     is_modified=is_modified)
 
-    def validate_integration(self, structure_validator, pack_error_ignore_list, is_modified, file_type, validate_all: bool = False):
+    def validate_integration(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
         integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                      print_as_warnings=self.print_ignored_errors,
                                                      skip_docker_check=self.skip_docker_checks,
@@ -1006,8 +967,7 @@ class ValidateManager:
                                                                current_file=integration_validator.current_file,
                                                                is_modified=is_modified,
                                                                is_backward_check=self.is_backward_check,
-                                                               validator=integration_validator,
-                                                               validate_all=validate_all)
+                                                               validator=integration_validator)
         if deprecated_result is not None:
             return deprecated_result
         if is_modified and self.is_backward_check:
@@ -1021,7 +981,7 @@ class ValidateManager:
                                                        check_is_unskipped=self.check_is_unskipped,
                                                        conf_json_data=self.conf_json_data)
 
-    def validate_script(self, structure_validator, pack_error_ignore_list, is_modified, file_type, validate_all: bool = False):
+    def validate_script(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
         script_validator = ScriptValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,
                                            skip_docker_check=self.skip_docker_checks,
@@ -1034,8 +994,7 @@ class ValidateManager:
                                                                current_file=script_validator.current_file,
                                                                is_modified=is_modified,
                                                                is_backward_check=self.is_backward_check,
-                                                               validator=script_validator,
-                                                               validate_all=validate_all)
+                                                               validator=script_validator)
         if deprecated_result is not None:
             return deprecated_result
 
@@ -1051,7 +1010,6 @@ class ValidateManager:
                                                      skip_docker_check=self.skip_docker_checks,
                                                      json_file_path=self.json_file_path,
                                                      validate_all=self.validate_all,
-                                                     deprecation_validator=self.deprecation_validator
                                                      )
         return integration_validator.is_valid_beta_integration()
 
@@ -1690,7 +1648,8 @@ class ValidateManager:
 
         # extract metadata files from the recognised changes
         changed_meta = self.pack_metadata_extraction(modified_files, added_files, renamed_files)
-        filtered_changed_meta, old_format_changed, _ = self.filter_to_relevant_files(changed_meta)
+        filtered_changed_meta, old_format_changed, _ = self.filter_to_relevant_files(changed_meta,
+                                                                                     check_metadata_files=True)
         old_format_files |= old_format_changed
         return filtered_modified, filtered_added, filtered_changed_meta, old_format_files, valid_types
 
@@ -1712,7 +1671,7 @@ class ValidateManager:
 
         return changed_metadata_files
 
-    def filter_to_relevant_files(self, file_set):
+    def filter_to_relevant_files(self, file_set, check_metadata_files=False):
         """Goes over file set and returns only a filtered set of only files relevant for validation"""
         filtered_set: set = set()
         old_format_files: set = set()
@@ -1727,9 +1686,11 @@ class ValidateManager:
                 file_path = str(path)
 
             try:
-                formatted_path, old_path, valid_file_extension = self.check_file_relevance_and_format_path(file_path,
-                                                                                                           old_path,
-                                                                                                           old_format_files)
+                formatted_path, old_path, valid_file_extension = self.check_file_relevance_and_format_path(
+                    file_path,
+                    old_path,
+                    old_format_files,
+                    check_metadata_files=check_metadata_files)
                 valid_types.add(valid_file_extension)
                 if formatted_path:
                     if old_path:
@@ -1746,7 +1707,7 @@ class ValidateManager:
 
         return filtered_set, old_format_files, all(valid_types)
 
-    def check_file_relevance_and_format_path(self, file_path, old_path, old_format_files):
+    def check_file_relevance_and_format_path(self, file_path, old_path, old_format_files, check_metadata_files=False):
         """
         Determines if a file is relevant for validation and create any modification to the file_path if needed
         :returns a tuple(string, string, bool) where
@@ -1760,7 +1721,7 @@ class ValidateManager:
 
         file_type = find_type(file_path)
 
-        if self.ignore_files_irrelevant_for_validation(file_path):
+        if self.ignore_files_irrelevant_for_validation(file_path, check_metadata_files=check_metadata_files):
             return irrelevant_file_output
 
         if not file_type:
@@ -1784,6 +1745,12 @@ class ValidateManager:
             else:
                 return irrelevant_file_output
 
+        if file_type == FileType.XDRC_TEMPLATE_YML:
+            file_path = file_path.replace('.yml', '.json')
+
+            if old_path:
+                old_path = old_path.replace('.yml', '.json')
+
         # redirect schema file when updating release notes
         if file_type == FileType.MODELING_RULE_SCHEMA:
             file_path = file_path.replace('_schema', '').replace('.json', '.yml')
@@ -1804,19 +1771,23 @@ class ValidateManager:
         else:
             return file_path, '', True
 
-    def ignore_files_irrelevant_for_validation(self, file_path: str) -> bool:
+    def ignore_files_irrelevant_for_validation(self, file_path: str, check_metadata_files: bool = False) -> bool:
         """
         Will ignore files that are not in the packs directory, are .txt files or are in the
         VALIDATION_USING_GIT_IGNORABLE_DATA tuple.
 
         Args:
             file_path: path of file to check if should be ignored.
+            check_metadata_files: If True will not ignore metadata files.
         Returns: True if file is ignored, false otherwise
         """
 
         if PACKS_DIR not in file_path:
             self.ignore_file(file_path)
             return True
+
+        if check_metadata_files and find_type(file_path) == FileType.METADATA:
+            return False
 
         if file_path.endswith(".txt"):
             self.ignore_file(file_path)
@@ -1976,7 +1947,7 @@ class ValidateManager:
         return id_set
 
     def check_and_validate_deprecated(self, file_type, file_path, current_file, is_modified, is_backward_check,
-                                      validator, validate_all: bool = False):
+                                      validator):
         """If file is deprecated, validate it. Return None otherwise.
 
         Files with 'deprecated: true' or 'toversion < OLDEST_SUPPORTED_VERSION' fields are considered deprecated.
@@ -2007,12 +1978,12 @@ class ValidateManager:
             if hasattr(validator, "is_valid_as_deprecated"):
                 is_valid_as_deprecated = validator.is_valid_as_deprecated()
 
-            if (validate_all or is_modified) and is_backward_check:
+            if is_modified and is_backward_check:
                 return all([is_valid_as_deprecated, validator.is_backward_compatible()])
 
             self.ignored_files.add(file_path)
             if self.print_ignored_files:
                 click.echo(f"Skipping validation for: {file_path}")
 
-            # return is_valid_as_deprecated
+            return is_valid_as_deprecated
         return None

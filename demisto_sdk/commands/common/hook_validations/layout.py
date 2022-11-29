@@ -5,18 +5,15 @@ from typing import Dict, List
 
 import click
 
-from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-    LAYOUT_AND_MAPPER_BUILT_IN_FIELDS,
-    LAYOUTS_CONTAINERS_OLDEST_SUPPORTED_VERSION)
+from demisto_sdk.commands.common.constants import (DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
+                                                   LAYOUT_AND_MAPPER_BUILT_IN_FIELDS,
+                                                   LAYOUTS_CONTAINERS_OLDEST_SUPPORTED_VERSION)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    error_codes
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
-from demisto_sdk.commands.common.tools import (
-    LAYOUT_CONTAINER_FIELDS, get_all_incident_and_indicator_fields_from_id_set,
-    get_invalid_incident_fields_from_layout)
+from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
+from demisto_sdk.commands.common.tools import (LAYOUT_CONTAINER_FIELDS,
+                                               get_all_incident_and_indicator_fields_from_id_set,
+                                               get_invalid_incident_fields_from_layout)
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 
 FROM_VERSION_LAYOUTS_CONTAINER = '6.0.0'

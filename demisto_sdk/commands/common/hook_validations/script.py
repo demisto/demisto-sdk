@@ -2,19 +2,14 @@ import os
 import re
 from typing import Optional
 
-from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, DEFAULT_CONTENT_ITEM_FROM_VERSION, DEPRECATED_REGEXES,
-    PYTHON_SUBTYPES, TYPE_PWSH)
+from demisto_sdk.commands.common.constants import (API_MODULES_PACK, DEFAULT_CONTENT_ITEM_FROM_VERSION,
+                                                   DEPRECATED_REGEXES, PYTHON_SUBTYPES, TYPE_PWSH)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    error_codes
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
-from demisto_sdk.commands.common.hook_validations.docker import \
-    DockerImageValidator
-from demisto_sdk.commands.common.tools import (
-    get_core_pack_list, get_file_version_suffix_if_exists, get_files_in_dir,
-    get_pack_name, server_version_compare)
+from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+from demisto_sdk.commands.common.tools import (get_core_pack_list, get_file_version_suffix_if_exists, get_files_in_dir,
+                                               get_pack_name, server_version_compare)
 
 
 class ScriptValidator(ContentEntityValidator):

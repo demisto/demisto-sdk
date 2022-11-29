@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.7.7"
+version = "1.7.8"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -19,12 +19,6 @@ exclude = ["TestSuite/**", "*/tests/*", "tests"]
 [tool.poetry.scripts]
 demisto-sdk = "demisto_sdk.__main__:main"
 
-[tool.vulture]
-exclude = ["*/tests/*"]
-min_confidence = 80
-paths = ["demisto_sdk", "TestSuite"]
-sort_by_size = true
-
 [tool.poetry.dependencies]
 python = "^3.8"
 autopep8 = "^1.6.0"
@@ -39,7 +33,7 @@ click = "^8.0.0"
 colorama = "^0.4.4"
 coloredlogs = "^15.0.1"
 configparser = "^5.2.0"
-coverage = "=6.3.2"
+coverage = "6.3.2"
 decorator = "^5.1.1"
 demisto-py = "^3.2.3"
 dictor = "^0.1.9"
@@ -67,7 +61,7 @@ wcmatch = "^8.3"
 yamlordereddictloader = "^0.4.0"
 GitPython = "^3.1.27"
 Jinja2 = "^3.1.1"
-Pebble = "^4.6.3"
+Pebble = ">=4.6.3,<6.0.0"
 PyPDF2 = "^1.26.0"
 giturlparse = "^0.10.0"
 pytest-freezegun = "^0.4.2"
@@ -137,6 +131,16 @@ follow_imports = "silent"
 pretty = true
 allow_redefinition = true
 exclude = "tests/.*|demisto_sdk/commands/init/templates/.*"
+
+[tool.vulture]
+exclude = ["*/tests/*"]
+min_confidence = 80
+paths = ["demisto_sdk", "TestSuite"]
+sort_by_size = true
+
+[tool.isort]
+atomic = true
+line_length = 120
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

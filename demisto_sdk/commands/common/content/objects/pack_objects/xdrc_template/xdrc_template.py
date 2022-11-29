@@ -4,13 +4,11 @@ import demisto_client
 from wcmatch.pathlib import Path
 
 import demisto_sdk.commands.common.content.errors as exc
-from demisto_sdk.commands.common.constants import (ENTITY_TYPE_TO_DIR,
-                                                   XDRC_TEMPLATE, FileType)
+from demisto_sdk.commands.common.constants import ENTITY_TYPE_TO_DIR, XDRC_TEMPLATE, FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
     JSONContentObject
 from demisto_sdk.commands.common.tools import generate_xsiam_normalized_name
-from demisto_sdk.commands.unify.xdrc_template_unifier import \
-    XDRCTemplateUnifier
+from demisto_sdk.commands.unify.xdrc_template_unifier import XDRCTemplateUnifier
 
 
 class XDRCTemplate(JSONContentObject):
@@ -72,15 +70,15 @@ class XDRCTemplate(JSONContentObject):
             DumpContentObjectError: If not valid directory path - not directory or not exists.
         """
         if dest_dir:
-            dest_dir = Path(dest_dir)
-            if dest_dir.exists() and not Path(dest_dir).is_dir():
+            dest_dir = Path(dest_dir)  # type: ignore
+            if dest_dir.exists() and not Path(dest_dir).is_dir():  # type: ignore
                 raise exc.ContentDumpError(self, self._path, "Destiantion is not valid directory path")
             else:
                 dest_dir.mkdir(parents=True, exist_ok=True)
         else:
             dest_dir = self._path.parent
 
-        return dest_dir
+        return dest_dir  # type: ignore
 
     def dump(self, dest_dir: Optional[Union[Path, str]] = None, unify: bool = True) -> List[Path]:
         """

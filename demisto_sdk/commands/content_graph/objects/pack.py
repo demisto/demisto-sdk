@@ -7,58 +7,44 @@ from typing import TYPE_CHECKING, Any, Generator, List, Optional
 from packaging.version import parse
 from pydantic import BaseModel, Field
 
-from demisto_sdk.commands.common.constants import (
-    CONTRIBUTORS_README_TEMPLATE, MarketplaceVersions)
+from demisto_sdk.commands.common.constants import CONTRIBUTORS_README_TEMPLATE, MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import MarketplaceTagParser
-from demisto_sdk.commands.content_graph.common import (PACK_METADATA_FILENAME,
-                                                       ContentType, Nodes,
-                                                       Relationships,
+from demisto_sdk.commands.content_graph.common import (PACK_METADATA_FILENAME, ContentType, Nodes, Relationships,
                                                        RelationshipType)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-from demisto_sdk.commands.content_graph.objects.correlation_rule import \
-    CorrelationRule
+from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
-from demisto_sdk.commands.content_graph.objects.generic_definition import \
-    GenericDefinition
-from demisto_sdk.commands.content_graph.objects.generic_field import \
-    GenericField
-from demisto_sdk.commands.content_graph.objects.generic_module import \
-    GenericModule
+from demisto_sdk.commands.content_graph.objects.generic_definition import GenericDefinition
+from demisto_sdk.commands.content_graph.objects.generic_field import GenericField
+from demisto_sdk.commands.content_graph.objects.generic_module import GenericModule
 from demisto_sdk.commands.content_graph.objects.generic_type import GenericType
-from demisto_sdk.commands.content_graph.objects.incident_field import \
-    IncidentField
-from demisto_sdk.commands.content_graph.objects.incident_type import \
-    IncidentType
-from demisto_sdk.commands.content_graph.objects.indicator_field import \
-    IndicatorField
-from demisto_sdk.commands.content_graph.objects.indicator_type import \
-    IndicatorType
+from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
+from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
+from demisto_sdk.commands.content_graph.objects.indicator_field import IndicatorField
+from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorType
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.job import Job
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.list import List as ListObject
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
-from demisto_sdk.commands.content_graph.objects.modeling_rule import \
-    ModelingRule
+from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.report import Report
 from demisto_sdk.commands.content_graph.objects.script import Script
-from demisto_sdk.commands.content_graph.objects.test_playbook import \
-    TestPlaybook
+from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
 from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
-from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import \
-    XSIAMDashboard
+from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
+from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
 
 if TYPE_CHECKING:
-    from demisto_sdk.commands.content_graph.objects.relationship import \
-        RelationshipData
+    from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
 logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
@@ -107,8 +93,9 @@ class PackContentItems(BaseModel):
         [], alias=ContentType.XSIAM_DASHBOARD.value
     )
     xsiam_report: List[XSIAMReport] = Field([], alias=ContentType.XSIAM_REPORT.value)
+    xdrc_template: List[XDRCTemplate] = Field([], alias=ContentType.XDRC_TEMPLATE.value)
 
-    def __iter__(self) -> Generator[ContentItem, Any, Any]:
+    def __iter__(self) -> Generator[ContentItem, Any, Any]:  # type: ignore
         """Defines the iteration of the object. Each iteration yields a single content item."""
         for content_items in vars(self).values():
             for content_item in content_items:

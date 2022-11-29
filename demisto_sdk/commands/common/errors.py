@@ -5,10 +5,9 @@ from typing import Any, Dict, List, Optional, Union
 import decorator
 from requests import Response
 
-from demisto_sdk.commands.common.constants import (
-    BETA_INTEGRATION_DISCLAIMER, FILETYPE_TO_DEFAULT_FROMVERSION,
-    INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME, FileType,
-    MarketplaceVersions)
+from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER, FILETYPE_TO_DEFAULT_FROMVERSION,
+                                                   INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME,
+                                                   FileType, MarketplaceVersions)
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 
 FOUND_FILES_AND_ERRORS: list = []
@@ -22,7 +21,7 @@ ALLOWED_IGNORE_ERRORS = [
     'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145', 'IN153', 'IN154',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
-    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107', 'PB118', 'PB119', 'PB121',
+    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB114', 'PB115', 'PB116', 'PB107', 'PB118', 'PB119', 'PB121',
     'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM110', 'RM112', 'RM113',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
@@ -314,11 +313,12 @@ ERROR_CODE = {
     "wrong_version_format": {'code': "PA130", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_version_diff_from_rn": {'code': "PA131", 'ui_applicable': False, 'related_field': ''},
     "pack_should_be_deprecated": {'code': "PA132", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_non_approved_tag_prefix": {'code': "PA133", 'ui_applicable': False, 'related_field': ''},
+    "categories_field_does_not_match_standard": {'code': "PA134", 'ui_applicable': False, 'related_field': ''},
 
     # PB - Playbooks
     "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
     "playbook_unreachable_condition": {'code': "PB101", 'ui_applicable': True, 'related_field': 'tasks'},
-    "playbook_unhandled_condition": {'code': "PB102", 'ui_applicable': True, 'related_field': 'conditions'},
     "playbook_unconnected_tasks": {'code': "PB103", 'ui_applicable': True, 'related_field': 'tasks'},
     "invalid_deprecated_playbook": {'code': "PB104", 'ui_applicable': False, 'related_field': 'description'},
     "playbook_cant_have_deletecontext_all": {'code': "PB105", 'ui_applicable': True, 'related_field': 'tasks'},
@@ -330,7 +330,6 @@ ERROR_CODE = {
                                                           'related_field': 'toVersion'},
     "integration_version_not_match_playbook_version": {'code': "PB111", 'ui_applicable': False,
                                                        'related_field': 'toVersion'},
-    "playbook_condition_has_no_else_path": {'code': "PB112", 'ui_applicable': False, 'related_field': 'nexttasks'},
     "invalid_subplaybook_name": {'code': "PB113", 'ui_applicable': False, 'related_field': 'tasks'},
     "playbook_not_quiet_mode": {'code': "PB114", 'ui_applicable': False, 'related_field': ''},
     "playbook_tasks_not_quiet_mode": {'code': "PB115", 'ui_applicable': False, 'related_field': 'tasks'},
@@ -340,6 +339,11 @@ ERROR_CODE = {
     "input_used_not_in_input_section": {'code': "PB119", 'ui_applicable': False, 'related_field': ''},
     "playbook_is_deprecated_and_used": {'code': 'PB120', 'ui_applicable': False, 'related_field': 'deprecated'},
     "incorrect_value_references": {'code': "PB121", 'ui_applicable': False, 'related_field': 'taskid'},
+    "playbook_unhandled_task_branches": {'code': "PB122", 'ui_applicable': True, 'related_field': 'conditions'},
+    "playbook_unhandled_reply_options": {'code': "PB123", 'ui_applicable': True, 'related_field': 'conditions'},
+    "playbook_unhandled_script_condition_branches": {'code': "PB124", 'ui_applicable': True, 'related_field': 'conditions'},
+    "playbook_only_default_next": {'code': "PB125", 'ui_applicable': True, 'related_field': 'conditions'},
+    "playbook_only_default_reply_option": {'code': "PB126", 'ui_applicable': True, 'related_field': 'message'},
 
     # PP - Pre-Process Rules
     "invalid_from_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
@@ -659,9 +663,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def wrong_category(category):
-        return "The category '{}' is not in the integration schemas, the valid options are:\n{}" \
-            .format(category, '\n'.join(INTEGRATION_CATEGORIES))
+    def wrong_category(category, approved_list):
+        return f"The category '{category}' is not in the integration schemas, the valid options are:\n{approved_list}"
 
     @staticmethod
     @error_code_decorator
@@ -841,8 +844,14 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def error_starting_mdx_server(line):
-        return f'Failed starting mdx server. stdout: {line}.\n' \
+        return f'Failed starting local mdx server. stdout: {line}.\n' \
                f'Try running the following command: `npm install`'
+
+    @staticmethod
+    @error_code_decorator
+    def error_starting_docker_mdx_server(line):
+        return f'Failed starting docker mdx server. stdout: {line}.\n' \
+               f'Check to see if the docker daemon is up and running'
 
     @staticmethod
     @error_code_decorator
@@ -1340,7 +1349,7 @@ class Errors:
             message_to_return += f"- {un_matching_file.get('name')}: Release notes file has dockerimage: " \
                                  f"{un_matching_file.get('rn_version')} but the YML file has dockerimage: " \
                                  f"{un_matching_file.get('yml_version')}\n"
-        message_to_return += "To fix this please run: 'demisto-sdk update-release-notes -i {pack_path}'"
+        message_to_return += f"To fix this please run: 'demisto-sdk update-release-notes -i {pack_path}'"
         return message_to_return
 
     @staticmethod
@@ -1362,7 +1371,33 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def playbook_unhandled_condition(task_id, task_condition_labels):
+    def playbook_only_default_next(task_id):
+        return f'Playbook conditional task with id:{task_id} only has a default condition. ' \
+               f'Please remove this task or add ' \
+               f'another non-default condition to condition task with id:{task_id}.'
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_only_default_reply_option(task_id):
+        return f'Playbook task with id:{task_id} only has a default option. ' \
+               f'Please remove this task or add ' \
+               f'another non-default option to the task with id:{task_id}.'
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_unhandled_task_branches(task_id, task_condition_labels):
+        return f'Playbook conditional task with id:{task_id} has an unhandled ' \
+               f'condition: {",".join(map(lambda x: f"{str(x)}", task_condition_labels))}'
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_unhandled_reply_options(task_id, task_condition_labels):
+        return f'Playbook conditional task with id:{task_id} has an unhandled ' \
+               f'condition: {",".join(map(lambda x: f"{str(x)}", task_condition_labels))}'
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_unhandled_script_condition_branches(task_id, task_condition_labels):
         return f'Playbook conditional task with id:{task_id} has an unhandled ' \
                f'condition: {",".join(map(lambda x: f"{str(x)}", task_condition_labels))}'
 
@@ -1728,8 +1763,15 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_metadata_non_approved_tags(non_approved_tags: set) -> str:
-        return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}' \
-               f'The list of approved tags can be found in https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories'
+        return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}. ' \
+               'The list of approved tags for each marketplace can be found on ' \
+               'https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_non_approved_tag_prefix(tag, approved_prefixes: set) -> str:
+        return f'The pack metadata contains a tag with an invalid prefix: {tag}.' \
+               f' The approved prefixes are: {", ".join(approved_prefixes)}.'
 
     @staticmethod
     @error_code_decorator
@@ -2476,6 +2518,12 @@ class Errors:
                f'The description of the pack in the pack_metadata.json should be one of the following formats:\n' \
                f'1. "Deprecated. Use <PACK_NAME> instead."\n' \
                f'2. "Deprecated. <REASON> No available replacement."'
+
+    @staticmethod
+    @error_code_decorator
+    def categories_field_does_not_match_standard(approved_list):
+        return f"The pack metadata categories field doesn't match the standard,\n" \
+               f"please make sure the field contain only one category from the following options:\n{approved_list}"
 
     @staticmethod
     @error_code_decorator

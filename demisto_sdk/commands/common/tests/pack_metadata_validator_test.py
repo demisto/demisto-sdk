@@ -6,11 +6,10 @@ import pytest
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import EXCLUDED_DISPLAY_NAME_WORDS
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import (
-    PACK_METADATA_NAME, PACK_METADATA_SUPPORT,
-    BlockingValidationFailureException, PackUniqueFilesValidator)
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+from demisto_sdk.commands.common.hook_validations.pack_unique_files import (PACK_METADATA_NAME, PACK_METADATA_SUPPORT,
+                                                                            BlockingValidationFailureException,
+                                                                            PackUniqueFilesValidator)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 
@@ -43,7 +42,9 @@ class TestPackMetadataValidator:
                                           os.path.join(FILES_PATH, 'pack_metadata__valid__community.json'),
                                           ])
     def test_metadata_validator_valid(self, mocker, metadata):
-        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
+                     return_value=["Data Enrichment & Threat Intelligence"])
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': {}}, 'json'))
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=TestPackMetadataValidator.read_file(metadata))
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
@@ -62,7 +63,7 @@ class TestPackMetadataValidator:
         os.path.join(FILES_PATH, 'pack_metadata_invalid_format_version.json'),
     ])
     def test_metadata_validator_invalid__non_breaking(self, mocker, metadata):
-        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': {}}, 'json'))
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=TestPackMetadataValidator.read_file(metadata))
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
@@ -89,7 +90,7 @@ class TestPackMetadataValidator:
         Then
                 Ensure BlockingValidationFailureException is raised
         """
-        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': {}}, 'json'))
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=TestPackMetadataValidator.read_file(metadata))
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
@@ -164,7 +165,7 @@ class TestPackMetadataValidator:
 
     def test_metadata_validator_empty_categories(self, mocker):
         metadata = os.path.join(self.__class__.FILES_PATH, 'pack_metadata_empty_categories.json')
-        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': {}}, 'json'))
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=TestPackMetadataValidator.read_file(metadata))
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
@@ -201,7 +202,7 @@ class TestPackMetadataValidator:
             - Ensure false is returned and the correct error is added to the validation object error list
         """
         metadata = os.path.join(self.FILES_PATH, 'pack_metadata_invalid_format_version.json')
-        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': {}}, 'json'))
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=TestPackMetadataValidator.read_file(metadata))
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
@@ -334,3 +335,38 @@ class TestPackMetadataValidator:
         pack, should_pack_be_deprecated = deprecated_pack
         validator = PackUniqueFilesValidator(pack.path)
         assert validator.should_pack_be_deprecated() == should_pack_be_deprecated
+
+    VALID_CATEGORIES_LIST = ["Endpoint", "File Integrity Management"]
+
+    @pytest.mark.parametrize("metadata_content, expected_results, valid_list_mock",
+                             [({"categories": ["Endpoint"]}, True, VALID_CATEGORIES_LIST),
+                              ({"categories": ["Analytics & SIEMM"]}, False, VALID_CATEGORIES_LIST),
+                              ({"categories": ["Endpoint", "File Integrity Management"]}, False, VALID_CATEGORIES_LIST),
+                              ({"categories": ["Analytics & SIEMM", "random category"]}, False, VALID_CATEGORIES_LIST),
+                              ({"categories": ["Analytics & SIEMM", "Endpoint"]}, False, VALID_CATEGORIES_LIST)])
+    def test_is_categories_field_match_standard(self, mocker, metadata_content, expected_results, valid_list_mock):
+        """
+        Given:
+            - A pack metadata content and a list of approved categories.
+            - case 1: pack metadata content with one valid category and the valid categories list.
+            - case 2: pack metadata content with one invalid category and the valid categories list.
+            - case 3: pack metadata content with two valid categories and the valid categories list.
+            - case 4: pack metadata content with two invalid categories and the valid categories list.
+            - case 5: pack metadata content with one invalid category and one valid category, and the valid categories list.
+
+        When:
+            - running is_categories_field_match_standard function.
+
+        Then:
+            - Ensure that the categories field was validated correctly.
+            - case 1: Should return True.
+            - case 2: Should return False.
+            - case 3: Should return False.
+            - case 4: Should return False.
+            - case 5: Should return False.
+        """
+        mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
+                     return_value=valid_list_mock)
+        validator = PackUniqueFilesValidator('test')
+        validator.metadata_content = metadata_content
+        assert validator.is_categories_field_match_standard() is expected_results

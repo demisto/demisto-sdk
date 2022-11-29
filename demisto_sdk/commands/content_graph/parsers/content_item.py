@@ -1,18 +1,14 @@
 import logging
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from typing import Dict, List, Optional, Type, cast
+from typing import Dict, List, Optional, Set, Type, cast
 
 from packaging.version import Version
 
-from demisto_sdk.commands.common.constants import (MARKETPLACE_MIN_VERSION,
-                                                   MarketplaceVersions)
-from demisto_sdk.commands.content_graph.common import (UNIFIED_FILES_SUFFIXES,
-                                                       ContentType,
-                                                       Relationships,
+from demisto_sdk.commands.common.constants import MARKETPLACE_MIN_VERSION, MarketplaceVersions
+from demisto_sdk.commands.content_graph.common import (UNIFIED_FILES_SUFFIXES, ContentType, Relationships,
                                                        RelationshipType)
-from demisto_sdk.commands.content_graph.parsers.base_content import \
-    BaseContentParser
+from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -142,6 +138,11 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     @property
     @abstractmethod
     def marketplaces(self) -> List[MarketplaceVersions]:
+        pass
+
+    @property
+    @abstractmethod
+    def supported_marketplaces(self) -> Set[MarketplaceVersions]:
         pass
 
     @property

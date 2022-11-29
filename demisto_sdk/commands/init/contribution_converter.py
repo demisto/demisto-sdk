@@ -12,27 +12,19 @@ from typing import Dict, List, Optional, Union
 import click
 
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (
-    AUTOMATION, ENTITY_TYPE_TO_DIR, INTEGRATION, INTEGRATIONS_DIR,
-    MARKETPLACE_LIVE_DISCUSSIONS, MARKETPLACES, PACK_INITIAL_VERSION, SCRIPT,
-    SCRIPTS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL, FileType)
+from demisto_sdk.commands.common.constants import (AUTOMATION, ENTITY_TYPE_TO_DIR, INTEGRATION, INTEGRATIONS_DIR,
+                                                   MARKETPLACE_LIVE_DISCUSSIONS, MARKETPLACES, PACK_INITIAL_VERSION,
+                                                   SCRIPT, SCRIPTS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL,
+                                                   FileType)
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, capital_case,
-                                               find_type,
-                                               get_child_directories,
-                                               get_child_files,
-                                               get_content_path,
-                                               get_display_name)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, capital_case, find_type, get_child_directories,
+                                               get_child_files, get_content_path, get_display_name)
 from demisto_sdk.commands.format.format_module import format_manager
-from demisto_sdk.commands.generate_docs.generate_integration_doc import \
-    generate_integration_doc
-from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
-    generate_playbook_doc
-from demisto_sdk.commands.generate_docs.generate_script_doc import \
-    generate_script_doc
+from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_integration_doc
+from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
+from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
-from demisto_sdk.commands.update_release_notes.update_rn_manager import \
-    UpdateReleaseNotesManager
+from demisto_sdk.commands.update_release_notes.update_rn_manager import UpdateReleaseNotesManager
 
 json = JSON_Handler()
 
@@ -99,8 +91,8 @@ class ContributionConverter:
         self.contrib_conversion_errs: List[str] = []
         self.create_new = create_new
         self.no_pipenv = no_pipenv
-        base_dir = base_dir or get_content_path()
-        self.packs_dir_path = os.path.join(base_dir, 'Packs')
+        base_dir = base_dir or get_content_path()  # type: ignore
+        self.packs_dir_path = os.path.join(base_dir, 'Packs')  # type: ignore
         if not os.path.isdir(self.packs_dir_path):
             os.makedirs(self.packs_dir_path)
 

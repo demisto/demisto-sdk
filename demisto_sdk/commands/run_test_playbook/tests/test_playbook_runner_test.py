@@ -4,10 +4,8 @@ import pytest
 from demisto_client.demisto_api import DefaultApi
 
 from demisto_sdk.__main__ import run_test_playbook
-from demisto_sdk.commands.run_test_playbook.test_playbook_runner import \
-    TestPlaybookRunner
-from demisto_sdk.tests.constants_test import (CONTENT_REPO_EXAMPLE_ROOT,
-                                              TEST_PLAYBOOK, VALID_PACK)
+from demisto_sdk.commands.run_test_playbook.test_playbook_runner import TestPlaybookRunner
+from demisto_sdk.tests.constants_test import CONTENT_REPO_EXAMPLE_ROOT, TEST_PLAYBOOK, VALID_PACK
 from TestSuite.test_tools import ChangeCWD
 
 WAITING_MASSAGE = "Waiting for the test playbook to finish running.."

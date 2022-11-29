@@ -1,3 +1,4 @@
+import contextlib
 import os
 import sys
 from io import StringIO
@@ -10,76 +11,58 @@ from mock import patch
 
 import demisto_sdk.commands.validate.validate_manager
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (
-    FILETYPE_TO_DEFAULT_FROMVERSION, PACKS_PACK_META_FILE_NAME, TEST_PLAYBOOK,
-    FileType)
+from demisto_sdk.commands.common.constants import (FILETYPE_TO_DEFAULT_FROMVERSION, PACKS_PACK_META_FILE_NAME,
+                                                   TEST_PLAYBOOK, FileType)
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
-from demisto_sdk.commands.common.hook_validations.dashboard import \
-    DashboardValidator
-from demisto_sdk.commands.common.hook_validations.description import \
-    DescriptionValidator
-from demisto_sdk.commands.common.hook_validations.generic_field import \
-    GenericFieldValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.dashboard import DashboardValidator
+from demisto_sdk.commands.common.hook_validations.description import DescriptionValidator
+from demisto_sdk.commands.common.hook_validations.generic_field import GenericFieldValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.hook_validations.incident_field import \
-    IncidentFieldValidator
-from demisto_sdk.commands.common.hook_validations.integration import \
-    IntegrationValidator
-from demisto_sdk.commands.common.hook_validations.layout import (
-    LayoutsContainerValidator, LayoutValidator)
-from demisto_sdk.commands.common.hook_validations.old_release_notes import \
-    OldReleaseNotesValidator
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
-    PackUniqueFilesValidator
-from demisto_sdk.commands.common.hook_validations.playbook import \
-    PlaybookValidator
-from demisto_sdk.commands.common.hook_validations.release_notes import \
-    ReleaseNotesValidator
-from demisto_sdk.commands.common.hook_validations.reputation import \
-    ReputationValidator
+from demisto_sdk.commands.common.hook_validations.incident_field import IncidentFieldValidator
+from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.layout import LayoutsContainerValidator, LayoutValidator
+from demisto_sdk.commands.common.hook_validations.old_release_notes import OldReleaseNotesValidator
+from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
+from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.release_notes import ReleaseNotesValidator
+from demisto_sdk.commands.common.hook_validations.reputation import ReputationValidator
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.unify.integration_script_unifier import \
-    IntegrationScriptUnifier
+from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
-from demisto_sdk.tests.constants_test import (
-    CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST, IGNORED_PNG,
-    INCIDENT_FIELD_TARGET, INCIDENT_TYPE_TARGET, INDICATOR_TYPE_TARGET,
-    INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
-    INVALID_BETA_INTEGRATION, INVALID_DASHBOARD_PATH,
-    INVALID_IGNORED_UNIFIED_INTEGRATION, INVALID_INCIDENT_FIELD_PATH,
-    INVALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_NO_TESTS,
-    INVALID_INTEGRATION_NON_CONFIGURED_TESTS, INVALID_LAYOUT_CONTAINER_PATH,
-    INVALID_LAYOUT_PATH, INVALID_MULTI_LINE_1_CHANGELOG_PATH,
-    INVALID_MULTI_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_1_CHANGELOG_PATH,
-    INVALID_ONE_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
-    INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, INVALID_PLAYBOOK_CONDITION_1,
-    INVALID_PLAYBOOK_CONDITION_2, INVALID_PLAYBOOK_ID_PATH,
-    INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
-    INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
-    LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, MODELING_RULES_SCHEMA_FILE,
-    MODELING_RULES_YML_FILE, PLAYBOOK_TARGET, SCRIPT_RELEASE_NOTES_TARGET,
-    SCRIPT_TARGET, VALID_BETA_INTEGRATION, VALID_BETA_PLAYBOOK_PATH,
-    VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
-    VALID_INDICATOR_FIELD_PATH, VALID_INTEGRATION_ID_PATH,
-    VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_CONTAINER_PATH,
-    VALID_LAYOUT_PATH, VALID_MD, VALID_MULTI_LINE_CHANGELOG_PATH,
-    VALID_MULTI_LINE_LIST_CHANGELOG_PATH, VALID_ONE_LINE_CHANGELOG_PATH,
-    VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PACK, VALID_PLAYBOOK_CONDITION,
-    VALID_REPUTATION_PATH, VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH,
-    VALID_WIDGET_PATH, WIDGET_TARGET)
-from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
-    INCIDENT_FIELD
+from demisto_sdk.tests.constants_test import (CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST, IGNORED_PNG,
+                                              INCIDENT_FIELD_TARGET, INCIDENT_TYPE_TARGET, INDICATOR_TYPE_TARGET,
+                                              INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
+                                              INVALID_BETA_INTEGRATION, INVALID_DASHBOARD_PATH,
+                                              INVALID_IGNORED_UNIFIED_INTEGRATION, INVALID_INCIDENT_FIELD_PATH,
+                                              INVALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_NO_TESTS,
+                                              INVALID_INTEGRATION_NON_CONFIGURED_TESTS, INVALID_LAYOUT_CONTAINER_PATH,
+                                              INVALID_LAYOUT_PATH, INVALID_MULTI_LINE_1_CHANGELOG_PATH,
+                                              INVALID_MULTI_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_1_CHANGELOG_PATH,
+                                              INVALID_ONE_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
+                                              INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, INVALID_PLAYBOOK_CONDITION_1,
+                                              INVALID_PLAYBOOK_CONDITION_2, INVALID_PLAYBOOK_ID_PATH,
+                                              INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
+                                              INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
+                                              LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, MODELING_RULES_SCHEMA_FILE,
+                                              MODELING_RULES_YML_FILE, PLAYBOOK_TARGET, SCRIPT_RELEASE_NOTES_TARGET,
+                                              SCRIPT_TARGET, VALID_BETA_INTEGRATION, VALID_BETA_PLAYBOOK_PATH,
+                                              VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
+                                              VALID_INDICATOR_FIELD_PATH, VALID_INTEGRATION_ID_PATH,
+                                              VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_CONTAINER_PATH,
+                                              VALID_LAYOUT_PATH, VALID_MD, VALID_MULTI_LINE_CHANGELOG_PATH,
+                                              VALID_MULTI_LINE_LIST_CHANGELOG_PATH, VALID_ONE_LINE_CHANGELOG_PATH,
+                                              VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PACK, VALID_PLAYBOOK_CONDITION,
+                                              VALID_REPUTATION_PATH, VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH,
+                                              VALID_WIDGET_PATH, WIDGET_TARGET)
+from demisto_sdk.tests.test_files.validate_integration_test_valid_types import INCIDENT_FIELD
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
 
@@ -199,6 +182,23 @@ class TestValidators:
             structure = StructureValidator(source)
             validator = PlaybookValidator(structure)
             assert validator.is_condition_branches_handled() is answer
+        finally:
+            os.remove(PLAYBOOK_TARGET)
+
+    INPUTS_is_condition_branches_handled = [
+        (INVALID_PLAYBOOK_CONDITION_1, False),
+        (INVALID_PLAYBOOK_CONDITION_2, True),
+        (VALID_PLAYBOOK_CONDITION, True)
+    ]
+
+    @pytest.mark.parametrize('source, answer', INPUTS_is_condition_branches_handled)
+    def test_are_default_conditions_valid(self, source, answer):
+        # type: (str, str) -> None
+        try:
+            copyfile(source, PLAYBOOK_TARGET)
+            structure = StructureValidator(source)
+            validator = PlaybookValidator(structure)
+            assert validator.are_default_conditions_valid() is answer
         finally:
             os.remove(PLAYBOOK_TARGET)
 
@@ -404,6 +404,7 @@ class TestValidators:
         mocker.patch.object(IntegrationValidator, 'is_docker_image_valid', return_value=True)
         mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
                             return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
         mocker.patch.object(DescriptionValidator, 'is_valid_description_name', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
@@ -443,8 +444,9 @@ class TestValidators:
         mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
         mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
                             return_value=True)
-        mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
 
+        mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert not validate_manager.run_validation_on_specific_files()
 
@@ -475,10 +477,11 @@ class TestValidators:
                                                                 pack_error_ignore_list=[], is_modified=True)
 
     def test_files_validator_validate_pack_unique_files(self, mocker):
-        from demisto_sdk.commands.common.content.objects.pack_objects.pack import \
-            Pack
-        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': {}}, 'json'))
         mocker.patch.object(Pack, 'should_be_deprecated', return_value=False)
+        mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
+                     return_value=["Analytics & SIEM"])
         # mocking should_be_deprecated must be done because the get_dict_from_file is being mocked.
         # should_be_deprecated relies on finding the correct file content from get_dict_from_file function.
         validate_manager = ValidateManager(skip_conf_json=True)
@@ -516,12 +519,12 @@ class TestValidators:
             Then:
                 - return a True validation response
         """
-        from demisto_sdk.commands.common.content.objects.pack_objects.pack import \
-            Pack
+        from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
         id_set_path = os.path.normpath(
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
-        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
-
+        mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
+                     return_value=["Analytics & SIEM"])
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': {}}, 'json'))
         mocker.patch.object(Pack, 'should_be_deprecated', return_value=False)
         # mocking should_be_deprecated must be done because the get_dict_from_file is being mocked.
         # should_be_deprecated relies on finding the correct file type from get_dict_from_file function.
@@ -1207,7 +1210,6 @@ class TestValidators:
                               'Packs/pack_id/test_data/file.json',
                               'Packs/pack_id/Scripts/script_id/test_data/file.json',
                               'Packs/pack_id/TestPlaybooks/test_data/file.json',
-                              'Packs/pack_id/pack_metadata.json',
                               'Packs/pack_id/Integrations/integration_id/command_examples',
                               'Packs/pack_id/Integrations/integration_id/test.txt',
                               'Packs/pack_id/.secrets-ignore',
@@ -1352,8 +1354,7 @@ def test_skip_conf_json(mocker):
           - If set to `False`, the `ConfJsonValidator` should be called.
 
     """
-    from demisto_sdk.commands.common.hook_validations.conf_json import \
-        ConfJsonValidator
+    from demisto_sdk.commands.common.hook_validations.conf_json import ConfJsonValidator
     conf_json_init = mocker.patch.object(ConfJsonValidator, 'load_conf_file')
     ValidateManager(skip_conf_json=False)
     conf_json_init.asssert_called()
@@ -1414,6 +1415,8 @@ def test_run_validation_using_git_on_only_metadata_changed(mocker, pack: Pack, p
                         return_value=(set(), set(), {pack.pack_metadata.path}, set(), True))
     mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
     mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
+    mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
+                 return_value=["Data Enrichment & Threat Intelligence"])
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
     with ChangeCWD(pack.repo_path):
         res = validate_manager.run_validation_using_git()
@@ -1551,7 +1554,6 @@ def test_check_file_relevance_and_format_path_non_formatted_relevant_file(mocker
                           'Packs/pack_id/test_data/file.json',
                           'Packs/pack_id/Scripts/script_id/test_data/file.json',
                           'Packs/pack_id/TestPlaybooks/test_data/file.json',
-                          'Packs/pack_id/pack_metadata.json',
                           'Packs/pack_id/Integrations/integration_id/command_examples'])
 def test_check_file_relevance_and_format_path_ignored_files(input_file_path):
     """
@@ -1974,3 +1976,47 @@ def test_check_file_relevance_and_format_path(mocker):
                                                                                    MODELING_RULES_SCHEMA_FILE,
                                                                                    set())
     assert file_path == old_path == MODELING_RULES_YML_FILE
+
+
+pack_metadata_invalid_tags = {
+    "name": "ForTesting",
+    "description": "A descriptive description.",
+    "support": "xsoar",
+    "currentVersion": "1.0.0",
+    "author": "Cortex XSOAR",
+    "url": "https://www.paloaltonetworks.com/cortex",
+    "email": "",
+    "categories": [
+        "Data Enrichment & Threat Intelligence"
+    ],
+    "tags": ["Use Case"],
+    "useCases": [],
+    "keywords": []
+}
+
+
+@pytest.mark.parametrize('pack_metadata_info', [pack_metadata_invalid_tags])
+def test_run_validation_using_git_on_metadata_with_invalid_tags(mocker, repo, pack_metadata_info):
+    """
+    Given
+        - A Pack with a Use Case tags but no PB, incidents Types or Layouts. Considered invalid.
+        - A git run.
+    When
+        - Running validations on pack using git.
+    Then
+        - Assert validation fails and the right error number is shown.
+    """
+    pack = repo.create_pack()
+    pack.pack_metadata.write_json(pack_metadata_info)
+    mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
+    mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git',
+                        return_value=({pack.pack_metadata.path}, set(), set()))
+    mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+    std_output = StringIO()
+    with contextlib.redirect_stdout(std_output):
+        with ChangeCWD(repo.path):
+            res = validate_manager.run_validation_using_git()
+    captured_stdout = std_output.getvalue()
+    assert "[PA123]" in captured_stdout, captured_stdout
+    assert not res

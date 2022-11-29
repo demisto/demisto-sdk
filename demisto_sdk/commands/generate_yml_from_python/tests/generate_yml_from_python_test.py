@@ -8,10 +8,9 @@ from typing import Any, Callable, Optional
 import pytest
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.generate_yml_from_python.generate_yml import \
-    YMLGenerator
-from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
-    ConfKey, InputArgument, OutputArgument, YMLMetadataCollector)
+from demisto_sdk.commands.generate_yml_from_python.generate_yml import YMLGenerator
+from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (ConfKey, InputArgument,
+                                                                                  OutputArgument, YMLMetadataCollector)
 from TestSuite.integration import Integration
 
 yaml = YAML_Handler()
@@ -577,8 +576,7 @@ class TestCommandGeneration:
         integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
-            from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import \
-                YMLMetadataCollector
+            from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import YMLMetadataCollector
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
 
             @metadata_collector.command(command_name="funky-command", outputs_prefix="funk", execution=False,

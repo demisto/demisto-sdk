@@ -6,16 +6,11 @@ from distutils.version import LooseVersion
 from enum import IntEnum
 from typing import List, Set
 
-from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_FROM_VERSION, MarketplaceVersions)
+from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION, MarketplaceVersions
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    error_codes
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
-from demisto_sdk.commands.common.tools import (get_core_pack_list,
-                                               get_pack_metadata,
-                                               get_pack_name, print_warning)
+from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
+from demisto_sdk.commands.common.tools import get_core_pack_list, get_pack_metadata, get_pack_name, print_warning
 
 # Cortex XSOAR is using a Bleve DB, those keys cannot be the cliName
 BleveMapping = {

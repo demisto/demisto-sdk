@@ -35,9 +35,8 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
         """
         import demisto_sdk.commands.create_id_set.create_id_set as cis
         import demisto_sdk.commands.find_dependencies.find_dependencies as find_dependencies
-        from demisto_sdk.tests.test_files.create_id_set import (
-            excluded_items_by_pack, excluded_items_by_type,
-            packs_dependencies_results)
+        from demisto_sdk.tests.test_files.create_id_set import (excluded_items_by_pack, excluded_items_by_type,
+                                                                packs_dependencies_results)
 
         mock_id_set = self.open_json_file('demisto_sdk/tests/test_files/create_id_set/unfiltered_id_set.json')
         id_set_after_manual_removal = self.open_json_file('demisto_sdk/tests/test_files/create_id_set/id_set_after_manual_removal.json')
@@ -93,9 +92,9 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
         """
         import demisto_sdk.commands.create_id_set.create_id_set as cis
         import demisto_sdk.commands.find_dependencies.find_dependencies as find_dependencies
-        from demisto_sdk.tests.test_files.create_id_set.mini_id_set import (
-            excluded_items_by_pack, excluded_items_by_type,
-            packs_dependencies_results)
+        from demisto_sdk.tests.test_files.create_id_set.mini_id_set import (excluded_items_by_pack,
+                                                                            excluded_items_by_type,
+                                                                            packs_dependencies_results)
 
         mock_id_set = self.open_json_file('demisto_sdk/tests/test_files/create_id_set/unfiltered_id_set.json')
         id_set_after_manual_removal = self.open_json_file('demisto_sdk/tests/test_files/create_id_set/mini_id_set/id_set_after_manual_removal.json')

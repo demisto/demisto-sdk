@@ -10,31 +10,18 @@ from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version
 from tabulate import tabulate
 
-from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
-                                                   CONTENT_ENTITIES_DIRS,
-                                                   DASHBOARDS_DIR,
-                                                   INCIDENT_FIELDS_DIR,
-                                                   INCIDENT_TYPES_DIR,
-                                                   INDICATOR_FIELDS_DIR,
-                                                   INDICATOR_TYPES_DIR,
-                                                   INTEGRATIONS_DIR, JOBS_DIR,
-                                                   LAYOUTS_DIR, LISTS_DIR,
-                                                   PLAYBOOKS_DIR, REPORTS_DIR,
-                                                   SCRIPTS_DIR,
-                                                   TEST_PLAYBOOKS_DIR,
-                                                   WIDGETS_DIR, FileType)
+from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONTENT_ENTITIES_DIRS, DASHBOARDS_DIR,
+                                                   INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+                                                   INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR,
+                                                   LISTS_DIR, PLAYBOOKS_DIR, REPORTS_DIR, SCRIPTS_DIR,
+                                                   TEST_PLAYBOOKS_DIR, WIDGETS_DIR, FileType)
 from demisto_sdk.commands.common.content.errors import ContentFactoryError
-from demisto_sdk.commands.common.content.objects.abstract_objects import (
-    JSONObject, YAMLObject)
+from demisto_sdk.commands.common.content.objects.abstract_objects import JSONObject, YAMLObject
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.content.objects_factory import \
-    path_to_pack_object
+from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (find_type,
-                                               get_child_directories,
-                                               get_demisto_version, get_file,
-                                               get_parent_directory_name,
-                                               print_v)
+from demisto_sdk.commands.common.tools import (find_type, get_child_directories, get_demisto_version, get_file,
+                                               get_parent_directory_name, print_v)
 
 json = JSON_Handler()
 
@@ -55,7 +42,7 @@ UPLOAD_SUPPORTED_ENTITIES = [
 
     FileType.INCIDENT_TYPE,
     FileType.INCIDENT_FIELD,
-    # FileType.REPUTATION,  currently not supported by demisto-py
+    FileType.REPUTATION,
     FileType.INDICATOR_FIELD,
 
     FileType.WIDGET,
@@ -135,7 +122,8 @@ class Uploader:
 
             if not self.path:
                 return SUCCESS_RETURN_CODE
-
+        host = self.client.api_client.configuration.host
+        click.secho(f'Using {host=}')
         click.secho(f"Uploading {self.path} ...")
         if self.path is None or not os.path.exists(self.path):
             click.secho(f'Error: Given input path: {self.path} does not exist', fg='bright_red')
@@ -224,7 +212,7 @@ class Uploader:
                     click.secho(f"Input path {path} is not uploading due to version mismatch.\n"
                                 f"XSOAR version is: {self.demisto_version} while the file's version is "
                                 f"{upload_object.from_version} - {upload_object.to_version}", fg='bright_red')
-                self.unuploaded_due_to_version.append((file_name, entity_type.value, self.demisto_version,
+                self.unuploaded_due_to_version.append((file_name, entity_type.value, self.demisto_version,  # type: ignore
                                                        upload_object.from_version, upload_object.to_version))
                 return ERROR_RETURN_CODE
         else:

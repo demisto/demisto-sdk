@@ -3,16 +3,12 @@ from typing import Dict, List
 
 import click
 
-from demisto_sdk.commands.common.constants import \
-    LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
+from demisto_sdk.commands.common.constants import LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    error_codes
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
-from demisto_sdk.commands.common.tools import (
-    get_all_incident_and_indicator_fields_from_id_set,
-    get_invalid_incident_fields_from_mapper)
+from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
+from demisto_sdk.commands.common.tools import (get_all_incident_and_indicator_fields_from_id_set,
+                                               get_invalid_incident_fields_from_mapper)
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 
 FROM_VERSION = '6.0.0'
@@ -58,6 +54,7 @@ class MapperValidator(ContentEntityValidator):
         """Check whether the Mapper is backward compatible or not, update the _is_valid field to determine that"""
 
         answers = [
+            not super().is_backward_compatible(),
             self.is_field_mapping_removed(),
         ]
         return not any(answers)

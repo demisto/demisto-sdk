@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import Dict, List
 
 import pytest
@@ -7,17 +8,18 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json, get_yaml
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-from demisto_sdk.commands.generate_docs.generate_integration_doc import (
-    append_or_replace_command_in_docs, disable_md_autolinks,
-    generate_commands_section, generate_integration_doc,
-    generate_setup_section, generate_single_command_section,
-    get_command_examples)
-from demisto_sdk.commands.generate_docs.generate_script_doc import \
-    generate_script_doc
+from demisto_sdk.commands.generate_docs.generate_integration_doc import (append_or_replace_command_in_docs,
+                                                                         disable_md_autolinks,
+                                                                         generate_commands_section,
+                                                                         generate_integration_doc,
+                                                                         generate_mirroring_section,
+                                                                         generate_setup_section,
+                                                                         generate_single_command_section,
+                                                                         get_command_examples)
+from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
 from TestSuite.pack import Pack
 
 json = JSON_Handler()
-
 
 FILES_PATH = os.path.normpath(os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files'))
 FAKE_ID_SET = get_json(os.path.join(FILES_PATH, 'fake_id_set.json'))
@@ -110,8 +112,7 @@ def test_generate_list_section_empty():
 
 
 def test_generate_numbered_section():
-    from demisto_sdk.commands.generate_docs.common import \
-        generate_numbered_section
+    from demisto_sdk.commands.generate_docs.common import generate_numbered_section
 
     section = generate_numbered_section('Use Cases', '* Drink coffee. * Write code.')
 
@@ -144,7 +145,8 @@ def test_generate_list_with_text_section():
 
 
 TEST_TABLE_SECTION_EMPTY = [
-    ([], 'Script Data', 'No data found.', 'This is the metadata of the script.', ['## Script Data', '---', 'No data found.', '']),
+    ([], 'Script Data', 'No data found.', 'This is the metadata of the script.',
+     ['## Script Data', '---', 'No data found.', '']),
     ([], 'Script Data', '', '', ['']),
     ([], 'Script Data', '', 'This is the metadata of the script.', [''])
 ]
@@ -167,8 +169,7 @@ def test_generate_table_section_empty(data, title, empty_message, text, expected
     - Case 2: No section is created.
     - Case 3: No section is created.
     """
-    from demisto_sdk.commands.generate_docs.common import \
-        generate_table_section
+    from demisto_sdk.commands.generate_docs.common import generate_table_section
 
     section = generate_table_section(data, title, empty_message, text)
 
@@ -185,8 +186,7 @@ def test_generate_table_section():
     Then
     - Validate That the script metadata was created correctly.
     """
-    from demisto_sdk.commands.generate_docs.common import \
-        generate_table_section
+    from demisto_sdk.commands.generate_docs.common import generate_table_section
 
     section = generate_table_section([{'Type': 'python2', 'Docker Image': 'demisto/python2'}],
                                      'Script Data', 'No data found.', 'This is the metadata of the script.')
@@ -208,8 +208,7 @@ def test_generate_table_section_with_newlines():
     Then
     - Validate That the \n is escaped correctly in a markdown format.
     """
-    from demisto_sdk.commands.generate_docs.common import \
-        generate_table_section
+    from demisto_sdk.commands.generate_docs.common import generate_table_section
 
     section = generate_table_section([{
         'Name': 'RsaDecryptKeyEntryID',
@@ -264,8 +263,7 @@ def test_generate_table_section_with_newlines():
 
 
 def test_get_inputs():
-    from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
-        get_inputs
+    from demisto_sdk.commands.generate_docs.generate_playbook_doc import get_inputs
     playbook = get_yaml(TEST_PLAYBOOK_PATH)
 
     inputs, errors = get_inputs(playbook)
@@ -281,6 +279,10 @@ def test_get_inputs():
             'Default Value': 'johnnydepp@gmail.com', 'Required': 'Required'
         },
         {
+            'Name': 'InputC', 'Description': '',
+            'Default Value': 'No_Accessor', 'Required': 'Optional'
+        },
+        {
             'Name': 'Indicator Query',
             'Description': 'Indicators matching the indicator query will be used as playbook input',
             'Default Value': expected_query, 'Required': 'Optional'
@@ -292,8 +294,7 @@ def test_get_inputs():
 
 
 def test_get_outputs():
-    from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
-        get_outputs
+    from demisto_sdk.commands.generate_docs.generate_playbook_doc import get_outputs
     playbook = get_yaml(TEST_PLAYBOOK_PATH)
 
     outputs, errors = get_outputs(playbook)
@@ -306,8 +307,7 @@ def test_get_outputs():
 
 
 def test_get_playbook_dependencies():
-    from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
-        get_playbook_dependencies
+    from demisto_sdk.commands.generate_docs.generate_playbook_doc import get_playbook_dependencies
     playbook = get_yaml(TEST_PLAYBOOK_PATH)
 
     playbooks, integrations, scripts, commands = get_playbook_dependencies(playbook, playbook_path=TEST_PLAYBOOK_PATH)
@@ -319,8 +319,7 @@ def test_get_playbook_dependencies():
 
 
 def test_get_input_data_simple():
-    from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
-        get_input_data
+    from demisto_sdk.commands.generate_docs.generate_playbook_doc import get_input_data
     playbook = get_yaml(TEST_PLAYBOOK_PATH)
 
     sample_input = playbook.get('inputs')[1]
@@ -330,16 +329,18 @@ def test_get_input_data_simple():
     assert _value == 'johnnydepp@gmail.com'
 
 
-def test_get_input_data_complex():
-    from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
-        get_input_data
+@pytest.mark.parametrize('index, expected_result',
+                         [(0, 'File.Name'),
+                          (2, 'No_Accessor')])
+def test_get_input_data_complex(index, expected_result):
+    from demisto_sdk.commands.generate_docs.generate_playbook_doc import get_input_data
     playbook = get_yaml(TEST_PLAYBOOK_PATH)
 
-    sample_input = playbook.get('inputs')[0]
+    sample_input = playbook.get('inputs')[index]
 
     _value = get_input_data(sample_input)
 
-    assert _value == 'File.Name'
+    assert _value == expected_result
 
 
 @pytest.mark.parametrize('playbook_name, custom_image_path, expected_result',
@@ -356,19 +357,18 @@ def test_generate_image_link(playbook_name, custom_image_path, expected_result):
     Then
     - Validate that the output of the command matches the expected result.
     """
-    from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
-        generate_image_path
+    from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_image_path
 
     output = generate_image_path(playbook_name, custom_image_path)
 
     assert output == expected_result
 
+
 # script tests
 
 
 def test_get_script_info():
-    from demisto_sdk.commands.generate_docs.generate_script_doc import \
-        get_script_info
+    from demisto_sdk.commands.generate_docs.generate_script_doc import get_script_info
     info = get_script_info(TEST_SCRIPT_PATH)
 
     assert info[0]['Description'] == 'python3'
@@ -377,8 +377,7 @@ def test_get_script_info():
 
 
 def test_get_script_inputs():
-    from demisto_sdk.commands.generate_docs.generate_script_doc import \
-        get_inputs
+    from demisto_sdk.commands.generate_docs.generate_script_doc import get_inputs
     script = get_yaml(TEST_SCRIPT_PATH)
     inputs, errors = get_inputs(script)
 
@@ -390,8 +389,7 @@ def test_get_script_inputs():
 
 
 def test_get_script_outputs():
-    from demisto_sdk.commands.generate_docs.generate_script_doc import \
-        get_outputs
+    from demisto_sdk.commands.generate_docs.generate_script_doc import get_outputs
     script = get_yaml(TEST_SCRIPT_PATH)
     outputs, errors = get_outputs(script)
 
@@ -403,8 +401,7 @@ def test_get_script_outputs():
 
 
 def test_get_used_in():
-    from demisto_sdk.commands.generate_docs.generate_script_doc import \
-        get_used_in
+    from demisto_sdk.commands.generate_docs.generate_script_doc import get_used_in
     script = get_yaml(TEST_SCRIPT_PATH)
     script_id = script.get('commonfields')['id']
     used_in = get_used_in(FAKE_ID_SET, script_id)
@@ -437,6 +434,46 @@ def test_generate_commands_section():
                         '', 'There is no context output for this command.']
 
     assert '\n'.join(section) == '\n'.join(expected_section)
+
+
+MIRRORING_TEST = [({'display': 'CrowdStrike Falcon',
+                    'configuration': [
+                        {'name': 'incidents_fetch_query'},
+                        {'name': 'comment_tag', 'display': 'test comment tag'},
+                        {'name': 'work_notes_tag', 'display': 'test work notes tag'},
+                        {'name': 'mirror_direction',
+                         'options': ['None', 'Incoming', 'Outgoing', 'Incoming And Outgoing']},
+                        {'name': 'close_incident'},
+                        {'name': 'close_out'}]},
+                   'mirroring_test_markdow'),
+                  ({'display': 'CrowdStrike Falcon',
+                    'configuration': [
+                        {'name': 'work_notes_tag', 'display': 'test work notes tag'},
+                        {'name': 'mirror_direction',
+                         'options': ['None', 'Incoming']},
+                        {'name': 'close_incident'}]},
+                   'mirroring_test_markdow_missing')
+                  ]
+
+
+@pytest.mark.parametrize('yml_content, path_to_result', MIRRORING_TEST)
+def test_incident_mirroring_section(yml_content, path_to_result):
+    """
+    Given
+    - An integration that implements incident mirroring.
+
+    When
+    - Generating docs for an integration.
+
+    Then
+    -  Ensure that the mirroring section being generated as expected.
+    """
+    test_files_path = Path(__file__, git_path(), 'demisto_sdk', 'commands', 'generate_docs', 'tests',
+                           'test_files', path_to_result)
+    section = generate_mirroring_section(yml_content)
+    with open(test_files_path) as f:
+        res = f.read()
+    assert '\n'.join(section) == res
 
 
 def test_generate_command_section_with_empty_cotext_example():
@@ -627,10 +664,13 @@ class TestAppendOrReplaceCommandInDocs:
     command = 'dxl-send-event'
     old_doc = open(positive_test_data_file).read()
     new_docs = "\n<NEW DOCS>\n"
+    new_command = '\n### dxl-send-event-new-one\n***\nSends the specified event to the DXL fabric.\n##### Base Command\n`dxl-send-event-new-one`'
+    new_command += '\n##### Input\n| **Argument Name** | **Description** | **Required** |\n| --- | --- | --- |\n| topic | The topic for which to publish the'
+    new_command += ' message. | Required |\n| payload | The event payload. | Required |\n##### Context Output\nThere is no context output for this command.'
     positive_inputs = [
-        (old_doc, new_docs),
-        (old_doc + "\n## Known Limitation", new_docs + "\n## Known Limitation"),
-        (old_doc + "\n### new-command", new_docs + "\n### new-command"),
+        (old_doc, new_docs + new_command),
+        (old_doc + "\n## Known Limitation", new_docs + new_command + "\n## Known Limitation"),
+        (old_doc + "\n### new-command", new_docs + new_command + "\n### new-command"),
         ("no docs (empty)\n", "no docs (empty)\n" + new_docs),
         (f"Command in file, but cant replace. {command}", f"Command in file, but cant replace. {command}\n" + new_docs)
     ]
@@ -811,8 +851,7 @@ def test_generate_table_section_numbered_section():
             - Validate that the generated table has \t at the beginning of each line.
     """
 
-    from demisto_sdk.commands.generate_docs.common import \
-        generate_table_section
+    from demisto_sdk.commands.generate_docs.common import generate_table_section
 
     expected_section = ['', '    | **Type** | **Docker Image** |', '    | --- | --- |',
                         '    | python2 | demisto/python2 |', '']
@@ -823,15 +862,16 @@ def test_generate_table_section_numbered_section():
 
 
 yml_data_cases = [
-    ({'name': 'test', 'display': 'test', 'configuration': [
-        {'defaultvalue': '', 'display': 'test1', 'name': 'test1', 'required': True, 'type': 8},
-        {'defaultvalue': '', 'display': 'test2', 'name': 'test2', 'required': True, 'type': 8}
-    ]},  # case no param with additional info field
-         ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
-          '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
-          '', '    | **Parameter** | **Required** |', '    | --- | --- |', '    | test1 | True |',
-          '    | test2 | True |',
-          '', '4. Click **Test** to validate the URLs, token, and connection.']  # expected
+    (
+        {'name': 'test', 'display': 'test', 'configuration': [
+            {'defaultvalue': '', 'display': 'test1', 'name': 'test1', 'required': True, 'type': 8},
+            {'defaultvalue': '', 'display': 'test2', 'name': 'test2', 'required': True, 'type': 8}
+        ]},  # case no param with additional info field
+        ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
+         '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
+         '', '    | **Parameter** | **Required** |', '    | --- | --- |', '    | test1 | True |',
+         '    | test2 | True |',
+         '', '4. Click **Test** to validate the URLs, token, and connection.']  # expected
     ),
     (
         {'name': 'test', 'display': 'test', 'configuration': [
@@ -921,8 +961,7 @@ def test_scripts_in_playbook(repo):
         Then
             - Ensure that the scripts we get are from both the script and scriptName fields.
     """
-    from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
-        get_playbook_dependencies
+    from demisto_sdk.commands.generate_docs.generate_playbook_doc import get_playbook_dependencies
     pack = repo.create_pack('pack')
     playbook = pack.create_playbook('LargePlaybook')
     test_task_1 = {
@@ -1033,8 +1072,7 @@ def test_add_access_data_of_type_credentials(access_data: List[Dict], credential
     Case b: 'Password' is added as default for display password name missing.
     Case c: Both display name and display password name are added.
     """
-    from demisto_sdk.commands.generate_docs.generate_integration_doc import \
-        add_access_data_of_type_credentials
+    from demisto_sdk.commands.generate_docs.generate_integration_doc import add_access_data_of_type_credentials
     add_access_data_of_type_credentials(access_data, credentials_conf)
     assert access_data == expected
 
@@ -1049,8 +1087,7 @@ def test_generate_versions_differences_section(monkeypatch):
             - Add a section of differences between versions in README.
     """
 
-    from demisto_sdk.commands.generate_docs.generate_integration_doc import \
-        generate_versions_differences_section
+    from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_versions_differences_section
     monkeypatch.setattr(
         'builtins.input',
         lambda _: ''
@@ -1124,9 +1161,11 @@ def test_disable_md_autolinks():
 
 TEST_EMPTY_SCRIPTDATA_SECTION = [
     ({'script': 'some info'}, ['']),
-    ({'subtype': 'python2', 'tags': []}, ['## Script data', '---', '', '| **Name** | **Description** |', '| --- | --- |', '| Script Type | python2 |', '']),
+    ({'subtype': 'python2', 'tags': []},
+     ['## Script data', '---', '', '| **Name** | **Description** |', '| --- | --- |', '| Script Type | python2 |', '']),
     ({'tags': []}, ['']),
-    ({'fromversion': '0.0.0'}, ['## Script data', '---', '', '| **Name** | **Description** |', '| --- | --- |', '| Cortex XSOAR Version | 0.0.0 |', ''])
+    ({'fromversion': '0.0.0'}, ['## Script data', '---', '', '| **Name** | **Description** |', '| --- | --- |',
+                                '| Cortex XSOAR Version | 0.0.0 |', ''])
 ]
 
 
@@ -1147,10 +1186,8 @@ def test_missing_data_sections_when_generating_table_section(yml_content, expect
     - Case 3: Empty table section.
     - Case 4: Script data section with a title and a table containing information only about the Cortex XSOAR Version.
     """
-    from demisto_sdk.commands.generate_docs.common import \
-        generate_table_section
-    from demisto_sdk.commands.generate_docs.generate_script_doc import \
-        get_script_info
+    from demisto_sdk.commands.generate_docs.common import generate_table_section
+    from demisto_sdk.commands.generate_docs.generate_script_doc import get_script_info
 
     script_pack = pack.create_script()
     script_pack.yml.write_dict(yml_content)

@@ -5,10 +5,11 @@ from ast import parse
 from pathlib import Path
 
 import pytest
+from klara.contract.solver import MANAGER
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import (
-    UnitTestsGenerator, run_generate_unit_tests)
+from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import UnitTestsGenerator, run_generate_unit_tests
+from demisto_sdk.commands.generate_unit_tests.test_module_builder import TestModule
 
 ARGS = [({'use_demisto': False}, 'malwarebazaar_all.py'),
         ({'use_demisto': False, 'commands': 'malwarebazaar-comment-add'}, 'malwarebazaar_specific_command.py'),
@@ -88,3 +89,22 @@ class TestUnitTestsGenerator:
         finally:
             if output_path.exists():
                 os.remove(output_path)
+
+
+def test_get_client_init_args():
+    """
+    Given
+    - Source code with a client class that inherits from 'BaseClient'
+
+    When
+    - The client class has a class scoped variable
+
+    Then
+    - Ensure 'get_client_init_args' does not raise an AttributeException
+    """
+    filepath = Path(__file__) / '..' / 'test_files' / 'client_class_test_cases.py'
+    source = filepath.resolve().read_text()
+    tree = MANAGER.build_tree(ast_str=source)
+    test_module = TestModule(tree, 'fake_client', False)
+    client_tree = TestModule.get_client_ast(test_module)
+    TestModule.get_client_init_args(client_tree)

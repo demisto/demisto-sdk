@@ -5,7 +5,7 @@ import logging
 import os
 import platform
 import traceback
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 import docker
 import docker.errors
@@ -16,28 +16,18 @@ import urllib3.exceptions
 from packaging.version import parse
 from wcmatch.pathlib import NEGATE, Path
 
-from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
-                                                   PACKS_PACK_META_FILE_NAME,
-                                                   TYPE_PWSH, TYPE_PYTHON)
+from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, PACKS_PACK_META_FILE_NAME, TYPE_PWSH, TYPE_PYTHON
+from demisto_sdk.commands.common.docker_helper import get_docker, init_global_docker_client
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.timers import timer
-from demisto_sdk.commands.common.tools import (get_all_docker_images,
-                                               run_command_os)
-from demisto_sdk.commands.lint.commands_builder import (
-    build_bandit_command, build_flake8_command, build_mypy_command,
-    build_pwsh_analyze_command, build_pwsh_test_command, build_pylint_command,
-    build_pytest_command, build_vulture_command, build_xsoar_linter_command)
-from demisto_sdk.commands.lint.docker_helper import (Docker,
-                                                     init_global_docker_client)
-from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
-                                               SUCCESS, WARNING,
-                                               add_tmp_lint_files,
-                                               add_typing_module,
-                                               coverage_report_editor,
-                                               get_file_from_container,
-                                               get_python_version_from_image,
-                                               pylint_plugin,
-                                               split_warnings_errors,
+from demisto_sdk.commands.common.tools import get_all_docker_images, run_command_os
+from demisto_sdk.commands.lint.commands_builder import (build_bandit_command, build_flake8_command, build_mypy_command,
+                                                        build_pwsh_analyze_command, build_pwsh_test_command,
+                                                        build_pylint_command, build_pytest_command,
+                                                        build_vulture_command, build_xsoar_linter_command)
+from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL, SUCCESS, WARNING, add_tmp_lint_files,
+                                               add_typing_module, coverage_report_editor, get_file_from_container,
+                                               get_python_version_from_image, pylint_plugin, split_warnings_errors,
                                                stream_docker_container_output)
 
 json = JSON_Handler()
@@ -66,7 +56,10 @@ class Linter:
         self._req_3 = req_3
         self._req_2 = req_2
         self._content_repo = content_repo
-        self._pack_abs_dir = Path(pack_dir)
+
+        # For covering the case when a path file is sent instead of a directory
+        self._pack_abs_dir = pack_dir if pack_dir.is_dir() else pack_dir.parent
+
         self._pack_name = None
         self.docker_timeout = docker_timeout
         # Docker client init
@@ -109,13 +102,13 @@ class Linter:
             "warning_code": SUCCESS,
         }
         self._pack_name = None
-        yml_file: Optional[Path] = self._pack_abs_dir.glob([r'*.yaml', r'*.yml', r'!*unified*.yml'], flags=NEGATE)
+        yml_file = self._pack_abs_dir.glob([r'*.yaml', r'*.yml', r'!*unified*.yml'], flags=NEGATE)
         if not yml_file:
             logger.info(f"{self._pack_abs_dir} - Skipping no yaml file found {yml_file}")
             self._pkg_lint_status["errors"].append('Unable to find yml file in package')
         else:
             try:
-                self._yml_file = next(yml_file)
+                self._yml_file = next(yml_file)  # type: ignore
                 self._pack_name = self._yml_file.stem
             except StopIteration:
                 logger.info(f"{self._pack_abs_dir} - Skipping no yaml file found {yml_file}")
@@ -225,7 +218,7 @@ class Linter:
             logger.info(f'{log_prompt} - Collecting all docker images to pull')
             self._facts["images"] = [[image, -1] for image in get_all_docker_images(script_obj=script_obj)]
             if os.getenv('GITLAB_CI', False):
-                self._facts["images"] = [f'docker-io.art.code.pan.run/{image}' for image in self._facts["images"]]
+                self._facts["images"] = [[f'docker-io.art.code.pan.run/{image[0]}', -1] for image in self._facts["images"]]
             # Gather environment variables for docker execution
             self._facts["env_vars"] = {
                 "CI": os.getenv("CI", False),
@@ -246,8 +239,9 @@ class Linter:
                         self._facts["python_version"] = py_num
 
                 # Checking whatever *test* exists in package
-                self._facts["test"] = True if next(self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']),
-                                                   None) else False
+                self._facts["test"] = True if next(
+                    self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']), None  # type: ignore
+                ) else False
                 if self._facts["test"]:
                     logger.info(f"{log_prompt} - Tests found")
                 else:
@@ -281,10 +275,10 @@ class Linter:
         if 'commonserver' in self._pack_abs_dir.name.lower():
             # Powershell
             if self._pkg_lint_status["pack_type"] == TYPE_PWSH:
-                self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPowerShell.ps1')]
+                self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPowerShell.ps1')]  # type: ignore
             # Python
             elif self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
-                self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPython.py')]
+                self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPython.py')]  # type: ignore
         else:
             test_modules = {self._pack_abs_dir / module.name for module in modules.keys()}
             lint_files = lint_files.difference(test_modules)
@@ -365,7 +359,10 @@ class Linter:
                 elif lint_check == "bandit" and not no_bandit:
                     exit_code, output = self._run_bandit(lint_files=self._facts["lint_files"])
 
-                elif lint_check == "mypy" and not no_mypy:
+                elif lint_check == "mypy" and not no_mypy and parse(
+                    self._facts['python_version']
+                ).major >= 3:  # type: ignore
+                    # mypy does not support python2 now
                     exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
                                                        lint_files=self._facts["lint_files"])
 
@@ -412,7 +409,7 @@ class Linter:
             if self._facts['is_long_running']:
                 myenv['LONGRUNNING'] = 'True'
 
-            py_ver = parse(py_num).major
+            py_ver = parse(py_num).major  # type: ignore
             if py_ver < 3:
                 myenv['PY2'] = 'True'
             myenv['is_script'] = str(self._facts['is_script'])
@@ -421,7 +418,9 @@ class Linter:
             myenv['commands'] = ','.join([str(elem) for elem in self._facts['commands']]) \
                 if self._facts['commands'] else ''
             stdout, stderr, exit_code = run_command_os(
-                command=build_xsoar_linter_command(lint_files, self._facts.get('support_level', 'base')),
+                command=build_xsoar_linter_command(
+                    lint_files, self._facts.get('support_level', 'base')  # type: ignore
+                ),
                 cwd=self._pack_abs_dir, env=myenv)
         if exit_code & FAIL_PYLINT:
             logger.error(f"{log_prompt} - Finished, errors found")
@@ -465,7 +464,7 @@ class Linter:
         """
         log_prompt = f"{self._pack_name} - Bandit"
         logger.info(f"{log_prompt} - Start")
-        stdout, stderr, exit_code = run_command_os(command=build_bandit_command(lint_files),
+        stdout, stderr, exit_code = run_command_os(command=build_bandit_command(lint_files),  # type: ignore
                                                    cwd=self._pack_abs_dir)
         logger.debug(f"{log_prompt} - Finished, exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
@@ -495,8 +494,10 @@ class Linter:
         """
         log_prompt = f"{self._pack_name} - Mypy"
         logger.info(f"{log_prompt} - Start")
-        with add_typing_module(lint_files=lint_files, python_version=py_num):
-            mypy_command = build_mypy_command(files=lint_files, version=py_num, content_repo=self._content_repo)
+        with add_typing_module(lint_files=lint_files, python_version=py_num):  # type: ignore
+            mypy_command = build_mypy_command(
+                files=lint_files, version=py_num, content_repo=self._content_repo  # type: ignore
+            )
             stdout, stderr, exit_code = run_command_os(command=mypy_command, cwd=self._pack_abs_dir)
         logger.debug(f"{log_prompt} - Finished, exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
@@ -645,7 +646,7 @@ class Linter:
         requirements = []
 
         if docker_base_image[1] != -1:
-            py_ver = parse(docker_base_image[1]).major
+            py_ver = parse(docker_base_image[1]).major  # type: ignore
             if py_ver == 2:
                 requirements = self._req_2
             elif py_ver == 3:
@@ -659,7 +660,7 @@ class Linter:
         test_image = None
         try:
             logger.info(f"{log_prompt} - Trying to pull existing image {test_image_name}")
-            test_image = Docker.pull_image(test_image_name)
+            test_image = get_docker().pull_image(test_image_name)
         except (docker.errors.APIError, docker.errors.ImageNotFound):
             logger.info(f"{log_prompt} - Unable to find image {test_image_name}")
         # Creatng new image if existing image isn't found
@@ -668,8 +669,8 @@ class Linter:
                 f"{log_prompt} - Creating image based on {docker_base_image[0]} - Could take 2-3 minutes at first "
                 f"time")
             try:
-                Docker.create_image(docker_base_image[0], test_image_name, container_type=self._pkg_lint_status["pack_type"],
-                                    install_packages=pip_requirements)
+                get_docker().create_image(docker_base_image[0], test_image_name, container_type=self._pkg_lint_status["pack_type"],
+                                          install_packages=pip_requirements)
 
                 if self._docker_hub_login:
                     for _ in range(2):
@@ -709,7 +710,7 @@ class Linter:
         exit_code = SUCCESS
         output = ""
         try:
-            container: docker.models.containers.Container = Docker.create_container(
+            container: docker.models.containers.Container = get_docker().create_container(
                 name=container_name,
                 image=test_image,
                 command=[self._facts['lint_to_commands'][linter]],
@@ -788,7 +789,7 @@ class Linter:
             cov = self._pack_abs_dir.stem if not no_coverage else ''
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
-            container: docker.models.containers.Container = Docker.create_container(
+            container: docker.models.containers.Container = get_docker().create_container(
                 name=container_name,
                 image=test_image,
                 command=[build_pytest_command(test_xml=test_xml, json=True, cov=cov)],
@@ -894,12 +895,12 @@ class Linter:
         try:
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
-            container = Docker.create_container(name=container_name, image=test_image,
-                                                user=f"{uid}:4000", environment=self._facts["env_vars"],
-                                                files_to_push=[(self._pack_abs_dir, '/devwork')],
-                                                command=build_pwsh_analyze_command(
-                                                    self._facts["lint_files"][0])
-                                                )
+            container = get_docker().create_container(name=container_name, image=test_image,
+                                                      user=f"{uid}:4000", environment=self._facts["env_vars"],
+                                                      files_to_push=[(self._pack_abs_dir, '/devwork')],
+                                                      command=build_pwsh_analyze_command(
+                                                          self._facts["lint_files"][0])
+                                                      )
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
@@ -968,7 +969,7 @@ class Linter:
         try:
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
-            container: docker.models.containers.Container = Docker.create_container(
+            container: docker.models.containers.Container = get_docker().create_container(
                 files_to_push=[(self._pack_abs_dir, '/devwork')],
                 name=container_name, image=test_image, command=build_pwsh_test_command(),
                 user=f"{uid}:4000", environment=self._facts["env_vars"])

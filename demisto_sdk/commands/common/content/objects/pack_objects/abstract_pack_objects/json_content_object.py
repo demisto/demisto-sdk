@@ -4,14 +4,10 @@ from typing import List, Optional, Union
 from packaging.version import LegacyVersion, Version, parse
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION)
-from demisto_sdk.commands.common.content.objects.abstract_objects import \
-    JSONObject
-from demisto_sdk.commands.common.content.objects.pack_objects.change_log.change_log import \
-    ChangeLog
-from demisto_sdk.commands.common.content.objects.pack_objects.readme.readme import \
-    Readme
+from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION
+from demisto_sdk.commands.common.content.objects.abstract_objects import JSONObject
+from demisto_sdk.commands.common.content.objects.pack_objects.change_log.change_log import ChangeLog
+from demisto_sdk.commands.common.content.objects.pack_objects.readme.readme import Readme
 from demisto_sdk.commands.common.tools import get_json
 
 
@@ -101,13 +97,12 @@ class JSONContentObject(JSONObject):
         """
         created_files: List[Path] = []
         created_files.extend(super().dump(dest_dir=dest_dir))
-        # Dump changelog if requested and availble
+        # Dump changelog if requested and available
         if change_log and self.changelog:
             created_files.extend(self.changelog.dump(dest_dir))
-        # Dump readme if requested and availble
+        # Dump readme if requested and available
         if readme and self.readme:
             created_files.extend(self.readme.dump(dest_dir))
-
         return created_files
 
     def is_file_structure_list(self) -> bool:

@@ -1,19 +1,15 @@
 import os
 from copy import deepcopy
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pytest
 from mock import mock_open, patch
 
-from demisto_sdk.commands.common.constants import (
-    ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS, FIRST_FETCH_PARAM,
-    INCIDENT_FETCH_REQUIRED_PARAMS, MAX_FETCH_PARAM, MarketplaceVersions)
-from demisto_sdk.commands.common.default_additional_info_loader import \
-    load_default_additional_info_dict
-from demisto_sdk.commands.common.hook_validations.integration import \
-    IntegrationValidator
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
+from demisto_sdk.commands.common.constants import (ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS, FIRST_FETCH_PARAM,
+                                                   INCIDENT_FETCH_REQUIRED_PARAMS, MAX_FETCH_PARAM, MarketplaceVersions)
+from demisto_sdk.commands.common.default_additional_info_loader import load_default_additional_info_dict
+from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.integration import Integration
 from TestSuite.test_tools import ChangeCWD
@@ -634,13 +630,15 @@ class TestIntegrationValidator:
     VALID_CATEGORY2 = {"category": "File Integrity Management"}
 
     IS_VALID_CATEGORY_INPUTS = [
-        (VALID_CATEGORY1, True),
-        (VALID_CATEGORY2, True),
-        (INVALID_CATEGORY, False)
+        (VALID_CATEGORY1, True, ['Endpoint']),
+        (VALID_CATEGORY2, True, ['File Integrity Management']),
+        (INVALID_CATEGORY, False, [])
     ]
 
-    @pytest.mark.parametrize("current, answer", IS_VALID_CATEGORY_INPUTS)
-    def test_is_valid_category(self, current, answer):
+    @pytest.mark.parametrize("current, answer, valid_list_mock", IS_VALID_CATEGORY_INPUTS)
+    def test_is_valid_category(self, mocker, current, answer, valid_list_mock):
+        mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
+                     return_value=valid_list_mock)
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current
@@ -1197,6 +1195,49 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.verify_reputation_commands_has_reliability(is_modified=True) is result
+
+    @pytest.mark.parametrize('hidden_value,is_valid', (
+        (None, True),
+        (True, True),
+        (False, True),
+        ([], True),
+        ([MarketplaceVersions.XSOAR], True),
+        ([MarketplaceVersions.MarketplaceV2], True),
+        ('true', True),
+        ('false', True),
+        ('True', True),
+        ('False', True),
+        ([MarketplaceVersions.XSOAR, MarketplaceVersions.XSOAR], True),  # may be useless, but not invalid
+
+        # invalid cases
+        ('', False),
+        (42, False),
+        ('None', False),
+        ([''], False),
+        ([True], False),
+        (['true'], False),
+        (['True'], False),
+        (MarketplaceVersions.XSOAR, False),
+        ([MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XPANSE], False),
+        ('🥲', False),
+        ('Trüe', False),
+        ('TRUE', False),
+        ([MarketplaceVersions.XSOAR, None], False),
+        ([MarketplaceVersions.MarketplaceV2, None], False),
+        ([MarketplaceVersions.XSOAR, True], False),
+        ([MarketplaceVersions.XSOAR, 1], False),
+        ([MarketplaceVersions.XSOAR, '🥲'], False),
+        ([MarketplaceVersions.XSOAR, 'true'], False),
+        ([MarketplaceVersions.XSOAR, 'True'], False),
+    ))
+    def test_invalid_hidden_attributes_for_param(self, hidden_value: Any, is_valid: bool):
+        assert IntegrationValidator(
+            mock_structure(
+                None,
+                # using `longRunning` here, as the name condition is tested in test_is_valid_hidden_params()
+                {'configuration': [{'name': 'longRunning', 'hidden': hidden_value}]}
+            )
+        ).is_valid_hidden_params() == is_valid
 
 
 class TestIsFetchParamsExist:

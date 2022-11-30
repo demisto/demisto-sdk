@@ -4,8 +4,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.unify.integration_script_unifier import \
-    IntegrationScriptUnifier
+from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
 from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YAML
@@ -84,7 +83,7 @@ class Integration:
             yml['name'] = yml['commonfields']['id'] = name
             if commands:
                 for command in commands:
-                    yml['script']['commands'].append({'name': command})
+                    yml['script']['commands'].append({'name': command, 'description': f'{command}-description'})
         with open(suite_join_path(default_integration_dir, 'sample_image.png'), 'rb') as image_file:
             image = image_file.read()
         with open(suite_join_path(default_integration_dir, 'CHANGELOG.md')) as changelog_file:

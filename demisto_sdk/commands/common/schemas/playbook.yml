@@ -250,6 +250,9 @@ mapping:
               - type: str
           continueonerror:
             type: bool
+          continueonerrortype:
+            type: str
+            enum: ["errorPath", ""]
           reputationcalc:
             type: int
           separatecontext:
@@ -281,7 +284,7 @@ mapping:
     type: seq
     sequence:
       - type: str
-        enum: ['xsoar', 'marketplacev2']
+        enum: ['xsoar', 'marketplacev2', 'xpanse']
 
 
 # playbook->tasks

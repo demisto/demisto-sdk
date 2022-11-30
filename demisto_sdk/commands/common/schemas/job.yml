@@ -204,9 +204,6 @@ mapping:
   itemVersion:
     type: str
     required: false
-  fromServerVersion:
-    type: str
-    required: false
   fromVersion:
     type: str
     required: true

@@ -2,12 +2,9 @@ import re
 from abc import abstractmethod
 from typing import Dict, Iterator, List, Union
 
-from demisto_sdk.commands.common.constants import (ENTITY_NAME_SEPARATORS,
-                                                   FileType)
-from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import \
-    Classifier
-from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import \
-    LayoutObject
+from demisto_sdk.commands.common.constants import ENTITY_NAME_SEPARATORS, FileType
+from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import Classifier
+from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import LayoutObject
 from demisto_sdk.commands.common.handlers import JSON_Handler
 
 json = JSON_Handler()
@@ -63,4 +60,4 @@ class BaseConverter:
             (None): Creates a new file.
         """
         with open(new_entity_path, 'w') as jf:
-            json.dump(obj=new_entity_dict, fp=jf, indent=2)
+            json.dump(data=new_entity_dict, fp=jf, indent=2)

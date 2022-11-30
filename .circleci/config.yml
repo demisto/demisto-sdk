@@ -17,13 +17,13 @@ parameters:
     default: "5.0.1"
   cache-version:
     type: string
-    default: v3  # Change this parameter to clear cache.
+    default: v4  # Change this parameter to clear cache.
   global-docker-image:
     type: string
-    default: cimg/python:3.10.4-node
+    default: cimg/python:3.10-node
   pythonversion_latest:
     type: string
-    default: "3.10.2"
+    default: "3.10"
 
 
 references:
@@ -43,9 +43,35 @@ references:
       requires:
         - checkout-content
 
+    install_neo4j: &install_neo4j
+      run:
+        name: Install Neo4j
+        command: |
+          # workaround for 402 Payment required issue: https://github.com/actions/runner-images/issues/1983
+          sudo rm -fv /etc/apt/sources.list.d/github_git-lfs.list
+          sudo rm -fv /etc/apt/sources.list.d/github_git-lfs.list.save
+
+          wget -O - https://debian.neo4j.com/neotechnology.gpg.key | sudo apt-key add -
+          echo 'deb https://debian.neo4j.com stable 4.4' | sudo tee /etc/apt/sources.list.d/neo4j.list
+          sudo apt-get update
+          apt list -a neo4j
+          sudo apt-get install neo4j
+          sudo chown -R circleci /var/log/neo4j
+          sudo chown -R circleci /var/lib/neo4j
+          neo4j-admin set-initial-password test
+
     install_node_ci: &install_node_ci
       - node/install-packages:
           cache-version: << pipeline.parameters.cache-version >>
+
+    install_poetry: &install_poetry
+      - run:
+          name: Install Poetry
+          command: |
+            # in old images we need to remove existing poetry
+            rm -rf $HOME/.poetry/bin/poetry
+            sudo curl -sSL https://install.python-poetry.org | python3 -
+            poetry --version
 
     install_demisto_sdk: &install_demisto_sdk
       - python/install-packages:
@@ -60,8 +86,13 @@ references:
 
     install_build_dependencies: &install_build_dependencies
       - python/install-packages: 
-                pkg-manager: "poetry"
-                args: "--extras build"
+          pkg-manager: "poetry"
+          args: "--extras build"
+          cache-version: << pipeline.parameters.cache-version >>
+          pre-install-steps:
+            - run:
+                name: Check if pyproject.toml is consistent with poetry.lock
+                command: poetry lock --check
     
     requires_all: &requires_all
       requires:
@@ -83,12 +114,17 @@ jobs:
       parallelism: 8
       steps:
         - checkout
+        - <<: *install_poetry
         - setup_remote_docker:
             version: 20.10.12
         - python/install-packages:
             pkg-manager: "poetry"
             cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_node_ci
+        - run:
+            name: Run Pytest collection
+            command: |
+              poetry run pytest --collect-only .
         - run:
             name: pytest
             no_output_timeout: 15m
@@ -103,6 +139,8 @@ jobs:
               TEST_FILES=$(circleci tests glob "**/*_test.py")
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/init\/templates\S*\.py//g')
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/tests\/integration_tests\S*\.py//g')
+              TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/content_graph\/tests\S*\.py//g')
+
               TEST_FILES=$(echo "$TEST_FILES" | circleci tests split --split-by=timings)
 
               mkdir test-results
@@ -111,6 +149,8 @@ jobs:
             path: test-results
         - store_artifacts:
             path: coverage_html_report
+        - store_artifacts:
+            path: test-results/junit.xml
         - run:
             name: Coveralls upload
             command: |
@@ -130,14 +170,28 @@ jobs:
         - image: cimg/python:<< parameters.pythonversion >>-node
       steps:
         - checkout
+        - <<: *install_neo4j
+        - <<: *install_poetry
         - setup_remote_docker:
             version: 20.10.12
         - python/install-packages:
             pkg-manager: "poetry"
             cache-version: << pipeline.parameters.cache-version >>
+
         - <<: *install_node_ci
         - run:
-            name: pytest
+            name: pytest - graph
+            no_output_timeout: 15m
+            command: |
+              shopt -u globstar
+              TEST_FILES=$(circleci tests glob "demisto_sdk/commands/content_graph/tests/*_test.py")
+
+              mkdir graph-test-results
+              poetry run pytest -v --junitxml=graph-test-results/junit.xml $TEST_FILES
+        - store_test_results:
+            path: graph-test-results
+        - run:
+            name: pytest - integrations
             no_output_timeout: 15m
             command: |
               shopt -u globstar
@@ -149,11 +203,13 @@ jobs:
             path: integration-test-results
 
 
+
   precommit-checks:
       docker:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
+        - <<: *install_poetry
         - attach_workspace:
             at: ~/project
         - <<: *install_build_dependencies
@@ -162,7 +218,6 @@ jobs:
             command: |
               cp .pre-commit-config.yaml pre-commit-cache-key.txt
               poetry run python --version --version >> pre-commit-cache-key.txt
-              cat poetry.lock >> pre-commit-cache-key.txt
         - restore_cache:
             keys:
             - v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}
@@ -197,10 +252,13 @@ jobs:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
+        - <<: *install_poetry
         - attach_workspace:
             at: ~/project
         - <<: *install_build_dependencies
-        - <<: *install_node_ci
+        - node/install-packages:
+            cache-version: << pipeline.parameters.cache-version >>
+            app-dir: content
         - run:
             name: Set Up & Create Id Set
             when: always
@@ -241,6 +299,7 @@ jobs:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
+        - <<: *install_poetry
         - <<: *install_demisto_sdk
         - setup_remote_docker:
             version: 20.10.12
@@ -282,6 +341,7 @@ jobs:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
+        - <<: *install_poetry
         - attach_workspace:
             at: ~/project
         - <<: *install_demisto_sdk
@@ -317,6 +377,7 @@ jobs:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
+        - <<: *install_poetry
         - attach_workspace:
             at: ~/project
         - run:
@@ -340,6 +401,7 @@ jobs:
       - image: cimg/python:<< pipeline.parameters.pythonversion_latest >>-node
     steps:
       - checkout
+      - <<: *install_poetry
       - python/install-packages:
           pkg-manager: "poetry"
           cache-version: << pipeline.parameters.cache-version >>
@@ -361,13 +423,13 @@ workflows:
           <<: *tag_filter
           matrix:
             parameters:
-              pythonversion: [3.8.12, 3.9.10, 3.10.2]   
+              pythonversion: ["3.8", "3.9", "3.10"]   
           name: run-unit-tests-<< matrix.pythonversion >>
       - run-integration-tests:
           <<: *tag_filter
           matrix:
             parameters:
-              pythonversion: [3.8.12, 3.9.10, 3.10.2]   
+              pythonversion: ["3.8", "3.9", "3.10"]   
           name: run-integration-tests-<< matrix.pythonversion >>
       - validate-files:
           <<: *tag_filter

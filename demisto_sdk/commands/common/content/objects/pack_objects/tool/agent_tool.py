@@ -7,8 +7,7 @@ from wcmatch.pathlib import Path
 
 import demisto_sdk.commands.common.content.errors as exc
 from demisto_sdk.commands.common.constants import TOOL
-from demisto_sdk.commands.common.content.objects.abstract_objects import \
-    GeneralObject
+from demisto_sdk.commands.common.content.objects.abstract_objects import GeneralObject
 
 
 class AgentTool(GeneralObject):
@@ -31,7 +30,7 @@ class AgentTool(GeneralObject):
         Raises:
             ContentInitializeError: If path not valid.
         """
-        path = Path(path)
+        path = Path(path)  # type: ignore
         if not path.exists():
             raise exc.ContentInitializeError(AgentTool, path)
         elif path.is_file():
@@ -67,7 +66,7 @@ class AgentTool(GeneralObject):
 
         return created_files
 
-    def _unserialize(self):
+    def _deserialize(self):
         """Currently no usage"""
         pass
 

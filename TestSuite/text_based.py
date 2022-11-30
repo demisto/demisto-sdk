@@ -10,7 +10,7 @@ class TextBased:
         self.write_text()
 
     def write_text(self, text: str = ''):
-        self._file_path.write_text(text)
+        self._file_path.write_text(data=text, encoding=None)
 
     def write_list(self, lst: list):
-        self._file_path.write_text('\n'.join(lst))
+        self._file_path.write_text(data='\n'.join(lst), encoding=None)

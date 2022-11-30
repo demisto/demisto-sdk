@@ -1,8 +1,7 @@
 import astroid
 import pylint.testutils
 
-from demisto_sdk.commands.lint.resources.pylint_plugins import \
-    certified_partner_level_checker
+from demisto_sdk.commands.lint.resources.pylint_plugins import certified_partner_level_checker
 
 # You can find documentation about adding new test checker here:
 # http://pylint.pycqa.org/en/latest/how_tos/custom_checkers.html#write-a-checker
@@ -81,54 +80,6 @@ class TestSysExitChecker(pylint.testutils.CheckerTestCase):
             - String of a code part which is being examined by pylint plugin.
         When:
             - sys.exit does not exists in the code.
-        Then:
-            - Ensure that there is no errors, Check that there is no error message.
-        """
-        node_a, node_b = astroid.extract_node("""
-            def test_function(): #@
-                return True #@
-        """)
-        assert node_a is not None and node_b is not None
-        with self.assertNoMessages():
-            self.checker.visit_call(node_a)
-            self.checker.visit_call(node_b)
-
-
-class TestDemistoLogChecker(pylint.testutils.CheckerTestCase):
-    """
-    Class which tests the functionality of demisto.log checker .
-    """
-    CHECKER_CLASS = certified_partner_level_checker.CertifiedPartnerChecker
-
-    def test_demisto_log_exists(self):
-        """
-        Given:
-            - String of a code part which is being examined by pylint plugin.
-        When:
-            - demisto.log exists in the code
-        Then:
-            - Ensure that the correct message id is being added to the message errors of pylint
-        """
-        _, node_b, _ = astroid.extract_node("""
-            def test_function(): #@
-                demisto.log('print this ') #@
-                return True #@
-        """)
-        assert node_b is not None
-        with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='demisto-log-exists',
-                    node=node_b,
-                ),
-        ):
-            self.checker.visit_call(node_b)
-
-    def test_no_demisto_log(self):
-        """
-        Given:
-            - String of a code part which is being examined by pylint plugin.
-        When:
-            - demisto.log does not exists in the code.
         Then:
             - Ensure that there is no errors, Check that there is no error message.
         """

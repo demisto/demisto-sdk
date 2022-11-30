@@ -11,13 +11,14 @@ import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.generate_integration.code_generator import (
-    IntegrationGeneratorArg, IntegrationGeneratorConfig,
-    IntegrationGeneratorOutput)
-from demisto_sdk.commands.postman_codegen.postman_codegen import (
-    build_commands_names_dict, create_body_format, duplicate_requests_check,
-    find_shared_args_path, flatten_collections, generate_command_outputs,
-    postman_to_autogen_configuration, update_min_unique_path)
+from demisto_sdk.commands.generate_integration.code_generator import (IntegrationGeneratorArg,
+                                                                      IntegrationGeneratorConfig,
+                                                                      IntegrationGeneratorOutput)
+from demisto_sdk.commands.postman_codegen.postman_codegen import (build_commands_names_dict, create_body_format,
+                                                                  duplicate_requests_check, find_shared_args_path,
+                                                                  flatten_collections, generate_command_outputs,
+                                                                  postman_to_autogen_configuration,
+                                                                  update_min_unique_path)
 
 json = JSON_Handler()
 
@@ -429,8 +430,7 @@ class TestPostmanCodeGen:
         - ensure the config file is generated
         - the config file should be identical to the one we have under resources folder
         """
-        from demisto_sdk.commands.common.hook_validations.docker import \
-            DockerImageValidator
+        from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 
         mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.6.12176')
 

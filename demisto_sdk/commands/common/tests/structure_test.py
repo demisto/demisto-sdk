@@ -5,38 +5,34 @@ from typing import List, Tuple
 
 import pytest
 
-from demisto_sdk.commands.common.constants import (
-    CODE_FILES_REGEX, PACKAGE_YML_FILE_REGEX,
-    PACKS_CLASSIFIER_JSON_5_9_9_REGEX, PACKS_CLASSIFIER_JSON_REGEX,
-    PACKS_DASHBOARD_JSON_REGEX, PACKS_INCIDENT_FIELD_JSON_REGEX,
-    PACKS_INCIDENT_TYPE_JSON_REGEX, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
-    PACKS_INTEGRATION_PY_REGEX, PACKS_INTEGRATION_TEST_PY_REGEX,
-    PACKS_INTEGRATION_YML_REGEX, PACKS_LAYOUT_JSON_REGEX,
-    PACKS_LAYOUTS_CONTAINER_JSON_REGEX, PACKS_MAPPER_JSON_REGEX,
-    PACKS_SCRIPT_PY_REGEX, PACKS_SCRIPT_TEST_PLAYBOOK,
-    PACKS_SCRIPT_TEST_PY_REGEX, PACKS_SCRIPT_YML_REGEX,
-    PACKS_WIDGET_JSON_REGEX, PLAYBOOK_README_REGEX, PLAYBOOK_YML_REGEX,
-    TEST_PLAYBOOK_YML_REGEX)
+from demisto_sdk.commands.common.constants import (CODE_FILES_REGEX, PACKAGE_YML_FILE_REGEX,
+                                                   PACKS_CLASSIFIER_JSON_5_9_9_REGEX, PACKS_CLASSIFIER_JSON_REGEX,
+                                                   PACKS_DASHBOARD_JSON_REGEX, PACKS_INCIDENT_FIELD_JSON_REGEX,
+                                                   PACKS_INCIDENT_TYPE_JSON_REGEX,
+                                                   PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_INTEGRATION_PY_REGEX,
+                                                   PACKS_INTEGRATION_TEST_PY_REGEX, PACKS_INTEGRATION_YML_REGEX,
+                                                   PACKS_LAYOUT_JSON_REGEX, PACKS_LAYOUTS_CONTAINER_JSON_REGEX,
+                                                   PACKS_MAPPER_JSON_REGEX, PACKS_SCRIPT_PY_REGEX,
+                                                   PACKS_SCRIPT_TEST_PLAYBOOK, PACKS_SCRIPT_TEST_PY_REGEX,
+                                                   PACKS_SCRIPT_YML_REGEX, PACKS_WIDGET_JSON_REGEX,
+                                                   PLAYBOOK_README_REGEX, PLAYBOOK_YML_REGEX, TEST_PLAYBOOK_YML_REGEX)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
-from demisto_sdk.commands.common.hook_validations.structure import (
-    StructureValidator, checked_type_by_reg)
-from demisto_sdk.tests.constants_test import (
-    DASHBOARD_TARGET, DIR_LIST, INCIDENT_FIELD_TARGET,
-    INDICATORFIELD_EXACT_SCHEME, INDICATORFIELD_EXTRA_FIELDS,
-    INDICATORFIELD_MISSING_AND_EXTRA_FIELDS, INDICATORFIELD_MISSING_FIELD,
-    INTEGRATION_TARGET, INVALID_DASHBOARD_PATH, INVALID_INTEGRATION_ID_PATH,
-    INVALID_INTEGRATION_YML_1, INVALID_INTEGRATION_YML_2,
-    INVALID_INTEGRATION_YML_3, INVALID_INTEGRATION_YML_4,
-    INVALID_LAYOUT_CONTAINER_PATH, INVALID_LAYOUT_PATH, INVALID_PLAYBOOK_PATH,
-    INVALID_REPUTATION_FILE, INVALID_WIDGET_PATH, LAYOUT_TARGET,
-    LAYOUTS_CONTAINER_TARGET, PLAYBOOK_PACK_TARGET, PLAYBOOK_TARGET,
-    VALID_DASHBOARD_PATH, VALID_INTEGRATION_ID_PATH,
-    VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_CONTAINER_PATH,
-    VALID_LAYOUT_PATH, VALID_PLAYBOOK_ARCSIGHT_ADD_DOMAIN_PATH,
-    VALID_PLAYBOOK_ID_PATH, VALID_REPUTATION_FILE, VALID_TEST_PLAYBOOK_PATH,
-    VALID_WIDGET_PATH, WIDGET_TARGET)
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator, checked_type_by_reg
+from demisto_sdk.tests.constants_test import (DASHBOARD_TARGET, DIR_LIST, INCIDENT_FIELD_TARGET,
+                                              INDICATORFIELD_EXACT_SCHEME, INDICATORFIELD_EXTRA_FIELDS,
+                                              INDICATORFIELD_MISSING_AND_EXTRA_FIELDS, INDICATORFIELD_MISSING_FIELD,
+                                              INTEGRATION_TARGET, INVALID_DASHBOARD_PATH, INVALID_INTEGRATION_ID_PATH,
+                                              INVALID_INTEGRATION_YML_1, INVALID_INTEGRATION_YML_2,
+                                              INVALID_INTEGRATION_YML_3, INVALID_INTEGRATION_YML_4,
+                                              INVALID_LAYOUT_CONTAINER_PATH, INVALID_LAYOUT_PATH, INVALID_PLAYBOOK_PATH,
+                                              INVALID_REPUTATION_FILE, INVALID_WIDGET_PATH, LAYOUT_TARGET,
+                                              LAYOUTS_CONTAINER_TARGET, PLAYBOOK_PACK_TARGET, PLAYBOOK_TARGET,
+                                              VALID_DASHBOARD_PATH, VALID_INTEGRATION_ID_PATH,
+                                              VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_CONTAINER_PATH,
+                                              VALID_LAYOUT_PATH, VALID_PLAYBOOK_ARCSIGHT_ADD_DOMAIN_PATH,
+                                              VALID_PLAYBOOK_ID_PATH, VALID_REPUTATION_FILE, VALID_TEST_PLAYBOOK_PATH,
+                                              VALID_WIDGET_PATH, WIDGET_TARGET)
 from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
@@ -114,31 +110,6 @@ class TestStructureValidator:
     def test_scheme_validation_reputation(self, path, answer):
         validator = StructureValidator(file_path=path, predefined_scheme='reputation')
         assert validator.is_valid_scheme() is answer
-
-    INPUTS_VALID_FROM_VERSION_MODIFIED = [
-        (VALID_TEST_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH, False),
-        (INVALID_PLAYBOOK_PATH, VALID_PLAYBOOK_ID_PATH, False),
-        (INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH, True)
-    ]
-
-    @pytest.mark.parametrize('path, old_file_path, answer', INPUTS_VALID_FROM_VERSION_MODIFIED)
-    def test_fromversion_update_validation_yml_structure(self, path, old_file_path, answer):
-        validator = StructureValidator(file_path=path)
-        with open(old_file_path) as f:
-            validator.old_file = yaml.load(f)
-            assert validator.is_valid_fromversion_on_modified() is answer
-
-    INPUTS_IS_ID_MODIFIED = [
-        (INVALID_PLAYBOOK_PATH, VALID_PLAYBOOK_ID_PATH, False, "Didn't find the id as updated in file"),
-        (VALID_PLAYBOOK_ID_PATH, VALID_PLAYBOOK_ID_PATH, True, "Found the ID as changed although it is not")
-    ]
-
-    @pytest.mark.parametrize("current_file, old_file, answer, error", INPUTS_IS_ID_MODIFIED)
-    def test_is_id_not_modified(self, current_file, old_file, answer, error):
-        validator = StructureValidator(file_path=current_file)
-        with open(old_file) as f:
-            validator.old_file = yaml.load(f)
-            assert validator.is_id_not_modified() is answer, error
 
     POSITIVE_ERROR = "Didn't find a slash in the ID even though it contains a slash."
     NEGATIVE_ERROR = "found a slash in the ID even though it not contains a slash."
@@ -243,7 +214,7 @@ class TestStructureValidator:
         yml_file = "yml_file.yml"
         json_file = "json_file.json"
         md_file = "md_file.md"
-        non_valid_file = "not_valid.py"
+        python_file = "py_file.py"
         no_extension = "no_ext"
 
         structure = StructureValidator(file_path=image)
@@ -258,8 +229,8 @@ class TestStructureValidator:
         structure = StructureValidator(file_path=md_file)
         assert structure.is_valid_file_extension()
 
-        structure = StructureValidator(file_path=non_valid_file)
-        assert not structure.is_valid_file_extension()
+        structure = StructureValidator(file_path=python_file)
+        assert structure.is_valid_file_extension()
 
         structure = StructureValidator(file_path=no_extension)
         assert not structure.is_valid_file_extension()

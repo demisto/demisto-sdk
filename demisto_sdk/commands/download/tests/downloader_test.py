@@ -5,17 +5,17 @@ from pathlib import Path
 import pytest
 from mock import patch
 
-from demisto_sdk.commands.common.constants import (
-    CLASSIFIERS_DIR, CONNECTIONS_DIR, CONTENT_ENTITIES_DIRS, DASHBOARDS_DIR,
-    DELETED_JSON_FIELDS_BY_DEMISTO, DELETED_YML_FIELDS_BY_DEMISTO,
-    GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR,
-    GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR,
-    LAYOUTS_DIR, LISTS_DIR, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, REPORTS_DIR,
-    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, WIZARDS_DIR)
+from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_DIR, CONTENT_ENTITIES_DIRS,
+                                                   DASHBOARDS_DIR, DELETED_JSON_FIELDS_BY_DEMISTO,
+                                                   DELETED_YML_FIELDS_BY_DEMISTO, GENERIC_DEFINITIONS_DIR,
+                                                   GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR, GENERIC_TYPES_DIR,
+                                                   INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+                                                   INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR,
+                                                   LISTS_DIR, MODELING_RULES_DIR, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
+                                                   REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR,
+                                                   WIZARDS_DIR, XDRC_TEMPLATE_DIR)
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import (get_child_files, get_json,
-                                               get_yaml)
+from demisto_sdk.commands.common.tools import get_child_files, get_json, get_yaml
 from demisto_sdk.commands.download.downloader import Downloader
 
 yaml = YAML_Handler()
@@ -153,7 +153,7 @@ class Environment:
             TEST_PLAYBOOKS_DIR: [], REPORTS_DIR: [], DASHBOARDS_DIR: [], WIDGETS_DIR: [], INCIDENT_FIELDS_DIR: [],
             INDICATOR_FIELDS_DIR: [], INCIDENT_TYPES_DIR: [], CLASSIFIERS_DIR: [], CONNECTIONS_DIR: [],
             INDICATOR_TYPES_DIR: [], GENERIC_TYPES_DIR: [], GENERIC_FIELDS_DIR: [], GENERIC_MODULES_DIR: [],
-            GENERIC_DEFINITIONS_DIR: []
+            GENERIC_DEFINITIONS_DIR: [], MODELING_RULES_DIR: [], XDRC_TEMPLATE_DIR: []
         }
 
         self.INTEGRATION_CUSTOM_CONTENT_OBJECT = {'id': 'Test Integration', 'name': 'Test Integration',
@@ -202,6 +202,18 @@ class TestHelperMethods:
 
     @pytest.mark.parametrize('data, file_type, entity', [
         ({'name': 'test-pb'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'playbook_testing'}, 'playbook', PLAYBOOKS_DIR),
+        ({'name': 'playbook_test'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'playbookTest'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'Testplaybook'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'Test-playbook'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'playbook_Test'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'playbook-test'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'playbook-Test'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'Test123'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'test_123'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'test-123'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'Test_123'}, 'playbook', TEST_PLAYBOOKS_DIR),
         ({}, 'integration', INTEGRATIONS_DIR)
     ])
     def test_file_type_to_entity(self, data, file_type, entity):
@@ -429,6 +441,7 @@ class TestMergeExistingFile:
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
             downloader.log_verbose = False
+            downloader.no_code_formatting = False
             downloader.merge_and_extract_existing_file(env.INTEGRATION_CUSTOM_CONTENT_OBJECT)
             stdout, _ = capsys.readouterr()
             assert 'Merged' in stdout
@@ -462,6 +475,7 @@ class TestMergeExistingFile:
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
             downloader.log_verbose = False
+            downloader.no_code_formatting = False
             downloader.merge_and_extract_existing_file(env.INTEGRATION_CUSTOM_CONTENT_OBJECT)
             paths = [file['path'] for file in env.INTEGRATION_PACK_OBJECT['Test Integration']]
             for path in paths:

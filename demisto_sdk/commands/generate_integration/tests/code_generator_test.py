@@ -3,9 +3,9 @@ from pathlib import Path
 
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.generate_integration.code_generator import (
-    IntegrationGeneratorCommand, IntegrationGeneratorConfig,
-    IntegrationGeneratorOutput, json_body_to_code)
+from demisto_sdk.commands.generate_integration.code_generator import (IntegrationGeneratorCommand,
+                                                                      IntegrationGeneratorConfig,
+                                                                      IntegrationGeneratorOutput, json_body_to_code)
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -77,8 +77,7 @@ class TestCodeGenerator:
         - ensure code is generated
         - esnrue the code is identical to what is stored under test_files folder
         """
-        from demisto_sdk.commands.common.hook_validations.docker import \
-            DockerImageValidator
+        from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 
         mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.6.12176')
 
@@ -115,8 +114,7 @@ class TestCodeGenerator:
         Then
         - ensure it generates the yml successfully and the yml is the exact as expected yml from test_files folder
        """
-        from demisto_sdk.commands.common.hook_validations.docker import \
-            DockerImageValidator
+        from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 
         mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.6.12176')
 
@@ -144,8 +142,7 @@ class TestCodeGenerator:
         - ensure VirusTotalTest dir contains VirusTotalTest.py
         - ensure VirusTotalTest dir contains VirusTotalTest.yml
         """
-        from demisto_sdk.commands.common.hook_validations.docker import \
-            DockerImageValidator
+        from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 
         mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.6.12176')
 
@@ -174,8 +171,7 @@ class TestCodeGenerator:
         - ensure integration-VirusTotalTest.yml exists
         - ensure the unified file contains the script
         """
-        from demisto_sdk.commands.common.hook_validations.docker import \
-            DockerImageValidator
+        from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 
         mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.6.12176')
 

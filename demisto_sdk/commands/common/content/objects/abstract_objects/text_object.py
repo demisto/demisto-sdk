@@ -26,7 +26,7 @@ class TextObject(GeneralObject):
         Raises:
             ContentInitializeError: If path not valid.
         """
-        path = Path(path)
+        path = Path(path)  # type: ignore
         if not (path.exists() and path.is_file()):
             raise exc.ContentInitializeError(TextObject, path)
 
@@ -40,7 +40,7 @@ class TextObject(GeneralObject):
         """
         pass
 
-    def _unserialize(self):
+    def _deserialize(self):
         """Load file content to string"""
         if not self._text:
             try:
@@ -55,6 +55,6 @@ class TextObject(GeneralObject):
             str: file content.
         """
         if not self._text:
-            self._unserialize()
+            self._deserialize()
 
         return self._text

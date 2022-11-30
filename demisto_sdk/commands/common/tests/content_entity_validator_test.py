@@ -2,22 +2,21 @@ import os
 
 import pytest
 
-from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
-                                                   EXCLUDED_DISPLAY_NAME_WORDS)
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
-from demisto_sdk.commands.common.tools import (get_not_registered_tests,
-                                               is_test_config_match)
-from demisto_sdk.tests.constants_test import (
-    INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK, VALID_INTEGRATION_TEST_PATH,
-    VALID_TEST_PLAYBOOK_PATH)
+from demisto_sdk.commands.common.constants import API_MODULES_PACK, EXCLUDED_DISPLAY_NAME_WORDS
+from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from demisto_sdk.commands.common.tools import get_not_registered_tests, is_test_config_match
+from demisto_sdk.tests.constants_test import (INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK, INVALID_PLAYBOOK_PATH,
+                                              VALID_INTEGRATION_TEST_PATH, VALID_PLAYBOOK_ID_PATH,
+                                              VALID_TEST_PLAYBOOK_PATH)
 
 HAS_TESTS_KEY_UNPUTS = [
     (VALID_INTEGRATION_TEST_PATH, 'integration', True),
     (INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK, 'integration', False)
 ]
+
+yaml = YAML_Handler()
 
 
 @pytest.mark.parametrize('file_path, schema, expected', HAS_TESTS_KEY_UNPUTS)
@@ -312,3 +311,42 @@ def test_are_fromversion_and_toversion_in_correct_format(mocker, current_file, f
         assert content_entity_validator.are_fromversion_and_toversion_in_correct_format() == expected_result
     except Exception as e:
         assert expected_result in str(e)
+
+
+INPUTS_VALID_FROM_VERSION_MODIFIED = [
+    (VALID_TEST_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH, False, 'Valid from version marked as invalid'),
+    (INVALID_PLAYBOOK_PATH, VALID_PLAYBOOK_ID_PATH, False, 'Invalid from version marked as valid.'),
+    (INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH, True, 'From version did not changed but marked as changed.')
+]
+
+
+@pytest.mark.parametrize('path, old_file_path, answer, error', INPUTS_VALID_FROM_VERSION_MODIFIED)
+def test_fromversion_update_validation_yml_structure(path, old_file_path, answer, error):
+    validator = ContentEntityValidator(StructureValidator(file_path=path))
+    with open(old_file_path) as f:
+        validator.old_file = yaml.load(f)
+        assert validator.is_valid_fromversion_on_modified() is answer, error
+
+
+INPUTS_IS_ID_MODIFIED = [
+    (INVALID_PLAYBOOK_PATH, VALID_PLAYBOOK_ID_PATH, False, "Didn't find the id as updated in file"),
+    (VALID_PLAYBOOK_ID_PATH, VALID_PLAYBOOK_ID_PATH, True, "Found the ID as changed although it is not")
+]
+
+
+@pytest.mark.parametrize("current_file, old_file, answer, error", INPUTS_IS_ID_MODIFIED)
+def test_is_id_not_modified(current_file, old_file, answer, error):
+    validator = ContentEntityValidator(StructureValidator(file_path=current_file))
+    with open(old_file) as f:
+        validator.old_file = yaml.load(f)
+        assert validator.is_id_not_modified() is answer, error
+
+
+@pytest.mark.parametrize("current_file, old_file, answer, error",
+                         INPUTS_VALID_FROM_VERSION_MODIFIED + INPUTS_IS_ID_MODIFIED
+                         )
+def test_is_backward_compatible(current_file, old_file, answer, error):
+    validator = ContentEntityValidator(StructureValidator(file_path=current_file))
+    with open(old_file) as f:
+        validator.old_file = yaml.load(f)
+        assert validator.is_backward_compatible() is answer, error

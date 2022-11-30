@@ -1,23 +1,20 @@
 from __future__ import annotations
 
+import logging
+import os
 from typing import Any, Iterator
 
 from git import InvalidGitRepositoryError, Repo
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.constants import (DOCUMENTATION,
-                                                   DOCUMENTATION_DIR,
-                                                   PACKS_DIR,
-                                                   TEST_PLAYBOOKS_DIR)
+from demisto_sdk.commands.common.constants import DOCUMENTATION, DOCUMENTATION_DIR, PACKS_DIR, TEST_PLAYBOOKS_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.content.objects.pack_objects.playbook.playbook import \
-    Playbook
-from demisto_sdk.commands.common.content.objects.pack_objects.script.script import \
-    Script
-from demisto_sdk.commands.common.content.objects.root_objects import (
-    ContentDescriptor, Documentation)
-from demisto_sdk.commands.common.content.objects_factory import \
-    path_to_pack_object
+from demisto_sdk.commands.common.content.objects.pack_objects.playbook.playbook import Playbook
+from demisto_sdk.commands.common.content.objects.pack_objects.script.script import Script
+from demisto_sdk.commands.common.content.objects.root_objects import ContentDescriptor, Documentation
+from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
+
+logger = logging.getLogger('demisto-sdk')
 
 
 class Content:
@@ -33,7 +30,7 @@ class Content:
         TODO:
             1. Add attribute which init only changed objects by git.
         """
-        self._path = Path(path)
+        self._path = Path(path)  # type: ignore
 
     @classmethod
     def from_cwd(cls) -> Content:
@@ -48,7 +45,7 @@ class Content:
         """
         repo = cls.git()
         if repo:
-            content = Content(repo.working_tree_dir)
+            content = Content(repo.working_tree_dir)  # type: ignore
         else:
             content = Content(Path.cwd())
 
@@ -68,8 +65,13 @@ class Content:
             1. Should be called when cwd inside content repository.
         """
         try:
-            repo = Repo(Path.cwd(), search_parent_directories=True)
+            if content_path := os.getenv('DEMISTO_SDK_CONTENT_PATH'):
+                repo = Repo(content_path)
+                logger.debug(f'Using content path: {content_path}')
+            else:
+                repo = Repo(Path.cwd(), search_parent_directories=True)
         except InvalidGitRepositoryError:
+            logger.debug('Git repo was not found.')
             repo = None
 
         return repo

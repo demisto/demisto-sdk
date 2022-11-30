@@ -1,8 +1,6 @@
 import os
 import re
-import subprocess
 import tempfile
-from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -11,25 +9,23 @@ from typing import Callable, List, Optional, Set
 from urllib.parse import urlparse
 
 import click
+import docker
 import requests
 from git import InvalidGitRepositoryError
 from requests.adapters import HTTPAdapter
 from requests.exceptions import HTTPError
 from urllib3.util import Retry
 
-from demisto_sdk.commands.common.constants import (RELATIVE_HREF_URL_REGEX,
-                                                   RELATIVE_MARKDOWN_URL_REGEX)
-from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
-                                                FOUND_FILES_AND_IGNORED_ERRORS,
-                                                Errors)
+from demisto_sdk.commands.common.constants import RELATIVE_HREF_URL_REGEX, RELATIVE_MARKDOWN_URL_REGEX
+from demisto_sdk.commands.common.docker_helper import init_global_docker_client
+from demisto_sdk.commands.common.errors import FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS, Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import (
-    BaseValidator, error_codes)
-from demisto_sdk.commands.common.tools import (
-    compare_context_path_in_yml_and_readme, get_content_path,
-    get_url_with_retries, get_yaml, get_yml_paths_in_dir, print_warning,
-    run_command_os)
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
+from demisto_sdk.commands.common.MDXServer import start_docker_MDX_server, start_local_MDX_server
+from demisto_sdk.commands.common.tools import (compare_context_path_in_yml_and_readme, get_content_path,
+                                               get_url_with_retries, get_yaml, get_yml_paths_in_dir, print_warning,
+                                               run_command_os)
 
 json = JSON_Handler()
 
@@ -118,7 +114,6 @@ class ReadMeValidator(BaseValidator):
     """
 
     # Static var to hold the mdx server process
-    _MDX_SERVER_PROCESS: Optional[subprocess.Popen] = None
     _MDX_SERVER_LOCK = Lock()
     MINIMUM_README_LENGTH = 30
 
@@ -130,7 +125,7 @@ class ReadMeValidator(BaseValidator):
         self.content_path = get_content_path()
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
-        self.node_modules_path = self.content_path / Path('node_modules')
+        self.node_modules_path = self.content_path / Path('node_modules')  # type: ignore
         with open(self.file_path) as f:
             readme_content = f.read()
         self.readme_content = readme_content
@@ -150,7 +145,8 @@ class ReadMeValidator(BaseValidator):
             self.verify_readme_is_not_too_short(),
             self.is_context_different_in_yml(),
             self.verify_demisto_in_readme_content(),
-            self.verify_template_not_in_readme()
+            self.verify_template_not_in_readme(),
+            self.verify_copyright_section_in_readme_content()
         ])
 
     def mdx_verify(self) -> bool:
@@ -160,8 +156,9 @@ class ReadMeValidator(BaseValidator):
             fp.write(readme_content)
             fp.flush()
             # run the javascript mdx parse validator
-            _, stderr, is_not_valid = run_command_os(f'node {mdx_parse} -f {fp.name}', cwd=self.content_path,
-                                                     env=os.environ)
+            _, stderr, is_not_valid = run_command_os(
+                f'node {mdx_parse} -f {fp.name}', cwd=self.content_path, env=os.environ  # type: ignore
+            )
         if is_not_valid:
             error_message, error_code = Errors.readme_error(stderr)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
@@ -169,11 +166,10 @@ class ReadMeValidator(BaseValidator):
         return True
 
     def mdx_verify_server(self) -> bool:
-        if not ReadMeValidator._MDX_SERVER_PROCESS:
-            server_started = ReadMeValidator.start_mdx_server(handle_error=self.handle_error,
-                                                              file_path=str(self.file_path))
-            if not server_started:
-                return False
+        server_started = ReadMeValidator.start_mdx_server(handle_error=self.handle_error,
+                                                          file_path=str(self.file_path))
+        if not server_started:
+            return False
         readme_content = self.fix_mdx()
         retry = Retry(total=2)
         adapter = HTTPAdapter(max_retries=retry)
@@ -193,8 +189,7 @@ class ReadMeValidator(BaseValidator):
 
     def is_mdx_file(self) -> bool:
         html = self.is_html_doc()
-        valid = os.environ.get('DEMISTO_README_VALIDATION') or os.environ.get(
-            'CI') or self.are_modules_installed_for_verify(self.content_path)
+        valid = self.should_run_mdx_validation()
         if valid and not html:
             # add to env var the directory of node modules
             os.environ['NODE_PATH'] = str(self.node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
@@ -203,6 +198,13 @@ class ReadMeValidator(BaseValidator):
             else:
                 return self.mdx_verify_server()
         return True
+
+    def should_run_mdx_validation(self):
+        return os.environ.get('DEMISTO_README_VALIDATION') or os.environ.get(
+            'CI'
+        ) or ReadMeValidator.are_modules_installed_for_verify(
+            self.content_path  # type: ignore
+        ) or ReadMeValidator.is_docker_available()
 
     def fix_mdx(self) -> str:
         txt = self.readme_content
@@ -219,39 +221,6 @@ class ReadMeValidator(BaseValidator):
         # remove html comments
         txt = re.sub(r'<\!--.*?-->', '', txt, flags=re.DOTALL)
         return txt
-
-    @staticmethod
-    @lru_cache(None)
-    def are_modules_installed_for_verify(content_path: str) -> bool:
-        """ Check the following:
-            1. npm packages installed - see packs var for specific pack details.
-            2. node interperter exists.
-        Returns:
-            bool: True If all req ok else False
-        """
-        missing_module = []
-        valid = True
-        # Check node exist
-        stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)
-        if exit_code:
-            print_warning(f'There is no node installed on the machine, Test Skipped, error - {stderr}, {stdout}')
-            valid = False
-        else:
-            # Check npm modules exsits
-            stdout, stderr, exit_code = run_command_os(f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}',
-                                                       cwd=content_path)
-            if exit_code:  # all are missinig
-                missing_module.extend(REQUIRED_MDX_PACKS)
-            else:
-                deps = json.loads(stdout).get('dependencies', {})
-                for pack in REQUIRED_MDX_PACKS:
-                    if pack not in deps:
-                        missing_module.append(pack)
-        if missing_module:
-            valid = False
-            print_warning(f"The npm modules: {missing_module} are not installed, Readme mdx validation skipped. Use "
-                          f"'npm install' to install all required node dependencies")
-        return valid
 
     def is_html_doc(self) -> bool:
         if self.readme_content.startswith(NO_HTML):
@@ -330,6 +299,54 @@ class ReadMeValidator(BaseValidator):
 
         return error_list
 
+    @staticmethod
+    @lru_cache(None)
+    def is_docker_available():
+        """ Pings the docker daemon to check if it is available
+
+        Returns:
+            bool: True if the daemon is accessible
+        """
+        try:
+            docker_client: docker.DockerClient = init_global_docker_client(log_prompt='DockerPing')
+            docker_client.ping()
+            return True
+        except Exception:
+            return False
+
+    @staticmethod
+    @lru_cache(None)
+    def are_modules_installed_for_verify(content_path: str) -> bool:
+        """ Check the following:
+            1. npm packages installed - see packs var for specific pack details.
+            2. node interperter exists.
+        Returns:
+            bool: True If all req ok else False
+        """
+        missing_module = []
+        valid = True
+        # Check node exist
+        stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)
+        if exit_code:
+            print_warning(f'There is no node installed on the machine, error - {stderr}, {stdout}')
+            valid = False
+        else:
+            # Check npm modules exsits
+            stdout, stderr, exit_code = run_command_os(f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}',
+                                                       cwd=content_path)
+            if exit_code:  # all are missinig
+                missing_module.extend(REQUIRED_MDX_PACKS)
+            else:
+                deps = json.loads(stdout).get('dependencies', {})
+                for pack in REQUIRED_MDX_PACKS:
+                    if pack not in deps:
+                        missing_module.append(pack)
+        if missing_module:
+            valid = False
+            print_warning(f"The npm modules: {missing_module} are not installed. Use "
+                          f"'npm install' to install all required node dependencies")
+        return valid
+
     def check_readme_relative_image_paths(self, is_pack_readme: bool = False) -> list:
         """ Validate readme images relative paths.
             (1) prints an error if relative paths in the pack README are found since they are not supported.
@@ -374,7 +391,9 @@ class ReadMeValidator(BaseValidator):
             if error_code and error_message:  # error was found
                 formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path,
                                                     should_print=should_print_error)
-                error_list.append(formatted_error)
+                # if error is None it should be ignored
+                if formatted_error:
+                    error_list.append(formatted_error)
 
         return error_list
 
@@ -582,6 +601,30 @@ class ReadMeValidator(BaseValidator):
 
         return valid
 
+    def check_readme_content_contain_text(self, text_list: list, is_lower: bool = False, to_split: bool = False):
+        """
+        Args:
+            text_list: list of words/sentences to search in line content.
+            is_lower: True to check when line is lower cased.
+            to_split: True to split the line in order to search specific word
+
+        Returns:
+            list of lines which contains the given text.
+
+        """
+        invalid_lines = []
+
+        for line_num, line in enumerate(self.readme_content.split('\n')):
+            if is_lower:
+                line = line.lower()
+            if to_split:
+                line = line.split()  # type: ignore
+            for text in text_list:
+                if text in line:
+                    invalid_lines.append(line_num + 1)
+
+        return invalid_lines
+
     @error_codes('RM106')
     def verify_demisto_in_readme_content(self):
         """
@@ -596,11 +639,7 @@ class ReadMeValidator(BaseValidator):
             return True
 
         is_valid = True
-        invalid_lines = []
-
-        for line_num, line in enumerate(self.readme_content.split('\n')):
-            if 'demisto ' in line.lower() or ' demisto' in line.lower():
-                invalid_lines.append(line_num + 1)
+        invalid_lines = self.check_readme_content_contain_text(text_list=['demisto ', ' demisto'], is_lower=True)
 
         if invalid_lines:
             error_message, error_code = Errors.readme_contains_demisto_word(invalid_lines)
@@ -618,11 +657,7 @@ class ReadMeValidator(BaseValidator):
             True if '%%FILL HERE%%' does not exist in the README content, and False if it does.
         """
         is_valid = True
-        invalid_lines = []
-
-        for line_num, line in enumerate(self.readme_content.split('\n')):
-            if '%%FILL HERE%%' in line:
-                invalid_lines.append(line_num + 1)
+        invalid_lines = self.check_readme_content_contain_text(text_list=['%%FILL HERE%%'])
 
         if invalid_lines:
             error_message, error_code = Errors.template_sentence_in_readme(invalid_lines)
@@ -631,40 +666,48 @@ class ReadMeValidator(BaseValidator):
 
         return is_valid
 
-    @staticmethod
-    @contextmanager
-    def start_mdx_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):
-        with ReadMeValidator._MDX_SERVER_LOCK:
-            if not ReadMeValidator._MDX_SERVER_PROCESS:
-                mdx_parse_server = Path(__file__).parent.parent / 'mdx-parse-server.js'
-                ReadMeValidator._MDX_SERVER_PROCESS = subprocess.Popen(['node', str(mdx_parse_server)],
-                                                                       stdout=subprocess.PIPE, text=True)
-                line = ReadMeValidator._MDX_SERVER_PROCESS.stdout.readline()  # type: ignore
-                if 'MDX server is listening on port' not in line:
-                    ReadMeValidator.stop_mdx_server()
-                    error_message, error_code = Errors.error_starting_mdx_server(line=line)
-                    if handle_error and file_path:
-                        if handle_error(error_message, error_code, file_path=file_path):
-                            return False
+    @error_codes('RM113')
+    def verify_copyright_section_in_readme_content(self):
+        """
+        Checks if there are words related to copyright section in the README content.
 
-                    else:
-                        raise Exception(error_message)
-        try:
-            yield True
-        finally:
-            ReadMeValidator.stop_mdx_server()
+        Returns:
+            True if related words does not exist in the README content, and False if it does.
+        """
+        is_valid = True
+        invalid_lines = self.check_readme_content_contain_text(text_list=['BSD', 'MIT', 'Copyright', 'proprietary'], to_split=True)
+
+        if invalid_lines:
+            error_message, error_code = Errors.copyright_section_in_readme_error(invalid_lines)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                is_valid = False
+
+        return is_valid
+
+    @staticmethod
+    def start_mdx_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):
+        """
+        This function will either start a local server or a server in docker depending on the dependencies installed
+        Args:
+            handle_error:
+            file_path:
+
+        Returns:
+            A ContextManager
+
+        """
+        with ReadMeValidator._MDX_SERVER_LOCK:
+            if ReadMeValidator.are_modules_installed_for_verify(get_content_path()):  # type: ignore
+                return start_local_MDX_server(handle_error, file_path)
+            elif ReadMeValidator.is_docker_available():
+                return start_docker_MDX_server(handle_error, file_path)
+        return False
 
     @staticmethod
     def add_node_env_vars():
         content_path = get_content_path()
-        node_modules_path = content_path / Path('node_modules')
+        node_modules_path = content_path / Path('node_modules')  # type: ignore
         os.environ['NODE_PATH'] = str(node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
-
-    @staticmethod
-    def stop_mdx_server():
-        if ReadMeValidator._MDX_SERVER_PROCESS:
-            ReadMeValidator._MDX_SERVER_PROCESS.terminate()
-            ReadMeValidator._MDX_SERVER_PROCESS = None
 
     @staticmethod
     def _get_error_lists():

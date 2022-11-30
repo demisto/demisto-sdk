@@ -1,0 +1,205 @@
+id: Test playbook
+version: 11
+name: Test playbook
+starttaskid: "0"
+tasks:
+  "0":
+    id: "0"
+    taskid: df426ee9-d162-4855-8c5b-0fe6f415d31d
+    type: start
+    task:
+      id: df426ee9-d162-4855-8c5b-0fe6f415d31d
+      version: -1
+      name: ""
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "1"
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 50
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+  "1":
+    id: "1"
+    taskid: ad563d96-52f2-45a6-8bfc-1e509f96bc7d
+    type: regular
+    task:
+      id: ad563d96-52f2-45a6-8bfc-1e509f96bc7d
+      version: -1
+      name: Gmail search
+      description: Searches for Gmail records of a specified Google user.
+      script: Gmail|||gmail-search
+      type: regular
+      iscommand: true
+      brand: Gmail
+    nexttasks:
+      '#none#':
+      - "2"
+    scriptarguments:
+      after: {}
+      before: {}
+      fields: {}
+      filename: {}
+      from: {}
+      has-attachments: {}
+      in: {}
+      include-spam-trash: {}
+      labels-ids: {}
+      max-results: {}
+      page-token: {}
+      query: {}
+      subject: {}
+      to: {}
+      user-id:
+        simple: koko@demisto.com
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 195
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+  "2":
+    id: "2"
+    taskid: b1ba6ee2-a80a-4fb3-8ba3-d689d599444c
+    type: regular
+    task:
+      id: b1ba6ee2-a80a-4fb3-8ba3-d689d599444c
+      version: -1
+      name: Read file
+      description: Load the contents of a file into context.
+      scriptName: ReadFile
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "4"
+    scriptarguments:
+      encoding: {}
+      entryID:
+        simple: entryId
+      maxFileSize: {}
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 370
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+  "3":
+    id: "3"
+    taskid: c496302f-4d40-4412-86a8-da1c355b039b
+    type: title
+    task:
+      id: c496302f-4d40-4412-86a8-da1c355b039b
+      version: -1
+      name: Done
+      type: title
+      iscommand: false
+      brand: ""
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 720
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+  "4":
+    id: "4"
+    taskid: 38c6ac55-ffd2-47cc-81ab-cd80d63efe9c
+    type: playbook
+    task:
+      id: 38c6ac55-ffd2-47cc-81ab-cd80d63efe9c
+      version: -1
+      name: Get Original Email - Gmail
+      playbookName: Get Original Email - Gmail
+      type: playbook
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "3"
+    separatecontext: true
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 545
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+view: |-
+  {
+    "linkLabelsPosition": {},
+    "paper": {
+      "dimensions": {
+        "height": 735,
+        "width": 380,
+        "x": 50,
+        "y": 50
+      }
+    }
+  }
+inputs:
+- key: InputA
+  value:
+    complex:
+      root: File
+      accessor: Name
+  required: false
+  description: ""
+- key: InputB
+  value:
+    simple: johnnydepp@gmail.com
+  required: true
+  description: This is input b
+- key: ""
+  value: {}
+  required: false
+  description: ""
+  playbookInputQuery:
+    query: (type:ip or type:file or type:Domain or type:URL) -tags:pending_review
+      and (tags:approved_black or tags:approved_white or tags:approved_watchlist)
+    queryEntity: indicators
+    results: null
+    daterange:
+      fromdate: 0001-01-01T00:00:00Z
+      todate: 0001-01-01T00:00:00Z
+      period:
+        by: ""
+        byto: ""
+        byfrom: ""
+        tovalue: null
+        fromvalue: null
+        field: ""
+      fromdatelicenseval: 0001-01-01T00:00:00Z
+    runFromLastJobTime: false
+outputs:
+- contextPath: Email.To
+  description: The recipient of the email.
+  type: string
+- contextPath: FileData
+  type: string

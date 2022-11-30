@@ -1,5 +1,4 @@
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
 
 
 class ReportValidator(ContentEntityValidator):

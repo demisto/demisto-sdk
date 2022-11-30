@@ -7,11 +7,12 @@ import pytest
 
 from demisto_sdk.commands.common.constants import PACKS_DIR
 from demisto_sdk.commands.common.content import Pack
-from demisto_sdk.commands.common.content.objects.pack_objects import (
-    AgentTool, Classifier, Connection, Contributors, Dashboard, DocFile,
-    IncidentField, IncidentType, IndicatorField, IndicatorType, Integration,
-    LayoutsContainer, PackIgnore, PackMetaData, Playbook, Readme, ReleaseNote,
-    Report, Script, SecretIgnore, Widget)
+from demisto_sdk.commands.common.content.objects.pack_objects import (AgentTool, Classifier, Connection, Contributors,
+                                                                      Dashboard, DocFile, IncidentField, IncidentType,
+                                                                      IndicatorField, IndicatorType, Integration,
+                                                                      LayoutsContainer, PackIgnore, PackMetaData,
+                                                                      Playbook, Readme, ReleaseNote, Report, Script,
+                                                                      SecretIgnore, Widget)
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import src_root
 
@@ -98,8 +99,7 @@ def test_sign_pack_exception_thrown(repo, capsys, mocker):
     import subprocess
 
     import demisto_sdk.commands.common.content.objects.pack_objects.pack as pack_class
-    from demisto_sdk.commands.common.content.objects.pack_objects.pack import \
-        Pack
+    from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 
     mocker.patch.object(subprocess, 'Popen', autospec=True)
 
@@ -128,8 +128,7 @@ def test_sign_pack_error_from_subprocess(repo, capsys, fake_process):
 
     """
     import demisto_sdk.commands.common.content.objects.pack_objects.pack as pack_class
-    from demisto_sdk.commands.common.content.objects.pack_objects.pack import \
-        Pack
+    from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 
     pack_class.logger = logging_setup(3)
 
@@ -160,8 +159,7 @@ def test_sign_pack_success(repo, capsys, fake_process):
 
     """
     import demisto_sdk.commands.common.content.objects.pack_objects.pack as pack_class
-    from demisto_sdk.commands.common.content.objects.pack_objects.pack import \
-        Pack
+    from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 
     pack_class.logger = logging_setup(3)
 

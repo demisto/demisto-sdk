@@ -4,7 +4,7 @@ from TestSuite.json_based import JSONBased
 
 
 class XSIAMReport(JSONBased):
-    def __init__(self, name: str, xsiam_report_dir_path: Path, json_content: dict = {}):
+    def __init__(self, name: str, xsiam_report_dir_path: Path, json_content: dict = None):
         self.xsiam_report_tmp_path = xsiam_report_dir_path / f"{name}.json"
         self.name = name
 

@@ -1,26 +1,21 @@
 import os
+from pathlib import Path
 from typing import Optional, Tuple
 
 import git
 
-from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES)
-from demisto_sdk.commands.common.tools import (LOG_COLORS,
-                                               filter_files_by_type,
-                                               filter_files_on_pack,
-                                               get_pack_name,
-                                               get_pack_names_from_files,
-                                               pack_name_to_path, print_color,
-                                               print_warning, suppress_stdout)
-from demisto_sdk.commands.update_release_notes.update_rn import (
-    UpdateRN, update_api_modules_dependents_rn)
+from demisto_sdk.commands.common.constants import API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES
+from demisto_sdk.commands.common.tools import (LOG_COLORS, filter_files_by_type, filter_files_on_pack, get_pack_name,
+                                               get_pack_names_from_files, pack_name_to_path, print_color, print_warning,
+                                               suppress_stdout)
+from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN, update_api_modules_dependents_rn
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 
 class UpdateReleaseNotesManager:
     def __init__(self, user_input: Optional[str] = None, update_type: Optional[str] = None,
                  pre_release: bool = False, is_all: Optional[bool] = False, text: Optional[str] = None,
-                 specific_version: Optional[str] = None, id_set_path: Optional[str] = None,
+                 specific_version: Optional[str] = None, id_set_path: Optional[Path] = None,
                  prev_ver: Optional[str] = None, is_force: bool = False, is_bc: bool = False):
         self.given_pack = user_input
         self.changed_packs_from_git: set = set()
@@ -179,7 +174,7 @@ class UpdateReleaseNotesManager:
 
         elif self.changed_packs_from_git:  # update all changed packs
             for pack in self.changed_packs_from_git:
-                if 'APIModules' in pack:  # We already handled Api Modules so we can skip it.
+                if API_MODULES_PACK in pack:  # We already handled Api Modules so we can skip it.
                     continue
                 self.create_pack_release_notes(pack, filtered_modified_files, filtered_added_files, old_format_files)
         else:

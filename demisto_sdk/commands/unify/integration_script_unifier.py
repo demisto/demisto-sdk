@@ -11,16 +11,12 @@ import click
 from inflection import dasherize, underscore
 from ruamel.yaml.scalarstring import FoldedScalarString
 
-from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-    DEFAULT_IMAGE_PREFIX, INTEGRATIONS_DIR, SCRIPTS_DIR, TYPE_TO_EXTENSION,
-    FileType)
+from demisto_sdk.commands.common.constants import (DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
+                                                   DEFAULT_IMAGE_PREFIX, INTEGRATIONS_DIR, SCRIPTS_DIR,
+                                                   TYPE_TO_EXTENSION, FileType)
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
-                                               find_type, get_mp_tag_parser,
-                                               get_pack_name, get_yaml,
-                                               get_yml_paths_in_dir,
-                                               print_color, print_warning,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list, find_type, get_mp_tag_parser, get_pack_name,
+                                               get_yaml, get_yml_paths_in_dir, print_color, print_warning,
                                                server_version_compare)
 from demisto_sdk.commands.unify.yaml_unifier import YAMLUnifier
 
@@ -113,7 +109,7 @@ class IntegrationScriptUnifier(YAMLUnifier):
             else:  # no value for dockerimage45 remove the dockerimage entry
                 del yml_unified45['dockerimage']
 
-            output_path45 = re.sub(r'\.yml$', '_45.yml', self.dest_path)  # type: ignore[type-var]
+            output_path45 = re.sub(r'\.yml$', '_45.yml', self.dest_path)  # type: ignore[arg-type]
             output_map = {
                 self.dest_path: yml_unified,
                 output_path45: yml_unified45,
@@ -124,12 +120,13 @@ class IntegrationScriptUnifier(YAMLUnifier):
         return output_map
 
     def unify(self, file_name_suffix=None):
-        print("Merging package: {}".format(self.package_path))
+        print(f"Merging package: {self.package_path}")
         self._set_dest_path(file_name_suffix)
 
         script_obj = self.yml_data
 
-        if not self.is_script_package:
+        if not self.is_script_package:  # integration
+            self.update_hidden_parameters_value()  # changes self.yml_data
             script_obj = self.yml_data['script']
         script_type = TYPE_TO_EXTENSION[script_obj['type']]
 
@@ -158,6 +155,22 @@ class IntegrationScriptUnifier(YAMLUnifier):
         print_color(f'Created unified yml: {list(output_map.keys())}', LOG_COLORS.GREEN)
 
         return unifier_outputs[0]
+
+    def update_hidden_parameters_value(self) -> None:
+        """
+        The `hidden` attribute of each param may be a bool (affecting both marketplaces),
+        or a list of marketplaces where this param is hidden.
+
+        This method replaces a list with a boolean, according to the self.marketplace value.
+        Boolean values are left untouched.
+        """
+        if not self.marketplace:
+            return
+
+        for i, param in enumerate(self.yml_data.get('configuration', ())):
+            if isinstance(hidden := (param.get('hidden')), list):
+                # converts list to bool
+                self.yml_data['configuration'][i]['hidden'] = self.marketplace in hidden
 
     def add_custom_section(self, unified_yml: Dict) -> Dict:
         """
@@ -242,15 +255,21 @@ class IntegrationScriptUnifier(YAMLUnifier):
             self.package_path = self.package_path[:-1]  # remove the last / as we use os.path.join
         if self.package_path.endswith(os.path.join('Scripts', 'CommonServerPython')):
             return os.path.join(self.package_path, 'CommonServerPython.py')
+        if self.package_path.endswith(os.path.join('Scripts', 'CommonServerUserPython')):
+            return os.path.join(self.package_path, 'CommonServerUserPython.py')
         if self.package_path.endswith(os.path.join('Scripts', 'CommonServerPowerShell')):
             return os.path.join(self.package_path, 'CommonServerPowerShell.ps1')
+        if self.package_path.endswith(os.path.join('Scripts', 'CommonServerUserPowerShell')):
+            return os.path.join(self.package_path, 'CommonServerUserPowerShell.ps1')
         if self.package_path.endswith('ApiModule'):
             return os.path.join(self.package_path, os.path.basename(os.path.normpath(self.package_path)) + '.py')
 
-        script_path = list(filter(lambda x: not re.search(ignore_regex, x, flags=re.IGNORECASE),
-                                  sorted(glob.glob(os.path.join(self.package_path, '*' + script_type)))))[0]
-
-        return script_path
+        script_path_list = list(filter(lambda x: not re.search(ignore_regex, x, flags=re.IGNORECASE),
+                                       sorted(glob.glob(os.path.join(self.package_path, '*' + script_type)))))
+        if script_path_list:
+            return script_path_list[0]
+        else:
+            raise Exception("the provided code file is not supported")
 
     def insert_script_to_yml(self, script_type, yml_unified, yml_data):
         script_path = self.get_code_file(script_type)

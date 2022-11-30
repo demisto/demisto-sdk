@@ -5,9 +5,7 @@ import click
 
 from demisto_sdk.commands.common.constants import BETA_INTEGRATION_DISCLAIMER
 from demisto_sdk.commands.common.tools import find_type
-from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
-                                                          SKIP_RETURN_CODE,
-                                                          SUCCESS_RETURN_CODE)
+from demisto_sdk.commands.format.format_constants import ERROR_RETURN_CODE, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
 CONTRIBUTOR_DETAILED_DESC = 'Contributed Integration'
@@ -29,7 +27,7 @@ class DescriptionFormat(BaseUpdate):
                  verbose: bool = False,
                  update_docker: bool = False,
                  **kwargs):
-        super().__init__(input, output, path, from_version, no_validate, verbose=verbose, **kwargs)
+        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate, verbose=verbose, **kwargs)
         description_type = input.replace('_description.md', '.yml')
         self.is_beta = False
         file_type = find_type(description_type)

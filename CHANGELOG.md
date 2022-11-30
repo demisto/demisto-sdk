@@ -1,6 +1,140 @@
 # Changelog
-
 ## Unreleased
+* Added the ability to limit the number of CPU cores with `DEMISTO_SDK_MAX_CPU_CORES` envirment variable.
+* Fixed an issue where **update-release-notes** failed when changing only xif file in **Modeling Rules**.
+
+## 1.7.9
+* Fixed an issue where an error message in **validate** would not include the suggested fix.
+* Added a validation that enforces predefined categories on MP Packs & integration yml files, the validation also ensures that each pack has only one category.
+* Fixed an issue where **update-release-notes** did not generate release notes for **XDRC Templates**.
+* Fixed an issue where **upload** failed without explaining the reason.
+* Improved implementation of the docker_helper module.
+* Fixed an issue where **validate** did not check changed pack_metadata.json files when running using git.
+* Added support for **xdrctemplate** to content graph.
+* Fixed an issue where local copies of the newly-introduced `DemistoClassApiModule.py` were validated.
+* Added new release notes templates for the addition and modification of playbooks, layouts and types in the **doc-review** command.
+* Fixed an issue where the **doc-review** command failed on descriptions of new content items.
+* Added the `Command XXX is deprecated. Use XXX instead.` release notes templates to **doc-review** command.
+* Fixed an issue where the **update-release-notes** command didn't add the modeling-rules description for new modeling-rules files.
+
+## 1.7.8
+* Added the capability to run the MDX server in a docker container for environments without node.
+* Fixed an issue where **generate-docs** with `-c` argument updated sections of the incorrect commands.
+* Added IF113 error code to **ALLOWED_IGNORE_ERRORS**.
+* Fixed an issue where **validate** failed on playbooks with non-string input values.
+* Added the `DEMISTO_SDK_IGNORE_CONTENT_WARNING` environment variable, to allow suppressing warnings when commands are not run under a content repo folder.
+* Fixed an issue where **validate** failed to recognize integration tests that were missing from config.json
+* Added support for **xpanse** marketplace in **create-id-set** and **create-content-artifacts** commands.
+* Fixed an issue where **split** failed on yml files.
+* Added support for marketplace-specific tags.
+* Fixed an issue where **download** would not run `isort`. @maxgubler
+* Fixed an issue where XSIAM Dashboards and Reports images failed the build.
+* Added support for **xpanse** marketplace to content graph.
+
+## 1.7.7
+* Fixed an issue where paybooks **generate-docs** didn't parse complex input values when no accessor field is given correctly.
+* Fixed an issue in the **download** command, where an exception would be raised when downloading system playbooks.
+* Fixed an issue where the **upload** failed on playbooks containing a value that starts with `=`.
+* Fixed an issue where the **generate-unit-tests** failed to generate assertions, and generate unit tests when command names does not match method name.
+* Fixed an issue where the **download** command did not honor the `--no-code-formatting` flag properly. @maxgubler
+* Added a new check to **validate**, making sure playbook task values are passed as references.
+* Fixed an issue where the **update-release-notes** deleted existing release notes, now appending to it instead.
+* Fixed an issue where **validate** printed blank space in case of validation failed and ignored.
+* Renamed 'Agent Config' to 'XDRC Templates'.
+* Fixed an issue where the **zip-packs** command did not work with the CommonServerUserPython and CommonServerUserPowerShell package.
+
+## 1.7.6
+
+* Fixed parsing of initialization arguments of client classes in the **generate-unit-tests** command.
+* Added support for AgentConfig content item in the **upload**, **create-id-set**, **find-dependecies**, **unify** and **create-content-artifacts** commands.
+* Added support for XSIAM Report preview image.
+
+## 1.7.5
+
+* Fixed an issue where the **upload** command did not work with the CommonServerUserPython package.
+* Fixed an issue in the **download** command, where some playbooks were downloaded as test playbooks.
+* Added playbook modification capabilities in **TestSuite**.
+* Added a new command **create-content-graph**.
+* Fixed an issue in the **upload** command, where the temporary zip would not clean up properly.
+* Improved content items parsing in the **create-content-graph** command.
+* Added an error when the docker daemon is unavailable when running **lint**.
+* Removed the validation of a subtype change for scripts in the **validate** command.
+* Fixed an issue where names of XSIAM content items were not normalized properly.
+* Fixed an issue where the **download** command was downloading playbooks with **script** (id) and not **scriptName**.
+* Fixed an issue where script yml files were not properly identified by `find_type`.
+* Removed nightly integrations filtering when deciding if a test should run.
+* Added support for XSIAM Dashboard preview image.
+* Added the `--no-code-formatting` flag to the **download** command, allowing to skip autopep8 and isort.
+* Fixed an issue in the **update-release-notes** command, where generating release notes for modeling rules schema file caused exception.
+
+## 1.7.4
+
+* Fixed an issue where the **doc-review** command showed irrelevant messages.
+* Fixed an issue in **validate**, where backward-compatibility failures prevented other validations from running.
+* Fixed an issue in **validate**, where content-like files under infrastructure paths were not ignored.
+* Fixed an issue in the AMI mapping, where server versions were missing.
+* Change the way the normalize name is set for external files.
+* Added dump function to XSIAM pack objects to dulicate the files.
+* Fixed an issue where the `contribution_converter` did not support changes made to ApiModules.
+* Added name normalization according to new convention to XSIAM content items
+* Added playbook modification capabilities in **TestSuite**.
+* Fixed an issue in create-content-artifacts where it will not get a normalize name for the item and it will try to duplicate the same file.
+
+## 1.7.3
+
+* Fixed an issue in the **format** command where fail when executed from environment without mdx server available.
+* Added `Added a`, `Added an` to the list of allowed changelog prefixes.
+* Added support for Indicator Types/Reputations in the **upload** command.
+* Fixed an issue when running from a subdirectory of a content repo failed.
+* Changing the way we are using XSIAM servers api-keys in **test-content** .
+* Added a success message to **postman-codegen**.
+
+## 1.7.2
+
+* Fixed an issue in the **validate** command where incident fields were not found in mappers even when they exist
+* Added an ability to provide list of marketplace names as a param attribute to **validate** and **upload**
+* Added the file type to the error message when it is not supported.
+* Fixed an issue where `contribution_converter` incorrectly mapped _Indicator Field_ objects to the _incidentfield_ directory in contribution zip files.
+* Fixed a bug where **validate** returned error on empty inputs not used in playbooks.
+* Added the `DEMISTO_SDK_CONTENT_PATH` environment variable, implicitly used in various commands.
+* Added link to documentation for error messages regarding use cases and tags.
+
+## 1.7.1
+
+* Fixed an issue where *indicatorTypes* and *betaIntegrations* were not found in the id_set.
+* Updated the default general `fromVersion` value on **format** to `6.5.0`
+* Fixed an issue where the **validate** command did not fail when the integration yml file name was not the same as the folder containing it.
+* Added an option to have **generate-docs** take a Playbooks folder path as input, and generate docs for all playbooks in it.
+* Fixed an issue where the suggestion in case of `IF113` included uppercase letters for the `cliName` parameter.
+* Added new validation to the **validate** command to fail and list all the file paths of files that are using a deprecated integration command / script / playbook.
+* **validate** will no longer fail on playbooks calling subplaybooks that have a higher `fromVersion` value, if  calling the subplaybook has `skipifunavailable=True`.
+* Fixed an issue where relative paths were not accessed correctly.
+* Running any `demisto-sdk` command in a folder with a `.env` file will load it, temporarily overriding existing environment variables.
+* Fixed an issue where **validate** did not properly detect deleted files.
+* Added new validations to the **validate** command to verify that the schema file exists for a modeling rule and that the schema and rules keys are empty in the yml file.
+* Fixed an issue where *find_type* didn't recognize exported incident types.
+* Added a new validation to **validate**, making sure all inputs of a playbook are used.
+* Added a new validation to **validate**, making sure all inputs used in a playbook declared in the input section.
+* The **format** command will now replace the *fromServerVersion* field with *fromVersion*.
+
+## 1.7.0
+
+* Allowed JSON Handlers to accept kwargs, for custoimzing behavior.
+* Fixed an issue where an incorrect error was shown when the `id` of a content item differed from its `name` attribute.
+* Fixed an issue where the `preserve_quotes` in ruamel_handler received an incorrect value @icholy
+* Fixed an issue where ignoring RM110 error code wasn't working and added a validation to **ALLOWED_IGNORE_ERRORS** to validate that all error codes are inserted in the right format.
+* Fixed an issue where the contribution credit text was not added correctly to the pack README.
+* Changed the contribution file implementation from markdown to a list of contributor names. The **create-content-artifact** will use this list to prepare the needed credit message.
+* Added a new validation to the `XSOAR-linter` in the **lint** command for verifying that demisto.log is not used in the code.
+* The **generate-docs** command will now auto-generate the Incident Mirroring section when implemented in an integration.
+* Added support to automatically generate release notes for deprecated items in the **update-release-notes** command.
+* Fixed an issue causing any command to crash when unable to detect local repository properties.
+* Fixed an issue where running in a private gitlab repo caused a warning message to be shown multiple times.
+* Added a new validation to the **validate** command to verify that markdown and python files do not contain words related to copyright section.
+* Fixed an issue where **lint** crashed when provided an input file path (expecting a directory).
+
+## 1.6.9
+
 * Added a new validation that checks whether a pack should be deprecated.
 * Added a new ability to the **format** command to deprecate a pack.
 * Fixed an issue where the **validate** command sometimes returned a false negative in cases where there are several sub-playbooks with the same ID.
@@ -12,9 +146,11 @@
 * Added support for modeling and parsing rules in the **split** command.
 * Added support for README files in **format** command.
 * Added a **validate** check, making sure classifier id and name values match. Updated the classifier **format** to update the id accordingly.
-* The **generate-docs** command will now auto-generate the playbook image link as default. Added the `--custom-image-link' argument to override.
+* The **generate-docs** command will now auto-generate the playbook image link by default.
+* Added the `--custom-image-link` argument to override.
 * Added a new flag to **generate-docs** command, allowing to add a custom image link to a playbook README.
 * Added a new validation to the **validate** command to verify that the package directory name is the same as the files contained in the that package.
+* Added support in the **unify** command to unify a schema into its Modeling Rule.
 
 ## 1.6.8
 

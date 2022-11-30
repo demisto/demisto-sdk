@@ -32,10 +32,10 @@ class YAMLObject(DictionaryBasedObject):
         Raises:
             ContentInitializeError: If path not valid.
         """
-        path = Path(path)
+        path = Path(path)  # type: ignore
         if path.is_dir():
             try:
-                path = next(path.glob(patterns=r'@(*.yml|*yaml|!*unified*)', flags=EXTGLOB | NEGATE))
+                path = next(path.glob(patterns=r'@(*.yml|*yaml|!*unified*)', flags=EXTGLOB | NEGATE))  # type: ignore
             except StopIteration:
                 raise exc.ContentInitializeError(path, path, "Can't find yaml or yml file in path (excluding unified).")
         elif not (path.is_file() and path.suffix in [".yaml", ".yml"]):
@@ -43,7 +43,7 @@ class YAMLObject(DictionaryBasedObject):
 
         return path
 
-    def _unserialize(self):
+    def _deserialize(self):
         """Load yaml to dictionary"""
         try:
             self._as_dict = yaml.load(self.path)
@@ -60,6 +60,6 @@ class YAMLObject(DictionaryBasedObject):
 
     def dump(self, dest_dir: Optional[Union[Path, str]] = None):
         if self.modified:
-            return self._serialize(dest_dir)
+            return self._serialize(dest_dir)  # type: ignore
         else:
             return super().dump(dest_dir)

@@ -7,8 +7,8 @@ from wcmatch.pathlib import Path
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE
 from demisto_sdk.commands.common.tools import src_root
-from demisto_sdk.commands.create_artifacts.tests.content_artifacts_creator_test import (
-    destroy_by_ext, duplicate_file, same_folders, temp_dir)
+from demisto_sdk.commands.create_artifacts.tests.content_artifacts_creator_test import (destroy_by_ext, duplicate_file,
+                                                                                        same_folders, temp_dir)
 from TestSuite.test_tools import ChangeCWD
 
 ARTIFACTS_CMD = 'create-content-artifacts'
@@ -72,7 +72,7 @@ def test_duplicate_file_failure(mock_git):
     assert result.exit_code == 1
 
 
-def test_specific_pack_creation(repo):
+def test_specific_pack_creation(repo, tmp_path):
     """Test the -p flag for specific packs creation
     """
     pack_1 = repo.setup_one_pack('Pack1')
@@ -90,13 +90,12 @@ def test_specific_pack_creation(repo):
     )
 
     with ChangeCWD(repo.path):
-        with temp_dir() as temp:
-            runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '-p', 'Pack1'])
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(main, [ARTIFACTS_CMD, '-a', tmp_path, '-p', 'Pack1'])
 
-            assert result.exit_code == 0
-            assert os.path.exists(os.path.join(str(temp), 'uploadable_packs', 'Pack1.zip'))
-            assert not os.path.exists(os.path.join(str(temp), 'uploadable_packs', 'Pack2.zip'))
+        assert result.exit_code == 0
+        assert Path.exists(tmp_path / 'uploadable_packs' / 'Pack1.zip')
+        assert not Path.exists(tmp_path / 'uploadable_packs' / 'Pack2.zip')
 
 
 def test_all_packs_creation(repo):

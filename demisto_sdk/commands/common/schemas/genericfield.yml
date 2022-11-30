@@ -88,8 +88,6 @@ mapping:
     type: str
   propagationLabels:
     type: any
-  fromServerVersion:
-    type: str
   toServerVersion:
     type: str
   definitionId:

@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import re
@@ -6,33 +5,32 @@ from abc import abstractmethod
 from distutils.version import LooseVersion
 from typing import Optional
 
+import click
 from packaging import version
 
-from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, DEFAULT_CONTENT_ITEM_FROM_VERSION,
-    ENTITY_NAME_SEPARATORS, EXCLUDED_DISPLAY_NAME_WORDS, FEATURE_BRANCHES,
-    FROM_TO_VERSION_REGEX, GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION,
-    OLDEST_SUPPORTED_VERSION, FileType)
+from demisto_sdk.commands.common.constants import (API_MODULES_PACK, DEFAULT_CONTENT_ITEM_FROM_VERSION,
+                                                   ENTITY_NAME_SEPARATORS, EXCLUDED_DISPLAY_NAME_WORDS,
+                                                   FEATURE_BRANCHES, FROM_TO_VERSION_REGEX,
+                                                   GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION, OLDEST_SUPPORTED_VERSION,
+                                                   FileType)
 from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import (
-    BaseValidator, error_codes)
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
-from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
-                                               get_file_displayed_name,
-                                               is_test_config_match,
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from demisto_sdk.commands.common.tools import (_get_file_id, find_type, get_file_displayed_name, is_test_config_match,
                                                run_command)
+from demisto_sdk.commands.format.format_constants import OLD_FILE_DEFAULT_1_FROMVERSION
 
+json = JSON_Handler()
 yaml = YAML_Handler()
 logger = logging.getLogger("demisto-sdk")
 
 
 class ContentEntityValidator(BaseValidator):
     DEFAULT_VERSION = -1
-    CONF_PATH = "./Tests/conf.json"
 
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
                  suppress_print=False, json_file_path=None, oldest_supported_version=None):
@@ -60,7 +58,21 @@ class ContentEntityValidator(BaseValidator):
             self.are_fromversion_and_toversion_in_correct_format(),
             self.are_fromversion_toversion_synchronized(),
         ]
+
         return all(tests)
+
+    def is_backward_compatible(self):
+        if not self.old_file:
+            return True
+
+        click.secho(f'Validating backwards compatibility for {self.file_path}')
+
+        is_backward_compatible = [
+            self.is_id_not_modified(),
+            self.is_valid_fromversion_on_modified(),
+        ]
+
+        return all(is_backward_compatible)
 
     def is_valid_generic_object_file(self):
         tests = [
@@ -72,6 +84,53 @@ class ContentEntityValidator(BaseValidator):
     def is_valid_version(self):
         # type: () -> bool
         pass
+
+    @error_codes('BC105')
+    def is_id_not_modified(self):
+        # type: () -> bool
+        """Check if the ID of the file has been changed.
+
+        Returns:
+            (bool): Whether the file's ID has been modified or not.
+        """
+        if not self.old_file:
+            return True
+
+        old_version_id = self.structure_validator.get_file_id_from_loaded_file_data(self.old_file)
+        new_file_id = self.structure_validator.get_file_id_from_loaded_file_data(self.current_file)
+        if not (new_file_id == old_version_id):
+            error_message, error_code = Errors.file_id_changed(old_version_id, new_file_id)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+
+        # True - the id has not changed.
+        return True
+
+    @error_codes('BC106')
+    def is_valid_fromversion_on_modified(self):
+        # type: () -> bool
+        """Check that the fromversion property was not changed on existing Content files.
+
+        Returns:
+            (bool): Whether the files' fromversion as been modified or not.
+        """
+        if not self.old_file:
+            return True
+
+        from_version_new = self.current_file.get("fromversion") or self.current_file.get("fromVersion")
+        from_version_old = self.old_file.get("fromversion") or self.old_file.get("fromVersion")
+
+        # if in old file there was no fromversion ,format command will add from version key with 4.1.0
+        if not from_version_old and from_version_new == OLD_FILE_DEFAULT_1_FROMVERSION:
+            return True
+
+        if from_version_old != from_version_new:
+            error_message, error_code = Errors.from_version_modified()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+
+        return True
 
     @error_codes('BA100')
     def _is_valid_version(self):
@@ -151,18 +210,18 @@ class ContentEntityValidator(BaseValidator):
 
     @error_codes('BA101')
     def _is_id_equals_name(self, file_type):
-        """Validate that the id of the file equals to the name.
+        """Validates that the id of a content item matches its name attribute.
          Args:
-            file_type (str): the file type. can be 'integration', 'script', 'playbook', 'dashboard', 'id'
+            file_type (str): the file type. can be 'integration', 'script', 'playbook', 'dashboard'
 
         Returns:
-            bool. Whether the file's id is equal to to its name
+            bool. Whether the id attribute is equal to the name attribute.
         """
 
-        file_id = _get_file_id(file_type, self.current_file)
+        id_ = _get_file_id(file_type, self.current_file)
         name = self.current_file.get('name', '')
-        if file_id != name:
-            error_message, error_code = Errors.id_should_equal_name(name, file_id)
+        if id_ != name:
+            error_message, error_code = Errors.id_should_equal_name(name, id_, self.file_path)
             if self.handle_error(error_message, error_code, file_path=self.file_path,
                                  suggested_fix=Errors.suggest_fix(self.file_path)):
                 return False
@@ -170,7 +229,7 @@ class ContentEntityValidator(BaseValidator):
         return True
 
     def _load_conf_file(self):
-        with open(self.CONF_PATH) as data_file:
+        with open(CONF_PATH) as data_file:
             return json.load(data_file)
 
     @error_codes('CJ104,CJ102')
@@ -213,13 +272,37 @@ class ContentEntityValidator(BaseValidator):
 
         # Integration case
         elif file_type == 'integration':
+            # Not stated no tests explicitly and has not tests in yml.
             is_configured_test = any(
                 test_config for test_config in conf_json_tests if is_test_config_match(test_config,
                                                                                        integration_id=content_item_id))
+
+            unconfigured_test_playbook_ids = []
+
+            if test_playbooks:
+                configured_tests = []
+                for test_playbook in test_playbooks:
+                    test_config_matches = []
+                    for test_config in conf_json_tests:
+                        test_config_matches.append(is_test_config_match(test_config,
+                                                                        test_playbook_id=test_playbook,
+                                                                        integration_id=content_item_id))
+                    found_match = any(test_config_matches)
+                    configured_tests.append(found_match)
+                    if not found_match:
+                        unconfigured_test_playbook_ids.append(test_playbook)
+
+                is_configured_test = all(configured_tests)
+
             if not is_configured_test:
                 missing_test_playbook_configurations = json.dumps(
                     {'integrations': content_item_id, 'playbookID': '<TestPlaybook ID>'},
                     indent=4)
+                if unconfigured_test_playbook_ids:
+                    missing_test_playbook_configurations = json.dumps(
+                        [{'integrations': content_item_id, 'playbookID': test_playbook_id}
+                         for test_playbook_id in unconfigured_test_playbook_ids], indent=4)
+
                 no_tests_key = yaml.dumps({'tests': ['No tests']})
                 error_message, error_code = Errors.integration_not_registered(self.file_path,
                                                                               missing_test_playbook_configurations,

@@ -1,0 +1,42 @@
+{
+    "description": "",
+    "feed": false,
+    "id": "GitHub Mapper",
+    "mapping": {
+        "DevSecOps New Git PR": {
+            "dontMapEventToLabels": true,
+            "internalMapping": {
+                "DevSecOps Repository Name": {
+                    "complex": null,
+                    "simple": "head.repo.name"
+                },
+                "DevSecOps Repository Organization": {
+                    "complex": {
+                        "accessor": "repo.full_name",
+                        "filters": [],
+                        "root": "head",
+                        "transformers": [
+                            {
+                                "args": {
+                                    "to": {
+                                        "isContext": false,
+                                        "value": {
+                                            "complex": null,
+                                            "simple": "/"
+                                        }
+                                    }
+                                },
+                                "operator": "substringTo"
+                            }
+                        ]
+                    },
+                    "simple": ""
+                }
+            }
+        }
+    },
+    "name": "GitHub Mapper",
+    "type": "mapping-incoming",
+    "version": -1,
+    "fromVersion": "6.0.0"
+}

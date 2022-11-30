@@ -1,11 +1,10 @@
 import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from demisto_sdk.commands.common.tools import (get_yaml, print_error,
-                                               print_warning)
-from demisto_sdk.commands.generate_docs.common import (
-    HEADER_TYPE, generate_list_section, generate_numbered_section,
-    generate_section, generate_table_section, save_output, string_escape_md)
+from demisto_sdk.commands.common.tools import get_yaml, print_error, print_warning
+from demisto_sdk.commands.generate_docs.common import (HEADER_TYPE, generate_list_section, generate_numbered_section,
+                                                       generate_section, generate_table_section, save_output,
+                                                       string_escape_md)
 
 
 def generate_playbook_doc(input_path: str, output: str = None, permissions: str = None, limitations: str = None,
@@ -225,7 +224,10 @@ def get_input_data(input_section: Dict) -> str:
     if default_value:
         complex_field = default_value.get('complex')
         if complex_field:
-            return f"{complex_field.get('root')}.{complex_field.get('accessor')}"
+            if complex_field.get('accessor'):
+                return f"{complex_field.get('root')}.{complex_field.get('accessor')}"
+            else:
+                return f"{complex_field.get('root')}"
         return default_value.get('simple')
 
     return ''

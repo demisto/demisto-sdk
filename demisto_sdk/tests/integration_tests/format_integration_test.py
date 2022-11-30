@@ -10,24 +10,21 @@ from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
-from demisto_sdk.commands.common.hook_validations.playbook import \
-    PlaybookValidator
-from demisto_sdk.commands.common.tools import (get_dict_from_file,
-                                               is_test_config_match)
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.commands.common.tools import get_dict_from_file, is_test_config_match
 from demisto_sdk.commands.format import format_module, update_generic
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
 from demisto_sdk.commands.lint.commands_builder import excluded_files
-from demisto_sdk.tests.constants_test import (
-    DESTINATION_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY,
-    INTEGRATION_WITH_TEST_PLAYBOOKS, PLAYBOOK_WITH_TEST_PLAYBOOKS,
-    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_PLAYBOOK_COPY)
-from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
-    GENERIC_DEFINITION, GENERIC_FIELD, GENERIC_MODULE, GENERIC_TYPE)
+from demisto_sdk.tests.constants_test import (DESTINATION_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY,
+                                              INTEGRATION_WITH_TEST_PLAYBOOKS, PLAYBOOK_WITH_TEST_PLAYBOOKS,
+                                              SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_PLAYBOOK_COPY)
+from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (GENERIC_DEFINITION, GENERIC_FIELD,
+                                                                                GENERIC_MODULE, GENERIC_TYPE)
 from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
@@ -176,12 +173,14 @@ def test_integration_format_yml_with_no_test_no_interactive_positive(tmp_path: P
 
 
 @pytest.mark.parametrize('source_path,destination_path,formatter,yml_title,file_type', YML_FILES_WITH_TEST_PLAYBOOKS)
-def test_integration_format_configuring_conf_json_no_interactive_positive(tmp_path: PosixPath,
-                                                                          source_path: str,
-                                                                          destination_path: str,
-                                                                          formatter: BaseUpdateYML,
-                                                                          yml_title: str,
-                                                                          file_type: str):
+def test_integration_format_configuring_conf_json_no_interactive_positive(
+        mocker,
+        tmp_path: PosixPath,
+        source_path: str,
+        destination_path: str,
+        formatter: BaseUpdateYML,
+        yml_title: str,
+        file_type: str):
     """
         Given
         - A yml file (integration, playbook or script) with no tests playbooks configured that are not configured
@@ -198,10 +197,10 @@ def test_integration_format_configuring_conf_json_no_interactive_positive(tmp_pa
             added to conf.json for each test playbook configured in the yml under 'tests' key
     """
     # Setting up conf.json
-    conf_json_path = str(tmp_path / 'conf.json')
+    conf_json_path = tmp_path / 'conf.json'
+    mocker.patch('demisto_sdk.commands.format.update_generic_yml.CONF_PATH', conf_json_path)
     with open(conf_json_path, 'w') as file:
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
-    BaseUpdateYML.CONF_PATH = conf_json_path
 
     test_playbooks = ['test1', 'test2']
     saved_file_path = str(tmp_path / os.path.basename(destination_path))
@@ -241,10 +240,10 @@ def test_integration_format_configuring_conf_json_positive(mocker,
         -  Ensure message is not prompt in the second time
     """
     # Setting up conf.json
-    conf_json_path = str(tmp_path / 'conf.json')
+    conf_json_path = tmp_path / 'conf.json'
+    mocker.patch('demisto_sdk.commands.format.update_generic_yml.CONF_PATH', conf_json_path)
     with open(conf_json_path, 'w') as file:
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
-    BaseUpdateYML.CONF_PATH = conf_json_path
     mocker.patch.object(BaseUpdate, 'set_default_from_version', return_value=None)
 
     test_playbooks = ['test1', 'test2']
@@ -267,12 +266,14 @@ def test_integration_format_configuring_conf_json_positive(mocker,
 
 
 @pytest.mark.parametrize('source_path,destination_path,formatter,yml_title,file_type', YML_FILES_WITH_TEST_PLAYBOOKS)
-def test_integration_format_configuring_conf_json_negative(tmp_path: PosixPath,
-                                                           source_path: str,
-                                                           destination_path: str,
-                                                           formatter: BaseUpdateYML,
-                                                           yml_title: str,
-                                                           file_type: str):
+def test_integration_format_configuring_conf_json_negative(
+        mocker,
+        tmp_path: PosixPath,
+        source_path: str,
+        destination_path: str,
+        formatter: BaseUpdateYML,
+        yml_title: str,
+        file_type: str):
     """
         Given
         - A yml file (integration, playbook or script) with no tests playbooks configured that are not configured
@@ -287,10 +288,11 @@ def test_integration_format_configuring_conf_json_negative(tmp_path: PosixPath,
         -  Ensure conf.json is not modified
     """
     # Setting up conf.json
-    conf_json_path = str(tmp_path / 'conf.json')
+    conf_json_path = tmp_path / 'conf.json'
+    mocker.patch('demisto_sdk.commands.format.update_generic_yml.CONF_PATH', conf_json_path)
+
     with open(conf_json_path, 'w') as file:
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
-    BaseUpdateYML.CONF_PATH = conf_json_path
 
     saved_file_path = str(tmp_path / os.path.basename(destination_path))
     runner = CliRunner()
@@ -1110,6 +1112,7 @@ class TestFormatWithoutAddTestsFlag:
         integration.yml.update({'fromversion': '5.5.0'})
         integration_path = integration.yml.path
         mocker.patch.object(BaseUpdate, 'set_default_from_version', return_value=None)
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
 
         result = runner.invoke(main, [FORMAT_CMD, '-i', integration_path, '-at'])
         prompt = f'The file {integration_path} has no test playbooks configured.' \
@@ -1119,7 +1122,7 @@ class TestFormatWithoutAddTestsFlag:
         assert prompt in result.output
         assert message not in result.output
 
-    def test_format_integrations_folder(self, pack):
+    def test_format_integrations_folder(self, mocker, pack):
         """
             Given
             - An integration folder.
@@ -1137,6 +1140,7 @@ class TestFormatWithoutAddTestsFlag:
         integration = pack.create_integration()
         integration.create_default_integration()
         integration_path = integration.yml.path
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
         result = runner.invoke(main, [FORMAT_CMD, '-i', integration_path], input='Y')
         prompt = f'The file {integration_path} has no test playbooks configured.' \
                  f' Do you want to configure it with "No tests"?'

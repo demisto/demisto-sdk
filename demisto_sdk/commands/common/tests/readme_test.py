@@ -4,11 +4,16 @@ import os
 import sys
 
 import pytest
+import requests
 import requests_mock
+from requests.adapters import HTTPAdapter
+from urllib3 import Retry
 
+import demisto_sdk
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.MDXServer import start_local_MDX_server
 from TestSuite.test_tools import ChangeCWD
 
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
@@ -34,7 +39,7 @@ MDX_SKIP_NPM_MESSAGE = 'Required npm modules are not installed. To run this test
 @pytest.mark.parametrize("current, answer", README_INPUTS)
 def test_is_file_valid(mocker, current, answer):
     readme_validator = ReadMeValidator(current)
-    valid = readme_validator.are_modules_installed_for_verify(readme_validator.content_path)
+    valid = ReadMeValidator.are_modules_installed_for_verify(readme_validator.content_path)
     if not valid:
         pytest.skip('skipping mdx test. ' + MDX_SKIP_NPM_MESSAGE)
         return
@@ -48,7 +53,44 @@ def test_is_file_valid(mocker, current, answer):
               status_code=200, text="Test3")
         mocker.patch.dict(os.environ, {'DEMISTO_README_VALIDATION': 'yes', 'DEMISTO_MDX_CMD_VERIFY': 'yes'})
         assert readme_validator.is_valid_file() is answer
-        assert not ReadMeValidator._MDX_SERVER_PROCESS
+        assert not demisto_sdk.commands.common.MDXServer._MDX_SERVER_PROCESS
+
+
+def test_local_server_up_and_down():
+    """
+    Given:
+        - node dependencies installed
+        - a valid file for mdx
+    When:
+        starting a local server with an mdx server
+    Then:
+        - The server is started successfully.
+        - The call is successful.
+    """
+    ReadMeValidator.add_node_env_vars()
+    readme_validator = ReadMeValidator(VALID_MD)
+    valid = ReadMeValidator.are_modules_installed_for_verify(readme_validator.content_path)
+    if not valid:
+        pytest.skip('skipping mdx server test. ' + MDX_SKIP_NPM_MESSAGE)
+        return
+
+    with start_local_MDX_server() as started:
+        assert started
+        assert_successful_mdx_call()
+
+
+def assert_successful_mdx_call():
+    session = requests.Session()
+    retry = Retry(total=2)
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    response = session.request(
+        'POST',
+        'http://localhost:6161',
+        data='## Hello',
+        timeout=20
+    )
+    assert response.status_code == 200
 
 
 @pytest.mark.parametrize("current, answer", README_INPUTS)
@@ -62,16 +104,48 @@ def test_is_file_valid_mdx_server(mocker, current, answer):
             return
         mocker.patch.dict(os.environ, {'DEMISTO_README_VALIDATION': 'yes'})
         assert readme_validator.is_valid_file() is answer
-        assert ReadMeValidator._MDX_SERVER_PROCESS is not None
+
+
+def test_local_server_is_up():
+    """
+    Given:
+        A valid file for mdx
+    When:
+        starting a local server and checking if up inside the context
+    Then:
+        - The if statement passes
+        - The api call succeeds
+    """
+    readme_validator = ReadMeValidator(INVALID_MD)
+    valid = ReadMeValidator.are_modules_installed_for_verify(readme_validator.content_path)
+    if not valid:
+        pytest.skip('skipping mdx server test. ' + MDX_SKIP_NPM_MESSAGE)
+        return
+    with start_local_MDX_server():
+        if start_local_MDX_server():
+            assert_successful_mdx_call()
+        assert_successful_mdx_call()
 
 
 def test_are_modules_installed_for_verify_false_res(tmp_path):
     r = str(tmp_path / "README.md")
     with open(r, 'w') as f:
         f.write('Test readme')
-    readme_validator = ReadMeValidator(r)
     # modules will be missing in tmp_path
-    assert not readme_validator.are_modules_installed_for_verify(tmp_path)
+    assert not ReadMeValidator.are_modules_installed_for_verify(tmp_path)
+
+
+def test_air_gapped_env(tmp_path, mocker):
+    """
+    Given: an environment without docker or node
+    When: verifying mdx
+    Then: The verification is skipped. If it was not skipped it would error out since the server wasnt started.
+    """
+    r = str(tmp_path / "README.md")
+    with open(r, 'w') as f:
+        f.write('<div> not valid')
+    mocker.patch.object(ReadMeValidator, 'should_run_mdx_validation', return_value=False)
+    assert ReadMeValidator(r).is_mdx_file()
 
 
 def test_relative_url_not_valid():
@@ -90,7 +164,8 @@ def test_relative_url_not_valid():
     captured_output = io.StringIO()
     sys.stdout = captured_output  # redirect stdout.
     absolute_urls = ["https://www.good.co.il", "https://example.com", "https://github.com/demisto/content/blob/123",
-                     "github.com/demisto/content/blob/123/Packs/FeedOffice365/doc_files/test.png", "https://hreftesting.com"]
+                     "github.com/demisto/content/blob/123/Packs/FeedOffice365/doc_files/test.png",
+                     "https://hreftesting.com"]
     relative_urls = ["relative1.com", "www.relative2.com", "hreftesting.com", "www.hreftesting.com"]
     readme_validator = ReadMeValidator(INVALID_MD)
     result = readme_validator.verify_readme_relative_urls()
@@ -219,6 +294,29 @@ def test_valid_sections(integration, file_input):
     result = readme_validator.verify_no_empty_sections()
 
     assert result
+
+
+@pytest.mark.parametrize("file_input",
+                         ["## Copyright\ninput",
+                          "## BSD\n\n---\ninput",
+                          "## MIT\n\n----------\ninput",
+                          "## proprietary\n\ninput"])
+def test_copyright_sections(integration, file_input):
+    """
+    Given
+        - Valid sections in different forms from SECTIONS
+    When
+        - Run validate on README file
+    Then
+        - Ensure no empty sections from the SECTIONS list
+    """
+
+    integration.readme.write(file_input)
+    readme_path = integration.readme.path
+    readme_validator = ReadMeValidator(readme_path)
+    result = readme_validator.verify_copyright_section_in_readme_content()
+
+    assert not result
 
 
 @pytest.mark.parametrize("file_input, section",
@@ -514,3 +612,32 @@ def test_verify_readme_image_paths(mocker):
     assert 'please repair it:\n' \
            '![Identity with High Risk Score](https://github.com/demisto/test3.png)' \
            not in captured_output
+
+
+def test_check_readme_relative_image_paths(mocker):
+    """
+
+    Given
+        - A README file (not pack README) with invalid relative image
+         paths and invalid absolute image paths in it.
+    When
+        - Run validate on README file and ignoring RM108 error
+    Then
+        - Ensure:
+            - Validation pass.
+            - nothing is printed as error.
+
+    """
+    readme_validator = ReadMeValidator(IMAGES_MD, ignored_errors={IMAGES_MD: 'RM108'})
+    mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='branch_name')
+    with requests_mock.Mocker() as m:
+        # Mock get requests
+        m.get('https://github.com/demisto/test1.png',
+              status_code=404, text="Test1", reason='just because')
+        m.get('https://github.com/demisto/content/raw/test2.png',
+              status_code=404, text="Test2")
+        m.get('https://github.com/demisto/test3.png',
+              status_code=200, text="Test3")
+        formatted_errors = readme_validator.check_readme_relative_image_paths()
+
+    assert not formatted_errors

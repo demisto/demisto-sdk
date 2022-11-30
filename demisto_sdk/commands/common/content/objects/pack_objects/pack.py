@@ -7,29 +7,32 @@ import demisto_client
 import regex
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.constants import (
-    CLASSIFIERS_DIR, CONNECTIONS_DIR, CORRELATION_RULES_DIR, DASHBOARDS_DIR,
-    DEPRECATED_DESC_REGEX, DEPRECATED_NO_REPLACE_DESC_REGEX, DOC_FILES_DIR,
-    GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR,
-    GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR,
-    LAYOUTS_DIR, LISTS_DIR, MODELING_RULES_DIR, PACK_NAME_DEPRECATED_REGEX,
-    PACK_VERIFY_KEY, PARSING_RULES_DIR, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
-    RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR,
-    TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR, XSIAM_DASHBOARDS_DIR,
-    XSIAM_REPORTS_DIR, FileType)
-from demisto_sdk.commands.common.content.objects.pack_objects import (
-    AgentTool, AuthorImage, Classifier, ClassifierMapper, Connection,
-    Contributors, CorrelationRule, Dashboard, DocFile, GenericDefinition,
-    GenericField, GenericModule, GenericType, IncidentField, IncidentType,
-    IndicatorField, IndicatorType, Integration, Job, LayoutObject, Lists,
-    ModelingRule, OldClassifier, PackIgnore, PackMetaData, ParsingRule,
-    Playbook, PreProcessRule, Readme, ReleaseNote, ReleaseNoteConfig, Report,
-    Script, SecretIgnore, Trigger, Widget, Wizard, XSIAMDashboard, XSIAMReport)
-from demisto_sdk.commands.common.content.objects_factory import \
-    path_to_pack_object
-from demisto_sdk.commands.common.tools import (get_demisto_version,
-                                               is_object_in_id_set)
+from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_DIR, CORRELATION_RULES_DIR,
+                                                   DASHBOARDS_DIR, DEPRECATED_DESC_REGEX,
+                                                   DEPRECATED_NO_REPLACE_DESC_REGEX, DOC_FILES_DIR,
+                                                   GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR,
+                                                   GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
+                                                   INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR,
+                                                   JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, MODELING_RULES_DIR,
+                                                   PACK_NAME_DEPRECATED_REGEX, PACK_VERIFY_KEY, PARSING_RULES_DIR,
+                                                   PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, REPORTS_DIR,
+                                                   SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, TRIGGER_DIR, WIDGETS_DIR,
+                                                   WIZARDS_DIR, XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR,
+                                                   XSIAM_REPORTS_DIR, FileType)
+from demisto_sdk.commands.common.content.objects.pack_objects import (AgentTool, AuthorImage, Classifier,
+                                                                      ClassifierMapper, Connection, Contributors,
+                                                                      CorrelationRule, Dashboard, DocFile,
+                                                                      GenericDefinition, GenericField, GenericModule,
+                                                                      GenericType, IncidentField, IncidentType,
+                                                                      IndicatorField, IndicatorType, Integration, Job,
+                                                                      LayoutObject, Lists, ModelingRule, OldClassifier,
+                                                                      PackIgnore, PackMetaData, ParsingRule, Playbook,
+                                                                      PreProcessRule, Readme, ReleaseNote,
+                                                                      ReleaseNoteConfig, Report, Script, SecretIgnore,
+                                                                      Trigger, Widget, Wizard, XDRCTemplate,
+                                                                      XSIAMDashboard, XSIAMReport)
+from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
+from demisto_sdk.commands.common.tools import get_demisto_version, is_object_in_id_set
 from demisto_sdk.commands.test_content import tools
 
 TURN_VERIFICATION_ERROR_MSG = "Can not set the pack verification configuration key,\nIn the server - go to Settings -> troubleshooting\
@@ -40,7 +43,7 @@ SET_VERIFY_KEY_ACTION = f'set the key "{PACK_VERIFY_KEY}" to ' + '{}'
 
 class Pack:
     def __init__(self, path: Union[str, Path]):
-        self._path = Path(path)
+        self._path = Path(path)  # type: ignore
         # in case the given path are a Pack and not zipped pack - we init the metadata from the pack
         if not str(path).endswith('.zip'):
             self._metadata = PackMetaData(self._path.joinpath('metadata.json'))
@@ -73,8 +76,10 @@ class Pack:
                 if is_object_in_id_set(object_id, content_object.type().value, self._pack_info_from_id_set):
                     yield content_object
                 else:
-                    logging.warning(f'Skipping object {object_path} with id "{object_id}" since it\'s missing from '
-                                    f'the given id set')
+                    logging.warning(
+                        f'Skipping object {object_path} with id "{object_id}" since it is missing from '
+                        f'the given id set. Items may be missing when their from/to version values are incompatible'
+                        f' with the current settings.')
             else:
                 yield content_object
 
@@ -271,6 +276,11 @@ class Pack:
                                                           suffix="json")
 
     @property
+    def xdrc_templates(self) -> Iterator[XDRCTemplate]:
+        return self._content_files_list_generator_factory(dir_name=XDRC_TEMPLATE_DIR,
+                                                          suffix="json")
+
+    @property
     def pack_metadata(self) -> Optional[PackMetaData]:
         obj = None
         file = self._path / "pack_metadata.json"
@@ -326,7 +336,7 @@ class Pack:
     @property
     def contributors(self) -> Optional[Contributors]:
         obj = None
-        file = self._path / "CONTRIBUTORS.md"
+        file = self._path / "CONTRIBUTORS.json"
         if file.exists():
             obj = Contributors(path=file)
 

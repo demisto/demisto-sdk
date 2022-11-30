@@ -3,19 +3,21 @@ from typing import Union
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import OLD_INDICATOR_TYPE, FileType
-from demisto_sdk.commands.common.content.objects.abstract_objects.general_object import \
-    GeneralObject
-from demisto_sdk.commands.common.content.objects.pack_objects import (
-    AgentTool, AuthorImage, ChangeLog, Classifier, ClassifierMapper,
-    Connection, Contributors, CorrelationRule, Dashboard, DocFile,
-    GenericDefinition, GenericField, GenericModule, GenericType, IncidentField,
-    IncidentType, IndicatorField, IndicatorType, Integration, Job, Layout,
-    LayoutsContainer, Lists, ModelingRule, OldClassifier, OldIndicatorType,
-    PackIgnore, PackMetaData, ParsingRule, Playbook, PreProcessRule, Readme,
-    ReleaseNote, ReleaseNoteConfig, Report, Script, SecretIgnore, Trigger,
-    Widget, Wizard, XSIAMDashboard, XSIAMReport)
-from demisto_sdk.commands.common.content.objects.root_objects import \
-    Documentation
+from demisto_sdk.commands.common.content.objects.abstract_objects.general_object import GeneralObject
+from demisto_sdk.commands.common.content.objects.pack_objects import (AgentTool, AuthorImage, ChangeLog, Classifier,
+                                                                      ClassifierMapper, Connection, Contributors,
+                                                                      CorrelationRule, Dashboard, DocFile,
+                                                                      GenericDefinition, GenericField, GenericModule,
+                                                                      GenericType, IncidentField, IncidentType,
+                                                                      IndicatorField, IndicatorType, Integration, Job,
+                                                                      Layout, LayoutsContainer, Lists, ModelingRule,
+                                                                      OldClassifier, OldIndicatorType, PackIgnore,
+                                                                      PackMetaData, ParsingRule, Playbook,
+                                                                      PreProcessRule, Readme, ReleaseNote,
+                                                                      ReleaseNoteConfig, Report, Script, SecretIgnore,
+                                                                      Trigger, Widget, Wizard, XDRCTemplate,
+                                                                      XSIAMDashboard, XSIAMReport)
+from demisto_sdk.commands.common.content.objects.root_objects import Documentation
 from demisto_sdk.commands.common.tools import find_type
 
 from .errors import ContentFactoryError
@@ -64,6 +66,7 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.XSIAM_REPORT: XSIAMReport,
     FileType.TRIGGER: Trigger,
     FileType.WIZARD: Wizard,
+    FileType.XDRC_TEMPLATE: XDRCTemplate,
 }
 
 TYPE_CONVERSION_BY_FILE_NAME = {
@@ -91,7 +94,7 @@ def path_to_pack_object(path: Union[Path, str]) -> GeneralObject:
     Raises:
         ContentFactoryError: If not able to determine object type from file path.
     """
-    path = Path(path)
+    path = Path(path)  # type: ignore
     # Determinist conversion by file name.
     object_type = TYPE_CONVERSION_BY_FILE_NAME.get(path.name)
     # Tools in path

@@ -10,8 +10,7 @@ from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-from demisto_sdk.commands.update_release_notes.update_rn_manager import \
-    UpdateReleaseNotesManager
+from demisto_sdk.commands.update_release_notes.update_rn_manager import UpdateReleaseNotesManager
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from TestSuite.test_tools import ChangeCWD
 
@@ -101,7 +100,7 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
 
     runner = CliRunner(mix_stderr=False)
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
-
+    mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn', return_value='')
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
     mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
     mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git', return_value=(modified_files, set(),
@@ -349,6 +348,7 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
     mocker.patch.object(GitUtil, 'get_current_working_branch', return_value="branch_name")
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='ApiModules')
+    mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn', return_value='')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='1.0.0')
 
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'ApiModules'), "-idp", repo.id_set.path])
@@ -448,6 +448,7 @@ def test_update_release_notes_master_unavailable(demisto_client, mocker, repo):
                         return_value=(modified_files, {'1_1_0.md'}, set()))
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.1.0'})
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
+    mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn', return_value='')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
 
     path_cwd = Path.cwd()
@@ -514,6 +515,7 @@ def test_update_release_notes_specific_version_valid(demisto_client, mocker, rep
                         return_value=(modified_files, {'1_1_0.md'}, set()))
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.1.0'})
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
+    mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn', return_value='')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
 
     path_cwd = Path.cwd()

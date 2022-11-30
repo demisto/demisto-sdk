@@ -2,8 +2,7 @@ import os
 
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.openapi_codegen.openapi_codegen import \
-    OpenAPIIntegration
+from demisto_sdk.commands.openapi_codegen.openapi_codegen import OpenAPIIntegration
 
 json = JSON_Handler()
 
@@ -58,8 +57,7 @@ class TestOpenAPICodeGen:
         Then
             - Ensure the configuration file is generated correctly
         """
-        from demisto_sdk.commands.common.hook_validations.docker import \
-            DockerImageValidator
+        from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 
         mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.6.12176')
 
@@ -84,8 +82,7 @@ class TestOpenAPICodeGen:
            - Ensure the yaml file is generated correctly
        """
 
-        from demisto_sdk.commands.common.hook_validations.docker import \
-            DockerImageValidator
+        from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 
         mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.6.12176')
         integration = self.init_integration()
@@ -151,8 +148,7 @@ class TestOpenAPICodeGen:
         Then
            - Ensure the arguments are generated correctly
         """
-        from demisto_sdk.commands.openapi_codegen.openapi_codegen import \
-            BASE_DATA
+        from demisto_sdk.commands.openapi_codegen.openapi_codegen import BASE_DATA
         integration = self.init_integration()
         command = [c for c in integration.configuration['commands'] if c['name'] == 'create-user'][0]
 

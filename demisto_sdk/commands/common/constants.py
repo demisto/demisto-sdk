@@ -45,6 +45,7 @@ XSIAM_DASHBOARDS_DIR = 'XSIAMDashboards'
 XSIAM_REPORTS_DIR = 'XSIAMReports'
 TRIGGER_DIR = 'Triggers'
 WIZARDS_DIR = 'Wizards'
+XDRC_TEMPLATE_DIR = 'XDRCTemplates'
 
 # NAMES OF ENTITIES
 
@@ -87,6 +88,7 @@ XSIAM_DASHBOARD = 'xsiamdashboard'
 XSIAM_REPORT = 'xsiamreport'
 TRIGGER = 'trigger'
 WIZARD = 'wizard'
+XDRC_TEMPLATE = 'xdrctemplate'
 
 MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
 
@@ -95,7 +97,7 @@ MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
 ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
 
 
-class FileType(Enum):
+class FileType(str, Enum):
     INTEGRATION = 'integration'
     SCRIPT = 'script'
     TEST_SCRIPT = 'testscript'
@@ -125,6 +127,7 @@ class FileType(Enum):
     DOC_IMAGE = 'doc_image'
     PYTHON_FILE = 'pythonfile'
     XIF_FILE = 'xiffile'
+    MODELING_RULE_SCHEMA = 'modelingruleschema'
     JAVASCRIPT_FILE = 'javascriptfile'
     POWERSHELL_FILE = 'powershellfile'
     CONF_JSON = 'confjson'
@@ -144,14 +147,23 @@ class FileType(Enum):
     BUILD_CONFIG_FILE = 'build-config-file'
     PARSING_RULE = 'parsingrule'
     MODELING_RULE = 'modelingrule'
+    MODELING_RULE_TEST_DATA = 'modelingruletestdata'
+    MODELING_RULE_XIF = 'modelingrulexif'
     CORRELATION_RULE = 'correlationrule'
     XSIAM_DASHBOARD = 'xsiamdashboard'
+    XSIAM_DASHBOARD_IMAGE = 'xsiamdashboardimage'
     XSIAM_REPORT = 'xsiamreport'
+    XSIAM_REPORT_IMAGE = 'xsiamreportimage'
     TRIGGER = 'trigger'
     WIZARD = 'wizard'
     PACK_IGNORE = '.pack-ignore'
     SECRET_IGNORE = '.secrets-ignore'
     DOC_FILE = 'doc_files'
+    XDRC_TEMPLATE = 'xdrctemplate'
+    XDRC_TEMPLATE_YML = 'xdrctemplateyml'
+    INDICATOR_TYPE = 'indicatortype'
+    TOOL = 'tools'
+    PACK_METADATA = 'packmetadata'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -181,11 +193,13 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.JOB: 'Jobs',
     FileType.PARSING_RULE: 'Parsing Rules',
     FileType.MODELING_RULE: 'Modeling Rules',
+    FileType.MODELING_RULE_SCHEMA: 'Modeling Rules Schema',
     FileType.CORRELATION_RULE: 'Correlation Rules',
     FileType.XSIAM_DASHBOARD: 'XSIAM Dashboards',
     FileType.XSIAM_REPORT: 'XSIAM Reports',
     FileType.TRIGGER: 'Triggers Recommendations',  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
     FileType.WIZARD: 'Wizards',
+    FileType.XDRC_TEMPLATE: 'XDRC Templates',
 }
 
 ENTITY_TYPE_TO_DIR = {
@@ -216,6 +230,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.PARSING_RULE.value: PARSING_RULES_DIR,
     FileType.MODELING_RULE.value: MODELING_RULES_DIR,
     FileType.WIZARD.value: WIZARDS_DIR,
+    FileType.XDRC_TEMPLATE.value: XDRC_TEMPLATE_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -224,13 +239,13 @@ SIEM_ONLY_ENTITIES = [
     FileType.CORRELATION_RULE.value,
     FileType.XSIAM_DASHBOARD.value,
     FileType.XSIAM_REPORT.value,
-    FileType.TRIGGER.value
+    FileType.TRIGGER.value,
+    FileType.XDRC_TEMPLATE.value,
 ]
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
 
 IGNORED_PACKS_IN_DEPENDENCY_CALC = ['NonSupported', 'Base']  # Packs that are ignored when calculating dependencies
-ALL_PACKS_DEPENDENCIES_DEFAULT_PATH = './all_packs_dependencies.json'
 ALLOWED_EMPTY_PACKS = ['Cortex911']  # Packs that are allowed to be without content items in the id_set
 
 CUSTOM_CONTENT_FILE_ENDINGS = ['yml', 'json']
@@ -258,6 +273,8 @@ CONTENT_ENTITIES_DIRS = [
     LISTS_DIR,
     JOBS_DIR,
     WIZARDS_DIR,
+    MODELING_RULES_DIR,
+    XDRC_TEMPLATE_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -442,7 +459,9 @@ DOCS_REGEX = r'.*docs.*'
 IMAGE_REGEX = r'.*\.png$'
 DESCRIPTION_REGEX = r'.*\.md'
 SCHEMA_REGEX = 'Tests/schemas/.*.yml'
-CONF_PATH = 'Tests/conf.json'
+
+# regex pattern used to convert incident/indicator fields to their CLI names
+NON_LETTERS_OR_NUMBERS_PATTERN = re.compile(r'[^a-zA-Z0-9]')
 
 PACKS_DIR_REGEX = fr'{CAN_START_WITH_DOT_SLASH}{PACKS_DIR}'
 PACK_DIR_REGEX = fr'{PACKS_DIR_REGEX}\/([^\\\/]+)'
@@ -528,6 +547,13 @@ JOB_JSON_REGEX = fr'{JOBS_DIR_REGEX}\/job-([^/]+)\.json'
 WIZARD_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{WIZARDS_DIR}'
 WIZARD_JSON_REGEX = fr'{WIZARD_DIR_REGEX}\/wizard-([^/]+)\.json'
 
+# Modeling Rules
+MODELING_RULE_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{MODELING_RULES_DIR}'
+MODELING_RULE_PACKAGE_REGEX = fr'{MODELING_RULE_DIR_REGEX}\/([^\\/]+)'
+MODELING_RULE_YML_REGEX = fr'{MODELING_RULE_PACKAGE_REGEX}\/\2\.yml'
+MODELING_RULE_RULES_REGEX = fr'{MODELING_RULE_PACKAGE_REGEX}\/\2\.xif'
+MODELING_RULE_SCHEMA_REGEX = fr'{MODELING_RULE_PACKAGE_REGEX}\/\2\.json'
+
 RELATIVE_HREF_URL_REGEX = r'(<.*?href\s*=\s*"((?!(?:https?:\/\/)|#|(?:mailto:)).*?)")'
 RELATIVE_MARKDOWN_URL_REGEX = r'(?<![!])(\[.*?\])\(((?!(?:https?:\/\/)|#|(?:mailto:)).*?)\)'
 
@@ -571,11 +597,13 @@ INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}.reputations\.json$'.format(CAN_START_
 DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
 DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"
 PACK_NAME_DEPRECATED_REGEX = r".* \(Deprecated\)"
+DEPRECATED_COMMAND_REGEX = r"Command \*\*\*.*?\*\*\* is deprecated. Use .*? instead."
 
 DEPRECATED_REGEXES: List[str] = [
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
-    PACK_NAME_DEPRECATED_REGEX
+    PACK_NAME_DEPRECATED_REGEX,
+    DEPRECATED_COMMAND_REGEX,
 ]
 
 PACK_METADATA_NAME = 'name'
@@ -631,13 +659,14 @@ INTEGRATION_PREFIX = 'integration'
 SCRIPT_PREFIX = 'script'
 PARSING_RULE_PREFIX = 'parsingrule'
 MODELING_RULE_PREFIX = 'modelingrule'
+XDRC_TEMPLATE_PREFIX = 'xdrctemplate'
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
 PACKS_PACK_IGNORE_FILE_NAME = '.pack-ignore'
 PACKS_PACK_META_FILE_NAME = 'pack_metadata.json'
 PACKS_README_FILE_NAME = 'README.md'
-PACKS_CONTRIBUTORS_FILE_NAME = 'CONTRIBUTORS.md'
+PACKS_CONTRIBUTORS_FILE_NAME = 'CONTRIBUTORS.json'
 AUTHOR_IMAGE_FILE_NAME = 'Author_image.png'
 
 PYTHON_TEST_REGEXES = [
@@ -829,6 +858,11 @@ CHECKED_TYPES_REGEXES = [
     PACKS_SCRIPT_README_REGEX,
     PACKS_SCRIPT_TEST_PLAYBOOK,
 
+    # Modeling Rules
+    MODELING_RULE_YML_REGEX,
+    MODELING_RULE_RULES_REGEX,
+    MODELING_RULE_SCHEMA_REGEX,
+
     PACKS_CLASSIFIER_JSON_REGEX,
     PACKS_CLASSIFIER_JSON_5_9_9_REGEX,
     PACKS_MAPPER_JSON_REGEX,
@@ -867,7 +901,7 @@ PACKAGE_SCRIPTS_REGEXES = [
     PACKS_SCRIPT_YML_REGEX
 ]
 
-PACKAGE_SUPPORTING_DIRECTORIES = [INTEGRATIONS_DIR, SCRIPTS_DIR]
+PACKAGE_SUPPORTING_DIRECTORIES = [INTEGRATIONS_DIR, SCRIPTS_DIR, MODELING_RULES_DIR]
 
 IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_REGEX]
 
@@ -1022,6 +1056,11 @@ UNRELEASE_HEADER = '## [Unreleased]\n'  # lgtm[py/regex/duplicate-in-character-c
 CONTENT_RELEASE_TAG_REGEX = r'^\d{2}\.\d{1,2}\.\d'
 RELEASE_NOTES_REGEX = re.escape(UNRELEASE_HEADER) + r'([\s\S]+?)## \[\d{2}\.\d{1,2}\.\d\] - \d{4}-\d{2}-\d{2}'
 
+# pack contributors template
+CONTRIBUTORS_README_TEMPLATE = '\n### Pack Contributors:\n\n---\n{contributors_names}\nContributions are welcome and ' \
+                               'appreciated. For more info, visit our [Contribution Guide](https://xsoar.pan.dev/docs' \
+                               '/contributing/contributing).'
+
 # Beta integration disclaimer
 BETA_INTEGRATION_DISCLAIMER = 'Note: This is a beta Integration,' \
                               ' which lets you implement and test pre-release software. ' \
@@ -1062,6 +1101,7 @@ SCHEMA_TO_REGEX = {
                ],
 
     'report': [PACKS_REPORT_JSON_REGEX],
+    'modelingrule': [MODELING_RULE_YML_REGEX],
     'release-notes': [PACKS_RELEASE_NOTES_REGEX],
     'genericfield': JSON_ALL_GENERIC_FIELDS_REGEXES,
     'generictype': JSON_ALL_GENERIC_TYPES_REGEXES,
@@ -1076,7 +1116,7 @@ EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
 FILE_TYPES_PATHS_TO_VALIDATE = {
     'reports': JSON_ALL_REPORTS_REGEXES
 }
-
+DEPENDENCIES_DOCKER = 'demisto/demisto-sdk-dependencies:1.0.0.36679'
 DEF_DOCKER = 'demisto/python:1.3-alpine'
 DEF_DOCKER_PWSH = 'demisto/powershell:6.2.3.5563'
 
@@ -1085,6 +1125,7 @@ DIR_TO_PREFIX = {
     'Scripts': SCRIPT_PREFIX,
     'ModelingRules': MODELING_RULE_PREFIX,
     'ParsingRules': PARSING_RULE_PREFIX,
+    'XDRCTemplates': XDRC_TEMPLATE_PREFIX,
 }
 
 ENTITY_NAME_SEPARATORS = [' ', '_', '-']
@@ -1157,7 +1198,7 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.GENERIC_DEFINITION: '6.5.0',
 }
 # This constant below should always be two versions before the latest server version
-GENERAL_DEFAULT_FROMVERSION = '6.2.0'
+GENERAL_DEFAULT_FROMVERSION = '6.5.0'
 VERSION_5_5_0 = '5.5.0'
 DEFAULT_CONTENT_ITEM_FROM_VERSION = '0.0.0'
 DEFAULT_CONTENT_ITEM_TO_VERSION = '99.99.99'
@@ -1368,8 +1409,6 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggr
                                      'detectedhosts', 'modified', 'expiration', 'timestamp', 'shortdesc',
                                      'short_description', 'description', 'Tags', 'blocked']
 
-DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
-MP_V2_ID_SET_PATH = "./Tests/id_set_mp_v2.json"
 METADATA_FILE_NAME = 'pack_metadata.json'
 
 CONTEXT_OUTPUT_README_TABLE_HEADER = '| **Path** | **Type** | **Description** |'
@@ -1420,6 +1459,7 @@ class ContentItems(Enum):
     XSIAM_REPORTS = 'xsiamreport'
     TRIGGERS = 'trigger',
     WIZARDS = 'wizard',
+    XDRC_TEMPLATE = 'xdrctemplate'
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
@@ -1445,6 +1485,7 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     XSIAM_REPORTS_DIR,
     TRIGGER_DIR,
     WIZARDS_DIR,
+    XDRC_TEMPLATE_DIR,
 }
 
 
@@ -1467,9 +1508,10 @@ class IronBankDockers:
     API_LINK = 'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Fdemisto%2F'
 
 
-class MarketplaceVersions(Enum):
+class MarketplaceVersions(str, Enum):
     XSOAR = 'xsoar'
     MarketplaceV2 = 'marketplacev2'
+    XPANSE = 'xpanse'
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {'html': LooseVersion('6.1.0'), 'grid': LooseVersion('5.5.0')}

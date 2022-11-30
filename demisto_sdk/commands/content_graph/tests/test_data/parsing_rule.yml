@@ -1,0 +1,42 @@
+name: My Rule
+id: _parsing_rule_id
+fromversion: 6.8.0
+tags: a
+rules: >-
+  [RULE:extract_hipmatch_only_fields]
+
+  alter endpoint_device_name = json_extract_scalar(endpoint_device_name, "$.string"),
+      hip_match_name = json_extract_scalar(hip_match_name, "$.string"),
+      host_id = json_extract_scalar(host_id, "$.string"),
+      source_ip_v6 = if(json_extract_scalar(source_ip_v6, "$.ip_address.value") != "",
+                        json_extract_scalar(source_ip_v6, "$.ip_address.value"),
+                        json_extract_scalar(source_ip_v6, "$.ip_address.hex")),
+      source = json_extract_scalar(source, "$.string"),
+      timestamp_device_identification = json_extract_scalar(timestamp_device_identification, "$.string"),
+      uuid = json_extract_scalar(uuid, "$.string");
+
+  [ RULE: filter_relevant_events]
+
+  filter eventType in ("app.ad.api.user_import.account_locked","app.app_instance.csr.generate");
+
+
+  [ INGEST:vendor="okta", product="saas", target_dataset="okta_on", no_hit=drop]
+
+  call extract_hipmatch_only_fields
+
+  | call filter_relevant_events;
+
+
+  [ INGEST:vendor="okta", product="om_prem", target_dataset="okta_saas", no_hit=drop]
+
+  filter eventType  in ("app.access_request.approver.approve","app.access_request.approver.deny");
+samples: >-
+  {
+      "okta_on_prem": [
+          {
+              "cefVersion": "CEF:0",
+              "cefDeviceVendor": "Zscaler",
+              "cefDeviceProduct": "NSSWeblog"
+          }
+      ]
+  }

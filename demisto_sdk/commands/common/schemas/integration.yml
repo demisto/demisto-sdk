@@ -26,12 +26,11 @@ mapping:
     type: bool
   category:
     type: str
-    enum: [
-    'Analytics & SIEM', 'Utilities', 'Messaging', 'Endpoint', 'Network Security',
-    'Vulnerability Management', 'Case Management',
-    'Forensics & Malware Analysis', 'IT Services', 'Data Enrichment & Threat Intelligence',
-     'Authentication', 'Database', 'Deception', 'Email Gateway', 'Identity and Access Management','File Integrity Management']
     required: true
+  sectionOrder:
+    type: seq
+    sequence:
+    - type: str
   fromversion:
     type: str
   toversion:
@@ -114,6 +113,10 @@ mapping:
     type: bool
   hidden:
     type: bool
+  videos:
+    type: seq
+    sequence:
+      - type: str
   versionedfields:
     type: any
   defaultEnabled:
@@ -130,7 +133,7 @@ mapping:
     type: seq
     sequence:
       - type: str
-        enum: ['xsoar', 'marketplacev2']
+        enum: ['xsoar', 'marketplacev2', 'xpanse']
 
 # integration->configuration
 schema;configuration_schema:
@@ -139,6 +142,10 @@ schema;configuration_schema:
   mapping:
     display:
       type: str
+    section:
+      type: str
+    advanced:
+      type: bool
     defaultvalue:
       type: any
     name:
@@ -150,7 +157,7 @@ schema;configuration_schema:
     required:
       type: bool
     hidden:
-      type: bool
+      type: any
     hidden_x2:
       type: bool
     options:

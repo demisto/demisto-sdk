@@ -2,7 +2,7 @@
 ## Unreleased
 * Added the ability to limit the number of CPU cores with `DEMISTO_SDK_MAX_CPU_CORES` envirment variable.
 * Fixed an issue where **update-release-notes** failed when changing only xif file in **Modeling Rules**.
-* Added hidden property to integration command argument and script argument.
+* Added hidden properties to integration command argument and script argument.
 
 ## 1.7.9
 * Fixed an issue where an error message in **validate** would not include the suggested fix.

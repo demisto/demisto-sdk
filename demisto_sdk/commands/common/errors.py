@@ -2532,7 +2532,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def modeling_rule_schema_xif_dataset_mismatch():
-        return "The dataset name in the schema file and in the xif file do not match"
+        return "There is a mismatch between datasets in schema file and in the xif file. " \
+               "Either there are more dataset declared in one of the files, or the names are not the same."
 
     @staticmethod
     @error_code_decorator

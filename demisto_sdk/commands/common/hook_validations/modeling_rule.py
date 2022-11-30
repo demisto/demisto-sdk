@@ -106,14 +106,12 @@ class ModelingRuleValidator(ContentEntityValidator):
 
         xif_file_path = get_files_in_dir(os.path.dirname(self.file_path), ['xif'], False)
         if xif_file_path and self.schema_content:
-            xif_dataset = set(get_dataset_from_xif(xif_file_path[0]))
-            if len(xif_dataset) > 1:
-                return False
-            else:
-                xif_dataset = xif_dataset.pop()
-            schema_dataset = next(iter(self.schema_content))
-            if xif_dataset and schema_dataset and xif_dataset == schema_dataset:
-                return True
+            xif_datasets = get_dataset_from_xif(xif_file_path[0])
+            schema_datasets = self.schema_content.keys()
+            if len(xif_datasets) == len(schema_datasets) and len(xif_datasets) >= 1:
+                all_exist = all(dataset in schema_datasets for dataset in xif_datasets)
+                if all_exist:
+                    return True
 
         error_message, error_code = Errors.modeling_rule_schema_xif_dataset_mismatch()
         if self.handle_error(error_message, error_code, file_path=self.file_path):

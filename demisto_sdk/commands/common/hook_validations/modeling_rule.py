@@ -31,7 +31,7 @@ class ModelingRuleValidator(ContentEntityValidator):
     def set_files_info(self):
         files = get_files_in_dir(os.path.dirname(self.file_path), ['json', 'xif'], False)
         for file in files:
-            if file.endswith('.json'):
+            if file.endswith('_schema.json'):
                 self.schema_path = file
                 with open(file, 'r') as sf:
                     self.schema_content = json.load(sf)

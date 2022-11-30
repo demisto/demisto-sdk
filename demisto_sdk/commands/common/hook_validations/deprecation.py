@@ -136,6 +136,8 @@ class DeprecationValidator:
                 depends_commands_list = script_val.get("depends_on")
                 if depends_commands_list:
                     for command in depends_commands_list:
+                        if command in COMMANDS_TO_IGNORE:
+                            continue
                         if command in deprecated_commands_list:
                             script_path = script_val.get("file_path", "")
                             if command in usage_dict and script_path not in usage_dict.get(command, []):

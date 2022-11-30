@@ -118,8 +118,15 @@ class IntegrationScriptUnifier(YAMLUnifier):
             self._output_yaml(file_path, file_data)
 
         return output_map
+    
+    def _add_docker_master_image(self):
+        ...
+    
+    def _prepare(self):
+        super()._prepare()
+        self._add_docker_master_image()
 
-    def unify(self, file_name_suffix=None):
+    def _unify(self, file_name_suffix=None):
         print(f"Merging package: {self.package_path}")
         self._set_dest_path(file_name_suffix)
 

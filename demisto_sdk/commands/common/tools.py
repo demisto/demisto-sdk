@@ -53,6 +53,11 @@ from demisto_sdk.commands.common.constants import (ALL_FILES_VALIDATION_IGNORE_W
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent, content_type_to_model
+from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
+from demisto_sdk.commands.content_graph.parsers.pack import PackParser
+from demisto_sdk.commands.content_graph.objects.pack import Pack
+
 
 json = JSON_Handler()
 
@@ -3054,3 +3059,15 @@ def field_to_cli_name(field_name: str) -> str:
         field_name (str): the incident/indicator field name.
     """
     return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, '', field_name).lower()
+
+def get_content_object_by_path(path: Path) -> Optional[BaseContent]:
+    if path.is_dir() and path.parts[-1] == 'Packs':  # if the path given is a pack
+        return Pack.from_orm(PackParser(path))
+    content_item_parser = ContentItemParser.from_path(path)
+    if not content_item_parser:
+        return None
+    model = content_type_to_model.get(content_item_parser.content_type)
+    if not model:
+        return None
+    return model.from_orm(content_item_parser)
+    

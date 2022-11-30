@@ -34,3 +34,6 @@ class IntegrationScript(ContentItem):
                 f"Failed to unify {self.path} to {dir}, probably already unified. Error message: {e}"
             )
             super().dump(dir, marketplace)
+
+    def prepare_for_upload(self, marketplace) -> None:
+        ...

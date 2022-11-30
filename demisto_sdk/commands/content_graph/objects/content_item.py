@@ -1,3 +1,4 @@
+from abc import abstractmethod
 import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Set
@@ -80,10 +81,15 @@ class ContentItem(BaseContent):
             for r in self.relationships_data[RelationshipType.TESTED_BY]
             if r.content_item == r.target
         ]
-
+    
+    @abstractmethod
+    def prepare_for_upload(self) -> dict:
+        raise NotImplementedError("Should be implemented in subclasses")
+    
     def summary(self) -> dict:
         return self.dict(include=self.metadata_fields(), by_alias=True)
 
+    @abstractmethod
     def metadata_fields(self) -> Set[str]:
         raise NotImplementedError("Should be implemented in subclasses")
 

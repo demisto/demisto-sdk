@@ -2500,17 +2500,24 @@ def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, ma
     return searched_tasks
 
 
-def extract_docker_image_from_text(text):
+def extract_docker_image_from_text(text: str, with_no_tag: bool = False):
     """
     Strips the docker image version from a given text.
+
     Args:
-        text : the text to extract the docker image from
-    Return:
-        str. The docker image version if exists, otherwise, return None.
+        text (str): the text to extract the docker image from
+        with_no_tag (bool): whether to return the docker image without its tag,
+            for example if True then demisto/tesseract:1.0.0.36078 --> tesseract
+
+    Returns:
+        str: The docker image version if exists, otherwise, return None.
     """
     match = (re.search(r'(demisto/.+:([0-9]+)(((\.)[0-9]+)+))', text))
     if match:
-        return match.group(1)
+        docker_image = match.group(1)
+        if with_no_tag:
+            return docker_image.replace('demisto/', '').split(':')[0]
+        return docker_image
     else:
         return None
 

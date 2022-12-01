@@ -7,7 +7,7 @@
 * Added a validation to validate types of attributes in the schema file of modeling rule.
 * Added a validation to validate that the dataset name is the same in the xif and schema files of modeling rule.
 * Added a validation to validate that a correlation rule file does not start with a hyphen.
-* Added a validation to validate that a xsiam content items naming following conventions.
+* Added a validation to validate that xsiam content items follow naming conventions.
 * Fixed an issue where **validate** did not check changed pack_metadata.json files when running using git.
 * Added support for **xdrctemplate** to content graph.
 * Fixed an issue where local copies of the newly-introduced `DemistoClassApiModule.py` were validated.

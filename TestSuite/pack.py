@@ -166,8 +166,6 @@ class Pack:
 
         self._xdrc_templates_path = self._pack_path / XDRC_TEMPLATE_DIR
         self._xdrc_templates_path.mkdir()
-        self._xdrc_templates_path = self._xdrc_templates_path / self.name
-        self._xdrc_templates_path.mkdir()
 
         self.secrets = Secrets(self._pack_path)
 

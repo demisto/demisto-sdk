@@ -559,7 +559,6 @@ def test_content_items_naming(repo):
     ]
 
     valid_entities_paths = [
-        pack.create_xdrc_template('pack').path,
         pack.create_modeling_rule('pack').yml.path,
         pack.create_parsing_rule('pack').yml.path,
         pack.create_correlation_rule('pack_test').path,

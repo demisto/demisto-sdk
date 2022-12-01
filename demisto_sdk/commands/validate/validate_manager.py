@@ -169,7 +169,9 @@ class ValidateManager:
                                    FileType.XSIAM_REPORT_IMAGE,
                                    FileType.XSIAM_DASHBOARD_IMAGE,
                                    FileType.XDRC_TEMPLATE_YML,
-                                   FileType.XDRC_TEMPLATE,)
+                                   FileType.XDRC_TEMPLATE,
+                                   FileType.MODELING_RULE_XIF,
+                                   )
 
         self.is_external_repo = is_external_repo
         if is_external_repo:

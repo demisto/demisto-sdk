@@ -130,6 +130,7 @@ def test_is_invalid_rule_file_name(repo):
     with ChangeCWD(repo.path):
         modeling_rule_validator = ModelingRuleValidator(structure_validator)
         assert not modeling_rule_validator.is_valid_rule_names()
+        assert not modeling_rule_validator._is_valid
 
 
 @pytest.mark.parametrize('schema, valid', [({"test_audit_raw": {"name": {"type": "sting", "is_array": False}}}, False),

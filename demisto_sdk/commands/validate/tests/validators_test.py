@@ -185,6 +185,23 @@ class TestValidators:
         finally:
             os.remove(PLAYBOOK_TARGET)
 
+    INPUTS_is_condition_branches_handled = [
+        (INVALID_PLAYBOOK_CONDITION_1, False),
+        (INVALID_PLAYBOOK_CONDITION_2, True),
+        (VALID_PLAYBOOK_CONDITION, True)
+    ]
+
+    @pytest.mark.parametrize('source, answer', INPUTS_is_condition_branches_handled)
+    def test_are_default_conditions_valid(self, source, answer):
+        # type: (str, str) -> None
+        try:
+            copyfile(source, PLAYBOOK_TARGET)
+            structure = StructureValidator(source)
+            validator = PlaybookValidator(structure)
+            assert validator.are_default_conditions_valid() is answer
+        finally:
+            os.remove(PLAYBOOK_TARGET)
+
     INPUTS_LOCKED_PATHS = [
         (VALID_REPUTATION_PATH, True, ReputationValidator),
         (INVALID_REPUTATION_PATH, False, ReputationValidator),
@@ -454,6 +471,7 @@ class TestValidators:
         mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
                             return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
         with ChangeCWD(integration.repo_path):
             validate_manager = ValidateManager(skip_conf_json=True)
             assert not validate_manager.run_validations_on_file(file_path=integration.yml.path,
@@ -1992,6 +2010,7 @@ def test_run_validation_using_git_on_metadata_with_invalid_tags(mocker, repo, pa
     pack = repo.create_pack()
     pack.pack_metadata.write_json(pack_metadata_info)
     mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
+    mocker.patch.object(PackUniqueFilesValidator, 'is_categories_field_match_standard', return_value=True)
     mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git',
                         return_value=({pack.pack_metadata.path}, set(), set()))
     mocker.patch.object(GitUtil, 'deleted_files', return_value=set())

@@ -184,7 +184,7 @@ class ModelingRuleValidator(ContentEntityValidator):
         if invalid_files:
             error_message, error_code = Errors.invalid_rule_name(invalid_files)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self.is_valid = False
+                self._is_valid = False
                 return False
 
         return True

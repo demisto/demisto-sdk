@@ -170,8 +170,7 @@ class ValidateManager:
                                    FileType.XSIAM_DASHBOARD_IMAGE,
                                    FileType.XDRC_TEMPLATE_YML,
                                    FileType.XDRC_TEMPLATE,
-                                   # FileType.MODELING_RULE_XIF
-                                   # todo: maybe here
+                                   FileType.MODELING_RULE_XIF,
                                    )
 
         self.is_external_repo = is_external_repo
@@ -676,7 +675,7 @@ class ValidateManager:
         elif file_type == FileType.PARSING_RULE:
             return self.validate_parsing_rule(structure_validator, pack_error_ignore_list)
 
-        elif file_type in {FileType.MODELING_RULE, FileType.MODELING_RULE_XIF}:
+        elif file_type in {FileType.MODELING_RULE}:
             return self.validate_modeling_rule(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.CORRELATION_RULE:

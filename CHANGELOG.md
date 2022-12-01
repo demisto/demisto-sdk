@@ -3,6 +3,7 @@
 * Added the ability to limit the number of CPU cores with `DEMISTO_SDK_MAX_CPU_CORES` envirment variable.
 * Fixed an issue where **update-release-notes** failed when changing only xif file in **Modeling Rules**.
 * Fixed an issue where **is_valid_category** and **is_categories_field_match_standard** failed on private repo due to approved_list not imported.
+* Fixed an issue where **validate** didn't fail on the MR103 validation error.
 * Fixed an issue where **validate** failed when changing only xif file in **Modeling Rules**.
 
 ## 1.7.9

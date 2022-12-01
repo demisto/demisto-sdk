@@ -4,6 +4,7 @@
 * Fixed an issue where **update-release-notes** failed when changing only xif file in **Modeling Rules**.
 * Fixed an issue where **is_valid_category** and **is_categories_field_match_standard** failed on private repo due to approved_list not imported.
 * Fixed an issue where **validate** didn't fail on the MR103 validation error.
+* Fixed the *--release-notes* flag in demisto-sdk to support the new CHANGELOG format.
 
 ## 1.7.9
 * Fixed an issue where an error message in **validate** would not include the suggested fix.

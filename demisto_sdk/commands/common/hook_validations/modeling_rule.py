@@ -106,7 +106,7 @@ class ModelingRuleValidator(ContentEntityValidator):
 
         xif_file_path = get_files_in_dir(os.path.dirname(self.file_path), ['xif'], False)
         if xif_file_path and self.schema_content:
-            xif_datasets = get_dataset_from_xif(xif_file_path[0])
+            xif_datasets = set(get_dataset_from_xif(xif_file_path[0]))
             schema_datasets = self.schema_content.keys()
             if len(xif_datasets) == len(schema_datasets) and len(xif_datasets) >= 1:
                 all_exist = all(dataset in schema_datasets for dataset in xif_datasets)

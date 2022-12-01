@@ -9,7 +9,7 @@ from datetime import datetime
 from distutils.version import LooseVersion
 from enum import Enum
 from functools import partial
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
@@ -28,6 +28,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, COMMON_TYPES
                                                    MarketplaceVersions)
 from demisto_sdk.commands.common.content_constant_paths import (DEFAULT_ID_SET_PATH, MP_V2_ID_SET_PATH,
                                                                 XPANSE_ID_SET_PATH)
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_current_repo, get_display_name, get_file,
                                                get_item_marketplaces, get_json, get_pack_name, get_yaml, print_color,

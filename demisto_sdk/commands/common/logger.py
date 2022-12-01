@@ -1,13 +1,18 @@
 import logging
 import os
 import sys
+from pathlib import Path
 from typing import Optional
+
+from rich.logging import RichHandler
 
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
 
-def logging_setup(verbose: int, quiet: Optional[bool] = False,
-                  log_path: Optional[str] = None) -> logging.Logger:
+def logging_setup(
+    verbose: int, quiet: Optional[bool] = False,
+    log_path: Optional[str] = None, log_file_name: str = 'lint_debug_log.log'
+) -> logging.Logger:
     """ Init logger object for logging in demisto-sdk
         For more info - https://docs.python.org/3/library/logging.html
 
@@ -15,6 +20,7 @@ def logging_setup(verbose: int, quiet: Optional[bool] = False,
         verbose(int) verosity level - 1-3
         quiet(bool): Whether to output a quiet response.
         log_path(str): Path to save log of all levels
+        log_file_name(str): Basename of file to save logs to. Defaults to "lint_debug_log.log".
 
     Returns:
         logging.Logger: logger object
@@ -56,7 +62,7 @@ def logging_setup(verbose: int, quiet: Optional[bool] = False,
 
     # Setting debug log file if in circleci
     if log_path:
-        file_handler = logging.FileHandler(filename=os.path.join(log_path, 'lint_debug_log.log'))
+        file_handler = logging.FileHandler(filename=os.path.join(log_path, log_file_name))
         file_handler.setFormatter(
             logging.Formatter('[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(message)s'))
         file_handler.name = 'file-handler'
@@ -73,6 +79,44 @@ def logging_setup(verbose: int, quiet: Optional[bool] = False,
 
 
 logger: logging.Logger = logging_setup(verbose=1, quiet=False)
+
+
+def set_console_stream_handler(logger: logging.Logger, handler: RichHandler = RichHandler(rich_tracebacks=True)):
+    """Set the console stream handler.
+
+    Args:
+        logger (logging.Logger): Logger.
+        handler (RichHandler, optional): RichHandler. Defaults to RichHandler(rich_tracebacks=True).
+    """
+    console_handler_index = -1
+    for i, h in enumerate(logger.handlers):
+        if h.name == 'console-handler':
+            console_handler_index = i
+    if console_handler_index != -1:
+        logger.handlers[console_handler_index] = handler
+    else:
+        logger.addHandler(handler)
+
+
+def setup_rich_logging(verbosity: int, quiet: bool, log_path: Path, log_file_name: str):
+    """Override the default StreamHandler with the RichHandler.
+
+    Setup logging and then override the default StreamHandler with the RichHandler.
+
+    Args:
+        verbosity (int): The log level to output.
+        quiet (bool): If True, no logs will be output.
+        log_path (Path): Path to the directory where the log file will be created.
+        log_file_name (str): The filename of the log file.
+    """
+    logger = logging_setup(
+        verbose=verbosity,
+        quiet=quiet,
+        log_path=log_path,  # type: ignore[arg-type]
+        log_file_name=log_file_name
+    )
+    rich_handler = RichHandler(rich_tracebacks=True)
+    set_console_stream_handler(logger, rich_handler)
 
 
 # Python program to print

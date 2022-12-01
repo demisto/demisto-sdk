@@ -147,6 +147,8 @@ class FileType(str, Enum):
     BUILD_CONFIG_FILE = 'build-config-file'
     PARSING_RULE = 'parsingrule'
     MODELING_RULE = 'modelingrule'
+    MODELING_RULE_TEST_DATA = 'modelingruletestdata'
+    MODELING_RULE_XIF = 'modelingrulexif'
     CORRELATION_RULE = 'correlationrule'
     XSIAM_DASHBOARD = 'xsiamdashboard'
     XSIAM_DASHBOARD_IMAGE = 'xsiamdashboardimage'
@@ -595,11 +597,13 @@ INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}.reputations\.json$'.format(CAN_START_
 DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
 DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"
 PACK_NAME_DEPRECATED_REGEX = r".* \(Deprecated\)"
+DEPRECATED_COMMAND_REGEX = r"Command \*\*\*.*?\*\*\* is deprecated. Use .*? instead."
 
 DEPRECATED_REGEXES: List[str] = [
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
-    PACK_NAME_DEPRECATED_REGEX
+    PACK_NAME_DEPRECATED_REGEX,
+    DEPRECATED_COMMAND_REGEX,
 ]
 
 PACK_METADATA_NAME = 'name'

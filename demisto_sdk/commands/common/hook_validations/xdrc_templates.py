@@ -38,7 +38,7 @@ class XDRCTemplatesValidator(ContentEntityValidator):
         Validates all file naming is as convention.
         """
         if not self.validate_xsiam_content_item_title(self.file_path):
-            error_message, error_code = Errors.files_naming_wrong([self.file_path])
+            error_message, error_code = Errors.xisam_content_files_naming_invalid([self.file_path])
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False

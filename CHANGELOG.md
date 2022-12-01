@@ -2,6 +2,10 @@
 ## Unreleased
 * Added the ability to limit the number of CPU cores with `DEMISTO_SDK_MAX_CPU_CORES` envirment variable.
 * Fixed an issue where **update-release-notes** failed when changing only xif file in **Modeling Rules**.
+* Added a validation to validate types of attributes in the schema file of modeling rule.
+* Added a validation to validate that the dataset name is the same in the xif and schema files of modeling rule.
+* Added a validation to validate that a correlation rule file does not start with a hyphen.
+* Added a validation to validate that xsiam content items follow naming conventions.
 * Fixed an issue where **is_valid_category** and **is_categories_field_match_standard** failed on private repo due to approved_list not imported.
 * Fixed an issue where **validate** didn't fail on the MR103 validation error.
 * Fixed an issue where **validate** failed when changing only xif file in **Modeling Rules**.
@@ -12,10 +16,6 @@
 * Fixed an issue where **update-release-notes** did not generate release notes for **XDRC Templates**.
 * Fixed an issue where **upload** failed without explaining the reason.
 * Improved implementation of the docker_helper module.
-* Added a validation to validate types of attributes in the schema file of modeling rule.
-* Added a validation to validate that the dataset name is the same in the xif and schema files of modeling rule.
-* Added a validation to validate that a correlation rule file does not start with a hyphen.
-* Added a validation to validate that xsiam content items follow naming conventions.
 * Fixed an issue where **validate** did not check changed pack_metadata.json files when running using git.
 * Added support for **xdrctemplate** to content graph.
 * Fixed an issue where local copies of the newly-introduced `DemistoClassApiModule.py` were validated.

@@ -45,7 +45,7 @@ class ParsingRuleValidator(ContentEntityValidator):
             if not self.validate_xsiam_content_item_title(file):
                 invalid_files.append(file)
         if invalid_files:
-            error_message, error_code = Errors.files_naming_wrong(invalid_files)
+            error_message, error_code = Errors.xisam_content_files_naming_invalid(invalid_files)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False

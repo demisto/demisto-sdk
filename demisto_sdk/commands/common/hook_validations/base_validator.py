@@ -335,12 +335,12 @@ class BaseValidator:
         file_name = str(file_path_object.stem)
         dir_name = str(file_path_object.parent.stem)
         pack_name = get_pack_name(file_path)
-        if file_type in [FileType.XDRC_TEMPLATE, FileType.XDRC_TEMPLATE_YML, FileType.MODELING_RULE,
-                         FileType.PARSING_RULE, FileType.XIF_FILE]:
+        if file_type in {FileType.XDRC_TEMPLATE, FileType.XDRC_TEMPLATE_YML, FileType.MODELING_RULE,
+                         FileType.PARSING_RULE, FileType.XIF_FILE}:
             if file_name != dir_name:
                 return False
-        elif file_type in [FileType.CORRELATION_RULE, FileType.XSIAM_DASHBOARD, FileType.XSIAM_REPORT,
-                           FileType.XSIAM_REPORT_IMAGE, FileType.XSIAM_DASHBOARD_IMAGE]:
+        elif file_type in {FileType.CORRELATION_RULE, FileType.XSIAM_DASHBOARD, FileType.XSIAM_REPORT,
+                           FileType.XSIAM_REPORT_IMAGE, FileType.XSIAM_DASHBOARD_IMAGE}:
             if not file_name.startswith(f'{pack_name}_'):
                 return False
         elif file_type == FileType.MODELING_RULE_SCHEMA:

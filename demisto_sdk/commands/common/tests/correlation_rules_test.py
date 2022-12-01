@@ -7,11 +7,11 @@ from demisto_sdk.commands.common.tools import get_yaml
 GIT_ROOT = git_path()
 
 
-def test_doesnt_hyphen_exists():
+def test_no_leading_hyphen():
     """
-    Given: A modeling rule with mismatch between dataset name of the schema and xif files.
-    When: running is_dataset_name_similar.
-    Then: Validate that the modeling rule is invalid.
+    Given: A correlation rule with leading hyphen is given.
+    When: running dataset_name_matches_in_xif_and_schema.
+    Then: Validate that the correlation rule is invalid.
     """
     invalid_correlation_file = f'{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/invalid_correlation_rule.yml'
     invalid_correlation_yaml = get_yaml(invalid_correlation_file)
@@ -20,4 +20,4 @@ def test_doesnt_hyphen_exists():
     content_validator = ContentEntityValidator(structure_validator)
     correlation_rule_validator = CorrelationRuleValidator(content_validator)
 
-    assert not correlation_rule_validator.doesnt_hyphen_exists()
+    assert not correlation_rule_validator.no_leading_hyphen()

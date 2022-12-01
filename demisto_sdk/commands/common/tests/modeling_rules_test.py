@@ -148,14 +148,14 @@ def test_is_schema_types_valid(repo, schema, valid):
     assert modeling_rule_validator.is_schema_types_valid() == valid
 
 
-def test_is_dataset_name_similar(repo):
+def test_dataset_name_matches_in_xif_and_schema(repo):
     """
     Given: A modeling rule with mismatch between dataset name of the schema and xif files.
-    When: running is_dataset_name_similar.
+    When: running dataset_name_matches_in_xif_and_schema.
     Then: Validate that the modeling rule is invalid.
     """
     pack = repo.create_pack('TestPack')
     dummy_modeling_rule = pack.create_modeling_rule('MyRule')
     structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
     modeling_rule_validator = ModelingRuleValidator(structure_validator)
-    assert not modeling_rule_validator.is_dataset_name_similar()
+    assert not modeling_rule_validator.dataset_name_matches_in_xif_and_schema()

@@ -4,6 +4,7 @@ This module is designed to validate the correctness of generic definition entiti
 import json
 import os
 import re
+from typing import Union, List
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import YAML_Handler
@@ -49,7 +50,7 @@ class ModelingRuleValidator(ContentEntityValidator):
         self.are_keys_empty_in_yml()
         self.is_valid_rule_names()
         self.is_schema_types_valid()
-        self.is_dataset_name_similar()
+        self.dataset_name_matches_in_xif_and_schema()
         self.is_files_naming_correct()
         return self._is_valid
 
@@ -74,14 +75,14 @@ class ModelingRuleValidator(ContentEntityValidator):
         """
             Validates all types used in the schema file are valid, i.e. part of the list below.
         """
-        valid_type = ['string', 'int', 'float', 'datetime', 'boolean']
+        valid_types = {'string', 'int', 'float', 'datetime', 'boolean'}
         invalid_types = []
         if self.schema_content:
             for dataset in self.schema_content:
                 attributes = self.schema_content.get(dataset)
                 for attr in attributes.values():
                     type_to_validate = attr.get('type')
-                    if type_to_validate not in valid_type:
+                    if type_to_validate not in valid_types:
                         invalid_types.append(type_to_validate)
 
             if invalid_types:
@@ -92,12 +93,12 @@ class ModelingRuleValidator(ContentEntityValidator):
         return True
 
     @error_codes("MR105")
-    def is_dataset_name_similar(self):
+    def dataset_name_matches_in_xif_and_schema(self):
         """
             Validates the dataset name is the same in the xif file and in the schema file
         """
 
-        def get_dataset_from_xif(xif_file_path):
+        def get_dataset_from_xif(xif_file_path: str) -> Union[List[str], None]:
             with open(xif_file_path, 'r') as xif_file:
                 xif_content = xif_file.read()
                 dataset = re.findall("dataset[ ]?=[ ]?([\"a-zA-Z_0-9]+)", xif_content)
@@ -134,7 +135,7 @@ class ModelingRuleValidator(ContentEntityValidator):
             if not self.validate_xsiam_content_item_title(self.xif_path):
                 invalid_files.append(self.xif_path)
         if invalid_files:
-            error_message, error_code = Errors.files_naming_wrong(invalid_files)
+            error_message, error_code = Errors.xisam_content_files_naming_invalid(invalid_files)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False

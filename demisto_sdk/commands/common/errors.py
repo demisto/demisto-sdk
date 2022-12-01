@@ -62,7 +62,7 @@ ERROR_CODE = {
     "incorrect_from_to_version_format": {'code': "BA117", 'ui_applicable': False, 'related_field': ''},
     "mismatching_from_to_versions": {'code': "BA118", 'ui_applicable': False, 'related_field': ''},
     "copyright_section_in_python_error": {'code': "BA119", 'ui_applicable': False, 'related_field': ''},
-    "files_naming_wrong": {'code': "BA120", 'ui_applicable': False, 'related_field': ''},
+    "xisam_content_files_naming_invalid": {'code': "BA120", 'ui_applicable': False, 'related_field': ''},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -2551,18 +2551,19 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def modeling_rule_schema_types_invalid(invalid_types: list):
-        return f"Some of the types in the schema file are invalid. Invalid types are: {','.join(invalid_types)}"
+        return f"The following types in the schema file are invalid {','.join(invalid_types)}. " \
+               f"Valid types are: string, int , float, datetime, boolean."
 
     @staticmethod
     @error_code_decorator
-    def files_naming_wrong(invalid_files: list):
-        return f"Some of the files naming in the directory not following conventions. Invalid files are: {','.join(invalid_files)}"
+    def xisam_content_files_naming_invalid(invalid_files: list):
+        return f"The following files do not match the naming conventions:: {','.join(invalid_files)}"
 
     @staticmethod
     @error_code_decorator
     def modeling_rule_schema_xif_dataset_mismatch():
         return "There is a mismatch between datasets in schema file and in the xif file. " \
-               "Either there are more dataset declared in one of the files, or the names are not the same."
+               "Either there are more datasets declared in one of the files, or the datasets titles are not the same."
 
     @staticmethod
     @error_code_decorator
@@ -2572,5 +2573,5 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def correlation_rule_starts_with_hyphen(invalid_files):
-        return f"The following correlation rule file starts with a hyphen {invalid_files} - Please remove it."
+    def correlation_rule_starts_with_hyphen():
+        return "Correlation rule files cannot start with a hyphen, please remove it."

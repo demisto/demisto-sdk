@@ -685,10 +685,10 @@ class ValidateManager:
         elif file_type == FileType.CORRELATION_RULE:
             return self.validate_correlation_rule(structure_validator, pack_error_ignore_list)
 
-        elif file_type == FileType.XSIAM_DASHBOARD or file_type == FileType.XSIAM_DASHBOARD_IMAGE:
+        elif file_type in {FileType.XSIAM_DASHBOARD, FileType.XSIAM_DASHBOARD_IMAGE}:
             return self.validate_xsiam_dashboard(structure_validator, pack_error_ignore_list)
 
-        elif file_type == FileType.XDRC_TEMPLATE or file_type == FileType.XDRC_TEMPLATE_YML:
+        elif file_type in {FileType.XDRC_TEMPLATE, FileType.XDRC_TEMPLATE_YML}:
             return self.validate_xdrc_templates(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.XSIAM_REPORT:

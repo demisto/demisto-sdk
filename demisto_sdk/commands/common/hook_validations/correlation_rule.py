@@ -28,7 +28,7 @@ class CorrelationRuleValidator(ContentEntityValidator):
         """
         logging.debug('Automatically considering XSIAM content item as valid, see issue #48151')
 
-        self.doesnt_hyphen_exists()
+        self.no_leading_hyphen()
         self.is_files_naming_correct()
         return self.is_valid
 
@@ -39,14 +39,14 @@ class CorrelationRuleValidator(ContentEntityValidator):
         pass
 
     @error_codes('CR100')
-    def doesnt_hyphen_exists(self):
+    def no_leading_hyphen(self):
         """
 
         Returns: False if type of current file is CommentSeq, which means the yaml starts with hyphen, True otherwise.
 
         """
         if isinstance(self.current_file, CommentedSeq):
-            error_message, error_code = Errors.correlation_rule_starts_with_hyphen(self.file_path)
+            error_message, error_code = Errors.correlation_rule_starts_with_hyphen()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
@@ -58,7 +58,7 @@ class CorrelationRuleValidator(ContentEntityValidator):
         Validates all file naming is as convention.
         """
         if not self.validate_xsiam_content_item_title(self.file_path):
-            error_message, error_code = Errors.files_naming_wrong([self.file_path])
+            error_message, error_code = Errors.xisam_content_files_naming_invalid([self.file_path])
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False

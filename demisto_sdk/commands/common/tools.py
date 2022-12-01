@@ -2418,11 +2418,9 @@ def get_approved_tags_from_branch() -> Dict[str, List[str]]:
     if not is_external_repository():
         approved_tags_json, _ = get_dict_from_file('Tests/Marketplace/approved_tags.json')
         if isinstance(approved_tags_json.get('approved_list'), list):
-            print_warning(
-                'You are using a deprecated version of the file aproved_tags.json, consider pulling from master'
-                ' to update it.')
-            return {'common': approved_tags_json.get('approved_list', []), 'xsoar': [], 'marketplacev2': [],
-                    'xpanse': []}
+            print_warning('You are using a deprecated version of the file aproved_tags.json, consider pulling from master'
+                          ' to update it.')
+            return {'common': approved_tags_json.get('approved_list', []), 'xsoar': [], 'marketplacev2': [], 'xpanse': []}
 
         return approved_tags_json.get('approved_list', {})
     return {}
@@ -2545,8 +2543,7 @@ def get_current_repo() -> Tuple[str, str, str]:
         return "Unknown source", '', ''
 
 
-def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None,
-                          item_type: str = None) -> List:
+def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None, item_type: str = None) -> List:
     """
     Return the supporting marketplaces of the item.
 
@@ -2918,7 +2915,7 @@ def get_display_name(file_path, file_data={}) -> str:
 
 
 def get_invalid_incident_fields_from_mapper(
-        mapper_incident_fields: Dict[str, Dict], mapping_type: str, content_fields: List
+    mapper_incident_fields: Dict[str, Dict], mapping_type: str, content_fields: List
 ) -> List[str]:
     """
     Get a list of incident fields which are not part of the content items (not part of id_json) from a specific

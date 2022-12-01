@@ -562,11 +562,11 @@ class Pack:
         return contributors
 
     def create_parsing_rule(
-            self,
-            name: Optional[str] = None,
-            yml: Optional[dict] = None,
-            rules: Optional[str] = None,
-            samples: Optional[list] = None,
+        self,
+        name: Optional[str] = None,
+        yml: Optional[dict] = None,
+        rules: Optional[str] = None,
+        samples: Optional[list] = None,
     ) -> Rule:
         if not name:
             name = f'parsingrule_{len(self.parsing_rules)}'

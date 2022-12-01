@@ -77,11 +77,12 @@ class ModelingRuleValidator(ContentEntityValidator):
         valid_type = ['string', 'int', 'float', 'datetime', 'boolean']
         invalid_types = []
         if self.schema_content:
-            attributes = list(self.schema_content.values())[0]
-            for attr in attributes.values():
-                type_to_validate = attr.get('type')
-                if type_to_validate not in valid_type:
-                    invalid_types.append(type_to_validate)
+            for dataset in self.schema_content:
+                attributes = self.schema_content.get(dataset)
+                for attr in attributes.values():
+                    type_to_validate = attr.get('type')
+                    if type_to_validate not in valid_type:
+                        invalid_types.append(type_to_validate)
 
             if invalid_types:
                 error_message, error_code = Errors.modeling_rule_schema_types_invalid(invalid_types)

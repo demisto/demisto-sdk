@@ -28,7 +28,7 @@ class CorrelationRuleValidator(ContentEntityValidator):
         """
         logging.debug('Automatically considering XSIAM content item as valid, see issue #48151')
 
-        self.is_hyphen_exists()
+        self.doesnt_hyphen_exists()
         self.is_files_naming_correct()
         return self.is_valid
 
@@ -39,7 +39,7 @@ class CorrelationRuleValidator(ContentEntityValidator):
         pass
 
     @error_codes('CR100')
-    def is_hyphen_exists(self):
+    def doesnt_hyphen_exists(self):
         """
 
         Returns: False if type of current file is CommentSeq, which means the yaml starts with hyphen, True otherwise.

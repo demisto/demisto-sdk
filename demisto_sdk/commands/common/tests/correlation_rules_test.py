@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.tools import get_yaml
 GIT_ROOT = git_path()
 
 
-def test_is_hyphen_exists():
+def test_doesnt_hyphen_exists():
     """
     Given: A modeling rule with mismatch between dataset name of the schema and xif files.
     When: running is_dataset_name_similar.
@@ -20,4 +20,4 @@ def test_is_hyphen_exists():
     content_validator = ContentEntityValidator(structure_validator)
     correlation_rule_validator = CorrelationRuleValidator(content_validator)
 
-    assert not correlation_rule_validator.is_hyphen_exists()
+    assert not correlation_rule_validator.doesnt_hyphen_exists()

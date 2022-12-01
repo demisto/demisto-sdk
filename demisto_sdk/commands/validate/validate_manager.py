@@ -166,7 +166,9 @@ class ValidateManager:
         self.skipped_file_types = (FileType.CHANGELOG,
                                    FileType.DOC_IMAGE,
                                    FileType.MODELING_RULE_SCHEMA,
-                                   FileType.XSIAM_REPORT_IMAGE)
+                                   FileType.XSIAM_REPORT_IMAGE,
+                                   FileType.MODELING_RULE_XIF,
+                                   )
 
         self.is_external_repo = is_external_repo
         if is_external_repo:

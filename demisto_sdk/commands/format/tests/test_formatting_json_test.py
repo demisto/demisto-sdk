@@ -1510,6 +1510,23 @@ class TestFormattingReport:
         bs = LayoutBaseFormat(input=layout.path, assume_yes=True)
         bs.run_format()
         assert bs.data['fromVersion'] == VERSION_5_5_0
+        
+    def test_none_tabs_does_not_throw_exception(self, mocker, pack):
+        """
+        Given
+            - An indicator file with None indicatorsDetails tabs.
+        When
+            - Run format command.
+        Then
+            - Ensure command will not throw an exception.
+        """
+
+        layout = pack.create_layout(name='TestType', content = {"cacheVersn": 0, "close": None, "definitionId": "", "description": "", "detached": False, "details": None, "detailsV2": None, "edit": None, "fromServerVersion": "", "group": "indicator", "id": "SHA256 Indicator", "indicatorsDetails": {"TypeName": "", "tabs": None}})
+        bs = LayoutBaseFormat(input=layout.path, assume_yes=True)
+        try:
+            bs.remove_copy_and_dev_suffixes_from_layoutscontainer()
+        except Exception as exc:
+            assert False, f"'remove_copy_and_dev_suffixes_from_layoutscontainer' raised an exception {exc}"
 
     def test_json_run_format_old_classifier(self, mocker, pack):
         """

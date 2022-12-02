@@ -95,14 +95,14 @@ class SecretConf:
             secret_conf['integrations']
         ]
         print(f'integrations: {self.integrations[0:20]}')
-        self.secret_conf = GoogleSecreteManagerModule(self.get_secret_service_account_config())
-        self.project_id = os.environ['GSM_PROJECT_ID']
-        secrets = self.secret_conf.list_secrets(self.project_id, with_secret=True)
-        print(f'secrets: {secrets[0:20]}')
-        secrets = [IntegrationConfiguration(integration_configuration=configuration) for configuration in
-                   secrets]
-
-        print(f'secrets_from_GSM: {secrets[0:20]}')
+        # self.secret_conf = GoogleSecreteManagerModule(self.get_secret_service_account_config())
+        # self.project_id = os.environ['GSM_PROJECT_ID']
+        # secrets = self.secret_conf.list_secrets(self.project_id, with_secret=True)
+        # print(f'secrets: {secrets[0:20]}')
+        # secrets = [IntegrationConfiguration(integration_configuration=configuration) for configuration in
+        #            secrets]
+        #
+        # print(f'secrets_from_GSM: {secrets[0:20]}')
 
     @staticmethod
     def get_secret_service_account_config() -> str:

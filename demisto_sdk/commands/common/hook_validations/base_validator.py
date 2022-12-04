@@ -17,6 +17,7 @@ json = JSON_Handler()
 
 
 def error_codes(error_codes_str: str):
+
     def error_codes_decorator(func):
 
         def wrapper(self, *args, **kwargs):
@@ -55,10 +56,10 @@ class BaseValidator:
 
     @staticmethod
     def should_ignore_error(
-            error_code,
-            ignored_errors_pack_ignore,
-            predefined_deprecated_ignored_errors,
-            predefined_by_support_ignored_errors
+        error_code,
+        ignored_errors_pack_ignore,
+        predefined_deprecated_ignored_errors,
+        predefined_by_support_ignored_errors
     ):
         """
         Determine if an error should be ignored or not. That includes all types of ignored errors,
@@ -169,19 +170,17 @@ class BaseValidator:
             rel_file_path = 'No-Name'
 
         ignored_errors_pack_ignore = self.ignored_errors.get(file_name) or self.ignored_errors.get(rel_file_path) or []
-        predefined_deprecated_ignored_errors = self.predefined_deprecated_ignored_errors.get(
-            file_name) or self.predefined_deprecated_ignored_errors.get(rel_file_path) or []  # noqa: E501
-        predefined_by_support_ignored_errors = self.predefined_by_support_ignored_errors.get(
-            file_path) or self.predefined_by_support_ignored_errors.get(rel_file_path) or []  # noqa: E501
+        predefined_deprecated_ignored_errors = self.predefined_deprecated_ignored_errors.get(file_name) or self.predefined_deprecated_ignored_errors.get(rel_file_path) or []  # noqa: E501
+        predefined_by_support_ignored_errors = self.predefined_by_support_ignored_errors.get(file_path) or self.predefined_by_support_ignored_errors.get(rel_file_path) or []  # noqa: E501
 
         is_error_not_allowed_in_pack_ignore = self.is_error_not_allowed_in_pack_ignore(
             error_code=error_code, ignored_errors_pack_ignore=ignored_errors_pack_ignore
         )
 
         if self.should_ignore_error(
-                error_code, ignored_errors_pack_ignore,
-                predefined_deprecated_ignored_errors,
-                predefined_by_support_ignored_errors
+            error_code, ignored_errors_pack_ignore,
+            predefined_deprecated_ignored_errors,
+            predefined_by_support_ignored_errors
         ) or warning:
             if self.print_as_warnings or warning:
                 click.secho(formatted_error_str('WARNING'), fg="yellow")

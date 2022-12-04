@@ -1,0 +1,19 @@
+
+from pathlib import Path
+from abc import ABC, abstractmethod
+
+from demisto_sdk.commands.common.constants import MarketplaceVersions
+
+
+class Unifier(ABC):
+    """Interface to YAML objects that need to be unified"""
+
+    @abstractmethod
+    @staticmethod
+    def unify(path: Path,
+              data: dict,
+              marketplace: MarketplaceVersions = None,
+              **kwargs,
+              ) -> dict:
+        """Merges the various components to create an output yml file."""
+        ...

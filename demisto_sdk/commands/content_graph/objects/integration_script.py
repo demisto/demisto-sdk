@@ -37,6 +37,7 @@ class IntegrationScript(ContentItem):
 
     def prepare_for_upload(self, marketplace) -> dict:
         data = super().prepare_for_upload(marketplace)
-        # other prepartions
-        data = IntegrationScriptUnifier.unify(data, marketplace)
+        data = IntegrationScriptUnifier(
+            input=str(self.path.parent), output=str(dir), marketplace=marketplace, force=True
+        ).unify()
         return data

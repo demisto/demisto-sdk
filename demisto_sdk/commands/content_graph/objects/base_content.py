@@ -1,13 +1,18 @@
 import json
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Set, Type, cast
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Set, Type, cast
 
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
+from demisto_sdk.commands.content_graph.parsers.pack import PackParser
+from demisto_sdk.commands.content_graph.objects.pack import Pack
+
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
@@ -55,6 +60,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         orm_mode = True  # allows using from_orm() method
         allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
 
+    @staticmethod
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
         state = self.__dict__.copy()
@@ -79,6 +85,18 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         json_dct = json.loads(self.json())
         json_dct["content_type"] = self.content_type
         return json_dct
+
+    @staticmethod
+    def from_path(path: Path) -> Optional["BaseContent"]:
+        if path.is_dir() and path.parts[-1] == 'Packs':  # if the path given is a pack
+            return Pack.from_orm(PackParser(path))
+        content_item_parser = ContentItemParser.from_path(path)
+        if not content_item_parser:
+            return None
+        model = content_type_to_model.get(content_item_parser.content_type)
+        if not model:
+            return None
+        return model.from_orm(content_item_parser)
 
     @abstractmethod
     def dump(self, path: DirectoryPath, marketplace: MarketplaceVersions) -> None:

@@ -238,8 +238,8 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 container = self.data.get(kind)
                 break
         if container:
-            for tab in container.get('tabs', ()):
-                for section in tab.get('sections', ()):
+            for tab in (container.get('tabs') or ()):
+                for section in (tab.get('sections') or ()):
                     if section.get('queryType') == SCRIPT_QUERY_TYPE:
                         section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))
                         section['name'] = remove_copy_and_dev_suffixes_from_str(section.get('name'))

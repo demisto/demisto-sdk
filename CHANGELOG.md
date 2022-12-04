@@ -5,7 +5,7 @@
 * Fixed an issue where **is_valid_category** and **is_categories_field_match_standard** failed on private repo due to approved_list not imported.
 * Fixed an issue where **validate** didn't fail on the MR103 validation error.
 * Fixed an issue where **validate** failed when changing only xif file in **Modeling Rules**.
-* Fixed an issue where **format** failed when indicator file has None in tabs.
+* Fixed an issue where **format** failed on indicator files with a `None` value under the `tabs` key.
 
 ## 1.7.9
 * Fixed an issue where an error message in **validate** would not include the suggested fix.

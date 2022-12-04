@@ -1510,7 +1510,7 @@ class TestFormattingReport:
         bs = LayoutBaseFormat(input=layout.path, assume_yes=True)
         bs.run_format()
         assert bs.data['fromVersion'] == VERSION_5_5_0
-        
+
     def test_none_tabs_do_not_throw_exception(self, mocker, pack):
         """
         Given

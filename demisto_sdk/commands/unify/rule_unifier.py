@@ -31,14 +31,14 @@ class RuleUnifier(YAMLUnifier):
 
         self.dir_name = os.path.basename(os.path.dirname(self.package_path))
 
-    def _unify(self):
+    def unify(self):
         click.echo(f'Unifiying {self.package_path}...')
         self._set_dest_path()
         self._insert_rules()
         self._insert_schema()
         self._insert_samples()
-        self._output(file_path=self.dest_path, file_data=self.data)
-        click.secho(f'Successfully created unified YAML in {self.dest_path}', fg="green")
+        self._output_yaml(file_path=self.dest_path, file_data=self.yml_data)
+        click.secho(f'Successfully created unifyed YAML in {self.dest_path}', fg="green")
 
         return [str(self.dest_path)]
 
@@ -46,7 +46,7 @@ class RuleUnifier(YAMLUnifier):
         rules_path = Path(self.yml_path).with_suffix('.xif')
         with io.open(rules_path, mode='r', encoding='utf-8') as rules_file:
             rules = rules_file.read()
-            self.data['rules'] = FoldedScalarString(rules)
+            self.yml_data['rules'] = FoldedScalarString(rules)
 
     def _insert_samples(self):
         samples_dir = os.path.join(os.path.dirname(self.package_path), SAMPLES_DIR)
@@ -55,10 +55,10 @@ class RuleUnifier(YAMLUnifier):
             for sample_file in os.listdir(samples_dir):
                 with io.open(os.path.join(samples_dir, sample_file), mode='r', encoding='utf-8') as samples_file_object:
                     sample = json.loads(samples_file_object.read())
-                    if self.data.get('id') in sample.get('rules', []):
+                    if self.yml_data.get('id') in sample.get('rules', []):
                         samples[f'{sample.get("vendor")}_{sample.get("product")}'].extend(sample.get('samples'))
             if samples:
-                self.data['samples'] = FoldedScalarString(json.dumps(samples, indent=4))
+                self.yml_data['samples'] = FoldedScalarString(json.dumps(samples, indent=4))
                 click.echo(f'Added {len(samples)} samples.')
             else:
                 click.echo('Did not find matching samples.')
@@ -68,6 +68,6 @@ class RuleUnifier(YAMLUnifier):
         if os.path.exists(schema_path):
             with io.open(schema_path, mode='r', encoding='utf-8') as schema_file:
                 schema = json.loads(schema_file.read())
-                self.data['schema'] = FoldedScalarString(json.dumps(schema, indent=4))
+                self.yml_data['schema'] = FoldedScalarString(json.dumps(schema, indent=4))
         else:
             click.echo('No schema file was found.')

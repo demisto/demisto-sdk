@@ -43,7 +43,14 @@ class ModelingRuleValidator(ContentEntityValidator):
     def is_schema_file_exists(self):
         # Gets the schema.json file from the modeling rule folder
         files_to_check = get_files_in_dir(os.path.dirname(self.file_path), ['json'], False)
-        if not files_to_check:
+        has_schema = False
+        if files_to_check:
+            for file_path in files_to_check:
+                file_name = os.path.basename(file_path)
+                if file_name.endswith('_schema.json'):
+                    has_schema = True
+                    break
+        if not files_to_check or not has_schema:
             error_message, error_code = Errors.modeling_rule_missing_schema_file(self.file_path)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False

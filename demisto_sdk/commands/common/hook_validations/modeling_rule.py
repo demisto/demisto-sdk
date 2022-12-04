@@ -4,7 +4,7 @@ This module is designed to validate the correctness of generic definition entiti
 import json
 import os
 import re
-from typing import Union, List
+from typing import List
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import YAML_Handler
@@ -98,13 +98,13 @@ class ModelingRuleValidator(ContentEntityValidator):
             Validates the dataset name is the same in the xif file and in the schema file
         """
 
-        def get_dataset_from_xif(xif_file_path: str) -> Union[List[str], None]:
+        def get_dataset_from_xif(xif_file_path: str) -> List[str]:
             with open(xif_file_path, 'r') as xif_file:
                 xif_content = xif_file.read()
                 dataset = re.findall("dataset[ ]?=[ ]?([\"a-zA-Z_0-9]+)", xif_content)
                 if dataset:
                     return [dataset_name.strip("\"") for dataset_name in dataset]
-            return None
+            return []
 
         xif_file_path = get_files_in_dir(os.path.dirname(self.file_path), ['xif'], False)
         if xif_file_path and self.schema_content:

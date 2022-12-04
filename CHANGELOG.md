@@ -7,6 +7,7 @@
 * Fixed an issue where **validate** failed when changing only xif file in **Modeling Rules**.
 * Fixed an issue where **format** failed on indicator files with a `None` value under the `tabs` key.
 * Fixed an issue where **validate** printed errors for only one change of context path instead of all.
+* Fixed an issue where **download** did not suggest using a username/password when authenticating with XSOAR and using invalid arguments.
 
 ## 1.7.9
 * Fixed an issue where an error message in **validate** would not include the suggested fix.

@@ -26,7 +26,23 @@ from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
     (['Created a new layout for MITRE Att&ck.'], True),
     (['Playbook now supports IPs as well as Emails.'], True),
     (['Created a new playbook for CVE-XXXX-XXXX.'], True),
-    (['Updated the IP type regex.'], True)
+    (['Updated the IP type regex.'], True),
+    (['##### New: script',
+      'Improved layout for ASN type.',  # Matches template following "##### New:"
+      'Documentation and metadata improvements.'], True),
+    (['##### New: script',
+      'some string that doesnt match a pattern'], True),   # Not matching template following "##### New:"
+    (['##### New: script',
+      '***command-one***',
+      'some string that doesnt match a pattern'], False),  # Not matching template following "*"
+    (['##### New: script',
+      'Blah.',
+      '##### script',
+      'Improved layout for ASN type.'], True),
+    (['##### New: script',
+      'Blah.',
+      '##### script',
+      'Blah.'], False),
 ])
 def test_release_notes_templates(file_content, expected_result):
     """

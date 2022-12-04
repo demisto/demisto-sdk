@@ -1,5 +1,13 @@
 # Changelog
 ## Unreleased
+* Added the ability to limit the number of CPU cores with `DEMISTO_SDK_MAX_CPU_CORES` envirment variable.
+* Fixed an issue where **update-release-notes** failed when changing only xif file in **Modeling Rules**.
+* Fixed an issue where **is_valid_category** and **is_categories_field_match_standard** failed on private repo due to approved_list not imported.
+* Fixed an issue where **validate** didn't fail on the MR103 validation error.
+* Fixed an issue where **validate** failed when changing only xif file in **Modeling Rules**.
+* Fixed an issue where **validate** printed errors for only one change of context path instead of all.
+
+## 1.7.9
 * Fixed an issue where an error message in **validate** would not include the suggested fix.
 * Added a validation that enforces predefined categories on MP Packs & integration yml files, the validation also ensures that each pack has only one category.
 * Fixed an issue where **update-release-notes** did not generate release notes for **XDRC Templates**.
@@ -9,7 +17,9 @@
 * Added support for **xdrctemplate** to content graph.
 * Fixed an issue where local copies of the newly-introduced `DemistoClassApiModule.py` were validated.
 * Added new release notes templates for the addition and modification of playbooks, layouts and types in the **doc-review** command.
-* Fixed an issue where **validate** printed errors for only one change of context path instead of all.
+* Fixed an issue where the **doc-review** command failed on descriptions of new content items.
+* Added the `Command XXX is deprecated. Use XXX instead.` release notes templates to **doc-review** command.
+* Fixed an issue where the **update-release-notes** command didn't add the modeling-rules description for new modeling-rules files.
 
 ## 1.7.8
 * Added the capability to run the MDX server in a docker container for environments without node.

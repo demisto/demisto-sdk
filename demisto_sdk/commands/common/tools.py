@@ -1345,6 +1345,8 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.CONTRIBUTORS
         elif XDRC_TEMPLATE_DIR in path.parts:
             return FileType.XDRC_TEMPLATE
+        elif MODELING_RULES_DIR in path.parts and 'testdata' in path.stem.casefold():
+            return FileType.MODELING_RULE_TEST_DATA
 
     elif path.name.endswith('_image.png'):
         if path.name.endswith('Author_image.png'):
@@ -1368,6 +1370,8 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
         return FileType.JAVASCRIPT_FILE
 
     elif path.suffix == '.xif':
+        if MODELING_RULES_DIR in path.parts:
+            return FileType.MODELING_RULE_XIF
         return FileType.XIF_FILE
 
     elif path.suffix == '.yml':
@@ -2427,10 +2431,8 @@ def get_current_categories() -> list:
     Returns:
         List of approved categories from current branch
     """
-    if not is_external_repository():
-        approved_categories_json, _ = get_dict_from_file('Tests/Marketplace/approved_categories.json')
-        return approved_categories_json.get('approved_list', [])
-    return []
+    approved_categories_json, _ = get_dict_from_file('Tests/Marketplace/approved_categories.json')
+    return approved_categories_json.get('approved_list', [])
 
 
 @contextmanager

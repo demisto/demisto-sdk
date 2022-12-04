@@ -136,12 +136,23 @@ class ReleaseNotesChecker:
     def check_rn(self) -> bool:
         """Check if an RN file is up to our standards"""
         show_template_message = False
+        is_new_content_item = False
 
         for line in self.file_content:
             line = line.lstrip(' -')
             line = line.rstrip()
+
+            if line.startswith('##### New:'):
+                is_new_content_item = True
+                continue
+
             # skip headers
             if line.startswith(('#', "*")) or line.isspace() or not line:
+                is_new_content_item = False
+                continue
+
+            if is_new_content_item:
+                # The description of new content items does not need to conform to templates
                 continue
 
             if not self.check_templates(line):

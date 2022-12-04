@@ -16,7 +16,8 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.common.update_id_set import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.update_release_notes.update_rn import (CLASS_BY_FILE_TYPE, UpdateRN, deprecated_commands,
-                                                                 get_deprecated_comment_from_desc, get_deprecated_rn)
+                                                                 get_deprecated_comment_from_desc, get_deprecated_rn,
+                                                                 get_file_description)
 
 json = JSON_Handler()
 
@@ -1717,3 +1718,18 @@ def test_handle_existing_rn_version_path(mocker, repo):
     client.existing_rn_version_path = 'ReleaseNotes/1_0_1.md'
     client.handle_existing_rn_version_path(f'{str(pack.path)}/ReleaseNotes/1_0_1.md')
     assert not client.should_delete_existing_rn
+
+
+@pytest.mark.parametrize('path, file_type, expected_results',
+                         [("demisto_sdk/commands/update_release_notes/tests_data/modeling_rules_yml_mock.yml",
+                           FileType.MODELING_RULE, "testing modeling rules description extraction.")])
+def test_get_file_description(path, file_type, expected_results):
+    """
+    Given:
+        - File type and file path.
+    When:
+        - Calling get_file_description function.
+    Then:
+        Ensure the function extracted the information from the right field.
+    """
+    assert get_file_description(path, file_type) == expected_results

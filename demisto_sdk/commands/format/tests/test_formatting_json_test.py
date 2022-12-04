@@ -1521,7 +1521,10 @@ class TestFormattingReport:
             - Ensure command will not throw an exception.
         """
 
-        layout = pack.create_layout(name='TestType', content = {"cacheVersn": 0, "close": None, "definitionId": "", "description": "", "detached": False, "details": None, "detailsV2": None, "edit": None, "fromServerVersion": "", "group": "indicator", "id": "SHA256 Indicator", "indicatorsDetails": {"TypeName": "", "tabs": None}})
+        layout = pack.create_layout(name='TestType', content = {"cacheVersn": 0, "close": None, "definitionId": "", "description": "",
+                                                                "detached": False, "details": None, "detailsV2": None, 
+                                                                "edit": None, "fromServerVersion": "", "group": "indicator",
+                                                                "id": "SHA256 Indicator", "indicatorsDetails": {"TypeName": "", "tabs": None}})
         bs = LayoutBaseFormat(input=layout.path, assume_yes=True)
         try:
             bs.remove_copy_and_dev_suffixes_from_layoutscontainer()

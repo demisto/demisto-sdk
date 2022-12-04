@@ -6,6 +6,7 @@
 * Fixed an issue where **validate** didn't fail on the MR103 validation error.
 * Fixed an issue where **validate** failed when changing only xif file in **Modeling Rules**.
 * Fixed an issue where **format** failed on indicator files with a `None` value under the `tabs` key.
+* Fixed an issue where **validate** printed errors for only one change of context path instead of all.
 
 ## 1.7.9
 * Fixed an issue where an error message in **validate** would not include the suggested fix.

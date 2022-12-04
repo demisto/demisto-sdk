@@ -1,6 +1,5 @@
-
-from pathlib import Path
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 

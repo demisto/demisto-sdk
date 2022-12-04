@@ -20,24 +20,7 @@ class IntegrationScript(ContentItem):
     description: Optional[str]
     is_unified: bool = Field(False, exclude=True)
 
-    def dump(self, dir: Path, marketplace: MarketplaceVersions) -> None:
-        if self.is_unified:
-            super().dump(dir, marketplace)
-            return
-        dir.mkdir(exist_ok=True, parents=True)
-        try:
-            IntegrationScriptUnifier(
-                input=str(self.path.parent), output=str(dir), marketplace=marketplace, force=True
-            ).unify()
-        except Exception as e:
-            logger.debug(
-                f"Failed to unify {self.path} to {dir}, probably already unified. Error message: {e}"
-            )
-            super().dump(dir, marketplace)
-
-    def prepare_for_upload(self, marketplace) -> dict:
+    def prepare_for_upload(self, marketplace: MarketplaceVersions) -> dict:
         data = super().prepare_for_upload(marketplace)
-        data = IntegrationScriptUnifier(
-            input=str(self.path.parent), output=str(dir), marketplace=marketplace, force=True
-        ).unify()
+        data = IntegrationScriptUnifier.unify(self.path, data, marketplace)
         return data

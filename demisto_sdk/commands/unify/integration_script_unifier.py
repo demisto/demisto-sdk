@@ -3,21 +3,19 @@ import copy
 import glob
 import io
 import os
-from pathlib import Path
 import re
 import shutil
+from pathlib import Path
 from typing import Dict, List, Union
 
 import click
 from inflection import dasherize, underscore
 from ruamel.yaml.scalarstring import FoldedScalarString
 
-from demisto_sdk.commands.common.constants import (DEFAULT_IMAGE_PREFIX,
-                                                   TYPE_TO_EXTENSION, FileType, MarketplaceVersions)
+from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_PREFIX, TYPE_TO_EXTENSION, FileType, MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list, find_type, get_mp_tag_parser, get_pack_name,
-                                               get_yaml, get_yml_paths_in_dir, print_color, print_warning,
-                                               )
+                                               get_yaml, get_yml_paths_in_dir, print_color, print_warning)
 from demisto_sdk.commands.unify.unifier import Unifier
 
 json = JSON_Handler()
@@ -56,6 +54,7 @@ class IntegrationScriptUnifier(Unifier):
         print(f"Merging package: {path}")
         if path.parent.name not in {'Integrations', 'Scripts'}:
             return data
+        package_path = path.parent
         is_script_package = isinstance(data.get('script'), str)
         script_obj = data
 
@@ -66,13 +65,11 @@ class IntegrationScriptUnifier(Unifier):
 
         yml_unified = copy.deepcopy(data)
 
-        yml_unified, script_path = IntegrationScriptUnifier.insert_script_to_yml(path, script_type, yml_unified, data, is_script_package)
-        image_path = None
-        desc_path = None
+        yml_unified, _ = IntegrationScriptUnifier.insert_script_to_yml(package_path, script_type, yml_unified, data, is_script_package)
         if not is_script_package:
-            yml_unified, image_path = IntegrationScriptUnifier.insert_image_to_yml(path, data, yml_unified, is_script_package, image_prefix, force)
-            yml_unified, desc_path = IntegrationScriptUnifier.insert_description_to_yml(path, data, yml_unified, is_script_package, force)
-            contributor_type, metadata_data = IntegrationScriptUnifier.get_contributor_data(path, is_script_package)
+            yml_unified, _ = IntegrationScriptUnifier.insert_image_to_yml(package_path, data, yml_unified, is_script_package, image_prefix, force)
+            yml_unified, _ = IntegrationScriptUnifier.insert_description_to_yml(package_path, data, yml_unified, is_script_package, force)
+            contributor_type, metadata_data = IntegrationScriptUnifier.get_contributor_data(package_path, is_script_package)
 
             if IntegrationScriptUnifier.is_contributor_pack(contributor_type):
                 contributor_email = metadata_data.get('email', '')
@@ -105,7 +102,7 @@ class IntegrationScriptUnifier(Unifier):
                 data['configuration'][i]['hidden'] = marketplace in hidden
 
     @staticmethod
-    def add_custom_section(unified_yml: Dict, custom: str, is_script_package: dict) -> Dict:
+    def add_custom_section(unified_yml: Dict, custom: str, is_script_package: bool) -> Dict:
         """
             Args:
                 unified_yml - The unified_yml

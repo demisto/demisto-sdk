@@ -6,9 +6,8 @@ from wcmatch.pathlib import EXTMATCH, Path
 import demisto_sdk.commands.common.content.errors as exc
 from demisto_sdk.commands.common.constants import ENTITY_TYPE_TO_DIR, FileType
 from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
-from demisto_sdk.commands.unify.rule_unifier import RuleUnifier
 from demisto_sdk.commands.unify.prepare_upload_manager import PrepareUploadManager
-
+from demisto_sdk.commands.unify.rule_unifier import RuleUnifier
 
 from .yaml_content_object import YAMLContentObject
 
@@ -122,7 +121,7 @@ class YAMLContentUnifiedObject(YAMLContentObject):
         # Unify step
         PrepareUploadManager.prepare_for_upload(self.path, dest_dir)
         return [dest_dir]
-    
+
     def dump(self, dest_dir: Optional[Union[str, Path]] = None, change_log: Optional[bool] = False,
              readme: Optional[bool] = False, unify: bool = True) -> List[Path]:
         """ Dump YAMLContentUnfiedObject.

@@ -54,7 +54,6 @@ from demisto_sdk.commands.common.git_content_config import GitContentConfig, Git
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 
-
 json = JSON_Handler()
 
 logger = logging.getLogger("demisto-sdk")
@@ -3052,5 +3051,3 @@ def field_to_cli_name(field_name: str) -> str:
         field_name (str): the incident/indicator field name.
     """
     return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, '', field_name).lower()
-
-    

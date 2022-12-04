@@ -1,9 +1,9 @@
-from abc import abstractmethod
 import shutil
+from abc import abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Set
 
-from demisto_sdk.commands.common.handlers import XSOAR_Handler, YAML_Handler, JSON_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, XSOAR_Handler, YAML_Handler
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -13,9 +13,10 @@ if TYPE_CHECKING:
 from pydantic import DirectoryPath
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import alternate_item_fields
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.common.tools import alternate_item_fields
+
 
 class ContentItem(BaseContent):
     path: Path
@@ -83,23 +84,23 @@ class ContentItem(BaseContent):
             for r in self.relationships_data[RelationshipType.TESTED_BY]
             if r.content_item == r.target
         ]
-        
+
     @property
     def handler(self) -> XSOAR_Handler:
         return JSON_Handler() if self.path.suffix == ".json" else YAML_Handler()
-    
+
     @property
     def data(self) -> dict:
         with self.path.open() as f:
             return self.handler.load(f)
-        
+
     @abstractmethod
     def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR) -> dict:
         if marketplace != MarketplaceVersions.XSOAR:
             data = self.data
             alternate_item_fields(data)
         return data
-    
+
     def summary(self) -> dict:
         return self.dict(include=self.metadata_fields(), by_alias=True)
 
@@ -126,7 +127,9 @@ class ContentItem(BaseContent):
 
     def dump(self, dir: DirectoryPath, _: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)
-        shutil.copy(self.path, dir / self.normalize_file_name)
+        data = self.prepare_for_upload()
+        with (dir / self.normalize_file_name).open("w") as f:
+            self.handler.dump(data, f)
 
     def to_id_set_entity(self) -> dict:
         """

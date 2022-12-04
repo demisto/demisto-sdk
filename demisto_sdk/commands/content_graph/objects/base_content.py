@@ -9,10 +9,9 @@ from pydantic.main import ModelMetaclass
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
-from demisto_sdk.commands.content_graph.objects.pack import Pack
-
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData

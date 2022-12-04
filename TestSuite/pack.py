@@ -596,11 +596,11 @@ class Pack:
         return rule
 
     def create_modeling_rule(
-            self,
-            name: Optional[str] = None,
-            yml: Optional[dict] = None,
-            rules: Optional[str] = None,
-            schema: Optional[dict] = None,
+        self,
+        name: Optional[str] = None,
+        yml: Optional[dict] = None,
+        rules: Optional[str] = None,
+        schema: Optional[dict] = None,
     ) -> Rule:
         if not name:
             name = f'modelingrule_{len(self.modeling_rules)}'

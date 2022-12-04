@@ -483,7 +483,7 @@ def test_modeling_rule(
     ),
     collector_token: Optional[str] = typer.Option(
         None,
-        envvar='COLLECTOR_TOKEN',
+        envvar='XSIAM_COLLECTOR_TOKEN',
         help='The token used to push event logs to a custom HTTP Collector',
         rich_help_panel='XSIAM Tenant Configuration',
         show_default=False,

@@ -1521,7 +1521,7 @@ class TestFormattingReport:
             - Ensure command will not throw an exception.
         """
 
-        layout = pack.create_layout(name='TestType', content = {"cacheVersn": 0, "close": None, "definitionId": "", "description": "",
+        layout = pack.create_layout(name='TestType', content={"cacheVersn": 0, "close": None, "definitionId": "", "description": "",
                                                                 "detached": False, "details": None, "detailsV2": None, 
                                                                 "edit": None, "fromServerVersion": "", "group": "indicator",
                                                                 "id": "SHA256 Indicator", "indicatorsDetails": {"TypeName": "", "tabs": None}})

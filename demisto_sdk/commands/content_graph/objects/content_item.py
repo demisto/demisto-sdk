@@ -83,8 +83,9 @@ class ContentItem(BaseContent):
         ]
     
     @abstractmethod
-    def prepare_for_upload(self) -> dict:
-        raise NotImplementedError("Should be implemented in subclasses")
+    def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR) -> dict:
+        # replace X2 with x
+        pass
     
     def summary(self) -> dict:
         return self.dict(include=self.metadata_fields(), by_alias=True)

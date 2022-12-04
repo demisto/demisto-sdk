@@ -12,3 +12,7 @@ class Widget(ContentItem, content_type=ContentType.WIDGET):  # type: ignore[call
 
     def metadata_fields(self) -> Set[str]:
         return {"name", "dataType", "widgetType"}
+
+    def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR) -> dict:
+        data = super().prepare_for_upload(marketplace)
+        # other prepartions

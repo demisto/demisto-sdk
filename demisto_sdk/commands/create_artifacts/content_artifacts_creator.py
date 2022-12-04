@@ -364,6 +364,17 @@ class ContentItemsHandler:
                 'name': content_object.get('name', '')
             })
 
+    def add_xsiam_layout_as_content_item(self, content_object: ContentObject):
+        if content_object.get('description') is not None:
+            self.content_items[ContentItems.XSIAM_LAYOUTS].append({
+                'name': content_object.get('name', ''),
+                'description': content_object.get('description')
+            })
+        else:
+            self.content_items[ContentItems.XSIAM_LAYOUTS].append({
+                'name': content_object.get('name', '')
+            })
+
     def add_pre_process_rules_as_content_item(self, content_object: ContentObject):
         self.content_items[ContentItems.PRE_PROCESS_RULES].append({
             'name': content_object.get('name') or content_object.get('id', ''),

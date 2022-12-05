@@ -9,35 +9,31 @@ from datetime import datetime
 from distutils.version import LooseVersion
 from enum import Enum
 from functools import partial
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
 import click
 import networkx
 
-from demisto_sdk.commands.common.constants import (
-    CLASSIFIERS_DIR, COMMON_TYPES_PACK, CORRELATION_RULES_DIR, DASHBOARDS_DIR,
-    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-    GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR,
-    GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, JOBS_DIR, LAYOUTS_DIR,
-    LISTS_DIR, MAPPERS_DIR, MODELING_RULES_DIR, PARSING_RULES_DIR, REPORTS_DIR,
-    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR,
-    XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, FileType,
-    MarketplaceVersions)
-from demisto_sdk.commands.common.content_constant_paths import (
-    DEFAULT_ID_SET_PATH, MP_V2_ID_SET_PATH, XPANSE_ID_SET_PATH)
+from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, COMMON_TYPES_PACK, CORRELATION_RULES_DIR,
+                                                   DASHBOARDS_DIR, DEFAULT_CONTENT_ITEM_FROM_VERSION,
+                                                   DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_DEFINITIONS_DIR,
+                                                   GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR, GENERIC_TYPES_DIR,
+                                                   INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+                                                   INDICATOR_TYPES_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR,
+                                                   MODELING_RULES_DIR, PARSING_RULES_DIR, REPORTS_DIR, SCRIPTS_DIR,
+                                                   TEST_PLAYBOOKS_DIR, TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR,
+                                                   XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, FileType,
+                                                   MarketplaceVersions)
+from demisto_sdk.commands.common.content_constant_paths import (DEFAULT_ID_SET_PATH, MP_V2_ID_SET_PATH,
+                                                                XPANSE_ID_SET_PATH)
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
-                                               get_current_repo,
-                                               get_display_name, get_file,
-                                               get_item_marketplaces, get_json,
-                                               get_pack_name, get_yaml,
-                                               print_color, print_error,
-                                               print_warning)
-from demisto_sdk.commands.unify.integration_script_unifier import \
-    IntegrationScriptUnifier
+from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_current_repo, get_display_name, get_file,
+                                               get_item_marketplaces, get_json, get_pack_name, get_yaml, print_color,
+                                               print_error, print_warning)
+from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
 
 json = JSON_Handler()
 

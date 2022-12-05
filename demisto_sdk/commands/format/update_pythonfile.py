@@ -5,8 +5,8 @@ from typing import Tuple
 import click
 
 from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
-from demisto_sdk.commands.format.format_constants import (
-    ERROR_RETURN_CODE, SKIP_VALIDATE_PY_RETURN_CODE, SUCCESS_RETURN_CODE)
+from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE, SKIP_VALIDATE_PY_RETURN_CODE,
+                                                          SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdate
 
 AUTOPEP_LINE_LENGTH = '130'

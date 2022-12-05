@@ -9,29 +9,20 @@ from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Any, Optional, Tuple, Union
 
-from demisto_sdk.commands.common.constants import (
-    ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEPRECATED_REGEXES,
-    IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, XSIAM_DASHBOARDS_DIR,
-    XSIAM_REPORTS_DIR, FileType)
+from demisto_sdk.commands.common.constants import (ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEPRECATED_REGEXES,
+                                                   IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, XSIAM_DASHBOARDS_DIR,
+                                                   XSIAM_REPORTS_DIR, FileType)
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content.objects.pack_objects import (
-    Integration, Playbook, Script)
+from demisto_sdk.commands.common.content.objects.pack_objects import Integration, Playbook, Script
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
     YAMLContentObject
-from demisto_sdk.commands.common.content_constant_paths import \
-    DEFAULT_ID_SET_PATH
+from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
-                                               get_api_module_ids,
-                                               get_api_module_integrations_set,
-                                               get_definition_name,
-                                               get_display_name,
-                                               get_from_version, get_json,
-                                               get_latest_release_notes_text,
-                                               get_pack_name, get_remote_file,
-                                               get_yaml, pack_name_to_path,
-                                               print_color, print_error,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_api_module_ids,
+                                               get_api_module_integrations_set, get_definition_name, get_display_name,
+                                               get_from_version, get_json, get_latest_release_notes_text, get_pack_name,
+                                               get_remote_file, get_yaml, pack_name_to_path, print_color, print_error,
                                                print_warning, run_command)
 
 json = JSON_Handler()
@@ -807,7 +798,7 @@ def get_file_description(path, file_type) -> str:
         print_warning(f'Cannot get file description: "{path}" file does not exist')
         return ''
 
-    elif file_type in (FileType.PLAYBOOK, FileType.INTEGRATION, FileType.CORRELATION_RULE):
+    elif file_type in (FileType.PLAYBOOK, FileType.INTEGRATION, FileType.CORRELATION_RULE, FileType.MODELING_RULE):
         yml_file = get_yaml(path)
         return yml_file.get('description', '')
 

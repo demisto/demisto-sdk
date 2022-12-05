@@ -31,26 +31,26 @@ from packaging.version import LegacyVersion, Version, parse
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
 
-from demisto_sdk.commands.common.constants import (
-    ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
-    DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
-    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-    DOC_FILES_DIR, ENV_DEMISTO_SDK_MARKETPLACE, ID_IN_COMMONFIELDS, ID_IN_ROOT,
-    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
-    INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
-    MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME, MODELING_RULES_DIR,
-    NON_LETTERS_OR_NUMBERS_PATTERN, OFFICIAL_CONTENT_ID_SET_PATH,
-    PACK_METADATA_IRON_BANK_TAG, PACKAGE_SUPPORTING_DIRECTORIES,
-    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
-    PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
-    PACKS_README_FILE_NAME, PARSING_RULES_DIR, PLAYBOOKS_DIR,
-    PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
-    SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR, TRIGGER_DIR,
-    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XDRC_TEMPLATE_DIR,
-    XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE, FileType,
-    FileTypeToIDSetKeys, IdSetKeys, MarketplaceVersions, urljoin)
-from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
-                                                            GitProvider)
+from demisto_sdk.commands.common.constants import (ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK,
+                                                   CLASSIFIERS_DIR, DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
+                                                   DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
+                                                   DOC_FILES_DIR, ENV_DEMISTO_SDK_MARKETPLACE, ID_IN_COMMONFIELDS,
+                                                   ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
+                                                   INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR,
+                                                   JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, MARKETPLACE_KEY_PACK_METADATA,
+                                                   METADATA_FILE_NAME, MODELING_RULES_DIR,
+                                                   NON_LETTERS_OR_NUMBERS_PATTERN, OFFICIAL_CONTENT_ID_SET_PATH,
+                                                   PACK_METADATA_IRON_BANK_TAG, PACKAGE_SUPPORTING_DIRECTORIES,
+                                                   PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
+                                                   PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
+                                                   PACKS_README_FILE_NAME, PARSING_RULES_DIR, PLAYBOOKS_DIR,
+                                                   PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX,
+                                                   REPORTS_DIR, SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR,
+                                                   TRIGGER_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
+                                                   XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
+                                                   XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, IdSetKeys,
+                                                   MarketplaceVersions, urljoin)
+from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 
@@ -1345,6 +1345,8 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.CONTRIBUTORS
         elif XDRC_TEMPLATE_DIR in path.parts:
             return FileType.XDRC_TEMPLATE
+        elif MODELING_RULES_DIR in path.parts and 'testdata' in path.stem.casefold():
+            return FileType.MODELING_RULE_TEST_DATA
 
     elif path.name.endswith('_image.png'):
         if path.name.endswith('Author_image.png'):
@@ -1368,6 +1370,8 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
         return FileType.JAVASCRIPT_FILE
 
     elif path.suffix == '.xif':
+        if MODELING_RULES_DIR in path.parts:
+            return FileType.MODELING_RULE_XIF
         return FileType.XIF_FILE
 
     elif path.suffix == '.yml':
@@ -2381,12 +2385,12 @@ def get_release_note_entries(version='') -> list:
                                              ).decode('utf-8').split('\n')
 
     if not version or 'dev' in version:
-        version = 'Changelog'
+        version = 'Unreleased'
 
-    if f'# {version}' not in changelog_file_content:
+    if f'## {version}' not in changelog_file_content:
         return []
 
-    result = changelog_file_content[changelog_file_content.index(f'# {version}') + 1:]
+    result = changelog_file_content[changelog_file_content.index(f'## {version}') + 1:]
     result = result[:result.index('')]
 
     return result
@@ -2419,6 +2423,16 @@ def get_approved_tags_from_branch() -> Dict[str, List[str]]:
 
         return approved_tags_json.get('approved_list', {})
     return {}
+
+
+def get_current_categories() -> list:
+    """Gets approved list of categories from current branch (only in content repo).
+
+    Returns:
+        List of approved categories from current branch
+    """
+    approved_categories_json, _ = get_dict_from_file('Tests/Marketplace/approved_categories.json')
+    return approved_categories_json.get('approved_list', [])
 
 
 @contextmanager

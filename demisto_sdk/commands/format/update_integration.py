@@ -3,16 +3,12 @@ from typing import Tuple
 
 import click
 
-from demisto_sdk.commands.common.constants import (
-    ALERT_FETCH_REQUIRED_PARAMS, BANG_COMMAND_NAMES, BETA_INTEGRATION,
-    FEED_REQUIRED_PARAMS, INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION,
-    TYPE_PWSH, MarketplaceVersions, ParameterType)
+from demisto_sdk.commands.common.constants import (ALERT_FETCH_REQUIRED_PARAMS, BANG_COMMAND_NAMES, BETA_INTEGRATION,
+                                                   FEED_REQUIRED_PARAMS, INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION,
+                                                   TYPE_PWSH, MarketplaceVersions, ParameterType)
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (find_type,
-                                               get_item_marketplaces, get_json)
-from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
-                                                          SKIP_RETURN_CODE,
-                                                          SUCCESS_RETURN_CODE)
+from demisto_sdk.commands.common.tools import find_type, get_item_marketplaces, get_json
+from demisto_sdk.commands.format.format_constants import ERROR_RETURN_CODE, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 
@@ -68,8 +64,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
                 integration_argument['type'] = 8
 
     def set_params_default_additional_info(self):
-        from demisto_sdk.commands.common.default_additional_info_loader import \
-            load_default_additional_info_dict
+        from demisto_sdk.commands.common.default_additional_info_loader import load_default_additional_info_dict
 
         default_additional_info = load_default_additional_info_dict()
 

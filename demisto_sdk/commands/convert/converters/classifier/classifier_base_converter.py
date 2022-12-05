@@ -3,12 +3,10 @@ from abc import abstractmethod
 from typing import Optional, Set
 
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import \
-    Classifier
+from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import Classifier
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.tools import get_yaml
-from demisto_sdk.commands.convert.converters.base_converter import \
-    BaseConverter
+from demisto_sdk.commands.convert.converters.base_converter import BaseConverter
 
 
 class ClassifierBaseConverter(BaseConverter):

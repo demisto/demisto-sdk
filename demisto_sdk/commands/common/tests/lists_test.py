@@ -4,8 +4,7 @@ from mock import patch
 from demisto_sdk.commands.common.constants import LISTS_DIR, PACKS_DIR
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.lists import ListsValidator
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.tools import src_root
 
 json = JSON_Handler()

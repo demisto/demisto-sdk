@@ -6,18 +6,16 @@ from typing import Dict, List, Tuple
 
 import click
 
-from demisto_sdk.commands.common.constants import (
-    LAYOUT_AND_MAPPER_BUILT_IN_FIELDS, FileType)
+from demisto_sdk.commands.common.constants import LAYOUT_AND_MAPPER_BUILT_IN_FIELDS, FileType
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import (
-    LAYOUT_CONTAINER_FIELDS, LOG_COLORS,
-    get_all_incident_and_indicator_fields_from_id_set,
-    get_invalid_incident_fields_from_layout, normalize_field_name, print_color,
-    print_error, remove_copy_and_dev_suffixes_from_str)
+from demisto_sdk.commands.common.tools import (LAYOUT_CONTAINER_FIELDS, LOG_COLORS,
+                                               get_all_incident_and_indicator_fields_from_id_set,
+                                               get_invalid_incident_fields_from_layout, normalize_field_name,
+                                               print_color, print_error, remove_copy_and_dev_suffixes_from_str)
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
-from demisto_sdk.commands.format.format_constants import (
-    DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
-    SKIP_RETURN_CODE, SUCCESS_RETURN_CODE, VERSION_6_0_0)
+from demisto_sdk.commands.format.format_constants import (DEFAULT_VERSION, ERROR_RETURN_CODE,
+                                                          NEW_FILE_DEFAULT_5_FROMVERSION, SKIP_RETURN_CODE,
+                                                          SUCCESS_RETURN_CODE, VERSION_6_0_0)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 yaml = YAML_Handler()
@@ -240,8 +238,8 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 container = self.data.get(kind)
                 break
         if container:
-            for tab in container.get('tabs', ()):
-                for section in tab.get('sections', ()):
+            for tab in (container.get('tabs') or ()):
+                for section in (tab.get('sections') or ()):
                     if section.get('queryType') == SCRIPT_QUERY_TYPE:
                         section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))
                         section['name'] = remove_copy_and_dev_suffixes_from_str(section.get('name'))

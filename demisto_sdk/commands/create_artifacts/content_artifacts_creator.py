@@ -13,25 +13,22 @@ from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
 from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
 
-from demisto_sdk.commands.common.constants import (
-    BASE_PACK, CLASSIFIERS_DIR, CONTENT_ITEMS_DISPLAY_FOLDERS,
-    CORRELATION_RULES_DIR, DASHBOARDS_DIR, DOCUMENTATION_DIR,
-    GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR,
-    GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR,
-    LAYOUTS_DIR, LISTS_DIR, MODELING_RULES_DIR, PACKS_DIR, PARSING_RULES_DIR,
-    PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, REPORTS_DIR,
-    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, TRIGGER_DIR, WIDGETS_DIR,
-    WIZARDS_DIR, XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
-    ContentItems, FileType, MarketplaceVersions)
-from demisto_sdk.commands.common.content import (Content, ContentError,
-                                                 ContentFactoryError, Pack)
-from demisto_sdk.commands.common.content.objects.abstract_objects.text_object import \
-    TextObject
-from demisto_sdk.commands.common.content.objects.pack_objects import (
-    JSONContentObject, Script, YAMLContentObject, YAMLContentUnifiedObject)
-from demisto_sdk.commands.common.tools import (alternate_item_fields,
-                                               arg_to_list, open_id_set_file,
+from demisto_sdk.commands.common.constants import (BASE_PACK, CLASSIFIERS_DIR, CONTENT_ITEMS_DISPLAY_FOLDERS,
+                                                   CORRELATION_RULES_DIR, DASHBOARDS_DIR, DOCUMENTATION_DIR,
+                                                   GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR,
+                                                   GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
+                                                   INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR,
+                                                   JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, MODELING_RULES_DIR, PACKS_DIR,
+                                                   PARSING_RULES_DIR, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
+                                                   RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
+                                                   TOOLS_DIR, TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR, XDRC_TEMPLATE_DIR,
+                                                   XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, ContentItems, FileType,
+                                                   MarketplaceVersions)
+from demisto_sdk.commands.common.content import Content, ContentError, ContentFactoryError, Pack
+from demisto_sdk.commands.common.content.objects.abstract_objects.text_object import TextObject
+from demisto_sdk.commands.common.content.objects.pack_objects import (JSONContentObject, Script, YAMLContentObject,
+                                                                      YAMLContentUnifiedObject)
+from demisto_sdk.commands.common.tools import (alternate_item_fields, arg_to_list, open_id_set_file,
                                                should_alternate_field_by_item)
 
 from .artifacts_report import ArtifactsReport, ObjectReport

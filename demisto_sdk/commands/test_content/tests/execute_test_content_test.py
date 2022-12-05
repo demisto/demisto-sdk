@@ -5,8 +5,8 @@ import pytest
 import requests_mock
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.test_content.execute_test_content import (
-    COVERAGE_REPORT_COMMENT, SKIPPED_CONTENT_COMMENT, _add_pr_comment)
+from demisto_sdk.commands.test_content.execute_test_content import (COVERAGE_REPORT_COMMENT, SKIPPED_CONTENT_COMMENT,
+                                                                    _add_pr_comment)
 
 json = JSON_Handler()
 

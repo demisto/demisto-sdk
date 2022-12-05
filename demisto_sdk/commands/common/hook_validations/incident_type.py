@@ -1,13 +1,10 @@
 import re
 from distutils.version import LooseVersion
 
-from demisto_sdk.commands.common.constants import \
-    DEFAULT_CONTENT_ITEM_FROM_VERSION
+from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    error_codes
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
 
 # Checks if playbookID is a UUID format
 INVALID_PLAYBOOK_ID = r'[\w\d]{8}-[\w\d]{4}-[\w\d]{4}-[\w\d]{4}-[\w\d]{12}'

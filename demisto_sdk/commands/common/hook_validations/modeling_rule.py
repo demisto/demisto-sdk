@@ -5,8 +5,7 @@ import os
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
 from demisto_sdk.commands.common.tools import get_files_in_dir
 
 yaml = YAML_Handler()
@@ -95,7 +94,7 @@ class ModelingRuleValidator(ContentEntityValidator):
         if invalid_files:
             error_message, error_code = Errors.invalid_rule_name(invalid_files)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self.is_valid = False
+                self._is_valid = False
                 return False
 
         return True

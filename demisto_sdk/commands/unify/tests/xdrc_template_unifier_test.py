@@ -1,8 +1,9 @@
 import json
 import os
+from pathlib import Path
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.unify.xdrc_template_unifier import XDRCTemplateUnifier
+from demisto_sdk.commands.unify.prepare_upload_manager import PrepareUploadManager
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
 
@@ -21,14 +22,11 @@ def test_unify_xdrc_template():
     """
     input_path = TESTS_DIR + '/test_files/Packs/DummyPack/XDRCTemplates/DummyXDRCTemplate'
     output_path = TESTS_DIR + '/test_files/Packs/DummyPack/XDRCTemplates/'
-
-    unifier = XDRCTemplateUnifier(input=input_path, output=output_path)
-    json_files = unifier.unify()
+    export_json_path = PrepareUploadManager.prepare_for_upload(Path(input_path), Path(output_path))
 
     expected_json_path = TESTS_DIR + '/test_files/Packs/DummyPack/XDRCTemplates/external-xdrctemplate-DummyXDRCTemplate.json'
-    export_json_path = json_files[0]
 
-    assert export_json_path == expected_json_path
+    assert export_json_path == Path(expected_json_path)
 
     expected_json_file = {'content_global_id': '1',
                           'name': 'Dummmy',
@@ -38,4 +36,4 @@ def test_unify_xdrc_template():
     with open(expected_json_path, 'r') as real_file:
         assert expected_json_file == json.load(real_file)
 
-    os.remove(expected_json_path)
+    os.remove(export_json_path)

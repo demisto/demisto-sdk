@@ -102,6 +102,8 @@ class ContentType(str, enum.Enum):
             return "pre-process-rule"
         elif self == ContentType.TEST_PLAYBOOK:
             return ContentType.PLAYBOOK.server_name
+        elif self == ContentType.XDRC_TEMPLATE:
+            return "external-xdrctemplate"
         return self.lower()
 
     @staticmethod

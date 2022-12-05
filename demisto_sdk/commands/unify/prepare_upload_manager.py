@@ -13,9 +13,12 @@ class PrepareUploadManager:
             input: Path,
             output: Optional[Path] = None,
             marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+            force: bool = False,
             **kwargs) -> Path:
         if isinstance(input, str):
             input = Path(input)
+        if force:
+            kwargs['force'] = True
         content_item = BaseContent.from_path(input)
         if not isinstance(content_item, ContentItem):
             raise ValueError(f"Unsupported input. Please provide a path of content item. Got {content_item}")
@@ -24,6 +27,8 @@ class PrepareUploadManager:
         else:
             output = output / content_item.normalize_file_name
         data = content_item.prepare_for_upload(marketplace, **kwargs)
+        if output.exists() and not force:
+            raise FileExistsError(f"Output file {output} already exists. Use --force to overwrite.")
         with output.open('w') as f:
             content_item.handler.dump(data, f)
         return output

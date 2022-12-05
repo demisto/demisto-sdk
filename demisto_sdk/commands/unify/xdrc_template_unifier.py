@@ -13,7 +13,7 @@ class XDRCTemplateUnifier(Unifier):
     def unify(path: Path, data: dict, marketplace: MarketplaceVersions = None, **kwargs) -> dict:
         click.echo(f'Unifying {path}...')
         data = XDRCTemplateUnifier._insert_yaml_template(path, data)
-        click.secho(f'Successfully created unified JSON in {path}', fg="green")
+        click.secho(f'Successfully created a unified JSON in {path}', fg="green")
         return data
 
     @staticmethod

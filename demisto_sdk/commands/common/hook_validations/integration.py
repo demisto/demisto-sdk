@@ -769,10 +769,7 @@ class IntegrationValidator(ContentEntityValidator):
         # if old integration command has no outputs, no change of context will occur.
         if not old_command_to_context_paths:
             return True
-        # if new integration command has no outputs, and old one does, a change of context will occur.
-        if not current_command_to_context_paths and old_command_to_context_paths \
-                and not self.structure_validator.quiet_bc:
-            return False
+        no_change = True
         for old_command, old_context_paths in old_command_to_context_paths.items():
             if old_command in current_command_to_context_paths.keys():
                 if not self._is_sub_set(current_command_to_context_paths[old_command], old_context_paths):
@@ -780,9 +777,15 @@ class IntegrationValidator(ContentEntityValidator):
                     if self.handle_error(error_message, error_code, file_path=self.file_path,
                                          warning=self.structure_validator.quiet_bc):
                         self.is_valid = False
-                        return False
+                        no_change = False
+            else:
+                error_message, error_code = Errors.breaking_backwards_command(old_command)
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     warning=self.structure_validator.quiet_bc):
+                    self.is_valid = False
+                    no_change = False
 
-        return True
+        return no_change
 
     @error_codes('IN129')
     def no_removed_integration_parameters(self):

@@ -48,6 +48,8 @@ class Integration:
         """
         if code is not None:
             self.code.write(code)
+        else:
+            self.code.write('from CommonServerPython import *\n\n\n')
         if yml is not None:
             self.yml.write_dict(yml)
         if readme is not None:

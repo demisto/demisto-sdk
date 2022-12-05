@@ -483,6 +483,8 @@ ERROR_CODE = {
     "modeling_rule_keys_not_empty": {'code': "MR101", 'ui_applicable': False, 'related_field': ''},
     "modeling_rule_keys_are_missing": {'code': "MR102", 'ui_applicable': False, 'related_field': ''},
     "invalid_rule_name": {'code': "MR103", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_missing_testdata_file": {'code': "MR104", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_testdata_not_formatted_correctly": {'code': "MR105", 'ui_applicable': False, 'related_field': ''},
 }
 
 
@@ -2547,3 +2549,18 @@ class Errors:
     def invalid_rule_name(invalid_files):
         return f"The following rule file name is invalid {invalid_files} - make sure that the rule name is " \
                f"the same as the folder containing it."
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_missing_testdata_file(modeling_rule_dir: Path, minimum_from_version: str, from_version: str):
+        test_data_file = modeling_rule_dir / f'{modeling_rule_dir.name}_testdata.json'
+        return f'The modeling rule {modeling_rule_dir} is missing a testdata file at {test_data_file}. The modeling ' \
+               f'rule has a fromversion of {from_version} and modeling rules supporting fromversion' \
+               f' {minimum_from_version} and upwards are required to provide test data for modeling rule testing.' \
+               ' Please add a testdata file for this rule. See the "demisto-sdk modeling-rules init-test-data" ' \
+               ' command for more information on creating a test data file for modeling rules.'
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_testdata_not_formatted_correctly(error_message: str):
+        return f'The modeling rule testdata file is not formatted correctly. {error_message}'

@@ -38,8 +38,9 @@ class ModelingRuleValidator(ContentEntityValidator):
         self.are_keys_empty_in_yml()
         self.is_valid_rule_names()
         if self.does_version_require_testdata():
-            self.does_testdata_file_exist()
-            self.is_testdata_formatted_correctly()
+            # this condition also marks the rule as invalid if the testdata file is missing
+            if self.does_testdata_file_exist():
+                self.is_testdata_formatted_correctly()
 
         return self._is_valid
 

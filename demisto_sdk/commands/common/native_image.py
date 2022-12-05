@@ -1,5 +1,5 @@
 import logging
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import extract_docker_image_from_text
@@ -22,7 +22,7 @@ class NativeImage:
 
 class NativeImageConfig:
 
-    def __init__(self, native_image_config_file_path: str | None = None):
+    def __init__(self, native_image_config_file_path: Optional[str] = None):
         if not native_image_config_file_path:
             native_image_config_file_path = 'Tests/native_image_config.json'
         with open(native_image_config_file_path, 'r') as file:
@@ -83,8 +83,8 @@ class NativeImageSupportedVersions:
         self,
         _id: str,
         docker_image: str,
-        native_image_config: NativeImageConfig | None = None,
-        native_image_config_file_path: str | None = None
+        native_image_config: Optional[NativeImageConfig] = None,
+        native_image_config_file_path: Optional[str] = None
     ):
         self.id = _id
         self.docker_image = extract_docker_image_from_text(text=docker_image, with_no_tag=True)
@@ -95,7 +95,7 @@ class NativeImageSupportedVersions:
             self.native_image_config = NativeImageConfig(native_image_config_file_path)
 
     def image_to_native_images_support(
-        self, docker_images_to_native_images_mapping: Dict[str, List[str]] | None = None
+        self, docker_images_to_native_images_mapping: Optional[Dict[str, List[str]]] = None
     ) -> List[str]:
         """
         Get the mapping the script/integration to the native-images which support it.
@@ -128,7 +128,7 @@ class NativeImageSupportedVersions:
         return []
 
     def get_supported_native_image_versions(
-        self, docker_images_to_native_images_mapping: Dict[str, List[str]] | None = None
+        self, docker_images_to_native_images_mapping: Optional[Dict[str, List[str]]] = None
     ) -> List[str]:
         """
         Get the native-images that the integration/script supports. Disregards native-images that are supported which
@@ -141,6 +141,5 @@ class NativeImageSupportedVersions:
                 if ignored_native_image in native_images:
                     native_images.remove(ignored_native_image)
             return native_images
-
         return []
 

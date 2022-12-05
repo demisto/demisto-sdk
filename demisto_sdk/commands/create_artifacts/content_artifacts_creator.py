@@ -23,7 +23,7 @@ from demisto_sdk.commands.common.constants import (BASE_PACK, CLASSIFIERS_DIR, C
                                                    RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
                                                    TOOLS_DIR, TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR, XDRC_TEMPLATE_DIR,
                                                    XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, ContentItems, FileType,
-                                                   MarketplaceVersions)
+                                                   MarketplaceVersions, XSIAM_LAYOUTS_DIR)
 from demisto_sdk.commands.common.content import Content, ContentError, ContentFactoryError, Pack
 from demisto_sdk.commands.common.content.objects.abstract_objects.text_object import TextObject
 from demisto_sdk.commands.common.content.objects.pack_objects import (JSONContentObject, Script, YAMLContentObject,
@@ -57,7 +57,7 @@ XSOAR_MARKETPLACE_ITEMS_TO_DUMP = [FileType.CLASSIFIER, FileType.CONNECTION, Fil
                                    FileType.PACK_METADATA, FileType.METADATA, FileType.README, FileType.AUTHOR_IMAGE]
 XSIAM_MARKETPLACE_ITEMS_TO_DUMP = [FileType.CLASSIFIER, FileType.CONNECTION, FileType.INCIDENT_FIELD,
                                    FileType.INCIDENT_TYPE, FileType.INDICATOR_FIELD, FileType.INDICATOR_TYPE,
-                                   FileType.INTEGRATION, FileType.JOB, FileType.LAYOUT, FileType.LISTS,
+                                   FileType.INTEGRATION, FileType.JOB, FileType.XSIAM_LAYOUT, FileType.LISTS,
                                    FileType.PLAYBOOK, FileType.SCRIPT, FileType.TEST_PLAYBOOK, FileType.RELEASE_NOTES,
                                    FileType.RELEASE_NOTES_CONFIG, FileType.WIZARD,
                                    FileType.PARSING_RULE, FileType.MODELING_RULE, FileType.CORRELATION_RULE,
@@ -74,6 +74,8 @@ MARKETPLACE_TO_ITEMS_MAPPING = {
     MarketplaceVersions.MarketplaceV2.value: XSIAM_MARKETPLACE_ITEMS_TO_DUMP,
     MarketplaceVersions.XPANSE.value: XPANSE_MARKETPLACE_ITEMS_TO_DUMP,
 }
+
+
 ##############
 # Main logic #
 ##############
@@ -224,6 +226,7 @@ class ContentItemsHandler:
             ContentItems.TRIGGERS: [],
             ContentItems.WIZARDS: [],
             ContentItems.XDRC_TEMPLATE: [],
+            ContentItems.XSIAM_LAYOUTS: [],
         }
         self.content_folder_name_to_func: Dict[str, Callable] = {
             SCRIPTS_DIR: self.add_script_as_content_item,
@@ -253,6 +256,7 @@ class ContentItemsHandler:
             TRIGGER_DIR: self.add_trigger_as_content_item,
             WIZARDS_DIR: self.add_wizards_as_content_item,
             XDRC_TEMPLATE_DIR: self.add_xdrc_template_as_content_item,
+            XSIAM_LAYOUTS_DIR: self.add_xsiam_layout_as_content_item,
         }
         self.id_set = id_set
         self.alternate_fields = alternate_fields
@@ -364,17 +368,6 @@ class ContentItemsHandler:
                 'name': content_object.get('name', '')
             })
 
-    def add_xsiam_layout_as_content_item(self, content_object: ContentObject):
-        if content_object.get('description') is not None:
-            self.content_items[ContentItems.XSIAM_LAYOUTS].append({
-                'name': content_object.get('name', ''),
-                'description': content_object.get('description')
-            })
-        else:
-            self.content_items[ContentItems.XSIAM_LAYOUTS].append({
-                'name': content_object.get('name', '')
-            })
-
     def add_pre_process_rules_as_content_item(self, content_object: ContentObject):
         self.content_items[ContentItems.PRE_PROCESS_RULES].append({
             'name': content_object.get('name') or content_object.get('id', ''),
@@ -478,6 +471,17 @@ class ContentItemsHandler:
             'os_type': content_object.get('os_type', ''),
             'profile_type': content_object.get('profile_type', ''),
         })
+
+    def add_xsiam_layout_as_content_item(self, content_object: ContentObject):
+        if content_object.get('description') is not None:
+            self.content_items[ContentItems.XSIAM_LAYOUTS].append({
+                'name': content_object.get('name', ''),
+                'description': content_object.get('description')
+            })
+        else:
+            self.content_items[ContentItems.XSIAM_LAYOUTS].append({
+                'name': content_object.get('name', '')
+            })
 
 
 @contextmanager
@@ -922,6 +926,12 @@ def handle_xdrc_template(content_items_handler, pack, pack_report, artifact_mana
         pack_report += dump_pack_conditionally(artifact_manager, xdrc_template)
 
 
+def handle_xsiam_layout(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
+    for xsiam_layout in pack.xsiam_layouts:
+        content_items_handler.handle_content_item(xsiam_layout)
+        pack_report += dump_pack_conditionally(artifact_manager, xsiam_layout)
+
+
 def handle_tools(pack, pack_report, artifact_manager, **kwargs):
     for tool in pack.tools:
         object_report = ObjectReport(tool, content_packs=True)
@@ -1040,6 +1050,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         FileType.METADATA: handle_metadata,
         FileType.README: handle_readme,
         FileType.AUTHOR_IMAGE: handle_author_image,
+        FileType.XSIAM_LAYOUT: handle_xsiam_layout,
     }
 
     items_to_dump = MARKETPLACE_TO_ITEMS_MAPPING.get(artifact_manager.marketplace, XSOAR_MARKETPLACE_ITEMS_TO_DUMP)

@@ -49,7 +49,7 @@ from demisto_sdk.commands.common.constants import (ALL_FILES_VALIDATION_IGNORE_W
                                                    TRIGGER_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
                                                    XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
                                                    XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, IdSetKeys,
-                                                   MarketplaceVersions, urljoin)
+                                                   MarketplaceVersions, urljoin, XSIAM_LAYOUTS_DIR)
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
@@ -676,7 +676,7 @@ def get_entity_id_by_entity_type(data: dict, content_entity: str):
     try:
         if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
             return data.get('commonfields', {}).get('id', '')
-        elif content_entity == LAYOUTS_DIR:
+        elif content_entity in {LAYOUTS_DIR, XSIAM_LAYOUTS_DIR}:
             return data.get('typeId', '')
         else:
             return data.get('id', '')
@@ -694,7 +694,7 @@ def get_entity_name_by_entity_type(data: dict, content_entity: str):
     :return: The file name
     """
     try:
-        if content_entity == LAYOUTS_DIR:
+        if content_entity in {LAYOUTS_DIR, XSIAM_LAYOUTS_DIR}:
             if 'typeId' in data:
                 return data.get('typeId', '')
             return data.get('name', '')  # for layoutscontainer
@@ -1347,6 +1347,8 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.XDRC_TEMPLATE
         elif MODELING_RULES_DIR in path.parts and 'testdata' in path.stem.casefold():
             return FileType.MODELING_RULE_TEST_DATA
+        elif XSIAM_LAYOUTS_DIR in path.parts:
+            return FileType.XSIAM_LAYOUT
 
     elif path.name.endswith('_image.png'):
         if path.name.endswith('Author_image.png'):
@@ -1512,6 +1514,7 @@ def find_type(
 
         if 'layout' in _dict or 'kind' in _dict:  # it's a Layout or Dashboard but not a Generic Object
             if 'kind' in _dict or 'typeId' in _dict:
+                #  check which special field XSIAM Layout has.
                 return FileType.LAYOUT
 
             return FileType.DASHBOARD
@@ -2083,7 +2086,8 @@ def item_type_to_content_items_header(item_type):
         "correlationrule": "correlationRule",
         "modelingrule": "modelingRule",
         "parsingrule": "parsingRule",
-        "xdrctemplate": "XDRCTemplate"
+        "xdrctemplate": "XDRCTemplate",
+        "xsiamlayout": "XSIAMLayout"
     }
 
     return f'{converter.get(item_type, item_type)}s'

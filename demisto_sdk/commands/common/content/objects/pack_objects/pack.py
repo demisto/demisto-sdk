@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_
                                                    PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, REPORTS_DIR,
                                                    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, TRIGGER_DIR, WIDGETS_DIR,
                                                    WIZARDS_DIR, XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR,
-                                                   XSIAM_REPORTS_DIR, FileType)
+                                                   XSIAM_REPORTS_DIR, XSIAM_LAYOUTS_DIR, FileType)
 from demisto_sdk.commands.common.content.objects.pack_objects import (AgentTool, AuthorImage, Classifier,
                                                                       ClassifierMapper, Connection, Contributors,
                                                                       CorrelationRule, Dashboard, DocFile,
@@ -30,7 +30,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (AgentTool,
                                                                       PreProcessRule, Readme, ReleaseNote,
                                                                       ReleaseNoteConfig, Report, Script, SecretIgnore,
                                                                       Trigger, Widget, Wizard, XDRCTemplate,
-                                                                      XSIAMDashboard, XSIAMReport)
+                                                                      XSIAMDashboard, XSIAMReport, XSIAMLayout)
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.tools import get_demisto_version, is_object_in_id_set
 from demisto_sdk.commands.test_content import tools
@@ -281,6 +281,11 @@ class Pack:
                                                           suffix="json")
 
     @property
+    def xsiam_layouts(self) -> Iterator[XSIAMLayout]:
+        return self._content_files_list_generator_factory(dir_name=XSIAM_LAYOUTS_DIR,
+                                                          suffix="json")
+
+    @property
     def pack_metadata(self) -> Optional[PackMetaData]:
         obj = None
         file = self._path / "pack_metadata.json"
@@ -401,8 +406,9 @@ class Pack:
         return regex.match(
             PACK_NAME_DEPRECATED_REGEX, pack_name
         ) and (
-            regex.match(DEPRECATED_NO_REPLACE_DESC_REGEX, pack_desc) or regex.match(DEPRECATED_DESC_REGEX, pack_desc)
-        )
+                       regex.match(DEPRECATED_NO_REPLACE_DESC_REGEX, pack_desc) or regex.match(DEPRECATED_DESC_REGEX,
+                                                                                               pack_desc)
+               )
 
     def should_be_deprecated(self) -> Optional[bool]:
         """
@@ -413,6 +419,7 @@ class Pack:
             Optional[bool]: True if pack should be deprecated according to the above, False if not,
                 None in case the pack is already deprecated.
         """
+
         def _get_deprecated_content_entities_count(content_entities) -> int:
             return len([entity for entity in content_entities if entity.is_deprecated])
 
@@ -421,12 +428,12 @@ class Pack:
 
         if self._are_integrations_or_scripts_or_playbooks_exist():
             return (
-                self.integrations_count == _get_deprecated_content_entities_count(self.integrations)
-            ) and (
-                self.playbooks_count == _get_deprecated_content_entities_count(self.playbooks)
-            ) and (
-                self.scripts_count == _get_deprecated_content_entities_count(self.scripts)
-            )
+                           self.integrations_count == _get_deprecated_content_entities_count(self.integrations)
+                   ) and (
+                           self.playbooks_count == _get_deprecated_content_entities_count(self.playbooks)
+                   ) and (
+                           self.scripts_count == _get_deprecated_content_entities_count(self.scripts)
+                   )
         # if there aren't any playbooks/scripts/integrations -> no deprecated content -> pack shouldn't be deprecated.
         return False
 

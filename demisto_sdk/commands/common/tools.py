@@ -26,7 +26,7 @@ import git
 import giturlparse
 import requests
 import urllib3
-from git.types import PathLike
+# from git.types import PathLike
 from packaging.version import LegacyVersion, Version, parse
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
@@ -1605,7 +1605,7 @@ def get_content_id_set() -> dict:
     return requests.get(OFFICIAL_CONTENT_ID_SET_PATH).json()
 
 
-def get_content_path() -> Union[str, PathLike, None]:
+def get_content_path() -> Union[str, None]:
     """ Get abs content path, from any CWD
     Returns:
         str: Absolute content path

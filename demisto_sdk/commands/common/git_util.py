@@ -6,7 +6,7 @@ from typing import Set, Tuple, Union
 import click
 import gitdb
 from git import InvalidGitRepositoryError, Repo
-from git.diff import Lit_change_type
+from git.diff import DiffIndex as DiffIndex
 from git.remote import Remote
 
 
@@ -392,7 +392,7 @@ class GitUtil:
                     in self.repo.git.diff('--name-only',
                                           f'{branch}...{current_branch_or_hash}').split('\n')}
 
-    def _only_last_commit(self, prev_ver: str, requested_status: Lit_change_type) -> Set:  # pragma: no cover
+    def _only_last_commit(self, prev_ver: str, requested_status: DiffIndex.change_type) -> Set:  # pragma: no cover
         """Get all the files that were changed in the last commit of a given type when checking a branch against itself.
         Args:
             prev_ver (str): The base branch against which the comparison is made.

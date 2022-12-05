@@ -92,7 +92,7 @@ class Uploader:
         self.path = input
         self.log_verbose = verbose
         verify = (not insecure) if insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
-        self.client = demisto_client.configure(verify_ssl=verify)
+        self.client = demisto_client.configure(verify_ssl=verify, base_url="https://10.180.189.234/", api_key="D30AD331E5EFE5013BC80A968F7E829B")
         self.successfully_uploaded_files: List[Tuple[str, str]] = []
         self.failed_uploaded_files: List[Tuple[str, str, str]] = []
         self.unuploaded_due_to_version: List[Tuple[str, str, Version, Version, Version]] = []

@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import get_child_files, get_json, get_yaml
 from demisto_sdk.commands.download.downloader import Downloader
+from demisto_sdk.tests.integration_tests.download_integration_test import demisto_client, match_request_text
 
 yaml = YAML_Handler()
 
@@ -773,3 +774,16 @@ def test_build_file_name():
         downloader.system_item_type = 'Field'
         file_name = downloader.build_file_name({'id': 'id 1'})
         assert file_name == 'id_1.json'
+
+
+@pytest.mark.parametrize('original_string, object_name, scripts_mapper, expected_string, expected_mapper', [
+    ('commonfields:\n id:f1e4c6e5-0d44-48a0-8020-a9711243e918\nname:TestingScript', 'automation-Testing.yml', {},
+     'commonfields:\n id:f1e4c6e5-0d44-48a0-8020-a9711243e918\nname:TestingScript', {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"}),
+    ('{\n\t"name":"TestingField",\n\t"script":"f1e4c6e5-0d44-48a0-8020-a9711243e918"\n\t}', 'incidentfield-TestingField.json', {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
+     '{\n\t"name":"TestingField",\n\t"script":"TestingScript"\n\t}', {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"})
+])
+def test_handle_file(original_string, object_name, scripts_mapper, expected_string, expected_mapper):
+    downloader = Downloader(output='', input='', regex='', all_custom_content=True)
+    final_string, final_mapper = downloader.handle_file(original_string, object_name, scripts_mapper)
+    assert final_string == expected_string
+    assert final_mapper == expected_mapper

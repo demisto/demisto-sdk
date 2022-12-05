@@ -16,6 +16,10 @@ from demisto_sdk.commands.common.tools import alternate_item_fields
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 
+import logging
+
+logger = logging.getLogger("demisto-sdk")
+
 
 class ContentItem(BaseContent):
     path: Path
@@ -120,8 +124,9 @@ class ContentItem(BaseContent):
         name = self.path.name
         for prefix in ContentType.server_names():
             name = name.replace(f"{prefix}-", "")
-
-        return f"{self.content_type.server_name}-{name}"
+        normalized = f"{self.content_type.server_name}-{name}"
+        logger.info(f"Normalized file name from {name} to {normalized}")
+        return normalized
 
     def dump(self, dir: DirectoryPath, _: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)

@@ -25,7 +25,7 @@ class PrepareUploadManager:
         if not output:
             output = input.parent / content_item.normalize_file_name
         else:
-            output = output / content_item.normalize_file_name
+            output = Path(output) / content_item.normalize_file_name
         data = content_item.prepare_for_upload(marketplace, **kwargs)
         if output.exists() and not force:
             raise FileExistsError(f"Output file {output} already exists. Use --force to overwrite.")

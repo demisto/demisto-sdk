@@ -50,8 +50,11 @@ class Integration:
             self.code.write(code)
         else:
             self.code.write('from CommonServerPython import *\n\n\n')
-        if yml is not None:
-            self.yml.write_dict(yml)
+        
+        if yml is None:
+            yml = {}
+        
+        self.yml.write_dict(yml)
         if readme is not None:
             self.readme.write(readme)
         if description is not None:
@@ -62,8 +65,10 @@ class Integration:
             self.image.write_bytes(image)
 
         if self.create_unified:
-            yml_path = PrepareUploadManager.prepare_for_upload(input=Path(self.path), output=Path(os.path.dirname(self._tmpdir_integration_path)))
-            readme_path = IntegrationScriptUnifier.move_readme_next_to_unified(self.path, yml_path)
+            yml_path = Path(self.path) / f'{self.name}.yml'
+            yml = IntegrationScriptUnifier.unify(yml_path, yml)
+            self.yml.write_dict(yml)
+            readme_path = IntegrationScriptUnifier.move_readme_next_to_unified(Path(self.path), yml_path)
             shutil.rmtree(self._tmpdir_integration_path)
             self.yml.path = str(yml_path)
             self.readme.path = readme_path

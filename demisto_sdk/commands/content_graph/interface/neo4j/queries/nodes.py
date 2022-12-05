@@ -4,9 +4,17 @@ from typing import Any, Dict, Iterable, List, Optional
 from neo4j import Transaction
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import SERVER_CONTENT_ITEMS, ContentType, Neo4jResult
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (intersects, run_query, to_neo4j_map,
-                                                                               versioned)
+from demisto_sdk.commands.content_graph.common import (
+    SERVER_CONTENT_ITEMS,
+    ContentType,
+    Neo4jResult,
+)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
+    intersects,
+    run_query,
+    to_neo4j_map,
+    versioned,
+)
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -56,7 +64,9 @@ def create_server_nodes_by_type(
     data = [
         {
             "name": content_item,
-            "object_id": content_item.lower() if should_have_lowercase_id else content_item,
+            "object_id": content_item.lower()
+            if should_have_lowercase_id
+            else content_item,
             "content_type": content_type,
             "is_server_item": True,
         }
@@ -100,7 +110,9 @@ def _match(
         if filter_list and marketplace:
             where.append("AND")
         if marketplace:
-            where.append(f"'{marketplace}' IN node_from.marketplaces AND '{marketplace}' IN node_to.marketplaces")
+            where.append(
+                f"'{marketplace}' IN node_from.marketplaces AND '{marketplace}' IN node_to.marketplaces"
+            )
 
     query = f"""
     MATCH (node_from{content_type_str}{params_str}) - [relationship] - (node_to)
@@ -108,8 +120,14 @@ def _match(
     RETURN node_from, collect(relationship) as relationships, collect(node_to) as nodes_to
     """
     return [
-        Neo4jResult(node_from=item.get("node_from"), relationships=item.get("relationships"), nodes_to=item.get("nodes_to"))
-        for item in run_query(tx, query, filter_list=list(filter_list) if filter_list else None)
+        Neo4jResult(
+            node_from=item.get("node_from"),
+            relationships=item.get("relationships"),
+            nodes_to=item.get("nodes_to"),
+        )
+        for item in run_query(
+            tx, query, filter_list=list(filter_list) if filter_list else None
+        )
     ]
 
 

@@ -5,14 +5,18 @@ from wcmatch.pathlib import EXTMATCH, Path
 
 import demisto_sdk.commands.common.content.errors as exc
 from demisto_sdk.commands.common.constants import ENTITY_TYPE_TO_DIR, FileType
-from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
+from demisto_sdk.commands.unify.integration_script_unifier import (
+    IntegrationScriptUnifier,
+)
 from demisto_sdk.commands.unify.rule_unifier import RuleUnifier
 
 from .yaml_content_object import YAMLContentObject
 
 
 class YAMLContentUnifiedObject(YAMLContentObject):
-    def __init__(self, path: Union[Path, str], content_type: FileType, file_name_prefix: str):
+    def __init__(
+        self, path: Union[Path, str], content_type: FileType, file_name_prefix: str
+    ):
         """YAML content object.
 
         Built from:
@@ -59,11 +63,11 @@ class YAMLContentUnifiedObject(YAMLContentObject):
     @property
     def script(self) -> dict:
         """Script item in object dict:
-            1. Script - Located under main keys.
-            2. Integration - Located under second level key (script -> script).
+        1. Script - Located under main keys.
+        2. Integration - Located under second level key (script -> script).
         """
         if self._content_type == FileType.INTEGRATION:
-            script = self.get('script', {})
+            script = self.get("script", {})
         else:
             script = self.to_dict()
 
@@ -79,7 +83,7 @@ class YAMLContentUnifiedObject(YAMLContentObject):
         References:
             1. Attribute info - https://xsoar.pan.dev/docs/integrations/docker#why-use-docker
         """
-        return self.script.get('dockerimage', '')
+        return self.script.get("dockerimage", "")
 
     @property
     def docker_image_4_5(self) -> str:
@@ -91,7 +95,7 @@ class YAMLContentUnifiedObject(YAMLContentObject):
         References:
             1. Attribute info - https://xsoar.pan.dev/docs/integrations/docker#why-use-docker
         """
-        return self.script.get('dockerimage45', '')
+        return self.script.get("dockerimage45", "")
 
     def is_unify(self) -> bool:
         """Check if Content object is unified or not.
@@ -124,8 +128,11 @@ class YAMLContentUnifiedObject(YAMLContentObject):
         unifier: Union[IntegrationScriptUnifier, RuleUnifier]
         if self._content_type in [FileType.SCRIPT, FileType.INTEGRATION]:
             unifier = IntegrationScriptUnifier(
-                input=str(self.path.parent), dir_name=unify_dir,
-                output=dest_dir, force=True, yml_modified_data=self.to_dict()  # type: ignore
+                input=str(self.path.parent),
+                dir_name=unify_dir,
+                output=dest_dir,
+                force=True,
+                yml_modified_data=self.to_dict(),  # type: ignore
             )
 
         elif self._content_type in [FileType.PARSING_RULE, FileType.MODELING_RULE]:
@@ -160,21 +167,32 @@ class YAMLContentUnifiedObject(YAMLContentObject):
         # Directory configuration - Integrations or Scripts
         unify_dir = ENTITY_TYPE_TO_DIR[self._content_type.value]
         # Split step
-        unifier = IntegrationScriptUnifier(input=str(self.path.parent), dir_name=unify_dir, output=str(dest_dir / self.path.name),
-                                           force=True)
+        unifier = IntegrationScriptUnifier(
+            input=str(self.path.parent),
+            dir_name=unify_dir,
+            output=str(dest_dir / self.path.name),
+            force=True,
+        )
         yaml_dict = self.to_dict()
         yaml_dict_copy = copy.deepcopy(yaml_dict)
         script_object = self.script
-        created_files: List[str] = unifier.write_yaml_with_docker(yaml_dict_copy, yaml_dict, script_object).keys()
+        created_files: List[str] = unifier.write_yaml_with_docker(
+            yaml_dict_copy, yaml_dict, script_object
+        ).keys()
         # Validate that split succeed - there is not exception raised in unify module.
         if not created_files:
             raise exc.ContentDumpError(self, self.path, "Unable to split object")
 
         return [Path(path) for path in created_files]
 
-    def dump(self, dest_dir: Optional[Union[str, Path]] = None, change_log: Optional[bool] = False,
-             readme: Optional[bool] = False, unify: bool = True) -> List[Path]:
-        """ Dump YAMLContentUnfiedObject.
+    def dump(
+        self,
+        dest_dir: Optional[Union[str, Path]] = None,
+        change_log: Optional[bool] = False,
+        readme: Optional[bool] = False,
+        unify: bool = True,
+    ) -> List[Path]:
+        """Dump YAMLContentUnfiedObject.
 
         Args:
             dest_dir: Destination directory.
@@ -197,8 +215,11 @@ class YAMLContentUnifiedObject(YAMLContentObject):
             # Unify in dest dir.
             created_files.extend(self._unify(dest_dir))
             # Adding readme and changelog if requested.
-            created_files.extend(super().dump(dest_dir=dest_dir, yaml=False,
-                                              readme=readme, change_log=change_log))
+            created_files.extend(
+                super().dump(
+                    dest_dir=dest_dir, yaml=False, readme=readme, change_log=change_log
+                )
+            )
 
         # Handling case where object is unified
         else:
@@ -209,13 +230,22 @@ class YAMLContentUnifiedObject(YAMLContentObject):
                 # Split file as described above.
                 created_files.extend(self._split_yaml_4_5_0(dest_dir))
                 # Adding readme and changelog if requested.
-                created_files.extend(super().dump(dest_dir=dest_dir, yaml=False,
-                                                  readme=readme, change_log=change_log))
+                created_files.extend(
+                    super().dump(
+                        dest_dir=dest_dir,
+                        yaml=False,
+                        readme=readme,
+                        change_log=change_log,
+                    )
+                )
 
             # Handling case where copy of object should be without modifications.
             else:
                 # Dump as YAMLContentObject
-                created_files.extend(super().dump(dest_dir=dest_dir,
-                                                  readme=readme, change_log=change_log))
+                created_files.extend(
+                    super().dump(
+                        dest_dir=dest_dir, readme=readme, change_log=change_log
+                    )
+                )
 
         return created_files

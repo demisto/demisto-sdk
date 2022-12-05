@@ -1,1 +1,1 @@
-data = {'ExcludedPack': {('integration', 'ExcludedPack_integration')}}
+data = {"ExcludedPack": {("integration", "ExcludedPack_integration")}}

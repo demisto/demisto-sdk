@@ -35,8 +35,8 @@ class RepositoryParser:
         packs_folder: Path = self.path / PACKS_FOLDER
         for path in packs_folder.iterdir():
             if (
-                path.is_dir() and
-                not path.name.startswith(".") and
-                path.name not in IGNORED_PACKS_FOR_PARSING
+                path.is_dir()
+                and not path.name.startswith(".")
+                and path.name not in IGNORED_PACKS_FOR_PARSING
             ):
                 yield path

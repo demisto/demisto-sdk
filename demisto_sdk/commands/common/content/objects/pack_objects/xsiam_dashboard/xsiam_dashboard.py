@@ -6,10 +6,12 @@ import demisto_client
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import XSIAM_DASHBOARD, FileType
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
-    JSONContentObject
-from demisto_sdk.commands.common.content.objects.pack_objects.xsiam_dashboard_image.xsiam_dashboard_image import \
-    XSIAMDashboardImage
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
+    JSONContentObject,
+)
+from demisto_sdk.commands.common.content.objects.pack_objects.xsiam_dashboard_image.xsiam_dashboard_image import (
+    XSIAMDashboardImage,
+)
 from demisto_sdk.commands.common.tools import generate_xsiam_normalized_name
 
 
@@ -26,7 +28,12 @@ class XSIAMDashboard(JSONContentObject):
             Image path or None if image not found.
         """
         if not self._image_file:
-            image_file = next(self._path.parent.glob(patterns=fr"{re.escape(self.path.stem)}_image.png"), None)
+            image_file = next(
+                self._path.parent.glob(
+                    patterns=rf"{re.escape(self.path.stem)}_image.png"
+                ),
+                None,
+            )
             if image_file:
                 self._image_file = XSIAMDashboardImage(image_file)
 
@@ -59,9 +66,9 @@ class XSIAMDashboard(JSONContentObject):
             created_files.extend(self.image_path.dump(dest_dir))
 
         new_file_path = created_files[0]
-        if new_file_path.name.startswith('external-'):
-            copy_to_path = str(new_file_path).replace('external-', '')
+        if new_file_path.name.startswith("external-"):
+            copy_to_path = str(new_file_path).replace("external-", "")
         else:
-            copy_to_path = f'{new_file_path.parent}/{self.normalize_file_name()}'
+            copy_to_path = f"{new_file_path.parent}/{self.normalize_file_name()}"
         shutil.copyfile(new_file_path, copy_to_path)
         return created_files

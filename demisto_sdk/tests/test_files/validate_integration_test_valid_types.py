@@ -3,32 +3,21 @@ OLD_CLASSIFIER = {
     "custom": True,
     "defaultIncidentType": "",
     "id": "test classifier",
-    "keyTypeMap": {
-        "test": "test1"
-    },
+    "keyTypeMap": {"test": "test1"},
     "mapping": {
         "Logz.io Alert": {
             "dontMapEventToLabels": False,
             "internalMapping": {
-                "test Alert ID": {
-                    "complex": None,
-                    "simple": "alertId"
-                },
-                "details": {
-                    "complex": None,
-                    "simple": "description"
-                }
-            }
+                "test Alert ID": {"complex": None, "simple": "alertId"},
+                "details": {"complex": None, "simple": "description"},
+            },
         }
     },
-    "transformer": {
-        "complex": None,
-        "simple": "test"
-    },
+    "transformer": {"complex": None, "simple": "test"},
     "unclassifiedCases": {},
     "version": -1,
     "fromVersion": "5.0.0",
-    "toVersion": "5.9.9"
+    "toVersion": "5.9.9",
 }
 
 NEW_CLASSIFIER = {
@@ -37,16 +26,11 @@ NEW_CLASSIFIER = {
     "type": "classification",
     "name": "test Classifier",
     "description": "Classifies test.",
-    "keyTypeMap": {
-        "test": "test1"
-    },
-    "transformer": {
-        "complex": None,
-        "simple": "test"
-    },
+    "keyTypeMap": {"test": "test1"},
+    "transformer": {"complex": None, "simple": "test"},
     "version": -1,
     "fromVersion": "6.0.0",
-    "toVersion": "6.0.5"
+    "toVersion": "6.0.5",
 }
 
 MAPPER = {
@@ -59,16 +43,13 @@ MAPPER = {
         "test": {
             "dontMapEventToLabels": False,
             "internalMapping": {
-                "test Alert ID": {
-                    "complex": None,
-                    "simple": "alertId"
-                }
-            }
+                "test Alert ID": {"complex": None, "simple": "alertId"}
+            },
         }
     },
     "version": -1,
     "fromVersion": "6.0.0",
-    "toVersion": "6.0.5"
+    "toVersion": "6.0.5",
 }
 
 DASHBOARD = {
@@ -81,7 +62,7 @@ DASHBOARD = {
         "byFrom": "days",
         "toValue": None,
         "fromValue": 7,
-        "field": ""
+        "field": "",
     },
     "fromDateLicense": "0001-01-01T00:00:00Z",
     "name": "my-dashboard",
@@ -101,13 +82,8 @@ DASHBOARD = {
                 "name": "My Tasks",
                 "dataType": "tasks",
                 "widgetType": "list",
-                "query": "assignee:\"{me}\" and (state:Waiting or state:inprogress or state:error)",
-                "sort": [
-                    {
-                        "field": "dueDate",
-                        "asc": True
-                    }
-                ],
+                "query": 'assignee:"{me}" and (state:Waiting or state:inprogress or state:error)',
+                "sort": [{"field": "dueDate", "asc": True}],
                 "isPredefined": True,
                 "dateRange": {
                     "fromDate": "0001-01-01T00:00:00Z",
@@ -117,17 +93,17 @@ DASHBOARD = {
                         "byFrom": "days",
                         "toValue": None,
                         "fromValue": None,
-                        "field": ""
+                        "field": "",
                     },
-                    "fromDateLicense": "0001-01-01T00:00:00Z"
+                    "fromDateLicense": "0001-01-01T00:00:00Z",
                 },
                 "params": None,
                 "size": 10,
-                "category": ""
-            }
+                "category": "",
+            },
         },
     ],
-    "isPredefined": True
+    "isPredefined": True,
 }
 
 CONNECTION = {
@@ -136,13 +112,13 @@ CONNECTION = {
             "contextKey1": "MD5",
             "contextKey2": "SHA256",
             "connectionDescription": "Belongs to the same file",
-            "parentContextKey": "File"
+            "parentContextKey": "File",
         },
         {
             "contextKey1": "MD5",
             "contextKey2": "SHA1",
             "connectionDescription": "Belongs to the same file",
-            "parentContextKey": "File"
+            "parentContextKey": "File",
         },
     ]
 }
@@ -176,9 +152,7 @@ INDICATOR_FIELD = {
     "content": True,
     "group": 2,
     "hidden": False,
-    "associatedTypes": [
-        "Employee"
-    ],
+    "associatedTypes": ["Employee"],
     "systemAssociatedTypes": None,
     "associatedToAll": False,
     "unmapped": False,
@@ -188,7 +162,7 @@ INDICATOR_FIELD = {
     "defaultRows": None,
     "sla": 0,
     "threshold": 72,
-    "breachScript": ""
+    "breachScript": "",
 }
 
 INCIDENT_TYPE = {
@@ -213,7 +187,7 @@ INCIDENT_TYPE = {
     "closureScript": "",
     "disabled": False,
     "reputationCalc": 0,
-    "fromVersion": "5.5.0"
+    "fromVersion": "5.5.0",
 }
 
 LAYOUT = {
@@ -245,7 +219,7 @@ LAYOUT = {
                                 "height": 24,
                                 "id": "incident-type-field",
                                 "index": 0,
-                                "startCol": 0
+                                "startCol": 0,
                             },
                         ],
                         "moved": False,
@@ -253,18 +227,18 @@ LAYOUT = {
                         "static": False,
                         "w": 1,
                         "x": 0,
-                        "y": 0
+                        "y": 0,
                     },
                 ],
                 "type": "custom",
-                "hidden": False
+                "hidden": False,
             },
         ],
         "typeId": "some-id",
-        "version": -1
+        "version": -1,
     },
     "typeId": "some-id",
-    "version": -1
+    "version": -1,
 }
 
 LAYOUTS_CONTAINER = {
@@ -291,7 +265,7 @@ LAYOUTS_CONTAINER = {
                                 "height": 24,
                                 "id": "incident-type-field",
                                 "index": 0,
-                                "startCol": 0
+                                "startCol": 0,
                             },
                         ],
                         "moved": False,
@@ -299,15 +273,15 @@ LAYOUTS_CONTAINER = {
                         "static": False,
                         "w": 1,
                         "x": 0,
-                        "y": 0
+                        "y": 0,
                     },
                 ],
                 "type": "custom",
-                "hidden": False
+                "hidden": False,
             },
         ]
     },
-    "version": -1
+    "version": -1,
 }
 
 REPORT = {
@@ -338,7 +312,7 @@ REPORT = {
                     "owner",
                     "severity",
                     "status",
-                    "dueDate"
+                    "dueDate",
                 ],
                 "readableHeaders": {
                     "name": "Name",
@@ -347,30 +321,26 @@ REPORT = {
                     "owner": "Owner",
                     "severity": "Severity",
                     "status": "Status",
-                    "dueDate": "Due Date"
+                    "dueDate": "Due Date",
                 },
                 "classes": "striped stackable small very compact",
                 "i": "1",
                 "rowPos": 6,
                 "columnPos": 0,
                 "w": 12,
-                "h": 2
+                "h": 2,
             },
             "query": {
                 "type": "incident",
                 "filter": {
                     "query": "-status:Closed and (severity:High or severity:Critical)",
-                    "period": {
-                        "byFrom": "days",
-                        "fromValue": None,
-                        "by": "day"
-                    },
+                    "period": {"byFrom": "days", "fromValue": None, "by": "day"},
                     "fromDate": None,
-                    "toDate": None
-                }
+                    "toDate": None,
+                },
             },
             "type": "table",
-            "title": "Critical and High Incidents"
+            "title": "Critical and High Incidents",
         },
     ],
     "recipients": [],
@@ -383,11 +353,7 @@ REPORT = {
     "nextScheduledTime": "0001-01-01T00:00:00Z",
     "latestReportUsername": "",
     "decoder": {
-        "evidences.fetched": {
-            "type": "date",
-            "value": "02/01/06 3:04:05 PM"
-        },
-
+        "evidences.fetched": {"type": "date", "value": "02/01/06 3:04:05 PM"},
     },
     "reportType": "",
     "sensitive": False,
@@ -403,7 +369,7 @@ REPORT = {
             "byFrom": "days",
             "toValue": None,
             "fromValue": None,
-            "field": ""
+            "field": "",
         },
         "fromDateLicense": "0001-01-01T00:00:00Z",
         "name": "Critical and High incidents",
@@ -433,19 +399,19 @@ REPORT = {
                             "byFrom": "days",
                             "toValue": None,
                             "fromValue": None,
-                            "field": ""
+                            "field": "",
                         },
-                        "fromDateLicense": "0001-01-01T00:00:00Z"
+                        "fromDateLicense": "0001-01-01T00:00:00Z",
                     },
                     "params": {
                         "text": "# **Critical and High incidents**\n\n{date}\n\n---"
                     },
-                    "size": 0
-                }
+                    "size": 0,
+                },
             },
         ],
-        "isPredefined": False
-    }
+        "isPredefined": False,
+    },
 }
 
 REPUTATION = {
@@ -477,7 +443,7 @@ REPUTATION = {
     "defaultMapping": {},
     "manualMapping": None,
     "fileHashesPriority": None,
-    "legacyNames": ["Malware"]
+    "legacyNames": ["Malware"],
 }
 
 WIDGET = {
@@ -497,23 +463,17 @@ WIDGET = {
             "byFrom": "days",
             "toValue": None,
             "fromValue": 7,
-            "field": ""
+            "field": "",
         },
-        "fromDateLicense": "0001-01-01T00:00:00Z"
+        "fromDateLicense": "0001-01-01T00:00:00Z",
     },
-    "params": {
-        "groupBy": [
-            "owner"
-        ]
-    },
-    "description": ""
+    "params": {"groupBy": ["owner"]},
+    "description": "",
 }
 
 INCIDENT_FIELD = {
     "associatedToAll": False,
-    "associatedTypes": [
-        "Me"
-    ],
+    "associatedTypes": ["Me"],
     "breachScript": "",
     "caseInsensitive": True,
     "cliName": "incidentfield",
@@ -546,14 +506,12 @@ INCIDENT_FIELD = {
     "useAsKpi": False,
     "validationRegex": "",
     "version": -1,
-    "fromVersion": "5.0.0"
+    "fromVersion": "5.0.0",
 }
 
 GENERIC_FIELD = {
     "associatedToAll": False,
-    "associatedTypes": [
-        "Workstation"
-    ],
+    "associatedTypes": ["Workstation"],
     "caseInsensitive": True,
     "cliName": "operatingsystem",
     "id": "generic_asset_operatingsystem",
@@ -579,7 +537,7 @@ GENERIC_FIELD = {
     "useAsKpi": False,
     "version": -1,
     "fromVersion": "6.5.0",
-    "openEnded": False
+    "openEnded": False,
 }
 
 GENERIC_TYPE = {
@@ -592,7 +550,7 @@ GENERIC_TYPE = {
     "genericModuleId": "rbvm",
     "system": False,
     "version": -1,
-    "fromVersion": "6.5.0"
+    "fromVersion": "6.5.0",
 }
 
 GENERIC_MODULE = {
@@ -600,23 +558,22 @@ GENERIC_MODULE = {
     "version": -1,
     "name": "Risk Based Vulnerability Management",
     "fromVersion": "6.5.0",
-    "definitionIds": [
-        "asset"
-    ],
-    "views": [{
-        "icon": "icon-widget-infinity-24-s",
-        "name": "RBVM",
-        "title": "Risk Base Vulnerability Management",
-        "id": "RBVM",
-        "tabs": [
-            {
-                "name": "Assets",
-                "newButtonDefinitionId": "asset",
-                "dashboard": {
-                    "id": "asset_dashboard"
+    "definitionIds": ["asset"],
+    "views": [
+        {
+            "icon": "icon-widget-infinity-24-s",
+            "name": "RBVM",
+            "title": "Risk Base Vulnerability Management",
+            "id": "RBVM",
+            "tabs": [
+                {
+                    "name": "Assets",
+                    "newButtonDefinitionId": "asset",
+                    "dashboard": {"id": "asset_dashboard"},
                 }
-            }]
-    }]
+            ],
+        }
+    ],
 }
 
 UNIFIED_GENERIC_MODULE = {
@@ -624,77 +581,74 @@ UNIFIED_GENERIC_MODULE = {
     "version": -1,
     "name": "Risk Based Vulnerability Management",
     "fromVersion": "6.5.0",
-    "definitionIds": [
-        "asset"
-    ],
-    "views": [{
-        "icon": "icon-widget-infinity-24-s",
-        "name": "RBVM",
-        "title": "Risk Base Vulnerability Management",
-        "id": "RBVM",
-        "tabs": [
-            {
-                "name": "Assets",
-                "newButtonDefinitionId": "asset",
-                "dashboard": {
-                    "id": "asset_dashboard",
-                    "version": -1,
-                    "fromVersion": "5.0.0",
-                    "description": "",
-                    "period": {
-                        "byTo": "",
-                        "byFrom": "days",
-                        "toValue": None,
-                        "fromValue": 7,
-                        "field": ""
-                    },
-                    "fromDateLicense": "0001-01-01T00:00:00Z",
-                    "name": "my-dashboard",
-                    "layout": [{
-                        "id": "a0e381e0-1c86-11e8-8581-45a91cd24d8e",
-                        "forceRange": True,
-                        "x": 8,
-                        "y": 0,
-                        "i": "a0e381e0-1c86-11e8-8581-45a91cd24d8e",
-                        "w": 4,
-                        "h": 4,
-                        "widget": {
-                            "id": "my-tasks",
-                            "version": 1,
-                            "modified": "2018-02-28T14:55:09.423998+02:00",
-                            "name": "My Tasks",
-                            "dataType": "tasks",
-                            "widgetType": "list",
-                            "query": "assignee:\"{me}\" and (state:Waiting or state:inprogress or state:error)",
-                            "sort": [
-                                {
-                                    "field": "dueDate",
-                                    "asc": True
-                                }
-                            ],
-                            "isPredefined": True,
-                            "dateRange": {
-                                "fromDate": "0001-01-01T00:00:00Z",
-                                "toDate": "0001-01-01T00:00:00Z",
-                                "period": {
-                                    "byTo": "",
-                                    "byFrom": "days",
-                                    "toValue": None,
-                                    "fromValue": None,
-                                    "field": ""
+    "definitionIds": ["asset"],
+    "views": [
+        {
+            "icon": "icon-widget-infinity-24-s",
+            "name": "RBVM",
+            "title": "Risk Base Vulnerability Management",
+            "id": "RBVM",
+            "tabs": [
+                {
+                    "name": "Assets",
+                    "newButtonDefinitionId": "asset",
+                    "dashboard": {
+                        "id": "asset_dashboard",
+                        "version": -1,
+                        "fromVersion": "5.0.0",
+                        "description": "",
+                        "period": {
+                            "byTo": "",
+                            "byFrom": "days",
+                            "toValue": None,
+                            "fromValue": 7,
+                            "field": "",
+                        },
+                        "fromDateLicense": "0001-01-01T00:00:00Z",
+                        "name": "my-dashboard",
+                        "layout": [
+                            {
+                                "id": "a0e381e0-1c86-11e8-8581-45a91cd24d8e",
+                                "forceRange": True,
+                                "x": 8,
+                                "y": 0,
+                                "i": "a0e381e0-1c86-11e8-8581-45a91cd24d8e",
+                                "w": 4,
+                                "h": 4,
+                                "widget": {
+                                    "id": "my-tasks",
+                                    "version": 1,
+                                    "modified": "2018-02-28T14:55:09.423998+02:00",
+                                    "name": "My Tasks",
+                                    "dataType": "tasks",
+                                    "widgetType": "list",
+                                    "query": 'assignee:"{me}" and (state:Waiting or state:inprogress or state:error)',
+                                    "sort": [{"field": "dueDate", "asc": True}],
+                                    "isPredefined": True,
+                                    "dateRange": {
+                                        "fromDate": "0001-01-01T00:00:00Z",
+                                        "toDate": "0001-01-01T00:00:00Z",
+                                        "period": {
+                                            "byTo": "",
+                                            "byFrom": "days",
+                                            "toValue": None,
+                                            "fromValue": None,
+                                            "field": "",
+                                        },
+                                        "fromDateLicense": "0001-01-01T00:00:00Z",
+                                    },
+                                    "params": None,
+                                    "size": 10,
+                                    "category": "",
                                 },
-                                "fromDateLicense": "0001-01-01T00:00:00Z"
                             },
-                            "params": None,
-                            "size": 10,
-                            "category": ""
-                        }
+                        ],
+                        "isPredefined": True,
                     },
-                    ],
-                    "isPredefined": True
                 }
-            }]
-    }]
+            ],
+        }
+    ],
 }
 
 GENERIC_DEFINITION = {
@@ -706,27 +660,27 @@ GENERIC_DEFINITION = {
     "name": "Assets",
     "partitioned": True,
     "auditable": False,
-    "rbacSupport": True
+    "rbacSupport": True,
 }
 
 EMPTY_ID_SET = {
-    'scripts': [],
-    'integrations': [],
-    'playbooks': [],
-    'TestPlaybooks': [],
-    'Classifiers': [],
-    'Dashboards': [],
-    'IncidentFields': [],
-    'IncidentTypes': [],
-    'IndicatorFields': [],
-    'IndicatorTypes': [],
-    'Layouts': [],
-    'Reports': [],
-    'Widgets': [],
-    'Mappers': [],
-    'GenericTypes': [],
-    'GenericFields': [],
-    'GenericModules': [],
-    'GenericDefinitions': [],
-    'Packs': []
+    "scripts": [],
+    "integrations": [],
+    "playbooks": [],
+    "TestPlaybooks": [],
+    "Classifiers": [],
+    "Dashboards": [],
+    "IncidentFields": [],
+    "IncidentTypes": [],
+    "IndicatorFields": [],
+    "IndicatorTypes": [],
+    "Layouts": [],
+    "Reports": [],
+    "Widgets": [],
+    "Mappers": [],
+    "GenericTypes": [],
+    "GenericFields": [],
+    "GenericModules": [],
+    "GenericDefinitions": [],
+    "Packs": [],
 }

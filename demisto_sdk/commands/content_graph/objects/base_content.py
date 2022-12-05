@@ -16,7 +16,9 @@ content_type_to_model: Dict[ContentType, Type["BaseContent"]] = {}
 
 
 class BaseContentMetaclass(ModelMetaclass):
-    def __new__(cls, name, bases, namespace, content_type: ContentType = None, **kwargs):
+    def __new__(
+        cls, name, bases, namespace, content_type: ContentType = None, **kwargs
+    ):
         """This method is called before every creation of a ContentItem *class* (NOT class instances!).
         If `content_type` is passed as an argument of the class, we add a mapping between the content type
         and the model class object.
@@ -48,10 +50,14 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     node_id: str
     marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
 
-    relationships_data: Dict[RelationshipType, Set["RelationshipData"]] = Field(defaultdict(set), exclude=True, repr=False)
+    relationships_data: Dict[RelationshipType, Set["RelationshipData"]] = Field(
+        defaultdict(set), exclude=True, repr=False
+    )
 
     class Config:
-        arbitrary_types_allowed = True  # allows having custom classes for properties in model
+        arbitrary_types_allowed = (
+            True  # allows having custom classes for properties in model
+        )
         orm_mode = True  # allows using from_orm() method
         allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
 

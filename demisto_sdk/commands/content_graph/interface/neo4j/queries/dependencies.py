@@ -3,9 +3,20 @@ from typing import Dict, List, Set
 
 from neo4j import Transaction
 
-from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES, REPUTATION_COMMAND_NAMES, MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentType, Neo4jResult, RelationshipType
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query, to_neo4j_map
+from demisto_sdk.commands.common.constants import (
+    GENERIC_COMMANDS_NAMES,
+    REPUTATION_COMMAND_NAMES,
+    MarketplaceVersions,
+)
+from demisto_sdk.commands.content_graph.common import (
+    ContentType,
+    Neo4jResult,
+    RelationshipType,
+)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
+    run_query,
+    to_neo4j_map,
+)
 
 REPUTATION_COMMANDS_NODE_IDS = [
     f"{ContentType.COMMAND}:{cmd}" for cmd in REPUTATION_COMMAND_NAMES
@@ -36,11 +47,15 @@ def get_all_level_packs_dependencies(
         {"AND all(r IN relationships(path) WHERE r.mandatorily = true)" if mandatorily else ""}
         RETURN p1 as pack, collect(r) as relationships, collect(p2) AS dependencies
     """
-    result = run_query(tx, query, filter_list=list(filter_list) if filter_list else None)
+    result = run_query(
+        tx, query, filter_list=list(filter_list) if filter_list else None
+    )
     logger.info("Found dependencies.")
     return [
         Neo4jResult(
-            node_from=item.get("pack"), nodes_to=item.get("dependencies"), relationships=item.get("relationships")
+            node_from=item.get("pack"),
+            nodes_to=item.get("dependencies"),
+            relationships=item.get("relationships"),
         )
         for item in result
     ]
@@ -109,7 +124,9 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
     outputs: Dict[str, Set[str]] = {}
     for row in result:
         outputs.setdefault(row["excluded_content_item"], set()).add(row["reason"])
-    logger.info(f"Removed {marketplace} from marketplaces for {len(outputs.keys())} content items.")
+    logger.info(
+        f"Removed {marketplace} from marketplaces for {len(outputs.keys())} content items."
+    )
 
 
 def update_uses_for_integration_commands(tx: Transaction) -> None:
@@ -148,4 +165,6 @@ def create_depends_on_relationships(tx: Transaction) -> None:
     """
     result = run_query(tx, query).single()
     depends_on_count: int = result["depends_on_relationships"]
-    logger.info(f"Merged {depends_on_count} DEPENDS_ON relationships between {depends_on_count} packs.")
+    logger.info(
+        f"Merged {depends_on_count} DEPENDS_ON relationships between {depends_on_count} packs."
+    )

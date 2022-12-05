@@ -1,11 +1,9 @@
-
-
 class BaseClient:
     ...
 
 
 class FakeClient(BaseClient):
-    FAKE_CLASS_VAR = 'so fake'
+    FAKE_CLASS_VAR = "so fake"
 
     def __init__(self, arg1, arg2, arg3):
         self.arg1 = arg1

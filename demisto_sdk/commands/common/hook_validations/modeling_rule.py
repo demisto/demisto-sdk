@@ -5,7 +5,9 @@ import os
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
+    ContentEntityValidator,
+)
 from demisto_sdk.commands.common.tools import get_files_in_dir
 
 yaml = YAML_Handler()
@@ -16,9 +18,19 @@ class ModelingRuleValidator(ContentEntityValidator):
     ModelingRuleValidator is designed to validate the correctness of the file structure we enter to content repo.
     """
 
-    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, json_file_path=None):
-        super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         json_file_path=json_file_path)
+    def __init__(
+        self,
+        structure_validator,
+        ignored_errors=None,
+        print_as_warnings=False,
+        json_file_path=None,
+    ):
+        super().__init__(
+            structure_validator,
+            ignored_errors=ignored_errors,
+            print_as_warnings=print_as_warnings,
+            json_file_path=json_file_path,
+        )
         self._is_valid = True
 
     def is_valid_file(self, validate_rn=True, is_new_file=False, use_git=False):
@@ -42,9 +54,13 @@ class ModelingRuleValidator(ContentEntityValidator):
 
     def is_schema_file_exists(self):
         # Gets the schema.json file from the modeling rule folder
-        files_to_check = get_files_in_dir(os.path.dirname(self.file_path), ['json'], False)
+        files_to_check = get_files_in_dir(
+            os.path.dirname(self.file_path), ["json"], False
+        )
         if not files_to_check:
-            error_message, error_code = Errors.modeling_rule_missing_schema_file(self.file_path)
+            error_message, error_code = Errors.modeling_rule_missing_schema_file(
+                self.file_path
+            )
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False
@@ -54,17 +70,19 @@ class ModelingRuleValidator(ContentEntityValidator):
         """
         Check that the schema and rules keys are empty.
         """
-        with open(self.file_path, 'r') as yf:
+        with open(self.file_path, "r") as yf:
             yaml_obj = yaml.load(yf)
 
         # Check that the keys exists in yml
-        if 'rules' in yaml_obj and 'schema' in yaml_obj:
+        if "rules" in yaml_obj and "schema" in yaml_obj:
             # Check that the following keys in the yml are empty
-            if not yaml_obj['rules'] and not yaml_obj['schema']:
+            if not yaml_obj["rules"] and not yaml_obj["schema"]:
                 return True
             else:
                 error_message, error_code = Errors.modeling_rule_keys_not_empty()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(
+                    error_message, error_code, file_path=self.file_path
+                ):
                     self._is_valid = False
                     return False
 
@@ -78,14 +96,16 @@ class ModelingRuleValidator(ContentEntityValidator):
     def is_valid_rule_names(self):
         """Check if the rule file names is valid"""
         # Gets all the files in the modeling rule folder
-        files_to_check = get_files_in_dir(os.path.dirname(self.file_path), ['json', 'xif', 'yml'], False)
+        files_to_check = get_files_in_dir(
+            os.path.dirname(self.file_path), ["json", "xif", "yml"], False
+        )
         integrations_folder = os.path.basename(os.path.dirname(self.file_path))
         invalid_files = []
 
         for file_path in files_to_check:
             file_name = os.path.basename(file_path)
             # The schema has _schema.json suffix whereas the integration only has the .suffix
-            splitter = '_' if file_name.endswith('_schema.json') else '.'
+            splitter = "_" if file_name.endswith("_schema.json") else "."
             base_name = file_name.rsplit(splitter, 1)[0]
 
             if integrations_folder != base_name:

@@ -3,8 +3,10 @@ from typing import Any, Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.parsers.integration_script import (IntegrationScriptParser,
-                                                                           IntegrationScriptUnifier)
+from demisto_sdk.commands.content_graph.parsers.integration_script import (
+    IntegrationScriptParser,
+    IntegrationScriptUnifier,
+)
 
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):

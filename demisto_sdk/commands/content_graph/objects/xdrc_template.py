@@ -18,6 +18,4 @@ class XDRCTemplate(ContentItem, content_type=ContentType.XDRC_TEMPLATE):
 
     def dump(self, dir: DirectoryPath, _: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)
-        XDRCTemplateUnifier(
-            input=str(self.path.parent), output=dir
-        ).unify()
+        XDRCTemplateUnifier(input=str(self.path.parent), output=dir).unify()

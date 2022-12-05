@@ -28,7 +28,10 @@ class ContentDTO(BaseModel):
         start_time = time.time()
         if USE_FUTURE:
             with Pool() as pool:
-                pool.starmap(Pack.dump, ((pack, dir / pack.path.name, marketplace) for pack in self.packs))
+                pool.starmap(
+                    Pack.dump,
+                    ((pack, dir / pack.path.name, marketplace) for pack in self.packs),
+                )
 
         else:
             for pack in self.packs:

@@ -13,7 +13,7 @@ class JSONBased:
         if prefix:
             self.name = f'{prefix.rstrip("-")}-{name}.json'
         else:
-            self.name = f'{name}.json'
+            self.name = f"{name}.json"
 
         self._file_path = dir_path / self.name
         self.path = str(self._file_path)
@@ -26,7 +26,7 @@ class JSONBased:
         self._file_path.write_text(content, None)
 
     def get_path_from_pack(self):
-        dir_parts = str(self._file_path).split('/')
+        dir_parts = str(self._file_path).split("/")
         dir_from_packs = PACKS_DIR
         add_directory = False
         for directory in dir_parts:

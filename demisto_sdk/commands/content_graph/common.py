@@ -11,8 +11,12 @@ REPO_PATH = Path(get_content_path())  # type: ignore
 
 NEO4J_ADMIN_DOCKER = ""
 
-NEO4J_DATABASE_HTTP = os.getenv("DEMISTO_SDK_NEO4J_DATABASE_HTTP", "http://127.0.0.1:7474")
-NEO4J_DATABASE_URL = os.getenv("DEMISTO_SDK_NEO4J_DATABASE_URL", "bolt://127.0.0.1:7687")
+NEO4J_DATABASE_HTTP = os.getenv(
+    "DEMISTO_SDK_NEO4J_DATABASE_HTTP", "http://127.0.0.1:7474"
+)
+NEO4J_DATABASE_URL = os.getenv(
+    "DEMISTO_SDK_NEO4J_DATABASE_URL", "bolt://127.0.0.1:7687"
+)
 NEO4J_USERNAME = os.getenv("DEMISTO_SDK_NEO4J_USERNAME", "neo4j")
 NEO4J_PASSWORD = os.getenv("DEMISTO_SDK_NEO4J_PASSWORD", "test")
 
@@ -76,7 +80,7 @@ class ContentType(str, enum.Enum):
     XSIAM_DASHBOARD = "XSIAMDashboard"
     XSIAM_REPORT = "XSIAMReport"
     WIZARD = "Wizard"
-    XDRC_TEMPLATE = 'XDRCTemplate'
+    XDRC_TEMPLATE = "XDRCTemplate"
 
     @property
     def labels(self) -> List[str]:
@@ -135,7 +139,10 @@ class ContentType(str, enum.Enum):
         for content_type in ContentType:
             if content_type in ContentType.abstract_types():
                 continue
-            if not include_non_content_items and content_type in ContentType.non_content_items():
+            if (
+                not include_non_content_items
+                and content_type in ContentType.non_content_items()
+            ):
                 continue
             yield content_type
 
@@ -166,7 +173,9 @@ class Relationships(dict):
 
     def update(self, other: "Relationships") -> None:  # type: ignore
         for relationship, parsed_data in other.items():
-            if relationship not in RelationshipType or not isinstance(parsed_data, list):
+            if relationship not in RelationshipType or not isinstance(
+                parsed_data, list
+            ):
                 raise TypeError
             self.add_batch(relationship, parsed_data)
 

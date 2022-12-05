@@ -7,14 +7,14 @@ from CommonServerPython import *
 # disable insecure warnings
 urllib3.disable_warnings()
 
-INTEGRATION_NAME = 'Azure'
-AZUREJSON_URL = 'https://www.microsoft.com/en-us/download/confirmation.aspx?id=56519'  # disable-secrets-detection
+INTEGRATION_NAME = "Azure"
+AZUREJSON_URL = "https://www.microsoft.com/en-us/download/confirmation.aspx?id=56519"  # disable-secrets-detection
 
 ERROR_TYPE_TO_MESSAGE = {
-    requests.ConnectionError: F'Connection error in the API call to {INTEGRATION_NAME}.\n',
-    requests.exceptions.SSLError: F'Connection error in the API call to {INTEGRATION_NAME}.\n'
-                                  F'Check your \'Trust any certificate\' parameter.\n\n',
-    requests.exceptions.HTTPError: F'Error issuing the request call to {INTEGRATION_NAME}.\n\n',
+    requests.ConnectionError: f"Connection error in the API call to {INTEGRATION_NAME}.\n",
+    requests.exceptions.SSLError: f"Connection error in the API call to {INTEGRATION_NAME}.\n"
+    f"Check your 'Trust any certificate' parameter.\n\n",
+    requests.exceptions.HTTPError: f"Error issuing the request call to {INTEGRATION_NAME}.\n\n",
 }
 
 
@@ -28,8 +28,14 @@ class Client(BaseClient):
         proxy (bool): False if feed HTTPS server certificate will not use proxies, True otherwise.
     """
 
-    def __init__(self, regions_list: list, services_list: list, polling_timeout: int = 20, insecure: bool = False,
-                 proxy: bool = False):
+    def __init__(
+        self,
+        regions_list: list,
+        services_list: list,
+        polling_timeout: int = 20,
+        insecure: bool = False,
+        proxy: bool = False,
+    ):
         super().__init__(base_url=AZUREJSON_URL, verify=not insecure, proxy=proxy)
         self.regions_list = regions_list
         self.services_list = services_list
@@ -59,12 +65,12 @@ class Client(BaseClient):
             type_ = FeedIndicatorType.IPv6
 
         else:
-            LOG(F'{INTEGRATION_NAME} - Unknown IP version: {azure_ip_address}')
+            LOG(f"{INTEGRATION_NAME} - Unknown IP version: {azure_ip_address}")
             return {}
 
         ip_object = {
-            'value': azure_ip_address,
-            'type': type_,
+            "value": azure_ip_address,
+            "type": type_,
         }
         ip_object.update(indicator_metadata)
 
@@ -77,21 +83,25 @@ class Client(BaseClient):
             str. The download link.
         """
         azure_url_response = self._http_request(
-            method='GET',
+            method="GET",
             full_url=self._base_url,
-            url_suffix='',
+            url_suffix="",
             stream=False,
             timeout=self._polling_timeout,
-            resp_type='text'
+            resp_type="text",
         )
 
-        download_link_search_regex = re.search(r'downloadData={.+(https://(.)+\.json)\",', azure_url_response)
-        download_link = download_link_search_regex.group(1) if download_link_search_regex else None
+        download_link_search_regex = re.search(
+            r"downloadData={.+(https://(.)+\.json)\",", azure_url_response
+        )
+        download_link = (
+            download_link_search_regex.group(1) if download_link_search_regex else None
+        )
 
         if download_link is None:
-            raise RuntimeError(F'{INTEGRATION_NAME} - Download link not found')
+            raise RuntimeError(f"{INTEGRATION_NAME} - Download link not found")
 
-        demisto.debug(F'download link: {download_link}')
+        demisto.debug(f"download link: {download_link}")
 
         return download_link
 
@@ -105,14 +115,14 @@ class Client(BaseClient):
             Dict. Content of values section in the Azure downloaded file.
         """
         file_download_response = self._http_request(
-            method='GET',
+            method="GET",
             full_url=download_link,
-            url_suffix='',
+            url_suffix="",
             stream=True,
-            timeout=self._polling_timeout
+            timeout=self._polling_timeout,
         )
 
-        return file_download_response.get('values')
+        return file_download_response.get("values")
 
     @staticmethod
     def extract_metadata_of_indicators_group(indicators_group_data: Dict) -> Dict:
@@ -126,18 +136,22 @@ class Client(BaseClient):
         """
         indicator_metadata = dict()
 
-        indicator_metadata['id'] = indicators_group_data.get('id')
-        indicator_metadata['name'] = indicators_group_data.get('name')
-        indicator_properties = indicators_group_data.get('properties')
+        indicator_metadata["id"] = indicators_group_data.get("id")
+        indicator_metadata["name"] = indicators_group_data.get("name")
+        indicator_properties = indicators_group_data.get("properties")
 
         if not indicator_properties:
-            LOG(F'{INTEGRATION_NAME} - no properties for indicators group {indicator_metadata["name"]}')
+            LOG(
+                f'{INTEGRATION_NAME} - no properties for indicators group {indicator_metadata["name"]}'
+            )
             return {}
 
-        indicator_metadata['region'] = indicator_properties.get('region')
-        indicator_metadata['platform'] = indicator_properties.get('platform')
-        indicator_metadata['system_service'] = indicator_properties.get('systemService')
-        indicator_metadata['address_prefixes'] = indicator_properties.get('addressPrefixes', [])
+        indicator_metadata["region"] = indicator_properties.get("region")
+        indicator_metadata["platform"] = indicator_properties.get("platform")
+        indicator_metadata["system_service"] = indicator_properties.get("systemService")
+        indicator_metadata["address_prefixes"] = indicator_properties.get(
+            "addressPrefixes", []
+        )
 
         return indicator_metadata
 
@@ -153,32 +167,42 @@ class Client(BaseClient):
         results = []
 
         if values_from_file is None:
-            LOG(F'{INTEGRATION_NAME} - No values in JSON response')
+            LOG(f"{INTEGRATION_NAME} - No values in JSON response")
             return []
 
         for indicators_group in values_from_file:
-            demisto.debug(F'{INTEGRATION_NAME} - Extracting value: {indicators_group.get("id")}')
+            demisto.debug(
+                f'{INTEGRATION_NAME} - Extracting value: {indicators_group.get("id")}'
+            )
 
-            indicator_metadata = self.extract_metadata_of_indicators_group(indicators_group)
+            indicator_metadata = self.extract_metadata_of_indicators_group(
+                indicators_group
+            )
             if not indicator_metadata:
                 continue
 
-            is_region_not_in_filter = 'All' not in self.regions_list and \
-                                      indicator_metadata['region'] not in self.regions_list
-            is_service_not_in_filter = 'All' not in self.services_list and \
-                                       indicator_metadata['system_service'] not in self.services_list
+            is_region_not_in_filter = (
+                "All" not in self.regions_list
+                and indicator_metadata["region"] not in self.regions_list
+            )
+            is_service_not_in_filter = (
+                "All" not in self.services_list
+                and indicator_metadata["system_service"] not in self.services_list
+            )
 
             if is_region_not_in_filter or is_service_not_in_filter:
                 continue
 
-            for address in indicator_metadata['address_prefixes']:
+            for address in indicator_metadata["address_prefixes"]:
                 results.append(
-                    self.build_ip_indicator(address,
-                                            azure_name=indicator_metadata['name'],
-                                            azure_id=indicator_metadata['id'],
-                                            azure_region=indicator_metadata['region'],
-                                            azure_platform=indicator_metadata['platform'],
-                                            azure_system_service=indicator_metadata['system_service'])
+                    self.build_ip_indicator(
+                        address,
+                        azure_name=indicator_metadata["name"],
+                        azure_id=indicator_metadata["id"],
+                        azure_region=indicator_metadata["region"],
+                        azure_platform=indicator_metadata["platform"],
+                        azure_system_service=indicator_metadata["system_service"],
+                    )
                 )
 
         return results
@@ -195,17 +219,23 @@ class Client(BaseClient):
 
             return results
 
-        except (requests.exceptions.SSLError, requests.ConnectionError, requests.exceptions.HTTPError) as err:
+        except (
+            requests.exceptions.SSLError,
+            requests.ConnectionError,
+            requests.exceptions.HTTPError,
+        ) as err:
             demisto.debug(str(err))
             raise Exception(ERROR_TYPE_TO_MESSAGE[err.__class__] + str(err))
 
         except RuntimeError as err:
             demisto.debug(str(err))
-            raise RuntimeError('Could not fetch download link from Azure')
+            raise RuntimeError("Could not fetch download link from Azure")
 
         except ValueError as err:
             demisto.debug(str(err))
-            raise ValueError(f'Could not parse returned data to Json. \n\nError massage: {err}')
+            raise ValueError(
+                f"Could not parse returned data to Json. \n\nError massage: {err}"
+            )
 
 
 def test_module(client: Client) -> Tuple[str, Dict, Dict]:
@@ -216,22 +246,26 @@ def test_module(client: Client) -> Tuple[str, Dict, Dict]:
         str. ok for success, relevant error string otherwise.
     """
     try:
-        if 'All' in client.regions_list and len(client.regions_list) >= 2:
-            err_msg = 'ConfigurationError: You may not select additional regions if you selected \'All\''
+        if "All" in client.regions_list and len(client.regions_list) >= 2:
+            err_msg = "ConfigurationError: You may not select additional regions if you selected 'All'"
             return_error(err_msg)
 
-        if 'All' in client.services_list and len(client.services_list) >= 2:
-            err_msg = 'ConfigurationError: You may not select additional services if you selected \'All\''
+        if "All" in client.services_list and len(client.services_list) >= 2:
+            err_msg = "ConfigurationError: You may not select additional services if you selected 'All'"
             return_error(err_msg)
 
         download_link = client.get_azure_download_link()
         client.get_download_file_content_values(download_link)
 
-    except (requests.exceptions.SSLError, requests.ConnectionError, requests.exceptions.HTTPError) as err:
+    except (
+        requests.exceptions.SSLError,
+        requests.ConnectionError,
+        requests.exceptions.HTTPError,
+    ) as err:
         demisto.debug(str(err))
         raise Exception(ERROR_TYPE_TO_MESSAGE[err.__class__] + str(err))
 
-    return 'ok', {}, {}
+    return "ok", {}, {}
 
 
 def get_indicators_command(client: Client) -> Tuple[str, Dict, Dict]:
@@ -245,17 +279,23 @@ def get_indicators_command(client: Client) -> Tuple[str, Dict, Dict]:
             str. Information to be printed to war room.
             Dict. The raw data of the indicators.
     """
-    limit = int(demisto.args().get('limit')) if 'limit' in demisto.args() else 10
+    limit = int(demisto.args().get("limit")) if "limit" in demisto.args() else 10
 
     indicators, raw_response = fetch_indicators_command(client, limit)
 
-    human_readable = tableToMarkdown('Indicators from Azure Feed:', indicators,
-                                     headers=['value', 'type'], removeNull=True)
+    human_readable = tableToMarkdown(
+        "Indicators from Azure Feed:",
+        indicators,
+        headers=["value", "type"],
+        removeNull=True,
+    )
 
-    return human_readable, {}, {'raw_response': raw_response}
+    return human_readable, {}, {"raw_response": raw_response}
 
 
-def fetch_indicators_command(client: Client, limit: int = -1) -> Tuple[List[Dict], List]:
+def fetch_indicators_command(
+    client: Client, limit: int = -1
+) -> Tuple[List[Dict], List]:
     """Fetches indicators from the feed to the indicators tab.
     Args:
         client (Client): Client object configured according to instance arguments.
@@ -274,12 +314,14 @@ def fetch_indicators_command(client: Client, limit: int = -1) -> Tuple[List[Dict
         iterator = iterator[:limit]
 
     for indicator in iterator:
-        indicators.append({
-            'value': indicator['value'],
-            'type': indicator['type'],
-            'fields': {'region': indicator.get('azure_region')},
-            'rawJSON': indicator
-        })
+        indicators.append(
+            {
+                "value": indicator["value"],
+                "type": indicator["type"],
+                "fields": {"region": indicator.get("azure_region")},
+                "rawJSON": indicator,
+            }
+        )
 
         raw_response.append(indicator)
 
@@ -290,45 +332,45 @@ def main():
     """
     PARSE AND VALIDATE INTEGRATION PARAMS
     """
-    regions_list = argToList(demisto.params().get('regions'))
+    regions_list = argToList(demisto.params().get("regions"))
     if not regions_list:
-        regions_list = ['All']
+        regions_list = ["All"]
 
-    services_list = argToList(demisto.params().get('services'))
+    services_list = argToList(demisto.params().get("services"))
     if not services_list:
-        services_list = ['All']
+        services_list = ["All"]
 
-    polling_arg = demisto.params().get('polling_timeout', '')
+    polling_arg = demisto.params().get("polling_timeout", "")
     polling_timeout = int(polling_arg) if polling_arg.isdigit() else 20
-    insecure = demisto.params().get('insecure', False)
-    proxy = demisto.params().get('proxy', False)
+    insecure = demisto.params().get("insecure", False)
+    proxy = demisto.params().get("proxy", False)
 
     command = demisto.command()
-    demisto.info(f'Command being called is {command}')
+    demisto.info(f"Command being called is {command}")
 
     try:
         client = Client(regions_list, services_list, polling_timeout, insecure, proxy)
 
         commands = {
-            'test-module': test_module,
-            'azure-get-indicators': get_indicators_command
+            "test-module": test_module,
+            "azure-get-indicators": get_indicators_command,
         }
 
         if command in commands:
             return_outputs(*commands[command](client))
 
-        elif command == 'fetch-indicators':
+        elif command == "fetch-indicators":
             indicators, _ = fetch_indicators_command(client)
 
             for single_batch in batch(indicators, batch_size=2000):
                 demisto.createIndicators(single_batch)
 
         else:
-            raise NotImplementedError(f'Command {command} is not implemented.')
+            raise NotImplementedError(f"Command {command} is not implemented.")
 
     except Exception:
         raise
 
 
-if __name__ in ['__main__', 'builtin', 'builtins']:
+if __name__ in ["__main__", "builtin", "builtins"]:
     main()

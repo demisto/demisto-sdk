@@ -1,8 +1,10 @@
 from demisto_sdk.commands.format.update_description import DescriptionFormat
-from demisto_sdk.tests.constants_test import (SOURCE_DESCRIPTION_FORMATTED_CONTRIB_DETAILS,
-                                              SOURCE_DESCRIPTION_FORMATTED_WITH_BETA_DESCRIPTION,
-                                              SOURCE_DESCRIPTION_WITH_CONTRIB_DETAILS,
-                                              SOURCE_DESCRIPTION_WITHOUT_BETA_DESCRIPTION)
+from demisto_sdk.tests.constants_test import (
+    SOURCE_DESCRIPTION_FORMATTED_CONTRIB_DETAILS,
+    SOURCE_DESCRIPTION_FORMATTED_WITH_BETA_DESCRIPTION,
+    SOURCE_DESCRIPTION_WITH_CONTRIB_DETAILS,
+    SOURCE_DESCRIPTION_WITHOUT_BETA_DESCRIPTION,
+)
 
 
 class TestDescriptionFormat:
@@ -15,7 +17,7 @@ class TestDescriptionFormat:
         Then
             - Ensure the details are deleted from the description file
         """
-        with open(SOURCE_DESCRIPTION_FORMATTED_CONTRIB_DETAILS, 'r') as f:
+        with open(SOURCE_DESCRIPTION_FORMATTED_CONTRIB_DETAILS, "r") as f:
             expected = f.read()
         formatter = DescriptionFormat(input=SOURCE_DESCRIPTION_WITH_CONTRIB_DETAILS)
         formatter.remove_community_partner_details()
@@ -30,7 +32,7 @@ class TestDescriptionFormat:
         Then
             - Ensure the beta description is added to the description file
         """
-        with open(SOURCE_DESCRIPTION_FORMATTED_WITH_BETA_DESCRIPTION, 'r') as f:
+        with open(SOURCE_DESCRIPTION_FORMATTED_WITH_BETA_DESCRIPTION, "r") as f:
             expected = f.read()
         formatter = DescriptionFormat(input=SOURCE_DESCRIPTION_WITHOUT_BETA_DESCRIPTION)
         formatter.add_betaintegration_description()

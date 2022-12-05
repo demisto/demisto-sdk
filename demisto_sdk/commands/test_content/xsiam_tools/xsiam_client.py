@@ -16,16 +16,24 @@ logger = logging.getLogger(__name__)
 
 
 class XsiamApiClientConfig(BaseModel):
-    base_url: HttpUrl = Field(default=os.getenv('DEMISTO_BASE_URL'), description="XSIAM Tenant Base URL")
-    api_key: SecretStr = Field(default=SecretStr(os.getenv('DEMISTO_API_KEY', '')), description="XSIAM API Key")
-    auth_id: str = Field(default=os.getenv('XSIAM_AUTH_ID'), description="XSIAM Auth ID")
-    token: Optional[SecretStr] = Field(default=SecretStr(os.getenv('XSIAM_TOKEN', '')), description="XSIAM Token")
+    base_url: HttpUrl = Field(
+        default=os.getenv("DEMISTO_BASE_URL"), description="XSIAM Tenant Base URL"
+    )
+    api_key: SecretStr = Field(
+        default=SecretStr(os.getenv("DEMISTO_API_KEY", "")), description="XSIAM API Key"
+    )
+    auth_id: str = Field(
+        default=os.getenv("XSIAM_AUTH_ID"), description="XSIAM Auth ID"
+    )
+    token: Optional[SecretStr] = Field(
+        default=SecretStr(os.getenv("XSIAM_TOKEN", "")), description="XSIAM Token"
+    )
     collector_token: Optional[SecretStr] = Field(
-        default=SecretStr(os.getenv('XSIAM_COLLECTOR_TOKEN', '')),
-        description="XSIAM HTTP Collector Token"
+        default=SecretStr(os.getenv("XSIAM_COLLECTOR_TOKEN", "")),
+        description="XSIAM HTTP Collector Token",
     )
 
-    @validator('base_url', 'api_key', 'auth_id', always=True)
+    @validator("base_url", "api_key", "auth_id", always=True)
     def validate_client_config(cls, v, field: ModelField):
         if not v:
             raise ValueError(
@@ -34,14 +42,14 @@ class XsiamApiClientConfig(BaseModel):
             )
         return v
 
-    @validator('collector_token', always=True)
+    @validator("collector_token", always=True)
     def validate_client_config_token(cls, v, values, field: ModelField):
         if not v:
-            other_token_name = 'token'
+            other_token_name = "token"
             if not values.get(other_token_name):
                 raise ValueError(
-                    f"XSIAM client configuration is not complete: you must set one of \"{field.name}\" or "
-                    f"\"{other_token_name}\" either explicitly on the command line or via their associated "
+                    f'XSIAM client configuration is not complete: you must set one of "{field.name}" or '
+                    f'"{other_token_name}" either explicitly on the command line or via their associated '
                     "environment variables"
                 )
         return v
@@ -61,7 +69,13 @@ class XsiamApiInterface(ABC):
         pass
 
     @abstractmethod
-    def push_to_dataset(self, data: List[Dict[str, Any]], vendor: str, product: str, data_format: str = 'json'):
+    def push_to_dataset(
+        self,
+        data: List[Dict[str, Any]],
+        vendor: str,
+        product: str,
+        data_format: str = "json",
+    ):
         pass
 
     @abstractmethod
@@ -76,23 +90,35 @@ class XsiamApiInterface(ABC):
 class XsiamApiClient(XsiamApiInterface):
     def __init__(self, config: XsiamApiClientConfig):
         self.base_url = config.base_url
-        self.api_key = config.api_key.get_secret_value() if isinstance(config.api_key, SecretStr) else config.api_key
+        self.api_key = (
+            config.api_key.get_secret_value()
+            if isinstance(config.api_key, SecretStr)
+            else config.api_key
+        )
         self.auth_id = config.auth_id
-        self.token = config.token.get_secret_value() if isinstance(
-            config.token, SecretStr) else config.token
-        self.collector_token = config.collector_token.get_secret_value() if isinstance(
-            config.collector_token, SecretStr) else config.collector_token
+        self.token = (
+            config.token.get_secret_value()
+            if isinstance(config.token, SecretStr)
+            else config.token
+        )
+        self.collector_token = (
+            config.collector_token.get_secret_value()
+            if isinstance(config.collector_token, SecretStr)
+            else config.collector_token
+        )
         self.__session: requests.Session = None  # type: ignore
 
     @property
     def _session(self) -> requests.Session:
         if not self.__session:
             self._session = requests.Session()
-            self._session.headers.update({
-                'x-xdr-auth-id': self.auth_id,
-                'Authorization': self.api_key,
-                'Content-Type': 'application/json',
-            })
+            self._session.headers.update(
+                {
+                    "x-xdr-auth-id": self.auth_id,
+                    "Authorization": self.api_key,
+                    "Content-Type": "application/json",
+                }
+            )
         return self.__session
 
     @_session.setter
@@ -101,116 +127,123 @@ class XsiamApiClient(XsiamApiInterface):
 
     @property
     def installed_packs(self) -> List[Dict[str, Any]]:
-        endpoint = urljoin(self.base_url, 'xsoar/contentpacks/metadata/installed')
+        endpoint = urljoin(self.base_url, "xsoar/contentpacks/metadata/installed")
         response = self._session.get(endpoint)
         response.raise_for_status()
         return response.json()
 
     def search_pack(self, pack_id):
-        endpoint = urljoin(self.base_url, f'xsoar/contentpacks/marketplace/{pack_id}')
+        endpoint = urljoin(self.base_url, f"xsoar/contentpacks/marketplace/{pack_id}")
         response = self._session.get(endpoint)
         response.raise_for_status()
         logger.debug(f'Found pack "{pack_id}" in bucket!')
         data = response.json()
-        pack_data = {
-            'id': data.get('id'),
-            'version': data.get('currentVersion')
-        }
+        pack_data = {"id": data.get("id"), "version": data.get("currentVersion")}
         return pack_data
 
     def uninstall_packs(self, pack_ids: List[str]):
-        endpoint = urljoin(self.base_url, 'xsoar/contentpacks/installed/delete')
+        endpoint = urljoin(self.base_url, "xsoar/contentpacks/installed/delete")
         body = {"IDs": pack_ids}
         response = self._session.post(endpoint, json=body)
         response.raise_for_status()
 
     def upload_packs(self, zip_path: Path):
-        endpoint = urljoin(self.base_url, 'xsoar/contentpacks/installed/upload')
-        header_params = {
-            'Content-Type': 'multipart/form-data'
-        }
+        endpoint = urljoin(self.base_url, "xsoar/contentpacks/installed/upload")
+        header_params = {"Content-Type": "multipart/form-data"}
         file_path = os.path.abspath(zip_path)
-        files = {'file': file_path}
+        files = {"file": file_path}
         response = self._session.post(endpoint, files=files, headers=header_params)
         response.raise_for_status()
-        logging.info(f'All packs from file {zip_path} were successfully installed on server {self.base_url}')
+        logging.info(
+            f"All packs from file {zip_path} were successfully installed on server {self.base_url}"
+        )
 
     def install_packs(self, packs: List[Dict[str, Any]]):
-        endpoint = urljoin(self.base_url, 'xsoar/contentpacks/marketplace/install')
-        response = self._session.post(url=endpoint, json={'packs': packs, 'ignoreWarnings': True})
+        endpoint = urljoin(self.base_url, "xsoar/contentpacks/marketplace/install")
+        response = self._session.post(
+            url=endpoint, json={"packs": packs, "ignoreWarnings": True}
+        )
         response.raise_for_status()
         if response.status_code in range(200, 300) and response.status_code != 204:
             response_data = response.json()
             packs_data = [
-                {
-                    'ID': pack.get('id'),
-                    'CurrentVersion': pack.get('currentVersion')
-                } for pack in response_data
+                {"ID": pack.get("id"), "CurrentVersion": pack.get("currentVersion")}
+                for pack in response_data
             ]
-            logger.info(f'Packs were successfully installed on server {self.base_url}')
-            logger.debug(f'The packs that were successfully installed on server {self.base_url}:\n{packs_data}')
+            logger.info(f"Packs were successfully installed on server {self.base_url}")
+            logger.debug(
+                f"The packs that were successfully installed on server {self.base_url}:\n{packs_data}"
+            )
         elif response.status_code == 204:
-            logger.info(f'All packs were successfully installed on server {self.base_url}')
+            logger.info(
+                f"All packs were successfully installed on server {self.base_url}"
+            )
 
     def sync_marketplace(self):
-        endpoint = urljoin(self.base_url, 'xsoar/contentpacks/marketplace/sync')
+        endpoint = urljoin(self.base_url, "xsoar/contentpacks/marketplace/sync")
         response = self._session.post(endpoint)
         response.raise_for_status()
-        logger.info(f'Marketplace was successfully synced on server {self.base_url}')
+        logger.info(f"Marketplace was successfully synced on server {self.base_url}")
 
-    def push_to_dataset(self, data: List[Dict[str, Any]], vendor: str, product: str, data_format: str = 'json'):
+    def push_to_dataset(
+        self,
+        data: List[Dict[str, Any]],
+        vendor: str,
+        product: str,
+        data_format: str = "json",
+    ):
         if self.token:
-            endpoint = urljoin(self.base_url, 'logs/v1/xsiam')
+            endpoint = urljoin(self.base_url, "logs/v1/xsiam")
             additional_headers = {
-                'authorization': self.token,
-                'format': data_format,
-                'product': product,
-                'vendor': vendor,
-                'content-encoding': 'gzip'
+                "authorization": self.token,
+                "format": data_format,
+                "product": product,
+                "vendor": vendor,
+                "content-encoding": "gzip",
             }
-            token_type = 'xsiam_token'
+            token_type = "xsiam_token"
         elif self.collector_token:
-            endpoint = urljoin(self.base_url, 'logs/v1/event')
+            endpoint = urljoin(self.base_url, "logs/v1/event")
             additional_headers = {
-                'authorization': self.collector_token,
-                'content-type': 'application/json' if data_format.casefold == 'json' else 'text/plain',
-                'content-encoding': 'gzip'
+                "authorization": self.collector_token,
+                "content-type": "application/json"
+                if data_format.casefold == "json"
+                else "text/plain",
+                "content-encoding": "gzip",
             }
-            token_type = 'collector_token'
+            token_type = "collector_token"
 
-        formatted_data = '\n'.join([json.dumps(d) for d in data])
-        compressed_data = gzip.compress(formatted_data.encode('utf-8'))
-        response = self._session.post(endpoint, data=compressed_data, headers=additional_headers)
+        formatted_data = "\n".join([json.dumps(d) for d in data])
+        compressed_data = gzip.compress(formatted_data.encode("utf-8"))
+        response = self._session.post(
+            endpoint, data=compressed_data, headers=additional_headers
+        )
         try:
             data = response.json()
         except requests.exceptions.JSONDecodeError:
             error = response.text
-            err_msg = f'Failed to push using {token_type} - with status code {response.status_code}'
-            err_msg += f'\n{error}' if error else ''
+            err_msg = f"Failed to push using {token_type} - with status code {response.status_code}"
+            err_msg += f"\n{error}" if error else ""
             logger.error(err_msg)
             response.raise_for_status()
         if response.status_code in range(200, 300):
             return data
         else:
             logger.error(
-                f'Failed to push using {token_type} - with status code {response.status_code}\n{pformat(data)}'
+                f"Failed to push using {token_type} - with status code {response.status_code}\n{pformat(data)}"
             )
             response.raise_for_status()
 
     def start_xql_query(self, query: str):
-        body = {
-            "request_data": {
-                "query": query
-            }
-        }
-        endpoint = urljoin(self.base_url, 'public_api/v1/xql/start_xql_query/')
-        logger.info(f'Starting xql query:\nendpoint={endpoint}\n{query=}')
+        body = {"request_data": {"query": query}}
+        endpoint = urljoin(self.base_url, "public_api/v1/xql/start_xql_query/")
+        logger.info(f"Starting xql query:\nendpoint={endpoint}\n{query=}")
         response = self._session.post(endpoint, json=body)
-        logger.debug('Request completed to start xql query')
+        logger.debug("Request completed to start xql query")
         data = response.json()
 
         if response.status_code in range(200, 300):
-            execution_id: str = data.get('reply', '')
+            execution_id: str = data.get("reply", "")
             return execution_id
         else:
             logger.error(
@@ -219,26 +252,35 @@ class XsiamApiClient(XsiamApiInterface):
             response.raise_for_status()
 
     def get_xql_query_result(self, execution_id: str, timeout: int = 300):
-        payload = json.dumps({
-            "request_data": {
-                "query_id": execution_id,
-                "pending_flag": False,
-                "limit": 1000,
-                "format": "json"
+        payload = json.dumps(
+            {
+                "request_data": {
+                    "query_id": execution_id,
+                    "pending_flag": False,
+                    "limit": 1000,
+                    "format": "json",
+                }
             }
-        })
-        endpoint = urljoin(self.base_url, 'public_api/v1/xql/get_query_results/')
-        logger.info(f'Getting xql query results: endpoint={endpoint}')
+        )
+        endpoint = urljoin(self.base_url, "public_api/v1/xql/get_query_results/")
+        logger.info(f"Getting xql query results: endpoint={endpoint}")
         response = self._session.post(endpoint, data=payload, timeout=timeout)
-        logger.debug('Request completed to get xql query results')
+        logger.debug("Request completed to get xql query results")
         data = response.json()
         logger.debug(pformat(data))
 
-        if response.status_code in range(200, 300) and data.get('reply', {}).get('status', '') == 'SUCCESS':
-            reply_results_data = data.get('reply', {}).get('results', {}).get('data', [])
+        if (
+            response.status_code in range(200, 300)
+            and data.get("reply", {}).get("status", "") == "SUCCESS"
+        ):
+            reply_results_data = (
+                data.get("reply", {}).get("results", {}).get("data", [])
+            )
             return reply_results_data
         else:
-            err_msg = (f'Failed to get xql query results for execution_id "{execution_id}"'
-                       f' - with status code {response.status_code}. data:\n{pformat(data)}')
+            err_msg = (
+                f'Failed to get xql query results for execution_id "{execution_id}"'
+                f" - with status code {response.status_code}. data:\n{pformat(data)}"
+            )
             logger.error(err_msg)
             response.raise_for_status()

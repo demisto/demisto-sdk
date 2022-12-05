@@ -7,17 +7,27 @@ from typing import TYPE_CHECKING, Any, Generator, List, Optional
 from packaging.version import parse
 from pydantic import BaseModel, Field
 
-from demisto_sdk.commands.common.constants import CONTRIBUTORS_README_TEMPLATE, MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    CONTRIBUTORS_README_TEMPLATE,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import MarketplaceTagParser
-from demisto_sdk.commands.content_graph.common import (PACK_METADATA_FILENAME, ContentType, Nodes, Relationships,
-                                                       RelationshipType)
+from demisto_sdk.commands.content_graph.common import (
+    PACK_METADATA_FILENAME,
+    ContentType,
+    Nodes,
+    Relationships,
+    RelationshipType,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
-from demisto_sdk.commands.content_graph.objects.generic_definition import GenericDefinition
+from demisto_sdk.commands.content_graph.objects.generic_definition import (
+    GenericDefinition,
+)
 from demisto_sdk.commands.content_graph.objects.generic_field import GenericField
 from demisto_sdk.commands.content_graph.objects.generic_module import GenericModule
 from demisto_sdk.commands.content_graph.objects.generic_type import GenericType
@@ -180,7 +190,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             content_item_dct[c.content_type].append(c)
 
         # If there is no server_min_version, set it to the maximum of its content items fromversion
-        self.server_min_version = self.server_min_version or str(max(parse(content_item.fromversion) for content_item in content_items))
+        self.server_min_version = self.server_min_version or str(
+            max(parse(content_item.fromversion) for content_item in content_items)
+        )
         self.content_items = PackContentItems.parse_obj(content_item_dct)
 
     def dump_metadata(self, path: Path) -> None:

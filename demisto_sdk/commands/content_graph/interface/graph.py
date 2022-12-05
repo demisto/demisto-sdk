@@ -19,7 +19,9 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def create_relationships(self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]) -> None:
+    def create_relationships(
+        self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]
+    ) -> None:
         pass
 
     @abstractmethod
@@ -53,7 +55,9 @@ class ContentGraphInterface(ABC):
             List[BaseContent]: The search results
         """
         if not marketplace and all_level_dependencies:
-            raise ValueError("Cannot search for all level dependencies without a marketplace")
+            raise ValueError(
+                "Cannot search for all level dependencies without a marketplace"
+            )
         if ContentGraphInterface._calculate_dependencies:
             self.create_pack_dependencies()
         return []
@@ -72,7 +76,9 @@ class ContentGraphInterface(ABC):
             ContentDTO: Marshalled object.
         """
         packs = self.search(
-            marketplace, content_type=ContentType.PACK, all_level_dependencies=all_level_dependencies,
+            marketplace,
+            content_type=ContentType.PACK,
+            all_level_dependencies=all_level_dependencies,
         )
         return ContentDTO(packs=packs)
 

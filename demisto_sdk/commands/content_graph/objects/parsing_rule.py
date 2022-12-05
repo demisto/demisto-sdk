@@ -11,7 +11,7 @@ class ParsingRule(ContentItem, content_type=ContentType.PARSING_RULE):  # type: 
     def metadata_fields(self) -> Set[str]:
         return {"name", "description"}
 
-    def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.MarketplaceV2) -> dict:
+    def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.MarketplaceV2, **kwargs) -> dict:
         data = super().prepare_for_upload(marketplace)
         data = RuleUnifier.unify(self.path, data, marketplace)
         return data

@@ -1,4 +1,3 @@
-import shutil
 from abc import abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Set
@@ -95,7 +94,7 @@ class ContentItem(BaseContent):
             return self.handler.load(f)
 
     @abstractmethod
-    def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR) -> dict:
+    def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
         if marketplace != MarketplaceVersions.XSOAR:
             data = self.data
             alternate_item_fields(data)

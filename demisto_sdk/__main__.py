@@ -12,7 +12,7 @@ import typer
 from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (ENV_DEMISTO_SDK_MARKETPLACE, MODELING_RULES_DIR, PARSING_RULES_DIR,
+from demisto_sdk.commands.common.constants import (ENV_DEMISTO_SDK_MARKETPLACE,
                                                    FileType)
 from demisto_sdk.commands.common.content_constant_paths import ALL_PACKS_DEPENDENCIES_DEFAULT_PATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
@@ -22,6 +22,7 @@ from demisto_sdk.commands.common.tools import (find_type, get_last_remote_releas
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data, test_modeling_rule
+from demisto_sdk.commands.unify.prepare_upload_manager import PrepareUploadManager
 from demisto_sdk.commands.upload.upload import upload_content_entity
 from demisto_sdk.utils.utils import check_configuration_file
 
@@ -291,16 +292,18 @@ def unify(**kwargs):
         # pass arguments to GenericModule unifier and call the command
         generic_module_unifier = GenericModuleUnifier(**kwargs)
         generic_module_unifier.merge_generic_module_with_its_dashboards()
-    elif any(rule_dir in os.path.abspath(kwargs['input']) for rule_dir in [PARSING_RULES_DIR, MODELING_RULES_DIR]):
-        from demisto_sdk.commands.unify.rule_unifier import RuleUnifier
-        rule_unifier = RuleUnifier(**kwargs)
-        rule_unifier.unify()
     else:
-        from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
+        PrepareUploadManager.prepare_for_upload(**kwargs)
+    # elif any(rule_dir in os.path.abspath(kwargs['input']) for rule_dir in [PARSING_RULES_DIR, MODELING_RULES_DIR]):
+    #     from demisto_sdk.commands.unify.rule_unifier import RuleUnifier
+    #     rule_unifier = RuleUnifier(**kwargs)
+    #     rule_unifier.unify()
+    # else:
+    #     from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
 
-        # pass arguments to YML unifier and call the command
-        yml_unifier = IntegrationScriptUnifier(**kwargs, custom=custom)
-        yml_unifier.unify()
+    #     # pass arguments to YML unifier and call the command
+    #     yml_unifier = IntegrationScriptUnifier(**kwargs, custom=custom)
+    #     yml_unifier.unify()
 
     return 0
 

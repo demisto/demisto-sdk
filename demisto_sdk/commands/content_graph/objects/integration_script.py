@@ -20,7 +20,7 @@ class IntegrationScript(ContentItem):
     description: Optional[str]
     is_unified: bool = Field(False, exclude=True)
 
-    def prepare_for_upload(self, marketplace: MarketplaceVersions) -> dict:
+    def prepare_for_upload(self, marketplace: MarketplaceVersions, **kwargs) -> dict:
         data = super().prepare_for_upload(marketplace)
-        data = IntegrationScriptUnifier.unify(self.path, data, marketplace)
+        data = IntegrationScriptUnifier.unify(self.path, data, marketplace, **kwargs)
         return data

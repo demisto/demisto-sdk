@@ -1,7 +1,5 @@
 from typing import Set
 
-from pydantic.types import DirectoryPath
-
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -15,9 +13,8 @@ class XDRCTemplate(ContentItem, content_type=ContentType.XDRC_TEMPLATE):
 
     def metadata_fields(self) -> Set[str]:
         return {"name", "os_type", "profile_type"}
-    
-    def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.MarketplaceV2) -> dict:
+
+    def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.MarketplaceV2, **kwargs) -> dict:
         data = super().prepare_for_upload(marketplace)
         data = XDRCTemplateUnifier.unify(self.path, data, marketplace)
         return data
-

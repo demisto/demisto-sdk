@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.constants import ENTITY_TYPE_TO_DIR, XDRC_TEMPL
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
     JSONContentObject
 from demisto_sdk.commands.common.tools import generate_xsiam_normalized_name
+from demisto_sdk.commands.unify.prepare_upload_manager import PrepareUploadManager
 from demisto_sdk.commands.unify.xdrc_template_unifier import XDRCTemplateUnifier
 
 
@@ -43,18 +44,9 @@ class XDRCTemplate(JSONContentObject):
             List[Path]: List of new created files.
         """
 
-        unify_dir = ENTITY_TYPE_TO_DIR[FileType.XDRC_TEMPLATE.value]
-
         # Unify step
-        unifier = XDRCTemplateUnifier(input=str(self.path.parent), output=dest_dir, dir_name=unify_dir)
+        PrepareUploadManager.prepare_for_upload(input=self.path, output=dest_dir)
 
-        created_files: List[str] = unifier.unify()
-
-        # Validate that unify succeed - there is no exception raised in unify module.
-        if not created_files:
-            raise exc.ContentDumpError(self, self.path, "Unable to unify XDRC template object")
-
-        return [Path(path) for path in created_files]
 
     def _create_target_dump_dir(self, dest_dir: Optional[Union[Path, str]] = None) -> Path:
         """Create destination directory, Destination must be valid directory, If not specified dump in

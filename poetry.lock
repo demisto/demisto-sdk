@@ -2562,7 +2562,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-ujson"
-version = "5.5.0"
+version = "5.6.0.0"
 description = "Typing stubs for ujson"
 category = "main"
 optional = false
@@ -2814,7 +2814,7 @@ build = ["gsutil"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "ba46350ea2807c8bb8eaec234e88dae6d99c3f2856af211a58b969a39a71a03b"
+content-hash = "41e1870fb31e6b9144f63551ab8d821fc7928f0cc629237b0b864ab78ee19e2e"
 
 [metadata.files]
 aiohttp = [
@@ -4753,8 +4753,8 @@ types-tabulate = [
     {file = "types_tabulate-0.8.11-py3-none-any.whl", hash = "sha256:af811268241e8fb87b63c052c87d1e329898a93191309d5d42111372232b2e0e"},
 ]
 types-ujson = [
-    {file = "types-ujson-5.5.0.tar.gz", hash = "sha256:74bc0ec76e3caf3682625703aad4aa9999327517e39afae67bb5aa3100a39bb8"},
-    {file = "types_ujson-5.5.0-py3-none-any.whl", hash = "sha256:6051e6b80d71382f1f85b0f97b475d84621eae3e2789ed24c5721f784b0846e1"},
+    {file = "types-ujson-5.6.0.0.tar.gz", hash = "sha256:1a20cf7946772756736582612e0da5656d2dbeccd24be4c1e97d1e66b072b97e"},
+    {file = "types_ujson-5.6.0.0-py3-none-any.whl", hash = "sha256:010b221260c24a915c6e713a83f366b91390766850ec110304de5b20c86b4b11"},
 ]
 types-urllib3 = [
     {file = "types-urllib3-1.26.25.4.tar.gz", hash = "sha256:eec5556428eec862b1ac578fb69aab3877995a99ffec9e5a12cf7fbd0cc9daee"},

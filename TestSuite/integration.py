@@ -5,6 +5,7 @@ from typing import List, Optional
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
+from demisto_sdk.commands.unify.prepare_upload_manager import PrepareUploadManager
 from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YAML
@@ -59,11 +60,10 @@ class Integration:
             self.image.write_bytes(image)
 
         if self.create_unified:
-            unifier = IntegrationScriptUnifier(input=self.path, output=os.path.dirname(self._tmpdir_integration_path))
-            yml_path = unifier.unify()[0]
-            readme_path = unifier.move_readme_next_to_unified(yml_path)
+            yml_path = PrepareUploadManager.prepare_for_upload(input=Path(self.path), output=Path(os.path.dirname(self._tmpdir_integration_path)))
+            readme_path = IntegrationScriptUnifier.move_readme_next_to_unified(self.path, yml_path)
             shutil.rmtree(self._tmpdir_integration_path)
-            self.yml.path = yml_path
+            self.yml.path = str(yml_path)
             self.readme.path = readme_path
 
     def create_default_integration(self, name: str = 'Sample', commands: List[str] = None):

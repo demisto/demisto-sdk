@@ -457,7 +457,8 @@ class IntegrationScriptUnifier(Unifier):
         # remove all non-word characters (dash is ok)
         return re.sub(r'[^\w-]', '', dasherized_integration_id)
 
-    def move_readme_next_to_unified(self, yml_path):
+    @staticmethod
+    def move_readme_next_to_unified(package_path, yml_path):
         """
             Args:
                 yml_path: The path to the yml file.
@@ -467,6 +468,6 @@ class IntegrationScriptUnifier(Unifier):
 
         """
         dst_path_readme = yml_path.replace('.yml', '_README.md')
-        src_path_readme = os.path.join(self.package_path, 'README.md')
+        src_path_readme = os.path.join(package_path, 'README.md')
         shutil.move(src_path_readme, dst_path_readme)
         return dst_path_readme

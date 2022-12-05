@@ -54,7 +54,7 @@ class XSIAMDashboard(JSONContentObject):
     def dump(self, dest_dir: Optional[Union[Path, str]] = None) -> List[Path]:
         # after XSIAM 1.2 is obsolete, we can clear this block and only export the file with the `external-` prefix.
         # Issue: CIAC-4349
-        
+
         created_files: List[Path] = []
         created_files.extend(super().dump(dest_dir=dest_dir))
 
@@ -63,7 +63,7 @@ class XSIAMDashboard(JSONContentObject):
             created_files.extend(self.image_path.dump(dest_dir))
 
         new_file_path = created_files[0]
-                
+
         if Version(self.get('fromversion', '0.0.0')) >= Version('6.10.0'):
             # export XSIAM 1.3 items only with the external prefix
             if not new_file_path.name.startswith('external-'):
@@ -79,7 +79,7 @@ class XSIAMDashboard(JSONContentObject):
                 shutil.move(new_file_path.as_posix(), move_to_path)
                 created_files.remove(new_file_path)
                 created_files.append(move_to_path)
-        
+
         else:
             # export 2 versions of the file, with/without the external prefix.
             if new_file_path.name.startswith('external-'):

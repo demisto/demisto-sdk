@@ -93,7 +93,6 @@ class ContentItem(BaseContent):
         with self.path.open() as f:
             return self.handler.load(f)
 
-    @abstractmethod
     def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
         data = self.data
         if marketplace != MarketplaceVersions.XSOAR:

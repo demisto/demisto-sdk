@@ -1,5 +1,5 @@
 import logging
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import extract_docker_image_from_text
@@ -52,7 +52,7 @@ def docker_images_to_native_images_support(native_images: List[NativeImage]) -> 
        chromium docker image is supported in both 8.1.0, 8.2.0 native images
        while tesseract is only supported in 8.1.0
     """
-    docker_images_to_native_images_mapping = {}
+    docker_images_to_native_images_mapping: Dict = {}
 
     for native_image in native_images:
         for supported_docker_image in native_image.supported_docker_images:
@@ -79,6 +79,7 @@ class NativeImageSupportedVersions:
         native_image_config_file_path (str): a path to the native image configuration file, if not provided
             will assume the running path is the content repo root.
     """
+
     def __init__(
         self,
         _id: str,
@@ -142,4 +143,3 @@ class NativeImageSupportedVersions:
                     native_images.remove(ignored_native_image)
             return native_images
         return []
-

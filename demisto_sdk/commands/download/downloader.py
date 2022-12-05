@@ -201,7 +201,8 @@ class Downloader:
 
     def handle_api_exception(self, e):
         if e.status == 401:
-            print_color('\nVerify that the environment variable DEMISTO_API_KEY is configured properly.\n',
+            print_color("\nAuthentication error: please verify that the appropriate environment variables "
+                        "(either DEMISTO_USERNAME and DEMISTO_PASSWORD, or just DEMISTO_API_KEY) are properly configured.\n",
                         LOG_COLORS.RED)
         print_color(f'Exception raised when fetching custom content:\nStatus: {e}', LOG_COLORS.NATIVE)
 

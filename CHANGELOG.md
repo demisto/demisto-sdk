@@ -4,7 +4,11 @@
 * Fixed an issue where **update-release-notes** failed when changing only xif file in **Modeling Rules**.
 * Fixed an issue where **is_valid_category** and **is_categories_field_match_standard** failed on private repo due to approved_list not imported.
 * Fixed an issue where **validate** didn't fail on the MR103 validation error.
+* Fixed the *--release-notes* flag in demisto-sdk to support the new CHANGELOG format.
 * Fixed an issue where **validate** failed when changing only xif file in **Modeling Rules**.
+* Fixed an issue where **format** failed on indicator files with a `None` value under the `tabs` key.
+* Fixed an issue where **validate** printed errors for only one change of context path instead of all.
+* Fixed an issue where **download** did not suggest using a username/password when authenticating with XSOAR and using invalid arguments.
 * Added support for fromversion/toversion in XSIAM content items (correlation rules, XSIAM dashboards, XSIAM reports).
 
 ## 1.7.9

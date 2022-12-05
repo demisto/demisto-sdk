@@ -84,7 +84,10 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             Optional[ContentItemParser]: The parsed content item.
         """
         if not ContentItemParser.is_content_item(path):
-            return None
+            if ContentItemParser.is_content_item(path.parent):
+                path = path.parent
+            else:
+                return None
 
         content_type: ContentType = ContentType.by_folder(path.parts[-2])
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
@@ -161,7 +164,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     @staticmethod
     def is_unified_file(path: Path) -> bool:
-        return path.suffix in UNIFIED_FILES_SUFFIXES
+        return path.suffix in UNIFIED_FILES_SUFFIXES and len(path.parts) > 2 and path.parts[-2] in {"Integrations", "Scripts"}
 
     @staticmethod
     def is_content_item(path: Path) -> bool:

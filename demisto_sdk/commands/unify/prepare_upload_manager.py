@@ -14,6 +14,8 @@ class PrepareUploadManager:
             output: Optional[Path] = None,
             marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
             **kwargs) -> None:
+        if isinstance(input, str):
+            input = Path(input)
         content_item = BaseContent.from_path(input)
         if not isinstance(content_item, ContentItem):
             raise ValueError(f"Unsupported input. Please provide a path of content item. Got {content_item}")

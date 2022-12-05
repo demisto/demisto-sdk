@@ -7,8 +7,8 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 class Unifier(ABC):
     """Interface to YAML objects that need to be unified"""
 
-    @abstractmethod
     @staticmethod
+    @abstractmethod
     def unify(path: Path,
               data: dict,
               marketplace: MarketplaceVersions = None,

@@ -283,7 +283,6 @@ def unify(**kwargs):
     # Input is of type Path.
     kwargs['input'] = str(kwargs['input'])
     file_type = find_type(kwargs['input'])
-    custom = kwargs.pop('custom')
     if marketplace := kwargs.get('marketplace'):
         os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
     if file_type == FileType.GENERIC_MODULE:

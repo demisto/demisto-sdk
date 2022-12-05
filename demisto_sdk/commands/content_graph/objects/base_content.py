@@ -9,7 +9,6 @@ from pydantic.main import ModelMetaclass
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
@@ -88,7 +87,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     @staticmethod
     def from_path(path: Path) -> Optional["BaseContent"]:
         if path.is_dir() and path.parts[-1] == 'Packs':  # if the path given is a pack
-            return Pack.from_orm(PackParser(path))
+            return content_type_to_model[ContentType.PACK].from_orm(PackParser(path))
         content_item_parser = ContentItemParser.from_path(path)
         if not content_item_parser:
             return None

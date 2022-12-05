@@ -95,8 +95,8 @@ class ContentItem(BaseContent):
 
     @abstractmethod
     def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
+        data = self.data
         if marketplace != MarketplaceVersions.XSOAR:
-            data = self.data
             alternate_item_fields(data)
         return data
 

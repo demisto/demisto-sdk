@@ -52,7 +52,7 @@ class IntegrationScriptUnifier(Unifier):
         **kwargs,
     ):
         print(f"Merging package: {path}")
-        if path.parent.name not in {'Integrations', 'Scripts'}:
+        if path.parent.name in {'Integrations', 'Scripts'}:
             return data
         package_path = path.parent
         is_script_package = isinstance(data.get('script'), str)
@@ -244,21 +244,21 @@ class IntegrationScriptUnifier(Unifier):
             yml_unified['script']['script'] = FoldedScalarString(clean_code)
 
         return yml_unified, script_path
-
-    def get_script_or_integration_package_data(self):
+    
+    @staticmethod
+    def get_script_or_integration_package_data(package_path: Path):
         # should be static method
-        _, yml_path = get_yml_paths_in_dir(self.package_path, error_msg='')
+        _, yml_path = get_yml_paths_in_dir(str(package_path), error_msg='')
 
         if not yml_path:
-            raise Exception(f'No yml files found in package path: {self.package_path}. '
+            raise Exception(f'No yml files found in package path: {package_path}. '
                             'Is this really a package dir?')
 
         if find_type(yml_path) in (FileType.SCRIPT, FileType.TEST_SCRIPT):
             code_type = get_yaml(yml_path).get('type')
         else:
             code_type = get_yaml(yml_path).get('script', {}).get('type')
-        unifier = IntegrationScriptUnifier(self.package_path)
-        code_path = unifier.get_code_file(TYPE_TO_EXTENSION[code_type])
+        code_path = IntegrationScriptUnifier.get_code_file(package_path, TYPE_TO_EXTENSION[code_type])
         with io.open(code_path, 'r', encoding='utf-8') as code_file:
             code = code_file.read()
 

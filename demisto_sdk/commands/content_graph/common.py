@@ -92,9 +92,7 @@ class ContentType(str, enum.Enum):
 
     @property
     def server_name(self) -> str:
-        if self == ContentType.SCRIPT:
-            return "automation"
-        elif self == ContentType.INDICATOR_TYPE:
+        if self == ContentType.INDICATOR_TYPE:
             return "reputation"
         elif self == ContentType.INDICATOR_FIELD:
             return "incidentfield-indicatorfield"

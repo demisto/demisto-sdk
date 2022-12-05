@@ -3,7 +3,6 @@ from typing import List, Optional
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
-from demisto_sdk.commands.unify.prepare_upload_manager import PrepareUploadManager
 from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YAML

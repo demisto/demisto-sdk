@@ -4,12 +4,11 @@ import demisto_client
 from wcmatch.pathlib import Path
 
 import demisto_sdk.commands.common.content.errors as exc
-from demisto_sdk.commands.common.constants import ENTITY_TYPE_TO_DIR, XDRC_TEMPLATE, FileType
+from demisto_sdk.commands.common.constants import XDRC_TEMPLATE, FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
     JSONContentObject
 from demisto_sdk.commands.common.tools import generate_xsiam_normalized_name
 from demisto_sdk.commands.unify.prepare_upload_manager import PrepareUploadManager
-from demisto_sdk.commands.unify.xdrc_template_unifier import XDRCTemplateUnifier
 
 
 class XDRCTemplate(JSONContentObject):

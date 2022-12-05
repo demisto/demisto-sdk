@@ -1394,7 +1394,7 @@ def process_script(file_path: str, packs: Dict[str, Dict], marketplace: str, pri
                 res.append(get_script_data(file_path, packs=packs))
         else:
             # package script
-            yml_path, code = IntegrationScriptUnifier.get_script_or_integration_package_data(file_path)
+            yml_path, code = IntegrationScriptUnifier.get_script_or_integration_package_data(Path(file_path))
             if should_skip_item_by_mp(yml_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
                 return [], excluded_items_from_id_set
             if print_logs:

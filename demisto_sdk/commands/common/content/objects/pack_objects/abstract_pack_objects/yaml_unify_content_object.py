@@ -1,13 +1,9 @@
-import copy
 from typing import List, Optional, Union
 
 from wcmatch.pathlib import EXTMATCH, Path
 
-import demisto_sdk.commands.common.content.errors as exc
-from demisto_sdk.commands.common.constants import ENTITY_TYPE_TO_DIR, FileType
-from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
+from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.unify.prepare_upload_manager import PrepareUploadManager
-from demisto_sdk.commands.unify.rule_unifier import RuleUnifier
 
 from .yaml_content_object import YAMLContentObject
 

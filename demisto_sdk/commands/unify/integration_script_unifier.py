@@ -231,14 +231,14 @@ class IntegrationScriptUnifier(Unifier):
 
         if is_script_package:
             if yml_data.get('script', '') not in ('', '-'):
-                print_warning(f'Script section is not empty in package {IntegrationScriptUnifier.package_path}.'
+                print_warning(f'Script section is not empty in package {package_path}.'
                               f'It should be blank or a dash(-).')
 
             yml_unified['script'] = FoldedScalarString(clean_code)
 
         else:
             if yml_data['script'].get('script', '') not in ('', '-'):
-                print_warning(f'Script section is not empty in package {self.package_path}.'
+                print_warning(f'Script section is not empty in package {package_path}.'
                               f'It should be blank or a dash(-).')
 
             yml_unified['script']['script'] = FoldedScalarString(clean_code)

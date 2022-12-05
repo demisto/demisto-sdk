@@ -9,6 +9,7 @@
 * Fixed an issue where **format** failed on indicator files with a `None` value under the `tabs` key.
 * Fixed an issue where **validate** printed errors for only one change of context path instead of all.
 * Fixed an issue where **download** did not suggest using a username/password when authenticating with XSOAR and using invalid arguments.
+* Added support for fromversion/toversion in XSIAM content items (correlation rules, XSIAM dashboards, XSIAM reports).
 * Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.
 
 ## 1.7.9

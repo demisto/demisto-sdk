@@ -1744,7 +1744,8 @@ class ValidateManager:
                     '.xif', '.yml')
 
                 if old_path:
-                    old_path = old_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml')
+                    old_path = old_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml').replace(
+                        '.xif', '.yml')
             else:
                 return irrelevant_file_output
 
@@ -1760,6 +1761,13 @@ class ValidateManager:
 
             if old_path:
                 old_path = old_path.replace('_schema', '').replace('.json', '.yml')
+        
+        # redirect _testdata.json file to the associated yml file
+        if file_type == FileType.MODELING_RULE_TEST_DATA:
+            file_path = file_path.replace('_testdata.json', '.yml')
+
+            if old_path:
+                old_path = old_path.replace('_testdata.json', '.yml')
 
         # check for old file format
         if self.is_old_file_format(file_path, file_type):

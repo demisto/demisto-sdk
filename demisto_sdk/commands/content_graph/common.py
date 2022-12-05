@@ -111,6 +111,10 @@ class ContentType(str, enum.Enum):
     @classmethod
     def by_folder(cls, folder: str) -> "ContentType":
         return cls(folder[:-1])  # remove the `s`
+    
+    @staticmethod
+    def folders() -> List[str]:
+        return [c.as_folder for c in ContentType]
 
     @property
     def as_folder(self) -> str:
@@ -118,6 +122,7 @@ class ContentType(str, enum.Enum):
             return f"{ContentType.CLASSIFIER}s"
         return f"{self.value}s"
 
+    
     @staticmethod
     def abstract_types() -> List["ContentType"]:
         return [ContentType.BASE_CONTENT, ContentType.COMMAND_OR_SCRIPT]

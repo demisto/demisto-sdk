@@ -14,5 +14,5 @@ class Unifier(ABC):
               marketplace: MarketplaceVersions = None,
               **kwargs,
               ) -> dict:
-        """Merges the various components to create an output yml file."""
+        """Merges the various components to create a unified output yml file."""
         ...

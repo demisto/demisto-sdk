@@ -2771,7 +2771,7 @@ def alternate_item_fields(content_item: dict):
     """
     copy_dict = content_item.copy()  # for modifying dict while iterating
     for field, value in copy_dict.items():
-        if field.endswith('_x2'):
+        if field.lower().endswith('_x2'):
             content_item[field[:-3]] = value
             content_item.pop(field)
         elif isinstance(content_item[field], dict):

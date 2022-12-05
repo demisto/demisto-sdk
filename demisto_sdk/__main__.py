@@ -292,17 +292,6 @@ def unify(**kwargs):
         generic_module_unifier.merge_generic_module_with_its_dashboards()
     else:
         PrepareUploadManager.prepare_for_upload(**kwargs)
-    # elif any(rule_dir in os.path.abspath(kwargs['input']) for rule_dir in [PARSING_RULES_DIR, MODELING_RULES_DIR]):
-    #     from demisto_sdk.commands.unify.rule_unifier import RuleUnifier
-    #     rule_unifier = RuleUnifier(**kwargs)
-    #     rule_unifier.unify()
-    # else:
-    #     from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
-
-    #     # pass arguments to YML unifier and call the command
-    #     yml_unifier = IntegrationScriptUnifier(**kwargs, custom=custom)
-    #     yml_unifier.unify()
-
     return 0
 
 

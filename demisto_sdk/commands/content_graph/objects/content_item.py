@@ -9,14 +9,14 @@ if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
     from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 
+import logging
+
 from pydantic import DirectoryPath
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import alternate_item_fields
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-
-import logging
 
 logger = logging.getLogger("demisto-sdk")
 

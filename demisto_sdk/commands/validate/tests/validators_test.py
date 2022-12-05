@@ -52,6 +52,7 @@ from demisto_sdk.tests.constants_test import (CONF_JSON_MOCK_PATH, DASHBOARD_TAR
                                               INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
                                               INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
                                               LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, MODELING_RULES_SCHEMA_FILE,
+                                              MODELING_RULES_TESTDATA_FILE, MODELING_RULES_XIF_FILE,
                                               MODELING_RULES_YML_FILE, PLAYBOOK_TARGET, SCRIPT_RELEASE_NOTES_TARGET,
                                               SCRIPT_TARGET, VALID_BETA_INTEGRATION, VALID_BETA_PLAYBOOK_PATH,
                                               VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
@@ -1960,23 +1961,30 @@ def test_image_error(capsys):
     assert expected_code in stdout
 
 
-def test_check_file_relevance_and_format_path(mocker):
+modeling_rule_file_changes = [
+    (MODELING_RULES_SCHEMA_FILE, FileType.MODELING_RULE_SCHEMA, MODELING_RULES_YML_FILE),
+    (MODELING_RULES_XIF_FILE, FileType.MODELING_RULE_XIF, MODELING_RULES_YML_FILE),
+    (MODELING_RULES_TESTDATA_FILE, FileType.MODELING_RULE_TEST_DATA, MODELING_RULES_YML_FILE),
+]
+
+
+@pytest.mark.parametrize('f_path, f_type, expected_result', modeling_rule_file_changes)
+def test_check_file_relevance_and_format_path(mocker, f_path, f_type, expected_result):
     """
 
-    Given: A modeling rules schema file that was changed.
+    Given: A modeling rules entity file that was changed.
 
-    When: Updating release notes
+    When: Validating changed files.
 
     Then: Update the file path to point the modeling rules yml file.
 
     """
     mocker.patch.object(ValidateManager, 'ignore_files_irrelevant_for_validation', return_value=False)
     mocker.patch.object(ValidateManager, 'is_old_file_format', return_value=False)
+    mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=f_type)
     validate_manager = ValidateManager()
-    file_path, old_path, _ = validate_manager.check_file_relevance_and_format_path(MODELING_RULES_SCHEMA_FILE,
-                                                                                   MODELING_RULES_SCHEMA_FILE,
-                                                                                   set())
-    assert file_path == old_path == MODELING_RULES_YML_FILE
+    file_path, old_path, _ = validate_manager.check_file_relevance_and_format_path(f_path, f_path, set())
+    assert file_path == old_path == expected_result
 
 
 pack_metadata_invalid_tags = {

@@ -1347,6 +1347,8 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.XDRC_TEMPLATE
         elif MODELING_RULES_DIR in path.parts and 'testdata' in path.stem.casefold():
             return FileType.MODELING_RULE_TEST_DATA
+        elif MODELING_RULES_DIR in path.parts and path.stem.casefold().endswith('_schema'):
+            return FileType.MODELING_RULE_SCHEMA
 
     elif path.name.endswith('_image.png'):
         if path.name.endswith('Author_image.png'):
@@ -1477,7 +1479,7 @@ def find_type(
             return FileType.CORRELATION_RULE
 
     if file_type == 'json' or path.lower().endswith('.json'):
-        if path.lower().endswith('_schema.json'):
+        if path.lower().endswith('_schema.json') and MODELING_RULES_DIR in Path(path).parts:
             return FileType.MODELING_RULE_SCHEMA
 
         if 'widgetType' in _dict:

@@ -47,10 +47,10 @@ class Integration:
             self.code.write(code)
         else:
             self.code.write('from CommonServerPython import *\n\n\n')
-        
+
         if yml is None:
             yml = {}
-        
+
         self.yml.write_dict(yml)
         if readme is not None:
             self.readme.write(readme)
@@ -65,7 +65,6 @@ class Integration:
             output_yml_path = Path(self.path).with_name(f'integration-{self.name}.yml')
             self.yml = YAML(output_yml_path, self._repo.path, IntegrationScriptUnifier.unify(Path(self.yml.path), yml))
             self.readme = File(output_yml_path.with_name(output_yml_path.name.replace('.yml', '_README.md')), self._repo.path)
-            IntegrationScriptUnifier.move_readme_next_to_unified(Path(self.path), output_yml_path)
             self.yml.path = str(output_yml_path)
 
     def create_default_integration(self, name: str = 'Sample', commands: List[str] = None):

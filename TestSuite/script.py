@@ -1,5 +1,5 @@
-from pathlib import Path
 import shutil
+from pathlib import Path
 from typing import Optional
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
@@ -43,7 +43,7 @@ class Script(Integration):
             changelog=changelog,
             description=description
         )
-        
+
     def build(
         self,
         code: Optional[str] = None,

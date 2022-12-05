@@ -42,7 +42,8 @@ class XDRCTemplate(JSONContentObject):
         Returns:
             List[Path]: List of new created files.
         """
-
+        if isinstance(dest_dir, str):
+            dest_dir = Path(dest_dir)
         # Unify step
         return [Path(str(PrepareUploadManager.prepare_for_upload(input=self.path, output=dest_dir)))]
 

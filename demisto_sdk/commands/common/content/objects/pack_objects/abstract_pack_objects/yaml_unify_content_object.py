@@ -119,8 +119,7 @@ class YAMLContentUnifiedObject(YAMLContentObject):
             2. Verbosity to quiet mode option in unify module.
         """
         # Unify step
-        PrepareUploadManager.prepare_for_upload(self.path, dest_dir)
-        return [dest_dir]
+        return [Path(str(PrepareUploadManager.prepare_for_upload(self.path, dest_dir)))]
 
     def dump(self, dest_dir: Optional[Union[str, Path]] = None, change_log: Optional[bool] = False,
              readme: Optional[bool] = False, unify: bool = True) -> List[Path]:

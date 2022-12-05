@@ -671,8 +671,7 @@ class IDSetValidations(BaseValidator):
             click.echo(f"id set validations for: {file_path}")
 
             if re.match(constants.PACKS_SCRIPT_YML_REGEX, file_path, re.IGNORECASE):
-                unifier = IntegrationScriptUnifier(os.path.dirname(file_path))
-                yml_path, code = unifier.get_script_or_integration_package_data()
+                yml_path, code = IntegrationScriptUnifier.get_script_or_integration_package_data(os.path.dirname(file_path))
                 script_data = get_script_data(yml_path, script_code=code)
                 is_valid = self._is_non_real_command_found(script_data)
             elif file_type == constants.FileType.INCIDENT_TYPE:

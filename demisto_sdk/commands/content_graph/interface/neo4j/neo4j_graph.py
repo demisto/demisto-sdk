@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Set
 
 from neo4j import GraphDatabase, Neo4jDriver, Session, graph
 
@@ -20,7 +20,6 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent,
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
-
 
 logger = logging.getLogger("demisto-sdk")
 

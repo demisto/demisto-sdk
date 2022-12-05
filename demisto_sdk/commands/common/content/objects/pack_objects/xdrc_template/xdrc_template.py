@@ -45,8 +45,7 @@ class XDRCTemplate(JSONContentObject):
         """
 
         # Unify step
-        PrepareUploadManager.prepare_for_upload(input=self.path, output=dest_dir)
-
+        return [Path(str(PrepareUploadManager.prepare_for_upload(input=self.path, output=dest_dir)))]
 
     def _create_target_dump_dir(self, dest_dir: Optional[Union[Path, str]] = None) -> Path:
         """Create destination directory, Destination must be valid directory, If not specified dump in

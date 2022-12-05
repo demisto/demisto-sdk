@@ -244,7 +244,7 @@ class IntegrationScriptUnifier(Unifier):
             yml_unified['script']['script'] = FoldedScalarString(clean_code)
 
         return yml_unified, script_path
-    
+
     @staticmethod
     def get_script_or_integration_package_data(package_path: Path):
         # should be static method

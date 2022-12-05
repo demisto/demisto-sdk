@@ -13,7 +13,7 @@ class PrepareUploadManager:
             input: Path,
             output: Optional[Path] = None,
             marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
-            **kwargs) -> None:
+            **kwargs) -> Path:
         if isinstance(input, str):
             input = Path(input)
         content_item = BaseContent.from_path(input)
@@ -26,3 +26,4 @@ class PrepareUploadManager:
         data = content_item.prepare_for_upload(marketplace, **kwargs)
         with output.open('w') as f:
             content_item.handler.dump(data, f)
+        return output

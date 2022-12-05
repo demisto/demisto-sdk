@@ -155,6 +155,7 @@ def test_is_incomplete_testdata_file(repo):
     Then: Validate that the modeling rule is invalid
     """
     from typer.testing import CliRunner
+
     from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_td_app
     pack = repo.create_pack('TestPack')
     dummy_modeling_rule = pack.create_modeling_rule('MyRule')

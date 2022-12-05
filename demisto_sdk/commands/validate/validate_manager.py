@@ -1761,7 +1761,7 @@ class ValidateManager:
 
             if old_path:
                 old_path = old_path.replace('_schema', '').replace('.json', '.yml')
-        
+
         # redirect _testdata.json file to the associated yml file
         if file_type == FileType.MODELING_RULE_TEST_DATA:
             file_path = file_path.replace('_testdata.json', '.yml')

@@ -101,7 +101,7 @@ class IntegrationScriptUnifier(Unifier):
                 data['configuration'][i]['hidden'] = marketplace in hidden
 
     @staticmethod
-    def add_custom_section(unified_yml: Dict, custom: str, is_script_package: bool) -> Dict:
+    def add_custom_section(unified_yml: Dict, custom: str = '', is_script_package: bool = False) -> Dict:
         """
             Args:
                 unified_yml - The unified_yml
@@ -121,7 +121,14 @@ class IntegrationScriptUnifier(Unifier):
         return unified_yml
 
     @staticmethod
-    def insert_image_to_yml(package_path: Path, yml_data: dict, yml_unified: dict, is_script_package: bool, image_prefix: str, force: bool):
+    def insert_image_to_yml(
+        package_path: Path,
+        yml_data: dict,
+        yml_unified: dict,
+        is_script_package: bool,
+        image_prefix: str = DEFAULT_IMAGE_PREFIX,
+        force: bool = False,
+    ):
         image_data, found_img_path = IntegrationScriptUnifier.get_data(package_path, "*png", is_script_package)
         if image_data:
             image_data = image_prefix + base64.b64encode(image_data).decode('utf-8')
@@ -173,14 +180,14 @@ class IntegrationScriptUnifier(Unifier):
         return data, found_data_path
 
     @staticmethod
-    def get_code_file(path: Path, script_type):
+    def get_code_file(package_path: Path, script_type):
         """Return the first code file in the specified directory path
         :param script_type: script type: .py, .js, .ps1
         :type script_type: str
         :return: path to found code file
         :rtype: str
         """
-        package_path = str(path)
+        package_path = str(package_path)
         ignore_regex = (r'CommonServerPython\.py|CommonServerUserPython\.py|demistomock\.py|_test\.py'
                         r'|conftest\.py|__init__\.py|ApiModule\.py|vulture_whitelist\.py'
                         r'|CommonServerPowerShell\.ps1|CommonServerUserPowerShell\.ps1|demistomock\.ps1|\.Tests\.ps1')

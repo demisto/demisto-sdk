@@ -456,18 +456,3 @@ class IntegrationScriptUnifier(Unifier):
         dasherized_integration_id = dasherize(underscore(integration_id)).replace(' ', '-')
         # remove all non-word characters (dash is ok)
         return re.sub(r'[^\w-]', '', dasherized_integration_id)
-
-    @staticmethod
-    def move_readme_next_to_unified(package_path: Path, yml_path: Path):
-        """
-            Args:
-                yml_path: The path to the yml file.
-
-            Return:
-                README new location next to the unified yml (in the same folder).
-
-        """
-        dst_path_readme = str(yml_path).replace('.yml', '_README.md')
-        src_path_readme = os.path.join(package_path, 'README.md')
-        shutil.move(src_path_readme, dst_path_readme)
-        return dst_path_readme

@@ -55,6 +55,6 @@ class Script(Integration):
     ):
         super().build(code, yml, readme, description, changelog, image)
         if self.create_unified:
-            script_yml_path = str(Path(self.path) / f'script-{self.name}.yml')
+            script_yml_path = Path(self.path).with_name(f'script-{self.name}.yml')
             shutil.move(self.yml.path, script_yml_path)
-            self.yml.path = script_yml_path
+            self.yml.path = str(script_yml_path)

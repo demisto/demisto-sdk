@@ -62,9 +62,9 @@ class Integration:
             self.image.write_bytes(image)
 
         if self.create_unified:
-            yml_path = Path(self.path) / f'integration-{self.name}.yml'
-            self.yml = YAML(yml_path, self._repo.path, IntegrationScriptUnifier.unify(yml_path, yml))
-            self.yml.path = str(yml_path)
+            output_yml_path = Path(self.path).with_name(f'integration-{self.name}.yml')
+            self.yml = YAML(output_yml_path, self._repo.path, IntegrationScriptUnifier.unify(Path(self.yml.path), yml))
+            self.yml.path = str(output_yml_path)
 
     def create_default_integration(self, name: str = 'Sample', commands: List[str] = None):
         """Creates a new integration with basic data

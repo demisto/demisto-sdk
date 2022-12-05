@@ -1,4 +1,6 @@
 from pathlib import Path
+import shutil
+from typing import Optional
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from TestSuite.integration import Integration
@@ -41,3 +43,18 @@ class Script(Integration):
             changelog=changelog,
             description=description
         )
+        
+    def build(
+        self,
+        code: Optional[str] = None,
+        yml: Optional[dict] = None,
+        readme: Optional[str] = None,
+        description: Optional[str] = None,
+        changelog: Optional[str] = None,
+        image: Optional[bytes] = None
+    ):
+        super().build(code, yml, readme, description, changelog, image)
+        if self.create_unified:
+            script_yml_path = str(Path(self.path) / f'script-{self.name}.yml')
+            shutil.copy(self.yml.path, script_yml_path)
+            self.yml.path = script_yml_path

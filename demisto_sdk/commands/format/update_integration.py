@@ -153,10 +153,11 @@ class IntegrationYMLFormat(BaseUpdateYML):
                 INCIDENT_FETCH_REQUIRED_PARAMS, ALERT_FETCH_REQUIRED_PARAMS) if is_xsoar_marketplace else (
                 ALERT_FETCH_REQUIRED_PARAMS, INCIDENT_FETCH_REQUIRED_PARAMS)
 
+            param_names = [param['name'] for param in params]
             for param_to_add, param_to_remove in zip(fetch_required_params, params_to_remove):
-                if param_to_add not in params:
+                if param_to_add['name'] not in param_names:
                     self.data['configuration'].append(param_to_add)
-                if param_to_remove in params:
+                if param_to_remove['name'] in param_names:
                     self.data['configuration'].remove(param_to_remove)
 
     def set_feed_params_in_config(self):

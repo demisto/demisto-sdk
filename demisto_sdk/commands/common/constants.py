@@ -1326,13 +1326,15 @@ INCIDENT_FETCH_REQUIRED_PARAMS = [
         'display': 'Incident type',
         'name': 'incidentType',
         'required': False,
-        'type': 13
+        'type': 13,
+        'section': 'Connect'
     },
     {
         'display': 'Fetch incidents',
         'name': 'isFetch',
         'required': False,
-        'type': 8
+        'type': 8,
+        'section': 'Collect'
     }
 ]
 
@@ -1341,13 +1343,15 @@ ALERT_FETCH_REQUIRED_PARAMS = [
         'display': 'Alert type',
         'name': 'incidentType',
         'required': False,
-        'type': 13
+        'type': 13,
+        'section': 'Connect'
     },
     {
         'display': 'Fetch alerts',
         'name': 'isFetch',
         'required': False,
-        'type': 8
+        'type': 8,
+        'section': 'Collect'
     }
 ]
 

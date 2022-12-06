@@ -209,7 +209,7 @@ class IntegrationScriptUnifier(Unifier):
         if script_path_list:
             return script_path_list[0]
         else:
-            raise Exception("the provided code file is not supported")
+            raise Exception(f"On {package_path}, {script_type} file was not found.")
 
     @staticmethod
     def insert_script_to_yml(package_path: Path, script_type: str, yml_unified: dict, yml_data: dict, is_script_package: bool):

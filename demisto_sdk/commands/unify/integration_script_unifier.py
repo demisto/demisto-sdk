@@ -62,7 +62,7 @@ class IntegrationScriptUnifier(Unifier):
             script_obj = data['script']
         script_type = TYPE_TO_EXTENSION[script_obj['type']]
         try:
-            IntegrationScriptUnifier.get_code_file(package_path, TYPE_TO_EXTENSION[script_type])
+            IntegrationScriptUnifier.get_code_file(package_path, script_type)
         except ValueError:
             print_warning(f'No code file found for {path}, assuming it is already unified')
             return data

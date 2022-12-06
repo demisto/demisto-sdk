@@ -2389,12 +2389,12 @@ def get_release_note_entries(version='') -> list:
                                              ).decode('utf-8').split('\n')
 
     if not version or 'dev' in version:
-        version = 'Changelog'
+        version = 'Unreleased'
 
-    if f'# {version}' not in changelog_file_content:
+    if f'## {version}' not in changelog_file_content:
         return []
 
-    result = changelog_file_content[changelog_file_content.index(f'# {version}') + 1:]
+    result = changelog_file_content[changelog_file_content.index(f'## {version}') + 1:]
     result = result[:result.index('')]
 
     return result

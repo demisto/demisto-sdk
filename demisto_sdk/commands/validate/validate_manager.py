@@ -162,16 +162,16 @@ class ValidateManager:
         self.always_valid = False
         self.ignored_files = set()
         self.new_packs = set()
-        self.skipped_file_types = (FileType.CHANGELOG,
-                                   FileType.DOC_IMAGE,
-                                   FileType.MODELING_RULE_SCHEMA,
-                                   FileType.XSIAM_DASHBOARD_IMAGE,
-                                   FileType.XSIAM_REPORT_IMAGE,
-                                   FileType.XSIAM_DASHBOARD_IMAGE,
-                                   FileType.XDRC_TEMPLATE_YML,
-                                   FileType.XDRC_TEMPLATE,
-                                   FileType.MODELING_RULE_XIF,
-                                   )
+        self.skipped_file_types = (
+            FileType.CHANGELOG,
+            FileType.DOC_IMAGE,
+            FileType.MODELING_RULE_SCHEMA,
+            FileType.XSIAM_DASHBOARD_IMAGE,
+            FileType.XSIAM_REPORT_IMAGE,
+            FileType.XSIAM_DASHBOARD_IMAGE,
+            FileType.XDRC_TEMPLATE_YML,
+            FileType.XDRC_TEMPLATE,
+        )
 
         self.is_external_repo = is_external_repo
         if is_external_repo:
@@ -675,7 +675,13 @@ class ValidateManager:
         elif file_type == FileType.PARSING_RULE:
             return self.validate_parsing_rule(structure_validator, pack_error_ignore_list)
 
-        elif file_type == FileType.MODELING_RULE:
+        elif file_type in (FileType.MODELING_RULE, FileType.MODELING_RULE_XIF, FileType.MODELING_RULE_TEST_DATA):
+            print(f'Validating {file_type.value} file: {file_path}')
+            if self.validate_all:
+                error_ignore_list = pack_error_ignore_list.copy()
+                error_ignore_list.setdefault(os.path.basename(file_path), [])
+                error_ignore_list.get(os.path.basename(file_path)).append('MR104')
+                return self.validate_modeling_rule(structure_validator, error_ignore_list)
             return self.validate_modeling_rule(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.CORRELATION_RULE:

@@ -19,8 +19,6 @@ class PrepareUploadManager:
             marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
             force: bool = False,
             **kwargs) -> Path:
-        # This is to be able to unify deprecated content as well
-
         if isinstance(input, str):
             input = Path(input)
         if not input.is_dir():

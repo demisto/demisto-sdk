@@ -263,20 +263,10 @@ def extract_code(config, **kwargs):
               help='The marketplace the content items are created for, that determines usage of marketplace '
                    'unique text. Default is the XSOAR marketplace.',
               default='xsoar', type=click.Choice(['xsoar', 'marketplacev2', 'v2']))
-def unify(**kwargs):
+def prepare_content(**kwargs):
     """
-    This command has three main functions:
+    This command is used to prepare to content to be used in the platform.
 
-    1. Integration/Script Unifier - Unifies integration/script code, image, description and yml files to a single XSOAR yml file.
-     * Note that this should be used on a single integration/script and not a pack, not multiple scripts/integrations.
-     * To use this function - set as input a path to the *directory* of the integration/script to unify.
-
-    2. GenericModule Unifier - Unifies a GenericModule with its Dashboards to a single JSON object.
-     * To use this function - set as input a path to a GenericModule *file*.
-
-    3. Parsing/Modeling Rule Unifier - Unifies Parsing/Modeling rule YML, XIF and samples JSON files to a single YML file.
-     * Note that this should be used on a single parsing/modeling rule and not a pack, not multiple rules.
-     * To use this function - set as input a path to the *directory* of the parsing/modeling rule to unify.
     """
     check_configuration_file('unify', kwargs)
     # Input is of type Path.
@@ -295,7 +285,7 @@ def unify(**kwargs):
     return 0
 
 
-main.add_command(unify, name='unify')
+main.add_command(prepare_content, name='unify')
 
 # ====================== zip-packs ====================== #
 @main.command()

@@ -27,6 +27,7 @@ ALLOWED_IGNORE_ERRORS = [
     'SC100', 'SC101', 'SC105', 'SC106',
     'IM111',
     'RN112',
+    'MR104', 'MR105',
 ]
 
 # predefined errors to be ignored in partner/community supported packs even if they do not appear in .pack-ignore

@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Optional
 
 import demisto_sdk.commands.content_graph.parsers.content_item
-from demisto_sdk.commands.common.constants import MarketplaceVersions, MARKETPLACE_MIN_VERSION
+from demisto_sdk.commands.common.constants import MARKETPLACE_MIN_VERSION, MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
@@ -37,7 +37,7 @@ class PrepareUploadManager:
             raise FileExistsError(f"Output file {output} already exists. Use --force to overwrite.")
         with output.open('w') as f:
             content_item.handler.dump(data, f)
-        
-        # This is to reset the min version
+
+        # This is to reset the min version for future runs
         demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = MARKETPLACE_MIN_VERSION
         return output

@@ -41,7 +41,7 @@ class Trigger(JSONContentObject):
         created_files.extend(super().dump(dest_dir=dest_dir))
         new_file_path = created_files[0]
 
-        if Version(self.get('fromversion', '0.0.0')) >= Version('6.10.0'):
+        if Version(self.get('fromVersion', '0.0.0')) >= Version('6.10.0'):
             # export XSIAM 1.3 items only with the external prefix
             if not new_file_path.name.startswith('external-'):
                 move_to_path = new_file_path.parent / self.normalize_file_name()
@@ -49,7 +49,7 @@ class Trigger(JSONContentObject):
                 created_files.remove(new_file_path)
                 created_files.append(move_to_path)
 
-        elif Version(self.get('toversion', '99.99.99')) < Version('6.10.0'):
+        elif Version(self.get('toVersion', '99.99.99')) < Version('6.10.0'):
             # export XSIAM 1.2 items only without the external prefix
             if new_file_path.name.startswith('external-'):
                 move_to_path = Path(str(new_file_path).replace('external-', ''))

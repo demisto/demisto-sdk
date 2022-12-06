@@ -90,7 +90,7 @@ class ContentItem(BaseContent):
 
     @property
     def handler(self) -> XSOAR_Handler:
-        return JSON_Handler() if self.path.suffix == ".json" else YAML_Handler()
+        return JSON_Handler() if self.path.suffix.lower() == ".json" else YAML_Handler()
 
     @property
     def data(self) -> dict:

@@ -6,8 +6,6 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
-# This is to be able to unify deprecated content as well
-constants.MARKETPLACE_MIN_VERSION = '0.0.0'
 
 
 class PrepareUploadManager:
@@ -19,6 +17,9 @@ class PrepareUploadManager:
             marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
             force: bool = False,
             **kwargs) -> Path:
+        # This is to be able to unify deprecated content as well
+        constants.MARKETPLACE_MIN_VERSION = '0.0.0'
+
         if isinstance(input, str):
             input = Path(input)
         if not input.is_dir():

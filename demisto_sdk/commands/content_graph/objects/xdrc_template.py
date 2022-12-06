@@ -2,11 +2,11 @@ from typing import Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.objects.content_item_x2 import ContentItemX2
+from demisto_sdk.commands.content_graph.objects.content_item_x2 import ContentItemXSIAM
 from demisto_sdk.commands.unify.xdrc_template_unifier import XDRCTemplateUnifier
 
 
-class XDRCTemplate(ContentItemX2, content_type=ContentType.XDRC_TEMPLATE):
+class XDRCTemplate(ContentItemXSIAM, content_type=ContentType.XDRC_TEMPLATE):
     content_global_id: str
     os_type: str
     profile_type: str

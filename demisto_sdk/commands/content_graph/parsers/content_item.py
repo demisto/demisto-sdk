@@ -83,6 +83,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         Returns:
             Optional[ContentItemParser]: The parsed content item.
         """
+        logger.info(f'Parsing content item {path}')
         if not ContentItemParser.is_content_item(path):
             if ContentItemParser.is_content_item(path.parent):
                 path = path.parent

@@ -102,14 +102,6 @@ class ContentType(str, enum.Enum):
             return "pre-process-rule"
         elif self == ContentType.TEST_PLAYBOOK:
             return ContentType.PLAYBOOK.server_name
-        elif self in {ContentType.PARSING_RULE,
-                      ContentType.MODELING_RULE,
-                      ContentType.XDRC_TEMPLATE,
-                      ContentType.XSIAM_DASHBOARD,
-                      ContentType.XSIAM_REPORT,
-                      ContentType.CORRELATION_RULE,
-                      }:
-            return f"external-{self.lower()}"
         return self.lower()
 
     @staticmethod

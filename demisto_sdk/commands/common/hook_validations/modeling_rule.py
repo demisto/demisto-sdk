@@ -60,7 +60,9 @@ class ModelingRuleValidator(ContentEntityValidator):
         try:
             _ = CompletedTestData.parse_file(testdata_file_path.as_posix())
         except ValidationError as e:
-            error_message, error_code = Errors.modeling_rule_testdata_not_formatted_correctly(str(e))
+            error_message, error_code = Errors.modeling_rule_testdata_not_formatted_correctly(
+                str(e), testdata_file_path
+            )
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False

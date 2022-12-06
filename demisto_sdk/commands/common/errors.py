@@ -2563,5 +2563,5 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def modeling_rule_testdata_not_formatted_correctly(error_message: str):
-        return f'The modeling rule testdata file is not formatted correctly. {error_message}'
+    def modeling_rule_testdata_not_formatted_correctly(error_message: str, test_data_file: Path):
+        return f'The modeling rule testdata file at {test_data_file} is not formatted correctly. {error_message}'

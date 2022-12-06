@@ -12,8 +12,11 @@ from demisto_sdk.commands.content_graph.common import ContentType, RelationshipT
 from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
+import logging
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
+
+logger = logging.getLogger('demisto-sdk')
 
 content_type_to_model: Dict[ContentType, Type["BaseContent"]] = {}
 
@@ -90,6 +93,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             return content_type_to_model[ContentType.PACK].from_orm(PackParser(path))
         content_item_parser = ContentItemParser.from_path(path)
         if not content_item_parser:
+            logger.error(f"Could not parse content item from path: {path}")
             return None
         model = content_type_to_model.get(content_item_parser.content_type)
         if not model:

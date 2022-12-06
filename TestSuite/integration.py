@@ -1,5 +1,5 @@
-from pathlib import Path
 import shutil
+from pathlib import Path
 from typing import List, Optional
 
 from demisto_sdk.commands.common.handlers import YAML_Handler

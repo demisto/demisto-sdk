@@ -89,6 +89,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
     @staticmethod
     def from_path(path: Path) -> Optional["BaseContent"]:
+        logger.info(f'Loading content item from path: {path}')
         if path.is_dir() and path.parts[-1] == 'Packs':  # if the path given is a pack
             return content_type_to_model[ContentType.PACK].from_orm(PackParser(path))
         content_item_parser = ContentItemParser.from_path(path)
@@ -96,6 +97,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             logger.error(f"Could not parse content item from path: {path}")
             return None
         model = content_type_to_model.get(content_item_parser.content_type)
+        logger.info(f'Loading content item from path: {path} as {model}')
         if not model:
             return None
         return model.from_orm(content_item_parser)

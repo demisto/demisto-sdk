@@ -160,7 +160,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     @staticmethod
     def is_package(path: Path) -> bool:
-        return path.is_dir()
+        return path.is_dir() and path.parent.name != "Packs"
 
     @staticmethod
     def is_unified_file(path: Path) -> bool:

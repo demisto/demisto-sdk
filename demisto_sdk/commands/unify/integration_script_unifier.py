@@ -61,7 +61,11 @@ class IntegrationScriptUnifier(Unifier):
             IntegrationScriptUnifier.update_hidden_parameters_value(data, marketplace)  # changes data
             script_obj = data['script']
         script_type = TYPE_TO_EXTENSION[script_obj['type']]
-
+        try:
+            IntegrationScriptUnifier.get_code_file(package_path, TYPE_TO_EXTENSION[script_type])
+        except ValueError:
+            print_warning(f'No code file found for {path}, assuming it is already unified')
+            return data
         yml_unified = copy.deepcopy(data)
 
         yml_unified, _ = IntegrationScriptUnifier.insert_script_to_yml(package_path, script_type, yml_unified, data, is_script_package)
@@ -209,7 +213,7 @@ class IntegrationScriptUnifier(Unifier):
         if script_path_list:
             return script_path_list[0]
         else:
-            raise Exception(f"On {package_path}, {script_type} file was not found.")
+            raise ValueError(f"Could not find a code file {script_type} in {package_path}")
 
     @staticmethod
     def insert_script_to_yml(package_path: Path, script_type: str, yml_unified: dict, yml_data: dict, is_script_package: bool):

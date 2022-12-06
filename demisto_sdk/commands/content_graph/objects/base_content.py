@@ -99,6 +99,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         model = content_type_to_model.get(content_item_parser.content_type)
         logger.info(f'Loading content item from path: {path} as {model}')
         if not model:
+            logger.error(f"Could not parse content item from path: {path}")
             return None
         return model.from_orm(content_item_parser)
 

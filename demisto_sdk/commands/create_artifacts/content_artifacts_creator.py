@@ -544,58 +544,6 @@ def is_in_content_packs(content_object: ContentObject) -> bool:
     return content_object.to_version >= FIRST_MARKETPLACE_VERSION
 
 
-def is_in_content_test(artifact_manager: ArtifactsManager, content_object: ContentObject) -> bool:
-    """Rules content_test:
-            1. flag of only packs is off.
-            2. Object located in TestPlaybooks directory (*/TestPlaybooks/*).
-            3. from_version < First marketplace version.
-            4. Path of object is not including global variable - IGNORED_TEST_PLAYBOOKS_DIR
-
-        Args:
-            artifact_manager: Artifacts manager object.
-            content_object: Content object as specified in global variable - ContentObject.
-
-        Returns:
-            bool: True if object should be included in content_test artifacts else False.
-    """
-    return (not artifact_manager.only_content_packs and
-            TEST_PLAYBOOKS_DIR in content_object.path.parts and
-            content_object.from_version < FIRST_MARKETPLACE_VERSION and
-            IGNORED_TEST_PLAYBOOKS_DIR not in content_object.path.parts)
-
-
-def is_in_content_new(artifact_manager: ArtifactsManager, content_object: ContentObject) -> bool:
-    """ Rules content_new:
-            1. flag of only packs is off.
-            2. Object not located in TestPlaybooks directory (*/TestPlaybooks/*).
-            3. from_version < First marketplace version
-
-        Args:
-            artifact_manager: Artifacts manager object.
-            content_object: Content object as specified in global variable - ContentObject.
-
-        Returns:
-            bool: True if object should be included in content_new artifacts else False.
-    """
-    return (not artifact_manager.only_content_packs and
-            TEST_PLAYBOOKS_DIR not in content_object.path.parts and
-            content_object.from_version < FIRST_MARKETPLACE_VERSION)
-
-
-def is_in_content_all(artifact_manager: ArtifactsManager, content_object: ContentObject) -> bool:
-    """ Rules content_all:
-            1. If in content_new or content_test.
-
-        Args:
-            artifact_manager: Artifacts manager object.
-            content_object: Content object as specified in global variable - ContentObject.
-
-        Returns:
-            bool: True if object should be included in content_all artifacts else False.
-    """
-    return is_in_content_new(artifact_manager, content_object) or is_in_content_test(artifact_manager, content_object)
-
-
 ############################
 # Documentations functions #
 ############################
@@ -657,34 +605,6 @@ def dump_content_descriptor(artifact_manager: ArtifactsManager) -> ArtifactsRepo
                      artifact_manager.content_all_path]:
             created_files = dump_link_files(artifact_manager, descriptor, dest, created_files)
         report.append(object_report)
-
-    return report
-
-
-##################################
-# Content Testplaybook functions #
-##################################
-
-
-def dump_tests_conditionally(artifact_manager: ArtifactsManager) -> ArtifactsReport:
-    """ Dump test scripts/playbooks conditionally into:
-            1. content_test
-
-    Args:
-        artifact_manager: Artifacts manager object.
-
-    Returns:
-        ArtifactsReport: ArtifactsReport object.
-
-    """
-    report = ArtifactsReport("TestPlaybooks:")
-    for test in artifact_manager.content.test_playbooks:
-        object_report = ObjectReport(test)
-        if is_in_content_test(artifact_manager, test):
-            object_report.set_content_test()
-            test_created_files = dump_link_files(artifact_manager, test, artifact_manager.content_test_path)
-            dump_link_files(artifact_manager, test, artifact_manager.content_all_path, test_created_files)
-        report += object_report
 
     return report
 
@@ -1052,7 +972,6 @@ def dump_pack_conditionally(artifact_manager: ArtifactsManager, content_object: 
     """
     object_report = ObjectReport(content_object)
     pack_created_files: List[Path] = []
-    test_new_created_files: List[Path] = []
 
     with content_files_handler(artifact_manager, content_object) as files_to_remove:
         # Content packs filter - When unify also _45.yml created which should be deleted after copy it if needed
@@ -1065,22 +984,6 @@ def dump_pack_conditionally(artifact_manager: ArtifactsManager, content_object: 
             # Collecting files *_45.yml which created and need to be removed after execution.
             files_to_remove.extend(
                 [created_file for created_file in pack_created_files if created_file.name.endswith('_45.yml')])
-
-        # Content test filter
-        if is_in_content_test(artifact_manager, content_object):
-            object_report.set_content_test()
-            test_new_created_files = dump_link_files(artifact_manager, content_object,
-                                                     artifact_manager.content_test_path, pack_created_files)
-
-        # Content new filter
-        if is_in_content_new(artifact_manager, content_object):
-            object_report.set_content_new()
-            test_new_created_files = dump_link_files(artifact_manager, content_object,
-                                                     artifact_manager.content_new_path, pack_created_files)
-        # Content all filter
-        if is_in_content_all(artifact_manager, content_object):
-            object_report.set_content_all()
-            dump_link_files(artifact_manager, content_object, artifact_manager.content_all_path, test_new_created_files)
 
     return object_report
 

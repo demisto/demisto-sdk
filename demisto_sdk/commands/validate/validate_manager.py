@@ -430,7 +430,7 @@ class ValidateManager:
     def should_validate_xsiam_content(package_path):
         parent_name = Path(package_path).stem
         dir_name = Path(package_path).parent.stem
-        return parent_name in ['XSIAMDashboards', 'XSIAMReports'] or dir_name == 'XDRCTemplates'
+        return parent_name in {'XSIAMDashboards', 'XSIAMReports'} or dir_name == 'XDRCTemplates'
 
     def run_validation_on_package(self, package_path, pack_error_ignore_list):
         package_entities_validation_results = set()

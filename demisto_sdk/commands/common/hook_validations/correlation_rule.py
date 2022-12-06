@@ -52,13 +52,13 @@ class CorrelationRuleValidator(ContentEntityValidator):
                 return False
         return True
 
-    @error_codes("BA120")
+    @error_codes("CR101")
     def is_files_naming_correct(self):
         """
         Validates all file naming is as convention.
         """
         if not self.validate_xsiam_content_item_title(self.file_path):
-            error_message, error_code = Errors.xisam_content_files_naming_invalid([self.file_path])
+            error_message, error_code = Errors.correlation_rules_files_naming_error([self.file_path])
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False

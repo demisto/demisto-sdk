@@ -1474,7 +1474,7 @@ def find_type(
             if MODELING_RULES_DIR in Path(path).parts:
                 return FileType.MODELING_RULE
 
-        if 'global_rule_id' in _dict or (isinstance(_dict, CommentedSeq) and 'global_rule_id' in _dict[0]):
+        if 'global_rule_id' in _dict or (isinstance(_dict, CommentedSeq) and _dict and 'global_rule_id' in _dict[0]):
             return FileType.CORRELATION_RULE
 
     if file_type == 'json' or path.lower().endswith('.json'):

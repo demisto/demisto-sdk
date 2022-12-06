@@ -102,8 +102,8 @@ class ModelingRuleValidator(ContentEntityValidator):
             with open(xif_file_path, 'r') as xif_file:
                 xif_content = xif_file.read()
                 dataset = re.findall("dataset[ ]?=[ ]?([\"a-zA-Z_0-9]+)", xif_content)
-                if dataset:
-                    return [dataset_name.strip("\"") for dataset_name in dataset]
+            if dataset:
+                return [dataset_name.strip("\"") for dataset_name in dataset]
             return []
 
         xif_file_path = get_files_in_dir(os.path.dirname(self.file_path), ['xif'], False)
@@ -120,7 +120,7 @@ class ModelingRuleValidator(ContentEntityValidator):
             self._is_valid = False
             return False
 
-    @error_codes("BA120")
+    @error_codes("MR106")
     def is_files_naming_correct(self):
         """
         Validates all file naming is as convention.
@@ -128,14 +128,12 @@ class ModelingRuleValidator(ContentEntityValidator):
         invalid_files = []
         if not self.validate_xsiam_content_item_title(self.file_path):
             invalid_files.append(self.file_path)
-        if self.schema_path:
-            if not self.validate_xsiam_content_item_title(self.schema_path):
-                invalid_files.append(self.schema_path)
-        if self.xif_path:
-            if not self.validate_xsiam_content_item_title(self.xif_path):
-                invalid_files.append(self.xif_path)
+        if self.schema_path and not self.validate_xsiam_content_item_title(self.schema_path):
+            invalid_files.append(self.schema_path)
+        if self.xif_path and not self.validate_xsiam_content_item_title(self.xif_path):
+            invalid_files.append(self.xif_path)
         if invalid_files:
-            error_message, error_code = Errors.xisam_content_files_naming_invalid(invalid_files)
+            error_message, error_code = Errors.modeling_rules_files_naming_error(invalid_files)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False

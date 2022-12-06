@@ -62,7 +62,6 @@ ERROR_CODE = {
     "incorrect_from_to_version_format": {'code': "BA117", 'ui_applicable': False, 'related_field': ''},
     "mismatching_from_to_versions": {'code': "BA118", 'ui_applicable': False, 'related_field': ''},
     "copyright_section_in_python_error": {'code': "BA119", 'ui_applicable': False, 'related_field': ''},
-    "xisam_content_files_naming_invalid": {'code': "BA120", 'ui_applicable': False, 'related_field': ''},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -342,7 +341,8 @@ ERROR_CODE = {
     "incorrect_value_references": {'code': "PB121", 'ui_applicable': False, 'related_field': 'taskid'},
     "playbook_unhandled_task_branches": {'code': "PB122", 'ui_applicable': True, 'related_field': 'conditions'},
     "playbook_unhandled_reply_options": {'code': "PB123", 'ui_applicable': True, 'related_field': 'conditions'},
-    "playbook_unhandled_script_condition_branches": {'code': "PB124", 'ui_applicable': True, 'related_field': 'conditions'},
+    "playbook_unhandled_script_condition_branches": {'code': "PB124", 'ui_applicable': True,
+                                                     'related_field': 'conditions'},
     "playbook_only_default_next": {'code': "PB125", 'ui_applicable': True, 'related_field': 'conditions'},
     "playbook_only_default_reply_option": {'code': "PB126", 'ui_applicable': True, 'related_field': 'message'},
 
@@ -367,6 +367,7 @@ ERROR_CODE = {
     "error_uninstall_node": {'code': "RM111", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_relative_url_error": {'code': "RM112", 'ui_applicable': False, 'related_field': ''},
     "copyright_section_in_readme_error": {'code': "RM113", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rules_files_naming_error": {'code': "RM114", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -486,9 +487,23 @@ ERROR_CODE = {
     "invalid_rule_name": {'code': "MR103", 'ui_applicable': False, 'related_field': ''},
     "modeling_rule_schema_types_invalid": {'code': "MR104", 'ui_applicable': False, 'related_field': ''},
     "modeling_rule_schema_xif_dataset_mismatch": {'code': "MR105", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rules_files_naming_error": {'code': "MR106", 'ui_applicable': False, 'related_field': ''},
 
     # CR - Correlation Rules
-    "correlation_rule_starts_with_hyphen": {'code': 'CR100', 'ui_applicable': False, 'related_field': ''}
+    "correlation_rule_starts_with_hyphen": {'code': 'CR100', 'ui_applicable': False, 'related_field': ''},
+    "correlation_rules_files_naming_error": {'code': 'CR101', 'ui_applicable': False, 'related_field': ''},
+
+    # XR - XSIAM Reports
+    "xsiam_report_files_naming_error": {'code': 'XR100', 'ui_applicable': False, 'related_field': ''},
+
+    # PR - Parsing Rules
+    "parsing_rules_files_naming_error": {'code': 'PR100', 'ui_applicable': False, 'related_field': ''},
+
+    # XT - XDRC Templates
+    "xdrc_templates_files_naming_error": {'code': 'XT100', 'ui_applicable': False, 'related_field': ''},
+
+    # XD - XSIAM Dashboards
+    "xsiam_dashboards_files_naming_error": {'code': 'XD100', 'ui_applicable': False, 'related_field': ''}
 }
 
 
@@ -2556,8 +2571,39 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def xisam_content_files_naming_invalid(invalid_files: list):
-        return f"The following files do not match the naming conventions:: {','.join(invalid_files)}"
+    def modeling_rules_files_naming_error(invalid_files: list):
+        return f"The following modeling rules do not match the naming conventions: {','.join(invalid_files)}. " \
+               f"Files in the modeling rules directory must be titled as the pack."
+
+    @staticmethod
+    @error_code_decorator
+    def correlation_rules_files_naming_error(invalid_files: list):
+        return f"The following correlation rules files do not match the naming conventions: {','.join(invalid_files)}." \
+               f" Files in the modeling rules directory must start with the title of pack."
+
+    @staticmethod
+    @error_code_decorator
+    def xsiam_report_files_naming_error(invalid_files: list):
+        return f"The following xsiam report files do not match the naming conventions: {','.join(invalid_files)}." \
+               f"XSIAM reports title must start with the title of pack."
+
+    @staticmethod
+    @error_code_decorator
+    def parsing_rules_files_naming_error(invalid_files: list):
+        return f"The following parsing rules files do not match the naming conventions: {','.join(invalid_files)}." \
+               f" Files in the parsing rules directory must be titled as the pack."
+
+    @staticmethod
+    @error_code_decorator
+    def xdrc_templates_files_naming_error(invalid_files: list):
+        return f"The following xdrc templates do not match the naming conventions:: {','.join(invalid_files)}." \
+               f" Files in the xdrc templates directory must be titled as the pack."
+
+    @staticmethod
+    @error_code_decorator
+    def xsiam_dashboards_files_naming_error(invalid_files: list):
+        return f"The following XSIAM dashboards do not match the naming conventions:: {','.join(invalid_files)}." \
+               f" Files titles in the XSIAM dashboards directory must be start with the pack title."
 
     @staticmethod
     @error_code_decorator

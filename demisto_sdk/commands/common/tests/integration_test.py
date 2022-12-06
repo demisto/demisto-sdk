@@ -1715,9 +1715,4 @@ class TestisContextChanged:
         integration_validator = IntegrationValidator(structure_validator, validate_all=validate_all)
         if remove_readme:
             os.remove(integration.readme.path)
-        res = integration_validator.validate_readme_exists(integration_validator.validate_all) is expected_result
-        if not res:
-            print(f'{integration.yml.path=}')
-            from pathlib import Path
-            print(list(Path(integration.yml.path).parent.iterdir()))
-        assert res
+        assert integration_validator.validate_readme_exists(integration_validator.validate_all) is expected_result

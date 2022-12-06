@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 from typing import List, Optional
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
@@ -66,6 +67,7 @@ class Integration:
             self.yml = YAML(output_yml_path, self._repo.path, IntegrationScriptUnifier.unify(Path(self.yml.path), yml))
             self.readme = File(output_yml_path.with_name(output_yml_path.name.replace('.yml', '_README.md')), self._repo.path)
             self.yml.path = str(output_yml_path)
+            shutil.rmtree(self._tmpdir_integration_path)
 
     def create_default_integration(self, name: str = 'Sample', commands: List[str] = None):
         """Creates a new integration with basic data

@@ -21,17 +21,18 @@ class PrepareUploadManager:
 
         if isinstance(input, str):
             input = Path(input)
-        if not input.is_dir():
-            input = input.parent
         if force:
             kwargs['force'] = True
         content_item = BaseContent.from_path(input)
         if not isinstance(content_item, ContentItem):
             raise ValueError(f"Unsupported input for {input}. Please provide a path to a content item. Got: {content_item}")
         if not output:
+            if not input.is_dir():
+                input = input.parent
             output = input / content_item.normalize_file_name
         else:
-            output = Path(output) / content_item.normalize_file_name
+            if not output.is_dir():
+                output = Path(output) / content_item.normalize_file_name
         data = content_item.prepare_for_upload(marketplace, **kwargs)
         if output.exists() and not force:
             raise FileExistsError(f"Output file {output} already exists. Use --force to overwrite.")

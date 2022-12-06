@@ -138,8 +138,6 @@ class NativeImageSupportedVersions:
         if native_images := self.image_to_native_images_support(docker_images_to_native_images_mapping):
             # in case there is a script/integration that should be ignored on a specific native image,
             # the native image(s) which doesn't support him will be removed.
-            for ignored_native_image in self.get_ignored_native_images():
-                if ignored_native_image in native_images:
-                    native_images.remove(ignored_native_image)
-            return native_images
+            ignored_native_images = self.get_ignored_native_images()
+            return [native_image for native_image in native_images if native_image not in ignored_native_images]
         return []

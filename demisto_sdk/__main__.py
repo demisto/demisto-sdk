@@ -242,7 +242,7 @@ def extract_code(config, **kwargs):
 
 
 # ====================== unify ====================== #
-@main.command()
+@main.command(name='prepare-content')
 @click.help_option(
     '-h', '--help'
 )
@@ -294,6 +294,8 @@ def unify(**kwargs):
         PrepareUploadManager.prepare_for_upload(**kwargs)
     return 0
 
+
+main.add_command(unify, name='unify')
 
 # ====================== zip-packs ====================== #
 @main.command()

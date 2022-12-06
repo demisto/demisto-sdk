@@ -1514,7 +1514,6 @@ def find_type(
 
         if 'layout' in _dict or 'kind' in _dict:  # it's a Layout or Dashboard but not a Generic Object
             if 'kind' in _dict or 'typeId' in _dict:
-                #  check which special field XSIAM Layout has.
                 return FileType.LAYOUT
 
             return FileType.DASHBOARD

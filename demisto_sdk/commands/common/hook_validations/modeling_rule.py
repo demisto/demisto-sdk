@@ -84,8 +84,8 @@ class ModelingRuleValidator(ContentEntityValidator):
             )
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
-                return False
-        return True
+                return has_testdata
+        return has_testdata
 
     def does_version_require_testdata(self):
         """Modeling Rule Versions Starting with 6.10.0 require test data for testing"""

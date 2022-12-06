@@ -23,7 +23,7 @@ class PrepareUploadManager:
             kwargs['force'] = True
         content_item = BaseContent.from_path(input)
         if not isinstance(content_item, ContentItem):
-            raise ValueError(f"Unsupported input. Please provide a path to a content item. Got: {content_item}")
+            raise ValueError(f"Unsupported input for {input}. Please provide a path to a content item. Got: {content_item}")
         if not output:
             output = input / content_item.normalize_file_name
         else:

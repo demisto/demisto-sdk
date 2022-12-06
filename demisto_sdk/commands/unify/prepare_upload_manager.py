@@ -1,13 +1,10 @@
 from pathlib import Path
 from typing import Optional
 
-import demisto_sdk.commands.content_graph.parsers.content_item as content_item
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+import demisto_sdk.commands.content_graph.parsers.content_item
+from demisto_sdk.commands.common.constants import MarketplaceVersions, MARKETPLACE_MIN_VERSION
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-
-# This is to force unifying deprecated content items
-content_item.MARKETPLACE_MIN_VERSION = '0.0.0'
 
 
 class PrepareUploadManager:
@@ -19,6 +16,9 @@ class PrepareUploadManager:
             marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
             force: bool = False,
             **kwargs) -> Path:
+        # This is to force unifying deprecated content items
+        demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = '0.0.0'
+
         if isinstance(input, str):
             input = Path(input)
         if not input.is_dir():
@@ -37,4 +37,7 @@ class PrepareUploadManager:
             raise FileExistsError(f"Output file {output} already exists. Use --force to overwrite.")
         with output.open('w') as f:
             content_item.handler.dump(data, f)
+        
+        # This is to reset the min version
+        demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = MARKETPLACE_MIN_VERSION
         return output

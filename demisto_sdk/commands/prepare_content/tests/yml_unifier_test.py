@@ -277,7 +277,7 @@ def test_insert_image_to_yml_without_image(tmp_path):
     integration_obj = {'id': 'SomeIntegration'}
     yaml.dump(integration_obj, integration_yml.open('w'))
     yml_unified, found_img_path = IntegrationScriptUnifier.insert_image_to_yml(
-        integration_dir, integration_obj)
+        integration_dir, integration_obj, False)
     assert yml_unified == integration_obj
     assert not found_img_path
 

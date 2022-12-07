@@ -206,6 +206,7 @@ class BaseUpdate:
                                 # is added by the server for internal use. Removing this configuration since it is
                                 # unnecessary.
                                 if list_element.get('name') == 'incidentFetchInterval':
+                                    print("Found unnecessary 'incidentFetchInterval' field, removing it")
                                     del data[field][i]
                                 self.recursive_remove_unnecessary_keys(
                                     sequence[0].get('mapping'),

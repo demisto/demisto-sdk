@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Set, Type, cast
 
 from packaging.version import Version
 
-from demisto_sdk.commands.common.constants import MARKETPLACE_MIN_VERSION, MarketplaceVersions
+from demisto_sdk.commands.common.constants import MARKETPLACE_MIN_VERSION, PACKS_DIR, MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import (UNIFIED_FILES_SUFFIXES, ContentType, Relationships,
                                                        RelationshipType)
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
@@ -83,10 +83,11 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         Returns:
             Optional[ContentItemParser]: The parsed content item.
         """
-        if not ContentItemParser.is_unified_file(path):
-            path = path.parent
-        if not ContentItemParser.is_package(path):
-            return None
+        if not ContentItemParser.is_content_item(path):
+            if ContentItemParser.is_content_item(path.parent):
+                path = path.parent
+            else:
+                return None
         content_type: ContentType = ContentType.by_folder(path.parts[-2])
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:
@@ -158,11 +159,27 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     @staticmethod
     def is_package(path: Path) -> bool:
-        return path.parent.name in ContentType.folders()
+        return path.is_dir() and len(path.parts) > 3 and path.parts[-4] == PACKS_DIR
 
     @staticmethod
     def is_unified_file(path: Path) -> bool:
-        return path.suffix in UNIFIED_FILES_SUFFIXES and len(path.parts) > 3 and path.parts[-4] == 'Packs'
+        return path.suffix in UNIFIED_FILES_SUFFIXES and len(path.parts) > 3 and path.parts[-4] == PACKS_DIR
+
+    @staticmethod
+    def is_content_item(path: Path) -> bool:
+        """Determines whether a file path is of a content item, by one of the following conditions:
+        1. If this is a directory
+        2. If it's a unified file
+
+        Args:
+            path (Path): The file path
+
+        Returns:
+            bool: True iff the file path is of a content item.
+        """
+        return ContentItemParser.is_package(path) or ContentItemParser.is_unified_file(
+            path
+        )
 
     def should_skip_parsing(self) -> bool:
         """Returns true if any of the minimal conditions for parsing is not met.

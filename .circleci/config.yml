@@ -176,11 +176,6 @@ jobs:
 
         - <<: *install_node_ci
         - run:
-          name: Run Pytest collection
-          command: |
-              poetry run pytest --collect-only .
-
-        - run:
             name: pytest - graph
             no_output_timeout: 15m
             command: |
@@ -227,6 +222,12 @@ jobs:
             command: |
               poetry run pre-commit --version
               poetry run pre-commit run -a
+        
+        - run:
+          name: Run Pytest collection
+          command: |
+              poetry run pytest --collect-only .
+
         - save_cache:
             key: v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}
             paths:

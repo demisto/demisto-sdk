@@ -70,7 +70,7 @@ def init_test_data(
     """
     # don't invoke rich logging if this is invoked from the "demisto-sdk modeling-rules test" command
     # since it's already setup there
-    if not (ctx.parent and ctx.parent.info_name == 'test'):
+    if not (ctx.parent and ctx.parent.info_name and ctx.parent.info_name.casefold() == 'test'):
         setup_rich_logging(verbosity, quiet, log_path, log_file_name)
 
     errors = False

@@ -98,6 +98,8 @@ class ContentItem(BaseContent):
             return self.handler.load(f)
 
     def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
+        if kwargs.get('unify_only'):
+            return self.data
         data = self.data
         if marketplace != MarketplaceVersions.XSOAR:
             alternate_item_fields(data)

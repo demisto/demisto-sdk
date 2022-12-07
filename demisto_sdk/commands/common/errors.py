@@ -2556,10 +2556,10 @@ class Errors:
     def modeling_rule_missing_testdata_file(modeling_rule_dir: Path, minimum_from_version: str, from_version: str):
         test_data_file = modeling_rule_dir / f'{modeling_rule_dir.name}_testdata.json'
         return f'The modeling rule {modeling_rule_dir} is missing a testdata file at {test_data_file}. The modeling ' \
-               f'rule has a fromversion of {from_version} and modeling rules supporting fromversion' \
-               f' {minimum_from_version} and upwards are required to provide test data for modeling rule testing.' \
-               ' Please add a testdata file for this rule. See the "demisto-sdk modeling-rules init-test-data" ' \
-               ' command for more information on creating a test data file for modeling rules.'
+               f'rule has a fromversion of {from_version} and modeling rules supporting fromversion ' \
+               f'{minimum_from_version} and upwards are required to provide test data for modeling rule testing. ' \
+               'Please add a testdata file for this rule. See the "demisto-sdk modeling-rules init-test-data" ' \
+               'command for more information on creating a test data file for modeling rules.'
 
     @staticmethod
     @error_code_decorator

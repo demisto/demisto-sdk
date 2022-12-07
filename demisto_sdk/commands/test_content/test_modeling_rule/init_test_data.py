@@ -16,7 +16,6 @@ logger = logging.getLogger('demisto-sdk')
 
 @app.command(no_args_is_help=True)
 def init_test_data(
-    ctx: typer.Context,
     input: List[Path] = typer.Argument(
         ...,
         exists=True,
@@ -68,10 +67,7 @@ def init_test_data(
     """
     Initialize or update a test data file for a modeling rule
     """
-    # don't invoke rich logging if this is invoked from the "demisto-sdk modeling-rules test" command
-    # since it's already setup there
-    if not (ctx.parent and ctx.parent.info_name and ctx.parent.info_name.casefold() == 'test'):
-        setup_rich_logging(verbosity, quiet, log_path, log_file_name)
+    setup_rich_logging(verbosity, quiet, log_path, log_file_name)
 
     errors = False
     for fp in input:

@@ -164,7 +164,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     @staticmethod
     def is_unified_file(path: Path) -> bool:
-        return path.suffix in UNIFIED_FILES_SUFFIXES and any(path.name.startswith(server_name) for server_name in
+        return path.suffix in UNIFIED_FILES_SUFFIXES and all(path.name.startswith(server_name) for server_name in
                                                              ContentType.server_names())
 
     @staticmethod

@@ -133,7 +133,7 @@ class IntegrationScriptUnifier(Unifier):
     def insert_image_to_yml(
         package_path: Path,
         yml_unified: dict,
-        is_script_package: bool,
+        is_script_package: bool = False,
         image_prefix: str = DEFAULT_IMAGE_PREFIX,
     ):
         image_data, found_img_path = IntegrationScriptUnifier.get_data(package_path, "*png", is_script_package)

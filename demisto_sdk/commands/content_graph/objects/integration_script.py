@@ -21,5 +21,5 @@ class IntegrationScript(ContentItem):
 
     def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
         data = super().prepare_for_upload(marketplace)
-        data = IntegrationScriptUnifier.unify(self.path, data, marketplace, force=True, **kwargs)
+        data = IntegrationScriptUnifier.unify(self.path, data, marketplace, **kwargs)
         return data

@@ -47,8 +47,9 @@ class IntegrationScriptUnifier(Unifier):
         marketplace: MarketplaceVersions = None,
         custom: str = '',
         image_prefix: str = DEFAULT_IMAGE_PREFIX,
+        **kwargs,
     ):
-        print(f"Merging package: {path}")
+        print(f"Unifying package: {path}")
         if path.parent.name in {'Integrations', 'Scripts'}:
             return data
         package_path = path.parent

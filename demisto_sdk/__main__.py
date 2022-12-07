@@ -19,9 +19,9 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (find_type, get_last_remote_release_version, get_release_note_entries,
                                                is_external_repository, print_error, print_success, print_warning)
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
+from demisto_sdk.commands.prepare_content.prepare_upload_manager import PrepareUploadManager
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data, test_modeling_rule
-from demisto_sdk.commands.prepare_content.prepare_upload_manager import PrepareUploadManager
 from demisto_sdk.commands.upload.upload import upload_content_entity
 from demisto_sdk.utils.utils import check_configuration_file
 

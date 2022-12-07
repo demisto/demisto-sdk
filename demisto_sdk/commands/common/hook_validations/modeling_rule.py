@@ -137,9 +137,12 @@ class ModelingRuleValidator(ContentEntityValidator):
 
         for file_path in files_to_check:
             file_name = os.path.basename(file_path)
+            file_name_std = file_name.casefold()
             # The schema has _schema.json suffix and the testdata file has _testdata.json suffix
             # whereas the other content entity component files only has the .suffix
-            splitter = '_' if file_name.endswith('_schema.json') or file_name.endswith('_testdata.json') else '.'
+            splitter = '_' if (
+                file_name_std.endswith('_schema.json') or file_name_std.endswith('_testdata.json')
+            ) else '.'
             base_name = file_name.rsplit(splitter, 1)[0]
 
             if integrations_folder != base_name:

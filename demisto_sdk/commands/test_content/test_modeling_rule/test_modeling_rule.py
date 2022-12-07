@@ -339,7 +339,15 @@ def validate_modeling_rule(
 
                 from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_td_app
 
-                # the init-test-data typer application only has one command, so we can just get the first one
+                if not init_td_app.registered_commands:
+                    err = (
+                        '[red]Failed to load the "init-test-data" typer application to interactively create a '
+                        'testdata file.[/red]'
+                    )
+                    logger.error(err, extra={'markup': True})
+                    raise typer.Exit(1)
+
+                # the init-test-data typer application should only have the one command
                 init_td_cmd_info = init_td_app.registered_commands[0]
 
                 init_td_cmd = get_command_from_info(

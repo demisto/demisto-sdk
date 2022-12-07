@@ -168,7 +168,6 @@ class ValidateManager:
             FileType.MODELING_RULE_SCHEMA,
             FileType.XSIAM_DASHBOARD_IMAGE,
             FileType.XSIAM_REPORT_IMAGE,
-            FileType.XSIAM_DASHBOARD_IMAGE,
             FileType.XDRC_TEMPLATE_YML,
             FileType.XDRC_TEMPLATE,
         )

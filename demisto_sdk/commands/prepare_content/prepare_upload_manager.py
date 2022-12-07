@@ -21,6 +21,9 @@ class PrepareUploadManager:
 
         if isinstance(input, str):
             input = Path(input)
+        if isinstance(output, str):
+            output = Path(output)
+
         if force:
             kwargs['force'] = True
         content_item = BaseContent.from_path(input)
@@ -31,8 +34,8 @@ class PrepareUploadManager:
                 input = input.parent
             output = input / content_item.normalize_file_name
         else:
-            if not Path(output).is_file():
-                output = Path(output) / content_item.normalize_file_name
+            if not output.is_file():
+                output = output / content_item.normalize_file_name
         data = content_item.prepare_for_upload(marketplace, **kwargs)
         if output.exists() and not force:
             raise FileExistsError(f"Output file {output} already exists. Use --force to overwrite.")

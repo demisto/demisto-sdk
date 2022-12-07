@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Set, Type, cast
 
 from packaging.version import Version
 
-from demisto_sdk.commands.common.constants import MARKETPLACE_MIN_VERSION, MarketplaceVersions
+from demisto_sdk.commands.common.constants import MARKETPLACE_MIN_VERSION, PACKS_DIR, MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import (UNIFIED_FILES_SUFFIXES, ContentType, Relationships,
                                                        RelationshipType)
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser

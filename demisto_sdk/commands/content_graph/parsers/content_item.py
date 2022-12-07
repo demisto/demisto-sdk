@@ -160,11 +160,12 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     @staticmethod
     def is_package(path: Path) -> bool:
-        return path.is_dir() and len(path.parts) > 3 and path.parts[-4] == PACKS_DIR
+        return path.is_dir() and path.parent.name in ContentType.folders()
 
     @staticmethod
     def is_unified_file(path: Path) -> bool:
-        return path.suffix in UNIFIED_FILES_SUFFIXES and len(path.parts) > 3 and path.parts[-4] == PACKS_DIR
+        return path.suffix in UNIFIED_FILES_SUFFIXES and all(path.name.startswith(server_name) for server_name in
+                                                             ContentType.server_names())
 
     @staticmethod
     def is_content_item(path: Path) -> bool:

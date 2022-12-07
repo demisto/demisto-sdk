@@ -3,7 +3,7 @@ from typing import Set
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-from demisto_sdk.commands.preapre_content.rule_unifier import RuleUnifier
+from demisto_sdk.commands.prepare_content.rule_unifier import RuleUnifier
 
 
 class ModelingRule(ContentItem, content_type=ContentType.MODELING_RULE):  # type: ignore[call-arg]

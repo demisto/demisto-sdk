@@ -62,7 +62,7 @@ class EnableLogging:
         logging.root.manager.loggerDict = self.loggers_to_levels
 
 
-@pytest.fixture(name='enable_logging', scope='module')
+@pytest.fixture(name='enable_logging', scope='module', autouse=True)
 def fixture_enable_logging():
     with EnableLogging():
         yield
@@ -204,7 +204,7 @@ class TestVerifyResults:
 
 class TestTheTestModelingRuleCommandSingleRule:
 
-    def test_the_test_modeling_rule_command_pack_not_on_tenant(self, pack, enable_logging):
+    def test_the_test_modeling_rule_command_pack_not_on_tenant(self, pack):
         """
         Given:
             - A test data file.
@@ -244,7 +244,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
-    def test_the_test_modeling_rule_command_fail_to_push_test_data(self, pack, enable_logging):
+    def test_the_test_modeling_rule_command_fail_to_push_test_data(self, pack):
         """
         Given:
             - A test data file.
@@ -288,7 +288,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
-    def test_the_test_modeling_rule_command_fail_to_check_dataset_exists(self, pack, monkeypatch, enable_logging):
+    def test_the_test_modeling_rule_command_fail_to_check_dataset_exists(self, pack, monkeypatch):
         """
         Given:
             - A test data file.
@@ -349,7 +349,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
-    def test_the_test_modeling_rule_command_fail_to_start_xql_query(self, pack, monkeypatch, enable_logging):
+    def test_the_test_modeling_rule_command_fail_to_start_xql_query(self, pack, monkeypatch):
         """
         Given:
             - A test data file.
@@ -422,7 +422,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
-    def test_the_test_modeling_rule_command_fail_to_get_xql_query_results(self, pack, monkeypatch, enable_logging):
+    def test_the_test_modeling_rule_command_fail_to_get_xql_query_results(self, pack, monkeypatch):
         """
         Given:
             - A test data file.
@@ -499,7 +499,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
-    def test_the_test_modeling_rule_command_results_match_expectations(self, pack, monkeypatch, enable_logging):
+    def test_the_test_modeling_rule_command_results_match_expectations(self, pack, monkeypatch):
         """
         Given:
             - A test data file.
@@ -597,7 +597,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
-    def test_the_test_modeling_rule_command_results_do_not_match_expectations(self, pack, monkeypatch, enable_logging):
+    def test_the_test_modeling_rule_command_results_do_not_match_expectations(self, pack, monkeypatch):
         """
         Given:
             - A test data file.
@@ -700,7 +700,7 @@ class TestTheTestModelingRuleCommandSingleRule:
 
 class TestTheTestModelingRuleCommandMultipleRules:
 
-    def test_fail_one_pass_second(self, repo, monkeypatch, enable_logging):
+    def test_fail_one_pass_second(self, repo, monkeypatch):
         """
         Given:
             - Two modeling rules with test data files.
@@ -808,7 +808,7 @@ class TestTheTestModelingRuleCommandMultipleRules:
 
 class TestTheTestModelingRuleCommandInteractive:
 
-    def test_no_testdata_file_exists(self, repo, monkeypatch, mocker, enable_logging):
+    def test_no_testdata_file_exists(self, repo, monkeypatch, mocker):
         """
         Given:
             - A modeling rule with no test data file.

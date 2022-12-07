@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.update_id_set import (get_classifier_data, get_
                                                        get_layouts_scripts_ids, get_layoutscontainer_data,
                                                        get_mapper_data, get_pack_metadata_data, get_playbook_data,
                                                        get_script_data)
-from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
+from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
 
 
 class IDSetValidations(BaseValidator):

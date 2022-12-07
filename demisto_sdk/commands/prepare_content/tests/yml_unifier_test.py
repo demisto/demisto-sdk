@@ -14,8 +14,8 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
-from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
-from demisto_sdk.commands.unify.prepare_upload_manager import PrepareUploadManager
+from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
+from demisto_sdk.commands.prepare_content.prepare_upload_manager import PrepareUploadManager
 from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()

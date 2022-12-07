@@ -8,7 +8,7 @@ import click
 from ruamel.yaml.scalarstring import FoldedScalarString
 
 from demisto_sdk.commands.common.constants import SAMPLES_DIR, MarketplaceVersions
-from demisto_sdk.commands.unify.unifier import Unifier
+from demisto_sdk.commands.prepare_content.unifier import Unifier
 
 
 class RuleUnifier(Unifier):

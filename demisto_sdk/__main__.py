@@ -21,7 +21,7 @@ from demisto_sdk.commands.common.tools import (find_type, get_last_remote_releas
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data, test_modeling_rule
-from demisto_sdk.commands.unify.prepare_upload_manager import PrepareUploadManager
+from demisto_sdk.commands.prepare_content.prepare_upload_manager import PrepareUploadManager
 from demisto_sdk.commands.upload.upload import upload_content_entity
 from demisto_sdk.utils.utils import check_configuration_file
 
@@ -280,7 +280,7 @@ def prepare_content(**kwargs):
     if marketplace := kwargs.get('marketplace'):
         os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
     if file_type == FileType.GENERIC_MODULE:
-        from demisto_sdk.commands.unify.generic_module_unifier import GenericModuleUnifier
+        from demisto_sdk.commands.prepare_content.generic_module_unifier import GenericModuleUnifier
 
         # pass arguments to GenericModule unifier and call the command
         generic_module_unifier = GenericModuleUnifier(**kwargs)

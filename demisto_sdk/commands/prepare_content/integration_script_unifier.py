@@ -15,7 +15,7 @@ from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_PREFIX, TYPE_TO_
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list, find_type, get_mp_tag_parser, get_pack_name,
                                                get_yaml, get_yml_paths_in_dir, print_color, print_warning)
-from demisto_sdk.commands.unify.unifier import Unifier
+from demisto_sdk.commands.prepare_content.unifier import Unifier
 
 json = JSON_Handler()
 

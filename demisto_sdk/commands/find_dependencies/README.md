@@ -24,7 +24,7 @@ This command is used in order to find the dependencies between packs and to upda
   Get only the packs dependent ON the given pack. Note: this flag can not be used for the packs ApiModules and Base.
 * **-d --dependency**
   Find which items in a specific content pack appears as a mandatory dependency of the searched pack.
-  
+
 **Examples**:
 `demisto-sdk find-dependencies -i Integrations/MyInt`
 This will calculate the dependencies for the `MyInt` pack and update the pack_metadata.

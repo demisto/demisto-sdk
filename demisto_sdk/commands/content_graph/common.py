@@ -105,16 +105,16 @@ class ContentType(str, enum.Enum):
         return self.lower()
 
     @staticmethod
-    def server_names() -> Set[str]:
-        return {c.server_name for c in ContentType} | {"indicatorfield"}
+    def server_names() -> List[str]:
+        return [c.server_name for c in ContentType] + ["indicatorfield"]
 
     @classmethod
     def by_folder(cls, folder: str) -> "ContentType":
         return cls(folder[:-1])  # remove the `s`
 
     @staticmethod
-    def folders() -> Set[str]:
-        return {c.as_folder for c in ContentType}
+    def folders() -> List[str]:
+        return [c.as_folder for c in ContentType]
 
     @property
     def as_folder(self) -> str:

@@ -83,12 +83,10 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         Returns:
             Optional[ContentItemParser]: The parsed content item.
         """
+        if not ContentItemParser.is_unified_file(path):
+            path = path.parent
         if not ContentItemParser.is_content_item(path):
-            if ContentItemParser.is_content_item(path.parent):
-                path = path.parent
-            else:
-                return None
-
+            return None
         content_type: ContentType = ContentType.by_folder(path.parts[-2])
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:

@@ -54,7 +54,8 @@ def test_init_test_data_create(pack):
     """
     from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_test_data_app
     runner = CliRunner()
-    pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
+    mr = pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
+    mr.testdata._file_path.unlink()
     mrule_dir = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
     test_data_file = mrule_dir / f'{DEFAULT_MODELING_RULE_NAME}_testdata.json'
     assert test_data_file.exists() is False
@@ -207,8 +208,10 @@ class TestInitTestDataMultiInput:
         """
         from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_test_data_app
         runner = CliRunner()
-        pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
-        pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME_2, rules=ONE_MODEL_RULE_TEXT)
+        mr_1 = pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
+        mr_2 = pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME_2, rules=ONE_MODEL_RULE_TEXT)
+        mr_1.testdata._file_path.unlink()
+        mr_2.testdata._file_path.unlink()
         mrule_dir = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
         mrule_dir_2 = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME_2)
         test_data_file = mrule_dir / f'{DEFAULT_MODELING_RULE_NAME}_testdata.json'
@@ -239,8 +242,10 @@ class TestInitTestDataMultiInput:
         """
         from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_test_data_app
         runner = CliRunner()
-        pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
-        pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME_2, rules=ONE_MODEL_RULE_TEXT)
+        mr_1 = pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
+        mr_2 = pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME_2, rules=ONE_MODEL_RULE_TEXT)
+        mr_1.testdata._file_path.unlink()
+        mr_2.testdata._file_path.unlink()
         mrule_dir = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
         mrule_dir_2 = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME_2)
         test_data_file = mrule_dir / f'{DEFAULT_MODELING_RULE_NAME}_testdata.json'

@@ -47,8 +47,6 @@ class IntegrationScriptUnifier(Unifier):
         marketplace: MarketplaceVersions = None,
         custom: str = '',
         image_prefix: str = DEFAULT_IMAGE_PREFIX,
-        force: bool = False,
-        **kwargs,
     ):
         print(f"Merging package: {path}")
         if path.parent.name in {'Integrations', 'Scripts'}:
@@ -68,10 +66,16 @@ class IntegrationScriptUnifier(Unifier):
             return data
         yml_unified = copy.deepcopy(data)
 
-        yml_unified, _ = IntegrationScriptUnifier.insert_script_to_yml(package_path, script_type, yml_unified, data, is_script_package)
+        yml_unified, _ = IntegrationScriptUnifier.insert_script_to_yml(
+            package_path, script_type, yml_unified, data, is_script_package
+        )
         if not is_script_package:
-            yml_unified, _ = IntegrationScriptUnifier.insert_image_to_yml(package_path, data, yml_unified, is_script_package, image_prefix, force)
-            yml_unified, _ = IntegrationScriptUnifier.insert_description_to_yml(package_path, data, yml_unified, is_script_package, force)
+            yml_unified, _ = IntegrationScriptUnifier.insert_image_to_yml(
+                package_path, yml_unified, is_script_package, image_prefix
+            )
+            yml_unified, _ = IntegrationScriptUnifier.insert_description_to_yml(
+                package_path, yml_unified, is_script_package
+            )
             contributor_type, metadata_data = IntegrationScriptUnifier.get_contributor_data(package_path, is_script_package)
 
             if IntegrationScriptUnifier.is_contributor_pack(contributor_type):
@@ -127,20 +131,13 @@ class IntegrationScriptUnifier(Unifier):
     @staticmethod
     def insert_image_to_yml(
         package_path: Path,
-        yml_data: dict,
         yml_unified: dict,
         is_script_package: bool,
         image_prefix: str = DEFAULT_IMAGE_PREFIX,
-        force: bool = False,
     ):
         image_data, found_img_path = IntegrationScriptUnifier.get_data(package_path, "*png", is_script_package)
         if image_data:
             image_data = image_prefix + base64.b64encode(image_data).decode('utf-8')
-
-            if yml_data.get('image') and force is False:
-                raise ValueError('Please move the image from the yml to an image file (.png)'
-                                 f' in the package: {package_path}')
-
             yml_unified['image'] = image_data
         else:
             click.secho(f'Failed getting image data for {package_path}', fg="yellow")
@@ -148,12 +145,8 @@ class IntegrationScriptUnifier(Unifier):
         return yml_unified, found_img_path
 
     @staticmethod
-    def insert_description_to_yml(package_path: Path, yml_data: dict, yml_unified: dict, is_script_package: bool, force: bool):
+    def insert_description_to_yml(package_path: Path, yml_unified: dict, is_script_package: bool):
         desc_data, found_desc_path = IntegrationScriptUnifier.get_data(package_path, '*_description.md', is_script_package)
-
-        if yml_data.get('detaileddescription') and force is False:
-            raise ValueError('Please move the detailed description from the yml to a description file (.md)'
-                             f' in the package: {package_path}')
 
         detailed_description = ''
         if desc_data:
@@ -161,7 +154,7 @@ class IntegrationScriptUnifier(Unifier):
 
         integration_doc_link = ''
         if '[View Integration Documentation]' not in detailed_description:
-            integration_doc_link = IntegrationScriptUnifier.get_integration_doc_link(package_path, yml_data)
+            integration_doc_link = IntegrationScriptUnifier.get_integration_doc_link(package_path, yml_unified)
         if integration_doc_link:
             if detailed_description:
                 detailed_description += '\n\n---\n' + integration_doc_link

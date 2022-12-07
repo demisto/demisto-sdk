@@ -241,7 +241,7 @@ def extract_code(config, **kwargs):
     return extractor.extract_code(kwargs['outfile'])
 
 
-# ====================== unify ====================== #
+# ====================== prepare-content ====================== #
 @main.command(name='prepare-content')
 @click.help_option(
     '-h', '--help'
@@ -265,7 +265,8 @@ def extract_code(config, **kwargs):
               default='xsoar', type=click.Choice(['xsoar', 'marketplacev2', 'v2']))
 def prepare_content(**kwargs):
     """
-    This command is used to prepare to content to be used in the platform.
+    This command is used to prepare the content to be used in the platform.
+
 
     """
     if click.get_current_context().info_name == 'unify':

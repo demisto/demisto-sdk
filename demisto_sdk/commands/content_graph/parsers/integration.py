@@ -3,8 +3,8 @@ from typing import Any, Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.parsers.integration_script import (IntegrationScriptParser,
-                                                                           IntegrationScriptUnifier)
+from demisto_sdk.commands.content_graph.parsers.integration_script import IntegrationScriptParser
+from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
 
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
@@ -82,9 +82,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         """
         if self.is_unified or self.script_info.get("script") not in ["-", ""]:
             return self.script_info.get("script")
-        if not self.unifier:
-            raise ValueError("Unifier object is not initialized")
-        return self.unifier.get_script_or_integration_package_data()[1]
+        return IntegrationScriptUnifier.get_script_or_integration_package_data(self.path.parent)[1]
 
     def connect_to_api_modules(self) -> None:
         """Creates IMPORTS relationships with the API modules used in the integration."""

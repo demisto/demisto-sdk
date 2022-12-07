@@ -38,7 +38,7 @@ class Rule:
         self.testdata = JSONBased(self._tmpdir_rule_path, f'{self.name}_testdata', '')
 
         self.samples: list[JSONBased] = []
-        self.samples_dir_path = tmpdir / SAMPLES_DIR
+        self.samples_dir_path = tmpdir / self.name / SAMPLES_DIR
 
     def build(
             self,

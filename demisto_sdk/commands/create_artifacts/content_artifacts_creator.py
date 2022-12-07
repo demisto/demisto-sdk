@@ -280,7 +280,7 @@ class ContentItemsHandler:
 
         if self.alternate_fields:
             if should_alternate_field_by_item(content_object, self.id_set):
-                alternate_item_fields(content_object)
+                alternate_item_fields(content_object.to_dict())
                 content_object.modified = True
 
         self.content_folder_name_to_func[content_object_directory](content_object)

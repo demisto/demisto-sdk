@@ -201,7 +201,12 @@ class BaseUpdate:
                                 print(f'Adding an empty array - `[]` as the value of the `{field}` field')
                             data[field] = []
                         else:
-                            for list_element in data[field]:
+                            for i, list_element in enumerate(data[field]):
+                                # When downloading the integration from XSOAR, 'incidentFetchInterval' configuration
+                                # is added by the server for internal use. Removing this configuration since it is
+                                # unnecessary.
+                                if list_element.get('name') == 'incidentFetchInterval':
+                                    del data[field][i]
                                 self.recursive_remove_unnecessary_keys(
                                     sequence[0].get('mapping'),
                                     list_element

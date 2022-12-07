@@ -139,7 +139,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     content_items: PackContentItems = Field(
         PackContentItems(), alias="contentItems", exclude=True
     )
-        
+
     @property
     def depends_on(self) -> List["RelationshipData"]:
         """

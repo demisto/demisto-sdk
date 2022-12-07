@@ -1,11 +1,11 @@
-from pathlib import Path
 import shutil
+from pathlib import Path
 from typing import Optional
-from demisto_sdk.commands.content_graph.objects.pack import Pack
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.pack import Pack
 
 
 class PrepareUploadManager:

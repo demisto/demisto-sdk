@@ -376,6 +376,8 @@ ERROR_CODE = {
     "release_notes_config_file_missing_release_notes": {'code': "RN110", 'ui_applicable': False, 'related_field': ''},
     "release_notes_docker_image_not_match_yaml": {'code': "RN111", 'ui_applicable': False, 'related_field': ''},
     "release_notes_bc_json_file_missing": {'code': "RN112", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_invalid_content_type_header": {'code': "RN113", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_invalid_content_name_header": {'code': "RN114", 'ui_applicable': False, 'related_field': ''},
 
     # RP - Reputations (Indicator Types)
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
@@ -1329,6 +1331,21 @@ class Errors:
         return f'A new release notes file contains the phrase \"breaking changes\" ' \
                'without a matching JSON file (with the same name as the release note file, e.g. 1_2_3.json). ' \
                f'Please run \"demisto-sdk update-release-notes -i {json_path[:-4]}md -bc\". ' \
+               'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
+
+    @staticmethod
+    @error_code_decorator
+    def release_notes_invalid_content_type_header(content_type: str, pack_name: str):
+        return f'The content type "{content_type}" is either invalid content type or does not exist in the "{pack_name}" pack.\n' \
+               f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n' \
+               'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
+
+    @staticmethod
+    @error_code_decorator
+    def release_notes_invalid_content_name_header(content_name_header: str, pack_name: str):
+        return f'The content item "{content_name_header}" either does not exist in the "{pack_name}" pack ' \
+               'or the header format is invalid.\n' \
+               f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n' \
                'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
 
     @staticmethod

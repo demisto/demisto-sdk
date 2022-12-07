@@ -3,19 +3,26 @@ from __future__ import print_function
 import itertools
 import os
 import re
+from typing import Dict, List, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
-    PACKS_DIR, RN_HEADER_BY_FILE_TYPE, SKIP_RELEASE_NOTES_FOR_TYPES)
+    PACKS_DIR, RN_CONTENT_ENTITY_WITH_STARS, RN_HEADER_BY_FILE_TYPE,
+    SKIP_RELEASE_NOTES_FOR_TYPES, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
 from demisto_sdk.commands.common.tools import (extract_docker_image_from_text,
                                                find_type, get_dict_from_file,
+                                               get_display_name,
                                                get_latest_release_notes_text,
                                                get_pack_name,
                                                get_release_notes_file_path,
                                                get_yaml)
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+ENTITY_TYPE_SECTION_REGEX = re.compile(r'^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)', re.M)
+ENTITY_SECTION_REGEX = re.compile(r'^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|'
+                                  r'^- \*\*(.+)\*\*$\n([\w\W]*)', re.M)
 
 
 class ReleaseNotesValidator(BaseValidator):
@@ -28,8 +35,8 @@ class ReleaseNotesValidator(BaseValidator):
     """
 
     def __init__(self, release_notes_file_path, modified_files=None, pack_name=None, added_files=None,
-                 ignored_errors=None,
-                 print_as_warnings=False, suppress_print=False, json_file_path=None, specific_validations=None):
+                 ignored_errors=None, print_as_warnings=False, suppress_print=False, json_file_path=None,
+                 specific_validations=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path,
                          specific_validations=specific_validations)
@@ -40,6 +47,115 @@ class ReleaseNotesValidator(BaseValidator):
         self.pack_path = os.path.join(PACKS_DIR, self.pack_name)
         self.release_notes_path = get_release_notes_file_path(self.release_notes_file_path)
         self.latest_release_notes = get_latest_release_notes_text(self.release_notes_path)
+
+    def filter_nones(self, ls: Union[List, Tuple]) -> List:
+        """
+            Filters out None values from a list or tuple.
+        Args:
+            ls: (List | Tuple) - This list or tuple to filter.
+        Return:
+            List filtered from None values.
+        """
+        return list(filter(lambda x: x, ls))
+
+    def extract_rn_headers(self) -> Dict:
+        """
+            Extracts the headers from the release notes file.
+        Args:
+            None.
+        Return:
+            The headers of the release notes file.
+        """
+        headers: Dict = {}
+        # Get all sections from the release notes using regex
+        rn_sections = ENTITY_TYPE_SECTION_REGEX.findall(self.latest_release_notes)
+
+        for section in rn_sections:
+            section = self.filter_nones(ls=section)
+            content_type = section[0]
+            content_type_sections_str = section[1]
+
+            # Extract the sections within a content type. (e.g. Integrations 1,2,3)
+            content_type_sections_ls = ENTITY_SECTION_REGEX.findall(content_type_sections_str)
+            for content_type_section in content_type_sections_ls:
+                content_type_section = self.filter_nones(ls=content_type_section)
+                if content_type_section:
+                    header = content_type_section[0]
+                    if headers.get(content_type):
+                        headers[content_type].append(header)
+                    else:
+                        headers[content_type] = [header]
+        return headers
+
+    def filter_rn_headers(self, headers: Dict) -> None:
+        """
+            Filters out the headers from the release notes file, removing add-ons such as "New" and "**".
+        Args:
+            headers: (Dict) - The release notes headers to filter, the structure is content type -> headers.(e.g. Integrations -> [header1, header2])
+        Return:
+            None.
+        """
+        for content_type, content_items in headers.items():
+            content_items = self.filter_nones(ls=content_items)
+            if content_type.lower().replace(' ', '') in RN_CONTENT_ENTITY_WITH_STARS:
+                content_items = list(map(lambda x: x.replace('**', ''), content_items))
+            headers[content_type] = [item.replace('New:', '').strip() for item in content_items]
+
+    def validate_content_type_header(self, content_type: str) -> bool:
+        """
+            Validate that the release notes 1st headers (the content type) are a valid content entity.
+        Args:
+            content_type: (str) - The content type to validate.(e.g. Integrations, Playbooks, etc.)
+        Return:
+            True if the content type is valid, False otherwise.
+        """
+        # Get all the content type headers
+        rn_valid_headers = list(map(lambda rn_valid_header: rn_valid_header.lower(), RN_HEADER_BY_FILE_TYPE.values()))
+
+        if content_type.lower() not in rn_valid_headers:
+            error_message, error_code = Errors.release_notes_invalid_content_type_header(content_type=content_type, pack_name=self.pack_name)
+            if self.handle_error(error_message, error_code, self.release_notes_file_path):
+                return False
+        return True
+
+    def validate_content_item_header(self, content_type: str, headers: Dict) -> bool:
+        """
+            Validate the 2nd headers (the content items) are exists in the pack and having the right display name.
+        Args:
+            content_type: (str) - The content type to validate.(e.g. Integrations, Playbooks, etc.)
+            headers: (Dict) - The release notes headers to validate, the structure is content type -> headers.(e.g. Integrations -> [header1, header2])
+        Return:
+            True if the content item is valid, False otherwise.
+        """
+        is_valid = True
+        # Special rule for the Mapper, as the Mapper is under the classifier directory.
+        content_type_dir_name = content_type.replace(' ', '') if content_type != RN_HEADER_BY_FILE_TYPE[
+            FileType.MAPPER] else RN_HEADER_BY_FILE_TYPE[FileType.CLASSIFIER]
+        content_type_path = os.path.join(self.pack_path, content_type_dir_name)
+
+        content_type_dir_list = []
+        try:
+            for file in os.listdir(content_type_path):
+                if os.path.isdir(os.path.join(content_type_path, file)):
+                    file_path = os.path.join(content_type_path, file, f'{file}.yml')
+                else:
+                    file_path = os.path.join(content_type_path, file)
+                if file_path.endswith('.yml') | file_path.endswith('.json'):
+                    content_type_dir_list.append(file_path)
+        except FileNotFoundError:
+            error_message, error_code = Errors.release_notes_invalid_content_type_header(content_type=content_type,
+                                                                                         pack_name=self.pack_name)
+            if self.handle_error(error_message, error_code, self.release_notes_file_path):
+                is_valid = False
+
+        content_type_dir_list = list(map(lambda item: get_display_name(item), content_type_dir_list))
+        for header in headers.get(content_type, []):
+            if header not in content_type_dir_list:
+                error_message, error_code = Errors.release_notes_invalid_content_name_header(content_name_header=header,
+                                                                                             pack_name=self.pack_name)
+                if self.handle_error(error_message, error_code, self.release_notes_file_path):
+                    is_valid = False
+        return is_valid
 
     @error_codes('RN107')
     def are_release_notes_complete(self):
@@ -57,12 +173,12 @@ class ReleaseNotesValidator(BaseValidator):
                 elif checked_file_pack_name and checked_file_pack_name == self.pack_name:
                     # Refer image and description file paths to the corresponding yml files
                     file = UpdateRN.change_image_or_desc_file_path(file)
-                    update_rn_util = UpdateRN(pack_path=self.pack_path, modified_files_in_pack=set(),
-                                              update_type=None, added_files=set(), pack=self.pack_name)
+                    update_rn_util = UpdateRN(pack_path=self.pack_path, modified_files_in_pack=set(), update_type=None,
+                                              added_files=set(), pack=self.pack_name)
                     file_name, file_type = update_rn_util.get_changed_file_name_and_type(file)
                     if file_name and file_type and file_type in RN_HEADER_BY_FILE_TYPE:
-                        if (RN_HEADER_BY_FILE_TYPE[file_type] not in self.latest_release_notes) or \
-                                (file_name not in self.latest_release_notes):
+                        if (RN_HEADER_BY_FILE_TYPE[file_type] not in self.latest_release_notes) or (
+                                file_name not in self.latest_release_notes):
                             error_message, error_code = Errors.missing_release_notes_entry(file_type, self.pack_name,
                                                                                            file_name)
                             if self.handle_error(error_message, error_code, self.release_notes_file_path):
@@ -108,15 +224,15 @@ class ReleaseNotesValidator(BaseValidator):
                     if modified_yml_dict.get(field) in splited_release_notes_entities:
                         entity_conent = splited_release_notes_entities.get(modified_yml_dict.get(field, {}), '') + "\n"
                         docker_version = self.get_docker_version_from_rn(entity_conent)
-                        yml_docker_version = modified_yml_dict.get("dockerimage") if type == 'Scripts' else \
-                            modified_yml_dict.get("script", {}).get("dockerimage", '')
+                        yml_docker_version = modified_yml_dict.get(
+                            "dockerimage") if type == 'Scripts' else modified_yml_dict.get("script", {}).get(
+                            "dockerimage", '')
                         if docker_version and yml_docker_version and yml_docker_version != docker_version:
-                            error_list.append({'name': modified_yml_dict.get(field),
-                                               'rn_version': docker_version,
+                            error_list.append({'name': modified_yml_dict.get(field), 'rn_version': docker_version,
                                                'yml_version': yml_docker_version})
         if len(error_list) > 0:
-            error_message, error_code = Errors.release_notes_docker_image_not_match_yaml(rn_file_name,
-                                                                                         error_list, self.pack_path)
+            error_message, error_code = Errors.release_notes_docker_image_not_match_yaml(rn_file_name, error_list,
+                                                                                         self.pack_path)
             if self.handle_error(error_message, error_code, file_path=self.release_notes_file_path):
                 return False
 
@@ -140,6 +256,26 @@ class ReleaseNotesValidator(BaseValidator):
                 if self.handle_error(error_message, error_code, self.release_notes_file_path):
                     is_valid = False
         return is_valid
+
+    @error_codes('RN113,RN114')
+    def validate_release_notes_headers(self):
+        """
+            Validate that the release notes 1st headers are a valid content entity,
+            and the 2nd headers are exists in the pack and having the right display name.
+        Args:
+            None.
+        Return:
+            True if the release notes headers are valid, False otherwise.
+        """
+
+        validations = []
+
+        headers = self.extract_rn_headers()
+        self.filter_rn_headers(headers=headers)
+        for content_type in headers.keys():
+            validations.append(self.validate_content_type_header(content_type=content_type))
+            validations.append(self.validate_content_item_header(content_type=content_type, headers=headers))
+        return all(validations)
 
     @staticmethod
     def get_docker_version_from_rn(section: str) -> str:
@@ -195,11 +331,8 @@ class ReleaseNotesValidator(BaseValidator):
         Return:
             bool. True if file's release notes are valid, False otherwise.
         """
-        validations = [
-            self.has_release_notes_been_filled_out(),
-            self.are_release_notes_complete(),
-            self.is_docker_image_same_as_yml(),
-            self.validate_json_when_breaking_changes()
-        ]
+        validations = [self.has_release_notes_been_filled_out(), self.are_release_notes_complete(),
+                       self.is_docker_image_same_as_yml(), self.validate_json_when_breaking_changes(),
+                       self.validate_release_notes_headers()]
 
         return all(validations)

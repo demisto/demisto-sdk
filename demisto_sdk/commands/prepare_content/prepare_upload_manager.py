@@ -31,7 +31,7 @@ class PrepareUploadManager:
                 input = input.parent
             output = input / content_item.normalize_file_name
         else:
-            if not output.is_dir():
+            if not Path(output).is_file():
                 output = Path(output) / content_item.normalize_file_name
         data = content_item.prepare_for_upload(marketplace, **kwargs)
         if output.exists() and not force:

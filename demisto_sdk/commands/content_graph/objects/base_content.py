@@ -100,7 +100,11 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         if not model:
             logger.error(f"Could not parse content item from path: {path}")
             return None
-        return model.from_orm(content_item_parser)
+        try:
+            return model.from_orm(content_item_parser)
+        except Exception as e:
+            logger.error(f"Could not parse content item from path: {path}: {e}. Parser class: {content_item_parser}")
+            return None
 
     @abstractmethod
     def dump(self, path: DirectoryPath, marketplace: MarketplaceVersions) -> None:

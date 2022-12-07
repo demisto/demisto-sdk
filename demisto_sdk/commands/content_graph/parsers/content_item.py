@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Set, Type, cast
 
 from packaging.version import Version
 
-from demisto_sdk.commands.common.constants import MARKETPLACE_MIN_VERSION, MarketplaceVersions
+from demisto_sdk.commands.common.constants import MARKETPLACE_MIN_VERSION, PACKS_DIR, MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import (UNIFIED_FILES_SUFFIXES, ContentType, Relationships,
                                                        RelationshipType)
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
@@ -89,7 +89,6 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
                 path = path.parent
             else:
                 return None
-
         content_type: ContentType = ContentType.by_folder(path.parts[-2])
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:
@@ -161,11 +160,11 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     @staticmethod
     def is_package(path: Path) -> bool:
-        return path.is_dir() and path.name not in ContentType.folders()
+        return path.is_dir() and len(path.parts) > 3 and path.parts[-4] == PACKS_DIR
 
     @staticmethod
     def is_unified_file(path: Path) -> bool:
-        return path.suffix in UNIFIED_FILES_SUFFIXES and len(path.parts) > 2 and path.parts[-2] in ContentType.folders()
+        return path.suffix in UNIFIED_FILES_SUFFIXES and len(path.parts) > 3 and path.parts[-4] == PACKS_DIR
 
     @staticmethod
     def is_content_item(path: Path) -> bool:

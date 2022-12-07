@@ -153,7 +153,7 @@ def test_insert_description_to_yml():
     integration_doc_link = '\n\n---\n[View Integration Documentation]' \
         '(https://xsoar.pan.dev/docs/reference/integrations/vuln-db)'
     yml_unified, found_data_path = IntegrationScriptUnifier.insert_description_to_yml(
-        package_path, {'commonfields': {'id': 'VulnDB'}}, {}, False, False
+        package_path, {'commonfields': {'id': 'VulnDB'}}, False
     )
 
     assert found_data_path == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_description.md"
@@ -175,7 +175,7 @@ def test_insert_description_to_yml_with_no_detailed_desc(tmp_path):
     readme.write_text('README')
     detailed_desc = tmp_path / 'integration_description.md'
     detailed_desc.write_text('')
-    yml_unified, _ = IntegrationScriptUnifier.insert_description_to_yml(tmp_path, {'commonfields': {'id': 'some integration id'}}, {}, False, False)
+    yml_unified, _ = IntegrationScriptUnifier.insert_description_to_yml(tmp_path, {'commonfields': {'id': 'some integration id'}}, False)
     assert '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/some-integration-id)' \
            == yml_unified['detaileddescription']
 
@@ -239,7 +239,7 @@ def test_insert_description_to_yml_doc_link_exist(tmp_path, mocker):
     detailed_desc.write_text('[View Integration Documentation]'
                              '(https://xsoar.pan.dev/docs/reference/integrations/some-integration-id)')
     mock_func = mocker.patch.object(IntegrationScriptUnifier, 'get_integration_doc_link', return_result='')
-    yml_unified, _ = IntegrationScriptUnifier.insert_description_to_yml(tmp_path, {'commonfields': {'id': 'some integration id'}}, {}, False, False)
+    yml_unified, _ = IntegrationScriptUnifier.insert_description_to_yml(tmp_path, {'commonfields': {'id': 'some integration id'}}, False)
     assert mock_func.call_count == 0
 
 
@@ -252,10 +252,8 @@ def test_insert_image_to_yml():
     with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.yml", mode="r", encoding="utf-8") \
             as yml_file:
         yml_unified_test = yaml.load(yml_file)
-    with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.yml", "r") as yml:
-        yml_data = yaml.load(yml)
     yml_unified, found_img_path = IntegrationScriptUnifier.insert_image_to_yml(
-        package_path, yml_data, yml_unified_test, False, image_prefix, False)
+        package_path, yml_unified_test, False, image_prefix)
     yml_unified_test['image'] = image_data
     assert found_img_path == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_image.png"
     assert yml_unified == yml_unified_test
@@ -279,7 +277,7 @@ def test_insert_image_to_yml_without_image(tmp_path):
     integration_obj = {'id': 'SomeIntegration'}
     yaml.dump(integration_obj, integration_yml.open('w'))
     yml_unified, found_img_path = IntegrationScriptUnifier.insert_image_to_yml(
-        integration_dir, integration_obj, integration_obj, False)
+        integration_dir, integration_obj)
     assert yml_unified == integration_obj
     assert not found_img_path
 
@@ -826,7 +824,7 @@ def test_unify_partner_contributed_pack(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [UNIFY_CMD, '-i', integration.path, '-o', integration.path], catch_exceptions=True)
     # Verifying unified process
-    assert 'Merging package:' in result.stdout
+    assert 'Unifying package:' in result.stdout
     assert 'Created unified yml:' in result.stdout
     # Verifying the unified file data
     assert PARTNER_UNIFY["display"] == PARTNER_DISPLAY_NAME
@@ -858,7 +856,7 @@ def test_unify_partner_contributed_pack_no_email(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [UNIFY_CMD, '-i', integration.path, '-o', integration.path], catch_exceptions=True)
     # Verifying unified process
-    assert 'Merging package:' in result.stdout
+    assert 'Unifying package:' in result.stdout
     assert 'Created unified yml:' in result.stdout
     # Verifying the unified file data
     assert PARTNER_UNIFY_NO_EMAIL["display"] == PARTNER_DISPLAY_NAME
@@ -916,7 +914,7 @@ def test_unify_partner_contributed_pack_no_url(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [UNIFY_CMD, '-i', integration.path, '-o', integration.path], catch_exceptions=True)
     # Verifying unified process
-    assert 'Merging package:' in result.stdout
+    assert 'Unifying package:' in result.stdout
     assert 'Created unified yml:' in result.stdout
     # Verifying the unified file data
     assert PARTNER_UNIFY_NO_URL["display"] == PARTNER_DISPLAY_NAME
@@ -947,7 +945,7 @@ def test_unify_not_partner_contributed_pack(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [UNIFY_CMD, '-i', integration.path, '-o', integration.path], catch_exceptions=True)
     # Verifying unified process
-    assert 'Merging package:' in result.stdout
+    assert 'Unifying package:' in result.stdout
     assert 'Created unified yml:' in result.stdout
     # Verifying the unified file data
     assert 'Partner' not in XSOAR_UNIFY["display"]
@@ -977,7 +975,7 @@ def test_unify_community_contributed(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [UNIFY_CMD, '-i', integration.path, '-o', integration.path], catch_exceptions=True)
     # Verifying unified process
-    assert 'Merging package:' in result.stdout
+    assert 'Unifying package:' in result.stdout
     assert 'Created unified yml:' in result.stdout
     # Verifying the unified file data
     assert COMMUNITY_UNIFY["display"] == COMMUNITY_DISPLAY_NAME

@@ -85,7 +85,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         """
         if not ContentItemParser.is_unified_file(path):
             path = path.parent
-        if not ContentItemParser.is_content_item(path):
+        if not ContentItemParser.is_package(path):
             return None
         content_type: ContentType = ContentType.by_folder(path.parts[-2])
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
@@ -158,27 +158,11 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     @staticmethod
     def is_package(path: Path) -> bool:
-        return path.is_dir() and path.parent.name in ContentType.folders()
+        return path.parent.name in ContentType.folders()
 
     @staticmethod
     def is_unified_file(path: Path) -> bool:
-        return path.suffix in UNIFIED_FILES_SUFFIXES and len(path.parts) > 2 and path.parts[-2] in ContentType.folders()
-
-    @staticmethod
-    def is_content_item(path: Path) -> bool:
-        """Determines whether a file path is of a content item, by one of the following conditions:
-        1. If this is a directory
-        2. If it's a unified file
-
-        Args:
-            path (Path): The file path
-
-        Returns:
-            bool: True iff the file path is of a content item.
-        """
-        return ContentItemParser.is_package(path) or ContentItemParser.is_unified_file(
-            path
-        )
+        return path.suffix in UNIFIED_FILES_SUFFIXES and len(path.parts) > 3 and path.parts[-4] == 'Packs'
 
     def should_skip_parsing(self) -> bool:
         """Returns true if any of the minimal conditions for parsing is not met.

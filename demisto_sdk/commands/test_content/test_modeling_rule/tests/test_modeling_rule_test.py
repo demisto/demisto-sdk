@@ -804,3 +804,66 @@ class TestTheTestModelingRuleCommandMultipleRules:
                     assert 'Mappings validated successfully' in result.stdout
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
+
+
+class TestTheTestModelingRuleCommandInteractive:
+
+    def test_no_testdata_file_exists(self, repo, monkeypatch, mocker, enable_logging):
+        """
+        Given:
+            - A modeling rule with no test data file.
+
+        When:
+            - The command is run in interactive mode.
+
+        Then:
+            - Verify we get a message saying the test data file does not exist.
+            - Ensure we are prompted  to create a test data file.
+            - The command returns with a non-zero exit code.
+            - Ensure the test data file was created.
+            - Ensure that the log output from creating the testdata file is not duplicated.
+        """
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import \
+            app as test_modeling_rule_cmd
+
+        # need to override this because when running this way the command name is 'test-modeling-rule' (taken from the
+        # module name from which it is imported) but the logic in 'init-test-data' command looks to see if the parent
+        # command is 'test' to determine if it should execute setup_rich_logging logic
+        test_modeling_rule_cmd.registered_commands[0].name = 'test'
+
+        # so the logged output when running the command will be printed with a width of 120 characters
+        monkeypatch.setenv('COLUMNS', '120')
+
+        runner = CliRunner()
+
+        # Create Pack with Modeling Rule
+        pack = repo.create_pack('Pack1')
+        pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
+        mrule_dir = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
+        test_data_file = mrule_dir / f'{DEFAULT_MODELING_RULE_NAME}_testdata.json'
+        if test_data_file.exists():
+            test_data_file.unlink()
+
+        try:
+            with SetFakeXsiamClientEnvironmentVars():
+                mock_confirm = mocker.patch('demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.'
+                                            'typer.confirm')
+                mock_prompt = mocker.patch('demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule.'
+                                           'typer.prompt')
+                # Arrange
+                mock_confirm.return_value = True
+                mock_prompt.return_value = 2
+                # Act
+                result = runner.invoke(
+                    test_modeling_rule_cmd,
+                    [mrule_dir.as_posix(), '--interactive']
+                )
+                # Assert
+                expected_log_count = 1
+                assert result.exit_code == 0
+                assert test_data_file.exists()
+                assert 'WARNING  No test data file found for' in result.stdout
+                assert result.stdout.count('Creating test data file for: ') == expected_log_count
+
+        except typer.Exit:
+            assert False, "No exception should be raised in this scenario."

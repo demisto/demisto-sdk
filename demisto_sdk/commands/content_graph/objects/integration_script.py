@@ -20,6 +20,9 @@ class IntegrationScript(ContentItem):
     is_unified: bool = Field(False, exclude=True)
 
     def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
-        data = super().prepare_for_upload(marketplace)
+        if not kwargs.get('unify_only'):
+            data = super().prepare_for_upload(marketplace)
+        else:
+            data = self.data
         data = IntegrationScriptUnifier.unify(self.path, data, marketplace, **kwargs)
         return data

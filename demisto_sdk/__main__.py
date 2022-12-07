@@ -270,8 +270,7 @@ def prepare_content(**kwargs):
 
     """
     if click.get_current_context().info_name == 'unify':
-        print_warning('The command `demisto-sdk unify` is deprecated and will be removed in the future. '
-                      'Please use `demisto-sdk prepare-content` instead.')
+        kwargs['unify_only'] = True
 
     check_configuration_file('unify', kwargs)
     # Input is of type Path.

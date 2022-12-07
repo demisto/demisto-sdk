@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.unify.prepare_upload_manager import PrepareUploadManager
+from demisto_sdk.commands.prepare_content.prepare_upload_manager import PrepareUploadManager
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
 

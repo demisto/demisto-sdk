@@ -33,7 +33,7 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_current_repo, get_display_name, get_file,
                                                get_item_marketplaces, get_json, get_pack_name, get_yaml, print_color,
                                                print_error, print_warning)
-from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
+from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
 
 json = JSON_Handler()
 

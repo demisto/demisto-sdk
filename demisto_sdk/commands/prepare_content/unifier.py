@@ -5,7 +5,7 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 
 class Unifier(ABC):
-    """Interface to YAML objects that need to be unified"""
+    """Interface to objects that need to be unified into YAML"""
 
     @staticmethod
     @abstractmethod

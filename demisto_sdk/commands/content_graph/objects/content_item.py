@@ -111,7 +111,7 @@ class ContentItem(BaseContent):
         raise NotImplementedError("Should be implemented in subclasses")
 
     @property
-    def normalize_file_name(self) -> str:
+    def normalize_name(self) -> str:
         """
         This will add the server prefix of the content item to its name
         In addition it will remove the existing server_names of the name.
@@ -131,7 +131,7 @@ class ContentItem(BaseContent):
     def dump(self, dir: DirectoryPath, _: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)
         data = self.prepare_for_upload()
-        with (dir / self.normalize_file_name).open("w") as f:
+        with (dir / self.normalize_name).open("w") as f:
             self.handler.dump(data, f)
 
     def to_id_set_entity(self) -> dict:

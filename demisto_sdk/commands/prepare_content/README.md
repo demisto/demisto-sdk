@@ -7,13 +7,13 @@ If the content item is an integration/script/rule, it will create the unified ym
 
 **Arguments**
 * **-i, --input**
-  The path to the directory of an integration/script in which the files reside
+  The path to the directory of a pack or a content item in which the files reside
 * **-o, --output**
-  The path to the directory into which to write the unified yml file
+  The path to the directory into which to write result.
 * **-f, --force**
-  Forcefully overwrites the preexisting yml if one exists
+  Forcefully overwrites the file if it exists.
 * **-c, --custom**
-  Adds a custom label to the name/display/id of the unified yml
+  Adds a custom label to the name/display/id of the unified yml (only for integrations/scripts).
 
 
 

@@ -10,6 +10,7 @@ from pydantic import Field
 
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 
 class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
@@ -70,3 +71,11 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             "category": True,
             "commands": {"name": True, "description": True},
         }
+
+    def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
+        data = super().prepare_for_upload(marketplace, **kwargs)
+
+        if supported_native_images := self.get_supported_native_images():
+            data['script']['nativeImage'] = supported_native_images
+
+        return data

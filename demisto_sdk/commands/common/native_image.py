@@ -24,7 +24,7 @@ class NativeImageConfig:
 
     def __init__(self, native_image_config_file_path: Optional[str] = None):
         if not native_image_config_file_path:
-            native_image_config_file_path = 'Tests/native_image_config.json'
+            native_image_config_file_path = 'Tests/docker_native_image_config.json'
         with open(native_image_config_file_path, 'r') as file:
             native_image_config_content = json.load(file)
 

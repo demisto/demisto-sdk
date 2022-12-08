@@ -7,6 +7,8 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
+from demisto_sdk.commands.common.native_image import NativeImageSupportedVersions
+
 
 yaml = YAML_Handler()
 
@@ -24,5 +26,11 @@ class IntegrationScript(ContentItem):
             data = super().prepare_for_upload(marketplace)
         else:
             data = self.data
+
         data = IntegrationScriptUnifier.unify(self.path, data, marketplace, **kwargs)
         return data
+
+    def get_supported_native_images(self):
+        return NativeImageSupportedVersions(
+            _id=self.object_id, docker_image=self.docker_image
+        ).get_supported_native_image_versions()

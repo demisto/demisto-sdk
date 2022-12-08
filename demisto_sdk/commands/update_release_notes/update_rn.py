@@ -793,7 +793,7 @@ def get_file_description(path, file_type) -> str:
         print_warning(f'Cannot get file description: "{path}" file does not exist')
         return ''
 
-    elif file_type in (FileType.PLAYBOOK, FileType.INTEGRATION, FileType.CORRELATION_RULE):
+    elif file_type in (FileType.PLAYBOOK, FileType.INTEGRATION, FileType.CORRELATION_RULE, FileType.MODELING_RULE):
         yml_file = get_yaml(path)
         return yml_file.get('description', '')
 

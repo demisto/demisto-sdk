@@ -33,7 +33,7 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_current_repo, get_display_name, get_file,
                                                get_item_marketplaces, get_json, get_pack_name, get_yaml, print_color,
                                                print_error, print_warning)
-from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
+from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
 
 json = JSON_Handler()
 
@@ -369,13 +369,12 @@ def get_filters_and_transformers_from_playbook(data_dict: dict) -> Tuple[list, l
 
 
 def get_integration_api_modules(file_path, data_dictionary, is_unified_integration):
-    unifier = IntegrationScriptUnifier(os.path.dirname(file_path))
     if is_unified_integration:
         integration_script_code = data_dictionary.get('script', {}).get('script', '')
     else:
-        _, integration_script_code = unifier.get_script_or_integration_package_data()
+        _, integration_script_code = IntegrationScriptUnifier.get_script_or_integration_package_data(os.path.dirname(file_path))
 
-    return list(unifier.check_api_module_imports(integration_script_code).values())
+    return list(IntegrationScriptUnifier.check_api_module_imports(integration_script_code).values())
 
 
 def get_integration_data(file_path, packs: Dict[str, Dict] = None):
@@ -1395,8 +1394,7 @@ def process_script(file_path: str, packs: Dict[str, Dict], marketplace: str, pri
                 res.append(get_script_data(file_path, packs=packs))
         else:
             # package script
-            unifier = IntegrationScriptUnifier(file_path)
-            yml_path, code = unifier.get_script_or_integration_package_data()
+            yml_path, code = IntegrationScriptUnifier.get_script_or_integration_package_data(Path(file_path))
             if should_skip_item_by_mp(yml_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
                 return [], excluded_items_from_id_set
             if print_logs:

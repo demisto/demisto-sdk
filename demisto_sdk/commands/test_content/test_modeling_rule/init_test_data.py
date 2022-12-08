@@ -68,6 +68,7 @@ def init_test_data(
     Initialize or update a test data file for a modeling rule
     """
     setup_rich_logging(verbosity, quiet, log_path, log_file_name)
+
     errors = False
     for fp in input:
         try:

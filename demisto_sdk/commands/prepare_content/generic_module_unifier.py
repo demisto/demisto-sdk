@@ -16,7 +16,7 @@ class GenericModuleUnifier:
     Unifies a GenericModule object with it's Dashboards
     """
 
-    def __init__(self, input: str, output: str = '', force: bool = False, marketplace: Optional[str] = None):
+    def __init__(self, input: str, output: str = '', force: bool = False, marketplace: Optional[str] = None, **kwargs):
         """
         Init a GenericModuleUnifier
         Args:

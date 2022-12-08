@@ -92,9 +92,7 @@ class ContentType(str, enum.Enum):
 
     @property
     def server_name(self) -> str:
-        if self == ContentType.SCRIPT:
-            return "automation"
-        elif self == ContentType.INDICATOR_TYPE:
+        if self == ContentType.INDICATOR_TYPE:
             return "reputation"
         elif self == ContentType.INDICATOR_FIELD:
             return "incidentfield-indicatorfield"
@@ -113,6 +111,10 @@ class ContentType(str, enum.Enum):
     @classmethod
     def by_folder(cls, folder: str) -> "ContentType":
         return cls(folder[:-1])  # remove the `s`
+
+    @staticmethod
+    def folders() -> List[str]:
+        return [c.as_folder for c in ContentType]
 
     @property
     def as_folder(self) -> str:

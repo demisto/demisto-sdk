@@ -13,6 +13,8 @@
 * Added support for fromversion/toversion in XSIAM content items (correlation rules, XSIAM dashboards, XSIAM reports and triggers).
 * Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.
 * Added **prepare-content** command which will prepare the pack or content item for the platform.
+* Added a new validation to the **validate** command to verify that the release notes header is in the correct format.
+
 ## 1.7.9
 * Fixed an issue where an error message in **validate** would not include the suggested fix.
 * Added a validation that enforces predefined categories on MP Packs & integration yml files, the validation also ensures that each pack has only one category.

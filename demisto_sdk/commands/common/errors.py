@@ -17,17 +17,16 @@ ALLOWED_IGNORE_ERRORS = [
     'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113', 'BA116', 'BA119',
     'DS107',
     'GF102',
-    'IF100', 'IF106', 'IF113', 'IF115', 'IF116',
+    'IF100', 'IF106', 'IF115', 'IF116',
     'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145', 'IN153', 'IN154',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
-    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB114', 'PB115', 'PB116', 'PB107', 'PB118', 'PB119', 'PB121',
+    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107', 'PB118', 'PB119',
     'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM110', 'RM112', 'RM113',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
     'IM111',
-    'RN112',
-    'MR104', 'MR105',
+    'RN112', 'RN113', 'RN114'
 ]
 
 # predefined errors to be ignored in partner/community supported packs even if they do not appear in .pack-ignore
@@ -314,12 +313,11 @@ ERROR_CODE = {
     "wrong_version_format": {'code': "PA130", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_version_diff_from_rn": {'code': "PA131", 'ui_applicable': False, 'related_field': ''},
     "pack_should_be_deprecated": {'code': "PA132", 'ui_applicable': False, 'related_field': ''},
-    "pack_metadata_non_approved_tag_prefix": {'code': "PA133", 'ui_applicable': False, 'related_field': ''},
-    "categories_field_does_not_match_standard": {'code': "PA134", 'ui_applicable': False, 'related_field': ''},
 
     # PB - Playbooks
     "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
     "playbook_unreachable_condition": {'code': "PB101", 'ui_applicable': True, 'related_field': 'tasks'},
+    "playbook_unhandled_condition": {'code': "PB102", 'ui_applicable': True, 'related_field': 'conditions'},
     "playbook_unconnected_tasks": {'code': "PB103", 'ui_applicable': True, 'related_field': 'tasks'},
     "invalid_deprecated_playbook": {'code': "PB104", 'ui_applicable': False, 'related_field': 'description'},
     "playbook_cant_have_deletecontext_all": {'code': "PB105", 'ui_applicable': True, 'related_field': 'tasks'},
@@ -331,6 +329,7 @@ ERROR_CODE = {
                                                           'related_field': 'toVersion'},
     "integration_version_not_match_playbook_version": {'code': "PB111", 'ui_applicable': False,
                                                        'related_field': 'toVersion'},
+    "playbook_condition_has_no_else_path": {'code': "PB112", 'ui_applicable': False, 'related_field': 'nexttasks'},
     "invalid_subplaybook_name": {'code': "PB113", 'ui_applicable': False, 'related_field': 'tasks'},
     "playbook_not_quiet_mode": {'code': "PB114", 'ui_applicable': False, 'related_field': ''},
     "playbook_tasks_not_quiet_mode": {'code': "PB115", 'ui_applicable': False, 'related_field': 'tasks'},
@@ -339,12 +338,6 @@ ERROR_CODE = {
     "input_key_not_in_tasks": {'code': "PB118", 'ui_applicable': False, 'related_field': ''},
     "input_used_not_in_input_section": {'code': "PB119", 'ui_applicable': False, 'related_field': ''},
     "playbook_is_deprecated_and_used": {'code': 'PB120', 'ui_applicable': False, 'related_field': 'deprecated'},
-    "incorrect_value_references": {'code': "PB121", 'ui_applicable': False, 'related_field': 'taskid'},
-    "playbook_unhandled_task_branches": {'code': "PB122", 'ui_applicable': True, 'related_field': 'conditions'},
-    "playbook_unhandled_reply_options": {'code': "PB123", 'ui_applicable': True, 'related_field': 'conditions'},
-    "playbook_unhandled_script_condition_branches": {'code': "PB124", 'ui_applicable': True, 'related_field': 'conditions'},
-    "playbook_only_default_next": {'code': "PB125", 'ui_applicable': True, 'related_field': 'conditions'},
-    "playbook_only_default_reply_option": {'code': "PB126", 'ui_applicable': True, 'related_field': 'message'},
 
     # PP - Pre-Process Rules
     "invalid_from_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
@@ -486,8 +479,6 @@ ERROR_CODE = {
     "modeling_rule_keys_not_empty": {'code': "MR101", 'ui_applicable': False, 'related_field': ''},
     "modeling_rule_keys_are_missing": {'code': "MR102", 'ui_applicable': False, 'related_field': ''},
     "invalid_rule_name": {'code': "MR103", 'ui_applicable': False, 'related_field': ''},
-    "modeling_rule_missing_testdata_file": {'code': "MR104", 'ui_applicable': False, 'related_field': ''},
-    "modeling_rule_testdata_not_formatted_correctly": {'code': "MR105", 'ui_applicable': False, 'related_field': ''},
 }
 
 
@@ -668,8 +659,9 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def wrong_category(category, approved_list):
-        return f"The category '{category}' is not in the integration schemas, the valid options are:\n{approved_list}"
+    def wrong_category(category):
+        return "The category '{}' is not in the integration schemas, the valid options are:\n{}" \
+            .format(category, '\n'.join(INTEGRATION_CATEGORIES))
 
     @staticmethod
     @error_code_decorator
@@ -849,14 +841,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def error_starting_mdx_server(line):
-        return f'Failed starting local mdx server. stdout: {line}.\n' \
+        return f'Failed starting mdx server. stdout: {line}.\n' \
                f'Try running the following command: `npm install`'
-
-    @staticmethod
-    @error_code_decorator
-    def error_starting_docker_mdx_server(line):
-        return f'Failed starting docker mdx server. stdout: {line}.\n' \
-               f'Check to see if the docker daemon is up and running'
 
     @staticmethod
     @error_code_decorator
@@ -1349,7 +1335,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def release_notes_invalid_content_type_header(content_type: str, pack_name: str):
-        return f'The content type "{content_type}" is either invalid content type or does not exist in the "{pack_name}" pack.\n' \
+        return f'The content type "{content_type}" is either an invalid content type or does not exist in the "{pack_name}" pack or has an invalid format.\n' \
                f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n' \
                'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
 
@@ -1369,7 +1355,7 @@ class Errors:
             message_to_return += f"- {un_matching_file.get('name')}: Release notes file has dockerimage: " \
                                  f"{un_matching_file.get('rn_version')} but the YML file has dockerimage: " \
                                  f"{un_matching_file.get('yml_version')}\n"
-        message_to_return += f"To fix this please run: 'demisto-sdk update-release-notes -i {pack_path}'"
+        message_to_return += "To fix this please run: 'demisto-sdk update-release-notes -i {pack_path}'"
         return message_to_return
 
     @staticmethod
@@ -1391,33 +1377,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def playbook_only_default_next(task_id):
-        return f'Playbook conditional task with id:{task_id} only has a default condition. ' \
-               f'Please remove this task or add ' \
-               f'another non-default condition to condition task with id:{task_id}.'
-
-    @staticmethod
-    @error_code_decorator
-    def playbook_only_default_reply_option(task_id):
-        return f'Playbook task with id:{task_id} only has a default option. ' \
-               f'Please remove this task or add ' \
-               f'another non-default option to the task with id:{task_id}.'
-
-    @staticmethod
-    @error_code_decorator
-    def playbook_unhandled_task_branches(task_id, task_condition_labels):
-        return f'Playbook conditional task with id:{task_id} has an unhandled ' \
-               f'condition: {",".join(map(lambda x: f"{str(x)}", task_condition_labels))}'
-
-    @staticmethod
-    @error_code_decorator
-    def playbook_unhandled_reply_options(task_id, task_condition_labels):
-        return f'Playbook conditional task with id:{task_id} has an unhandled ' \
-               f'condition: {",".join(map(lambda x: f"{str(x)}", task_condition_labels))}'
-
-    @staticmethod
-    @error_code_decorator
-    def playbook_unhandled_script_condition_branches(task_id, task_condition_labels):
+    def playbook_unhandled_condition(task_id, task_condition_labels):
         return f'Playbook conditional task with id:{task_id} has an unhandled ' \
                f'condition: {",".join(map(lambda x: f"{str(x)}", task_condition_labels))}'
 
@@ -1783,15 +1743,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_metadata_non_approved_tags(non_approved_tags: set) -> str:
-        return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}. ' \
-               'The list of approved tags for each marketplace can be found on ' \
-               'https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories'
-
-    @staticmethod
-    @error_code_decorator
-    def pack_metadata_non_approved_tag_prefix(tag, approved_prefixes: set) -> str:
-        return f'The pack metadata contains a tag with an invalid prefix: {tag}.' \
-               f' The approved prefixes are: {", ".join(approved_prefixes)}.'
+        return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}' \
+               f'The list of approved tags can be found in https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories'
 
     @staticmethod
     @error_code_decorator
@@ -2251,13 +2204,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def incorrect_value_references(task_key, value, task_name, section_name):
-        return f"On task: '{task_name}' with ID: '{task_key}', an input with the value: '{value}' was passed as string, rather than as " \
-            f"a reference in the '{section_name}' section. Change the reference to 'From previous tasks' from 'As value'" \
-            " , or change the value to ${" + value + "}."
-
-    @staticmethod
-    @error_code_decorator
     def incorrect_from_to_version_format(incorrect_key: str):
         return f"The format of the {incorrect_key} is incorrect\n" \
                f"Please fix this so that it is in xx.xx.xx format and each member is a number only."
@@ -2541,12 +2487,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def categories_field_does_not_match_standard(approved_list):
-        return f"The pack metadata categories field doesn't match the standard,\n" \
-               f"please make sure the field contain only one category from the following options:\n{approved_list}"
-
-    @staticmethod
-    @error_code_decorator
     def modeling_rule_missing_schema_file(file_path: str):
         return f'The modeling rule {file_path} is missing a schema file.'
 
@@ -2567,18 +2507,3 @@ class Errors:
     def invalid_rule_name(invalid_files):
         return f"The following rule file name is invalid {invalid_files} - make sure that the rule name is " \
                f"the same as the folder containing it."
-
-    @staticmethod
-    @error_code_decorator
-    def modeling_rule_missing_testdata_file(modeling_rule_dir: Path, minimum_from_version: str, from_version: str):
-        test_data_file = modeling_rule_dir / f'{modeling_rule_dir.name}_testdata.json'
-        return f'The modeling rule {modeling_rule_dir} is missing a testdata file at {test_data_file}. The modeling ' \
-               f'rule has a fromversion of {from_version} and modeling rules supporting fromversion ' \
-               f'{minimum_from_version} and upwards are required to provide test data for modeling rule testing. ' \
-               'Please add a testdata file for this rule. See the "demisto-sdk modeling-rules init-test-data" ' \
-               'command for more information on creating a test data file for modeling rules.'
-
-    @staticmethod
-    @error_code_decorator
-    def modeling_rule_testdata_not_formatted_correctly(error_message: str, test_data_file: Path):
-        return f'The modeling rule testdata file at {test_data_file} is not formatted correctly. {error_message}'

@@ -10,9 +10,7 @@ from pathlib import Path
 from typing import Any, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEPRECATED_REGEXES,
-                                                   IGNORED_PACK_NAMES, RN_CONTENT_ENTITY_WITH_STARS,
-                                                   RN_HEADER_BY_FILE_TYPE, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
-                                                   FileType)
+                                                   IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects import Integration, Playbook, Script
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
@@ -141,10 +139,7 @@ class UpdateRN:
                               f"Did you mistype {file_path}?")
 
         if file_path.endswith('_image.png'):
-            if Path(file_path).parent.name in (XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR):
-                new_path = file_path.replace('_image.png', '.json')
-            else:
-                new_path = file_path.replace('_image.png', '.yml')
+            new_path = file_path.replace('_image.png', '.yml')
             validate_new_path(new_path)
             return new_path
 
@@ -165,11 +160,10 @@ class UpdateRN:
                 The content of the rn
         """
         if self.existing_rn_version_path:
-            existing_rn_abs_path = Path(self.existing_rn_version_path).absolute()
-            rn_path_abs_path = Path(rn_path).absolute()
-            self.should_delete_existing_rn = str(existing_rn_abs_path) != str(rn_path_abs_path)
+            self.should_delete_existing_rn = self.existing_rn_version_path != rn_path
             try:
-                return existing_rn_abs_path.read_text()
+                with open(self.existing_rn_version_path, 'r') as f:
+                    return f.read()
             except Exception as e:
                 print_error(f'Failed to load the previous release notes file content: {e}')
         return ''
@@ -595,7 +589,8 @@ class UpdateRN:
             :return
             The release notes description
         """
-        if _type in RN_CONTENT_ENTITY_WITH_STARS:
+        if _type in (FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
+                     FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
 
             rn_desc = f'- **{content_name}**\n'
 
@@ -798,7 +793,7 @@ def get_file_description(path, file_type) -> str:
         print_warning(f'Cannot get file description: "{path}" file does not exist')
         return ''
 
-    elif file_type in (FileType.PLAYBOOK, FileType.INTEGRATION, FileType.CORRELATION_RULE, FileType.MODELING_RULE):
+    elif file_type in (FileType.PLAYBOOK, FileType.INTEGRATION, FileType.CORRELATION_RULE):
         yml_file = get_yaml(path)
         return yml_file.get('description', '')
 

@@ -13,20 +13,20 @@ from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from TestSuite.pack import Pack
 
 
-def get_validator(file_path='', modified_files=None, added_files=None):
+def get_validator(file_path='', modified_files=None, added_files=None, pack_name='CortexXDR', pack_path='Path/CortexXDR'):
     release_notes_validator = ReleaseNotesValidator("")
     release_notes_validator.release_notes_file_path = os.path.join(FILES_PATH, 'CortexXDR')
     release_notes_validator.release_notes_path = file_path
     release_notes_validator.latest_release_notes = file_path
     release_notes_validator.modified_files = modified_files
     release_notes_validator.added_files = added_files
-    release_notes_validator.pack_name = 'CortexXDR'
+    release_notes_validator.pack_name = pack_name
     release_notes_validator.file_types_that_should_not_appear_in_rn = {
         FileType.TEST_SCRIPT, FileType.TEST_PLAYBOOK, FileType.README, FileType.RELEASE_NOTES, None}
     release_notes_validator.ignored_errors = {}
     release_notes_validator.checked_files = set()
     release_notes_validator.json_file_path = ''
-    release_notes_validator.pack_path = 'Path/CortexXDR'
+    release_notes_validator.pack_path = pack_path
     release_notes_validator.suppress_print = False
     release_notes_validator.specific_validations = None
     release_notes_validator.predefined_by_support_ignored_errors = {}
@@ -521,3 +521,35 @@ def test_validate_json_when_breaking_changes(release_notes_content, has_json, ch
 
     validator.release_notes_file_path = release_note.path
     assert validator.validate_json_when_breaking_changes() == expected_result
+
+
+def test_validate_headers(mocker, repo):
+    """
+    Given
+    - A valid release notes file.
+    When
+    - Validating the release notes file headers.
+    Then
+    - Ensure that the validation passes.
+    """
+    with open('test_files/rn_header_test_data', 'r') as f:
+        content = f.read()
+    pack = repo.create_pack('test_pack')
+    mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
+    validator = get_validator(content, MODIFIED_FILES, pack_name=pack.name, pack_path=pack.path)
+
+    pack.create_integration("integration-test")
+    pack.create_script("script-test")
+    pack.create_playbook("playbook-test")
+    pack.create_correlation_rule("correlation-rule-test")
+    pack.create_dashboard("test")
+    pack.create_incident_field("test")
+    pack.create_incident_type("test")
+    pack.create_indicator_field("test")
+    pack.create_indicator_type("test")
+    pack.create_layout("test")
+    pack.create_mapper("test")
+    pack.create_classifier("test")
+    pack.create_widget("test")
+    pack.create_xsiam_dashboard("xsiam-dashboard-test")
+    assert validator.validate_release_notes_headers()

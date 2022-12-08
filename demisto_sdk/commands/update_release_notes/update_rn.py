@@ -11,8 +11,7 @@ from typing import Any, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEPRECATED_REGEXES,
-    IGNORED_PACK_NAMES, RN_CONTENT_ENTITY_WITH_STARS, RN_HEADER_BY_FILE_TYPE,
-    FileType)
+    IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     Integration, Playbook, Script)
@@ -599,7 +598,8 @@ class UpdateRN:
             :return
             The release notes description
         """
-        if _type in RN_CONTENT_ENTITY_WITH_STARS:
+        if _type in (FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
+                     FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
 
             rn_desc = f'- **{content_name}**\n'
 

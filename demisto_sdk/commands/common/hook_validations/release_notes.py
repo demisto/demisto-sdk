@@ -77,6 +77,9 @@ class ReleaseNotesValidator(BaseValidator):
 
             # Extract the sections within a content type. (e.g. Integrations 1,2,3)
             content_type_sections_ls = ENTITY_SECTION_REGEX.findall(content_type_sections_str)
+            if not content_type_sections_ls:
+                #  Will raise error in validate_special_forms
+                headers[content_type] = []
             for content_type_section in content_type_sections_ls:
                 content_type_section = self.filter_nones(ls=content_type_section)
                 if content_type_section:
@@ -86,6 +89,26 @@ class ReleaseNotesValidator(BaseValidator):
                     else:
                         headers[content_type] = [header]
         return headers
+
+    def validate_special_forms(self, headers: Dict) -> bool:
+        is_valid = True
+        for content_type, content_items in headers.items():
+            if not content_items:
+                error_message, error_code = Errors.release_notes_invalid_content_type_header(content_type=content_type,
+                                                                                             pack_name=self.pack_name)
+                if self.handle_error(error_message, error_code, file_path=self.release_notes_file_path,
+                                     drop_line=True):
+                    is_valid = False
+            if content_type.lower().replace(' ', '') in RN_CONTENT_ENTITY_WITH_STARS:
+                for content_item in content_items:
+                    if content_item.count('**') != 2:
+                        error_message, error_code = Errors.release_notes_invalid_content_type_header(
+                            content_type=content_type,
+                            pack_name=self.pack_name)
+                        if self.handle_error(error_message, error_code, file_path=self.release_notes_file_path,
+                                             drop_line=True):
+                            is_valid = False
+        return is_valid
 
     def filter_rn_headers(self, headers: Dict) -> None:
         """
@@ -97,6 +120,8 @@ class ReleaseNotesValidator(BaseValidator):
         """
         for content_type, content_items in headers.items():
             content_items = self.filter_nones(ls=content_items)
+            if content_type in RN_CONTENT_ENTITY_WITH_STARS and content_items:
+                headers[content_type] = [item.replace('*', '') for item in content_items]
             if content_type.lower().replace(' ', '') in RN_CONTENT_ENTITY_WITH_STARS:
                 content_items = list(map(lambda x: x.replace('**', ''), content_items))
             headers[content_type] = [item.replace('New:', '').strip() for item in content_items]
@@ -271,6 +296,7 @@ class ReleaseNotesValidator(BaseValidator):
         validations = []
 
         headers = self.extract_rn_headers()
+        validations.append(self.validate_special_forms(headers))
         self.filter_rn_headers(headers=headers)
         for content_type in headers.keys():
             validations.append(self.validate_content_type_header(content_type=content_type))

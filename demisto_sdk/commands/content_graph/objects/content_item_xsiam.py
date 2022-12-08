@@ -8,7 +8,7 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
 class ContentItemXSIAM(ContentItem, ABC):
- 
+
     def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)
         output_paths = []

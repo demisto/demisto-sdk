@@ -5,19 +5,14 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from requests.structures import CaseInsensitiveDict
 
-from demisto_sdk.commands.common.constants import (
-    CONTEXT_OUTPUT_README_TABLE_HEADER, DOCS_COMMAND_SECTION_REGEX)
-from demisto_sdk.commands.common.default_additional_info_loader import \
-    load_default_additional_info_dict
+from demisto_sdk.commands.common.constants import CONTEXT_OUTPUT_README_TABLE_HEADER, DOCS_COMMAND_SECTION_REGEX
+from demisto_sdk.commands.common.default_additional_info_loader import load_default_additional_info_dict
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
-                                               print_color, print_error,
-                                               print_warning)
-from demisto_sdk.commands.generate_docs.common import (
-    add_lines, build_example_dict, generate_numbered_section, generate_section,
-    generate_table_section, save_output, string_escape_md)
-from demisto_sdk.commands.integration_diff.integration_diff_detector import \
-    IntegrationDiffDetector
+from demisto_sdk.commands.common.tools import LOG_COLORS, get_yaml, print_color, print_error, print_warning
+from demisto_sdk.commands.generate_docs.common import (add_lines, build_example_dict, generate_numbered_section,
+                                                       generate_section, generate_table_section, save_output,
+                                                       string_escape_md)
+from demisto_sdk.commands.integration_diff.integration_diff_detector import IntegrationDiffDetector
 
 json = JSON_Handler()
 
@@ -35,7 +30,7 @@ def append_or_replace_command_in_docs(old_docs: str, new_doc_section: str, comma
     Returns:
         str: The whole documentation.
     """
-    regexp = DOCS_COMMAND_SECTION_REGEX.format(command_name)
+    regexp = DOCS_COMMAND_SECTION_REGEX.format(command_name + "\n")
     # Read doc content
     errs = list()
     if re.findall(regexp, old_docs, flags=re.DOTALL):

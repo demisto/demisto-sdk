@@ -4,12 +4,8 @@ from typing import Dict, Optional, Union
 
 import coverage
 
-from demisto_sdk.commands.coverage_analyze.helpers import (CoverageSummary,
-                                                           export_report,
-                                                           get_coverage_obj,
-                                                           get_report_str,
-                                                           parse_report_type,
-                                                           percent_to_float)
+from demisto_sdk.commands.coverage_analyze.helpers import (CoverageSummary, export_report, get_coverage_obj,
+                                                           get_report_str, parse_report_type, percent_to_float)
 
 logger = logging.getLogger('demisto-sdk')
 

@@ -3,11 +3,8 @@ from __future__ import print_function
 import time
 from threading import Thread
 
-from demisto_sdk.commands.test_content.mock_server import (MITMProxy,
-                                                           clean_filename,
-                                                           get_folder_path,
-                                                           get_log_file_path,
-                                                           get_mock_file_path)
+from demisto_sdk.commands.test_content.mock_server import (MITMProxy, clean_filename, get_folder_path,
+                                                           get_log_file_path, get_mock_file_path)
 
 
 def test_clean_filename():

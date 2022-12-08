@@ -5,19 +5,13 @@ import os
 import re
 from typing import Dict, List, Tuple, Union
 
-from demisto_sdk.commands.common.constants import (
-    PACKS_DIR, RN_CONTENT_ENTITY_WITH_STARS, RN_HEADER_BY_FILE_TYPE,
-    SKIP_RELEASE_NOTES_FOR_TYPES, FileType)
+from demisto_sdk.commands.common.constants import (PACKS_DIR, RN_CONTENT_ENTITY_WITH_STARS, RN_HEADER_BY_FILE_TYPE,
+                                                   SKIP_RELEASE_NOTES_FOR_TYPES, FileType)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import (
-    BaseValidator, error_codes)
-from demisto_sdk.commands.common.tools import (extract_docker_image_from_text,
-                                               find_type, get_dict_from_file,
-                                               get_display_name,
-                                               get_latest_release_notes_text,
-                                               get_pack_name,
-                                               get_release_notes_file_path,
-                                               get_yaml)
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
+from demisto_sdk.commands.common.tools import (extract_docker_image_from_text, find_type, get_dict_from_file,
+                                               get_display_name, get_latest_release_notes_text, get_pack_name,
+                                               get_release_notes_file_path, get_yaml)
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
 ENTITY_TYPE_SECTION_REGEX = re.compile(r'^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)', re.M)

@@ -29,8 +29,8 @@ class GitCredentials:
     ENV_GITLAB_TOKEN_NAME = 'DEMISTO_SDK_GITLAB_TOKEN'
 
     def __init__(self):
-        self.github_token = os.getenv(self.ENV_GITHUB_TOKEN_NAME)
-        self.gitlab_token = os.getenv(self.ENV_GITLAB_TOKEN_NAME)
+        self.github_token = os.getenv(self.ENV_GITHUB_TOKEN_NAME, '')
+        self.gitlab_token = os.getenv(self.ENV_GITLAB_TOKEN_NAME, '')
 
 
 class GitContentConfig:
@@ -214,7 +214,7 @@ class GitContentConfig:
             r = requests.get(f'https://api.{api_host}/repos/{repo_name}',
                              headers={
                                  'Authorization': f"Bearer {GitContentConfig.CREDENTIALS.github_token}"
-                                 if GitContentConfig.CREDENTIALS.github_token else None,
+                                 if GitContentConfig.CREDENTIALS.github_token else '',
                                  'Accept': 'application/vnd.github.VERSION.raw'},
                              verify=False,
                              timeout=10)

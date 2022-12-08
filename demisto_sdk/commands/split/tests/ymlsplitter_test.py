@@ -7,11 +7,9 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
+from demisto_sdk.commands.prepare_content.tests.yml_unifier_test import DUMMY_MODULE, DUMMY_SCRIPT
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
-from demisto_sdk.commands.unify.integration_script_unifier import \
-    IntegrationScriptUnifier
-from demisto_sdk.commands.unify.tests.yml_unifier_test import (DUMMY_MODULE,
-                                                               DUMMY_SCRIPT)
 from TestSuite.test_tools import ChangeCWD
 
 yaml = YAML_Handler()

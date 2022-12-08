@@ -5,10 +5,8 @@ import click
 
 from demisto_sdk.commands.common.constants import DEPRECATED_REGEXES
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    error_codes
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
 from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
 
 
@@ -46,12 +44,13 @@ class PlaybookValidator(ContentEntityValidator):
             self.is_root_connected_to_all_tasks(),
             self.is_using_instance(),
             self.is_condition_branches_handled(),
+            self.are_default_conditions_valid(),
             self.is_delete_context_all_in_playbook(),
             self.are_tests_configured(),
             self.is_script_id_valid(id_set_file),
             self._is_id_uuid(),
             self._is_taskid_equals_id(),
-            self.verify_condition_tasks_has_else_path(),
+            self._is_correct_value_references_interface(),
             self.name_not_contain_the_type(),
             self.is_valid_with_indicators_input(),
             self.inputs_in_use_check(is_modified),
@@ -214,7 +213,7 @@ class PlaybookValidator(ContentEntityValidator):
                         task) and is_all_condition_branches_handled
         return is_all_condition_branches_handled
 
-    @error_codes('PB101,PB102')
+    @error_codes('PB122')
     def is_builtin_condition_task_branches_handled(self, task: Dict) -> bool:
         """Checks whether a builtin conditional task branches are handled properly
         NOTE: The function uses str.upper() on branches to be case insensitive
@@ -246,19 +245,19 @@ class PlaybookValidator(ContentEntityValidator):
                 # else doesn't have a path, skip error
                 if '#DEFAULT#' == e.args[0]:
                     continue
-                error_message, error_code = Errors.playbook_unreachable_condition(task.get('id'), next_task_branch)
+                error_message, error_code = Errors.playbook_unhandled_task_branches(task.get('id'), next_task_branch)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = is_all_condition_branches_handled = False
 
         # if there are task_condition_labels left then not all branches are handled
         if task_condition_labels:
-            error_message, error_code = Errors.playbook_unhandled_condition(task.get('id'), task_condition_labels)
+            error_message, error_code = Errors.playbook_unhandled_task_branches(task.get('id'), task_condition_labels)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = is_all_condition_branches_handled = False
 
         return is_all_condition_branches_handled
 
-    @error_codes('PB101,PB102')
+    @error_codes('PB101,PB123')
     def is_ask_condition_branches_handled(self, task: Dict) -> bool:
         """Checks whether a builtin conditional task branches are handled properly
         NOTE: The function uses str.upper() on branches to be case insensitive
@@ -271,9 +270,6 @@ class PlaybookValidator(ContentEntityValidator):
         """
         is_all_condition_branches_handled: bool = True
         next_tasks: Dict = task.get('nexttasks', {})
-        # if default is handled, then it means all branches are being handled
-        if '#default#' in next_tasks:
-            return is_all_condition_branches_handled
 
         # ADD all replyOptions to unhandled_reply_options (UPPER)
         unhandled_reply_options = set(map(str.upper, task.get('message', {}).get('replyOptions', [])))
@@ -288,7 +284,7 @@ class PlaybookValidator(ContentEntityValidator):
         # Remove all nexttasks from unhandled_reply_options (UPPER)
         for next_task_branch, next_task_id in next_tasks_upper.items():
             try:
-                if next_task_id:
+                if next_task_id and next_task_branch != '#DEFAULT#':
                     unhandled_reply_options.remove(next_task_branch)
             except KeyError:
                 error_message, error_code = Errors.playbook_unreachable_condition(task.get('id'), next_task_branch)
@@ -296,12 +292,16 @@ class PlaybookValidator(ContentEntityValidator):
                     self.is_valid = is_all_condition_branches_handled = False
 
         if unhandled_reply_options:
-            error_message, error_code = Errors.playbook_unhandled_condition(task.get('id'), unhandled_reply_options)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self.is_valid = is_all_condition_branches_handled = False
+            # if there's only one unhandled_reply_options and there's a #default#
+            # then all good.
+            # Otherwise - Error
+            if not (len(unhandled_reply_options) == 1 and '#DEFAULT#' in next_tasks_upper):
+                error_message, error_code = Errors.playbook_unhandled_reply_options(task.get('id'), unhandled_reply_options)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self.is_valid = is_all_condition_branches_handled = False
         return is_all_condition_branches_handled
 
-    @error_codes('PB102')
+    @error_codes('PB124')
     def is_script_condition_branches_handled(self, task: Dict) -> bool:
         """Checks whether a script conditional task branches are handled properly
 
@@ -313,18 +313,83 @@ class PlaybookValidator(ContentEntityValidator):
         """
         is_all_condition_branches_handled: bool = True
         next_tasks: Dict = task.get('nexttasks', {})
-        if '#default#' not in next_tasks:
-            error_message, error_code = Errors.playbook_unhandled_condition(task.get('id'), {'else'})
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self.is_valid = is_all_condition_branches_handled = False
 
         if len(next_tasks) < 2:
             # there should be at least 2 next tasks, we don't know what condition is missing, but we know it's missing
-            error_message, error_code = Errors.playbook_unhandled_condition(task.get('id'), {})
+            error_message, error_code = Errors.playbook_unhandled_script_condition_branches(task.get('id'), {})
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = is_all_condition_branches_handled = False
 
         return is_all_condition_branches_handled
+
+    def are_default_conditions_valid(self):  # type: () -> bool
+        """Check whether the playbook conditional tasks' default options are valid
+
+        Return:
+            bool. if the Playbook's handles all condition default options correctly.
+        """
+        default_conditions_valid: bool = True
+        tasks: Dict = self.current_file.get('tasks', {})
+        for task in tasks.values():
+            if task.get('type') == 'condition':
+                # builtin conditional task
+                if task.get('nexttasks'):
+                    default_conditions_valid = self.is_default_not_only_condition(
+                        task) and default_conditions_valid
+                # ask conditional task
+                if task.get('message') and task.get('message').get('replyOptions'):
+                    default_conditions_valid = self.is_default_not_only_reply_option(
+                        task) and default_conditions_valid
+        return default_conditions_valid
+
+    @error_codes('PB125')
+    def is_default_not_only_condition(self, task: Dict) -> bool:
+        """Checks whether the #default# is the only branch
+
+        Args:
+            task (dict): task json loaded from a yaml
+
+        Return:
+            bool. if the task's next tasks have more than just the default option.
+        """
+        is_default_not_only_condition_res: bool = True
+        next_tasks: Dict = task.get('nexttasks', {})
+
+        # Rename the keys in dictionary to upper case
+        next_tasks_upper = {k.upper(): v for k, v in next_tasks.items()}
+        default_upper = '#default#'.upper()
+        found_non_default_next_task = False
+        for current_next_task_upper in next_tasks_upper:
+            if default_upper != current_next_task_upper:
+                found_non_default_next_task = True
+
+        if not found_non_default_next_task:
+            error_message, error_code = Errors.playbook_only_default_next(task.get('id'))
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = is_default_not_only_condition_res = False
+
+        return is_default_not_only_condition_res
+
+    @error_codes('PB126')
+    def is_default_not_only_reply_option(self, task: Dict) -> bool:
+        """Checks whether #default# is the only reply option
+
+        Args:
+            task (dict): task json loaded from a yaml
+
+        Return:
+            bool. if the task reply options have more than just the default option.
+        """
+        is_default_not_only_reply_option_res: bool = True
+
+        reply_options = set(map(str.upper, task.get('message', {}).get('replyOptions', [])))
+
+        if len(reply_options) == 1 and '#default#'.upper() in reply_options:
+            error_message, error_code = Errors.playbook_only_default_reply_option(task.get('id'))
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = is_default_not_only_reply_option_res = False
+
+        return is_default_not_only_reply_option_res
 
     @error_codes('PB103')
     def is_root_connected_to_all_tasks(self):  # type: () -> bool
@@ -498,28 +563,6 @@ class PlaybookValidator(ContentEntityValidator):
         next_tasks: Dict = task.get('nexttasks', {})
         return '#default#' in next_tasks
 
-    @error_codes('PB112')
-    def verify_condition_tasks_has_else_path(self):  # type: () -> bool
-        """Check whether the playbook conditional tasks has else path
-
-        Return:
-            bool. if the Playbook has else path to all condition task
-        """
-        all_conditions_has_else_path: bool = True
-        tasks: Dict = self.current_file.get('tasks', {})
-        error_tasks_ids = []
-        for task in tasks.values():
-            if task.get('type') == 'condition':
-                if not self._is_else_path_in_condition_task(task):
-                    error_tasks_ids.append(task.get('id'))
-
-        if error_tasks_ids:
-            error_message, error_code = Errors.playbook_condition_has_no_else_path(error_tasks_ids)
-            if self.handle_error(error_message, error_code, file_path=self.file_path, warning=True):
-                all_conditions_has_else_path = False
-
-        return all_conditions_has_else_path
-
     @error_codes('PB108')
     def _is_id_uuid(self):
         """
@@ -560,6 +603,215 @@ class PlaybookValidator(ContentEntityValidator):
                 error_message, error_code = Errors.taskid_different_from_id(task_key, taskid, inner_id)
                 self.handle_error(error_message, error_code, file_path=self.file_path)  # Does not break after one
                 # invalid task in order to raise error for all the invalid tasks at the file
+
+        return is_valid
+
+    @error_codes('PB121')
+    def _is_correct_value_references_interface(self):
+        """
+        Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>}
+        Returns: True if the references are correct
+        """
+        answers = []
+        tasks: dict = self.current_file.get('tasks', {})
+        for task_id, task in tasks.items():
+            task_name = task.get('task', {}).get('name', '')
+            tasks_check = [
+                self.handle_condition_task(task, task_id, task_name),
+                self.handle_regular_task(task, task_id, task_name),
+                self.handle_data_collection(task, task_id, task_name)
+            ]
+            answers.extend(tasks_check)
+
+        answers.append(self.handle_playbook_inputs(self.current_file.get('inputs', [])))
+        return all(answers)
+
+    def handle_condition_task(self, task, task_id, task_name):
+        """
+        Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>},
+        in a condition task
+        Returns: True if the references are correct
+        """
+        is_valid = True
+        if task.get('type') == 'condition':
+            for conditions in task.get('conditions', []):
+                for condition in conditions.get('condition'):
+                    for condition_info in condition:
+                        if value := condition_info.get('left', {}).get('value', {}).get('simple', ''):
+                            if not self.handle_incorrect_reference_value(task_id, value, task_name, 'condition', condition_info.get('left', {})):
+                                is_valid = False
+
+                        elif value := condition_info.get('left', {}).get('value', {}).get('complex', {}):
+                            if not self.handle_transformers_and_filters(value, task_id, task_name, 'condition'):
+                                is_valid = False
+
+                        if value := condition_info.get('right', {}).get('value', {}).get('simple', ''):
+                            if not self.handle_incorrect_reference_value(task_id, value, task_name, 'condition', condition_info.get('right', {})):
+                                is_valid = False
+
+                        elif value := condition_info.get('right', {}).get('value', {}).get('complex', {}):
+                            if not self.handle_transformers_and_filters(value, task_id, task_name, 'condition'):
+                                is_valid = False
+
+            for message_key, message_value in task.get('message', {}).items():
+                if not self.handle_message_value(message_key, message_value, task_id, task_name):
+                    is_valid = False
+
+            for script_argument in task.get('scriptarguments', {}).values():
+                if not self.handle_script_arguments(script_argument, task_id, task_name):
+                    is_valid = False
+
+        return is_valid
+
+    def handle_regular_task(self, task, task_id, task_name):
+        """
+        Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>},
+        in a regular task
+        Returns: True if the references are correct
+        """
+        is_valid = True
+        if task.get('type') == 'regular':
+            if default_assignee := task.get('defaultassigneecomplex', {}).get('simple', ''):
+                if not self.handle_incorrect_reference_value(task_id, default_assignee, task_name, 'default assignee'):
+                    is_valid = False
+
+            elif default_assignee := task.get('defaultassigneecomplex', {}).get('complex', {}):
+                if not self.handle_transformers_and_filters(default_assignee, task_id, task_name, 'default assignee'):
+                    is_valid = False
+
+            for script_argument in task.get('scriptarguments', {}).values():
+                if not self.handle_script_arguments(script_argument, task_id, task_name):
+                    is_valid = False
+
+            for incident_field in task.get('fieldMapping', []):
+                field_output = incident_field.get('output', {}).get('complex', {})
+                if not self.handle_transformers_and_filters(field_output, task_id, task_name, 'field mapping'):
+                    is_valid = False
+
+        return is_valid
+
+    def handle_data_collection(self, task, task_id, task_name):
+        """
+        Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>},
+        in a data collection task
+        Returns: True if the references are correct
+        """
+        is_valid = True
+        if task.get('type') == 'collection':
+            for script_argument in task.get('scriptarguments', {}).values():
+                if not self.handle_script_arguments(script_argument, task_id, task_name):
+                    is_valid = False
+
+        for message_key, message_value in task.get('message', {}).items():
+            if not self.handle_message_value(message_key, message_value, task_id, task_name):
+                is_valid = False
+
+        for form_question in task.get('form', {}).get('questions', []):
+            if form_question.get('labelarg'):
+                if value := form_question.get('labelarg', {}).get('simple', ''):
+                    if not self.handle_incorrect_reference_value(task_id, value, task_name, 'form question', form_question):
+                        is_valid = False
+
+                elif value := form_question.get('labelarg', {}).get('complex', {}):
+                    if not self.handle_transformers_and_filters(value, 'inputs', task_name, 'form question'):
+                        is_valid = False
+
+        return is_valid
+
+    def handle_playbook_inputs(self, inputs):
+        """
+        Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>},
+        in the inputs section
+        Returns: True if the references are correct
+        """
+        is_valid = True
+        for playbook_input in inputs:
+            if value := playbook_input.get('value', {}).get('simple', ''):
+                if not self.handle_incorrect_reference_value('inputs', value, 'inputs', 'playbook inputs', playbook_input):
+                    is_valid = False
+
+            elif complex_value := playbook_input.get('value', {}).get('complex', {}):
+                if not self.handle_transformers_and_filters(complex_value, 'inputs', 'inputs', 'playbook inputs'):
+                    is_valid = False
+
+        return is_valid
+
+    def handle_transformers_and_filters(self, field_output: dict, task_id, task_name, section_name):
+        """
+        Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>},
+        in a transformers and filters section.
+        Returns: True if the references are correct
+        """
+        is_valid = True
+        filters = field_output.get('filters', [])
+        for incident_filter in filters:
+            for filter_info in incident_filter:
+                if value := filter_info.get('left', {}).get('value', {}).get('simple', ''):
+                    if not self.handle_incorrect_reference_value(task_id, value, task_name, section_name, filter_info.get('left', {})):
+                        is_valid = False
+
+                if value := filter_info.get('right', {}).get('value', {}).get('simple', ''):
+                    if not self.handle_incorrect_reference_value(task_id, value, task_name, section_name, filter_info.get('right', {})):
+                        is_valid = False
+
+        for transformer in field_output.get('transformers', []):
+            for _, arg_info in transformer.get('args', {}).items():
+                if value := arg_info.get('value', {}).get('simple', ''):
+                    if not self.handle_incorrect_reference_value(task_id, value, task_name, section_name, arg_info):
+                        is_valid = False
+
+        return is_valid
+
+    def handle_script_arguments(self, script_argument: dict, task_id, task_name):
+        """
+        Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>},
+        in a script arguments section.
+        Returns: True if the references are correct
+        """
+        is_valid = True
+        if arg_value := script_argument.get('simple', ''):
+            if not self.handle_incorrect_reference_value(task_id, arg_value, task_name, 'script arguments'):
+                is_valid = False
+
+        elif arg_value := script_argument.get('complex', {}):
+            if not self.handle_transformers_and_filters(arg_value, task_id, task_name, 'script arguments'):
+                is_valid = False
+
+        return is_valid
+
+    def handle_message_value(self, message_key, message_value, task_id, task_name):
+        """
+        Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>},
+        in a message section.
+        Returns: True if the references are correct
+        """
+        is_valid = True
+        if message_key and message_value:
+            if isinstance(message_value, dict):
+                if value := message_value.get('simple', ''):
+                    if not self.handle_incorrect_reference_value(task_id, value, task_name, 'message'):
+                        is_valid = False
+
+                elif value := message_value.get('complex', {}):
+                    if not self.handle_transformers_and_filters(value, task_id, task_name, 'message'):
+                        is_valid = False
+
+        return is_valid
+
+    def handle_incorrect_reference_value(self, task_id, values, task_name, section_name, value_info: dict = {}):
+        """
+        Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>},
+        Returns: True if the references are correct
+        """
+        is_valid = True
+        split_values = values.split(',') if isinstance(values, str) else ()
+        for value in split_values:
+            if value.startswith('incident.') or value.startswith('inputs.'):
+                if not value_info.get('iscontext', ''):
+                    error_message, error_code = Errors.incorrect_value_references(task_id, value, task_name, section_name)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        self.is_valid = False
+                        is_valid = False
 
         return is_valid
 

@@ -3,8 +3,7 @@ from typing import Union
 import pytest
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.constants import (
-    CLASSIFIERS_DIR, DEFAULT_CONTENT_ITEM_FROM_VERSION, PACKS_DIR)
+from demisto_sdk.commands.common.constants import CLASSIFIERS_DIR, DEFAULT_CONTENT_ITEM_FROM_VERSION, PACKS_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
     JSONContentObject
 from demisto_sdk.commands.common.tools import src_root

@@ -8,20 +8,14 @@ from io import open
 from pathlib import Path
 from typing import Optional
 
-from ruamel.yaml.scalarstring import (PlainScalarString,
-                                      SingleQuotedScalarString)
+from ruamel.yaml.scalarstring import PlainScalarString, SingleQuotedScalarString
 
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
-                                                   TYPE_TO_EXTENSION)
+from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON, TYPE_TO_EXTENSION
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS,
-                                               get_all_docker_images,
-                                               get_pipenv_dir,
-                                               get_python_version, pascal_case,
-                                               print_color, print_error)
-from demisto_sdk.commands.unify.integration_script_unifier import \
-    IntegrationScriptUnifier
+from demisto_sdk.commands.common.tools import (LOG_COLORS, get_all_docker_images, get_pipenv_dir, get_python_version,
+                                               pascal_case, print_color, print_error)
+from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
 
 yaml = YAML_Handler()
 
@@ -67,6 +61,7 @@ class YmlSplitter:
             no_pipenv: bool = False,
             no_logging: bool = False,
             no_code_formatting: bool = False,
+            **_,  # ignoring unexpected kwargs
     ):
         self.input = Path(input).resolve()
         self.output = (Path(output) if output else Path(self.input.parent)).resolve()
@@ -176,17 +171,16 @@ class YmlSplitter:
                         self.print_logs("autopep8 skipped! It doesn't seem you have autopep8 installed.\n"
                                         "Make sure to install it with: pip install autopep8.\n"
                                         "Then run: autopep8 -i {}".format(code_file), LOG_COLORS.YELLOW)
+
+                    self.print_logs("Running isort on file: {} ...".format(code_file), LOG_COLORS.NATIVE)
+                    try:
+                        subprocess.call(["isort", code_file])
+                    except FileNotFoundError:
+                        self.print_logs("isort skipped! It doesn't seem you have isort installed.\n"
+                                        "Make sure to install it with: pip install isort.\n"
+                                        "Then run: isort {}".format(code_file), LOG_COLORS.YELLOW)
                 if self.pipenv:
                     try:
-                        if self.run_code_formatting:
-                            self.print_logs("Running isort on file: {} ...".format(code_file), LOG_COLORS.NATIVE)
-                            try:
-                                subprocess.call(["isort", code_file])
-                            except FileNotFoundError:
-                                self.print_logs("isort skipped! It doesn't seem you have isort installed.\n"
-                                                "Make sure to install it with: pip install isort.\n"
-                                                "Then run: isort {}".format(code_file), LOG_COLORS.YELLOW)
-
                         self.print_logs("Detecting python version and setting up pipenv files ...", log_color=LOG_COLORS.NATIVE)
                         docker = get_all_docker_images(script_obj)[0]
                         py_ver = get_python_version(docker, self.config.log_verbose)

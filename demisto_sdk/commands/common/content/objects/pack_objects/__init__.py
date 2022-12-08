@@ -5,9 +5,7 @@ import inspect
 
 from .abstract_pack_objects.json_content_object import JSONContentObject
 from .abstract_pack_objects.yaml_content_object import YAMLContentObject
-from .abstract_pack_objects.yaml_unify_content_object import \
-    YAMLContentUnifiedObject
-from .agent_config.agent_config import AgentConfig
+from .abstract_pack_objects.yaml_unify_content_object import YAMLContentUnifiedObject
 from .author_image.author_image import AuthorImage
 from .change_log.change_log import ChangeLog
 from .classifier.classifier import Classifier, ClassifierMapper, OldClassifier
@@ -44,6 +42,7 @@ from .tool.agent_tool import AgentTool
 from .trigger.trigger import Trigger
 from .widget.widget import Widget
 from .wizard.wizard import Wizard
+from .xdrc_template.xdrc_template import XDRCTemplate
 from .xsiam_dashboard.xsiam_dashboard import XSIAMDashboard
 from .xsiam_report.xsiam_report import XSIAMReport
 

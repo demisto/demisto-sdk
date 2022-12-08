@@ -15,8 +15,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_child_directories
-from demisto_sdk.commands.init.contribution_converter import \
-    ContributionConverter
+from demisto_sdk.commands.init.contribution_converter import ContributionConverter
 from TestSuite.contribution import Contribution
 from TestSuite.repo import Repo
 

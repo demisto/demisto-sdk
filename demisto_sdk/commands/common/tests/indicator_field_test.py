@@ -1,9 +1,7 @@
 import pytest
 
-from demisto_sdk.commands.common.hook_validations.indicator_field import \
-    IndicatorFieldValidator
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
+from demisto_sdk.commands.common.hook_validations.indicator_field import IndicatorFieldValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 
 INDICATOR_GROUP_NUMBER = 2
 

@@ -2,8 +2,7 @@ import pytest
 from mock import patch
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.hook_validations.wizard import WizardValidator
 
 json = JSON_Handler()

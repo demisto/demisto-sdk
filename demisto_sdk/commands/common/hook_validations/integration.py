@@ -3,37 +3,30 @@ import re
 from pathlib import Path
 from typing import Dict, Optional
 
-from demisto_sdk.commands.common.constants import (
-    ALERT_FETCH_REQUIRED_PARAMS, BANG_COMMAND_ARGS_MAPPING_DICT,
-    BANG_COMMAND_NAMES, DBOT_SCORES_DICT, DEFAULT_CONTENT_ITEM_FROM_VERSION,
-    DEPRECATED_REGEXES, ENDPOINT_COMMAND_NAME, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
-    FEED_REQUIRED_PARAMS, FIRST_FETCH, FIRST_FETCH_PARAM,
-    INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION_CATEGORIES, IOC_OUTPUTS_DICT,
-    MAX_FETCH, MAX_FETCH_PARAM, PACKS_DIR, PACKS_PACK_META_FILE_NAME,
-    PYTHON_SUBTYPES, REPUTATION_COMMAND_NAMES, TYPE_PWSH,
-    XSOAR_CONTEXT_STANDARD_URL, XSOAR_SUPPORT, MarketplaceVersions)
-from demisto_sdk.commands.common.default_additional_info_loader import \
-    load_default_additional_info_dict
-from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
-                                                FOUND_FILES_AND_IGNORED_ERRORS,
-                                                Errors)
+from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common.constants import (ALERT_FETCH_REQUIRED_PARAMS, BANG_COMMAND_ARGS_MAPPING_DICT,
+                                                   BANG_COMMAND_NAMES, DBOT_SCORES_DICT,
+                                                   DEFAULT_CONTENT_ITEM_FROM_VERSION, DEPRECATED_REGEXES,
+                                                   ENDPOINT_COMMAND_NAME, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
+                                                   FEED_REQUIRED_PARAMS, FIRST_FETCH, FIRST_FETCH_PARAM,
+                                                   INCIDENT_FETCH_REQUIRED_PARAMS, IOC_OUTPUTS_DICT, MAX_FETCH,
+                                                   MAX_FETCH_PARAM, PACKS_DIR, PACKS_PACK_META_FILE_NAME,
+                                                   PYTHON_SUBTYPES, REPUTATION_COMMAND_NAMES, TYPE_PWSH,
+                                                   XSOAR_CONTEXT_STANDARD_URL, XSOAR_SUPPORT, MarketplaceVersions)
+from demisto_sdk.commands.common.default_additional_info_loader import load_default_additional_info_dict
+from demisto_sdk.commands.common.errors import FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS, Errors
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    error_codes
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
-from demisto_sdk.commands.common.hook_validations.description import \
-    DescriptionValidator
-from demisto_sdk.commands.common.hook_validations.docker import \
-    DockerImageValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.description import DescriptionValidator
+from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.tools import (
-    _get_file_id, compare_context_path_in_yml_and_readme,
-    extract_deprecated_command_names_from_yml,
-    extract_none_deprecated_command_names_from_yml, get_core_pack_list,
-    get_file_version_suffix_if_exists, get_files_in_dir, get_item_marketplaces,
-    get_pack_name, is_iron_bank_pack, print_error, server_version_compare,
-    string_to_bool)
+from demisto_sdk.commands.common.tools import (_get_file_id, compare_context_path_in_yml_and_readme,
+                                               extract_deprecated_command_names_from_yml,
+                                               extract_none_deprecated_command_names_from_yml, get_core_pack_list,
+                                               get_file_version_suffix_if_exists, get_files_in_dir,
+                                               get_item_marketplaces, get_pack_name, is_iron_bank_pack, print_error,
+                                               server_version_compare, string_to_bool)
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -351,8 +344,9 @@ class IntegrationValidator(ContentEntityValidator):
         # type: () -> bool
         """Check that the integration category is in the schema."""
         category = self.current_file.get('category', None)
-        if category not in INTEGRATION_CATEGORIES:
-            error_message, error_code = Errors.wrong_category(category)
+        approved_list = tools.get_current_categories()
+        if category not in approved_list:
+            error_message, error_code = Errors.wrong_category(category, approved_list)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
@@ -775,10 +769,7 @@ class IntegrationValidator(ContentEntityValidator):
         # if old integration command has no outputs, no change of context will occur.
         if not old_command_to_context_paths:
             return True
-        # if new integration command has no outputs, and old one does, a change of context will occur.
-        if not current_command_to_context_paths and old_command_to_context_paths \
-                and not self.structure_validator.quiet_bc:
-            return False
+        no_change = True
         for old_command, old_context_paths in old_command_to_context_paths.items():
             if old_command in current_command_to_context_paths.keys():
                 if not self._is_sub_set(current_command_to_context_paths[old_command], old_context_paths):
@@ -786,9 +777,15 @@ class IntegrationValidator(ContentEntityValidator):
                     if self.handle_error(error_message, error_code, file_path=self.file_path,
                                          warning=self.structure_validator.quiet_bc):
                         self.is_valid = False
-                        return False
+                        no_change = False
+            else:
+                error_message, error_code = Errors.breaking_backwards_command(old_command)
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     warning=self.structure_validator.quiet_bc):
+                    self.is_valid = False
+                    no_change = False
 
-        return True
+        return no_change
 
     @error_codes('IN129')
     def no_removed_integration_parameters(self):

@@ -1,10 +1,8 @@
 import pytest
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, PLAYBOOKS_DIR
-from demisto_sdk.commands.common.content.errors import (ContentInitializeError,
-                                                        ContentSerializeError)
-from demisto_sdk.commands.common.content.objects.abstract_objects import \
-    YAMLObject
+from demisto_sdk.commands.common.content.errors import ContentInitializeError, ContentSerializeError
+from demisto_sdk.commands.common.content.objects.abstract_objects import YAMLObject
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import src_root
 

@@ -8,26 +8,21 @@ from typing import Optional
 import click
 from packaging import version
 
-from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, DEFAULT_CONTENT_ITEM_FROM_VERSION,
-    ENTITY_NAME_SEPARATORS, EXCLUDED_DISPLAY_NAME_WORDS, FEATURE_BRANCHES,
-    FROM_TO_VERSION_REGEX, GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION,
-    OLDEST_SUPPORTED_VERSION, FileType)
+from demisto_sdk.commands.common.constants import (API_MODULES_PACK, DEFAULT_CONTENT_ITEM_FROM_VERSION,
+                                                   ENTITY_NAME_SEPARATORS, EXCLUDED_DISPLAY_NAME_WORDS,
+                                                   FEATURE_BRANCHES, FROM_TO_VERSION_REGEX,
+                                                   GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION, OLDEST_SUPPORTED_VERSION,
+                                                   FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import (
-    BaseValidator, error_codes)
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
-from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
-                                               get_file_displayed_name,
-                                               is_test_config_match,
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from demisto_sdk.commands.common.tools import (_get_file_id, find_type, get_file_displayed_name, is_test_config_match,
                                                run_command)
-from demisto_sdk.commands.format.format_constants import \
-    OLD_FILE_DEFAULT_1_FROMVERSION
+from demisto_sdk.commands.format.format_constants import OLD_FILE_DEFAULT_1_FROMVERSION
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -277,13 +272,37 @@ class ContentEntityValidator(BaseValidator):
 
         # Integration case
         elif file_type == 'integration':
+            # Not stated no tests explicitly and has not tests in yml.
             is_configured_test = any(
                 test_config for test_config in conf_json_tests if is_test_config_match(test_config,
                                                                                        integration_id=content_item_id))
+
+            unconfigured_test_playbook_ids = []
+
+            if test_playbooks:
+                configured_tests = []
+                for test_playbook in test_playbooks:
+                    test_config_matches = []
+                    for test_config in conf_json_tests:
+                        test_config_matches.append(is_test_config_match(test_config,
+                                                                        test_playbook_id=test_playbook,
+                                                                        integration_id=content_item_id))
+                    found_match = any(test_config_matches)
+                    configured_tests.append(found_match)
+                    if not found_match:
+                        unconfigured_test_playbook_ids.append(test_playbook)
+
+                is_configured_test = all(configured_tests)
+
             if not is_configured_test:
                 missing_test_playbook_configurations = json.dumps(
                     {'integrations': content_item_id, 'playbookID': '<TestPlaybook ID>'},
                     indent=4)
+                if unconfigured_test_playbook_ids:
+                    missing_test_playbook_configurations = json.dumps(
+                        [{'integrations': content_item_id, 'playbookID': test_playbook_id}
+                         for test_playbook_id in unconfigured_test_playbook_ids], indent=4)
+
                 no_tests_key = yaml.dumps({'tests': ['No tests']})
                 error_message, error_code = Errors.integration_not_registered(self.file_path,
                                                                               missing_test_playbook_configurations,

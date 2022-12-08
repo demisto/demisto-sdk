@@ -6,8 +6,8 @@ from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
-    DASHBOARD, GENERIC_MODULE, UNIFIED_GENERIC_MODULE)
+from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (DASHBOARD, GENERIC_MODULE,
+                                                                                UNIFIED_GENERIC_MODULE)
 from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
@@ -103,6 +103,7 @@ class TestParsingRuleUnifier:
         pack = repo.create_pack()
         pack.create_parsing_rule(
             yml={
+                'name': rule_id,
                 'id': rule_id,
                 'rules': '',
                 'samples': ''

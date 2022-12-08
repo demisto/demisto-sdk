@@ -10,24 +10,21 @@ from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
-from demisto_sdk.commands.common.hook_validations.playbook import \
-    PlaybookValidator
-from demisto_sdk.commands.common.tools import (get_dict_from_file,
-                                               is_test_config_match)
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.commands.common.tools import get_dict_from_file, is_test_config_match
 from demisto_sdk.commands.format import format_module, update_generic
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
 from demisto_sdk.commands.lint.commands_builder import excluded_files
-from demisto_sdk.tests.constants_test import (
-    DESTINATION_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY,
-    INTEGRATION_WITH_TEST_PLAYBOOKS, PLAYBOOK_WITH_TEST_PLAYBOOKS,
-    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_PLAYBOOK_COPY)
-from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
-    GENERIC_DEFINITION, GENERIC_FIELD, GENERIC_MODULE, GENERIC_TYPE)
+from demisto_sdk.tests.constants_test import (DESTINATION_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_PLAYBOOK_COPY,
+                                              INTEGRATION_WITH_TEST_PLAYBOOKS, PLAYBOOK_WITH_TEST_PLAYBOOKS,
+                                              SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_PLAYBOOK_COPY)
+from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (GENERIC_DEFINITION, GENERIC_FIELD,
+                                                                                GENERIC_MODULE, GENERIC_TYPE)
 from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
@@ -1115,6 +1112,7 @@ class TestFormatWithoutAddTestsFlag:
         integration.yml.update({'fromversion': '5.5.0'})
         integration_path = integration.yml.path
         mocker.patch.object(BaseUpdate, 'set_default_from_version', return_value=None)
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
 
         result = runner.invoke(main, [FORMAT_CMD, '-i', integration_path, '-at'])
         prompt = f'The file {integration_path} has no test playbooks configured.' \
@@ -1124,7 +1122,7 @@ class TestFormatWithoutAddTestsFlag:
         assert prompt in result.output
         assert message not in result.output
 
-    def test_format_integrations_folder(self, pack):
+    def test_format_integrations_folder(self, mocker, pack):
         """
             Given
             - An integration folder.
@@ -1142,6 +1140,7 @@ class TestFormatWithoutAddTestsFlag:
         integration = pack.create_integration()
         integration.create_default_integration()
         integration_path = integration.yml.path
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
         result = runner.invoke(main, [FORMAT_CMD, '-i', integration_path], input='Y')
         prompt = f'The file {integration_path} has no test playbooks configured.' \
                  f' Do you want to configure it with "No tests"?'

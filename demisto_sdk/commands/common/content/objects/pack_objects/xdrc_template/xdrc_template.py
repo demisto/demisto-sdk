@@ -4,25 +4,23 @@ import demisto_client
 from wcmatch.pathlib import Path
 
 import demisto_sdk.commands.common.content.errors as exc
-from demisto_sdk.commands.common.constants import (AGENT_CONFIG,
-                                                   ENTITY_TYPE_TO_DIR,
-                                                   FileType)
+from demisto_sdk.commands.common.constants import XDRC_TEMPLATE, FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
     JSONContentObject
 from demisto_sdk.commands.common.tools import generate_xsiam_normalized_name
-from demisto_sdk.commands.unify.agent_config_unifier import AgentConfigUnifier
+from demisto_sdk.commands.prepare_content.prepare_upload_manager import PrepareUploadManager
 
 
-class AgentConfig(JSONContentObject):
+class XDRCTemplate(JSONContentObject):
     def __init__(self, path: Union[Path, str]):
-        super().__init__(path, AGENT_CONFIG)
+        super().__init__(path, XDRC_TEMPLATE)
 
     def normalize_file_name(self) -> str:
-        return generate_xsiam_normalized_name(self._path.name, AGENT_CONFIG)
+        return generate_xsiam_normalized_name(self._path.name, XDRC_TEMPLATE)
 
     def upload(self, client: demisto_client):
         """
-        Upload the agent_config to demisto_client
+        Upload the xdrc_template to demisto_client
         Args:
             client: The demisto_client object of the desired XSOAR machine to upload to.
 
@@ -33,10 +31,10 @@ class AgentConfig(JSONContentObject):
         pass
 
     def type(self):
-        return FileType.AGENT_CONFIG
+        return FileType.XDRC_TEMPLATE
 
     def _unify(self, dest_dir: Path = None) -> List[Path]:
-        """Unify AgentConfig in destination dir.
+        """Unify XDRCTemplate in destination dir.
 
         Args:
             dest_dir: Destination directory.
@@ -44,19 +42,10 @@ class AgentConfig(JSONContentObject):
         Returns:
             List[Path]: List of new created files.
         """
-
-        unify_dir = ENTITY_TYPE_TO_DIR[FileType.AGENT_CONFIG.value]
-
+        if isinstance(dest_dir, str):
+            dest_dir = Path(dest_dir)
         # Unify step
-        unifier = AgentConfigUnifier(input=str(self.path.parent), output=dest_dir, dir_name=unify_dir)
-
-        created_files: List[str] = unifier.unify()
-
-        # Validate that unify succeed - there is no exception raised in unify module.
-        if not created_files:
-            raise exc.ContentDumpError(self, self.path, "Unable to unify Agent Config object")
-
-        return [Path(path) for path in created_files]
+        return [Path(str(PrepareUploadManager.prepare_for_upload(input=self.path, output=dest_dir)))]
 
     def _create_target_dump_dir(self, dest_dir: Optional[Union[Path, str]] = None) -> Path:
         """Create destination directory, Destination must be valid directory, If not specified dump in
@@ -72,19 +61,19 @@ class AgentConfig(JSONContentObject):
             DumpContentObjectError: If not valid directory path - not directory or not exists.
         """
         if dest_dir:
-            dest_dir = Path(dest_dir)
-            if dest_dir.exists() and not Path(dest_dir).is_dir():
+            dest_dir = Path(dest_dir)  # type: ignore
+            if dest_dir.exists() and not Path(dest_dir).is_dir():  # type: ignore
                 raise exc.ContentDumpError(self, self._path, "Destiantion is not valid directory path")
             else:
                 dest_dir.mkdir(parents=True, exist_ok=True)
         else:
             dest_dir = self._path.parent
 
-        return dest_dir
+        return dest_dir  # type: ignore
 
     def dump(self, dest_dir: Optional[Union[Path, str]] = None, unify: bool = True) -> List[Path]:
         """
-        Dump AgentConfig.
+        Dump XDRCTemplate.
 
         Args:
             dest_dir: Destination directory.

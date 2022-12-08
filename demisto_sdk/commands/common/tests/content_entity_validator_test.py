@@ -2,19 +2,14 @@ import os
 
 import pytest
 
-from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
-                                                   EXCLUDED_DISPLAY_NAME_WORDS)
+from demisto_sdk.commands.common.constants import API_MODULES_PACK, EXCLUDED_DISPLAY_NAME_WORDS
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
-from demisto_sdk.commands.common.tools import (get_not_registered_tests,
-                                               is_test_config_match)
-from demisto_sdk.tests.constants_test import (
-    INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK, INVALID_PLAYBOOK_PATH,
-    VALID_INTEGRATION_TEST_PATH, VALID_PLAYBOOK_ID_PATH,
-    VALID_TEST_PLAYBOOK_PATH)
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from demisto_sdk.commands.common.tools import get_not_registered_tests, is_test_config_match
+from demisto_sdk.tests.constants_test import (INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK, INVALID_PLAYBOOK_PATH,
+                                              VALID_INTEGRATION_TEST_PATH, VALID_PLAYBOOK_ID_PATH,
+                                              VALID_TEST_PLAYBOOK_PATH)
 
 HAS_TESTS_KEY_UNPUTS = [
     (VALID_INTEGRATION_TEST_PATH, 'integration', True),

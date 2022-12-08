@@ -2,8 +2,7 @@ from typing import Optional
 
 import pytest
 
-from demisto_sdk.commands.common.hook_validations.release_notes_config import \
-    ReleaseNotesConfigValidator
+from demisto_sdk.commands.common.hook_validations.release_notes_config import ReleaseNotesConfigValidator
 
 
 class TestReleaseNotesConfigValidator:

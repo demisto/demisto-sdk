@@ -354,5 +354,4 @@ class ReleaseNotesValidator(BaseValidator):
         validations = [self.has_release_notes_been_filled_out(), self.are_release_notes_complete(),
                        self.is_docker_image_same_as_yml(), self.validate_json_when_breaking_changes(),
                        self.validate_release_notes_headers()]
-
         return all(validations)

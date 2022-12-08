@@ -83,17 +83,15 @@ class NativeImageSupportedVersions:
     def __init__(
         self,
         _id: str,
-        docker_image: str,
+        docker_image: Optional[str],
         native_image_config: Optional[NativeImageConfig] = None,
         native_image_config_file_path: Optional[str] = None
     ):
         self.id = _id
-        self.docker_image = extract_docker_image_from_text(text=docker_image, with_no_tag=True)
-
-        if native_image_config:
-            self.native_image_config = native_image_config
-        else:
-            self.native_image_config = NativeImageConfig(native_image_config_file_path)
+        self.docker_image = extract_docker_image_from_text(
+            text=docker_image, with_no_tag=True
+        ) if docker_image else docker_image
+        self.native_image_config = native_image_config or NativeImageConfig(native_image_config_file_path)
 
     def image_to_native_images_support(
         self, docker_images_to_native_images_mapping: Optional[Dict[str, List[str]]] = None

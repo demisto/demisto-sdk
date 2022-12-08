@@ -20,6 +20,7 @@ from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json
 from TestSuite.repo import Repo
+from pytest_mock import MockerFixture
 
 # Fixtures for mock content object models
 
@@ -369,7 +370,7 @@ class TestCreateContentGraph:
         assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script0.yml")
         assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script1.yml")
 
-    def test_create_content_graph_end_to_end_with_new_service(self, repo: Repo, tmp_path: Path):
+    def test_create_content_graph_end_to_end_with_new_service(self, repo: Repo, tmp_path: Path, mocker: MockerFixture):
         """
         Given:
             - A repository with a pack TestPack, containing an integration TestIntegration.
@@ -379,9 +380,11 @@ class TestCreateContentGraph:
             - Make sure the service remains available by querying for all content items in the graph.
             - Make sure there is a single integration in the query response.
         """
-        self._test_create_content_graph_end_to_end(repo, start_service=True, tmp_path=tmp_path)
+        self._test_create_content_graph_end_to_end(repo, start_service=True, tmp_path=tmp_path, mocker=mocker)
 
-    def test_create_content_graph_end_to_end_with_existing_service(self, repo: Repo, tmp_path: Path):
+    def test_create_content_graph_end_to_end_with_existing_service(
+        self, repo: Repo, tmp_path: Path, mocker: MockerFixture
+    ):
         """
         Given:
             - A repository with a pack TestPack, containing an integration TestIntegration.
@@ -391,7 +394,7 @@ class TestCreateContentGraph:
             - Make sure the service remains available by querying for all content items in the graph.
             - Make sure there is a single integration in the query response.
         """
-        self._test_create_content_graph_end_to_end(repo, start_service=False, tmp_path=tmp_path)
+        self._test_create_content_graph_end_to_end(repo, start_service=False, tmp_path=tmp_path, mocker=mocker)
 
     def test_create_content_graph_relationships(
         self,

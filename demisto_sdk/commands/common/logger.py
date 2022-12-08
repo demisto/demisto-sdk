@@ -116,6 +116,7 @@ def setup_rich_logging(verbosity: int, quiet: bool, log_path: Path, log_file_nam
         log_file_name=log_file_name
     )
     rich_handler = RichHandler(rich_tracebacks=True)
+    rich_handler.name = 'console-handler'
     set_console_stream_handler(logger, rich_handler)
 
 

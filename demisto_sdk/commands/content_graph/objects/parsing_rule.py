@@ -12,6 +12,9 @@ class ParsingRule(ContentItem, content_type=ContentType.PARSING_RULE):  # type: 
         return {"name", "description"}
 
     def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.MarketplaceV2, **kwargs) -> dict:
-        data = super().prepare_for_upload(marketplace)
+        if not kwargs.get('unify_only'):
+            data = super().prepare_for_upload(marketplace)
+        else:
+            data = self.data
         data = RuleUnifier.unify(self.path, data, marketplace)
         return data

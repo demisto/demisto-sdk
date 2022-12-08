@@ -1,9 +1,12 @@
 from pathlib import Path
 from typing import List, Set
-
+import logging
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
+
+
+logger = logging.getLogger('demisto-sdk')
 
 
 class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignore[call-arg]
@@ -20,7 +23,9 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
     def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
         data = super().prepare_for_upload(marketplace, **kwargs)
 
-        if marketplace == MarketplaceVersions.XSOAR and (supported_native_images := self.get_supported_native_images()):
+        if supported_native_images := self.get_supported_native_images(
+            marketplace=marketplace, native_image_config_file_path=kwargs.get('native_image_config_file_path')
+        ):
             data['nativeImage'] = supported_native_images
 
         return data

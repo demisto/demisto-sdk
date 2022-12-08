@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import PrepareUploadManager
 from TestSuite.test_tools import ChangeCWD
+from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -443,7 +444,7 @@ class TestMergeScriptPackageToYMLIntegration:
         self.export_dir_path = os.path.join(self.test_dir_path, self.package_name)
         self.expected_yml_path = os.path.join(self.test_dir_path, 'integration-SampleIntegPackage.yml')
 
-    def test_unify_integration(self):
+    def test_unify_integration(self, mocker):
         """
         sanity test of merge_script_package_to_yml of integration
         """
@@ -457,6 +458,7 @@ class TestMergeScriptPackageToYMLIntegration:
             image_file='demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage_image.png',
         )
 
+        mocker.patch.object(IntegrationScript, 'get_supported_native_images', return_value=[])
         export_yml_path = PrepareUploadManager.prepare_for_upload(input=Path(self.export_dir_path), output=Path(self.test_dir_path))
 
         assert export_yml_path == Path(self.expected_yml_path)

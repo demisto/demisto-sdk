@@ -11,7 +11,7 @@ class ContentItemXSIAM(ContentItem, ABC):
 
     def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)
-        
+
         output_paths = []
         data = self.prepare_for_upload(marketplace)
 

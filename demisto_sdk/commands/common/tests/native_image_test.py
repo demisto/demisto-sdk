@@ -6,7 +6,8 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.native_image import NativeImageConfig, NativeImageSupportedVersions
 
 GIT_ROOT = git_path()
-NATIVE_IMAGE_TEST_CONFIG_PATH = f'{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/native_image_config.json'
+NATIVE_IMAGE_TEST_CONFIG_PATH = f'{GIT_ROOT}/demisto_sdk/commands/common/tests/' \
+                                f'test_files/docker_native_image_config.json'
 
 
 @pytest.fixture

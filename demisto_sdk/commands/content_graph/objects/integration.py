@@ -8,9 +8,9 @@ if TYPE_CHECKING:
 
 from pydantic import Field
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 
 class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
@@ -78,7 +78,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         if supported_native_images := self.get_supported_native_images(
             marketplace=marketplace,
             native_image_config_file_path=kwargs.get('native_image_config_file_path'),
-            ignore_native_image=kwargs.get('ignore_native_image')
+            ignore_native_image=kwargs.get('ignore_native_image') or False
         ):
             data['script']['nativeImage'] = supported_native_images
 

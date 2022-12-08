@@ -1,10 +1,10 @@
+import logging
 from pathlib import Path
 from typing import List, Set
-import logging
+
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
-
 
 logger = logging.getLogger('demisto-sdk')
 

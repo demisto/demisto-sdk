@@ -14,10 +14,10 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
+from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import PrepareUploadManager
 from TestSuite.test_tools import ChangeCWD
-from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -476,7 +476,7 @@ class TestMergeScriptPackageToYMLIntegration:
         assert expected_yml == actual_yml
 
     @pytest.mark.parametrize('marketplace', (MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2))
-    def test_unify_integration__hidden_param(self, marketplace: MarketplaceVersions):
+    def test_unify_integration__hidden_param(self, marketplace: MarketplaceVersions, mocker):
         """
         Given   an integration file with params that have different valid values for the `hidden` attribute
         When    running unify
@@ -492,6 +492,7 @@ class TestMergeScriptPackageToYMLIntegration:
             image_file='demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage_image.png',
         )
 
+        mocker.patch.object(IntegrationScript, 'get_supported_native_images', return_value=[])
         unified_yml = PrepareUploadManager.prepare_for_upload(
             input=Path(self.export_dir_path), output=Path(self.test_dir_path), marketplace=marketplace
         )
@@ -517,7 +518,7 @@ class TestMergeScriptPackageToYMLIntegration:
         assert 'Should not be hidden - hidden attribute is False' in hidden_false
         assert 'Should not be hidden - no hidden attribute' in missing_hidden_field
 
-    def test_unify_integration__detailed_description_with_special_char(self):
+    def test_unify_integration__detailed_description_with_special_char(self, mocker):
         """
         -
         """
@@ -537,6 +538,7 @@ class TestMergeScriptPackageToYMLIntegration:
             detailed_description=description,
         )
 
+        mocker.patch.object(IntegrationScript, 'get_supported_native_images', return_value=[])
         export_yml_path = PrepareUploadManager.prepare_for_upload(
             Path(self.export_dir_path), output=Path(self.test_dir_path)
         )
@@ -550,7 +552,7 @@ class TestMergeScriptPackageToYMLIntegration:
         assert expected_yml == actual_yml
         assert actual_yml['detaileddescription'] == description
 
-    def test_unify_integration__detailed_description_with_yml_structure(self):
+    def test_unify_integration__detailed_description_with_yml_structure(self, mocker):
         """
         -
         """
@@ -575,6 +577,7 @@ final test: hi
             detailed_description=description,
         )
 
+        mocker.patch.object(IntegrationScript, 'get_supported_native_images', return_value=[])
         export_yml_path = PrepareUploadManager.prepare_for_upload(Path(self.export_dir_path), output=Path(self.test_dir_path))
 
         assert export_yml_path == Path(self.expected_yml_path)
@@ -586,7 +589,7 @@ final test: hi
         assert expected_yml == actual_yml
         assert actual_yml['detaileddescription'] == description
 
-    def test_unify_default_output_integration(self):
+    def test_unify_default_output_integration(self, mocker):
         """
         Given
         - UploadTest integration.
@@ -599,6 +602,7 @@ final test: hi
         - Ensure Unify command works with default output.
         """
         input_path_integration = TESTS_DIR + '/test_files/Packs/DummyPack/Integrations/UploadTest'
+        mocker.patch.object(IntegrationScript, 'get_supported_native_images', return_value=[])
         export_yml_path = PrepareUploadManager.prepare_for_upload(Path(input_path_integration))
         expected_yml_path = TESTS_DIR + '/test_files/Packs/DummyPack/Integrations/UploadTest/integration-UploadTest.yml'
 
@@ -615,7 +619,7 @@ class TestMergeScriptPackageToYMLScript:
         self.export_dir_path = os.path.join(self.test_dir_path, self.package_name)
         self.expected_yml_path = os.path.join(self.test_dir_path, 'script-SampleScriptPackage.yml')
 
-    def test_unify_script(self):
+    def test_unify_script(self, mocker):
         """
         sanity test of merge_script_package_to_yml of script
         """
@@ -627,6 +631,7 @@ class TestMergeScriptPackageToYMLScript:
             script_code=TEST_VALID_CODE,
         )
 
+        mocker.patch.object(IntegrationScript, 'get_supported_native_images', return_value=[])
         export_yml_path = PrepareUploadManager.prepare_for_upload(
             input=Path(self.export_dir_path), output=Path(self.test_dir_path)
         )
@@ -640,7 +645,7 @@ class TestMergeScriptPackageToYMLScript:
 
         assert expected_yml == actual_yml
 
-    def test_unify_default_output_script(self):
+    def test_unify_default_output_script(self, mocker):
         """
         Given
         - DummyScript script.
@@ -653,6 +658,7 @@ class TestMergeScriptPackageToYMLScript:
         - Ensure Unify script works with default output.
         """
         input_path_script = TESTS_DIR + '/test_files/Packs/DummyPack/Scripts/DummyScript'
+        mocker.patch.object(IntegrationScript, 'get_supported_native_images', return_value=[])
         export_yml_path = PrepareUploadManager.prepare_for_upload(Path(input_path_script))
         expected_yml_path = TESTS_DIR + '/test_files/Packs/DummyPack/Scripts/DummyScript/script-DummyScript.yml'
 

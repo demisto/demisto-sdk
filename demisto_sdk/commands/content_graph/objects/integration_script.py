@@ -5,10 +5,9 @@ from pydantic import Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.native_image import NativeImageSupportedVersions
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
-from demisto_sdk.commands.common.native_image import NativeImageSupportedVersions
-
 
 yaml = YAML_Handler()
 
@@ -39,8 +38,7 @@ class IntegrationScript(ContentItem):
         if marketplace == marketplace.XSOAR and not ignore_native_image:
             return NativeImageSupportedVersions(
                 _id=self.object_id,
-                docker_image=self.docker_image,
-                native_image_config=native_image_config_file_path
+                docker_image=self.docker_image,  # type: ignore[arg-type]
+                native_image_config_file_path=native_image_config_file_path  # type: ignore[arg-type]
             ).get_supported_native_image_versions()
         return []
-

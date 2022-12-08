@@ -12,6 +12,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
     Neo4jContentGraphInterface as ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
+from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
@@ -315,8 +316,10 @@ def create_mini_content(repository: ContentDTO):
 
 
 class TestCreateContentGraph:
-    def _test_create_content_graph_end_to_end(self, repo: Repo, start_service: bool, tmp_path: Path):
+    def _test_create_content_graph_end_to_end(self, repo: Repo, start_service: bool, tmp_path: Path, mocker):
         import demisto_sdk.commands.content_graph.objects.repository as repo_module
+
+        mocker.patch.object(IntegrationScript, 'get_supported_native_images', return_value=[])
 
         repo_module.USE_FUTURE = False
         pack = repo.create_pack("TestPack")

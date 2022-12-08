@@ -20,7 +20,7 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
     def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
         data = super().prepare_for_upload(marketplace, **kwargs)
 
-        if supported_native_images := self.get_supported_native_images():
+        if marketplace == MarketplaceVersions.XSOAR and (supported_native_images := self.get_supported_native_images()):
             data['nativeImage'] = supported_native_images
 
         return data

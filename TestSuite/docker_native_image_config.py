@@ -15,7 +15,6 @@ class DockerNativeImageConfiguration:
         self.path = str(self._native_image_config_path)
 
     def write_native_image_config(self, data: Optional[Dict] = None):
-
         if data:
             with open(self.path, 'w') as file:
                 json.dump(data, file)

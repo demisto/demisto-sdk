@@ -2,13 +2,13 @@ from typing import List
 
 import pytest
 
-from demisto_sdk.commands.common.native_image import NativeImageConfig, NativeImageSupportedVersions
+from demisto_sdk.commands.common.native_image import NativeImageConfig, NativeImageSupportedVersions, file_to_native_image_config
 from demisto_sdk.tests.constants_test import NATIVE_IMAGE_TEST_CONFIG_PATH
 
 
 @pytest.fixture
 def native_image_config() -> NativeImageConfig:
-    return NativeImageConfig(NATIVE_IMAGE_TEST_CONFIG_PATH)
+    return file_to_native_image_config(NATIVE_IMAGE_TEST_CONFIG_PATH)
 
 
 def test_load_native_image_config(native_image_config: NativeImageConfig):

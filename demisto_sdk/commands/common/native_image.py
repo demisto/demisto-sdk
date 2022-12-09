@@ -1,5 +1,6 @@
 import logging
 from typing import Dict, List, Optional
+from pydantic import BaseModel
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import extract_docker_image_from_text, get_dict_from_file
@@ -8,7 +9,23 @@ json = JSON_Handler()
 logger = logging.getLogger('demisto-sdk')
 
 
-def load_native_image_config(native_image_config_file_path: Optional[str] = None):
+class NativeImage(BaseModel):
+    supported_docker_images: List[str]
+    docker_ref: str
+
+
+class IgnoredContentItem(BaseModel):
+    id: str
+    reason: str
+    ignored_native_images: List[str]
+
+
+class NativeImageConfig(BaseModel):
+    native_images: Dict[str, NativeImage]
+    ignored_content_items: List[IgnoredContentItem]
+
+
+def load_native_image_config(native_image_config_file_path: Optional[str] = None) -> Dict:
     if not native_image_config_file_path:
         native_image_config_file_path = 'Tests/docker_native_image_config.json'
 
@@ -16,35 +33,15 @@ def load_native_image_config(native_image_config_file_path: Optional[str] = None
     return native_image_config_content
 
 
+def file_to_native_image_config(native_image_config_file_path: Optional[str] = None) -> NativeImageConfig:
+    return NativeImageConfig.parse_obj(load_native_image_config(native_image_config_file_path))
+
+
 def extract_native_image_version_for_server(native_image: str) -> str:
     return native_image.replace('native:', '')
 
 
-class NativeImage:
-
-    def __init__(self, name: str, supported_docker_images: List[str], native_docker_ref: str):
-        self.name = name
-        self.supported_docker_images = supported_docker_images
-        self.native_docker_ref = native_docker_ref
-
-
-class NativeImageConfig:
-
-    def __init__(self, native_image_config_file_path: Optional[str] = None):
-        native_image_config_content = load_native_image_config(native_image_config_file_path)
-
-        self.native_images = [
-            NativeImage(
-                name=name,
-                supported_docker_images=native_image_conf.get('supported_docker_images'),
-                native_docker_ref=native_image_conf.get('docker_ref')
-            ) for name, native_image_conf in native_image_config_content.get('native_images').items()
-        ]
-
-        self.ignored_content_items: List = native_image_config_content.get('ignored_content_items')
-
-
-def docker_images_to_native_images_support(native_images: List[NativeImage]) -> Dict[str, List[str]]:
+def docker_images_to_native_images_support(native_images: Dict[str, NativeImage]) -> Dict[str, List[str]]:
     """
     Map all the docker images from the native image configuration file into the native-images which support it.
 
@@ -59,12 +56,12 @@ def docker_images_to_native_images_support(native_images: List[NativeImage]) -> 
     """
     docker_images_to_native_images_mapping: Dict = {}
 
-    for native_image in native_images:
+    for native_image_name, native_image in native_images.items():
         for supported_docker_image in native_image.supported_docker_images:
             if supported_docker_image not in docker_images_to_native_images_mapping:
                 docker_images_to_native_images_mapping[supported_docker_image] = []
             docker_images_to_native_images_mapping[supported_docker_image].append(
-                extract_native_image_version_for_server(native_image.name)
+                extract_native_image_version_for_server(native_image_name)
             )
 
     return docker_images_to_native_images_mapping
@@ -96,7 +93,7 @@ class NativeImageSupportedVersions:
         self.docker_image = extract_docker_image_from_text(
             text=docker_image, with_no_tag=True
         ) if docker_image else docker_image
-        self.native_image_config = native_image_config or NativeImageConfig(native_image_config_file_path)
+        self.native_image_config = native_image_config or file_to_native_image_config(native_image_config_file_path)
 
     def image_to_native_images_support(
         self, docker_images_to_native_images_mapping: Optional[Dict[str, List[str]]] = None
@@ -121,9 +118,9 @@ class NativeImageSupportedVersions:
         """
         ignored_content_items = self.native_image_config.ignored_content_items or []
         for ignored_content_item in ignored_content_items:
-            if self.id == ignored_content_item.get('id'):
-                ignored_native_images = ignored_content_item.get('ignored_native_images', [])
-                reason = ignored_content_item.get('reason')
+            if self.id == ignored_content_item.id:
+                ignored_native_images = ignored_content_item.ignored_native_images
+                reason = ignored_content_item.reason
                 logger.debug(
                     f'content item ID: {self.id} cannot run with these native '
                     f'images: {ignored_native_images}, reason: {reason}'

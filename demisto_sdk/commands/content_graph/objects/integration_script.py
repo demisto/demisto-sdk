@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Optional, List
 
 from pydantic import Field
 
@@ -34,7 +34,7 @@ class IntegrationScript(ContentItem):
         marketplace: MarketplaceVersions,
         native_image_config_file_path: Optional[str] = None,
         ignore_native_image: bool = False
-    ):
+    ) -> List[str]:
         if marketplace == MarketplaceVersions.XSOAR and not ignore_native_image:
             return NativeImageSupportedVersions(
                 _id=self.object_id,

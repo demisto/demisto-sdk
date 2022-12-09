@@ -24,7 +24,9 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
         data = super().prepare_for_upload(marketplace, **kwargs)
 
         if supported_native_images := self.get_supported_native_images(
-            marketplace=marketplace, native_image_config_file_path=kwargs.get('native_image_config_file_path')
+            marketplace=marketplace,
+            native_image_config_file_path=kwargs.get('native_image_config_file_path'),
+            ignore_native_image=kwargs.get('ignore_native_image') or False
         ):
             data['nativeImage'] = supported_native_images
 

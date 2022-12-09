@@ -35,7 +35,7 @@ class IntegrationScript(ContentItem):
         native_image_config_file_path: Optional[str] = None,
         ignore_native_image: bool = False
     ):
-        if marketplace == marketplace.XSOAR and not ignore_native_image:
+        if marketplace == MarketplaceVersions.XSOAR and not ignore_native_image:
             return NativeImageSupportedVersions(
                 _id=self.object_id,
                 docker_image=self.docker_image,

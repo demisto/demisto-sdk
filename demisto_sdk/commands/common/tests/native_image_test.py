@@ -2,7 +2,8 @@ from typing import List
 
 import pytest
 
-from demisto_sdk.commands.common.native_image import NativeImageConfig, NativeImageSupportedVersions, file_to_native_image_config
+from demisto_sdk.commands.common.native_image import (NativeImageConfig, NativeImageSupportedVersions,
+                                                      file_to_native_image_config)
 from demisto_sdk.tests.constants_test import NATIVE_IMAGE_TEST_CONFIG_PATH
 
 

@@ -1,5 +1,6 @@
 import logging
 from typing import Dict, List, Optional
+
 from pydantic import BaseModel
 
 from demisto_sdk.commands.common.handlers import JSON_Handler

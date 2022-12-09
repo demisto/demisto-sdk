@@ -1,5 +1,6 @@
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Dict, Optional
+
 from demisto_sdk.commands.common.handlers import JSON_Handler
 
 json = JSON_Handler()
@@ -19,8 +20,8 @@ class DockerNativeImageConfiguration:
             with open(self.path, 'w') as file:
                 json.dump(data, file)
         else:
-            from demisto_sdk.tests.constants_test import NATIVE_IMAGE_TEST_CONFIG_PATH
             from demisto_sdk.commands.common.native_image import load_native_image_config
+            from demisto_sdk.tests.constants_test import NATIVE_IMAGE_TEST_CONFIG_PATH
 
             with open(self.path, 'w') as file:
                 json.dump(load_native_image_config(NATIVE_IMAGE_TEST_CONFIG_PATH), file, indent=4)

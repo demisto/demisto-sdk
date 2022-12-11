@@ -3,6 +3,10 @@
 * Added validation of testdata files for **Modeling Rules**.
 * Added the ability to limit the number of CPU cores with `DEMISTO_SDK_MAX_CPU_CORES` envirment variable.
 * Fixed an issue where **update-release-notes** failed when changing only xif file in **Modeling Rules**.
+* Added a **validate** step checking types of attributes in the schema file of modeling rule.
+* Added a **validate** step checking that the dataset name of a modeling rule shows in the xif and schema files.
+* Added a **validate** step checking that a correlation rule file does not start with a hyphen.
+* Added a **validate** step checking that xsiam content items follow naming conventions.
 * Fixed an issue where **is_valid_category** and **is_categories_field_match_standard** failed on private repo due to approved_list not imported.
 * Fixed an issue where **validate** didn't fail on the MR103 validation error.
 * Fixed the *--release-notes* flag in demisto-sdk to support the new CHANGELOG format.

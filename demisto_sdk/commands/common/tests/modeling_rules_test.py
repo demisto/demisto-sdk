@@ -161,6 +161,34 @@ def test_is_invalid_rule_file_name(repo, file_to_rename):
         assert not modeling_rule_validator._is_valid
 
 
+@pytest.mark.parametrize('schema, valid', [({"test_audit_raw": {"name": {"type": "sting", "is_array": False}}}, False),
+                                           ({"test_audit_raw": {"name": {"type": "string", "is_array": False}}}, True)])
+def test_is_schema_types_valid(repo, schema, valid):
+    """
+    Given: A modeling rule with invalid schema attribute types
+    When: running is_schema_types_valid
+    Then: Validate that the modeling rule is invalid
+    """
+    pack = repo.create_pack('TestPack')
+    dummy_modeling_rule = pack.create_modeling_rule('MyRule', schema=schema)
+    structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
+    modeling_rule_validator = ModelingRuleValidator(structure_validator)
+    assert modeling_rule_validator.is_schema_types_valid() == valid
+
+
+def test_dataset_name_matches_in_xif_and_schema(repo):
+    """
+    Given: A modeling rule with mismatch between dataset name of the schema and xif files.
+    When: running dataset_name_matches_in_xif_and_schema.
+    Then: Validate that the modeling rule is invalid.
+    """
+    pack = repo.create_pack('TestPack')
+    dummy_modeling_rule = pack.create_modeling_rule('MyRule')
+    structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
+    modeling_rule_validator = ModelingRuleValidator(structure_validator)
+    assert not modeling_rule_validator.dataset_name_matches_in_xif_and_schema()
+
+
 def test_is_missing_testdata_file(repo):
     """
     Given: A modeling rule with missing testdata file

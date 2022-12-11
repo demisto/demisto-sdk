@@ -63,7 +63,6 @@ class ModelingRuleValidator(ContentEntityValidator):
             if self.does_testdata_file_exist():
                 self.is_testdata_formatted_correctly()
 
-
         return self._is_valid
 
     def is_valid_version(self):
@@ -175,26 +174,6 @@ class ModelingRuleValidator(ContentEntityValidator):
             self._is_valid = False
             return False
 
-    @error_codes("MR108")
-    def is_files_naming_correct(self):
-        """
-        Validates all file naming is as convention.
-        """
-        invalid_files = []
-        if not self.validate_xsiam_content_item_title(self.file_path):
-            invalid_files.append(self.file_path)
-        if self.schema_path and not self.validate_xsiam_content_item_title(self.schema_path):
-            invalid_files.append(self.schema_path)
-        if self.xif_path and not self.validate_xsiam_content_item_title(self.xif_path):
-            invalid_files.append(self.xif_path)
-        if invalid_files:
-            error_message, error_code = Errors.modeling_rules_files_naming_error(invalid_files)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self._is_valid = False
-                return False
-        return True
-
-
     def are_keys_empty_in_yml(self):
         """
         Check that the schema and rules keys are empty.
@@ -233,7 +212,7 @@ class ModelingRuleValidator(ContentEntityValidator):
             # The schema has _schema.json suffix and the testdata file has _testdata.json suffix
             # whereas the other content entity component files only has the .suffix
             splitter = '_' if (
-                file_name_std.endswith('_schema.json') or file_name_std.endswith('_testdata.json')
+                    file_name_std.endswith('_schema.json') or file_name_std.endswith('_testdata.json')
             ) else '.'
             base_name = file_name.rsplit(splitter, 1)[0]
 

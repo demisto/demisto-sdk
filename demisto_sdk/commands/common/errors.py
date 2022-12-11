@@ -488,7 +488,6 @@ ERROR_CODE = {
     "modeling_rule_testdata_not_formatted_correctly": {'code': "MR105", 'ui_applicable': False, 'related_field': ''},
     "modeling_rule_schema_types_invalid": {'code': "MR106", 'ui_applicable': False, 'related_field': ''},
     "modeling_rule_schema_xif_dataset_mismatch": {'code': "MR107", 'ui_applicable': False, 'related_field': ''},
-    "modeling_rules_files_naming_error": {'code': "MR108", 'ui_applicable': False, 'related_field': ''},
 
     # CR - Correlation Rules
     "correlation_rule_starts_with_hyphen": {'code': 'CR100', 'ui_applicable': False, 'related_field': ''},
@@ -2569,12 +2568,6 @@ class Errors:
     def modeling_rule_schema_types_invalid(invalid_types: list):
         return f"The following types in the schema file are invalid {','.join(invalid_types)}. " \
                f"Valid types are: string, int , float, datetime, boolean."
-
-    @staticmethod
-    @error_code_decorator
-    def modeling_rules_files_naming_error(invalid_files: list):
-        return f"The following modeling rules do not match the naming conventions: {','.join(invalid_files)}. " \
-               f"Files in the modeling rules directory must be titled exactly as the pack, e.g. `myPack.xif`."
 
     @staticmethod
     @error_code_decorator

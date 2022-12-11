@@ -3,9 +3,9 @@ import os
 from contextlib import redirect_stdout
 from copy import deepcopy
 from typing import Any, Dict, List, Optional
+from unittest.mock import mock_open, patch
 
 import pytest
-from unittest.mock import mock_open, patch
 
 from demisto_sdk.commands.common.constants import (ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS, FIRST_FETCH_PARAM,
                                                    INCIDENT_FETCH_REQUIRED_PARAMS, MAX_FETCH_PARAM, MarketplaceVersions)

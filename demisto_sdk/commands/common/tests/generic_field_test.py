@@ -1,6 +1,5 @@
 import copy
 from collections import namedtuple
-
 from unittest.mock import patch
 
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator

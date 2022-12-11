@@ -1,9 +1,9 @@
 import os
 import shutil
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
-from unittest.mock import patch
 
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_DIR, CONTENT_ENTITIES_DIRS,
                                                    DASHBOARDS_DIR, DELETED_JSON_FIELDS_BY_DEMISTO,

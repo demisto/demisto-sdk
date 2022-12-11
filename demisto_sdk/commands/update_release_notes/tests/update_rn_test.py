@@ -6,8 +6,8 @@ from collections import Counter
 from copy import deepcopy
 from pathlib import Path
 from typing import Dict, Optional
-
 from unittest import mock
+
 import pytest
 
 from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_TO_VERSION, FileType

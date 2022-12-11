@@ -3,12 +3,12 @@ import re
 import shutil
 from os.path import join
 from typing import Union
+from unittest.mock import patch
 from zipfile import ZipFile
 
 import pytest
 from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
-from unittest.mock import patch
 
 from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
 from demisto_sdk.commands.common.git_util import GitUtil

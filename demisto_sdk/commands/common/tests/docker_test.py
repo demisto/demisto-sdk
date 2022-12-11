@@ -1,6 +1,6 @@
 import os
-
 from unittest import mock
+
 import pytest
 
 from demisto_sdk.commands.common.errors import Errors

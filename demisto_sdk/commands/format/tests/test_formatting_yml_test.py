@@ -4,10 +4,10 @@ import sys
 import uuid
 from collections import OrderedDict
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 import click
 import pytest
-from unittest.mock import Mock, patch
 
 from demisto_sdk.commands.common.constants import (ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS,
                                                    GENERAL_DEFAULT_FROMVERSION, INCIDENT_FETCH_REQUIRED_PARAMS,

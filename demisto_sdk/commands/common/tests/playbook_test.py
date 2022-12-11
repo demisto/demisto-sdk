@@ -1,8 +1,8 @@
 import os.path
 from typing import Optional
+from unittest.mock import patch
 
 import pytest
-from unittest.mock import patch
 
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator

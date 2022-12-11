@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 from demisto_sdk.commands.common.constants import LISTS_DIR, PACKS_DIR
 from demisto_sdk.commands.common.handlers import JSON_Handler

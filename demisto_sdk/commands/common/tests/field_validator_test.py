@@ -1,8 +1,8 @@
 from distutils.version import LooseVersion
 from typing import List
+from unittest.mock import patch
 
 import pytest
-from unittest.mock import patch
 
 from demisto_sdk.commands.common.hook_validations.field_base_validator import FieldBaseValidator, GroupFieldTypes
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator

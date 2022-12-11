@@ -5,9 +5,9 @@ from io import StringIO
 from pathlib import Path
 from shutil import copyfile
 from typing import Any, List, Optional, Type, Union
+from unittest.mock import patch
 
 import pytest
-from unittest.mock import patch
 
 import demisto_sdk.commands.validate.validate_manager
 from demisto_sdk.commands.common import tools

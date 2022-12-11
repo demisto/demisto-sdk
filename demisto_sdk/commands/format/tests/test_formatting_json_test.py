@@ -1,9 +1,9 @@
 import os
 import shutil
 from typing import Optional
+from unittest.mock import patch
 
 import pytest
-from unittest.mock import patch
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler

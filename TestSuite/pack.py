@@ -234,7 +234,7 @@ class Pack:
             self,
             name: Optional[str] = None,
             yml: Optional[dict] = None,
-            code: str = '',
+            code: Optional[str] = None,
             readme: str = '',
             description: str = '',
             changelog: str = '',

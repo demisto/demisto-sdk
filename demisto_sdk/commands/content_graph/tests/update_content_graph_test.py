@@ -1,212 +1,39 @@
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pytest
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.content_graph_commands import create_content_graph, update_content_graph
+from demisto_sdk.commands.content_graph.content_graph_commands import create_content_graph, stop_content_graph, update_content_graph
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
     Neo4jContentGraphInterface as ContentGraphInterface
-from demisto_sdk.commands.content_graph.objects.classifier import Classifier
-from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
-from demisto_sdk.commands.content_graph.objects.script import Script
-from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
-from demisto_sdk.commands.content_graph.tests.test_tools import load_json
-from TestSuite.repo import Repo
+from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
+    find_model_for_id, mock_classifier, mock_integration, mock_pack, mock_playbook,
+    mock_relationship, mock_script, mock_test_playbook)
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 
-# Fixtures for mock content object models
+
+GIT_PATH = Path(git_path())
 
 
 @pytest.fixture(autouse=True)
-def setup(mocker, repo: Repo):
+def setup(mocker):
     """Auto-used fixture for setup before every test run"""
-    mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
-    mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
+    mocker.patch.object(neo4j_service, "REPO_PATH", GIT_PATH)
+    mocker.patch.object(ContentGraphInterface, "repo_path", GIT_PATH)
 
 
 @pytest.fixture
-def repository(mocker):
+def repository(mocker) -> ContentDTO:
     repository = ContentDTO(
         path=Path(),
         packs=[],
     )
-    mocker.patch(
-        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
-        return_value=repository,
-    )
-    return repository
-
-
-def mock_pack(name: str = "SamplePack"):
-    return Pack(
-        object_id=name,
-        content_type=ContentType.PACK,
-        node_id=f"{ContentType.PACK}:{name}",
-        path=Path("/dummypath"),
-        name=name,
-        marketplaces=[MarketplaceVersions.XSOAR],
-        description="",
-        created="",
-        updated="",
-        support="",
-        email="",
-        url="",
-        author="",
-        certification="",
-        hidden=False,
-        server_min_version="",
-        current_version="1.0.0",
-        tags=[],
-        categories=[],
-        useCases=[],
-        keywords=[],
-        contentItems=[],
-    )
-
-
-def mock_integration(name: str = "SampleIntegration"):
-    return Integration(
-        id=name,
-        content_type=ContentType.INTEGRATION,
-        node_id=f"{ContentType.INTEGRATION}:{name}",
-        path=Path("/dummypath"),
-        fromversion="5.0.0",
-        toversion="99.99.99",
-        display_name=name,
-        name=name,
-        marketplaces=[MarketplaceVersions.XSOAR],
-        description="",
-        deprecated=False,
-        type="python3",
-        docker_image="mock:docker",
-        category="blabla",
-        commands=[Command(name="test-command", description="")],
-    )
-
-
-def mock_script(name: str = "SampleScript"):
-    return Script(
-        id=name,
-        content_type=ContentType.SCRIPT,
-        node_id=f"{ContentType.SCRIPT}:{name}",
-        path=Path("/dummypath"),
-        fromversion="5.0.0",
-        description="",
-        display_name=name,
-        toversion="99.99.99",
-        name=name,
-        marketplaces=[MarketplaceVersions.XSOAR],
-        deprecated=False,
-        type="python3",
-        docker_image="mock:docker",
-        tags=[],
-        is_test=False,
-    )
-
-
-def mock_classifier(name: str = "SampleClassifier"):
-    return Classifier(
-        id=name,
-        content_type=ContentType.CLASSIFIER,
-        node_id=f"{ContentType.CLASSIFIER}:{name}",
-        path=Path("/dummypath"),
-        fromversion="5.0.0",
-        description="",
-        display_name=name,
-        toversion="99.99.99",
-        name=name,
-        marketplaces=[MarketplaceVersions.XSOAR],
-        deprecated=False,
-        type="python3",
-        docker_image="mock:docker",
-        tags=[],
-        is_test=False,
-    )
-
-
-def mock_playbook(name: str = "SamplePlaybook"):
-    return Playbook(
-        id=name,
-        content_type=ContentType.PLAYBOOK,
-        node_id=f"{ContentType.PLAYBOOK}:{name}",
-        path=Path("/dummypath"),
-        fromversion="5.0.0",
-        toversion="99.99.99",
-        display_name=name,
-        name=name,
-        marketplaces=[MarketplaceVersions.XSOAR],
-        description="",
-        deprecated=False,
-        is_test=False,
-    )
-
-
-def mock_test_playbook(name: str = "SampleTestPlaybook"):
-    return TestPlaybook(
-        id=name,
-        # content_type=ContentType.TEST_PLAYBOOK,
-        node_id=f"{ContentType.PLAYBOOK}:{name}",
-        path=Path("/dummypath"),
-        fromversion="5.0.0",
-        toversion="99.99.99",
-        display_name=name,
-        name=name,
-        marketplaces=[MarketplaceVersions.XSOAR],
-        description="",
-        deprecated=False,
-        is_test=True,
-    )
-
-
-# HELPERS
-
-
-def mock_relationship(
-    source: str,
-    source_type: ContentType,
-    target: str,
-    target_type: ContentType,
-    source_fromversion: str = "5.0.0",
-    source_marketplaces: List[str] = [MarketplaceVersions.XSOAR],
-    **kwargs,
-) -> Dict[str, Any]:
-    rel = {
-        "source_id": source,
-        "source_type": source_type,
-        "source_fromversion": source_fromversion,
-        "source_marketplaces": source_marketplaces,
-        "target": target,
-        "target_type": target_type,
-    }
-    rel.update(kwargs)
-    return rel
-
-
-def find_model_for_id(packs: List[Pack], source_id: str):
-    for pack in packs:
-        if pack.object_id == source_id:
-            return pack
-        for content_item in pack.content_items:
-            if content_item.object_id == source_id:
-                return content_item
-            if isinstance(content_item, Integration):
-                for command in content_item.commands:
-                    if command.name == source_id:
-                        return command
-    return None
-
-
-def create_mini_content(repository: ContentDTO):
-    """Created a content repo with three packs and relationships§
-
-    Args:
-        repository (ContentDTO): the content dto to populate
-    """
     relationships = {
         RelationshipType.IN_PACK: [
             mock_relationship(
@@ -311,113 +138,225 @@ def create_mini_content(repository: ContentDTO):
     pack3.content_items.playbook.append(mock_playbook())
     pack3.content_items.script.append(mock_script("SampleScript2"))
     repository.packs.extend([pack1, pack2, pack3])
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
+        return_value=repository,
+    )
+    return repository
+
+
+# HELPERS
+
+
+def compare_content_items(
+    content_items_list_a: List[ContentItem],
+    content_items_list_b: List[ContentItem]
+) -> None:
+    assert len(content_items_list_a) == len(content_items_list_b)
+    for ci_a, ci_b in zip(content_items_list_a, content_items_list_b):
+        assert ci_a.dict() == ci_b.dict()
+
+
+def compare_relationships(pack_a: Pack, pack_b: Pack) -> None:
+    for relationship_type, relationships in pack_a.relationships.items():
+        for relationship in relationships:
+            content_item_source = find_model_for_id([pack_b], relationship.get("source_id"))
+            content_item_target_id = relationship.get("target")
+            assert content_item_source
+            assert content_item_target_id
+            if relationship_type == RelationshipType.IN_PACK:
+                assert content_item_source.in_pack.object_id == content_item_target_id
+            if relationship_type == RelationshipType.IMPORTS:
+                assert content_item_source.imports[0].object_id == content_item_target_id
+            if relationship_type == RelationshipType.USES_BY_ID:
+                assert content_item_source.uses[0].content_item.object_id == content_item_target_id
+            if relationship_type == RelationshipType.TESTED_BY:
+                assert content_item_source.tested_by[0].object_id == content_item_target_id
+
+
+def compare(packs_list_a: List[Pack], packs_list_b: List[Pack]) -> None:
+    packs_list_a.sort(key=lambda pack: pack.object_id)
+    packs_list_b.sort(key=lambda pack: pack.object_id)
+    assert len(packs_list_a) == len(packs_list_b)
+    for pack_a, pack_b in zip(packs_list_a, packs_list_b):
+        assert pack_a.dict() == pack_b.dict()
+        compare_content_items(list(pack_a.content_items), list(pack_b.content_items))
+        compare_relationships(pack_a, pack_b)
+
+
+def _get_pack_by_id(repository: ContentDTO, pack_id: str) -> Optional[Pack]:
+    for pack in repository.packs:
+        if pack.object_id == pack_id:
+            return pack
+    return None
+
+
+def verify_dependencies_existence(
+    packs: List[Pack],
+    dependencies: List[Dict[str, Any]],
+    should_exist: bool,
+) -> None:
+    for dependency in dependencies:
+        for pack in packs:
+            if pack.object_id == dependency["source_id"]:
+                if should_exist:
+                    assert any(r.target.object_id == dependency["target"] for r in pack.depends_on)
+                else:
+                    assert all(r.target.object_id != dependency["target"] for r in pack.depends_on)
+                break
+        else:
+            assert False
+
+
+# Test cases (commit functions)
+
+
+def _testcase1__pack3_pack4__script2_uses_script4(
+    repository: ContentDTO,
+) -> Tuple[
+    List[Pack],
+    List[Dict[str, Any]],
+    List[Dict[str, Any]],
+]:
+    """Test case for the following updates:
+    * New pack: SamplePack4, with a script: SampleScript4
+    * New relationship: SampleScript2 (of existing pack SamplePack3) USES SampleScript4 (of new pack SamplePack4)
+    
+    Returns:
+        1. A list of the updated packs: pack3, pack4.
+        2. New mandatory dependency: pack3->pack4.
+    """
+    pack4_relationships = {
+        RelationshipType.IN_PACK: [
+            mock_relationship(
+                "SampleScript4",
+                ContentType.SCRIPT,
+                "SamplePack4",
+                ContentType.PACK,
+            )
+        ],
+    }
+    pack4 = mock_pack("SamplePack4")
+    pack4.relationships = pack4_relationships
+    pack4.content_items.script.append(mock_script("SampleScript4"))
+
+    pack3 = _get_pack_by_id(repository, "SamplePack3")
+    assert pack3
+    pack3.relationships.setdefault(RelationshipType.USES_BY_ID, []).append(
+        mock_relationship(
+            "SampleScript2",
+            ContentType.SCRIPT,
+            "SampleScript4",
+            ContentType.SCRIPT,
+        )
+    )
+
+    updated_packs = [pack3, pack4]
+    added_dependencies = [mock_relationship(
+        "SamplePack3",
+        ContentType.PACK,
+        "SamplePack4",
+        ContentType.PACK,
+    )]
+    return updated_packs, added_dependencies, []
+
+
+def _testcase2__pack3__remove_relationship(
+    repository: ContentDTO,
+) -> Tuple[
+    List[Pack],
+    List[Dict[str, Any]],
+    List[Dict[str, Any]],
+]:
+    """Test case for the following update:
+    * Remove relationship: TestApiModule (of pack SamplePack2) USES SampleScript2 (of pack SamplePack3)
+
+    Returns:
+        1. A list of the updated pack: pack2.
+        2. Removed mandatory dependency: pack2->pack3.
+    """
+    pack2 = _get_pack_by_id(repository, "SamplePack2")
+    assert pack2
+    uses_relationships = pack2.relationships.get(RelationshipType.USES_BY_ID, [])
+    for rel in uses_relationships:
+        if rel["source_id"] == "TestApiModule" and rel["target"] == "SampleScript2":
+            uses_relationships.remove(rel)
+            break
+
+    updated_packs = [pack2]
+    removed_dependencies = [mock_relationship(
+        "SamplePack2",
+        ContentType.PACK,
+        "SamplePack3",
+        ContentType.PACK,
+    )]
+    return updated_packs, [], removed_dependencies
 
 
 class TestUpdateContentGraph:
-    def _test_create_content_graph_end_to_end(self, repo: Repo, start_service: bool) -> Repo:
-        import demisto_sdk.commands.content_graph.objects.repository as repo_module
+    @pytest.mark.parametrize(
+        "commit_func, start_service, stop_service",
+        [
+            (_testcase1__pack3_pack4__script2_uses_script4, True, False),
+            (_testcase2__pack3__remove_relationship, False, True),
+        ]
+    )
+    def test_update_content_graph(
+        self,
+        repository: ContentDTO,
+        commit_func: Callable[
+            [ContentDTO],
+            Tuple[List[Pack], List[Dict[str, Any]], List[Dict[str, Any]]]
+        ],
+        start_service: bool,
+        stop_service: bool,
+    ):
+        """
+        Given:
+            - A ContentDTO model representing the repository state on master branch.
+            - A function representing a commit (an update of certain packs in the repository).
+              This function returns:
+              1. A list of the updated packs
+              2. A list of the expected added dependencies due to the update.
+              3. A list of the expected removed dependencies due to the update.
+        When:
+            - Running create_content_graph() on master.
+            - Pushing a commit with the pack updates.
+            - Running update_content_graph().
+        Then:
+            - Make sure the pack models from the interface are equal to the pack models from ContentDTO
+                before and after the update.
+            - Make sure the expected added dependencies actually don't exist before the update
+                and exist after the update.
+            - Make sure the expected removed dependencies actually exist before the update
+                and don't exist after the update.
 
-        repo_module.USE_FUTURE = False
-        pack = repo.create_pack("TestPack")
-        pack.pack_metadata.write_json(load_json("pack_metadata.json"))
-        integration = pack.create_integration()
-        integration.create_default_integration("TestIntegration", ["test-command1", "test-command2"])
-        script = pack.create_script()
-        api_module = pack.create_script()
-        script.create_default_script("SampleScript")
-        api_module.create_default_script("TestApiModule")
-
-        pack.create_classifier(name="SampleClassifier", content=load_json("classifier.json"))
-
+        """
         with ContentGraphInterface(start_service=start_service) as interface:
-            create_content_graph(interface, export=True)
-        return repo
-
-    def _test_update_content_graph_end_to_end(self, repo: Repo, start_service: bool, tmp_path: Path):
-        import demisto_sdk.commands.content_graph.objects.repository as repo_module
-
-        repo_module.USE_FUTURE = False
-        pack = repo.create_pack("TestPack2")
-        pack.pack_metadata.write_json(load_json("pack_metadata2.json"))
-        script = pack.create_script()
-        script.create_default_script("SampleScript2")
-        script.code.write("execute_command('SampleScript')")
-
-        with ContentGraphInterface(start_service=start_service) as interface:
-            update_content_graph(interface, packs_to_update=['TestPack2'])
-            packs = interface.search(marketplace=MarketplaceVersions.XSOAR, content_type=ContentType.PACK)
-            integrations = interface.search(
+            create_content_graph(interface, export=True, dependencies=True)
+            packs = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
-                content_type=ContentType.INTEGRATION,
+                content_type=ContentType.PACK,
+                all_level_dependencies=True,
             )
-            all_content_items = interface.search(marketplace=MarketplaceVersions.XSOAR)
-            content_cto = interface.marshal_graph(MarketplaceVersions.XSOAR)
-        assert len(packs) == 2
-        assert len(integrations) == 1
-        assert len(all_content_items) == 10
+            compare(repository.packs, packs)
 
-        # TestPack assertions (created before create_content_graph())
-        first_pack = packs[0] if packs[0].object_id == "TestPack" else packs[1]
-        # make sure that data from pack_metadata.json updated
-        assert first_pack.name == "HelloWorld"
-        assert first_pack.support == "community"
-        assert len(first_pack.content_items.integration) == 1
-        returned_integration = first_pack.content_items.integration[0]
-        assert returned_integration == integrations[0]
-        assert returned_integration.name == "TestIntegration"
-        assert {command.name for command in returned_integration.commands} == {
-            "test-command",
-            "test-command1",
-            "test-command2",
-        }
-        returned_scripts = {script.object_id for script in first_pack.content_items.script}
-        assert returned_scripts == {"SampleScript", "TestApiModule"}
+            updated_packs, added_dependencies, removed_dependencies = commit_func(repository)
+            verify_dependencies_existence(packs, added_dependencies, should_exist=False)
+            verify_dependencies_existence(packs, removed_dependencies, should_exist=True)
 
-        # TestPack2 assertions (created before update_content_graph())
-        second_pack = packs[0] if packs[0].object_id == "TestPack2" else packs[1]
-        assert second_pack.name == "HelloWorld2"
-        assert len(second_pack.content_items.script) == 1
-        second_pack_script = second_pack.content_items.script[0]
-        assert len(second_pack_script.uses) == 1
-        assert second_pack_script.uses[0].target.object_id == "SampleScript"
+            pack_ids_to_update = [pack.object_id for pack in updated_packs]
+            all_packs = [pack for pack in repository.packs if pack.object_id not in pack_ids_to_update] + updated_packs
+            repository.packs = updated_packs
 
-        content_cto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
-        assert Path.exists(tmp_path / "TestPack")
-        assert Path.exists(tmp_path / "TestPack" / "metadata.json")
-        assert Path.exists(tmp_path / "TestPack" / "Integrations" / "integration-integration_0.yml")
-        assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script0.yml")
-        assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script1.yml")
-        assert Path.exists(tmp_path / "TestPack2")
-
-    def test_update_content_graph_end_to_end_with_new_service(self, repo: Repo, tmp_path: Path):
-        """
-        Given:
-            - A repository with a pack TestPack, containing a script SampleScript.
-            - A new neo4j service.
-        When:
-            - Running create_content_graph() with a new service.
-            - Adding to the repository the pack TestPack2, containing a script that uses SampleScript.
-            - Running update_content_graph() with the same service.
-        Then:
-            - Make sure the service remains available by querying for all content items in the graph.
-            - Make sure TestPack content items are returned in the query response.
-            - Make sure TestPack2 content items and the USES relationship are returned in the query response.
-
-        """
-        repo = self._test_create_content_graph_end_to_end(repo, start_service=True)
-        self._test_update_content_graph_end_to_end(repo, start_service=False, tmp_path=tmp_path)
-
-    def test_update_content_graph_end_to_end_with_existing_service(self, repo: Repo, tmp_path: Path):
-        """
-        Given:
-            - A repository with a pack TestPack, containing a script SampleScript.
-            - An existing neo4j service.
-        When:
-            - Running update_content_graph() with the same service.
-        Then:
-            - Make sure the service remains available by querying for all content items in the graph.
-            - Make sure TestPack content items are returned in the query response.
-            - Make sure TestPack2 content items and the USES relationship are returned in the query response.
-
-        """
-        self._test_update_content_graph_end_to_end(repo, start_service=False, tmp_path=tmp_path)
+            update_content_graph(interface, packs_to_update=pack_ids_to_update, dependencies=True)
+            packs = interface.search(
+                marketplace=MarketplaceVersions.XSOAR,
+                content_type=ContentType.PACK,
+                all_level_dependencies=True,
+            )
+            compare(all_packs, packs)
+            verify_dependencies_existence(packs, added_dependencies, should_exist=True)
+            verify_dependencies_existence(packs, removed_dependencies, should_exist=False)
+        if stop_service:
+            stop_content_graph()

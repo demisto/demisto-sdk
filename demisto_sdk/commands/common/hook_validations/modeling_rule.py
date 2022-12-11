@@ -3,12 +3,12 @@ This module is designed to validate the correctness of generic definition entiti
 """
 import json
 import os
+import re
 from pathlib import Path
+from typing import List
 
 from packaging.version import Version
 from pydantic import ValidationError
-import re
-from typing import List
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import YAML_Handler
@@ -57,7 +57,6 @@ class ModelingRuleValidator(ContentEntityValidator):
         self.is_valid_rule_names()
         self.is_schema_types_valid()
         self.dataset_name_matches_in_xif_and_schema()
-        self.is_files_naming_correct()
         if self.does_version_require_testdata():
             # this condition also marks the rule as invalid if the testdata file is missing
             if self.does_testdata_file_exist():

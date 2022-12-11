@@ -3,7 +3,7 @@ name: "CodeQL"
 on:
   push:
     branches: [ "master"]
-  pull_request: 
+  pull_request:
   schedule:
     - cron: '27 11 * * 2'
 
@@ -30,7 +30,7 @@ jobs:
       uses: github/codeql-action/init@v2
       with:
         languages: ${{ matrix.language }}
-      
+
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2
       with:

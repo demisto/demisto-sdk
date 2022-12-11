@@ -52,7 +52,6 @@ https://xsoar.pan.dev/docs/integrations/unit-testing
 
 """
 
-import io
 from demisto_sdk.commands.common.handlers import JSON_Handler
 json = JSON_Handler()
 

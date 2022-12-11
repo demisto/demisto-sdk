@@ -2,7 +2,6 @@
 This module is designed to validate the existence and structure of content pack essential files in content.
 """
 import glob
-import io
 import os
 import re
 from datetime import datetime

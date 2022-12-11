@@ -3,7 +3,6 @@ import os
 import shutil
 import sqlite3
 from datetime import datetime
-from typing import Text
 
 import coverage
 import pytest

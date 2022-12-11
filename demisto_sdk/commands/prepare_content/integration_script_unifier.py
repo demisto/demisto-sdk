@@ -1,7 +1,6 @@
 import base64
 import copy
 import glob
-import io
 import os
 import re
 from pathlib import Path

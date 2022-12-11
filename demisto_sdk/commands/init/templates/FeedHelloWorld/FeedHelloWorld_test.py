@@ -56,7 +56,6 @@ https://xsoar.pan.dev/docs/integrations/unit-testing
 from FeedHelloWorld import (Client, fetch_indicators_command,
                             get_indicators_command)
 from CommonServerPython import string_to_table_header, tableToMarkdown
-import io
 from demisto_sdk.commands.common.handlers import JSON_Handler
 json = JSON_Handler()
 

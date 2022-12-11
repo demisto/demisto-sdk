@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where **validate** used absolute paths when getting the remote pack_metadata.json files in private repos.
 * Added validation of testdata files for **Modeling Rules**.
 * Added the ability to limit the number of CPU cores with `DEMISTO_SDK_MAX_CPU_CORES` envirment variable.
 * Fixed an issue where **update-release-notes** failed when changing only xif file in **Modeling Rules**.

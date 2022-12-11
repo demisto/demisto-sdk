@@ -736,7 +736,8 @@ class PackUniqueFilesValidator(BaseValidator):
                 click.secho("Running on master branch - skipping price change validation", fg="yellow")
             return None
         try:
-            old_meta_file_content = current_repo.git.show(f'{self.prev_ver}:{metadata_file_path}')
+            old_meta_file_content = get_remote_file(full_file_path=metadata_file_path, tag=self.prev_ver,
+                                                    return_content=True)
 
         except GitCommandError as e:
             if not self.suppress_print:

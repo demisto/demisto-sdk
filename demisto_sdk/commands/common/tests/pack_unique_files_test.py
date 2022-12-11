@@ -1,4 +1,5 @@
 import os
+from contextlib import nullcontext as does_not_raise
 
 import click
 import pytest
@@ -577,6 +578,56 @@ class TestPackUniqueFilesValidator:
         assert not res
         assert "Unable to find previous pack_metadata.json file - skipping price change validation" in \
                capsys.readouterr().out
+
+    def test_get_master_private_repo_meta_file_relative_path(self, mocker, repo):
+        """
+        Given:
+            - A repo which runs on non-master branch.
+            - A remote repo.
+
+        When:
+            - Running get_master_private_repo_meta_file.
+
+        Then:
+            - Ensure the remote metadata path is constructed correctly.
+        """
+        self.restart_validator()
+        pack_name = 'PackName'
+        pack = repo.create_pack(pack_name)
+        pack.pack_metadata.write_json(PACK_METADATA_PARTNER)
+        self.validator.prev_ver = 'prev_ver'
+
+        class MyRepo:
+            active_branch = 'not-master'
+
+            def remote(self):
+                return 'remote_path'
+
+            class gitClass:
+                remote_file_path = 'remote_path/prev_ver:Packs/PackName/pack_metadata.json'
+
+                def show(self, var):
+                    if var == self.remote_file_path:
+                        return json.dumps(PACK_METADATA_PARTNER)
+                    else:
+                        raise Exception(f'file path {var} does not match expected path {self.remote_file_path}')
+
+                def rev_parse(self, var):
+                    return repo.path
+
+                def remote(self):
+                    return 'remote_path'
+
+            git = gitClass()
+
+        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo', return_value=MyRepo())
+        mocker.patch('demisto_sdk.commands.common.tools.git.Repo', return_value=MyRepo())
+        mocker.patch('demisto_sdk.commands.common.git_util.Repo', return_value=MyRepo())
+
+        with ChangeCWD(repo.path):
+            with does_not_raise():
+                res = self.validator.get_master_private_repo_meta_file(str(pack.pack_metadata.path))
+                assert res == PACK_METADATA_PARTNER
 
     @pytest.mark.parametrize('text, result', README_INPUT_RESULTS_LIST)
     def test_validate_pack_readme_file_is_not_empty_partner(self, mocker, text, result):

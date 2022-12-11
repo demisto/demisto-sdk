@@ -2579,7 +2579,7 @@ class Errors:
     @error_code_decorator
     def xsiam_report_files_naming_error(invalid_files: list):
         return f"The following xsiam report files do not match the naming conventions: {','.join(invalid_files)}." \
-               f"XSIAM reports title must use the pack's name as a prefix, e.g. `myPack-report1.yml`"
+               f"XSIAM reports file name must use the pack's name as a prefix, e.g. `myPack-report1.yml`"
 
     @staticmethod
     @error_code_decorator
@@ -2597,7 +2597,7 @@ class Errors:
     @error_code_decorator
     def xsiam_dashboards_files_naming_error(invalid_files: list):
         return f"The following XSIAM dashboards do not match the naming conventions:: {','.join(invalid_files)}." \
-               f" Files titles in the XSIAM dashboards directory must use the pack's name as a prefix, " \
+               f" File names in the XSIAM dashboards directory must use the pack's name as a prefix, " \
                f"e.g. `myPack-report1.yml` "
 
     @staticmethod

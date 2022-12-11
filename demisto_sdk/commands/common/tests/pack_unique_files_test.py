@@ -536,16 +536,24 @@ class TestPackUniqueFilesValidator:
         class MyRepo:
             active_branch = 'not-master'
 
+            def remote(self):
+                return 'remote_path'
+
             class gitClass:
                 def show(self, var):
                     raise GitCommandError("A", "B")
 
+                def rev_parse(self, var):
+                    return repo.path
+
             git = gitClass()
 
-        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo', return_value=MyRepo)
-        res = self.validator.get_master_private_repo_meta_file(str(pack.pack_metadata.path))
-        assert not res
-        assert "Got an error while trying to connect to git" in capsys.readouterr().out
+        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo', return_value=MyRepo())
+        mocker.patch('demisto_sdk.commands.common.tools.git.Repo', return_value=MyRepo())
+        with ChangeCWD(repo.path):
+            res = self.validator.get_master_private_repo_meta_file(str(pack.pack_metadata.path))
+            assert not res
+            assert "Got an error while trying to connect to git" in capsys.readouterr().out
 
     def test_get_master_private_repo_meta_file_file_not_found(self, mocker, repo, capsys):
         """
@@ -567,17 +575,25 @@ class TestPackUniqueFilesValidator:
         class MyRepo:
             active_branch = 'not-master'
 
+            def remote(self):
+                return 'remote_path'
+
             class gitClass:
                 def show(self, var):
                     return None
 
+                def rev_parse(self, var):
+                    return repo.path
+
             git = gitClass()
 
-        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo', return_value=MyRepo)
+        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo', return_value=MyRepo())
+        mocker.patch('demisto_sdk.commands.common.tools.git.Repo', return_value=MyRepo())
         res = self.validator.get_master_private_repo_meta_file(str(pack.pack_metadata.path))
-        assert not res
-        assert "Unable to find previous pack_metadata.json file - skipping price change validation" in \
-               capsys.readouterr().out
+        with ChangeCWD(repo.path):
+            assert not res
+            assert "Unable to find previous pack_metadata.json file - skipping price change validation" in \
+                capsys.readouterr().out
 
     def test_get_master_private_repo_meta_file_relative_path(self, mocker, repo):
         """

@@ -33,8 +33,8 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json, get_remote_file, pack_name_to_path,
-                                               print_warning)
+from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json, get_local_remote_file, get_remote_file,
+                                               pack_name_to_path, print_warning)
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 
 json = JSON_Handler()
@@ -736,8 +736,10 @@ class PackUniqueFilesValidator(BaseValidator):
                 click.secho("Running on master branch - skipping price change validation", fg="yellow")
             return None
         try:
-            old_meta_file_content = get_remote_file(full_file_path=metadata_file_path, tag=self.prev_ver,
-                                                    return_content=True)
+            tag = self.prev_ver
+            tag = tag.replace('origin/', '').replace('demisto/', '')
+            old_meta_file_content = get_local_remote_file(full_file_path=metadata_file_path, tag=tag,
+                                                          return_content=True)
 
         except GitCommandError as e:
             if not self.suppress_print:

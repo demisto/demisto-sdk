@@ -333,7 +333,9 @@ def get_local_remote_file(
     git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
     file_content = repo_git_util.get_local_remote_file_content(git_path)
     if return_content:
-        return file_content.encode()
+        if file_content:
+            return file_content.encode()
+        return file_content
     return get_file_details(file_content, full_file_path)
 
 

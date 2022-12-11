@@ -2,10 +2,11 @@ name: "CodeQL"
 
 on:
   push:
-    branches: [ "master"]
+    branches: [ "master" ]
   pull_request:
+    branches: [ "master" ]
   schedule:
-    - cron: '27 11 * * 2'
+    - cron: "1 14 * * 4"
 
 jobs:
   analyze:
@@ -19,23 +20,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'javascript', 'python']
-        # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby' ]
+        language: [ python ]
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
-      with:
-        languages: ${{ matrix.language }}
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ${{ matrix.language }}
+          queries: +security-and-quality
 
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
-      with:
-        category: "/language:${{matrix.language}}"
-        # the next block has been copied from Content and is not necessarily relevant here.
-        # queries:
-        #   # exclude polluting-import as this is how we import from demistomock and CommonServerPython
-        #   "exclude: py/polluting-import"
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: "/language:${{ matrix.language }}"

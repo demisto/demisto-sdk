@@ -3,7 +3,7 @@ from typing import Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import (CORRELATION_RULES_DIR, DEFAULT_IMAGE_BASE64, MODELING_RULES_DIR,
                                                    PARSING_RULES_DIR, TRIGGER_DIR, XDRC_TEMPLATE_DIR,
-                                                   XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR)
+                                                   XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, XSIAM_LAYOUTS_DIR)
 from TestSuite.correlation_rule import CorrelationRule
 from TestSuite.file import File
 from TestSuite.integration import Integration
@@ -18,6 +18,7 @@ from TestSuite.text_based import TextBased
 from TestSuite.trigger import Trigger
 from TestSuite.wizard import Wizard
 from TestSuite.xdrc_template import XDRCTemplate
+from TestSuite.xsiam_layout import XSIAMLayout
 from TestSuite.xsiam_dashboard import XSIAMDashboard
 from TestSuite.xsiam_report import XSIAMReport
 from TestSuite.yml import YAML
@@ -77,6 +78,7 @@ class Pack:
         self.triggers: List[JSONBased] = list()
         self.wizards: List[Wizard] = list()
         self.xdrc_templates: List[XDRCTemplate] = list()
+        self.xsiam_layouts: List[XSIAMLayout] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
@@ -157,6 +159,9 @@ class Pack:
 
         self._xsiam_dashboards_path = self._pack_path / XSIAM_DASHBOARDS_DIR
         self._xsiam_dashboards_path.mkdir()
+
+        self._xsiam_layouts_path = self._pack_path / XSIAM_LAYOUTS_DIR
+        self._xsiam_layouts_path.mkdir()
 
         self._xsiam_reports_path = self._pack_path / XSIAM_REPORTS_DIR
         self._xsiam_reports_path.mkdir()
@@ -437,6 +442,15 @@ class Pack:
         layout = self._create_json_based(name, prefix, content, dir_path=self._layout_path)
         self.layouts.append(layout)
         return layout
+
+    def create_xsiam_layout(
+            self,
+            name,
+            content: dict = None
+    ) -> JSONBased:
+        xsiam_layout = self._create_json_based(name, prefix='', content=content, dir_path=self._xsiam_layouts_path)
+        self.layouts.append(xsiam_layout)
+        return xsiam_layout
 
     def create_layoutcontainer(
             self,

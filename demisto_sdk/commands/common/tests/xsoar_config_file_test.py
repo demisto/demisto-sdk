@@ -22,8 +22,7 @@ def test_schema_file_correct_path():
 class TestCreateSchemaValidationResultsTable:
     @staticmethod
     def errors_iterator(errors_list: List) -> Iterator[ValidationError]:
-        for error in errors_list:
-            yield error
+        yield from errors_list
 
     def test_create_schema_validation_results_table_no_errors(self):
         """

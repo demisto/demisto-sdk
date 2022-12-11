@@ -460,7 +460,7 @@ class TestPrintColor:
         tools.print_color('test', LOG_COLORS.GREEN)
 
         print_args = print.call_args[0][0]
-        assert print_args == u'{}{}{}'.format(LOG_COLORS.GREEN, 'test', LOG_COLORS.NATIVE)
+        assert print_args == '{}{}{}'.format(LOG_COLORS.GREEN, 'test', LOG_COLORS.NATIVE)
 
 
 class TestReleaseVersion:

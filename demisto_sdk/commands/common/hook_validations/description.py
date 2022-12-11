@@ -175,7 +175,7 @@ class DescriptionValidator(BaseValidator):
                 yml_or_file = 'in the yml file'
 
                 # find in which line the description begins in the yml
-                with open(self.file_path, 'r') as f:
+                with open(self.file_path) as f:
                     for line_n, line in enumerate(f.readlines()):
                         if 'detaileddescription:' in line:
                             yml_line_num = line_n + 1

@@ -78,7 +78,7 @@ class PlaybookValidator(ContentEntityValidator):
         Returns:
             bool. Whether the file id equals to its name
         """
-        return super(PlaybookValidator, self)._is_id_equals_name('playbook')
+        return super()._is_id_equals_name('playbook')
 
     def is_valid_version(self):  # type: () -> bool
         """Check whether the playbook version is equal to DEFAULT_VERSION (see base_validator class)
@@ -95,7 +95,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         """
         result: set = set()
-        with open(self.file_path, 'r') as f:
+        with open(self.file_path) as f:
             playbook_text = f.read()
         all_inputs_occurrences = re.findall(r"inputs\.[-\w ]+", playbook_text)
         for input in all_inputs_occurrences:

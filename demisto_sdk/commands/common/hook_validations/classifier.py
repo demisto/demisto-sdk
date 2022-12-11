@@ -58,7 +58,7 @@ class ClassifierValidator(ContentEntityValidator):
         Returns:
             bool. True if valid, and False otherwise.
         """
-        return super(ClassifierValidator, self)._is_id_equals_name('classifier')
+        return super()._is_id_equals_name('classifier')
 
     def is_valid_version(self):
         """Checks if version field is valid. uses default method.

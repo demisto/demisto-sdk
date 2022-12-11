@@ -1,5 +1,5 @@
 import pytest
-from mock import patch
+from unittest.mock import patch
 
 from demisto_sdk.commands.common.hook_validations.classifier import ClassifierValidator
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator

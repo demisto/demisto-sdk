@@ -149,7 +149,7 @@ class CoverageSummary:
             original_summary_path(str): The path to the original coverage.json file.
             min_summary_path(str): The path to the coverage-min.json
         """
-        with open(original_summary_path, 'r') as original_summary_file:
+        with open(original_summary_path) as original_summary_file:
             original_summary = json.load(original_summary_file)
 
         min_summary_files = {}
@@ -175,7 +175,7 @@ class CoverageSummary:
         json_path = os.path.join(self.cache_dir, 'coverage-min.json') if self.cache_dir else ''
         if self.use_cache and self.cache_dir:
             try:
-                with open(json_path, 'r') as coverage_summary_file:
+                with open(json_path) as coverage_summary_file:
                     full_coverage_summary = json.load(coverage_summary_file)
                 last_updated = datetime.strptime(full_coverage_summary['last_updated'], '%Y-%m-%dT%H:%M:%SZ')
                 next_update = last_updated + timedelta(days=1)

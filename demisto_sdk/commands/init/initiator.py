@@ -639,7 +639,7 @@ class Initiator:
         Args:
             name_to_change (str): The name of the former integration/script to replace in the import.
         """
-        with open(os.path.join(self.full_output_path, f"{self.dir_name}_test.py"), 'r') as fp:
+        with open(os.path.join(self.full_output_path, f"{self.dir_name}_test.py")) as fp:
             file_contents = fp.read()
 
         file_contents = file_contents.replace(f'.{name_to_change}', self.dir_name)

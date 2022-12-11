@@ -18,7 +18,7 @@ def create_whitelist_secrets_file(file_path, urls=None, ips=None, files=None, ge
         ips = []
     if generic_strings is None:
         generic_strings = []
-    with io.open(file_path, 'w') as f:
+    with open(file_path, 'w') as f:
         secrets_content = dict(
             files=files,
             iocs=dict(
@@ -145,7 +145,7 @@ class TestSecrets:
         file1_path = os.path.join(dir1_path, file_name)
         file2_path = os.path.join(dir2_path, file_name)
         for file_path in [file1_path, file2_path]:
-            with io.open(file_path, 'w') as f:
+            with open(file_path, 'w') as f:
                 f.write('''
 print('This is our dummy code')
 

@@ -26,7 +26,7 @@ PYTHON_FILE_PATH = os.path.join(TEST_DATA_DIR, 'HealthCheckAnalyzeLargeInvestiga
 
 
 def read_file(file_path):
-    with open(file_path, 'r') as file_obj:
+    with open(file_path) as file_obj:
         return json.load(file_obj)
 
 
@@ -148,7 +148,7 @@ class TestCoverageSummary:
             files = summary['files']
             assert bool(files)
             for file_name, percent in files.items():
-                assert isinstance(file_name, Text)
+                assert isinstance(file_name, str)
                 assert isinstance(percent, float)
 
         def test_url_and_validate_data(self):

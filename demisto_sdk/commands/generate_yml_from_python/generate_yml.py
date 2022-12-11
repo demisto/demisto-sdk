@@ -10,7 +10,7 @@ from types import FunctionType
 from typing import Any, AnyStr, Callable, List, Optional, Tuple, Union
 
 import click
-import mock  # type: ignore
+from unittest import mock
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import write_yml

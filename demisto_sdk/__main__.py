@@ -45,7 +45,7 @@ class PathsParamType(click.Path):
 
     def convert(self, value, param, ctx):
         if ',' not in value:
-            return super(PathsParamType, self).convert(value, param, ctx)
+            return super().convert(value, param, ctx)
 
         split_paths = value.split(',')
         # check the validity of each of the paths
@@ -1817,7 +1817,7 @@ def openapi_codegen(**kwargs):
     configuration = None
     if kwargs.get('config_file'):
         try:
-            with open(kwargs['config_file'], 'r') as config_file:
+            with open(kwargs['config_file']) as config_file:
                 configuration = json.load(config_file)
         except Exception as e:
             print_error(f'Failed to load configuration file: {e}')

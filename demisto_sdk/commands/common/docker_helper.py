@@ -162,7 +162,7 @@ class DockerBase:
 
 class MountableDocker(DockerBase):
     def __init__(self):
-        super(MountableDocker, self).__init__()
+        super().__init__()
         files = [
             Path('/etc/ssl/certs/ca-certificates.crt'),
             Path('/etc/pip.conf'),
@@ -198,10 +198,10 @@ class MountableDocker(DockerBase):
         """
         kwargs = kwargs or {}
         if files_to_push and mount_files:
-            return super(MountableDocker, self).create_container(image=image, command=command, environment=environment,
+            return super().create_container(image=image, command=command, environment=environment,
                                                                  mounts=self.get_mounts(files_to_push), files_to_push=None, **kwargs)
         else:
-            return super(MountableDocker, self).create_container(image=image, command=command, environment=environment,
+            return super().create_container(image=image, command=command, environment=environment,
                                                                  files_to_push=files_to_push, **kwargs)
 
 

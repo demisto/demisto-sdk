@@ -110,7 +110,7 @@ class BaseUpdate:
 
     def remove_unnecessary_keys(self):
         """Removes keys that are in file but not in schema of file type"""
-        with open(self.schema_path, 'r') as file_obj:
+        with open(self.schema_path) as file_obj:
             schema = yaml.load(file_obj)
             extended_schema = self.recursive_extend_schema(schema, schema)
         if self.verbose:
@@ -286,7 +286,7 @@ class BaseUpdate:
         Returns:
             List of keys that should be deleted in file
         """
-        with open(self.schema_path, 'r') as file_obj:
+        with open(self.schema_path) as file_obj:
             a = yaml.load(file_obj)
         schema_fields = a.get('mapping').keys()
         arguments_to_remove = set(self.data.keys()) - set(schema_fields)

@@ -65,7 +65,7 @@ URL = "https://openphish.com/feed.txt"
 
 
 def util_load_json(path):
-    with io.open(path, mode='r', encoding='utf-8') as f:
+    with open(path, encoding='utf-8') as f:
         return json.loads(f.read())
 
 
@@ -80,7 +80,7 @@ def test_build_iterator(requests_mock):
         - Returns a list of the indicators parsed from the API's response
 
     """
-    with open('test_data/FeedHelloWorld_mock.txt', 'r') as file:
+    with open('test_data/FeedHelloWorld_mock.txt') as file:
         response = file.read()
     requests_mock.get(URL, text=response)
     expected_url = 'https://url1.com'

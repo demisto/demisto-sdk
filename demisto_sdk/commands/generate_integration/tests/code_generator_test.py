@@ -82,14 +82,14 @@ class TestCodeGenerator:
         mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.6.12176')
 
         autogen_config = None
-        with open(self.autogen_config_path, mode='r') as f:
+        with open(self.autogen_config_path) as f:
             config_dict = json.load(f)
             config_dict['fix_code'] = True
             autogen_config = IntegrationGeneratorConfig(**config_dict)
 
         code = autogen_config.generate_integration_python_code()
 
-        with open(os.path.join(self.test_integration_dir, 'VirusTotalTest.py'), mode='r') as f:
+        with open(os.path.join(self.test_integration_dir, 'VirusTotalTest.py')) as f:
             expected_code = f.read()
 
             assert expected_code == code
@@ -118,13 +118,13 @@ class TestCodeGenerator:
 
         mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.6.12176')
 
-        with open(self.autogen_config_path, mode='r') as f:
+        with open(self.autogen_config_path) as f:
             config_dict = json.load(f)
             config_dict['fix_code'] = True
             autogen_config = IntegrationGeneratorConfig(**config_dict)
 
         yaml_obj = autogen_config.generate_integration_yml().to_dict()
-        with open(os.path.join(self.test_integration_dir, 'VirusTotalTest.yml'), mode='r') as f:
+        with open(os.path.join(self.test_integration_dir, 'VirusTotalTest.yml')) as f:
             expected_yml = yaml.load(f)
 
         assert expected_yml == yaml_obj
@@ -146,7 +146,7 @@ class TestCodeGenerator:
 
         mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.6.12176')
 
-        with open(self.autogen_config_path, mode='r') as f:
+        with open(self.autogen_config_path) as f:
             config_dict = json.load(f)
             config_dict['fix_code'] = True
             autogen_config = IntegrationGeneratorConfig(**config_dict)
@@ -176,7 +176,7 @@ class TestCodeGenerator:
         mocker.patch.object(DockerImageValidator, 'get_docker_image_latest_tag_request', return_value='3.8.6.12176')
 
         autogen_config = None
-        with open(self.autogen_config_path, mode='r') as f:
+        with open(self.autogen_config_path) as f:
             config_dict = json.load(f)
             config_dict['fix_code'] = True
             autogen_config = IntegrationGeneratorConfig(**config_dict)
@@ -188,7 +188,7 @@ class TestCodeGenerator:
         )
 
         assert os.path.isfile(Path(tmpdir, 'integration-VirusTotalTest.yml'))
-        with open(Path(tmpdir, 'integration-VirusTotalTest.yml'), mode='r') as f:
+        with open(Path(tmpdir, 'integration-VirusTotalTest.yml')) as f:
             actual_unified_yml = f.read()
             assert actual_unified_yml.find('class Client(BaseClient):')
             assert actual_unified_yml.find('- display: Trust any certificate')
@@ -207,7 +207,7 @@ class TestCodeGenerator:
         - ensure in the code we return response.get('scans')
         - ensure in yml, we generate outputs for scans object, and not to the whole response
         """
-        with open(os.path.join(self.test_files_path, 'VirusTotal-autogen-config.json'), mode='r') as f:
+        with open(os.path.join(self.test_files_path, 'VirusTotal-autogen-config.json')) as f:
             config_dict = json.load(f)
 
         config = IntegrationGeneratorConfig(**config_dict)

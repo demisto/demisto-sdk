@@ -570,7 +570,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def file_name_include_spaces_error(file_name):
-        return "Please remove spaces from the file's name: '{}'.".format(file_name)
+        return f"Please remove spaces from the file's name: '{file_name}'."
 
     @staticmethod
     @error_code_decorator
@@ -647,27 +647,27 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def wrong_display_name(param_name, param_display):
-        return 'The display name of the {} parameter should be \'{}\''.format(param_name, param_display)
+        return f'The display name of the {param_name} parameter should be \'{param_display}\''
 
     @staticmethod
     @error_code_decorator
     def wrong_default_parameter_not_empty(param_name, default_value):
-        return 'The default value of the {} parameter should be {}'.format(param_name, default_value)
+        return f'The default value of the {param_name} parameter should be {default_value}'
 
     @staticmethod
     @error_code_decorator
     def no_default_value_in_parameter(param_name):
-        return 'The {} parameter should have a default value'.format(param_name)
+        return f'The {param_name} parameter should have a default value'
 
     @staticmethod
     @error_code_decorator
     def wrong_required_value(param_name):
-        return 'The required field of the {} parameter should be False'.format(param_name)
+        return f'The required field of the {param_name} parameter should be False'
 
     @staticmethod
     @error_code_decorator
     def wrong_required_type(param_name):
-        return 'The type field of the {} parameter should be 8'.format(param_name)
+        return f'The type field of the {param_name} parameter should be 8'
 
     @staticmethod
     @error_code_decorator
@@ -680,7 +680,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def fromlicense_in_parameters(param_name):
-        return 'The "fromlicense" field of the {} parameter is not allowed for contributors'.format(param_name)
+        return f'The "fromlicense" field of the {param_name} parameter is not allowed for contributors'
 
     @staticmethod
     @error_code_decorator
@@ -750,9 +750,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def duplicate_arg_in_file(arg, command_name=None):
-        err_msg = "The argument '{}' is duplicated".format(arg)
+        err_msg = f"The argument '{arg}' is duplicated"
         if command_name:
-            err_msg += " in '{}'.".format(command_name)
+            err_msg += f" in '{command_name}'."
         err_msg += ", please remove one of its appearances."
         return err_msg
 
@@ -770,12 +770,12 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def added_required_fields(field):
-        return "You've added required, the field is '{}'".format(field)
+        return f"You've added required, the field is '{field}'"
 
     @staticmethod
     @error_code_decorator
     def removed_integration_parameters(field):
-        return "You've removed integration parameters, the removed parameters are '{}'".format(field)
+        return f"You've removed integration parameters, the removed parameters are '{field}'"
 
     @staticmethod
     @error_code_decorator
@@ -807,7 +807,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def empty_display_configuration(field_name):
-        return "No display details were entered for the field {}".format(field_name)
+        return f"No display details were entered for the field {field_name}"
 
     @staticmethod
     @error_code_decorator
@@ -1027,7 +1027,7 @@ class Errors:
     @classmethod
     @error_code_decorator
     def breaking_backwards_subtype(cls):
-        return "{}, You've changed the subtype, please undo.".format(cls.BACKWARDS)
+        return f"{cls.BACKWARDS}, You've changed the subtype, please undo."
 
     @classmethod
     @error_code_decorator
@@ -1283,7 +1283,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def missing_release_notes(rn_path):
-        return 'Missing release notes, Please add it under {}'.format(rn_path)
+        return f'Missing release notes, Please add it under {rn_path}'
 
     @staticmethod
     @error_code_decorator
@@ -1947,7 +1947,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def wrong_version_reputations(object_id, version):
-        return "Reputation object with id {} must have version {}".format(object_id, version)
+        return f"Reputation object with id {object_id} must have version {version}"
 
     @staticmethod
     @error_code_decorator
@@ -1994,7 +1994,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def wrong_file_extension(file_extension, accepted_extensions):
-        return "File extension {} is not valid. accepted {}".format(file_extension, accepted_extensions)
+        return f"File extension {file_extension} is not valid. accepted {accepted_extensions}"
 
     @staticmethod
     @error_code_decorator
@@ -2290,7 +2290,7 @@ class Errors:
 
     @staticmethod
     def wrong_filename(file_type):
-        return 'This is not a valid {} filename.'.format(file_type)
+        return f'This is not a valid {file_type} filename.'
 
     @staticmethod
     def wrong_path():
@@ -2303,7 +2303,7 @@ class Errors:
 
     @classmethod
     def breaking_backwards_no_old_script(cls, e):
-        return "{}\n{}, Could not find the old file.".format(cls.BACKWARDS, str(e))
+        return f"{cls.BACKWARDS}\n{str(e)}, Could not find the old file."
 
     @staticmethod
     def id_might_changed():
@@ -2328,7 +2328,7 @@ class Errors:
 
     @staticmethod
     def no_yml_file(file_path):
-        return "No yml files were found in {} directory.".format(file_path)
+        return f"No yml files were found in {file_path} directory."
 
     @staticmethod
     @error_code_decorator

@@ -171,9 +171,9 @@ class PackUniqueFilesValidator(BaseValidator):
     def _read_file_content(self, file_name):
         """Open & Read a file object's content throw exception if can't"""
         try:
-            with io.open(self._get_pack_file_path(file_name), mode="r", encoding="utf-8") as file:
+            with open(self._get_pack_file_path(file_name), encoding="utf-8") as file:
                 return file.read()
-        except IOError:
+        except OSError:
             if not self._add_error(Errors.cant_open_pack_file(file_name), file_name):
                 return "No-Text-Required"
         except ValueError:

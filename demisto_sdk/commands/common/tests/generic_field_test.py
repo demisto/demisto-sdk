@@ -1,7 +1,7 @@
 import copy
 from collections import namedtuple
 
-from mock import patch
+from unittest.mock import patch
 
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import GENERIC_FIELD

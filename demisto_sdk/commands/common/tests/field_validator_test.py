@@ -2,7 +2,7 @@ from distutils.version import LooseVersion
 from typing import List
 
 import pytest
-from mock import patch
+from unittest.mock import patch
 
 from demisto_sdk.commands.common.hook_validations.field_base_validator import FieldBaseValidator, GroupFieldTypes
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
@@ -80,7 +80,7 @@ class TestFieldValidator:
                 validator.is_valid_name()
                 sys.stdout = old_stdout
 
-            with open('file', 'r') as temp_out:
+            with open('file') as temp_out:
                 output = temp_out.read()
                 assert ('IF100' in str(output)) is answer
             # remove the temp file

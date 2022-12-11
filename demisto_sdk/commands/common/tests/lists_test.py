@@ -1,5 +1,5 @@
 import pytest
-from mock import patch
+from unittest.mock import patch
 
 from demisto_sdk.commands.common.constants import LISTS_DIR, PACKS_DIR
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -24,7 +24,7 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.is_valid = True
         structure.scheme_name = 'list'
         structure.file_path = file_path
-        file = open(file_path, "r")
+        file = open(file_path)
         structure.current_file = json.loads(file.read())
         file.close()
         structure.old_file = old_file

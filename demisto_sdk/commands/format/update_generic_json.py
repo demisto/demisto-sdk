@@ -90,7 +90,7 @@ class BaseUpdateJSON(BaseUpdate):
 
     def remove_null_fields(self):
         """Remove empty fields from file root."""
-        with open(self.schema_path, 'r') as file_obj:
+        with open(self.schema_path) as file_obj:
             schema_data = yaml.load(file_obj)
         schema_fields = schema_data.get('mapping').keys()
         for field in schema_fields:

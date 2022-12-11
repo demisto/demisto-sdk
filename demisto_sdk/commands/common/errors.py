@@ -27,6 +27,7 @@ ALLOWED_IGNORE_ERRORS = [
     'SC100', 'SC101', 'SC105', 'SC106',
     'IM111',
     'RN112',
+    'MR104', 'MR105',
 ]
 
 # predefined errors to be ignored in partner/community supported packs even if they do not appear in .pack-ignore
@@ -341,8 +342,7 @@ ERROR_CODE = {
     "incorrect_value_references": {'code': "PB121", 'ui_applicable': False, 'related_field': 'taskid'},
     "playbook_unhandled_task_branches": {'code': "PB122", 'ui_applicable': True, 'related_field': 'conditions'},
     "playbook_unhandled_reply_options": {'code': "PB123", 'ui_applicable': True, 'related_field': 'conditions'},
-    "playbook_unhandled_script_condition_branches": {'code': "PB124", 'ui_applicable': True,
-                                                     'related_field': 'conditions'},
+    "playbook_unhandled_script_condition_branches": {'code': "PB124", 'ui_applicable': True, 'related_field': 'conditions'},
     "playbook_only_default_next": {'code': "PB125", 'ui_applicable': True, 'related_field': 'conditions'},
     "playbook_only_default_reply_option": {'code': "PB126", 'ui_applicable': True, 'related_field': 'message'},
 
@@ -484,9 +484,11 @@ ERROR_CODE = {
     "modeling_rule_keys_not_empty": {'code': "MR101", 'ui_applicable': False, 'related_field': ''},
     "modeling_rule_keys_are_missing": {'code': "MR102", 'ui_applicable': False, 'related_field': ''},
     "invalid_rule_name": {'code': "MR103", 'ui_applicable': False, 'related_field': ''},
-    "modeling_rule_schema_types_invalid": {'code': "MR104", 'ui_applicable': False, 'related_field': ''},
-    "modeling_rule_schema_xif_dataset_mismatch": {'code': "MR105", 'ui_applicable': False, 'related_field': ''},
-    "modeling_rules_files_naming_error": {'code': "MR106", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_missing_testdata_file": {'code': "MR104", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_testdata_not_formatted_correctly": {'code': "MR105", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_schema_types_invalid": {'code': "MR106", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_schema_xif_dataset_mismatch": {'code': "MR107", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rules_files_naming_error": {'code': "MR108", 'ui_applicable': False, 'related_field': ''},
 
     # CR - Correlation Rules
     "correlation_rule_starts_with_hyphen": {'code': 'CR100', 'ui_applicable': False, 'related_field': ''},
@@ -1459,7 +1461,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def content_entity_version_not_match_playbook_version(
-            main_playbook: str, entities_names_and_version: str, main_playbook_version: str, content_sub_type: str
+        main_playbook: str, entities_names_and_version: str, main_playbook_version: str, content_sub_type: str
     ):
         return f"Playbook {main_playbook} with 'fromversion' {main_playbook_version} uses the following" \
                f" {content_sub_type} with an invalid 'fromversion': [{entities_names_and_version}]. " \
@@ -2253,8 +2255,8 @@ class Errors:
     @error_code_decorator
     def incorrect_value_references(task_key, value, task_name, section_name):
         return f"On task: '{task_name}' with ID: '{task_key}', an input with the value: '{value}' was passed as string, rather than as " \
-               f"a reference in the '{section_name}' section. Change the reference to 'From previous tasks' from 'As value'" \
-               " , or change the value to ${" + value + "}."
+            f"a reference in the '{section_name}' section. Change the reference to 'From previous tasks' from 'As value'" \
+            " , or change the value to ${" + value + "}."
 
     @staticmethod
     @error_code_decorator
@@ -2616,6 +2618,21 @@ class Errors:
     def invalid_rule_name(invalid_files):
         return f"The following rule file name is invalid {invalid_files} - make sure that the rule name is " \
                f"the same as the folder containing it."
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_missing_testdata_file(modeling_rule_dir: Path, minimum_from_version: str, from_version: str):
+        test_data_file = modeling_rule_dir / f'{modeling_rule_dir.name}_testdata.json'
+        return f'The modeling rule {modeling_rule_dir} is missing a testdata file at {test_data_file}. The modeling ' \
+               f'rule has a fromversion of {from_version} and modeling rules supporting fromversion ' \
+               f'{minimum_from_version} and upwards are required to provide test data for modeling rule testing. ' \
+               'Please add a testdata file for this rule. See the "demisto-sdk modeling-rules init-test-data" ' \
+               'command for more information on creating a test data file for modeling rules.'
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_testdata_not_formatted_correctly(error_message: str, test_data_file: Path):
+        return f'The modeling rule testdata file at {test_data_file} is not formatted correctly. {error_message}'
 
     @staticmethod
     @error_code_decorator

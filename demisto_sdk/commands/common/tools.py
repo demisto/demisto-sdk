@@ -1348,6 +1348,8 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.XDRC_TEMPLATE
         elif MODELING_RULES_DIR in path.parts and 'testdata' in path.stem.casefold():
             return FileType.MODELING_RULE_TEST_DATA
+        elif MODELING_RULES_DIR in path.parts and path.stem.casefold().endswith('_schema'):
+            return FileType.MODELING_RULE_SCHEMA
 
     elif path.name.endswith('_image.png'):
         if path.name.endswith('Author_image.png'):
@@ -1478,7 +1480,7 @@ def find_type(
             return FileType.CORRELATION_RULE
 
     if file_type == 'json' or path.lower().endswith('.json'):
-        if path.lower().endswith('_schema.json'):
+        if path.lower().endswith('_schema.json') and MODELING_RULES_DIR in Path(path).parts:
             return FileType.MODELING_RULE_SCHEMA
 
         if 'widgetType' in _dict:
@@ -2386,12 +2388,12 @@ def get_release_note_entries(version='') -> list:
                                              ).decode('utf-8').split('\n')
 
     if not version or 'dev' in version:
-        version = 'Changelog'
+        version = 'Unreleased'
 
-    if f'# {version}' not in changelog_file_content:
+    if f'## {version}' not in changelog_file_content:
         return []
 
-    result = changelog_file_content[changelog_file_content.index(f'# {version}') + 1:]
+    result = changelog_file_content[changelog_file_content.index(f'## {version}') + 1:]
     result = result[:result.index('')]
 
     return result
@@ -2762,24 +2764,23 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
     return detailed_commands, scripts_and_pbs
 
 
-def alternate_item_fields(content_item):
+def alternate_item_fields(content_item: dict):
     """
     Go over all of the given content item fields and if there is a field with an alternative name, which is marked
     by '_x2', use that value as the value of the original field (the corresponding one without the '_x2' suffix).
     Args:
-        content_item: content item object
+        content_item: content item data
 
     """
-    current_dict = content_item.to_dict() if not isinstance(content_item, dict) else content_item
-    copy_dict = current_dict.copy()  # for modifying dict while iterating
+    copy_dict = content_item.copy()  # for modifying dict while iterating
     for field, value in copy_dict.items():
-        if field.endswith('_x2'):
-            current_dict[field[:-3]] = value
-            current_dict.pop(field)
-        elif isinstance(current_dict[field], dict):
-            alternate_item_fields(current_dict[field])
-        elif isinstance(current_dict[field], list):
-            for item in current_dict[field]:
+        if field.lower().endswith('_x2'):
+            content_item[field[:-3]] = value
+            content_item.pop(field)
+        elif isinstance(content_item[field], dict):
+            alternate_item_fields(content_item[field])
+        elif isinstance(content_item[field], list):
+            for item in content_item[field]:
                 if isinstance(item, dict):
                     alternate_item_fields(item)
 

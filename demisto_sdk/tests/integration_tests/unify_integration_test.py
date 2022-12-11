@@ -103,6 +103,7 @@ class TestParsingRuleUnifier:
         pack = repo.create_pack()
         pack.create_parsing_rule(
             yml={
+                'name': rule_id,
                 'id': rule_id,
                 'rules': '',
                 'samples': ''

@@ -11,6 +11,7 @@ from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.table import Table
 from rich.theme import Theme
+from typer.main import get_command_from_info
 
 from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (ModelingRule,
                                                                                                   SingleModelingRule)
@@ -332,11 +333,33 @@ def validate_modeling_rule(
             generate = typer.confirm(f'Would you like to generate a test data file for {mrule_dir}?')
             if generate:
                 logger.info('[cyan underline]Generate Test Data File[/cyan underline]', extra={'markup': True})
-                init_td = app.command()(init_test_data.init_test_data)
                 events_count = typer.prompt(
                     'For how many events would you like to generate templates?', type=int, default=1, show_default=True
                 )
-                init_td([mrule_dir], events_count)
+
+                from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_td_app
+
+                if not init_td_app.registered_commands:
+                    err = (
+                        '[red]Failed to load the "init-test-data" typer application to interactively create a '
+                        'testdata file.[/red]'
+                    )
+                    logger.error(err, extra={'markup': True})
+                    raise typer.Exit(1)
+
+                # the init-test-data typer application should only have the one command
+                init_td_cmd_info = init_td_app.registered_commands[0]
+
+                init_td_cmd = get_command_from_info(
+                    init_td_cmd_info,
+                    pretty_exceptions_short=app.pretty_exceptions_short,
+                    rich_markup_mode=app.rich_markup_mode
+                )
+                init_td_cmd_ctx = init_td_cmd.make_context(
+                    init_td_cmd.name, [mrule_dir.as_posix(), f'--count={events_count}'], parent=ctx
+                )
+                init_td_cmd.invoke(init_td_cmd_ctx)
+
                 if mr_entity.testdata_path:
                     logger.info(
                         f'[green]Test data file generated for {mrule_dir}[/green]',
@@ -540,6 +563,7 @@ def test_modeling_rule(
     Test a modeling rule against an XSIAM tenant
     """
     setup_rich_logging(verbosity, quiet, log_path, log_file_name)
+
     # override XsiamApiClient logger
     xsiam_logger = logging.getLogger(xsiam_client.__name__)
     set_console_stream_handler(xsiam_logger)

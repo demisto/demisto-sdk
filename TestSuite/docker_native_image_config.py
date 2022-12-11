@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import Dict, Optional
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.constants import NATIVE_IMAGE_FILE_NAME
+from demisto_sdk.commands.common.handlers import JSON_Handler
 
 json = JSON_Handler()
 

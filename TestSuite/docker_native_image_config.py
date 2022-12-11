@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.constants import NATIVE_IMAGE_FILE_NAME
 
 json = JSON_Handler()
 
@@ -10,8 +11,7 @@ class DockerNativeImageConfiguration:
 
     def __init__(self, tmpdir: Path):
         self.tmpdir = tmpdir
-        file_name = 'docker_native_image_config.json'
-        self._native_image_config_path = tmpdir / file_name
+        self._native_image_config_path = tmpdir / NATIVE_IMAGE_FILE_NAME
         self.path = str(self._native_image_config_path)
 
     def write_native_image_config(self, data: Optional[Dict] = None):

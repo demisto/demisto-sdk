@@ -271,4 +271,4 @@ DIR_LIST = [
 ]
 
 
-NATIVE_IMAGE_TEST_CONFIG_PATH = f'{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/docker_native_image_config.json'
+NATIVE_IMAGE_TEST_CONFIG_PATH = f'{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/{constants.NATIVE_IMAGE_FILE_NAME}'

@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import extract_docker_image_from_text, get_dict_from_file
+from demisto_sdk.commands.common.constants import NATIVE_IMAGE_FILE_NAME
 
 json = JSON_Handler()
 logger = logging.getLogger('demisto-sdk')
@@ -28,7 +29,7 @@ class NativeImageConfig(BaseModel):
 
 def load_native_image_config(native_image_config_file_path: Optional[str] = None) -> Dict:
     if not native_image_config_file_path:
-        native_image_config_file_path = 'Tests/docker_native_image_config.json'
+        native_image_config_file_path = f'Tests/{NATIVE_IMAGE_FILE_NAME}'
 
     native_image_config_content, _ = get_dict_from_file(native_image_config_file_path)
     return native_image_config_content

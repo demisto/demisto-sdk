@@ -16,6 +16,7 @@ classifiers=[
 ]
 exclude = ["TestSuite/**", "*/tests/*", "tests"]
 
+
 [tool.poetry.scripts]
 demisto-sdk = "demisto_sdk.__main__:main"
 

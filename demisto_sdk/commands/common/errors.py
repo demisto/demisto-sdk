@@ -2572,37 +2572,38 @@ class Errors:
     @error_code_decorator
     def modeling_rules_files_naming_error(invalid_files: list):
         return f"The following modeling rules do not match the naming conventions: {','.join(invalid_files)}. " \
-               f"Files in the modeling rules directory must be titled as the pack."
+               f"Files in the modeling rules directory must be titled exactly as the pack, e.g. `myPack.xif`."
 
     @staticmethod
     @error_code_decorator
     def correlation_rules_files_naming_error(invalid_files: list):
         return f"The following correlation rules files do not match the naming conventions: {','.join(invalid_files)}." \
-               f" Files in the modeling rules directory must start with the title of pack."
+               f" Files in the modeling rules directory must use the pack's name as a prefix, e.g. `myPack-report1.yml`"
 
     @staticmethod
     @error_code_decorator
     def xsiam_report_files_naming_error(invalid_files: list):
         return f"The following xsiam report files do not match the naming conventions: {','.join(invalid_files)}." \
-               f"XSIAM reports title must start with the title of pack."
+               f"XSIAM reports title must use the pack's name as a prefix, e.g. `myPack-report1.yml`"
 
     @staticmethod
     @error_code_decorator
     def parsing_rules_files_naming_error(invalid_files: list):
         return f"The following parsing rules files do not match the naming conventions: {','.join(invalid_files)}." \
-               f" Files in the parsing rules directory must be titled as the pack."
+               f" Files in the parsing rules directory must be titled exactly as the pack, e.g. `myPack.yml`."
 
     @staticmethod
     @error_code_decorator
     def xdrc_templates_files_naming_error(invalid_files: list):
         return f"The following xdrc templates do not match the naming conventions:: {','.join(invalid_files)}." \
-               f" Files in the xdrc templates directory must be titled as the pack."
+               f" Files in the xdrc templates directory must be titled exactly as the pack, e.g. `myPack.yml`."
 
     @staticmethod
     @error_code_decorator
     def xsiam_dashboards_files_naming_error(invalid_files: list):
         return f"The following XSIAM dashboards do not match the naming conventions:: {','.join(invalid_files)}." \
-               f" Files titles in the XSIAM dashboards directory must be start with the pack title."
+               f" Files titles in the XSIAM dashboards directory must use the pack's name as a prefix, " \
+               f"e.g. `myPack-report1.yml` "
 
     @staticmethod
     @error_code_decorator

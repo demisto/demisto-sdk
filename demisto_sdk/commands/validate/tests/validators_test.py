@@ -35,7 +35,7 @@ from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
+from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST, IGNORED_PNG,
                                               INCIDENT_FIELD_TARGET, INCIDENT_TYPE_TARGET, INDICATOR_TYPE_TARGET,
@@ -52,6 +52,7 @@ from demisto_sdk.tests.constants_test import (CONF_JSON_MOCK_PATH, DASHBOARD_TAR
                                               INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
                                               INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
                                               LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, MODELING_RULES_SCHEMA_FILE,
+                                              MODELING_RULES_TESTDATA_FILE, MODELING_RULES_XIF_FILE,
                                               MODELING_RULES_YML_FILE, PLAYBOOK_TARGET, SCRIPT_RELEASE_NOTES_TARGET,
                                               SCRIPT_TARGET, VALID_BETA_INTEGRATION, VALID_BETA_PLAYBOOK_PATH,
                                               VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
@@ -1960,23 +1961,30 @@ def test_image_error(capsys):
     assert expected_code in stdout
 
 
-def test_check_file_relevance_and_format_path(mocker):
+modeling_rule_file_changes = [
+    (MODELING_RULES_SCHEMA_FILE, FileType.MODELING_RULE_SCHEMA, MODELING_RULES_YML_FILE),
+    (MODELING_RULES_XIF_FILE, FileType.MODELING_RULE_XIF, MODELING_RULES_YML_FILE),
+    (MODELING_RULES_TESTDATA_FILE, FileType.MODELING_RULE_TEST_DATA, MODELING_RULES_YML_FILE),
+]
+
+
+@pytest.mark.parametrize('f_path, f_type, expected_result', modeling_rule_file_changes)
+def test_check_file_relevance_and_format_path(mocker, f_path, f_type, expected_result):
     """
 
-    Given: A modeling rules schema file that was changed.
+    Given: A modeling rules entity file that was changed.
 
-    When: Updating release notes
+    When: Validating changed files.
 
     Then: Update the file path to point the modeling rules yml file.
 
     """
     mocker.patch.object(ValidateManager, 'ignore_files_irrelevant_for_validation', return_value=False)
     mocker.patch.object(ValidateManager, 'is_old_file_format', return_value=False)
+    mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=f_type)
     validate_manager = ValidateManager()
-    file_path, old_path, _ = validate_manager.check_file_relevance_and_format_path(MODELING_RULES_SCHEMA_FILE,
-                                                                                   MODELING_RULES_SCHEMA_FILE,
-                                                                                   set())
-    assert file_path == old_path == MODELING_RULES_YML_FILE
+    file_path, old_path, _ = validate_manager.check_file_relevance_and_format_path(f_path, f_path, set())
+    assert file_path == old_path == expected_result
 
 
 pack_metadata_invalid_tags = {
@@ -2021,4 +2029,218 @@ def test_run_validation_using_git_on_metadata_with_invalid_tags(mocker, repo, pa
             res = validate_manager.run_validation_using_git()
     captured_stdout = std_output.getvalue()
     assert "[PA123]" in captured_stdout, captured_stdout
+    assert not res
+
+
+def test_run_validation_using_git_modify_existing_modeling_rule_yml_supports_td(mocker, repo):
+    """
+    Given:
+        - A pack with a modeling rule content entity defined exists.
+        - The modeling rule version supports testing via usage of testdata.
+        - No test data file exists.
+    When:
+        - The modeling rule yml file has been modified.
+    Then:
+        - Ensure the test data file is required.
+    """
+    pack = repo.create_pack()
+    modeling_rule_name = 'MyModelingRule'
+    modeling_rule_yml_content = {
+        'id': 'modeling-rule',
+        'name': modeling_rule_name,
+        'fromversion': '6.10.0',
+        'tags': 'tag',
+        'rules': '',
+        'schema': '',
+    }
+    modeling_rule = pack.create_modeling_rule(modeling_rule_name, modeling_rule_yml_content)
+    modeling_rule.testdata._file_path.unlink()
+    mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
+    mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git',
+                        return_value=({modeling_rule.yml.path}, set(), set()))
+    mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
+    mocker.patch.object(ValidateManager, 'is_old_file_format', return_value=False)
+    mocker.patch.object(ValidateManager, 'ignore_files_irrelevant_for_validation', return_value=False)
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+    std_output = StringIO()
+    with contextlib.redirect_stdout(std_output):
+        with ChangeCWD(repo.path):
+            res = validate_manager.run_validation_using_git()
+    captured_stdout = std_output.getvalue()
+    assert "[MR104]" in captured_stdout, captured_stdout
+    assert not res
+
+
+def test_run_validation_using_git_modify_existing_modeling_rule_xif_supports_td(mocker, repo):
+    """
+    Given:
+        - A pack with a modeling rule content entity defined exists.
+        - The modeling rule version supports testing via usage of testdata.
+        - No test data file exists.
+    When:
+        - The modeling rule xif file has been modified.
+    Then:
+        - Ensure the test data file is required.
+    """
+    pack = repo.create_pack()
+    modeling_rule_name = 'MyModelingRule'
+    modeling_rule_yml_content = {
+        'id': 'modeling-rule',
+        'name': modeling_rule_name,
+        'fromversion': '6.10.0',
+        'tags': 'tag',
+        'rules': '',
+        'schema': '',
+    }
+    modeling_rule = pack.create_modeling_rule(modeling_rule_name, modeling_rule_yml_content)
+    modeling_rule.testdata._file_path.unlink()
+    mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
+    mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git',
+                        return_value=({modeling_rule.rules.path}, set(), set()))
+    mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
+    mocker.patch.object(ValidateManager, 'is_old_file_format', return_value=False)
+    mocker.patch.object(ValidateManager, 'ignore_files_irrelevant_for_validation', return_value=False)
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+    std_output = StringIO()
+    with contextlib.redirect_stdout(std_output):
+        with ChangeCWD(repo.path):
+            res = validate_manager.run_validation_using_git()
+    captured_stdout = std_output.getvalue()
+    assert "[MR104]" in captured_stdout, captured_stdout
+    assert not res
+
+
+def test_run_validation_using_git_modify_existing_modeling_rule_schema_supports_td(mocker, repo):
+    """
+    Given:
+        - A pack with a modeling rule content entity defined exists.
+        - The modeling rule version supports testing via usage of testdata.
+        - No test data file exists.
+    When:
+        - The modeling rule schema file has been modified.
+    Then:
+        - Ensure the test data file is required.
+    """
+    pack = repo.create_pack()
+    modeling_rule_name = 'MyModelingRule'
+    modeling_rule_yml_content = {
+        'id': 'modeling-rule',
+        'name': modeling_rule_name,
+        'fromversion': '6.10.0',
+        'tags': 'tag',
+        'rules': '',
+        'schema': '',
+    }
+    modeling_rule = pack.create_modeling_rule(modeling_rule_name, modeling_rule_yml_content)
+    modeling_rule.testdata._file_path.unlink()
+    mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
+    mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git',
+                        return_value=({modeling_rule.schema.path}, set(), set()))
+    mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
+    mocker.patch.object(ValidateManager, 'is_old_file_format', return_value=False)
+    mocker.patch.object(ValidateManager, 'ignore_files_irrelevant_for_validation', return_value=False)
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+    std_output = StringIO()
+    with contextlib.redirect_stdout(std_output):
+        with ChangeCWD(repo.path):
+            res = validate_manager.run_validation_using_git()
+    captured_stdout = std_output.getvalue()
+    assert "[MR104]" in captured_stdout, captured_stdout
+    assert not res
+
+
+@pytest.mark.parametrize('modified_file', ['yml', 'rules', 'schema', 'testdata'])
+def test_run_validation_using_git_modify_existing_incomplete_testdata(mocker, repo, modified_file):
+    """
+    Given:
+        - A pack with a modeling rule content entity defined exists.
+        - The modeling rule version supports testing via usage of testdata.
+        - The testdata file is incomplete.
+    When:
+        - One of the component files has been modified.
+    Then:
+        - Ensure an error about the incomplete test data file is returned.
+    """
+    from typer.testing import CliRunner
+
+    from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_td_app
+    pack = repo.create_pack()
+    modeling_rule_name = 'MyModelingRule'
+    modeling_rule_yml_content = {
+        'id': 'modeling-rule',
+        'name': modeling_rule_name,
+        'fromversion': '6.10.0',
+        'tags': 'tag',
+        'rules': '',
+        'schema': '',
+    }
+    modeling_rule = pack.create_modeling_rule(modeling_rule_name, modeling_rule_yml_content)
+    modeling_rule.testdata._file_path.unlink()
+    with open('demisto_sdk/tests/test_files/modeling_rules.xif', 'r') as f:
+        xif_rules = f.read()
+        modeling_rule.rules.write(xif_rules)
+    runner = CliRunner()
+    result = runner.invoke(init_td_app, [modeling_rule.testdata._file_path.parent.as_posix()])
+    assert result.exit_code == 0
+
+    mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
+    modified_files = {modeling_rule.yml.path}
+    if modified_file == 'rules':
+        modified_files = {modeling_rule.rules.path}
+    elif modified_file == 'schema':
+        modified_files = {modeling_rule.schema.path}
+    elif modified_file == 'testdata':
+        modified_files = {modeling_rule.testdata.path}
+    mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git',
+                        return_value=(modified_files, set(), set()))
+    mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
+    mocker.patch.object(ValidateManager, 'is_old_file_format', return_value=False)
+    mocker.patch.object(ValidateManager, 'ignore_files_irrelevant_for_validation', return_value=False)
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+    std_output = StringIO()
+    with contextlib.redirect_stdout(std_output):
+        with ChangeCWD(repo.path):
+            res = validate_manager.run_validation_using_git()
+    captured_stdout = std_output.getvalue()
+    assert "[MR105]" in captured_stdout, captured_stdout
+    assert not res
+
+
+def test_run_validation_using_git_add_modeling_rule_that_supports_td(mocker, repo):
+    """
+    Given:
+        - A pack with a modeling rule content entity does not previously exist.
+        - The modeling rule being added has a version that supports testing via usage of testdata.
+    When:
+        - The modeling rule yml, xif, and schema file have been added.
+    Then:
+        - Ensure the validation fails on requiring a test data file be added.
+    """
+    pack = repo.create_pack()
+    modeling_rule_name = 'MyModelingRule'
+    modeling_rule_yml_content = {
+        'id': 'modeling-rule',
+        'name': modeling_rule_name,
+        'fromversion': '6.10.0',
+        'tags': 'tag',
+        'rules': '',
+        'schema': '',
+    }
+    modeling_rule = pack.create_modeling_rule(modeling_rule_name, modeling_rule_yml_content)
+    modeling_rule.testdata._file_path.unlink()
+    mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
+    mocker.patch.object(
+        ValidateManager, 'get_unfiltered_changed_files_from_git',
+        return_value=(set(), {modeling_rule.yml.path, modeling_rule.rules.path, modeling_rule.schema.path}, set())
+    )
+    mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
+    mocker.patch.object(ValidateManager, 'is_old_file_format', return_value=False)
+    mocker.patch.object(ValidateManager, 'ignore_files_irrelevant_for_validation', return_value=False)
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+    std_output = StringIO()
+    with contextlib.redirect_stdout(std_output):
+        with ChangeCWD(repo.path):
+            res = validate_manager.run_validation_using_git()
+    captured_stdout = std_output.getvalue()
+    assert "[MR104]" in captured_stdout, captured_stdout
     assert not res

@@ -27,6 +27,7 @@ ALLOWED_IGNORE_ERRORS = [
     'SC100', 'SC101', 'SC105', 'SC106',
     'IM111',
     'RN112',
+    'MR104', 'MR105',
 ]
 
 # predefined errors to be ignored in partner/community supported packs even if they do not appear in .pack-ignore
@@ -483,6 +484,26 @@ ERROR_CODE = {
     "modeling_rule_keys_not_empty": {'code': "MR101", 'ui_applicable': False, 'related_field': ''},
     "modeling_rule_keys_are_missing": {'code': "MR102", 'ui_applicable': False, 'related_field': ''},
     "invalid_rule_name": {'code': "MR103", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_missing_testdata_file": {'code': "MR104", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_testdata_not_formatted_correctly": {'code': "MR105", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_schema_types_invalid": {'code': "MR106", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_schema_xif_dataset_mismatch": {'code': "MR107", 'ui_applicable': False, 'related_field': ''},
+
+    # CR - Correlation Rules
+    "correlation_rule_starts_with_hyphen": {'code': 'CR100', 'ui_applicable': False, 'related_field': ''},
+    "correlation_rules_files_naming_error": {'code': 'CR101', 'ui_applicable': False, 'related_field': ''},
+
+    # XR - XSIAM Reports
+    "xsiam_report_files_naming_error": {'code': 'XR100', 'ui_applicable': False, 'related_field': ''},
+
+    # PR - Parsing Rules
+    "parsing_rules_files_naming_error": {'code': 'PR100', 'ui_applicable': False, 'related_field': ''},
+
+    # XT - XDRC Templates
+    "xdrc_templates_files_naming_error": {'code': 'XT100', 'ui_applicable': False, 'related_field': ''},
+
+    # XD - XSIAM Dashboards
+    "xsiam_dashboards_files_naming_error": {'code': 'XD100', 'ui_applicable': False, 'related_field': ''}
 }
 
 
@@ -2544,6 +2565,69 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def modeling_rule_schema_types_invalid(invalid_types: list):
+        return f"The following types in the schema file are invalid {','.join(invalid_types)}. " \
+               f"Valid types are: string, int , float, datetime, boolean."
+
+    @staticmethod
+    @error_code_decorator
+    def correlation_rules_files_naming_error(invalid_files: list):
+        return f"The following correlation rules files do not match the naming conventions: {','.join(invalid_files)}.\n" \
+               f"Files in the modeling rules directory must use the pack's name as a prefix, e.g. `myPack-report1.yml`"
+
+    @staticmethod
+    @error_code_decorator
+    def xsiam_report_files_naming_error(invalid_files: list):
+        return f"The following xsiam report files do not match the naming conventions: {','.join(invalid_files)}.\n" \
+               f"XSIAM reports file name must use the pack's name as a prefix, e.g. `myPack-report1.yml`"
+
+    @staticmethod
+    @error_code_decorator
+    def parsing_rules_files_naming_error(invalid_files: list):
+        return f"The following parsing rules files do not match the naming conventions: {','.join(invalid_files)}.\n" \
+               f" Files in the parsing rules directory must be titled exactly as the pack, e.g. `myPack.yml`."
+
+    @staticmethod
+    @error_code_decorator
+    def xdrc_templates_files_naming_error(invalid_files: list):
+        return f"The following xdrc templates do not match the naming conventions:: {','.join(invalid_files)}.\n" \
+               f"Files in the xdrc templates directory must be titled exactly as the pack, e.g. `myPack.yml`."
+
+    @staticmethod
+    @error_code_decorator
+    def xsiam_dashboards_files_naming_error(invalid_files: list):
+        return f"The following XSIAM dashboards do not match the naming conventions:: {','.join(invalid_files)}.\n" \
+               f"Files name in the XSIAM dashboards directory must use the pack's name as a prefix, " \
+               f"e.g. `myPack-report1.yml` "
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_schema_xif_dataset_mismatch():
+        return "There is a mismatch between datasets in schema file and in the xif file. " \
+               "Either there are more datasets declared in one of the files, or the datasets titles are not the same."
+
+    @staticmethod
+    @error_code_decorator
     def invalid_rule_name(invalid_files):
         return f"The following rule file name is invalid {invalid_files} - make sure that the rule name is " \
                f"the same as the folder containing it."
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_missing_testdata_file(modeling_rule_dir: Path, minimum_from_version: str, from_version: str):
+        test_data_file = modeling_rule_dir / f'{modeling_rule_dir.name}_testdata.json'
+        return f'The modeling rule {modeling_rule_dir} is missing a testdata file at {test_data_file}. The modeling ' \
+               f'rule has a fromversion of {from_version} and modeling rules supporting fromversion ' \
+               f'{minimum_from_version} and upwards are required to provide test data for modeling rule testing. ' \
+               'Please add a testdata file for this rule. See the "demisto-sdk modeling-rules init-test-data" ' \
+               'command for more information on creating a test data file for modeling rules.'
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_testdata_not_formatted_correctly(error_message: str, test_data_file: Path):
+        return f'The modeling rule testdata file at {test_data_file} is not formatted correctly. {error_message}'
+
+    @staticmethod
+    @error_code_decorator
+    def correlation_rule_starts_with_hyphen():
+        return "Correlation rule files cannot start with a hyphen, please remove it."

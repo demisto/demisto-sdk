@@ -2178,6 +2178,7 @@ def error_code(config, **kwargs):
 @click.option('-ud', '--use-docker', is_flag=True, help="Use docker service to run the content graph")
 @click.option('-us', '--use-existing', is_flag=True, help="Use existing service", default=False)
 @click.option('-d', '--dependencies', is_flag=True, help="Whether dependencies should be included in the graph", default=False)
+@click.option('-se', '--skip-export', is_flag=True, help="Whether or not to skip exporting to CSV.", default=False)
 @click.option('-o', '--output-file', type=click.Path(), help="dump file output", default=None)
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
               type=click.IntRange(0, 3, clamp=True), default=2, show_default=True)
@@ -2188,6 +2189,7 @@ def create_content_graph(
     use_docker: bool = False,
     use_existing: bool = False,
     dependencies: bool = False,
+    skip_export: bool = False,
     output_file: Path = None,
     **kwargs,
 ):
@@ -2202,7 +2204,52 @@ def create_content_graph(
         output_file=Path(output_file) if output_file else None,
         use_docker=use_docker,
     ) as content_graph_interface:
-        create_content_graph_command(content_graph_interface, dependencies)
+        create_content_graph_command(content_graph_interface, dependencies, export=not skip_export)
+
+
+# ====================== update-content-graph ====================== #
+@main.command(
+    hidden=True,
+)
+@click.help_option(
+    '-h', '--help'
+)
+@click.option('-ud', '--use-docker', is_flag=True, help="Use docker service to run the content graph")
+@click.option('-us', '--use-existing', is_flag=True, help="Use existing service", default=False)
+@click.option('-p', '--packs', help="A comma-separated list of packs to update", multiple=True, default=None)
+@click.option('-d', '--dependencies', is_flag=True, help="Whether dependencies should be included in the graph", default=False)
+@click.option('-o', '--output-file', type=click.Path(), help="dump file output", default=None)
+@click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
+              type=click.IntRange(0, 3, clamp=True), default=2, show_default=True)
+@click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")
+@click.option("-lp", "--log-path", help="Path to store all levels of logs",
+              type=click.Path(resolve_path=True))
+def update_content_graph(
+    use_docker: bool = False,
+    use_existing: bool = False,
+    packs: list = None,
+    dependencies: bool = False,
+    output_file: Path = None,
+    **kwargs
+):
+    from demisto_sdk.commands.common.logger import logging_setup
+    from demisto_sdk.commands.content_graph.content_graph_commands import \
+        update_content_graph as update_content_graph_command
+    from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
+    logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
+                  quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
+                  log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
+
+    with Neo4jContentGraphInterface(
+        start_service=not use_existing,
+        output_file=output_file,
+        use_docker=use_docker,
+    ) as content_graph_interface:
+        update_content_graph_command(
+            content_graph_interface,
+            packs_to_update=packs or [],
+            dependencies=dependencies,
+        )
 
 
 @main.result_callback()

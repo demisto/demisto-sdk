@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Added validation of testdata files for **Modeling Rules**.
+* Added the **update-content-graph** command.
 * Added the ability to limit the number of CPU cores with `DEMISTO_SDK_MAX_CPU_CORES` envirment variable.
 * Fixed an issue where **update-release-notes** failed when changing only xif file in **Modeling Rules**.
 * Added a **validate** step checking types of attributes in the schema file of modeling rule.

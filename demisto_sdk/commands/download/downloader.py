@@ -955,8 +955,7 @@ class Downloader:
                                           dictor(pack_obj_data, field)}, splitter='dot')
 
         if file_ending == 'yml':
-            with open(file_path_to_write, 'r') as yf:
-                file_yaml_object = yaml.load(yf)
+            file_yaml_object = get_yaml(file_path_to_write)
             if pack_obj_data:
                 merge(file_yaml_object, preserved_data)
             with open(file_path_to_write, 'w') as yf:

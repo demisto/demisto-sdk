@@ -6,7 +6,7 @@ import click
 from demisto_sdk.commands.common.constants import \
     DEFAULT_CONTENT_ITEM_TO_VERSION
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.tools import is_uuid, print_error
+from demisto_sdk.commands.common.tools import get_yaml, is_uuid, print_error
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES, TO_VERSION_5_9_9)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
@@ -92,8 +92,7 @@ class BaseUpdateJSON(BaseUpdate):
 
     def remove_null_fields(self):
         """Remove empty fields from file root."""
-        with open(self.schema_path, 'r') as file_obj:
-            schema_data = yaml.load(file_obj)
+        schema_data = get_yaml(self.schema_path)
         schema_fields = schema_data.get('mapping').keys()
         for field in schema_fields:
             # We want to keep 'false' and 0 values, and avoid removing fields that are required in the schema.

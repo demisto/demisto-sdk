@@ -260,7 +260,7 @@ def _testcase1__pack3_pack4__script2_uses_script4(repository: ContentDTO) -> Lis
     """Test case for the following updates:
     * New pack: SamplePack4, with a script: SampleScript4
     * New relationship: SampleScript2 (of existing pack SamplePack3) USES SampleScript4 (of new pack SamplePack4)
-    
+
     Returns:
         A list of the updated packs: pack3, pack4.
     """

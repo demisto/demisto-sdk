@@ -39,7 +39,7 @@ class Neo4jImportHandler:
         for filename in self.import_path.iterdir():
             if filename.name.startswith(f'{source}.') and filename.suffix == '.csv':
                 tempfile = NamedTemporaryFile(mode='w', delete=False)
-                with open(filename, 'r') as csv_file, tempfile:
+                with open(filename) as csv_file, tempfile:
                     reader = csv.reader(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                     writer = csv.writer(tempfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                     writer.writerow(next(reader))  # skip headers row

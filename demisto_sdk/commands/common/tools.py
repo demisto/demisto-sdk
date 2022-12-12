@@ -638,8 +638,8 @@ def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool =
         except Exception as e:
             raise ValueError(f"{file_path} has a structure issue of file type {type_of_file}\n{e}")
 
-    if isinstance(result, (dict, list)):
-        return result
+        if isinstance(result, (dict, list)):
+            return result
     return {}
 
 
@@ -2501,7 +2501,7 @@ def get_definition_name(path: str, pack_path: str) -> Optional[str]:
         print("Was unable to find the file for definitionId " + definition_id)
         return None
 
-    except FileNotFoundError or AttributeError:
+    except (FileNotFoundError, AttributeError):
         print("Error while retrieving definition name for definitionId " + definition_id +
               "\n Check file structure and make sure all relevant fields are entered properly")
         return None

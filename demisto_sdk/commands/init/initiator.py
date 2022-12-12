@@ -23,8 +23,9 @@ from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_common_server_path,
-                                               get_pack_name, print_error,
-                                               print_v, print_warning)
+                                               get_pack_name, get_yaml,
+                                               print_error, print_v,
+                                               print_warning)
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
 json = JSON_Handler()
@@ -557,8 +558,7 @@ class Initiator:
             current_suffix (str): The yml file name (HelloWorld or HelloWorldScript)
             integration (bool): Indicates if integration yml is being reformatted.
         """
-        with open(os.path.join(self.full_output_path, f"{current_suffix}.yml")) as f:
-            yml_dict = yaml.load(f)
+        yml_dict = get_yaml(os.path.join(self.full_output_path, f"{current_suffix}.yml"))
         yml_dict["commonfields"]["id"] = self.id
         yml_dict['name'] = self.id
 

@@ -12,8 +12,8 @@ from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (
     LAYOUT_CONTAINER_FIELDS, LOG_COLORS,
     get_all_incident_and_indicator_fields_from_id_set,
-    get_invalid_incident_fields_from_layout, get_yaml, normalize_field_name, print_color,
-    print_error, remove_copy_and_dev_suffixes_from_str)
+    get_invalid_incident_fields_from_layout, get_yaml, normalize_field_name,
+    print_color, print_error, remove_copy_and_dev_suffixes_from_str)
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
@@ -216,15 +216,14 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 Dict with layout kinds as keys and set of keys that should
                 be deleted as values.
         """
-        with open(self.schema_path, 'r') as file_obj:
-            a = yaml.load(file_obj)
-        schema_fields = a.get('mapping').keys()
+        yaml_content = get_yaml(self.schema_path)
+        schema_fields = yaml_content.get('mapping').keys()
         first_level_args = set(self.data.keys()) - set(schema_fields)
 
         second_level_args = {}
         for kind in LAYOUTS_CONTAINER_KINDS:
             if kind in self.data:
-                kind_schema = a['mapping'][kind]['mapping'].keys()
+                kind_schema = yaml_content['mapping'][kind]['mapping'].keys()
                 second_level_args[kind] = set(self.data[kind].keys()) - set(kind_schema)
 
         return first_level_args, second_level_args

@@ -5,6 +5,7 @@ import click
 
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.upload.uploader import Uploader
 
 json = JSON_Handler()
@@ -378,10 +379,11 @@ class PlaybookTestsGenerator:
 
         """
         try:
-            with open(self.integration_yml_path, 'r') as yf:
-                yaml_obj = yaml.load(yf)
-
-                yaml_obj.get('name')
+            if not Path(self.integration_yml_path).exists():
+                if self.verbose:
+                    raise FileNotFoundError()
+                raise FileNotFoundError()
+            yaml_obj = get_yaml(self.integration_yml_path)
         except FileNotFoundError as ex:
             if self.verbose:
                 raise

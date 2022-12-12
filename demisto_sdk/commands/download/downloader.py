@@ -948,7 +948,7 @@ class Downloader:
         if file_ending == 'yml':
             file_yaml_object = get_yaml(file_path_to_write)
             if pack_obj_data:
-                
+
                 merge(file_yaml_object, preserved_data)
             with open(file_path_to_write, 'w') as yf:
                 yaml.dump(file_yaml_object, yf)

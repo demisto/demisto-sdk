@@ -3,7 +3,7 @@ import json
 import os
 import shutil
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import git
 import pytest
@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_IGNORE_FILE_NAME, PLAYBOOKS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TRIGGER_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
     XSOAR_CONFIG_FILE, FileType, MarketplaceVersions)
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.tests.objects.pack_objects.pack_ignore.pack_ignore_test import \
     PACK_IGNORE
@@ -29,7 +30,7 @@ from demisto_sdk.commands.common.tools import (
     filter_files_by_type, filter_files_on_pack, filter_packagify_changes,
     find_type, find_type_by_path, generate_xsiam_normalized_name,
     get_code_lang, get_current_repo, get_dict_from_file, get_display_name,
-    get_entity_id_by_entity_type, get_entity_name_by_entity_type,
+    get_entity_id_by_entity_type, get_entity_name_by_entity_type, get_file,
     get_file_displayed_name, get_file_version_suffix_if_exists,
     get_files_in_dir, get_ignore_pack_skipped_tests, get_item_marketplaces,
     get_last_release_version, get_last_remote_release_version,
@@ -59,6 +60,7 @@ from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
 GIT_ROOT = git_path()
+yaml = YAML_Handler()
 
 
 class TestGenericFunctions:
@@ -72,6 +74,17 @@ class TestGenericFunctions:
     @pytest.mark.parametrize('file_path, func', FILE_PATHS)
     def test_get_file(self, file_path, func):
         assert func(file_path)
+    
+    @staticmethod
+    @pytest.mark.parametrize('suffix,dump_function', (('.json', json.dumps), ('.yaml', yaml.dumps)))
+    def test_get_file_non_unicode(tmp_path, suffix: str, dump_function: Callable):
+        """ Tests reading a non-unicode file """
+        text = 'Nett hier. Aber waren Sie schon mal in Baden-Württemberg?'  # the umlaut is important
+        path = (tmp_path / 'non_unicode').with_suffix(suffix)
+        
+        path.write_text(dump_function({'text': text}, ensure_ascii=False), encoding='latin-1')
+        assert get_file(path, suffix) == {'text': text}
+        
 
     @pytest.mark.parametrize('file_name, prefix, result',
                              [('test.json', 'parsingrule', 'parsingrule-external-test.json'),

@@ -18,8 +18,9 @@ from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_all_docker_images, get_file,
                                                get_pipenv_dir,
-                                               get_python_version, get_yaml, pascal_case,
-                                               print_color, print_error)
+                                               get_python_version, get_yaml,
+                                               pascal_case, print_color,
+                                               print_error)
 from demisto_sdk.commands.unify.integration_script_unifier import \
     IntegrationScriptUnifier
 

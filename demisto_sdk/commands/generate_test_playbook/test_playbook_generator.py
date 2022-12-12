@@ -378,22 +378,14 @@ class PlaybookTestsGenerator:
         local directory
 
         """
-        try:
-            if not Path(self.integration_yml_path).exists():
-                if self.verbose:
-                    raise FileNotFoundError()
-                raise FileNotFoundError()
-            yaml_obj = get_yaml(self.integration_yml_path)
-        except FileNotFoundError as ex:
+        if not Path(self.integration_yml_path).exists():
+            click.secho(f"File {self.integration_yml_path} was not found when trying to generate a test playbook", fg='bright_red')
             if self.verbose:
-                raise
-
-            click.secho(str(ex), fg='bright_red')
-            return
-        except AttributeError:
-            click.secho(f'Error - failed to parse: {self.integration_yml_path}.\nProbably invalid yml file',
-                        fg='bright_red')
-            return
+                raise FileNotFoundError()
+            else:
+                return
+            
+        yaml_obj = get_yaml(self.integration_yml_path)
 
         test_playbook = Playbook(
             name=self.name,

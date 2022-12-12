@@ -627,8 +627,7 @@ class TestMergeExistingFile:
         downloader.update_data(env.CUSTOM_CONTENT_INTEGRATION_PATH,
                                f'{env.INTEGRATION_INSTANCE_PATH}/TestIntegration.yml', 'yml')
 
-        with open(env.CUSTOM_CONTENT_INTEGRATION_PATH) as yf:
-            file_yaml_object = yaml.load(yf)
+        file_yaml_object = get_yaml(env.CUSTOM_CONTENT_INTEGRATION_PATH)
         for field in DELETED_YML_FIELDS_BY_DEMISTO:
             obj = file_yaml_object
             dotted_path_list = field.split('.')

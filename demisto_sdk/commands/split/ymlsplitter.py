@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON, TYPE_TO_EXTENSION
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_all_docker_images, get_pipenv_dir, get_python_version,
-                                               pascal_case, print_color, print_error)
+                                               get_yaml, pascal_case, print_color, print_error)
 from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
 
 yaml = YAML_Handler()
@@ -75,8 +75,7 @@ class YmlSplitter:
         self.lines_inserted_at_code_start = 0
         self.config = configuration or Configuration()
         self.auto_create_dir = not no_auto_create_dir
-        with open(self.input, 'rb') as yml_file:
-            self.yml_data = yaml.load(yml_file)
+        self.yml_data = get_yaml(self.input)
         self.api_module_path: Optional[str] = None
 
     def get_output_path(self):

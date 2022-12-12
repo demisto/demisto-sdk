@@ -3,7 +3,7 @@ import json
 import os
 import shutil
 from pathlib import Path
-from typing import Callable, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import git
 import pytest
@@ -72,8 +72,8 @@ class TestGenericFunctions:
         assert func(file_path)
 
     @staticmethod
-    @pytest.mark.parametrize('suffix,dump_function', (('.json', json.dumps), ('.yaml', yaml.dumps)))
-    def test_get_file_non_unicode(tmp_path, suffix: str, dump_function: Callable):
+    @pytest.mark.parametrize('suffix,dump_function', (('.json', json.dumps), ('.yml', yaml.dumps)))
+    def test_get_file_non_unicode(tmp_path, suffix: str, dump_function: Callable[[Dict], Any]):
         """ Tests reading a non-unicode file """
         text = 'Nett hier. Aber waren Sie schon mal in Baden-Württemberg?'  # the umlaut is important
         path = (tmp_path / 'non_unicode').with_suffix(suffix)

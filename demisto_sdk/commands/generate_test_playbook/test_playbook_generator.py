@@ -384,7 +384,7 @@ class PlaybookTestsGenerator:
                 raise FileNotFoundError()
             else:
                 return
-            
+
         yaml_obj = get_yaml(self.integration_yml_path)
 
         test_playbook = Playbook(

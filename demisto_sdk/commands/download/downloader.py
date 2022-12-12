@@ -504,7 +504,7 @@ class Downloader:
         :return: The main file id & name
         """
         main_file_data: dict = dict()
-        main_file_path: str = str()
+        main_file_path: str = ''
 
         # Entities which contain yml files
         if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR, PLAYBOOKS_DIR, TEST_PLAYBOOKS_DIR):
@@ -930,7 +930,7 @@ class Downloader:
                                           dictor(pack_obj_data, field)}, splitter='dot')
 
         if file_ending == 'yml':
-            with open(file_path_to_write, 'r') as yf:
+            with open(file_path_to_write) as yf:
                 file_yaml_object = yaml.load(yf)
             if pack_obj_data:
                 merge(file_yaml_object, preserved_data)
@@ -1001,7 +1001,7 @@ class Downloader:
         Log files downloaded/merged
         :return: None
         """
-        log_msg, added_msg, merged_msg = str(), str(), str()
+        log_msg, added_msg, merged_msg = '', '', ''
         if self.num_added_files:
             files = 'file' if self.num_added_files == 1 else 'files'
             added_msg = f'{self.num_added_files} {files} added'

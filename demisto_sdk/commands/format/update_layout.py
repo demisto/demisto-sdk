@@ -196,7 +196,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 Dict with layout kinds as keys and set of keys that should
                 be deleted as values.
         """
-        with open(self.schema_path, 'r') as file_obj:
+        with open(self.schema_path) as file_obj:
             a = yaml.load(file_obj)
         schema_fields = a.get('mapping').keys()
         first_level_args = set(self.data.keys()) - set(schema_fields)
@@ -215,7 +215,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 Dict with layout kinds as keys and set of keys that should
                 be deleted as values.
         """
-        with open(self.schema_path, 'r') as file_obj:
+        with open(self.schema_path) as file_obj:
             a = yaml.load(file_obj)
         schema_fields = a.get('mapping').keys()
         first_level_args = set(self.data.keys()) - set(schema_fields)

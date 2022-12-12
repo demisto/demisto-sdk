@@ -1,4 +1,3 @@
-import io
 import os
 from pathlib import Path
 from typing import Optional
@@ -228,7 +227,7 @@ class BaseValidator:
         if not os.path.exists(meta_file_path):
             return {}
 
-        with io.open(meta_file_path, encoding="utf-8") as file:
+        with open(meta_file_path, encoding="utf-8") as file:
             metadata_file_content = file.read()
 
         return json.loads(metadata_file_content)

@@ -15,7 +15,7 @@ class TestDescriptionFormat:
         Then
             - Ensure the details are deleted from the description file
         """
-        with open(SOURCE_DESCRIPTION_FORMATTED_CONTRIB_DETAILS, 'r') as f:
+        with open(SOURCE_DESCRIPTION_FORMATTED_CONTRIB_DETAILS) as f:
             expected = f.read()
         formatter = DescriptionFormat(input=SOURCE_DESCRIPTION_WITH_CONTRIB_DETAILS)
         formatter.remove_community_partner_details()
@@ -30,7 +30,7 @@ class TestDescriptionFormat:
         Then
             - Ensure the beta description is added to the description file
         """
-        with open(SOURCE_DESCRIPTION_FORMATTED_WITH_BETA_DESCRIPTION, 'r') as f:
+        with open(SOURCE_DESCRIPTION_FORMATTED_WITH_BETA_DESCRIPTION) as f:
             expected = f.read()
         formatter = DescriptionFormat(input=SOURCE_DESCRIPTION_WITHOUT_BETA_DESCRIPTION)
         formatter.add_betaintegration_description()

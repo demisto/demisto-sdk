@@ -27,7 +27,7 @@ class Readme(TextObject):
         """Mention contributors in pack readme"""
         try:
             if self.contributors:
-                with open(self.contributors.path, 'r') as contributors_file:
+                with open(self.contributors.path) as contributors_file:
                     contributor_list = json.load(contributors_file)
                 contribution_data = self.prepare_contributors_text(contributor_list)
                 with open(self._path, 'a+') as readme_file:

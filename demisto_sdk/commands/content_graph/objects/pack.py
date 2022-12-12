@@ -98,8 +98,7 @@ class PackContentItems(BaseModel):
     def __iter__(self) -> Generator[ContentItem, Any, Any]:  # type: ignore
         """Defines the iteration of the object. Each iteration yields a single content item."""
         for content_items in vars(self).values():
-            for content_item in content_items:
-                yield content_item
+            yield from content_items
 
     class Config:
         arbitrary_types_allowed = True

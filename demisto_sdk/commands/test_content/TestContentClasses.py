@@ -520,7 +520,7 @@ class BuildContext:
         self.xsiam_servers_path = kwargs.get('xsiam_servers_path')
         self.conf, self.secret_conf = self._load_conf_files(kwargs['conf'], kwargs['secret'])
         if self.is_xsiam:
-            with open(kwargs.get('xsiam_servers_api_keys_path'), 'r') as json_file:  # type: ignore[arg-type]
+            with open(kwargs.get('xsiam_servers_api_keys_path')) as json_file:  # type: ignore[arg-type]
                 xsiam_servers_api_keys = json.loads(json_file.read())
             self.xsiam_conf = self._load_xsiam_file(self.xsiam_servers_path)
             self.env_json = [self.xsiam_conf.get(self.xsiam_machine, {})]
@@ -655,7 +655,7 @@ class BuildContext:
         Returns:
             A list of playbook IDs that should be run in the current build
         """
-        with open(FILTER_CONF, 'r') as filter_file:
+        with open(FILTER_CONF) as filter_file:
             filtered_tests = [line.strip('\n') for line in filter_file.readlines()]
 
         return filtered_tests
@@ -760,7 +760,7 @@ class BuildContext:
         if not os.path.isfile(ENV_RESULTS_PATH):
             return {}
 
-        with open(ENV_RESULTS_PATH, 'r') as json_file:
+        with open(ENV_RESULTS_PATH) as json_file:
             return json.load(json_file)
 
     def _get_server_numeric_version(self) -> str:
@@ -1757,7 +1757,7 @@ class TestContext:
         """
         if self.build_context.is_nightly and self.build_context.memCheck and not self.build_context.is_local_run:
             stdout, stderr = self._get_circle_memory_data()
-            text = 'Memory Usage: {}'.format(stdout) if not stderr else stderr
+            text = f'Memory Usage: {stdout}' if not stderr else stderr
             self._send_slack_message(SLACK_MEM_CHANNEL_ID, text, 'Content CircleCI', 'False')
             stdout, stderr = self._get_circle_processes_data()
             text = stdout if not stderr else stderr

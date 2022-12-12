@@ -494,7 +494,7 @@ class TestJsonOutput:
         with ChangeCWD(repo.path):
             # create new file
             base.json_output(integration.yml.path, ui_applicable_error_code, ui_applicable_error_message, False)
-            with open(base.json_file_path, 'r') as f:
+            with open(base.json_file_path) as f:
                 json_output = json.load(f)
 
             assert json_output.sort() == expected_json_1.sort()
@@ -538,7 +538,7 @@ class TestJsonOutput:
         with ChangeCWD(repo.path):
             # create new file
             base.json_output(integration.yml.path, ui_applicable_error_code, ui_applicable_error_message, False)
-            with open(base.json_file_path, 'r') as f:
+            with open(base.json_file_path) as f:
                 json_output = json.load(f)
 
             assert json_output.sort() == expected_json_1.sort()

@@ -4,7 +4,6 @@ import re
 import shutil
 import subprocess
 import tempfile
-from io import open
 from pathlib import Path
 from typing import Optional
 
@@ -26,7 +25,7 @@ INTEGRATIONS_DOCS_REFERENCE = 'https://xsoar.pan.dev/docs/reference/integrations
 def get_pip_requirements(docker_image: str):
     return subprocess.check_output(["docker", "run", "--rm", docker_image,
                                     "pip", "freeze", "--disable-pip-version-check"],
-                                   universal_newlines=True, stderr=subprocess.DEVNULL).strip()
+                                   text=True, stderr=subprocess.DEVNULL).strip()
 
 
 class YmlSplitter:
@@ -104,7 +103,7 @@ class YmlSplitter:
         except ValueError as ex:
             print_error(str(ex))
             return 1
-        self.print_logs("Starting migration of: {} to dir: {}".format(self.input, output_path),
+        self.print_logs(f"Starting migration of: {self.input} to dir: {output_path}",
                         log_color=LOG_COLORS.NATIVE)
         output_path.mkdir(parents=True, exist_ok=True)
         base_name = output_path.name if not self.base_name else self.base_name
@@ -112,11 +111,11 @@ class YmlSplitter:
         self.extract_code(code_file, executed_from_contrib_converter)
         script = self.yml_data.get('script', {})
         lang_type: str = script.get('type', '') if self.file_type == 'integration' else self.yml_data.get('type')
-        self.extract_image("{}/{}_image.png".format(output_path, base_name))
-        self.extract_long_description("{}/{}_description.md".format(output_path, base_name))
-        yaml_out = "{}/{}.yml".format(output_path, base_name)
-        self.print_logs("Creating yml file: {} ...".format(yaml_out), log_color=LOG_COLORS.NATIVE)
-        with open(self.input, 'r') as yf:
+        self.extract_image(f"{output_path}/{base_name}_image.png")
+        self.extract_long_description(f"{output_path}/{base_name}_description.md")
+        yaml_out = f"{output_path}/{base_name}.yml"
+        self.print_logs(f"Creating yml file: {yaml_out} ...", log_color=LOG_COLORS.NATIVE)
+        with open(self.input) as yf:
             yaml_obj = yaml.load(yf)
         script_obj = yaml_obj
 
@@ -164,7 +163,7 @@ class YmlSplitter:
             # Python code formatting and dev env setup
             if code_type == TYPE_PYTHON:
                 if self.run_code_formatting:
-                    self.print_logs("Running autopep8 on file: {} ...".format(code_file), log_color=LOG_COLORS.NATIVE)
+                    self.print_logs(f"Running autopep8 on file: {code_file} ...", log_color=LOG_COLORS.NATIVE)
                     try:
                         subprocess.call(["autopep8", "-i", "--max-line-length", "130", code_file])
                     except FileNotFoundError:
@@ -172,7 +171,7 @@ class YmlSplitter:
                                         "Make sure to install it with: pip install autopep8.\n"
                                         "Then run: autopep8 -i {}".format(code_file), LOG_COLORS.YELLOW)
 
-                    self.print_logs("Running isort on file: {} ...".format(code_file), LOG_COLORS.NATIVE)
+                    self.print_logs(f"Running isort on file: {code_file} ...", LOG_COLORS.NATIVE)
                     try:
                         subprocess.call(["isort", code_file])
                     except FileNotFoundError:
@@ -185,14 +184,14 @@ class YmlSplitter:
                         docker = get_all_docker_images(script_obj)[0]
                         py_ver = get_python_version(docker, self.config.log_verbose)
                         pip_env_dir = get_pipenv_dir(py_ver, self.config.envs_dirs_base)
-                        self.print_logs("Copying pipenv files from: {}".format(pip_env_dir), log_color=LOG_COLORS.NATIVE)
-                        shutil.copy("{}/Pipfile".format(pip_env_dir), output_path)
-                        shutil.copy("{}/Pipfile.lock".format(pip_env_dir), output_path)
+                        self.print_logs(f"Copying pipenv files from: {pip_env_dir}", log_color=LOG_COLORS.NATIVE)
+                        shutil.copy(f"{pip_env_dir}/Pipfile", output_path)
+                        shutil.copy(f"{pip_env_dir}/Pipfile.lock", output_path)
                         env = os.environ.copy()
                         env["PIPENV_IGNORE_VIRTUALENVS"] = "1"
                         try:
                             subprocess.call(["pipenv", "install", "--dev"], cwd=output_path, env=env)
-                            self.print_logs("Installing all py requirements from docker: [{}] into pipenv".format(docker),
+                            self.print_logs(f"Installing all py requirements from docker: [{docker}] into pipenv",
                                             LOG_COLORS.NATIVE)
                             requirements = get_pip_requirements(docker)
                             fp = tempfile.NamedTemporaryFile(delete=False)
@@ -214,7 +213,7 @@ class YmlSplitter:
                                             "Make sure to install it with: pip3 install pipenv.\n"
                                             f"Then run in the package dir: pipenv install --dev\n.Err: {err}", LOG_COLORS.YELLOW)
                         arg_path = output_path.relative_to()
-                        self.print_logs("\nCompleted: setting up package: {}\n".format(arg_path), LOG_COLORS.GREEN)
+                        self.print_logs(f"\nCompleted: setting up package: {arg_path}\n", LOG_COLORS.GREEN)
                         next_steps: str = "Next steps: \n" \
                                           "* Install additional py packages for unit testing (if needed): cd {};" \
                                           " pipenv install <package>\n".format(arg_path) if code_type == TYPE_PYTHON else ''
@@ -224,7 +223,7 @@ class YmlSplitter:
                                       "    git rm {}\n".format(self.input)
                         if found_readme:
                             next_steps += "    git rm {}\n".format(self.input.parent / f'{self.input.stem}_README.md')
-                        next_steps += "    git add {}\n".format(arg_path)
+                        next_steps += f"    git add {arg_path}\n"
                         self.print_logs(next_steps, log_color=LOG_COLORS.NATIVE)
 
                     except Exception:
@@ -262,8 +261,8 @@ class YmlSplitter:
             lang_type = self.yml_data['type']
         ext = TYPE_TO_EXTENSION[lang_type]
         code_file_path = code_file_path.with_suffix(ext)
-        self.print_logs("Extracting code to: {} ...".format(code_file_path), log_color=LOG_COLORS.NATIVE)
-        with open(code_file_path, 'wt') as code_file:
+        self.print_logs(f"Extracting code to: {code_file_path} ...", log_color=LOG_COLORS.NATIVE)
+        with open(code_file_path, 'w') as code_file:
             if lang_type == TYPE_PYTHON and self.demisto_mock:
                 code_file.write("import demistomock as demisto  # noqa: F401\n")
                 self.lines_inserted_at_code_start += 1
@@ -290,7 +289,7 @@ class YmlSplitter:
         """
         if self.file_type == 'script':
             return 0  # no image in script type
-        self.print_logs("Extracting image to: {} ...".format(output_path), log_color=LOG_COLORS.NATIVE)
+        self.print_logs(f"Extracting image to: {output_path} ...", log_color=LOG_COLORS.NATIVE)
         im_field = self.yml_data.get('image')
         if im_field and len(im_field.split(',')) >= 2:
             image_b64 = self.yml_data['image'].split(',')[1]
@@ -321,7 +320,7 @@ class YmlSplitter:
         long_description = self.yml_data.get('detaileddescription')
         if long_description:
             long_description = self.remove_integration_documentation(long_description)
-            self.print_logs("Extracting long description to: {} ...".format(output_path), log_color=LOG_COLORS.NATIVE)
+            self.print_logs(f"Extracting long description to: {output_path} ...", log_color=LOG_COLORS.NATIVE)
             with open(output_path, 'w', encoding='utf-8') as desc_file:
                 desc_file.write(long_description)
         return 0
@@ -334,7 +333,7 @@ class YmlSplitter:
         """
         rules = self.yml_data.get('rules')
         if rules:
-            self.print_logs("Extracting rules to: {} ...".format(output_path), log_color=LOG_COLORS.NATIVE)
+            self.print_logs(f"Extracting rules to: {output_path} ...", log_color=LOG_COLORS.NATIVE)
             with open(output_path, 'w', encoding='utf-8') as rules_file:
                 rules_file.write(rules)
         return 0
@@ -349,14 +348,14 @@ class YmlSplitter:
         # Modeling rules
         schema = self.yml_data.get('schema')
         if schema:
-            self.print_logs("Extracting rules schema to: {} ...".format(output_path), log_color=LOG_COLORS.NATIVE)
+            self.print_logs(f"Extracting rules schema to: {output_path} ...", log_color=LOG_COLORS.NATIVE)
             with open(output_path, 'w', encoding='utf-8') as rules_file:
                 rules_file.write(schema)
 
         # Parsing rules
         samples = self.yml_data.get('samples')
         if samples:
-            self.print_logs("Extracting rules samples to: {} ...".format(output_path), log_color=LOG_COLORS.NATIVE)
+            self.print_logs(f"Extracting rules samples to: {output_path} ...", log_color=LOG_COLORS.NATIVE)
             with open(output_path, 'w', encoding='utf-8') as rules_file:
                 rules_file.write(samples)
         return 0

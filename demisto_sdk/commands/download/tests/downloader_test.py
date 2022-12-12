@@ -1,9 +1,9 @@
 import os
 import shutil
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
-from mock import patch
 
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_DIR, CONTENT_ENTITIES_DIRS,
                                                    DASHBOARDS_DIR, DELETED_JSON_FIELDS_BY_DEMISTO,
@@ -492,10 +492,10 @@ class TestMergeExistingFile:
                             assert True
                         else:
                             assert False
-            with open(env.INTEGRATION_PACK_OBJECT['Test Integration'][5]['path'], 'r') as description_file:
+            with open(env.INTEGRATION_PACK_OBJECT['Test Integration'][5]['path']) as description_file:
                 description_data = description_file.read()
             assert 'Test Integration Long Description TEST' in description_data
-            with open(env.INTEGRATION_PACK_OBJECT['Test Integration'][0]['path'], 'r') as code_file:
+            with open(env.INTEGRATION_PACK_OBJECT['Test Integration'][0]['path']) as code_file:
                 code_data = code_file.read()
             assert 'TEST' in code_data
 
@@ -627,7 +627,7 @@ class TestMergeExistingFile:
         downloader.update_data(env.CUSTOM_CONTENT_INTEGRATION_PATH,
                                f'{env.INTEGRATION_INSTANCE_PATH}/TestIntegration.yml', 'yml')
 
-        with open(env.CUSTOM_CONTENT_INTEGRATION_PATH, 'r') as yf:
+        with open(env.CUSTOM_CONTENT_INTEGRATION_PATH) as yf:
             file_yaml_object = yaml.load(yf)
         for field in DELETED_YML_FIELDS_BY_DEMISTO:
             obj = file_yaml_object

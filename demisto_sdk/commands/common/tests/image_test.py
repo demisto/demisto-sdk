@@ -144,7 +144,7 @@ def test_json_outputs_where_no_image_in_integration(repo):
         image_validator = image.ImageValidator(integration.yml.path, json_file_path=json_file_path)
 
         # Check the outputs in the json file
-        with open(image_validator.json_file_path, "r") as r:
+        with open(image_validator.json_file_path) as r:
             json_outputs = json.loads(r.read())
 
             assert json_outputs[0]['filePath'] == image_path

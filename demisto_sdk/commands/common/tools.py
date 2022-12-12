@@ -218,7 +218,7 @@ def get_yml_paths_in_dir(project_dir: str, error_msg: str = '') -> Tuple[list, s
 
 # print srt in the given color
 def print_color(obj, color):
-    print(u'{}{}{}'.format(color, obj, LOG_COLORS.NATIVE))
+    print(f'{color}{obj}{LOG_COLORS.NATIVE}')
 
 
 def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = True) -> list:
@@ -284,10 +284,10 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     output, err = p.communicate()
     if err:
         if exit_on_error:
-            print_error('Failed to run command {}\nerror details:\n{}'.format(command, err))
+            print_error(f'Failed to run command {command}\nerror details:\n{err}')
             sys.exit(1)
         else:
-            raise RuntimeError('Failed to run command {}\nerror details:\n{}'.format(command, err))
+            raise RuntimeError(f'Failed to run command {command}\nerror details:\n{err}')
 
     return output
 
@@ -450,7 +450,7 @@ def get_remote_file(
     return get_remote_file_from_api(full_file_path, git_content_config, tag, return_content, suppress_print)
 
 
-def filter_files_on_pack(pack: str, file_paths_list=str()) -> set:
+def filter_files_on_pack(pack: str, file_paths_list='') -> set:
     """
     filter_files_changes_on_pack.
 
@@ -598,7 +598,7 @@ def get_last_remote_release_version():
     return ''
 
 
-@lru_cache()
+@lru_cache
 def get_file(file_path, type_of_file, clear_cache=False):
     if clear_cache:
         get_file.cache_clear()
@@ -619,7 +619,7 @@ def get_file(file_path, type_of_file, clear_cache=False):
 
             except Exception as e:
                 raise ValueError(
-                    "{} has a structure issue of file type {}. Error was: {}".format(file_path, type_of_file, str(e)))
+                    f"{file_path} has a structure issue of file type {type_of_file}. Error was: {str(e)}")
     if isinstance(data_dictionary, (dict, list)):
         return data_dictionary
     return {}
@@ -852,7 +852,7 @@ def get_latest_release_notes_text(rn_path):
             if not rn:
                 print_error(f'Release Notes may not be empty. Please fill out correctly. - {rn_path}')
                 return None
-        except IOError:
+        except OSError:
             return ''
 
     return rn if rn else None
@@ -1220,9 +1220,9 @@ def get_python_version(docker_image, log_verbose=None, no_prints=False):
     py_ver = check_output(["docker", "run", "--rm", docker_image,
                            "python", "-c",
                            "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))"],
-                          universal_newlines=True, stderr=stderr_out).strip()
+                          text=True, stderr=stderr_out).strip()
     if not no_prints:
-        print("Detected python version: [{}] for docker image: {}".format(py_ver, docker_image))
+        print(f"Detected python version: [{py_ver}] for docker image: {docker_image}")
 
     py_num = float(py_ver)
     if py_num < 2.7 or (3 < py_num < 3.4):  # pylint can only work on python 3.4 and up
@@ -1239,7 +1239,7 @@ def get_pipenv_dir(py_version, envs_dirs_base):
     Returns:
         string -- full path to the pipenv dir
     """
-    return "{}{}".format(envs_dirs_base, int(py_version))
+    return f"{envs_dirs_base}{int(py_version)}"
 
 
 def print_v(msg, log_verbose=None):
@@ -1264,9 +1264,9 @@ def get_dev_requirements(py_version, envs_dirs_base):
     """
     env_dir = get_pipenv_dir(py_version, envs_dirs_base)
     stderr_out = None if LOG_VERBOSE else DEVNULL
-    requirements = check_output(['pipenv', 'lock', '-r', '-d'], cwd=env_dir, universal_newlines=True,
+    requirements = check_output(['pipenv', 'lock', '-r', '-d'], cwd=env_dir, text=True,
                                 stderr=stderr_out)
-    print_v("dev requirements:\n{}".format(requirements))
+    print_v(f"dev requirements:\n{requirements}")
     return requirements
 
 
@@ -1304,7 +1304,7 @@ def get_dict_from_file(path: str,
     return {}, None
 
 
-@lru_cache()
+@lru_cache
 def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     """Find FileType value of a path, without accessing the file.
     This function is here as we want to implement lru_cache and we can do it on `find_type`
@@ -1987,9 +1987,9 @@ def camel_to_snake(camel: str) -> str:
 def open_id_set_file(id_set_path):
     id_set = {}
     try:
-        with open(id_set_path, 'r') as id_set_file:
+        with open(id_set_path) as id_set_file:
             id_set = json.load(id_set_file)
-    except IOError:
+    except OSError:
         print_warning("Could not open id_set file")
         raise
     finally:
@@ -2137,12 +2137,10 @@ def extract_multiple_keys_from_dict(key: str, var: dict):
             if k == key:
                 yield v
             if isinstance(v, dict):
-                for result in extract_multiple_keys_from_dict(key, v):
-                    yield result
+                yield from extract_multiple_keys_from_dict(key, v)
             elif isinstance(v, list):
                 for d in v:
-                    for result in extract_multiple_keys_from_dict(key, d):
-                        yield result
+                    yield from extract_multiple_keys_from_dict(key, d)
 
 
 def find_file(root_path, file_name):
@@ -2161,7 +2159,7 @@ def find_file(root_path, file_name):
     return ''
 
 
-@lru_cache()
+@lru_cache
 def get_file_displayed_name(file_path):
     """Gets the file name that is displayed in the UI by the file's path.
     If there is no displayed name - returns the file name"""
@@ -2600,7 +2598,7 @@ def get_mp_types_from_metadata_by_item(file_path):
         metadata_path = Path(*metadata_path_parts) / METADATA_FILE_NAME
 
     try:
-        with open(metadata_path, 'r') as metadata_file:
+        with open(metadata_path) as metadata_file:
             metadata = json.load(metadata_file)
             marketplaces = metadata.get(MARKETPLACE_KEY_PACK_METADATA)
             if not marketplaces:

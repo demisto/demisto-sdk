@@ -1,6 +1,3 @@
-"""
-
-"""
 import os
 import shutil
 from pathlib import Path
@@ -10,6 +7,8 @@ from TestSuite.conf_json import ConfJSON
 from TestSuite.global_secrets import GlobalSecrets
 from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
+
+DEFAULT_MARKETPLACES = ["xsoar"]
 
 
 class Repo:
@@ -77,7 +76,7 @@ class Repo:
     def __del__(self):
         shutil.rmtree(self.path, ignore_errors=True)
 
-    def setup_one_pack(self, name, marketplaces: list = None) -> Pack:
+    def setup_one_pack(self, name, marketplaces: List[str] = DEFAULT_MARKETPLACES) -> Pack:
         """Sets up a new pack in the repo, and includes one per each content entity.
 
         Args:
@@ -88,11 +87,8 @@ class Repo:
             Pack. The pack object created.
 
         """
-
-        if not marketplaces:
-            marketplaces = ['xsoar']
-
         pack = self.create_pack(name)
+        pack.pack_metadata.update({'marketplaces': marketplaces})
 
         script = pack.create_script(f'{name}_script')
         script.create_default_script()
@@ -227,12 +223,12 @@ class Repo:
             print('parsing done')
         return pack
 
-    def setup_content_repo(self, number_of_packs, marketplaces: list = None):
+    def setup_content_repo(self, number_of_packs, marketplaces: List[str] = DEFAULT_MARKETPLACES):
         """Creates a fully constructed content repository, where packs names will pack_<index>.
 
         Args:
             number_of_packs (int): Amount of packs to be created in the repo.
-            marketplaces (list): List of the marketplaces to setup the packs.
+            marketplaces (List[str]): List of the marketplaces to setup the packs.
 
         """
         for i in range(number_of_packs):
@@ -259,11 +255,3 @@ class Repo:
         file_path = os.path.join(self.path, file_name)
         with open(file_path, 'w') as f:
             f.write(file_content)
-
-    def add_pack_metadata_file(self, pack_path, file_content):
-        file_path = os.path.join(pack_path, 'pack_metadata.json')
-        if file_content:
-            with open(file_path, 'w') as f:
-                f.write(file_content)
-        else:
-            shutil.copy('demisto_sdk/tests/test_files/DummyPackScriptIsXsoarOnly/pack_metadata.json', file_path)

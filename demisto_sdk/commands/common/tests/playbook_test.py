@@ -1,17 +1,15 @@
 import os.path
 from typing import Optional
+from unittest.mock import patch
 
 import pytest
-from mock import patch
 
-from demisto_sdk.commands.common.hook_validations.playbook import \
-    PlaybookValidator
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
-from demisto_sdk.tests.constants_test import (
-    CONTENT_REPO_EXAMPLE_ROOT, INVALID_PLAYBOOK_INPUTS_USE,
-    INVALID_PLAYBOOK_UNHANDLED_CONDITION,
-    INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION, VALID_PLAYBOOK_INPUTS_USE)
+from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from demisto_sdk.tests.constants_test import (CONTENT_REPO_EXAMPLE_ROOT, CORRECT_PLAYBOOK_REFERENCE_USE,
+                                              INCORRECT_PLAYBOOK_REFERENCE_USE, INVALID_PLAYBOOK_INPUTS_USE,
+                                              INVALID_PLAYBOOK_UNHANDLED_CONDITION,
+                                              INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION, VALID_PLAYBOOK_INPUTS_USE)
 from TestSuite.test_tools import ChangeCWD
 
 
@@ -351,6 +349,11 @@ class TestPlaybookValidator:
         (PLAYBOOK_JSON_ID_NOT_EQUAL_TO_TASKID, False)
     ]
 
+    IS_CORRECT_VALUE_REFERENCE = [
+        (INCORRECT_PLAYBOOK_REFERENCE_USE, False),
+        (CORRECT_PLAYBOOK_REFERENCE_USE, True)
+    ]
+
     DEPRECATED_VALID = {"deprecated": True, "description": "Deprecated. Use the XXXX playbook instead."}
     DEPRECATED_VALID2 = {"deprecated": True, "description": "Deprecated. Feodo Tracker no longer supports this feed "
                                                             "No available replacement."}
@@ -443,6 +446,7 @@ class TestPlaybookValidator:
     @pytest.mark.parametrize("playbook_json, expected_result", IS_CONDITIONAL_INPUTS)
     def test_is_condition_branches_handled(self, playbook_json, expected_result):
         structure = mock_structure("", playbook_json)
+        print(f'*** {playbook_json=}')
         validator = PlaybookValidator(structure)
         assert validator.is_condition_branches_handled() is expected_result
 
@@ -543,6 +547,25 @@ class TestPlaybookValidator:
         validator = PlaybookValidator(structure)
         validator._is_taskid_equals_id() is expected_result
 
+    @pytest.mark.parametrize("playbook_path, expected_result", IS_CORRECT_VALUE_REFERENCE)
+    def test_is_correct_value_references(self, playbook_path, expected_result):
+        """
+        Given
+        - A playbook.
+
+        When
+        - The playbook include taskid and inside task that has conditions with correct value reference.
+        - The playbook include taskid and inside task that has conditions with incorrect value reference.
+
+        Then
+        - Ensure validation passes if the the reference is from previous task and not as value.
+        - Ensure validation failes if the the reference is as value task and not from previous task.
+        """
+
+        structure = StructureValidator(file_path=playbook_path)
+        validator = PlaybookValidator(structure)
+        validator._is_correct_value_references_interface() is expected_result
+
     @pytest.mark.parametrize("current, answer", DEPRECATED_INPUTS)
     def test_is_valid_deprecated_playbook(self, current, answer):
         """
@@ -569,22 +592,6 @@ class TestPlaybookValidator:
         validator = PlaybookValidator(structure)
         validator.current_file = current
         assert validator.is_valid_as_deprecated() is answer
-
-    @pytest.mark.parametrize("playbook_json, expected_result", [(CONDITIONAL_SCRPT_WITH_NO_DFLT_NXT_TASK, True)])
-    def test_verify_all_conditional_tasks_has_else_path(self, playbook_json, expected_result):
-        """
-        Given
-            - A playbook with a condition without a default task
-
-        When
-            - Running Validate playbook
-
-        Then
-            - Function returns true as this is an ignored error.
-        """
-        structure = mock_structure("", playbook_json)
-        validator = PlaybookValidator(structure)
-        assert validator.verify_condition_tasks_has_else_path() is expected_result
 
     @pytest.mark.parametrize("playbook_task_json, expected_result", IS_ELSE_IN_CONDITION_TASK)
     def test_verify_else_for_conditions_task(self, playbook_task_json, expected_result):

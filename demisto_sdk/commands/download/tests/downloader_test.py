@@ -1,22 +1,21 @@
 import os
 import shutil
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
-from mock import patch
 
-from demisto_sdk.commands.common.constants import (
-    AGENT_CONFIG_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, CONTENT_ENTITIES_DIRS,
-    DASHBOARDS_DIR, DELETED_JSON_FIELDS_BY_DEMISTO,
-    DELETED_YML_FIELDS_BY_DEMISTO, GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR,
-    GENERIC_MODULES_DIR, GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR,
-    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
-    INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, MODELING_RULES_DIR,
-    PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, REPORTS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, WIDGETS_DIR, WIZARDS_DIR)
+from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_DIR, CONTENT_ENTITIES_DIRS,
+                                                   DASHBOARDS_DIR, DELETED_JSON_FIELDS_BY_DEMISTO,
+                                                   DELETED_YML_FIELDS_BY_DEMISTO, GENERIC_DEFINITIONS_DIR,
+                                                   GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR, GENERIC_TYPES_DIR,
+                                                   INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+                                                   INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR,
+                                                   LISTS_DIR, MODELING_RULES_DIR, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
+                                                   REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR,
+                                                   WIZARDS_DIR, XDRC_TEMPLATE_DIR)
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import (get_child_files, get_json,
-                                               get_yaml)
+from demisto_sdk.commands.common.tools import get_child_files, get_json, get_yaml
 from demisto_sdk.commands.download.downloader import Downloader
 
 yaml = YAML_Handler()
@@ -154,7 +153,7 @@ class Environment:
             TEST_PLAYBOOKS_DIR: [], REPORTS_DIR: [], DASHBOARDS_DIR: [], WIDGETS_DIR: [], INCIDENT_FIELDS_DIR: [],
             INDICATOR_FIELDS_DIR: [], INCIDENT_TYPES_DIR: [], CLASSIFIERS_DIR: [], CONNECTIONS_DIR: [],
             INDICATOR_TYPES_DIR: [], GENERIC_TYPES_DIR: [], GENERIC_FIELDS_DIR: [], GENERIC_MODULES_DIR: [],
-            GENERIC_DEFINITIONS_DIR: [], MODELING_RULES_DIR: [], AGENT_CONFIG_DIR: []
+            GENERIC_DEFINITIONS_DIR: [], MODELING_RULES_DIR: [], XDRC_TEMPLATE_DIR: []
         }
 
         self.INTEGRATION_CUSTOM_CONTENT_OBJECT = {'id': 'Test Integration', 'name': 'Test Integration',
@@ -442,6 +441,7 @@ class TestMergeExistingFile:
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
             downloader.log_verbose = False
+            downloader.no_code_formatting = False
             downloader.merge_and_extract_existing_file(env.INTEGRATION_CUSTOM_CONTENT_OBJECT)
             stdout, _ = capsys.readouterr()
             assert 'Merged' in stdout
@@ -475,6 +475,7 @@ class TestMergeExistingFile:
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
             downloader.log_verbose = False
+            downloader.no_code_formatting = False
             downloader.merge_and_extract_existing_file(env.INTEGRATION_CUSTOM_CONTENT_OBJECT)
             paths = [file['path'] for file in env.INTEGRATION_PACK_OBJECT['Test Integration']]
             for path in paths:
@@ -491,10 +492,10 @@ class TestMergeExistingFile:
                             assert True
                         else:
                             assert False
-            with open(env.INTEGRATION_PACK_OBJECT['Test Integration'][5]['path'], 'r') as description_file:
+            with open(env.INTEGRATION_PACK_OBJECT['Test Integration'][5]['path']) as description_file:
                 description_data = description_file.read()
             assert 'Test Integration Long Description TEST' in description_data
-            with open(env.INTEGRATION_PACK_OBJECT['Test Integration'][0]['path'], 'r') as code_file:
+            with open(env.INTEGRATION_PACK_OBJECT['Test Integration'][0]['path']) as code_file:
                 code_data = code_file.read()
             assert 'TEST' in code_data
 

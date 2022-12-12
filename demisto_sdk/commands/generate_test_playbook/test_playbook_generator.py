@@ -293,7 +293,7 @@ def get_command_examples(commands_file_path, entity_type) -> dict:
     command_examples = []  # type: list
 
     if entity_type == FileType.INTEGRATION.value:
-        with open(commands_file_path, 'r') as examples_file:
+        with open(commands_file_path) as examples_file:
             command_examples = examples_file.read().splitlines()
     else:
         command_examples = commands_file_path.split('\n')

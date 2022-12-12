@@ -5,19 +5,14 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from requests.structures import CaseInsensitiveDict
 
-from demisto_sdk.commands.common.constants import (
-    CONTEXT_OUTPUT_README_TABLE_HEADER, DOCS_COMMAND_SECTION_REGEX)
-from demisto_sdk.commands.common.default_additional_info_loader import \
-    load_default_additional_info_dict
+from demisto_sdk.commands.common.constants import CONTEXT_OUTPUT_README_TABLE_HEADER, DOCS_COMMAND_SECTION_REGEX
+from demisto_sdk.commands.common.default_additional_info_loader import load_default_additional_info_dict
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
-                                               print_color, print_error,
-                                               print_warning)
-from demisto_sdk.commands.generate_docs.common import (
-    add_lines, build_example_dict, generate_numbered_section, generate_section,
-    generate_table_section, save_output, string_escape_md)
-from demisto_sdk.commands.integration_diff.integration_diff_detector import \
-    IntegrationDiffDetector
+from demisto_sdk.commands.common.tools import LOG_COLORS, get_yaml, print_color, print_error, print_warning
+from demisto_sdk.commands.generate_docs.common import (add_lines, build_example_dict, generate_numbered_section,
+                                                       generate_section, generate_table_section, save_output,
+                                                       string_escape_md)
+from demisto_sdk.commands.integration_diff.integration_diff_detector import IntegrationDiffDetector
 
 json = JSON_Handler()
 
@@ -35,7 +30,7 @@ def append_or_replace_command_in_docs(old_docs: str, new_doc_section: str, comma
     Returns:
         str: The whole documentation.
     """
-    regexp = DOCS_COMMAND_SECTION_REGEX.format(command_name)
+    regexp = DOCS_COMMAND_SECTION_REGEX.format(command_name + "\n")
     # Read doc content
     errs = list()
     if re.findall(regexp, old_docs, flags=re.DOTALL):
@@ -584,7 +579,7 @@ def generate_command_example(cmd_from_yaml, cmd_example=None):
                 example.extend([
                     '#### Context Example',
                     '```json',
-                    '{}'.format(context_example),
+                    f'{context_example}',
                     '```',
                     '',
                 ])
@@ -612,7 +607,7 @@ def get_command_examples(commands_examples_input, specific_commands):
         return []
 
     if os.path.isfile(commands_examples_input):
-        with open(commands_examples_input, 'r') as examples_file:
+        with open(commands_examples_input) as examples_file:
             command_examples = examples_file.read().splitlines()
     else:
         print_warning('failed to open commands file, using commands as comma seperated list')
@@ -653,7 +648,7 @@ def get_command_permissions(commands_permissions_file_path) -> list:
         return commands_permissions
 
     if os.path.isfile(commands_permissions_file_path):
-        with open(commands_permissions_file_path, 'r') as permissions_file:
+        with open(commands_permissions_file_path) as permissions_file:
             permissions = permissions_file.read().splitlines()
     else:
         print('failed to open permissions file')

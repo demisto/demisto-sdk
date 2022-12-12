@@ -78,8 +78,7 @@ from typing import Dict, Optional
 import dateparser
 
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
-                                               print_error)
+from demisto_sdk.commands.common.tools import LOG_COLORS, print_color, print_error
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -228,7 +227,7 @@ def json_to_outputs(command, json, prefix, output=None, verbose=False, interacti
     """
     try:
         if json:
-            with open(json, 'r') as json_file:
+            with open(json) as json_file:
                 input_json = json_file.read()
         else:
             print("Enter the command's output in JSON format.\n "

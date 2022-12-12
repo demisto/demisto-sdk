@@ -12,105 +12,69 @@ from packaging import version
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, AUTHOR_IMAGE_FILE_NAME, CONTENT_ENTITIES_DIRS,
-    DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR,
-    IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
-    PACKS_PACK_META_FILE_NAME, SKIP_RELEASE_NOTES_FOR_TYPES,
-    VALIDATION_USING_GIT_IGNORABLE_DATA, FileType, FileType_ALLOWED_TO_DELETE,
-    PathLevel)
+from demisto_sdk.commands.common.constants import (API_MODULES_PACK, AUTHOR_IMAGE_FILE_NAME, CONTENT_ENTITIES_DIRS,
+                                                   DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_FIELDS_DIR,
+                                                   GENERIC_TYPES_DIR, IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION,
+                                                   PACKS_DIR, PACKS_PACK_META_FILE_NAME, SKIP_RELEASE_NOTES_FOR_TYPES,
+                                                   VALIDATION_USING_GIT_IGNORABLE_DATA, FileType,
+                                                   FileType_ALLOWED_TO_DELETE, PathLevel)
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content_constant_paths import \
-    DEFAULT_ID_SET_PATH
-from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
-                                                FOUND_FILES_AND_IGNORED_ERRORS,
-                                                PRESET_ERROR_TO_CHECK,
-                                                PRESET_ERROR_TO_IGNORE, Errors,
+from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
+from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS,
+                                                PRESET_ERROR_TO_CHECK, PRESET_ERROR_TO_IGNORE, Errors,
                                                 get_all_error_codes)
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.hook_validations.author_image import \
-    AuthorImageValidator
-from demisto_sdk.commands.common.hook_validations.base_validator import (
-    BaseValidator, error_codes)
-from demisto_sdk.commands.common.hook_validations.classifier import \
-    ClassifierValidator
-from demisto_sdk.commands.common.hook_validations.conf_json import \
-    ConfJsonValidator
-from demisto_sdk.commands.common.hook_validations.correlation_rule import \
-    CorrelationRuleValidator
-from demisto_sdk.commands.common.hook_validations.dashboard import \
-    DashboardValidator
-from demisto_sdk.commands.common.hook_validations.deprecation import \
-    DeprecationValidator
-from demisto_sdk.commands.common.hook_validations.description import \
-    DescriptionValidator
-from demisto_sdk.commands.common.hook_validations.generic_definition import \
-    GenericDefinitionValidator
-from demisto_sdk.commands.common.hook_validations.generic_field import \
-    GenericFieldValidator
-from demisto_sdk.commands.common.hook_validations.generic_module import \
-    GenericModuleValidator
-from demisto_sdk.commands.common.hook_validations.generic_type import \
-    GenericTypeValidator
+from demisto_sdk.commands.common.hook_validations.author_image import AuthorImageValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
+from demisto_sdk.commands.common.hook_validations.classifier import ClassifierValidator
+from demisto_sdk.commands.common.hook_validations.conf_json import ConfJsonValidator
+from demisto_sdk.commands.common.hook_validations.correlation_rule import CorrelationRuleValidator
+from demisto_sdk.commands.common.hook_validations.dashboard import DashboardValidator
+from demisto_sdk.commands.common.hook_validations.deprecation import DeprecationValidator
+from demisto_sdk.commands.common.hook_validations.description import DescriptionValidator
+from demisto_sdk.commands.common.hook_validations.generic_definition import GenericDefinitionValidator
+from demisto_sdk.commands.common.hook_validations.generic_field import GenericFieldValidator
+from demisto_sdk.commands.common.hook_validations.generic_module import GenericModuleValidator
+from demisto_sdk.commands.common.hook_validations.generic_type import GenericTypeValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.hook_validations.incident_field import \
-    IncidentFieldValidator
-from demisto_sdk.commands.common.hook_validations.incident_type import \
-    IncidentTypeValidator
-from demisto_sdk.commands.common.hook_validations.indicator_field import \
-    IndicatorFieldValidator
-from demisto_sdk.commands.common.hook_validations.integration import \
-    IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.incident_field import IncidentFieldValidator
+from demisto_sdk.commands.common.hook_validations.incident_type import IncidentTypeValidator
+from demisto_sdk.commands.common.hook_validations.indicator_field import IndicatorFieldValidator
+from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.job import JobValidator
-from demisto_sdk.commands.common.hook_validations.layout import (
-    LayoutsContainerValidator, LayoutValidator)
+from demisto_sdk.commands.common.hook_validations.layout import LayoutsContainerValidator, LayoutValidator
 from demisto_sdk.commands.common.hook_validations.lists import ListsValidator
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
-from demisto_sdk.commands.common.hook_validations.modeling_rule import \
-    ModelingRuleValidator
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
-    PackUniqueFilesValidator
-from demisto_sdk.commands.common.hook_validations.parsing_rule import \
-    ParsingRuleValidator
-from demisto_sdk.commands.common.hook_validations.playbook import \
-    PlaybookValidator
-from demisto_sdk.commands.common.hook_validations.pre_process_rule import \
-    PreProcessRuleValidator
-from demisto_sdk.commands.common.hook_validations.python_file import \
-    PythonFileValidator
+from demisto_sdk.commands.common.hook_validations.modeling_rule import ModelingRuleValidator
+from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
+from demisto_sdk.commands.common.hook_validations.parsing_rule import ParsingRuleValidator
+from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.pre_process_rule import PreProcessRuleValidator
+from demisto_sdk.commands.common.hook_validations.python_file import PythonFileValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.hook_validations.release_notes import \
-    ReleaseNotesValidator
-from demisto_sdk.commands.common.hook_validations.release_notes_config import \
-    ReleaseNotesConfigValidator
+from demisto_sdk.commands.common.hook_validations.release_notes import ReleaseNotesValidator
+from demisto_sdk.commands.common.hook_validations.release_notes_config import ReleaseNotesConfigValidator
 from demisto_sdk.commands.common.hook_validations.report import ReportValidator
-from demisto_sdk.commands.common.hook_validations.reputation import \
-    ReputationValidator
+from demisto_sdk.commands.common.hook_validations.reputation import ReputationValidator
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
-from demisto_sdk.commands.common.hook_validations.test_playbook import \
-    TestPlaybookValidator
-from demisto_sdk.commands.common.hook_validations.triggers import \
-    TriggersValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from demisto_sdk.commands.common.hook_validations.test_playbook import TestPlaybookValidator
+from demisto_sdk.commands.common.hook_validations.triggers import TriggersValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.hook_validations.wizard import WizardValidator
-from demisto_sdk.commands.common.hook_validations.xsiam_dashboard import \
-    XSIAMDashboardValidator
-from demisto_sdk.commands.common.hook_validations.xsiam_report import \
-    XSIAMReportValidator
-from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
-    XSOARConfigJsonValidator
-from demisto_sdk.commands.common.tools import (
-    _get_file_id, find_type, get_api_module_ids,
-    get_api_module_integrations_set, get_content_path, get_file,
-    get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
-    get_relative_path_from_packs_dir, get_remote_file, get_yaml,
-    open_id_set_file, run_command_os)
+from demisto_sdk.commands.common.hook_validations.xdrc_templates import XDRCTemplatesValidator
+from demisto_sdk.commands.common.hook_validations.xsiam_dashboard import XSIAMDashboardValidator
+from demisto_sdk.commands.common.hook_validations.xsiam_report import XSIAMReportValidator
+from demisto_sdk.commands.common.hook_validations.xsoar_config_json import XSOARConfigJsonValidator
+from demisto_sdk.commands.common.tools import (_get_file_id, find_type, get_api_module_ids,
+                                               get_api_module_integrations_set, get_content_path, get_file,
+                                               get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
+                                               get_relative_path_from_packs_dir, get_remote_file, get_yaml,
+                                               open_id_set_file, print_warning, run_command_os)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
-SKIPPED_FILES = ['CommonServerPython.py', 'CommonServerUserPython.py', 'demistomock.py']
+SKIPPED_FILES = ['CommonServerPython.py', 'CommonServerUserPython.py', 'demistomock.py', 'DemistoClassApiModule.py']
 
 
 class ValidateManager:
@@ -146,7 +110,7 @@ class ValidateManager:
         self.check_is_unskipped = check_is_unskipped
         self.conf_json_data = {}
         self.run_with_multiprocessing = multiprocessing
-        self.is_possible_validate_readme = self.is_node_exist()
+        self.is_possible_validate_readme = self.is_node_exist() or ReadMeValidator.is_docker_available()
 
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
@@ -199,14 +163,12 @@ class ValidateManager:
         self.always_valid = False
         self.ignored_files = set()
         self.new_packs = set()
-        self.skipped_file_types = (FileType.CHANGELOG,
-                                   FileType.DOC_IMAGE,
-                                   FileType.MODELING_RULE_SCHEMA,
-                                   FileType.XSIAM_DASHBOARD_IMAGE,
-                                   FileType.XSIAM_REPORT_IMAGE,
-                                   FileType.XSIAM_DASHBOARD_IMAGE,
-                                   FileType.AGENT_CONFIG_YML,
-                                   FileType.AGENT_CONFIG,)
+        self.skipped_file_types = (
+            FileType.CHANGELOG,
+            FileType.DOC_IMAGE,
+            FileType.MODELING_RULE_SCHEMA,
+            FileType.XSIAM_REPORT_IMAGE,
+        )
 
         self.is_external_repo = is_external_repo
         if is_external_repo:
@@ -242,7 +204,7 @@ class ValidateManager:
         """
         # Check node exist
         content_path = get_content_path()
-        stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)
+        stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)  # type: ignore
         if exit_code:
             return False
         return True
@@ -464,13 +426,20 @@ class ValidateManager:
 
         return all(content_entities_validation_results)
 
+    @staticmethod
+    def should_validate_xsiam_content(package_path):
+        parent_name = Path(package_path).stem
+        dir_name = Path(package_path).parent.stem
+        return parent_name in {'XSIAMDashboards', 'XSIAMReports'} or dir_name == 'XDRCTemplates'
+
     def run_validation_on_package(self, package_path, pack_error_ignore_list):
         package_entities_validation_results = set()
 
         for file_name in os.listdir(package_path):
             file_path = os.path.join(package_path, file_name)
+            should_validate_xsiam_item = self.should_validate_xsiam_content(package_path)
             should_validate_py_file = file_path.endswith('.py') and file_name not in SKIPPED_FILES
-            if file_path.endswith('.yml') or file_path.endswith('.md') or should_validate_py_file:
+            if file_path.endswith('.yml') or file_path.endswith('.md') or should_validate_py_file or should_validate_xsiam_item:
                 package_entities_validation_results.add(self.run_validations_on_file(file_path, pack_error_ignore_list))
 
             else:
@@ -632,9 +601,11 @@ class ValidateManager:
                                      file_path=file_path):
                     return False
             if not self.validate_all:
-                if not ReadMeValidator.are_modules_installed_for_verify(get_content_path()):  # shows warning message
-                    return True
                 ReadMeValidator.add_node_env_vars()
+                if not ReadMeValidator.are_modules_installed_for_verify(
+                    get_content_path()  # type: ignore
+                ) and not ReadMeValidator.is_docker_available():  # shows warning message
+                    return True
                 with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
                     return self.validate_readme(file_path, pack_error_ignore_list)
             return self.validate_readme(file_path, pack_error_ignore_list)
@@ -708,14 +679,23 @@ class ValidateManager:
         elif file_type == FileType.PARSING_RULE:
             return self.validate_parsing_rule(structure_validator, pack_error_ignore_list)
 
-        elif file_type == FileType.MODELING_RULE:
+        elif file_type in (FileType.MODELING_RULE, FileType.MODELING_RULE_XIF, FileType.MODELING_RULE_TEST_DATA):
+            print(f'Validating {file_type.value} file: {file_path}')
+            if self.validate_all:
+                error_ignore_list = pack_error_ignore_list.copy()
+                error_ignore_list.setdefault(os.path.basename(file_path), [])
+                error_ignore_list.get(os.path.basename(file_path)).append('MR104')
+                return self.validate_modeling_rule(structure_validator, error_ignore_list)
             return self.validate_modeling_rule(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.CORRELATION_RULE:
             return self.validate_correlation_rule(structure_validator, pack_error_ignore_list)
 
-        elif file_type == FileType.XSIAM_DASHBOARD:
+        elif file_type in {FileType.XSIAM_DASHBOARD, FileType.XSIAM_DASHBOARD_IMAGE}:
             return self.validate_xsiam_dashboard(structure_validator, pack_error_ignore_list)
+
+        elif file_type in {FileType.XDRC_TEMPLATE, FileType.XDRC_TEMPLATE_YML}:
+            return self.validate_xdrc_templates(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.XSIAM_REPORT:
             return self.validate_xsiam_report(structure_validator, pack_error_ignore_list)
@@ -1202,6 +1182,12 @@ class ValidateManager:
                                                             json_file_path=self.json_file_path)
         return xsiam_dashboard_validator.is_valid_file(validate_rn=False)
 
+    def validate_xdrc_templates(self, structure_validator, pack_error_ignore_list):
+        xdrc_templates_validator = XDRCTemplatesValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                                          print_as_warnings=self.print_ignored_errors,
+                                                          json_file_path=self.json_file_path)
+        return xdrc_templates_validator.is_valid_file(validate_rn=False)
+
     def validate_parsing_rule(self, structure_validator, pack_error_ignore_list):
         parsing_rule_validator = ParsingRuleValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                       print_as_warnings=self.print_ignored_errors,
@@ -1683,7 +1669,8 @@ class ValidateManager:
 
         # extract metadata files from the recognised changes
         changed_meta = self.pack_metadata_extraction(modified_files, added_files, renamed_files)
-        filtered_changed_meta, old_format_changed, _ = self.filter_to_relevant_files(changed_meta)
+        filtered_changed_meta, old_format_changed, _ = self.filter_to_relevant_files(changed_meta,
+                                                                                     check_metadata_files=True)
         old_format_files |= old_format_changed
         return filtered_modified, filtered_added, filtered_changed_meta, old_format_files, valid_types
 
@@ -1705,7 +1692,7 @@ class ValidateManager:
 
         return changed_metadata_files
 
-    def filter_to_relevant_files(self, file_set):
+    def filter_to_relevant_files(self, file_set, check_metadata_files=False):
         """Goes over file set and returns only a filtered set of only files relevant for validation"""
         filtered_set: set = set()
         old_format_files: set = set()
@@ -1720,9 +1707,11 @@ class ValidateManager:
                 file_path = str(path)
 
             try:
-                formatted_path, old_path, valid_file_extension = self.check_file_relevance_and_format_path(file_path,
-                                                                                                           old_path,
-                                                                                                           old_format_files)
+                formatted_path, old_path, valid_file_extension = self.check_file_relevance_and_format_path(
+                    file_path,
+                    old_path,
+                    old_format_files,
+                    check_metadata_files=check_metadata_files)
                 valid_types.add(valid_file_extension)
                 if formatted_path:
                     if old_path:
@@ -1739,7 +1728,7 @@ class ValidateManager:
 
         return filtered_set, old_format_files, all(valid_types)
 
-    def check_file_relevance_and_format_path(self, file_path, old_path, old_format_files):
+    def check_file_relevance_and_format_path(self, file_path, old_path, old_format_files, check_metadata_files=False):
         """
         Determines if a file is relevant for validation and create any modification to the file_path if needed
         :returns a tuple(string, string, bool) where
@@ -1753,7 +1742,7 @@ class ValidateManager:
 
         file_type = find_type(file_path)
 
-        if self.ignore_files_irrelevant_for_validation(file_path):
+        if self.ignore_files_irrelevant_for_validation(file_path, check_metadata_files=check_metadata_files):
             return irrelevant_file_output
 
         if not file_type:
@@ -1766,16 +1755,24 @@ class ValidateManager:
             return '', '', False
 
         # redirect non-test code files to the associated yml file
-        if file_type in [FileType.PYTHON_FILE, FileType.POWERSHELL_FILE, FileType.JAVASCRIPT_FILE, FileType.XIF_FILE]:
+        if file_type in [FileType.PYTHON_FILE, FileType.POWERSHELL_FILE, FileType.JAVASCRIPT_FILE, FileType.XIF_FILE,
+                         FileType.MODELING_RULE_XIF]:
             if not (str(file_path).endswith('_test.py') or str(file_path).endswith('.Tests.ps1') or
                     str(file_path).endswith('_test.js')):
                 file_path = file_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml').replace(
                     '.xif', '.yml')
 
                 if old_path:
-                    old_path = old_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml')
+                    old_path = old_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml').replace(
+                        '.xif', '.yml')
             else:
                 return irrelevant_file_output
+
+        if file_type == FileType.XDRC_TEMPLATE_YML:
+            file_path = file_path.replace('.yml', '.json')
+
+            if old_path:
+                old_path = old_path.replace('.yml', '.json')
 
         # redirect schema file when updating release notes
         if file_type == FileType.MODELING_RULE_SCHEMA:
@@ -1783,6 +1780,13 @@ class ValidateManager:
 
             if old_path:
                 old_path = old_path.replace('_schema', '').replace('.json', '.yml')
+
+        # redirect _testdata.json file to the associated yml file
+        if file_type == FileType.MODELING_RULE_TEST_DATA:
+            file_path = file_path.replace('_testdata.json', '.yml')
+
+            if old_path:
+                old_path = old_path.replace('_testdata.json', '.yml')
 
         # check for old file format
         if self.is_old_file_format(file_path, file_type):
@@ -1797,19 +1801,23 @@ class ValidateManager:
         else:
             return file_path, '', True
 
-    def ignore_files_irrelevant_for_validation(self, file_path: str) -> bool:
+    def ignore_files_irrelevant_for_validation(self, file_path: str, check_metadata_files: bool = False) -> bool:
         """
         Will ignore files that are not in the packs directory, are .txt files or are in the
         VALIDATION_USING_GIT_IGNORABLE_DATA tuple.
 
         Args:
             file_path: path of file to check if should be ignored.
+            check_metadata_files: If True will not ignore metadata files.
         Returns: True if file is ignored, false otherwise
         """
 
         if PACKS_DIR not in file_path:
             self.ignore_file(file_path)
             return True
+
+        if check_metadata_files and find_type(file_path) == FileType.METADATA:
+            return False
 
         if file_path.endswith(".txt"):
             self.ignore_file(file_path)

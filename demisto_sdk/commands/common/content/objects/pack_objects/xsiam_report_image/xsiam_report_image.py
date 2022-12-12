@@ -3,8 +3,7 @@ from typing import Union
 from wcmatch.pathlib import Path
 
 import demisto_sdk.commands.common.content.errors as exc
-from demisto_sdk.commands.common.content.objects.abstract_objects import \
-    GeneralObject
+from demisto_sdk.commands.common.content.objects.abstract_objects import GeneralObject
 
 
 class XSIAMReportImage(GeneralObject):
@@ -31,7 +30,7 @@ class XSIAMReportImage(GeneralObject):
         Raises:
             ContentInitializeError: If path not valid.
         """
-        path = Path(path)
+        path = Path(path)  # type: ignore
         if not (path.exists() and path.is_file()):
             raise exc.ContentInitializeError(XSIAMReportImage, path)
 

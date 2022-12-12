@@ -8,8 +8,7 @@ import pytest
 from demisto_sdk.__main__ import xsoar_config_file_update
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import src_root
-from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import \
-    XSOARConfigFileUpdater
+from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import XSOARConfigFileUpdater
 
 json = JSON_Handler()
 
@@ -64,7 +63,7 @@ class TestXSOARConfigFileUpdater:
             assert Path(f'{tmp_output_dir}/{expected_path}').exists()
 
             try:
-                with open(f'{tmp_output_dir}/{expected_path}', 'r') as config_file:
+                with open(f'{tmp_output_dir}/{expected_path}') as config_file:
                     config_file_info = json.load(config_file)
             except IsADirectoryError:
                 config_file_info = {}
@@ -99,7 +98,7 @@ class TestXSOARConfigFileUpdater:
             expected_path_object = Path(tmp_output_dir) / 'xsoar_config.json'
 
             if expected_path_object.is_file():
-                with open(expected_path_object, 'r') as config_file:
+                with open(expected_path_object) as config_file:
                     config_file_info = json.load(config_file)
             elif not expected_path_object.is_file():
                 config_file_info = {}
@@ -127,7 +126,7 @@ class TestXSOARConfigFileUpdater:
             assert Path(f'{tmp_output_dir}/xsoar_config.json').exists()
 
             try:
-                with open(f'{tmp_output_dir}/xsoar_config.json', 'r') as config_file:
+                with open(f'{tmp_output_dir}/xsoar_config.json') as config_file:
                     config_file_info = json.load(config_file)
             except IsADirectoryError:
                 config_file_info = {}
@@ -153,7 +152,7 @@ class TestXSOARConfigFileUpdater:
             assert Path(f'{tmp_output_dir}/xsoar_config.json').exists()
 
             try:
-                with open(f'{tmp_output_dir}/xsoar_config.json', 'r') as config_file:
+                with open(f'{tmp_output_dir}/xsoar_config.json') as config_file:
                     config_file_info = json.load(config_file)
             except IsADirectoryError:
                 config_file_info = {}
@@ -188,7 +187,7 @@ class TestXSOARConfigFileUpdater:
                 assert err in stdout
 
             try:
-                with open(f'{tmp_output_dir}/{expected_path}', 'r') as config_file:
+                with open(f'{tmp_output_dir}/{expected_path}') as config_file:
                     config_file_info = json.load(config_file)
             except IsADirectoryError:
                 config_file_info = {}
@@ -223,7 +222,7 @@ class TestXSOARConfigFileUpdater:
                 assert err in stdout
 
             try:
-                with open(f'{tmp_output_dir}/{expected_path}', 'r') as config_file:
+                with open(f'{tmp_output_dir}/{expected_path}') as config_file:
                     config_file_info = json.load(config_file)
             except IsADirectoryError:
                 config_file_info = {}

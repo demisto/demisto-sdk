@@ -9,11 +9,9 @@ from demisto_sdk.commands.common.tools import get_json, get_yaml
 
 
 FAKE_INTEGRATION_YML = open(
-    f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_descriptions/tests/test_data/input_integration.yml',
-    'r').read()
+    f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_descriptions/tests/test_data/input_integration.yml').read()
 FAKE_INTEGRATION_YML_SIMILAR = open(
-    f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_descriptions/tests/test_data/input_integration_similar_paths.yml',
-    'r').read()
+    f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_descriptions/tests/test_data/input_integration_similar_paths.yml').read()
 FAKE_OUTPUT_AI21 = get_json(
     f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_descriptions/tests/test_data/ai21_response.json')
 LOGPROB_INPUT_AI21 = get_json(
@@ -29,8 +27,7 @@ def test_ai21_api_request(mocker):
         Then
            - Ensure the descriptions are generated with probability indicators
     """
-    from demisto_sdk.commands.generate_outputs.generate_descriptions import \
-        generate_descriptions
+    from demisto_sdk.commands.generate_outputs.generate_descriptions import generate_descriptions
 
     mocker.patch.dict(os.environ, {'AI21_KEY': '123'})
 
@@ -55,8 +52,7 @@ def test_build_description_with_probabilities():
         Then
           - Ensure the output is wrapped with *'s
     """
-    from demisto_sdk.commands.generate_outputs.generate_descriptions import \
-        generate_descriptions
+    from demisto_sdk.commands.generate_outputs.generate_descriptions import generate_descriptions
 
     assert generate_descriptions.build_description_with_probabilities(
         LOGPROB_INPUT_AI21) == 'The **Unkown**'
@@ -71,8 +67,7 @@ def test_generate_ai_descriptions(mocker, tmp_path):
       Then
          - Ensure the descriptions are generated
     """
-    from demisto_sdk.commands.generate_outputs.generate_descriptions import \
-        generate_descriptions
+    from demisto_sdk.commands.generate_outputs.generate_descriptions import generate_descriptions
 
     mocker.patch.dict(os.environ, {'AI21_KEY': '123'})
 
@@ -105,8 +100,7 @@ def test_generate_ai_descriptions_interactive(mocker, tmp_path, monkeypatch):
       Then
          - Ensure the output uses the user's string
     """
-    from demisto_sdk.commands.generate_outputs.generate_descriptions import \
-        generate_descriptions
+    from demisto_sdk.commands.generate_outputs.generate_descriptions import generate_descriptions
 
     mocker.patch.dict(os.environ, {'AI21_KEY': '123'})
     mocker.patch.object(
@@ -145,8 +139,7 @@ def test_generate_ai_descriptions_interactive_similar_path(mocker, tmp_path):
       Then
          - Ensure the descriptions are according to the user's decisions
     """
-    from demisto_sdk.commands.generate_outputs.generate_descriptions import \
-        generate_descriptions
+    from demisto_sdk.commands.generate_outputs.generate_descriptions import generate_descriptions
 
     mocker.patch.dict(os.environ, {'AI21_KEY': '123'})
     import builtins

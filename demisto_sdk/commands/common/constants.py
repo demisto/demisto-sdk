@@ -45,7 +45,7 @@ XSIAM_DASHBOARDS_DIR = 'XSIAMDashboards'
 XSIAM_REPORTS_DIR = 'XSIAMReports'
 TRIGGER_DIR = 'Triggers'
 WIZARDS_DIR = 'Wizards'
-AGENT_CONFIG_DIR = 'AgentConfigs'
+XDRC_TEMPLATE_DIR = 'XDRCTemplates'
 
 # NAMES OF ENTITIES
 
@@ -88,7 +88,7 @@ XSIAM_DASHBOARD = 'xsiamdashboard'
 XSIAM_REPORT = 'xsiamreport'
 TRIGGER = 'trigger'
 WIZARD = 'wizard'
-AGENT_CONFIG = 'agentconfig'
+XDRC_TEMPLATE = 'xdrctemplate'
 
 MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
 
@@ -147,6 +147,8 @@ class FileType(str, Enum):
     BUILD_CONFIG_FILE = 'build-config-file'
     PARSING_RULE = 'parsingrule'
     MODELING_RULE = 'modelingrule'
+    MODELING_RULE_TEST_DATA = 'modelingruletestdata'
+    MODELING_RULE_XIF = 'modelingrulexif'
     CORRELATION_RULE = 'correlationrule'
     XSIAM_DASHBOARD = 'xsiamdashboard'
     XSIAM_DASHBOARD_IMAGE = 'xsiamdashboardimage'
@@ -157,8 +159,11 @@ class FileType(str, Enum):
     PACK_IGNORE = '.pack-ignore'
     SECRET_IGNORE = '.secrets-ignore'
     DOC_FILE = 'doc_files'
-    AGENT_CONFIG = 'agentconfig'
-    AGENT_CONFIG_YML = 'agentconfigyml'
+    XDRC_TEMPLATE = 'xdrctemplate'
+    XDRC_TEMPLATE_YML = 'xdrctemplateyml'
+    INDICATOR_TYPE = 'indicatortype'
+    TOOL = 'tools'
+    PACK_METADATA = 'packmetadata'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -194,6 +199,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.XSIAM_REPORT: 'XSIAM Reports',
     FileType.TRIGGER: 'Triggers Recommendations',  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
     FileType.WIZARD: 'Wizards',
+    FileType.XDRC_TEMPLATE: 'XDRC Templates',
 }
 
 ENTITY_TYPE_TO_DIR = {
@@ -224,7 +230,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.PARSING_RULE.value: PARSING_RULES_DIR,
     FileType.MODELING_RULE.value: MODELING_RULES_DIR,
     FileType.WIZARD.value: WIZARDS_DIR,
-    FileType.AGENT_CONFIG.value: AGENT_CONFIG_DIR,
+    FileType.XDRC_TEMPLATE.value: XDRC_TEMPLATE_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -234,7 +240,7 @@ SIEM_ONLY_ENTITIES = [
     FileType.XSIAM_DASHBOARD.value,
     FileType.XSIAM_REPORT.value,
     FileType.TRIGGER.value,
-    FileType.AGENT_CONFIG.value,
+    FileType.XDRC_TEMPLATE.value,
 ]
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
@@ -268,7 +274,7 @@ CONTENT_ENTITIES_DIRS = [
     JOBS_DIR,
     WIZARDS_DIR,
     MODELING_RULES_DIR,
-    AGENT_CONFIG_DIR,
+    XDRC_TEMPLATE_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -568,7 +574,7 @@ PLAYBOOK_BASE_REGEX = fr'{PLAYBOOKS_DIR_REGEX}\/.*'
 PLAYBOOK_YML_REGEX = fr'{PLAYBOOK_BASE_REGEX}\.yml'
 PLAYBOOK_README_REGEX = fr'{PLAYBOOK_BASE_REGEX}_README\.md$'
 
-TEST_SCRIPT_REGEX = r'{}{}.*script-.*\.yml$'.format(CAN_START_WITH_DOT_SLASH, TEST_PLAYBOOKS_DIR)
+TEST_SCRIPT_REGEX = fr'{CAN_START_WITH_DOT_SLASH}{TEST_PLAYBOOKS_DIR}.*script-.*\.yml$'
 TEST_PLAYBOOK_YML_REGEX = fr'{PACK_DIR_REGEX}/{TEST_PLAYBOOKS_DIR}\/(?!script-)([^.]+)\.yml'
 
 PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}/([^/]+)/{}/reputations.json'.format(CAN_START_WITH_DOT_SLASH,
@@ -576,26 +582,28 @@ PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}/([^/]+)/{}/reputations.json'.fo
                                                                                      INDICATOR_TYPES_DIR)
 PACKS_RELEASE_NOTES_REGEX = r'{}{}/([^/]+)/{}/([^/]+)\.md$'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
                                                                    RELEASE_NOTES_DIR)
-PACKS_TOOLS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.zip'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, TOOLS_DIR)
+PACKS_TOOLS_REGEX = fr'{CAN_START_WITH_DOT_SLASH}{PACKS_DIR}/([^/]+)/{TOOLS_DIR}/([^.]+)\.zip'
 
-PLAYBOOK_REGEX = r'{}(?!Test){}/playbook-.*\.yml$'.format(CAN_START_WITH_DOT_SLASH, PLAYBOOKS_DIR)
+PLAYBOOK_REGEX = fr'{CAN_START_WITH_DOT_SLASH}(?!Test){PLAYBOOKS_DIR}/playbook-.*\.yml$'
 
-TEST_PLAYBOOK_REGEX = r'{}{}/(?!script-).*\.yml$'.format(CAN_START_WITH_DOT_SLASH, TEST_PLAYBOOKS_DIR)
-TEST_NOT_PLAYBOOK_REGEX = r'{}{}/(?!playbook).*-.*\.yml$'.format(CAN_START_WITH_DOT_SLASH, TEST_PLAYBOOKS_DIR)
+TEST_PLAYBOOK_REGEX = fr'{CAN_START_WITH_DOT_SLASH}{TEST_PLAYBOOKS_DIR}/(?!script-).*\.yml$'
+TEST_NOT_PLAYBOOK_REGEX = fr'{CAN_START_WITH_DOT_SLASH}{TEST_PLAYBOOKS_DIR}/(?!playbook).*-.*\.yml$'
 
-CONNECTIONS_REGEX = r'{}{}.*canvas-context-connections.*\.json$'.format(CAN_START_WITH_DOT_SLASH, CONNECTIONS_DIR)
+CONNECTIONS_REGEX = fr'{CAN_START_WITH_DOT_SLASH}{CONNECTIONS_DIR}.*canvas-context-connections.*\.json$'
 
-INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}.reputations\.json$'.format(CAN_START_WITH_DOT_SLASH, INDICATOR_TYPES_DIR)
+INDICATOR_TYPES_REPUTATIONS_REGEX = fr'{CAN_START_WITH_DOT_SLASH}{INDICATOR_TYPES_DIR}.reputations\.json$'
 
 # deprecated regex
 DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
 DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"
 PACK_NAME_DEPRECATED_REGEX = r".* \(Deprecated\)"
+DEPRECATED_COMMAND_REGEX = r"Command \*\*\*.*?\*\*\* is deprecated. Use .*? instead."
 
 DEPRECATED_REGEXES: List[str] = [
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
-    PACK_NAME_DEPRECATED_REGEX
+    PACK_NAME_DEPRECATED_REGEX,
+    DEPRECATED_COMMAND_REGEX,
 ]
 
 PACK_METADATA_NAME = 'name'
@@ -651,7 +659,7 @@ INTEGRATION_PREFIX = 'integration'
 SCRIPT_PREFIX = 'script'
 PARSING_RULE_PREFIX = 'parsingrule'
 MODELING_RULE_PREFIX = 'modelingrule'
-AGENT_CONFIG_PREFIX = 'agentconfig'
+XDRC_TEMPLATE_PREFIX = 'xdrctemplate'
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
@@ -943,7 +951,7 @@ SPELLCHECK_FILE_TYPES = [
     PLAYBOOK_YML_REGEX
 ]
 
-KNOWN_FILE_STATUSES = ['a', 'm', 'd', 'r'] + ['r{:03}'.format(i) for i in range(101)]
+KNOWN_FILE_STATUSES = ['a', 'm', 'd', 'r'] + [f'r{i:03}' for i in range(101)]
 
 CODE_FILES_REGEX = [
     PACKS_INTEGRATION_PY_REGEX,
@@ -1108,7 +1116,7 @@ EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
 FILE_TYPES_PATHS_TO_VALIDATE = {
     'reports': JSON_ALL_REPORTS_REGEXES
 }
-
+DEPENDENCIES_DOCKER = 'demisto/demisto-sdk-dependencies:1.0.0.36679'
 DEF_DOCKER = 'demisto/python:1.3-alpine'
 DEF_DOCKER_PWSH = 'demisto/powershell:6.2.3.5563'
 
@@ -1117,7 +1125,7 @@ DIR_TO_PREFIX = {
     'Scripts': SCRIPT_PREFIX,
     'ModelingRules': MODELING_RULE_PREFIX,
     'ParsingRules': PARSING_RULE_PREFIX,
-    'AgentConfigs': AGENT_CONFIG_PREFIX,
+    'XDRCTemplates': XDRC_TEMPLATE_PREFIX,
 }
 
 ENTITY_NAME_SEPARATORS = [' ', '_', '-']
@@ -1451,7 +1459,7 @@ class ContentItems(Enum):
     XSIAM_REPORTS = 'xsiamreport'
     TRIGGERS = 'trigger',
     WIZARDS = 'wizard',
-    AGENT_CONFIG = 'agentconfig'
+    XDRC_TEMPLATE = 'xdrctemplate'
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
@@ -1477,7 +1485,7 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     XSIAM_REPORTS_DIR,
     TRIGGER_DIR,
     WIZARDS_DIR,
-    AGENT_CONFIG_DIR,
+    XDRC_TEMPLATE_DIR,
 }
 
 
@@ -1503,6 +1511,7 @@ class IronBankDockers:
 class MarketplaceVersions(str, Enum):
     XSOAR = 'xsoar'
     MarketplaceV2 = 'marketplacev2'
+    XPANSE = 'xpanse'
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {'html': LooseVersion('6.1.0'), 'grid': LooseVersion('5.5.0')}

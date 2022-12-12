@@ -1,85 +1,69 @@
+import contextlib
 import os
 import sys
 from io import StringIO
 from pathlib import Path
 from shutil import copyfile
 from typing import Any, List, Optional, Type, Union
+from unittest.mock import patch
 
 import pytest
-from mock import patch
 
 import demisto_sdk.commands.validate.validate_manager
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (
-    FILETYPE_TO_DEFAULT_FROMVERSION, PACKS_PACK_META_FILE_NAME, TEST_PLAYBOOK,
-    FileType)
+from demisto_sdk.commands.common.constants import (FILETYPE_TO_DEFAULT_FROMVERSION, PACKS_PACK_META_FILE_NAME,
+                                                   TEST_PLAYBOOK, FileType)
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
-from demisto_sdk.commands.common.hook_validations.dashboard import \
-    DashboardValidator
-from demisto_sdk.commands.common.hook_validations.description import \
-    DescriptionValidator
-from demisto_sdk.commands.common.hook_validations.generic_field import \
-    GenericFieldValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.dashboard import DashboardValidator
+from demisto_sdk.commands.common.hook_validations.description import DescriptionValidator
+from demisto_sdk.commands.common.hook_validations.generic_field import GenericFieldValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.hook_validations.incident_field import \
-    IncidentFieldValidator
-from demisto_sdk.commands.common.hook_validations.integration import \
-    IntegrationValidator
-from demisto_sdk.commands.common.hook_validations.layout import (
-    LayoutsContainerValidator, LayoutValidator)
-from demisto_sdk.commands.common.hook_validations.old_release_notes import \
-    OldReleaseNotesValidator
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
-    PackUniqueFilesValidator
-from demisto_sdk.commands.common.hook_validations.playbook import \
-    PlaybookValidator
-from demisto_sdk.commands.common.hook_validations.release_notes import \
-    ReleaseNotesValidator
-from demisto_sdk.commands.common.hook_validations.reputation import \
-    ReputationValidator
+from demisto_sdk.commands.common.hook_validations.incident_field import IncidentFieldValidator
+from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.layout import LayoutsContainerValidator, LayoutValidator
+from demisto_sdk.commands.common.hook_validations.old_release_notes import OldReleaseNotesValidator
+from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
+from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.release_notes import ReleaseNotesValidator
+from demisto_sdk.commands.common.hook_validations.reputation import ReputationValidator
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.unify.integration_script_unifier import \
-    IntegrationScriptUnifier
+from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
-from demisto_sdk.tests.constants_test import (
-    CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST, IGNORED_PNG,
-    INCIDENT_FIELD_TARGET, INCIDENT_TYPE_TARGET, INDICATOR_TYPE_TARGET,
-    INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
-    INVALID_BETA_INTEGRATION, INVALID_DASHBOARD_PATH,
-    INVALID_IGNORED_UNIFIED_INTEGRATION, INVALID_INCIDENT_FIELD_PATH,
-    INVALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_NO_TESTS,
-    INVALID_INTEGRATION_NON_CONFIGURED_TESTS, INVALID_LAYOUT_CONTAINER_PATH,
-    INVALID_LAYOUT_PATH, INVALID_MULTI_LINE_1_CHANGELOG_PATH,
-    INVALID_MULTI_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_1_CHANGELOG_PATH,
-    INVALID_ONE_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
-    INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, INVALID_PLAYBOOK_CONDITION_1,
-    INVALID_PLAYBOOK_CONDITION_2, INVALID_PLAYBOOK_ID_PATH,
-    INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
-    INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
-    LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, MODELING_RULES_SCHEMA_FILE,
-    MODELING_RULES_YML_FILE, PLAYBOOK_TARGET, SCRIPT_RELEASE_NOTES_TARGET,
-    SCRIPT_TARGET, VALID_BETA_INTEGRATION, VALID_BETA_PLAYBOOK_PATH,
-    VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
-    VALID_INDICATOR_FIELD_PATH, VALID_INTEGRATION_ID_PATH,
-    VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_CONTAINER_PATH,
-    VALID_LAYOUT_PATH, VALID_MD, VALID_MULTI_LINE_CHANGELOG_PATH,
-    VALID_MULTI_LINE_LIST_CHANGELOG_PATH, VALID_ONE_LINE_CHANGELOG_PATH,
-    VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PACK, VALID_PLAYBOOK_CONDITION,
-    VALID_REPUTATION_PATH, VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH,
-    VALID_WIDGET_PATH, WIDGET_TARGET)
-from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
-    INCIDENT_FIELD
+from demisto_sdk.tests.constants_test import (CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST, IGNORED_PNG,
+                                              INCIDENT_FIELD_TARGET, INCIDENT_TYPE_TARGET, INDICATOR_TYPE_TARGET,
+                                              INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
+                                              INVALID_BETA_INTEGRATION, INVALID_DASHBOARD_PATH,
+                                              INVALID_IGNORED_UNIFIED_INTEGRATION, INVALID_INCIDENT_FIELD_PATH,
+                                              INVALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_NO_TESTS,
+                                              INVALID_INTEGRATION_NON_CONFIGURED_TESTS, INVALID_LAYOUT_CONTAINER_PATH,
+                                              INVALID_LAYOUT_PATH, INVALID_MULTI_LINE_1_CHANGELOG_PATH,
+                                              INVALID_MULTI_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_1_CHANGELOG_PATH,
+                                              INVALID_ONE_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
+                                              INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, INVALID_PLAYBOOK_CONDITION_1,
+                                              INVALID_PLAYBOOK_CONDITION_2, INVALID_PLAYBOOK_ID_PATH,
+                                              INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
+                                              INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
+                                              LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, MODELING_RULES_SCHEMA_FILE,
+                                              MODELING_RULES_TESTDATA_FILE, MODELING_RULES_XIF_FILE,
+                                              MODELING_RULES_YML_FILE, PLAYBOOK_TARGET, SCRIPT_RELEASE_NOTES_TARGET,
+                                              SCRIPT_TARGET, VALID_BETA_INTEGRATION, VALID_BETA_PLAYBOOK_PATH,
+                                              VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
+                                              VALID_INDICATOR_FIELD_PATH, VALID_INTEGRATION_ID_PATH,
+                                              VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_CONTAINER_PATH,
+                                              VALID_LAYOUT_PATH, VALID_MD, VALID_MULTI_LINE_CHANGELOG_PATH,
+                                              VALID_MULTI_LINE_LIST_CHANGELOG_PATH, VALID_ONE_LINE_CHANGELOG_PATH,
+                                              VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PACK, VALID_PLAYBOOK_CONDITION,
+                                              VALID_REPUTATION_PATH, VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH,
+                                              VALID_WIDGET_PATH, WIDGET_TARGET)
+from demisto_sdk.tests.test_files.validate_integration_test_valid_types import INCIDENT_FIELD
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
 
@@ -199,6 +183,23 @@ class TestValidators:
             structure = StructureValidator(source)
             validator = PlaybookValidator(structure)
             assert validator.is_condition_branches_handled() is answer
+        finally:
+            os.remove(PLAYBOOK_TARGET)
+
+    INPUTS_is_condition_branches_handled = [
+        (INVALID_PLAYBOOK_CONDITION_1, False),
+        (INVALID_PLAYBOOK_CONDITION_2, True),
+        (VALID_PLAYBOOK_CONDITION, True)
+    ]
+
+    @pytest.mark.parametrize('source, answer', INPUTS_is_condition_branches_handled)
+    def test_are_default_conditions_valid(self, source, answer):
+        # type: (str, str) -> None
+        try:
+            copyfile(source, PLAYBOOK_TARGET)
+            structure = StructureValidator(source)
+            validator = PlaybookValidator(structure)
+            assert validator.are_default_conditions_valid() is answer
         finally:
             os.remove(PLAYBOOK_TARGET)
 
@@ -404,6 +405,7 @@ class TestValidators:
         mocker.patch.object(IntegrationValidator, 'is_docker_image_valid', return_value=True)
         mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
                             return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
         mocker.patch.object(DescriptionValidator, 'is_valid_description_name', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
@@ -443,8 +445,9 @@ class TestValidators:
         mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
         mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
                             return_value=True)
-        mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
 
+        mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert not validate_manager.run_validation_on_specific_files()
 
@@ -469,16 +472,18 @@ class TestValidators:
         mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
                             return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
         with ChangeCWD(integration.repo_path):
             validate_manager = ValidateManager(skip_conf_json=True)
             assert not validate_manager.run_validations_on_file(file_path=integration.yml.path,
                                                                 pack_error_ignore_list=[], is_modified=True)
 
     def test_files_validator_validate_pack_unique_files(self, mocker):
-        from demisto_sdk.commands.common.content.objects.pack_objects.pack import \
-            Pack
-        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': {}}, 'json'))
         mocker.patch.object(Pack, 'should_be_deprecated', return_value=False)
+        mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
+                     return_value=["Analytics & SIEM"])
         # mocking should_be_deprecated must be done because the get_dict_from_file is being mocked.
         # should_be_deprecated relies on finding the correct file content from get_dict_from_file function.
         validate_manager = ValidateManager(skip_conf_json=True)
@@ -516,12 +521,12 @@ class TestValidators:
             Then:
                 - return a True validation response
         """
-        from demisto_sdk.commands.common.content.objects.pack_objects.pack import \
-            Pack
+        from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
         id_set_path = os.path.normpath(
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
-        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
-
+        mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
+                     return_value=["Analytics & SIEM"])
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': {}}, 'json'))
         mocker.patch.object(Pack, 'should_be_deprecated', return_value=False)
         # mocking should_be_deprecated must be done because the get_dict_from_file is being mocked.
         # should_be_deprecated relies on finding the correct file type from get_dict_from_file function.
@@ -612,15 +617,10 @@ class TestValidators:
         result = validate_manager.validate_no_duplicated_release_notes(added_files)
         assert result is expected
 
-    ARE_TEST_CONFIGURED_TEST_INPUT = [
-        (VALID_INTEGRATION_TEST_PATH, 'integration', True),
-        (INVALID_INTEGRATION_NO_TESTS, 'integration', False),
-        (INVALID_INTEGRATION_NON_CONFIGURED_TESTS, 'integration', False),
+    @pytest.mark.parametrize('file_path, file_type, expected', [
         (TEST_PLAYBOOK, 'testplaybook', False)
-    ]
-
-    @pytest.mark.parametrize('file_path, file_type, expected', ARE_TEST_CONFIGURED_TEST_INPUT)
-    def test_are_tests_configured(self, file_path: str, file_type: str, expected: bool):
+    ])
+    def test_are_tests_configured_testplaybook(self, file_path: str, file_type: str, expected: bool):
         """
             Given
             - A content item
@@ -634,6 +634,48 @@ class TestValidators:
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type)
         validator = IntegrationValidator(structure_validator)
         assert validator.are_tests_configured() == expected
+
+    ARE_TEST_CONFIGURED_TEST_INPUT = [
+        pytest.param({'tests': ['PagerDuty Test']}, 'PagerDuty v2', True,
+                     id='well configured'),
+        pytest.param({}, 'PagerDuty v3', False,
+                     id='tests section missing from yml and conf.json'),
+        pytest.param({}, 'PagerDuty v2', True,
+                     id='tests section missing from yml but in conf.json'),
+        pytest.param({'tests': ['Non configured test']}, 'PagerDuty v4', False,
+                     id='integration id is not in conf.json'),
+        pytest.param({'tests': ['PagerDuty Test', 'Non configured test']}, 'PagerDuty v2', False,
+                     id='only some of the tests are in conf.json'),
+        pytest.param({'tests': ['Non configured test']}, 'PagerDuty v2', False,
+                     id='yml tests mismatch conf.json tests')
+    ]
+
+    @pytest.mark.parametrize('configured_tests, integration_id, expected', ARE_TEST_CONFIGURED_TEST_INPUT)
+    def test_are_tests_configured_integration(self, repo, integration_id, configured_tests: str, expected: bool):
+        """
+            Given
+            - A content item
+
+            When
+            - Checking if the item has tests configured
+
+            Then
+            -  validator return the correct answer accordingly
+        """
+
+        with ChangeCWD(repo.path):
+            pack = repo.create_pack('Pack')
+            yml_dict = {'commonfields': {'id': integration_id}}
+            yml_dict.update(configured_tests)
+            integration = pack.create_integration(name=integration_id, yml=yml_dict)
+            repo.conf.write_json(tests=[{
+                "integrations": "PagerDuty v2",
+                "playbookID": "PagerDuty Test"
+            }])
+            integration_yml_path = os.path.join(integration.path, integration.name + '.yml')
+            structure_validator = StructureValidator(integration_yml_path, predefined_scheme='integration')
+            validator = IntegrationValidator(structure_validator)
+            assert validator.are_tests_configured() == expected
 
     def test_unified_files_ignored(self):
         """
@@ -1170,7 +1212,6 @@ class TestValidators:
                               'Packs/pack_id/test_data/file.json',
                               'Packs/pack_id/Scripts/script_id/test_data/file.json',
                               'Packs/pack_id/TestPlaybooks/test_data/file.json',
-                              'Packs/pack_id/pack_metadata.json',
                               'Packs/pack_id/Integrations/integration_id/command_examples',
                               'Packs/pack_id/Integrations/integration_id/test.txt',
                               'Packs/pack_id/.secrets-ignore',
@@ -1315,8 +1356,7 @@ def test_skip_conf_json(mocker):
           - If set to `False`, the `ConfJsonValidator` should be called.
 
     """
-    from demisto_sdk.commands.common.hook_validations.conf_json import \
-        ConfJsonValidator
+    from demisto_sdk.commands.common.hook_validations.conf_json import ConfJsonValidator
     conf_json_init = mocker.patch.object(ConfJsonValidator, 'load_conf_file')
     ValidateManager(skip_conf_json=False)
     conf_json_init.asssert_called()
@@ -1377,6 +1417,8 @@ def test_run_validation_using_git_on_only_metadata_changed(mocker, pack: Pack, p
                         return_value=(set(), set(), {pack.pack_metadata.path}, set(), True))
     mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
     mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
+    mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
+                 return_value=["Data Enrichment & Threat Intelligence"])
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
     with ChangeCWD(pack.repo_path):
         res = validate_manager.run_validation_using_git()
@@ -1514,7 +1556,6 @@ def test_check_file_relevance_and_format_path_non_formatted_relevant_file(mocker
                           'Packs/pack_id/test_data/file.json',
                           'Packs/pack_id/Scripts/script_id/test_data/file.json',
                           'Packs/pack_id/TestPlaybooks/test_data/file.json',
-                          'Packs/pack_id/pack_metadata.json',
                           'Packs/pack_id/Integrations/integration_id/command_examples'])
 def test_check_file_relevance_and_format_path_ignored_files(input_file_path):
     """
@@ -1920,20 +1961,286 @@ def test_image_error(capsys):
     assert expected_code in stdout
 
 
-def test_check_file_relevance_and_format_path(mocker):
+modeling_rule_file_changes = [
+    (MODELING_RULES_SCHEMA_FILE, FileType.MODELING_RULE_SCHEMA, MODELING_RULES_YML_FILE),
+    (MODELING_RULES_XIF_FILE, FileType.MODELING_RULE_XIF, MODELING_RULES_YML_FILE),
+    (MODELING_RULES_TESTDATA_FILE, FileType.MODELING_RULE_TEST_DATA, MODELING_RULES_YML_FILE),
+]
+
+
+@pytest.mark.parametrize('f_path, f_type, expected_result', modeling_rule_file_changes)
+def test_check_file_relevance_and_format_path(mocker, f_path, f_type, expected_result):
     """
 
-    Given: A modeling rules schema file that was changed.
+    Given: A modeling rules entity file that was changed.
 
-    When: Updating release notes
+    When: Validating changed files.
 
     Then: Update the file path to point the modeling rules yml file.
 
     """
     mocker.patch.object(ValidateManager, 'ignore_files_irrelevant_for_validation', return_value=False)
     mocker.patch.object(ValidateManager, 'is_old_file_format', return_value=False)
+    mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=f_type)
     validate_manager = ValidateManager()
-    file_path, old_path, _ = validate_manager.check_file_relevance_and_format_path(MODELING_RULES_SCHEMA_FILE,
-                                                                                   MODELING_RULES_SCHEMA_FILE,
-                                                                                   set())
-    assert file_path == old_path == MODELING_RULES_YML_FILE
+    file_path, old_path, _ = validate_manager.check_file_relevance_and_format_path(f_path, f_path, set())
+    assert file_path == old_path == expected_result
+
+
+pack_metadata_invalid_tags = {
+    "name": "ForTesting",
+    "description": "A descriptive description.",
+    "support": "xsoar",
+    "currentVersion": "1.0.0",
+    "author": "Cortex XSOAR",
+    "url": "https://www.paloaltonetworks.com/cortex",
+    "email": "",
+    "categories": [
+        "Data Enrichment & Threat Intelligence"
+    ],
+    "tags": ["Use Case"],
+    "useCases": [],
+    "keywords": []
+}
+
+
+@pytest.mark.parametrize('pack_metadata_info', [pack_metadata_invalid_tags])
+def test_run_validation_using_git_on_metadata_with_invalid_tags(mocker, repo, pack_metadata_info):
+    """
+    Given
+        - A Pack with a Use Case tags but no PB, incidents Types or Layouts. Considered invalid.
+        - A git run.
+    When
+        - Running validations on pack using git.
+    Then
+        - Assert validation fails and the right error number is shown.
+    """
+    pack = repo.create_pack()
+    pack.pack_metadata.write_json(pack_metadata_info)
+    mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
+    mocker.patch.object(PackUniqueFilesValidator, 'is_categories_field_match_standard', return_value=True)
+    mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git',
+                        return_value=({pack.pack_metadata.path}, set(), set()))
+    mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+    std_output = StringIO()
+    with contextlib.redirect_stdout(std_output):
+        with ChangeCWD(repo.path):
+            res = validate_manager.run_validation_using_git()
+    captured_stdout = std_output.getvalue()
+    assert "[PA123]" in captured_stdout, captured_stdout
+    assert not res
+
+
+def test_run_validation_using_git_modify_existing_modeling_rule_yml_supports_td(mocker, repo):
+    """
+    Given:
+        - A pack with a modeling rule content entity defined exists.
+        - The modeling rule version supports testing via usage of testdata.
+        - No test data file exists.
+    When:
+        - The modeling rule yml file has been modified.
+    Then:
+        - Ensure the test data file is required.
+    """
+    pack = repo.create_pack()
+    modeling_rule_name = 'MyModelingRule'
+    modeling_rule_yml_content = {
+        'id': 'modeling-rule',
+        'name': modeling_rule_name,
+        'fromversion': '6.10.0',
+        'tags': 'tag',
+        'rules': '',
+        'schema': '',
+    }
+    modeling_rule = pack.create_modeling_rule(modeling_rule_name, modeling_rule_yml_content)
+    modeling_rule.testdata._file_path.unlink()
+    mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
+    mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git',
+                        return_value=({modeling_rule.yml.path}, set(), set()))
+    mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
+    mocker.patch.object(ValidateManager, 'is_old_file_format', return_value=False)
+    mocker.patch.object(ValidateManager, 'ignore_files_irrelevant_for_validation', return_value=False)
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+    std_output = StringIO()
+    with contextlib.redirect_stdout(std_output):
+        with ChangeCWD(repo.path):
+            res = validate_manager.run_validation_using_git()
+    captured_stdout = std_output.getvalue()
+    assert "[MR104]" in captured_stdout, captured_stdout
+    assert not res
+
+
+def test_run_validation_using_git_modify_existing_modeling_rule_xif_supports_td(mocker, repo):
+    """
+    Given:
+        - A pack with a modeling rule content entity defined exists.
+        - The modeling rule version supports testing via usage of testdata.
+        - No test data file exists.
+    When:
+        - The modeling rule xif file has been modified.
+    Then:
+        - Ensure the test data file is required.
+    """
+    pack = repo.create_pack()
+    modeling_rule_name = 'MyModelingRule'
+    modeling_rule_yml_content = {
+        'id': 'modeling-rule',
+        'name': modeling_rule_name,
+        'fromversion': '6.10.0',
+        'tags': 'tag',
+        'rules': '',
+        'schema': '',
+    }
+    modeling_rule = pack.create_modeling_rule(modeling_rule_name, modeling_rule_yml_content)
+    modeling_rule.testdata._file_path.unlink()
+    mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
+    mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git',
+                        return_value=({modeling_rule.rules.path}, set(), set()))
+    mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
+    mocker.patch.object(ValidateManager, 'is_old_file_format', return_value=False)
+    mocker.patch.object(ValidateManager, 'ignore_files_irrelevant_for_validation', return_value=False)
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+    std_output = StringIO()
+    with contextlib.redirect_stdout(std_output):
+        with ChangeCWD(repo.path):
+            res = validate_manager.run_validation_using_git()
+    captured_stdout = std_output.getvalue()
+    assert "[MR104]" in captured_stdout, captured_stdout
+    assert not res
+
+
+def test_run_validation_using_git_modify_existing_modeling_rule_schema_supports_td(mocker, repo):
+    """
+    Given:
+        - A pack with a modeling rule content entity defined exists.
+        - The modeling rule version supports testing via usage of testdata.
+        - No test data file exists.
+    When:
+        - The modeling rule schema file has been modified.
+    Then:
+        - Ensure the test data file is required.
+    """
+    pack = repo.create_pack()
+    modeling_rule_name = 'MyModelingRule'
+    modeling_rule_yml_content = {
+        'id': 'modeling-rule',
+        'name': modeling_rule_name,
+        'fromversion': '6.10.0',
+        'tags': 'tag',
+        'rules': '',
+        'schema': '',
+    }
+    modeling_rule = pack.create_modeling_rule(modeling_rule_name, modeling_rule_yml_content)
+    modeling_rule.testdata._file_path.unlink()
+    mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
+    mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git',
+                        return_value=({modeling_rule.schema.path}, set(), set()))
+    mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
+    mocker.patch.object(ValidateManager, 'is_old_file_format', return_value=False)
+    mocker.patch.object(ValidateManager, 'ignore_files_irrelevant_for_validation', return_value=False)
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+    std_output = StringIO()
+    with contextlib.redirect_stdout(std_output):
+        with ChangeCWD(repo.path):
+            res = validate_manager.run_validation_using_git()
+    captured_stdout = std_output.getvalue()
+    assert "[MR104]" in captured_stdout, captured_stdout
+    assert not res
+
+
+@pytest.mark.parametrize('modified_file', ['yml', 'rules', 'schema', 'testdata'])
+def test_run_validation_using_git_modify_existing_incomplete_testdata(mocker, repo, modified_file):
+    """
+    Given:
+        - A pack with a modeling rule content entity defined exists.
+        - The modeling rule version supports testing via usage of testdata.
+        - The testdata file is incomplete.
+    When:
+        - One of the component files has been modified.
+    Then:
+        - Ensure an error about the incomplete test data file is returned.
+    """
+    from typer.testing import CliRunner
+
+    from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_td_app
+    pack = repo.create_pack()
+    modeling_rule_name = 'MyModelingRule'
+    modeling_rule_yml_content = {
+        'id': 'modeling-rule',
+        'name': modeling_rule_name,
+        'fromversion': '6.10.0',
+        'tags': 'tag',
+        'rules': '',
+        'schema': '',
+    }
+    modeling_rule = pack.create_modeling_rule(modeling_rule_name, modeling_rule_yml_content)
+    modeling_rule.testdata._file_path.unlink()
+    with open('demisto_sdk/tests/test_files/modeling_rules.xif') as f:
+        xif_rules = f.read()
+        modeling_rule.rules.write(xif_rules)
+    runner = CliRunner()
+    result = runner.invoke(init_td_app, [modeling_rule.testdata._file_path.parent.as_posix()])
+    assert result.exit_code == 0
+
+    mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
+    modified_files = {modeling_rule.yml.path}
+    if modified_file == 'rules':
+        modified_files = {modeling_rule.rules.path}
+    elif modified_file == 'schema':
+        modified_files = {modeling_rule.schema.path}
+    elif modified_file == 'testdata':
+        modified_files = {modeling_rule.testdata.path}
+    mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git',
+                        return_value=(modified_files, set(), set()))
+    mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
+    mocker.patch.object(ValidateManager, 'is_old_file_format', return_value=False)
+    mocker.patch.object(ValidateManager, 'ignore_files_irrelevant_for_validation', return_value=False)
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+    std_output = StringIO()
+    with contextlib.redirect_stdout(std_output):
+        with ChangeCWD(repo.path):
+            res = validate_manager.run_validation_using_git()
+    captured_stdout = std_output.getvalue()
+    assert "[MR105]" in captured_stdout, captured_stdout
+    assert not res
+
+
+def test_run_validation_using_git_add_modeling_rule_that_supports_td(mocker, repo):
+    """
+    Given:
+        - A pack with a modeling rule content entity does not previously exist.
+        - The modeling rule being added has a version that supports testing via usage of testdata.
+    When:
+        - The modeling rule yml, xif, and schema file have been added.
+    Then:
+        - Ensure the validation fails on requiring a test data file be added.
+    """
+    pack = repo.create_pack()
+    modeling_rule_name = 'MyModelingRule'
+    modeling_rule_yml_content = {
+        'id': 'modeling-rule',
+        'name': modeling_rule_name,
+        'fromversion': '6.10.0',
+        'tags': 'tag',
+        'rules': '',
+        'schema': '',
+    }
+    modeling_rule = pack.create_modeling_rule(modeling_rule_name, modeling_rule_yml_content)
+    modeling_rule.testdata._file_path.unlink()
+    mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
+    mocker.patch.object(
+        ValidateManager, 'get_unfiltered_changed_files_from_git',
+        return_value=(set(), {modeling_rule.yml.path, modeling_rule.rules.path, modeling_rule.schema.path}, set())
+    )
+    mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
+    mocker.patch.object(ValidateManager, 'is_old_file_format', return_value=False)
+    mocker.patch.object(ValidateManager, 'ignore_files_irrelevant_for_validation', return_value=False)
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+    std_output = StringIO()
+    with contextlib.redirect_stdout(std_output):
+        with ChangeCWD(repo.path):
+            res = validate_manager.run_validation_using_git()
+    captured_stdout = std_output.getvalue()
+    assert "[MR104]" in captured_stdout, captured_stdout
+    assert not res

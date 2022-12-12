@@ -47,13 +47,27 @@ references:
       run:
         name: Install Neo4j
         command: |
-          curl -fsSL https://debian.neo4j.com/neotechnology.gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/neo4j.gpg
-          echo "deb [signed-by=/usr/share/keyrings/neo4j.gpg] https://debian.neo4j.com stable 4.4" | sudo tee -a /etc/apt/sources.list.d/neo4j.list
+          # workaround for 402 Payment required issue: https://github.com/actions/runner-images/issues/1983
+          sudo rm -fv /etc/apt/sources.list.d/github_git-lfs.list
+          sudo rm -fv /etc/apt/sources.list.d/github_git-lfs.list.save
+
+          wget -O - https://debian.neo4j.com/neotechnology.gpg.key | sudo apt-key add -
+          echo 'deb https://debian.neo4j.com stable 4.4' | sudo tee /etc/apt/sources.list.d/neo4j.list
           sudo apt-get update
           apt list -a neo4j
           sudo apt-get install neo4j
           sudo chown -R circleci /var/log/neo4j
           sudo chown -R circleci /var/lib/neo4j
+          sudo chown -R circleci /etc/neo4j
+          mkdir -p /var/lib/neo4j/plugins
+          wget -O /var/lib/neo4j/plugins/apoc-4.4.0.8-all.jar https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases/download/4.4.0.8/apoc-4.4.0.8-all.jar
+          neo4j_conf_file="/etc/neo4j/neo4j.conf"
+          sudo echo "dbms.security.procedures.unrestricted=apoc.*" >> $neo4j_conf_file
+          sudo echo "dbms.security.procedures.allowlist=apoc.*" >> $neo4j_conf_file
+          apoc_conf_file="/etc/neo4j/apoc.conf"
+          sudo echo "apoc.export.file.enabled=true" > $apoc_conf_file
+          sudo echo "apoc.import.file.enabled=true" >> $apoc_conf_file
+          sudo echo "apoc.import.file.use_neo4j_config=true" >> $apoc_conf_file
           neo4j-admin set-initial-password test
 
     install_node_ci: &install_node_ci
@@ -169,6 +183,7 @@ jobs:
         - python/install-packages:
             pkg-manager: "poetry"
             cache-version: << pipeline.parameters.cache-version >>
+
         - <<: *install_node_ci
         - run:
             name: pytest - graph
@@ -180,7 +195,7 @@ jobs:
               mkdir graph-test-results
               poetry run pytest -v --junitxml=graph-test-results/junit.xml $TEST_FILES
         - store_test_results:
-            path: graph-test-results        
+            path: graph-test-results
         - run:
             name: pytest - integrations
             no_output_timeout: 15m
@@ -217,6 +232,12 @@ jobs:
             command: |
               poetry run pre-commit --version
               poetry run pre-commit run -a
+        
+        - run:
+            name: Run Pytest collection
+            command: |
+                poetry run pytest --collect-only .
+
         - save_cache:
             key: v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}
             paths:
@@ -247,7 +268,9 @@ jobs:
         - attach_workspace:
             at: ~/project
         - <<: *install_build_dependencies
-        - <<: *install_node_ci
+        - node/install-packages:
+            cache-version: << pipeline.parameters.cache-version >>
+            app-dir: content
         - run:
             name: Set Up & Create Id Set
             when: always

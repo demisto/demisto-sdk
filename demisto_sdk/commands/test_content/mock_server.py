@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import ast
 import os
 import string
@@ -7,8 +5,7 @@ import time
 import unicodedata
 from contextlib import contextmanager
 from pprint import pformat
-from subprocess import (STDOUT, CalledProcessError, call, check_call,
-                        check_output)
+from subprocess import STDOUT, CalledProcessError, call, check_call, check_output
 from threading import Lock
 from typing import Dict, Iterator
 
@@ -102,7 +99,7 @@ class AMIConnection:
             raise TypeError("options must be string")
         if not isinstance(command, list):
             raise TypeError("command must be list")
-        prefix = "ssh {} {}@{}".format(ssh_options, SSH_USER, self.internal_ip).split()
+        prefix = f"ssh {ssh_options} {SSH_USER}@{self.internal_ip}".split()
         return prefix + command
 
     def call(self, command, **kwargs):
@@ -115,7 +112,7 @@ class AMIConnection:
         return check_output(self.add_ssh_prefix(command), **kwargs)
 
     def copy_file(self, src, dst=REMOTE_HOME, **kwargs):
-        silence_output(check_call, ['scp', src, "{}@{}:{}".format(SSH_USER, self.internal_ip, dst)],
+        silence_output(check_call, ['scp', src, f"{SSH_USER}@{self.internal_ip}:{dst}"],
                        stdout='null', **kwargs)
         return os.path.join(dst, os.path.basename(src))
 

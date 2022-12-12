@@ -9,35 +9,31 @@ from datetime import datetime
 from distutils.version import LooseVersion
 from enum import Enum
 from functools import partial
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
 import click
 import networkx
 
-from demisto_sdk.commands.common.constants import (
-    AGENT_CONFIG_DIR, CLASSIFIERS_DIR, COMMON_TYPES_PACK,
-    CORRELATION_RULES_DIR, DASHBOARDS_DIR, DEFAULT_CONTENT_ITEM_FROM_VERSION,
-    DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_DEFINITIONS_DIR,
-    GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR, GENERIC_TYPES_DIR,
-    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
-    INDICATOR_TYPES_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR,
-    MODELING_RULES_DIR, PARSING_RULES_DIR, REPORTS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR,
-    XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, FileType, MarketplaceVersions)
-from demisto_sdk.commands.common.content_constant_paths import (
-    DEFAULT_ID_SET_PATH, MP_V2_ID_SET_PATH)
+from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, COMMON_TYPES_PACK, CORRELATION_RULES_DIR,
+                                                   DASHBOARDS_DIR, DEFAULT_CONTENT_ITEM_FROM_VERSION,
+                                                   DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_DEFINITIONS_DIR,
+                                                   GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR, GENERIC_TYPES_DIR,
+                                                   INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+                                                   INDICATOR_TYPES_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR,
+                                                   MODELING_RULES_DIR, PARSING_RULES_DIR, REPORTS_DIR, SCRIPTS_DIR,
+                                                   TEST_PLAYBOOKS_DIR, TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR,
+                                                   XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, FileType,
+                                                   MarketplaceVersions)
+from demisto_sdk.commands.common.content_constant_paths import (DEFAULT_ID_SET_PATH, MP_V2_ID_SET_PATH,
+                                                                XPANSE_ID_SET_PATH)
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
-                                               get_current_repo,
-                                               get_display_name, get_file,
-                                               get_item_marketplaces, get_json,
-                                               get_pack_name, get_yaml,
-                                               print_color, print_error,
-                                               print_warning)
-from demisto_sdk.commands.unify.integration_script_unifier import \
-    IntegrationScriptUnifier
+from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_current_repo, get_display_name, get_file,
+                                               get_item_marketplaces, get_json, get_pack_name, get_yaml, print_color,
+                                               print_error, print_warning)
+from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
 
 json = JSON_Handler()
 
@@ -51,17 +47,22 @@ ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Cla
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes', 'GenericFields', 'GenericModules',
                    'GenericDefinitions', 'Lists', 'Jobs', 'ParsingRules', 'ModelingRules',
-                   'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'Wizards', 'AgentConfigs']
+                   'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'Wizards', 'XDRCTemplates']
 
 CONTENT_MP_V2_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                           'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                           'Layouts', 'Mappers', 'Packs', 'Lists', 'ParsingRules', 'ModelingRules',
-                          'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'AgentConfigs']
+                          'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'XDRCTemplates']
 
 ID_SET_MP_V2_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                          'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                          'Layouts', 'Mappers', 'Lists', 'ParsingRules', 'ModelingRules',
-                         'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'AgentConfigs']
+                         'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'XDRCTemplates']
+
+CONTENT_XPANSE_ENTITIES = ['Packs', 'Integrations', 'Scripts', 'Playbooks', 'IncidentFields', 'IncidentTypes']
+
+ID_SET_XPANSE_ENTITIES = ['integrations', 'scripts', 'playbooks', 'IncidentFields', 'IncidentTypes']
+
 
 BUILT_IN_FIELDS = [
     "name",
@@ -368,13 +369,12 @@ def get_filters_and_transformers_from_playbook(data_dict: dict) -> Tuple[list, l
 
 
 def get_integration_api_modules(file_path, data_dictionary, is_unified_integration):
-    unifier = IntegrationScriptUnifier(os.path.dirname(file_path))
     if is_unified_integration:
         integration_script_code = data_dictionary.get('script', {}).get('script', '')
     else:
-        _, integration_script_code = unifier.get_script_or_integration_package_data()
+        _, integration_script_code = IntegrationScriptUnifier.get_script_or_integration_package_data(os.path.dirname(file_path))
 
-    return list(unifier.check_api_module_imports(integration_script_code).values())
+    return list(IntegrationScriptUnifier.check_api_module_imports(integration_script_code).values())
 
 
 def get_integration_data(file_path, packs: Dict[str, Dict] = None):
@@ -1299,7 +1299,7 @@ def get_correlation_rule_data(path: str, packs: Dict[str, Dict] = None):
     return {id_: data}
 
 
-def get_agent_config_data(path: str, packs: Dict[str, Dict] = None):
+def get_xdrc_template_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
 
     id_ = json_data.get('content_global_id')
@@ -1354,7 +1354,7 @@ def process_integration(file_path: str, packs: Dict[str, Dict], marketplace: str
         else:
             # package integration
             package_name = os.path.basename(file_path)
-            file_path = os.path.join(file_path, '{}.yml'.format(package_name))
+            file_path = os.path.join(file_path, f'{package_name}.yml')
             if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
                 return [], excluded_items_from_id_set
             if os.path.isfile(file_path):
@@ -1394,8 +1394,7 @@ def process_script(file_path: str, packs: Dict[str, Dict], marketplace: str, pri
                 res.append(get_script_data(file_path, packs=packs))
         else:
             # package script
-            unifier = IntegrationScriptUnifier(file_path)
-            yml_path, code = unifier.get_script_or_integration_package_data()
+            yml_path, code = IntegrationScriptUnifier.get_script_or_integration_package_data(Path(file_path))
             if should_skip_item_by_mp(yml_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
                 return [], excluded_items_from_id_set
             if print_logs:
@@ -1622,7 +1621,7 @@ def process_general_items(file_path: str, packs: Dict[str, Dict], marketplace: s
     * XSIAMDashboards
     * XSIAMReports
     * Triggers
-    * AgentConfigs
+    * XDRCTemplates
 
     Args:
         file_path: The file path from an item folder
@@ -1992,10 +1991,10 @@ def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_se
     """
     Merges two id-sets. Loads them from files and saves the merged unified id_set into output_id_set_path.
     """
-    with open(first_id_set_path, mode='r') as f1:
+    with open(first_id_set_path) as f1:
         first_id_set = json.load(f1)
 
-    with open(second_id_set_path, mode='r') as f2:
+    with open(second_id_set_path) as f2:
         second_id_set = json.load(f2)
 
     unified_id_set, duplicates = merge_id_sets(first_id_set, second_id_set, print_logs)
@@ -2058,14 +2057,16 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
     Returns: id-set object
     """
     if id_set_path == "":
-        if marketplace == MarketplaceVersions.MarketplaceV2.value:
-            id_set_path = MP_V2_ID_SET_PATH
-        else:
-            id_set_path = DEFAULT_ID_SET_PATH
+        id_set_path = {
+            MarketplaceVersions.MarketplaceV2.value: MP_V2_ID_SET_PATH,
+            MarketplaceVersions.XPANSE.value: XPANSE_ID_SET_PATH,
+        }.get(marketplace, DEFAULT_ID_SET_PATH)
 
     if not objects_to_create:
         if marketplace == MarketplaceVersions.MarketplaceV2.value:
             objects_to_create = CONTENT_MP_V2_ENTITIES
+        elif marketplace == MarketplaceVersions.XPANSE.value:
+            objects_to_create = CONTENT_XPANSE_ENTITIES
         else:
             objects_to_create = CONTENT_ENTITIES
 
@@ -2091,7 +2092,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                     "doesn't require a refresh. Will use current id-set. "
                     "If you rather force an id-set refresh, unset DEMISTO_SDK_ID_SET_REFRESH_INTERVAL or set it to -1.",
                     LOG_COLORS.GREEN)
-                with open(id_set_path, mode="r") as f:
+                with open(id_set_path) as f:
                     return json.load(f)
             else:
                 print_color(
@@ -2135,7 +2136,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
     xsiam_reports_list = []
     triggers_list = []
     wizards_list = []
-    agent_configs_list = []
+    xdrc_templates_list = []
     packs_dict: Dict[str, Dict] = {}
     excluded_items_by_pack: Dict[str, set] = {}
     excluded_items_by_type: Dict[str, set] = {}
@@ -2704,24 +2705,24 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'AgentConfigs' in objects_to_create:
-            print_color("\nStarting iteration over AgentConfigs", LOG_COLORS.GREEN)
+        if 'XDRCTemplates' in objects_to_create:
+            print_color("\nStarting iteration over XDRCTemplates", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        packs=packs_dict,
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                           FileType.AGENT_CONFIG),
-                                                                       data_extraction_func=get_agent_config_data,
+                                                                           FileType.XDRC_TEMPLATE),
+                                                                       data_extraction_func=get_xdrc_template_data,
                                                                        suffix='json'
                                                                        ),
-                                                               get_general_paths(AGENT_CONFIG_DIR,
+                                                               get_general_paths(XDRC_TEMPLATE_DIR,
                                                                                  pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('agentConfigs',
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('XDRCTemplates',
                                                                                                []).append(_id)
-                agent_configs_list.extend(arr)
+                xdrc_templates_list.extend(arr)
                 update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
                                            excluded_items_from_iteration)
 
@@ -2751,7 +2752,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
     new_ids_dict['Triggers'] = sort(triggers_list)
     new_ids_dict['Wizards'] = sort(wizards_list)
     new_ids_dict['Packs'] = packs_dict
-    new_ids_dict['AgentConfigs'] = sort(agent_configs_list)
+    new_ids_dict['XDRCTemplates'] = sort(xdrc_templates_list)
 
     if marketplace != MarketplaceVersions.MarketplaceV2.value:
         new_ids_dict['GenericTypes'] = sort(generic_types_list)
@@ -2772,7 +2773,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
         new_ids_dict['Dashboards'] = []
 
     exec_time = time.time() - start_time
-    print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)
+    print_color(f"Finished the creation of the id_set. Total time: {exec_time} seconds", LOG_COLORS.GREEN)
 
     duplicates = find_duplicates(new_ids_dict, print_logs, marketplace)
     if any(duplicates) and fail_on_duplicates:
@@ -2783,12 +2784,12 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
 def find_duplicates(id_set, print_logs, marketplace):
     lists_to_return = []
-
-    entities = ID_SET_ENTITIES if marketplace != 'marketplacev2' else ID_SET_MP_V2_ENTITIES
+    entities = {MarketplaceVersions.MarketplaceV2.value: ID_SET_MP_V2_ENTITIES,
+                MarketplaceVersions.XPANSE.value: ID_SET_XPANSE_ENTITIES}.get(marketplace, ID_SET_ENTITIES)
 
     for object_type in entities:
         if print_logs:
-            print_color("Checking diff for {}".format(object_type), LOG_COLORS.GREEN)
+            print_color(f"Checking diff for {object_type}", LOG_COLORS.GREEN)
         objects = id_set.get(object_type)
         ids = {list(specific_item.keys())[0] for specific_item in objects}
 

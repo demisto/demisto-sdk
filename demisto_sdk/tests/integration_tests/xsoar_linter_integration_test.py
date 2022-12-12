@@ -13,9 +13,8 @@ import pytest
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.lint import linter
-from demisto_sdk.tests.constants_test import (
-    GIT_ROOT, XSOAR_LINTER_PY3_INVALID, XSOAR_LINTER_PY3_INVALID_WARNINGS,
-    XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER, XSOAR_LINTER_PY3_VALID)
+from demisto_sdk.tests.constants_test import (GIT_ROOT, XSOAR_LINTER_PY3_INVALID, XSOAR_LINTER_PY3_INVALID_WARNINGS,
+                                              XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER, XSOAR_LINTER_PY3_VALID)
 
 files = [
 

@@ -10,8 +10,7 @@ from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-from demisto_sdk.commands.update_release_notes.update_rn_manager import \
-    UpdateReleaseNotesManager
+from demisto_sdk.commands.update_release_notes.update_rn_manager import UpdateReleaseNotesManager
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from TestSuite.test_tools import ChangeCWD
 
@@ -73,7 +72,7 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
     assert 'Changes were detected. Bumping FeedAzureValid to version: 1.0.1' in result.stdout
     assert 'Finished updating release notes for FeedAzureValid.' in result.stdout
 
-    with open(rn_path, 'r') as f:
+    with open(rn_path) as f:
         rn = f.read()
     assert expected_rn == rn
 
@@ -121,7 +120,7 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
     assert 'Changes were detected. Bumping FeedAzureValid to version: 1.0.1' in result.stdout
     assert 'Finished updating release notes for FeedAzureValid.' in result.stdout
 
-    with open(rn_path, 'r') as f:
+    with open(rn_path) as f:
         rn = f.read()
 
     assert expected_rn == rn
@@ -167,7 +166,7 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
     assert 'Changes were detected. Bumping FeedAzureValid to version: 1.0.1' in result.stdout
     assert 'Finished updating release notes for FeedAzureValid.' in result.stdout
 
-    with open(rn_path, 'r') as f:
+    with open(rn_path) as f:
         rn = f.read()
     assert expected_rn == rn
 
@@ -212,7 +211,7 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
     assert 'Finished updating release notes for VMware.' in result.stdout
 
     assert os.path.isfile(rn_path)
-    with open(rn_path, 'r') as f:
+    with open(rn_path) as f:
         rn = f.read()
     assert expected_rn == rn
 
@@ -289,7 +288,7 @@ def test_update_release_notes_existing(demisto_client, mocker):
     assert not result.exception
     assert 'Finished updating release notes for FeedAzureValid.' in result.stdout
 
-    with open(rn_path, 'r') as f:
+    with open(rn_path) as f:
         rn = f.read()
     os.remove(rn_path)
     assert expected_rn == rn
@@ -561,6 +560,6 @@ def test_force_update_release(demisto_client, mocker, repo):
     assert 'Bumping ThinkCanary to version: 1.0.1' in result.stdout
     assert 'Finished updating release notes for ThinkCanary.' in result.stdout
 
-    with open(rn_path, 'r') as f:
+    with open(rn_path) as f:
         rn = f.read()
     assert '##### ThinkCanary\n- %%UPDATE_RN%%\n' == rn

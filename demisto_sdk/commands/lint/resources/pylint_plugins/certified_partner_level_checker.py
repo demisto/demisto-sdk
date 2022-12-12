@@ -50,7 +50,7 @@ class CertifiedPartnerChecker(BaseChecker):
     msgs = cert_partner_msg
 
     def __init__(self, linter=None):
-        super(CertifiedPartnerChecker, self).__init__(linter)
+        super().__init__(linter)
         self.list_of_function_names = set()
 
     # ------------------------------------- visit functions -------------------------------------------------

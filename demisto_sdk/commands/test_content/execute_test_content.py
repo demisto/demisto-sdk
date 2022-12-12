@@ -4,10 +4,8 @@ from threading import Thread
 
 import requests
 
-from demisto_sdk.commands.test_content.ParallelLoggingManager import \
-    ParallelLoggingManager
-from demisto_sdk.commands.test_content.TestContentClasses import (
-    BuildContext, ServerContext)
+from demisto_sdk.commands.test_content.ParallelLoggingManager import ParallelLoggingManager
+from demisto_sdk.commands.test_content.TestContentClasses import BuildContext, ServerContext
 
 SKIPPED_CONTENT_COMMENT = 'The following integrations/tests were collected by the CI build but are currently skipped. ' \
                           'The collected tests are related to this pull request and might be critical.'
@@ -26,7 +24,7 @@ def _add_pr_comment(comment, logging_module):
     branch_name = os.environ['CI_COMMIT_BRANCH']
     sha1 = os.environ['CI_COMMIT_SHA']
 
-    query = '?q={}+repo:demisto/content+org:demisto+is:pr+is:open+head:{}+is:open'.format(sha1, branch_name)
+    query = f'?q={sha1}+repo:demisto/content+org:demisto+is:pr+is:open+head:{branch_name}+is:open'
     url = 'https://api.github.com/search/issues'
     headers = {'Authorization': 'Bearer ' + token}
 

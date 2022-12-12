@@ -3,8 +3,7 @@ from typing import Iterator, List
 import pytest
 from jsonschema import ValidationError
 
-from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
-    XSOARConfigJsonValidator
+from demisto_sdk.commands.common.hook_validations.xsoar_config_json import XSOARConfigJsonValidator
 
 
 def test_schema_file_correct_path():
@@ -23,8 +22,7 @@ def test_schema_file_correct_path():
 class TestCreateSchemaValidationResultsTable:
     @staticmethod
     def errors_iterator(errors_list: List) -> Iterator[ValidationError]:
-        for error in errors_list:
-            yield error
+        yield from errors_list
 
     def test_create_schema_validation_results_table_no_errors(self):
         """

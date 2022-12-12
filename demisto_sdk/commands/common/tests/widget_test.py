@@ -1,8 +1,8 @@
-import pytest
-from mock import patch
+from unittest.mock import patch
 
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
+import pytest
+
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 
 

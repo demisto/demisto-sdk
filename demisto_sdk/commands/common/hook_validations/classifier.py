@@ -2,15 +2,11 @@ from distutils.version import LooseVersion
 
 import click
 
-from demisto_sdk.commands.common.constants import \
-    LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
+from demisto_sdk.commands.common.constants import LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    error_codes
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
-from demisto_sdk.commands.common.tools import \
-    get_all_incident_and_indicator_fields_from_id_set
+from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
+from demisto_sdk.commands.common.tools import get_all_incident_and_indicator_fields_from_id_set
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 
 FROM_VERSION_FOR_NEW_CLASSIFIER = '6.0.0'
@@ -62,7 +58,7 @@ class ClassifierValidator(ContentEntityValidator):
         Returns:
             bool. True if valid, and False otherwise.
         """
-        return super(ClassifierValidator, self)._is_id_equals_name('classifier')
+        return super()._is_id_equals_name('classifier')
 
     def is_valid_version(self):
         """Checks if version field is valid. uses default method.

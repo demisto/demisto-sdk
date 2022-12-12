@@ -27,30 +27,32 @@ import giturlparse
 import requests
 import urllib3
 from bs4 import UnicodeDammit
-from packaging.version import parse
+from git.types import PathLike
+from packaging.version import LegacyVersion, Version, parse
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
+from ruamel.yaml.comments import CommentedSeq
 
-from demisto_sdk.commands.common.constants import (
-    AGENT_CONFIG_DIR, ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK,
-    CLASSIFIERS_DIR, DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
-    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-    DOC_FILES_DIR, ENV_DEMISTO_SDK_MARKETPLACE, ID_IN_COMMONFIELDS, ID_IN_ROOT,
-    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
-    INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
-    MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME, MODELING_RULES_DIR,
-    NON_LETTERS_OR_NUMBERS_PATTERN, OFFICIAL_CONTENT_ID_SET_PATH,
-    PACK_METADATA_IRON_BANK_TAG, PACKAGE_SUPPORTING_DIRECTORIES,
-    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
-    PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
-    PACKS_README_FILE_NAME, PARSING_RULES_DIR, PLAYBOOKS_DIR,
-    PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
-    SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR, TRIGGER_DIR,
-    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSIAM_DASHBOARDS_DIR,
-    XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys,
-    IdSetKeys, MarketplaceVersions, urljoin)
-from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
-                                                            GitProvider)
+from demisto_sdk.commands.common.constants import (ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK,
+                                                   CLASSIFIERS_DIR, DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
+                                                   DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
+                                                   DOC_FILES_DIR, ENV_DEMISTO_SDK_MARKETPLACE, ID_IN_COMMONFIELDS,
+                                                   ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
+                                                   INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR,
+                                                   JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, MARKETPLACE_KEY_PACK_METADATA,
+                                                   METADATA_FILE_NAME, MODELING_RULES_DIR,
+                                                   NON_LETTERS_OR_NUMBERS_PATTERN, OFFICIAL_CONTENT_ID_SET_PATH,
+                                                   PACK_METADATA_IRON_BANK_TAG, PACKAGE_SUPPORTING_DIRECTORIES,
+                                                   PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
+                                                   PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
+                                                   PACKS_README_FILE_NAME, PARSING_RULES_DIR, PLAYBOOKS_DIR,
+                                                   PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX,
+                                                   REPORTS_DIR, SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR,
+                                                   TRIGGER_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
+                                                   XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
+                                                   XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, IdSetKeys,
+                                                   MarketplaceVersions, urljoin)
+from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 
@@ -216,7 +218,7 @@ def get_yml_paths_in_dir(project_dir: str, error_msg: str = '') -> Tuple[list, s
 
 # print srt in the given color
 def print_color(obj, color):
-    print(u'{}{}{}'.format(color, obj, LOG_COLORS.NATIVE))
+    print(f'{color}{obj}{LOG_COLORS.NATIVE}')
 
 
 def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = True) -> list:
@@ -247,7 +249,7 @@ def src_root() -> Path:
     git_dir = git.Repo(Path.cwd(),
                        search_parent_directories=True).working_tree_dir
 
-    return Path(git_dir) / 'demisto_sdk'
+    return Path(git_dir) / 'demisto_sdk'  # type: ignore
 
 
 def print_error(error_str):
@@ -282,10 +284,10 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     output, err = p.communicate()
     if err:
         if exit_on_error:
-            print_error('Failed to run command {}\nerror details:\n{}'.format(command, err))
+            print_error(f'Failed to run command {command}\nerror details:\n{err}')
             sys.exit(1)
         else:
-            raise RuntimeError('Failed to run command {}\nerror details:\n{}'.format(command, err))
+            raise RuntimeError(f'Failed to run command {command}\nerror details:\n{err}')
 
     return output
 
@@ -364,7 +366,7 @@ def get_remote_file_from_api(
             res.raise_for_status()
         else:  # Github
             res = requests.get(git_path, verify=False, timeout=10, headers={
-                'Authorization': f"Bearer {github_token}" if github_token else None,
+                'Authorization': f"Bearer {github_token}" if github_token else '',
                 'Accept': f'application/vnd.github.VERSION.raw',
             })  # Sometime we need headers
             if not res.ok:  # sometime we need param token
@@ -448,7 +450,7 @@ def get_remote_file(
     return get_remote_file_from_api(full_file_path, git_content_config, tag, return_content, suppress_print)
 
 
-def filter_files_on_pack(pack: str, file_paths_list=str()) -> set:
+def filter_files_on_pack(pack: str, file_paths_list='') -> set:
     """
     filter_files_changes_on_pack.
 
@@ -868,7 +870,7 @@ def get_latest_release_notes_text(rn_path):
             if not rn:
                 print_error(f'Release Notes may not be empty. Please fill out correctly. - {rn_path}')
                 return None
-        except IOError:
+        except OSError:
             return ''
 
     return rn if rn else None
@@ -1109,7 +1111,7 @@ def filter_files_by_type(file_paths=None, skip_file_types=None) -> set:
 
 
 def pack_name_to_path(pack_name):
-    return os.path.join(get_content_path(), PACKS_DIR, pack_name)
+    return os.path.join(get_content_path(), PACKS_DIR, pack_name)  # type: ignore
 
 
 def pack_name_to_posix_path(pack_name):
@@ -1117,7 +1119,7 @@ def pack_name_to_posix_path(pack_name):
 
 
 def get_pack_ignore_file_path(pack_name):
-    return os.path.join(get_content_path(), PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
+    return os.path.join(get_content_path(), PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)  # type: ignore
 
 
 def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # type: ignore
@@ -1236,9 +1238,9 @@ def get_python_version(docker_image, log_verbose=None, no_prints=False):
     py_ver = check_output(["docker", "run", "--rm", docker_image,
                            "python", "-c",
                            "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))"],
-                          universal_newlines=True, stderr=stderr_out).strip()
+                          text=True, stderr=stderr_out).strip()
     if not no_prints:
-        print("Detected python version: [{}] for docker image: {}".format(py_ver, docker_image))
+        print(f"Detected python version: [{py_ver}] for docker image: {docker_image}")
 
     py_num = float(py_ver)
     if py_num < 2.7 or (3 < py_num < 3.4):  # pylint can only work on python 3.4 and up
@@ -1255,7 +1257,7 @@ def get_pipenv_dir(py_version, envs_dirs_base):
     Returns:
         string -- full path to the pipenv dir
     """
-    return "{}{}".format(envs_dirs_base, int(py_version))
+    return f"{envs_dirs_base}{int(py_version)}"
 
 
 def print_v(msg, log_verbose=None):
@@ -1280,9 +1282,9 @@ def get_dev_requirements(py_version, envs_dirs_base):
     """
     env_dir = get_pipenv_dir(py_version, envs_dirs_base)
     stderr_out = None if LOG_VERBOSE else DEVNULL
-    requirements = check_output(['pipenv', 'lock', '-r', '-d'], cwd=env_dir, universal_newlines=True,
+    requirements = check_output(['pipenv', 'lock', '-r', '-d'], cwd=env_dir, text=True,
                                 stderr=stderr_out)
-    print_v("dev requirements:\n{}".format(requirements))
+    print_v(f"dev requirements:\n{requirements}")
     return requirements
 
 
@@ -1320,7 +1322,7 @@ def get_dict_from_file(path: str,
     return {}, None
 
 
-@lru_cache()
+@lru_cache
 def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     """Find FileType value of a path, without accessing the file.
     This function is here as we want to implement lru_cache and we can do it on `find_type`
@@ -1360,8 +1362,12 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.XSOAR_CONFIG
         elif 'CONTRIBUTORS' in path.name:
             return FileType.CONTRIBUTORS
-        elif AGENT_CONFIG_DIR in path.parts:
-            return FileType.AGENT_CONFIG
+        elif XDRC_TEMPLATE_DIR in path.parts:
+            return FileType.XDRC_TEMPLATE
+        elif MODELING_RULES_DIR in path.parts and 'testdata' in path.stem.casefold():
+            return FileType.MODELING_RULE_TEST_DATA
+        elif MODELING_RULES_DIR in path.parts and path.stem.casefold().endswith('_schema'):
+            return FileType.MODELING_RULE_SCHEMA
 
     elif path.name.endswith('_image.png'):
         if path.name.endswith('Author_image.png'):
@@ -1385,6 +1391,8 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
         return FileType.JAVASCRIPT_FILE
 
     elif path.suffix == '.xif':
+        if MODELING_RULES_DIR in path.parts:
+            return FileType.MODELING_RULE_XIF
         return FileType.XIF_FILE
 
     elif path.suffix == '.yml':
@@ -1399,8 +1407,11 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             # Packs/myPack/Scripts/myScript/myScript.yml
             return FileType.SCRIPT
 
-        elif AGENT_CONFIG_DIR in path.parts:
-            return FileType.AGENT_CONFIG_YML
+        elif XDRC_TEMPLATE_DIR in path.parts:
+            return FileType.XDRC_TEMPLATE_YML
+
+        elif PARSING_RULES_DIR in path.parts:
+            return FileType.PARSING_RULE
 
     elif path.name == FileType.PACK_IGNORE:
         return FileType.PACK_IGNORE
@@ -1483,11 +1494,11 @@ def find_type(
             if MODELING_RULES_DIR in Path(path).parts:
                 return FileType.MODELING_RULE
 
-        if 'global_rule_id' in _dict:
+        if 'global_rule_id' in _dict or (isinstance(_dict, CommentedSeq) and _dict and 'global_rule_id' in _dict[0]):
             return FileType.CORRELATION_RULE
 
     if file_type == 'json' or path.lower().endswith('.json'):
-        if path.lower().endswith('_schema.json'):
+        if path.lower().endswith('_schema.json') and MODELING_RULES_DIR in Path(path).parts:
             return FileType.MODELING_RULE_SCHEMA
 
         if 'widgetType' in _dict:
@@ -1558,7 +1569,7 @@ def find_type(
             return FileType.TRIGGER
 
         if 'profile_type' in _dict and 'yaml_template' in _dict:
-            return FileType.AGENT_CONFIG
+            return FileType.XDRC_TEMPLATE
 
         # When using it for all files validation- sometimes 'id' can be integer
         if 'id' in _dict:
@@ -1608,7 +1619,7 @@ def is_external_repository() -> bool:
     """
     try:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
-        private_settings_path = os.path.join(git_repo.working_dir, '.private-repo-settings')
+        private_settings_path = os.path.join(git_repo.working_dir, '.private-repo-settings')  # type: ignore
         return os.path.exists(private_settings_path)
     except git.InvalidGitRepositoryError:
         return True
@@ -1619,7 +1630,7 @@ def get_content_id_set() -> dict:
     return requests.get(OFFICIAL_CONTENT_ID_SET_PATH).json()
 
 
-def get_content_path() -> str:
+def get_content_path() -> Union[str, PathLike, None]:
     """ Get abs content path, from any CWD
     Returns:
         str: Absolute content path
@@ -1639,7 +1650,8 @@ def get_content_path() -> str:
             raise git.InvalidGitRepositoryError
         return git_repo.working_dir
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
-        print_warning("Please run demisto-sdk in content repository!")
+        if not os.getenv('DEMISTO_SDK_IGNORE_CONTENT_WARNING'):
+            print_warning("Please run demisto-sdk in content repository!")
     return ''
 
 
@@ -1733,7 +1745,7 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
 
         if not is_fork_repo and not is_external_repo:
             return False, ''
-        content_path_parts = Path(git_repo.working_dir).parts
+        content_path_parts = Path(git_repo.working_dir).parts  # type: ignore
         input_path_parts = Path(file_path).parts
         input_path_parts_prefix = input_path_parts[:len(content_path_parts)]
         if content_path_parts == input_path_parts_prefix:
@@ -1993,16 +2005,16 @@ def camel_to_snake(camel: str) -> str:
 def open_id_set_file(id_set_path):
     id_set = {}
     try:
-        with open(id_set_path, 'r') as id_set_file:
+        with open(id_set_path) as id_set_file:
             id_set = json.load(id_set_file)
-    except IOError:
+    except OSError:
         print_warning("Could not open id_set file")
         raise
     finally:
         return id_set
 
 
-def get_demisto_version(client: demisto_client) -> str:
+def get_demisto_version(client: demisto_client) -> Union[Version, LegacyVersion]:
     """
     Args:
         demisto_client: A configured demisto_client instance
@@ -2015,7 +2027,7 @@ def get_demisto_version(client: demisto_client) -> str:
         about_data = json.loads(resp[0].replace("'", '"'))
         return parse(about_data.get('demistoVersion'))  # type: ignore
     except Exception:
-        return "0"
+        return parse("0")
 
 
 def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
@@ -2092,7 +2104,7 @@ def item_type_to_content_items_header(item_type):
         "correlationrule": "correlationRule",
         "modelingrule": "modelingRule",
         "parsingrule": "parsingRule",
-        "agentconfig": "agentConfig"
+        "xdrctemplate": "XDRCTemplate"
     }
 
     return f'{converter.get(item_type, item_type)}s'
@@ -2143,12 +2155,10 @@ def extract_multiple_keys_from_dict(key: str, var: dict):
             if k == key:
                 yield v
             if isinstance(v, dict):
-                for result in extract_multiple_keys_from_dict(key, v):
-                    yield result
+                yield from extract_multiple_keys_from_dict(key, v)
             elif isinstance(v, list):
                 for d in v:
-                    for result in extract_multiple_keys_from_dict(key, d):
-                        yield result
+                    yield from extract_multiple_keys_from_dict(key, d)
 
 
 def find_file(root_path, file_name):
@@ -2167,7 +2177,7 @@ def find_file(root_path, file_name):
     return ''
 
 
-@lru_cache()
+@lru_cache
 def get_file_displayed_name(file_path):
     """Gets the file name that is displayed in the UI by the file's path.
     If there is no displayed name - returns the file name"""
@@ -2317,18 +2327,6 @@ def get_approved_usecases() -> list:
     ).get('approved_list', [])
 
 
-def get_approved_tags() -> list:
-    """Gets approved list of tags from content master
-
-    Returns:
-        List of approved tags
-    """
-    return get_remote_file(
-        'Tests/Marketplace/approved_tags.json',
-        git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
-    ).get('approved_list', [])
-
-
 def get_pack_metadata(file_path: str) -> dict:
     """ Get the pack_metadata dict, of the pack containing the given file path.
 
@@ -2406,12 +2404,12 @@ def get_release_note_entries(version='') -> list:
                                              ).decode('utf-8').split('\n')
 
     if not version or 'dev' in version:
-        version = 'Changelog'
+        version = 'Unreleased'
 
-    if f'# {version}' not in changelog_file_content:
+    if f'## {version}' not in changelog_file_content:
         return []
 
-    result = changelog_file_content[changelog_file_content.index(f'# {version}') + 1:]
+    result = changelog_file_content[changelog_file_content.index(f'## {version}') + 1:]
     result = result[:result.index('')]
 
     return result
@@ -2429,16 +2427,31 @@ def get_current_usecases() -> list:
     return []
 
 
-def get_current_tags() -> list:
+def get_approved_tags_from_branch() -> Dict[str, List[str]]:
     """Gets approved list of tags from current branch (only in content repo).
 
     Returns:
-        List of approved tags from current branch
+        Dict of approved tags from current branch
     """
     if not is_external_repository():
         approved_tags_json, _ = get_dict_from_file('Tests/Marketplace/approved_tags.json')
-        return approved_tags_json.get('approved_list', [])
-    return []
+        if isinstance(approved_tags_json.get('approved_list'), list):
+            print_warning('You are using a deprecated version of the file aproved_tags.json, consider pulling from master'
+                          ' to update it.')
+            return {'common': approved_tags_json.get('approved_list', []), 'xsoar': [], 'marketplacev2': [], 'xpanse': []}
+
+        return approved_tags_json.get('approved_list', {})
+    return {}
+
+
+def get_current_categories() -> list:
+    """Gets approved list of categories from current branch (only in content repo).
+
+    Returns:
+        List of approved categories from current branch
+    """
+    approved_categories_json, _ = get_dict_from_file('Tests/Marketplace/approved_categories.json')
+    return approved_categories_json.get('approved_list', [])
 
 
 @contextmanager
@@ -2603,7 +2616,7 @@ def get_mp_types_from_metadata_by_item(file_path):
         metadata_path = Path(*metadata_path_parts) / METADATA_FILE_NAME
 
     try:
-        with open(metadata_path, 'r') as metadata_file:
+        with open(metadata_path) as metadata_file:
             metadata = json.load(metadata_file)
             marketplaces = metadata.get(MARKETPLACE_KEY_PACK_METADATA)
             if not marketplaces:
@@ -2767,24 +2780,23 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
     return detailed_commands, scripts_and_pbs
 
 
-def alternate_item_fields(content_item):
+def alternate_item_fields(content_item: dict):
     """
     Go over all of the given content item fields and if there is a field with an alternative name, which is marked
     by '_x2', use that value as the value of the original field (the corresponding one without the '_x2' suffix).
     Args:
-        content_item: content item object
+        content_item: content item data
 
     """
-    current_dict = content_item.to_dict() if not isinstance(content_item, dict) else content_item
-    copy_dict = current_dict.copy()  # for modifying dict while iterating
+    copy_dict = content_item.copy()  # for modifying dict while iterating
     for field, value in copy_dict.items():
-        if field.endswith('_x2'):
-            current_dict[field[:-3]] = value
-            current_dict.pop(field)
-        elif isinstance(current_dict[field], dict):
-            alternate_item_fields(current_dict[field])
-        elif isinstance(current_dict[field], list):
-            for item in current_dict[field]:
+        if field.lower().endswith('_x2'):
+            content_item[field[:-3]] = value
+            content_item.pop(field)
+        elif isinstance(content_item[field], dict):
+            alternate_item_fields(content_item[field])
+        elif isinstance(content_item[field], list):
+            for item in content_item[field]:
                 if isinstance(item, dict):
                     alternate_item_fields(item)
 

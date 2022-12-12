@@ -3,11 +3,8 @@ from datetime import datetime
 
 import pytest
 
-from demisto_sdk.commands.coverage_analyze.tests.helpers_test import (
-    JSON_MIN_DATA_FILE, TEST_DATA_DIR, read_file)
-from demisto_sdk.commands.coverage_analyze.tools import (HISTORY_URL,
-                                                         LATEST_URL,
-                                                         get_total_coverage)
+from demisto_sdk.commands.coverage_analyze.tests.helpers_test import JSON_MIN_DATA_FILE, TEST_DATA_DIR, read_file
+from demisto_sdk.commands.coverage_analyze.tools import HISTORY_URL, LATEST_URL, get_total_coverage
 
 
 class TestGetTotalCoverage:

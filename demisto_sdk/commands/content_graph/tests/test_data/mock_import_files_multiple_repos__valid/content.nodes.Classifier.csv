@@ -1,0 +1,2 @@
+:ID,marketplaces,type,display_name,deprecated:boolean,description,toversion,object_id,fromversion,node_id,name,path,content_type,not_in_repository:boolean,:LABEL
+4,xsoar$marketplacev2,classification,SampleClassifier,false,Classifies Sample alerts.,99.99.99,SampleClassifier,6.0.0,Classifier:SampleClassifier,Sample Classifier,/Packs/SamplePack/Classifiers/classifier-SampleClassifier.json,Classifier,false,BaseContent;Classifier

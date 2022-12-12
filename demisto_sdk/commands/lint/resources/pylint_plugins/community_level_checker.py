@@ -26,7 +26,7 @@ class CommunityChecker(BaseChecker):
     msgs = community_msg
 
     def __init__(self, linter=None):
-        super(CommunityChecker, self).__init__(linter)
+        super().__init__(linter)
 
     # -------------------------------------------- Validations--------------------------------------------------
 

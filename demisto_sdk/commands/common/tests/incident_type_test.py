@@ -1,12 +1,10 @@
 from typing import Optional
+from unittest.mock import patch
 
 import pytest
-from mock import patch
 
-from demisto_sdk.commands.common.hook_validations.incident_type import \
-    IncidentTypeValidator
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
+from demisto_sdk.commands.common.hook_validations.incident_type import IncidentTypeValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):

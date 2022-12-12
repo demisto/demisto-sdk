@@ -12,12 +12,9 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import Colors
 from demisto_sdk.commands.common.tools import print_error, print_success
 from demisto_sdk.commands.generate_docs.common import execute_command
-from demisto_sdk.commands.generate_docs.generate_integration_doc import \
-    get_command_examples
-from demisto_sdk.commands.generate_unit_tests.test_case_builder import (
-    ArgsBuilder, TestCase)
-from demisto_sdk.commands.generate_unit_tests.test_module_builder import \
-    TestModule
+from demisto_sdk.commands.generate_docs.generate_integration_doc import get_command_examples
+from demisto_sdk.commands.generate_unit_tests.test_case_builder import ArgsBuilder, TestCase
+from demisto_sdk.commands.generate_unit_tests.test_module_builder import TestModule
 
 logger = logging.getLogger('demisto-sdk')
 json = JSON_Handler()
@@ -55,7 +52,7 @@ class UnitTestsGenerator:
         Returns the source code for which the unit tests will be generated.
         """
 
-        with open(self.input_path, 'r') as input_file:
+        with open(self.input_path) as input_file:
             return input_file.read()
 
     def decision_maker(self, command_name: str):

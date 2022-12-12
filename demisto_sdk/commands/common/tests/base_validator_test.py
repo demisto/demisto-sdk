@@ -4,13 +4,10 @@ from os.path import join
 import pytest
 
 from demisto_sdk.commands.common.constants import PACK_METADATA_SUPPORT
-from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
-                                                FOUND_FILES_AND_IGNORED_ERRORS,
-                                                PRESET_ERROR_TO_CHECK,
-                                                PRESET_ERROR_TO_IGNORE, Errors)
+from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS,
+                                                PRESET_ERROR_TO_CHECK, PRESET_ERROR_TO_IGNORE, Errors)
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
 from TestSuite.test_tools import ChangeCWD
@@ -497,7 +494,7 @@ class TestJsonOutput:
         with ChangeCWD(repo.path):
             # create new file
             base.json_output(integration.yml.path, ui_applicable_error_code, ui_applicable_error_message, False)
-            with open(base.json_file_path, 'r') as f:
+            with open(base.json_file_path) as f:
                 json_output = json.load(f)
 
             assert json_output.sort() == expected_json_1.sort()
@@ -541,7 +538,37 @@ class TestJsonOutput:
         with ChangeCWD(repo.path):
             # create new file
             base.json_output(integration.yml.path, ui_applicable_error_code, ui_applicable_error_message, False)
-            with open(base.json_file_path, 'r') as f:
+            with open(base.json_file_path) as f:
                 json_output = json.load(f)
 
             assert json_output.sort() == expected_json_1.sort()
+
+
+def test_content_items_naming(repo):
+    """
+    Given: Pack with XSIAM content items.
+    When: validating pack items.
+    Then: validate the naming conventions are used.
+    """
+    pack = repo.create_pack('pack')
+    invalid_entities_paths = [
+        pack.create_xdrc_template('test').path,
+        pack.create_correlation_rule('test_correlation').path,
+        pack.create_xsiam_dashboard('test_dashboard').path,
+        pack.create_xsiam_report('test_report').path
+    ]
+
+    valid_entities_paths = [
+        pack.create_modeling_rule('pack').yml.path,
+        pack.create_parsing_rule('pack').yml.path,
+        pack.create_correlation_rule('pack_test').path,
+        pack.create_xsiam_dashboard('pack_test').path,
+        pack.create_xsiam_report('pack_test').path
+    ]
+
+    base_validator = BaseValidator(ignored_errors={})
+    for entity in invalid_entities_paths:
+        assert not base_validator.validate_xsiam_content_item_title(entity)
+
+    for entity in valid_entities_paths:
+        assert base_validator.validate_xsiam_content_item_title(entity)

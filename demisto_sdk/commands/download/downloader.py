@@ -241,13 +241,10 @@ class Downloader:
         Fetches the custom content from Demisto into a temporary dir.
         :return: True if fetched successfully, False otherwise
         """
-        print(f'tarfile encoding is {tarfile.ENCODING}')
-
         try:
             verify = (not self.insecure) if self.insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
             self.client = demisto_client.configure(verify_ssl=verify)
             api_response: tuple = demisto_client.generic_request_func(self.client, '/content/bundle', 'GET')
-            print(f'{api_response=}')
             body: bytes = ast.literal_eval(api_response[0])
             io_bytes = io.BytesIO(body)
 
@@ -265,7 +262,6 @@ class Downloader:
                     if not self.list_files and re.search(r'playbook-.*\.yml', member.name):
                         # if the content item is playbook and list-file flag is true, we should download the file via direct REST API
                         # because there are props like scriptName, that playbook from custom content bundle don't contain
-                        print('7a) downloading playbook')
                         string_to_write = self.download_playbook_yaml(string_to_write)
 
                     try:

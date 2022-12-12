@@ -8,11 +8,10 @@ import click
 
 from demisto_sdk.commands.common.constants import LAYOUT_AND_MAPPER_BUILT_IN_FIELDS, FileType
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import (
-    LAYOUT_CONTAINER_FIELDS, LOG_COLORS,
-    get_all_incident_and_indicator_fields_from_id_set,
-    get_invalid_incident_fields_from_layout, get_yaml, normalize_field_name,
-    print_color, print_error, remove_copy_and_dev_suffixes_from_str)
+from demisto_sdk.commands.common.tools import (LAYOUT_CONTAINER_FIELDS, LOG_COLORS,
+                                               get_all_incident_and_indicator_fields_from_id_set,
+                                               get_invalid_incident_fields_from_layout, get_yaml, normalize_field_name,
+                                               print_color, print_error, remove_copy_and_dev_suffixes_from_str)
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 from demisto_sdk.commands.format.format_constants import (DEFAULT_VERSION, ERROR_RETURN_CODE,
                                                           NEW_FILE_DEFAULT_5_FROMVERSION, SKIP_RETURN_CODE,

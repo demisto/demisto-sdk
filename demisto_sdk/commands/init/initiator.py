@@ -21,11 +21,8 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_
                                                    XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS,
-                                               get_common_server_path,
-                                               get_pack_name, get_yaml,
-                                               print_error, print_v,
-                                               print_warning)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, get_common_server_path, get_pack_name, get_yaml, print_error,
+                                               print_v, print_warning)
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
 json = JSON_Handler()

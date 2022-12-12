@@ -15,11 +15,11 @@ from demisto_sdk.commands.common.constants import (DEFAULT_CONTENT_ITEM_TO_VERSI
                                                    PACKS_PACK_IGNORE_FILE_NAME, PLAYBOOKS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR, TRIGGER_DIR, XSIAM_DASHBOARDS_DIR,
                                                    XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE, FileType, MarketplaceVersions)
-from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.tests.objects.pack_objects.pack_ignore.pack_ignore_test import PACK_IGNORE
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitCredentials
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (LOG_COLORS, MarketplaceTagParser, TagParser, arg_to_list,
                                                compare_context_path_in_yml_and_readme, field_to_cli_name,
@@ -70,17 +70,16 @@ class TestGenericFunctions:
     @pytest.mark.parametrize('file_path, func', FILE_PATHS)
     def test_get_file(self, file_path, func):
         assert func(file_path)
-    
+
     @staticmethod
     @pytest.mark.parametrize('suffix,dump_function', (('.json', json.dumps), ('.yaml', yaml.dumps)))
     def test_get_file_non_unicode(tmp_path, suffix: str, dump_function: Callable):
         """ Tests reading a non-unicode file """
         text = 'Nett hier. Aber waren Sie schon mal in Baden-Württemberg?'  # the umlaut is important
         path = (tmp_path / 'non_unicode').with_suffix(suffix)
-        
+
         path.write_text(dump_function({'text': text}, ensure_ascii=False), encoding='latin-1')
         assert get_file(path, suffix) == {'text': text}
-        
 
     @pytest.mark.parametrize('file_name, prefix, result',
                              [('test.json', 'parsingrule', 'parsingrule-external-test.json'),

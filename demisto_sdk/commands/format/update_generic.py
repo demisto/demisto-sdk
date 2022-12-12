@@ -8,8 +8,8 @@ import dictdiffer
 
 from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION, VERSION_5_5_0
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file, get_max_version, get_remote_file, get_yaml,
-                                               is_file_from_content_repo)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file, get_max_version, get_remote_file,
+                                               get_yaml, is_file_from_content_repo)
 from demisto_sdk.commands.format.format_constants import (DEFAULT_VERSION, ERROR_RETURN_CODE,
                                                           JSON_FROM_SERVER_VERSION_KEY, OLD_FILE_TYPES,
                                                           SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)

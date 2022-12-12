@@ -624,9 +624,9 @@ def _read_file(file_path: Path) -> str:
 def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool = False):
     if clear_cache:
         get_file.cache_clear()
-        
+
     file_path = Path(file_path).absolute()
-    
+
     if not file_path.exists():
         raise FileNotFoundError(file_path)
 

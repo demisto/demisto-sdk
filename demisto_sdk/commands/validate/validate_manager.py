@@ -162,14 +162,15 @@ class ValidateManager:
         self.always_valid = False
         self.ignored_files = set()
         self.new_packs = set()
-        self.skipped_file_types = (FileType.CHANGELOG,
-                                   FileType.DOC_IMAGE,
-                                   FileType.MODELING_RULE_SCHEMA,
-                                   FileType.XSIAM_DASHBOARD_IMAGE,
-                                   FileType.XSIAM_REPORT_IMAGE,
-                                   FileType.XSIAM_DASHBOARD_IMAGE,
-                                   FileType.XDRC_TEMPLATE_YML,
-                                   FileType.XDRC_TEMPLATE,)
+        self.skipped_file_types = (
+            FileType.CHANGELOG,
+            FileType.DOC_IMAGE,
+            FileType.MODELING_RULE_SCHEMA,
+            FileType.XSIAM_DASHBOARD_IMAGE,
+            FileType.XSIAM_REPORT_IMAGE,
+            FileType.XDRC_TEMPLATE_YML,
+            FileType.XDRC_TEMPLATE,
+        )
 
         self.is_external_repo = is_external_repo
         if is_external_repo:
@@ -673,7 +674,13 @@ class ValidateManager:
         elif file_type == FileType.PARSING_RULE:
             return self.validate_parsing_rule(structure_validator, pack_error_ignore_list)
 
-        elif file_type == FileType.MODELING_RULE:
+        elif file_type in (FileType.MODELING_RULE, FileType.MODELING_RULE_XIF, FileType.MODELING_RULE_TEST_DATA):
+            print(f'Validating {file_type.value} file: {file_path}')
+            if self.validate_all:
+                error_ignore_list = pack_error_ignore_list.copy()
+                error_ignore_list.setdefault(os.path.basename(file_path), [])
+                error_ignore_list.get(os.path.basename(file_path)).append('MR104')
+                return self.validate_modeling_rule(structure_validator, error_ignore_list)
             return self.validate_modeling_rule(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.CORRELATION_RULE:
@@ -1734,14 +1741,16 @@ class ValidateManager:
             return '', '', False
 
         # redirect non-test code files to the associated yml file
-        if file_type in [FileType.PYTHON_FILE, FileType.POWERSHELL_FILE, FileType.JAVASCRIPT_FILE, FileType.XIF_FILE]:
+        if file_type in [FileType.PYTHON_FILE, FileType.POWERSHELL_FILE, FileType.JAVASCRIPT_FILE, FileType.XIF_FILE,
+                         FileType.MODELING_RULE_XIF]:
             if not (str(file_path).endswith('_test.py') or str(file_path).endswith('.Tests.ps1') or
                     str(file_path).endswith('_test.js')):
                 file_path = file_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml').replace(
                     '.xif', '.yml')
 
                 if old_path:
-                    old_path = old_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml')
+                    old_path = old_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml').replace(
+                        '.xif', '.yml')
             else:
                 return irrelevant_file_output
 
@@ -1757,6 +1766,13 @@ class ValidateManager:
 
             if old_path:
                 old_path = old_path.replace('_schema', '').replace('.json', '.yml')
+
+        # redirect _testdata.json file to the associated yml file
+        if file_type == FileType.MODELING_RULE_TEST_DATA:
+            file_path = file_path.replace('_testdata.json', '.yml')
+
+            if old_path:
+                old_path = old_path.replace('_testdata.json', '.yml')
 
         # check for old file format
         if self.is_old_file_format(file_path, file_type):

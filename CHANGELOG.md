@@ -1,12 +1,36 @@
 # Changelog
 ## Unreleased
+* Added validation of testdata files for **Modeling Rules**.
+* Added the **update-content-graph** command.
+* Added the ability to limit the number of CPU cores with `DEMISTO_SDK_MAX_CPU_CORES` envirment variable.
+* Fixed an issue where **update-release-notes** failed when changing only xif file in **Modeling Rules**.
+* Added a **validate** step checking types of attributes in the schema file of modeling rule.
+* Added a **validate** step checking that the dataset name of a modeling rule shows in the xif and schema files.
+* Added a **validate** step checking that a correlation rule file does not start with a hyphen.
+* Added a **validate** step checking that xsiam content items follow naming conventions.
+* Fixed an issue where **is_valid_category** and **is_categories_field_match_standard** failed on private repo due to approved_list not imported.
+* Fixed an issue where **validate** didn't fail on the MR103 validation error.
+* Fixed the *--release-notes* flag in demisto-sdk to support the new CHANGELOG format.
+* Fixed an issue where **validate** failed when changing only xif file in **Modeling Rules**.
+* Fixed an issue where **format** failed on indicator files with a `None` value under the `tabs` key.
+* Fixed an issue where **validate** printed errors for only one change of context path instead of all.
+* Fixed an issue where **download** did not suggest using a username/password when authenticating with XSOAR and using invalid arguments.
+* Added support for fromversion/toversion in XSIAM content items (correlation rules, XSIAM dashboards, XSIAM reports and triggers).
+* Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.
+* Added **prepare-content** command which will prepare the pack or content item for the platform.
+## 1.7.9
+* Fixed an issue where an error message in **validate** would not include the suggested fix.
 * Added a validation that enforces predefined categories on MP Packs & integration yml files, the validation also ensures that each pack has only one category.
- * Fixed an issue where **update-release-notes** did not generate release notes for **XDRC Templates**.
- * Fixed an issue where **upload** failed without explaining the reason.
- * Improved implementation of the docker_helper module.
- * Added the **update-content-graph** command.
- * Fixed an issue where **validate** did not check changed pack_metadata.json files when running using git.
- * Added support for **xdrctemplate** to content graph.
+* Fixed an issue where **update-release-notes** did not generate release notes for **XDRC Templates**.
+* Fixed an issue where **upload** failed without explaining the reason.
+* Improved implementation of the docker_helper module.
+* Fixed an issue where **validate** did not check changed pack_metadata.json files when running using git.
+* Added support for **xdrctemplate** to content graph.
+* Fixed an issue where local copies of the newly-introduced `DemistoClassApiModule.py` were validated.
+* Added new release notes templates for the addition and modification of playbooks, layouts and types in the **doc-review** command.
+* Fixed an issue where the **doc-review** command failed on descriptions of new content items.
+* Added the `Command XXX is deprecated. Use XXX instead.` release notes templates to **doc-review** command.
+* Fixed an issue where the **update-release-notes** command didn't add the modeling-rules description for new modeling-rules files.
 
 ## 1.7.8
 * Added the capability to run the MDX server in a docker container for environments without node.

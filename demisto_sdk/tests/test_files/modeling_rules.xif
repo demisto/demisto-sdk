@@ -1,0 +1,8 @@
+[MODEL: dataset="fake_fakerson_raw"]
+filter
+    method contains "GET"
+| alter
+    xdm.target.sent_bytes = to_number(sent_bytes),
+    xdm.network.http.method = method,
+    xdm.network.http.url = URL,
+    xdm.network.http.referrer = referrer;

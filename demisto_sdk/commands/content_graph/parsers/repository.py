@@ -4,6 +4,7 @@ import traceback
 from pathlib import Path
 from typing import Iterator, List, Optional
 
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.content_graph.common import PACKS_FOLDER
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
@@ -29,7 +30,7 @@ class RepositoryParser:
             packs_to_parse (Optional[List[str]]): A list of packs to parse. If not provided, parses all packs.
         """
         self.path: Path = path
-        pool = multiprocessing.Pool()
+        pool = multiprocessing.Pool(processes=cpu_count())
         self.packs_to_parse: Optional[List[str]] = packs_to_parse
         try:
             self.packs: List[PackParser] = list(pool.map(PackParser, self.iter_packs()))

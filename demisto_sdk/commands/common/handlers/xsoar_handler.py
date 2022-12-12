@@ -3,7 +3,7 @@ abstract class for xsoar handlers (yaml, json, etc...)
 """
 
 from abc import ABC, abstractmethod
-from typing import IO, Any, AnyStr
+from typing import IO, Any
 
 
 class XSOAR_Handler(ABC):
@@ -12,7 +12,7 @@ class XSOAR_Handler(ABC):
         pass
 
     @abstractmethod
-    def dump(self, data: AnyStr, fp: IO[str], indent=0, sort_keys=False, **kwargs):
+    def dump(self, data: Any, fp: IO[str], indent=0, sort_keys=False, **kwargs):
         pass
 
     @abstractmethod

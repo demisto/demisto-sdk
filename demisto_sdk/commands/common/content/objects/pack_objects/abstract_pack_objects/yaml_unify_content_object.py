@@ -1,12 +1,9 @@
-import copy
 from typing import List, Optional, Union
 
 from wcmatch.pathlib import EXTMATCH, Path
 
-import demisto_sdk.commands.common.content.errors as exc
-from demisto_sdk.commands.common.constants import ENTITY_TYPE_TO_DIR, FileType
-from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
-from demisto_sdk.commands.unify.rule_unifier import RuleUnifier
+from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.prepare_content.prepare_upload_manager import PrepareUploadManager
 
 from .yaml_content_object import YAMLContentObject
 
@@ -48,10 +45,10 @@ class YAMLContentUnifiedObject(YAMLContentObject):
 
     @property
     def rules_path(self) -> Optional[Path]:
-        """YAML related code path.
+        """YAML related rules (modeling|parsing rule|correlation rule) path.
 
         Returns:
-            Code path or None if code file not found.
+            Rules file path or None if rules file not found.
         """
         patterns = [f"{self.path.stem}.@(xif)"]
         return next(self._path.parent.glob(patterns=patterns, flags=EXTMATCH), None)
@@ -59,7 +56,7 @@ class YAMLContentUnifiedObject(YAMLContentObject):
     @property
     def script(self) -> dict:
         """Script item in object dict:
-            1. Script - Loacted under main keys.
+            1. Script - Located under main keys.
             2. Integration - Located under second level key (script -> script).
         """
         if self._content_type == FileType.INTEGRATION:
@@ -117,60 +114,10 @@ class YAMLContentUnifiedObject(YAMLContentObject):
             1. Add Exception raising in unify module.
             2. Verbosity to quiet mode option in unify module.
         """
-        # Directory configuration - Integrations or Scripts
-        unify_dir = ENTITY_TYPE_TO_DIR[self._content_type.value]
-
+        if isinstance(dest_dir, str):
+            dest_dir = Path(dest_dir)
         # Unify step
-        unifier: Union[IntegrationScriptUnifier, RuleUnifier]
-        if self._content_type in [FileType.SCRIPT, FileType.INTEGRATION]:
-            unifier = IntegrationScriptUnifier(
-                input=str(self.path.parent), dir_name=unify_dir,
-                output=dest_dir, force=True, yml_modified_data=self.to_dict()  # type: ignore
-            )
-
-        elif self._content_type in [FileType.PARSING_RULE, FileType.MODELING_RULE]:
-            unifier = RuleUnifier(input=str(self.path.parent), output=dest_dir, force=True)  # type: ignore
-
-        created_files: List[str] = unifier.unify()
-
-        # Validate that unify succeed - there is not exception raised in unify module.
-        if not created_files:
-            raise exc.ContentDumpError(self, self.path, "Unable to unify object")
-
-        return [Path(path) for path in created_files]
-
-    def _split_yaml_4_5_0(self, dest_dir: Path) -> List[Path]:
-        """Split YAMLContentUnfiedObject in destination dir.
-
-        Args:
-            dest_dir: Destination directory.
-
-        Returns:
-            List[Path]: List of new created files.
-
-        Notes:
-            1. If object contain docker_image_4_5 key with value -> should split to:
-                a. <original_file>
-                b. <original_file_name>_4_5.yml
-
-        TODO:
-            1. Add Exception raising in unify module.
-            2. Verbosity to quiet mode option in unify module.
-        """
-        # Directory configuration - Integrations or Scripts
-        unify_dir = ENTITY_TYPE_TO_DIR[self._content_type.value]
-        # Split step
-        unifier = IntegrationScriptUnifier(input=str(self.path.parent), dir_name=unify_dir, output=str(dest_dir / self.path.name),
-                                           force=True)
-        yaml_dict = self.to_dict()
-        yaml_dict_copy = copy.deepcopy(yaml_dict)
-        script_object = self.script
-        created_files: List[str] = unifier.write_yaml_with_docker(yaml_dict_copy, yaml_dict, script_object).keys()
-        # Validate that split succeed - there is not exception raised in unify module.
-        if not created_files:
-            raise exc.ContentDumpError(self, self.path, "Unable to split object")
-
-        return [Path(path) for path in created_files]
+        return [Path(str(PrepareUploadManager.prepare_for_upload(self.path, dest_dir, force=True)))]
 
     def dump(self, dest_dir: Optional[Union[str, Path]] = None, change_log: Optional[bool] = False,
              readme: Optional[bool] = False, unify: bool = True) -> List[Path]:

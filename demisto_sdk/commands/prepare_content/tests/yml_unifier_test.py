@@ -3,18 +3,19 @@ import copy
 import os
 import re
 import shutil
+from pathlib import Path
 
 import pytest
 import requests
 from click.testing import CliRunner
-from mock import patch
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
-from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
+from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
+from demisto_sdk.commands.prepare_content.prepare_upload_manager import PrepareUploadManager
 from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
@@ -90,31 +91,26 @@ def get_dummy_module(name='MicrosoftApiModule', path=None):
     return DUMMY_MODULE.replace('CLASSNAME', class_name)
 
 
-def test_clean_python_code(repo):
-    pack = repo.create_pack('PackName')
-    integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
-    unifier = IntegrationScriptUnifier(str(integration.path))
+def test_clean_python_code():
     script_code = "import demistomock as demisto\nfrom CommonServerPython import *  # test comment being removed\n" \
                   "from CommonServerUserPython import *\nfrom __future__ import print_function"
     # Test remove_print_future is False
-    script_code = unifier.clean_python_code(script_code, remove_print_future=False)
+    script_code = IntegrationScriptUnifier.clean_python_code(script_code, remove_print_future=False)
     assert script_code == "\n\n\nfrom __future__ import print_function"
     # Test remove_print_future is True
-    script_code = unifier.clean_python_code(script_code)
+    script_code = IntegrationScriptUnifier.clean_python_code(script_code)
     assert script_code.strip() == ""
 
 
 def test_get_code_file():
     # Test integration case
-    unifier = IntegrationScriptUnifier(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/")
-    assert unifier.get_code_file(".py") == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.py"
-    unifier = IntegrationScriptUnifier(f"{git_path()}/demisto_sdk/tests/test_files/Unifier/SampleNoPyFile")
+    package_path = f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/"
+    assert IntegrationScriptUnifier.get_code_file(package_path, ".py") == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.py"
     with pytest.raises(Exception):
-        unifier.get_code_file(".py")
+        IntegrationScriptUnifier.get_code_file(f"{git_path()}/demisto_sdk/tests/test_files/Unifier/SampleNoPyFile", ".py")
     # Test script case
-    unifier = IntegrationScriptUnifier(f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/")
-    assert unifier.get_code_file(".py") == f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/" \
-                                           f"CalculateGeoDistance.py"
+    assert IntegrationScriptUnifier.get_code_file(f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/", ".py") == \
+        f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/CalculateGeoDistance.py"
 
 
 def test_get_code_file_case_insensative(tmp_path):
@@ -123,55 +119,45 @@ def test_get_code_file_case_insensative(tmp_path):
     os.makedirs(integration_dir)
     open(integration_dir / "Dummy.ps1", 'a')
     open(integration_dir / "ADummy.tests.ps1", 'a')  # a test file which is named such a way that it comes up first
-    unifier = IntegrationScriptUnifier(str(integration_dir))
-    assert unifier.get_code_file(".ps1") == str(integration_dir / "Dummy.ps1")
+    assert IntegrationScriptUnifier.get_code_file(integration_dir, ".ps1") == str(integration_dir / "Dummy.ps1")
 
 
 def test_get_script_or_integration_package_data():
-    unifier = IntegrationScriptUnifier(f"{git_path()}/demisto_sdk/tests/test_files/Unifier/SampleNoPyFile")
     with pytest.raises(Exception):
-        unifier.get_script_or_integration_package_data()
-    unifier = IntegrationScriptUnifier(f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance")
+        IntegrationScriptUnifier.get_script_or_integration_package_data(f"{git_path()}/demisto_sdk/tests/test_files/Unifier/SampleNoPyFile")
     with open(f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/CalculateGeoDistance.py", "r") as \
             code_file:
         code = code_file.read()
-    yml_path, code_data = unifier.get_script_or_integration_package_data()
+    yml_path, code_data = IntegrationScriptUnifier.get_script_or_integration_package_data(
+        Path(f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance"))
     assert yml_path == f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/CalculateGeoDistance.yml"
     assert code_data == code
 
 
 def test_get_data():
-    with patch.object(IntegrationScriptUnifier, "__init__", lambda a, b, c, d, e: None):
-        unifier = IntegrationScriptUnifier('', None, None, None)
-        unifier.package_path = f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/"
-        unifier.is_script_package = False
-        with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_image.png", "rb") as image_file:
-            image = image_file.read()
-        data, found_data_path = unifier.get_data(unifier.package_path, "*png")
-        assert data == image
-        assert found_data_path == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_image.png"
-        unifier.is_script_package = True
-        data, found_data_path = unifier.get_data(unifier.package_path, "*png")
-        assert data is None
-        assert found_data_path is None
+    package_path = Path(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/")
+    with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_image.png", "rb") as image_file:
+        image = image_file.read()
+    data, found_data_path = IntegrationScriptUnifier.get_data(package_path, "*png", False)
+    assert data == image
+    assert found_data_path == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_image.png"
+    data, found_data_path = IntegrationScriptUnifier.get_data(package_path, "*png", True)
+    assert data is None
+    assert found_data_path is None
 
 
 def test_insert_description_to_yml():
-    with patch.object(IntegrationScriptUnifier, "__init__", lambda a, b, c, d, e: None):
-        unifier = IntegrationScriptUnifier('', None, None, None)
-        unifier.package_path = f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/"
-        unifier.dir_name = "Integrations"
-        unifier.is_script_package = False
-        with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_description.md", "rb") as desc_file:
-            desc_data = desc_file.read().decode("utf-8")
-        integration_doc_link = '\n\n---\n[View Integration Documentation]' \
-                               '(https://xsoar.pan.dev/docs/reference/integrations/vuln-db)'
-        yml_unified, found_data_path = unifier.insert_description_to_yml(
-            {'commonfields': {'id': 'VulnDB'}}, {}
-        )
+    package_path = Path(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/")
+    with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_description.md", "rb") as desc_file:
+        desc_data = desc_file.read().decode("utf-8")
+    integration_doc_link = '\n\n---\n[View Integration Documentation]' \
+        '(https://xsoar.pan.dev/docs/reference/integrations/vuln-db)'
+    yml_unified, found_data_path = IntegrationScriptUnifier.insert_description_to_yml(
+        package_path, {'commonfields': {'id': 'VulnDB'}}, False
+    )
 
-        assert found_data_path == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_description.md"
-        assert (desc_data + integration_doc_link) == yml_unified['detaileddescription']
+    assert found_data_path == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_description.md"
+    assert (desc_data + integration_doc_link) == yml_unified['detaileddescription']
 
 
 def test_insert_description_to_yml_with_no_detailed_desc(tmp_path):
@@ -189,8 +175,7 @@ def test_insert_description_to_yml_with_no_detailed_desc(tmp_path):
     readme.write_text('README')
     detailed_desc = tmp_path / 'integration_description.md'
     detailed_desc.write_text('')
-    unifier = IntegrationScriptUnifier(str(tmp_path))
-    yml_unified, _ = unifier.insert_description_to_yml({'commonfields': {'id': 'some integration id'}}, {})
+    yml_unified, _ = IntegrationScriptUnifier.insert_description_to_yml(tmp_path, {'commonfields': {'id': 'some integration id'}}, False)
     assert '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/some-integration-id)' \
            == yml_unified['detaileddescription']
 
@@ -209,8 +194,7 @@ def test_get_integration_doc_link_positive(tmp_path):
     """
     readme = tmp_path / 'README.md'
     readme.write_text('README')
-    unifier = IntegrationScriptUnifier(str(tmp_path))
-    integration_doc_link = unifier.get_integration_doc_link({'commonfields': {'id': 'Cortex XDR - IOC'}})
+    integration_doc_link = IntegrationScriptUnifier.get_integration_doc_link(tmp_path, {'commonfields': {'id': 'Cortex XDR - IOC'}})
     assert integration_doc_link == \
         '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/cortex-xdr---ioc)'
     link = re.findall(r'\(([^)]+)\)', integration_doc_link)[0]
@@ -231,13 +215,12 @@ def test_get_integration_doc_link_negative(tmp_path):
     Then:
         - Verify an empty string is returned
     """
-    unifier = IntegrationScriptUnifier(str(tmp_path))
-    integration_doc_link = unifier.get_integration_doc_link({'commonfields': {'id': 'Integration With No README'}})
+    integration_doc_link = IntegrationScriptUnifier.get_integration_doc_link(tmp_path, {'commonfields': {'id': 'Integration With No README'}})
     assert integration_doc_link == ''
 
     readme = tmp_path / 'README.md'
     readme.write_text('')
-    integration_doc_link = unifier.get_integration_doc_link({'commonfields': {'id': 'Integration With Empty README'}})
+    integration_doc_link = IntegrationScriptUnifier.get_integration_doc_link(tmp_path, {'commonfields': {'id': 'Integration With Empty README'}})
     assert integration_doc_link == ''
 
 
@@ -256,30 +239,24 @@ def test_insert_description_to_yml_doc_link_exist(tmp_path, mocker):
     detailed_desc.write_text('[View Integration Documentation]'
                              '(https://xsoar.pan.dev/docs/reference/integrations/some-integration-id)')
     mock_func = mocker.patch.object(IntegrationScriptUnifier, 'get_integration_doc_link', return_result='')
-    unifier = IntegrationScriptUnifier(str(tmp_path))
-    yml_unified, _ = unifier.insert_description_to_yml({'commonfields': {'id': 'some integration id'}}, {})
+    yml_unified, _ = IntegrationScriptUnifier.insert_description_to_yml(tmp_path, {'commonfields': {'id': 'some integration id'}}, False)
     assert mock_func.call_count == 0
 
 
 def test_insert_image_to_yml():
-    with patch.object(IntegrationScriptUnifier, "__init__", lambda a, b, c, d, e: None):
-        unifier = IntegrationScriptUnifier('', None, None, None)
-        unifier.package_path = f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/"
-        unifier.dir_name = "Integrations"
-        unifier.is_script_package = False
-        unifier.image_prefix = "data:image/png;base64,"
-        with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_image.png", "rb") as image_file:
-            image_data = image_file.read()
-            image_data = unifier.image_prefix + base64.b64encode(image_data).decode('utf-8')
-        with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.yml", mode="r", encoding="utf-8") \
-                as yml_file:
-            yml_unified_test = yaml.load(yml_file)
-        with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.yml", "r") as yml:
-            yml_data = yaml.load(yml)
-        yml_unified, found_img_path = unifier.insert_image_to_yml(yml_data, yml_unified_test)
-        yml_unified_test['image'] = image_data
-        assert found_img_path == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_image.png"
-        assert yml_unified == yml_unified_test
+    package_path = Path(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/")
+    image_prefix = "data:image/png;base64,"
+    with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_image.png", "rb") as image_file:
+        image_data = image_file.read()
+        image_data = image_prefix + base64.b64encode(image_data).decode('utf-8')
+    with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.yml", mode="r", encoding="utf-8") \
+            as yml_file:
+        yml_unified_test = yaml.load(yml_file)
+    yml_unified, found_img_path = IntegrationScriptUnifier.insert_image_to_yml(
+        package_path, yml_unified_test, False, image_prefix)
+    yml_unified_test['image'] = image_data
+    assert found_img_path == f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_image.png"
+    assert yml_unified == yml_unified_test
 
 
 def test_insert_image_to_yml_without_image(tmp_path):
@@ -299,8 +276,8 @@ def test_insert_image_to_yml_without_image(tmp_path):
     integration_yml = integration_dir / 'SomeIntegration.yml'
     integration_obj = {'id': 'SomeIntegration'}
     yaml.dump(integration_obj, integration_yml.open('w'))
-    unifier = IntegrationScriptUnifier(str(integration_dir))
-    yml_unified, found_img_path = unifier.insert_image_to_yml(integration_obj, integration_obj)
+    yml_unified, found_img_path = IntegrationScriptUnifier.insert_image_to_yml(
+        integration_dir, integration_obj, False)
     assert yml_unified == integration_obj
     assert not found_img_path
 
@@ -395,29 +372,27 @@ def test_insert_module_code__verify_offsets(mocker):
     (f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/", "Scripts",
      f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/CalculateGeoDistance")])
 def test_insert_script_to_yml(package_path, dir_name, file_path):
-    with patch.object(IntegrationScriptUnifier, "__init__", lambda a, b, c, d, e: None):
-        unifier = IntegrationScriptUnifier("", None, None, None)
-        unifier.package_path = package_path
-        unifier.dir_name = dir_name
-        unifier.is_script_package = dir_name == 'Scripts'
-        with open(file_path + ".yml", "r") as yml:
-            test_yml_data = yaml.load(yml)
+    is_script_package = dir_name == 'Scripts'
+    with open(file_path + ".yml", "r") as yml:
+        test_yml_data = yaml.load(yml)
 
-        test_yml_unified = copy.deepcopy(test_yml_data)
+    test_yml_unified = copy.deepcopy(test_yml_data)
 
-        yml_unified, script_path = unifier.insert_script_to_yml(".py", test_yml_unified, test_yml_data)
+    yml_unified, script_path = IntegrationScriptUnifier.insert_script_to_yml(
+        Path(package_path), ".py", test_yml_unified, test_yml_data, is_script_package
+    )
 
-        with open(file_path + ".py", mode="r", encoding="utf-8") as script_file:
-            script_code = script_file.read()
-        clean_code = unifier.clean_python_code(script_code)
+    with open(file_path + ".py", mode="r", encoding="utf-8") as script_file:
+        script_code = script_file.read()
+    clean_code = IntegrationScriptUnifier.clean_python_code(script_code)
 
-        if isinstance(test_yml_unified.get('script', {}), str):
-            test_yml_unified['script'] = clean_code
-        else:
-            test_yml_unified['script']['script'] = clean_code
+    if isinstance(test_yml_unified.get('script', {}), str):
+        test_yml_unified['script'] = clean_code
+    else:
+        test_yml_unified['script']['script'] = clean_code
 
-        assert yml_unified == test_yml_unified
-        assert script_path == file_path + ".py"
+    assert yml_unified == test_yml_unified
+    assert script_path == file_path + ".py"
 
 
 @pytest.mark.parametrize('package_path, dir_name, file_path', [
@@ -429,19 +404,17 @@ def test_insert_script_to_yml(package_path, dir_name, file_path):
      f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB"),
 ])
 def test_insert_script_to_yml_exceptions(package_path, dir_name, file_path):
-    with patch.object(IntegrationScriptUnifier, "__init__", lambda a, b, c, d, e: None):
-        unifier = IntegrationScriptUnifier("", None, None, None)
-        unifier.package_path = package_path
-        unifier.dir_name = dir_name
-        unifier.is_script_package = dir_name == 'Scripts'
-        with open(file_path + ".yml", "r") as yml:
-            test_yml_data = yaml.load(yml)
-        if dir_name == "Scripts":
-            test_yml_data['script'] = 'blah'
-        else:
-            test_yml_data['script']['script'] = 'blah'
+    is_script_package = dir_name == 'Scripts'
+    with open(file_path + ".yml", "r") as yml:
+        test_yml_data = yaml.load(yml)
+    if dir_name == "Scripts":
+        test_yml_data['script'] = 'blah'
+    else:
+        test_yml_data['script']['script'] = 'blah'
 
-        unifier.insert_script_to_yml(".py", {'script': {}}, test_yml_data)
+    IntegrationScriptUnifier.insert_script_to_yml(
+        Path(package_path), ".py", {'script': {}}, test_yml_data, is_script_package
+    )
 
 
 def create_test_package(test_dir, package_name, base_yml, script_code, detailed_description='', image_file=''):
@@ -464,7 +437,7 @@ def create_test_package(test_dir, package_name, base_yml, script_code, detailed_
 class TestMergeScriptPackageToYMLIntegration:
     @pytest.fixture(autouse=True)
     def setup(self, tmp_path):
-        self.test_dir_path = str(tmp_path / 'Unifier' / 'Testing')
+        self.test_dir_path = str(tmp_path / 'Unifier' / 'Testing' / 'Integrations')
         os.makedirs(self.test_dir_path)
         self.package_name = 'SampleIntegPackage'
         self.export_dir_path = os.path.join(self.test_dir_path, self.package_name)
@@ -484,11 +457,9 @@ class TestMergeScriptPackageToYMLIntegration:
             image_file='demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage_image.png',
         )
 
-        unifier = IntegrationScriptUnifier(input=self.export_dir_path, output=self.test_dir_path)
-        yml_files = unifier.unify()
-        export_yml_path = yml_files[0]
+        export_yml_path = PrepareUploadManager.prepare_for_upload(input=Path(self.export_dir_path), output=Path(self.test_dir_path))
 
-        assert export_yml_path == self.expected_yml_path
+        assert export_yml_path == Path(self.expected_yml_path)
 
         comment = '# this is a comment text inside a file 033dab25fd9655480dbec3a4c579a0e6'
         with open(export_yml_path) as file_:
@@ -519,15 +490,15 @@ class TestMergeScriptPackageToYMLIntegration:
             image_file='demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage_image.png',
         )
 
-        unifier = IntegrationScriptUnifier(input=self.export_dir_path, output=self.test_dir_path,
-                                           marketplace=marketplace)
-        yml_files = unifier.unify()
+        unified_yml = PrepareUploadManager.prepare_for_upload(
+            input=Path(self.export_dir_path), output=Path(self.test_dir_path), marketplace=marketplace
+        )
 
         hidden_true = set()
         hidden_false = set()
         missing_hidden_field = set()
 
-        for param in get_yaml(yml_files[0])['configuration']:
+        for param in get_yaml(unified_yml)['configuration']:
             # updates the three sets
             {True: hidden_true,
              False: hidden_false,
@@ -564,11 +535,11 @@ class TestMergeScriptPackageToYMLIntegration:
             detailed_description=description,
         )
 
-        unifier = IntegrationScriptUnifier(self.export_dir_path, output=self.test_dir_path)
-        yml_files = unifier.unify()
-        export_yml_path = yml_files[0]
+        export_yml_path = PrepareUploadManager.prepare_for_upload(
+            Path(self.export_dir_path), output=Path(self.test_dir_path)
+        )
 
-        assert export_yml_path == self.expected_yml_path
+        assert export_yml_path == Path(self.expected_yml_path)
         actual_yml = get_yaml(export_yml_path)
 
         expected_yml = get_yaml('demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/'
@@ -602,11 +573,9 @@ final test: hi
             detailed_description=description,
         )
 
-        unifier = IntegrationScriptUnifier(self.export_dir_path, output=self.test_dir_path)
-        yml_files = unifier.unify()
-        export_yml_path = yml_files[0]
+        export_yml_path = PrepareUploadManager.prepare_for_upload(Path(self.export_dir_path), output=Path(self.test_dir_path))
 
-        assert export_yml_path == self.expected_yml_path
+        assert export_yml_path == Path(self.expected_yml_path)
 
         actual_yml = get_yaml(export_yml_path)
         expected_yml = get_yaml('demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/'
@@ -628,43 +597,17 @@ final test: hi
         - Ensure Unify command works with default output.
         """
         input_path_integration = TESTS_DIR + '/test_files/Packs/DummyPack/Integrations/UploadTest'
-        unifier = IntegrationScriptUnifier(input_path_integration)
-        yml_files = unifier.unify()
-        export_yml_path = yml_files[0]
+        export_yml_path = PrepareUploadManager.prepare_for_upload(Path(input_path_integration))
         expected_yml_path = TESTS_DIR + '/test_files/Packs/DummyPack/Integrations/UploadTest/integration-UploadTest.yml'
 
-        assert export_yml_path == expected_yml_path
-        os.remove(expected_yml_path)
-
-    def test_unify_default_output_integration_for_relative_current_dir_input(self, mocker):
-        """
-        Given
-        - Input path of '.'.
-        - UploadTest integration.
-
-        When
-        - Running Unify on it.
-
-        Then
-        - Ensure Unify command works with default output given relative path to current directory.
-        """
-        from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
-        abs_path_mock = mocker.patch('demisto_sdk.commands.unify.integration_script_unifier.os.path.abspath')
-        abs_path_mock.return_value = TESTS_DIR + '/test_files/Packs/DummyPack/Integrations/UploadTest'
-        input_path_integration = '.'
-        unifier = IntegrationScriptUnifier(input_path_integration)
-        yml_files = unifier.unify()
-        export_yml_path = yml_files[0]
-        expected_yml_path = TESTS_DIR + '/test_files/Packs/DummyPack/Integrations/UploadTest/integration-UploadTest.yml'
-
-        assert export_yml_path == expected_yml_path
+        assert export_yml_path == Path(expected_yml_path)
         os.remove(expected_yml_path)
 
 
 class TestMergeScriptPackageToYMLScript:
     @pytest.fixture(autouse=True)
     def setup(self, tmp_path):
-        self.test_dir_path = str(tmp_path / 'Unifier' / 'Testing')
+        self.test_dir_path = str(tmp_path / 'Unifier' / 'Testing' / 'Scripts')
         os.makedirs(self.test_dir_path)
         self.package_name = 'SampleScriptPackage'
         self.export_dir_path = os.path.join(self.test_dir_path, self.package_name)
@@ -682,11 +625,11 @@ class TestMergeScriptPackageToYMLScript:
             script_code=TEST_VALID_CODE,
         )
 
-        unifier = IntegrationScriptUnifier(input=self.export_dir_path, output=self.test_dir_path)
-        yml_files = unifier.unify()
-        export_yml_path = yml_files[0]
+        export_yml_path = PrepareUploadManager.prepare_for_upload(
+            input=Path(self.export_dir_path), output=Path(self.test_dir_path)
+        )
 
-        assert export_yml_path == self.expected_yml_path
+        assert export_yml_path == Path(self.expected_yml_path)
 
         actual_yml = get_yaml(export_yml_path)
 
@@ -694,40 +637,6 @@ class TestMergeScriptPackageToYMLScript:
                                 'script-SampleScriptPackageSanity.yml')
 
         assert expected_yml == actual_yml
-
-    def test_unify_script__docker45(self):
-        """
-        sanity test of merge_script_package_to_yml of script
-        """
-
-        create_test_package(
-            test_dir=self.test_dir_path,
-            package_name=self.package_name,
-            base_yml='demisto_sdk/tests/test_files/Unifier/SampleScriptPackage/SampleScriptPackageDocker45.yml',
-            script_code=TEST_VALID_CODE,
-        )
-
-        unifier = IntegrationScriptUnifier(input=self.export_dir_path, output=self.test_dir_path)
-        yml_files = unifier.unify()
-        assert len(yml_files) == 2
-        export_yml_path = yml_files[0]
-        export_yml_path_45 = yml_files[1]
-
-        assert export_yml_path == self.expected_yml_path
-        assert export_yml_path_45 == self.expected_yml_path.replace('.yml', '_45.yml')
-
-        actual_yml = get_yaml(export_yml_path)
-
-        expected_yml = get_yaml('demisto_sdk/tests/test_files/Unifier/SampleScriptPackage/'
-                                'script-SampleScriptPackageSanityDocker45.yml')
-
-        assert expected_yml == actual_yml
-
-        actual_yml_45 = get_yaml(export_yml_path_45)
-
-        expected_yml_45 = get_yaml('demisto_sdk/tests/test_files/Unifier/SampleScriptPackage/'
-                                   'script-SampleScriptPackageSanityDocker45_45.yml')
-        assert expected_yml_45 == actual_yml_45
 
     def test_unify_default_output_script(self):
         """
@@ -742,12 +651,10 @@ class TestMergeScriptPackageToYMLScript:
         - Ensure Unify script works with default output.
         """
         input_path_script = TESTS_DIR + '/test_files/Packs/DummyPack/Scripts/DummyScript'
-        unifier = IntegrationScriptUnifier(input_path_script)
-        yml_files = unifier.unify()
-        export_yml_path = yml_files[0]
+        export_yml_path = PrepareUploadManager.prepare_for_upload(Path(input_path_script))
         expected_yml_path = TESTS_DIR + '/test_files/Packs/DummyPack/Scripts/DummyScript/script-DummyScript.yml'
 
-        assert export_yml_path == expected_yml_path
+        assert export_yml_path == Path(expected_yml_path)
         os.remove(expected_yml_path)
 
 
@@ -875,7 +782,12 @@ XSOAR_UNIFY = PARTNER_UNIFY.copy()
 COMMUNITY_UNIFY = PARTNER_UNIFY.copy()
 PARTNER_UNIFY_EMAIL_LIST = PARTNER_UNIFY.copy()
 
-INTEGRATION_YAML = {'name': 'IntegrationName', 'display': 'test', 'script': {'type': 'python'}}
+INTEGRATION_YAML = {'commonfields': {'id': 'IntegrationName'},
+                    'name': 'IntegrationName',
+                    'display': 'test',
+                    'category': 'test',
+                    'script': {'type': 'python', 'script': 'import abc'}
+                    }
 
 PARTNER_DISPLAY_NAME = 'test (Partner Contribution)'
 COMMUNITY_DISPLAY_NAME = 'test (Community Contribution)'
@@ -912,7 +824,7 @@ def test_unify_partner_contributed_pack(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [UNIFY_CMD, '-i', integration.path, '-o', integration.path], catch_exceptions=True)
     # Verifying unified process
-    assert 'Merging package:' in result.stdout
+    assert 'Unifying package:' in result.stdout
     assert 'Created unified yml:' in result.stdout
     # Verifying the unified file data
     assert PARTNER_UNIFY["display"] == PARTNER_DISPLAY_NAME
@@ -944,7 +856,7 @@ def test_unify_partner_contributed_pack_no_email(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [UNIFY_CMD, '-i', integration.path, '-o', integration.path], catch_exceptions=True)
     # Verifying unified process
-    assert 'Merging package:' in result.stdout
+    assert 'Unifying package:' in result.stdout
     assert 'Created unified yml:' in result.stdout
     # Verifying the unified file data
     assert PARTNER_UNIFY_NO_EMAIL["display"] == PARTNER_DISPLAY_NAME
@@ -1002,7 +914,7 @@ def test_unify_partner_contributed_pack_no_url(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [UNIFY_CMD, '-i', integration.path, '-o', integration.path], catch_exceptions=True)
     # Verifying unified process
-    assert 'Merging package:' in result.stdout
+    assert 'Unifying package:' in result.stdout
     assert 'Created unified yml:' in result.stdout
     # Verifying the unified file data
     assert PARTNER_UNIFY_NO_URL["display"] == PARTNER_DISPLAY_NAME
@@ -1033,7 +945,7 @@ def test_unify_not_partner_contributed_pack(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [UNIFY_CMD, '-i', integration.path, '-o', integration.path], catch_exceptions=True)
     # Verifying unified process
-    assert 'Merging package:' in result.stdout
+    assert 'Unifying package:' in result.stdout
     assert 'Created unified yml:' in result.stdout
     # Verifying the unified file data
     assert 'Partner' not in XSOAR_UNIFY["display"]
@@ -1063,36 +975,12 @@ def test_unify_community_contributed(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [UNIFY_CMD, '-i', integration.path, '-o', integration.path], catch_exceptions=True)
     # Verifying unified process
-    assert 'Merging package:' in result.stdout
+    assert 'Unifying package:' in result.stdout
     assert 'Created unified yml:' in result.stdout
     # Verifying the unified file data
     assert COMMUNITY_UNIFY["display"] == COMMUNITY_DISPLAY_NAME
     assert '#### Integration Author:' in COMMUNITY_UNIFY["detaileddescription"]
     assert 'No support or maintenance is provided by the author.' in COMMUNITY_UNIFY["detaileddescription"]
-
-
-def test_invalid_path_to_unifier(repo):
-    """
-    Given:
-    - Input path to integration YML for unify command.
-
-    When:
-    - Performing unify command.
-
-    Then:
-    - Ensure error message indicating path should be to a directory returned.
-
-    """
-    pack = repo.create_pack('PackName')
-    integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
-    integration.create_default_integration()
-
-    with ChangeCWD(pack.repo_path):
-        runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [UNIFY_CMD, '-i', f'{integration.path}/integration.yml'])
-    assert '''Unsupported input. Please provide either:
-1. Path to directory of an integration or a script.
-2. Path to directory of a Parsing/Modeling rule.''' in result.stdout
 
 
 def test_add_contributors_support(tmp_path):
@@ -1106,13 +994,12 @@ def test_add_contributors_support(tmp_path):
     Then:
         - Verify CONTRIBUTOR_DISPLAY_NAME is not added twice
     """
-    unifier = IntegrationScriptUnifier(str(tmp_path))
     unified_yml = {
         'display': 'Test Integration (Partner Contribution)',
         'commonfields': {'id': 'Test Integration'}
     }
 
-    unifier.add_contributors_support(
+    IntegrationScriptUnifier.add_contributors_support(
         unified_yml=unified_yml,
         contributor_type='partner',
         contributor_email='',
@@ -1132,13 +1019,12 @@ def test_add_custom_section(tmp_path):
         Then:
             - Add a "Test" to the name/display/id of the integration if the yml exsits.
     '''
-    unifier = IntegrationScriptUnifier(str(tmp_path), custom='Test')
     unified_yml = {
         'display': 'Integration display',
         'commonfields': {'id': 'Integration id'},
         'name': 'Integration name'
     }
-    unified = unifier.add_custom_section(unified_yml)
+    unified = IntegrationScriptUnifier.add_custom_section(unified_yml, 'Test', False)
     assert unified.get('display') == 'Integration display - Test'
     assert unified.get('name') == 'Integration name - Test'
     assert unified.get('commonfields').get('id') == 'Integration id - Test'
@@ -1155,5 +1041,4 @@ def test_empty_yml(tmp_path):
     Then:
         - Check that the function will not raise any errors.
     """
-    unifier = IntegrationScriptUnifier(str(tmp_path))
-    unifier.add_custom_section({})
+    IntegrationScriptUnifier.add_custom_section({})

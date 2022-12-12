@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.update_id_set import (get_classifier_data, get_
                                                        get_layouts_scripts_ids, get_layoutscontainer_data,
                                                        get_mapper_data, get_pack_metadata_data, get_playbook_data,
                                                        get_script_data)
-from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
+from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
 
 
 class IDSetValidations(BaseValidator):
@@ -671,8 +671,7 @@ class IDSetValidations(BaseValidator):
             click.echo(f"id set validations for: {file_path}")
 
             if re.match(constants.PACKS_SCRIPT_YML_REGEX, file_path, re.IGNORECASE):
-                unifier = IntegrationScriptUnifier(os.path.dirname(file_path))
-                yml_path, code = unifier.get_script_or_integration_package_data()
+                yml_path, code = IntegrationScriptUnifier.get_script_or_integration_package_data(os.path.dirname(file_path))
                 script_data = get_script_data(yml_path, script_code=code)
                 is_valid = self._is_non_real_command_found(script_data)
             elif file_type == constants.FileType.INCIDENT_TYPE:

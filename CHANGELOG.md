@@ -13,7 +13,7 @@
 * Added support for fromversion/toversion in XSIAM content items (correlation rules, XSIAM dashboards, XSIAM reports and triggers).
 * Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.
 * Added **prepare-content** command which will prepare the pack or content item for the platform.
-* Added support for **nativeImage** key for an integration/script.
+* Added support for the **nativeImage** key for an integration/script in the **prepare-content** command.
 
 ## 1.7.9
 * Fixed an issue where an error message in **validate** would not include the suggested fix.

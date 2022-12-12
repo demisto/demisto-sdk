@@ -269,6 +269,3 @@ DIR_LIST = [
     f'{PACK_TARGET}/{constants.INDICATOR_FIELDS_DIR}',
     constants.TESTS_DIR
 ]
-
-
-NATIVE_IMAGE_TEST_CONFIG_PATH = f'{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/{constants.NATIVE_IMAGE_FILE_NAME}'

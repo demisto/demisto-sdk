@@ -25,9 +25,9 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
 
         if supported_native_images := self.get_supported_native_images(
             marketplace=marketplace,
-            native_image_config_file_path=kwargs.get('native_image_config_file_path'),
             ignore_native_image=kwargs.get('ignore_native_image') or False
         ):
+            logger.debug(f'Adding the following native images {supported_native_images} to script {self.object_id}')
             data['nativeImage'] = supported_native_images
 
         return data

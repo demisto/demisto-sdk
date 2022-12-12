@@ -2,17 +2,16 @@ from typing import List
 
 import pytest
 
-from demisto_sdk.commands.common.native_image import (NativeImageConfig, NativeImageSupportedVersions,
+from demisto_sdk.commands.common.native_image import (NativeImageConfig, ScriptIntegrationSupportedNativeImages,
                                                       file_to_native_image_config)
-from demisto_sdk.tests.constants_test import NATIVE_IMAGE_TEST_CONFIG_PATH
 
 
 @pytest.fixture
-def native_image_config() -> NativeImageConfig:
-    return file_to_native_image_config(NATIVE_IMAGE_TEST_CONFIG_PATH)
+def native_image_config(repo) -> NativeImageConfig:
+    return file_to_native_image_config(repo.docker_native_image_config.path)
 
 
-def test_load_native_image_config(native_image_config: NativeImageConfig):
+def test_load_native_image_config(native_image_config):
     """
     Given
     - native image configuration file
@@ -25,9 +24,10 @@ def test_load_native_image_config(native_image_config: NativeImageConfig):
     """
     assert native_image_config.native_images
     assert native_image_config.ignored_content_items
+    assert native_image_config.docker_images_to_native_images_mapping
 
 
-def test_docker_images_to_supported_native_images(native_image_config: NativeImageConfig):
+def test_docker_images_to_supported_native_images(native_image_config):
     """
     Given
     - native image configuration file
@@ -38,9 +38,7 @@ def test_docker_images_to_supported_native_images(native_image_config: NativeIma
     Then
     - make sure each docker image is getting mapped correctly
     """
-    from demisto_sdk.commands.common.native_image import docker_images_to_native_images_support
-
-    assert docker_images_to_native_images_support(native_image_config.native_images) == {
+    assert native_image_config.docker_images_to_native_images_mapping == {
         'python3': ['8.1', '8.2'],
         'py3-tools': ['8.1', '8.2'],
         'unzip': ['8.1', '8.2'],
@@ -51,83 +49,7 @@ def test_docker_images_to_supported_native_images(native_image_config: NativeIma
     }
 
 
-class TestNativeImageSupportedVersions:
-
-    @pytest.mark.parametrize(
-        '_id, docker_image, expected_native_images',
-        [
-            (
-                'Image OCR', 'demisto/tesseract:1.0.0.36078', ['8.1', '8.2'],
-            ),
-            (
-                'Panorama', 'demisto/pan-os-python:1.0.0.30307', ['8.2']
-            ),
-            (
-                'Prisma Cloud Compute', 'demisto/python3:3.10.1.25933', ['8.1', '8.2'],
-            )
-        ]
-    )
-    def test_image_to_native_images_support(
-        self, native_image_config: NativeImageConfig, _id: str, docker_image: str, expected_native_images: List[str]
-    ):
-        """
-        Given
-        - native image configuration file
-        - id of an integration
-        - docker image of an integration
-
-        When
-        - mapping docker images into native images
-
-        Then
-        - make sure each docker image is getting mapped correctly to the native image that it supports
-        """
-        native_image_supported_versions = NativeImageSupportedVersions(
-            _id=_id, docker_image=docker_image, native_image_config=native_image_config
-        )
-        assert native_image_supported_versions.image_to_native_images_support() == expected_native_images
-
-    @pytest.mark.parametrize(
-        '_id, docker_image, expected_native_images_to_ignore',
-        [
-            (
-                'UnzipFile', 'demisto/unzip:1.0.0.23423', ['8.1'],
-            ),
-            (
-                'Panorama', 'demisto/pan-os-python:1.0.0.30307', ['8.2'],
-            ),
-            (
-                'Image OCR', 'demisto/tesseract:1.0.0.36078', ['8.1', '8.2'],
-            ),
-            (
-                'Prisma Cloud Compute', 'demisto/python3:3.10.1.25933', []
-            )
-        ]
-    )
-    def test_get_ignored_native_images(
-        self,
-        native_image_config: NativeImageConfig,
-        _id: str,
-        docker_image: str,
-        expected_native_images_to_ignore: List[str]
-    ):
-        """
-        Given
-        - native image configuration file
-        - id of an integration
-        - docker image of an integration
-
-        When
-        - getting the ignored images
-
-        Then
-        - make sure each docker image is getting mapped correctly to the native images which he should ignore
-        """
-        native_image_supported_versions = NativeImageSupportedVersions(
-            _id=_id, docker_image=docker_image, native_image_config=native_image_config
-        )
-
-        assert native_image_supported_versions.get_ignored_native_images() == expected_native_images_to_ignore
+class TestScriptIntegrationSupportedNativeImages:
 
     @pytest.mark.parametrize(
         '_id, docker_image, expected_native_images',
@@ -151,7 +73,7 @@ class TestNativeImageSupportedVersions:
     )
     def test_get_supported_native_image_versions(
         self,
-        native_image_config: NativeImageConfig,
+        native_image_config,
         _id: str,
         docker_image: str,
         expected_native_images: List[str]
@@ -171,7 +93,7 @@ class TestNativeImageSupportedVersions:
         - make sure each docker image is getting mapped correctly
             to the native images based also on the ignore mechanism
         """
-        native_image_supported_versions = NativeImageSupportedVersions(
+        native_image_supported_versions = ScriptIntegrationSupportedNativeImages(
             _id=_id, docker_image=docker_image, native_image_config=native_image_config
         )
 

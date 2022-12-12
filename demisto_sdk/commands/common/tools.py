@@ -610,12 +610,11 @@ def _read_file(file_path: Path) -> str:
 
     except UnicodeDecodeError:
         try:
-            encoding = UnicodeDammit(file_path.read_bytes()).original_encoding
-            print(f"guess: encoding is {encoding}")
-            return file_path.read_text(encoding=encoding)
+            # guesses the original encoding
+            return UnicodeDammit(file_path.read_bytes()).unicode_markup
 
         except UnicodeDecodeError:
-            print(f"could not auto-detect encoding for file {file_path} (guess was {encoding})")
+            print(f"could not auto-detect encoding for file {file_path}")
             raise
 
 

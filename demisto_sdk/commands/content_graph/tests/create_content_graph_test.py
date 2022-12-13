@@ -26,6 +26,8 @@ from TestSuite.repo import Repo
 def setup(mocker, repo: Repo):
     """Auto-used fixture for setup before every test run"""
     mocker.patch("demisto_sdk.commands.content_graph.objects.base_content.get_content_path", return_value=Path(repo.path))
+    mocker.patch("demisto_sdk.commands.content_graph.objects.content_item.get_content_path", return_value=Path(repo.path))
+    mocker.patch("demisto_sdk.commands.content_graph.objects.pack.get_content_path", return_value=Path(repo.path))
     mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
     mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
 

@@ -1349,14 +1349,15 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def release_notes_invalid_content_type_header(content_type: str, pack_name: str):
-        return f'The content type "{content_type}" is either an invalid content type or does not exist in the "{pack_name}" pack or has an invalid format.\n' \
+        return f'The content type "{content_type}" is either an invalid content type or does not exist in the "{pack_name}" pack' \
+               f' or the header format is invalid.\n' \
                f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n' \
                'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
 
     @staticmethod
     @error_code_decorator
-    def release_notes_invalid_content_name_header(content_name_header: str, pack_name: str):
-        return f'The content item "{content_name_header}" either does not exist in the "{pack_name}" pack ' \
+    def release_notes_invalid_content_name_header(content_name_header: str, pack_name: str, content_type_dir: str):
+        return f'The content item "{content_type_dir}/{content_name_header}" either does not exist in the "{pack_name}" pack ' \
                'or the header format is invalid.\n' \
                f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n' \
                'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'

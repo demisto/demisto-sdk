@@ -551,3 +551,49 @@ def test_validate_headers(mocker, repo):
     pack.create_widget("test")
     pack.create_xsiam_dashboard("xsiam-dashboard-test")
     assert validator.validate_release_notes_headers()
+
+
+TEST_RELEASE_NOTES_INVALID_HEADERS = [("""#### Integrations
+##### integration-test
+- Added x y z""", 'Integrations', {'validate_special_forms': True, 'validate_content_type_header': True,
+                                   'validate_content_item_header': False}),
+    ("""#### FakeContentType
+                                      ##### Test
+                                      - Added x y z""", 'FakeContentType', {'validate_special_forms': False,
+                                                                            'validate_content_type_header': False,
+                                                                            'validate_content_item_header': True}),
+    ("""#### Incident Fields
+                                      ##### Test
+                                      - Added x y z""", 'Incident Fields', {'validate_special_forms': False,
+                                                                            'validate_content_type_header': True,
+                                                                            'validate_content_item_header': True}),
+    ("""#### Integrations
+                                      - **integration-test**
+                                      - Added x y z""", 'Integrations', {'validate_special_forms': False,
+                                                                         'validate_content_type_header': True,
+                                                                         'validate_content_item_header': True})
+]
+
+
+@pytest.mark.parametrize('content, content_type, expected_result', TEST_RELEASE_NOTES_INVALID_HEADERS,
+                         ids=['Content item dose not exist', 'Content type dose not exist', 'Invalid special forms',
+                              'Invalid content type format'])
+def test_invalid_headers(mocker, repo, content, content_type, expected_result):
+    """
+    Given
+    - A invalid release notes file.
+    When
+    - Validating the release notes file headers.
+    Then
+    - Ensure that the validations return the expected result according to the test case.
+    """
+    pack = repo.create_pack('test_pack')
+    mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
+    validator = get_validator(content, MODIFIED_FILES, pack_name=pack.name, pack_path=pack.path)
+    headers = validator.extract_rn_headers()
+    assert expected_result['validate_special_forms'] == validator.validate_special_forms(headers)
+    validator.filter_rn_headers(headers=headers)
+    assert expected_result['validate_content_type_header'] == validator.validate_content_type_header(
+        content_type=content_type)
+    assert expected_result['validate_content_item_header'] == validator.validate_content_item_header(
+        content_type=content_type, headers=headers)

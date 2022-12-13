@@ -5,13 +5,13 @@ import os
 import re
 from typing import Dict, List, Tuple, Union
 
-from demisto_sdk.commands.common.constants import (PACKS_DIR, RN_CONTENT_ENTITY_WITH_STARS, RN_HEADER_BY_FILE_TYPE,
-                                                   SKIP_RELEASE_NOTES_FOR_TYPES, FileType)
+from demisto_sdk.commands.common.constants import (CUSTOM_CONTENT_FILE_ENDINGS, PACKS_DIR, RN_CONTENT_ENTITY_WITH_STARS,
+                                                   RN_HEADER_BY_FILE_TYPE, SKIP_RELEASE_NOTES_FOR_TYPES, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
 from demisto_sdk.commands.common.tools import (extract_docker_image_from_text, find_type, get_dict_from_file,
-                                               get_display_name, get_latest_release_notes_text, get_pack_name,
-                                               get_release_notes_file_path, get_yaml)
+                                               get_display_name, get_files_in_dir, get_latest_release_notes_text,
+                                               get_pack_name, get_release_notes_file_path, get_yaml)
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
 ENTITY_TYPE_SECTION_REGEX = re.compile(r'^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)', re.M)
@@ -129,9 +129,8 @@ class ReleaseNotesValidator(BaseValidator):
             True if the content type is valid, False otherwise.
         """
         # Get all the content type headers
-        rn_valid_headers = list(map(lambda rn_valid_header: rn_valid_header.lower(), RN_HEADER_BY_FILE_TYPE.values()))
-
-        if content_type.lower() not in rn_valid_headers:
+        rn_valid_headers = RN_HEADER_BY_FILE_TYPE.values()
+        if content_type not in rn_valid_headers:
             error_message, error_code = Errors.release_notes_invalid_content_type_header(content_type=content_type, pack_name=self.pack_name)
             if self.handle_error(error_message, error_code, self.release_notes_file_path):
                 return False
@@ -154,13 +153,7 @@ class ReleaseNotesValidator(BaseValidator):
 
         content_type_dir_list = []
         try:
-            for file in os.listdir(content_type_path):
-                if os.path.isdir(os.path.join(content_type_path, file)):
-                    file_path = os.path.join(content_type_path, file, f'{file}.yml')
-                else:
-                    file_path = os.path.join(content_type_path, file)
-                if file_path.endswith('.yml') | file_path.endswith('.json'):
-                    content_type_dir_list.append(file_path)
+            content_type_dir_list = get_files_in_dir(content_type_path, CUSTOM_CONTENT_FILE_ENDINGS, recursive=True)
         except FileNotFoundError:
             error_message, error_code = Errors.release_notes_invalid_content_type_header(content_type=content_type,
                                                                                          pack_name=self.pack_name)
@@ -171,7 +164,8 @@ class ReleaseNotesValidator(BaseValidator):
         for header in headers.get(content_type, []):
             if header not in content_type_dir_list:
                 error_message, error_code = Errors.release_notes_invalid_content_name_header(content_name_header=header,
-                                                                                             pack_name=self.pack_name)
+                                                                                             pack_name=self.pack_name,
+                                                                                             content_type_dir=content_type_dir_name)
                 if self.handle_error(error_message, error_code, self.release_notes_file_path):
                     is_valid = False
         return is_valid

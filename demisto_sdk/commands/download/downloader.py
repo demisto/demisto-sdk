@@ -299,13 +299,13 @@ class Downloader:
         """
         try:
             verify = (not self.insecure) if self.insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
-            self.client = demisto_client.configure(verify_ssl=verify, base_url="https://10.180.189.234/", api_key="D30AD331E5EFE5013BC80A968F7E829B")
+            self.client = demisto_client.configure(verify_ssl=verify)
             api_response: tuple = demisto_client.generic_request_func(self.client, '/content/bundle', 'GET')
             body: bytes = ast.literal_eval(api_response[0])
             io_bytes = io.BytesIO(body)
             # Demisto's custom content file is of type tar.gz
             tar = tarfile.open(fileobj=io_bytes, mode='r')
-            scripts_id_name = {"feaaca83-7f64-4001-8e25-af45661dc811": "Replaced Script Name"}
+            scripts_id_name = {}
             for member in tar.getmembers():
                 file_name: str = self.update_file_prefix(member.name.strip('/'))
                 file_path: str = os.path.join(self.custom_content_temp_dir, file_name)
@@ -315,21 +315,6 @@ class Downloader:
                 if extracted_file:
                     string_to_write = extracted_file.read().decode('utf-8')
                     string_to_write, scripts_id_name = self.handle_file(string_to_write, member.name, scripts_id_name)
-
-                    # string_to_write = extracted_file.read().decode('utf-8')
-                    #
-                    # if 'automation-' in member.name:
-                    #     scripts_id_name = self.map_script(string_to_write, scripts_id_name)
-                    #
-                    # if not self.list_files and re.search(r'incidentfield-.*\.json', member.name):
-                    #     string_to_write = self.handle_incidentfield(string_to_write, scripts_id_name)
-                    #
-                    # if not self.list_files and re.search(r'playbook-.*\.yml', member.name):
-                    #     #  if the content item is playbook and list-file flag is true, we should download the
-                    #     #  file via direct REST API because there are props like scriptName, that playbook from custom
-                    #     #  content bundle don't contain
-                    #
-                    #     string_to_write = self.download_playbook_yaml(string_to_write)
 
                     with open(file_path, 'w') as file:
                         file.write(string_to_write)

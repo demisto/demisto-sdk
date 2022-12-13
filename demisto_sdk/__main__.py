@@ -2280,9 +2280,9 @@ def create_content_graph(
         create_content_graph_command(content_graph_interface, dependencies)
 
 
-# @main.result_callback()
-# def exit_from_program(result=0, **kwargs):
-#     sys.exit(result)
+@main.result_callback()
+def exit_from_program(result=0, **kwargs):
+    sys.exit(result)
 
 
 if __name__ == '__main__':

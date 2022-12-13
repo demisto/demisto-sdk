@@ -3,6 +3,7 @@
 * Fixed an issue where **format** created duplicate configuration parameters.
 
 ## 1.8.0
+* Added a new validation to the **validate** command to verify that the release notes headers are in the correct format.
 * Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.
 * Added a **validate** step for **Modeling Rules** testdata files.
 * Added the **update-content-graph** command.

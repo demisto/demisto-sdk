@@ -530,7 +530,7 @@ def test_validate_headers(mocker, repo):
     Then
     - Ensure that the validation passes.
     """
-    with open('demisto_sdk/commands/common/tests/test_files/rn_header_test_data', 'r') as f:
+    with open('demisto_sdk/commands/common/tests/test_files/rn_header_test_data') as f:
         content = f.read()
     pack = repo.create_pack('test_pack')
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)

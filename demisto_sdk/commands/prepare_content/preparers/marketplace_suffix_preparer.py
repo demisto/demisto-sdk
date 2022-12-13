@@ -41,7 +41,7 @@ class MarketplaceSuffixPreparer:
                 elif isinstance(data[current_key], list):
                     updated_list = []
                     for i in range(len(data[current_key])):
-                        current_list_item = data[i]
+                        current_list_item = data[current_key][i]
                         if isinstance(current_list_item, dict):
                             current_list_item = MarketplaceSuffixPreparer.prepare(current_list_item, marketplace)
                         updated_list.append(current_list_item)

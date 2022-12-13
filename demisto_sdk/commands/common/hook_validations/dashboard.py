@@ -48,7 +48,7 @@ class DashboardValidator(ContentEntityValidator):
         Returns:
             bool. Whether the file id equals to its name
         """
-        return super(DashboardValidator, self)._is_id_equals_name('dashboard')
+        return super()._is_id_equals_name('dashboard')
 
     @error_codes('DA100,WD100')
     def contains_forbidden_fields(self):

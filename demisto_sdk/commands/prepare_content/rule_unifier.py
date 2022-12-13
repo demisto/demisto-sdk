@@ -1,4 +1,3 @@
-import io
 import json
 import os
 from collections import defaultdict
@@ -25,7 +24,7 @@ class RuleUnifier(Unifier):
     @staticmethod
     def _insert_rules(path: Path, data: dict):
         rules_path = path.with_suffix('.xif')
-        with io.open(rules_path, mode='r', encoding='utf-8') as rules_file:
+        with open(rules_path, encoding='utf-8') as rules_file:
             rules = rules_file.read()
             data['rules'] = FoldedScalarString(rules)
 
@@ -35,7 +34,7 @@ class RuleUnifier(Unifier):
         if os.path.isdir(samples_dir):
             samples = defaultdict(list)
             for sample_file in os.listdir(samples_dir):
-                with io.open(os.path.join(samples_dir, sample_file), mode='r', encoding='utf-8') as samples_file_object:
+                with open(os.path.join(samples_dir, sample_file), encoding='utf-8') as samples_file_object:
                     sample = json.loads(samples_file_object.read())
                     if data.get('id') in sample.get('rules', []):
                         samples[f'{sample.get("vendor")}_{sample.get("product")}'].extend(sample.get('samples'))
@@ -49,7 +48,7 @@ class RuleUnifier(Unifier):
     def _insert_schema(path: Path, data: dict):
         schema_path = str(path).replace('.yml', '_schema.json')
         if os.path.exists(schema_path):
-            with io.open(schema_path, mode='r', encoding='utf-8') as schema_file:
+            with open(schema_path, encoding='utf-8') as schema_file:
                 schema = json.loads(schema_file.read())
                 data['schema'] = FoldedScalarString(json.dumps(schema, indent=4))
         else:

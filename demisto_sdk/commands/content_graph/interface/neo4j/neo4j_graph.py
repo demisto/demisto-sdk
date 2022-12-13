@@ -25,6 +25,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (_m
                                                                               remove_server_nodes)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import create_relationships
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent, ServerContent, content_type_to_model
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
@@ -91,6 +92,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 if not model:
                     raise NoModelException(f"No model for {content_type}")
                 obj = model.parse_obj(node)
+                if isinstance(obj, ContentItem):
+                    obj.fix_for_marketplace(marketplace)
                 Neo4jContentGraphInterface._id_to_obj[element_id] = obj
 
     def _add_relationships_to_objects(self, result: List[Neo4jResult]) -> List[BaseContent]:
@@ -169,7 +172,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         )
         content_items_nodes: Set[graph.Node] = set()
         nodes_set = self._get_nodes_set_from_result(mandatorily_dependencies, set(), content_items_nodes)
-        self._add_to_mapping(nodes_set)
+        self._add_to_mapping(nodes_set, marketplace)
         if content_items_nodes:
             self._search(
                 marketplace,
@@ -212,7 +215,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             content_items_nodes: Set[graph.Node] = set()
             pack_nodes: Set[graph.Node] = set()
             nodes_set = self._get_nodes_set_from_result(result, pack_nodes, content_items_nodes)
-            self._add_to_mapping(nodes_set)
+            self._add_to_mapping(nodes_set, marketplace)
 
             if content_items_nodes and level < 2:
                 # limit recursion level is 2, because worst case is `Pack`, and there are two levels until the command

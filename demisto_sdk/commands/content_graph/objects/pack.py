@@ -182,14 +182,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         self.server_min_version = self.server_min_version or str(max(parse(content_item.fromversion) for content_item in content_items))
         self.content_items = PackContentItems.parse_obj(content_item_dct)
 
-    def dump_metadata(self, path: Path, marketplace: MarketplaceVersions = None) -> None:
+    def dump_metadata(self, path: Path) -> None:
         metadata = self.dict(exclude={"path", "node_id", "content_type"})
         metadata["contentItems"] = {}
         for content_item in self.content_items:
             try:
                 metadata["contentItems"].setdefault(
                     content_item.content_type.server_name, []
-                ).append(content_item.summary(marketplace))
+                ).append(content_item.summary())
             except NotImplementedError as e:
                 logger.debug(f"Could not add {content_item.name} to pack metadata: {e}")
         with open(path, "w") as f:
@@ -224,7 +224,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 content_item.dump(
                     path / content_item.content_type.as_folder, marketplace
                 )
-            self.dump_metadata(path / "metadata.json", marketplace)
+            self.dump_metadata(path / "metadata.json")
             self.dump_readme(path / "README.md", marketplace)
             shutil.copy(
                 self.path / PACK_METADATA_FILENAME, path / PACK_METADATA_FILENAME

@@ -4,9 +4,6 @@
 * Added the **update-content-graph** command.
 * Added the ability to limit the number of CPU cores with `DEMISTO_SDK_MAX_CPU_CORES` envirment variable.
 * Fixed an issue where **update-release-notes** failed when changing only xif file in **Modeling Rules**.
-* Added hidden properties to integration command argument and script argument.
-
-=======
 * Added a **validate** step checking types of attributes in the schema file of modeling rule.
 * Added a **validate** step checking that the dataset name of a modeling rule shows in the xif and schema files.
 * Added a **validate** step checking that a correlation rule file does not start with a hyphen.
@@ -22,6 +19,8 @@
 * Added support for fromversion/toversion in XSIAM content items (correlation rules, XSIAM dashboards, XSIAM reports and triggers).
 * Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.
 * Added **prepare-content** command which will prepare the pack or content item for the platform.
+* Added hidden properties to integration command argument and script argument.
+* Patched an issue where deprecated `packaging.version.LegacyVersion`, locking packaging version to `<22`.
 
 ## 1.7.9
 * Fixed an issue where an error message in **validate** would not include the suggested fix.

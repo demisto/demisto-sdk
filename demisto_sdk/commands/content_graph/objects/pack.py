@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Generator, List, Optional
 
 from packaging.version import parse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 from demisto_sdk.commands.common.constants import CONTRIBUTORS_README_TEMPLATE, MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -138,6 +138,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     content_items: PackContentItems = Field(
         PackContentItems(), alias="contentItems", exclude=True
     )
+
+    @validator("path", always=True)
+    def validate_path(cls, v: Path) -> Path:
+        return v.absolute()
 
     @property
     def depends_on(self) -> List["RelationshipData"]:

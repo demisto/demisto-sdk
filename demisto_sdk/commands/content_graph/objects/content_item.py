@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 import logging
 
-from pydantic import DirectoryPath
+from pydantic import DirectoryPath, validator
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import alternate_item_fields
@@ -31,6 +31,10 @@ class ContentItem(BaseContent):
     deprecated: bool
     description: Optional[str]
     is_test: bool = False
+
+    @validator("path", always=True)
+    def validate_path(cls, v: Path) -> Path:
+        return v.absolute()
 
     @property
     def in_pack(self) -> Optional["Pack"]:

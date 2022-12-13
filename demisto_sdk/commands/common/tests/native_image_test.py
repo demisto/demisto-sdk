@@ -87,7 +87,7 @@ class TestScriptIntegrationSupportedNativeImages:
         - Case E: an integration that its docker image is not supported in any native image.
 
         When
-        - getting the ignored images
+        - getting the supported native images
 
         Then
         - make sure each docker image is getting mapped correctly

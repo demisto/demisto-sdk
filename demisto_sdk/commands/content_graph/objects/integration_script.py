@@ -25,5 +25,4 @@ class IntegrationScript(ContentItem):
         else:
             data = self.data
         data = IntegrationScriptUnifier.unify(self.path, data, marketplace, **kwargs)
-
         return data

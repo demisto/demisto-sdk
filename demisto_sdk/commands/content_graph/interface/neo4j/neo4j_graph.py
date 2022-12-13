@@ -68,7 +68,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def close(self) -> None:
         self.driver.close()
 
-    def _add_to_mapping(self, nodes: Iterable[graph.Node]) -> None:
+    def _add_to_mapping(self, nodes: Iterable[graph.Node], marketplace: MarketplaceVersions = None) -> None:
         """Parses nodes to content objects and adds it to mapping
 
         Args:

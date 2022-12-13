@@ -26,7 +26,8 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
         self.tags: List[str] = self.yml_data.get("tags", [])
         if self.type == "python":
             self.type += "2"
-
+        self.object_id_x2 = self.yml_data.get('commonfileds', {}).get('id_x2') or self.object_id
+        self.name_x2 = self.yml_data.get('name_x2') or self.name
         self.connect_to_dependencies()
         self.connect_to_tests()
 

@@ -40,7 +40,7 @@ class ModelingRuleValidator(ContentEntityValidator):
         for file in files:
             if file.endswith('_schema.json'):
                 self.schema_path = file
-                with open(file, 'r') as sf:
+                with open(file) as sf:
                     self.schema_content = json.load(sf)
             if file.endswith('.xif'):
                 self.xif_path = file
@@ -105,7 +105,7 @@ class ModelingRuleValidator(ContentEntityValidator):
 
     def does_version_require_testdata(self):
         """Modeling Rule Versions Starting with 6.10.0 require test data for testing"""
-        with open(self.file_path, 'r') as yf:
+        with open(self.file_path) as yf:
             yaml_obj = yaml.load(yf)
         if 'fromversion' in yaml_obj:
             if Version(yaml_obj['fromversion']) >= Version(self.MIN_FROMVERSION_REQUIRES_TESTDATA):
@@ -152,7 +152,7 @@ class ModelingRuleValidator(ContentEntityValidator):
         """
 
         def get_dataset_from_xif(xif_file_path: str) -> List[str]:
-            with open(xif_file_path, 'r') as xif_file:
+            with open(xif_file_path) as xif_file:
                 xif_content = xif_file.read()
                 dataset = re.findall("dataset[ ]?=[ ]?([\"a-zA-Z_0-9]+)", xif_content)
             if dataset:
@@ -177,7 +177,7 @@ class ModelingRuleValidator(ContentEntityValidator):
         """
         Check that the schema and rules keys are empty.
         """
-        with open(self.file_path, 'r') as yf:
+        with open(self.file_path) as yf:
             yaml_obj = yaml.load(yf)
 
         # Check that the keys exists in yml

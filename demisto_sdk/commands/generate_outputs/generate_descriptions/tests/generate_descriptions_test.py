@@ -9,11 +9,9 @@ from demisto_sdk.commands.common.tools import get_json, get_yaml
 
 
 FAKE_INTEGRATION_YML = open(
-    f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_descriptions/tests/test_data/input_integration.yml',
-    'r').read()
+    f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_descriptions/tests/test_data/input_integration.yml').read()
 FAKE_INTEGRATION_YML_SIMILAR = open(
-    f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_descriptions/tests/test_data/input_integration_similar_paths.yml',
-    'r').read()
+    f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_descriptions/tests/test_data/input_integration_similar_paths.yml').read()
 FAKE_OUTPUT_AI21 = get_json(
     f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_descriptions/tests/test_data/ai21_response.json')
 LOGPROB_INPUT_AI21 = get_json(

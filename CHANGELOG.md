@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Added validation of testdata files for **Modeling Rules**.
+* Added the **update-content-graph** command.
 * Added the ability to limit the number of CPU cores with `DEMISTO_SDK_MAX_CPU_CORES` envirment variable.
 * Fixed an issue where **update-release-notes** failed when changing only xif file in **Modeling Rules**.
 * Added a **validate** step checking types of attributes in the schema file of modeling rule.
@@ -14,10 +15,13 @@
 * Fixed an issue where **format** failed on indicator files with a `None` value under the `tabs` key.
 * Fixed an issue where **validate** printed errors for only one change of context path instead of all.
 * Fixed an issue where **download** did not suggest using a username/password when authenticating with XSOAR and using invalid arguments.
+* Fixed an issue where **download** failed when listing or downloading content items that are not unicode-encoded.
 * Added support for fromversion/toversion in XSIAM content items (correlation rules, XSIAM dashboards, XSIAM reports and triggers).
 * Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.
 * Fixed an issue where **format** created duplicate configuration parameters.
 * Added **prepare-content** command which will prepare the pack or content item for the platform.
+* Patched an issue where deprecated `packaging.version.LegacyVersion`, locking packaging version to `<22`.
+
 ## 1.7.9
 * Fixed an issue where an error message in **validate** would not include the suggested fix.
 * Added a validation that enforces predefined categories on MP Packs & integration yml files, the validation also ensures that each pack has only one category.

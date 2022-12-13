@@ -9,12 +9,20 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import (NEO4J_DATABASE_URL, NEO4J_PASSWORD, NEO4J_USERNAME, ContentType,
                                                        Neo4jResult, RelationshipType)
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import create_constraints
+from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import Neo4jImportHandler
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import create_constraints, drop_constraints
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (create_pack_dependencies,
                                                                                      get_all_level_packs_dependencies)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export import (export_to_csv, import_csv,
+                                                                                      merge_duplicate_commands,
+                                                                                      merge_duplicate_content_items,
+                                                                                      post_export_write_queries,
+                                                                                      post_import_write_queries,
+                                                                                      pre_export_write_queries)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import create_indexes
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (_match, create_nodes,
-                                                                              delete_all_graph_nodes, duplicates_exist)
+                                                                              delete_all_graph_nodes, duplicates_exist,
+                                                                              remove_server_nodes)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import create_relationships
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent, ServerContent, content_type_to_model
 from demisto_sdk.commands.content_graph.objects.integration import Integration
@@ -236,6 +244,40 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def create_relationships(self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]) -> None:
         with self.driver.session() as session:
             session.write_transaction(create_relationships, relationships)
+
+    def remove_server_items(self) -> None:
+        with self.driver.session() as session:
+            session.write_transaction(remove_server_nodes)
+
+    def import_graph(self) -> None:
+        """Imports CSV files to neo4j, by:
+        1. Dropping the constraints (we temporarily allow creating duplicate nodes from different repos)
+        2. Preparing the CSV files for import and importing them
+        3. Running serveral DB queries to fix the imported data
+        4. Merging duplicate nodes (conmmands/content items)
+        5. Recreating the constraints
+
+        Args:
+            external_import_paths (List[Path]): A list of external repositories' import paths.
+        """
+        import_handler = Neo4jImportHandler()
+        import_handler.ensure_data_uniqueness()
+        node_files = import_handler.get_nodes_files()
+        relationship_files = import_handler.get_relationships_files()
+        with self.driver.session() as session:
+            session.write_transaction(drop_constraints)
+            session.write_transaction(import_csv, node_files, relationship_files)
+            session.write_transaction(post_import_write_queries)
+            session.write_transaction(merge_duplicate_commands)
+            session.write_transaction(merge_duplicate_content_items)
+            session.write_transaction(create_constraints)
+
+    def export_graph(self) -> None:
+        Neo4jImportHandler().clean_import_dir()
+        with self.driver.session() as session:
+            session.write_transaction(pre_export_write_queries)
+            session.write_transaction(export_to_csv, self.repo_path.name)
+            session.write_transaction(post_export_write_queries)
 
     def clean_graph(self):
         with self.driver.session() as session:

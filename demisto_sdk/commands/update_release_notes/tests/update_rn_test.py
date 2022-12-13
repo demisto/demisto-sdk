@@ -6,8 +6,8 @@ from collections import Counter
 from copy import deepcopy
 from pathlib import Path
 from typing import Dict, Optional
+from unittest import mock
 
-import mock
 import pytest
 
 from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_TO_VERSION, FileType
@@ -1319,7 +1319,7 @@ class TestRNUpdateUnit:
                        "isfetch: false\n" \
                        "longRunning: false\n"
 
-        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', 'r') as file:
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json') as file:
             pack_data = json.load(file)
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command',
                      return_value=expected_res)
@@ -1336,7 +1336,7 @@ class TestRNUpdateUnit:
                           update_type='minor', modified_files_in_pack={'Packs/Test/Integrations/Test.yml'},
                           added_files=set())
         client.execute_update()
-        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md') as file:
             RN = file.read()
         os.remove('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
         assert 'Updated the Docker image to: *demisto/python3:3.9.6.22914*.' in RN
@@ -1352,7 +1352,7 @@ class TestRNUpdateUnit:
             - A new record with the updated docker image is added.
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', 'r') as file:
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json') as file:
             pack_data = json.load(file)
         with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md', 'w') as file:
             file.write('### Integrations\n')
@@ -1372,7 +1372,7 @@ class TestRNUpdateUnit:
                           modified_files_in_pack={'Packs/Test/Integrations/Test.yml'}, added_files=set())
         client.execute_update()
         client.execute_update()
-        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md', 'r') as file:
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md') as file:
             RN = file.read()
         assert RN.count('Updated the Docker image to: *dockerimage:python/test:1243*.') == 1
 
@@ -1392,7 +1392,7 @@ class TestRNUpdateUnit:
         import os
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', 'r') as file:
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json') as file:
             pack_data = json.load(file)
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command',
                      return_value='+  type:True')
@@ -1409,7 +1409,7 @@ class TestRNUpdateUnit:
                           update_type='minor', modified_files_in_pack={
                               'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
         client.execute_update()
-        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md') as file:
             RN = file.read()
         os.remove('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
         assert 'Updated the Docker image to: *dockerimage:python/test:1243*' not in RN
@@ -1427,7 +1427,7 @@ class TestRNUpdateUnit:
         import os
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json', 'r') as file:
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json') as file:
             pack_data = json.load(file)
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command',
                      return_value='+  dockerimage:python/test:1243')
@@ -1444,7 +1444,7 @@ class TestRNUpdateUnit:
                           update_type='minor', modified_files_in_pack={'Packs/Test/Integrations/Test.yml'},
                           added_files={'Packs/Test/Integrations/Test.yml'})
         client.execute_update()
-        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md', 'r') as file:
+        with open('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md') as file:
             RN = file.read()
         os.remove('demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md')
         assert 'Updated the Docker image to: *dockerimage:python/test:1243*' not in RN
@@ -1502,7 +1502,7 @@ class TestRNUpdateUnit:
         client.build_rn_config_file('1.0.1')
         if expected_conf_data:
             assert os.path.exists(conf_path)
-            with open(conf_path, 'r') as f:
+            with open(conf_path) as f:
                 assert json.loads(f.read()) == expected_conf_data
         else:
             assert not os.path.exists(conf_path)

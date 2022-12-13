@@ -219,7 +219,7 @@ def test_is_incomplete_testdata_file(repo):
     dummy_modeling_rule = pack.create_modeling_rule('MyRule')
     structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
     dummy_modeling_rule.testdata._file_path.unlink()
-    with open('demisto_sdk/tests/test_files/modeling_rules.xif', 'r') as f:
+    with open('demisto_sdk/tests/test_files/modeling_rules.xif') as f:
         xif_rules = f.read()
         dummy_modeling_rule.rules.write(xif_rules)
     runner = CliRunner()

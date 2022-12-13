@@ -22,7 +22,7 @@ def generate_script_doc(input_path, examples, output: str = None, permissions: s
 
         if examples:
             if os.path.isfile(examples):
-                with open(examples, 'r') as examples_file:
+                with open(examples) as examples_file:
                     examples = examples_file.read().splitlines()
             else:
                 examples = examples.split(',')
@@ -240,7 +240,7 @@ def generate_script_example(script_name, example=None):
             if context_example:
                 results.extend(['### Context Example',
                                 '```json',
-                                '{}'.format(context_example),
+                                f'{context_example}',
                                 '```',
                                 '', ])
             if md_example:

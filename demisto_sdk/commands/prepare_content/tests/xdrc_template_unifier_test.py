@@ -33,7 +33,7 @@ def test_unify_xdrc_template():
                           'os_type': 'AGENT_OS_LINUX',
                           'profile_type': 'STANDARD',
                           'yaml_template': 'dGVzdDogZHVtbXlfdGVzdA=='}
-    with open(expected_json_path, 'r') as real_file:
+    with open(expected_json_path) as real_file:
         assert expected_json_file == json.load(real_file)
 
     os.remove(export_json_path)

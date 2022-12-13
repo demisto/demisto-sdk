@@ -7,7 +7,7 @@ from wcmatch.pathlib import Path
 import demisto_sdk.commands.common.content.errors as exc
 
 
-class GeneralObject(object):
+class GeneralObject:
     def __init__(self, path: Union[Path, str], file_name_prefix: str = ""):
         """ Abstract object for represent objects in content.
 

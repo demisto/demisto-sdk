@@ -3,7 +3,6 @@ from typing import Any, Dict, List
 
 import pytest
 
-import demisto_sdk.commands.content_graph.content_graph_commands as content_graph_commands
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
@@ -26,7 +25,7 @@ from TestSuite.repo import Repo
 @pytest.fixture(autouse=True)
 def setup(mocker, repo: Repo):
     """Auto-used fixture for setup before every test run"""
-    mocker.patch.object(content_graph_commands, "REPO_PATH", Path(repo.path))
+    mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
     mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
 
 
@@ -37,7 +36,7 @@ def repository(mocker):
         packs=[],
     )
     mocker.patch(
-        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_repository",
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
         return_value=repository,
     )
     return repository
@@ -60,7 +59,7 @@ def mock_pack(name: str = "SamplePack"):
         author="",
         certification="",
         hidden=False,
-        server_min_version="",
+        server_min_version="5.5.0",
         current_version="1.0.0",
         tags=[],
         categories=[],
@@ -547,68 +546,6 @@ class TestCreateContentGraph:
             create_content_graph(interface)
             script = interface.search(object_id="TestScript")[0]
         assert script.not_in_repository
-
-    def test_create_content_graph_duplicate_integrations(
-        self,
-        repository: ContentDTO,
-    ):
-        """
-        Given:
-            - A mocked model of a repository with a pack TestPack, containing two integrations
-              with the exact same properties.
-        When:
-            - Running create_content_graph().
-        Then:
-            - Make sure the duplicates are found and the command fails.
-        """
-        pack = mock_pack()
-        integration = mock_integration()
-        integration2 = mock_integration()
-        relationships = {
-            RelationshipType.IN_PACK: [
-                mock_relationship(
-                    "SampleIntegration",
-                    ContentType.INTEGRATION,
-                    "SamplePack",
-                    ContentType.PACK,
-                ),
-                mock_relationship(
-                    "SampleIntegration",
-                    ContentType.INTEGRATION,
-                    "SamplePack",
-                    ContentType.PACK,
-                ),
-            ],
-            RelationshipType.HAS_COMMAND: [
-                mock_relationship(
-                    "SampleIntegration",
-                    ContentType.INTEGRATION,
-                    "test-command",
-                    ContentType.COMMAND,
-                    name="test-command",
-                    description="",
-                    deprecated=False,
-                ),
-                mock_relationship(
-                    "SampleIntegration",
-                    ContentType.INTEGRATION,
-                    "test-command",
-                    ContentType.COMMAND,
-                    name="test-command",
-                    description="",
-                    deprecated=False,
-                ),
-            ],
-        }
-        pack.relationships = relationships
-        pack.content_items.integration.append(integration)
-        pack.content_items.integration.append(integration2)
-        repository.packs.append(pack)
-        with pytest.raises(Exception) as e:
-            with ContentGraphInterface() as interface:
-                create_content_graph(interface)
-                interface.validate_graph()
-        assert "Duplicates found in graph" in str(e)
 
     def test_create_content_graph_duplicate_integrations_different_marketplaces(
         self,

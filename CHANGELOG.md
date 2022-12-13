@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where **format** created duplicate configuration parameters.
 
 ## 1.8.0
 * Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.

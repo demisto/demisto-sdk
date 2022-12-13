@@ -12,14 +12,14 @@ import typer
 from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (ENV_DEMISTO_SDK_MARKETPLACE, MODELING_RULES_DIR, PARSING_RULES_DIR,
-                                                   FileType)
+from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE, FileType
 from demisto_sdk.commands.common.content_constant_paths import ALL_PACKS_DEPENDENCIES_DEFAULT_PATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (find_type, get_last_remote_release_version, get_release_note_entries,
                                                is_external_repository, print_error, print_success, print_warning)
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
+from demisto_sdk.commands.prepare_content.prepare_upload_manager import PrepareUploadManager
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data, test_modeling_rule
 from demisto_sdk.commands.upload.upload import upload_content_entity
@@ -45,7 +45,7 @@ class PathsParamType(click.Path):
 
     def convert(self, value, param, ctx):
         if ',' not in value:
-            return super(PathsParamType, self).convert(value, param, ctx)
+            return super().convert(value, param, ctx)
 
         split_paths = value.split(',')
         # check the validity of each of the paths
@@ -241,8 +241,8 @@ def extract_code(config, **kwargs):
     return extractor.extract_code(kwargs['outfile'])
 
 
-# ====================== unify ====================== #
-@main.command()
+# ====================== prepare-content ====================== #
+@main.command(name='prepare-content')
 @click.help_option(
     '-h', '--help'
 )
@@ -263,49 +263,37 @@ def extract_code(config, **kwargs):
               help='The marketplace the content items are created for, that determines usage of marketplace '
                    'unique text. Default is the XSOAR marketplace.',
               default='xsoar', type=click.Choice(['xsoar', 'marketplacev2', 'v2']))
-def unify(**kwargs):
+def prepare_content(**kwargs):
     """
-    This command has three main functions:
+    This command is used to prepare the content to be used in the platform.
 
-    1. Integration/Script Unifier - Unifies integration/script code, image, description and yml files to a single XSOAR yml file.
-     * Note that this should be used on a single integration/script and not a pack, not multiple scripts/integrations.
-     * To use this function - set as input a path to the *directory* of the integration/script to unify.
 
-    2. GenericModule Unifier - Unifies a GenericModule with its Dashboards to a single JSON object.
-     * To use this function - set as input a path to a GenericModule *file*.
-
-    3. Parsing/Modeling Rule Unifier - Unifies Parsing/Modeling rule YML, XIF and samples JSON files to a single YML file.
-     * Note that this should be used on a single parsing/modeling rule and not a pack, not multiple rules.
-     * To use this function - set as input a path to the *directory* of the parsing/modeling rule to unify.
     """
+    if click.get_current_context().info_name == 'unify':
+        kwargs['unify_only'] = True
+
     check_configuration_file('unify', kwargs)
     # Input is of type Path.
     kwargs['input'] = str(kwargs['input'])
     file_type = find_type(kwargs['input'])
-    custom = kwargs.pop('custom')
     if marketplace := kwargs.get('marketplace'):
         os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
     if file_type == FileType.GENERIC_MODULE:
-        from demisto_sdk.commands.unify.generic_module_unifier import GenericModuleUnifier
+        from demisto_sdk.commands.prepare_content.generic_module_unifier import GenericModuleUnifier
 
         # pass arguments to GenericModule unifier and call the command
         generic_module_unifier = GenericModuleUnifier(**kwargs)
         generic_module_unifier.merge_generic_module_with_its_dashboards()
-    elif any(rule_dir in os.path.abspath(kwargs['input']) for rule_dir in [PARSING_RULES_DIR, MODELING_RULES_DIR]):
-        from demisto_sdk.commands.unify.rule_unifier import RuleUnifier
-        rule_unifier = RuleUnifier(**kwargs)
-        rule_unifier.unify()
     else:
-        from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
-
-        # pass arguments to YML unifier and call the command
-        yml_unifier = IntegrationScriptUnifier(**kwargs, custom=custom)
-        yml_unifier.unify()
-
+        PrepareUploadManager.prepare_for_upload(**kwargs)
     return 0
 
 
+main.add_command(prepare_content, name='unify')
+
 # ====================== zip-packs ====================== #
+
+
 @main.command()
 @click.help_option(
     '-h', '--help'
@@ -1829,7 +1817,7 @@ def openapi_codegen(**kwargs):
     configuration = None
     if kwargs.get('config_file'):
         try:
-            with open(kwargs['config_file'], 'r') as config_file:
+            with open(kwargs['config_file']) as config_file:
                 configuration = json.load(config_file)
         except Exception as e:
             print_error(f'Failed to load configuration file: {e}')
@@ -2190,6 +2178,7 @@ def error_code(config, **kwargs):
 @click.option('-ud', '--use-docker', is_flag=True, help="Use docker service to run the content graph")
 @click.option('-us', '--use-existing', is_flag=True, help="Use existing service", default=False)
 @click.option('-d', '--dependencies', is_flag=True, help="Whether dependencies should be included in the graph", default=False)
+@click.option('-se', '--skip-export', is_flag=True, help="Whether or not to skip exporting to CSV.", default=False)
 @click.option('-o', '--output-file', type=click.Path(), help="dump file output", default=None)
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
               type=click.IntRange(0, 3, clamp=True), default=2, show_default=True)
@@ -2200,6 +2189,7 @@ def create_content_graph(
     use_docker: bool = False,
     use_existing: bool = False,
     dependencies: bool = False,
+    skip_export: bool = False,
     output_file: Path = None,
     **kwargs,
 ):
@@ -2214,7 +2204,52 @@ def create_content_graph(
         output_file=Path(output_file) if output_file else None,
         use_docker=use_docker,
     ) as content_graph_interface:
-        create_content_graph_command(content_graph_interface, dependencies)
+        create_content_graph_command(content_graph_interface, dependencies, export=not skip_export)
+
+
+# ====================== update-content-graph ====================== #
+@main.command(
+    hidden=True,
+)
+@click.help_option(
+    '-h', '--help'
+)
+@click.option('-ud', '--use-docker', is_flag=True, help="Use docker service to run the content graph")
+@click.option('-us', '--use-existing', is_flag=True, help="Use existing service", default=False)
+@click.option('-p', '--packs', help="A comma-separated list of packs to update", multiple=True, default=None)
+@click.option('-d', '--dependencies', is_flag=True, help="Whether dependencies should be included in the graph", default=False)
+@click.option('-o', '--output-file', type=click.Path(), help="dump file output", default=None)
+@click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
+              type=click.IntRange(0, 3, clamp=True), default=2, show_default=True)
+@click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")
+@click.option("-lp", "--log-path", help="Path to store all levels of logs",
+              type=click.Path(resolve_path=True))
+def update_content_graph(
+    use_docker: bool = False,
+    use_existing: bool = False,
+    packs: list = None,
+    dependencies: bool = False,
+    output_file: Path = None,
+    **kwargs
+):
+    from demisto_sdk.commands.common.logger import logging_setup
+    from demisto_sdk.commands.content_graph.content_graph_commands import \
+        update_content_graph as update_content_graph_command
+    from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
+    logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
+                  quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
+                  log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
+
+    with Neo4jContentGraphInterface(
+        start_service=not use_existing,
+        output_file=output_file,
+        use_docker=use_docker,
+    ) as content_graph_interface:
+        update_content_graph_command(
+            content_graph_interface,
+            packs_to_update=packs or [],
+            dependencies=dependencies,
+        )
 
 
 @main.result_callback()

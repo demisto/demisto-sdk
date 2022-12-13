@@ -37,7 +37,7 @@ def get_total_coverage(filename: Optional[str] = None, date: Optional[datetime] 
     assert not (filename and date), 'Provide either a filename or a date, not both.'
     try:
         if filename:
-            with open(filename, 'r') as report_file:
+            with open(filename) as report_file:
                 result = json.load(report_file)
             try:
                 return result[coverage_field]

@@ -1,0 +1,2 @@
+:ID,marketplaces,object_id,content_type,name,not_in_repository:boolean,:LABEL
+3,xsoar$marketplacev2,test-command,Command,test-command,false,BaseContent;CommandOrScript;Command

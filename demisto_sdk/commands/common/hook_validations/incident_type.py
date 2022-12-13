@@ -56,7 +56,7 @@ class IncidentTypeValidator(ContentEntityValidator):
         Returns:
             bool. Whether the version is valid or not.
         """
-        return super(IncidentTypeValidator, self)._is_valid_version()
+        return super()._is_valid_version()
 
     def is_id_equals_name(self):
         # type: () -> bool
@@ -65,7 +65,7 @@ class IncidentTypeValidator(ContentEntityValidator):
         Returns:
             bool. Whether the file id equals to its name
         """
-        return super(IncidentTypeValidator, self)._is_id_equals_name('incident_type')
+        return super()._is_id_equals_name('incident_type')
 
     @error_codes('IF110')
     def is_changed_from_version(self):

@@ -7,9 +7,9 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
+from demisto_sdk.commands.prepare_content.tests.yml_unifier_test import DUMMY_MODULE, DUMMY_SCRIPT
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
-from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
-from demisto_sdk.commands.unify.tests.yml_unifier_test import DUMMY_MODULE, DUMMY_SCRIPT
 from TestSuite.test_tools import ChangeCWD
 
 yaml = YAML_Handler()
@@ -160,15 +160,15 @@ def test_extract_to_package_format_modeling_rule(tmpdir):
                             output=str(out), file_type='modelingrule')
     assert extractor.extract_to_package_format() == 0
     # check code
-    with open(out.join('OktaModelingRule').join('OktaModelingRule.xif'), 'r', encoding='utf-8') as f:
+    with open(out.join('OktaModelingRule').join('OktaModelingRule.xif'), encoding='utf-8') as f:
         file_data = f.read()
         assert '[MODEL: dataset=okta_okta_raw, model=Audit]' in file_data
 
-    with open(out.join('OktaModelingRule').join('OktaModelingRule_schema.json'), 'r', encoding='utf-8') as f:
+    with open(out.join('OktaModelingRule').join('OktaModelingRule_schema.json'), encoding='utf-8') as f:
         file_data = f.read()
         assert schema == json.loads(file_data)
 
-    with open(out.join('OktaModelingRule').join('OktaModelingRule.yml'), 'r') as f:
+    with open(out.join('OktaModelingRule').join('OktaModelingRule.yml')) as f:
         yaml_obj = yaml.load(f)
         assert yaml_obj['fromversion'] == '6.8.0'
 
@@ -196,15 +196,15 @@ def test_extract_to_package_format_parsing_rule(tmpdir):
                             output=str(out), file_type='parsingrule')
     assert extractor.extract_to_package_format() == 0
     # check code
-    with open(out.join('MyRule').join('MyRule.xif'), 'r', encoding='utf-8') as f:
+    with open(out.join('MyRule').join('MyRule.xif'), encoding='utf-8') as f:
         file_data = f.read()
         assert '[RULE:extract_hipmatch_only_fields]' in file_data
 
-    with open(out.join('MyRule').join('MyRule.json'), 'r', encoding='utf-8') as f:
+    with open(out.join('MyRule').join('MyRule.json'), encoding='utf-8') as f:
         file_data = f.read()
         assert sample == json.loads(file_data)
 
-    with open(out.join('MyRule').join('MyRule.yml'), 'r') as f:
+    with open(out.join('MyRule').join('MyRule.yml')) as f:
         yaml_obj = yaml.load(f)
         assert yaml_obj['fromversion'] == '6.8.0'
 
@@ -296,7 +296,7 @@ def test_extract_code_pwsh(tmpdir):
 
     extractor.extract_code(extractor.output)
     # notice that we passed without an extension. Extractor should be adding .ps1
-    with open(extractor.output.with_suffix('.ps1'), 'r', encoding='utf-8') as temp_code:
+    with open(extractor.output.with_suffix('.ps1'), encoding='utf-8') as temp_code:
         file_data = temp_code.read()
         assert '. $PSScriptRoot\\CommonServerPowerShell.ps1\n' in file_data
         assert file_data[-1] == '\n'
@@ -338,19 +338,19 @@ def test_extract_to_package_format_pwsh(tmpdir):
                             output=str(out), file_type='integration')
     assert extractor.extract_to_package_format() == 0
     # check code
-    with open(out.join('PowerShellRemotingOverSSH').join('PowerShellRemotingOverSSH.ps1'), 'r', encoding='utf-8') as f:
+    with open(out.join('PowerShellRemotingOverSSH').join('PowerShellRemotingOverSSH.ps1'), encoding='utf-8') as f:
         file_data = f.read()
         assert '. $PSScriptRoot\\CommonServerPowerShell.ps1\n' in file_data
         assert file_data[-1] == '\n'
     # check description
-    with open(out.join('PowerShellRemotingOverSSH').join('PowerShellRemotingOverSSH_description.md'), 'r') as f:
+    with open(out.join('PowerShellRemotingOverSSH').join('PowerShellRemotingOverSSH_description.md')) as f:
         file_data = f.read()
         assert 'Username and password are both associated with the user in the target machine' in file_data
     # check readme
-    with open(out.join('PowerShellRemotingOverSSH').join('README.md'), 'r') as f:
+    with open(out.join('PowerShellRemotingOverSSH').join('README.md')) as f:
         file_data = f.read()
         assert 'This is a sample test README' in file_data
-    with open(out.join('PowerShellRemotingOverSSH').join('PowerShellRemotingOverSSH.yml'), 'r') as f:
+    with open(out.join('PowerShellRemotingOverSSH').join('PowerShellRemotingOverSSH.yml')) as f:
         yaml_obj = yaml.load(f)
         assert yaml_obj['fromversion'] == '5.5.0'
         assert not yaml_obj['script']['script']

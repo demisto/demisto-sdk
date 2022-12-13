@@ -6,5 +6,5 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 class Report(ContentItem, content_type=ContentType.REPORT):  # type: ignore[call-arg]
 
-    def include_in_metadata(self) -> Set[str]:
+    def metadata_fields(self) -> Set[str]:
         return {"name", "description"}

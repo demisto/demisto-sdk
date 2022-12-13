@@ -531,7 +531,7 @@ class PackMetaData(JSONObject):
             return None
 
         try:
-            with open(user_metadata_path, "r") as user_metadata_file:
+            with open(user_metadata_path) as user_metadata_file:
                 user_metadata = json.load(user_metadata_file)  # loading user metadata
                 # part of old packs are initialized with empty list
                 if isinstance(user_metadata, list):

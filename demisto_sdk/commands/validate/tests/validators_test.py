@@ -5,9 +5,9 @@ from io import StringIO
 from pathlib import Path
 from shutil import copyfile
 from typing import Any, List, Optional, Type, Union
+from unittest.mock import patch
 
 import pytest
-from mock import patch
 
 import demisto_sdk.commands.validate.validate_manager
 from demisto_sdk.commands.common import tools
@@ -2176,7 +2176,7 @@ def test_run_validation_using_git_modify_existing_incomplete_testdata(mocker, re
     }
     modeling_rule = pack.create_modeling_rule(modeling_rule_name, modeling_rule_yml_content)
     modeling_rule.testdata._file_path.unlink()
-    with open('demisto_sdk/tests/test_files/modeling_rules.xif', 'r') as f:
+    with open('demisto_sdk/tests/test_files/modeling_rules.xif') as f:
         xif_rules = f.read()
         modeling_rule.rules.write(xif_rules)
     runner = CliRunner()

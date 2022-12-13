@@ -33,7 +33,7 @@ class DescriptionFormat(BaseUpdate):
         file_type = find_type(description_type)
         if file_type:
             self.is_beta = find_type(description_type).value == 'betaintegration'
-        with open(self.source_file, 'r') as f:
+        with open(self.source_file) as f:
             self.description_content = f.read()
 
     def remove_community_partner_details(self):

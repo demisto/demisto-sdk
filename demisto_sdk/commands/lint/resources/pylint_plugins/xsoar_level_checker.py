@@ -51,7 +51,7 @@ class XsoarChecker(BaseChecker):
     msgs = xsoar_msg
 
     def __init__(self, linter=None):
-        super(XsoarChecker, self).__init__(linter)
+        super().__init__(linter)
         self.is_script = True if os.getenv('is_script') == 'True' else False
         self.common_args_params = ['args', 'dargs', 'arguments', 'd_args', 'data_args', 'params', 'PARAMS',
                                    'integration_parameters']
@@ -191,8 +191,7 @@ class XsoarChecker(BaseChecker):
             for subnode in list(node.get_children()):
                 yield subnode
 
-                for sub in self._inner_search(subnode):
-                    yield sub
+                yield from self._inner_search(subnode)
 
         except (AttributeError, TypeError):
             yield node

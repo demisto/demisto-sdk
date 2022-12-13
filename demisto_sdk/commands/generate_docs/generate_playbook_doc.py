@@ -166,7 +166,7 @@ def get_inputs(playbook: Dict[str, List[Dict]]) -> Tuple[List[Dict], List[str]]:
             description = description if description else default_description
 
         if not description:
-            errors.append('Error! You are missing description in playbook input {}'.format(name))
+            errors.append(f'Error! You are missing description in playbook input {name}')
 
         inputs.append({
             'Name': name,

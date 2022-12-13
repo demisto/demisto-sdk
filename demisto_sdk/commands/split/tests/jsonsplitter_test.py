@@ -33,12 +33,12 @@ def test_split_json(repo):
         assert res == 0
         assert os.path.isfile(expected_dashboard_path)
 
-        with open(expected_dashboard_path, 'r') as f:
+        with open(expected_dashboard_path) as f:
             result_dashboard = json.load(f)
 
         assert result_dashboard == EXTRACTED_DASHBOARD
 
-        with open(generic_module.path, 'r') as f:
+        with open(generic_module.path) as f:
             result_generic_module = json.load(f)
 
         assert result_generic_module == GENERIC_MODULE

@@ -2574,7 +2574,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-tabulate"
-version = "0.8.11"
+version = "0.9.0.0"
 description = "Typing stubs for tabulate"
 category = "main"
 optional = false
@@ -2834,7 +2834,7 @@ build = ["gsutil"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "e65061b4e52484a51f0718b000a538489131c5dd249f2d7ae3433ab821abe6f4"
+content-hash = "7e9b4ad0599804f550a16f2f30876f78dc3aacd27a4a95cc04e39826e7c7a845"
 
 [metadata.files]
 aiohttp = [
@@ -4757,8 +4757,8 @@ types-six = [
     {file = "types_six-1.16.21.4-py3-none-any.whl", hash = "sha256:3849354bd07b9274436aaa7d5d834594d8f0aa74581f88c632188c58f2abed23"},
 ]
 types-tabulate = [
-    {file = "types-tabulate-0.8.11.tar.gz", hash = "sha256:17a5fa3b5ca453815778fc9865e8ecd0118b07b2b9faff3e2b06fe448174dd5e"},
-    {file = "types_tabulate-0.8.11-py3-none-any.whl", hash = "sha256:af811268241e8fb87b63c052c87d1e329898a93191309d5d42111372232b2e0e"},
+    {file = "types-tabulate-0.9.0.0.tar.gz", hash = "sha256:4a79474714cea156bcd2185bb9bddd8fb9d3d5227c8d0a7f21bf21caf5f60e67"},
+    {file = "types_tabulate-0.9.0.0-py3-none-any.whl", hash = "sha256:a1cc2aa52d2a9abfe0acbb361ccd49e3400794086a41626ce8784ed2e1ec0b0d"},
 ]
 types-ujson = [
     {file = "types-ujson-5.6.0.0.tar.gz", hash = "sha256:1a20cf7946772756736582612e0da5656d2dbeccd24be4c1e97d1e66b072b97e"},

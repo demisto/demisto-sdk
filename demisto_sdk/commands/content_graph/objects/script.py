@@ -8,10 +8,10 @@ from demisto_sdk.commands.content_graph.objects.integration_script import Integr
 
 class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignore[call-arg]
     tags: List[str]
-    
+
     def metadata_fields(self) -> Set[str]:
         return {"name", "description", "tags"}
-        
+
     def dump(self, dir: Path, marketplace: MarketplaceVersions) -> None:
         if self.is_test:
             return

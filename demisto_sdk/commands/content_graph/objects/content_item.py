@@ -97,18 +97,26 @@ class ContentItem(BaseContent):
         with self.path.open() as f:
             return self.handler.load(f)
 
+    def fix_for_marketplace(self, marketplace: Optional[MarketplaceVersions] = None) -> None:
+        if marketplace and marketplace != MarketplaceVersions.XSOAR:
+            data = self.data
+            self.object_id = data.get('commonfields', {}).get('id_x2') or self.object_id
+            self.name = data.get('name_x2') or self.name
+
     def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
         data = self.data
         if marketplace != MarketplaceVersions.XSOAR:
             alternate_item_fields(data)
-            # TODO: should be in the Parser once we create a database for each marketplace
-            common_fields = data.get("commonfields", {})
-            if isinstance(common_fields, dict):
-                self.object_id = common_fields.get("id") or self.object_id
-            self.name = data.get("name") or self.name
         return data
 
     def summary(self) -> dict:
+        """Summary of a content item (the most important metadata fields)
+
+        Args:
+
+        Returns:
+            dict: Dictionary representation of the summary content item.
+        """
         return self.dict(include=self.metadata_fields(), by_alias=True)
 
     @abstractmethod

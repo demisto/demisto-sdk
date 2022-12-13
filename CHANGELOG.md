@@ -18,6 +18,7 @@
 * Fixed an issue where **download** failed when listing or downloading content items that are not unicode-encoded.
 * Added support for fromversion/toversion in XSIAM content items (correlation rules, XSIAM dashboards, XSIAM reports and triggers).
 * Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.
+* Fixed an issue where **format** created duplicate configuration parameters.
 * Added **prepare-content** command which will prepare the pack or content item for the platform.
 * Patched an issue where deprecated `packaging.version.LegacyVersion`, locking packaging version to `<22`.
 

@@ -14,9 +14,9 @@ import logging
 from pydantic import DirectoryPath
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import alternate_item_fields
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import MarketplaceSuffixPreparer
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -99,8 +99,8 @@ class ContentItem(BaseContent):
 
     def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
         data = self.data
+        MarketplaceSuffixPreparer.prepare(data, marketplace)
         if marketplace != MarketplaceVersions.XSOAR:
-            alternate_item_fields(data)
             # TODO: should be in the Parser once we create a database for each marketplace
             common_fields = data.get("commonfields", {})
             if isinstance(common_fields, dict):

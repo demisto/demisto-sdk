@@ -1,17 +1,15 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 import networkx
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.update_id_set import (
-    BUILT_IN_FIELDS, build_tasks_graph, get_fields_by_script_argument)
-from demisto_sdk.commands.content_graph.common import (ContentType,
-                                                       RelationshipType)
-from demisto_sdk.commands.content_graph.parsers.yaml_content_item import \
-    YAMLContentItemParser
+from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS, build_tasks_graph, get_fields_by_script_argument
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.parsers.yaml_content_item import YAMLContentItemParser
 
 LIST_COMMANDS = ["Builtin|||setList", "Builtin|||getList"]
+IGNORED_FIELDS = ["retry-count"]
 
 
 class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
@@ -36,6 +34,10 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
     @property
     def object_id(self) -> Optional[str]:
         return self.yml_data.get("id")
+
+    @property
+    def supported_marketplaces(self) -> Set[MarketplaceVersions]:
+        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XPANSE}
 
     def is_mandatory_dependency(self, task_id: str) -> bool:
         try:
@@ -80,14 +82,15 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
             if "setIncident" in command:
                 for incident_field in get_fields_by_script_argument(task):
                     self.add_dependency_by_id(
-                        incident_field, ContentType.INCIDENT_FIELD, is_mandatory
+                        incident_field, ContentType.INCIDENT_FIELD, is_mandatory=False
                     )
 
             elif "setIndicator" in command:
                 for incident_field in get_fields_by_script_argument(task):
-                    self.add_dependency_by_id(
-                        incident_field, ContentType.INDICATOR_FIELD, is_mandatory
-                    )
+                    if incident_field not in IGNORED_FIELDS:
+                        self.add_dependency_by_id(
+                            incident_field, ContentType.INDICATOR_FIELD, is_mandatory=False
+                        )
 
             elif command in LIST_COMMANDS:
                 # if list := task.get('scriptarguments', {}).get('listName', {}).get('simple'):

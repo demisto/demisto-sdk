@@ -4,8 +4,7 @@ import pytest
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations import image
-from demisto_sdk.commands.common.hook_validations.integration import \
-    IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tests.integration_test import mock_structure
 from TestSuite.file import File
@@ -145,7 +144,7 @@ def test_json_outputs_where_no_image_in_integration(repo):
         image_validator = image.ImageValidator(integration.yml.path, json_file_path=json_file_path)
 
         # Check the outputs in the json file
-        with open(image_validator.json_file_path, "r") as r:
+        with open(image_validator.json_file_path) as r:
             json_outputs = json.loads(r.read())
 
             assert json_outputs[0]['filePath'] == image_path

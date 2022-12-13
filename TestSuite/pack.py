@@ -1,14 +1,9 @@
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from demisto_sdk.commands.common.constants import (CORRELATION_RULES_DIR,
-                                                   DEFAULT_IMAGE_BASE64,
-                                                   MODELING_RULES_DIR,
-                                                   PARSING_RULES_DIR,
-                                                   TRIGGER_DIR,
-                                                   XDRC_TEMPLATE_DIR,
-                                                   XSIAM_DASHBOARDS_DIR,
-                                                   XSIAM_REPORTS_DIR)
+from demisto_sdk.commands.common.constants import (CORRELATION_RULES_DIR, DEFAULT_IMAGE_BASE64, MODELING_RULES_DIR,
+                                                   PARSING_RULES_DIR, TRIGGER_DIR, XDRC_TEMPLATE_DIR,
+                                                   XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR)
 from TestSuite.correlation_rule import CorrelationRule
 from TestSuite.file import File
 from TestSuite.integration import Integration
@@ -234,7 +229,7 @@ class Pack:
             self,
             name: Optional[str] = None,
             yml: Optional[dict] = None,
-            code: str = '',
+            code: Optional[str] = None,
             readme: str = '',
             description: str = '',
             changelog: str = '',

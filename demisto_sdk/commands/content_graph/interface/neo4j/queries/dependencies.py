@@ -3,20 +3,17 @@ from typing import Dict, List, Set
 
 from neo4j import Transaction
 
-from demisto_sdk.commands.common.constants import (GENERIC_COMMANDS_NAMES,
-                                                   REPUTATION_COMMAND_NAMES,
-                                                   MarketplaceVersions)
-from demisto_sdk.commands.content_graph.common import (ContentType,
-                                                       Neo4jResult,
-                                                       RelationshipType)
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
-    run_query, to_neo4j_map)
+from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES, REPUTATION_COMMAND_NAMES, MarketplaceVersions
+from demisto_sdk.commands.content_graph.common import ContentType, Neo4jResult, RelationshipType
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query, to_neo4j_map
 
 REPUTATION_COMMANDS_NODE_IDS = [
     f"{ContentType.COMMAND}:{cmd}" for cmd in REPUTATION_COMMAND_NAMES
 ]
 IGNORED_CONTENT_ITEMS_IN_DEPENDENCY_CALC = REPUTATION_COMMANDS_NODE_IDS
 IGNORED_PACKS_IN_DEPENDENCY_CALC = ["NonSupported", "Base", "ApiModules"]
+
+GENERIC_COMMANDS_NAMES = GENERIC_COMMANDS_NAMES | {"search"}
 
 MAX_DEPTH = 7
 
@@ -50,9 +47,18 @@ def get_all_level_packs_dependencies(
 
 
 def create_pack_dependencies(tx: Transaction) -> None:
+    remove_existing_depends_on_relationships(tx)
     fix_marketplaces_properties(tx)
     update_uses_for_integration_commands(tx)
     create_depends_on_relationships(tx)
+
+
+def remove_existing_depends_on_relationships(tx: Transaction) -> None:
+    query = f"""
+        MATCH ()-[r:{RelationshipType.DEPENDS_ON}]->()
+        DELETE r
+    """
+    run_query(tx, query)
 
 
 def fix_marketplaces_properties(tx: Transaction) -> None:
@@ -137,7 +143,6 @@ def create_depends_on_relationships(tx: Transaction) -> None:
         AND id(pack_a) <> id(pack_b)
         AND NOT pack_a.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
         AND NOT pack_b.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
-        AND NOT b.node_id IN {IGNORED_CONTENT_ITEMS_IN_DEPENDENCY_CALC}
         AND a.is_test <> true
         AND b.is_test <> true
         WITH r, pack_a, pack_b

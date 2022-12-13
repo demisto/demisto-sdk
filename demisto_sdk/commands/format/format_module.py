@@ -4,46 +4,30 @@ from typing import Dict, List, Tuple
 
 import click
 
-from demisto_sdk.commands.common.constants import (JOB,
-                                                   TESTS_AND_DOC_DIRECTORIES,
-                                                   FileType)
+from demisto_sdk.commands.common.constants import JOB, TESTS_AND_DOC_DIRECTORIES, FileType
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
-                                               print_error, print_success,
-                                               print_warning)
+from demisto_sdk.commands.common.tools import find_type, get_files_in_dir, print_error, print_success, print_warning
 from demisto_sdk.commands.format.format_constants import SCHEMAS_PATH
-from demisto_sdk.commands.format.update_classifier import (
-    ClassifierJSONFormat, OldClassifierJSONFormat)
+from demisto_sdk.commands.format.update_classifier import ClassifierJSONFormat, OldClassifierJSONFormat
 from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_description import DescriptionFormat
-from demisto_sdk.commands.format.update_genericdefinition import \
-    GenericDefinitionJSONFormat
-from demisto_sdk.commands.format.update_genericfield import \
-    GenericFieldJSONFormat
-from demisto_sdk.commands.format.update_genericmodule import \
-    GenericModuleJSONFormat
-from demisto_sdk.commands.format.update_generictype import \
-    GenericTypeJSONFormat
-from demisto_sdk.commands.format.update_incidentfields import \
-    IncidentFieldJSONFormat
-from demisto_sdk.commands.format.update_incidenttype import \
-    IncidentTypesJSONFormat
-from demisto_sdk.commands.format.update_indicatorfields import \
-    IndicatorFieldJSONFormat
-from demisto_sdk.commands.format.update_indicatortype import \
-    IndicatorTypeJSONFormat
+from demisto_sdk.commands.format.update_genericdefinition import GenericDefinitionJSONFormat
+from demisto_sdk.commands.format.update_genericfield import GenericFieldJSONFormat
+from demisto_sdk.commands.format.update_genericmodule import GenericModuleJSONFormat
+from demisto_sdk.commands.format.update_generictype import GenericTypeJSONFormat
+from demisto_sdk.commands.format.update_incidentfields import IncidentFieldJSONFormat
+from demisto_sdk.commands.format.update_incidenttype import IncidentTypesJSONFormat
+from demisto_sdk.commands.format.update_indicatorfields import IndicatorFieldJSONFormat
+from demisto_sdk.commands.format.update_indicatortype import IndicatorTypeJSONFormat
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_job import JobJSONFormat
 from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_lists import ListsFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
-from demisto_sdk.commands.format.update_pack_metadata import \
-    PackMetadataJsonFormat
-from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
-                                                         TestPlaybookYMLFormat)
-from demisto_sdk.commands.format.update_pre_process_rules import \
-    PreProcessRulesFormat
+from demisto_sdk.commands.format.update_pack_metadata import PackMetadataJsonFormat
+from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat, TestPlaybookYMLFormat
+from demisto_sdk.commands.format.update_pre_process_rules import PreProcessRulesFormat
 from demisto_sdk.commands.format.update_pythonfile import PythonFileFormat
 from demisto_sdk.commands.format.update_readme import ReadmeFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
@@ -282,7 +266,7 @@ def run_format_on_file(input: str, file_type: str, from_version: str, interactiv
     if file_type == 'betaintegration':
         file_type = 'integration'
     schema_path = os.path.normpath(
-        os.path.join(__file__, "..", "..", "common", SCHEMAS_PATH, '{}.yml'.format(file_type)))
+        os.path.join(__file__, "..", "..", "common", SCHEMAS_PATH, f'{file_type}.yml'))
     if file_type not in ('integration', 'script') and 'update_docker' in kwargs:
         # non code formatters don't support update_docker param. remove it
         del kwargs['update_docker']

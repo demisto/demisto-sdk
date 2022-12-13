@@ -5,13 +5,13 @@ import networkx as nx
 import pytest
 
 import demisto_sdk.commands.create_id_set.create_id_set as cis
-from demisto_sdk.commands.common.constants import (
-    FILETYPE_TO_DEFAULT_FROMVERSION, FileType, MarketplaceVersions)
-from demisto_sdk.commands.find_dependencies.find_dependencies import (
-    PackDependencies, calculate_single_pack_dependencies,
-    find_dependencies_between_two_packs, get_packs_dependent_on_given_packs,
-    remove_items_from_content_entities_sections,
-    remove_items_from_packs_section)
+from demisto_sdk.commands.common.constants import FILETYPE_TO_DEFAULT_FROMVERSION, FileType, MarketplaceVersions
+from demisto_sdk.commands.find_dependencies.find_dependencies import (PackDependencies,
+                                                                      calculate_single_pack_dependencies,
+                                                                      find_dependencies_between_two_packs,
+                                                                      get_packs_dependent_on_given_packs,
+                                                                      remove_items_from_content_entities_sections,
+                                                                      remove_items_from_packs_section)
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
 

@@ -16,23 +16,16 @@ from mergedeep import merge
 from tabulate import tabulate
 from urllib3.exceptions import MaxRetryError
 
-from demisto_sdk.commands.common.constants import (
-    CONTENT_ENTITIES_DIRS, CONTENT_FILE_ENDINGS,
-    DELETED_JSON_FIELDS_BY_DEMISTO, DELETED_YML_FIELDS_BY_DEMISTO,
-    ENTITY_NAME_SEPARATORS, ENTITY_TYPE_TO_DIR, FILE_EXIST_REASON,
-    FILE_NOT_IN_CC_REASON, INTEGRATIONS_DIR, PLAYBOOKS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR)
+from demisto_sdk.commands.common.constants import (CONTENT_ENTITIES_DIRS, CONTENT_FILE_ENDINGS,
+                                                   DELETED_JSON_FIELDS_BY_DEMISTO, DELETED_YML_FIELDS_BY_DEMISTO,
+                                                   ENTITY_NAME_SEPARATORS, ENTITY_TYPE_TO_DIR, FILE_EXIST_REASON,
+                                                   FILE_NOT_IN_CC_REASON, INTEGRATIONS_DIR, PLAYBOOKS_DIR, SCRIPTS_DIR,
+                                                   TEST_PLAYBOOKS_DIR)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
-                                               get_child_directories,
-                                               get_child_files, get_code_lang,
-                                               get_dict_from_file,
-                                               get_entity_id_by_entity_type,
-                                               get_entity_name_by_entity_type,
-                                               get_files_in_dir, get_json,
-                                               get_yaml, get_yml_paths_in_dir,
-                                               print_color,
-                                               retrieve_file_ending)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_child_directories, get_child_files,
+                                               get_code_lang, get_dict_from_file, get_entity_id_by_entity_type,
+                                               get_entity_name_by_entity_type, get_files_in_dir, get_json, get_yaml,
+                                               get_yml_paths_in_dir, print_color, retrieve_file_ending)
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
@@ -208,7 +201,8 @@ class Downloader:
 
     def handle_api_exception(self, e):
         if e.status == 401:
-            print_color('\nVerify that the environment variable DEMISTO_API_KEY is configured properly.\n',
+            print_color("\nAuthentication error: please verify that the appropriate environment variables "
+                        "(either DEMISTO_USERNAME and DEMISTO_PASSWORD, or just DEMISTO_API_KEY) are properly configured.\n",
                         LOG_COLORS.RED)
         print_color(f'Exception raised when fetching custom content:\nStatus: {e}', LOG_COLORS.NATIVE)
 
@@ -253,9 +247,9 @@ class Downloader:
             api_response: tuple = demisto_client.generic_request_func(self.client, '/content/bundle', 'GET')
             body: bytes = ast.literal_eval(api_response[0])
             io_bytes = io.BytesIO(body)
+
             # Demisto's custom content file is of type tar.gz
             tar = tarfile.open(fileobj=io_bytes, mode='r')
-
             for member in tar.getmembers():
                 file_name: str = self.update_file_prefix(member.name.strip('/'))
                 file_path: str = os.path.join(self.custom_content_temp_dir, file_name)
@@ -268,11 +262,17 @@ class Downloader:
                     if not self.list_files and re.search(r'playbook-.*\.yml', member.name):
                         # if the content item is playbook and list-file flag is true, we should download the file via direct REST API
                         # because there are props like scriptName, that playbook from custom content bundle don't contain
-
                         string_to_write = self.download_playbook_yaml(string_to_write)
 
-                    with open(file_path, 'w') as file:
-                        file.write(string_to_write)
+                    try:
+                        with open(file_path, 'w') as file:
+                            file.write(string_to_write)
+
+                    except Exception as e:
+                        print(f'encountered exception {type(e)}: {e}')
+                        print('trying to write with encoding=utf8')
+                        with open(file_path, 'w', encoding='utf8') as file:
+                            file.write(string_to_write)
                 else:
                     raise FileNotFoundError(f'Could not extract files from tar file: {file_path}')
 
@@ -510,7 +510,7 @@ class Downloader:
         :return: The main file id & name
         """
         main_file_data: dict = dict()
-        main_file_path: str = str()
+        main_file_path: str = ''
 
         # Entities which contain yml files
         if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR, PLAYBOOKS_DIR, TEST_PLAYBOOKS_DIR):
@@ -936,8 +936,7 @@ class Downloader:
                                           dictor(pack_obj_data, field)}, splitter='dot')
 
         if file_ending == 'yml':
-            with open(file_path_to_write, 'r') as yf:
-                file_yaml_object = yaml.load(yf)
+            file_yaml_object = get_yaml(file_path_to_write)
             if pack_obj_data:
                 merge(file_yaml_object, preserved_data)
             with open(file_path_to_write, 'w') as yf:
@@ -1007,7 +1006,7 @@ class Downloader:
         Log files downloaded/merged
         :return: None
         """
-        log_msg, added_msg, merged_msg = str(), str(), str()
+        log_msg, added_msg, merged_msg = '', '', ''
         if self.num_added_files:
             files = 'file' if self.num_added_files == 1 else 'files'
             added_msg = f'{self.num_added_files} {files} added'

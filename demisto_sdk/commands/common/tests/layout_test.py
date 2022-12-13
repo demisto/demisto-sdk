@@ -1,10 +1,9 @@
-import pytest
-from mock import patch
+from unittest.mock import patch
 
-from demisto_sdk.commands.common.hook_validations.layout import (
-    LayoutsContainerValidator, LayoutValidator)
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
+import pytest
+
+from demisto_sdk.commands.common.hook_validations.layout import LayoutsContainerValidator, LayoutValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):

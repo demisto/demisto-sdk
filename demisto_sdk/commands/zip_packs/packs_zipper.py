@@ -7,13 +7,12 @@ from shutil import make_archive
 
 import click
 
-from demisto_sdk.commands.common.constants import (PACKS_DIR,
-                                                   MarketplaceVersions)
+from demisto_sdk.commands.common.constants import PACKS_DIR, MarketplaceVersions
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.tools import arg_to_list
-from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
-    IGNORED_PACKS, ArtifactsManager, ContentObject, create_dirs, delete_dirs,
-    dump_pack, zip_packs)
+from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (IGNORED_PACKS, ArtifactsManager,
+                                                                             ContentObject, create_dirs, delete_dirs,
+                                                                             dump_pack, zip_packs)
 
 EX_SUCCESS = 0
 EX_FAIL = 1
@@ -158,7 +157,7 @@ class QuietModeController:
             self.logger.setLevel(logging.ERROR)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.logger.debug('{} {} {}'.format(exc_type, exc_val, exc_tb))
+        self.logger.debug(f'{exc_type} {exc_val} {exc_tb}')
         sys.stdout = self.old_stdout
         self.logger.setLevel(self.prev_logger_level)
 
@@ -190,9 +189,12 @@ def PacksDirsHandler(artifact_manager: PacksManager):
         delete_dirs(artifact_manager)
         create_dirs(artifact_manager)
         yield
-    except (Exception, KeyboardInterrupt):
+    except (Exception, KeyboardInterrupt) as e:
         delete_dirs(artifact_manager)
         artifact_manager.exit_code = EX_FAIL
+        logger = logging.getLogger('demisto-sdk')
+        logger.error(e)
+        exit(EX_FAIL)
     else:
         if artifact_manager.zip_all:
             zip_packs(artifact_manager)

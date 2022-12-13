@@ -1,12 +1,10 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.content_item import \
-    IncorrectParserException
-from demisto_sdk.commands.content_graph.parsers.json_content_item import \
-    JSONContentItemParser
+from demisto_sdk.commands.content_graph.parsers.content_item import IncorrectParserException
+from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 from demisto_sdk.commands.content_graph.parsers.mapper import MapperParser
 
 
@@ -56,10 +54,10 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
             content_type_to_map = ContentType.INCIDENT_TYPE
 
         if default_incident_type := self.json_data.get("defaultIncidentType"):
-            self.add_dependency_by_id(default_incident_type, content_type_to_map)
+            self.add_dependency_by_id(default_incident_type, content_type_to_map, is_mandatory=False)
 
         for incident_type in self.json_data.get("keyTypeMap", {}).values():
-            self.add_dependency_by_id(incident_type, content_type_to_map)
+            self.add_dependency_by_id(incident_type, content_type_to_map, is_mandatory=False)
 
         if transformer_complex_value := self.json_data.get("transformer", {}).get(
             "complex", {}
@@ -67,3 +65,7 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
             self.get_filters_and_transformers_from_complex_value(
                 transformer_complex_value
             )
+
+    @property
+    def supported_marketplaces(self) -> Set[MarketplaceVersions]:
+        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2}

@@ -2,8 +2,7 @@ import os
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
-from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
-    GENERIC_MODULE, UNIFIED_GENERIC_MODULE)
+from demisto_sdk.tests.test_files.validate_integration_test_valid_types import GENERIC_MODULE, UNIFIED_GENERIC_MODULE
 from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
@@ -34,12 +33,12 @@ def test_split_json(repo):
         assert res == 0
         assert os.path.isfile(expected_dashboard_path)
 
-        with open(expected_dashboard_path, 'r') as f:
+        with open(expected_dashboard_path) as f:
             result_dashboard = json.load(f)
 
         assert result_dashboard == EXTRACTED_DASHBOARD
 
-        with open(generic_module.path, 'r') as f:
+        with open(generic_module.path) as f:
             result_generic_module = json.load(f)
 
         assert result_generic_module == GENERIC_MODULE

@@ -1,18 +1,24 @@
-import shutil
+from abc import abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Set
+
+from demisto_sdk.commands.common.handlers import JSON_Handler, XSOAR_Handler, YAML_Handler
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.pack import Pack
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
     from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 
+import logging
+
 from pydantic import DirectoryPath
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import (ContentType,
-                                                       RelationshipType)
+from demisto_sdk.commands.common.tools import alternate_item_fields
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class ContentItem(BaseContent):
@@ -82,13 +88,43 @@ class ContentItem(BaseContent):
             if r.content_item == r.target
         ]
 
+    @property
+    def handler(self) -> XSOAR_Handler:
+        return JSON_Handler() if self.path.suffix.lower() == ".json" else YAML_Handler()
+
+    @property
+    def data(self) -> dict:
+        with self.path.open() as f:
+            return self.handler.load(f)
+
+    def fix_for_marketplace(self, marketplace: Optional[MarketplaceVersions] = None) -> None:
+        if marketplace and marketplace != MarketplaceVersions.XSOAR:
+            data = self.data
+            self.object_id = data.get('commonfields', {}).get('id_x2') or self.object_id
+            self.name = data.get('name_x2') or self.name
+
+    def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
+        data = self.data
+        if marketplace != MarketplaceVersions.XSOAR:
+            alternate_item_fields(data)
+        return data
+
     def summary(self) -> dict:
+        """Summary of a content item (the most important metadata fields)
+
+        Args:
+
+        Returns:
+            dict: Dictionary representation of the summary content item.
+        """
         return self.dict(include=self.metadata_fields(), by_alias=True)
 
+    @abstractmethod
     def metadata_fields(self) -> Set[str]:
         raise NotImplementedError("Should be implemented in subclasses")
 
-    def normalize_file_name(self, name: str) -> str:
+    @property
+    def normalize_name(self) -> str:
         """
         This will add the server prefix of the content item to its name
         In addition it will remove the existing server_names of the name.
@@ -98,15 +134,18 @@ class ContentItem(BaseContent):
         Returns:
             str: The normalized name.
         """
-
+        name = self.path.name
         for prefix in ContentType.server_names():
             name = name.replace(f"{prefix}-", "")
-
-        return f"{self.content_type.server_name}-{name}"
+        normalized = f"{self.content_type.server_name}-{name}"
+        logger.info(f"Normalized file name from {name} to {normalized}")
+        return normalized
 
     def dump(self, dir: DirectoryPath, _: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)
-        shutil.copy(self.path, dir / self.normalize_file_name(self.path.name))
+        data = self.prepare_for_upload()
+        with (dir / self.normalize_name).open("w") as f:
+            self.handler.dump(data, f)
 
     def to_id_set_entity(self) -> dict:
         """

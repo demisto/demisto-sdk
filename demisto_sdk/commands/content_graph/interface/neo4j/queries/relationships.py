@@ -3,10 +3,8 @@ from typing import Any, Dict, List
 
 from neo4j import Transaction
 
-from demisto_sdk.commands.content_graph.common import (ContentType,
-                                                       RelationshipType)
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
-    labels_of, node_map, run_query)
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import labels_of, node_map, run_query
 
 
 def build_source_properties() -> str:
@@ -42,7 +40,8 @@ MERGE (cmd:{ContentType.COMMAND}{build_target_properties(with_content_type=True)
 ON CREATE
     SET cmd:{labels_of(ContentType.COMMAND)},
         cmd.marketplaces = rel_data.source_marketplaces,
-        cmd.name = rel_data.name
+        cmd.name = rel_data.name,
+        cmd.not_in_repository = false
 
 // Otherwize, add the integration's marketplaces to its marketplaces property
 ON MATCH

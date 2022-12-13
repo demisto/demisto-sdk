@@ -5,10 +5,9 @@ from typing import Any, Dict, List, Optional, Union
 import decorator
 from requests import Response
 
-from demisto_sdk.commands.common.constants import (
-    BETA_INTEGRATION_DISCLAIMER, FILETYPE_TO_DEFAULT_FROMVERSION,
-    INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME, FileType,
-    MarketplaceVersions)
+from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER, FILETYPE_TO_DEFAULT_FROMVERSION,
+                                                   INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME,
+                                                   FileType, MarketplaceVersions)
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 
 FOUND_FILES_AND_ERRORS: list = []
@@ -18,16 +17,17 @@ ALLOWED_IGNORE_ERRORS = [
     'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113', 'BA116', 'BA119',
     'DS107',
     'GF102',
-    'IF100', 'IF106', 'IF115', 'IF116',
+    'IF100', 'IF106', 'IF113', 'IF115', 'IF116',
     'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145', 'IN153', 'IN154',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
-    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107', 'PB118', 'PB119', 'PB121',
+    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB114', 'PB115', 'PB116', 'PB107', 'PB118', 'PB119', 'PB121',
     'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM110', 'RM112', 'RM113',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
     'IM111',
     'RN112',
+    'MR104', 'MR105',
 ]
 
 # predefined errors to be ignored in partner/community supported packs even if they do not appear in .pack-ignore
@@ -314,11 +314,12 @@ ERROR_CODE = {
     "wrong_version_format": {'code': "PA130", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_version_diff_from_rn": {'code': "PA131", 'ui_applicable': False, 'related_field': ''},
     "pack_should_be_deprecated": {'code': "PA132", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_non_approved_tag_prefix": {'code': "PA133", 'ui_applicable': False, 'related_field': ''},
+    "categories_field_does_not_match_standard": {'code': "PA134", 'ui_applicable': False, 'related_field': ''},
 
     # PB - Playbooks
     "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
     "playbook_unreachable_condition": {'code': "PB101", 'ui_applicable': True, 'related_field': 'tasks'},
-    "playbook_unhandled_condition": {'code': "PB102", 'ui_applicable': True, 'related_field': 'conditions'},
     "playbook_unconnected_tasks": {'code': "PB103", 'ui_applicable': True, 'related_field': 'tasks'},
     "invalid_deprecated_playbook": {'code': "PB104", 'ui_applicable': False, 'related_field': 'description'},
     "playbook_cant_have_deletecontext_all": {'code': "PB105", 'ui_applicable': True, 'related_field': 'tasks'},
@@ -330,7 +331,6 @@ ERROR_CODE = {
                                                           'related_field': 'toVersion'},
     "integration_version_not_match_playbook_version": {'code': "PB111", 'ui_applicable': False,
                                                        'related_field': 'toVersion'},
-    "playbook_condition_has_no_else_path": {'code': "PB112", 'ui_applicable': False, 'related_field': 'nexttasks'},
     "invalid_subplaybook_name": {'code': "PB113", 'ui_applicable': False, 'related_field': 'tasks'},
     "playbook_not_quiet_mode": {'code': "PB114", 'ui_applicable': False, 'related_field': ''},
     "playbook_tasks_not_quiet_mode": {'code': "PB115", 'ui_applicable': False, 'related_field': 'tasks'},
@@ -340,6 +340,11 @@ ERROR_CODE = {
     "input_used_not_in_input_section": {'code': "PB119", 'ui_applicable': False, 'related_field': ''},
     "playbook_is_deprecated_and_used": {'code': 'PB120', 'ui_applicable': False, 'related_field': 'deprecated'},
     "incorrect_value_references": {'code': "PB121", 'ui_applicable': False, 'related_field': 'taskid'},
+    "playbook_unhandled_task_branches": {'code': "PB122", 'ui_applicable': True, 'related_field': 'conditions'},
+    "playbook_unhandled_reply_options": {'code': "PB123", 'ui_applicable': True, 'related_field': 'conditions'},
+    "playbook_unhandled_script_condition_branches": {'code': "PB124", 'ui_applicable': True, 'related_field': 'conditions'},
+    "playbook_only_default_next": {'code': "PB125", 'ui_applicable': True, 'related_field': 'conditions'},
+    "playbook_only_default_reply_option": {'code': "PB126", 'ui_applicable': True, 'related_field': 'message'},
 
     # PP - Pre-Process Rules
     "invalid_from_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
@@ -479,6 +484,26 @@ ERROR_CODE = {
     "modeling_rule_keys_not_empty": {'code': "MR101", 'ui_applicable': False, 'related_field': ''},
     "modeling_rule_keys_are_missing": {'code': "MR102", 'ui_applicable': False, 'related_field': ''},
     "invalid_rule_name": {'code': "MR103", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_missing_testdata_file": {'code': "MR104", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_testdata_not_formatted_correctly": {'code': "MR105", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_schema_types_invalid": {'code': "MR106", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_schema_xif_dataset_mismatch": {'code': "MR107", 'ui_applicable': False, 'related_field': ''},
+
+    # CR - Correlation Rules
+    "correlation_rule_starts_with_hyphen": {'code': 'CR100', 'ui_applicable': False, 'related_field': ''},
+    "correlation_rules_files_naming_error": {'code': 'CR101', 'ui_applicable': False, 'related_field': ''},
+
+    # XR - XSIAM Reports
+    "xsiam_report_files_naming_error": {'code': 'XR100', 'ui_applicable': False, 'related_field': ''},
+
+    # PR - Parsing Rules
+    "parsing_rules_files_naming_error": {'code': 'PR100', 'ui_applicable': False, 'related_field': ''},
+
+    # XT - XDRC Templates
+    "xdrc_templates_files_naming_error": {'code': 'XT100', 'ui_applicable': False, 'related_field': ''},
+
+    # XD - XSIAM Dashboards
+    "xsiam_dashboards_files_naming_error": {'code': 'XD100', 'ui_applicable': False, 'related_field': ''}
 }
 
 
@@ -545,7 +570,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def file_name_include_spaces_error(file_name):
-        return "Please remove spaces from the file's name: '{}'.".format(file_name)
+        return f"Please remove spaces from the file's name: '{file_name}'."
 
     @staticmethod
     @error_code_decorator
@@ -622,27 +647,27 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def wrong_display_name(param_name, param_display):
-        return 'The display name of the {} parameter should be \'{}\''.format(param_name, param_display)
+        return f'The display name of the {param_name} parameter should be \'{param_display}\''
 
     @staticmethod
     @error_code_decorator
     def wrong_default_parameter_not_empty(param_name, default_value):
-        return 'The default value of the {} parameter should be {}'.format(param_name, default_value)
+        return f'The default value of the {param_name} parameter should be {default_value}'
 
     @staticmethod
     @error_code_decorator
     def no_default_value_in_parameter(param_name):
-        return 'The {} parameter should have a default value'.format(param_name)
+        return f'The {param_name} parameter should have a default value'
 
     @staticmethod
     @error_code_decorator
     def wrong_required_value(param_name):
-        return 'The required field of the {} parameter should be False'.format(param_name)
+        return f'The required field of the {param_name} parameter should be False'
 
     @staticmethod
     @error_code_decorator
     def wrong_required_type(param_name):
-        return 'The type field of the {} parameter should be 8'.format(param_name)
+        return f'The type field of the {param_name} parameter should be 8'
 
     @staticmethod
     @error_code_decorator
@@ -655,13 +680,12 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def fromlicense_in_parameters(param_name):
-        return 'The "fromlicense" field of the {} parameter is not allowed for contributors'.format(param_name)
+        return f'The "fromlicense" field of the {param_name} parameter is not allowed for contributors'
 
     @staticmethod
     @error_code_decorator
-    def wrong_category(category):
-        return "The category '{}' is not in the integration schemas, the valid options are:\n{}" \
-            .format(category, '\n'.join(INTEGRATION_CATEGORIES))
+    def wrong_category(category, approved_list):
+        return f"The category '{category}' is not in the integration schemas, the valid options are:\n{approved_list}"
 
     @staticmethod
     @error_code_decorator
@@ -726,9 +750,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def duplicate_arg_in_file(arg, command_name=None):
-        err_msg = "The argument '{}' is duplicated".format(arg)
+        err_msg = f"The argument '{arg}' is duplicated"
         if command_name:
-            err_msg += " in '{}'.".format(command_name)
+            err_msg += f" in '{command_name}'."
         err_msg += ", please remove one of its appearances."
         return err_msg
 
@@ -746,12 +770,12 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def added_required_fields(field):
-        return "You've added required, the field is '{}'".format(field)
+        return f"You've added required, the field is '{field}'"
 
     @staticmethod
     @error_code_decorator
     def removed_integration_parameters(field):
-        return "You've removed integration parameters, the removed parameters are '{}'".format(field)
+        return f"You've removed integration parameters, the removed parameters are '{field}'"
 
     @staticmethod
     @error_code_decorator
@@ -783,7 +807,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def empty_display_configuration(field_name):
-        return "No display details were entered for the field {}".format(field_name)
+        return f"No display details were entered for the field {field_name}"
 
     @staticmethod
     @error_code_decorator
@@ -841,8 +865,14 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def error_starting_mdx_server(line):
-        return f'Failed starting mdx server. stdout: {line}.\n' \
+        return f'Failed starting local mdx server. stdout: {line}.\n' \
                f'Try running the following command: `npm install`'
+
+    @staticmethod
+    @error_code_decorator
+    def error_starting_docker_mdx_server(line):
+        return f'Failed starting docker mdx server. stdout: {line}.\n' \
+               f'Check to see if the docker daemon is up and running'
 
     @staticmethod
     @error_code_decorator
@@ -997,7 +1027,7 @@ class Errors:
     @classmethod
     @error_code_decorator
     def breaking_backwards_subtype(cls):
-        return "{}, You've changed the subtype, please undo.".format(cls.BACKWARDS)
+        return f"{cls.BACKWARDS}, You've changed the subtype, please undo."
 
     @classmethod
     @error_code_decorator
@@ -1253,7 +1283,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def missing_release_notes(rn_path):
-        return 'Missing release notes, Please add it under {}'.format(rn_path)
+        return f'Missing release notes, Please add it under {rn_path}'
 
     @staticmethod
     @error_code_decorator
@@ -1340,7 +1370,7 @@ class Errors:
             message_to_return += f"- {un_matching_file.get('name')}: Release notes file has dockerimage: " \
                                  f"{un_matching_file.get('rn_version')} but the YML file has dockerimage: " \
                                  f"{un_matching_file.get('yml_version')}\n"
-        message_to_return += "To fix this please run: 'demisto-sdk update-release-notes -i {pack_path}'"
+        message_to_return += f"To fix this please run: 'demisto-sdk update-release-notes -i {pack_path}'"
         return message_to_return
 
     @staticmethod
@@ -1362,7 +1392,33 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def playbook_unhandled_condition(task_id, task_condition_labels):
+    def playbook_only_default_next(task_id):
+        return f'Playbook conditional task with id:{task_id} only has a default condition. ' \
+               f'Please remove this task or add ' \
+               f'another non-default condition to condition task with id:{task_id}.'
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_only_default_reply_option(task_id):
+        return f'Playbook task with id:{task_id} only has a default option. ' \
+               f'Please remove this task or add ' \
+               f'another non-default option to the task with id:{task_id}.'
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_unhandled_task_branches(task_id, task_condition_labels):
+        return f'Playbook conditional task with id:{task_id} has an unhandled ' \
+               f'condition: {",".join(map(lambda x: f"{str(x)}", task_condition_labels))}'
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_unhandled_reply_options(task_id, task_condition_labels):
+        return f'Playbook conditional task with id:{task_id} has an unhandled ' \
+               f'condition: {",".join(map(lambda x: f"{str(x)}", task_condition_labels))}'
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_unhandled_script_condition_branches(task_id, task_condition_labels):
         return f'Playbook conditional task with id:{task_id} has an unhandled ' \
                f'condition: {",".join(map(lambda x: f"{str(x)}", task_condition_labels))}'
 
@@ -1728,8 +1784,15 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_metadata_non_approved_tags(non_approved_tags: set) -> str:
-        return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}' \
-               f'The list of approved tags can be found in https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories'
+        return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}. ' \
+               'The list of approved tags for each marketplace can be found on ' \
+               'https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_non_approved_tag_prefix(tag, approved_prefixes: set) -> str:
+        return f'The pack metadata contains a tag with an invalid prefix: {tag}.' \
+               f' The approved prefixes are: {", ".join(approved_prefixes)}.'
 
     @staticmethod
     @error_code_decorator
@@ -1884,7 +1947,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def wrong_version_reputations(object_id, version):
-        return "Reputation object with id {} must have version {}".format(object_id, version)
+        return f"Reputation object with id {object_id} must have version {version}"
 
     @staticmethod
     @error_code_decorator
@@ -1931,7 +1994,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def wrong_file_extension(file_extension, accepted_extensions):
-        return "File extension {} is not valid. accepted {}".format(file_extension, accepted_extensions)
+        return f"File extension {file_extension} is not valid. accepted {accepted_extensions}"
 
     @staticmethod
     @error_code_decorator
@@ -2227,7 +2290,7 @@ class Errors:
 
     @staticmethod
     def wrong_filename(file_type):
-        return 'This is not a valid {} filename.'.format(file_type)
+        return f'This is not a valid {file_type} filename.'
 
     @staticmethod
     def wrong_path():
@@ -2240,7 +2303,7 @@ class Errors:
 
     @classmethod
     def breaking_backwards_no_old_script(cls, e):
-        return "{}\n{}, Could not find the old file.".format(cls.BACKWARDS, str(e))
+        return f"{cls.BACKWARDS}\n{str(e)}, Could not find the old file."
 
     @staticmethod
     def id_might_changed():
@@ -2265,7 +2328,7 @@ class Errors:
 
     @staticmethod
     def no_yml_file(file_path):
-        return "No yml files were found in {} directory.".format(file_path)
+        return f"No yml files were found in {file_path} directory."
 
     @staticmethod
     @error_code_decorator
@@ -2479,6 +2542,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def categories_field_does_not_match_standard(approved_list):
+        return f"The pack metadata categories field doesn't match the standard,\n" \
+               f"please make sure the field contain only one category from the following options:\n{approved_list}"
+
+    @staticmethod
+    @error_code_decorator
     def modeling_rule_missing_schema_file(file_path: str):
         return f'The modeling rule {file_path} is missing a schema file.'
 
@@ -2496,6 +2565,69 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def modeling_rule_schema_types_invalid(invalid_types: list):
+        return f"The following types in the schema file are invalid {','.join(invalid_types)}. " \
+               f"Valid types are: string, int , float, datetime, boolean."
+
+    @staticmethod
+    @error_code_decorator
+    def correlation_rules_files_naming_error(invalid_files: list):
+        return f"The following correlation rules files do not match the naming conventions: {','.join(invalid_files)}.\n" \
+               f"Files in the modeling rules directory must use the pack's name as a prefix, e.g. `myPack-report1.yml`"
+
+    @staticmethod
+    @error_code_decorator
+    def xsiam_report_files_naming_error(invalid_files: list):
+        return f"The following xsiam report files do not match the naming conventions: {','.join(invalid_files)}.\n" \
+               f"XSIAM reports file name must use the pack's name as a prefix, e.g. `myPack-report1.yml`"
+
+    @staticmethod
+    @error_code_decorator
+    def parsing_rules_files_naming_error(invalid_files: list):
+        return f"The following parsing rules files do not match the naming conventions: {','.join(invalid_files)}.\n" \
+               f" Files in the parsing rules directory must be titled exactly as the pack, e.g. `myPack.yml`."
+
+    @staticmethod
+    @error_code_decorator
+    def xdrc_templates_files_naming_error(invalid_files: list):
+        return f"The following xdrc templates do not match the naming conventions:: {','.join(invalid_files)}.\n" \
+               f"Files in the xdrc templates directory must be titled exactly as the pack, e.g. `myPack.yml`."
+
+    @staticmethod
+    @error_code_decorator
+    def xsiam_dashboards_files_naming_error(invalid_files: list):
+        return f"The following XSIAM dashboards do not match the naming conventions:: {','.join(invalid_files)}.\n" \
+               f"Files name in the XSIAM dashboards directory must use the pack's name as a prefix, " \
+               f"e.g. `myPack-report1.yml` "
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_schema_xif_dataset_mismatch():
+        return "There is a mismatch between datasets in schema file and in the xif file. " \
+               "Either there are more datasets declared in one of the files, or the datasets titles are not the same."
+
+    @staticmethod
+    @error_code_decorator
     def invalid_rule_name(invalid_files):
         return f"The following rule file name is invalid {invalid_files} - make sure that the rule name is " \
                f"the same as the folder containing it."
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_missing_testdata_file(modeling_rule_dir: Path, minimum_from_version: str, from_version: str):
+        test_data_file = modeling_rule_dir / f'{modeling_rule_dir.name}_testdata.json'
+        return f'The modeling rule {modeling_rule_dir} is missing a testdata file at {test_data_file}. The modeling ' \
+               f'rule has a fromversion of {from_version} and modeling rules supporting fromversion ' \
+               f'{minimum_from_version} and upwards are required to provide test data for modeling rule testing. ' \
+               'Please add a testdata file for this rule. See the "demisto-sdk modeling-rules init-test-data" ' \
+               'command for more information on creating a test data file for modeling rules.'
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_testdata_not_formatted_correctly(error_message: str, test_data_file: Path):
+        return f'The modeling rule testdata file at {test_data_file} is not formatted correctly. {error_message}'
+
+    @staticmethod
+    @error_code_decorator
+    def correlation_rule_starts_with_hyphen():
+        return "Correlation rule files cannot start with a hyphen, please remove it."

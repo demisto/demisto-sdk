@@ -1,10 +1,9 @@
 from pathlib import Path
-from typing import List
+from typing import List, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.json_content_item import \
-    JSONContentItemParser
+from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 
 
 class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDENT_TYPE):
@@ -19,6 +18,10 @@ class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDEN
         self.closure_script = self.json_data.get("closureScript") or None
 
         self.connect_to_dependencies()
+
+    @property
+    def supported_marketplaces(self) -> Set[MarketplaceVersions]:
+        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XPANSE}
 
     def connect_to_dependencies(self) -> None:
         """Collects the script, playbook and layout used by the incident type as mandatory dependencies."""

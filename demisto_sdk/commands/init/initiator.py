@@ -9,21 +9,19 @@ import click
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (
-    CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
-    DEFAULT_CONTENT_ITEM_FROM_VERSION, DOC_FILES_DIR, GENERIC_DEFINITIONS_DIR,
-    GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR, GENERIC_TYPES_DIR,
-    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
-    INDICATOR_TYPES_DIR, INTEGRATION_CATEGORIES, INTEGRATIONS_DIR, JOBS_DIR,
-    LAYOUTS_DIR, MARKETPLACE_LIVE_DISCUSSIONS, MARKETPLACES,
-    PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS, PLAYBOOKS_DIR, REPORTS_DIR,
-    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, WIZARDS_DIR, XSOAR_AUTHOR,
-    XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
+from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
+                                                   DEFAULT_CONTENT_ITEM_FROM_VERSION, DOC_FILES_DIR,
+                                                   GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR,
+                                                   GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
+                                                   INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATION_CATEGORIES,
+                                                   INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR,
+                                                   MARKETPLACE_LIVE_DISCUSSIONS, MARKETPLACES, PACK_INITIAL_VERSION,
+                                                   PACK_SUPPORT_OPTIONS, PLAYBOOKS_DIR, REPORTS_DIR, SCRIPTS_DIR,
+                                                   TEST_PLAYBOOKS_DIR, WIDGETS_DIR, WIZARDS_DIR, XSOAR_AUTHOR,
+                                                   XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS,
-                                               get_common_server_path,
-                                               get_pack_name, print_error,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, get_common_server_path, get_pack_name, get_yaml, print_error,
                                                print_v, print_warning)
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
@@ -557,8 +555,7 @@ class Initiator:
             current_suffix (str): The yml file name (HelloWorld or HelloWorldScript)
             integration (bool): Indicates if integration yml is being reformatted.
         """
-        with open(os.path.join(self.full_output_path, f"{current_suffix}.yml")) as f:
-            yml_dict = yaml.load(f)
+        yml_dict = get_yaml(os.path.join(self.full_output_path, f"{current_suffix}.yml"))
         yml_dict["commonfields"]["id"] = self.id
         yml_dict['name'] = self.id
 
@@ -641,7 +638,7 @@ class Initiator:
         Args:
             name_to_change (str): The name of the former integration/script to replace in the import.
         """
-        with open(os.path.join(self.full_output_path, f"{self.dir_name}_test.py"), 'r') as fp:
+        with open(os.path.join(self.full_output_path, f"{self.dir_name}_test.py")) as fp:
             file_contents = fp.read()
 
         file_contents = file_contents.replace(f'.{name_to_change}', self.dir_name)

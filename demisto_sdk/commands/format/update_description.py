@@ -5,9 +5,7 @@ import click
 
 from demisto_sdk.commands.common.constants import BETA_INTEGRATION_DISCLAIMER
 from demisto_sdk.commands.common.tools import find_type
-from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
-                                                          SKIP_RETURN_CODE,
-                                                          SUCCESS_RETURN_CODE)
+from demisto_sdk.commands.format.format_constants import ERROR_RETURN_CODE, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
 CONTRIBUTOR_DETAILED_DESC = 'Contributed Integration'
@@ -35,7 +33,7 @@ class DescriptionFormat(BaseUpdate):
         file_type = find_type(description_type)
         if file_type:
             self.is_beta = find_type(description_type).value == 'betaintegration'
-        with open(self.source_file, 'r') as f:
+        with open(self.source_file) as f:
             self.description_content = f.read()
 
     def remove_community_partner_details(self):

@@ -1,10 +1,9 @@
 from pathlib import Path
-from typing import List
+from typing import List, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.json_content_item import \
-    JSONContentItemParser
+from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 
 
 class WidgetParser(JSONContentItemParser, content_type=ContentType.WIDGET):
@@ -18,8 +17,8 @@ class WidgetParser(JSONContentItemParser, content_type=ContentType.WIDGET):
         self.connect_to_dependencies()
 
     @property
-    def marketplaces(self) -> List[MarketplaceVersions]:
-        return [MarketplaceVersions.XSOAR]
+    def supported_marketplaces(self) -> Set[MarketplaceVersions]:
+        return {MarketplaceVersions.XSOAR}
 
     def connect_to_dependencies(self) -> None:
         """Collects the playbook used in the widget as a mandatory dependency."""

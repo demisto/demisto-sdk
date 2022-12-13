@@ -1,7 +1,6 @@
 import pytest
 
-from demisto_sdk.commands.common.hook_validations.old_release_notes import \
-    OldReleaseNotesValidator
+from demisto_sdk.commands.common.hook_validations.old_release_notes import OldReleaseNotesValidator
 
 
 def get_validator(file_path='', diff=''):

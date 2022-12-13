@@ -1,10 +1,9 @@
 from pathlib import Path
-from typing import List
+from typing import List, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.yaml_content_item import \
-    YAMLContentItemParser
+from demisto_sdk.commands.content_graph.parsers.yaml_content_item import YAMLContentItemParser
 
 
 class CorrelationRuleParser(
@@ -18,3 +17,7 @@ class CorrelationRuleParser(
     @property
     def object_id(self) -> str:
         return self.yml_data["global_rule_id"]
+
+    @property
+    def supported_marketplaces(self) -> Set[MarketplaceVersions]:
+        return {MarketplaceVersions.MarketplaceV2}

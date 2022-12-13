@@ -1,0 +1,22 @@
+{
+    "data": [
+        {
+            "test_data_event_id": "abcdefgh-0000-1111-2222-hijklmnopqrs",
+            "vendor": "fake",
+            "product": "fakerson",
+            "dataset": "fake_fakerson_raw",
+            "event_data": {
+                "method": "GET",
+                "sent_bytes": 1,
+                "URL": "/icons/fake.png",
+                "referrer": "HTTP/1.1"
+            },
+            "expected_values": {
+                "xdm.target.sent_bytes": 1.0,
+                "xdm.network.http.method": "GET",
+                "xdm.network.http.url": "/icons/fake.png",
+                "xdm.network.http.referrer": "HTTP/1.1"
+            }
+        }
+    ]
+}

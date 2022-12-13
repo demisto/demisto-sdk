@@ -1,3 +1,4 @@
+import functools
 import logging
 import os
 import shutil
@@ -64,7 +65,7 @@ class DockerBase:
     def __init__(self):
         self.tmp_dir_name = tempfile.TemporaryDirectory(prefix=os.path.join(os.getcwd(), 'tmp'))
         self.tmp_dir = Path(self.tmp_dir_name.name)
-        installation_scripts = Path(__file__).parent / 'resources' / 'installation_scripts'
+        installation_scripts = Path(__file__).parent.parent / 'lint' / 'resources' / 'installation_scripts'
         self.installation_scripts = {
             TYPE_PYTHON: installation_scripts / 'python_image.sh',
             TYPE_PWSH: installation_scripts / 'powershell_image.sh',
@@ -161,7 +162,7 @@ class DockerBase:
 
 class MountableDocker(DockerBase):
     def __init__(self):
-        super(MountableDocker, self).__init__()
+        super().__init__()
         files = [
             Path('/etc/ssl/certs/ca-certificates.crt'),
             Path('/etc/pip.conf'),
@@ -197,11 +198,13 @@ class MountableDocker(DockerBase):
         """
         kwargs = kwargs or {}
         if files_to_push and mount_files:
-            return super(MountableDocker, self).create_container(image=image, command=command, environment=environment,
-                                                                 mounts=self.get_mounts(files_to_push), files_to_push=None, **kwargs)
+            return super().create_container(image=image, command=command, environment=environment,
+                                            mounts=self.get_mounts(files_to_push), files_to_push=None, **kwargs)
         else:
-            return super(MountableDocker, self).create_container(image=image, command=command, environment=environment,
-                                                                 files_to_push=files_to_push, **kwargs)
+            return super().create_container(image=image, command=command, environment=environment,
+                                            files_to_push=files_to_push, **kwargs)
 
 
-Docker = MountableDocker() if CAN_MOUNT_FILES else DockerBase()
+@functools.lru_cache
+def get_docker():
+    return MountableDocker() if CAN_MOUNT_FILES else DockerBase()

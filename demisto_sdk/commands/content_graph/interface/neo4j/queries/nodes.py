@@ -4,22 +4,38 @@ from typing import Any, Dict, Iterable, List, Optional
 from neo4j import Transaction
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import (SERVER_CONTENT_ITEMS,
-                                                       ContentType,
-                                                       Neo4jResult)
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
-    intersects, run_query, to_neo4j_map, versioned)
+from demisto_sdk.commands.content_graph.common import SERVER_CONTENT_ITEMS, ContentType, Neo4jResult
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (intersects, run_query, to_neo4j_map,
+                                                                               versioned)
 
 logger = logging.getLogger("demisto-sdk")
 
 NESTING_LEVEL = 5
 
-CREATE_NODES_BY_TYPE_TEMPLATE = """
+CREATE_CONTENT_ITEM_NODES_BY_TYPE_TEMPLATE = """
 UNWIND $data AS node_data
-CREATE (n:{labels}{{object_id: node_data.object_id}})
-SET n += node_data
+MERGE (n:{labels}{{
+    object_id: node_data.object_id,
+    fromversion: node_data.fromversion,
+    marketplaces: node_data.marketplaces
+}})
+SET n = node_data,  // override existing data
+    n.not_in_repository = false
+WITH n
+    OPTIONAL MATCH (n)-[r]->()
+    DELETE r
 RETURN count(n) AS nodes_created
 """
+
+
+CREATE_NODES_BY_TYPE_TEMPLATE = """
+UNWIND $data AS node_data
+MERGE (n:{labels}{{object_id: node_data.object_id}})
+SET n = node_data,  // override existing data
+    n.not_in_repository = false
+RETURN count(n) AS nodes_created
+"""
+
 
 FIND_DUPLICATES = f"""
 MATCH (a:{ContentType.BASE_CONTENT})
@@ -36,35 +52,39 @@ RETURN count(b) > 0 AS found_duplicates
 """
 
 
+REMOVE_SERVER_NODES_BY_TYPE = """
+MATCH (a)
+WHERE (a:{label} OR a.content_type = "{content_type}")
+AND a.not_in_repository = true
+AND any(
+    identifier IN [a.object_id, a.name]
+    WHERE toLower(identifier) IN {server_content_items}
+)
+DETACH DELETE a
+"""
+
+
 def create_nodes(
     tx: Transaction,
     nodes: Dict[ContentType, List[Dict[str, Any]]],
 ) -> None:
     for content_type, data in nodes.items():
         create_nodes_by_type(tx, content_type, data)
+
+
+def remove_server_nodes(tx: Transaction) -> None:
     for content_type, content_items in SERVER_CONTENT_ITEMS.items():
-        create_server_nodes_by_type(tx, content_type, content_items)
+        if content_type in [ContentType.COMMAND, ContentType.SCRIPT]:
+            label = ContentType.COMMAND_OR_SCRIPT
+        else:
+            label = ContentType.BASE_CONTENT
 
-
-def create_server_nodes_by_type(
-    tx: Transaction,
-    content_type: ContentType,
-    content_items: List[str],
-) -> None:
-    should_have_lowercase_id: bool = content_type in [
-        ContentType.INCIDENT_FIELD,
-        ContentType.INDICATOR_FIELD,
-    ]
-    data = [
-        {
-            "name": content_item,
-            "object_id": content_item.lower() if should_have_lowercase_id else content_item,
-            "content_type": content_type,
-            "is_server_item": True,
-        }
-        for content_item in content_items
-    ]
-    create_nodes_by_type(tx, content_type, data)
+        query = REMOVE_SERVER_NODES_BY_TYPE.format(
+            label=label,
+            content_type=content_type,
+            server_content_items=[c.lower() for c in content_items],
+        )
+        run_query(tx, query)
 
 
 def duplicates_exist(tx) -> bool:
@@ -78,7 +98,10 @@ def create_nodes_by_type(
     data: List[Dict[str, Any]],
 ) -> None:
     labels: str = ":".join(content_type.labels)
-    query = CREATE_NODES_BY_TYPE_TEMPLATE.format(labels=labels)
+    if content_type in ContentType.content_items():
+        query = CREATE_CONTENT_ITEM_NODES_BY_TYPE_TEMPLATE.format(labels=labels)
+    else:
+        query = CREATE_NODES_BY_TYPE_TEMPLATE.format(labels=labels)
     result = run_query(tx, query, data=data).single()
     nodes_count: int = result["nodes_created"]
     logger.info(f"Created {nodes_count} nodes of type {content_type}.")

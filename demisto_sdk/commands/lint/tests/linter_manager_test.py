@@ -4,8 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
-                                                   FileType)
+from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON, FileType
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.lint.lint_manager import LintManager
 from TestSuite.test_tools import ChangeCWD
@@ -80,7 +79,7 @@ def test_create_failed_unit_tests_report_with_failed_tests():
     lint_manager.LintManager._create_failed_packs_report(lint_status, path)
     file_path = f'{path}/failed_lint_report.txt'
     assert os.path.isfile(file_path)
-    with open(file_path, 'r') as file:
+    with open(file_path) as file:
         content = file.read()
         fail_list = content.split('\n')
         assert len(fail_list) == 2

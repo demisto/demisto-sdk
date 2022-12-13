@@ -1,13 +1,11 @@
 from distutils.version import LooseVersion
 from typing import List
+from unittest.mock import patch
 
 import pytest
-from mock import patch
 
-from demisto_sdk.commands.common.hook_validations.field_base_validator import (
-    FieldBaseValidator, GroupFieldTypes)
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
+from demisto_sdk.commands.common.hook_validations.field_base_validator import FieldBaseValidator, GroupFieldTypes
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 
 INDICATOR_GROUP_NUMBER = 2
 INCIDENT_GROUP_NUMBER = 0
@@ -82,7 +80,7 @@ class TestFieldValidator:
                 validator.is_valid_name()
                 sys.stdout = old_stdout
 
-            with open('file', 'r') as temp_out:
+            with open('file') as temp_out:
                 output = temp_out.read()
                 assert ('IF100' in str(output)) is answer
             # remove the temp file
@@ -429,8 +427,7 @@ class TestFieldValidator:
             Then
             - Ensure validate fails when the field name does not start with the pack name prefix.
         """
-        from demisto_sdk.commands.common.hook_validations import \
-            field_base_validator
+        from demisto_sdk.commands.common.hook_validations import field_base_validator
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
             structure = StructureValidator("")
             structure.current_file = current_file

@@ -3,7 +3,6 @@ import os
 import shutil
 import sqlite3
 from datetime import datetime
-from typing import Text
 
 import coverage
 import pytest
@@ -12,15 +11,9 @@ from freezegun import freeze_time
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logging_setup
-from demisto_sdk.commands.coverage_analyze.helpers import (CoverageSummary,
-                                                           InvalidReportType,
-                                                           coverage_files,
-                                                           export_report,
-                                                           fix_file_path,
-                                                           get_coverage_obj,
-                                                           get_report_str,
-                                                           parse_report_type,
-                                                           percent_to_float)
+from demisto_sdk.commands.coverage_analyze.helpers import (CoverageSummary, InvalidReportType, coverage_files,
+                                                           export_report, fix_file_path, get_coverage_obj,
+                                                           get_report_str, parse_report_type, percent_to_float)
 
 json = JSON_Handler()
 
@@ -32,7 +25,7 @@ PYTHON_FILE_PATH = os.path.join(TEST_DATA_DIR, 'HealthCheckAnalyzeLargeInvestiga
 
 
 def read_file(file_path):
-    with open(file_path, 'r') as file_obj:
+    with open(file_path) as file_obj:
         return json.load(file_obj)
 
 
@@ -154,7 +147,7 @@ class TestCoverageSummary:
             files = summary['files']
             assert bool(files)
             for file_name, percent in files.items():
-                assert isinstance(file_name, Text)
+                assert isinstance(file_name, str)
                 assert isinstance(percent, float)
 
         def test_url_and_validate_data(self):

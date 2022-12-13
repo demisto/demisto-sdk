@@ -7,10 +7,9 @@ from typing import Callable
 import pytest
 
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (
-    INTEGRATION_CATEGORIES, MARKETPLACE_LIVE_DISCUSSIONS, MARKETPLACES,
-    PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS, XSOAR_AUTHOR, XSOAR_SUPPORT,
-    XSOAR_SUPPORT_URL)
+from demisto_sdk.commands.common.constants import (INTEGRATION_CATEGORIES, MARKETPLACE_LIVE_DISCUSSIONS, MARKETPLACES,
+                                                   PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS, XSOAR_AUTHOR,
+                                                   XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.init.initiator import Initiator
 from TestSuite.test_tools import ChangeCWD
@@ -340,7 +339,7 @@ def test_yml_reformatting(monkeypatch, tmp_path, initiator):
     dir_name = 'HelloWorldTest'
     initiator.dir_name = dir_name
     initiator.yml_reformatting(current_suffix=initiator.HELLO_WORLD_INTEGRATION, integration=True)
-    with open(full_output_path / f'{dir_name}.yml', 'r') as f:
+    with open(full_output_path / f'{dir_name}.yml') as f:
         yml_dict = yaml.load(f)
         assert yml_dict == OrderedDict({
             'commonfields': OrderedDict({
@@ -396,7 +395,7 @@ def test_change_template_name_script_py(monkeypatch, tmp_path, initiator):
     initiator.dir_name = dir_name
     initiator.change_template_name_script_py(current_suffix=dir_name, current_template='BaseScript')
 
-    with open(full_output_path / f'{dir_name}.py', 'r') as f:
+    with open(full_output_path / f'{dir_name}.py') as f:
         new_data = f.read()
         assert new_data == SCRIPT_EXPECTED_DATA
 
@@ -419,7 +418,7 @@ def test_get_remote_templates__valid(mocker, initiator):
     os.makedirs(PACK_NAME, exist_ok=True)
     res = initiator.get_remote_templates(['Test.py'], dir=DIR_NAME)
     file_path = os.path.join(PACK_NAME, 'Test.py')
-    with open(file_path, 'r') as f:
+    with open(file_path) as f:
         file_content = f.read()
 
     assert res

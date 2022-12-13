@@ -1,16 +1,13 @@
 import os
 import random
 
-from demisto_sdk.commands.common.content_constant_paths import \
-    DEFAULT_ID_SET_PATH
-from demisto_sdk.commands.common.tools import (get_from_version, get_yaml,
-                                               open_id_set_file, print_error,
-                                               print_warning)
+from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
+from demisto_sdk.commands.common.tools import get_from_version, get_yaml, open_id_set_file, print_error, print_warning
 from demisto_sdk.commands.common.update_id_set import get_depends_on
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-from demisto_sdk.commands.generate_docs.common import (
-    build_example_dict, generate_list_section, generate_numbered_section,
-    generate_section, generate_table_section, save_output, string_escape_md)
+from demisto_sdk.commands.generate_docs.common import (build_example_dict, generate_list_section,
+                                                       generate_numbered_section, generate_section,
+                                                       generate_table_section, save_output, string_escape_md)
 
 
 def generate_script_doc(input_path, examples, output: str = None, permissions: str = None,
@@ -25,7 +22,7 @@ def generate_script_doc(input_path, examples, output: str = None, permissions: s
 
         if examples:
             if os.path.isfile(examples):
-                with open(examples, 'r') as examples_file:
+                with open(examples) as examples_file:
                     examples = examples_file.read().splitlines()
             else:
                 examples = examples.split(',')
@@ -243,7 +240,7 @@ def generate_script_example(script_name, example=None):
             if context_example:
                 results.extend(['### Context Example',
                                 '```json',
-                                '{}'.format(context_example),
+                                f'{context_example}',
                                 '```',
                                 '', ])
             if md_example:

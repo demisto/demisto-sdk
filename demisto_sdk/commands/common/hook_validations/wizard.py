@@ -2,13 +2,10 @@ from typing import Optional
 
 import click
 
-from demisto_sdk.commands.common.constants import (
-    FILETYPE_TO_DEFAULT_FROMVERSION, WIZARD, FileType)
+from demisto_sdk.commands.common.constants import FILETYPE_TO_DEFAULT_FROMVERSION, WIZARD, FileType
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    error_codes
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
 from demisto_sdk.commands.common.tools import get_pack_name
 
 

@@ -26,7 +26,7 @@ class ContentError(Exception):
 class ContentInitializeError(ContentError):
     def __init__(self, obj: object, obj_path: Path, additional_info: Optional[str] = ""):
         """Exception raised when an error occurred in object initialization"""
-        super(ContentInitializeError, self).__init__(obj, obj_path, additional_info)
+        super().__init__(obj, obj_path, additional_info)
 
     @property
     def msg(self) -> str:
@@ -40,7 +40,7 @@ class ContentInitializeError(ContentError):
 class ContentDumpError(ContentError):
     def __init__(self, obj: object, obj_path: Path, additional_info: Optional[str] = ""):
         """Exception raised when an error occurred in object dump"""
-        super(ContentDumpError, self).__init__(obj, obj_path, additional_info)
+        super().__init__(obj, obj_path, additional_info)
 
     @property
     def msg(self) -> str:
@@ -54,7 +54,7 @@ class ContentDumpError(ContentError):
 class ContentKeyError(ContentError):
     def __init__(self, obj: object, obj_path: Path, key: str, additional_info: Optional[str] = ""):
         """Exception raised when an error occurred in accessing key of the object (YAML/JSON)"""
-        super(ContentKeyError, self).__init__(obj, obj_path, additional_info)
+        super().__init__(obj, obj_path, additional_info)
         self.key = key
 
     @property
@@ -69,7 +69,7 @@ class ContentKeyError(ContentError):
 class ContentSerializeError(ContentError):
     def __init__(self, obj: object, obj_path: Path, additional_info: Optional[str] = ""):
         """Exception raised when an error occurred in object serialization"""
-        super(ContentSerializeError, self).__init__(obj, obj_path, additional_info)
+        super().__init__(obj, obj_path, additional_info)
 
     @property
     def msg(self) -> str:
@@ -83,7 +83,7 @@ class ContentSerializeError(ContentError):
 class ContentFactoryError(ContentError):
     def __init__(self, obj: object, obj_path: Path, additional_info: Optional[str] = ""):
         """Exception raised when an error occurred in content object factory"""
-        super(ContentFactoryError, self).__init__(obj, obj_path, additional_info)
+        super().__init__(obj, obj_path, additional_info)
 
     @property
     def msg(self) -> str:

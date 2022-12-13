@@ -43,7 +43,7 @@ class TestPlaybooks:
         assert not result.stderr
         assert not result.exception
         assert Path(readme_path).exists()
-        with open(readme_path, 'r') as readme_file:
+        with open(readme_path) as readme_file:
             contents = readme_file.read()
             assert '| **Name** | **Description** | **Default Value** | **Required** |' in contents
             assert '| **Path** | **Description** | **Type** |' in contents
@@ -78,7 +78,7 @@ class TestPlaybooks:
         assert not result.stderr
         assert not result.exception
         assert Path(readme_path).exists()
-        with open(readme_path, 'r') as readme_file:
+        with open(readme_path) as readme_file:
             contents = readme_file.read()
             assert 'There are no inputs for this playbook.' in contents
             assert 'There are no outputs for this playbook.' in contents
@@ -113,7 +113,7 @@ class TestPlaybooks:
         assert not result.stderr
         assert not result.exception
         assert Path(readme_path).exists()
-        with open(readme_path, 'r') as readme_file:
+        with open(readme_path) as readme_file:
             contents = readme_file.read()
             assert 'Builtin' not in contents
             assert '### Integrations\n* DummyIntegration\n' in contents
@@ -148,7 +148,7 @@ class TestPlaybooks:
         assert not result.stderr
         assert not result.exception
         assert Path(readme_path).exists()
-        with open(readme_path, 'r') as readme_file:
+        with open(readme_path) as readme_file:
             contents = readme_file.read()
             assert 'Builtin' not in contents
             assert '### Integrations\n* PaloAltoNetworks_XDR\n' in contents
@@ -187,13 +187,13 @@ class TestPlaybooks:
         assert not result.stderr
         assert not result.exception
         assert Path(readme_path_1).exists()
-        with open(readme_path_1, 'r') as readme_file:
+        with open(readme_path_1) as readme_file:
             contents = readme_file.read()
             assert '| **Name** | **Description** | **Default Value** | **Required** |' in contents
             assert '| **Path** | **Description** | **Type** |' in contents
 
         assert Path(readme_path_2).exists()
-        with open(readme_path_2, 'r') as readme_file:
+        with open(readme_path_2) as readme_file:
             contents = readme_file.read()
             assert 'There are no inputs for this playbook.' in contents
             assert 'There are no outputs for this playbook.' in contents

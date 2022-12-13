@@ -1,8 +1,56 @@
 # Changelog
-* Fixed an issue where **validate** failed to recognize integration tests that were missing from config.json
-
 ## Unreleased
+* Fixed an issue where **format** created duplicate configuration parameters.
+
+## 1.8.0
+* Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.
+* Added a **validate** step for **Modeling Rules** testdata files.
+* Added the **update-content-graph** command.
+* Added the ability to limit the number of CPU cores with `DEMISTO_SDK_MAX_CPU_CORES` envirment variable.
+* Added the **prepare-content** command.
+* Added support for fromversion/toversion in XSIAM content items (correlation rules, XSIAM dashboards, XSIAM reports and triggers).
+* Added a **validate** step checking types of attributes in the schema file of modeling rule.
+* Added a **validate** step checking that the dataset name of a modeling rule shows in the xif and schema files.
+* Added a **validate** step checking that a correlation rule file does not start with a hyphen.
+* Added a **validate** step checking that xsiam content items follow naming conventions.
+* Fixed an issue where SDK commands failed on the deprecated `packaging.version.LegacyVersion`, by locking the `packaging` version to `<22`.
+* Fixed an issue where **update-release-notes** failed when changing only xif file in **Modeling Rules**.
+* Fixed an issue where *is_valid_category* and *is_categories_field_match_standard* failed when running in a private repo.
+* Fixed an issue where **validate** didn't fail on the MR103 validation error.
+* Fixed the *--release-notes* option, to support the new CHANGELOG format.
+* Fixed an issue where **validate** failed when only changing a modeling rules's xif file.
+* Fixed an issue where **format** failed on indicator files with a `None` value under the `tabs` key.
+* Fixed an issue where **validate** only printed errors for one change of context path, rather than print all.
+* Fixed an issue where **download** did not suggest using a username/password when authenticating with XSOAR and using invalid arguments.
+* Fixed an issue where **download** failed when listing or downloading content items that are not unicode-encoded.
+
+## 1.7.9
+* Fixed an issue where an error message in **validate** would not include the suggested fix.
+* Added a validation that enforces predefined categories on MP Packs & integration yml files, the validation also ensures that each pack has only one category.
+* Fixed an issue where **update-release-notes** did not generate release notes for **XDRC Templates**.
+* Fixed an issue where **upload** failed without explaining the reason.
+* Improved implementation of the docker_helper module.
+* Fixed an issue where **validate** did not check changed pack_metadata.json files when running using git.
+* Added support for **xdrctemplate** to content graph.
+* Fixed an issue where local copies of the newly-introduced `DemistoClassApiModule.py` were validated.
+* Added new release notes templates for the addition and modification of playbooks, layouts and types in the **doc-review** command.
+* Fixed an issue where the **doc-review** command failed on descriptions of new content items.
+* Added the `Command XXX is deprecated. Use XXX instead.` release notes templates to **doc-review** command.
+* Fixed an issue where the **update-release-notes** command didn't add the modeling-rules description for new modeling-rules files.
+
+## 1.7.8
+* Added the capability to run the MDX server in a docker container for environments without node.
 * Fixed an issue where **generate-docs** with `-c` argument updated sections of the incorrect commands.
+* Added IF113 error code to **ALLOWED_IGNORE_ERRORS**.
+* Fixed an issue where **validate** failed on playbooks with non-string input values.
+* Added the `DEMISTO_SDK_IGNORE_CONTENT_WARNING` environment variable, to allow suppressing warnings when commands are not run under a content repo folder.
+* Fixed an issue where **validate** failed to recognize integration tests that were missing from config.json
+* Added support for **xpanse** marketplace in **create-id-set** and **create-content-artifacts** commands.
+* Fixed an issue where **split** failed on yml files.
+* Added support for marketplace-specific tags.
+* Fixed an issue where **download** would not run `isort`. @maxgubler
+* Fixed an issue where XSIAM Dashboards and Reports images failed the build.
+* Added support for **xpanse** marketplace to content graph.
 
 ## 1.7.7
 * Fixed an issue where paybooks **generate-docs** didn't parse complex input values when no accessor field is given correctly.

@@ -1,12 +1,11 @@
 from demisto_sdk.commands.test_content.mock_server import MITMProxy
-from demisto_sdk.commands.test_content.TestContentClasses import (
-    BuildContext, ServerContext)
-from demisto_sdk.commands.test_content.tests.build_context_test import (
-    generate_content_conf_json, generate_integration_configuration,
-    generate_secret_conf_json, generate_test_configuration,
-    get_mocked_build_context)
-from demisto_sdk.commands.test_content.tests.DemistoClientMock import \
-    DemistoClientMock
+from demisto_sdk.commands.test_content.TestContentClasses import BuildContext, ServerContext
+from demisto_sdk.commands.test_content.tests.build_context_test import (generate_content_conf_json,
+                                                                        generate_integration_configuration,
+                                                                        generate_secret_conf_json,
+                                                                        generate_test_configuration,
+                                                                        get_mocked_build_context)
+from demisto_sdk.commands.test_content.tests.DemistoClientMock import DemistoClientMock
 
 
 def test_execute_tests(mocker, tmp_path):

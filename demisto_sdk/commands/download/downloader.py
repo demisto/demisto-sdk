@@ -249,11 +249,18 @@ class Downloader:
     def handle_layout(self, layout_string, scripts_mapper):
         # In case the layout uses a custom script, replace the id value of the script with its name
         file_json_object = json.loads(layout_string)
-        incidentfield_name = file_json_object.get('name')
-        if incidentfield_name and (incidentfield_name in self.input_files or self.all_custom_content):
-            if file_json_object.get('script') and file_json_object.get('script') in scripts_mapper:
-                layout_string = layout_string.replace(file_json_object.get('script'),
-                                                      scripts_mapper[file_json_object.get('script')])
+        layout_name = file_json_object.get('name')
+        if layout_name and (layout_name in self.input_files or self.all_custom_content):
+            tabs = file_json_object.get('detailsV2', {}).get('tabs', [])
+            for tab in tabs:
+                sections = tab.get('sections', [])
+                for section in sections:
+                    items = section.get('items', [])
+                    for item in items:
+                        if item.get('scriptId') and item.get('scriptId') in scripts_mapper:
+                            layout_string = layout_string.replace(item.get('scriptId'),
+                                                                  scripts_mapper[item.get('scriptId')])
+
         return layout_string
 
     @staticmethod
@@ -280,8 +287,8 @@ class Downloader:
 
             string_to_write = self.download_playbook_yaml(string_to_write)
 
-        # if not self.list_files and re.search(r'layout-.*\.json', member_name):
-        #     string_to_write = self.handle_layout(string_to_write, scripts_id_name)
+        if not self.list_files and re.search(r'layout.*\.json', member_name):
+            string_to_write = self.handle_layout(string_to_write, scripts_id_name)
 
         return string_to_write, scripts_id_name
 
@@ -298,7 +305,7 @@ class Downloader:
             io_bytes = io.BytesIO(body)
             # Demisto's custom content file is of type tar.gz
             tar = tarfile.open(fileobj=io_bytes, mode='r')
-            scripts_id_name = {}
+            scripts_id_name = {"feaaca83-7f64-4001-8e25-af45661dc811": "Replaced Script Name"}
             for member in tar.getmembers():
                 file_name: str = self.update_file_prefix(member.name.strip('/'))
                 file_path: str = os.path.join(self.custom_content_temp_dir, file_name)

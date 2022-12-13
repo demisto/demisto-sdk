@@ -108,7 +108,7 @@ class TestOpenAPICodeGen:
        """
         integration = self.init_integration()
 
-        with open(os.path.join(self.test_files_path, 'swagger_python.py'), 'r') as py_file:
+        with open(os.path.join(self.test_files_path, 'swagger_python.py')) as py_file:
             expected_py = py_file.read()
 
         py = integration.generate_python_code()
@@ -210,10 +210,10 @@ class TestOpenAPICodeGen:
         - Ensure file does not overwrite given JSON file for open API code gen command.
         """
         integration = self.init_integration(base_name='swagger_pets')
-        with open(self.swagger_path, 'r') as f:
+        with open(self.swagger_path) as f:
             file_data_before_config_save = json.loads(f.read())
         integration.save_config(integration.configuration, self.test_files_path)
-        with open(self.swagger_path, 'r') as f:
+        with open(self.swagger_path) as f:
             file_data_after_config_save = json.loads(f.read())
         assert file_data_after_config_save == file_data_before_config_save
         os.remove(os.path.join(self.test_files_path, f'{integration.base_name}_config.json'))

@@ -55,8 +55,7 @@ class PackContentItems:
         self.xdrc_template = ContentItemsList(content_type=ContentType.XDRC_TEMPLATE)
 
     def iter_lists(self) -> Iterator[ContentItemsList]:
-        for attribute in vars(self).values():
-            yield attribute
+        yield from vars(self).values()
 
     def append(self, obj: ContentItemParser) -> None:
         """Appends a content item by iterating the content item lists

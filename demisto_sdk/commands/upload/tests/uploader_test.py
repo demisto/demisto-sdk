@@ -43,7 +43,7 @@ if not hasattr(inspect, '_orig_findsource'):
         try:
             return inspect._orig_findsource(*args, **kwargs)
         except IndexError:
-            raise IOError("Invalid line")
+            raise OSError("Invalid line")
 
     inspect._orig_findsource = inspect.findsource
     inspect.findsource = findsource
@@ -327,7 +327,7 @@ def test_upload_incident_type_correct_file_change(demisto_client_configure, mock
 
     def save_file(file):
         global DATA
-        with open(file, 'r') as f:
+        with open(file) as f:
             DATA = f.read()
         return
 
@@ -375,7 +375,7 @@ def test_upload_incident_field_correct_file_change(demisto_client_configure, moc
 
     def save_file(file):
         global DATA
-        with open(file, 'r') as f:
+        with open(file) as f:
             DATA = f.read()
         return
 

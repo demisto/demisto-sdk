@@ -101,6 +101,11 @@ class ContentItem(BaseContent):
         data = self.data
         if marketplace != MarketplaceVersions.XSOAR:
             alternate_item_fields(data)
+            # TODO: should be in the Parser once we create a database for each marketplace
+            common_fields = data.get("commonfields", {})
+            if isinstance(common_fields, dict):
+                self.object_id = common_fields.get("id") or self.object_id
+            self.name = data.get("name") or self.name
         return data
 
     def summary(self) -> dict:

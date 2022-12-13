@@ -126,7 +126,7 @@ def test_get_code_file_case_insensative(tmp_path):
 def test_get_script_or_integration_package_data():
     with pytest.raises(Exception):
         IntegrationScriptUnifier.get_script_or_integration_package_data(f"{git_path()}/demisto_sdk/tests/test_files/Unifier/SampleNoPyFile")
-    with open(f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/CalculateGeoDistance.py", "r") as \
+    with open(f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/CalculateGeoDistance.py") as \
             code_file:
         code = code_file.read()
     yml_path, code_data = IntegrationScriptUnifier.get_script_or_integration_package_data(
@@ -250,7 +250,7 @@ def test_insert_image_to_yml():
     with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB_image.png", "rb") as image_file:
         image_data = image_file.read()
         image_data = image_prefix + base64.b64encode(image_data).decode('utf-8')
-    with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.yml", mode="r", encoding="utf-8") \
+    with open(f"{git_path()}/demisto_sdk/tests/test_files/VulnDB/VulnDB.yml", encoding="utf-8") \
             as yml_file:
         yml_unified_test = yaml.load(yml_file)
     yml_unified, found_img_path = IntegrationScriptUnifier.insert_image_to_yml(
@@ -374,7 +374,7 @@ def test_insert_module_code__verify_offsets(mocker):
      f"{git_path()}/demisto_sdk/tests/test_files/CalculateGeoDistance/CalculateGeoDistance")])
 def test_insert_script_to_yml(package_path, dir_name, file_path):
     is_script_package = dir_name == 'Scripts'
-    with open(file_path + ".yml", "r") as yml:
+    with open(file_path + ".yml") as yml:
         test_yml_data = yaml.load(yml)
 
     test_yml_unified = copy.deepcopy(test_yml_data)
@@ -383,7 +383,7 @@ def test_insert_script_to_yml(package_path, dir_name, file_path):
         Path(package_path), ".py", test_yml_unified, test_yml_data, is_script_package
     )
 
-    with open(file_path + ".py", mode="r", encoding="utf-8") as script_file:
+    with open(file_path + ".py", encoding="utf-8") as script_file:
         script_code = script_file.read()
     clean_code = IntegrationScriptUnifier.clean_python_code(script_code)
 
@@ -406,7 +406,7 @@ def test_insert_script_to_yml(package_path, dir_name, file_path):
 ])
 def test_insert_script_to_yml_exceptions(package_path, dir_name, file_path):
     is_script_package = dir_name == 'Scripts'
-    with open(file_path + ".yml", "r") as yml:
+    with open(file_path + ".yml") as yml:
         test_yml_data = yaml.load(yml)
     if dir_name == "Scripts":
         test_yml_data['script'] = 'blah'

@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import get_content_path
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
@@ -9,6 +11,7 @@ from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
 class ContentGraphInterface(ABC):
     _calculate_dependencies = True
+    repo_path = Path(get_content_path())  # type: ignore
 
     @abstractmethod
     def create_indexes_and_constraints(self) -> None:
@@ -20,6 +23,18 @@ class ContentGraphInterface(ABC):
 
     @abstractmethod
     def create_relationships(self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]) -> None:
+        pass
+
+    @abstractmethod
+    def remove_server_items(self) -> None:
+        pass
+
+    @abstractmethod
+    def import_graph(self) -> None:
+        pass
+
+    @abstractmethod
+    def export_graph(self) -> None:
         pass
 
     @abstractmethod

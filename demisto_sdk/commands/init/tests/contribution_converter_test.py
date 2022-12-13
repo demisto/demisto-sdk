@@ -3,12 +3,12 @@ import re
 import shutil
 from os.path import join
 from typing import Union
+from unittest.mock import patch
 from zipfile import ZipFile
 
 import pytest
 from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
-from mock import patch
 
 from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -44,7 +44,7 @@ name_reformatting_test_examples = [
 
 
 def util_open_file(path):
-    with open(path, mode='r') as f:
+    with open(path) as f:
         return f.read()
 
 
@@ -463,7 +463,7 @@ def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_ve
 
     pack_metadata_path = converted_pack_path / 'pack_metadata.json'
     assert pack_metadata_path.exists()
-    with open(pack_metadata_path, 'r') as pack_metadata:
+    with open(pack_metadata_path) as pack_metadata:
         metadata = json.load(pack_metadata)
         assert metadata.get('name', '') == name
         assert metadata.get('description', '') == description

@@ -217,7 +217,7 @@ class ScriptValidator(ContentEntityValidator):
             Returns:
                 bool. Whether the script's id equals to its name
             """
-        return super(ScriptValidator, self)._is_id_equals_name('script')
+        return super()._is_id_equals_name('script')
 
     def is_docker_image_valid(self):
         # type: () -> bool

@@ -6,7 +6,7 @@ from typing import Set, Tuple, Union
 import click
 import gitdb
 from git import InvalidGitRepositoryError, Repo
-from git.diff import DiffIndex as Lit_change_type
+from git.diff import Lit_change_type
 from git.remote import Remote
 
 

@@ -28,7 +28,7 @@ class MarketplaceSuffixPreparer:
         }
 
         suffix = replacement_configuration.get(marketplace)
-        print(f'{suffix=}')
+        print(f'{marketplace=}, {suffix=}')
         if suffix:
             suffix_len = len(suffix)
             data_keys = list(data.keys())

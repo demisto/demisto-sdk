@@ -96,21 +96,30 @@ class ContentItem(BaseContent):
     def data(self) -> dict:
         with self.path.open() as f:
             return self.handler.load(f)
-
+    
+    def fix_for_marketplace(self, marketplace: MarketplaceVersions) -> dict:
+        data = self.data
+        if marketplace != MarketplaceVersions.XSOAR:
+            alternate_item_fields(data)
+            self.object_id = data.get('commonfields', {}).get('id') or self.object_id
+            self.name = data.get('name') or self.name
+        return data
+    
     def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
         data = self.data
         if marketplace != MarketplaceVersions.XSOAR:
             alternate_item_fields(data)
+
         return data
 
-    def summary(self, marketplace: MarketplaceVersions = None) -> dict:
-        """_summary_
+    def summary(self) -> dict:
+        """Summary of a content item (the most important metadata fields)
 
         Args:
             marketplace (MarketplaceVersions, optional): Could be take care from subclass. Defaults to None.
 
         Returns:
-            dict: _description_
+            dict: Dictionary representation of the summary content item.
         """
         return self.dict(include=self.metadata_fields(), by_alias=True)
 

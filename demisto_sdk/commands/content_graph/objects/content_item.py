@@ -97,7 +97,7 @@ class ContentItem(BaseContent):
         with self.path.open() as f:
             return self.handler.load(f)
 
-    def fix_for_marketplace(self, marketplace: Optional[MarketplaceVersions] = None) -> dict:
+    def fix_for_marketplace(self, marketplace: Optional[MarketplaceVersions] = None) -> None:
         if marketplace and marketplace != MarketplaceVersions.XSOAR:
             data = self.data
             self.object_id = data.get('commonfields', {}).get('id_x2') or self.object_id
@@ -113,7 +113,6 @@ class ContentItem(BaseContent):
         """Summary of a content item (the most important metadata fields)
 
         Args:
-            marketplace (MarketplaceVersions, optional): Could be take care from subclass. Defaults to None.
 
         Returns:
             dict: Dictionary representation of the summary content item.

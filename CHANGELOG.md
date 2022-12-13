@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+
+## 1.8.0
 * Added validation of testdata files for **Modeling Rules**.
 * Added the **update-content-graph** command.
 * Added the ability to limit the number of CPU cores with `DEMISTO_SDK_MAX_CPU_CORES` envirment variable.
@@ -19,6 +21,7 @@
 * Added support for fromversion/toversion in XSIAM content items (correlation rules, XSIAM dashboards, XSIAM reports and triggers).
 * Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.
 * Added **prepare-content** command which will prepare the pack or content item for the platform.
+
 ## 1.7.9
 * Fixed an issue where an error message in **validate** would not include the suggested fix.
 * Added a validation that enforces predefined categories on MP Packs & integration yml files, the validation also ensures that each pack has only one category.

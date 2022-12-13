@@ -31,7 +31,7 @@ class MarketplaceSuffixPreparer:
         print(f'{suffix=}')
         if suffix:
             suffix_len = len(suffix)
-            data_keys = [key for key in data]
+            data_keys = list(data.keys())
             for current_key in data_keys:
                 print(f'{current_key=}')
                 if current_key.casefold().endswith(suffix):

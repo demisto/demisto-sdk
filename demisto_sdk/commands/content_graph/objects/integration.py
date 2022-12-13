@@ -1,3 +1,4 @@
+import logging
 from typing import TYPE_CHECKING, List
 
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -8,8 +9,11 @@ if TYPE_CHECKING:
 
 from pydantic import Field
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
+
+logger = logging.getLogger('demisto-sdk')
 
 
 class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
@@ -70,3 +74,16 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             "category": True,
             "commands": {"name": True, "description": True},
         }
+
+    def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
+        data = super().prepare_for_upload(marketplace, **kwargs)
+
+        if marketplace == MarketplaceVersions.MarketplaceV2:
+            x2_suffix = '_x2'
+            len_x2_suffix = len(x2_suffix)
+            for current_key in data.keys():
+                if current_key.casefold().endswith(x2_suffix):
+                    current_key_no_suffix = current_key[:-len_x2_suffix]
+                    logger.debug(f'Replacing {current_key_no_suffix} value from {data[current_key_no_suffix]} to {data[current_key]}.')
+                    data[current_key_no_suffix] = data[current_key]
+        return data

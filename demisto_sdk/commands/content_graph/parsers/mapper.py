@@ -50,11 +50,11 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
             fields_content_type = ContentType.INCIDENT_FIELD
 
         if default_incident_type := self.json_data.get("defaultIncidentType"):
-            self.add_dependency_by_name(default_incident_type, content_type_to_map)
+            self.add_dependency_by_name(default_incident_type, content_type_to_map, is_mandatory=False)
 
         for incident_type, mapping_data in self.json_data.get("mapping", {}).items():
             if incident_type not in IGNORED_INCIDENT_TYPES:
-                self.add_dependency_by_name(incident_type, content_type_to_map)
+                self.add_dependency_by_name(incident_type, content_type_to_map, is_mandatory=False)
             internal_mapping: Dict[str, Any] = mapping_data.get("internalMapping")
 
             if self.type == "mapping-outgoing":
@@ -65,6 +65,7 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
                             self.add_dependency_by_id(
                                 incident_field_simple,
                                 fields_content_type,
+                                is_mandatory=False,
                             )
                         elif incident_field_complex := fields_mapper.get(
                             "complex", {}
@@ -72,6 +73,7 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
                             self.add_dependency_by_id(
                                 incident_field_complex,
                                 fields_content_type,
+                                is_mandatory=False,
                             )
 
             elif self.type == "mapping-incoming":
@@ -80,6 +82,7 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
                     self.add_dependency_by_name(
                         incident_field,
                         fields_content_type,
+                        is_mandatory=False,
                     )
             else:
                 raise ValueError(

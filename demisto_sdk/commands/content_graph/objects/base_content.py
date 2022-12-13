@@ -65,6 +65,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
         state = self.__dict__.copy()
+
         # This object cannot be pickled
         del state["relationships_data"]
         return state

@@ -90,7 +90,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         """
 
         json_dct = json.loads(self.json())
-        if 'path' in json_dct:
+        if 'path' in json_dct and Path(json_dct['path']).is_absolute():
             json_dct['path'] = (Path(json_dct['path']).relative_to(get_content_path())).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type
         return json_dct

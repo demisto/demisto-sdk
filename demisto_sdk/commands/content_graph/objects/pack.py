@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field, validator
 
 from demisto_sdk.commands.common.constants import CONTRIBUTORS_README_TEMPLATE, MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import MarketplaceTagParser
+from demisto_sdk.commands.common.tools import MarketplaceTagParser, get_content_path
 from demisto_sdk.commands.content_graph.common import (PACK_METADATA_FILENAME, ContentType, Nodes, Relationships,
                                                        RelationshipType)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -141,7 +141,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
 
     @validator("path", always=True)
     def validate_path(cls, v: Path) -> Path:
-        return v.absolute()
+        if v.is_absolute():
+            return v
+        return Path(get_content_path()) / v  # type: ignore
 
     @property
     def depends_on(self) -> List["RelationshipData"]:

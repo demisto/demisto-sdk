@@ -14,7 +14,7 @@ import logging
 from pydantic import DirectoryPath, validator
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import alternate_item_fields
+from demisto_sdk.commands.common.tools import alternate_item_fields, get_content_path
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 
@@ -34,7 +34,9 @@ class ContentItem(BaseContent):
 
     @validator("path", always=True)
     def validate_path(cls, v: Path) -> Path:
-        return v.absolute()
+        if v.is_absolute():
+            return v
+        return Path(get_content_path()) / v  # type: ignore
 
     @property
     def in_pack(self) -> Optional["Pack"]:

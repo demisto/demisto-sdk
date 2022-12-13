@@ -61,7 +61,6 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         arbitrary_types_allowed = True  # allows having custom classes for properties in model
         orm_mode = True  # allows using from_orm() method
         allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
-        allow_mutation = True  # allows changing the model after creation
 
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""

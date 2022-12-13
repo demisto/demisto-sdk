@@ -35,6 +35,7 @@ class MarketplaceSuffixPreparer:
                     current_key_no_suffix = current_key[:-suffix_len]
                     logger.debug(f'Replacing {current_key_no_suffix} value from {data[current_key_no_suffix]} to {data[current_key]}.')
                     data[current_key_no_suffix] = data[current_key]
+                    data.pop(current_key, None)
 
                 elif isinstance(data[current_key], dict):
                     data[current_key] = MarketplaceSuffixPreparer.prepare(data[current_key], marketplace)

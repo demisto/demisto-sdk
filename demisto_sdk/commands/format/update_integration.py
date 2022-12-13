@@ -140,7 +140,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
             # Creates a deep copy of the feed integration configuration so the 'defaultvalue` field would not get
             # popped from the original configuration params.
             params = [dict(config) for config in self.data.get('configuration', [])]
-            
+
             # ignore optional fields
             for param in params:
                 for field in ('defaultvalue', 'section', 'advanced'):

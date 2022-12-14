@@ -43,7 +43,7 @@ class ContentGraphInterface(ABC):
     @abstractmethod
     def clean_graph(self):
         ...
-        
+
     @abstractmethod
     def search(
         self,
@@ -91,7 +91,7 @@ class ContentGraphInterface(ABC):
     @abstractmethod
     def create_pack_dependencies(self):
         ...
-        
+
     @abstractmethod
     def run_single_query(self, query: str, **kwargs) -> Any:
         pass

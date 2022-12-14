@@ -2204,7 +2204,7 @@ def create_content_graph(
         output_file=Path(output_file) if output_file else None,
         use_docker=use_docker,
     ) as content_graph_interface:
-        create_content_graph_command(content_graph_interface, no_dependencies, export=not skip_export)
+        create_content_graph_command(content_graph_interface, not no_dependencies, export=not skip_export)
 
 
 # ====================== update-content-graph ====================== #

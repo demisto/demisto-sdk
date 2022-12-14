@@ -2767,8 +2767,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                                                        packs=packs_dict,
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
-                                                                       expected_file_types=(
-                                                                               FileType.XSIAM_LAYOUT),
+                                                                       expected_file_types=FileType.XSIAM_LAYOUT,
                                                                        data_extraction_func=get_xsiam_layouts_data,
                                                                        suffix='json'
                                                                        ),

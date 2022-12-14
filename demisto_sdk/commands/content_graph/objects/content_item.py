@@ -103,19 +103,13 @@ class ContentItem(BaseContent):
         with self.path.open() as f:
             return self.handler.load(f)
 
-    def fix_for_marketplace(self, marketplace: Optional[MarketplaceVersions] = None) -> None:
-        if marketplace and marketplace != MarketplaceVersions.XSOAR:
-            data = self.data
-            self.object_id = data.get('commonfields', {}).get('id_x2') or self.object_id
-            self.name = data.get('name_x2') or self.name
-
     def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
         data = self.data
         if marketplace != MarketplaceVersions.XSOAR:
             alternate_item_fields(data)
         return data
 
-    def summary(self) -> dict:
+    def summary(self, marketplace: Optional[MarketplaceVersions] = None) -> dict:
         """Summary of a content item (the most important metadata fields)
 
         Args:
@@ -123,7 +117,14 @@ class ContentItem(BaseContent):
         Returns:
             dict: Dictionary representation of the summary content item.
         """
-        return self.dict(include=self.metadata_fields(), by_alias=True)
+        summary_res = self.dict(include=self.metadata_fields(), by_alias=True)
+        if marketplace and marketplace != MarketplaceVersions.XSOAR:
+            data = self.data
+            if 'id' in summary_res:
+                summary_res['id'] = data.get('commonfields', {}).get('id_x2') or self.object_id
+            if 'name' in summary_res:
+                summary_res['name'] = data.get('name_x2') or self.name
+        return summary_res
 
     @abstractmethod
     def metadata_fields(self) -> Set[str]:

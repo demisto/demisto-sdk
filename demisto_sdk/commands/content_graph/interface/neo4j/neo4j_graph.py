@@ -92,8 +92,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 if not model:
                     raise NoModelException(f"No model for {content_type}")
                 obj = model.parse_obj(node)
-                if isinstance(obj, ContentItem):
-                    obj.fix_for_marketplace(marketplace)
                 Neo4jContentGraphInterface._id_to_obj[element_id] = obj
 
     def _add_relationships_to_objects(self, result: List[Neo4jResult]) -> List[BaseContent]:

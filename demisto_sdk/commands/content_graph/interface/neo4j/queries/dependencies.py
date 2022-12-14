@@ -5,7 +5,7 @@ from neo4j import Transaction
 
 from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES, REPUTATION_COMMAND_NAMES, MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, Neo4jResult, RelationshipType
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query, to_neo4j_map
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import intersects, run_query, to_neo4j_map, versioned
 
 REPUTATION_COMMANDS_NODE_IDS = [
     f"{ContentType.COMMAND}:{cmd}" for cmd in REPUTATION_COMMAND_NAMES
@@ -15,7 +15,7 @@ IGNORED_PACKS_IN_DEPENDENCY_CALC = ["NonSupported", "Base", "ApiModules"]
 
 GENERIC_COMMANDS_NAMES = GENERIC_COMMANDS_NAMES | {"search"}
 
-MAX_DEPTH = 7
+MAX_DEPTH = 5
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -125,9 +125,13 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
     query = f"""
     MATCH (content_item:{ContentType.BASE_CONTENT})-[r:{RelationshipType.USES}]->(command:{ContentType.COMMAND})
     MATCH (command)<-[rcmd:{RelationshipType.HAS_COMMAND}]-(integration:{ContentType.INTEGRATION})
-    WHERE NOT command.object_id IN {list(GENERIC_COMMANDS_NAMES)}
+    WHERE {intersects('content_item.marketplaces', 'integration.marketplaces')}
+    AND {versioned('content_item.toversion')} >= {versioned('content_item.fromversion')}
+    AND {versioned('content_item.toversion')} >= {versioned('integration.fromversion')}
+
+    WITH count(rcmd) as command_count, content_item, r, integration
     MERGE (content_item)-[u:USES]->(integration)
-    SET u.mandatorily = r.mandatorily OR u.mandatorily
+    SET u.mandatorily = u.mandatorily AND (CASE WHEN command_count = 1 THEN true ELSE false END)
     RETURN count(u) as uses_relationships
     """
     result = run_query(tx, query).single()

@@ -10,7 +10,6 @@ logger = logging.getLogger("demisto-sdk")
 
 def create_content_graph(
     content_graph_interface: ContentGraphInterface,
-    dependencies: bool = False,
     export: bool = False,
 ) -> None:
     """This function creates a new content graph database in neo4j from the content path
@@ -19,8 +18,6 @@ def create_content_graph(
         content_graph_interface (ContentGraphInterface): The content graph interface.
     """
     ContentGraphBuilder(content_graph_interface).create_graph()
-    if dependencies:
-        content_graph_interface.create_pack_dependencies()
     if export:
         content_graph_interface.export_graph()
 

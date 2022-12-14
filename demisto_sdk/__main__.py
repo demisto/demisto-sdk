@@ -2177,7 +2177,6 @@ def error_code(config, **kwargs):
 )
 @click.option('-ud', '--use-docker', is_flag=True, help="Use docker service to run the content graph")
 @click.option('-us', '--use-existing', is_flag=True, help="Use existing service", default=False)
-@click.option('-d', '--dependencies', is_flag=True, help="Whether dependencies should be included in the graph", default=False)
 @click.option('-se', '--skip-export', is_flag=True, help="Whether or not to skip exporting to CSV.", default=False)
 @click.option('-o', '--output-file', type=click.Path(), help="dump file output", default=None)
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
@@ -2188,7 +2187,6 @@ def error_code(config, **kwargs):
 def create_content_graph(
     use_docker: bool = False,
     use_existing: bool = False,
-    dependencies: bool = False,
     skip_export: bool = False,
     output_file: Path = None,
     **kwargs,
@@ -2204,7 +2202,7 @@ def create_content_graph(
         output_file=Path(output_file) if output_file else None,
         use_docker=use_docker,
     ) as content_graph_interface:
-        create_content_graph_command(content_graph_interface, dependencies, export=not skip_export)
+        create_content_graph_command(content_graph_interface, export=not skip_export)
 
 
 # ====================== update-content-graph ====================== #

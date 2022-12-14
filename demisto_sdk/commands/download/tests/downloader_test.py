@@ -160,7 +160,7 @@ class Environment:
                                                   'path': self.CUSTOM_CONTENT_INTEGRATION_PATH,
                                                   'entity': 'Integrations', 'type': 'integration', 'file_ending': 'yml',
                                                   'code_lang': 'python'}
-        self.SCRIPT_CUSTOM_CONTENT_OBJECT = {'id': 'TestScript', 'name': 'TestScript',
+        self.SCRIPT_CUSTOM_CONTENT_OBJECT = {'id': 'f1e4c6e5-0d44-48a0-8020-a9711243e918', 'name': 'TestScript',
                                              'path': self.CUSTOM_CONTENT_SCRIPT_PATH, 'entity': 'Scripts',
                                              'type': 'script', 'file_ending': 'yml', 'code_lang': 'python'}
         self.PLAYBOOK_CUSTOM_CONTENT_OBJECT = {'id': 'DummyPlaybook',

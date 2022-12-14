@@ -113,7 +113,7 @@ class ContentItem(BaseContent):
         """Summary of a content item (the most important metadata fields)
 
         Args:
-
+            marketplace: The marketplace to get the summary for.
         Returns:
             dict: Dictionary representation of the summary content item.
         """

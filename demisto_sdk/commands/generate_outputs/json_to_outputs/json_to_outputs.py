@@ -227,7 +227,7 @@ def json_to_outputs(command, json, prefix, output=None, verbose=False, interacti
     """
     try:
         if json:
-            with open(json, 'r') as json_file:
+            with open(json) as json_file:
                 input_json = json_file.read()
         else:
             print("Enter the command's output in JSON format.\n "

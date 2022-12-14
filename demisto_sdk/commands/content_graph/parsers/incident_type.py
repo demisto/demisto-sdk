@@ -32,4 +32,4 @@ class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDEN
             self.add_dependency_by_id(playbook, ContentType.PLAYBOOK)
 
         if layout := self.json_data.get("layout"):
-            self.add_dependency_by_id(layout, ContentType.LAYOUT)
+            self.add_dependency_by_id(layout, ContentType.LAYOUT, is_mandatory=False)

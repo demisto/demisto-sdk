@@ -579,7 +579,7 @@ def generate_command_example(cmd_from_yaml, cmd_example=None):
                 example.extend([
                     '#### Context Example',
                     '```json',
-                    '{}'.format(context_example),
+                    f'{context_example}',
                     '```',
                     '',
                 ])
@@ -607,7 +607,7 @@ def get_command_examples(commands_examples_input, specific_commands):
         return []
 
     if os.path.isfile(commands_examples_input):
-        with open(commands_examples_input, 'r') as examples_file:
+        with open(commands_examples_input) as examples_file:
             command_examples = examples_file.read().splitlines()
     else:
         print_warning('failed to open commands file, using commands as comma seperated list')
@@ -648,7 +648,7 @@ def get_command_permissions(commands_permissions_file_path) -> list:
         return commands_permissions
 
     if os.path.isfile(commands_permissions_file_path):
-        with open(commands_permissions_file_path, 'r') as permissions_file:
+        with open(commands_permissions_file_path) as permissions_file:
             permissions = permissions_file.read().splitlines()
     else:
         print('failed to open permissions file')

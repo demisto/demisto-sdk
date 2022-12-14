@@ -118,7 +118,7 @@ def find_pack_display_name(pack_folder_name: str) -> str:
 
     pack_metadata_path = found_path_results[0]
 
-    with open(pack_metadata_path, 'r') as pack_metadata_file:
+    with open(pack_metadata_path) as pack_metadata_file:
         pack_metadata = json.load(pack_metadata_file)
 
     pack_display_name = pack_metadata.get('name') if pack_metadata.get('name') else pack_folder_name
@@ -2177,7 +2177,7 @@ class PackDependencies:
         """
 
         if id_set_path and os.path.isfile(id_set_path):
-            with open(id_set_path, 'r') as id_set_file:
+            with open(id_set_path) as id_set_file:
                 id_set = json.load(id_set_file)
         else:
             if skip_id_set_creation:
@@ -2247,7 +2247,7 @@ class PackDependencies:
             The pack metadata content.
         """
 
-        with open(find_pack_path(pack_name)[0], "r") as pack_metadata:
+        with open(find_pack_path(pack_name)[0]) as pack_metadata:
             pack_meta_file_content = json.loads(pack_metadata.read())
 
         return pack_meta_file_content

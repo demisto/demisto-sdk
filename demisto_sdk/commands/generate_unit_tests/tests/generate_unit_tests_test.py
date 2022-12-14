@@ -78,10 +78,10 @@ class TestUnitTestsGenerator:
             append=False
         )
 
-        with open(output_path, 'r') as f:
+        with open(output_path) as f:
             output_source = f.read()
 
-        with open(desired, 'r') as f:
+        with open(desired) as f:
             output_desired = f.read()
 
         try:

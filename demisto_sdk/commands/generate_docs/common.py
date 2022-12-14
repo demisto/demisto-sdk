@@ -42,7 +42,7 @@ def generate_section(title, data=''):
     :return: array of strings contains the section lines in markdown format.
     """
     section = [
-        '## {}'.format(title),
+        f'## {title}',
         ''
     ]
     if data:
@@ -58,7 +58,7 @@ def generate_numbered_section(title: str, data: str = ''):
     :return: array of strings contains the section lines in markdown format.
     """
     section = [
-        '## {}'.format(title)
+        f'## {title}'
     ]
 
     list_data = data.split('* ')
@@ -219,11 +219,11 @@ def execute_command(command_example, insecure: bool):
         runner = Runner('', insecure=insecure)
         res, raw_context = runner.execute_command(command_example)
         if not res:
-            raise RuntimeError('something went wrong with your command: {}'.format(command_example))
+            raise RuntimeError(f'something went wrong with your command: {command_example}')
 
         for entry in res:
             if is_error(entry):
-                raise RuntimeError('something went wrong with your command: {}'.format(command_example))
+                raise RuntimeError(f'something went wrong with your command: {command_example}')
 
             if raw_context:
                 context = {k.split('(')[0]: v for k, v in raw_context.items()}
@@ -236,11 +236,11 @@ def execute_command(command_example, insecure: bool):
                     md_example = f'```\n{json.dumps(content, sort_keys=True, indent=4)}\n```'
 
     except RuntimeError:
-        errors.append('The provided example for cmd {} has failed...'.format(cmd))
+        errors.append(f'The provided example for cmd {cmd} has failed...')
 
     except Exception as e:
         errors.append(
-            'Error encountered in the processing of command {}, error was: {}. '.format(cmd, str(e)) +
+            f'Error encountered in the processing of command {cmd}, error was: {str(e)}. ' +
             '. Please check your command inputs and outputs')
 
     cmd = cmd.split(' ')[0][1:]

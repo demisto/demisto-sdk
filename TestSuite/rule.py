@@ -35,9 +35,10 @@ class Rule:
         self.yml = YAML(self._tmpdir_rule_path / f'{self.name}.yml', self._repo.path)
         self.rules = File(self._tmpdir_rule_path / f'{self.name}.xif', self._repo.path)
         self.schema = JSONBased(self._tmpdir_rule_path, f'{self.name}_schema', '')
+        self.testdata = JSONBased(self._tmpdir_rule_path, f'{self.name}_testdata', '')
 
         self.samples: list[JSONBased] = []
-        self.samples_dir_path = tmpdir / SAMPLES_DIR
+        self.samples_dir_path = tmpdir / self.name / SAMPLES_DIR
 
     def build(
             self,

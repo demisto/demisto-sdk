@@ -803,6 +803,7 @@ class TestIntegrationValidation:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         invalid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
@@ -903,6 +904,7 @@ class TestIntegrationValidation:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         invalid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
@@ -950,7 +952,8 @@ class TestIntegrationValidation:
 
     @pytest.mark.parametrize('field,description,should_pass', (('DBotScore.Score', 'my custom description', True),
                                                                ('DBotScore.Score', '', False)))
-    def test_empty_default_descriptions(self, repo, field: str, description: str, should_pass: bool):
+    def test_empty_default_descriptions(self, mocker, repo, field: str, description: str, should_pass: bool):
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
         pack = repo.create_pack(f'{field}-{description}')
         integration = pack.create_integration()
         integration.create_default_integration()

@@ -4,10 +4,10 @@ import sys
 import uuid
 from collections import OrderedDict
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 import click
 import pytest
-from mock import Mock, patch
 
 from demisto_sdk.commands.common.constants import (ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS,
                                                    GENERAL_DEFAULT_FROMVERSION, INCIDENT_FETCH_REQUIRED_PARAMS,
@@ -62,7 +62,7 @@ class TestFormatting:
             - Ensure comments are being preserved
         """
         schema_path = os.path.normpath(
-            os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
+            os.path.join(__file__, "..", "..", "..", "common", "schemas", f'{file_type}.yml'))
         base_yml = formatter(source_path, path=schema_path)
         yaml.dump(base_yml.data, sys.stdout)
         stdout, _ = capsys.readouterr()
@@ -71,7 +71,7 @@ class TestFormatting:
     @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', BASIC_YML_TEST_PACKS)
     def test_basic_yml_updates(self, mocker, source_path, destination_path, formatter, yml_title, file_type):
         schema_path = os.path.normpath(
-            os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
+            os.path.join(__file__, "..", "..", "..", "common", "schemas", f'{file_type}.yml'))
         from demisto_sdk.commands.format import update_generic
         mocker.patch.object(update_generic, 'get_remote_file', return_value={})
         base_yml = formatter(source_path, path=schema_path)
@@ -135,7 +135,7 @@ class TestFormatting:
     @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', BASIC_YML_TEST_PACKS)
     def test_save_output_file(self, source_path, destination_path, formatter, yml_title, file_type):
         schema_path = os.path.normpath(
-            os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
+            os.path.join(__file__, "..", "..", "..", "common", "schemas", f'{file_type}.yml'))
         saved_file_path = os.path.join(os.path.dirname(source_path), os.path.basename(destination_path))
         base_yml = formatter(input=source_path, output=saved_file_path, path=schema_path)
         base_yml.save_yml_to_destination_file()
@@ -152,7 +152,7 @@ class TestFormatting:
                              INTEGRATION_PROXY_SSL_PACK)
     def test_proxy_ssl_descriptions(self, source_path, argument_name, argument_description, file_type, appearances):
         schema_path = os.path.normpath(
-            os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
+            os.path.join(__file__, "..", "..", "..", "common", "schemas", f'{file_type}.yml'))
         base_yml = IntegrationYMLFormat(source_path, path=schema_path, verbose=True)
         base_yml.update_proxy_insecure_param_to_default()
 
@@ -182,7 +182,7 @@ class TestFormatting:
                              INTEGRATION_BANG_COMMANDS_ARGUMENTS_PACK)
     def test_bang_commands_default_arguments(self, source_path, file_type, bang_command, verifications):
         schema_path = os.path.normpath(
-            os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
+            os.path.join(__file__, "..", "..", "..", "common", "schemas", f'{file_type}.yml'))
         base_yml = IntegrationYMLFormat(source_path, path=schema_path, verbose=True)
         base_yml.set_reputation_commands_basic_argument_as_needed()
 
@@ -299,7 +299,7 @@ class TestFormatting:
     ])
     def test_pwsh_format(self, tmpdir, yml_file, yml_type):
         schema_path = os.path.normpath(
-            os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(yml_type)))
+            os.path.join(__file__, "..", "..", "..", "common", "schemas", f'{yml_type}.yml'))
         dest = str(tmpdir.join('pwsh_format_res.yml'))
         src_file = f'{GIT_ROOT}/demisto_sdk/tests/test_files/{yml_file}'
         if yml_type == 'script':
@@ -329,13 +329,13 @@ class TestFormatting:
         - Ensure 'yes' string in the playbook condition remains string and do not change to boolean.
         """
         schema_path = os.path.normpath(
-            os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
+            os.path.join(__file__, "..", "..", "..", "common", "schemas", f'{file_type}.yml'))
         saved_file_path = os.path.join(os.path.dirname(source_path), os.path.basename(destination_path))
         base_yml = formatter(input=source_path, output=saved_file_path, path=schema_path)
         base_yml.save_yml_to_destination_file()
         assert os.path.isfile(saved_file_path)
 
-        with open(saved_file_path, 'r') as f:
+        with open(saved_file_path) as f:
             yaml_content = yaml.load(f)
             assert 'yes' in yaml_content['tasks']['27']['nexttasks']
         os.remove(saved_file_path)
@@ -529,7 +529,7 @@ class TestFormatting:
             lambda _: 'N'
         )
         res = format_manager(input=target, verbose=True, assume_yes=True)
-        with open(target, 'r') as f:
+        with open(target) as f:
             yaml_content = yaml.load(f)
             params = yaml_content['configuration']
             for param in params:
@@ -567,7 +567,7 @@ class TestFormatting:
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
         res = format_manager(input=target, verbose=True, clear_cache=True, assume_yes=True)
-        with open(target, 'r') as f:
+        with open(target) as f:
             yaml_content = yaml.load(f)
             params = yaml_content['configuration']
             for counter, param in enumerate(params):

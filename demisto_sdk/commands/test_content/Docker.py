@@ -41,12 +41,12 @@ class Docker:
                 str: full ssh command
 
         """
-        remote_server = '{}@{}'.format(cls.REMOTE_MACHINE_USER, server_ip)
-        ssh_prefix = '{} {}'.format(cls.SSH_OPTIONS, remote_server)
+        remote_server = f'{cls.REMOTE_MACHINE_USER}@{server_ip}'
+        ssh_prefix = f'{cls.SSH_OPTIONS} {remote_server}'
         if force_tty:
             ssh_prefix += ' -t'
         # escaping the remote command with single quotes
-        cmd = "{} '{}'".format(ssh_prefix, remote_command)
+        cmd = f"{ssh_prefix} '{remote_command}'"
 
         return cmd
 
@@ -68,7 +68,7 @@ class Docker:
 
         """
         # docker stats command with json output
-        docker_command = 'sudo docker stats --no-stream --no-trunc --format "{}"'.format(cls.COMMAND_FORMAT)
+        docker_command = f'sudo docker stats --no-stream --no-trunc --format "{cls.COMMAND_FORMAT}"'
         # replacing : and / in docker images names in order to grep the stats by container name
         docker_images_regex = ['{}--'.format(re.sub('[:/]', '', docker_image)) for docker_image in docker_images]
         pipe = ' | '
@@ -89,7 +89,7 @@ class Docker:
             Returns:
                 str: String of docker kill command on remote machine.
         """
-        remote_command = 'sudo docker kill {}'.format(container_name)
+        remote_command = f'sudo docker kill {container_name}'
         cmd = cls._build_ssh_command(server_ip, remote_command)
 
         return cmd
@@ -106,7 +106,7 @@ class Docker:
                 str: String of docker exec ps command on remote machine.
 
         """
-        remote_command = 'sudo docker exec -it {} ps -fe'.format(container_id)
+        remote_command = f'sudo docker exec -it {container_id} ps -fe'
         cmd = cls._build_ssh_command(server_ip, remote_command, force_tty=True)
 
         return cmd
@@ -249,7 +249,7 @@ class Docker:
         stdout, stderr = cls.run_shell_command(cmd)
 
         if stderr:
-            ignored_warning_message = "Connection to {} closed".format(server_ip)
+            ignored_warning_message = f"Connection to {server_ip} closed"
             if ignored_warning_message not in stderr:
                 logging_module.debug(f"Failed getting pid info for container id: {container_id}.\n"
                                      f"Additional information: {stderr}")
@@ -318,7 +318,7 @@ class Docker:
                                   .format(container_name, pid_threshold, pids_usage, pids_usage))
                 additional_pid_info = cls.get_docker_pid_info(server_ip, container_id, logging_module)
                 if additional_pid_info:
-                    error_message += 'Additional pid information:\n{}'.format(additional_pid_info)
+                    error_message += f'Additional pid information:\n{additional_pid_info}'
                 failed_memory_test = True
 
             if failed_memory_test:

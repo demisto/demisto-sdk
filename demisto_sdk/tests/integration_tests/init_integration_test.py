@@ -62,7 +62,7 @@ def test_integration_init_integration_positive(monkeypatch, tmp_path):
     assert f"Finished creating integration: {tmp_integration_path}." in result.stdout
     assert result.stderr == ""
 
-    with open(tmp_pack_metadata_path, 'r') as f:
+    with open(tmp_pack_metadata_path) as f:
         metadata_json = json.loads(f.read())
         assert {
             "name": pack_display_name,
@@ -142,7 +142,7 @@ def test_integration_init_integration_positive_no_inline_pack_name(monkeypatch, 
     assert f"Finished creating integration: {tmp_integration_path}." in result.stdout
     assert result.stderr == ""
 
-    with open(tmp_pack_metadata_path, 'r') as f:
+    with open(tmp_pack_metadata_path) as f:
         metadata_json = json.loads(f.read())
         assert {
             "name": pack_display_name,

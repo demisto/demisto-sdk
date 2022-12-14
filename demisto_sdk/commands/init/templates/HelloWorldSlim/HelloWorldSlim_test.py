@@ -8,13 +8,12 @@ https://xsoar.pan.dev/docs/integrations/unit-testing
 
 """
 
-import io
 from demisto_sdk.commands.common.handlers import JSON_Handler
 json = JSON_Handler()
 
 
 def util_load_json(path):
-    with io.open(path, mode='r', encoding='utf-8') as f:
+    with open(path, encoding='utf-8') as f:
         return json.loads(f.read())
 
 

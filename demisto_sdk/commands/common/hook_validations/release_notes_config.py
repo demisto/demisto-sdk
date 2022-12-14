@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import os
 
 from demisto_sdk.commands.common.errors import Errors

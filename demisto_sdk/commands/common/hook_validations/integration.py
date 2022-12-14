@@ -343,6 +343,8 @@ class IntegrationValidator(ContentEntityValidator):
     def is_valid_category(self):
         # type: () -> bool
         """Check that the integration category is in the schema."""
+        if tools.is_external_repository():
+            return True
         category = self.current_file.get('category', None)
         approved_list = tools.get_current_categories()
         if category not in approved_list:
@@ -889,7 +891,7 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             bool. True if valid, and False otherwise.
         """
-        return super(IntegrationValidator, self)._is_id_equals_name('integration')
+        return super()._is_id_equals_name('integration')
 
     @error_codes('IN117,IN118')
     def is_valid_display_configuration(self):
@@ -1374,7 +1376,7 @@ class IntegrationValidator(ContentEntityValidator):
             return False
 
         # get README file's content
-        with open(readme_path, 'r') as readme:
+        with open(readme_path) as readme:
             readme_content = readme.read()
 
         # commands = self.current_file.get("script", {}).get('commands', [])

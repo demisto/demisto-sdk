@@ -204,7 +204,7 @@ class Linter:
             self._facts['is_long_running'] = script_obj.get('longRunning')
             self._facts['commands'] = self._get_commands_list(script_obj)
             self._pkg_lint_status["pack_type"] = script_obj.get('type')
-        except (FileNotFoundError, IOError, KeyError):
+        except (FileNotFoundError, OSError, KeyError):
             self._pkg_lint_status["errors"].append('Unable to parse package yml')
             return True
         # return no check needed if not python pack
@@ -253,7 +253,7 @@ class Linter:
                         additional_req = test_requirements.read_text(encoding='utf-8').strip().split('\n')
                         self._facts["additional_requirements"].extend(additional_req)
                         logger.info(f"{log_prompt} - Additional package Pypi packages found - {additional_req}")
-                    except (FileNotFoundError, IOError):
+                    except (FileNotFoundError, OSError):
                         self._pkg_lint_status["errors"].append('Unable to parse test-requirements.txt in package')
             elif not self._facts["python_version"]:
                 # get python version from yml

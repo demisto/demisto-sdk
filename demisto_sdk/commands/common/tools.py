@@ -2454,10 +2454,10 @@ def get_current_categories() -> list:
     Returns:
         List of approved categories from current branch
     """
-    if not is_external_repository():
-        approved_categories_json, _ = get_dict_from_file('Tests/Marketplace/approved_categories.json')
-        return approved_categories_json.get('approved_list', [])
-    return []
+    if is_external_repository():
+        return []
+    approved_categories_json, _ = get_dict_from_file('Tests/Marketplace/approved_categories.json')
+    return approved_categories_json.get('approved_list', [])
 
 
 @contextmanager

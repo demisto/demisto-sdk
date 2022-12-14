@@ -2,6 +2,7 @@
 ## Unreleased
 * Fixed an issue where **format** created duplicate configuration parameters.
 * Added hidden properties to integration command argument and script argument.
+* Fixed an issue where **validate** failed in private repo due to attempts to read from nonexisting file.
 
 ## 1.8.0
 * Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.

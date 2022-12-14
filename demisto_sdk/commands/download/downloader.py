@@ -223,9 +223,10 @@ class Downloader:
         playbook_id = file_yaml_object.get('id')
         playbook_name = file_yaml_object.get('name')
         if playbook_id and playbook_name and (playbook_name in self.input_files or self.all_custom_content):
-            # download the playbook yaml in case playbook name appears in the input_files or --all-custom-content flag is true
+            # download the playbook yaml in case playbook name appears in the input_files
+            # or --all-custom-content flag is true
 
-            # this will make sure that we save the downloaded files in the custom cotent temp dir
+            # this will make sure that we save the downloaded files in the custom content temp dir
             if self.client and self.client.api_client and self.client.api_client.configuration:
                 api_resp = demisto_client.generic_request_func(self.client, f'/playbook/{playbook_id}/yaml', 'GET')
                 status_code = api_resp[1]
@@ -235,6 +236,63 @@ class Downloader:
                 return ast.literal_eval(api_resp[0]).decode('utf-8')
 
         return playbook_string
+
+    def handle_incidentfield(self, incidentfield_string: str, scripts_mapper: dict) -> str:
+        # In case the incident field uses a custom script, replace the id value of the script with its name
+        file_json_object = json.loads(incidentfield_string)
+        incidentfield_name = file_json_object.get('name')
+        if incidentfield_name and (incidentfield_name in self.input_files or self.all_custom_content):
+            if file_json_object.get('script') and file_json_object.get('script') in scripts_mapper:
+                incidentfield_string = incidentfield_string.replace(file_json_object.get('script'),
+                                                                    scripts_mapper[file_json_object.get('script')])
+
+        return incidentfield_string
+
+    def handle_layout(self, layout_string, scripts_mapper):
+        # In case the layout uses a custom script, replace the id value of the script with its name
+        file_json_object = json.loads(layout_string)
+        layout_name = file_json_object.get('name')
+        if layout_name and (layout_name in self.input_files or self.all_custom_content):
+            tabs = file_json_object.get('detailsV2', {}).get('tabs', [])
+            for tab in tabs:
+                sections = tab.get('sections', [])
+                for section in sections:
+                    items = section.get('items', [])
+                    for item in items:
+                        if item.get('scriptId') and item.get('scriptId') in scripts_mapper:
+                            layout_string = layout_string.replace(item.get('scriptId'),
+                                                                  scripts_mapper[item.get('scriptId')])
+
+        return layout_string
+
+    @staticmethod
+    def map_script(script_string: str, scripts_mapper: dict) -> dict:
+        script_yml = yaml.load(script_string)
+        script_id = script_yml.get('commonfields').get('id')
+        if re.search(r'^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$',
+                     script_id):
+            scripts_mapper[script_id] = script_yml.get('name')
+        return scripts_mapper
+
+    def handle_file(self, string_to_write, member_name, scripts_id_name):
+
+        if 'automation-' in member_name:
+            scripts_id_name = self.map_script(string_to_write, scripts_id_name)
+
+        if not self.list_files and re.search(r'incidentfield-.*\.json', member_name):
+            string_to_write = self.handle_incidentfield(string_to_write, scripts_id_name)
+
+        if not self.list_files and re.search(r'playbook-.*\.yml', member_name):
+            #  if the content item is playbook and list-file flag is true, we should download the
+            #  file via direct REST API because there are props like scriptName, that playbook from custom
+            #  content bundle don't contain
+
+            string_to_write = self.download_playbook_yaml(string_to_write)
+
+        if not self.list_files and re.search(r'layout.*\.json', member_name):
+            string_to_write = self.handle_layout(string_to_write, scripts_id_name)
+
+        return string_to_write, scripts_id_name
 
     def fetch_custom_content(self) -> bool:
         """
@@ -250,6 +308,8 @@ class Downloader:
 
             # Demisto's custom content file is of type tar.gz
             tar = tarfile.open(fileobj=io_bytes, mode='r')
+
+            scripts_id_name = {}
             for member in tar.getmembers():
                 file_name: str = self.update_file_prefix(member.name.strip('/'))
                 file_path: str = os.path.join(self.custom_content_temp_dir, file_name)
@@ -258,11 +318,7 @@ class Downloader:
                 # File might empty
                 if extracted_file:
                     string_to_write = extracted_file.read().decode('utf-8')
-
-                    if not self.list_files and re.search(r'playbook-.*\.yml', member.name):
-                        # if the content item is playbook and list-file flag is true, we should download the file via direct REST API
-                        # because there are props like scriptName, that playbook from custom content bundle don't contain
-                        string_to_write = self.download_playbook_yaml(string_to_write)
+                    string_to_write, scripts_id_name = self.handle_file(string_to_write, member.name, scripts_id_name)
 
                     try:
                         with open(file_path, 'w') as file:

@@ -775,8 +775,8 @@ def test_build_file_name():
 
 
 @pytest.mark.parametrize('original_string, object_name, scripts_mapper, expected_string, expected_mapper', [
-    ('commonfields:\n id:f1e4c6e5-0d44-48a0-8020-a9711243e918\nname:TestingScript', 'automation-Testing.yml', {},
-     'commonfields:\n id:f1e4c6e5-0d44-48a0-8020-a9711243e918\nname:TestingScript',
+    ('name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918', 'automation-Testing.yml', {},
+     'name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918',
      {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"}),
     ('{\n\t"name":"TestingField",\n\t"script":"f1e4c6e5-0d44-48a0-8020-a9711243e918"\n}',
      'incidentfield-TestingField.json', {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},

@@ -26,7 +26,7 @@ import git
 import giturlparse
 import requests
 import urllib3
-from bs4 import UnicodeDammit
+from bs4 import UnicodeDammit  # type:ignore[attr-defined]
 from git.types import PathLike
 from packaging.version import LegacyVersion, Version, parse
 from pebble import ProcessFuture, ProcessPool

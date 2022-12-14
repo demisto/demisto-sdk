@@ -309,7 +309,7 @@ class Downloader:
             # Demisto's custom content file is of type tar.gz
             tar = tarfile.open(fileobj=io_bytes, mode='r')
 
-            scripts_id_name = {}
+            scripts_id_name: dict = {}
             for member in tar.getmembers():
                 file_name: str = self.update_file_prefix(member.name.strip('/'))
                 file_path: str = os.path.join(self.custom_content_temp_dir, file_name)

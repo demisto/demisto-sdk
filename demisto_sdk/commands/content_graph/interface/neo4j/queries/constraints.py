@@ -25,7 +25,6 @@ def drop_constraints(tx: Transaction) -> None:
 
 def drop_nodes_constraints(tx: Transaction) -> None:
     drop_node_property_uniqueness_constraint(tx, CMD_UNIQUE_OBJ_ID)
-    # drop_node_property_uniqueness_constraint(tx, ContentType.COMMAND, 'node_id')
 
 
 def drop_node_property_uniqueness_constraint(
@@ -42,7 +41,6 @@ def create_constraints(tx: Transaction) -> None:
 
 def create_nodes_constraints(tx: Transaction) -> None:
     create_node_property_uniqueness_constraint(tx, CMD_UNIQUE_OBJ_ID, ContentType.COMMAND, 'object_id')
-    # create_node_property_uniqueness_constraint(tx, '', ContentType.COMMAND, 'node_id')
 
 
 def create_node_property_uniqueness_constraint(

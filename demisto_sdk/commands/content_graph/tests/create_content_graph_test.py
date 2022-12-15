@@ -27,6 +27,9 @@ from TestSuite.repo import Repo
 @pytest.fixture(autouse=True)
 def setup(mocker, repo: Repo):
     """Auto-used fixture for setup before every test run"""
+    mocker.patch("demisto_sdk.commands.content_graph.objects.base_content.get_content_path", return_value=Path(repo.path))
+    mocker.patch("demisto_sdk.commands.content_graph.objects.content_item.get_content_path", return_value=Path(repo.path))
+    mocker.patch("demisto_sdk.commands.content_graph.objects.pack.get_content_path", return_value=Path(repo.path))
     mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
     mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
 
@@ -49,7 +52,7 @@ def mock_pack(name: str = "SamplePack"):
         object_id=name,
         content_type=ContentType.PACK,
         node_id=f"{ContentType.PACK}:{name}",
-        path=Path("/dummypath"),
+        path=Path("Packs"),
         name=name,
         marketplaces=[MarketplaceVersions.XSOAR],
         description="",
@@ -76,7 +79,7 @@ def mock_integration(name: str = "SampleIntegration"):
         id=name,
         content_type=ContentType.INTEGRATION,
         node_id=f"{ContentType.INTEGRATION}:{name}",
-        path=Path("/dummypath"),
+        path=Path("Packs"),
         fromversion="5.0.0",
         toversion="99.99.99",
         display_name=name,
@@ -96,7 +99,7 @@ def mock_script(name: str = "SampleScript"):
         id=name,
         content_type=ContentType.SCRIPT,
         node_id=f"{ContentType.SCRIPT}:{name}",
-        path=Path("/dummypath"),
+        path=Path("Packs"),
         fromversion="5.0.0",
         description="",
         display_name=name,
@@ -116,7 +119,7 @@ def mock_classifier(name: str = "SampleClassifier"):
         id=name,
         content_type=ContentType.CLASSIFIER,
         node_id=f"{ContentType.CLASSIFIER}:{name}",
-        path=Path("/dummypath"),
+        path=Path("Packs"),
         fromversion="5.0.0",
         description="",
         display_name=name,
@@ -136,7 +139,7 @@ def mock_playbook(name: str = "SamplePlaybook"):
         id=name,
         content_type=ContentType.PLAYBOOK,
         node_id=f"{ContentType.PLAYBOOK}:{name}",
-        path=Path("/dummypath"),
+        path=Path("Packs"),
         fromversion="5.0.0",
         toversion="99.99.99",
         display_name=name,
@@ -153,7 +156,7 @@ def mock_test_playbook(name: str = "SampleTestPlaybook"):
         id=name,
         # content_type=ContentType.TEST_PLAYBOOK,
         node_id=f"{ContentType.PLAYBOOK}:{name}",
-        path=Path("/dummypath"),
+        path=Path("Packs"),
         fromversion="5.0.0",
         toversion="99.99.99",
         display_name=name,

@@ -140,9 +140,11 @@ class IntegrationYMLFormat(BaseUpdateYML):
             # Creates a deep copy of the feed integration configuration so the 'defaultvalue` field would not get
             # popped from the original configuration params.
             params = [dict(config) for config in self.data.get('configuration', [])]
+
+            # ignore optional fields
             for param in params:
-                if 'defaultvalue' in param:
-                    param.pop('defaultvalue')
+                for field in ('defaultvalue', 'section', 'advanced'):
+                    param.pop(field, None)
 
             # get the iten marketplaces to decide which are the required params
             # if no marketplaces or xsoar in marketplaces - the required params will be INCIDENT_FETCH_REQUIRED_PARAMS (with Incident type etc. )

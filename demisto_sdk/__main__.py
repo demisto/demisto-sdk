@@ -2184,8 +2184,8 @@ def error_code(config, **kwargs):
 )
 @click.option('-ud', '--use-docker', is_flag=True, help="Use docker service to run the content graph")
 @click.option('-us', '--use-existing', is_flag=True, help="Use existing service", default=False)
-@click.option('-d', '--dependencies', is_flag=True, help="Whether dependencies should be included in the graph", default=False)
 @click.option('-se', '--skip-export', is_flag=True, help="Whether or not to skip exporting to CSV.", default=False)
+@click.option('-nd', '--no-dependencies', is_flag=True, help="Whether or not to include dependencies.", default=False)
 @click.option('-o', '--output-file', type=click.Path(), help="dump file output", default=None)
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
               type=click.IntRange(0, 3, clamp=True), default=2, show_default=True)
@@ -2195,8 +2195,8 @@ def error_code(config, **kwargs):
 def create_content_graph(
     use_docker: bool = False,
     use_existing: bool = False,
-    dependencies: bool = False,
     skip_export: bool = False,
+    no_dependencies: bool = False,
     output_file: Path = None,
     **kwargs,
 ):
@@ -2211,7 +2211,7 @@ def create_content_graph(
         output_file=Path(output_file) if output_file else None,
         use_docker=use_docker,
     ) as content_graph_interface:
-        create_content_graph_command(content_graph_interface, dependencies, export=not skip_export)
+        create_content_graph_command(content_graph_interface, not no_dependencies, export=not skip_export)
 
 
 # ====================== update-content-graph ====================== #
@@ -2224,7 +2224,7 @@ def create_content_graph(
 @click.option('-ud', '--use-docker', is_flag=True, help="Use docker service to run the content graph")
 @click.option('-us', '--use-existing', is_flag=True, help="Use existing service", default=False)
 @click.option('-p', '--packs', help="A comma-separated list of packs to update", multiple=True, default=None)
-@click.option('-d', '--dependencies', is_flag=True, help="Whether dependencies should be included in the graph", default=False)
+@click.option('-nd', '--no-dependencies', is_flag=True, help="Whether dependencies should be included in the graph", default=False)
 @click.option('-o', '--output-file', type=click.Path(), help="dump file output", default=None)
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
               type=click.IntRange(0, 3, clamp=True), default=2, show_default=True)
@@ -2235,7 +2235,7 @@ def update_content_graph(
     use_docker: bool = False,
     use_existing: bool = False,
     packs: list = None,
-    dependencies: bool = False,
+    no_dependencies: bool = False,
     output_file: Path = None,
     **kwargs
 ):
@@ -2255,7 +2255,7 @@ def update_content_graph(
         update_content_graph_command(
             content_graph_interface,
             packs_to_update=packs or [],
-            dependencies=dependencies,
+            dependencies=not no_dependencies,
         )
 
 

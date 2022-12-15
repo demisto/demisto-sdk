@@ -68,7 +68,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def close(self) -> None:
         self.driver.close()
 
-    def _add_to_mapping(self, nodes: Iterable[graph.Node]) -> None:
+    def _add_to_mapping(self, nodes: Iterable[graph.Node], marketplace: MarketplaceVersions = None) -> None:
         """Parses nodes to content objects and adds it to mapping
 
         Args:
@@ -169,7 +169,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         )
         content_items_nodes: Set[graph.Node] = set()
         nodes_set = self._get_nodes_set_from_result(mandatorily_dependencies, set(), content_items_nodes)
-        self._add_to_mapping(nodes_set)
+        self._add_to_mapping(nodes_set, marketplace)
         if content_items_nodes:
             self._search(
                 marketplace,
@@ -212,7 +212,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             content_items_nodes: Set[graph.Node] = set()
             pack_nodes: Set[graph.Node] = set()
             nodes_set = self._get_nodes_set_from_result(result, pack_nodes, content_items_nodes)
-            self._add_to_mapping(nodes_set)
+            self._add_to_mapping(nodes_set, marketplace)
 
             if content_items_nodes and level < 2:
                 # limit recursion level is 2, because worst case is `Pack`, and there are two levels until the command
@@ -312,7 +312,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def create_pack_dependencies(self):
         with self.driver.session() as session:
             session.write_transaction(create_pack_dependencies)
-        super().create_pack_dependencies()
 
     def run_single_query(self, query: str, **kwargs) -> Any:
         with self.driver.session() as session:

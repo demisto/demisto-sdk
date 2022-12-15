@@ -214,7 +214,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             nodes_set = self._get_nodes_set_from_result(result, pack_nodes, content_items_nodes)
             self._add_to_mapping(nodes_set, marketplace)
 
-            if content_items_nodes and level < 2:
+            if content_items_nodes and level < 1:
                 # limit recursion level is 2, because worst case is `Pack`, and there are two levels until the command
                 self._search(
                     marketplace,

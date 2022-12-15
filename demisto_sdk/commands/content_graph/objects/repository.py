@@ -1,7 +1,6 @@
 import logging
 import shutil
 import time
-from multiprocessing import Pool
 from pathlib import Path
 from typing import List
 from concurrent.futures import ProcessPoolExecutor
@@ -30,8 +29,6 @@ class ContentDTO(BaseModel):
             with ProcessPoolExecutor() as executor:
                 for pack in self.packs:
                     executor.submit(Pack.dump, pack, dir / pack.path.name, marketplace)
-            # with Pool() as pool:
-            #     pool.starmap(Pack.dump, ((pack, dir / pack.path.name, marketplace) for pack in self.packs))
 
         else:
             for pack in self.packs:

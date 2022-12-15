@@ -371,7 +371,10 @@ def get_value_from_dict(object, path):
     keys = path.split('.')
     rv = object
     for key in keys:
-        rv = rv[key]
+        if key in rv:
+            rv = rv[key]
+        else:
+            raise Exception(f'Value {path} not found in object')
     return rv
 
 

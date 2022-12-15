@@ -28,17 +28,13 @@ class MarketplaceSuffixPreparer:
         }
 
         suffix = replacement_configuration.get(marketplace)
-        print(f'{marketplace=}, {suffix=}')
         if suffix:
             suffix_len = len(suffix)
             data_keys = list(data.keys())
             for current_key in data_keys:
-                print(f'{current_key=}')
                 if current_key.casefold().endswith(suffix):
-                    print(f'{current_key=} ends with {suffix=}')
                     current_key_no_suffix = current_key[:-suffix_len]
                     logger.debug(f'Replacing {current_key_no_suffix} value from {data[current_key_no_suffix]} to {data[current_key]}.')
-                    print(f'Replacing {current_key_no_suffix} value from {data[current_key_no_suffix]} to {data[current_key]}.')
                     data[current_key_no_suffix] = data[current_key]
                     data.pop(current_key, None)
 

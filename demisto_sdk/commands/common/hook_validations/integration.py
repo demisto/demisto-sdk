@@ -27,6 +27,7 @@ from demisto_sdk.commands.common.tools import (_get_file_id, compare_context_pat
                                                get_file_version_suffix_if_exists, get_files_in_dir,
                                                get_item_marketplaces, get_pack_name, is_iron_bank_pack, print_error,
                                                server_version_compare, string_to_bool)
+from demisto_sdk.commands.validate.validate_manager import SKIPPED_FILES
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -1306,8 +1307,7 @@ class IntegrationValidator(ContentEntityValidator):
     @error_codes('IN137')
     def is_valid_py_file_names(self):
         # Gets the all integration .py files from the integration folder.
-        excluded_files = ['demistomock.py', 'conftest.py', 'CommonServerPython.py', 'CommonServerUserPython.py',
-                          '.vulture_whitelist.py']
+        excluded_files = frozenset(('conftest.py', '.vulture_whitelist.py')).union(SKIPPED_FILES)
         files_to_check = get_files_in_dir(os.path.dirname(self.file_path), ['py'], False)
         invalid_files = []
         integrations_folder = os.path.basename(os.path.dirname(self.file_path))

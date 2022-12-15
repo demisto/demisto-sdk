@@ -21,7 +21,9 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export im
                                                                                       pre_export_write_queries)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import create_indexes
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (_match, create_nodes,
-                                                                              delete_all_graph_nodes, duplicates_exist,
+                                                                              delete_all_graph_nodes,
+                                                                              duplicates_exist,
+                                                                              remove_empty_properties,
                                                                               remove_server_nodes)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import create_relationships
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent, ServerContent, content_type_to_model
@@ -260,7 +262,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Args:
             external_import_paths (List[Path]): A list of external repositories' import paths.
         """
-        import_handler = Neo4jImportHandler()
+        import_handler = Neo4jImportHandler(self.use_docker)
         import_handler.ensure_data_uniqueness()
         node_files = import_handler.get_nodes_files()
         relationship_files = import_handler.get_relationships_files()
@@ -271,9 +273,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.write_transaction(merge_duplicate_commands)
             session.write_transaction(merge_duplicate_content_items)
             session.write_transaction(create_constraints)
+            session.write_transaction(remove_empty_properties)
 
     def export_graph(self) -> None:
-        Neo4jImportHandler().clean_import_dir()
+        Neo4jImportHandler(self.use_docker).clean_import_dir()
         with self.driver.session() as session:
             session.write_transaction(pre_export_write_queries)
             session.write_transaction(export_to_csv, self.repo_path.name)

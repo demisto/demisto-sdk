@@ -146,6 +146,10 @@ class PackParser(BaseContentParser, PackMetadataParser):
     def parse_pack_folders(self) -> None:
         """Parses all pack content items by iterating its folders."""
         for folder_path in ContentType.pack_folders(self.path):
+            if ContentType.by_folder(folder_path.name) in [
+                ContentType.GENERIC_FIELD, ContentType.GENERIC_TYPE
+            ]:
+                folder_path = folder_path / "ThreatIntelReport"
             for (
                 content_item_path
             ) in folder_path.iterdir():  # todo: consider multiprocessing

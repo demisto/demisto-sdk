@@ -137,6 +137,8 @@ schema;argument_schema:
       type: bool
     type:
       type: str
+    hidden:
+      type: bool
 
 # script->outputs
 schema;output_schema:

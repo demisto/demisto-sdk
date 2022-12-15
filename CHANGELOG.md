@@ -2,6 +2,7 @@
 ## Unreleased
 * Fixed an issue where **format** created duplicate configuration parameters.
 * Added hidden properties to integration command argument and script argument.
+* Added `--override-existing` to **upload** that skips the confirmation prompt for overriding existing content packs.
 
 ## 1.8.0
 * Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.

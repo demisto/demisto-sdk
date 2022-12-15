@@ -88,7 +88,7 @@ class Uploader:
         """
 
     def __init__(self, input: str, insecure: bool = False, verbose: bool = False, pack_names: list = None,
-                 skip_validation: bool = False, detached_files: bool = False, reattach: bool = False):
+                 skip_validation: bool = False, detached_files: bool = False, reattach: bool = False, override_existing: bool = False):
         self.path = input
         self.log_verbose = verbose
         verify = (not insecure) if insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
@@ -101,6 +101,7 @@ class Uploader:
         self.skip_upload_packs_validation = skip_validation
         self.is_files_to_detached = detached_files
         self.reattach_files = reattach
+        self.override_existing = override_existing
 
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance.
@@ -297,7 +298,7 @@ class Uploader:
             if not self.pack_names:
                 self.pack_names = [zipped_pack.path.stem]
 
-            if self.notify_user_should_override_packs(skip_validation):
+            if self.notify_user_should_override_packs():
                 zipped_pack.upload(logger, self.client, skip_validation)
                 self.successfully_uploaded_files.extend([(pack_name, FileType.PACK.value) for pack_name in self.pack_names])
                 return SUCCESS_RETURN_CODE
@@ -310,13 +311,8 @@ class Uploader:
             self.failed_uploaded_files.append((file_name, FileType.PACK.value, message))
             return ERROR_RETURN_CODE
 
-    def notify_user_should_override_packs(self, skip_validation: bool):
-        """
-        Notify the user about possible overridden packs.
-
-        Args:
-            skip_validation (bool): Skips user confirmation prompt.
-        """
+    def notify_user_should_override_packs(self):
+        """Notify the user about possible overridden packs."""
 
         response = self.client.generic_request('/contentpacks/metadata/installed', "GET")
         installed_packs = eval(response[0])
@@ -327,7 +323,7 @@ class Uploader:
                 pack_names = '\n'.join(common_packs)
                 click.secho(f'This command will overwrite the following packs:\n{pack_names}.\n'
                             'Any changes made on XSOAR will be lost.', fg='bright_red')
-                if not skip_validation:
+                if not self.override_existing:
                     click.secho('Are you sure you want to continue? Y/[N]', fg='bright_red')
                     answer = str(input())
                     return answer in ['y', 'Y', 'yes']

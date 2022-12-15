@@ -398,7 +398,6 @@ def get_value_from_dict(object, path):
                          ])
 def test_use_alternative_fields(artifact: str, keys_paths: List[str]):
     with temp_dir() as temp:
-        # pack_path = PosixPath(TEST_DATA, 'content_repo_with_alternative_fields')
         PrepareUploadManager.prepare_for_upload(artifact, output=temp, marketplace=MarketplaceVersions.MarketplaceV2,
                                                 force=True,
                                                 )

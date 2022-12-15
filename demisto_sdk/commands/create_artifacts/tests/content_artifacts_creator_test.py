@@ -2,6 +2,7 @@ from contextlib import contextmanager
 from filecmp import cmp, dircmp
 from pathlib import Path
 from shutil import copyfile, copytree, rmtree
+from typing import List
 
 import pytest
 
@@ -395,7 +396,7 @@ def get_value_from_dict(object, path):
                               ['commonfields.id', 'name', 'comment']
                               )
                          ])
-def test_use_alternative_fields(artifact: str, keys_paths: list[str]):
+def test_use_alternative_fields(artifact: str, keys_paths: List[str]):
     with temp_dir() as temp:
         # pack_path = PosixPath(TEST_DATA, 'content_repo_with_alternative_fields')
         PrepareUploadManager.prepare_for_upload(artifact, output=temp, marketplace=MarketplaceVersions.MarketplaceV2,

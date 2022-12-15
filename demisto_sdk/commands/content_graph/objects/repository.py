@@ -4,7 +4,7 @@ import time
 from multiprocessing import Pool
 from pathlib import Path
 from typing import List
-
+from concurrent.futures import ProcessPoolExecutor
 from pydantic import BaseModel, DirectoryPath
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -27,8 +27,11 @@ class ContentDTO(BaseModel):
         logger.info("starting repo dump")
         start_time = time.time()
         if USE_FUTURE:
-            with Pool() as pool:
-                pool.starmap(Pack.dump, ((pack, dir / pack.path.name, marketplace) for pack in self.packs))
+            with ProcessPoolExecutor() as executor:
+                for pack in self.packs:
+                    executor.submit(Pack.dump, pack, dir / pack.path.name, marketplace)
+            # with Pool() as pool:
+            #     pool.starmap(Pack.dump, ((pack, dir / pack.path.name, marketplace) for pack in self.packs))
 
         else:
             for pack in self.packs:

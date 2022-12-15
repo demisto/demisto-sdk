@@ -1,9 +1,10 @@
 import logging
 import shutil
 import time
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 from typing import List
-from concurrent.futures import ProcessPoolExecutor
+
 from pydantic import BaseModel, DirectoryPath
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions

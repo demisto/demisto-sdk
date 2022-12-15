@@ -1,8 +1,9 @@
-import io
 import os
+from pathlib import Path
 from typing import Optional
 
 import click
+from ruamel.yaml.comments import CommentedSeq
 
 from demisto_sdk.commands.common.constants import PACK_METADATA_SUPPORT, PACKS_DIR, PACKS_PACK_META_FILE_NAME, FileType
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS, FOUND_FILES_AND_ERRORS,
@@ -217,7 +218,8 @@ class BaseValidator:
     def check_deprecated(self, file_path):
         if file_path.endswith('.yml'):
             yml_dict = get_yaml(file_path)
-            if yml_dict.get('deprecated'):
+            if not isinstance(yml_dict, CommentedSeq) and yml_dict.get('deprecated'):
+                # yml files may be CommentedSeq ("list") or dict-like
                 self.add_flag_to_ignore_list(file_path, 'deprecated')
 
     @staticmethod
@@ -225,7 +227,7 @@ class BaseValidator:
         if not os.path.exists(meta_file_path):
             return {}
 
-        with io.open(meta_file_path, encoding="utf-8") as file:
+        with open(meta_file_path, encoding="utf-8") as file:
             metadata_file_content = file.read()
 
         return json.loads(metadata_file_content)
@@ -325,3 +327,24 @@ class BaseValidator:
         json_contents.append(formatted_error_output)
         with open(self.json_file_path, 'w') as f:
             json.dump(json_contents, f, indent=4)
+
+    @staticmethod
+    def validate_xsiam_content_item_title(file_path):
+        file_path_object = Path(file_path)
+        file_type = find_type(file_path)
+        file_name = str(file_path_object.stem)
+        dir_name = str(file_path_object.parent.stem)
+        pack_name = get_pack_name(file_path)
+        if file_type in {FileType.XDRC_TEMPLATE, FileType.XDRC_TEMPLATE_YML, FileType.MODELING_RULE,
+                         FileType.PARSING_RULE, FileType.XIF_FILE}:
+            if file_name != dir_name:
+                return False
+        elif file_type in {FileType.CORRELATION_RULE, FileType.XSIAM_DASHBOARD, FileType.XSIAM_REPORT,
+                           FileType.XSIAM_REPORT_IMAGE, FileType.XSIAM_DASHBOARD_IMAGE}:
+            if not file_name.startswith(f'{pack_name}_'):
+                return False
+        elif file_type == FileType.MODELING_RULE_SCHEMA:
+            schema_expected_name = f'{dir_name}_schema'
+            if file_name != schema_expected_name:
+                return False
+        return True

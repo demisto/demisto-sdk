@@ -274,7 +274,7 @@ class UpdateRN:
         self.bc_path = bc_file_path
         bc_file_data: dict = dict()
         if os.path.exists(bc_file_path):
-            with open(bc_file_path, 'r') as f:
+            with open(bc_file_path) as f:
                 bc_file_data = json.loads(f.read())
         bc_file_data['breakingChanges'] = True
         bc_file_data['breakingChangesNotes'] = bc_file_data.get('breakingChangesNotes')
@@ -798,7 +798,7 @@ def get_file_description(path, file_type) -> str:
         print_warning(f'Cannot get file description: "{path}" file does not exist')
         return ''
 
-    elif file_type in (FileType.PLAYBOOK, FileType.INTEGRATION, FileType.CORRELATION_RULE):
+    elif file_type in (FileType.PLAYBOOK, FileType.INTEGRATION, FileType.CORRELATION_RULE, FileType.MODELING_RULE):
         yml_file = get_yaml(path)
         return yml_file.get('description', '')
 
@@ -838,7 +838,7 @@ def update_api_modules_dependents_rn(pre_release: bool, update_type: Union[str, 
                         "available. Please run `demisto-sdk create-id-set` to generate it, and rerun this command.")
             return total_updated_packs
         id_set_path = DEFAULT_ID_SET_PATH
-    with open(id_set_path, 'r') as conf_file:
+    with open(id_set_path) as conf_file:
         id_set = json.load(conf_file)
     api_module_set = get_api_module_ids(added)
     api_module_set = api_module_set.union(get_api_module_ids(modified))

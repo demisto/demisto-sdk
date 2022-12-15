@@ -147,6 +147,8 @@ class FileType(str, Enum):
     BUILD_CONFIG_FILE = 'build-config-file'
     PARSING_RULE = 'parsingrule'
     MODELING_RULE = 'modelingrule'
+    MODELING_RULE_TEST_DATA = 'modelingruletestdata'
+    MODELING_RULE_XIF = 'modelingrulexif'
     CORRELATION_RULE = 'correlationrule'
     XSIAM_DASHBOARD = 'xsiamdashboard'
     XSIAM_DASHBOARD_IMAGE = 'xsiamdashboardimage'
@@ -572,7 +574,7 @@ PLAYBOOK_BASE_REGEX = fr'{PLAYBOOKS_DIR_REGEX}\/.*'
 PLAYBOOK_YML_REGEX = fr'{PLAYBOOK_BASE_REGEX}\.yml'
 PLAYBOOK_README_REGEX = fr'{PLAYBOOK_BASE_REGEX}_README\.md$'
 
-TEST_SCRIPT_REGEX = r'{}{}.*script-.*\.yml$'.format(CAN_START_WITH_DOT_SLASH, TEST_PLAYBOOKS_DIR)
+TEST_SCRIPT_REGEX = fr'{CAN_START_WITH_DOT_SLASH}{TEST_PLAYBOOKS_DIR}.*script-.*\.yml$'
 TEST_PLAYBOOK_YML_REGEX = fr'{PACK_DIR_REGEX}/{TEST_PLAYBOOKS_DIR}\/(?!script-)([^.]+)\.yml'
 
 PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}/([^/]+)/{}/reputations.json'.format(CAN_START_WITH_DOT_SLASH,
@@ -580,16 +582,16 @@ PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}/([^/]+)/{}/reputations.json'.fo
                                                                                      INDICATOR_TYPES_DIR)
 PACKS_RELEASE_NOTES_REGEX = r'{}{}/([^/]+)/{}/([^/]+)\.md$'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR,
                                                                    RELEASE_NOTES_DIR)
-PACKS_TOOLS_REGEX = r'{}{}/([^/]+)/{}/([^.]+)\.zip'.format(CAN_START_WITH_DOT_SLASH, PACKS_DIR, TOOLS_DIR)
+PACKS_TOOLS_REGEX = fr'{CAN_START_WITH_DOT_SLASH}{PACKS_DIR}/([^/]+)/{TOOLS_DIR}/([^.]+)\.zip'
 
-PLAYBOOK_REGEX = r'{}(?!Test){}/playbook-.*\.yml$'.format(CAN_START_WITH_DOT_SLASH, PLAYBOOKS_DIR)
+PLAYBOOK_REGEX = fr'{CAN_START_WITH_DOT_SLASH}(?!Test){PLAYBOOKS_DIR}/playbook-.*\.yml$'
 
-TEST_PLAYBOOK_REGEX = r'{}{}/(?!script-).*\.yml$'.format(CAN_START_WITH_DOT_SLASH, TEST_PLAYBOOKS_DIR)
-TEST_NOT_PLAYBOOK_REGEX = r'{}{}/(?!playbook).*-.*\.yml$'.format(CAN_START_WITH_DOT_SLASH, TEST_PLAYBOOKS_DIR)
+TEST_PLAYBOOK_REGEX = fr'{CAN_START_WITH_DOT_SLASH}{TEST_PLAYBOOKS_DIR}/(?!script-).*\.yml$'
+TEST_NOT_PLAYBOOK_REGEX = fr'{CAN_START_WITH_DOT_SLASH}{TEST_PLAYBOOKS_DIR}/(?!playbook).*-.*\.yml$'
 
-CONNECTIONS_REGEX = r'{}{}.*canvas-context-connections.*\.json$'.format(CAN_START_WITH_DOT_SLASH, CONNECTIONS_DIR)
+CONNECTIONS_REGEX = fr'{CAN_START_WITH_DOT_SLASH}{CONNECTIONS_DIR}.*canvas-context-connections.*\.json$'
 
-INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}.reputations\.json$'.format(CAN_START_WITH_DOT_SLASH, INDICATOR_TYPES_DIR)
+INDICATOR_TYPES_REPUTATIONS_REGEX = fr'{CAN_START_WITH_DOT_SLASH}{INDICATOR_TYPES_DIR}.reputations\.json$'
 
 # deprecated regex
 DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
@@ -949,7 +951,7 @@ SPELLCHECK_FILE_TYPES = [
     PLAYBOOK_YML_REGEX
 ]
 
-KNOWN_FILE_STATUSES = ['a', 'm', 'd', 'r'] + ['r{:03}'.format(i) for i in range(101)]
+KNOWN_FILE_STATUSES = ['a', 'm', 'd', 'r'] + [f'r{i:03}' for i in range(101)]
 
 CODE_FILES_REGEX = [
     PACKS_INTEGRATION_PY_REGEX,

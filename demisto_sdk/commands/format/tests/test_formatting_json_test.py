@@ -1,9 +1,9 @@
 import os
 import shutil
 from typing import Optional
+from unittest.mock import patch
 
 import pytest
-from mock import patch
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -364,7 +364,7 @@ def test_update_connection_removes_unnecessary_keys(tmpdir, monkeypatch):
         lambda _: 'N'
     )
     connection_formatter.format_file()
-    with open(connection_file_path, 'r') as file:
+    with open(connection_file_path) as file:
         formatted_connection = json.load(file)
     for connection in formatted_connection['canvasContextConnections']:
         assert 'not_needed key' not in connection
@@ -398,7 +398,7 @@ def test_update_connection_updates_from_version(tmpdir):
                                                 path=CONNECTION_SCHEMA_PATH,
                                                 )
     connection_formatter.format_file()
-    with open(connection_file_path, 'r') as file:
+    with open(connection_file_path) as file:
         formatted_connection = json.load(file)
     assert formatted_connection['fromVersion'] == '6.0.0'
 
@@ -1510,6 +1510,26 @@ class TestFormattingReport:
         bs = LayoutBaseFormat(input=layout.path, assume_yes=True)
         bs.run_format()
         assert bs.data['fromVersion'] == VERSION_5_5_0
+
+    def test_none_tabs_do_not_throw_exception(self, mocker, pack):
+        """
+        Given
+            - An indicator file with None indicatorsDetails tabs.
+        When
+            - Run format command.
+        Then
+            - Ensure command will not throw an exception.
+        """
+
+        layout = pack.create_layout(name='TestType', content={"name": "SHA256_Indicator_dev", "cacheVersn": 0,
+                                                              "close": None, "definitionId": "", "description": "",
+                                                              "detached": False, "details": None, "detailsV2": None,
+                                                              "edit": None, "fromServerVersion": "", "group": "indicator",
+                                                              "id": "SHA256 Indicator", "indicatorsDetails": {"TypeName": "", "tabs": None},
+                                                              "fromVersion": ""})
+        bs = LayoutBaseFormat(input=layout.path, assume_yes=True)
+        bs.remove_copy_and_dev_suffixes_from_layoutscontainer()
+        assert bs.data['name'] == "SHA256_Indicator"
 
     def test_json_run_format_old_classifier(self, mocker, pack):
         """

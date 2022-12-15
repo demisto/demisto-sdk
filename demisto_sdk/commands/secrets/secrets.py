@@ -1,4 +1,3 @@
-import io
 import math
 import os
 import string
@@ -69,7 +68,7 @@ WHILEIST_REGEX = r'\S*{}\S*'
 # disable-secrets-detection-end
 
 
-class SecretsValidator(object):
+class SecretsValidator:
 
     def __init__(
             self,
@@ -194,7 +193,7 @@ class SecretsValidator(object):
             # Skip white listed files
 
             if file_path in files_white_list:
-                print("Skipping secrets detection for file: {} as it is white listed".format(file_path))
+                print(f"Skipping secrets detection for file: {file_path} as it is white listed")
                 continue
             # Init vars for current loop
             file_name = os.path.basename(file_path)
@@ -286,7 +285,7 @@ class SecretsValidator(object):
         matching_yml_file_contents = None
         yml_file = os.path.join(integration_path, os.path.basename(integration_path) + '.yml')
         if os.path.exists(yml_file):
-            with io.open(yml_file, mode="r", encoding="utf-8") as matching_yml_file:
+            with open(yml_file, encoding="utf-8") as matching_yml_file:
                 matching_yml_file_contents = matching_yml_file.read()
         return matching_yml_file_contents
 
@@ -376,7 +375,7 @@ class SecretsValidator(object):
         ioc_white_list = []
         files_while_list = []
         if os.path.isfile(whitelist_path):
-            with io.open(whitelist_path, mode="r", encoding="utf-8") as secrets_white_list_file:
+            with open(whitelist_path, encoding="utf-8") as secrets_white_list_file:
                 secrets_white_list_file = json.load(secrets_white_list_file)
                 for name, white_list in secrets_white_list_file.items():  # type: ignore
                     if name == 'iocs':
@@ -396,7 +395,7 @@ class SecretsValidator(object):
         files_white_list = []
 
         if os.path.isfile(whitelist_path):
-            with io.open(whitelist_path, mode="r", encoding="utf-8") as secrets_white_list_file:
+            with open(whitelist_path, encoding="utf-8") as secrets_white_list_file:
                 temp_white_list = secrets_white_list_file.read().split('\n')
             for white_list_line in temp_white_list:
                 if white_list_line.startswith('file:'):
@@ -423,12 +422,12 @@ class SecretsValidator(object):
                 file_contents = self.extract_text_from_md_html(file_path)
             else:
                 # Open each file, read its contents in UTF-8 encoding to avoid unicode characters
-                with io.open(file_path, mode="r", encoding="utf-8", errors='ignore') as commited_file:
+                with open(file_path, encoding="utf-8", errors='ignore') as commited_file:
                     file_contents = commited_file.read()
             file_contents = self.ignore_base64(file_contents)
             return file_contents
         except Exception as ex:
-            print("Failed opening file: {}. Exception: {}".format(file_path, ex))
+            print(f"Failed opening file: {file_path}. Exception: {ex}")
             raise
 
     @staticmethod
@@ -440,7 +439,7 @@ class SecretsValidator(object):
             pdf_reader = PyPDF2.PdfFileReader(pdf_file_obj)
             num_pages = pdf_reader.numPages
         except PyPDF2.errors.PdfReadError:
-            print('ERROR: Could not parse PDF file in path: {} - ***Review Manually***'.format(file_path))
+            print(f'ERROR: Could not parse PDF file in path: {file_path} - ***Review Manually***')
             return file_contents
         while page_num < num_pages:
             pdf_page = pdf_reader.getPage(page_num)
@@ -452,12 +451,12 @@ class SecretsValidator(object):
     @staticmethod
     def extract_text_from_md_html(file_path):
         try:
-            with open(file_path, mode='r') as html_page:
+            with open(file_path) as html_page:
                 soup = BeautifulSoup(html_page, features="html.parser")
                 file_contents = soup.text
                 return file_contents
         except Exception as ex:
-            print_error('Unable to parse the following file {} due to error {}'.format(file_path, ex))
+            print_error(f'Unable to parse the following file {file_path} due to error {ex}')
             raise
 
     @staticmethod

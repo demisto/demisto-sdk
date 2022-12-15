@@ -82,6 +82,7 @@ class ReleaseNotesValidator(BaseValidator):
                         headers[content_type] = [header]
         return headers
 
+    @error_codes('RN113')
     def validate_special_forms(self, headers: Dict) -> bool:
         is_valid = True
         for content_type, content_items in headers.items():
@@ -118,6 +119,7 @@ class ReleaseNotesValidator(BaseValidator):
                 content_items = list(map(lambda x: x.replace('**', ''), content_items))
             headers[content_type] = [item.replace('New:', '').strip() for item in content_items]
 
+    @error_codes('RN113')
     def validate_content_type_header(self, content_type: str) -> bool:
         """
             Validate that the release notes 1st headers (the content type) are a valid content entity.
@@ -134,6 +136,7 @@ class ReleaseNotesValidator(BaseValidator):
                 return False
         return True
 
+    @error_codes('RN113,RN114')
     def validate_content_item_header(self, content_type: str, headers: Dict) -> bool:
         """
             Validate the 2nd headers (the content items) are exists in the pack and having the right display name.
@@ -268,7 +271,6 @@ class ReleaseNotesValidator(BaseValidator):
                     is_valid = False
         return is_valid
 
-    @error_codes('RN113,RN114')
     def validate_release_notes_headers(self):
         """
             Validate that the release notes 1st headers are a valid content entity,

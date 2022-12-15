@@ -3,6 +3,7 @@
 * Fixed an issue where **format** created duplicate configuration parameters.
 * Added hidden properties to integration command argument and script argument.
 * Fixed an issue where **validate** failed in private repo due to attempts to read from nonexisting file.
+* Fixed an issue where fields ending with `_x2` where not replaced in the appropriate Marketplace.
 
 ## 1.8.0
 * Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.
@@ -29,10 +30,6 @@
 * Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.
 * Added **prepare-content** command which will prepare the pack or content item for the platform.
 * Patched an issue where deprecated `packaging.version.LegacyVersion`, locking packaging version to `<22`.
-<<<<<<< HEAD
-* Fixed an issue where fields ending with `_x2` where not replaced in the appropriate Marketplace.
-=======
->>>>>>> master
 
 ## 1.7.9
 * Fixed an issue where an error message in **validate** would not include the suggested fix.

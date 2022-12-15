@@ -150,6 +150,8 @@ class PackParser(BaseContentParser, PackMetadataParser):
                 ContentType.GENERIC_FIELD, ContentType.GENERIC_TYPE
             ]:
                 folder_path = folder_path / "ThreatIntelReport"
+                if not folder_path.is_dir():
+                    continue
             for (
                 content_item_path
             ) in folder_path.iterdir():  # todo: consider multiprocessing

@@ -237,6 +237,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def create_nodes(self, nodes: Dict[ContentType, List[Dict[str, Any]]]) -> None:
         with self.driver.session() as session:
             session.write_transaction(create_nodes, nodes)
+            session.write_transaction(remove_empty_properties)
 
     def validate_graph(self) -> None:
         with self.driver.session() as session:

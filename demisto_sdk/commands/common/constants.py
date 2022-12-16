@@ -595,7 +595,7 @@ INDICATOR_TYPES_REPUTATIONS_REGEX = fr'{CAN_START_WITH_DOT_SLASH}{INDICATOR_TYPE
 
 INCIDENT_FIELD_REGEX = r'incidentfield-.*\.json'
 
-LAYOUT_REGEX = r'layoutscontainer-.*\.json'
+LAYOUT_REGEX = r'layout.*\.json'
 
 # deprecated regex
 DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"

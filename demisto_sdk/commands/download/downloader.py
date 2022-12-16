@@ -20,7 +20,8 @@ from demisto_sdk.commands.common.constants import (CONTENT_ENTITIES_DIRS, CONTEN
                                                    DELETED_JSON_FIELDS_BY_DEMISTO, DELETED_YML_FIELDS_BY_DEMISTO,
                                                    ENTITY_NAME_SEPARATORS, ENTITY_TYPE_TO_DIR, FILE_EXIST_REASON,
                                                    FILE_NOT_IN_CC_REASON, INTEGRATIONS_DIR, PLAYBOOKS_DIR, SCRIPTS_DIR,
-                                                   TEST_PLAYBOOKS_DIR)
+                                                   TEST_PLAYBOOKS_DIR, UUID_REGEX, PLAYBOOK_REGEX, INCIDENT_FIELD_REGEX,
+                                                   LAYOUT_REGEX)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_child_directories, get_child_files,
                                                get_code_lang, get_dict_from_file, get_entity_id_by_entity_type,
@@ -269,8 +270,7 @@ class Downloader:
     def map_script(script_string: str, scripts_mapper: dict) -> dict:
         script_yml = yaml.load(script_string)
         script_id = script_yml.get('commonfields').get('id')
-        if re.search(r'^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$',
-                     script_id):
+        if re.search(UUID_REGEX, script_id):
             scripts_mapper[script_id] = script_yml.get('name')
         return scripts_mapper
 
@@ -279,17 +279,17 @@ class Downloader:
         if 'automation-' in member_name:
             scripts_id_name = self.map_script(string_to_write, scripts_id_name)
 
-        if not self.list_files and re.search(r'incidentfield-.*\.json', member_name):
+        if not self.list_files and re.search(INCIDENT_FIELD_REGEX, member_name):
             string_to_write = self.handle_incidentfield(string_to_write, scripts_id_name)
 
-        if not self.list_files and re.search(r'playbook-.*\.yml', member_name):
+        if not self.list_files and re.search(PLAYBOOK_REGEX, member_name):
             #  if the content item is playbook and list-file flag is true, we should download the
             #  file via direct REST API because there are props like scriptName, that playbook from custom
             #  content bundle don't contain
 
             string_to_write = self.download_playbook_yaml(string_to_write)
 
-        if not self.list_files and re.search(r'layout.*\.json', member_name):
+        if not self.list_files and re.search(LAYOUT_REGEX, member_name):
             string_to_write = self.handle_layout(string_to_write, scripts_id_name)
 
         return string_to_write, scripts_id_name

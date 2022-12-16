@@ -907,6 +907,8 @@ class PackUniqueFilesValidator(BaseValidator):
         Returns:
             bool: True if pack contain only one category and the category is from the approved list. Otherwise, return False.
         """
+        if tools.is_external_repository():
+            return True
         categories = self._read_metadata_content().get('categories', [])
         approved_list = tools.get_current_categories()
         if not len(categories) == 1 or not self.validate_categories_approved(categories, approved_list):

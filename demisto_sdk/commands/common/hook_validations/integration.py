@@ -343,6 +343,8 @@ class IntegrationValidator(ContentEntityValidator):
     def is_valid_category(self):
         # type: () -> bool
         """Check that the integration category is in the schema."""
+        if tools.is_external_repository():
+            return True
         category = self.current_file.get('category', None)
         approved_list = tools.get_current_categories()
         if category not in approved_list:

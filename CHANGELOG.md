@@ -2,6 +2,8 @@
 ## Unreleased
 * Fixed an issue where **format** created duplicate configuration parameters.
 * Added hidden properties to integration command argument and script argument.
+* Added `--override-existing` to **upload** that skips the confirmation prompt for overriding existing content packs. @mattbibbydw
+* Fixed an issue where **validate** failed in private repo due to attempts to read from nonexisting file.
 * Fixed an issue where custom scripts names were replaced with uuid in IncidentFields and Layouts.
 
 ## 1.8.0

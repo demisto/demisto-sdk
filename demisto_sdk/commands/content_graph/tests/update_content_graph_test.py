@@ -31,6 +31,7 @@ GIT_PATH = Path(git_path())
 @pytest.fixture(autouse=True)
 def setup(mocker):
     """Auto-used fixture for setup before every test run"""
+    mocker.patch("demisto_sdk.commands.content_graph.objects.base_content.get_content_path", return_value=GIT_PATH)
     mocker.patch.object(neo4j_service, "REPO_PATH", GIT_PATH)
     mocker.patch.object(ContentGraphInterface, "repo_path", GIT_PATH)
 
@@ -38,7 +39,7 @@ def setup(mocker):
 @pytest.fixture
 def repository(mocker) -> ContentDTO:
     repository = ContentDTO(
-        path=Path(),
+        path=GIT_PATH,
         packs=[],
     )
     relationships = {
@@ -203,7 +204,7 @@ def compare(
     packs_from_graph.sort(key=lambda pack: pack.object_id)
     assert len(packs_from_content_dto) == len(packs_from_graph)
     for pack_a, pack_b in zip(packs_from_content_dto, packs_from_graph):
-        assert pack_a.dict() == pack_b.dict()
+        assert pack_a.to_dict() == pack_b.to_dict()
         _compare_content_items(list(pack_a.content_items), list(pack_b.content_items))
         _compare_relationships(pack_a, pack_b)
     _verify_dependencies_existence(packs_from_graph, expected_added_dependencies, should_exist=after_update)
@@ -216,7 +217,7 @@ def _compare_content_items(
 ) -> None:
     assert len(content_items_list_a) == len(content_items_list_b)
     for ci_a, ci_b in zip(content_items_list_a, content_items_list_b):
-        assert ci_a.dict() == ci_b.dict()
+        assert ci_a.to_dict() == ci_b.to_dict()
 
 
 def _compare_relationships(pack_a: Pack, pack_b: Pack) -> None:

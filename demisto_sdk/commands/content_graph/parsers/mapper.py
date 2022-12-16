@@ -45,16 +45,18 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
         if self.json_data.get("feed"):
             content_type_to_map = ContentType.INDICATOR_TYPE
             fields_content_type = ContentType.INDICATOR_FIELD
+            add_dependency_func = self.add_dependency_by_id
         else:
             content_type_to_map = ContentType.INCIDENT_TYPE
             fields_content_type = ContentType.INCIDENT_FIELD
+            add_dependency_func = self.add_dependency_by_name  # type: ignore
 
         if default_incident_type := self.json_data.get("defaultIncidentType"):
-            self.add_dependency_by_name(default_incident_type, content_type_to_map, is_mandatory=False)
+            add_dependency_func(default_incident_type, content_type_to_map, is_mandatory=False)
 
         for incident_type, mapping_data in self.json_data.get("mapping", {}).items():
             if incident_type not in IGNORED_INCIDENT_TYPES:
-                self.add_dependency_by_name(incident_type, content_type_to_map, is_mandatory=False)
+                add_dependency_func(incident_type, content_type_to_map, is_mandatory=False)
             internal_mapping: Dict[str, Any] = mapping_data.get("internalMapping")
 
             if self.type == "mapping-outgoing":

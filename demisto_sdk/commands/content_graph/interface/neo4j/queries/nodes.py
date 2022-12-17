@@ -119,7 +119,7 @@ def _match(
     content_type_str = f":{content_type}" if content_type else ""
     where = []
     if marketplace or filter_list:
-        where.append("WHERE")
+        where.append("AND")
         if filter_list:
             where.append("id(node_from) IN $filter_list")
         if filter_list and marketplace:
@@ -128,7 +128,8 @@ def _match(
             where.append(f"'{marketplace}' IN node_from.marketplaces AND '{marketplace}' IN node_to.marketplaces")
 
     query = f"""
-    MATCH (node_from{content_type_str}{params_str}) - [relationship] - (node_to)
+    MATCH (node_from{content_type_str}{params_str}) - [relationship:*0..1] - (node_to)
+    WHERE id(node_from) <> id(node_to)
     {" ".join(where)}
     RETURN node_from, collect(relationship) as relationships, collect(node_to) as nodes_to
     """

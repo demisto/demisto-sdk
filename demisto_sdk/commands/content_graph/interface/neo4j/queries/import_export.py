@@ -13,9 +13,14 @@ LIST_PROPERTIES = [
     'categories',
     'use_cases',
     'keywords',
+    'contributors',
     'packs',
     'integrations',
-    'scripts'
+    'playbooks',
+    'scripts',
+    'enhancement_script_names',
+    'definition_ids',
+    'tabs',
 ]
 
 CONVERT_FIELD_TO_STRING = """MATCH (n) WHERE NOT n.{prop} IS NULL

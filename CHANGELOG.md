@@ -2,6 +2,7 @@
 ## Unreleased
 * Fixed an issue where **format** created duplicate configuration parameters.
 * Added hidden properties to integration command argument and script argument.
+* Added `--override-existing` to **upload** that skips the confirmation prompt for overriding existing content packs. @mattbibbydw
 * Fixed an issue where **validate** failed in private repo due to attempts to read from nonexisting file.
 * Fixed an issue where fields ending with `_x2` where not replaced in the appropriate Marketplace.
 

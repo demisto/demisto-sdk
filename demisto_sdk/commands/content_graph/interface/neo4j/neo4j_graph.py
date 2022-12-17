@@ -152,6 +152,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             nodes_to (List[graph.Node]): The list of nodes of the target
         """
         for node_to, rel in zip(nodes_to, relationships):
+            if not rel:
+                continue
+            rel = rel[0]
             obj.relationships_data[rel.type].add(
                 RelationshipData(
                     relationship_type=rel.type,

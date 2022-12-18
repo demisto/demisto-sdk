@@ -1,5 +1,4 @@
-from collections import defaultdict
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from multiprocessing import Pool
 import logging
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
@@ -179,15 +178,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 )
 
     def _add_nodes_to_mapping(self, nodes_to):
-        nodes_to = list(filter(lambda node: node.id not in self._id_to_obj, nodes_to))
+        nodes_to = filter(lambda node: node.id not in self._id_to_obj, nodes_to)
         if not nodes_to:
             return
-        with ProcessPoolExecutor() as executor:
-            futures = []
-            for node_to in nodes_to:
-                futures.append(executor.submit(_parse_node, node_to.id, dict(node_to.items())))
-            for future in futures:
-                id_, result = future.result()
+    
+        with Pool() as pool:
+            results = pool.starmap(_parse_node, ((node.id, dict(node.items())) for node in nodes_to))
+            for id_, result in results:
                 self._id_to_obj[id_] = result
 
     def _search(

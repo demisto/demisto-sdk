@@ -1,6 +1,6 @@
 comment: Test Script Comment
 commonfields:
-  id: TestScript
+  id: f1e4c6e5-0d44-48a0-8020-a9711243e918
   version: -1
 dockerimage: demisto/faker3:1.0.0.247
 enabled: true

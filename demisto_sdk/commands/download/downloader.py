@@ -19,8 +19,8 @@ from urllib3.exceptions import MaxRetryError
 from demisto_sdk.commands.common.constants import (CONTENT_ENTITIES_DIRS, CONTENT_FILE_ENDINGS,
                                                    DELETED_JSON_FIELDS_BY_DEMISTO, DELETED_YML_FIELDS_BY_DEMISTO,
                                                    ENTITY_NAME_SEPARATORS, ENTITY_TYPE_TO_DIR, FILE_EXIST_REASON,
-                                                   FILE_NOT_IN_CC_REASON, INCIDENT_FIELD_REGEX, INTEGRATIONS_DIR,
-                                                   LAYOUT_REGEX, PLAYBOOK_REGEX, PLAYBOOKS_DIR, SCRIPTS_DIR,
+                                                   FILE_NOT_IN_CC_REASON, INCIDENT_FIELD_FILE_NAME_REGEX, INTEGRATIONS_DIR,
+                                                   LAYOUT_FILE_NAME__REGEX, PLAYBOOK_REGEX, PLAYBOOKS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR, UUID_REGEX)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_child_directories, get_child_files,
@@ -242,10 +242,10 @@ class Downloader:
         # In case the incident field uses a custom script, replace the id value of the script with its name
         file_json_object = json.loads(incidentfield_string)
         incidentfield_name = file_json_object.get('name')
+        script = file_json_object.get('script')
         if incidentfield_name and (incidentfield_name in self.input_files or self.all_custom_content):
-            if file_json_object.get('script') and file_json_object.get('script') in scripts_mapper:
-                incidentfield_string = incidentfield_string.replace(file_json_object.get('script'),
-                                                                    scripts_mapper[file_json_object.get('script')])
+            if script and script in scripts_mapper:
+                incidentfield_string = incidentfield_string.replace(script, scripts_mapper[script])
 
         return incidentfield_string
 
@@ -254,15 +254,12 @@ class Downloader:
         file_json_object = json.loads(layout_string)
         layout_name = file_json_object.get('name')
         if layout_name and (layout_name in self.input_files or self.all_custom_content):
-            tabs = file_json_object.get('detailsV2', {}).get('tabs', [])
-            for tab in tabs:
-                sections = tab.get('sections', [])
-                for section in sections:
-                    items = section.get('items', [])
-                    for item in items:
-                        if item.get('scriptId') and item.get('scriptId') in scripts_mapper:
-                            layout_string = layout_string.replace(item.get('scriptId'),
-                                                                  scripts_mapper[item.get('scriptId')])
+            for tab in file_json_object.get('detailsV2', {}).get('tabs', ()):
+                for section in tab.get('sections', ()):
+                    for item in section.get('items', ()):
+                        script_id = item.get('scriptId')
+                        if script_id and script_id in scripts_mapper:
+                            layout_string = layout_string.replace(script_id, scripts_mapper[script_id])
 
         return layout_string
 
@@ -279,7 +276,7 @@ class Downloader:
         if 'automation-' in member_name:
             scripts_id_name = self.map_script(string_to_write, scripts_id_name)
 
-        if not self.list_files and re.search(INCIDENT_FIELD_REGEX, member_name):
+        if not self.list_files and re.search(INCIDENT_FIELD_FILE_NAME_REGEX, member_name):
             string_to_write = self.handle_incidentfield(string_to_write, scripts_id_name)
 
         if not self.list_files and re.search(PLAYBOOK_REGEX, member_name):
@@ -289,7 +286,7 @@ class Downloader:
 
             string_to_write = self.download_playbook_yaml(string_to_write)
 
-        if not self.list_files and re.search(LAYOUT_REGEX, member_name):
+        if not self.list_files and re.search(LAYOUT_FILE_NAME__REGEX, member_name):
             string_to_write = self.handle_layout(string_to_write, scripts_id_name)
 
         return string_to_write, scripts_id_name

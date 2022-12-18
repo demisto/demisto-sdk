@@ -94,7 +94,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def close(self) -> None:
         self.driver.close()
 
-    def _add_relationships_to_objects(self, result: Dict[int, Neo4jRelationshipResult]) -> List[BaseContent]:
+    def _add_relationships_to_objects(self, result: Dict[int, Neo4jRelationshipResult]):
         """This adds relationships to given object
 
         Args:
@@ -103,7 +103,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Returns:
             List[BaseContent]: The objects to return with relationships
         """
-        final_result = []
         integration_nodes: Set[int] = set()
         nodes_to = []
         for res in result.values():
@@ -122,12 +121,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             if isinstance(obj, Integration) and not obj.commands:
                 obj.set_commands()  # type: ignore[union-attr]
 
-            final_result.append(obj)
         if integration_nodes:
             with self.driver.session() as session:
                 integrations_result = session.read_transaction(_match_relationships, integration_nodes)
                 self._add_relationships_to_objects(integrations_result)
-        return final_result
 
     def _add_relationships(
         self,
@@ -215,11 +212,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             relationships: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
                 _match_relationships, missing_relationships, marketplace
             )
-            final_result = self._add_relationships_to_objects(relationships)
+            self._add_relationships_to_objects(relationships)
 
             if all_level_dependencies and pack_nodes and marketplace:
                 self._add_all_level_dependencies(session, marketplace, pack_nodes)
-            return final_result
+            return [self._id_to_obj[result.id] for result in results]
 
     def create_indexes_and_constraints(self) -> None:
         with self.driver.session() as session:

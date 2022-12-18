@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import List, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 
 
@@ -16,3 +16,11 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
         if self.is_test:
             return
         return super().dump(dir, marketplace)
+
+    @property
+    def imported_by(self) -> list:
+        return [
+            r.content_item
+            for r in self.relationships_data[RelationshipType.IMPORTS]
+            if r.content_item == r.source
+        ]

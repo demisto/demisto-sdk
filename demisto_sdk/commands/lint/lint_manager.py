@@ -16,14 +16,16 @@ import urllib3.exceptions
 from packaging.version import Version
 from wcmatch.pathlib import Path, PosixPath
 
-from demisto_sdk.commands.common.constants import PACKS_PACK_META_FILE_NAME, TYPE_PWSH, TYPE_PYTHON, DemistoException
+from demisto_sdk.commands.common.constants import (API_MODULES_PACK, PACKS_PACK_META_FILE_NAME, TYPE_PWSH, TYPE_PYTHON,
+                                                   DemistoException)
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import Colors
 from demisto_sdk.commands.common.timers import report_time_measurements
-from demisto_sdk.commands.common.tools import (find_file, find_type, get_api_module_dependencies, get_content_path,
-                                               get_file_displayed_name, get_json, is_external_repository, print_error,
-                                               print_v, print_warning, retrieve_file_ending)
+from demisto_sdk.commands.common.tools import (find_file, find_type, get_content_path, get_file_displayed_name,
+                                               get_json, is_external_repository, print_error, print_v, print_warning,
+                                               retrieve_file_ending)
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS, PY_CHCEKS, SUCCESS,
                                                build_skipped_exit_code, generate_coverage_report, get_test_modules)
 from demisto_sdk.commands.lint.linter import Linter
@@ -75,22 +77,36 @@ class LintManager:
                                                          base_branch=self._prev_ver)
 
         self._id_set_path = id_set_path
+
         if check_dependent_api_module:
-            print('Checking for packages dependent on the modified API module', end='... ')
-            dependent_on_api_module = get_api_module_dependencies(self._pkgs, self._id_set_path, self._verbose)
-            dependent_on_api_module = self._get_packages(content_repo=self._facts["content_repo"],
-                                                         input=dependent_on_api_module)
+            dependent_on_api_module = self._get_api_module_dependent_items()
             self._pkgs = list(set(self._pkgs + dependent_on_api_module))
-            if dependent_on_api_module:
-                print(f'Found {Colors.Fg.cyan}{len(dependent_on_api_module)}{Colors.reset} dependent packages. '
-                      f'Executing lint and test on those as well.')
-            else:
-                print('No dependent packages found.')
+
         if json_file_path:
             if os.path.isdir(json_file_path):
                 json_file_path = os.path.join(json_file_path, 'lint_outputs.json')
         self.json_file_path = json_file_path
         self.linters_error_list: list = []
+
+    def _get_api_module_dependent_items(self) -> list:
+        changed_api_modules = {pkg.name for pkg in self._pkgs if API_MODULES_PACK in pkg.parts}
+        if changed_api_modules:
+            dependent_items = []
+            for changed_api_module in changed_api_modules:
+                print(f'Checking for packages dependent on the modified API module {changed_api_module}...')
+                with Neo4jContentGraphInterface() as graph:
+                    api_module_node = graph.search(object_id=changed_api_module)[0]
+                    dependent_items += [dependency.path for dependency in api_module_node.imported_by]
+
+            dependent_on_api_module = self._get_packages(content_repo=self._facts["content_repo"],
+                                                         input=dependent_items)
+
+            if dependent_on_api_module:
+                print(f'Found {Colors.Fg.cyan}{len(dependent_on_api_module)}{Colors.reset} dependent packages. '
+                      f'Executing lint and test on those as well.')
+                return dependent_on_api_module
+            print('No dependent packages found.')
+        return[]
 
     @staticmethod
     def _gather_facts() -> Dict[str, Any]:

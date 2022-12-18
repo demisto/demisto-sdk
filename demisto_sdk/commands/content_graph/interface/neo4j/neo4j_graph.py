@@ -45,7 +45,6 @@ def _parse_node(element_id: int, node: dict) -> BaseContent:
         NoModelException: If no model found to parse on
     """
     obj: BaseContent
-    node["database_id"] = element_id
     content_type = node.get("content_type", "")
     if node.get("not_in_repository") or node.get("is_server_item"):
         obj = ServerContent.parse_obj(node)
@@ -55,7 +54,7 @@ def _parse_node(element_id: int, node: dict) -> BaseContent:
         if not model:
             raise NoModelException(f"No model for {content_type}")
         obj = model.parse_obj(node)
-
+    obj.database_id = element_id
     return obj
 
 

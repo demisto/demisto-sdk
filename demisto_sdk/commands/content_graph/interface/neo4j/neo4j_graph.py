@@ -281,7 +281,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             List[BaseContent]: The search results
         """
         super().search()
-        return self._search(marketplace, content_type, filter_list, all_level_dependencies, 0, **properties)
+        return self._search(marketplace, content_type, filter_list, all_level_dependencies, **properties)
 
     def create_pack_dependencies(self):
         with self.driver.session() as session:

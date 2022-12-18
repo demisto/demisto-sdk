@@ -1,5 +1,5 @@
-from multiprocessing import Pool
 import logging
+from multiprocessing import Pool
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
@@ -25,7 +25,8 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (_m
                                                                               delete_all_graph_nodes, duplicates_exist,
                                                                               remove_empty_properties,
                                                                               remove_server_nodes)
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import _match_relationships, create_relationships
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (_match_relationships,
+                                                                                      create_relationships)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent, ServerContent, content_type_to_model
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack

@@ -2,8 +2,8 @@ import logging
 from typing import Any, Dict, List
 
 from neo4j import Transaction
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, Neo4jRelationshipResult, RelationshipType
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import labels_of, node_map, run_query
 

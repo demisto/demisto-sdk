@@ -37,6 +37,7 @@ class RelationshipType(str, enum.Enum):
     USES_COMMAND_OR_SCRIPT = "USES_COMMAND_OR_SCRIPT"
     USES_PLAYBOOK = "USES_PLAYBOOK"
 
+
 class ContentType(str, enum.Enum):
     BASE_CONTENT = "BaseContent"
     CLASSIFIER = "Classifier"

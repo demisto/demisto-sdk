@@ -5,12 +5,8 @@ from neo4j import Transaction
 
 from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES, REPUTATION_COMMAND_NAMES, MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, Neo4jRelationshipResult, RelationshipType
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
-    intersects,
-    run_query,
-    to_neo4j_map,
-    versioned,
-)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (intersects, run_query, to_neo4j_map,
+                                                                               versioned)
 
 REPUTATION_COMMANDS_NODE_IDS = [f"{ContentType.COMMAND}:{cmd}" for cmd in REPUTATION_COMMAND_NAMES]
 IGNORED_CONTENT_ITEMS_IN_DEPENDENCY_CALC = REPUTATION_COMMANDS_NODE_IDS

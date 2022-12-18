@@ -185,9 +185,11 @@ def _get_pack_by_id(repository: ContentDTO, pack_id: str) -> Pack:
 
 
 def dump_csv_import_files(csv_files_dir: Path) -> None:
-    import_path = neo4j_service.get_neo4j_import_path().as_posix()
-    shutil.rmtree(import_path)
-    copy_tree(csv_files_dir.as_posix(), import_path)
+    for is_docker in [True, False]:
+        import_path = neo4j_service.get_neo4j_import_path(is_docker).as_posix()
+        if Path(import_path).is_dir():
+            shutil.rmtree(import_path)
+            copy_tree(csv_files_dir.as_posix(), import_path)
 
 
 # COMPARISON HELPER FUNCTIONS

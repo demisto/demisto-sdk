@@ -64,6 +64,17 @@ DETACH DELETE a
 """
 
 
+REMOVE_EMPTY_PROPERTIES = """CALL apoc.periodic.iterate(
+    "MATCH (n) RETURN n",
+    "WITH n, [key in keys(n) WHERE n[key] = '' | [key, null]] as nullifiers
+    WHERE size(nullifiers) <> 0
+    WITH n, apoc.map.fromPairs(nullifiers) as nullifyMap
+    SET n += nullifyMap",
+    {batchSize:30000, parallel:true, iterateList:true}
+);
+"""
+
+
 def create_nodes(
     tx: Transaction,
     nodes: Dict[ContentType, List[Dict[str, Any]]],
@@ -155,3 +166,7 @@ def delete_all_graph_nodes(tx: Transaction) -> None:
     DETACH DELETE n
     """
     run_query(tx, query)
+
+
+def remove_empty_properties(tx: Transaction) -> None:
+    run_query(tx, REMOVE_EMPTY_PROPERTIES)

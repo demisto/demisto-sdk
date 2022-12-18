@@ -19,8 +19,6 @@ NEO4J_IMPORT_FOLDER = "import"
 NEO4J_DATA_FOLDER = "data"
 NEO4J_PLUGINS_FOLDER = "plugins"
 
-IS_RUNNING_IN_NEO4J_DOCKER = False
-
 logger = logging.getLogger("demisto-sdk")
 
 try:
@@ -79,10 +77,7 @@ def _wait_until_service_is_up():
 
 
 def _should_use_docker(use_docker: bool) -> bool:
-    global IS_RUNNING_IN_NEO4J_DOCKER
-    if use_docker or not IS_NEO4J_ADMIN_AVAILABLE:
-        IS_RUNNING_IN_NEO4J_DOCKER = True
-    return IS_RUNNING_IN_NEO4J_DOCKER
+    return use_docker or not IS_NEO4J_ADMIN_AVAILABLE
 
 
 def start(use_docker: bool = True):
@@ -214,7 +209,7 @@ def is_alive():
         return False
 
 
-def get_neo4j_import_path() -> Path:
-    if IS_RUNNING_IN_NEO4J_DOCKER:
+def get_neo4j_import_path(is_running_on_docker: bool) -> Path:
+    if is_running_on_docker:
         return REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER
     return LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER

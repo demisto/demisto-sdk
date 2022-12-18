@@ -20,8 +20,7 @@ PACK_CONTRIBUTORS_FILENAME = "CONTRIBUTORS.json"
 UNIFIED_FILES_SUFFIXES = [".yml", ".json"]
 
 
-class Neo4jResult(NamedTuple):
-    node_from: graph.Node
+class Neo4jRelationshipResult(NamedTuple):
     relationships: List[graph.Relationship]
     nodes_to: List[graph.Node]
 

@@ -4,7 +4,7 @@ from typing import Dict, List, Set
 from neo4j import Transaction
 
 from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES, REPUTATION_COMMAND_NAMES, MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentType, Neo4jResult, RelationshipType
+from demisto_sdk.commands.content_graph.common import ContentType, Neo4jRelationshipResult, RelationshipType
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (intersects, run_query, to_neo4j_map,
                                                                                versioned)
 
@@ -27,7 +27,7 @@ def get_all_level_packs_dependencies(
     filter_list: List[int] = None,
     mandatorily: bool = False,
     **properties,
-) -> List[Neo4jResult]:
+) -> List[Neo4jRelationshipResult]:
     params_str = to_neo4j_map(properties)
 
     query = f"""
@@ -40,7 +40,7 @@ def get_all_level_packs_dependencies(
     result = run_query(tx, query, filter_list=list(filter_list) if filter_list else None)
     logger.info("Found dependencies.")
     return [
-        Neo4jResult(
+        Neo4jRelationshipResult(
             node_from=item.get("pack"), nodes_to=item.get("dependencies"), relationships=item.get("relationships")
         )
         for item in result

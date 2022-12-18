@@ -1,0 +1,2 @@
+:START_ID,:END_ID,:TYPE,mandatorily:boolean
+2,4,USES,true

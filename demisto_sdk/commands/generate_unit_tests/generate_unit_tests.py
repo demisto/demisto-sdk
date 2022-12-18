@@ -52,7 +52,7 @@ class UnitTestsGenerator:
         Returns the source code for which the unit tests will be generated.
         """
 
-        with open(self.input_path, 'r') as input_file:
+        with open(self.input_path) as input_file:
             return input_file.read()
 
     def decision_maker(self, command_name: str):

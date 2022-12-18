@@ -179,7 +179,7 @@ class FieldBaseValidator(ContentEntityValidator):
         Returns:
             (bool): True of version is valid, false otherwise.
         """
-        return super(FieldBaseValidator, self)._is_valid_version()
+        return super()._is_valid_version()
 
     @error_codes('IF103')
     def is_valid_type(self) -> bool:

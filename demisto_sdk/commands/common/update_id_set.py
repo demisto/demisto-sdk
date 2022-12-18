@@ -1354,7 +1354,7 @@ def process_integration(file_path: str, packs: Dict[str, Dict], marketplace: str
         else:
             # package integration
             package_name = os.path.basename(file_path)
-            file_path = os.path.join(file_path, '{}.yml'.format(package_name))
+            file_path = os.path.join(file_path, f'{package_name}.yml')
             if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
                 return [], excluded_items_from_id_set
             if os.path.isfile(file_path):
@@ -1991,10 +1991,10 @@ def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_se
     """
     Merges two id-sets. Loads them from files and saves the merged unified id_set into output_id_set_path.
     """
-    with open(first_id_set_path, mode='r') as f1:
+    with open(first_id_set_path) as f1:
         first_id_set = json.load(f1)
 
-    with open(second_id_set_path, mode='r') as f2:
+    with open(second_id_set_path) as f2:
         second_id_set = json.load(f2)
 
     unified_id_set, duplicates = merge_id_sets(first_id_set, second_id_set, print_logs)
@@ -2092,7 +2092,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                     "doesn't require a refresh. Will use current id-set. "
                     "If you rather force an id-set refresh, unset DEMISTO_SDK_ID_SET_REFRESH_INTERVAL or set it to -1.",
                     LOG_COLORS.GREEN)
-                with open(id_set_path, mode="r") as f:
+                with open(id_set_path) as f:
                     return json.load(f)
             else:
                 print_color(
@@ -2773,7 +2773,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
         new_ids_dict['Dashboards'] = []
 
     exec_time = time.time() - start_time
-    print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)
+    print_color(f"Finished the creation of the id_set. Total time: {exec_time} seconds", LOG_COLORS.GREEN)
 
     duplicates = find_duplicates(new_ids_dict, print_logs, marketplace)
     if any(duplicates) and fail_on_duplicates:
@@ -2789,7 +2789,7 @@ def find_duplicates(id_set, print_logs, marketplace):
 
     for object_type in entities:
         if print_logs:
-            print_color("Checking diff for {}".format(object_type), LOG_COLORS.GREEN)
+            print_color(f"Checking diff for {object_type}", LOG_COLORS.GREEN)
         objects = id_set.get(object_type)
         ids = {list(specific_item.keys())[0] for specific_item in objects}
 

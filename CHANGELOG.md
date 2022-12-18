@@ -1,7 +1,16 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where **format** created duplicate configuration parameters.
+* Added hidden properties to integration command argument and script argument.
+* Added `--override-existing` to **upload** that skips the confirmation prompt for overriding existing content packs. @mattbibbydw
+* Fixed an issue where **validate** failed in private repo due to attempts to read from nonexisting file.
+* Fixed an issue where fields ending with `_x2` where not replaced in the appropriate Marketplace.
 * Fixed an issue where **validate** used absolute paths when getting the remote pack_metadata.json files in private repos.
-* Added validation of testdata files for **Modeling Rules**.
+
+## 1.8.0
+* Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.
+* Added a **validate** step for **Modeling Rules** testdata files.
+* Added the **update-content-graph** command.
 * Added the ability to limit the number of CPU cores with `DEMISTO_SDK_MAX_CPU_CORES` envirment variable.
 * Fixed an issue where **update-release-notes** failed when changing only xif file in **Modeling Rules**.
 * Fixed an issue where **is_valid_category** and **is_categories_field_match_standard** failed on private repo due to approved_list not imported.

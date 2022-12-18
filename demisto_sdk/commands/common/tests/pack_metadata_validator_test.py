@@ -1,4 +1,3 @@
-import io
 import os
 from typing import Dict
 
@@ -143,7 +142,7 @@ class TestPackMetadataValidator:
 
     @staticmethod
     def read_file(file_):
-        with io.open(file_, mode="r", encoding="utf-8") as data:
+        with open(file_, encoding="utf-8") as data:
             return data.read()
 
     def test_metadata_not_dict(self, mocker):

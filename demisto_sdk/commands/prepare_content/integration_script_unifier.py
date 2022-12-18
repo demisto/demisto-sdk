@@ -1,7 +1,6 @@
 import base64
 import copy
 import glob
-import io
 import os
 import re
 from pathlib import Path
@@ -212,7 +211,7 @@ class IntegrationScriptUnifier(Unifier):
     @staticmethod
     def insert_script_to_yml(package_path: Path, script_type: str, yml_unified: dict, yml_data: dict, is_script_package: bool):
         script_path = IntegrationScriptUnifier.get_code_file(package_path, script_type)
-        with io.open(script_path, mode='r', encoding='utf-8') as script_file:
+        with open(script_path, encoding='utf-8') as script_file:
             script_code = script_file.read()
 
         # Check if the script imports an API module. If it does,
@@ -263,7 +262,7 @@ class IntegrationScriptUnifier(Unifier):
         else:
             code_type = get_yaml(yml_path).get('script', {}).get('type')
         code_path = IntegrationScriptUnifier.get_code_file(package_path, TYPE_TO_EXTENSION[code_type])
-        with io.open(code_path, 'r', encoding='utf-8') as code_file:
+        with open(code_path, encoding='utf-8') as code_file:
             code = code_file.read()
 
         return yml_path, code
@@ -318,10 +317,10 @@ class IntegrationScriptUnifier(Unifier):
         :return: The API module code
         """
         try:
-            with io.open(module_path, mode='r', encoding='utf-8') as script_file:
+            with open(module_path, encoding='utf-8') as script_file:
                 module_code = script_file.read()
         except Exception as exc:
-            raise ValueError('Could not retrieve the module [{}] code: {}'.format(module_name, str(exc)))
+            raise ValueError(f'Could not retrieve the module [{module_name}] code: {str(exc)}')
 
         return module_code
 

@@ -13,7 +13,7 @@ def test_find_primary_branch():
 
     assert not GitUtil.find_primary_branch(None)
 
-    class Object(object):
+    class Object:
         pass
 
     empty_repo = Object()

@@ -2,7 +2,6 @@
 This module is designed to validate the existence and structure of content pack essential files in content.
 """
 import glob
-import io
 import os
 import re
 from datetime import datetime
@@ -171,9 +170,9 @@ class PackUniqueFilesValidator(BaseValidator):
     def _read_file_content(self, file_name):
         """Open & Read a file object's content throw exception if can't"""
         try:
-            with io.open(self._get_pack_file_path(file_name), mode="r", encoding="utf-8") as file:
+            with open(self._get_pack_file_path(file_name), encoding="utf-8") as file:
                 return file.read()
-        except IOError:
+        except OSError:
             if not self._add_error(Errors.cant_open_pack_file(file_name), file_name):
                 return "No-Text-Required"
         except ValueError:
@@ -911,6 +910,8 @@ class PackUniqueFilesValidator(BaseValidator):
         Returns:
             bool: True if pack contain only one category and the category is from the approved list. Otherwise, return False.
         """
+        if tools.is_external_repository():
+            return True
         categories = self._read_metadata_content().get('categories', [])
         approved_list = tools.get_current_categories()
         if not len(categories) == 1 or not self.validate_categories_approved(categories, approved_list):

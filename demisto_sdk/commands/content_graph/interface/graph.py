@@ -1,14 +1,16 @@
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import get_content_path
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
 
 class ContentGraphInterface(ABC):
-    _calculate_dependencies = True
+    repo_path = Path(get_content_path())  # type: ignore
 
     @abstractmethod
     def create_indexes_and_constraints(self) -> None:
@@ -23,12 +25,24 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
+    def remove_server_items(self) -> None:
+        pass
+
+    @abstractmethod
+    def import_graph(self) -> None:
+        pass
+
+    @abstractmethod
+    def export_graph(self) -> None:
+        pass
+
+    @abstractmethod
     def validate_graph(self) -> None:
         pass
 
     @abstractmethod
     def clean_graph(self):
-        ContentGraphInterface._calculate_dependencies = True
+        ...
 
     @abstractmethod
     def search(
@@ -54,8 +68,6 @@ class ContentGraphInterface(ABC):
         """
         if not marketplace and all_level_dependencies:
             raise ValueError("Cannot search for all level dependencies without a marketplace")
-        if ContentGraphInterface._calculate_dependencies:
-            self.create_pack_dependencies()
         return []
 
     def marshal_graph(
@@ -78,7 +90,7 @@ class ContentGraphInterface(ABC):
 
     @abstractmethod
     def create_pack_dependencies(self):
-        ContentGraphInterface._calculate_dependencies = False
+        ...
 
     @abstractmethod
     def run_single_query(self, query: str, **kwargs) -> Any:

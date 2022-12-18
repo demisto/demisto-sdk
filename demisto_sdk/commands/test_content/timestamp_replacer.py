@@ -142,7 +142,7 @@ class TimestampReplacer:
         if ctx.options.script_mode == 'record':
             if ctx.options.detect_timestamps:
                 self.run_all_key_detections(req)
-                logging.info('updating problem_keys file at "{}"'.format(self.bad_keys_filepath))
+                logging.info(f'updating problem_keys file at "{self.bad_keys_filepath}"')
                 self.update_problem_keys_file()
         elif ctx.options.script_mode in {'clean', 'playback'}:
             logging.info(f'flow.live is: {flow.live}')
@@ -175,7 +175,7 @@ class TimestampReplacer:
             req (Request): The request to modify
         """
         query_data = sorted(req._get_query())
-        logging.info('fetched query_data: {}'.format(query_data))
+        logging.info(f'fetched query_data: {query_data}')
         updated_query_data = []
         if query_data and self.query_keys:
             for key, val in query_data:
@@ -258,13 +258,13 @@ class TimestampReplacer:
         original_content = deepcopy(json_body)
         modified = False
         keys_to_replace = self.json_keys
-        logging.info('{}'.format(keys_to_replace))
+        logging.info(f'{keys_to_replace}')
         for key_path in keys_to_replace:
             body = json_body
             keys = key_path.split('.')
-            logging.info('keypath parts: {}'.format(keys))
+            logging.info(f'keypath parts: {keys}')
             lastkey = keys[-1]
-            logging.info('lastkey: {}'.format(lastkey))
+            logging.info(f'lastkey: {lastkey}')
             skip_key = False
             for k in keys[:-1]:
                 if k in body:
@@ -279,16 +279,16 @@ class TimestampReplacer:
                     break
             if not skip_key:
                 if lastkey in body:
-                    logging.info('modifying request to "{}"'.format(req.pretty_url))
+                    logging.info(f'modifying request to "{req.pretty_url}"')
                     body[lastkey] = self.constant
                     modified = True
                 elif isinstance(body, list) and lastkey.isdigit() and int(lastkey) <= len(body) - 1:
-                    logging.info('modifying request to "{}"'.format(req.pretty_url))
+                    logging.info(f'modifying request to "{req.pretty_url}"')
                     body[int(lastkey)] = self.constant
                     modified = True
         if modified:
-            logging.info('original request body:\n{}'.format(json.dumps(original_content, indent=4)))
-            logging.info('modified request body:\n{}'.format(json.dumps(json_body, indent=4)))
+            logging.info(f'original request body:\n{json.dumps(original_content, indent=4)}')
+            logging.info(f'modified request body:\n{json.dumps(json_body, indent=4)}')
             req.set_content(json.dumps(json_body).encode())
 
     def run_all_key_detections(self, req: Request) -> None:
@@ -307,7 +307,7 @@ class TimestampReplacer:
 
     def handle_url_query(self, req: Request) -> None:
         query_data = req._get_query()
-        logging.info('query_data: {}'.format(query_data))
+        logging.info(f'query_data: {query_data}')
         for key, val in query_data:
             # don't bother trying to interpret an argument less than 4 characters as some type of timestamp
             if len(val) > 4:
@@ -388,7 +388,7 @@ class TimestampReplacer:
             bad_key_paths = []
             if isinstance(obj, dict):
                 for key, val in obj.items():
-                    sub_key_path = '{}.{}'.format(key_path, key) if key_path else key
+                    sub_key_path = f'{key_path}.{key}' if key_path else key
                     if isinstance(val, (list, dict)):
                         bad_key_paths.extend(travel_dict(val, sub_key_path))
                     else:
@@ -412,7 +412,7 @@ class TimestampReplacer:
                                 bad_key_paths.append(sub_key_path)
             elif isinstance(obj, list):
                 for i, val in enumerate(obj):
-                    sub_key_path = '{}.{}'.format(key_path, i) if key_path else i
+                    sub_key_path = f'{key_path}.{i}' if key_path else i
                     if isinstance(val, (list, dict)):
                         bad_key_paths.extend(travel_dict(val, sub_key_path))
                     else:
@@ -457,12 +457,12 @@ class TimestampReplacer:
         """
         logging.info('executing "read_in_problematic_keys" method')
         repo_bad_keys_filepath = self.bad_keys_filepath.replace('/tmp/Mocks', 'content-test-data')
-        logging.info('reading in problematic keys data from "{}"'.format(repo_bad_keys_filepath))
+        logging.info(f'reading in problematic keys data from "{repo_bad_keys_filepath}"')
         if not path.exists(self.bad_keys_filepath) and path.exists(repo_bad_keys_filepath):
-            with open(repo_bad_keys_filepath, 'r') as fp:
+            with open(repo_bad_keys_filepath) as fp:
                 problem_keys = json.load(fp)
         elif path.exists(self.bad_keys_filepath):
-            with open(self.bad_keys_filepath, 'r') as fp:
+            with open(self.bad_keys_filepath) as fp:
                 problem_keys = json.load(fp)
         else:
             problem_keys = {
@@ -487,9 +487,9 @@ class TimestampReplacer:
         """
         logging.info('executing "load_problematic_keys" method')
         if path.exists(self.bad_keys_filepath):
-            logging.info('"{}" path exists - loading bad keys'.format(self.bad_keys_filepath))
+            logging.info(f'"{self.bad_keys_filepath}" path exists - loading bad keys')
 
-            problem_keys = json.load(open(self.bad_keys_filepath, 'r'))
+            problem_keys = json.load(open(self.bad_keys_filepath))
 
             query_keys = problem_keys.get('server_replay_ignore_params')
             self.query_keys.update(query_keys.split() if isinstance(query_keys, str) else query_keys)
@@ -503,7 +503,7 @@ class TimestampReplacer:
             logging.info(f'self.form_keys={self.form_keys}')
             logging.info(f'self.json_keys={self.json_keys}')
         else:
-            logging.info('"{}" path doesn\'t exist - no bad keys to set'.format(self.bad_keys_filepath))
+            logging.info(f'"{self.bad_keys_filepath}" path doesn\'t exist - no bad keys to set')
             logging.info('not setting bad keys from file')
 
     @staticmethod

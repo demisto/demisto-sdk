@@ -44,6 +44,6 @@ def test_mention_contributors_in_readme(pack):
     expected_contribution_section = CONTRIBUTORS_README_TEMPLATE.format(
         contributors_names=' - Contributor1\n - Contributor2\n')
     expected_readme = initial_readme_text + expected_contribution_section
-    with open(readme.path, 'r') as readme_file:
+    with open(readme.path) as readme_file:
         readme_file_content = readme_file.read()
     assert readme_file_content == expected_readme

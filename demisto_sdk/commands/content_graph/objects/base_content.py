@@ -67,7 +67,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
         dict_copy = self.__dict__.copy()
-        dict_copy["__relationships_data"] = defaultdict(set)
+        dict_copy["relationships_data"] = defaultdict(set)
         return {
             '__dict__': dict_copy,
             '__fields_set__': self.__fields_set__,

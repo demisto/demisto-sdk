@@ -181,7 +181,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         nodes_to = filter(lambda node: node.id not in self._id_to_obj, nodes_to)
         if not nodes_to:
             return
-    
+
         with Pool() as pool:
             results = pool.starmap(_parse_node, ((node.id, dict(node.items())) for node in nodes_to))
             for id_, result in results:

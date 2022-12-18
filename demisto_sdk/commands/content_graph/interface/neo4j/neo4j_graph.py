@@ -114,10 +114,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             obj = Neo4jContentGraphInterface._id_to_obj[id]
             self._add_relationships(obj, res.relationships, res.nodes_to)
             if isinstance(obj, Pack) and not list(obj.content_items):
-                integration_nodes.update(
-                    node_to.id for node_to, rel in zip(res.nodes_to, res.relationships)
-                    if rel.type == RelationshipType.IN_PACK and node_to.get("content_type") == ContentType.INTEGRATION
-                )
                 obj.set_content_items()  # type: ignore[union-attr]
                 if obj.content_items.integration:
                     integration_nodes.update(

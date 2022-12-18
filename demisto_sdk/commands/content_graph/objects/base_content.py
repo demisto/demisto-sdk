@@ -56,7 +56,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     node_id: str
     marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
 
-    relationships_data: Dict[RelationshipType, Set["RelationshipData"]] = Field(defaultdict(set), exclude=True, repr=False)
+    relationships_data: Dict[str, Set["RelationshipData"]] = Field(defaultdict(set), exclude=True, repr=False)
 
     class Config:
         arbitrary_types_allowed = True  # allows having custom classes for properties in model
@@ -65,15 +65,10 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
-        state = self.__dict__.copy()
+        state = super().__getstate__()
+        state["__dict__"]["__relationships_data"] = defaultdict(set)
 
-        # This object cannot be pickled
-        del state["relationships_data"]
         return state
-
-    def __setstate__(self, state) -> None:
-        """Needed to for the object to be pickled correctly (to use multiprocessing)"""
-        self.__dict__.update(state)
 
     @property
     def normalize_name(self) -> str:

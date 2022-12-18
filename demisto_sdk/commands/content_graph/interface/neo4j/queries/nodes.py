@@ -135,7 +135,8 @@ def _match(
     if filter_list:
         query = "UNWIND $filter_list AS node_id\n" + query
 
-    return run_query(tx, query, filter_list=list(filter_list) if filter_list else None)
+    return [item.get('node') for item in
+            run_query(tx, query, filter_list=list(filter_list) if filter_list else None)]
     # query = f"""
     # MATCH (node_from{content_type_str}{params_str}) - [relationship*0..1] - (node_to)
     # WHERE id(node_from) <> id(node_to)

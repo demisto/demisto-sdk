@@ -30,6 +30,10 @@ class RelationshipData(BaseModel):
              self.source.content_type, self.target.content_type)
         )
 
+    def __getstate__(self):
+        state = super().__getstate__()
+        print(state)
+    
     def __eq__(self, __o: object) -> bool:
         """This is needed to check if the relationship already exists"""
         return hash(self) == hash(__o)

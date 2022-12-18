@@ -188,7 +188,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with Pool() as pool:
             results = pool.starmap(_parse_node, ((node.id, dict(node.items())) for node in nodes_to))
             for result in results:
-                assert result.database_id
+                assert result.database_id is not None
                 self._id_to_obj[result.database_id] = result
 
     def _search(

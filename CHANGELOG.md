@@ -8,7 +8,7 @@
 ## 1.8.0
 * Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.
 * Added a **validate** step for **Modeling Rules** testdata files.
-* Added the **update-content-graph** command.
+* Added the **update-content-graph** command.§
 * Added the ability to limit the number of CPU cores with `DEMISTO_SDK_MAX_CPU_CORES` envirment variable.
 * Added the **prepare-content** command.
 * Added support for fromversion/toversion in XSIAM content items (correlation rules, XSIAM dashboards, XSIAM reports and triggers).

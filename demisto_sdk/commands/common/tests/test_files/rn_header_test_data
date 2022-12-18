@@ -17,7 +17,8 @@
 - Ignore the json suffix, it is not a real dashboard.
 
 #### Incident Fields
-- **incidentfield-test.json**
+- **incidentfield-test1.json**
+- **incidentfield-test2.json**
 
 #### Incident Types
 - **incidenttype-test.json**
@@ -29,9 +30,8 @@
 - **reputation-test.json**
 
 #### Layouts
-##### New: layout-test.json
-- Added x y z
-- Ignore the json suffix, it is not a real layout.
+- New: **layout-test.json**
+
 
 #### Mappers
 ##### New: classifier-mapper-test.json

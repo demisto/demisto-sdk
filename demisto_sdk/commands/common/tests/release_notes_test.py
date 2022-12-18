@@ -541,7 +541,8 @@ def test_validate_headers(mocker, repo):
     pack.create_playbook("playbook-test")
     pack.create_correlation_rule("correlation-rule-test")
     pack.create_dashboard("test")
-    pack.create_incident_field("test")
+    pack.create_incident_field("test1")
+    pack.create_incident_field("test2")
     pack.create_incident_type("test")
     pack.create_indicator_field("test")
     pack.create_indicator_type("test")
@@ -562,7 +563,7 @@ TEST_RELEASE_NOTES_INVALID_HEADERS = [("""#### Integrations
                                       - Added x y z""", 'FakeContentType', {'validate_special_forms': False,
                                                                             'validate_content_type_header': False,
                                                                             'validate_content_item_header': True}),
-    ("""#### Incident Fields
+    ("""#### Incident Field
                                       ##### Test
                                       - Added x y z""", 'Incident Fields', {'validate_special_forms': False,
                                                                             'validate_content_type_header': True,
@@ -571,13 +572,18 @@ TEST_RELEASE_NOTES_INVALID_HEADERS = [("""#### Integrations
                                       - **integration-test**
                                       - Added x y z""", 'Integrations', {'validate_special_forms': False,
                                                                          'validate_content_type_header': True,
-                                                                         'validate_content_item_header': True})
+                                                                         'validate_content_item_header': True}),
+    ("""#### Incident Field
+                                  - *test**
+                                  - Added x y z""", 'Incident Fields', {'validate_special_forms': False,
+                                                                        'validate_content_type_header': True,
+                                                                        'validate_content_item_header': True})
 ]
 
 
 @pytest.mark.parametrize('content, content_type, expected_result', TEST_RELEASE_NOTES_INVALID_HEADERS,
                          ids=['Content item dose not exist', 'Content type dose not exist', 'Invalid special forms',
-                              'Invalid content type format'])
+                              'Invalid content type format', 'Invalid special forms missing star'])
 def test_invalid_headers(mocker, repo, content, content_type, expected_result):
     """
     Given

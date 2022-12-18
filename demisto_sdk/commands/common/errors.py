@@ -26,7 +26,7 @@ ALLOWED_IGNORE_ERRORS = [
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
     'IM111',
-    'RN112', 'RN113', 'RN114',
+    'RN112', 'RN113', 'RN114', 'RN115', 'RN116', 'RN117'
     'MR104', 'MR105',
 ]
 
@@ -384,6 +384,10 @@ ERROR_CODE = {
     "release_notes_bc_json_file_missing": {'code': "RN112", 'ui_applicable': False, 'related_field': ''},
     "release_notes_invalid_content_type_header": {'code': "RN113", 'ui_applicable': False, 'related_field': ''},
     "release_notes_invalid_content_name_header": {'code': "RN114", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_invalid_header_format": {'code': "RN115", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_found_star_in_header": {'code': "RN116", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_missing_star_in_header": {'code': "RN117", 'ui_applicable': False, 'related_field': ''},
+
 
     # RP - Reputations (Indicator Types)
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
@@ -1367,16 +1371,35 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def release_notes_invalid_content_type_header(content_type: str, pack_name: str):
-        return f'The content type "{content_type}" is either an invalid content type or does not exist in the "{pack_name}" pack' \
-               f' or the header format is invalid.\n' \
+        return f'The content type header "{content_type}" is either an invalid content type or does not exist in the "{pack_name}" pack.\n' \
                f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n' \
                'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
 
     @staticmethod
     @error_code_decorator
     def release_notes_invalid_content_name_header(content_name_header: str, pack_name: str, content_type_dir: str):
-        return f'The content item "{content_type_dir}/{content_name_header}" either does not exist in the "{pack_name}" pack ' \
-               'or the header format is invalid.\n' \
+        return f'The content item "{content_type_dir}/{content_name_header}" does not exist in the "{pack_name}" pack.\n' \
+               f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n' \
+               'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
+
+    @staticmethod
+    @error_code_decorator
+    def release_notes_invalid_header_format(content_name_header: str, pack_name: str):
+        return f'The content item "{content_name_header}" header format is invalid.\n' \
+               f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n' \
+               'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
+
+    @staticmethod
+    @error_code_decorator
+    def release_notes_found_star_in_header(content_name_header: str, pack_name: str):
+        return f'The content item "{content_name_header}" should not have a "*" symbols in the header.\n' \
+               f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n' \
+               'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
+
+    @staticmethod
+    @error_code_decorator
+    def release_notes_missing_star_in_header(content_name_header: str, pack_name: str):
+        return f'The content item "{content_name_header}" is missing a "*" symbols in the header.\n' \
                f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n' \
                'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
 

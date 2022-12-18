@@ -5,6 +5,7 @@
 * Added `--override-existing` to **upload** that skips the confirmation prompt for overriding existing content packs. @mattbibbydw
 * Fixed an issue where **validate** failed in private repo due to attempts to read from nonexisting file.
 * Fixed an issue where fields ending with `_x2` where not replaced in the appropriate Marketplace.
+* Fixed an issue where **validate** used absolute paths when getting the remote pack_metadata.json files in private repos.
 
 ## 1.8.0
 * Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.

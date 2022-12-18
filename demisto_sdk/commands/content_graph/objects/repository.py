@@ -1,3 +1,4 @@
+from concurrent.futures import ProcessPoolExecutor
 import logging
 import shutil
 import time
@@ -27,8 +28,11 @@ class ContentDTO(BaseModel):
         logger.info("starting repo dump")
         start_time = time.time()
         if USE_FUTURE:
-            with Pool() as pool:
-                pool.starmap(Pack.dump, ((pack, dir / pack.path.name, marketplace) for pack in self.packs))
+            with ProcessPoolExecutor() as executor:
+                for pack in self.packs:
+                    executor.submit(self.dump, dir / pack.path.name, marketplace)
+            # with Pool() as pool:
+            #     pool.starmap(Pack.dump, ((pack, dir / pack.path.name, marketplace) for pack in self.packs))
 
         else:
             for pack in self.packs:

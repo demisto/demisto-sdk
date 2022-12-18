@@ -1,7 +1,7 @@
 exclude: demisto_sdk/tests/test_files/.*|.circleci/config.yml|demisto_sdk/commands/.*/tests/test_files/.*
 repos:
     - repo: https://github.com/pre-commit/pre-commit-hooks
-      rev: v4.1.0
+      rev: v4.4.0
       hooks:
           - id: trailing-whitespace
           - id: end-of-file-fixer
@@ -20,15 +20,15 @@ repos:
         - id: pycln
           args: ["--skip-imports=CommonServerPython,CommonServerUserPython,demisto"]
     - repo: https://github.com/pycqa/flake8
-      rev: "4.0.1"
+      rev: "6.0.0"
       hooks:
           - id: flake8
     - repo: https://github.com/pre-commit/mirrors-autopep8
-      rev: v1.6.0
+      rev: v2.0.1
       hooks:
           - id: autopep8
     - repo: https://github.com/timothycrosley/isort
-      rev: 5.10.1
+      rev: v5.11.3
       hooks:
           - id: isort
             types: [python]
@@ -50,6 +50,6 @@ repos:
       hooks:
           - id: check-poetry
     - repo: https://github.com/jendrikseipp/vulture
-      rev: "v2.3"
+      rev: "v2.6"
       hooks:
           - id: vulture

@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
-from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator  # noqa:F401
 from demisto_sdk.commands.common.tools import (_get_file_id, find_type, get_file_displayed_name, is_test_config_match,
                                                run_command)
 from demisto_sdk.commands.format.format_constants import OLD_FILE_DEFAULT_1_FROMVERSION
@@ -32,9 +32,10 @@ logger = logging.getLogger("demisto-sdk")
 class ContentEntityValidator(BaseValidator):
     DEFAULT_VERSION = -1
 
-    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
-                 suppress_print=False, json_file_path=None, oldest_supported_version=None):
-        # type: (StructureValidator, dict, bool, bool, bool, Optional[str], Optional[str]) -> None
+    def __init__(self, structure_validator: StructureValidator, ignored_errors: Optional[dict] = None,
+                 print_as_warnings: bool = False, skip_docker_check: bool = False,
+                 suppress_print: bool = False, json_file_path: Optional[str] = None,
+                 oldest_supported_version: Optional[str] = None) -> None:
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path,
                          specific_validations=structure_validator.specific_validations)

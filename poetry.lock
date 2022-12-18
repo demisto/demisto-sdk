@@ -249,17 +249,6 @@ optional = false
 python-versions = "*"
 
 [[package]]
-name = "bs4"
-version = "0.0.1"
-description = "Dummy package for Beautiful Soup"
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-beautifulsoup4 = "*"
-
-[[package]]
 name = "cachetools"
 version = "5.2.0"
 description = "Extensible memoizing collections and decorators"
@@ -2834,7 +2823,7 @@ build = ["gsutil"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "7e9b4ad0599804f550a16f2f30876f78dc3aacd27a4a95cc04e39826e7c7a845"
+content-hash = "289a3791a66dec80f7c8fd2b88cd77549837a3006bdac05d7ea4152712a30e1d"
 
 [metadata.files]
 aiohttp = [
@@ -3107,9 +3096,6 @@ brotli = [
     {file = "Brotli-1.0.9-pp37-pypy37_pp73-macosx_10_9_x86_64.whl", hash = "sha256:9749a124280a0ada4187a6cfd1ffd35c350fb3af79c706589d98e088c5044267"},
     {file = "Brotli-1.0.9-pp37-pypy37_pp73-win_amd64.whl", hash = "sha256:76ffebb907bec09ff511bb3acc077695e2c32bc2142819491579a695f77ffd4d"},
     {file = "Brotli-1.0.9.zip", hash = "sha256:4d1b810aa0ed773f81dceda2cc7b403d01057458730e309856356d4ef4188438"},
-]
-bs4 = [
-    {file = "bs4-0.0.1.tar.gz", hash = "sha256:36ecea1fd7cc5c0c6e4a1ff075df26d50da647b75376626cc186e2212886dd3a"},
 ]
 cachetools = [
     {file = "cachetools-5.2.0-py3-none-any.whl", hash = "sha256:f9f17d2aec496a9aa6b76f53e3b614c965223c061982d434d160f930c698a9db"},

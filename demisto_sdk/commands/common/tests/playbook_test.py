@@ -13,8 +13,7 @@ from demisto_sdk.tests.constants_test import (CONTENT_REPO_EXAMPLE_ROOT, CORRECT
 from TestSuite.test_tools import ChangeCWD
 
 
-def mock_structure(file_path=None, current_file=None, old_file=None):
-    # type: (Optional[str], Optional[dict], Optional[dict]) -> StructureValidator
+def mock_structure(file_path: Optional[str] = None, current_file: Optional[dict] = None, old_file: Optional[dict] = None) -> StructureValidator:
     with patch.object(StructureValidator, '__init__', lambda a, b: None):
         structure = StructureValidator(file_path)
         structure.is_valid = True

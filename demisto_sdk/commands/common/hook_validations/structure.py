@@ -92,8 +92,7 @@ class StructureValidator(BaseValidator):
 
         return False
 
-    def scheme_of_file_by_path(self):
-        # type:  () -> Optional[str]
+    def scheme_of_file_by_path(self) -> Optional[str]:
         """Running on given regexes from `constants` to find out what type of file it is
 
         Returns:
@@ -152,8 +151,7 @@ class StructureValidator(BaseValidator):
         return True
 
     @staticmethod
-    def get_file_id_from_loaded_file_data(loaded_file_data):
-        # type: (dict) -> Optional[str]
+    def get_file_id_from_loaded_file_data(loaded_file_data: dict) -> None:
         """Gets a dict and extracting its `id` field
 
         Args:
@@ -225,7 +223,6 @@ class StructureValidator(BaseValidator):
         return {}
 
     def get_file_type(self):
-        # type: () -> Optional[str]
         """Gets file type based on regex or scheme_name
 
         Returns:

@@ -4,7 +4,7 @@ import sys
 from io import StringIO
 from pathlib import Path
 from shutil import copyfile
-from typing import Any, List, Optional, Type, Union
+from typing import Any, List, Optional, Union
 from unittest.mock import patch
 
 import pytest
@@ -128,8 +128,7 @@ class TestValidators:
             os.remove(PLAYBOOK_TARGET)
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
-    def test_is_valid_version(self, source, target, answer, validator):
-        # type: (str, str, Any, Type[ContentEntityValidator]) -> None
+    def test_is_valid_version(self, source: str, target: str, answer: Any, validator: ContentEntityValidator) -> None:
         """
         Given
         - A file with either a valid or invalid version
@@ -149,8 +148,7 @@ class TestValidators:
             os.remove(target)
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
-    def test_is_valid_fromversion(self, source, target, answer, validator):
-        # type: (str, str, Any, Type[ContentEntityValidator]) -> None
+    def test_is_valid_fromversion(self, source: str, target: str, answer: Any, validator: ContentEntityValidator) -> None:
         """
         Given
         - A file with either a valid or invalid fromversion
@@ -176,7 +174,7 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize('source, answer', INPUTS_is_condition_branches_handled)
-    def test_is_condition_branches_handled(self, source, answer):
+    def test_is_condition_branches_handled(self, source: str, answer: str) -> None:
         # type: (str, str) -> None
         try:
             copyfile(source, PLAYBOOK_TARGET)
@@ -216,8 +214,7 @@ class TestValidators:
         assert validator.is_valid_version() is answer
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
-    def test_is_file_valid(self, source, target, answer, validator, mocker):
-        # type: (str, str, str, Any, Type[ContentEntityValidator]) -> None
+    def test_is_file_valid(self, source: str, target: str, answer: str, validator: Any, mocker: ContentEntityValidator) -> None:
         try:
             copyfile(source, target)
             structure = StructureValidator(source)
@@ -243,9 +240,9 @@ class TestValidators:
     @pytest.mark.parametrize('source_dummy, target_dummy, source_release_notes, target_release_notes, '
                              'validator, answer',
                              INPUTS_RELEASE_NOTES_EXISTS_VALIDATION)
-    def test_is_release_notes_exists(self, source_dummy, target_dummy,
-                                     source_release_notes, target_release_notes, validator, answer, mocker):
-        # type: (str, str, str, str, Type[ContentEntityValidator], Any, Any) -> None
+    def test_is_release_notes_exists(
+            self, source_dummy: str, target_dummy: str, source_release_notes: str, target_release_notes: str,
+            validator: ContentEntityValidator, answer: Any, mocker: Any) -> None:
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
@@ -294,9 +291,9 @@ class TestValidators:
 
     @pytest.mark.parametrize('source_dummy, target_dummy, source_release_notes, target_release_notes, '
                              'validator, answer', test_package)
-    def test_valid_release_notes_structure(self, source_dummy, target_dummy,
-                                           source_release_notes, target_release_notes, validator, answer, mocker):
-        # type: (str, str, str, str, Type[ContentEntityValidator], Any, Any) -> None
+    def test_valid_release_notes_structure(self, source_dummy: str, target_dummy: str,
+                                           source_release_notes: str, target_release_notes: str,
+                                           validator: ContentEntityValidator, answer: Any, mocker: Any) -> None:
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
@@ -322,8 +319,7 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_ID_EQUALS_NAME)
-    def test_is_id_equals_name(self, source, target, answer, validator):
-        # type: (str, str, Any, Type[Union[ScriptValidator, PlaybookValidator, IntegrationValidator]]) -> None
+    def test_is_id_equals_name(self, source: str, target: str, answer: Any, validator: Union[ScriptValidator, PlaybookValidator, IntegrationValidator]) -> None:
         try:
             copyfile(str(source), target)
             structure = StructureValidator(str(source))

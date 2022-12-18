@@ -137,7 +137,7 @@ class TestStructureValidator:
         structure.scheme_name = None
         assert structure.is_valid_file_path() is answer
 
-    INPUTS_IS_VALID_FILE = [
+    INPUTS_IS_VALID_FILE: List[Tuple[str, str, bool]] = [
         (VALID_LAYOUT_PATH, LAYOUT_TARGET, True),
         (INVALID_LAYOUT_PATH, LAYOUT_TARGET, False),
         (VALID_LAYOUT_CONTAINER_PATH, LAYOUTS_CONTAINER_TARGET, True),
@@ -149,7 +149,7 @@ class TestStructureValidator:
         (VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET, True),
         (VALID_INTEGRATION_TEST_PATH, INTEGRATION_TARGET, True),
         (INVALID_PLAYBOOK_PATH, INTEGRATION_TARGET, False),
-    ]  # type: List[Tuple[str, str, bool]]
+    ]
 
     @pytest.mark.parametrize('source, target, answer', INPUTS_IS_VALID_FILE)
     def test_is_file_valid(self, source, target, answer, mocker):

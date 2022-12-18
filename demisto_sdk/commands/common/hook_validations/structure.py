@@ -74,8 +74,7 @@ class StructureValidator(BaseValidator):
                                             suppress_print=suppress_print)
         self.configuration = configuration
 
-    def is_valid_file(self):
-        # type: () -> bool
+    def is_valid_file(self) -> bool:
         """Checks if given file is valid
 
         Returns:
@@ -111,8 +110,7 @@ class StructureValidator(BaseValidator):
         return None
 
     @error_codes('ST110')
-    def is_valid_scheme(self):
-        # type: () -> bool
+    def is_valid_scheme(self) -> bool:
         """Validate the file scheme according to the scheme we have saved in SCHEMAS_PATH.
 
         Returns:
@@ -176,8 +174,7 @@ class StructureValidator(BaseValidator):
             return None
 
     @error_codes('ST101')
-    def is_file_id_without_slashes(self):
-        # type: () -> bool
+    def is_file_id_without_slashes(self) -> bool:
         """Check if the ID of the file contains any slashes ('/').
 
         Returns:
@@ -202,8 +199,7 @@ class StructureValidator(BaseValidator):
 
         return True
 
-    def load_data_from_file(self):
-        # type: () -> dict
+    def load_data_from_file(self) -> dict:
         """Loads data according to function defined in FILE_SUFFIX_TO_LOAD_FUNCTION
         Returns:
              (dict)

@@ -52,7 +52,7 @@ class TestStructureValidator:
         INCIDENT_FIELD_TARGET,
         PLAYBOOK_PACK_TARGET,
     ]
-    CREATED_DIRS = list()  # type: List
+    CREATED_DIRS: List = list()
 
     @classmethod
     def setup_class(cls):
@@ -181,14 +181,14 @@ class TestStructureValidator:
     expected_error_6 = 'The value "Network Securitys" in \'category\' is invalid ' \
                        '- legal values include: \'Analytics & SIEM\', \'Utilities\', \'Messaging\''
 
-    TEST_ERRORS = [
+    TEST_ERRORS: List[Tuple[str, str, str, str]] = [
         (INVALID_INTEGRATION_YML_1, 'integration', pykwalify_error_1, expected_error_1),
         (INVALID_INTEGRATION_YML_2, 'integration', pykwalify_error_2, expected_error_2),
         (INVALID_INTEGRATION_YML_3, 'integration', pykwalify_error_3, expected_error_3),
         (INVALID_INTEGRATION_YML_4, 'integration', pykwalify_error_4, expected_error_4),
         (INVALID_INTEGRATION_YML_4, 'integration', pykwalify_error_5, expected_error_5),
         (INVALID_INTEGRATION_YML_4, 'integration', pykwalify_error_6, expected_error_6),
-    ]  # type: List[Tuple[str,str,str, str]]
+    ]
 
     @pytest.mark.parametrize('path, scheme , error, correct', TEST_ERRORS)
     def test_print_error_line(self, path, scheme, error, correct, mocker):

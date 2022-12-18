@@ -71,7 +71,7 @@ json = JSON_Handler()
 
 
 class TestValidators:
-    CREATED_DIRS = list()  # type: list[str]
+    CREATED_DIRS: list[str] = list()
 
     @classmethod
     def setup_class(cls):
@@ -175,7 +175,6 @@ class TestValidators:
 
     @pytest.mark.parametrize('source, answer', INPUTS_is_condition_branches_handled)
     def test_is_condition_branches_handled(self, source: str, answer: str) -> None:
-        # type: (str, str) -> None
         try:
             copyfile(source, PLAYBOOK_TARGET)
             structure = StructureValidator(source)
@@ -191,8 +190,7 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize('source, answer', INPUTS_is_condition_branches_handled)
-    def test_are_default_conditions_valid(self, source, answer):
-        # type: (str, str) -> None
+    def test_are_default_conditions_valid(self, source: str, answer: str) -> None:
         try:
             copyfile(source, PLAYBOOK_TARGET)
             structure = StructureValidator(source)
@@ -334,8 +332,7 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize('source, answer', INPUTS_IS_CONNECTED_TO_ROOT)
-    def test_is_root_connected_to_all_tasks(self, source, answer):
-        # type: (str, bool) -> None
+    def test_is_root_connected_to_all_tasks(self, source: str, answer: bool) -> None:
         try:
             copyfile(source, PLAYBOOK_TARGET)
             structure = StructureValidator(source)
@@ -356,8 +353,7 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize('source, target, file_type', INPUTS_STRUCTURE_VALIDATION)
-    def test_is_file_structure(self, source, target, file_type):
-        # type: (str, str, str) -> None
+    def test_is_file_structure(self, source: str, target: str, file_type: str) -> None:
         try:
             copyfile(source, target)
             assert StructureValidator(file_path=source, predefined_scheme=file_type).is_valid_file()

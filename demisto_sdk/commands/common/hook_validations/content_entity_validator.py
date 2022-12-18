@@ -82,13 +82,11 @@ class ContentEntityValidator(BaseValidator):
         return all(tests)
 
     @abstractmethod
-    def is_valid_version(self):
-        # type: () -> bool
+    def is_valid_version(self) -> bool:
         pass
 
     @error_codes('BC105')
-    def is_id_not_modified(self):
-        # type: () -> bool
+    def is_id_not_modified(self) -> bool:
         """Check if the ID of the file has been changed.
 
         Returns:
@@ -108,8 +106,7 @@ class ContentEntityValidator(BaseValidator):
         return True
 
     @error_codes('BC106')
-    def is_valid_fromversion_on_modified(self):
-        # type: () -> bool
+    def is_valid_fromversion_on_modified(self) -> bool:
         """Check that the fromversion property was not changed on existing Content files.
 
         Returns:
@@ -134,8 +131,7 @@ class ContentEntityValidator(BaseValidator):
         return True
 
     @error_codes('BA100')
-    def _is_valid_version(self):
-        # type: () -> bool
+    def _is_valid_version(self) -> bool:
         """Base is_valid_version method for files that version is their root.
 
         Return:
@@ -168,8 +164,7 @@ class ContentEntityValidator(BaseValidator):
         return True
 
     @staticmethod
-    def is_release_branch():
-        # type: () -> bool
+    def is_release_branch() -> bool:
         """Check if we are working on a release branch.
 
         Returns:
@@ -186,8 +181,7 @@ class ContentEntityValidator(BaseValidator):
         return False
 
     @staticmethod
-    def is_subset_dictionary(new_dict, old_dict):
-        # type: (dict, dict) -> bool
+    def is_subset_dictionary(new_dict: dict, old_dict: dict) -> bool:
         """Check if the new dictionary is a sub set of the old dictionary.
 
         Args:

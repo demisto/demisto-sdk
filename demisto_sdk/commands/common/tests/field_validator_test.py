@@ -334,10 +334,10 @@ class TestFieldValidator:
         validator = FieldBaseValidator(structure, set(), set())
         assert validator.is_valid_version() == is_valid, f'is_valid_version({version}) returns {not is_valid}.'
 
-    IS_FROM_VERSION_CHANGED_NO_OLD = {}  # type: dict[any, any]
+    IS_FROM_VERSION_CHANGED_NO_OLD: dict[any, any] = {}
     IS_FROM_VERSION_CHANGED_OLD = {"fromVersion": "5.0.0"}
     IS_FROM_VERSION_CHANGED_NEW = {"fromVersion": "5.0.0"}
-    IS_FROM_VERSION_CHANGED_NO_NEW = {}  # type: dict[any, any]
+    IS_FROM_VERSION_CHANGED_NO_NEW: dict[any, any] = {}
     IS_FROM_VERSION_CHANGED_NEW_HIGHER = {"fromVersion": "5.5.0"}
     IS_CHANGED_FROM_VERSION_INPUTS = [
         (IS_FROM_VERSION_CHANGED_NO_OLD, IS_FROM_VERSION_CHANGED_NO_OLD, False),

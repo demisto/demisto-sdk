@@ -111,8 +111,6 @@ mapping:
         type: bool
   system:
     type: bool
-  hidden:
-    type: bool
   videos:
     type: seq
     sequence:

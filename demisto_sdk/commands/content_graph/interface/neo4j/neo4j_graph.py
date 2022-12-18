@@ -156,7 +156,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def _add_all_level_dependencies(self, session: Session, marketplace: MarketplaceVersions, pack_nodes):
         mandatorily_dependencies: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
-            get_all_level_packs_dependencies, pack_nodes, marketplace
+            get_all_level_packs_dependencies, pack_nodes, marketplace, True
         )
         nodes_to = []
         for pack in mandatorily_dependencies.values():

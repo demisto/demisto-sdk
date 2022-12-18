@@ -4,6 +4,8 @@
 * Added hidden properties to integration command argument and script argument.
 * Added `--override-existing` to **upload** that skips the confirmation prompt for overriding existing content packs. @mattbibbydw
 * Fixed an issue where **validate** failed in private repo due to attempts to read from nonexisting file.
+* Fixed an issue where fields ending with `_x2` where not replaced in the appropriate Marketplace.
+* Fixed an issue where **validate** used absolute paths when getting the remote pack_metadata.json files in private repos.
 * Fixed an issue where custom scripts names were replaced with uuid in IncidentFields and Layouts.
 
 ## 1.8.0

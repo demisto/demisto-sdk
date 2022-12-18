@@ -35,7 +35,7 @@ from demisto_sdk.commands.content_graph.objects.relationship import Relationship
 logger = logging.getLogger("demisto-sdk")
 
 
-def _parse_node(element_id: int, node: dict) -> Tuple[int, BaseContent]:
+def _parse_node(element_id: int, node: dict) -> BaseContent:
     """Parses nodes to content objects and adds it to mapping
 
     Args:
@@ -45,6 +45,7 @@ def _parse_node(element_id: int, node: dict) -> Tuple[int, BaseContent]:
         NoModelException: If no model found to parse on
     """
     obj: BaseContent
+    node["database_id"] = element_id
     content_type = node.get("content_type", "")
     if node.get("not_in_repository") or node.get("is_server_item"):
         obj = ServerContent.parse_obj(node)
@@ -55,7 +56,7 @@ def _parse_node(element_id: int, node: dict) -> Tuple[int, BaseContent]:
             raise NoModelException(f"No model for {content_type}")
         obj = model.parse_obj(node)
 
-    return element_id, obj
+    return obj
 
 
 class NoModelException(Exception):
@@ -118,6 +119,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                     if rel.type == RelationshipType.IN_PACK and node_to.get("content_type") == ContentType.INTEGRATION
                 )
                 obj.set_content_items()  # type: ignore[union-attr]
+                if obj.content_items.integration:
+                    integration_nodes.update(
+                        integration.database_id for integration in obj.content_items.integration if integration.database_id   
+                    )
+
             if isinstance(obj, Integration) and not obj.commands:
                 obj.set_commands()  # type: ignore[union-attr]
 
@@ -186,8 +192,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
         with Pool() as pool:
             results = pool.starmap(_parse_node, ((node.id, dict(node.items())) for node in nodes_to))
-            for id_, result in results:
-                self._id_to_obj[id_] = result
+            for result in results:
+                assert result.database_id
+                self._id_to_obj[result.database_id] = result
 
     def _search(
         self,

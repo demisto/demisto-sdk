@@ -21,8 +21,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export im
                                                                                       pre_export_write_queries)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import create_indexes
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (_match, create_nodes,
-                                                                              delete_all_graph_nodes,
-                                                                              duplicates_exist,
+                                                                              delete_all_graph_nodes, duplicates_exist,
                                                                               remove_empty_properties,
                                                                               remove_server_nodes)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import create_relationships

@@ -3,8 +3,19 @@ commonfields:
   version: -1
   id_x2: id_x2
 name: name
-script: ''
-type: javascript
+script: >-
+  import json
+  def main():
+      execute_command_result = demisto.executeCommand("ParseEmailFiles", {
+          "entryid": demisto.args().get("entryId"),
+          "parse_only_headers": "true",
+          "max_depth": "1"
+      })
+
+  if __name__ == '__builtin__':
+      main()
+type: python
+subtype: python3
 tags:
 - Utility
 comment: Expose the incident owner into IncidentOwner context key

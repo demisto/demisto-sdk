@@ -94,7 +94,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def close(self) -> None:
         self.driver.close()
 
-    def _add_relationships_to_objects(self, session: Session, result: Dict[int, Neo4jRelationshipResult]):
+    def _add_relationships_to_objects(self, session: Session, result: Dict[int, Neo4jRelationshipResult], marketplace: MarketplaceVersions):
         """This adds relationships to given object
 
         Args:
@@ -112,7 +112,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         for id, res in result.items():
             obj = Neo4jContentGraphInterface._id_to_obj[id]
             self._add_relationships(obj, res.relationships, res.nodes_to)
-            if isinstance(obj, Pack):
+            if isinstance(obj, Pack) and not obj.content_items:
                 obj.set_content_items()  # type: ignore[union-attr]
                 content_item_nodes.update(
                     content_item.database_id for content_item in obj.content_items if content_item.database_id
@@ -122,8 +122,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 obj.set_commands()  # type: ignore[union-attr]
 
         if content_item_nodes:
-            integrations_result = session.read_transaction(_match_relationships, content_item_nodes)
-            self._add_relationships_to_objects(session, integrations_result)
+            integrations_result = session.read_transaction(_match_relationships, content_item_nodes, marketplace)
+            self._add_relationships_to_objects(session, integrations_result, marketplace)
 
     def _add_relationships(
         self,
@@ -223,7 +223,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             relationships: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
                 _match_relationships, nodes_without_relationships, marketplace
             )
-            self._add_relationships_to_objects(session, relationships)
+            self._add_relationships_to_objects(session, relationships, marketplace)
 
             pack_nodes = {result.id for result in results if isinstance(self._id_to_obj[result.id], Pack)}
             if all_level_dependencies and pack_nodes and marketplace:

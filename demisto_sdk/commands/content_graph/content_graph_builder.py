@@ -36,6 +36,7 @@ class ContentGraphBuilder:
         if packs_to_update:
             self._parse_and_model_content(packs_to_update)
             self._create_or_update_graph()
+            self.content_graph.clear_cache()
 
     def _preprepare_database(self) -> None:
         self.content_graph.clean_graph()

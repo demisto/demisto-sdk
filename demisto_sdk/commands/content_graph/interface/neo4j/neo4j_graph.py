@@ -305,6 +305,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.write_transaction(create_pack_dependencies)
 
+    def clear_cache(self):
+        self._id_to_obj = {}
+    
     def run_single_query(self, query: str, **kwargs) -> Any:
         with self.driver.session() as session:
             try:

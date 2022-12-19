@@ -191,7 +191,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         """
         nodes = filter(lambda node: node.id not in self._id_to_obj, nodes)
         if not nodes:
-            print("No nodes to parse because", self._id_to_obj)
+            logger.debug("No nodes to parse packs beacuse all of them in mapping", self._id_to_obj)
             return
 
         with Pool() as pool:

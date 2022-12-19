@@ -89,7 +89,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         if self.output_file:
             neo4j_service.dump(self.output_file, self.use_docker)
             logger.info(f"Dumped graph to file: {self.output_file}")
-        self.clear_cache()
         self.driver.close()
 
     def close(self) -> None:
@@ -318,9 +317,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def create_pack_dependencies(self):
         with self.driver.session() as session:
             session.write_transaction(create_pack_dependencies)
-
-    def clear_cache(self):
-        Neo4jContentGraphInterface._id_to_obj = {}
 
     def run_single_query(self, query: str, **kwargs) -> Any:
         with self.driver.session() as session:

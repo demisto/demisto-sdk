@@ -35,7 +35,7 @@ class TestPlaybookValidator(ContentEntityValidator):
             self.are_fromversion_toversion_synchronized(),
         ])
 
-    def is_valid_version(self):  # type: () -> bool
+    def is_valid_version(self) -> bool:
         """Check whether the test playbook version is equal to DEFAULT_VERSION (see base_validator class)
 
         Return:

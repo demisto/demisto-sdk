@@ -397,7 +397,7 @@ class TestUpdateContentGraph:
             - Make sure the expected removed dependencies actually exist before the update
                 and don't exist after the update.
         """
-        with ContentGraphInterface() as interface:
+        with ContentGraphInterface(start_service=True) as interface:
             # create the graph with dependencies
             create_content_graph(interface, export=True, dependencies=True)
             packs_from_graph = interface.search(

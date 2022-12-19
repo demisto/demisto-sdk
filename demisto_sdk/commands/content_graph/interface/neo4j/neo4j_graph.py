@@ -105,6 +105,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             List[BaseContent]: The objects to return with relationships
         """
         content_item_nodes: Set[int] = set()
+        packs = []
         nodes_to = []
         for res in result.values():
             nodes_to.extend(res.nodes_to)
@@ -112,8 +113,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         for id, res in result.items():
             obj = Neo4jContentGraphInterface._id_to_obj[id]
             self._add_relationships(obj, res.relationships, res.nodes_to)
+            from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
             if isinstance(obj, Pack) and not obj.content_items:
-                obj.set_content_items()  # type: ignore[union-attr]
+                # obj.set_content_items()  # type: ignore[union-attr]
+                packs.append(obj)
                 content_item_nodes.update(
                     content_item.database_id for content_item in obj.content_items if content_item.database_id
                 )
@@ -124,7 +127,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         if content_item_nodes:
             content_items_result = session.read_transaction(_match_relationships, content_item_nodes, marketplace)
             self._add_relationships_to_objects(session, content_items_result, marketplace)
-
+        for pack in packs:
+            pack.set_content_items()
+            
     def _add_relationships(
         self,
         obj: BaseContent,
@@ -149,7 +154,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                                      content_item=Neo4jContentGraphInterface._id_to_obj[node_to.id],
                                      is_direct=True,
                                      **rel,
-                                 ))
+                                 )
+                                 )
 
     def _add_all_level_dependencies(self, session: Session, marketplace: MarketplaceVersions, pack_nodes: Iterable[graph.Node]):
         """Helper method to add all level dependencies

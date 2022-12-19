@@ -151,7 +151,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                                      **rel,
                                  ))
 
-    def _add_all_level_dependencies(self, session: Session, marketplace: MarketplaceVersions, pack_nodes: List[graph.Node]]):
+    def _add_all_level_dependencies(self, session: Session, marketplace: MarketplaceVersions, pack_nodes: List[graph.Node]):
         """Helper method to add all level dependencies
 
         Args:

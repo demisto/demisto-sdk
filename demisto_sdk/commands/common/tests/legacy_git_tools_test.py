@@ -3,7 +3,7 @@ import os
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.legacy_git_tools import (filter_changed_files, get_changed_files,
                                                           get_modified_and_added_files)
-from demisto_sdk.tests.constants_test import *
+from demisto_sdk.tests.constants_test import *  # nopycln: import
 
 
 def test_filter_changed_files(mocker):

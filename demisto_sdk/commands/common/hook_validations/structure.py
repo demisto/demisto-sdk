@@ -137,7 +137,7 @@ class StructureValidator(BaseValidator):
                 logging.disable(logging.ERROR)
             scheme_file_name = 'integration' if self.scheme_name.value == 'betaintegration' else self.scheme_name.value  # type: ignore
             path = os.path.normpath(
-                os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, '{}.yml'.format(scheme_file_name)))
+                os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, f'{scheme_file_name}.yml'))
             core = Core(source_file=self.file_path,
                         schema_files=[path])
             core.validate(raise_exception=True)
@@ -214,7 +214,7 @@ class StructureValidator(BaseValidator):
         if file_extension in ACCEPTED_FILE_EXTENSIONS:
             if file_extension in self.FILE_SUFFIX_TO_LOAD_FUNCTION:
                 load_function = self.FILE_SUFFIX_TO_LOAD_FUNCTION[file_extension]
-                with open(self.file_path, 'r') as file_obj:
+                with open(self.file_path) as file_obj:
                     loaded_file_data = load_function(file_obj)  # type: ignore
                     return loaded_file_data
 

@@ -44,7 +44,7 @@ class PartnerChecker(BaseChecker):
     msgs = partner_msg
 
     def __init__(self, linter=None):
-        super(PartnerChecker, self).__init__(linter)
+        super().__init__(linter)
         self.return_error_count = 0
 
     # ------------------------------------- visit functions -------------------------------------------------
@@ -170,8 +170,7 @@ class PartnerChecker(BaseChecker):
             for subnode in list(node.get_children()):
                 yield subnode
 
-                for sub in self._inner_search_return_error(subnode):
-                    yield sub
+                yield from self._inner_search_return_error(subnode)
 
         except AttributeError:
             yield node

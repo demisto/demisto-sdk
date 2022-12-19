@@ -23,7 +23,7 @@ class AuthorImageValidator(ImageValidator):
 
     def get_support_level(self):
         metadata_path = os.path.join(self.pack_path, PACKS_PACK_META_FILE_NAME)
-        with open(metadata_path, 'r') as f:
+        with open(metadata_path) as f:
             metadata_content = json.load(f)
             return metadata_content.get(PACK_METADATA_SUPPORT)
 

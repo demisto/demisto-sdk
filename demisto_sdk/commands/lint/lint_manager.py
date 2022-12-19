@@ -140,7 +140,7 @@ class LintManager:
                              f" {facts[f'requirements_3']}")
             python2_requirements = pipfile_dir / 'pipfile_python2/dev-requirements.txt'
             facts["requirements_2"] = python2_requirements.read_text().strip().split('\n')  # type: ignore
-        except (json.JSONDecodeError, IOError, FileNotFoundError, KeyError) as e:
+        except (json.JSONDecodeError, OSError, FileNotFoundError, KeyError) as e:
             print_error("Can't parse pipfile.lock - Aborting!")
             logger.critical(f"demisto-sdk-can't parse pipfile.lock {e}")
             sys.exit(1)

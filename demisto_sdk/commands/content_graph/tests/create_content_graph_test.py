@@ -3,7 +3,6 @@ from typing import Any, Dict, List
 
 import pytest
 
-import demisto_sdk.commands.content_graph.content_graph_commands as content_graph_commands
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
@@ -26,7 +25,10 @@ from TestSuite.repo import Repo
 @pytest.fixture(autouse=True)
 def setup(mocker, repo: Repo):
     """Auto-used fixture for setup before every test run"""
-    mocker.patch.object(content_graph_commands, "REPO_PATH", Path(repo.path))
+    mocker.patch("demisto_sdk.commands.content_graph.objects.base_content.get_content_path", return_value=Path(repo.path))
+    mocker.patch("demisto_sdk.commands.content_graph.objects.content_item.get_content_path", return_value=Path(repo.path))
+    mocker.patch("demisto_sdk.commands.content_graph.objects.pack.get_content_path", return_value=Path(repo.path))
+    mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
     mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
 
 
@@ -37,7 +39,7 @@ def repository(mocker):
         packs=[],
     )
     mocker.patch(
-        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_repository",
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
         return_value=repository,
     )
     return repository
@@ -48,7 +50,7 @@ def mock_pack(name: str = "SamplePack"):
         object_id=name,
         content_type=ContentType.PACK,
         node_id=f"{ContentType.PACK}:{name}",
-        path=Path("/dummypath"),
+        path=Path("Packs"),
         name=name,
         marketplaces=[MarketplaceVersions.XSOAR],
         description="",
@@ -60,7 +62,7 @@ def mock_pack(name: str = "SamplePack"):
         author="",
         certification="",
         hidden=False,
-        server_min_version="",
+        server_min_version="5.5.0",
         current_version="1.0.0",
         tags=[],
         categories=[],
@@ -75,7 +77,7 @@ def mock_integration(name: str = "SampleIntegration"):
         id=name,
         content_type=ContentType.INTEGRATION,
         node_id=f"{ContentType.INTEGRATION}:{name}",
-        path=Path("/dummypath"),
+        path=Path("Packs"),
         fromversion="5.0.0",
         toversion="99.99.99",
         display_name=name,
@@ -95,7 +97,7 @@ def mock_script(name: str = "SampleScript"):
         id=name,
         content_type=ContentType.SCRIPT,
         node_id=f"{ContentType.SCRIPT}:{name}",
-        path=Path("/dummypath"),
+        path=Path("Packs"),
         fromversion="5.0.0",
         description="",
         display_name=name,
@@ -115,7 +117,7 @@ def mock_classifier(name: str = "SampleClassifier"):
         id=name,
         content_type=ContentType.CLASSIFIER,
         node_id=f"{ContentType.CLASSIFIER}:{name}",
-        path=Path("/dummypath"),
+        path=Path("Packs"),
         fromversion="5.0.0",
         description="",
         display_name=name,
@@ -135,7 +137,7 @@ def mock_playbook(name: str = "SamplePlaybook"):
         id=name,
         content_type=ContentType.PLAYBOOK,
         node_id=f"{ContentType.PLAYBOOK}:{name}",
-        path=Path("/dummypath"),
+        path=Path("Packs"),
         fromversion="5.0.0",
         toversion="99.99.99",
         display_name=name,
@@ -152,7 +154,7 @@ def mock_test_playbook(name: str = "SampleTestPlaybook"):
         id=name,
         # content_type=ContentType.TEST_PLAYBOOK,
         node_id=f"{ContentType.PLAYBOOK}:{name}",
-        path=Path("/dummypath"),
+        path=Path("Packs"),
         fromversion="5.0.0",
         toversion="99.99.99",
         display_name=name,
@@ -547,68 +549,6 @@ class TestCreateContentGraph:
             create_content_graph(interface)
             script = interface.search(object_id="TestScript")[0]
         assert script.not_in_repository
-
-    def test_create_content_graph_duplicate_integrations(
-        self,
-        repository: ContentDTO,
-    ):
-        """
-        Given:
-            - A mocked model of a repository with a pack TestPack, containing two integrations
-              with the exact same properties.
-        When:
-            - Running create_content_graph().
-        Then:
-            - Make sure the duplicates are found and the command fails.
-        """
-        pack = mock_pack()
-        integration = mock_integration()
-        integration2 = mock_integration()
-        relationships = {
-            RelationshipType.IN_PACK: [
-                mock_relationship(
-                    "SampleIntegration",
-                    ContentType.INTEGRATION,
-                    "SamplePack",
-                    ContentType.PACK,
-                ),
-                mock_relationship(
-                    "SampleIntegration",
-                    ContentType.INTEGRATION,
-                    "SamplePack",
-                    ContentType.PACK,
-                ),
-            ],
-            RelationshipType.HAS_COMMAND: [
-                mock_relationship(
-                    "SampleIntegration",
-                    ContentType.INTEGRATION,
-                    "test-command",
-                    ContentType.COMMAND,
-                    name="test-command",
-                    description="",
-                    deprecated=False,
-                ),
-                mock_relationship(
-                    "SampleIntegration",
-                    ContentType.INTEGRATION,
-                    "test-command",
-                    ContentType.COMMAND,
-                    name="test-command",
-                    description="",
-                    deprecated=False,
-                ),
-            ],
-        }
-        pack.relationships = relationships
-        pack.content_items.integration.append(integration)
-        pack.content_items.integration.append(integration2)
-        repository.packs.append(pack)
-        with pytest.raises(Exception) as e:
-            with ContentGraphInterface() as interface:
-                create_content_graph(interface)
-                interface.validate_graph()
-        assert "Duplicates found in graph" in str(e)
 
     def test_create_content_graph_duplicate_integrations_different_marketplaces(
         self,

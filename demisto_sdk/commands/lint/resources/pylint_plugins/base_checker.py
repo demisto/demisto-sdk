@@ -71,7 +71,7 @@ class CustomBaseChecker(BaseChecker):
     msgs = base_msg
 
     def __init__(self, linter=None):
-        super(CustomBaseChecker, self).__init__(linter)
+        super().__init__(linter)
         self.commands = os.getenv('commands', '').split(',') if os.getenv('commands') else []
         self.is_script = True if os.getenv('is_script') == 'True' else False
         # we treat scripts as they already implement the test-module

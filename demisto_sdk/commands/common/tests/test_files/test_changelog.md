@@ -1,4 +1,5 @@
 # Changelog
+## Unreleased
 * Fixed an issue in the **create-id-set** command where similar items from different marketplaces were reported as duplicated.
 * Fixed typo in demisto-sdk init
 * Fixed an issue where the **lint** command did not handle all container exit codes.
@@ -288,7 +289,7 @@
 * Fixed an issue where the demisto-sdk version check failed due to a rate limit.
 * Fixed an issue with playbooks scheme validation.
 
-# 1.3.8
+## 1.3.8
 * Updated the **secrets** command to work on forked branches.
 
 # 1.3.7

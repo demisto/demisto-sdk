@@ -343,6 +343,8 @@ class IntegrationValidator(ContentEntityValidator):
     def is_valid_category(self):
         # type: () -> bool
         """Check that the integration category is in the schema."""
+        if tools.is_external_repository():
+            return True
         category = self.current_file.get('category', None)
         approved_list = tools.get_current_categories()
         if category not in approved_list:
@@ -769,10 +771,7 @@ class IntegrationValidator(ContentEntityValidator):
         # if old integration command has no outputs, no change of context will occur.
         if not old_command_to_context_paths:
             return True
-        # if new integration command has no outputs, and old one does, a change of context will occur.
-        if not current_command_to_context_paths and old_command_to_context_paths \
-                and not self.structure_validator.quiet_bc:
-            return False
+        no_change = True
         for old_command, old_context_paths in old_command_to_context_paths.items():
             if old_command in current_command_to_context_paths.keys():
                 if not self._is_sub_set(current_command_to_context_paths[old_command], old_context_paths):
@@ -780,9 +779,15 @@ class IntegrationValidator(ContentEntityValidator):
                     if self.handle_error(error_message, error_code, file_path=self.file_path,
                                          warning=self.structure_validator.quiet_bc):
                         self.is_valid = False
-                        return False
+                        no_change = False
+            else:
+                error_message, error_code = Errors.breaking_backwards_command(old_command)
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     warning=self.structure_validator.quiet_bc):
+                    self.is_valid = False
+                    no_change = False
 
-        return True
+        return no_change
 
     @error_codes('IN129')
     def no_removed_integration_parameters(self):
@@ -886,7 +891,7 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             bool. True if valid, and False otherwise.
         """
-        return super(IntegrationValidator, self)._is_id_equals_name('integration')
+        return super()._is_id_equals_name('integration')
 
     @error_codes('IN117,IN118')
     def is_valid_display_configuration(self):
@@ -1371,7 +1376,7 @@ class IntegrationValidator(ContentEntityValidator):
             return False
 
         # get README file's content
-        with open(readme_path, 'r') as readme:
+        with open(readme_path) as readme:
             readme_content = readme.read()
 
         # commands = self.current_file.get("script", {}).get('commands', [])

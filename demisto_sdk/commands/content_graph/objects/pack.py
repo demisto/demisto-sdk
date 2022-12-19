@@ -102,7 +102,7 @@ class PackContentItems(BaseModel):
 
     def __bool__(self) -> bool:
         return bool(list(self))
-        
+
     class Config:
         arbitrary_types_allowed = True
         orm_mode = True
@@ -190,7 +190,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         # If there is no server_min_version, set it to the maximum of its content items fromversion
         self.server_min_version = self.server_min_version or str(max(parse(content_item.fromversion) for content_item in content_items))
         self.content_items = PackContentItems(**content_item_dct)
-        
+
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
         metadata = self.dict(exclude={"path", "node_id", "content_type"})
         metadata["contentItems"] = {}

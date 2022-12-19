@@ -100,9 +100,9 @@ class PackContentItems(BaseModel):
         for content_items in vars(self).values():
             yield from content_items
 
-    def __nonzero__(self) -> bool:
+    def __bool__(self) -> bool:
         return bool(self.__iter__())
-    
+        
     class Config:
         arbitrary_types_allowed = True
         orm_mode = True

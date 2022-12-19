@@ -80,7 +80,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         if start_service or not neo4j_service.is_alive():
             neo4j_service.start(use_docker)
         self.output_file = output_file
-        self.use_docker = use_docker
+        self.use_docker = neo4j_service._should_use_docker(use_docker)
 
     def __enter__(self) -> "Neo4jContentGraphInterface":
         return self
@@ -112,7 +112,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         for id, res in result.items():
             obj = Neo4jContentGraphInterface._id_to_obj[id]
             self._add_relationships(obj, res.relationships, res.nodes_to)
-            if isinstance(obj, Pack) and not obj.content_items:
+            if isinstance(obj, Pack) and not list(obj.content_items):
                 obj.set_content_items()  # type: ignore[union-attr]
                 content_item_nodes.update(
                     content_item.database_id for content_item in obj.content_items if content_item.database_id

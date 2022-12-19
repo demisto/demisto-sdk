@@ -653,7 +653,7 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'layoutscontainer',
     'mapper',
     'pre_process_rule',
-    'lists',
+    'list',
     JOB,
     WIZARD,
     'classifier'

@@ -126,7 +126,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         pass
 
 
-class ServerContent(BaseContent):
+class UnknownContent(BaseContent):
     not_in_repository: bool = True
     node_id: str = ""  # just because it's missing from the db
     object_id: str = ""

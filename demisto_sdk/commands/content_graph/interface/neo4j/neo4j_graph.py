@@ -27,7 +27,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (_m
                                                                               remove_server_nodes)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (_match_relationships,
                                                                                       create_relationships)
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent, ServerContent, content_type_to_model
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent, UnknownContent, content_type_to_model
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
@@ -46,8 +46,8 @@ def _parse_node(element_id: int, node: dict) -> BaseContent:
     """
     obj: BaseContent
     content_type = node.get("content_type", "")
-    if node.get("not_in_repository") or node.get("is_server_item"):
-        obj = ServerContent.parse_obj(node)
+    if node.get("not_in_repository"):
+        obj = UnknownContent.parse_obj(node)
 
     else:
         model = content_type_to_model.get(content_type)

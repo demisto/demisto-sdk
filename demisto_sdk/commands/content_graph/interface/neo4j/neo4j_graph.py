@@ -189,7 +189,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Args:
             nodes (List[graph.Node]): list of nodes to add
         """
-        nodes = filter(lambda node: node.id not in self._id_to_obj, nodes)
+        nodes = [node for node in nodes if node.id not in self._id_to_obj]
+        # nodes = filter(lambda node: node.id not in self._id_to_obj, nodes)
         if not nodes:
             logger.debug("No nodes to parse packs because all of them in mapping", self._id_to_obj)
             return

@@ -94,10 +94,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def close(self) -> None:
         self.driver.close()
 
-    def _add_relationships_to_objects(self, result: Dict[int, Neo4jRelationshipResult]):
+    def _add_relationships_to_objects(self, session: Session, result: Dict[int, Neo4jRelationshipResult]):
         """This adds relationships to given object
 
         Args:
+            session (Session): Neo4j session
             result (List[Neo4jResult]): Result from neo4j query
 
         Returns:
@@ -121,9 +122,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 obj.set_commands()  # type: ignore[union-attr]
 
         if content_item_nodes:
-            with self.driver.session() as session:
-                integrations_result = session.read_transaction(_match_relationships, content_item_nodes)
-                self._add_relationships_to_objects(integrations_result)
+            integrations_result = session.read_transaction(_match_relationships, content_item_nodes)
+            self._add_relationships_to_objects(session, integrations_result)
 
     def _add_relationships(
         self,
@@ -151,11 +151,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                                      **rel,
                                  ))
 
-    def _add_all_level_dependencies(self, session: Session, marketplace: MarketplaceVersions, pack_nodes: List[graph.Node]):
+    def _add_all_level_dependencies(self, session: Session, marketplace: MarketplaceVersions, pack_nodes: Iterable[graph.Node]):
         """Helper method to add all level dependencies
 
         Args:
-            session (Session): DB sesseion
+            session (Session): neo4j session
             marketplace (MarketplaceVersions): Marketplace version to check for dependencies
             pack_nodes (List[graph.Node]): List of the pack nodes
         """
@@ -222,7 +222,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             relationships: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
                 _match_relationships, nodes_without_relationships, marketplace
             )
-            self._add_relationships_to_objects(relationships)
+            self._add_relationships_to_objects(session, relationships)
 
             pack_nodes = {result.id for result in results if isinstance(self._id_to_obj[result.id], Pack)}
             if all_level_dependencies and pack_nodes and marketplace:

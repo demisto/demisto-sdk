@@ -99,6 +99,8 @@ class ContentType(str, enum.Enum):
             return "pre-process-rule"
         elif self == ContentType.TEST_PLAYBOOK:
             return ContentType.PLAYBOOK.server_name
+        elif self == ContentType.MAPPER:
+            return "classifier-mapper"
         return self.lower()
 
     @staticmethod

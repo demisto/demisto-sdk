@@ -26,7 +26,7 @@ import git
 import giturlparse
 import requests
 import urllib3
-from bs4 import UnicodeDammit
+from bs4.dammit import UnicodeDammit
 from git.types import PathLike
 from packaging.version import LegacyVersion, Version, parse
 from pebble import ProcessFuture, ProcessPool
@@ -480,7 +480,7 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
     :return: tuple of updated lists: (modified_files, updated_added_files, removed_files)
     """
     # map IDs to removed files
-    packagify_diff = {}  # type: dict
+    packagify_diff: dict = {}
     for file_path in removed_files:
         if file_path.split("/")[0] in PACKAGE_SUPPORTING_DIRECTORIES:
             if PACKS_README_FILE_NAME in file_path:

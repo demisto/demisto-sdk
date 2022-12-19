@@ -36,16 +36,14 @@ class ScriptValidator(ContentEntityValidator):
         return True
 
     @classmethod
-    def _is_sub_set(cls, supposed_bigger_list, supposed_smaller_list):
-        # type: (list, list) -> bool
+    def _is_sub_set(cls, supposed_bigger_list: list, supposed_smaller_list: list) -> bool:
         """Check if supposed_smaller_list is a subset of the supposed_bigger_list"""
         for check_item in supposed_smaller_list:
             if check_item not in supposed_bigger_list:
                 return False
         return True
 
-    def is_backward_compatible(self):
-        # type: () -> bool
+    def is_backward_compatible(self) -> bool:
         """Check if the script is backward compatible."""
         if not self.old_file:
             return True
@@ -60,8 +58,7 @@ class ScriptValidator(ContentEntityValidator):
 
         return not any(is_breaking_backwards)
 
-    def is_valid_file(self, validate_rn=True):
-        # type: (bool) -> bool
+    def is_valid_file(self, validate_rn: bool = True) -> bool:
         """Check whether the script is valid or not"""
         is_script_valid = all([
             super().is_valid_file(validate_rn),
@@ -173,8 +170,7 @@ class ScriptValidator(ContentEntityValidator):
 
         return no_incidents
 
-    def is_there_duplicates_args(self):
-        # type: () -> bool
+    def is_there_duplicates_args(self) -> bool:
         """Check if there are duplicated arguments."""
         args = [arg['name'] for arg in self.current_file.get('args', [])]
         if len(args) != len(set(args)) and not self.structure_validator.quiet_bc:
@@ -182,8 +178,7 @@ class ScriptValidator(ContentEntityValidator):
         return False
 
     @error_codes('BC103')
-    def is_arg_changed(self):
-        # type: () -> bool
+    def is_arg_changed(self) -> bool:
         """Check if the argument has been changed."""
         current_args = [arg['name'] for arg in self.current_file.get('args', [])]
         old_args = [arg['name'] for arg in self.old_file.get('args', [])]
@@ -197,8 +192,7 @@ class ScriptValidator(ContentEntityValidator):
         return False
 
     @error_codes('BC101')
-    def is_context_path_changed(self):
-        # type: () -> bool
+    def is_context_path_changed(self) -> bool:
         """Check if the context path as been changed."""
         current_context = [output['contextPath'] for output in self.current_file.get('outputs') or []]
         old_context = [output['contextPath'] for output in self.old_file.get('outputs') or []]
@@ -219,8 +213,7 @@ class ScriptValidator(ContentEntityValidator):
             """
         return super()._is_id_equals_name('script')
 
-    def is_docker_image_valid(self):
-        # type: () -> bool
+    def is_docker_image_valid(self) -> bool:
         # dockers should not be checked when running on all files
         # dockers should not be checked when running on ApiModules scripts
         if self.skip_docker_check or API_MODULES_PACK in self.file_path:
@@ -237,8 +230,7 @@ class ScriptValidator(ContentEntityValidator):
         return False
 
     @error_codes('SC100')
-    def is_valid_name(self):
-        # type: () -> bool
+    def is_valid_name(self) -> bool:
         version_number: Optional[str] = get_file_version_suffix_if_exists(self.current_file)
         if not version_number:
             return True

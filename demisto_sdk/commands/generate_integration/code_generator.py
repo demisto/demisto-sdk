@@ -3,7 +3,7 @@ import os
 import re
 from distutils.util import strtobool
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import autopep8
 
@@ -173,7 +173,6 @@ class IntegrationGeneratorConfig:
             argument_default: The default format for the argument.
         """
         arg_type = ARGUMENT_TYPES.get(arg.type_, 'str')
-        default: Optional[Any]
         if arg.default_value is None:
             return None
 

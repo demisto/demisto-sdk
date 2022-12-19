@@ -120,7 +120,7 @@ def generate_integration_doc(
                 doc_text, err = append_or_replace_command_in_docs(doc_text, command_section_str, specific_command)
                 errors.extend(err)
         else:
-            docs = []  # type: list
+            docs: list = []
             docs.extend(add_lines(yml_data.get('description')))
             if not is_contribution:
                 docs.extend(['This integration was integrated and tested with version xx of {}'
@@ -341,7 +341,7 @@ def generate_commands_section(
     Returns:
         [str, str] -- [commands section, errors]
     """
-    errors = []  # type: list
+    errors: list = []
     section = [
         '## Commands',
         'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
@@ -642,7 +642,7 @@ def get_command_permissions(commands_permissions_file_path) -> list:
 
     @return: a list of command permissions
     """
-    commands_permissions = []  # type: list
+    commands_permissions: list = []
 
     if commands_permissions_file_path is None:
         return commands_permissions

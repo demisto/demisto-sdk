@@ -89,12 +89,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         if self.output_file:
             neo4j_service.dump(self.output_file, self.use_docker)
             logger.info(f"Dumped graph to file: {self.output_file}")
+        self.clear_cache()
         self.driver.close()
 
     def close(self) -> None:
         self.driver.close()
 
-    def _add_relationships_to_objects(self, session: Session, result: Dict[int, Neo4jRelationshipResult], marketplace: MarketplaceVersions):
+    def _add_relationships_to_objects(self, session: Session, result: Dict[int, Neo4jRelationshipResult], marketplace: Optional[MarketplaceVersions]):
         """This adds relationships to given object
 
         Args:

@@ -147,7 +147,7 @@ def _match(
 
     return [item.get('node') for item in
             run_query(tx, query, filter_list=list(ids_list) if ids_list else None)]
-    
+
 
 def delete_all_graph_nodes(tx: Transaction) -> None:
     query = """

@@ -112,3 +112,6 @@ node_modules
 
 # Certificates
 *.crt
+
+# neo4j
+neo4j-data

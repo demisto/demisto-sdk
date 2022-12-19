@@ -157,14 +157,14 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             get_all_level_packs_dependencies, pack_nodes, marketplace, True
         )
         nodes_to = []
-        for pack in mandatorily_dependencies.values():
-            nodes_to.extend(pack.nodes_to)
+        for pack_depends_on_relationship in mandatorily_dependencies.values():
+            nodes_to.extend(pack_depends_on_relationship.nodes_to)
         self._add_nodes_to_mapping(nodes_to)
 
-        for id, pack in mandatorily_dependencies.items():
-            obj = Neo4jContentGraphInterface._id_to_obj[id]
-            for node_to in pack.nodes_to:
-                target = Neo4jContentGraphInterface._id_to_obj[node_to.id]
+        for pack_id, pack_depends_on_relationship in mandatorily_dependencies.items():
+            obj = Neo4jContentGraphInterface._id_to_obj[pack_id]
+            for node in pack_depends_on_relationship.nodes_to:
+                target = Neo4jContentGraphInterface._id_to_obj[node.id]
                 obj.relationships_data[RelationshipType.DEPENDS_ON].add(
                     RelationshipData(
                         relationship_type=RelationshipType.DEPENDS_ON,

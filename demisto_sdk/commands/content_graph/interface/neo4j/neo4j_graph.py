@@ -112,7 +112,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         for id, res in result.items():
             obj = Neo4jContentGraphInterface._id_to_obj[id]
             self._add_relationships(obj, res.relationships, res.nodes_to)
-            if isinstance(obj, Pack) and not obj.content_items:
+            if isinstance(obj, Pack) and not list(obj.content_items):
                 obj.set_content_items()  # type: ignore[union-attr]
                 content_item_nodes.update(
                     content_item.database_id for content_item in obj.content_items if content_item.database_id
@@ -193,14 +193,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         if not nodes:
             logger.debug("No nodes to parse packs because all of them in mapping", self._id_to_obj)
             return
-        for node in nodes:
-            obj = _parse_node(node.id, dict(node.items()))
-            self._id_to_obj[node.id] = obj
-        # with Pool() as pool:
-        #     results = pool.starmap(_parse_node, ((node.id, dict(node.items())) for node in nodes))
-        #     for result in results:
-        #         assert result.database_id is not None
-        #         self._id_to_obj[result.database_id] = result
+        with Pool() as pool:
+            results = pool.starmap(_parse_node, ((node.id, dict(node.items())) for node in nodes))
+            for result in results:
+                assert result.database_id is not None
+                self._id_to_obj[result.database_id] = result
 
     def _search(
         self,

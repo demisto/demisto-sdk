@@ -178,7 +178,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def _add_nodes_to_mapping(self, nodes_to):
         nodes_to = filter(lambda node: node.id not in self._id_to_obj, nodes_to)
-        if any(nodes_to):
+        if not any(nodes_to):
             return
 
         with Pool() as pool:

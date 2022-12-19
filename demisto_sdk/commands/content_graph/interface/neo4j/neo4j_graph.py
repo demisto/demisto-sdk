@@ -113,9 +113,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         for id, res in result.items():
             obj = Neo4jContentGraphInterface._id_to_obj[id]
             self._add_relationships(obj, res.relationships, res.nodes_to)
-            from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
             if isinstance(obj, Pack) and not obj.content_items:
-                # obj.set_content_items()  # type: ignore[union-attr]
                 packs.append(obj)
                 content_item_nodes.update(
                     content_item.database_id for content_item in obj.content_items if content_item.database_id

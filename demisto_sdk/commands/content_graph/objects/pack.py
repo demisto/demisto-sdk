@@ -108,21 +108,21 @@ class PackContentItems(BaseModel):
 
 class PackMetadata(BaseModel):
     name: str
-    description: str
-    created: str
-    updated: str
-    support: str
-    email: str
-    url: str
-    author: str
-    certification: str
-    hidden: bool
-    server_min_version: str = Field(alias="serverMinVersion")
-    current_version: str = Field(alias="currentVersion")
-    tags: List[str]
-    categories: List[str]
-    use_cases: List[str] = Field(alias="useCases")
-    keywords: List[str]
+    description: Optional[str]
+    created: Optional[str]
+    updated: Optional[str]
+    support: Optional[str]
+    email: Optional[str]
+    url: Optional[str]
+    author: Optional[str]
+    certification: Optional[str]
+    hidden: Optional[bool]
+    server_min_version: Optional[str] = Field(alias="serverMinVersion")
+    current_version: Optional[str] = Field(alias="currentVersion")
+    tags: Optional[List[str]]
+    categories: Optional[List[str]]
+    use_cases: Optional[List[str]] = Field(alias="useCases")
+    keywords: Optional[List[str]]
     price: Optional[int] = None
     premium: Optional[bool] = None
     vendor_id: Optional[str] = Field(None, alias="vendorId")

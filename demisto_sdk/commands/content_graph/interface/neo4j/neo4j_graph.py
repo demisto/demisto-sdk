@@ -307,7 +307,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def clear_cache(self):
         self._id_to_obj = {}
-    
+
     def run_single_query(self, query: str, **kwargs) -> Any:
         with self.driver.session() as session:
             try:

@@ -141,16 +141,15 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             nodes_to (List[graph.Node]): The list of nodes of the target
         """
         for node_to, rel in zip(nodes_to, relationships):
-            obj.relationships_data[rel.type].add(
-                RelationshipData(
-                    relationship_type=rel.type,
-                    source=Neo4jContentGraphInterface._id_to_obj[rel.start_node.id],
-                    target=Neo4jContentGraphInterface._id_to_obj[rel.end_node.id],
-                    content_item=Neo4jContentGraphInterface._id_to_obj[node_to.id],
-                    is_direct=True,
-                    **rel,
-                )
-            )
+            obj.add_relationship(rel.type,
+                                 RelationshipData(
+                                     relationship_type=rel.type,
+                                     source=Neo4jContentGraphInterface._id_to_obj[rel.start_node.id],
+                                     target=Neo4jContentGraphInterface._id_to_obj[rel.end_node.id],
+                                     content_item=Neo4jContentGraphInterface._id_to_obj[node_to.id],
+                                     is_direct=True,
+                                     **rel,
+                                 ))
 
     def _add_all_level_dependencies(self, session: Session, marketplace: MarketplaceVersions, pack_nodes):
         mandatorily_dependencies: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
@@ -165,7 +164,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             obj = Neo4jContentGraphInterface._id_to_obj[pack_id]
             for node in pack_depends_on_relationship.nodes_to:
                 target = Neo4jContentGraphInterface._id_to_obj[node.id]
-                obj.relationships_data[RelationshipType.DEPENDS_ON].add(
+                obj.add_relationship(
+                    RelationshipType.DEPENDS_ON,
                     RelationshipData(
                         relationship_type=RelationshipType.DEPENDS_ON,
                         source=obj,
@@ -211,7 +211,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 _match_relationships, nodes_without_relationships, marketplace
             )
             self._add_relationships_to_objects(relationships)
-            
+
             pack_nodes = {result.id for result in results if isinstance(self._id_to_obj[result.id], Pack)}
             if all_level_dependencies and pack_nodes and marketplace:
                 self._add_all_level_dependencies(session, marketplace, pack_nodes)

@@ -124,6 +124,9 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     @abstractmethod
     def dump(self, path: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         pass
+    
+    def add_relationship(self, relationship_type: RelationshipType, relationship: "RelationshipData") -> None:
+        self.relationships_data[relationship_type].add(relationship)
 
 
 class UnknownContent(BaseContent):

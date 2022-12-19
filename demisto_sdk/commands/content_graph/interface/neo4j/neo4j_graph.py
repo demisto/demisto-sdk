@@ -151,7 +151,14 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                                      **rel,
                                  ))
 
-    def _add_all_level_dependencies(self, session: Session, marketplace: MarketplaceVersions, pack_nodes):
+    def _add_all_level_dependencies(self, session: Session, marketplace: MarketplaceVersions, pack_nodes: List[graph.Node]]):
+        """Helper method to add all level dependencies
+
+        Args:
+            session (Session): DB sesseion
+            marketplace (MarketplaceVersions): Marketplace version to check for dependencies
+            pack_nodes (List[graph.Node]): List of the pack nodes
+        """
         mandatorily_dependencies: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
             get_all_level_packs_dependencies, pack_nodes, marketplace, True
         )
@@ -176,13 +183,18 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                     )
                 )
 
-    def _add_nodes_to_mapping(self, nodes_to):
-        nodes_to = filter(lambda node: node.id not in self._id_to_obj, nodes_to)
-        if not any(nodes_to):
+    def _add_nodes_to_mapping(self, nodes: List[graph.Node]) -> None:
+        """Add nodes to the content models mapping
+
+        Args:
+            nodes (List[graph.Node]): list of nodes to add
+        """
+        nodes = filter(lambda node: node.id not in self._id_to_obj, nodes)
+        if not nodes:
             return
 
         with Pool() as pool:
-            results = pool.starmap(_parse_node, ((node.id, dict(node.items())) for node in nodes_to))
+            results = pool.starmap(_parse_node, ((node.id, dict(node.items())) for node in nodes))
             for result in results:
                 assert result.database_id is not None
                 self._id_to_obj[result.database_id] = result

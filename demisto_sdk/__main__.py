@@ -886,6 +886,10 @@ def format(
          "any detached item in your XSOAR instance that isn't currently in the repo's SystemPacks folder "
          "will be re-attached.)", is_flag=True
 )
+@click.option(
+    "--override-existing", is_flag=True,
+    help="If true will skip override confirmation prompt while uploading packs."
+)
 def upload(**kwargs):
     """Upload integration or pack to Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.

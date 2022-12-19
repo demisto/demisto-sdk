@@ -50,8 +50,7 @@ from demisto_sdk.commands.common.constants import (ALL_FILES_VALIDATION_IGNORE_W
                                                    REPORTS_DIR, SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR,
                                                    TRIGGER_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
                                                    XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
-                                                   XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, IdSetKeys,
-                                                   MarketplaceVersions, urljoin)
+                                                   XSOAR_CONFIG_FILE, FileType, IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
@@ -334,7 +333,9 @@ def get_local_remote_file(
     git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
     file_content = repo_git_util.get_local_remote_file_content(git_path)
     if return_content:
-        return file_content.encode()
+        if file_content:
+            return file_content.encode()
+        return file_content
     return get_file_details(file_content, full_file_path)
 
 
@@ -2791,49 +2792,6 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
             })
 
     return detailed_commands, scripts_and_pbs
-
-
-def alternate_item_fields(content_item: dict):
-    """
-    Go over all of the given content item fields and if there is a field with an alternative name, which is marked
-    by '_x2', use that value as the value of the original field (the corresponding one without the '_x2' suffix).
-    Args:
-        content_item: content item data
-
-    """
-    copy_dict = content_item.copy()  # for modifying dict while iterating
-    for field, value in copy_dict.items():
-        if field.lower().endswith('_x2'):
-            content_item[field[:-3]] = value
-            content_item.pop(field)
-        elif isinstance(content_item[field], dict):
-            alternate_item_fields(content_item[field])
-        elif isinstance(content_item[field], list):
-            for item in content_item[field]:
-                if isinstance(item, dict):
-                    alternate_item_fields(item)
-
-
-def should_alternate_field_by_item(content_item, id_set):
-    """
-    Go over the given content item and check if it should be modified to use its alternative fields, which is determined
-    by the field 'has_alternative_meta' in the id set.
-    Args:
-        content_item: content item object
-        id_set: parsed id set dict
-
-    Returns: True if should alterante fields, false otherwise
-
-    """
-    commonfields = content_item.get('commonfields')
-    item_id = commonfields.get('id') if commonfields else content_item.get('id')
-
-    item_type = content_item.type()
-    id_set_item_type = id_set.get(FileTypeToIDSetKeys.get(item_type))
-    for item in id_set_item_type:
-        if list(item.keys())[0] == item_id:
-            return item.get(item_id, {}).get('has_alternative_meta', False)
-    return False
 
 
 def get_url_with_retries(url: str, retries: int, backoff_factor: int = 1, **kwargs):

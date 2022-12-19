@@ -1,7 +1,7 @@
 import logging
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set
 
 from neo4j import GraphDatabase, Neo4jDriver, Session, graph
 

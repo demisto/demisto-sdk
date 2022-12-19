@@ -112,7 +112,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         for id, res in result.items():
             obj = Neo4jContentGraphInterface._id_to_obj[id]
             self._add_relationships(obj, res.relationships, res.nodes_to)
-            if isinstance(obj, Pack) and not list(obj.content_items):
+            if isinstance(obj, Pack):
                 obj.set_content_items()  # type: ignore[union-attr]
                 content_item_nodes.update(
                     content_item.database_id for content_item in obj.content_items if content_item.database_id
@@ -191,7 +191,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         """
         nodes = filter(lambda node: node.id not in self._id_to_obj, nodes)
         if not nodes:
-            logger.debug("No nodes to parse packs beacuse all of them in mapping", self._id_to_obj)
+            logger.debug("No nodes to parse packs because all of them in mapping", self._id_to_obj)
             return
 
         with Pool() as pool:

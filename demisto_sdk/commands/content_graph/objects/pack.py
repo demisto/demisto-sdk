@@ -101,7 +101,7 @@ class PackContentItems(BaseModel):
             yield from content_items
 
     def __bool__(self) -> bool:
-        return bool(self.__iter__())
+        return bool(list(self))
         
     class Config:
         arbitrary_types_allowed = True

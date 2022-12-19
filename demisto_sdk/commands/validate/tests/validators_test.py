@@ -71,7 +71,7 @@ json = JSON_Handler()
 
 
 class TestValidators:
-    CREATED_DIRS: list[str] = list()
+    CREATED_DIRS: List[str] = list()
 
     @classmethod
     def setup_class(cls):

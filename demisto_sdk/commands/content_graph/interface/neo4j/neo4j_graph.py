@@ -105,7 +105,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             List[BaseContent]: The objects to return with relationships
         """
         content_item_nodes: Set[int] = set()
-        packs = []
+        packs: List[Pack] = []
         nodes_to = []
         for res in result.values():
             nodes_to.extend(res.nodes_to)
@@ -116,7 +116,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             if isinstance(obj, Pack) and not obj.content_items:
                 packs.append(obj)
                 content_item_nodes.update(
-                    content_item.database_id for content_item in obj.content_items if content_item.database_id
+                    node.id for node, rel in zip(res.nodes_to, res.relationships) if rel.type == RelationshipType.IN_PACK
                 )
 
             if isinstance(obj, Integration) and not obj.commands:
@@ -125,6 +125,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         if content_item_nodes:
             content_items_result = session.read_transaction(_match_relationships, content_item_nodes, marketplace)
             self._add_relationships_to_objects(session, content_items_result, marketplace)
+        
+        # we need to set content items only after they are fully loaded
         for pack in packs:
             pack.set_content_items()
             

@@ -189,17 +189,18 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Args:
             nodes (List[graph.Node]): list of nodes to add
         """
-        nodes = [node for node in nodes if node.id not in self._id_to_obj]
-        # nodes = filter(lambda node: node.id not in self._id_to_obj, nodes)
+        nodes = filter(lambda node: node.id not in self._id_to_obj, nodes)
         if not nodes:
             logger.debug("No nodes to parse packs because all of them in mapping", self._id_to_obj)
             return
-
-        with Pool() as pool:
-            results = pool.starmap(_parse_node, ((node.id, dict(node.items())) for node in nodes))
-            for result in results:
-                assert result.database_id is not None
-                self._id_to_obj[result.database_id] = result
+        for node in nodes:
+            obj = _parse_node(node.id, dict(node.items()))
+            self._id_to_obj[node.id] = obj
+        # with Pool() as pool:
+        #     results = pool.starmap(_parse_node, ((node.id, dict(node.items())) for node in nodes))
+        #     for result in results:
+        #         assert result.database_id is not None
+        #         self._id_to_obj[result.database_id] = result
 
     def _search(
         self,

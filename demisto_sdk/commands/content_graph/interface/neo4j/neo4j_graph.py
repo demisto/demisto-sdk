@@ -178,7 +178,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def _add_nodes_to_mapping(self, nodes_to):
         nodes_to = filter(lambda node: node.id not in self._id_to_obj, nodes_to)
-        if not nodes_to:
+        if any(nodes_to):
             return
 
         with Pool() as pool:
@@ -306,7 +306,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.write_transaction(create_pack_dependencies)
 
     def clear_cache(self):
-        self._id_to_obj = {}
+        Neo4jContentGraphInterface._id_to_obj = {}
 
     def run_single_query(self, query: str, **kwargs) -> Any:
         with self.driver.session() as session:

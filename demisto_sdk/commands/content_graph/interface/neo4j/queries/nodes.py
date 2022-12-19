@@ -122,43 +122,32 @@ def _match(
     tx: Transaction,
     marketplace: MarketplaceVersions = None,
     content_type: Optional[ContentType] = None,
-    filter_list: Optional[Iterable[int]] = None,
+    ids_list: Optional[Iterable[int]] = None,
     **properties,
 ) -> List[Neo4jRelationshipResult]:
     params_str = to_neo4j_map(properties)
 
     content_type_str = f":{content_type}" if content_type else ""
     where = []
-    if marketplace or filter_list:
+    if marketplace or ids_list:
         where.append("WHERE")
-        if filter_list:
-            where.append("id(node_id) = id(node)")
-        if filter_list and marketplace:
+        if ids_list:
+            where.append("node_id = id(node)")
+        if ids_list and marketplace:
             where.append("AND")
         if marketplace:
-            # where.append(f"'{marketplace}' IN node_from.marketplaces AND '{marketplace}' IN node_to.marketplaces")
             where.append(f"'{marketplace}' IN node.marketplaces")
     query = f"""
     MATCH (node{content_type_str}{params_str})
     {" ".join(where)}
     RETURN node
     """
-    if filter_list:
+    if ids_list:
         query = "UNWIND $filter_list AS node_id\n" + query
 
     return [item.get('node') for item in
-            run_query(tx, query, filter_list=list(filter_list) if filter_list else None)]
-    # query = f"""
-    # MATCH (node_from{content_type_str}{params_str}) - [relationship*0..1] - (node_to)
-    # WHERE id(node_from) <> id(node_to)
-    # {" ".join(where)}
-    # RETURN node_from, collect(relationship) as relationships, collect(node_to) as nodes_to
-    # """
-    # return [
-    #     Neo4jResult(node_from=item.get("node_from"), relationships=item.get("relationships"), nodes_to=item.get("nodes_to"))
-    #     for item in run_query(tx, query, filter_list=list(filter_list) if filter_list else None)
-    # ]
-
+            run_query(tx, query, filter_list=list(ids_list) if ids_list else None)]
+    
 
 def delete_all_graph_nodes(tx: Transaction) -> None:
     query = """

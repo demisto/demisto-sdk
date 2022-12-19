@@ -205,14 +205,14 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             )
             self._add_nodes_to_mapping(results)
 
-            pack_nodes = {result.id for result in results if isinstance(self._id_to_obj[result.id], Pack)}
-            missing_relationships = {result.id for result in results if not self._id_to_obj[result.id].relationships_data}
+            nodes_without_relationships = {result.id for result in results if not self._id_to_obj[result.id].relationships_data}
 
             relationships: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
-                _match_relationships, missing_relationships, marketplace
+                _match_relationships, nodes_without_relationships, marketplace
             )
             self._add_relationships_to_objects(relationships)
-
+            
+            pack_nodes = {result.id for result in results if isinstance(self._id_to_obj[result.id], Pack)}
             if all_level_dependencies and pack_nodes and marketplace:
                 self._add_all_level_dependencies(session, marketplace, pack_nodes)
             return [self._id_to_obj[result.id] for result in results]

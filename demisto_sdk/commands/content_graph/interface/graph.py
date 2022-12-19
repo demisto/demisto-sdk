@@ -49,7 +49,7 @@ class ContentGraphInterface(ABC):
         self,
         marketplace: MarketplaceVersions = None,
         content_type: Optional[ContentType] = None,
-        filter_list: Optional[Iterable[int]] = None,
+        ids_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,
         **properties,
     ) -> List[BaseContent]:
@@ -59,7 +59,7 @@ class ContentGraphInterface(ABC):
         Args:
             marketplace (MarketplaceVersions, optional): Marketplace to search by. Defaults to None.
             content_type (Optional[ContentType], optional): The content_type to filter. Defaults to None.
-            filter_list (Optional[Iterable[int]], optional): A list of unique IDs to filter. Defaults to None.
+            ids_list (Optional[Iterable[int]], optional): A list of unique IDs to filter. Defaults to None.
             all_level_dependencies (bool, optional): Whether to return all level dependencies. Defaults to False.
             **properties: A key, value filter for the search. For example: `search(object_id="QRadar")`.
 

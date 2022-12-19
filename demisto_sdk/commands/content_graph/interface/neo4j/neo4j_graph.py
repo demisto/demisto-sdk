@@ -103,7 +103,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Returns:
             List[BaseContent]: The objects to return with relationships
         """
-        integration_nodes: Set[int] = set()
+        content_item_nodes: Set[int] = set()
         nodes_to = []
         for res in result.values():
             nodes_to.extend(res.nodes_to)
@@ -113,17 +113,16 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships(obj, res.relationships, res.nodes_to)
             if isinstance(obj, Pack) and not list(obj.content_items):
                 obj.set_content_items()  # type: ignore[union-attr]
-                if obj.content_items.integration:
-                    integration_nodes.update(
-                        integration.database_id for integration in obj.content_items.integration if integration.database_id   
-                    )
+                content_item_nodes.update(
+                    content_item.database_id for content_item in obj.content_items if content_item.database_id
+                )
 
             if isinstance(obj, Integration) and not obj.commands:
                 obj.set_commands()  # type: ignore[union-attr]
 
-        if integration_nodes:
+        if content_item_nodes:
             with self.driver.session() as session:
-                integrations_result = session.read_transaction(_match_relationships, integration_nodes)
+                integrations_result = session.read_transaction(_match_relationships, content_item_nodes)
                 self._add_relationships_to_objects(integrations_result)
 
     def _add_relationships(

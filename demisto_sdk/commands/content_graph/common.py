@@ -1,7 +1,7 @@
 import enum
 import os
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, NamedTuple, Optional, Set
+from typing import Any, Dict, Iterator, List, NamedTuple, Set
 
 from neo4j import graph
 
@@ -108,24 +108,19 @@ class ContentType(str, enum.Enum):
         return [c.server_name for c in ContentType] + ["indicatorfield", "mapper"]
 
     @classmethod
-    def by_folder(cls, folder: str) -> "ContentType":
-        return cls(folder[:-1])  # remove the `s`
-
-    @classmethod
-    def by_path(cls, path: Path) -> Optional["ContentType"]:
-        try:
-            for idx, folder in enumerate(path.parts):
-                if folder == PACKS_FOLDER:
-                    content_type_dir = path.parts[idx + 2]
-                    break
+    def by_path(cls, path: Path) -> "ContentType":
+        for idx, folder in enumerate(path.parts):
+            if folder == PACKS_FOLDER:
+                content_type_dir = path.parts[idx + 2]
+                break
+        else:
+            # less safe option - will raise an exception if the path
+            # is not to the content item directory or file
+            if path.is_dir():
+                content_type_dir = path.parts[-1]
             else:
-                # less safe option
                 content_type_dir = path.parts[-2]
-            return cls(content_type_dir[:-1])  # remove the `s`
-        except Exception:
-            # could not detect the content type - skipping
-            pass
-        return None
+        return cls(content_type_dir[:-1])  # remove the `s`
 
     @staticmethod
     def folders() -> List[str]:

@@ -89,18 +89,18 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
                 path = path.parent
             else:
                 return None
-        if content_type := ContentType.by_path(path):
-            if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
-                try:
-                    return ContentItemParser.parse(
-                        parser_cls,
-                        path,
-                        pack_marketplaces,
-                    )
-                except IncorrectParserException as e:
-                    return ContentItemParser.parse(
-                        e.correct_parser, path, pack_marketplaces, **e.kwargs
-                    )
+        content_type: ContentType = ContentType.by_path(path)
+        if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
+            try:
+                return ContentItemParser.parse(
+                    parser_cls,
+                    path,
+                    pack_marketplaces,
+                )
+            except IncorrectParserException as e:
+                return ContentItemParser.parse(
+                    e.correct_parser, path, pack_marketplaces, **e.kwargs
+                )
         return None
 
     @staticmethod

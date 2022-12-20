@@ -56,7 +56,7 @@ XSOAR_MARKETPLACE_ITEMS_TO_DUMP = [FileType.CLASSIFIER, FileType.CONNECTION, Fil
                                    FileType.PACK_METADATA, FileType.METADATA, FileType.README, FileType.AUTHOR_IMAGE]
 XSIAM_MARKETPLACE_ITEMS_TO_DUMP = [FileType.CLASSIFIER, FileType.CONNECTION, FileType.INCIDENT_FIELD,
                                    FileType.INCIDENT_TYPE, FileType.INDICATOR_FIELD, FileType.INDICATOR_TYPE,
-                                   FileType.INTEGRATION, FileType.JOB, FileType.XSIAM_LAYOUT, FileType.LISTS,
+                                   FileType.INTEGRATION, FileType.JOB, FileType.LISTS,
                                    FileType.PLAYBOOK, FileType.SCRIPT, FileType.TEST_PLAYBOOK, FileType.RELEASE_NOTES,
                                    FileType.RELEASE_NOTES_CONFIG, FileType.WIZARD,
                                    FileType.PARSING_RULE, FileType.MODELING_RULE, FileType.CORRELATION_RULE,

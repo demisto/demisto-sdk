@@ -105,7 +105,7 @@ class ContentType(str, enum.Enum):
 
     @staticmethod
     def server_names() -> List[str]:
-        return [c.server_name for c in ContentType] + ["indicatorfield"]
+        return [c.server_name for c in ContentType] + ["indicatorfield", "mapper"]
 
     @classmethod
     def by_folder(cls, folder: str) -> "ContentType":

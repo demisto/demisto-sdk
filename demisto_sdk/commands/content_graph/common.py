@@ -117,8 +117,13 @@ class ContentType(str, enum.Enum):
             for idx, folder in enumerate(path.parts):
                 if folder == PACKS_FOLDER:
                     content_type_dir = path.parts[idx + 2]
-                    return cls(content_type_dir[:-1])  # remove the `s`
+                    break
+            else:
+                # less safe option
+                content_type_dir = path.parts[-2]
+            return cls(content_type_dir[:-1])  # remove the `s`
         except Exception:
+            # could not detect the content type - skipping
             pass
         return None
 

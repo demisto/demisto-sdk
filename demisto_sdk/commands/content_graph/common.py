@@ -1,7 +1,7 @@
 import enum
 import os
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, NamedTuple, Set
+from typing import Any, Dict, Iterator, List, NamedTuple, Optional, Set
 
 from neo4j import graph
 
@@ -111,6 +111,17 @@ class ContentType(str, enum.Enum):
     def by_folder(cls, folder: str) -> "ContentType":
         return cls(folder[:-1])  # remove the `s`
 
+    @classmethod
+    def by_path(cls, path: Path) -> Optional["ContentType"]:
+        try:
+            for idx, folder in enumerate(path.parts):
+                if folder == PACKS_FOLDER:
+                    content_type_dir = path.parts[idx + 2]
+                    return cls(content_type_dir[:-1])  # remove the `s`
+        except Exception:
+            pass
+        return None
+
     @staticmethod
     def folders() -> List[str]:
         return [c.as_folder for c in ContentType]
@@ -145,13 +156,22 @@ class ContentType(str, enum.Enum):
         return ContentType.non_abstracts(include_non_content_items=False)
 
     @staticmethod
+    def threat_intel_report_types() -> List["ContentType"]:
+        return [ContentType.GENERIC_FIELD, ContentType.GENERIC_TYPE]
+
+    @staticmethod
     def pack_folders(pack_path: Path) -> Iterator[Path]:
         for content_type in ContentType.content_items():
             if content_type == ContentType.MAPPER:
                 continue
             pack_folder = pack_path / content_type.as_folder
             if pack_folder.is_dir() and not pack_folder.name.startswith("."):
-                yield pack_folder
+                if content_type not in ContentType.threat_intel_report_types():
+                    yield pack_folder
+                else:
+                    for tir_folder in pack_folder.iterdir():
+                        if tir_folder.is_dir() and not tir_folder.name.startswith("."):
+                            yield tir_folder
 
 
 class Relationships(dict):

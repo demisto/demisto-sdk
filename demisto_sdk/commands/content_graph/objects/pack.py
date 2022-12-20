@@ -251,8 +251,13 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 logger.info(f'No such file {self.path / "Author_image.png"}')
             if self.object_id == "Base":
                 content_path = Path(get_content_path())  # type: ignore
-                shutil.copy(content_path / "Documentation" / "doc-CommonServer.json", path / "Documentation" / "doc-CommonServer.json")
-                shutil.copy(content_path / "Documentation" / "doc-howto.json", path / "Documentation" / "doc-howto.json")
+                documentation_path = content_path / "Documentation"
+                documentation_output = path / "Documentation"
+                documentation_output.mkdir(exist_ok=True, parents=True)
+                shutil.copy(documentation_path / "doc-howto.json", documentation_output / "doc-howto.json")
+                if (documentation_path / "doc-CommonServerPython.json").exists():
+                    shutil.copy(documentation_path / "doc-CommonServerPython.json", documentation_output / "doc-CommonServerPython.json")
+
             logger.info(f"Dumped pack {self.name}. Files: {list(path.iterdir())}")
         except Exception as e:
             logger.error(f"Failed dumping pack {self.name}: {e}")

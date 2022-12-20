@@ -117,9 +117,9 @@ class ContentType(str, enum.Enum):
             # less safe option - will raise an exception if the path
             # is not to the content item directory or file
             if path.is_dir():
-                content_type_dir = path.parts[-1]
-            else:
                 content_type_dir = path.parts[-2]
+            else:
+                content_type_dir = path.parts[-3]
         return cls(content_type_dir[:-1])  # remove the `s`
 
     @staticmethod

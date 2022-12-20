@@ -144,7 +144,12 @@ class ContentItem(BaseContent):
         """
         name = self.path.name
         for prefix in ContentType.server_names():
-            name = name.replace(f"{prefix}-", "")
+            name = name.lstrip(f"{prefix}-")
+        
+        # we need to iterations because maybe the prefix is in the middle of the name
+        for prefix in ContentType.server_names():
+            name = name.lstrip(f"{prefix}-")
+
         normalized = f"{self.content_type.server_name}-{name}"
         logger.info(f"Normalized file name from {name} to {normalized}")
         return normalized

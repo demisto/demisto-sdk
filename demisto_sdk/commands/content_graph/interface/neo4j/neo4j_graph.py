@@ -125,11 +125,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         if content_item_nodes:
             content_items_result = session.read_transaction(_match_relationships, content_item_nodes, marketplace)
             self._add_relationships_to_objects(session, content_items_result, marketplace)
-        
+
         # we need to set content items only after they are fully loaded
         for pack in packs:
             pack.set_content_items()
-            
+
     def _add_relationships(
         self,
         obj: BaseContent,

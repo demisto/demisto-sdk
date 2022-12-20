@@ -230,8 +230,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         try:
             path.mkdir(exist_ok=True, parents=True)
             for content_item in self.content_items:
+                folder = content_item.content_type.as_folder
+                if content_item.content_type == ContentType.SCRIPT and content_item.is_test:
+                    folder = ContentType.TEST_PLAYBOOK.as_folder
                 content_item.dump(
-                    path / content_item.content_type.as_folder, marketplace
+                    path / folder, marketplace
                 )
             self.dump_metadata(path / "metadata.json", marketplace)
             self.dump_readme(path / "README.md", marketplace)

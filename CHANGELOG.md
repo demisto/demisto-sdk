@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where modeling rules with arbitrary whitespace characters were not parsed correctly.
 
 ## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.

@@ -143,11 +143,16 @@ class ContentItem(BaseContent):
             str: The normalized name.
         """
         name = self.path.name
-        for prefix in ContentType.server_names():
+        server_names = ContentType.server_names()
+        # for BC want to keep `classifier-mapper-classifier-*`.`
+        if self.content_type in {ContentType.CLASSIFIER, ContentType.MAPPER}:
+            server_names.remove(ContentType.CLASSIFIER.server_name)
+        
+        for prefix in server_names:
             name = name.lstrip(f"{prefix}-")
         
         # we need to iterations because maybe the prefix is in the middle of the name
-        for prefix in ContentType.server_names():
+        for prefix in server_names:
             name = name.lstrip(f"{prefix}-")
 
         normalized = f"{self.content_type.server_name}-{name}"

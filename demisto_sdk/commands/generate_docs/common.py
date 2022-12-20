@@ -275,8 +275,8 @@ def build_example_dict(command_examples: list, insecure: bool) -> Tuple[Dict[str
     gets an array of command examples, run them one by one and return a map of
         {base command -> [(example command, markdown, outputs), ...]}.
     """
-    examples = {}  # type: dict
-    errors = []  # type: list
+    examples: dict = {}
+    errors: list = []
     for example in command_examples:
         name, md_example, context_example, cmd_errors = execute_command(example, insecure)
         if 'playbookQuery' in context_example:

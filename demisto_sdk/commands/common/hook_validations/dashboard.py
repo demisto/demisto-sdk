@@ -6,16 +6,14 @@ from demisto_sdk.commands.common.tools import print_error
 
 class DashboardValidator(ContentEntityValidator):
     @staticmethod
-    def get_widgets_from_dashboard(dashboard):
-        # type: () -> list
+    def get_widgets_from_dashboard(dashboard) -> list:
         layout_of_dashboard: list = dashboard.get('layout', [])
         widgets = []
         if layout_of_dashboard:
             widgets = [item.get('widget') for item in layout_of_dashboard]
         return widgets
 
-    def is_valid_dashboard(self, validate_rn=True):
-        # type: (bool) -> bool
+    def is_valid_dashboard(self, validate_rn: bool = True) -> bool:
         """Check whether the dashboard is valid or not.
 
         Returns:
@@ -32,8 +30,7 @@ class DashboardValidator(ContentEntityValidator):
 
         return is_dashboard_valid
 
-    def is_valid_version(self):
-        # type: () -> bool
+    def is_valid_version(self) -> bool:
         """Return if version is valid. uses default method.
 
         Returns:
@@ -41,8 +38,7 @@ class DashboardValidator(ContentEntityValidator):
         """
         return self._is_valid_version()
 
-    def is_id_equals_name(self):
-        # type: () -> bool
+    def is_id_equals_name(self) -> bool:
         """Check whether the dashboard ID is equal to its name.
 
         Returns:
@@ -51,8 +47,7 @@ class DashboardValidator(ContentEntityValidator):
         return super()._is_id_equals_name('dashboard')
 
     @error_codes('DA100,WD100')
-    def contains_forbidden_fields(self):
-        # type: () -> bool
+    def contains_forbidden_fields(self) -> bool:
         """Return if root and widgets exclude the unnecessary fields.
 
         Returns:
@@ -88,8 +83,7 @@ class DashboardValidator(ContentEntityValidator):
         return is_valid
 
     @error_codes('DA101,WD101')
-    def is_including_fields(self):
-        # type: () -> bool
+    def is_including_fields(self) -> bool:
         """Return if root and inner widgets includes the necessary fields.
 
         Returns:

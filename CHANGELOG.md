@@ -1,17 +1,19 @@
 # Changelog
 ## Unreleased
 * Added a new validation to the **validate** command to verify that the release notes headers are in the correct format.
+
+## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.
 * Added hidden properties to integration command argument and script argument.
 * Added `--override-existing` to **upload** that skips the confirmation prompt for overriding existing content packs. @mattbibbydw
-* Fixed an issue where **validate** failed in private repo due to attempts to read from nonexisting file.
-* Fixed an issue where fields ending with `_x2` where not replaced in the appropriate Marketplace.
-* Fixed an issue where **validate** used absolute paths when getting the remote pack_metadata.json files in private repos.
+* Fixed an issue where **validate** failed in private repos when attempting to read from a nonexisting `approved_categories.json`.
+* Fixed an issue where **validate** used absolute paths when getting remote `pack_metadata.json` files in private repos.
+* Fixed an issue in **download**, where names of custom scripts were replaced with UUIDs in IncidentFields and Layouts.
 
 ## 1.8.0
 * Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.
 * Added a **validate** step for **Modeling Rules** testdata files.
-* Added the **update-content-graph** command.§
+* Added the **update-content-graph** command.
 * Added the ability to limit the number of CPU cores with `DEMISTO_SDK_MAX_CPU_CORES` envirment variable.
 * Added the **prepare-content** command.
 * Added support for fromversion/toversion in XSIAM content items (correlation rules, XSIAM dashboards, XSIAM reports and triggers).

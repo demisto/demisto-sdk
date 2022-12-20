@@ -138,9 +138,9 @@ def main():
             notify_slack(slack_token=options.slack_token,
                          channel=SCHEMA_UPDATE_CHANNEL,
                          attachments=message)
-            raise(e)
+            raise (e)
         else:
-            raise(e)
+            raise (e)
 
 
 if __name__ == '__main__':

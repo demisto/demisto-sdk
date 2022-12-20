@@ -246,6 +246,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 shutil.copy(self.path / "Author_image.png", path / "Author_image.png")
             except FileNotFoundError:
                 logger.info(f'No such file {self.path / "Author_image.png"}')
+            if (self.path / "Documentation").exists():
+                shutil.copytree(self.path / "Documentation", path / "Documentation")
             logger.info(f"Dumped pack {self.name}. Files: {list(path.iterdir())}")
         except Exception as e:
             logger.error(f"Failed dumping pack {self.name}: {e}")

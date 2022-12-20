@@ -251,7 +251,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 logger.info(f'No such file {self.path / "Author_image.png"}')
             if self.object_id == "Base":
                 content_path = Path(get_content_path())  # type: ignore
-                shutil.copy(content_path / "Documentation" / "doc-CommonServerPython.json", path / "Documentation" / "doc-CommonServerPython.json")
+                shutil.copy(content_path / "Documentation" / "doc-CommonServer.json", path / "Documentation" / "doc-CommonServer.json")
                 shutil.copy(content_path / "Documentation" / "doc-howto.json", path / "Documentation" / "doc-howto.json")
             logger.info(f"Dumped pack {self.name}. Files: {list(path.iterdir())}")
         except Exception as e:

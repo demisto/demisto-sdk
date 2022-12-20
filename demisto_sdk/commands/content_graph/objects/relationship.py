@@ -25,8 +25,9 @@ class RelationshipData(BaseModel):
 
     def __hash__(self):
         """This is the unique identifier of the relationship"""
+        
         return hash(
-            (self.source.object_id, self.target.object_id, self.relationship_type,
+            (self.source.database_id, self.target.database_id, self.relationship_type,
              self.source.content_type, self.target.content_type)
         )
 

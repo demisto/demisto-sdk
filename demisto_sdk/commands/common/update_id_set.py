@@ -1280,8 +1280,8 @@ def get_trigger_data(path: str, packs: Dict[str, Dict] = None):
 def get_xsiam_layout_rule_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
 
-    id_ = json_data.get('layout_rule_id')
-    name = json_data.get('layout_rule_name')
+    id_ = json_data.get('xsiam_layout_rule_id')
+    name = json_data.get('xsiam_layout_rule_name')
     display_name = get_display_name(path, json_data)
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')

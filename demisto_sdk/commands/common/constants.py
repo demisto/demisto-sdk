@@ -47,6 +47,7 @@ TRIGGER_DIR = 'Triggers'
 WIZARDS_DIR = 'Wizards'
 XDRC_TEMPLATE_DIR = 'XDRCTemplates'
 XSIAM_LAYOUTS_DIR = 'XSIAMLayouts'
+XSIAM_LAYOUT_RULES_DIR = 'XSIAMLayoutRules'
 
 # NAMES OF ENTITIES
 
@@ -91,6 +92,7 @@ TRIGGER = 'trigger'
 WIZARD = 'wizard'
 XDRC_TEMPLATE = 'xdrctemplate'
 XSIAM_LAYOUT = 'xsiamlayout'
+XSIAM_LAYOUT_RULE = 'xsiamlayoutrule'
 
 MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
 
@@ -167,6 +169,7 @@ class FileType(str, Enum):
     TOOL = 'tools'
     PACK_METADATA = 'packmetadata'
     XSIAM_LAYOUT = 'xsiamlayout'
+    XSIAM_LAYOUT_RULE = 'xsiamlayoutrule'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -203,7 +206,8 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.TRIGGER: 'Triggers Recommendations',  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
     FileType.WIZARD: 'Wizards',
     FileType.XDRC_TEMPLATE: 'XDRC Templates',
-    FileType.XSIAM_LAYOUT: 'XSIAM Layouts'
+    FileType.XSIAM_LAYOUT: 'XSIAM Layouts',
+    FileType.XSIAM_LAYOUT_RULE: 'XSIAM Layout Rules'
 }
 
 ENTITY_TYPE_TO_DIR = {
@@ -236,6 +240,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.WIZARD.value: WIZARDS_DIR,
     FileType.XDRC_TEMPLATE.value: XDRC_TEMPLATE_DIR,
     FileType.XSIAM_LAYOUT.value: XSIAM_LAYOUTS_DIR,
+    FileType.XSIAM_LAYOUT_RULE.value: XSIAM_LAYOUT_RULES_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -246,7 +251,8 @@ SIEM_ONLY_ENTITIES = [
     FileType.XSIAM_REPORT.value,
     FileType.TRIGGER.value,
     FileType.XDRC_TEMPLATE.value,
-    FileType.XSIAM_LAYOUT.value
+    FileType.XSIAM_LAYOUT.value,
+    FileType.XSIAM_LAYOUT_RULE.value
 ]
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
@@ -282,6 +288,7 @@ CONTENT_ENTITIES_DIRS = [
     MODELING_RULES_DIR,
     XDRC_TEMPLATE_DIR,
     XSIAM_LAYOUTS_DIR,
+    XSIAM_LAYOUT_RULES_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -668,6 +675,7 @@ PARSING_RULE_PREFIX = 'parsingrule'
 MODELING_RULE_PREFIX = 'modelingrule'
 XDRC_TEMPLATE_PREFIX = 'xdrctemplate'
 XSIAM_LAYOUT_PREFIX = 'xsiamlayout'
+XSIAM_LAYOUT_RULE_PREFIX = 'xsiamlayoutrule'
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
@@ -1468,7 +1476,8 @@ class ContentItems(Enum):
     TRIGGERS = 'trigger',
     WIZARDS = 'wizard',
     XDRC_TEMPLATE = 'xdrctemplate',
-    XSIAM_LAYOUTS = 'xsiamlayout'
+    XSIAM_LAYOUTS = 'xsiamlayout',
+    XSIAM_LAYOUT_RULES = 'xsiamlayoutrule',
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
@@ -1495,7 +1504,8 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     TRIGGER_DIR,
     WIZARDS_DIR,
     XDRC_TEMPLATE_DIR,
-    XSIAM_LAYOUTS_DIR
+    XSIAM_LAYOUTS_DIR,
+    XSIAM_LAYOUT_RULES_DIR,
 }
 
 

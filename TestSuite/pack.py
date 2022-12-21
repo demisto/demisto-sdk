@@ -3,7 +3,8 @@ from typing import Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import (CORRELATION_RULES_DIR, DEFAULT_IMAGE_BASE64, MODELING_RULES_DIR,
                                                    PARSING_RULES_DIR, TRIGGER_DIR, XDRC_TEMPLATE_DIR,
-                                                   XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, XSIAM_LAYOUTS_DIR)
+                                                   XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, XSIAM_LAYOUTS_DIR,
+                                                   XSIAM_LAYOUT_RULES_DIR)
 from TestSuite.correlation_rule import CorrelationRule
 from TestSuite.file import File
 from TestSuite.integration import Integration
@@ -21,6 +22,7 @@ from TestSuite.xdrc_template import XDRCTemplate
 from TestSuite.xsiam_layout import XSIAMLayout
 from TestSuite.xsiam_dashboard import XSIAMDashboard
 from TestSuite.xsiam_report import XSIAMReport
+from TestSuite.xsiam_layout_rule import XSIAMLayoutRule
 from TestSuite.yml import YAML
 
 
@@ -79,6 +81,7 @@ class Pack:
         self.wizards: List[Wizard] = list()
         self.xdrc_templates: List[XDRCTemplate] = list()
         self.xsiam_layouts: List[XSIAMLayout] = list()
+        self.xsiam_layout_rules: List[XSIAMLayoutRule] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
@@ -162,6 +165,9 @@ class Pack:
 
         self._xsiam_layouts_path = self._pack_path / XSIAM_LAYOUTS_DIR
         self._xsiam_layouts_path.mkdir()
+
+        self._xsiam_layout_rules_path = self._pack_path / XSIAM_LAYOUT_RULES_DIR
+        self._xsiam_layout_rules_path.mkdir()
 
         self._xsiam_reports_path = self._pack_path / XSIAM_REPORTS_DIR
         self._xsiam_reports_path.mkdir()
@@ -665,6 +671,11 @@ class Pack:
         trigger = Trigger(name, self._triggers_path, content)
         self.triggers.append(trigger)
         return trigger
+
+    def create_xsiam_layout_rule(self, name, content:dict = None) -> XSIAMLayoutRule:
+        xsiam_layout_rule = XSIAMLayoutRule(name, self._xsiam_layout_rules_path, content)
+        self.xsiam_layout_rules.append(xsiam_layout_rule)
+        return xsiam_layout_rule
 
     def create_xdrc_template(self, name, json_content: dict = None, yaml_content: dict = None) -> XDRCTemplate:
         xdrc_template = XDRCTemplate(name, self._xdrc_templates_path, json_content, yaml_content)

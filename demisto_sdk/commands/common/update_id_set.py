@@ -25,7 +25,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, COMMON_TYPES
                                                    MODELING_RULES_DIR, PARSING_RULES_DIR, REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR, TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR,
                                                    XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, FileType,
-                                                   MarketplaceVersions, XSIAM_LAYOUTS_DIR)
+                                                   MarketplaceVersions, XSIAM_LAYOUTS_DIR, XSIAM_LAYOUT_RULES_DIR)
 from demisto_sdk.commands.common.content_constant_paths import (DEFAULT_ID_SET_PATH, MP_V2_ID_SET_PATH,
                                                                 XPANSE_ID_SET_PATH)
 from demisto_sdk.commands.common.cpu_count import cpu_count
@@ -37,7 +37,6 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import Inte
 
 json = JSON_Handler()
 
-
 CONTENT_ENTITIES = ['Packs', 'Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                     'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes',
@@ -48,24 +47,23 @@ ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Cla
                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes', 'GenericFields', 'GenericModules',
                    'GenericDefinitions', 'Lists', 'Jobs', 'ParsingRules', 'ModelingRules',
                    'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'Wizards', 'XDRCTemplates',
-                   'XSIAMLayouts']
+                   'XSIAMLayouts', 'XSIAMLayoutRules']
 
 CONTENT_MP_V2_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                           'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                           'Layouts', 'Mappers', 'Packs', 'Lists', 'ParsingRules', 'ModelingRules',
                           'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'XDRCTemplates',
-                          'XSIAMLayouts']
+                          'XSIAMLayouts', 'XSIAMLayoutRules']
 
 ID_SET_MP_V2_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                          'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                          'Layouts', 'Mappers', 'Lists', 'ParsingRules', 'ModelingRules',
                          'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'XDRCTemplates',
-                         'XSIAMLayouts']
+                         'XSIAMLayouts', 'XSIAMLayoutRules']
 
 CONTENT_XPANSE_ENTITIES = ['Packs', 'Integrations', 'Scripts', 'Playbooks', 'IncidentFields', 'IncidentTypes']
 
 ID_SET_XPANSE_ENTITIES = ['integrations', 'scripts', 'playbooks', 'IncidentFields', 'IncidentTypes']
-
 
 BUILT_IN_FIELDS = [
     "name",
@@ -375,7 +373,8 @@ def get_integration_api_modules(file_path, data_dictionary, is_unified_integrati
     if is_unified_integration:
         integration_script_code = data_dictionary.get('script', {}).get('script', '')
     else:
-        _, integration_script_code = IntegrationScriptUnifier.get_script_or_integration_package_data(os.path.dirname(file_path))
+        _, integration_script_code = IntegrationScriptUnifier.get_script_or_integration_package_data(
+            os.path.dirname(file_path))
 
     return list(IntegrationScriptUnifier.check_api_module_imports(integration_script_code).values())
 
@@ -597,7 +596,8 @@ def get_playbook_data(file_path: str, packs: Dict[str, Dict] = None) -> dict:
     pack = get_pack_name(file_path)
     dependent_incident_fields, dependent_indicator_fields = get_dependent_incident_and_indicator_fields(data_dictionary)
 
-    playbook_data = create_common_entity_data(path=file_path, name=name, display_name=display_name, to_version=toversion,
+    playbook_data = create_common_entity_data(path=file_path, name=name, display_name=display_name,
+                                              to_version=toversion,
                                               from_version=fromversion, pack=pack, marketplaces=marketplaces)
 
     transformers, filters = get_filters_and_transformers_from_playbook(data_dictionary)
@@ -647,7 +647,8 @@ def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None):
     fromversion = data_dictionary.get('fromversion')
     docker_image = data_dictionary.get('dockerimage')
     depends_on, command_to_integration = get_depends_on(data_dictionary)
-    script_executions = sorted(list(set(re.findall(r"execute_?command\(['\"](\w+)['\"].*", script_code, re.IGNORECASE))))
+    script_executions = sorted(
+        list(set(re.findall(r"execute_?command\(['\"](\w+)['\"].*", script_code, re.IGNORECASE))))
     pack = get_pack_name(file_path)
     marketplaces = get_item_marketplaces(file_path, item_data=data_dictionary, packs=packs)
 
@@ -1207,7 +1208,8 @@ def get_general_data(path: str, packs: Dict[str, Dict] = None):
     display_name = get_display_name(path, json_data)
 
     if find_type(path) in [FileType.XSIAM_DASHBOARD, FileType.XSIAM_REPORT]:
-        json_data = json_data.get('dashboards_data', [{}])[0] if 'dashboards_data' in json_data else json_data.get('templates_data', [{}])[0]
+        json_data = json_data.get('dashboards_data', [{}])[0] if 'dashboards_data' in json_data else \
+        json_data.get('templates_data', [{}])[0]
         id_ = json_data.get('global_id')
 
     brandname = json_data.get('brandName', '')
@@ -1263,6 +1265,23 @@ def get_trigger_data(path: str, packs: Dict[str, Dict] = None):
 
     id_ = json_data.get('trigger_id')
     name = json_data.get('trigger_name')
+    display_name = get_display_name(path, json_data)
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+    marketplaces = [MarketplaceVersions.MarketplaceV2.value]
+
+    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
+                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
+
+    return {id_: data}
+
+
+def get_xsiam_layout_rule_data(path: str, packs: Dict[str, Dict] = None):
+    json_data = get_json(path)
+
+    id_ = json_data.get('layout_rule_id')
+    name = json_data.get('layout_rule_name')
     display_name = get_display_name(path, json_data)
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
@@ -1358,7 +1377,8 @@ def get_depends_on(data_dict):
     return depends_on_list, command_to_integration
 
 
-def process_integration(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool) -> Tuple[list, dict]:
+def process_integration(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool) -> Tuple[
+    list, dict]:
     """
     Process integration dir or file
 
@@ -1375,8 +1395,7 @@ def process_integration(file_path: str, packs: Dict[str, Dict], marketplace: str
     excluded_items_from_id_set: dict = {}
     try:
         if os.path.isfile(file_path):
-            if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs,
-                                      print_logs=print_logs):
+            if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
                 return [], excluded_items_from_id_set
             if find_type(file_path) in (FileType.INTEGRATION, FileType.BETA_INTEGRATION):
                 if print_logs:
@@ -1386,7 +1405,8 @@ def process_integration(file_path: str, packs: Dict[str, Dict], marketplace: str
             # package integration
             package_name = os.path.basename(file_path)
             file_path = os.path.join(file_path, f'{package_name}.yml')
-            if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
+            if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs,
+                                      print_logs=print_logs):
                 return [], excluded_items_from_id_set
             if os.path.isfile(file_path):
                 # locally, might have leftover dirs without committed files
@@ -1417,7 +1437,8 @@ def process_script(file_path: str, packs: Dict[str, Dict], marketplace: str, pri
     excluded_items_from_id_set: dict = {}
     try:
         if os.path.isfile(file_path):
-            if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
+            if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs,
+                                      print_logs=print_logs):
                 return [], excluded_items_from_id_set
             if find_type(file_path) == FileType.SCRIPT:
                 if print_logs:
@@ -1426,7 +1447,8 @@ def process_script(file_path: str, packs: Dict[str, Dict], marketplace: str, pri
         else:
             # package script
             yml_path, code = IntegrationScriptUnifier.get_script_or_integration_package_data(Path(file_path))
-            if should_skip_item_by_mp(yml_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
+            if should_skip_item_by_mp(yml_path, marketplace, excluded_items_from_id_set, packs=packs,
+                                      print_logs=print_logs):
                 return [], excluded_items_from_id_set
             if print_logs:
                 print(f'adding {file_path} to id_set')
@@ -1438,7 +1460,8 @@ def process_script(file_path: str, packs: Dict[str, Dict], marketplace: str, pri
     return res, excluded_items_from_id_set
 
 
-def process_incident_fields(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool, incident_types: List) -> \
+def process_incident_fields(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool,
+                            incident_types: List) -> \
         Tuple[list, dict]:
     """
     Process a incident_fields JSON file
@@ -1455,7 +1478,8 @@ def process_incident_fields(file_path: str, packs: Dict[str, Dict], marketplace:
     res = []
     excluded_items_from_id_set: dict = {}
     try:
-        if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
+        if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs,
+                                  print_logs=print_logs):
             return [], excluded_items_from_id_set
         if find_type(file_path) == FileType.INCIDENT_FIELD:
             if print_logs:
@@ -1467,7 +1491,8 @@ def process_incident_fields(file_path: str, packs: Dict[str, Dict], marketplace:
     return res, excluded_items_from_id_set
 
 
-def process_indicator_types(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool, all_integrations: list) -> \
+def process_indicator_types(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool,
+                            all_integrations: list) -> \
         Tuple[list, dict]:
     """
     Process a indicator types JSON file
@@ -1485,7 +1510,8 @@ def process_indicator_types(file_path: str, packs: Dict[str, Dict], marketplace:
     excluded_items_from_id_set: dict = {}
 
     try:
-        if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
+        if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs,
+                                  print_logs=print_logs):
             if print_logs:
                 print(f'Skipping {file_path} due to mismatch with the marketplace this id set is generated for.')
             return [], excluded_items_from_id_set
@@ -1519,7 +1545,8 @@ def process_generic_items(file_path: str, packs: Dict[str, Dict], marketplace: s
     excluded_items_from_id_set: dict = {}
 
     try:
-        if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
+        if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs,
+                                  print_logs=print_logs):
             return [], excluded_items_from_id_set
         if find_type(file_path) == FileType.GENERIC_FIELD:
             if print_logs:
@@ -1587,7 +1614,8 @@ def process_wizards(file_path: str, packs: Dict[str, Dict], marketplace: str, pr
     return result
 
 
-def process_layoutscontainers(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool) -> Tuple[List, Dict]:
+def process_layoutscontainers(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool) -> Tuple[
+    List, Dict]:
     """
     Process a JSON file representing a Layoutcontainer object.
     Args:
@@ -1604,7 +1632,8 @@ def process_layoutscontainers(file_path: str, packs: Dict[str, Dict], marketplac
     excluded_items_from_id_set: Dict = {}
 
     try:
-        if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
+        if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs,
+                                  print_logs=print_logs):
             return result, excluded_items_from_id_set
 
         if find_type(file_path) != FileType.LAYOUTS_CONTAINER:
@@ -1633,7 +1662,8 @@ def process_layoutscontainers(file_path: str, packs: Dict[str, Dict], marketplac
 
 
 def process_general_items(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool,
-                          expected_file_types: Tuple[FileType], data_extraction_func: Callable, suffix: str = 'yml') -> Tuple[list, dict]:
+                          expected_file_types: Tuple[FileType], data_extraction_func: Callable, suffix: str = 'yml') -> \
+Tuple[list, dict]:
     """
     Process a general item file.
     expected file in one of the following:
@@ -1653,7 +1683,8 @@ def process_general_items(file_path: str, packs: Dict[str, Dict], marketplace: s
     * XSIAMReports
     * Triggers
     * XDRCTemplates
-    * XSIAMLayout
+    * XSIAMLayouts
+    * XSIAMLayoutRules
 
     Args:
         file_path: The file path from an item folder
@@ -1673,7 +1704,8 @@ def process_general_items(file_path: str, packs: Dict[str, Dict], marketplace: s
         if os.path.isfile(file_path):
             item_type = find_type(file_path)
             if item_type in expected_file_types:
-                if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs, item_type=item_type):
+                if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs,
+                                          print_logs=print_logs, item_type=item_type):
                     return [], excluded_items_from_id_set
                 if print_logs:
                     print(f'adding {file_path} to id_set')
@@ -1683,7 +1715,8 @@ def process_general_items(file_path: str, packs: Dict[str, Dict], marketplace: s
             file_path = os.path.join(file_path, f'{package_name}.{suffix}')
             item_type = find_type(file_path)
             if os.path.isfile(file_path) and item_type in expected_file_types:
-                if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs, item_type=item_type):
+                if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs,
+                                          print_logs=print_logs, item_type=item_type):
                     return [], excluded_items_from_id_set
                 if print_logs:
                     print(f'adding {file_path} to id_set')
@@ -2170,6 +2203,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
     wizards_list = []
     xdrc_templates_list = []
     xsiam_layouts_list = []
+    xsiam_layout_rules_list = []
     packs_dict: Dict[str, Dict] = {}
     excluded_items_by_pack: Dict[str, set] = {}
     excluded_items_by_type: Dict[str, set] = {}
@@ -2270,8 +2304,8 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                           FileType.CLASSIFIER,
-                                                                           FileType.OLD_CLASSIFIER),
+                                                                               FileType.CLASSIFIER,
+                                                                               FileType.OLD_CLASSIFIER),
                                                                        data_extraction_func=get_classifier_data,
                                                                        ),
                                                                get_general_paths(CLASSIFIERS_DIR, pack_to_create)):
@@ -2501,7 +2535,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                           FileType.GENERIC_DEFINITION,),
+                                                                               FileType.GENERIC_DEFINITION,),
                                                                        data_extraction_func=get_general_data,
                                                                        ),
                                                                get_general_paths(GENERIC_DEFINITIONS_DIR,
@@ -2598,7 +2632,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                           FileType.PARSING_RULE,),
+                                                                               FileType.PARSING_RULE,),
                                                                        data_extraction_func=get_parsing_rule_data,
                                                                        ),
                                                                get_general_paths(PARSING_RULES_DIR,
@@ -2620,7 +2654,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                           FileType.MODELING_RULE,),
+                                                                               FileType.MODELING_RULE,),
                                                                        data_extraction_func=get_modeling_rule_data,
                                                                        ),
                                                                get_general_paths(MODELING_RULES_DIR,
@@ -2642,7 +2676,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                           FileType.CORRELATION_RULE,),
+                                                                               FileType.CORRELATION_RULE,),
                                                                        data_extraction_func=get_correlation_rule_data,
                                                                        ),
                                                                get_general_paths(CORRELATION_RULES_DIR,
@@ -2664,7 +2698,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                           FileType.XSIAM_DASHBOARD,),
+                                                                               FileType.XSIAM_DASHBOARD,),
                                                                        data_extraction_func=get_xsiam_dashboard_data,
                                                                        ),
                                                                get_general_paths(XSIAM_DASHBOARDS_DIR,
@@ -2686,7 +2720,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                           FileType.XSIAM_REPORT,),
+                                                                               FileType.XSIAM_REPORT,),
                                                                        data_extraction_func=get_xsiam_report_data,
                                                                        ),
                                                                get_general_paths(XSIAM_REPORTS_DIR,
@@ -2708,7 +2742,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                           FileType.TRIGGER,),
+                                                                               FileType.TRIGGER,),
                                                                        data_extraction_func=get_trigger_data,
                                                                        ),
                                                                get_general_paths(TRIGGER_DIR,
@@ -2733,7 +2767,8 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                 get_general_paths(WIZARDS_DIR, pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('wizards', []).append(_id)
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('wizards', []).append(
+                            _id)
                 wizards_list.extend(arr)
 
         progress_bar.update(1)
@@ -2745,7 +2780,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                           FileType.XDRC_TEMPLATE),
+                                                                               FileType.XDRC_TEMPLATE),
                                                                        data_extraction_func=get_xdrc_template_data,
                                                                        suffix='json'
                                                                        ),
@@ -2783,6 +2818,28 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
+        if 'XSIAMLayoutRules' in objects_to_create:
+            print_color("\nStarting iteration over XSIAMLayoutRules", LOG_COLORS.GREEN)
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=FileType.XSIAM_LAYOUT_RULE,
+                                                                       data_extraction_func=get_xsiam_layout_rule_data,
+                                                                       suffix='json'
+                                                                       ),
+                                                               get_general_paths(XSIAM_LAYOUT_RULES_DIR,
+                                                                                 pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('XSIAMLayoutRules',
+                                                                                               []).append(_id)
+                xsiam_layout_rules_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
+
+        progress_bar.update(1)
+
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
     # it shouldn't take too much time
@@ -2809,6 +2866,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
     new_ids_dict['Packs'] = packs_dict
     new_ids_dict['XDRCTemplates'] = sort(xdrc_templates_list)
     new_ids_dict['XSIAMLayouts'] = sort(xsiam_layouts_list)
+    new_ids_dict['XSIAMLayoutRules'] = sort(xsiam_layout_rules_list)
 
     if marketplace != MarketplaceVersions.MarketplaceV2.value:
         new_ids_dict['GenericTypes'] = sort(generic_types_list)
@@ -2928,9 +2986,10 @@ def has_duplicate(id_set_subset_list, id_to_check, object_type, print_logs=True,
             dict2_from_version <= dict1_from_version < dict2_to_version,  # will catch (C, B), (B, A), (C, A)
             dict2_from_version < dict1_to_version <= dict2_to_version,  # will catch (C, B), (C, A)
         ]):
-            print_warning(f'There are several {object_type} with the same ID ({id_to_check}) and their versions overlap: '
-                          f'1) "{dict1_from_version}-{dict1_to_version}", '
-                          f'2) "{dict2_from_version}-{dict2_to_version}".')
+            print_warning(
+                f'There are several {object_type} with the same ID ({id_to_check}) and their versions overlap: '
+                f'1) "{dict1_from_version}-{dict1_to_version}", '
+                f'2) "{dict2_from_version}-{dict2_to_version}".')
             return True
 
         if print_logs and dict1.get('name') != dict2.get('name'):

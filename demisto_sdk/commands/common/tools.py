@@ -51,7 +51,8 @@ from demisto_sdk.commands.common.constants import (ALL_FILES_VALIDATION_IGNORE_W
                                                    TRIGGER_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
                                                    XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
                                                    XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, IdSetKeys,
-                                                   MarketplaceVersions, urljoin, XSIAM_LAYOUTS_DIR)
+                                                   MarketplaceVersions, urljoin, XSIAM_LAYOUTS_DIR,
+                                                   XSIAM_LAYOUT_RULES_DIR)
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
@@ -1374,6 +1375,8 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.XSIAM_LAYOUT
         elif MODELING_RULES_DIR in path.parts and path.stem.casefold().endswith('_schema'):
             return FileType.MODELING_RULE_SCHEMA
+        elif XSIAM_LAYOUT_RULES_DIR in path.parts:
+            return FileType.XSIAM_LAYOUT_RULE
 
     elif path.name.endswith('_image.png'):
         if path.name.endswith('Author_image.png'):
@@ -1573,6 +1576,9 @@ def find_type(
 
         if 'trigger_id' in _dict:
             return FileType.TRIGGER
+
+        if 'xsiam_layout_rule_id' in _dict:
+            return  FileType.XSIAM_LAYOUT_RULE
 
         if 'profile_type' in _dict and 'yaml_template' in _dict:
             return FileType.XDRC_TEMPLATE
@@ -1882,6 +1888,8 @@ def _get_file_id(file_type: str, file_content: Dict):
         return file_content.get('id', '')
     elif file_type in ID_IN_COMMONFIELDS:
         return file_content.get('commonfields', {}).get('id')
+    elif file_type == FileType.XSIAM_LAYOUT_RULE:
+        return file_content.get('xsiam_layout_rule_id', '')
     return file_content.get('trigger_id', '')
 
 
@@ -2111,7 +2119,8 @@ def item_type_to_content_items_header(item_type):
         "modelingrule": "modelingRule",
         "parsingrule": "parsingRule",
         "xdrctemplate": "XDRCTemplate",
-        "xsiamlayout": "XSIAMLayout"
+        "xsiamlayout": "XSIAMLayout",
+        "xsiamlayoutrule": "XSIAMLayoutRule"
     }
 
     return f'{converter.get(item_type, item_type)}s'
@@ -2924,6 +2933,8 @@ def get_display_name(file_path, file_data={}) -> str:
         name = file_data.get('id', None)
     elif 'trigger_name' in file_data:
         name = file_data.get('trigger_name')
+    elif 'xsiam_layout_rule_name' in file_data:
+        name = file_data.get('xsiam_layout_rule_name')
 
     elif 'dashboards_data' in file_data and file_data.get('dashboards_data') \
             and isinstance(file_data['dashboards_data'], list):

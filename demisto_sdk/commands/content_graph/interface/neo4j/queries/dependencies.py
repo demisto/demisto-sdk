@@ -112,13 +112,14 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
             marketplaces = [], mp IN content_item.marketplaces |
             CASE WHEN mp <> "{marketplace}" THEN marketplaces + mp ELSE marketplaces END
         )
-        RETURN content_item.node_id AS excluded_content_item, dependency.node_id AS reason
+        RETURN content_item.node_id AS excluded_content_item, dependency.content_type + dependency.object_id AS reason 
     """
     result = run_query(tx, query)
     outputs: Dict[str, Set[str]] = {}
     for row in result:
         outputs.setdefault(row["excluded_content_item"], set()).add(row["reason"])
     logger.info(f"Removed {marketplace} from marketplaces for {len(outputs.keys())} content items.")
+    logger.debug(f"Reasons: {dict(sorted(outputs.items()))}")
 
 
 def update_uses_for_integration_commands(tx: Transaction) -> None:

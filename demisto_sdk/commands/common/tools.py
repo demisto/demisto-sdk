@@ -49,9 +49,9 @@ from demisto_sdk.commands.common.constants import (ALL_FILES_VALIDATION_IGNORE_W
                                                    PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX,
                                                    REPORTS_DIR, SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR,
                                                    TRIGGER_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-                                                   XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
-                                                   XSOAR_CONFIG_FILE, FileType, IdSetKeys, MarketplaceVersions, urljoin,
-                                                   XSIAM_LAYOUTS_DIR,XSIAM_LAYOUT_RULES_DIR)
+                                                   XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_LAYOUT_RULES_DIR,
+                                                   XSIAM_LAYOUTS_DIR, XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE, FileType,
+                                                   IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
@@ -1579,7 +1579,7 @@ def find_type(
             return FileType.TRIGGER
 
         if 'xsiam_layout_rule_id' in _dict:
-            return  FileType.XSIAM_LAYOUT_RULE
+            return FileType.XSIAM_LAYOUT_RULE
 
         if 'profile_type' in _dict and 'yaml_template' in _dict:
             return FileType.XDRC_TEMPLATE

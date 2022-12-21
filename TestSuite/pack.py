@@ -3,8 +3,8 @@ from typing import Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import (CORRELATION_RULES_DIR, DEFAULT_IMAGE_BASE64, MODELING_RULES_DIR,
                                                    PARSING_RULES_DIR, TRIGGER_DIR, XDRC_TEMPLATE_DIR,
-                                                   XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, XSIAM_LAYOUTS_DIR,
-                                                   XSIAM_LAYOUT_RULES_DIR)
+                                                   XSIAM_DASHBOARDS_DIR, XSIAM_LAYOUT_RULES_DIR, XSIAM_LAYOUTS_DIR,
+                                                   XSIAM_REPORTS_DIR)
 from TestSuite.correlation_rule import CorrelationRule
 from TestSuite.file import File
 from TestSuite.integration import Integration
@@ -19,10 +19,10 @@ from TestSuite.text_based import TextBased
 from TestSuite.trigger import Trigger
 from TestSuite.wizard import Wizard
 from TestSuite.xdrc_template import XDRCTemplate
-from TestSuite.xsiam_layout import XSIAMLayout
 from TestSuite.xsiam_dashboard import XSIAMDashboard
-from TestSuite.xsiam_report import XSIAMReport
+from TestSuite.xsiam_layout import XSIAMLayout
 from TestSuite.xsiam_layout_rule import XSIAMLayoutRule
+from TestSuite.xsiam_report import XSIAMReport
 from TestSuite.yml import YAML
 
 
@@ -672,7 +672,7 @@ class Pack:
         self.triggers.append(trigger)
         return trigger
 
-    def create_xsiam_layout_rule(self, name, content:dict = None) -> XSIAMLayoutRule:
+    def create_xsiam_layout_rule(self, name, content: dict = None) -> XSIAMLayoutRule:
         xsiam_layout_rule = XSIAMLayoutRule(name, self._xsiam_layout_rules_path, content)
         self.xsiam_layout_rules.append(xsiam_layout_rule)
         return xsiam_layout_rule

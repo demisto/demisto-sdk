@@ -16,8 +16,8 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (AgentTool,
                                                                       PreProcessRule, Readme, ReleaseNote,
                                                                       ReleaseNoteConfig, Report, Script, SecretIgnore,
                                                                       Trigger, Widget, Wizard, XDRCTemplate,
-                                                                      XSIAMDashboard, XSIAMReport, XSIAMLayout,
-                                                                      XSIAMLayoutRule)
+                                                                      XSIAMDashboard, XSIAMLayout, XSIAMLayoutRule,
+                                                                      XSIAMReport)
 from demisto_sdk.commands.common.content.objects.root_objects import Documentation
 from demisto_sdk.commands.common.tools import find_type
 

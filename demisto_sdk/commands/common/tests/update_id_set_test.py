@@ -26,12 +26,12 @@ from demisto_sdk.commands.common.update_id_set import (add_item_to_exclusion_dic
                                                        get_script_data, get_trigger_data,
                                                        get_values_for_keys_recursively, get_widget_data,
                                                        get_xdrc_template_data, get_xsiam_dashboard_data,
+                                                       get_xsiam_layout_rule_data, get_xsiam_layouts_data,
                                                        get_xsiam_report_data, has_duplicate, merge_id_sets,
                                                        process_general_items, process_incident_fields,
                                                        process_integration, process_jobs, process_layoutscontainers,
                                                        process_script, process_wizards, re_create_id_set,
-                                                       should_skip_item_by_mp, get_xsiam_layouts_data,
-                                                       get_xsiam_layout_rule_data)
+                                                       should_skip_item_by_mp)
 from TestSuite.utils import IsEqualFunctions
 
 json = JSON_Handler()

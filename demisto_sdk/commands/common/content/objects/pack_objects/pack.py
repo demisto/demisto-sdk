@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_
                                                    PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, REPORTS_DIR,
                                                    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, TRIGGER_DIR, WIDGETS_DIR,
                                                    WIZARDS_DIR, XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR,
-                                                   XSIAM_REPORTS_DIR, XSIAM_LAYOUTS_DIR, XSIAM_LAYOUT_RULES_DIR,
+                                                   XSIAM_LAYOUT_RULES_DIR, XSIAM_LAYOUTS_DIR, XSIAM_REPORTS_DIR,
                                                    FileType)
 from demisto_sdk.commands.common.content.objects.pack_objects import (AgentTool, AuthorImage, Classifier,
                                                                       ClassifierMapper, Connection, Contributors,
@@ -31,8 +31,8 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (AgentTool,
                                                                       PreProcessRule, Readme, ReleaseNote,
                                                                       ReleaseNoteConfig, Report, Script, SecretIgnore,
                                                                       Trigger, Widget, Wizard, XDRCTemplate,
-                                                                      XSIAMDashboard, XSIAMReport, XSIAMLayout,
-                                                                      XSIAMLayoutRule)
+                                                                      XSIAMDashboard, XSIAMLayout, XSIAMLayoutRule,
+                                                                      XSIAMReport)
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.tools import get_demisto_version, is_object_in_id_set
 from demisto_sdk.commands.test_content import tools

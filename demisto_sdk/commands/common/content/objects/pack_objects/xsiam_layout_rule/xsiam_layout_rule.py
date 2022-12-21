@@ -2,7 +2,6 @@ import shutil
 from typing import List, Optional, Union
 
 import demisto_client
-from packaging.version import Version
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import XSIAM_LAYOUT_RULE, FileType

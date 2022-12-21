@@ -255,8 +255,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 documentation_output = path / "Documentation"
                 documentation_output.mkdir(exist_ok=True, parents=True)
                 shutil.copy(documentation_path / "doc-howto.json", documentation_output / "doc-howto.json")
-                if (documentation_path / "doc-CommonServerPython.json").exists():
-                    shutil.copy(documentation_path / "doc-CommonServerPython.json", documentation_output / "doc-CommonServerPython.json")
+                if (documentation_path / "doc-CommonServer.json").exists():
+                    shutil.copy(documentation_path / "doc-CommonServer.json", documentation_output / "doc-CommonServer.json")
 
             logger.info(f"Dumped pack {self.name}. Files: {list(path.iterdir())}")
         except Exception as e:

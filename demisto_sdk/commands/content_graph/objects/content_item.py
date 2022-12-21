@@ -149,11 +149,11 @@ class ContentItem(BaseContent):
             server_names.remove(ContentType.CLASSIFIER.server_name)
         
         for prefix in server_names:
-            name = name.lstrip(f"{prefix}-")
+            name = name.removeprefix(f"{prefix}-")
         
         # we need to iterations because maybe the prefix is in the middle of the name
         for prefix in server_names:
-            name = name.lstrip(f"{prefix}-")
+            name = name.removeprefix(f"{prefix}-")
 
         normalized = f"{self.content_type.server_name}-{name}"
         logger.info(f"Normalized file name from {name} to {normalized}")

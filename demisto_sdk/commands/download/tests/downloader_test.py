@@ -162,7 +162,7 @@ class Environment:
                                                   'path': self.CUSTOM_CONTENT_INTEGRATION_PATH,
                                                   'entity': 'Integrations', 'type': 'integration', 'file_ending': 'yml',
                                                   'code_lang': 'python'}
-        self.SCRIPT_CUSTOM_CONTENT_OBJECT = {'id': 'TestScript', 'name': 'TestScript',
+        self.SCRIPT_CUSTOM_CONTENT_OBJECT = {'id': 'f1e4c6e5-0d44-48a0-8020-a9711243e918', 'name': 'TestScript',
                                              'path': self.CUSTOM_CONTENT_SCRIPT_PATH, 'entity': 'Scripts',
                                              'type': 'script', 'file_ending': 'yml', 'code_lang': 'python'}
         self.PLAYBOOK_CUSTOM_CONTENT_OBJECT = {'id': 'DummyPlaybook',
@@ -774,3 +774,27 @@ def test_build_file_name():
         downloader.system_item_type = 'Field'
         file_name = downloader.build_file_name({'id': 'id 1'})
         assert file_name == 'id_1.json'
+
+
+@pytest.mark.parametrize('original_string, object_name, scripts_mapper, expected_string, expected_mapper', [
+    ('name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918', 'automation-Testing.yml', {},
+     'name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918',
+     {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"}),
+    ('{\n\t"name":"TestingField",\n\t"script":"f1e4c6e5-0d44-48a0-8020-a9711243e918"\n}',
+     'incidentfield-TestingField.json', {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
+     '{\n\t"name":"TestingField",\n\t"script":"TestingScript"\n}',
+     {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"}),
+    ('{\n\t"name":"TestingLayout",\n\t"detailsV2":{\n\t\t"tabs":[\n\t\t\t{\n\t\t\t\t"sections":[\n\t\t\t\t\t{\n\t\t\t\t'
+     '\t\t"items":[\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t"scriptId":"f1e4c6e5-0d44-48a0-8020-a9711243e918"\n\t\t\t\t\t\t'
+     '\t}\n\t\t\t\t\t\t]\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t]\n\t}\n}',
+     'layoutcontainer-TestingLayout.json', {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
+     '{\n\t"name":"TestingLayout",\n\t"detailsV2":{\n\t\t"tabs":[\n\t\t\t{\n\t\t\t\t"sections":[\n\t\t\t\t\t{\n\t\t\t\t'
+     '\t\t"items":[\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t"scriptId":"TestingScript"\n\t\t\t\t\t\t'
+     '\t}\n\t\t\t\t\t\t]\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t]\n\t}\n}',
+     {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"})
+])
+def test_handle_file(original_string, object_name, scripts_mapper, expected_string, expected_mapper):
+    downloader = Downloader(output='', input='', regex='', all_custom_content=True)
+    final_string, final_mapper = downloader.handle_file(original_string, object_name, scripts_mapper)
+    assert final_string == expected_string
+    assert final_mapper == expected_mapper

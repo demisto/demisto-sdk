@@ -171,8 +171,7 @@ class TestPlaybookRunner:
 
         return status_code
 
-    def create_incident_with_test_playbook(self, incident_name, test_playbook_id):
-        # type: (str, str) -> int
+    def create_incident_with_test_playbook(self, incident_name: str, test_playbook_id: str) -> int:
         """Create an incident in your xsoar instance with the given incident_name and the given test_playbook_id
 
         Args:

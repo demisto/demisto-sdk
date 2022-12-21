@@ -16,7 +16,7 @@ class TestGenerateTestPlaybook:
     TEMP_DIR = 'temp'
     TEST_FILE_PATH = Path(git_path()) / 'demisto_sdk' / 'tests' / 'test_files'
     DUMMY_INTEGRATION_YML_PATH = TEST_FILE_PATH / 'fake_integration.yml'
-    CREATED_DIRS = list()  # type: list
+    CREATED_DIRS: list = list()
 
     @classmethod
     def setup_class(cls):

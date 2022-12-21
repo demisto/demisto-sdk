@@ -712,7 +712,7 @@ def get_values_for_keys_recursively(json_object: dict, keys_to_search: list) -> 
                 'x3': [False]
             }
     """
-    values = {key: [] for key in keys_to_search}  # type: dict
+    values: dict = {key: [] for key in keys_to_search}
 
     def get_values(current_object):
         if not current_object or not isinstance(current_object, (dict, list)):

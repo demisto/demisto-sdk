@@ -5,7 +5,7 @@ import string
 import sys
 from configparser import ConfigParser
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import List, Optional, Tuple
 
 import click
 import nltk
@@ -66,14 +66,14 @@ class DocReviewer:
         self.current_pack = None
         self.files: list = []
         self.spellchecker = SpellChecker()
-        self.unknown_words = {}  # type:Dict
+        self.unknown_words: dict = {}
         self.no_camel_case = no_camel_case
         self.found_misspelled = False
         self.no_failure = no_failure
         self.expand_dictionary = expand_dictionary
-        self.files_with_misspells = set()  # type:Set
-        self.files_without_misspells = set()  # type:Set
-        self.malformed_rn_files = set()  # type:Set
+        self.files_with_misspells: set = set()
+        self.files_without_misspells: set = set()
+        self.malformed_rn_files: set = set()
 
     @staticmethod
     def find_known_words_from_pack(file_path: str) -> Tuple[str, list]:

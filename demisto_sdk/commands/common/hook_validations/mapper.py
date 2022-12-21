@@ -49,8 +49,7 @@ class MapperValidator(ContentEntityValidator):
         """
         return self._is_valid_version()
 
-    def is_backward_compatible(self):
-        # type: () -> bool
+    def is_backward_compatible(self) -> bool:
         """Check whether the Mapper is backward compatible or not, update the _is_valid field to determine that"""
 
         answers = [

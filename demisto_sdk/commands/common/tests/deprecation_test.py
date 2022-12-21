@@ -89,8 +89,7 @@ mocked_id_set = {
 }
 
 
-def mock_deprecation_manager():
-    # type: () -> DeprecationValidator
+def mock_deprecation_manager() -> DeprecationValidator:
     deprecation_validator = DeprecationValidator(mocked_id_set)
     return deprecation_validator
 

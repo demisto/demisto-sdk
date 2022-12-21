@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, Optional
 from unittest.mock import patch
 
 import pytest
@@ -7,8 +7,7 @@ from demisto_sdk.commands.common.hook_validations.incident_type import IncidentT
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 
 
-def mock_structure(file_path=None, current_file=None, old_file=None):
-    # type: (Optional[str], Optional[dict], Optional[dict]) -> StructureValidator
+def mock_structure(file_path: Optional[str] = None, current_file: Optional[dict] = None, old_file: Optional[dict] = None) -> StructureValidator:
     with patch.object(StructureValidator, '__init__', lambda a, b: None):
         structure = StructureValidator(file_path)
         structure.is_valid = True
@@ -65,10 +64,10 @@ def test_is_including_fields(current_file, is_valid):
     assert validator.is_including_int_fields() == is_valid, f'is_including_int_fields returns {not is_valid}.'
 
 
-IS_FROM_VERSION_CHANGED_NO_OLD = {}  # type: dict[any, any]
+IS_FROM_VERSION_CHANGED_NO_OLD: Dict[any, any] = {}
 IS_FROM_VERSION_CHANGED_OLD = {"fromVersion": "5.0.0"}
 IS_FROM_VERSION_CHANGED_NEW = {"fromVersion": "5.0.0"}
-IS_FROM_VERSION_CHANGED_NO_NEW = {}  # type: dict[any, any]
+IS_FROM_VERSION_CHANGED_NO_NEW: Dict[any, any] = {}
 IS_FROM_VERSION_CHANGED_NEW_HIGHER = {"fromVersion": "5.5.0"}
 IS_CHANGED_FROM_VERSION_INPUTS = [
     (IS_FROM_VERSION_CHANGED_NO_OLD, IS_FROM_VERSION_CHANGED_NO_OLD, False),

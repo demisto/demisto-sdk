@@ -10,4 +10,4 @@ class GenericType(ContentItem, content_type=ContentType.GENERIC_TYPE):  # type: 
     definition_id: Optional[str] = Field(alias="definitionId")
 
     def metadata_fields(self) -> Set[str]:
-        return {"name", "details"}
+        return {"name", "description"}

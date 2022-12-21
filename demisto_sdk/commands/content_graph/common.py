@@ -107,8 +107,19 @@ class ContentType(str, enum.Enum):
         return [c.server_name for c in ContentType] + ["indicatorfield", "mapper"]
 
     @classmethod
-    def by_folder(cls, folder: str) -> "ContentType":
-        return cls(folder[:-1])  # remove the `s`
+    def by_path(cls, path: Path) -> "ContentType":
+        for idx, folder in enumerate(path.parts):
+            if folder == PACKS_FOLDER:
+                content_type_dir = path.parts[idx + 2]
+                break
+        else:
+            # less safe option - will raise an exception if the path
+            # is not to the content item directory or file
+            if path.is_dir():
+                content_type_dir = path.parts[-2]
+            else:
+                content_type_dir = path.parts[-3]
+        return cls(content_type_dir[:-1])  # remove the `s`
 
     @staticmethod
     def folders() -> List[str]:
@@ -144,13 +155,22 @@ class ContentType(str, enum.Enum):
         return ContentType.non_abstracts(include_non_content_items=False)
 
     @staticmethod
+    def threat_intel_report_types() -> List["ContentType"]:
+        return [ContentType.GENERIC_FIELD, ContentType.GENERIC_TYPE]
+
+    @staticmethod
     def pack_folders(pack_path: Path) -> Iterator[Path]:
         for content_type in ContentType.content_items():
             if content_type == ContentType.MAPPER:
                 continue
             pack_folder = pack_path / content_type.as_folder
             if pack_folder.is_dir() and not pack_folder.name.startswith("."):
-                yield pack_folder
+                if content_type not in ContentType.threat_intel_report_types():
+                    yield pack_folder
+                else:
+                    for tir_folder in pack_folder.iterdir():
+                        if tir_folder.is_dir() and not tir_folder.name.startswith("."):
+                            yield tir_folder
 
 
 class Relationships(dict):

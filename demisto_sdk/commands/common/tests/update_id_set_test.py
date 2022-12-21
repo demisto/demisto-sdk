@@ -3087,8 +3087,8 @@ class TestXSIAMLayoutRules:
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
         xsiam_layout_rule = pack.create_xsiam_layout_rule("xsiam_layout_rule_name",
-                                                {"xsiam_layout_rule_id": "xsiam_layout_rule_id",
-                                                 "xsiam_layout_rule_name": "xsiam_layout_rule_name"})
+                                                          {"xsiam_layout_rule_id": "xsiam_layout_rule_id",
+                                                           "xsiam_layout_rule_name": "xsiam_layout_rule_name"})
         res = process_general_items(xsiam_layout_rule.path, {pack.name: {}},
                                     MarketplaceVersions.MarketplaceV2.value, True, (FileType.XSIAM_LAYOUT_RULE,),
                                     get_xsiam_layout_rule_data)

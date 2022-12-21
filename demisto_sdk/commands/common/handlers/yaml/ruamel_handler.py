@@ -1,6 +1,8 @@
 from io import StringIO
+from typing import Optional, Type
 
 from ruamel.yaml import YAML
+from ruamel.yaml.reader import ReaderError
 
 from demisto_sdk.commands.common.handlers.handlers_utils import order_dict
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
@@ -51,3 +53,6 @@ class RUAMEL_Handler(XSOAR_Handler):
         output_str = string_stream.getvalue()
         string_stream.close()
         return output_str
+
+    def decode_error(self) -> Optional[Type[Exception]]:
+        return ReaderError

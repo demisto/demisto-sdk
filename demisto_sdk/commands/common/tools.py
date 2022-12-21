@@ -621,6 +621,16 @@ def _read_file(file_path: Path) -> str:
             raise
 
 
+def safe_write_utf(write_method: Callable, path: Path, decode_errors: Tuple[Exception, ...]):
+    # write unicode content into a possibly-not-unicode file
+    try:
+        write_method()
+        return
+
+    except *decode_errors as e:
+        ...
+
+
 @lru_cache
 def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool = False):
     if clear_cache:

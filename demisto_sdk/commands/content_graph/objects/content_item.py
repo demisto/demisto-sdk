@@ -153,14 +153,14 @@ class ContentItem(BaseContent):
                 name = name.removeprefix(f"{prefix}-")
             except AttributeError:
                 # not supported in python 3.8
-                name = name.replace(f"{prefix}-", "", 1) 
+                name = name[:len(prefix) + 1] if name.startswith(f"{prefix}-") else name
         # we need to iterations because maybe the prefix is in the middle of the name
         for prefix in server_names:
             try:
                 name = name.removeprefix(f"{prefix}-")
             except AttributeError:
                 # not supported in python 3.8
-                name = name.replace(f"{prefix}-", "", 1) 
+                name = name[:len(prefix) + 1] if name.startswith(f"{prefix}-") else name
         normalized = f"{self.content_type.server_name}-{name}"
         logger.info(f"Normalized file name from {name} to {normalized}")
         return normalized

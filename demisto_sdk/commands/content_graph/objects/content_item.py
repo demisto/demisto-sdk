@@ -143,21 +143,17 @@ class ContentItem(BaseContent):
             str: The normalized name.
         """
         name = self.path.name
-        server_names = ContentType.server_names()
-        # for BC want to keep `classifier-mapper-classifier-*`.`
-        if self.content_type in {ContentType.CLASSIFIER, ContentType.MAPPER}:
-            server_names.remove(ContentType.CLASSIFIER.server_name)
-        
+        server_names = ContentType.server_names()        
         for prefix in server_names:
             try:
-                name = name.removeprefix(f"{prefix}-")
+                name = name.removeprefix(f"{prefix}-")  # type: ignore[attr-defined]
             except AttributeError:
                 # not supported in python 3.8
                 name = name[:len(prefix) + 1] if name.startswith(f"{prefix}-") else name
         # we need to iterations because maybe the prefix is in the middle of the name
         for prefix in server_names:
             try:
-                name = name.removeprefix(f"{prefix}-")
+                name = name.removeprefix(f"{prefix}-")  # type: ignore[attr-defined]
             except AttributeError:
                 # not supported in python 3.8
                 name = name[:len(prefix) + 1] if name.startswith(f"{prefix}-") else name

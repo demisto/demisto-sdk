@@ -89,7 +89,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
                 path = path.parent
             else:
                 return None
-        content_type: ContentType = ContentType.by_folder(path.parts[-2])
+        content_type: ContentType = ContentType.by_path(path)
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:
                 return ContentItemParser.parse(
@@ -164,7 +164,12 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     @staticmethod
     def is_unified_file(path: Path) -> bool:
-        return path.suffix in UNIFIED_FILES_SUFFIXES and path.parent.name in ContentType.folders() and path.parent.parent.name not in ContentType.folders()
+        if path.suffix in UNIFIED_FILES_SUFFIXES:
+            if path.parent.name in ContentType.folders():
+                return path.parent.parent.name not in ContentType.folders()
+            if path.parent.parent.name in ContentType.folders():
+                return ContentType.by_path(path) in ContentType.threat_intel_report_types()
+        return False
 
     @staticmethod
     def is_content_item(path: Path) -> bool:

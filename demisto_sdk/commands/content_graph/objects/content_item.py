@@ -149,12 +149,18 @@ class ContentItem(BaseContent):
             server_names.remove(ContentType.CLASSIFIER.server_name)
         
         for prefix in server_names:
-            name = name.removeprefix(f"{prefix}-")
-        
+            try:
+                name = name.removeprefix(f"{prefix}-")
+            except AttributeError:
+                # not supported in python 3.8
+                name = name.replace(f"{prefix}-", "", 1) 
         # we need to iterations because maybe the prefix is in the middle of the name
         for prefix in server_names:
-            name = name.removeprefix(f"{prefix}-")
-
+            try:
+                name = name.removeprefix(f"{prefix}-")
+            except AttributeError:
+                # not supported in python 3.8
+                name = name.replace(f"{prefix}-", "", 1) 
         normalized = f"{self.content_type.server_name}-{name}"
         logger.info(f"Normalized file name from {name} to {normalized}")
         return normalized

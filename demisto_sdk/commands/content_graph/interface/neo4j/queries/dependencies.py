@@ -48,7 +48,6 @@ def create_pack_dependencies(tx: Transaction) -> None:
     fix_marketplaces_properties(tx)
     update_uses_for_integration_commands(tx)
     create_depends_on_relationships(tx)
-    (tx)
 
 
 def delete_deprecatedcontent_relationship(tx: Transaction) -> None:

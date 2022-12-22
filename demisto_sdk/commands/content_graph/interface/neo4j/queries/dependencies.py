@@ -119,6 +119,17 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
 
 
 def update_uses_for_integration_commands(tx: Transaction) -> None:
+    """This query creates a relationships between content items and integrations, based on the commands they use.
+    If a content item uses a command which is in an integration, we create a relationship between the content item and the integration.
+    The mandatorily property is calculated as follows:
+        - If there is only one integration that implements the command, the mandatorily property is the same as the command's mandatorily property.
+          Otherwise, the mandatorily property is false.
+        - If there is already a relationship between the content item and the integration,
+          the mandatorily property is the OR of the existing and the new mandatorily property.
+
+    Args:
+        tx (Transaction): _description_
+    """    
     query = f"""
     MATCH (content_item:{ContentType.BASE_CONTENT})-[r:{RelationshipType.USES}]->(command:{ContentType.COMMAND})
     MATCH (command)<-[rcmd:{RelationshipType.HAS_COMMAND}]-(integration:{ContentType.INTEGRATION})

@@ -13,7 +13,7 @@ from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInter
 from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import Neo4jImportHandler
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import create_constraints, drop_constraints
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (create_pack_dependencies,
-                                                                                     get_all_level_packs_dependencies)
+                                                                                     get_all_level_packs_dependencies, get_dependency_reason)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export import (export_to_csv, import_csv,
                                                                                       merge_duplicate_commands,
                                                                                       merge_duplicate_content_items,
@@ -323,6 +323,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.write_transaction(create_pack_dependencies)
 
+    def get_dependency_reason(self, pack_source: str, pack_target: str, mandatorily: bool = False) -> List[str]:
+        with self.driver.session() as session:
+            return session.read_transaction(get_dependency_reason, pack_source, pack_target, mandatorily)
+    
     def run_single_query(self, query: str, **kwargs) -> Any:
         with self.driver.session() as session:
             try:

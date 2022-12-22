@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Set, Tuple
 
 from neo4j import Transaction
 
@@ -126,7 +126,10 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
 
     WITH count(rcmd) as command_count, content_item, r, integration
     MERGE (content_item)-[u:USES]->(integration)
-    SET u.mandatorily = u.mandatorily AND (CASE WHEN command_count = 1 THEN true ELSE false END)
+    ON CREATE
+        SET u.mandatorily = CASE WHEN command_count = 1 THEN r.mandatorily ELSE false END
+    ON MATCH
+        SET u.mandatorily = u.mandatorily AND (CASE WHEN command_count = 1 THEN r.mandatorily ELSE false END)
     RETURN count(u) as uses_relationships
     """
     result = run_query(tx, query).single()
@@ -164,14 +167,12 @@ def create_depends_on_relationships(tx: Transaction) -> None:
             pack_a, pack_b, reasons
     """
     result = run_query(tx, query)
-    outputs: Dict[str, List[Dict[str, Any]]] = {}
+    outputs: Dict[Tuple[str, str], List[Dict[str, Any]]] = {}
     for row in result:
-        dep = row["pack_a"] + " depends on " + row["pack_b"]
+        dep = row["pack_a"], row["pack_b"]
         outputs[dep] = row["reasons"]
     outputs = dict(sorted(outputs.items()))
     for dep, reasons in outputs.items():
-        reasons_str = ""
-        for idx, reason in enumerate(reasons, 1):
-            reasons_str += f"{idx}. {reason['source']} uses {reason['target']} "
-            reasons_str += "mandatorily.\n" if reason["mandatorily"] else "optionally.\n"
-        logger.debug(f"{dep} because:\n{reasons_str}---------\n")
+        logger.debug(f"Created DEPENDS_ON relationship between {dep[0]} and {dep[1]}")
+        for reason in reasons:
+            logger.debug(f"Reason: {reason.get('source')} -> {reason.get('target')} (mandatorily: {reason.get('mandatorily')})")

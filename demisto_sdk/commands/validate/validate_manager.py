@@ -36,6 +36,7 @@ from demisto_sdk.commands.common.hook_validations.generic_definition import Gene
 from demisto_sdk.commands.common.hook_validations.generic_field import GenericFieldValidator
 from demisto_sdk.commands.common.hook_validations.generic_module import GenericModuleValidator
 from demisto_sdk.commands.common.hook_validations.generic_type import GenericTypeValidator
+from demisto_sdk.commands.common.hook_validations.graph_validator import GraphValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.incident_field import IncidentFieldValidator
@@ -80,7 +81,7 @@ SKIPPED_FILES = ['CommonServerPython.py', 'CommonServerUserPython.py', 'demistom
 class ValidateManager:
     def __init__(
             self, is_backward_check=True, prev_ver=None, use_git=False, only_committed_files=False,
-            print_ignored_files=False, skip_conf_json=True, validate_id_set=False, file_path=None,
+            print_ignored_files=False, skip_conf_json=True, validate_graph=False, validate_id_set=False, file_path=None,
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
             create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False, include_untracked=False,
@@ -100,6 +101,7 @@ class ValidateManager:
         self.print_ignored_errors = print_ignored_errors
         self.skip_dependencies = skip_dependencies or not use_git
         self.skip_id_set_creation = not create_id_set or skip_dependencies
+        self.validate_graph = validate_graph
         self.compare_type = '...'
         self.staged = staged
         self.skip_schema_check = skip_schema_check
@@ -244,6 +246,9 @@ class ValidateManager:
             self.use_git = True
             self.is_circle = True
             is_valid = self.run_validation_using_git()
+        
+        # TODO: impl graph validations for each of the above cases
+
         return self.print_final_report(is_valid)
 
     @staticmethod
@@ -335,6 +340,10 @@ class ValidateManager:
         """
         click.secho('\n================= Validating all files =================', fg="bright_cyan")
         all_packs_valid = set()
+
+        if self.validate_graph:
+            with GraphValidator(self.specific_validations) as graph_validator:
+                is_valid = graph_validator.is_valid_graph()
 
         if not self.skip_conf_json:
             all_packs_valid.add(self.conf_json_validator.is_valid_conf_json())

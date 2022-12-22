@@ -340,6 +340,9 @@ def zip_packs(**kwargs) -> int:
     '--no-conf-json', is_flag=True,
     default=False, show_default=True, help='Skip conf.json validation.')
 @click.option(
+    '-vg', '--validate-graph', is_flag=True,
+    default=False, show_default=True, help='Perform validations on content graph.')
+@click.option(
     '-s', '--id-set', is_flag=True,
     default=False, show_default=True, help='Perform validations using the id_set file.')
 @click.option(
@@ -458,6 +461,7 @@ def validate(config, **kwargs):
             file_path=file_path,
             validate_all=kwargs.get('validate_all'),
             validate_id_set=kwargs['id_set'],
+            validate_graph=kwargs.get('validate_graph'),
             skip_pack_rn_validation=kwargs['skip_pack_release_notes'],
             print_ignored_errors=kwargs['print_ignored_errors'],
             is_external_repo=is_external_repo,

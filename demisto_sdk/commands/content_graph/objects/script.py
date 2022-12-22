@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import List, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -12,7 +11,3 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
     def metadata_fields(self) -> Set[str]:
         return {"name", "description", "tags"}
 
-    def dump(self, dir: Path, marketplace: MarketplaceVersions) -> None:
-        if self.is_test:
-            return
-        return super().dump(dir, marketplace)

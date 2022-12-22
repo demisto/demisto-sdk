@@ -170,7 +170,8 @@ def create_depends_on_relationships(tx: Transaction) -> None:
         outputs[dep] = row["reasons"]
     outputs = dict(sorted(outputs.items()))
     for dep, reasons in outputs.items():
+        reasons_str = ""
         for idx, reason in enumerate(reasons, 1):
-            reasons_str = f"{idx}. " + reason["source"] + " uses " + reason["target"]
-            reasons_str += " mandatorily.\n" if reason["mandatorily"] else " optionally.\n"
-            logger.debug(f"{dep} because:\n{reasons_str}---------\n")
+            reasons_str += f"{idx}. {reason['source']} uses {reason['target']} "
+            reasons_str += "mandatorily.\n" if reason["mandatorily"] else "optionally.\n"
+        logger.debug(f"{dep} because:\n{reasons_str}---------\n")

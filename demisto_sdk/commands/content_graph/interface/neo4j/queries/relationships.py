@@ -194,9 +194,19 @@ def create_relationships_by_type(
 
 def _match_relationships(
     tx: Transaction,
-    ids_list=List[str],
+    ids_list: List[str],
     marketplace: MarketplaceVersions = None,
 ) -> Dict[int, Neo4jRelationshipResult]:
+    """Match relationships of the given ids list.
+
+    Args:
+        tx (Transaction): The neo4j transaction.
+        ids_list (List[str]): The neo4j ids list to filter by
+        marketplace (MarketplaceVersions, optional): The marketplace to filter by. Defaults to None.
+
+    Returns:
+        Dict[int, Neo4jRelationshipResult]: Dictionary of neo4j ids to Neo4jRelationshipResult
+    """    
     marketplace_where = f"AND '{marketplace}' IN node_from.marketplaces AND '{marketplace}' IN node_to.marketplaces" if marketplace else ""
     query = f"""
     UNWIND $ids_list AS id

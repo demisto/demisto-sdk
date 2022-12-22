@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Set
+from typing import Any, Dict, List, Set
 
 from neo4j import Transaction
 
@@ -8,8 +8,6 @@ from demisto_sdk.commands.content_graph.common import ContentType, Neo4jRelation
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (is_target_available, run_query,
                                                                                to_neo4j_map)
 
-REPUTATION_COMMANDS_NODE_IDS = [f"{ContentType.COMMAND}:{cmd}" for cmd in REPUTATION_COMMAND_NAMES]
-IGNORED_CONTENT_ITEMS_IN_DEPENDENCY_CALC = REPUTATION_COMMANDS_NODE_IDS
 IGNORED_PACKS_IN_DEPENDENCY_CALC = ["NonSupported", "Base", "ApiModules"]
 
 GENERIC_COMMANDS_NAMES = GENERIC_COMMANDS_NAMES | {"search"}
@@ -148,21 +146,33 @@ def create_depends_on_relationships(tx: Transaction) -> None:
         AND NOT pack_b.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
         AND a.is_test <> true
         AND b.is_test <> true
-        WITH r, a, b, pack_a, pack_b
+        WITH pack_a, a, r, b, pack_b
         MERGE (pack_a)-[dep:DEPENDS_ON]->(pack_b)
-        WITH dep, r, pack_a, a, pack_b, b, REDUCE(
+        WITH dep, pack_a, a, r, b, pack_b, REDUCE(
             marketplaces = [], mp IN pack_a.marketplaces |
             CASE WHEN mp IN pack_b.marketplaces THEN marketplaces + mp ELSE marketplaces END
         ) AS common_marketplaces
         SET dep.marketplaces = common_marketplaces,
             dep.mandatorily = r.mandatorily OR dep.mandatorily
+        WITH
+            pack_a.object_id AS pack_a,
+            pack_b.object_id AS pack_b,
+            collect({{
+                source: a.object_id,
+                target: b.object_id,
+                mandatorily: r.mandatorily
+            }}) AS reasons
         RETURN
-            pack_a.node_id + " -> " + a.node_id AS source,
-            r.mandatorily AS mandatorily,
-            pack_b.node_id + " -> " + b.node_id AS target
+            pack_a, pack_b, reasons
     """
     result = run_query(tx, query)
-    logger.debug("The following relationships create packs dependencies:")
+    outputs: Dict[str, List[Dict[str, Any]]] = {}
     for row in result:
-        mandatorily = "mandatorily" if row["mandatorily"] else "optionally"
-        logger.debug(f"{row['source']} uses {row['target']} {mandatorily}.")
+        dep = row["pack_a"] + " depends on " + row["pack_b"]
+        outputs[dep] = row["reasons"]
+    outputs = dict(sorted(outputs.items()))
+    for dep, reasons in outputs.items():
+        for idx, reason in enumerate(reasons, 1):
+            reasons_str = f"{idx}. " + reason["source"] + " uses " + reason["target"]
+            reasons_str += " mandatorily.\n" if reason["mandatorily"] else " optionally.\n"
+            logger.debug(f"{dep} because:\n{reasons_str}---------\n")

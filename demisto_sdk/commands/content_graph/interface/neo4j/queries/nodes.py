@@ -1,10 +1,10 @@
 import logging
 from typing import Any, Dict, Iterable, List, Optional
 
-from neo4j import Transaction
+from neo4j import Transaction, graph
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import SERVER_CONTENT_ITEMS, ContentType, Neo4jRelationshipResult
+from demisto_sdk.commands.content_graph.common import SERVER_CONTENT_ITEMS, ContentType
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (intersects, run_query, to_neo4j_map,
                                                                                versioned)
 
@@ -124,7 +124,18 @@ def _match(
     content_type: Optional[ContentType] = None,
     ids_list: Optional[Iterable[int]] = None,
     **properties,
-) -> List[Neo4jRelationshipResult]:
+) -> List[graph.Node]:
+    """A query to match nodes in the graph.
+
+    Args:
+        tx: Neo4j transaction.
+        marketplace: The marketplace to filter by.
+        content_type: The content type to filter by.
+        ids_list: A list of neo4j ids to filter by.
+    
+    Returns:
+        List[graph.Node]: list of neo4j nodes.
+    """    
     params_str = to_neo4j_map(properties)
 
     content_type_str = f":{content_type}" if content_type else ""

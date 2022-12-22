@@ -161,7 +161,7 @@ def create_depends_on_relationships(tx: Transaction) -> None:
             r.mandatorily AS mandatorily,
             pack_b.node_id + " -> " + b.node_id AS target
     """
-    result = run_query(tx, query).single()
+    result = run_query(tx, query)
     logger.debug("The following relationships create packs dependencies:")
     for row in result:
         mandatorily = "mandatorily" if row["mandatorily"] else "optionally"

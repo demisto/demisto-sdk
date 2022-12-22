@@ -145,7 +145,7 @@ class ContentItem(BaseContent):
         name = self.path.name
         server_names = ContentType.server_names()
         for _ in range(2):
-            # we need to iterations because maybe the prefix is in the middle of the name
+            # we iterate twice to handle cases of doubled prefixes like `classifier-mapper-`
             for prefix in server_names:
                 try:
                     name = name.removeprefix(f"{prefix}-")  # type: ignore[attr-defined]

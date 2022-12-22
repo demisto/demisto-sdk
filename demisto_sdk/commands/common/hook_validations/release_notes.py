@@ -71,6 +71,7 @@ class ReleaseNotesValidator(BaseValidator):
             # Extract the sections within a content type. (e.g. Integrations 1,2,3)
             if content_type in contents_with_stars:
                 content_type_sections_ls = list(map(lambda x: [x], content_type_sections_str.split('\n')))
+                content_type_sections_ls = list(filter(lambda x: x[0].startswith('-'), content_type_sections_ls))
             else:
                 content_type_sections_ls = ENTITY_SECTION_REGEX.findall(content_type_sections_str)
             if not content_type_sections_ls:
@@ -96,7 +97,7 @@ class ReleaseNotesValidator(BaseValidator):
         return True
 
     @error_codes('RN116')
-    def _rn_valid_missing_star_in_header(self, content_type: str, content_items: Dict) -> bool:
+    def _rn_valid_existing_star_in_header(self, content_type: str, content_items: Dict) -> bool:
         is_valid = []
         for content_item in content_items:
             if content_item.count('**') != 0:
@@ -107,7 +108,7 @@ class ReleaseNotesValidator(BaseValidator):
         return all(is_valid)
 
     @error_codes('RN117')
-    def _rn_valid_existing_star_in_header(self, content_type: str, content_items: Dict) -> bool:
+    def _rn_valid_missing_star_in_header(self, content_type: str, content_items: Dict) -> bool:
         is_valid = []
         for content_item in content_items:
             if content_item.count('**') != 2:
@@ -123,9 +124,9 @@ class ReleaseNotesValidator(BaseValidator):
         for content_type, content_items in headers.items():
             is_valid.append(self._rn_valid_header_format(content_type, content_items))
             if content_type in contents_with_stars:
-                is_valid.append(self._rn_valid_existing_star_in_header(content_type, content_items))
-            else:
                 is_valid.append(self._rn_valid_missing_star_in_header(content_type, content_items))
+            else:
+                is_valid.append(self._rn_valid_existing_star_in_header(content_type, content_items))
         return all(is_valid)
 
     def filter_rn_headers(self, headers: Dict) -> None:

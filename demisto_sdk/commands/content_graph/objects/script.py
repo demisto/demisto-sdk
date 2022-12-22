@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import List, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions

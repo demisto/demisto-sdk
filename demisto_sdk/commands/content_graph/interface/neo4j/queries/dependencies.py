@@ -161,3 +161,19 @@ def create_depends_on_relationships(tx: Transaction) -> None:
     result = run_query(tx, query).single()
     depends_on_count: int = result["depends_on_relationships"]
     logger.info(f"Merged {depends_on_count} DEPENDS_ON relationships between {depends_on_count} packs.")
+
+
+def get_dependency_reason(tx: Transaction, pack_a: str, pack_b: str, mandatorily: bool) -> list:
+    query = f"""
+        MATCH (pack_a:{ContentType.BASE_CONTENT}{{object_id: "{pack_a}"}})<-[:{RelationshipType.IN_PACK}]-(a)
+            -[r:{RelationshipType.USES}]->(b)-[:{RelationshipType.IN_PACK}]->(pack_b:{ContentType.BASE_CONTENT}{{object_id: "{pack_b}"}})
+        WHERE ANY(marketplace IN pack_a.marketplaces WHERE marketplace IN pack_b.marketplaces)
+        AND id(pack_a) <> id(pack_b)
+        AND NOT pack_a.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
+        AND NOT pack_b.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
+        AND a.is_test <> true
+        AND b.is_test <> true
+        {"AND r.mandatorily = true" if mandatorily else ""}
+        RETURN a, r, b
+    """
+    return run_query(tx, query).data()

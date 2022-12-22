@@ -132,10 +132,10 @@ def _match(
         marketplace: The marketplace to filter by.
         content_type: The content type to filter by.
         ids_list: A list of neo4j ids to filter by.
-    
+
     Returns:
         List[graph.Node]: list of neo4j nodes.
-    """    
+    """
     params_str = to_neo4j_map(properties)
 
     content_type_str = f":{content_type}" if content_type else ""

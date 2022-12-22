@@ -206,7 +206,7 @@ def _match_relationships(
 
     Returns:
         Dict[int, Neo4jRelationshipResult]: Dictionary of neo4j ids to Neo4jRelationshipResult
-    """    
+    """
     marketplace_where = f"AND '{marketplace}' IN node_from.marketplaces AND '{marketplace}' IN node_to.marketplaces" if marketplace else ""
     query = f"""
     UNWIND $ids_list AS id

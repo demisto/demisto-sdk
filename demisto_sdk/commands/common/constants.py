@@ -459,7 +459,8 @@ DOCS_REGEX = r'.*docs.*'
 IMAGE_REGEX = r'.*\.png$'
 DESCRIPTION_REGEX = r'.*\.md'
 SCHEMA_REGEX = 'Tests/schemas/.*.yml'
-
+RN_HEADER_SECTION_REGEX = re.compile(r'^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|'
+                                     r'^- \*\*(.+)\*\*$\n([\w\W]*)', re.M)
 # regex pattern used to convert incident/indicator fields to their CLI names
 NON_LETTERS_OR_NUMBERS_PATTERN = re.compile(r'[^a-zA-Z0-9]')
 

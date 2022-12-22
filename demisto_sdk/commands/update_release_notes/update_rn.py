@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Any, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEPRECATED_REGEXES,
-                                                   IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, XSIAM_DASHBOARDS_DIR,
-                                                   XSIAM_REPORTS_DIR, FileType)
+                                                   IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, RN_HEADER_SECTION_REGEX,
+                                                   XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects import Integration, Playbook, Script
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
@@ -722,7 +722,8 @@ class UpdateRN:
         if len(rn_parts) > 1:
             # Splitting again by content name to append the docker image release note to corresponding
             # content entry only
-            content_parts = rn_parts[1].split(f'{content_name}\n')
+            content_parts = RN_HEADER_SECTION_REGEX.findall(rn_parts[1])
+            content_parts = list(filter(lambda x: x, content_parts[0]))
             new_rn = f'{rn_parts[0]}{header_by_type}{content_parts[0]}{content_name}\n{new_rn_part}\n' \
                      f'{content_parts[1]}'
         else:

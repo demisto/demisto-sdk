@@ -778,27 +778,28 @@ def get_layout_data(path: str, packs: Dict[str, Dict] = None):
 
 def get_xsiam_layouts_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
-
-    layout = json_data.get('layout', {})
-    name = layout.get('name', '-')
-    display_name = get_display_name(path, json_data)
-    id_ = json_data.get('id', layout.get('id', '-'))
-    type_ = json_data.get('typeId')
-    type_name = json_data.get('TypeName')
-    fromversion = json_data.get('fromVersion')
-    toversion = json_data.get('toVersion')
-    kind = json_data.get('kind')
     pack = get_pack_name(path)
-    marketplaces = [MarketplaceVersions.MarketplaceV2.value]
+    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
+    data = create_common_entity_data(path=path, name=json_data.get('name'),
+                                     display_name=get_display_name(path, json_data),
+                                     to_version=json_data.get('toVersion'),
+                                     from_version=json_data.get('fromVersion'),
+                                     pack=pack,
+                                     marketplaces=marketplaces,
+                                     )
+    data.update({"group": json_data.get('group')})
 
-    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
-                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
-    if type_:
-        data['typeID'] = type_
-    if type_name:
-        data['typename'] = type_name
-    if kind:
-        data['kind'] = kind
+    id_ = json_data.get('id')
+    incident_indicator_types_dependency = {id_}
+    incident_indicator_fields_dependency = get_values_for_keys_recursively(json_data, ['fieldId'])
+    definition_id = json_data.get('definitionId')
+    if data.get('name'):
+        incident_indicator_types_dependency.add(data['name'])
+    data['incident_and_indicator_types'] = list(incident_indicator_types_dependency)
+    if incident_indicator_fields_dependency['fieldId']:
+        data['incident_and_indicator_fields'] = incident_indicator_fields_dependency['fieldId']
+    if definition_id:
+        data['definitionId'] = definition_id
 
     return {id_: data}
 
@@ -1280,8 +1281,9 @@ def get_trigger_data(path: str, packs: Dict[str, Dict] = None):
 def get_xsiam_layout_rule_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
 
-    id_ = json_data.get('xsiam_layout_rule_id')
-    name = json_data.get('xsiam_layout_rule_name')
+    id_ = json_data.get('rule_id')
+    name = json_data.get('rule_name')
+    layout_id = json_data('layout_id')
     display_name = get_display_name(path, json_data)
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
@@ -1290,6 +1292,7 @@ def get_xsiam_layout_rule_data(path: str, packs: Dict[str, Dict] = None):
 
     data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
                                      from_version=fromversion, pack=pack, marketplaces=marketplaces)
+    data.update({'layout_id': layout_id})
 
     return {id_: data}
 

@@ -3161,52 +3161,29 @@ class TestXSIAMLayouts:
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
         xsiam_layout = pack.create_xsiam_layout("name_test", {
-            "kind": "kind_test",
-            "layout": {
+                "group": "incident",
                 "id": "id_test",
                 "name": "name_test",
+                "system": "false",
                 "version": -1,
-                "kind": "kind_test",
-                "typeId": "typeId_test",
-                "sections": [
-                    {
-                        "description": "",
-                        "fields": [
-                            {
-                                "fieldId": "filedId_test",
-                                "isVisible": True
-                            }
-                        ],
-                        "isVisible": True,
-                        "name": "xsiam_layout_name",
-                        "query": None,
-                        "queryType": "",
-                        "readOnly": False,
-                        "type": ""
-                    }
-                ]
-            },
-            "fromVersion": "5.0.0",
-            "toVersion": "5.9.9",
-            "typeId": "typeId_test",
-            "version": -1,
-            "description": ""}
+                "fromVersion": "6.1.0",
+                "description": "test"}
         )
         res = process_general_items(xsiam_layout.path, {pack.name: {}},
                                     MarketplaceVersions.MarketplaceV2.value, True, (FileType.XSIAM_LAYOUT,), get_xsiam_layouts_data, 'json')
 
         captured = capsys.readouterr()
-        xsiam_results = res[0][0]['id_test']
+        xsiam_layout_results = res[0][0]['id_test']
 
         assert len(res) == 2
-        assert 'name' in xsiam_results.keys()
-        assert 'display_name' in xsiam_results.keys()
-        assert 'file_path' in xsiam_results.keys()
-        assert 'pack' in xsiam_results.keys()
+        assert 'name' in xsiam_layout_results.keys()
+        assert 'display_name' in xsiam_layout_results.keys()
+        assert 'file_path' in xsiam_layout_results.keys()
+        assert 'pack' in xsiam_layout_results.keys()
 
-        assert xsiam_results["name"] == xsiam_layout._file_path.parts[-1].split(".")[0]
-        assert xsiam_results['file_path'] == xsiam_layout.path
-        assert xsiam_results['pack'] == pack.name
+        assert xsiam_layout_results["name"] == xsiam_layout._file_path.parts[-1].split(".")[0]
+        assert xsiam_layout_results['file_path'] == xsiam_layout.path
+        assert xsiam_layout_results['pack'] == pack.name
 
         assert f'adding {xsiam_layout._file_path} to id_set' in captured.out
 

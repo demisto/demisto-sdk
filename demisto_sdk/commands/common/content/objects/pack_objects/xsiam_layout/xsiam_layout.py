@@ -15,14 +15,6 @@ class XSIAMLayout(JSONContentObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, FileType.XSIAM_LAYOUT)
 
-    def get_id(self) -> Optional[str]:
-        """
-        Returns the xsiam layout ID of the given layout.
-        Returns:
-            (str): ID of the layout.
-        """
-        return self.get('layout', dict()).get('id')
-
     def normalize_file_name(self) -> str:
         return generate_xsiam_normalized_name(self._path.name, XSIAM_LAYOUT)
 

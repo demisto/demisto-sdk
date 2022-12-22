@@ -39,13 +39,13 @@ def test_docker_images_to_supported_native_images(native_image_config):
     - make sure each docker image is getting mapped correctly
     """
     assert native_image_config.docker_images_to_native_images_mapping == {
-        'python3': ['8.1', '8.2'],
-        'py3-tools': ['8.1', '8.2'],
-        'unzip': ['8.1', '8.2'],
-        'chromium': ['8.1', '8.2'],
-        'tesseract': ['8.1', '8.2'],
-        'pan-os-python': ['8.2'],
-        'tld': ['8.1']
+        'python3': ['native:8.1', 'native:8.2'],
+        'py3-tools': ['native:8.1', 'native:8.2'],
+        'unzip': ['native:8.1', 'native:8.2'],
+        'chromium': ['native:8.1', 'native:8.2'],
+        'tesseract': ['native:8.1', 'native:8.2'],
+        'pan-os-python': ['native:8.2'],
+        'tld': ['native:8.1']
     }
 
 

@@ -55,9 +55,7 @@ class NativeImageConfig(Singleton, BaseModel):
             for supported_docker_image in native_image_obj.supported_docker_images:
                 if supported_docker_image not in docker_images_to_native_images_mapping:
                     docker_images_to_native_images_mapping[supported_docker_image] = []
-                docker_images_to_native_images_mapping[supported_docker_image].append(
-                    _extract_native_image_version_for_server(native_image_name)
-                )
+                docker_images_to_native_images_mapping[supported_docker_image].append(native_image_name)
 
         return docker_images_to_native_images_mapping
 
@@ -114,19 +112,28 @@ class ScriptIntegrationSupportedNativeImages:
                     f'content item ID: {self.id} cannot run with these native '
                     f'images: {ignored_native_images}, reason: {reason}'
                 )
-                return list(map(_extract_native_image_version_for_server, ignored_native_images))
+                return ignored_native_images
         return []
 
-    def get_supported_native_image_versions(self) -> List[str]:
+    def get_supported_native_image_versions(self, get_raw_version: bool = False) -> List[str]:
         """
         Get the native-images that the integration/script supports. Disregards native-images that are supported which
         should be ignored.
+
+        Args:
+            get_raw_version (bool): whether to extract the raw server version from the native image name, for example:
+              'native:8.2' will become '8.2' for each one of the native-images that are supported.
         """
         if native_images := self.__docker_image_to_native_images_support():
             # in case there is a script/integration that should be ignored on a specific native image,
             # the native image(s) which doesn't support him will be removed.
             ignored_native_images = self.__get_ignored_native_images()
-            return [native_image for native_image in native_images if native_image not in ignored_native_images]
+            native_images = [
+                native_image for native_image in native_images if native_image not in ignored_native_images
+            ]
+            if get_raw_version:
+                return list(map(_extract_native_image_version_for_server, native_images))
+            return native_images
         return []
 
 

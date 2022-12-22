@@ -39,5 +39,5 @@ class IntegrationScript(ContentItem):
                 _id=self.object_id,
                 docker_image=self.docker_image,
                 native_image_config=file_to_native_image_config()
-            ).get_supported_native_image_versions()
+            ).get_supported_native_image_versions(get_raw_version=True)
         return []

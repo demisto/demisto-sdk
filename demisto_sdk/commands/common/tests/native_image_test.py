@@ -97,4 +97,6 @@ class TestScriptIntegrationSupportedNativeImages:
             _id=_id, docker_image=docker_image, native_image_config=native_image_config
         )
 
-        assert native_image_supported_versions.get_supported_native_image_versions() == expected_native_images
+        assert native_image_supported_versions.get_supported_native_image_versions(
+            get_raw_version=True
+        ) == expected_native_images

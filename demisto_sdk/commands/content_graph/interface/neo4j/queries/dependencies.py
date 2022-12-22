@@ -5,8 +5,8 @@ from neo4j import Transaction
 
 from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES, REPUTATION_COMMAND_NAMES, MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, Neo4jResult, RelationshipType
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (intersects, run_query, to_neo4j_map,
-                                                                               versioned)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (is_target_available, run_query,
+                                                                               to_neo4j_map)
 
 REPUTATION_COMMANDS_NODE_IDS = [
     f"{ContentType.COMMAND}:{cmd}" for cmd in REPUTATION_COMMAND_NAMES
@@ -126,9 +126,7 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
     query = f"""
     MATCH (content_item:{ContentType.BASE_CONTENT})-[r:{RelationshipType.USES}]->(command:{ContentType.COMMAND})
     MATCH (command)<-[rcmd:{RelationshipType.HAS_COMMAND}]-(integration:{ContentType.INTEGRATION})
-    WHERE {intersects('content_item.marketplaces', 'integration.marketplaces')}
-    AND {versioned('content_item.toversion')} >= {versioned('content_item.fromversion')}
-    AND {versioned('content_item.toversion')} >= {versioned('integration.fromversion')}
+    WHERE {is_target_available("content_item", "integration")}
 
     WITH count(rcmd) as command_count, content_item, r, integration
     MERGE (content_item)-[u:USES]->(integration)

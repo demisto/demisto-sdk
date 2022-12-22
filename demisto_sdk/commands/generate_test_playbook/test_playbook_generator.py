@@ -118,7 +118,7 @@ def create_end_task(id):
 
 
 def create_automation_task(_id, automation_name, item_type: str, args: Optional[Dict] = None, brand: str = ""):
-    script_args = {}  # type:Dict
+    script_args: Dict = {}
     if args and len(args) > 0:
         for arg, val in args.items():
             script_args[arg] = {
@@ -290,7 +290,7 @@ def get_command_examples(commands_file_path, entity_type) -> dict:
     Return:
         dict. Arguments separated by the commands.
     """
-    command_examples = []  # type: list
+    command_examples: list = []
 
     if entity_type == FileType.INTEGRATION.value:
         with open(commands_file_path) as examples_file:

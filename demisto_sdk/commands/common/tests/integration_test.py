@@ -22,8 +22,8 @@ FEED_REQUIRED_PARAMS_STRUCTURE = [dict(required_param.get('must_equal'), **requi
                                        name=required_param.get('name')) for required_param in FEED_REQUIRED_PARAMS]
 
 
-def mock_structure(file_path=None, current_file=None, old_file=None, quiet_bc=False):
-    # type: (Optional[str], Optional[dict], Optional[dict], Optional[bool]) -> StructureValidator
+def mock_structure(file_path: Optional[str] = None, current_file: Optional[dict] = None,
+                   old_file: Optional[dict] = None, quiet_bc: Optional[bool] = False) -> StructureValidator:
     with patch.object(StructureValidator, '__init__', lambda a, b: None):
         structure = StructureValidator(file_path)
         structure.is_valid = True
@@ -42,7 +42,7 @@ class TestIntegrationValidator:
     SCRIPT_WITH_DOCKER_IMAGE_1 = {"script": {"dockerimage": "test"}}
     SCRIPT_WITH_DOCKER_IMAGE_2 = {"script": {"dockerimage": "test1"}}
     SCRIPT_WITH_NO_DOCKER_IMAGE = {"script": {"no": "dockerimage"}}
-    EMPTY_CASE = {}  # type: dict[any, any]
+    EMPTY_CASE: Dict[Any, Any] = {}
     IS_DOCKER_IMAGE_CHANGED = [
         (SCRIPT_WITH_DOCKER_IMAGE_1, SCRIPT_WITH_NO_DOCKER_IMAGE, True),
         (SCRIPT_WITH_DOCKER_IMAGE_1, SCRIPT_WITH_DOCKER_IMAGE_2, True),

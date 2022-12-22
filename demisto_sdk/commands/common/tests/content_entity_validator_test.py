@@ -20,8 +20,7 @@ yaml = YAML_Handler()
 
 
 @pytest.mark.parametrize('file_path, schema, expected', HAS_TESTS_KEY_UNPUTS)
-def test_yml_has_test_key(file_path, schema, expected):
-    # type: (str, str, bool) -> None
+def test_yml_has_test_key(file_path: str, schema: str, expected: bool) -> None:
     """
         Given
         - A yml file test playbook list and the yml file type
@@ -79,8 +78,7 @@ FIND_TEST_MATCH_INPUT = [
 
 
 @pytest.mark.parametrize('test_config, integration_id, test_playbook_id, file_type, expected', FIND_TEST_MATCH_INPUT)
-def test_find_test_match(test_config, integration_id, test_playbook_id, expected, file_type):
-    # type: (dict, str, str, bool, str) -> None
+def test_find_test_match(test_config: dict, integration_id: str, test_playbook_id: str, expected: bool, file_type: str) -> None:
     """
         Given
         - A test configuration from 'conf.json' file. test-playbook id and a content item id
@@ -134,8 +132,7 @@ NOT_REGISTERED_TESTS_INPUT = [
 
 
 @pytest.mark.parametrize('file_path, schema, conf_json_data, content_item_id, expected', NOT_REGISTERED_TESTS_INPUT)
-def test_get_not_registered_tests(file_path, schema, conf_json_data, content_item_id, expected):
-    # type: (str, str, list, str, list) -> None
+def test_get_not_registered_tests(file_path: str, schema: str, conf_json_data: list, content_item_id: str, expected: list) -> None:
     """
         Given
         - A content item with test playbooks configured on it

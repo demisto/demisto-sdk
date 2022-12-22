@@ -30,8 +30,7 @@ class PlaybookRunner:
 
         self.base_link_to_workplan = self.get_base_link_to_workplan(url)
 
-    def run_playbook(self):
-        # type: () -> int
+    def run_playbook(self) -> int:
         """Run a playbook in Demisto.
 
         Returns:
@@ -78,8 +77,7 @@ class PlaybookRunner:
 
         return 0
 
-    def create_incident_with_playbook(self, incident_name, playbook_id):
-        # type: (str, str) -> int
+    def create_incident_with_playbook(self, incident_name: str, playbook_id: str) -> int:
         """Create an incident in Demisto with the given incident_name and the given playbook_id
 
         Args:

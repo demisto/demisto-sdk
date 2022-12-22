@@ -132,6 +132,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
 
 class UnknownContent(BaseContent):
+    """A model for non-existing content items used by existing content items. """
     not_in_repository: bool = True
     node_id: str = ""  # just because it's missing from the db
     object_id: str = ""

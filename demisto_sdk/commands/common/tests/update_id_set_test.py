@@ -716,7 +716,8 @@ class TestScripts:
         test_file_path = os.path.join(TESTS_DIR, 'test_files',
                                       'Packs', 'DummyPack', 'Scripts', 'DummyScript')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        res, _ = process_script(test_file_path, {'DummyPack': {'marketplaces': [MarketplaceVersions.XSOAR.value]}}, MarketplaceVersions.XSOAR.value, print_logs=True)
+        res, _ = process_script(test_file_path, {'DummyPack': {'marketplaces': [
+                                MarketplaceVersions.XSOAR.value]}}, MarketplaceVersions.XSOAR.value, print_logs=True)
         assert len(res) == 1
         data = res[0]
 

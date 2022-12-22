@@ -1209,7 +1209,7 @@ def get_general_data(path: str, packs: Dict[str, Dict] = None):
 
     if find_type(path) in [FileType.XSIAM_DASHBOARD, FileType.XSIAM_REPORT]:
         json_data = json_data.get('dashboards_data', [{}])[0] if 'dashboards_data' in json_data else \
-        json_data.get('templates_data', [{}])[0]
+            json_data.get('templates_data', [{}])[0]
         id_ = json_data.get('global_id')
 
     brandname = json_data.get('brandName', '')
@@ -1378,7 +1378,7 @@ def get_depends_on(data_dict):
 
 
 def process_integration(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool) -> Tuple[
-    list, dict]:
+        list, dict]:
     """
     Process integration dir or file
 
@@ -1615,7 +1615,7 @@ def process_wizards(file_path: str, packs: Dict[str, Dict], marketplace: str, pr
 
 
 def process_layoutscontainers(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool) -> Tuple[
-    List, Dict]:
+        List, Dict]:
     """
     Process a JSON file representing a Layoutcontainer object.
     Args:
@@ -1663,7 +1663,7 @@ def process_layoutscontainers(file_path: str, packs: Dict[str, Dict], marketplac
 
 def process_general_items(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool,
                           expected_file_types: Tuple[FileType], data_extraction_func: Callable, suffix: str = 'yml') -> \
-Tuple[list, dict]:
+        Tuple[list, dict]:
     """
     Process a general item file.
     expected file in one of the following:
@@ -2304,8 +2304,8 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                               FileType.CLASSIFIER,
-                                                                               FileType.OLD_CLASSIFIER),
+                                                                           FileType.CLASSIFIER,
+                                                                           FileType.OLD_CLASSIFIER),
                                                                        data_extraction_func=get_classifier_data,
                                                                        ),
                                                                get_general_paths(CLASSIFIERS_DIR, pack_to_create)):
@@ -2535,7 +2535,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                               FileType.GENERIC_DEFINITION,),
+                                                                           FileType.GENERIC_DEFINITION,),
                                                                        data_extraction_func=get_general_data,
                                                                        ),
                                                                get_general_paths(GENERIC_DEFINITIONS_DIR,
@@ -2632,7 +2632,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                               FileType.PARSING_RULE,),
+                                                                           FileType.PARSING_RULE,),
                                                                        data_extraction_func=get_parsing_rule_data,
                                                                        ),
                                                                get_general_paths(PARSING_RULES_DIR,
@@ -2654,7 +2654,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                               FileType.MODELING_RULE,),
+                                                                           FileType.MODELING_RULE,),
                                                                        data_extraction_func=get_modeling_rule_data,
                                                                        ),
                                                                get_general_paths(MODELING_RULES_DIR,
@@ -2676,7 +2676,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                               FileType.CORRELATION_RULE,),
+                                                                           FileType.CORRELATION_RULE,),
                                                                        data_extraction_func=get_correlation_rule_data,
                                                                        ),
                                                                get_general_paths(CORRELATION_RULES_DIR,
@@ -2698,7 +2698,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                               FileType.XSIAM_DASHBOARD,),
+                                                                           FileType.XSIAM_DASHBOARD,),
                                                                        data_extraction_func=get_xsiam_dashboard_data,
                                                                        ),
                                                                get_general_paths(XSIAM_DASHBOARDS_DIR,
@@ -2720,7 +2720,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                               FileType.XSIAM_REPORT,),
+                                                                           FileType.XSIAM_REPORT,),
                                                                        data_extraction_func=get_xsiam_report_data,
                                                                        ),
                                                                get_general_paths(XSIAM_REPORTS_DIR,
@@ -2742,7 +2742,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                               FileType.TRIGGER,),
+                                                                           FileType.TRIGGER,),
                                                                        data_extraction_func=get_trigger_data,
                                                                        ),
                                                                get_general_paths(TRIGGER_DIR,
@@ -2780,7 +2780,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                               FileType.XDRC_TEMPLATE),
+                                                                           FileType.XDRC_TEMPLATE),
                                                                        data_extraction_func=get_xdrc_template_data,
                                                                        suffix='json'
                                                                        ),

@@ -129,7 +129,7 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
     ON CREATE
         SET u.mandatorily = CASE WHEN command_count = 1 THEN r.mandatorily ELSE false END
     ON MATCH
-        SET u.mandatorily = u.mandatorily AND (CASE WHEN command_count = 1 THEN r.mandatorily ELSE false END)
+        SET u.mandatorily = u.mandatorily OR (CASE WHEN command_count = 1 THEN r.mandatorily ELSE false END)
     RETURN count(u) as uses_relationships
     """
     result = run_query(tx, query).single()

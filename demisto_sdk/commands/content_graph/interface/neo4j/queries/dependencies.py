@@ -148,32 +148,21 @@ def create_depends_on_relationships(tx: Transaction) -> None:
         AND NOT pack_b.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
         AND a.is_test <> true
         AND b.is_test <> true
-        WITH r, pack_a, pack_b
+        WITH r, a, b, pack_a, pack_b
         MERGE (pack_a)-[dep:DEPENDS_ON]->(pack_b)
-        WITH dep, r, REDUCE(
+        WITH dep, r, pack_a, a, pack_b, b, REDUCE(
             marketplaces = [], mp IN pack_a.marketplaces |
             CASE WHEN mp IN pack_b.marketplaces THEN marketplaces + mp ELSE marketplaces END
         ) AS common_marketplaces
         SET dep.marketplaces = common_marketplaces,
             dep.mandatorily = r.mandatorily OR dep.mandatorily
-        RETURN count(dep) AS depends_on_relationships
+        RETURN
+            pack_a.node_id + " -> " + a.node_id AS source,
+            r.mandatorily AS mandatorily,
+            pack_b.node_id + " -> " + b.node_id AS target
     """
     result = run_query(tx, query).single()
-    depends_on_count: int = result["depends_on_relationships"]
-    logger.info(f"Merged {depends_on_count} DEPENDS_ON relationships between {depends_on_count} packs.")
-
-
-def get_dependency_reason(tx: Transaction, pack_a: str, pack_b: str, mandatorily: bool) -> list:
-    query = f"""
-        MATCH (pack_a:{ContentType.BASE_CONTENT}{{object_id: "{pack_a}"}})<-[:{RelationshipType.IN_PACK}]-(a)
-            -[r:{RelationshipType.USES}]->(b)-[:{RelationshipType.IN_PACK}]->(pack_b:{ContentType.BASE_CONTENT}{{object_id: "{pack_b}"}})
-        WHERE ANY(marketplace IN pack_a.marketplaces WHERE marketplace IN pack_b.marketplaces)
-        AND id(pack_a) <> id(pack_b)
-        AND NOT pack_a.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
-        AND NOT pack_b.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
-        AND a.is_test <> true
-        AND b.is_test <> true
-        {"AND r.mandatorily = true" if mandatorily else ""}
-        RETURN a, r, b
-    """
-    return run_query(tx, query).data()
+    logger.debug("The following relationships create packs dependencies:")
+    for row in result:
+        mandatorily = "mandatorily" if row["mandatorily"] else "optionally"
+        logger.debug(f"{row['source']} uses {row['target']} {mandatorily}.")

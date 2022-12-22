@@ -143,16 +143,8 @@ class ContentItem(BaseContent):
             str: The normalized name.
         """
         name = self.path.name
-        server_names = ContentType.server_names()
-        for _ in range(2):
-            # we need to iterations because maybe the prefix is in the middle of the name
-            for prefix in server_names:
-                try:
-                    name = name.removeprefix(f"{prefix}-")  # type: ignore[attr-defined]
-                except AttributeError:
-                    # not supported in python 3.8
-                    name = name[:len(prefix) + 1] if name.startswith(f"{prefix}-") else name
-
+        for prefix in ContentType.server_names():
+            name = name.replace(f"{prefix}-", "")
         normalized = f"{self.content_type.server_name}-{name}"
         logger.info(f"Normalized file name from {name} to {normalized}")
         return normalized

@@ -322,7 +322,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def create_pack_dependencies(self):
         with self.driver.session() as session:
             session.write_transaction(create_pack_dependencies)
-    
+
     def run_single_query(self, query: str, **kwargs) -> Any:
         with self.driver.session() as session:
             try:

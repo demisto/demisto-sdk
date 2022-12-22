@@ -1,8 +1,9 @@
+import shutil
 from typing import Set
 
 from pydantic import DirectoryPath
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item_xsiam import ContentItemXSIAM
 

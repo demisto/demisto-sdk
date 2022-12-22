@@ -101,6 +101,7 @@ class PackContentItems(BaseModel):
             yield from content_items
 
     def __bool__(self) -> bool:
+        """Used for easier determination of content items existence in a pack. """
         return bool(list(self))
 
     class Config:

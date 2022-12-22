@@ -424,7 +424,6 @@ class TestUpdateContentGraph:
                 content_type=ContentType.PACK,
                 all_level_dependencies=True,
             )
-            print("packs_from_graph", packs_from_graph)
             compare(
                 repository.packs,
                 packs_from_graph,

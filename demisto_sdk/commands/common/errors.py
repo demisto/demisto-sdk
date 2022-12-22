@@ -7,7 +7,8 @@ from requests import Response
 
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER, FILETYPE_TO_DEFAULT_FROMVERSION,
                                                    INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME,
-                                                   FileType, MarketplaceVersions)
+                                                   FileType, MarketplaceVersions, RN_HEADER_BY_FILE_TYPE,
+                                                   RN_CONTENT_ENTITY_WITH_STARS)
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 
 FOUND_FILES_AND_ERRORS: list = []
@@ -26,7 +27,7 @@ ALLOWED_IGNORE_ERRORS = [
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
     'IM111',
-    'RN112', 'RN113', 'RN114', 'RN115', 'RN116', 'RN117',
+    'RN112', 'RN113', 'RN114', 'RN115',
     'MR104', 'MR105',
 ]
 
@@ -385,8 +386,7 @@ ERROR_CODE = {
     "release_notes_invalid_content_type_header": {'code': "RN113", 'ui_applicable': False, 'related_field': ''},
     "release_notes_invalid_content_name_header": {'code': "RN114", 'ui_applicable': False, 'related_field': ''},
     "release_notes_invalid_header_format": {'code': "RN115", 'ui_applicable': False, 'related_field': ''},
-    "release_notes_found_star_in_header": {'code': "RN116", 'ui_applicable': False, 'related_field': ''},
-    "release_notes_missing_star_in_header": {'code': "RN117", 'ui_applicable': False, 'related_field': ''},
+
 
 
     # RP - Reputations (Indicator Types)
@@ -1375,31 +1375,23 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def release_notes_invalid_content_name_header(content_name_header: str, pack_name: str, content_type_dir: str):
-        return f'The content item "{content_type_dir}/{content_name_header}" does not exist in the "{pack_name}" pack.\n' \
+    def release_notes_invalid_content_name_header(content_name_header: str, pack_name: str, content_type: str):
+        return f'The {content_type} "{content_name_header}" does not exist in the "{pack_name}" pack.\n' \
                f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n' \
                'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
 
     @staticmethod
     @error_code_decorator
     def release_notes_invalid_header_format(content_type: str, pack_name: str):
-        return f'The content item "{content_type}" header format is invalid.\n' \
-               f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n' \
-               'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
+        contents_with_stars = [RN_HEADER_BY_FILE_TYPE[content] for content in RN_CONTENT_ENTITY_WITH_STARS]
+        error = f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n' \
+                'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
 
-    @staticmethod
-    @error_code_decorator
-    def release_notes_found_star_in_header(content_name_header: str, pack_name: str):
-        return f'The content item "{content_name_header}" should not have a "*" symbols in the header.\n' \
-               f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n' \
-               'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
-
-    @staticmethod
-    @error_code_decorator
-    def release_notes_missing_star_in_header(content_name_header: str, pack_name: str):
-        return f'The content item "{content_name_header}" is missing a "*" symbols in the header.\n' \
-               f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n' \
-               'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
+        if content_type in contents_with_stars:
+            error = f'Did not find content items headers under "{content_type}" - might be duo to missing "**" symbols in the header.\n{error}'
+        else:
+            error = f'Did not find content items headers under "{content_type}" - might be duo to invalid format.\n{error}'
+        return error
 
     @staticmethod
     @error_code_decorator

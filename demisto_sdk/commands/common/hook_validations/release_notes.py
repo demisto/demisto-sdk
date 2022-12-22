@@ -14,7 +14,7 @@ from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
 ENTITY_TYPE_SECTION_REGEX = re.compile(r'^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)', re.M)
 ENTITY_SECTION_REGEX = re.compile(r'^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|'
-                                  r'^- \*\*(.+)\*\*$\nֿ([\w\W]*)', re.M)
+                                  r'^- \*\*(.+)\*\*$\n', re.M)
 
 
 class ReleaseNotesValidator(BaseValidator):
@@ -62,18 +62,11 @@ class ReleaseNotesValidator(BaseValidator):
         contents_with_stars = [RN_HEADER_BY_FILE_TYPE[content] for content in RN_CONTENT_ENTITY_WITH_STARS]
         # Get all sections from the release notes using regex
         rn_sections = ENTITY_TYPE_SECTION_REGEX.findall(self.latest_release_notes)
-
         for section in rn_sections:
             section = self.filter_nones(ls=section)
             content_type = section[0]
             content_type_sections_str = section[1]
-
-            # Extract the sections within a content type. (e.g. Integrations 1,2,3)
-            if content_type in contents_with_stars:
-                content_type_sections_ls = list(map(lambda x: [x], content_type_sections_str.split('\n')))
-                content_type_sections_ls = list(filter(lambda x: x[0].startswith('-'), content_type_sections_ls))
-            else:
-                content_type_sections_ls = ENTITY_SECTION_REGEX.findall(content_type_sections_str)
+            content_type_sections_ls = ENTITY_SECTION_REGEX.findall(content_type_sections_str)
             if not content_type_sections_ls:
                 #  Did not find content items headers under content type - might be duo to invalid format.
                 #  Will raise error in validate_special_forms.
@@ -89,46 +82,13 @@ class ReleaseNotesValidator(BaseValidator):
         return headers
 
     @error_codes('RN115')
-    def _rn_valid_header_format(self, content_type: str, content_items: Dict) -> bool:
+    def rn_valid_header_format(self, content_type: str, content_items: List) -> bool:
         if not content_items:
             error_message, error_code = Errors.release_notes_invalid_header_format(content_type=content_type,
                                                                                    pack_name=self.pack_name)
             if self.handle_error(error_message, error_code, file_path=self.release_notes_file_path, drop_line=True):
                 return False
         return True
-
-    @error_codes('RN116')
-    def _rn_valid_existing_star_in_header(self, content_type: str, content_items: Dict) -> bool:
-        is_valid = []
-        for content_item in content_items:
-            if content_item.count('**') != 0:
-                error_message, error_code = Errors.release_notes_found_star_in_header(content_type=content_type,
-                                                                                      pack_name=self.pack_name)
-                if self.handle_error(error_message, error_code, file_path=self.release_notes_file_path, drop_line=True):
-                    is_valid.append(False)
-        return all(is_valid)
-
-    @error_codes('RN117')
-    def _rn_valid_missing_star_in_header(self, content_type: str, content_items: Dict) -> bool:
-        is_valid = []
-        for content_item in content_items:
-            if content_item.count('**') != 2:
-                error_message, error_code = Errors.release_notes_missing_star_in_header(
-                    content_name_header=content_type, pack_name=self.pack_name)
-                if self.handle_error(error_message, error_code, file_path=self.release_notes_file_path, drop_line=True):
-                    is_valid.append(False)
-        return all(is_valid)
-
-    def validate_special_forms(self, headers: Dict) -> bool:
-        is_valid = []
-        contents_with_stars = [RN_HEADER_BY_FILE_TYPE[content] for content in RN_CONTENT_ENTITY_WITH_STARS]
-        for content_type, content_items in headers.items():
-            is_valid.append(self._rn_valid_header_format(content_type, content_items))
-            if content_type in contents_with_stars:
-                is_valid.append(self._rn_valid_missing_star_in_header(content_type, content_items))
-            else:
-                is_valid.append(self._rn_valid_existing_star_in_header(content_type, content_items))
-        return all(is_valid)
 
     def filter_rn_headers(self, headers: Dict) -> None:
         """
@@ -142,7 +102,7 @@ class ReleaseNotesValidator(BaseValidator):
         for content_type, content_items in headers.items():
             content_items = self.filter_nones(ls=content_items)
             if content_type in contents_with_stars:
-                content_items = list(map(lambda x: x.replace('**', '').replace('-', '', 1), content_items))
+                content_items = list(map(lambda x: x.replace('**', ''), content_items))
             headers[content_type] = [item.replace('New:', '').strip() for item in content_items]
 
     @error_codes('RN113')
@@ -163,7 +123,7 @@ class ReleaseNotesValidator(BaseValidator):
         return True
 
     @error_codes('RN113,RN114')
-    def validate_content_item_header(self, content_type: str, headers: Dict) -> bool:
+    def validate_content_item_header(self, content_type: str, content_items: List) -> bool:
         """
             Validate the 2nd headers (the content items) are exists in the pack and having the right display name.
         Args:
@@ -173,6 +133,7 @@ class ReleaseNotesValidator(BaseValidator):
             True if the content item is valid, False otherwise.
         """
         is_valid = True
+        # todo: change it to type->dir instead of the mapping down.
         # Special rule for the Mapper, as the Mapper is under the classifier directory.
         content_type_dir_name = content_type.replace(' ', '') if content_type != RN_HEADER_BY_FILE_TYPE[
             FileType.MAPPER] else RN_HEADER_BY_FILE_TYPE[FileType.CLASSIFIER]
@@ -181,20 +142,22 @@ class ReleaseNotesValidator(BaseValidator):
         content_type_dir_list = []
         try:
             content_type_dir_list = get_files_in_dir(content_type_path, CUSTOM_CONTENT_FILE_ENDINGS, recursive=True)
+            # todo: Verify what error been thorwn from get_files_in_dir
         except FileNotFoundError:
             error_message, error_code = Errors.release_notes_invalid_content_type_header(content_name_header=content_type,
                                                                                          pack_name=self.pack_name)
             if self.handle_error(error_message, error_code, self.release_notes_file_path):
                 is_valid = False
 
-        content_type_dir_list = list(map(lambda item: get_display_name(item), content_type_dir_list))
-        for header in headers.get(content_type, []):
-            if header not in content_type_dir_list:
-                error_message, error_code = Errors.release_notes_invalid_content_name_header(content_name_header=header,
-                                                                                             pack_name=self.pack_name,
-                                                                                             content_type_dir=content_type_dir_name)
-                if self.handle_error(error_message, error_code, self.release_notes_file_path):
-                    is_valid = False
+        content_items_display_names = set(map(lambda item: get_display_name(item), content_type_dir_list))
+        diff = set(content_items) - content_items_display_names
+        for header in diff:
+            # todo: change the content_type to display the content type display name. (see the printed error)
+            error_message, error_code = Errors.release_notes_invalid_content_name_header(content_name_header=header,
+                                                                                         pack_name=self.pack_name,
+                                                                                         content_type=content_type)
+            if self.handle_error(error_message, error_code, self.release_notes_file_path):
+                is_valid = False
         return is_valid
 
     @error_codes('RN107')
@@ -310,11 +273,12 @@ class ReleaseNotesValidator(BaseValidator):
         validations = []
 
         headers = self.extract_rn_headers()
-        validations.append(self.validate_special_forms(headers))
+        # validations.append(self.validate_special_forms(headers))
         self.filter_rn_headers(headers=headers)
-        for content_type in headers.keys():
+        for content_type, content_items in headers.items():
+            validations.append(self.rn_valid_header_format(content_type=content_type, content_items=content_items))
             validations.append(self.validate_content_type_header(content_type=content_type))
-            validations.append(self.validate_content_item_header(content_type=content_type, headers=headers))
+            validations.append(self.validate_content_item_header(content_type=content_type, content_items=content_items))
         return all(validations)
 
     @staticmethod
@@ -339,8 +303,8 @@ class ReleaseNotesValidator(BaseValidator):
             rn : the relese notes
             splitter: a string to split by
         Return:
-            dict. dictionary where each entry is the category name in the relese notes
-            and its value is the chnages for that category.
+            dict. dictionary where each entry is the category name in the release notes
+            and its value is the change for that category.
         """
         splitted_text = rn.split(splitter)
         splitted_categories_dict = {}

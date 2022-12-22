@@ -53,7 +53,7 @@ def create_pack_dependencies(tx: Transaction) -> None:
 
 def delete_deprecatedcontent_relationship(tx: Transaction) -> None:
     query = f"""
-        MATCH () - [r:{RelationshipType.USES}] -> () - [{RelationshipType.IN_PACK}] -> (:{ContentType.PACK}{{object_id: "DeprecatedContent"}})
+        MATCH () - [r:{RelationshipType.USES}] -> () - [:{RelationshipType.IN_PACK}] -> (:{ContentType.PACK}{{object_id: "DeprecatedContent"}})
         DELETE r
     """
     run_query(tx, query)

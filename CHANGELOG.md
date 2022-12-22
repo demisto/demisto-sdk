@@ -1,6 +1,6 @@
 # Changelog
 ## Unreleased
-* Added a new validation to the **validate** command to verify that the release notes headers are in the correct format.
+* Fixed an issue where modeling rules with arbitrary whitespace characters were not parsed correctly.
 
 ## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.

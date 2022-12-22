@@ -156,8 +156,8 @@ def create_depends_on_relationships(tx: Transaction) -> None:
             pack_a.object_id AS pack_a,
             pack_b.object_id AS pack_b,
             collect({{
-                source: a.object_id,
-                target: b.object_id,
+                source: a.node_id,
+                target: b.node_id,
                 mandatorily: r.mandatorily
             }}) AS reasons
         RETURN

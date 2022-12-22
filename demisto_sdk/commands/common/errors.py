@@ -1382,8 +1382,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def release_notes_invalid_header_format(content_name_header: str, pack_name: str):
-        return f'The content item "{content_name_header}" header format is invalid.\n' \
+    def release_notes_invalid_header_format(content_type: str, pack_name: str):
+        return f'The content item "{content_type}" header format is invalid.\n' \
                f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n' \
                'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
 

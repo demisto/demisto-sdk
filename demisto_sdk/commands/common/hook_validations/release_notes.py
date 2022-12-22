@@ -50,7 +50,7 @@ class ReleaseNotesValidator(BaseValidator):
         """
         return list(filter(lambda x: x, ls))
 
-    def extract_rn_headers(self) -> Dict:
+    def extract_rn_headers(self) -> Dict[str, List[str]]:
         """
             Extracts the headers from the release notes file.
         Args:
@@ -75,7 +75,8 @@ class ReleaseNotesValidator(BaseValidator):
             else:
                 content_type_sections_ls = ENTITY_SECTION_REGEX.findall(content_type_sections_str)
             if not content_type_sections_ls:
-                #  Will raise error in validate_special_forms
+                #  Did not find content items headers under content type - might be duo to invalid format.
+                #  Will raise error in validate_special_forms.
                 headers[content_type] = []
             for content_type_section in content_type_sections_ls:
                 content_type_section = self.filter_nones(ls=content_type_section)
@@ -90,7 +91,7 @@ class ReleaseNotesValidator(BaseValidator):
     @error_codes('RN115')
     def _rn_valid_header_format(self, content_type: str, content_items: Dict) -> bool:
         if not content_items:
-            error_message, error_code = Errors.release_notes_invalid_header_format(content_name_header=content_type,
+            error_message, error_code = Errors.release_notes_invalid_header_format(content_type=content_type,
                                                                                    pack_name=self.pack_name)
             if self.handle_error(error_message, error_code, file_path=self.release_notes_file_path, drop_line=True):
                 return False

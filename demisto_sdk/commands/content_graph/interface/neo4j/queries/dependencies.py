@@ -44,9 +44,19 @@ def get_all_level_packs_dependencies(
 
 def create_pack_dependencies(tx: Transaction) -> None:
     remove_existing_depends_on_relationships(tx)
+    delete_deprecatedcontent_relationship(tx)  # TODO decide what to do with this
     fix_marketplaces_properties(tx)
     update_uses_for_integration_commands(tx)
     create_depends_on_relationships(tx)
+    (tx)
+
+
+def delete_deprecatedcontent_relationship(tx: Transaction) -> None:
+    query = f"""
+        MATCH () - [r:{RelationshipType.USES}] -> () - [{RelationshipType.IN_PACK}] -> (:{ContentType.PACK}{{object_id: "DeprecatedContent"}})
+        DELETE r
+    """
+    run_query(tx, query)
 
 
 def remove_existing_depends_on_relationships(tx: Transaction) -> None:
@@ -129,7 +139,7 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
 
     Args:
         tx (Transaction): _description_
-    """    
+    """
     query = f"""
     MATCH (content_item:{ContentType.BASE_CONTENT})-[r:{RelationshipType.USES}]->(command:{ContentType.COMMAND})
     MATCH (command)<-[rcmd:{RelationshipType.HAS_COMMAND}]-(integration:{ContentType.INTEGRATION})

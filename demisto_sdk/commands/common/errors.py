@@ -7,8 +7,8 @@ from requests import Response
 
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER, FILETYPE_TO_DEFAULT_FROMVERSION,
                                                    INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME,
-                                                   FileType, MarketplaceVersions, RN_HEADER_BY_FILE_TYPE,
-                                                   RN_CONTENT_ENTITY_WITH_STARS)
+                                                   RN_CONTENT_ENTITY_WITH_STARS, RN_HEADER_BY_FILE_TYPE, FileType,
+                                                   MarketplaceVersions)
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 
 FOUND_FILES_AND_ERRORS: list = []

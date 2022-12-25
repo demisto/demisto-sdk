@@ -703,6 +703,9 @@ def test_get_api_module_dependent_items(mocker, changed_files, api_module_nodes,
     get_packages_mock = mocker.patch.object(LintManager, '_get_packages', side_effect=[changed_files,
                                                                                        packages_of_dependent_items])
     mocker.patch.object(LintManager, '_gather_facts', return_value={'content_repo': ''})
+
+    mocker.patch.object(Neo4jContentGraphInterface, "__init__", return_value=None)
+    mocker.patch.object(Neo4jContentGraphInterface, "__exit__", return_value=None)
     mocker.patch.object(Neo4jContentGraphInterface, "search", side_effect=api_module_nodes)
     lint_manager = LintManager(input='',
                                git=False,

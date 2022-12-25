@@ -115,7 +115,7 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
         AND
             NOT "{marketplace}" IN dependency.marketplaces
         AND
-            dependency.object_id NOT IN {REPUTATION_COMMAND_NAMES}
+            NOT dependency.object_id IN {list(REPUTATION_COMMAND_NAMES)}
         OPTIONAL MATCH (alternative_dependency:{ContentType.BASE_CONTENT}{{node_id: dependency.node_id}})
         WHERE
             "{marketplace}" IN alternative_dependency.marketplaces
@@ -153,7 +153,7 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
             (command:{ContentType.COMMAND})<-[rcmd:{RelationshipType.HAS_COMMAND}]
             -(integration:{ContentType.INTEGRATION})
     WHERE {is_target_available("content_item", "integration")}
-    AND command.object_id not in {list(REPUTATION_COMMAND_NAMES)}
+    AND NOT command.object_id IN {list(REPUTATION_COMMAND_NAMES)}
     WITH command, count(rcmd) as command_count
 
     MATCH (content_item:{ContentType.BASE_CONTENT})
@@ -161,7 +161,7 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
             (command)<-[rcmd:{RelationshipType.HAS_COMMAND}]
             -(integration:{ContentType.INTEGRATION})
     WHERE {is_target_available("content_item", "integration")}
-    AND command.object_id not in {list(REPUTATION_COMMAND_NAMES)}
+    AND NOT command.object_id IN {list(REPUTATION_COMMAND_NAMES)}
 
     MERGE (content_item)-[u:USES]->(integration)
     ON CREATE

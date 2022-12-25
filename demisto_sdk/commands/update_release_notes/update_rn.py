@@ -653,6 +653,7 @@ class UpdateRN:
             desc = data.get('description', '')
             docker_image = data.get('dockerimage')
             path = data.get('path')
+
             if _type is None:
                 continue
 

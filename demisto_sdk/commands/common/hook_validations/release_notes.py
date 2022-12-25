@@ -133,7 +133,8 @@ class ReleaseNotesValidator(BaseValidator):
             True if the content item is valid, False otherwise.
         """
         is_valid = True
-        entity_type = content_type.replace(' ', '').removesuffix('s')
+        entity_type = content_type.replace(' ', '')
+        entity_type = entity_type[:-1] if entity_type.endswith('s') else entity_type
 
         content_type_dir_name = ENTITY_TYPE_TO_DIR.get(entity_type.lower(), entity_type)
         content_type_path = os.path.join(self.pack_path, content_type_dir_name)

@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_
                                                    PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, REPORTS_DIR,
                                                    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, TRIGGER_DIR, WIDGETS_DIR,
                                                    WIZARDS_DIR, XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR,
-                                                   XSIAM_REPORTS_DIR, FileType)
+                                                   XSIAM_REPORTS_DIR, FileType, LAYOUT_RULES_DIR)
 from demisto_sdk.commands.common.content.objects.pack_objects import (AgentTool, AuthorImage, Classifier,
                                                                       ClassifierMapper, Connection, Contributors,
                                                                       CorrelationRule, Dashboard, DocFile,
@@ -30,7 +30,8 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (AgentTool,
                                                                       PreProcessRule, Readme, ReleaseNote,
                                                                       ReleaseNoteConfig, Report, Script, SecretIgnore,
                                                                       Trigger, Widget, Wizard, XDRCTemplate,
-                                                                      XSIAMDashboard, XSIAMReport)
+                                                                      XSIAMDashboard, XSIAMReport, LAYOUT_RULE)
+
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.tools import get_demisto_version, is_object_in_id_set
 from demisto_sdk.commands.test_content import tools
@@ -353,6 +354,11 @@ class Pack:
     @property
     def pack_info_from_id_set(self) -> dict:
         return self._pack_info_from_id_set
+
+    @property
+    def layout_rules(self) -> Iterator[LAYOUT_RULE]:
+        return self._content_files_list_generator_factory(dir_name=LAYOUT_RULES_DIR,
+                                                          suffix='json')
 
     @pack_info_from_id_set.setter
     def pack_info_from_id_set(self, pack_section_from_id_set: dict):

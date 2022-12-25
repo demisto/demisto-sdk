@@ -44,6 +44,7 @@ from .wizard.wizard import Wizard
 from .xdrc_template.xdrc_template import XDRCTemplate
 from .xsiam_dashboard.xsiam_dashboard import XSIAMDashboard
 from .xsiam_report.xsiam_report import XSIAMReport
+from .layout_rule.layout_rule import LayoutRule
 
 __all__ = [name for name, obj in locals().items()
            if not (name.startswith('_') or inspect.ismodule(obj))]

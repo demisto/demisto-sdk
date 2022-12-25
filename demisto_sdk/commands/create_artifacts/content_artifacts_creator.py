@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.constants import (BASE_PACK, CLASSIFIERS_DIR, C
                                                    RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
                                                    TOOLS_DIR, TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR, XDRC_TEMPLATE_DIR,
                                                    XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, ContentItems, FileType,
-                                                   MarketplaceVersions)
+                                                   MarketplaceVersions, LAYOUT_RULES_DIR)
 from demisto_sdk.commands.common.content import Content, ContentError, ContentFactoryError, Pack
 from demisto_sdk.commands.common.content.objects.abstract_objects.text_object import TextObject
 from demisto_sdk.commands.common.content.objects.pack_objects import (JSONContentObject, Script, YAMLContentObject,
@@ -61,7 +61,8 @@ XSIAM_MARKETPLACE_ITEMS_TO_DUMP = [FileType.CLASSIFIER, FileType.CONNECTION, Fil
                                    FileType.PARSING_RULE, FileType.MODELING_RULE, FileType.CORRELATION_RULE,
                                    FileType.XSIAM_DASHBOARD, FileType.XSIAM_REPORT, FileType.TRIGGER,
                                    FileType.XDRC_TEMPLATE, FileType.TOOL,
-                                   FileType.PACK_METADATA, FileType.METADATA, FileType.README, FileType.AUTHOR_IMAGE]
+                                   FileType.PACK_METADATA, FileType.METADATA, FileType.README, FileType.AUTHOR_IMAGE,
+                                   FileType.LAYOUT_RULE]
 XPANSE_MARKETPLACE_ITEMS_TO_DUMP = [FileType.INCIDENT_FIELD, FileType.INCIDENT_TYPE, FileType.INTEGRATION,
                                     FileType.PLAYBOOK, FileType.SCRIPT,
                                     FileType.RELEASE_NOTES, FileType.RELEASE_NOTES_CONFIG, FileType.PACK_METADATA,
@@ -222,6 +223,7 @@ class ContentItemsHandler:
             ContentItems.TRIGGERS: [],
             ContentItems.WIZARDS: [],
             ContentItems.XDRC_TEMPLATE: [],
+            ContentItems.LAYOUT_RULES: []
         }
         self.content_folder_name_to_func: Dict[str, Callable] = {
             SCRIPTS_DIR: self.add_script_as_content_item,
@@ -251,6 +253,7 @@ class ContentItemsHandler:
             TRIGGER_DIR: self.add_trigger_as_content_item,
             WIZARDS_DIR: self.add_wizards_as_content_item,
             XDRC_TEMPLATE_DIR: self.add_xdrc_template_as_content_item,
+            LAYOUT_RULES_DIR: self.add_layout_rule_as_content_item
         }
         self.id_set = id_set
         self.alternate_fields = alternate_fields
@@ -461,6 +464,16 @@ class ContentItemsHandler:
             'profile_type': content_object.get('profile_type', ''),
         })
 
+    def add_layout_rule_as_content_item(self, content_object: ContentObject):
+        if content_object.get('description') is not None:
+            self.content_items[ContentItems.LAYOUT_RULES].append({
+                'name': content_object.get('name', ''),
+                'description': content_object.get('description')
+            })
+        else:
+            self.content_items[ContentItems.LAYOUT_RULES].append({
+                'name': content_object.get('name', '')
+            })
 
 @contextmanager
 def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
@@ -903,6 +916,10 @@ def handle_xdrc_template(content_items_handler, pack, pack_report, artifact_mana
         content_items_handler.handle_content_item(xdrc_template)
         pack_report += dump_pack_conditionally(artifact_manager, xdrc_template)
 
+def handle_layout_rule(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
+    for layout_rule in pack.layout_rules:
+        content_items_handler.handle_content_item(layout_rule)
+        pack_report += dump_pack_conditionally(artifact_manager, layout_rule)
 
 def handle_tools(pack, pack_report, artifact_manager, **kwargs):
     for tool in pack.tools:
@@ -1022,6 +1039,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         FileType.METADATA: handle_metadata,
         FileType.README: handle_readme,
         FileType.AUTHOR_IMAGE: handle_author_image,
+        FileType.LAYOUT_RULE: handle_layout_rule
     }
 
     items_to_dump = MARKETPLACE_TO_ITEMS_MAPPING.get(artifact_manager.marketplace, XSOAR_MARKETPLACE_ITEMS_TO_DUMP)

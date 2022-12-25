@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (AgentTool,
                                                                       PreProcessRule, Readme, ReleaseNote,
                                                                       ReleaseNoteConfig, Report, Script, SecretIgnore,
                                                                       Trigger, Widget, Wizard, XDRCTemplate,
-                                                                      XSIAMDashboard, XSIAMReport)
+                                                                      XSIAMDashboard, XSIAMReport, LayoutRule)
 from demisto_sdk.commands.common.content.objects.root_objects import Documentation
 from demisto_sdk.commands.common.tools import find_type
 
@@ -67,6 +67,7 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.TRIGGER: Trigger,
     FileType.WIZARD: Wizard,
     FileType.XDRC_TEMPLATE: XDRCTemplate,
+    FileType.LAYOUT_RULE: LayoutRule
 }
 
 TYPE_CONVERSION_BY_FILE_NAME = {

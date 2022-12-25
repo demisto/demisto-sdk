@@ -3,7 +3,7 @@ from typing import Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import (CORRELATION_RULES_DIR, DEFAULT_IMAGE_BASE64, MODELING_RULES_DIR,
                                                    PARSING_RULES_DIR, TRIGGER_DIR, XDRC_TEMPLATE_DIR,
-                                                   XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR)
+                                                   XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, LAYOUT_RULES_DIR)
 from TestSuite.correlation_rule import CorrelationRule
 from TestSuite.file import File
 from TestSuite.integration import Integration
@@ -21,6 +21,7 @@ from TestSuite.xdrc_template import XDRCTemplate
 from TestSuite.xsiam_dashboard import XSIAMDashboard
 from TestSuite.xsiam_report import XSIAMReport
 from TestSuite.yml import YAML
+from TestSuite.layout_rule import LayoutRule
 
 
 class Pack:
@@ -77,6 +78,7 @@ class Pack:
         self.triggers: List[JSONBased] = list()
         self.wizards: List[Wizard] = list()
         self.xdrc_templates: List[XDRCTemplate] = list()
+        self.layout_rules: List[LayoutRule] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
@@ -180,6 +182,9 @@ class Pack:
 
         self._jobs_path = self._pack_path / 'Jobs'
         self._jobs_path.mkdir()
+
+        self._xsiam_layout_rules_path = self._pack_path / LAYOUT_RULES_DIR
+        self._xsiam_layout_rules_path.mkdir()
 
         self.contributors: Optional[TextBased] = None
 
@@ -656,3 +661,8 @@ class Pack:
         xdrc_template = XDRCTemplate(name, self._xdrc_templates_path, json_content, yaml_content)
         self.xdrc_templates.append(xdrc_template)
         return xdrc_template
+
+    def create_layout_rule(self, name, content: dict = None) -> LayoutRule:
+        layout_rule = LayoutRule(name, self._xsiam_layout_rules_path, content)
+        self.layout_rules.append(layout_rule)
+        return layout_rule

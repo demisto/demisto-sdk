@@ -1,11 +1,13 @@
+import hashlib
 import logging
 import shutil
 from pathlib import Path
-import hashlib
+
 import docker
 import requests
 from requests.adapters import HTTPAdapter, Retry
 from tqdm import tqdm
+
 from demisto_sdk.commands.common.tools import get_content_path, run_command
 from demisto_sdk.commands.content_graph.common import NEO4J_DATABASE_HTTP, NEO4J_FOLDER, NEO4J_PASSWORD
 
@@ -112,6 +114,7 @@ def _download_apoc(is_running_on_docker: bool):
     with open(plugins_folder / "apoc.jar", "wb") as f:
         for data in tqdm(response.iter_content(1024), total=total_size // 1024, unit="MB", unit_scale=True):
             f.write(data)
+
 
 def start(use_docker: bool = True):
     """Starting the neo4j service

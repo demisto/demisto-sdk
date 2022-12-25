@@ -1204,12 +1204,12 @@ def get_all_docker_images(script_obj) -> List[str]:
     """Gets a yml as dict and returns a list of all 'dockerimage' values in the yml.
 
     Args:
-        script_obj (dict): A yml dict.
+        script_obj (dict): A yml dict (of the integration/script that lint runs on).
 
     Returns:
-        List. A list of all docker images.
+        List. A list of all docker images that appears in the integration/script yml.
     """
-    # this makes sure the first docker in the list is the main docker image.
+    # this makes sure the first docker in the list is the main docker image
     def_docker_image = DEF_DOCKER
     if script_obj.get('type') == TYPE_PWSH:
         def_docker_image = DEF_DOCKER_PWSH
@@ -1225,6 +1225,73 @@ def get_all_docker_images(script_obj) -> List[str]:
                 imgs.extend(script_obj.get(key))
 
     return imgs
+
+
+def get_all_docker_images_for_lint(script_obj, docker_image_flag) -> List[str]:
+    """Gets a yml as dict of the current integration/script that lint runs on, and a flag indicates on which docker
+     images lint should run.
+
+     Creates a list including all the desirable docker images according to the following logic:
+
+        - If docker_image_flag is 'native:<server version>', lint will run on the relevant native image.
+
+        - If docker_image_flag is 'native:latest', lint will find the latest tag of the current server version's
+          native image (in Docker Hub) and will run on it.
+
+        - If docker_image_flag is 'from-yml', lint will run on the docker images appearing in the YML file of the
+          integration/script.
+
+        - If docker_image_flag is 'all', lint will run on:
+            1. The native image of the current server version.
+            2. The native image of the previous server version.
+            3. The latest tag of the current server version's native image.
+            4. The docker images that appear in the YML file of the integration/script.
+
+        - If the docker_image_flag is a specific docker image tag, lint will verify that this specific tag exist in
+          Docker Hub and run on it.
+
+    Args:
+        script_obj (dict): A yml dict.
+        docker_image_flag (str): A flag indicates on which docker images lint should run.
+
+    Returns:
+        List. A list of all desirable docker images.
+    """
+    imgs = []
+    if docker_image_flag.startswith('native:'):
+        # desirable docker image is a native image
+
+        if docker_image_flag == 'native:latest':
+            # TODO: find the latest version of current server version docker image in docker hub and return it
+            return imgs
+
+        else:
+            server_version = docker_image_flag.split(':')[1]
+            if not isinstance(server_version, float):
+                # TODO: need to check how to handle errors - not sure raise exception is the desirable behavior here
+                raise ValueError(f"Error: Invalid input provided for docker image: {docker_image_flag}.\n "
+                                 f"For running the lint command on a native docker image set the docker image flag to"
+                                 f" 'native:<server version' - for example: 'native:8.1")
+            # TODO: call Guy's class
+
+    elif docker_image_flag == 'from-yml':
+        # desirable docker images are the docker images from the yml (alt-dockerimages include)
+        imgs = get_all_docker_images(script_obj)
+        return imgs
+
+    elif docker_image_flag == 'all':
+        # desirable docker images are the docker images from the yml (alt-dockerimages include), the native image of
+        # the current server version, the native image of the previous server version, and the latest tag of the current
+        # server version native image.
+        imgs = get_all_docker_images(script_obj)
+        # TODO: need to add native current, previous and latest.
+
+    else:
+        # TODO: check if the docker image is a specific tag exists in Docker Hub and if not raise exception
+
+        raise ValueError(f"Error: Invalid input provided for docker image: {docker_image_flag}.\n"
+                         f"Possible values are: 'native:<server version' - for example: 'native:8.1, 'native:latest',"
+                         f" 'from-yml', 'all' or a sepcific docker image tag from Docker Hub - for example: ''.")
 
 
 def get_python_version(docker_image, log_verbose=None, no_prints=False):

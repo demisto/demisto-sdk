@@ -631,6 +631,10 @@ def secrets(config, **kwargs):
 )
 @click.option("-dt", "--docker-timeout", default=60,
               help="The timeout (in seconds) for requests done by the docker client.", type=int)
+@click.option("-di", "--docker-image", default='from-yml',
+              help="The docker image to check package on. "
+                   "Possible values: 'naive:<server version>', 'native:latest', 'all, a specific docker image tag"
+                   " (from Docker Hub) or the default 'from-yml'.")
 @click.option("-idp", "--id-set-path", help="Path to id_set.json, relevant for when using the "
                                             "--check-dependent-api-module flag.",
               type=click.Path(resolve_path=True),
@@ -647,7 +651,7 @@ def lint(**kwargs):
         2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.
         Meant to be used with integrations/scripts that use the folder (package) structure.
         Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
-        If no additional flags specifying the packs are given,will lint only changed files.
+        If no additional flags specifying the packs are given, will lint only changed files.
     """
     from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.lint.lint_manager import LintManager
@@ -684,6 +688,7 @@ def lint(**kwargs):
         no_coverage=kwargs.get('no_coverage'),  # type: ignore[arg-type]
         coverage_report=kwargs.get('coverage_report'),  # type: ignore[arg-type]
         docker_timeout=kwargs.get('docker_timeout'),  # type: ignore[arg-type]
+        docker_image=kwargs.get('docker_image'),  # type: ignore[arg-type]
         time_measurements_dir=kwargs.get('time_measurements_dir'),  # type: ignore[arg-type]
     )
 

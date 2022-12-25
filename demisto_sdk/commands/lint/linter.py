@@ -20,7 +20,7 @@ from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, PACKS_PACK_M
 from demisto_sdk.commands.common.docker_helper import get_docker, init_global_docker_client
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.timers import timer
-from demisto_sdk.commands.common.tools import get_all_docker_images, run_command_os
+from demisto_sdk.commands.common.tools import run_command_os, get_all_docker_images_for_lint
 from demisto_sdk.commands.lint.commands_builder import (build_bandit_command, build_flake8_command, build_mypy_command,
                                                         build_pwsh_analyze_command, build_pwsh_test_command,
                                                         build_pylint_command, build_pytest_command,
@@ -49,10 +49,12 @@ class Linter:
             req_2(list): requirements for docker using python2.
             req_3(list): requirements for docker using python3.
             docker_engine(bool):  Whether docker engine detected by docker-sdk.
+            docker_timeout(int): Timeout for docker requests.
+            docker_image(str): Desirable docker image to run lint on.
     """
 
     def __init__(self, pack_dir: Path, content_repo: Path, req_3: list, req_2: list, docker_engine: bool,
-                 docker_timeout: int):
+                 docker_timeout: int, docker_image: str):
         self._req_3 = req_3
         self._req_2 = req_2
         self._content_repo = content_repo
@@ -62,6 +64,7 @@ class Linter:
 
         self._pack_name = None
         self.docker_timeout = docker_timeout
+        self.docker_image = docker_image
         # Docker client init
         if docker_engine:
             self._docker_client: docker.DockerClient = init_global_docker_client(timeout=docker_timeout, log_prompt='Linter')
@@ -216,9 +219,12 @@ class Linter:
         # Docker images
         if self._facts["docker_engine"]:
             logger.info(f'{log_prompt} - Collecting all docker images to pull')
-            self._facts["images"] = [[image, -1] for image in get_all_docker_images(script_obj=script_obj)]
+            self._facts["images"] = \
+                [[image, -1] for image in get_all_docker_images_for_lint(script_obj=script_obj,
+                                                                         docker_image_flag=self.docker_image)]
             if os.getenv('GITLAB_CI', False):
-                self._facts["images"] = [[f'docker-io.art.code.pan.run/{image[0]}', -1] for image in self._facts["images"]]
+                self._facts["images"] = \
+                    [[f'docker-io.art.code.pan.run/{image[0]}', -1] for image in self._facts["images"]]
             # Gather environment variables for docker execution
             self._facts["env_vars"] = {
                 "CI": os.getenv("CI", False),
@@ -586,7 +592,7 @@ class Linter:
                             elif not no_pwsh_test and check == "pwsh_test":
                                 exit_code, output = self._docker_run_pwsh_test(test_image=image_id,
                                                                                keep_container=keep_container)
-                        # If lint check perfrom and failed on reason related to enviorment will run twice,
+                        # If lint check perform and failed on reason related to environment will run twice,
                         # But it failing in second time it will count as test failure.
                         if (exit_code == RERUN and trial == 1) or exit_code == FAIL or exit_code == SUCCESS:
                             if exit_code in [RERUN, FAIL]:

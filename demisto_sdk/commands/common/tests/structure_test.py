@@ -52,7 +52,7 @@ class TestStructureValidator:
         INCIDENT_FIELD_TARGET,
         PLAYBOOK_PACK_TARGET,
     ]
-    CREATED_DIRS = list()  # type: List
+    CREATED_DIRS: List = list()
 
     @classmethod
     def setup_class(cls):
@@ -137,7 +137,7 @@ class TestStructureValidator:
         structure.scheme_name = None
         assert structure.is_valid_file_path() is answer
 
-    INPUTS_IS_VALID_FILE = [
+    INPUTS_IS_VALID_FILE: List[Tuple[str, str, bool]] = [
         (VALID_LAYOUT_PATH, LAYOUT_TARGET, True),
         (INVALID_LAYOUT_PATH, LAYOUT_TARGET, False),
         (VALID_LAYOUT_CONTAINER_PATH, LAYOUTS_CONTAINER_TARGET, True),
@@ -149,7 +149,7 @@ class TestStructureValidator:
         (VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET, True),
         (VALID_INTEGRATION_TEST_PATH, INTEGRATION_TARGET, True),
         (INVALID_PLAYBOOK_PATH, INTEGRATION_TARGET, False),
-    ]  # type: List[Tuple[str, str, bool]]
+    ]
 
     @pytest.mark.parametrize('source, target, answer', INPUTS_IS_VALID_FILE)
     def test_is_file_valid(self, source, target, answer, mocker):
@@ -181,14 +181,14 @@ class TestStructureValidator:
     expected_error_6 = 'The value "Network Securitys" in \'category\' is invalid ' \
                        '- legal values include: \'Analytics & SIEM\', \'Utilities\', \'Messaging\''
 
-    TEST_ERRORS = [
+    TEST_ERRORS: List[Tuple[str, str, str, str]] = [
         (INVALID_INTEGRATION_YML_1, 'integration', pykwalify_error_1, expected_error_1),
         (INVALID_INTEGRATION_YML_2, 'integration', pykwalify_error_2, expected_error_2),
         (INVALID_INTEGRATION_YML_3, 'integration', pykwalify_error_3, expected_error_3),
         (INVALID_INTEGRATION_YML_4, 'integration', pykwalify_error_4, expected_error_4),
         (INVALID_INTEGRATION_YML_4, 'integration', pykwalify_error_5, expected_error_5),
         (INVALID_INTEGRATION_YML_4, 'integration', pykwalify_error_6, expected_error_6),
-    ]  # type: List[Tuple[str,str,str, str]]
+    ]
 
     @pytest.mark.parametrize('path, scheme , error, correct', TEST_ERRORS)
     def test_print_error_line(self, path, scheme, error, correct, mocker):

@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 import pytest
+from pytest_mock import MockerFixture
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -11,6 +12,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
     Neo4jContentGraphInterface as ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
+from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
@@ -53,14 +55,6 @@ def mock_pack(name: str = "SamplePack"):
         path=Path("Packs"),
         name=name,
         marketplaces=[MarketplaceVersions.XSOAR],
-        description="",
-        created="",
-        updated="",
-        support="",
-        email="",
-        url="",
-        author="",
-        certification="",
         hidden=False,
         server_min_version="5.5.0",
         current_version="1.0.0",
@@ -83,7 +77,6 @@ def mock_integration(name: str = "SampleIntegration"):
         display_name=name,
         name=name,
         marketplaces=[MarketplaceVersions.XSOAR],
-        description="",
         deprecated=False,
         type="python3",
         docker_image="mock:docker",
@@ -99,7 +92,6 @@ def mock_script(name: str = "SampleScript"):
         node_id=f"{ContentType.SCRIPT}:{name}",
         path=Path("Packs"),
         fromversion="5.0.0",
-        description="",
         display_name=name,
         toversion="99.99.99",
         name=name,
@@ -119,7 +111,6 @@ def mock_classifier(name: str = "SampleClassifier"):
         node_id=f"{ContentType.CLASSIFIER}:{name}",
         path=Path("Packs"),
         fromversion="5.0.0",
-        description="",
         display_name=name,
         toversion="99.99.99",
         name=name,
@@ -143,7 +134,6 @@ def mock_playbook(name: str = "SamplePlaybook"):
         display_name=name,
         name=name,
         marketplaces=[MarketplaceVersions.XSOAR],
-        description="",
         deprecated=False,
         is_test=False,
     )
@@ -160,7 +150,6 @@ def mock_test_playbook(name: str = "SampleTestPlaybook"):
         display_name=name,
         name=name,
         marketplaces=[MarketplaceVersions.XSOAR],
-        description="",
         deprecated=False,
         is_test=True,
     )
@@ -317,8 +306,10 @@ def create_mini_content(repository: ContentDTO):
 
 
 class TestCreateContentGraph:
-    def _test_create_content_graph_end_to_end(self, repo: Repo, start_service: bool, tmp_path: Path):
+    def _test_create_content_graph_end_to_end(self, repo: Repo, start_service: bool, tmp_path: Path, mocker):
         import demisto_sdk.commands.content_graph.objects.repository as repo_module
+
+        mocker.patch.object(IntegrationScript, 'get_supported_native_images', return_value=[])
 
         repo_module.USE_FUTURE = False
         pack = repo.create_pack("TestPack")
@@ -368,7 +359,7 @@ class TestCreateContentGraph:
         assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script0.yml")
         assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script1.yml")
 
-    def test_create_content_graph_end_to_end_with_new_service(self, repo: Repo, tmp_path: Path):
+    def test_create_content_graph_end_to_end_with_new_service(self, repo: Repo, tmp_path: Path, mocker: MockerFixture):
         """
         Given:
             - A repository with a pack TestPack, containing an integration TestIntegration.
@@ -378,9 +369,11 @@ class TestCreateContentGraph:
             - Make sure the service remains available by querying for all content items in the graph.
             - Make sure there is a single integration in the query response.
         """
-        self._test_create_content_graph_end_to_end(repo, start_service=True, tmp_path=tmp_path)
+        self._test_create_content_graph_end_to_end(repo, start_service=True, tmp_path=tmp_path, mocker=mocker)
 
-    def test_create_content_graph_end_to_end_with_existing_service(self, repo: Repo, tmp_path: Path):
+    def test_create_content_graph_end_to_end_with_existing_service(
+        self, repo: Repo, tmp_path: Path, mocker: MockerFixture
+    ):
         """
         Given:
             - A repository with a pack TestPack, containing an integration TestIntegration.
@@ -390,7 +383,7 @@ class TestCreateContentGraph:
             - Make sure the service remains available by querying for all content items in the graph.
             - Make sure there is a single integration in the query response.
         """
-        self._test_create_content_graph_end_to_end(repo, start_service=False, tmp_path=tmp_path)
+        self._test_create_content_graph_end_to_end(repo, start_service=False, tmp_path=tmp_path, mocker=mocker)
 
     def test_create_content_graph_relationships(
         self,

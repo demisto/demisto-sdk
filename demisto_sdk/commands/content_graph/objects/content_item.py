@@ -17,7 +17,8 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_content_path
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import MarketplaceSuffixPreparer
+
+# from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import MarketplaceSuffixPreparer
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -106,7 +107,7 @@ class ContentItem(BaseContent):
 
     def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
         data = self.data
-        data = MarketplaceSuffixPreparer.prepare(data, marketplace)
+        # data = MarketplaceSuffixPreparer.prepare(data, marketplace)
         return data
 
     def summary(self, marketplace: Optional[MarketplaceVersions] = None) -> dict:
@@ -142,8 +143,15 @@ class ContentItem(BaseContent):
             str: The normalized name.
         """
         name = self.path.name
-        for prefix in ContentType.server_names():
-            name = name.replace(f"{prefix}-", "")
+        server_names = ContentType.server_names()
+        for _ in range(2):
+            # we iterate twice to handle cases of doubled prefixes like `classifier-mapper-`
+            for prefix in server_names:
+                try:
+                    name = name.removeprefix(f"{prefix}-")  # type: ignore[attr-defined]
+                except AttributeError:
+                    # not supported in python 3.8
+                    name = name[:len(prefix) + 1] if name.startswith(f"{prefix}-") else name
         normalized = f"{self.content_type.server_name}-{name}"
         logger.info(f"Normalized file name from {name} to {normalized}")
         return normalized

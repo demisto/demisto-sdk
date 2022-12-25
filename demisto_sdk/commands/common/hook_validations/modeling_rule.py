@@ -7,15 +7,11 @@ import re
 from pathlib import Path
 from typing import List
 
-from packaging.version import Version
-from pydantic import ValidationError
-
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
 from demisto_sdk.commands.common.tools import get_files_in_dir
-from demisto_sdk.commands.test_content.xsiam_tools.test_data import CompletedTestData
 
 yaml = YAML_Handler()
 
@@ -57,10 +53,6 @@ class ModelingRuleValidator(ContentEntityValidator):
         self.is_valid_rule_names()
         self.is_schema_types_valid()
         self.dataset_name_matches_in_xif_and_schema()
-        if self.does_version_require_testdata():
-            # this condition also marks the rule as invalid if the testdata file is missing
-            if self.does_testdata_file_exist():
-                self.is_testdata_formatted_correctly()
 
         return self._is_valid
 
@@ -69,48 +61,6 @@ class ModelingRuleValidator(ContentEntityValidator):
         May deleted or be edited in the future by the use of XSIAM new content
         """
         pass
-
-    def is_testdata_formatted_correctly(self):
-        """
-        Check that the testdata file is formatted correctly.
-        Checks that the testdata file contains event data and expected values mappings.
-        """
-        modeling_rule_dir = Path(self.file_path).parent
-        testdata_file_path = modeling_rule_dir / f'{modeling_rule_dir.name}_testdata.json'
-        try:
-            _ = CompletedTestData.parse_file(testdata_file_path.as_posix())
-        except ValidationError as e:
-            error_message, error_code = Errors.modeling_rule_testdata_not_formatted_correctly(
-                str(e), testdata_file_path
-            )
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self._is_valid = False
-                return False
-
-    def does_testdata_file_exist(self):
-        """Check if the testdata file exists"""
-        modeling_rule_dir = Path(self.file_path).parent
-        testdata_files = list(modeling_rule_dir.glob('*_[tT][eE][sS][tT][dD][aA][tT][aA].[jJ][sS][oO][nN]'))
-        has_testdata = len(testdata_files) > 0
-        if not has_testdata:
-            error_message, error_code = Errors.modeling_rule_missing_testdata_file(
-                modeling_rule_dir,
-                self.MIN_FROMVERSION_REQUIRES_TESTDATA,
-                self.current_file.get("fromversion")
-            )
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self._is_valid = False
-                return has_testdata
-        return has_testdata
-
-    def does_version_require_testdata(self):
-        """Modeling Rule Versions Starting with 6.10.0 require test data for testing"""
-        with open(self.file_path) as yf:
-            yaml_obj = yaml.load(yf)
-        if 'fromversion' in yaml_obj:
-            if Version(yaml_obj['fromversion']) >= Version(self.MIN_FROMVERSION_REQUIRES_TESTDATA):
-                return True
-        return False
 
     def is_schema_file_exists(self):
         # Gets the schema.json file from the modeling rule folder

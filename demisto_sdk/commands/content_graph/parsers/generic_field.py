@@ -22,13 +22,13 @@ class GenericFieldParser(JSONContentItemParser, content_type=ContentType.GENERIC
     def connect_to_dependencies(self) -> None:
         """Collects the generic types associated to the generic field as optional dependencies."""
         for associated_type in set(self.json_data.get("associatedTypes") or []):
-            self.add_dependency_by_id(
+            self.add_dependency_by_name(
                 associated_type, ContentType.GENERIC_TYPE, is_mandatory=False
             )
 
         for system_associated_type in set(
             self.json_data.get("systemAssociatedTypes") or []
         ):
-            self.add_dependency_by_id(
+            self.add_dependency_by_name(
                 system_associated_type, ContentType.GENERIC_TYPE, is_mandatory=False
             )

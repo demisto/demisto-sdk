@@ -26,7 +26,7 @@ import git
 import giturlparse
 import requests
 import urllib3
-from bs4 import UnicodeDammit
+from bs4.dammit import UnicodeDammit
 from git.types import PathLike
 from packaging.version import LegacyVersion, Version, parse
 from pebble import ProcessFuture, ProcessPool
@@ -333,7 +333,9 @@ def get_local_remote_file(
     git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
     file_content = repo_git_util.get_local_remote_file_content(git_path)
     if return_content:
-        return file_content.encode()
+        if file_content:
+            return file_content.encode()
+        return file_content
     return get_file_details(file_content, full_file_path)
 
 
@@ -478,7 +480,7 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
     :return: tuple of updated lists: (modified_files, updated_added_files, removed_files)
     """
     # map IDs to removed files
-    packagify_diff = {}  # type: dict
+    packagify_diff: dict = {}
     for file_path in removed_files:
         if file_path.split("/")[0] in PACKAGE_SUPPORTING_DIRECTORIES:
             if PACKS_README_FILE_NAME in file_path:
@@ -2538,17 +2540,24 @@ def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, ma
     return searched_tasks
 
 
-def extract_docker_image_from_text(text):
+def extract_docker_image_from_text(text: str, with_no_tag: bool = False):
     """
     Strips the docker image version from a given text.
+
     Args:
-        text : the text to extract the docker image from
-    Return:
-        str. The docker image version if exists, otherwise, return None.
+        text (str): the text to extract the docker image from
+        with_no_tag (bool): whether to return the docker image without its tag,
+            for example if True then demisto/tesseract:1.0.0.36078 --> tesseract
+
+    Returns:
+        str: The docker image version if exists, otherwise, return None.
     """
     match = (re.search(r'(demisto/.+:([0-9]+)(((\.)[0-9]+)+))', text))
     if match:
-        return match.group(1)
+        docker_image = match.group(1)
+        if with_no_tag:
+            return docker_image.replace('demisto/', '').split(':')[0]
+        return docker_image
     else:
         return None
 

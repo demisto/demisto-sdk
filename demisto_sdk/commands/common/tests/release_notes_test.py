@@ -556,28 +556,28 @@ def test_validate_headers(mocker, repo):
 
 TEST_RELEASE_NOTES_INVALID_HEADERS = [("""#### Integrations
 ##### integration-test
-- Added x y z""", 'Integrations', {'validate_special_forms': True, 'validate_content_type_header': True,
+- Added x y z""", 'Integrations', {'rn_valid_header_format': True, 'validate_content_type_header': True,
                                    'validate_content_item_header': False}),
     ("""#### FakeContentType
                                       ##### Test
-                                      - Added x y z""", 'FakeContentType', {'validate_special_forms': False,
+                                      - Added x y z""", 'FakeContentType', {'rn_valid_header_format': False,
                                                                             'validate_content_type_header': False,
-                                                                            'validate_content_item_header': True}),
-    ("""#### Incident Field
+                                                                            'validate_content_item_header': False}),
+    ("""#### Incident Fields
                                       ##### Test
-                                      - Added x y z""", 'Incident Fields', {'validate_special_forms': False,
+                                      - Added x y z""", 'Incident Fields', {'rn_valid_header_format': False,
                                                                             'validate_content_type_header': True,
-                                                                            'validate_content_item_header': True}),
+                                                                            'validate_content_item_header': False}),
     ("""#### Integrations
                                       - **integration-test**
-                                      - Added x y z""", 'Integrations', {'validate_special_forms': False,
+                                      - Added x y z""", 'Integrations', {'rn_valid_header_format': False,
                                                                          'validate_content_type_header': True,
-                                                                         'validate_content_item_header': True}),
-    ("""#### Incident Field
+                                                                         'validate_content_item_header': False}),
+    ("""#### Incident Fields
                                   - *test**
-                                  - Added x y z""", 'Incident Fields', {'validate_special_forms': False,
+                                  - Added x y z""", 'Incident Fields', {'rn_valid_header_format': False,
                                                                         'validate_content_type_header': True,
-                                                                        'validate_content_item_header': True})
+                                                                        'validate_content_item_header': False})
 ]
 
 
@@ -597,9 +597,10 @@ def test_invalid_headers(mocker, repo, content, content_type, expected_result):
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
     validator = get_validator(content, MODIFIED_FILES, pack_name=pack.name, pack_path=pack.path)
     headers = validator.extract_rn_headers()
-    assert expected_result['validate_special_forms'] == validator.validate_special_forms(headers)
-    validator.filter_rn_headers(headers=headers)
-    assert expected_result['validate_content_type_header'] == validator.validate_content_type_header(
-        content_type=content_type)
-    assert expected_result['validate_content_item_header'] == validator.validate_content_item_header(
-        content_type=content_type, headers=headers)
+    for content_type, content_items in headers.items():
+        assert expected_result['rn_valid_header_format'] == validator.rn_valid_header_format(content_type, content_items)
+        validator.filter_rn_headers(headers=headers)
+        assert expected_result['validate_content_type_header'] == validator.validate_content_type_header(
+            content_type=content_type)
+        assert expected_result['validate_content_item_header'] == validator.validate_content_item_header(
+            content_type=content_type, content_items=content_items)

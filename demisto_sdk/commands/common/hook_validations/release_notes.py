@@ -3,8 +3,9 @@ import os
 import re
 from typing import Dict, List, Tuple, Union
 
-from demisto_sdk.commands.common.constants import (CUSTOM_CONTENT_FILE_ENDINGS, PACKS_DIR, RN_CONTENT_ENTITY_WITH_STARS,
-                                                   RN_HEADER_BY_FILE_TYPE, SKIP_RELEASE_NOTES_FOR_TYPES, FileType)
+from demisto_sdk.commands.common.constants import (CUSTOM_CONTENT_FILE_ENDINGS, ENTITY_TYPE_TO_DIR, PACKS_DIR,
+                                                   RN_CONTENT_ENTITY_WITH_STARS, RN_HEADER_BY_FILE_TYPE,
+                                                   SKIP_RELEASE_NOTES_FOR_TYPES)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
 from demisto_sdk.commands.common.tools import (extract_docker_image_from_text, find_type, get_dict_from_file,
@@ -59,7 +60,6 @@ class ReleaseNotesValidator(BaseValidator):
             The headers of the release notes file.
         """
         headers: Dict = {}
-        contents_with_stars = [RN_HEADER_BY_FILE_TYPE[content] for content in RN_CONTENT_ENTITY_WITH_STARS]
         # Get all sections from the release notes using regex
         rn_sections = ENTITY_TYPE_SECTION_REGEX.findall(self.latest_release_notes)
         for section in rn_sections:
@@ -69,7 +69,7 @@ class ReleaseNotesValidator(BaseValidator):
             content_type_sections_ls = ENTITY_SECTION_REGEX.findall(content_type_sections_str)
             if not content_type_sections_ls:
                 #  Did not find content items headers under content type - might be duo to invalid format.
-                #  Will raise error in validate_special_forms.
+                #  Will raise error in rn_valid_header_format.
                 headers[content_type] = []
             for content_type_section in content_type_sections_ls:
                 content_type_section = self.filter_nones(ls=content_type_section)
@@ -128,23 +128,19 @@ class ReleaseNotesValidator(BaseValidator):
             Validate the 2nd headers (the content items) are exists in the pack and having the right display name.
         Args:
             content_type: (str) - The content type to validate.(e.g. Integrations, Playbooks, etc.)
-            headers: (Dict) - The release notes headers to validate, the structure is content type -> headers.(e.g. Integrations -> [header1, header2])
+            content_items: (Dict) - The content items headers to validate.
         Return:
             True if the content item is valid, False otherwise.
         """
         is_valid = True
-        # todo: change it to type->dir instead of the mapping down.
-        # Special rule for the Mapper, as the Mapper is under the classifier directory.
-        content_type_dir_name = content_type.replace(' ', '') if content_type != RN_HEADER_BY_FILE_TYPE[
-            FileType.MAPPER] else RN_HEADER_BY_FILE_TYPE[FileType.CLASSIFIER]
+        entity_type = content_type.replace(' ', '').removesuffix('s')
+
+        content_type_dir_name = ENTITY_TYPE_TO_DIR.get(entity_type.lower(), entity_type)
         content_type_path = os.path.join(self.pack_path, content_type_dir_name)
 
-        content_type_dir_list = []
-        try:
-            content_type_dir_list = get_files_in_dir(content_type_path, CUSTOM_CONTENT_FILE_ENDINGS, recursive=True)
-            # todo: Verify what error been thorwn from get_files_in_dir
-        except FileNotFoundError:
-            error_message, error_code = Errors.release_notes_invalid_content_type_header(content_name_header=content_type,
+        content_type_dir_list = get_files_in_dir(content_type_path, CUSTOM_CONTENT_FILE_ENDINGS, recursive=True)
+        if not content_type_dir_list:
+            error_message, error_code = Errors.release_notes_invalid_content_type_header(content_type=content_type,
                                                                                          pack_name=self.pack_name)
             if self.handle_error(error_message, error_code, self.release_notes_file_path):
                 is_valid = False
@@ -152,10 +148,9 @@ class ReleaseNotesValidator(BaseValidator):
         content_items_display_names = set(map(lambda item: get_display_name(item), content_type_dir_list))
         diff = set(content_items) - content_items_display_names
         for header in diff:
-            # todo: change the content_type to display the content type display name. (see the printed error)
             error_message, error_code = Errors.release_notes_invalid_content_name_header(content_name_header=header,
                                                                                          pack_name=self.pack_name,
-                                                                                         content_type=content_type)
+                                                                                         content_type=entity_type)
             if self.handle_error(error_message, error_code, self.release_notes_file_path):
                 is_valid = False
         return is_valid

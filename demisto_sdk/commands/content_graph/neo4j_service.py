@@ -1,11 +1,11 @@
 import logging
 import shutil
 from pathlib import Path
-
+import hashlib
 import docker
 import requests
 from requests.adapters import HTTPAdapter, Retry
-
+from tqdm import tqdm
 from demisto_sdk.commands.common.tools import get_content_path, run_command
 from demisto_sdk.commands.content_graph.common import NEO4J_DATABASE_HTTP, NEO4J_FOLDER, NEO4J_PASSWORD
 
@@ -18,6 +18,11 @@ LOCAL_NEO4J_PATH = Path("/var/lib/neo4j")
 NEO4J_IMPORT_FOLDER = "import"
 NEO4J_DATA_FOLDER = "data"
 NEO4J_PLUGINS_FOLDER = "plugins"
+
+# When updating the APOC version, make sure to update the checksum as well
+APOC_URL = "https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases/download/4.4.0.12/apoc-4.4.0.12-all.jar"
+APOC_CHECKSUM = "a2bebf7f4aeae23677e369a51ac7d4d0"
+
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -80,6 +85,34 @@ def _should_use_docker(use_docker: bool) -> bool:
     return use_docker or not IS_NEO4J_ADMIN_AVAILABLE
 
 
+def _get_plugins_folder(is_running_on_docker: bool) -> Path:
+    plugins_path = REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER
+    if not is_running_on_docker:
+        plugins_path = LOCAL_NEO4J_PATH / NEO4J_PLUGINS_FOLDER
+    return plugins_path
+
+
+def _is_apoc_available(plugins_path: Path) -> bool:
+    for plugin in plugins_path.iterdir():
+        if plugin.name.startswith("apoc") and hashlib.md5(plugin.read_bytes()).hexdigest() == APOC_CHECKSUM:
+            return True
+    return False
+
+
+def _download_apoc(is_running_on_docker: bool):
+    plugins_folder = _get_plugins_folder(is_running_on_docker)
+    if _is_apoc_available(plugins_folder):
+        logger.info("APOC is already available")
+        return
+    logger.info("Downloading APOC...")
+    # Download APOC_URL and save it to plugins folder in neo4j
+    response = requests.get(APOC_URL, verify=False, stream=True)
+    total_size = int(response.headers.get("content-length", 0))
+
+    with open(plugins_folder / "apoc.jar", "wb") as f:
+        for data in tqdm(response.iter_content(1024), total=total_size // 1024, unit="MB", unit_scale=True):
+            f.write(data)
+
 def start(use_docker: bool = True):
     """Starting the neo4j service
 
@@ -87,10 +120,9 @@ def start(use_docker: bool = True):
         use_docker (bool, optional): Whether use docker or run locally. Defaults to True.
     """
     use_docker = _should_use_docker(use_docker)
+    _download_apoc(use_docker)
     if not use_docker:
-        _neo4j_admin_command(
-            "set-initial-password", f"neo4j-admin set-initial-password {NEO4J_PASSWORD}"
-        )
+        _neo4j_admin_command("set-initial-password", f"neo4j-admin set-initial-password {NEO4J_PASSWORD}")
         run_command("neo4j start", cwd=REPO_PATH, is_silenced=False)
 
     else:
@@ -102,9 +134,9 @@ def start(use_docker: bool = True):
             name="neo4j-content",
             ports={"7474/tcp": 7474, "7687/tcp": 7687, "7473/tcp": 7473},
             volumes=[
-                f'{REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER}:/{NEO4J_DATA_FOLDER}',
-                f'{REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER}:{LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER}',
-                f'{REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER}:/{NEO4J_PLUGINS_FOLDER}'
+                f"{REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER}:/{NEO4J_DATA_FOLDER}",
+                f"{REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER}:{LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER}",
+                f"{REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER}:/{NEO4J_PLUGINS_FOLDER}",
             ],
             detach=True,
             environment={
@@ -112,7 +144,6 @@ def start(use_docker: bool = True):
                 "NEO4J_apoc_export_file_enabled": "true",
                 "NEO4J_apoc_import_file_enabled": "true",
                 "NEO4J_apoc_import_file_use__neo4j__config": "true",
-                "NEO4JLABS_PLUGINS": '["apoc"]',
                 "NEO4J_dbms_security_procedures_unrestricted": "apoc.*",
                 "NEO4J_dbms_security_procedures_allowlist": "apoc.*",
             },
@@ -172,11 +203,7 @@ def dump(output_path: Path, use_docker=True):
     dump_path = Path("/backups/content-graph.dump") if use_docker else output_path
     command = f"neo4j-admin dump --database=neo4j --to={dump_path}"
     # The actual path in the host is different than the path in the container
-    real_path = (
-        (REPO_PATH / NEO4J_FOLDER / "backups" / "content-graph.dump")
-        if use_docker
-        else output_path
-    )
+    real_path = (REPO_PATH / NEO4J_FOLDER / "backups" / "content-graph.dump") if use_docker else output_path
     real_path.unlink(missing_ok=True)
     _neo4j_admin_command("dump", command)
     if use_docker:

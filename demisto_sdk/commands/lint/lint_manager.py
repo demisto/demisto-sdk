@@ -58,7 +58,7 @@ class LintManager:
     """
 
     def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, prev_ver: str,
-                 json_file_path: str = '', id_set_path: str = None, check_dependent_api_module: bool = False):
+                 json_file_path: str = '', check_dependent_api_module: bool = False):
 
         # Verbosity level
         self._verbose = not quiet if quiet else verbose
@@ -75,8 +75,6 @@ class LintManager:
                                                          git=git,
                                                          all_packs=all_packs,
                                                          base_branch=self._prev_ver)
-
-        self._id_set_path = id_set_path
 
         if check_dependent_api_module:
             dependent_on_api_module = self._get_api_module_dependent_items()

@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Set, Tuple
 
 from neo4j import Transaction
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import MarketplaceVersions, REPUTATION_COMMAND_NAMES
 from demisto_sdk.commands.content_graph.common import ContentType, Neo4jRelationshipResult, RelationshipType
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (is_target_available, run_query,
                                                                                to_neo4j_map)
@@ -114,6 +114,8 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
             "{marketplace}" IN content_item.marketplaces
         AND
             NOT "{marketplace}" IN dependency.marketplaces
+        AND
+            dependency.object_id NOT IN {REPUTATION_COMMAND_NAMES}
         OPTIONAL MATCH (alternative_dependency:{ContentType.BASE_CONTENT}{{node_id: dependency.node_id}})
         WHERE
             "{marketplace}" IN alternative_dependency.marketplaces
@@ -151,6 +153,7 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
             (command:{ContentType.COMMAND})<-[rcmd:{RelationshipType.HAS_COMMAND}]
             -(integration:{ContentType.INTEGRATION})
     WHERE {is_target_available("content_item", "integration")}
+    AND command.object_id not in {list(REPUTATION_COMMAND_NAMES)}
     WITH command, count(rcmd) as command_count
 
     MATCH (content_item:{ContentType.BASE_CONTENT})
@@ -158,6 +161,7 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
             (command)<-[rcmd:{RelationshipType.HAS_COMMAND}]
             -(integration:{ContentType.INTEGRATION})
     WHERE {is_target_available("content_item", "integration")}
+    AND command.object_id not in {list(REPUTATION_COMMAND_NAMES)}
 
     MERGE (content_item)-[u:USES]->(integration)
     ON CREATE
@@ -165,6 +169,7 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
     ON MATCH
         SET u.mandatorily = u.mandatorily OR (CASE WHEN command_count = 1 THEN r.mandatorily ELSE false END)
     RETURN count(u) as uses_relationships
+
     """
     result = run_query(tx, query).single()
     uses_count = result["uses_relationships"]

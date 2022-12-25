@@ -659,7 +659,6 @@ def lint(**kwargs):
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
 
     check_configuration_file('lint', kwargs)
-    print(f"kwargs.get('id_set_path') {kwargs.get('id_set_path')}")
     lint_manager = LintManager(
         input=kwargs.get('input'),  # type: ignore[arg-type]
         git=kwargs.get('git'),  # type: ignore[arg-type]

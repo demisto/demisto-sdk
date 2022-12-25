@@ -44,9 +44,9 @@ def get_all_level_packs_dependencies(
 
 def create_pack_dependencies(tx: Transaction) -> None:
     remove_existing_depends_on_relationships(tx)
+    update_uses_for_integration_commands(tx)
     delete_deprecatedcontent_relationship(tx)  # TODO decide what to do with this
     fix_marketplaces_properties(tx)
-    update_uses_for_integration_commands(tx)
     create_depends_on_relationships(tx)
 
 

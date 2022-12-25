@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Fixed an issue where modeling rules with arbitrary whitespace characters were not parsed correctly.
+* Added support for the **nativeImage** key for an integration/script in the **prepare-content** command.
 
 ## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.

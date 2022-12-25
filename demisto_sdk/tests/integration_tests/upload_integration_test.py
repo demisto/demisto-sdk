@@ -26,7 +26,7 @@ def demisto_client(mocker):
     mocker.patch("click.secho")
 
 
-def test_integration_upload_pack_positive(demisto_client):
+def test_integration_upload_pack_positive(demisto_client, mocker, repo):
     """
     Given
     - Content pack named FeedAzure to upload.
@@ -38,6 +38,8 @@ def test_integration_upload_pack_positive(demisto_client):
     - Ensure upload runs successfully.
     - Ensure success upload message is printed.
     """
+    from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
+    mocker.patch.object(IntegrationScript, 'get_supported_native_images', return_value=[])
 
     pack_path = join(
         DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure"

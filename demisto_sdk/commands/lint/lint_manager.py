@@ -106,7 +106,7 @@ class LintManager:
                       f'Executing lint and test on those as well.')
                 return dependent_on_api_module
             print('No dependent packages found.')
-        return[]
+        return []
 
     @staticmethod
     def _gather_facts() -> Dict[str, Any]:

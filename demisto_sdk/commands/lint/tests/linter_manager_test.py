@@ -6,6 +6,7 @@ import pytest
 
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON, FileType
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
 from demisto_sdk.commands.lint.lint_manager import LintManager
 from TestSuite.test_tools import ChangeCWD
 
@@ -623,3 +624,95 @@ def test_create_json_output_xsoar_linter(repo, mocker):
         }
     ]
     assert json_contents == expected_format
+
+
+class NodeDependencyMock:
+    def __init__(self, path):
+        self.path = path
+
+
+class NodeMock:
+    def __init__(self, imported_by):
+        self.imported_by = imported_by
+
+
+@pytest.mark.parametrize("changed_files, api_module_nodes, dependent_items, packages_of_dependent_items, cdam_flag",
+                         [pytest.param([PosixPath("Packs/ApiModules/Scripts/SomeApiModule")],
+                                       [[NodeMock(imported_by=[NodeDependencyMock(
+                                           path="Packs/SomePack/Scripts/SomeScript/SomeScript.py")])]],
+                                       ["Packs/SomePack/Scripts/SomeScript/SomeScript.py"],
+                                       [PosixPath("Packs/SomePack/Scripts/SomeScript")],
+                                       True,
+                                       id="single api module change with dependency"),
+                          pytest.param([PosixPath("Packs/ApiModules/Scripts/SomeApiModule")],
+                                       [[NodeMock(imported_by=[])]],
+                                       [],
+                                       [],
+                                       True,
+                                       id="single api module change with no dependencies"),
+                          pytest.param([PosixPath("Packs/SomePack/Scripts/SomePackScript")],
+                                       [[NodeMock(imported_by=[NodeDependencyMock(
+                                           path="Packs/SomeOtherPack/Scripts/SomeScript/SomeScript.py")])]],
+                                       [],
+                                       [],
+                                       True,
+                                       id="non api module change with dependency"),
+                          pytest.param([PosixPath("Packs/ApiModules/Scripts/SomeApiModule")],
+                                       [[NodeMock(imported_by=[
+                                           NodeDependencyMock(path="Packs/SomePack1/Scripts/SomeScript1/SomeScript1.py"),
+                                           NodeDependencyMock(path="Packs/SomePack2/Scripts/SomeScript2/SomeScript2.py")
+                                       ])]],
+                                       ["Packs/SomePack1/Scripts/SomeScript1/SomeScript1.py",
+                                        "Packs/SomePack2/Scripts/SomeScript2/SomeScript2.py"],
+                                       [PosixPath("Packs/SomePack1/Scripts/SomeScript1"),
+                                        PosixPath("Packs/SomePack2/Scripts/SomeScript2")],
+                                       True,
+                                       id="single api module change with 2 dependencies"),
+                          pytest.param([PosixPath("Packs/ApiModules/Scripts/SomeApiModule1"),
+                                        PosixPath("Packs/ApiModules/Scripts/SomeApiModule2")],
+                                       [[NodeMock(imported_by=[NodeDependencyMock(
+                                           path="Packs/SomePack1/Scripts/SomeScript1/SomeScript1.py")])],
+                                           [NodeMock(imported_by=[NodeDependencyMock(
+                                               path="Packs/SomePack2/Scripts/SomeScript2/SomeScript2.py")])]],
+                                       ["Packs/SomePack1/Scripts/SomeScript1/SomeScript1.py",
+                                        "Packs/SomePack2/Scripts/SomeScript2/SomeScript2.py"],
+                                       [PosixPath("Packs/SomePack1/Scripts/SomeScript1"),
+                                        PosixPath("Packs/SomePack2/Scripts/SomeScript2")],
+                                       True,
+                                       id="2 api module changes with 1 dependency each"),
+                          pytest.param([PosixPath("Packs/ApiModules/Scripts/SomeApiModule")],
+                                       [[NodeMock(imported_by=[NodeDependencyMock(
+                                           path="Packs/SomePack/Scripts/SomeScript/SomeScript.py")])]],
+                                       [],
+                                       [],
+                                       False,
+                                       id="single api module change with dependency, no cdam flag")
+                          ])
+def test_get_api_module_dependent_items(mocker, changed_files, api_module_nodes, dependent_items,
+                                        packages_of_dependent_items, cdam_flag):
+    """
+    Given:
+        - Changed API modules with various dependencies.
+
+    When:
+        - Running lint on API modules
+
+    Then:
+        - Ensure that lint runs on all relevant dependencies as well.
+    """
+    get_packages_mock = mocker.patch.object(LintManager, '_get_packages', side_effect=[changed_files,
+                                                                                       packages_of_dependent_items])
+    mocker.patch.object(LintManager, '_gather_facts', return_value={'content_repo': ''})
+    mocker.patch.object(Neo4jContentGraphInterface, "search", side_effect=api_module_nodes)
+    lint_manager = LintManager(input='',
+                               git=False,
+                               all_packs=False,
+                               quiet=False,
+                               verbose=False,
+                               prev_ver='master',
+                               json_file_path='path',
+                               check_dependent_api_module=cdam_flag)
+
+    assert set(lint_manager._pkgs) == set(packages_of_dependent_items + changed_files)
+    if packages_of_dependent_items:
+        get_packages_mock.assert_called_with(content_repo='', input=dependent_items)

@@ -21,16 +21,16 @@ from demisto_sdk.commands.common.update_id_set import (add_item_to_exclusion_dic
                                                        get_generic_field_data, get_generic_module_data,
                                                        get_generic_type_data, get_incident_fields_by_playbook_input,
                                                        get_incident_type_data, get_indicator_type_data, get_layout_data,
-                                                       get_mapper_data, get_modeling_rule_data, get_pack_metadata_data,
-                                                       get_parsing_rule_data, get_playbook_data, get_report_data,
-                                                       get_script_data, get_trigger_data,
+                                                       get_layout_rule_data, get_mapper_data, get_modeling_rule_data,
+                                                       get_pack_metadata_data, get_parsing_rule_data, get_playbook_data,
+                                                       get_report_data, get_script_data, get_trigger_data,
                                                        get_values_for_keys_recursively, get_widget_data,
                                                        get_xdrc_template_data, get_xsiam_dashboard_data,
                                                        get_xsiam_report_data, has_duplicate, merge_id_sets,
                                                        process_general_items, process_incident_fields,
                                                        process_integration, process_jobs, process_layoutscontainers,
                                                        process_script, process_wizards, re_create_id_set,
-                                                       should_skip_item_by_mp, get_layout_rule_data)
+                                                       should_skip_item_by_mp)
 from TestSuite.utils import IsEqualFunctions
 
 json = JSON_Handler()
@@ -3108,6 +3108,7 @@ class TestXDRCTemplates:
 
         assert f'adding {xdrc_template._file_path} to id_set' in captured.out
 
+
 class TestLayoutRules:
     @staticmethod
     def test_process_layout_rules(mocker, capsys, pack):
@@ -3121,8 +3122,8 @@ class TestLayoutRules:
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
         layout_rule = pack.create_layout_rule("layout_rule_name",
-                                                          {"rule_id": "rule_id",
-                                                           "rule_name": "rule_name"})
+                                              {"rule_id": "rule_id",
+                                               "rule_name": "rule_name"})
         res = process_general_items(layout_rule.path, {pack.name: {}},
                                     MarketplaceVersions.MarketplaceV2.value, True, (FileType.LAYOUT_RULE,),
                                     get_layout_rule_data())
@@ -3141,6 +3142,7 @@ class TestLayoutRules:
         assert layout_rule_result['pack'] == pack.name
 
         assert f'adding {layout_rule._file_path} to id_set' in captured.out
+
 
 def test_merge_id_sets(tmp_path):
     """

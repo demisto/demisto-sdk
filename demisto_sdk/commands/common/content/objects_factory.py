@@ -10,13 +10,13 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (AgentTool,
                                                                       GenericDefinition, GenericField, GenericModule,
                                                                       GenericType, IncidentField, IncidentType,
                                                                       IndicatorField, IndicatorType, Integration, Job,
-                                                                      Layout, LayoutsContainer, Lists, ModelingRule,
-                                                                      OldClassifier, OldIndicatorType, PackIgnore,
-                                                                      PackMetaData, ParsingRule, Playbook,
+                                                                      Layout, LayoutRule, LayoutsContainer, Lists,
+                                                                      ModelingRule, OldClassifier, OldIndicatorType,
+                                                                      PackIgnore, PackMetaData, ParsingRule, Playbook,
                                                                       PreProcessRule, Readme, ReleaseNote,
                                                                       ReleaseNoteConfig, Report, Script, SecretIgnore,
                                                                       Trigger, Widget, Wizard, XDRCTemplate,
-                                                                      XSIAMDashboard, XSIAMReport, LayoutRule)
+                                                                      XSIAMDashboard, XSIAMReport)
 from demisto_sdk.commands.common.content.objects.root_objects import Documentation
 from demisto_sdk.commands.common.tools import find_type
 

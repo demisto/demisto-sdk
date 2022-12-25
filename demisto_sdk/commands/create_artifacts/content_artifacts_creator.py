@@ -17,12 +17,12 @@ from demisto_sdk.commands.common.constants import (BASE_PACK, CLASSIFIERS_DIR, C
                                                    GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR,
                                                    GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR,
-                                                   JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, MODELING_RULES_DIR, PACKS_DIR,
-                                                   PARSING_RULES_DIR, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
-                                                   RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
-                                                   TOOLS_DIR, TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR, XDRC_TEMPLATE_DIR,
-                                                   XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, ContentItems, FileType,
-                                                   MarketplaceVersions, LAYOUT_RULES_DIR)
+                                                   JOBS_DIR, LAYOUT_RULES_DIR, LAYOUTS_DIR, LISTS_DIR,
+                                                   MODELING_RULES_DIR, PACKS_DIR, PARSING_RULES_DIR, PLAYBOOKS_DIR,
+                                                   PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR,
+                                                   TEST_PLAYBOOKS_DIR, TOOLS_DIR, TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR,
+                                                   XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
+                                                   ContentItems, FileType, MarketplaceVersions)
 from demisto_sdk.commands.common.content import Content, ContentError, ContentFactoryError, Pack
 from demisto_sdk.commands.common.content.objects.abstract_objects.text_object import TextObject
 from demisto_sdk.commands.common.content.objects.pack_objects import (JSONContentObject, Script, YAMLContentObject,
@@ -475,6 +475,7 @@ class ContentItemsHandler:
                 'name': content_object.get('name', '')
             })
 
+
 @contextmanager
 def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
     """ Process pool Handler which terminate all processes in case of Exception.
@@ -916,10 +917,12 @@ def handle_xdrc_template(content_items_handler, pack, pack_report, artifact_mana
         content_items_handler.handle_content_item(xdrc_template)
         pack_report += dump_pack_conditionally(artifact_manager, xdrc_template)
 
+
 def handle_layout_rule(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
     for layout_rule in pack.layout_rules:
         content_items_handler.handle_content_item(layout_rule)
         pack_report += dump_pack_conditionally(artifact_manager, layout_rule)
+
 
 def handle_tools(pack, pack_report, artifact_manager, **kwargs):
     for tool in pack.tools:

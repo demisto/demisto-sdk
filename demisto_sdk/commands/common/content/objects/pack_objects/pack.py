@@ -13,25 +13,24 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_
                                                    GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR,
                                                    GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR,
-                                                   JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, MODELING_RULES_DIR,
-                                                   PACK_NAME_DEPRECATED_REGEX, PACK_VERIFY_KEY, PARSING_RULES_DIR,
-                                                   PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, REPORTS_DIR,
-                                                   SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, TRIGGER_DIR, WIDGETS_DIR,
-                                                   WIZARDS_DIR, XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR,
-                                                   XSIAM_REPORTS_DIR, FileType, LAYOUT_RULES_DIR)
+                                                   JOBS_DIR, LAYOUT_RULES_DIR, LAYOUTS_DIR, LISTS_DIR,
+                                                   MODELING_RULES_DIR, PACK_NAME_DEPRECATED_REGEX, PACK_VERIFY_KEY,
+                                                   PARSING_RULES_DIR, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
+                                                   RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
+                                                   TOOLS_DIR, TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR, XDRC_TEMPLATE_DIR,
+                                                   XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, FileType)
 from demisto_sdk.commands.common.content.objects.pack_objects import (AgentTool, AuthorImage, Classifier,
                                                                       ClassifierMapper, Connection, Contributors,
                                                                       CorrelationRule, Dashboard, DocFile,
                                                                       GenericDefinition, GenericField, GenericModule,
                                                                       GenericType, IncidentField, IncidentType,
                                                                       IndicatorField, IndicatorType, Integration, Job,
-                                                                      LayoutObject, Lists, ModelingRule, OldClassifier,
-                                                                      PackIgnore, PackMetaData, ParsingRule, Playbook,
-                                                                      PreProcessRule, Readme, ReleaseNote,
-                                                                      ReleaseNoteConfig, Report, Script, SecretIgnore,
-                                                                      Trigger, Widget, Wizard, XDRCTemplate,
-                                                                      XSIAMDashboard, XSIAMReport, LAYOUT_RULE)
-
+                                                                      LayoutObject, LayoutRule, Lists, ModelingRule,
+                                                                      OldClassifier, PackIgnore, PackMetaData,
+                                                                      ParsingRule, Playbook, PreProcessRule, Readme,
+                                                                      ReleaseNote, ReleaseNoteConfig, Report, Script,
+                                                                      SecretIgnore, Trigger, Widget, Wizard,
+                                                                      XDRCTemplate, XSIAMDashboard, XSIAMReport)
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.tools import get_demisto_version, is_object_in_id_set
 from demisto_sdk.commands.test_content import tools
@@ -356,7 +355,7 @@ class Pack:
         return self._pack_info_from_id_set
 
     @property
-    def layout_rules(self) -> Iterator[LAYOUT_RULE]:
+    def layout_rules(self) -> Iterator[LayoutRule]:
         return self._content_files_list_generator_factory(dir_name=LAYOUT_RULES_DIR,
                                                           suffix='json')
 

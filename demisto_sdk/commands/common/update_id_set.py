@@ -21,11 +21,11 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, COMMON_TYPES
                                                    DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_DEFINITIONS_DIR,
                                                    GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR, GENERIC_TYPES_DIR,
                                                    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
-                                                   INDICATOR_TYPES_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR,
-                                                   MODELING_RULES_DIR, PARSING_RULES_DIR, REPORTS_DIR, SCRIPTS_DIR,
-                                                   TEST_PLAYBOOKS_DIR, TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR,
-                                                   XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, FileType,
-                                                   MarketplaceVersions, LAYOUT_RULES_DIR)
+                                                   INDICATOR_TYPES_DIR, JOBS_DIR, LAYOUT_RULES_DIR, LAYOUTS_DIR,
+                                                   LISTS_DIR, MAPPERS_DIR, MODELING_RULES_DIR, PARSING_RULES_DIR,
+                                                   REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TRIGGER_DIR,
+                                                   WIDGETS_DIR, WIZARDS_DIR, XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR,
+                                                   XSIAM_REPORTS_DIR, FileType, MarketplaceVersions)
 from demisto_sdk.commands.common.content_constant_paths import (DEFAULT_ID_SET_PATH, MP_V2_ID_SET_PATH,
                                                                 XPANSE_ID_SET_PATH)
 from demisto_sdk.commands.common.cpu_count import cpu_count
@@ -1938,6 +1938,7 @@ def get_wizard_data(path: str, packs: Dict[str, Dict] = None):
         dependency_packs.extend({pack['name'] for pack in dep_packs['packs']})
     data['dependency_packs'] = dependency_packs
     return {json_data.get('id'): data}
+
 
 def get_layout_rule_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)

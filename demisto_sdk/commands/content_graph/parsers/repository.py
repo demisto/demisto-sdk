@@ -30,10 +30,11 @@ class RepositoryParser:
             packs_to_parse (Optional[List[str]]): A list of packs to parse. If not provided, parses all packs.
         """
         self.path: Path = path
-        pool = multiprocessing.Pool(processes=cpu_count())
+            
         self.packs_to_parse: Optional[List[str]] = packs_to_parse
         try:
-            self.packs: List[PackParser] = list(pool.map(PackParser, self.iter_packs()))
+            with multiprocessing.Pool(processes=cpu_count()) as pool:
+                self.packs: List[PackParser] = list(pool.map(PackParser, self.iter_packs()))
         except Exception:
             logger.error(traceback.format_exc())
             raise

@@ -146,11 +146,14 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
         tx (Transaction): _description_
     """
     query = f"""
+    MATCH (command:{ContentType.COMMAND})<-[rcmd:{RelationshipType.HAS_COMMAND}]-(integration:{ContentType.INTEGRATION})
+    WITH id(command) AS command_id, count(rcmd) as command_count
+    
     MATCH (content_item:{ContentType.BASE_CONTENT})-[r:{RelationshipType.USES}]->(command:{ContentType.COMMAND})
     MATCH (command)<-[rcmd:{RelationshipType.HAS_COMMAND}]-(integration:{ContentType.INTEGRATION})
-    WHERE {is_target_available("content_item", "integration")}
+    WHERE id(command) = command_id
+    AND {is_target_available("content_item", "integration")}
 
-    WITH count(rcmd) as command_count, content_item, r, integration
     MERGE (content_item)-[u:USES]->(integration)
     ON CREATE
         SET u.mandatorily = CASE WHEN command_count = 1 THEN r.mandatorily ELSE false END

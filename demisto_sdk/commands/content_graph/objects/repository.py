@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import List
 
 from pydantic import BaseModel, DirectoryPath
+from demisto_sdk.commands.common.cpu_count import cpu_count
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_content_path
@@ -27,7 +28,7 @@ class ContentDTO(BaseModel):
         logger.info("starting repo dump")
         start_time = time.time()
         if USE_FUTURE:
-            with Pool() as pool:
+            with Pool(processes=cpu_count()) as pool:
                 pool.starmap(Pack.dump, ((pack, dir / pack.path.name, marketplace) for pack in self.packs))
 
         else:

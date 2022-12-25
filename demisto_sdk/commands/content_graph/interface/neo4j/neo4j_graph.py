@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set
 
 from neo4j import GraphDatabase, Neo4jDriver, Session, graph
+from demisto_sdk.commands.common.cpu_count import cpu_count
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -199,7 +200,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         if not nodes:
             logger.debug("No nodes to parse packs because all of them in mapping", self._id_to_obj)
             return
-        with Pool() as pool:
+        with Pool(processes=cpu_count()) as pool:
             results = pool.starmap(_parse_node, ((node.id, dict(node.items())) for node in nodes))
             for result in results:
                 assert result.database_id is not None

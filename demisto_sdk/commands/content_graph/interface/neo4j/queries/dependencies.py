@@ -157,7 +157,7 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
         -[r:{RelationshipType.USES}]->
             (command)<-[rcmd:{RelationshipType.HAS_COMMAND}]
             -(integration:{ContentType.INTEGRATION})
-    AND {is_target_available("content_item", "integration")}
+    WHERE {is_target_available("content_item", "integration")}
 
     MERGE (content_item)-[u:USES]->(integration)
     ON CREATE

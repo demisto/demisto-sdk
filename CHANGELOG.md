@@ -2,6 +2,8 @@
 ## Unreleased
 * Fixed an issue where modeling rules with arbitrary whitespace characters were not parsed correctly.
 * Added support for the **nativeImage** key for an integration/script in the **prepare-content** command.
+* Fixed an issue where **xdrctemplate** was missing 'external' prefix.
+* Fixed an issue in **prepare-content** command providing output path.
 
 ## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.

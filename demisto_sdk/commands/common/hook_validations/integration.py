@@ -5,7 +5,7 @@ from typing import Dict, Optional
 
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS, BANG_COMMAND_ARGS_MAPPING_DICT,
-    BANG_COMMAND_NAMES, DBOT_SCORES_DICT, DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    BANG_COMMAND_NAMES, DBOT_SCORES_DICT, DEFAULT_CONTENT_ITEM_FROM_VERSION, DEPRECATED_DESC_REGEX, DEPRECATED_NO_REPLACE_DESC_REGEX,
     DEPRECATED_REGEXES, ENDPOINT_COMMAND_NAME, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
     FEED_REQUIRED_PARAMS, FIRST_FETCH, FIRST_FETCH_PARAM,
     INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION_CATEGORIES, IOC_OUTPUTS_DICT,
@@ -207,34 +207,42 @@ class IntegrationValidator(ContentEntityValidator):
                 self.is_valid = False
         return self.is_valid
 
-    @error_codes('IN127')
+    @error_codes('IN127,IN157')
     def _is_valid_deprecated_integration_display_name(self) -> bool:
-        is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
-        display_name = self.current_file.get('display', '')
-        if is_deprecated:
-            if not display_name.endswith('(Deprecated)'):
-                error_message, error_code = Errors.invalid_deprecated_integration_display_name()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    is_valid = False
-        return is_valid
+        is_display_name_deprecated = self.current_file.get('display', '').endswith('(Deprecated)')
+        
+        if is_deprecated and not is_display_name_deprecated:
+            error_message, error_code = Errors.invalid_deprecated_integration_display_name()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+            
+        if (not is_deprecated) and is_display_name_deprecated:
+            error_message, error_code = Errors.invalid_integration_deprecation__only_display_name_suffix()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+            
+        return True
 
-    @error_codes('IN128')
+    @error_codes('IN128,IN158')
     def _is_valid_deprecated_integration_description(self) -> bool:
-        is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
         description = self.current_file.get('description', '')
-        deprecated_v2_regex = DEPRECATED_REGEXES[0]
-        deprecated_no_replace_regex = DEPRECATED_REGEXES[1]
-        if is_deprecated:
-            if re.search(deprecated_v2_regex, description) or re.search(deprecated_no_replace_regex, description):
-                pass
-            else:
-                error_message, error_code = Errors.invalid_deprecated_integration_description()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    is_valid = False
-
-        return is_valid
+        
+        description_indicates_deprecation = any((re.search(DEPRECATED_DESC_REGEX, description),
+                                                 re.search(DEPRECATED_NO_REPLACE_DESC_REGEX, description)))
+        
+        if is_deprecated and not description_indicates_deprecation:
+            error_message, error_code = Errors.invalid_deprecated_integration_description()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        
+        if (not is_deprecated) and description_indicates_deprecation:
+            error_message, error_code = Errors.invalid_deprecation__only_description_deprecated()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+            
+        return True
 
     @error_codes('IN152')
     def is_valid_default_value_for_checkbox(self) -> bool:

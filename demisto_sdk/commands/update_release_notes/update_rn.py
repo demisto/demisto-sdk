@@ -47,8 +47,8 @@ def get_deprecated_comment_from_desc(description: str) -> str:
     Returns:
         If a deprecated description is found return it for rn.
     """
-    deprecate_line_with_replacement = re.findall(DEPRECATED_REGEXES[0], description)
-    deprecate_line_no_replacement = re.findall(DEPRECATED_REGEXES[1], description)
+    deprecate_line_with_replacement = re.findall(DEPRECATED_DESC_REGEX, description)
+    deprecate_line_no_replacement = re.findall(DEPRECATED_NO_REPLACE_DESC_REGEX, description)
 
     deprecate_line = deprecate_line_with_replacement + deprecate_line_no_replacement
     return deprecate_line[0] if deprecate_line else ''

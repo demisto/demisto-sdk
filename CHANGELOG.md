@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Fixed an issue where modeling rules with arbitrary whitespace characters were not parsed correctly.
+* Added support for the **nativeImage** key for an integration/script in the **prepare-content** command.
 * Added a new validation to the **validate** command to verify that the release notes headers are in the correct format.
 
 ## 1.8.1

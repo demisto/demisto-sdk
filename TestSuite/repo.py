@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from TestSuite.conf_json import ConfJSON
+from TestSuite.docker_native_image_config import DockerNativeImageConfiguration
 from TestSuite.global_secrets import GlobalSecrets
 from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
@@ -45,6 +46,10 @@ class Repo:
         # Conf.json
         self.conf = ConfJSON(self._test_dir, 'conf.json', '')
         self.conf.write_json()
+
+        # docker native image config
+        self.docker_native_image_config = DockerNativeImageConfiguration(self._test_dir)
+        self.docker_native_image_config.write_native_image_config()
 
         self.content_descriptor = JSONBased(self._tmpdir, 'content-descriptor', '')
         self.content_descriptor.write_json({})

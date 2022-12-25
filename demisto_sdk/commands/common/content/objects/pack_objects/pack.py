@@ -281,6 +281,11 @@ class Pack:
                                                           suffix="json")
 
     @property
+    def layout_rules(self) -> Iterator[LayoutRule]:
+        return self._content_files_list_generator_factory(dir_name=LAYOUT_RULES_DIR,
+                                                          suffix='json')
+
+    @property
     def pack_metadata(self) -> Optional[PackMetaData]:
         obj = None
         file = self._path / "pack_metadata.json"
@@ -353,11 +358,6 @@ class Pack:
     @property
     def pack_info_from_id_set(self) -> dict:
         return self._pack_info_from_id_set
-
-    @property
-    def layout_rules(self) -> Iterator[LayoutRule]:
-        return self._content_files_list_generator_factory(dir_name=LAYOUT_RULES_DIR,
-                                                          suffix='json')
 
     @pack_info_from_id_set.setter
     def pack_info_from_id_set(self, pack_section_from_id_set: dict):

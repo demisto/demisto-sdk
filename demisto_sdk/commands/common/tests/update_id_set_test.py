@@ -3121,15 +3121,15 @@ class TestLayoutRules:
             - Verify result as expeted.
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        layout_rule = pack.create_layout_rule("layout_rule_name",
+        layout_rule = pack.create_layout_rule("rule_name",
                                               {"rule_id": "rule_id",
                                                "rule_name": "rule_name"})
         res = process_general_items(layout_rule.path, {pack.name: {}},
                                     MarketplaceVersions.MarketplaceV2.value, True, (FileType.LAYOUT_RULE,),
-                                    get_layout_rule_data())
+                                    get_layout_rule_data, 'json')
 
         captured = capsys.readouterr()
-        layout_rule_result = res[0][0]['xsiam_layout_rule_id']
+        layout_rule_result = res[0][0]['rule_id']
 
         assert len(res) == 2
         assert 'name' in layout_rule_result.keys()

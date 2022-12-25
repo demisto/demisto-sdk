@@ -1945,7 +1945,7 @@ def get_layout_rule_data(path: str, packs: Dict[str, Dict] = None):
 
     id_ = json_data.get('rule_id')
     name = json_data.get('rule_name')
-    layout_id = json_data('layout_id')
+    layout_id = json_data.get('layout_id')
     display_name = get_display_name(path, json_data)
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')

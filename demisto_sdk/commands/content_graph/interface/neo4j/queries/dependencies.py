@@ -225,7 +225,7 @@ def create_depends_on_relationships(tx: Transaction) -> None:
                 mandatorily: r.mandatorily
             }}) AS reasons
         RETURN
-            pack_a, pack_b, reasons
+            pack_a.object_id AS pack_a, pack_b.object_id AS pack_b, reasons
     """
     result = run_query(tx, query)
     outputs: Dict[str, Dict[str, list]] = {}

@@ -193,7 +193,7 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
         content_item = row["content_item"]
         msg = (
             f"{content_item} uses command {command} ({is_cmd_mandatory}), "
-            f"new {is_integ_mandatory} rels to integrations: {integrations}"
+            f"new {is_integ_mandatory} relationships to integrations: {integrations}"
         )
         logger.debug(msg)
 

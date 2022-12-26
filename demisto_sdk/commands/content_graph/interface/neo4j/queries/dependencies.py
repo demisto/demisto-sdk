@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Set, Tuple
 
 from neo4j import Transaction
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions, REPUTATION_COMMAND_NAMES
+from demisto_sdk.commands.common.constants import MarketplaceVersions, GENERIC_COMMANDS_NAMES
 from demisto_sdk.commands.content_graph.common import ContentType, Neo4jRelationshipResult, RelationshipType
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (is_target_available, run_query,
                                                                                to_neo4j_map)
@@ -115,7 +115,7 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
         AND
             NOT "{marketplace}" IN dependency.marketplaces
         AND
-            NOT dependency.object_id IN {list(REPUTATION_COMMAND_NAMES)}
+            NOT dependency.object_id IN {list(GENERIC_COMMANDS_NAMES)}
         OPTIONAL MATCH (alternative_dependency:{ContentType.BASE_CONTENT}{{node_id: dependency.node_id}})
         WHERE
             "{marketplace}" IN alternative_dependency.marketplaces
@@ -153,7 +153,7 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
             (command:{ContentType.COMMAND})<-[rcmd:{RelationshipType.HAS_COMMAND}]
             -(integration:{ContentType.INTEGRATION})
     WHERE {is_target_available("content_item", "integration")}
-    AND NOT command.object_id IN {list(REPUTATION_COMMAND_NAMES)}
+    AND NOT command.object_id IN {list(GENERIC_COMMANDS_NAMES)}
     WITH command, count(DISTINCT rcmd) as command_count
 
     MATCH (content_item:{ContentType.BASE_CONTENT})
@@ -161,7 +161,7 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
             (command)<-[rcmd:{RelationshipType.HAS_COMMAND}]
             -(integration:{ContentType.INTEGRATION})
     WHERE {is_target_available("content_item", "integration")}
-    AND NOT command.object_id IN {list(REPUTATION_COMMAND_NAMES)}
+    AND NOT command.object_id IN {list(GENERIC_COMMANDS_NAMES)}
 
     MERGE (content_item)-[u:USES]->(integration)
     ON CREATE

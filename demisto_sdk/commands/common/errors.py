@@ -212,7 +212,7 @@ ERROR_CODE = {
                                                              'related_field': 'configuration'},
     "invalid_deprecated_integration_display_name": {'code': "IN127", 'ui_applicable': False,
                                                     'related_field': 'display'},
-    "invalid_deprecation__only_display_name_suffix": {"code": "IN157", "ui_applicable": False, 'related_field': 'deprecated'},
+    "invalid_integration_deprecation__only_display_name_suffix": {"code": "IN157", "ui_applicable": False, 'related_field': 'deprecated'},
     "invalid_deprecation__only_description_deprecated": {"code": "IN158", "ui_applicable": False, 'related_field': 'deprecated'},
     "invalid_deprecated_integration_description": {'code': "IN128", 'ui_applicable': False, 'related_field': ''},
     "removed_integration_parameters": {'code': "IN129", 'ui_applicable': False, 'related_field': 'configuration'},

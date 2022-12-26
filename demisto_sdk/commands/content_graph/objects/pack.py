@@ -42,13 +42,14 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
+from demisto_sdk.commands.common.constants import BASE_PACK
+
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
 logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
-
 
 class PackContentItems(BaseModel):
     # The alias is for marshalling purposes
@@ -250,19 +251,22 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 shutil.copy(self.path / "Author_image.png", path / "Author_image.png")
             except FileNotFoundError:
                 logger.info(f'No such file {self.path / "Author_image.png"}')
-            if self.object_id == "Base":
-                content_path = Path(get_content_path())  # type: ignore
-                documentation_path = content_path / "Documentation"
-                documentation_output = path / "Documentation"
-                documentation_output.mkdir(exist_ok=True, parents=True)
-                shutil.copy(documentation_path / "doc-howto.json", documentation_output / "doc-howto.json")
-                if (documentation_path / "doc-CommonServer.json").exists():
-                    shutil.copy(documentation_path / "doc-CommonServer.json", documentation_output / "doc-CommonServer.json")
+            if self.object_id == BASE_PACK:
+                self.handle_base_pack(path)
 
             logger.info(f"Dumped pack {self.name}. Files: {list(path.iterdir())}")
         except Exception as e:
             logger.error(f"Failed dumping pack {self.name}: {e}")
             raise
+
+    def handle_base_pack(self, path: Path):
+        content_path = Path(get_content_path())  # type: ignore
+        documentation_path = content_path / "Documentation"
+        documentation_output = path / "Documentation"
+        documentation_output.mkdir(exist_ok=True, parents=True)
+        shutil.copy(documentation_path / "doc-howto.json", documentation_output / "doc-howto.json")
+        if (documentation_path / "doc-CommonServer.json").exists():
+            shutil.copy(documentation_path / "doc-CommonServer.json", documentation_output / "doc-CommonServer.json")
 
     def to_nodes(self) -> Nodes:
         return Nodes(

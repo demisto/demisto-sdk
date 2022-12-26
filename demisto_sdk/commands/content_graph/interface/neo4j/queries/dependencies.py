@@ -134,7 +134,8 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
     logger.info(f"Removed {marketplace} from marketplaces for {len(outputs.keys())} content items.")
     logger.debug(f"Excluded content items: {dict(sorted(outputs.items()))}")
     import json
-    with open(f'artifacts/removed_from_marketplace-{marketplace}.json', 'w') as fp:
+    import os
+    with open(f'{os.getenv("ARTIFACTS_FOLDER")}/removed_from_marketplace-{marketplace}.json', 'w') as fp:
         json.dump(dict(sorted(outputs.items())), fp, indent=4)
 
 
@@ -220,5 +221,6 @@ def create_depends_on_relationships(tx: Transaction) -> None:
             logger.debug(f"Reason: {reason.get('source')} -> {reason.get('target')} (mandatorily: {reason.get('mandatorily')})")
 
     import json
-    with open('artifacts/depends_on.json', 'w') as fp:
+    import os
+    with open(f'{os.getenv("ARTIFACTS_FOLDER")}/depends_on.json', 'w') as fp:
         json.dump(outputs, fp, indent=4)

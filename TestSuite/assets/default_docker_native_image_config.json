@@ -1,0 +1,50 @@
+{
+   "native_images":{
+      "native:8.1":{
+         "supported_docker_images":[
+           "python3",
+           "py3-tools",
+           "unzip",
+           "chromium",
+           "tesseract",
+           "tld"
+         ],
+        "docker_ref": "demisto/py3-native:8.1.0.12345"
+      },
+     "native:8.2": {
+       "supported_docker_images":[
+            "python3",
+            "py3-tools",
+            "unzip",
+            "chromium",
+            "tesseract",
+            "pan-os-python"
+         ],
+       "docker_ref": "demisto/py3-native:8.2.0.12345"
+     }
+   },
+   "ignored_content_items":[
+      {
+         "id":"UnzipFile",
+         "reason":"this is just a test",
+         "ignored_native_images":[
+            "native:8.1"
+         ]
+      },
+      {
+         "id":"Panorama",
+         "reason":"this is just a test",
+         "ignored_native_images":[
+           "native:8.2"
+         ]
+      },
+      {
+         "id":"Image OCR",
+         "reason":"this is just a test",
+         "ignored_native_images":[
+           "native:8.1",
+           "native:8.2"
+         ]
+      }
+   ]
+}

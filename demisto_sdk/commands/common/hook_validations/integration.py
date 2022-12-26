@@ -49,8 +49,7 @@ class IntegrationValidator(ContentEntityValidator):
         self.deprecation_validator = deprecation_validator
 
     @error_codes('BA100')
-    def is_valid_version(self):
-        # type: () -> bool
+    def is_valid_version(self) -> bool:
         if self.current_file.get("commonfields", {}).get('version') == self.DEFAULT_VERSION:
             return True
 
@@ -62,8 +61,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
-    def is_backward_compatible(self):
-        # type: () -> bool
+    def is_backward_compatible(self) -> bool:
         """Check whether the Integration is backward compatible or not, update the _is_valid field to determine that"""
         if not self.old_file:
             return True
@@ -250,8 +248,7 @@ class IntegrationValidator(ContentEntityValidator):
         return self.are_tests_registered_in_conf_json_file_or_yml_file(tests)
 
     @error_codes('IN100,IN101,IN102,IN103')
-    def is_valid_param(self, param_name, param_display):
-        # type: (str, str) -> bool
+    def is_valid_param(self, param_name: str, param_display: str) -> bool:
         """Check if the given parameter has the right configuration."""
         err_msgs = []
         configuration = self.current_file.get('configuration', [])
@@ -294,13 +291,11 @@ class IntegrationValidator(ContentEntityValidator):
             return False
         return True
 
-    def is_proxy_configured_correctly(self):
-        # type: () -> bool
+    def is_proxy_configured_correctly(self) -> bool:
         """Check that if an integration has a proxy parameter that it is configured properly."""
         return self.is_valid_param('proxy', 'Use system proxy settings')
 
-    def is_insecure_configured_correctly(self):
-        # type: () -> bool
+    def is_insecure_configured_correctly(self) -> bool:
         """Check that if an integration has an insecure parameter that it is configured properly."""
         insecure_field_name = ''
         configuration = self.current_file.get('configuration', [])
@@ -311,8 +306,7 @@ class IntegrationValidator(ContentEntityValidator):
             return self.is_valid_param(insecure_field_name, 'Trust any certificate (not secure)')
         return True
 
-    def is_checkbox_param_configured_correctly(self):
-        # type: () -> bool
+    def is_checkbox_param_configured_correctly(self) -> bool:
         """Check that if an integration has a checkbox parameter it is configured properly.
         Returns:
             bool. True if the checkbox parameter is configured correctly, False otherwise.
@@ -328,8 +322,7 @@ class IntegrationValidator(ContentEntityValidator):
         return True
 
     @error_codes('IN102')
-    def is_valid_checkbox_param(self, configuration_param, param_name):
-        # type: (dict, str) -> bool
+    def is_valid_checkbox_param(self, configuration_param: dict, param_name: str) -> bool:
         """Check if the given checkbox parameter required field is False.
         Returns:
             bool. True if valid, False otherwise.
@@ -341,8 +334,7 @@ class IntegrationValidator(ContentEntityValidator):
         return True
 
     @error_codes('IN104')
-    def is_valid_category(self):
-        # type: () -> bool
+    def is_valid_category(self) -> bool:
         """Check that the integration category is in the schema."""
         if tools.is_external_repository():
             return True
@@ -357,8 +349,7 @@ class IntegrationValidator(ContentEntityValidator):
         return True
 
     @error_codes('IN105,IN144,IN106')
-    def is_valid_default_array_argument_in_reputation_command(self):
-        # type: () -> bool
+    def is_valid_default_array_argument_in_reputation_command(self) -> bool:
         """Check if a reputation command (domain/email/file/ip/url/cve)
             has a default non required argument and make sure the default value can accept array of inputs.
 
@@ -402,8 +393,7 @@ class IntegrationValidator(ContentEntityValidator):
         return flag
 
     @error_codes('IN134')
-    def is_valid_default_argument(self):
-        # type: () -> bool
+    def is_valid_default_argument(self) -> bool:
         """Check if a  command has at most 1 default argument.
 
         Returns:
@@ -448,8 +438,7 @@ class IntegrationValidator(ContentEntityValidator):
         return missing_outputs, missing_descriptions
 
     @error_codes('DB100,DB101,IN107')
-    def is_outputs_for_reputations_commands_valid(self):
-        # type: () -> bool
+    def is_outputs_for_reputations_commands_valid(self) -> bool:
         """Check if a reputation command (domain/email/file/ip/url)
             has the correct DBotScore outputs according to the context standard
             https://xsoar.pan.dev/docs/integrations/context-standards
@@ -503,8 +492,7 @@ class IntegrationValidator(ContentEntityValidator):
         return output_for_reputation_valid
 
     @error_codes('IN108')
-    def is_valid_subtype(self):
-        # type: () -> bool
+    def is_valid_subtype(self) -> bool:
         """Validate that the subtype is python2 or python3."""
         type_ = self.current_file.get('script', {}).get('type')
         if type_ == 'python':
@@ -518,8 +506,7 @@ class IntegrationValidator(ContentEntityValidator):
         return True
 
     @error_codes('BC100')
-    def no_changed_subtype(self):
-        # type: () -> bool
+    def no_changed_subtype(self) -> bool:
         """Validate that the subtype was not changed.
         Returns True if valid, and False otherwise."""
         type_ = self.current_file.get('script', {}).get('type')
@@ -536,8 +523,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
-    def is_valid_beta(self):
-        # type: () -> bool
+    def is_valid_beta(self) -> bool:
         """Validate that beta integration has correct beta attributes"""
         valid_status = True
         if not all([self._is_display_contains_beta(), self._has_beta_param()]):
@@ -550,8 +536,7 @@ class IntegrationValidator(ContentEntityValidator):
         return valid_status
 
     @error_codes('IN109')
-    def _id_has_no_beta_substring(self):
-        # type: () -> bool
+    def _id_has_no_beta_substring(self) -> bool:
         """Checks that 'id' field dose not include the substring 'beta'"""
         common_fields = self.current_file.get('commonfields', {})
         integration_id = common_fields.get('id', '')
@@ -563,8 +548,7 @@ class IntegrationValidator(ContentEntityValidator):
         return True
 
     @error_codes('IN110')
-    def _name_has_no_beta_substring(self):
-        # type: () -> bool
+    def _name_has_no_beta_substring(self) -> bool:
         """Checks that 'name' field dose not include the substring 'beta'"""
         name = self.current_file.get('name', '')
         if 'beta' in name.lower():
@@ -575,8 +559,7 @@ class IntegrationValidator(ContentEntityValidator):
         return True
 
     @error_codes('IN111')
-    def _has_beta_param(self):
-        # type: () -> bool
+    def _has_beta_param(self) -> bool:
         """Checks that integration has 'beta' field with value set to true"""
         beta = self.current_file.get('beta', False)
         if not beta:
@@ -587,8 +570,7 @@ class IntegrationValidator(ContentEntityValidator):
         return True
 
     @error_codes('IN112')
-    def _is_display_contains_beta(self):
-        # type: () -> bool
+    def _is_display_contains_beta(self) -> bool:
         """Checks that 'display' field includes the substring 'beta'"""
         if not self.current_file.get('deprecated'):  # this validation is not needed for deprecated beta integrations
             display = self.current_file.get('display', '')
@@ -600,8 +582,7 @@ class IntegrationValidator(ContentEntityValidator):
         return True
 
     @error_codes('IN113')
-    def has_no_duplicate_args(self):
-        # type: () -> bool
+    def has_no_duplicate_args(self) -> bool:
         """Check if a command has the same arg more than once
 
         Returns:
@@ -614,7 +595,7 @@ class IntegrationValidator(ContentEntityValidator):
             # for it here to avoid crash
             if command.get('arguments', []) is None:
                 continue
-            arg_names = []  # type: list
+            arg_names: list = []
             for arg in command.get('arguments', []):
                 arg_name = arg.get('name')
                 if arg_name in arg_names:
@@ -657,8 +638,7 @@ class IntegrationValidator(ContentEntityValidator):
         return no_incidents
 
     @error_codes('IN114')
-    def has_no_duplicate_params(self):
-        # type: () -> bool
+    def has_no_duplicate_params(self) -> bool:
         """Check if the integration has the same param more than once
 
         Returns:
@@ -681,8 +661,7 @@ class IntegrationValidator(ContentEntityValidator):
         return does_not_have_duplicate_param
 
     @staticmethod
-    def _get_command_to_args(integration_json):
-        # type: (dict) -> dict
+    def _get_command_to_args(integration_json: dict) -> dict:
         """Get a dictionary command name to it's arguments.
 
         Args:
@@ -691,7 +670,7 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             dict. command name to a list of it's arguments.
         """
-        command_to_args = {}  # type: dict
+        command_to_args: dict = {}
         commands = integration_json.get('script', {}).get('commands', [])
         for command in commands:
             command_to_args[command['name']] = {}
@@ -700,8 +679,7 @@ class IntegrationValidator(ContentEntityValidator):
         return command_to_args
 
     @error_codes('BC104')
-    def no_changed_command_name_or_arg(self):
-        # type: () -> bool
+    def no_changed_command_name_or_arg(self) -> bool:
         """Check if a command name or argument as been changed.
 
         Returns:
@@ -724,14 +702,12 @@ class IntegrationValidator(ContentEntityValidator):
         return True
 
     @staticmethod
-    def _is_sub_set(supposed_bigger_list, supposed_smaller_list):
-        # type: (list, list) -> bool
+    def _is_sub_set(supposed_bigger_list: list, supposed_smaller_list: list) -> bool:
         """Check if supposed_smaller_list is a subset of the supposed_bigger_list"""
         return all(item in supposed_bigger_list for item in supposed_smaller_list)
 
     @error_codes('IN115')
-    def _get_command_to_context_paths(self, integration_json):
-        # type: (dict) -> dict
+    def _get_command_to_context_paths(self, integration_json: dict) -> dict:
         """Get a dictionary command name to it's context paths.
 
         Args:
@@ -760,8 +736,7 @@ class IntegrationValidator(ContentEntityValidator):
         return command_to_context_dict
 
     @error_codes('BC102')
-    def no_change_to_context_path(self):
-        # type: () -> bool
+    def no_change_to_context_path(self) -> bool:
         """Check if a context path as been changed.
 
         Returns:
@@ -791,8 +766,7 @@ class IntegrationValidator(ContentEntityValidator):
         return no_change
 
     @error_codes('IN129')
-    def no_removed_integration_parameters(self):
-        # type: () -> bool
+    def no_removed_integration_parameters(self) -> bool:
         """Check if integration parameters were removed.
         Returns True if valid, and False otherwise.
         """
@@ -858,8 +832,7 @@ class IntegrationValidator(ContentEntityValidator):
         return True
 
     @error_codes('IN116')
-    def no_added_required_fields(self):
-        # type: () -> bool
+    def no_added_required_fields(self) -> bool:
         """Check if required field were added.
         Returns True if valid, and False otherwise.
         """
@@ -927,8 +900,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
-    def is_docker_image_valid(self):
-        # type: () -> bool
+    def is_docker_image_valid(self) -> bool:
         # dockers should not be checked when running on all files
         if self.skip_docker_check:
             return True
@@ -953,8 +925,7 @@ class IntegrationValidator(ContentEntityValidator):
         return False
 
     @error_codes('IN119')
-    def is_valid_feed(self):
-        # type: () -> bool
+    def is_valid_feed(self) -> bool:
         valid_from_version = valid_feed_params = True
         if self.current_file.get('script', {}).get('feed'):
             from_version = self.current_file.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
@@ -1097,8 +1068,7 @@ class IntegrationValidator(ContentEntityValidator):
         return params_exist
 
     @error_codes('IN123')
-    def is_valid_display_name(self):
-        # type: () -> bool
+    def is_valid_display_name(self) -> bool:
         version_number: Optional[str] = get_file_version_suffix_if_exists(self.current_file,
                                                                           check_in_display=True)
         if not version_number:

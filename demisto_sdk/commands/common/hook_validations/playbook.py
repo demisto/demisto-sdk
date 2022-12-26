@@ -72,7 +72,7 @@ class PlaybookValidator(ContentEntityValidator):
         tests = self.current_file.get('tests', [])
         return self.yml_has_test_key(tests, file_type)
 
-    def is_id_equals_name(self):  # type: () -> bool
+    def is_id_equals_name(self) -> bool:
         """Check whether the playbook ID is equal to its name.
 
         Returns:
@@ -80,7 +80,7 @@ class PlaybookValidator(ContentEntityValidator):
         """
         return super()._is_id_equals_name('playbook')
 
-    def is_valid_version(self):  # type: () -> bool
+    def is_valid_version(self) -> bool:
         """Check whether the playbook version is equal to DEFAULT_VERSION (see base_validator class)
 
         Return:
@@ -174,7 +174,7 @@ class PlaybookValidator(ContentEntityValidator):
         return True
 
     @error_codes('PB100')
-    def is_no_rolename(self):  # type: () -> bool
+    def is_no_rolename(self) -> bool:
         """Check whether the playbook has a rolename
 
         Return:
@@ -189,7 +189,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         return True
 
-    def is_condition_branches_handled(self):  # type: () -> bool
+    def is_condition_branches_handled(self) -> bool:
         """Check whether the playbook conditional tasks has all optional branches handled
 
         Return:
@@ -322,7 +322,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         return is_all_condition_branches_handled
 
-    def are_default_conditions_valid(self):  # type: () -> bool
+    def are_default_conditions_valid(self) -> bool:
         """Check whether the playbook conditional tasks' default options are valid
 
         Return:
@@ -392,7 +392,7 @@ class PlaybookValidator(ContentEntityValidator):
         return is_default_not_only_reply_option_res
 
     @error_codes('PB103')
-    def is_root_connected_to_all_tasks(self):  # type: () -> bool
+    def is_root_connected_to_all_tasks(self) -> bool:
         """Check whether the playbook root is connected to all tasks
 
         Return:

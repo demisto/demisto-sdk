@@ -50,16 +50,14 @@ class IncidentTypeValidator(ContentEntityValidator):
 
         return is_incident_type__valid
 
-    def is_valid_version(self):
-        # type: () -> bool
+    def is_valid_version(self) -> bool:
         """Check if a valid version.
         Returns:
             bool. Whether the version is valid or not.
         """
         return super()._is_valid_version()
 
-    def is_id_equals_name(self):
-        # type: () -> bool
+    def is_id_equals_name(self) -> bool:
         """Check whether the incident Type ID is equal to its name.
 
         Returns:
@@ -68,8 +66,7 @@ class IncidentTypeValidator(ContentEntityValidator):
         return super()._is_id_equals_name('incident_type')
 
     @error_codes('IF110')
-    def is_changed_from_version(self):
-        # type: () -> bool
+    def is_changed_from_version(self) -> bool:
         """Check if fromversion has been changed.
        Returns:
            bool. Whether fromversion has been changed.
@@ -87,8 +84,7 @@ class IncidentTypeValidator(ContentEntityValidator):
         return is_bc_broke
 
     @error_codes('IT100,IF108')
-    def is_including_int_fields(self):
-        # type: () -> bool
+    def is_including_int_fields(self) -> bool:
         """Check if including required fields, only from 5.0.0.
         Returns:
             bool. Whether the included fields have a positive integer value.
@@ -114,8 +110,7 @@ class IncidentTypeValidator(ContentEntityValidator):
         return is_valid
 
     @error_codes('IT101')
-    def is_valid_playbook_id(self):
-        # type: () -> bool
+    def is_valid_playbook_id(self) -> bool:
         """Check if playbookId is valid
         Returns:
             bool. True if playbook ID is valid, False otherwise.

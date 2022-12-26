@@ -438,7 +438,7 @@ class SecretsValidator:
             pdf_file_obj = open('./' + file_path, 'rb')
             pdf_reader = PyPDF2.PdfFileReader(pdf_file_obj)
             num_pages = pdf_reader.numPages
-        except PyPDF2.utils.PdfReadError:
+        except PyPDF2.errors.PdfReadError:
             print(f'ERROR: Could not parse PDF file in path: {file_path} - ***Review Manually***')
             return file_contents
         while page_num < num_pages:

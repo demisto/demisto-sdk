@@ -1,7 +1,6 @@
-import os
 from contextlib import contextmanager
 from filecmp import cmp, dircmp
-from pathlib import Path, PosixPath
+from pathlib import Path
 from shutil import copyfile, copytree, rmtree
 
 import pytest
@@ -10,6 +9,7 @@ from demisto_sdk.commands.common.constants import PACKS_DIR, TEST_PLAYBOOKS_DIR
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import src_root
+# from demisto_sdk.commands.prepare_content.prepare_upload_manager import PrepareUploadManager
 from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
@@ -357,45 +357,51 @@ def mock_single_pack_git(mocker):
     yield
 
 
-def test_use_alternative_fields(mock_single_pack_git):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsManager
+def load_file(file_path: str) -> dict:
+    path_str = str(file_path)
+    with open(path_str) as f:
+        if path_str.endswith('yml') or path_str.endswith('yaml'):
+            return yaml.load(f)
+        elif path_str.endswith('json'):
+            return json.load(f)
+        return {}
 
-    with temp_dir() as temp:
-        config = ArtifactsManager(artifacts_path=temp,
-                                  content_version='6.0.0',
-                                  zip=False,
-                                  suffix='',
-                                  cpus=1,
-                                  packs=True,
-                                  alternate_fields=True,
-                                  id_set_path=ALTERNATIVE_FIELDS_ID_SET_PATH)
-        exit_code = config.create_content_artifacts()
 
-        assert exit_code == 0
-        assert same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / 'content_with_alternative_fields')
-        pack_path = PosixPath(temp, 'content_packs', 'DummyPackAlternativeFields')
+def get_value_from_dict(object, path):
+    keys = path.split('.')
+    rv = object
+    for key in keys:
+        if key in rv:
+            rv = rv[key]
+        else:
+            raise Exception(f'Value {path} not found in object')
+    return rv
 
-        # Check Integration
-        integration_yml = dict(yaml.load(PosixPath(pack_path, 'Integrations', 'integration-sample_packs.yml')))
-        assert not any(key for key in integration_yml if key.endswith('_x2'))
-        assert integration_yml['name'] == 'name_x2'
-        assert integration_yml['defaultEnabled']
 
-        # Check Script
-        script_yml = dict(yaml.load(PosixPath(pack_path, 'Scripts', 'script-sample_packs.yml')))
-        assert not any(key for key in script_yml if key.endswith('_x2'))
-        assert script_yml['name'] == 'name_x2'
-        assert script_yml['comment'] == 'comment_x2'
-        assert script_yml['commonfields']['id'] == 'id_x2'
-
-        # Check Playbook
-        playbook_yml = dict(yaml.load(PosixPath(pack_path, 'Playbooks', 'playbook-sample_packs.yml')))
-        assert not any(key for key in playbook_yml if key.endswith('_x2'))
-        assert playbook_yml['name'] == 'name_x2'
-        assert playbook_yml['tasks']['task_num']['task']['scriptName'] == 'scriptName_x2'
-
-        # Check IncidentField
-        with open(os.path.join(pack_path, 'IncidentFields', 'incidentfield-sample_packs.json')) as json_file:
-            incident_field_json = json.load(json_file)
-        assert not any(key.endswith('_x2') for key in incident_field_json)
-        assert incident_field_json['name'] == 'name_x2'
+# @pytest.mark.parametrize(argnames="artifact, keys_paths",
+#                          argvalues=[
+#                              ('demisto_sdk/tests/test_files/content_repo_with_alternative_fields/Packs/'
+#                               'DummyPackAlternativeFields/IncidentFields/incidentfield-sample_packs.json',
+#                               ['name']),
+#                              ('demisto_sdk/tests/test_files/content_repo_with_alternative_fields/Packs/'
+#                               'DummyPackAlternativeFields/Integrations/integration-sample_packs.yml',
+#                               ['name']),
+#                              ('demisto_sdk/tests/test_files/content_repo_with_alternative_fields/Packs/'
+#                               'DummyPackAlternativeFields/Playbooks/playbook-sample_packs.yml',
+#                               ['name', 'tasks.task_num.task.scriptName']
+#                               ),
+#                              ('demisto_sdk/tests/test_files/content_repo_with_alternative_fields/Packs/'
+#                               'DummyPackAlternativeFields/Scripts/script-sample_packs.yml',
+#                               ['commonfields.id', 'name', 'comment']
+#                               )
+#                          ])
+# def test_use_alternative_fields(artifact: str, keys_paths: List[str]):
+#     with temp_dir() as temp:
+#         PrepareUploadManager.prepare_for_upload(artifact, output=temp, marketplace=MarketplaceVersions.MarketplaceV2,
+#                                                 force=True,
+#                                                 )
+#         filename = artifact.split('/')[-1]
+#         original_data = load_file(artifact)
+#         modified_data = load_file(temp / filename)
+#         for current_key_path in keys_paths:
+#             assert get_value_from_dict(original_data, current_key_path + '_x2') == get_value_from_dict(modified_data, current_key_path)

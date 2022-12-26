@@ -593,6 +593,10 @@ CONNECTIONS_REGEX = fr'{CAN_START_WITH_DOT_SLASH}{CONNECTIONS_DIR}.*canvas-conte
 
 INDICATOR_TYPES_REPUTATIONS_REGEX = fr'{CAN_START_WITH_DOT_SLASH}{INDICATOR_TYPES_DIR}.reputations\.json$'
 
+INCIDENT_FIELD_FILE_NAME_REGEX = r'incidentfield-.*\.json'
+
+LAYOUT_FILE_NAME__REGEX = r'layout.*\.json'
+
 # deprecated regex
 DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
 DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"
@@ -1602,3 +1606,4 @@ class ParameterType(Enum):
 
 
 NO_TESTS_DEPRECATED = 'No tests (deprecated)'
+NATIVE_IMAGE_FILE_NAME = 'docker_native_image_config.json'

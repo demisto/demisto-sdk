@@ -171,7 +171,7 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
     WHERE {is_target_available("content_item", "integration")}
     AND NOT command.object_id IN {list(GENERIC_COMMANDS_NAMES)}
 
-    MERGE (content_item)-[u:USES]->(integration)
+    MERGE (content_item)-[u:{RelationshipType.USES}]->(integration)
     ON CREATE
         SET u.mandatorily = CASE WHEN command_count = 1 THEN r.mandatorily ELSE false END
     ON MATCH

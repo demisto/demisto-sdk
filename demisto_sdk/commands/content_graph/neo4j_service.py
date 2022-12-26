@@ -87,13 +87,6 @@ def _should_use_docker(use_docker: bool) -> bool:
     return use_docker or not IS_NEO4J_ADMIN_AVAILABLE
 
 
-def _get_plugins_folder(is_running_on_docker: bool) -> Path:
-    plugins_path = REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER
-    if not is_running_on_docker:
-        plugins_path = LOCAL_NEO4J_PATH / NEO4J_PLUGINS_FOLDER
-    return plugins_path
-
-
 def _is_apoc_available(plugins_path: Path, sha1: str) -> bool:
     for plugin in plugins_path.iterdir():
         if plugin.name.startswith("apoc") and hashlib.sha1(plugin.read_bytes()).hexdigest() == sha1:
@@ -101,15 +94,15 @@ def _is_apoc_available(plugins_path: Path, sha1: str) -> bool:
     return False
 
 
-def _download_apoc(is_running_on_docker: bool):
+def _download_apoc():
     apocs = [apoc for apoc in requests.get(APOC_URL_VERSIONS, verify=False).json()
              if apoc["neo4j"] == NEO4J_VERSION]
     if not apocs:
         logger.debug(f"Could not find APOC for neo4j version {NEO4J_VERSION}")
         return
-    download_url = apocs[0].get("jar")
+    download_url = apocs[0].get("downloadUrl")
     sha1 = apocs[0].get("sha1")
-    plugins_folder = _get_plugins_folder(is_running_on_docker)
+    plugins_folder = REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER
     plugins_folder.mkdir(parents=True, exist_ok=True)
 
     if _is_apoc_available(plugins_folder, sha1):
@@ -140,7 +133,7 @@ def start(use_docker: bool = True):
         Path.mkdir(REPO_PATH / NEO4J_FOLDER, exist_ok=True, parents=True)
         # we download apoc only if we are running on docker
         # if the user is running locally he needs to setup apoc manually
-        _download_apoc(use_docker)
+        _download_apoc()
         docker_client = _get_docker_client()
         _stop_neo4j_service_docker(docker_client)
         docker_client.containers.run(

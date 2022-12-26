@@ -102,7 +102,7 @@ def _is_apoc_available(plugins_path: Path, sha1: str) -> bool:
 
 
 def _download_apoc(is_running_on_docker: bool):
-    apocs = [apoc for apoc in requests.get(APOC_URL_VERSIONS, verify=False).json()["versions"]
+    apocs = [apoc for apoc in requests.get(APOC_URL_VERSIONS, verify=False).json()
              if apoc["neo4j"] == NEO4J_VERSION]
     if not apocs:
         logger.debug(f"Could not find APOC for neo4j version {NEO4J_VERSION}")

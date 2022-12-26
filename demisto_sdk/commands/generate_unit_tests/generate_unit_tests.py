@@ -71,8 +71,8 @@ class UnitTestsGenerator:
             {base command -> {readable_outputs:markdown, outputs:context_outputs}}
         Note: if a command appears more then once, run all occurrences but stores only the last.
         """
-        examples = {}  # type: dict
-        errors = []  # type: list
+        examples: dict = {}
+        errors: list = []
         for example in self.command_examples:
             name, md_example, context_example, cmd_errors = execute_command(example, self.insecure)
 

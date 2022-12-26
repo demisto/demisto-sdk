@@ -259,6 +259,13 @@ def extract_code(config, **kwargs):
     is_flag=True,
     show_default=False
 )
+@click.option(
+    "-ini", "--ignore-native-image",
+    help="Whether to ignore the addition of the nativeimage key to the yml of a script/integration",
+    is_flag=True,
+    show_default=False,
+    default=False
+)
 @click.option('-mp', '--marketplace',
               help='The marketplace the content items are created for, that determines usage of marketplace '
                    'unique text. Default is the XSOAR marketplace.',

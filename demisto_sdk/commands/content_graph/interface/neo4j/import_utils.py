@@ -9,8 +9,8 @@ from demisto_sdk.commands.content_graph.neo4j_service import get_neo4j_import_pa
 
 
 class Neo4jImportHandler:
-    def __init__(self) -> None:
-        self.import_path: Path = get_neo4j_import_path()
+    def __init__(self, is_running_on_docker: bool) -> None:
+        self.import_path: Path = get_neo4j_import_path(is_running_on_docker)
 
     def clean_import_dir(self) -> None:
         for file in self.import_path.iterdir():

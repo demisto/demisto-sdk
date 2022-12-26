@@ -4,7 +4,7 @@ import sys
 from io import StringIO
 from pathlib import Path
 from shutil import copyfile
-from typing import Any, List, Optional, Type, Union
+from typing import Any, List, Optional, Union
 from unittest.mock import patch
 
 import pytest
@@ -71,7 +71,7 @@ json = JSON_Handler()
 
 
 class TestValidators:
-    CREATED_DIRS = list()  # type: list[str]
+    CREATED_DIRS: List[str] = list()
 
     @classmethod
     def setup_class(cls):
@@ -128,8 +128,7 @@ class TestValidators:
             os.remove(PLAYBOOK_TARGET)
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
-    def test_is_valid_version(self, source, target, answer, validator):
-        # type: (str, str, Any, Type[ContentEntityValidator]) -> None
+    def test_is_valid_version(self, source: str, target: str, answer: Any, validator: ContentEntityValidator) -> None:
         """
         Given
         - A file with either a valid or invalid version
@@ -149,8 +148,7 @@ class TestValidators:
             os.remove(target)
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
-    def test_is_valid_fromversion(self, source, target, answer, validator):
-        # type: (str, str, Any, Type[ContentEntityValidator]) -> None
+    def test_is_valid_fromversion(self, source: str, target: str, answer: Any, validator: ContentEntityValidator) -> None:
         """
         Given
         - A file with either a valid or invalid fromversion
@@ -176,8 +174,7 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize('source, answer', INPUTS_is_condition_branches_handled)
-    def test_is_condition_branches_handled(self, source, answer):
-        # type: (str, str) -> None
+    def test_is_condition_branches_handled(self, source: str, answer: str) -> None:
         try:
             copyfile(source, PLAYBOOK_TARGET)
             structure = StructureValidator(source)
@@ -193,8 +190,7 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize('source, answer', INPUTS_is_condition_branches_handled)
-    def test_are_default_conditions_valid(self, source, answer):
-        # type: (str, str) -> None
+    def test_are_default_conditions_valid(self, source: str, answer: str) -> None:
         try:
             copyfile(source, PLAYBOOK_TARGET)
             structure = StructureValidator(source)
@@ -216,8 +212,7 @@ class TestValidators:
         assert validator.is_valid_version() is answer
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_VALID_VERSION)
-    def test_is_file_valid(self, source, target, answer, validator, mocker):
-        # type: (str, str, str, Any, Type[ContentEntityValidator]) -> None
+    def test_is_file_valid(self, source: str, target: str, answer: str, validator: Any, mocker: ContentEntityValidator) -> None:
         try:
             copyfile(source, target)
             structure = StructureValidator(source)
@@ -243,9 +238,9 @@ class TestValidators:
     @pytest.mark.parametrize('source_dummy, target_dummy, source_release_notes, target_release_notes, '
                              'validator, answer',
                              INPUTS_RELEASE_NOTES_EXISTS_VALIDATION)
-    def test_is_release_notes_exists(self, source_dummy, target_dummy,
-                                     source_release_notes, target_release_notes, validator, answer, mocker):
-        # type: (str, str, str, str, Type[ContentEntityValidator], Any, Any) -> None
+    def test_is_release_notes_exists(
+            self, source_dummy: str, target_dummy: str, source_release_notes: str, target_release_notes: str,
+            validator: ContentEntityValidator, answer: Any, mocker: Any) -> None:
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
@@ -294,9 +289,9 @@ class TestValidators:
 
     @pytest.mark.parametrize('source_dummy, target_dummy, source_release_notes, target_release_notes, '
                              'validator, answer', test_package)
-    def test_valid_release_notes_structure(self, source_dummy, target_dummy,
-                                           source_release_notes, target_release_notes, validator, answer, mocker):
-        # type: (str, str, str, str, Type[ContentEntityValidator], Any, Any) -> None
+    def test_valid_release_notes_structure(self, source_dummy: str, target_dummy: str,
+                                           source_release_notes: str, target_release_notes: str,
+                                           validator: ContentEntityValidator, answer: Any, mocker: Any) -> None:
         try:
             copyfile(source_dummy, target_dummy)
             copyfile(source_release_notes, target_release_notes)
@@ -322,8 +317,7 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize('source, target, answer, validator', INPUTS_IS_ID_EQUALS_NAME)
-    def test_is_id_equals_name(self, source, target, answer, validator):
-        # type: (str, str, Any, Type[Union[ScriptValidator, PlaybookValidator, IntegrationValidator]]) -> None
+    def test_is_id_equals_name(self, source: str, target: str, answer: Any, validator: Union[ScriptValidator, PlaybookValidator, IntegrationValidator]) -> None:
         try:
             copyfile(str(source), target)
             structure = StructureValidator(str(source))
@@ -338,8 +332,7 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize('source, answer', INPUTS_IS_CONNECTED_TO_ROOT)
-    def test_is_root_connected_to_all_tasks(self, source, answer):
-        # type: (str, bool) -> None
+    def test_is_root_connected_to_all_tasks(self, source: str, answer: bool) -> None:
         try:
             copyfile(source, PLAYBOOK_TARGET)
             structure = StructureValidator(source)
@@ -360,8 +353,7 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize('source, target, file_type', INPUTS_STRUCTURE_VALIDATION)
-    def test_is_file_structure(self, source, target, file_type):
-        # type: (str, str, str) -> None
+    def test_is_file_structure(self, source: str, target: str, file_type: str) -> None:
         try:
             copyfile(source, target)
             assert StructureValidator(file_path=source, predefined_scheme=file_type).is_valid_file()
@@ -2029,218 +2021,4 @@ def test_run_validation_using_git_on_metadata_with_invalid_tags(mocker, repo, pa
             res = validate_manager.run_validation_using_git()
     captured_stdout = std_output.getvalue()
     assert "[PA123]" in captured_stdout, captured_stdout
-    assert not res
-
-
-def test_run_validation_using_git_modify_existing_modeling_rule_yml_supports_td(mocker, repo):
-    """
-    Given:
-        - A pack with a modeling rule content entity defined exists.
-        - The modeling rule version supports testing via usage of testdata.
-        - No test data file exists.
-    When:
-        - The modeling rule yml file has been modified.
-    Then:
-        - Ensure the test data file is required.
-    """
-    pack = repo.create_pack()
-    modeling_rule_name = 'MyModelingRule'
-    modeling_rule_yml_content = {
-        'id': 'modeling-rule',
-        'name': modeling_rule_name,
-        'fromversion': '6.10.0',
-        'tags': 'tag',
-        'rules': '',
-        'schema': '',
-    }
-    modeling_rule = pack.create_modeling_rule(modeling_rule_name, modeling_rule_yml_content)
-    modeling_rule.testdata._file_path.unlink()
-    mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
-    mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git',
-                        return_value=({modeling_rule.yml.path}, set(), set()))
-    mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
-    mocker.patch.object(ValidateManager, 'is_old_file_format', return_value=False)
-    mocker.patch.object(ValidateManager, 'ignore_files_irrelevant_for_validation', return_value=False)
-    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
-    std_output = StringIO()
-    with contextlib.redirect_stdout(std_output):
-        with ChangeCWD(repo.path):
-            res = validate_manager.run_validation_using_git()
-    captured_stdout = std_output.getvalue()
-    assert "[MR104]" in captured_stdout, captured_stdout
-    assert not res
-
-
-def test_run_validation_using_git_modify_existing_modeling_rule_xif_supports_td(mocker, repo):
-    """
-    Given:
-        - A pack with a modeling rule content entity defined exists.
-        - The modeling rule version supports testing via usage of testdata.
-        - No test data file exists.
-    When:
-        - The modeling rule xif file has been modified.
-    Then:
-        - Ensure the test data file is required.
-    """
-    pack = repo.create_pack()
-    modeling_rule_name = 'MyModelingRule'
-    modeling_rule_yml_content = {
-        'id': 'modeling-rule',
-        'name': modeling_rule_name,
-        'fromversion': '6.10.0',
-        'tags': 'tag',
-        'rules': '',
-        'schema': '',
-    }
-    modeling_rule = pack.create_modeling_rule(modeling_rule_name, modeling_rule_yml_content)
-    modeling_rule.testdata._file_path.unlink()
-    mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
-    mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git',
-                        return_value=({modeling_rule.rules.path}, set(), set()))
-    mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
-    mocker.patch.object(ValidateManager, 'is_old_file_format', return_value=False)
-    mocker.patch.object(ValidateManager, 'ignore_files_irrelevant_for_validation', return_value=False)
-    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
-    std_output = StringIO()
-    with contextlib.redirect_stdout(std_output):
-        with ChangeCWD(repo.path):
-            res = validate_manager.run_validation_using_git()
-    captured_stdout = std_output.getvalue()
-    assert "[MR104]" in captured_stdout, captured_stdout
-    assert not res
-
-
-def test_run_validation_using_git_modify_existing_modeling_rule_schema_supports_td(mocker, repo):
-    """
-    Given:
-        - A pack with a modeling rule content entity defined exists.
-        - The modeling rule version supports testing via usage of testdata.
-        - No test data file exists.
-    When:
-        - The modeling rule schema file has been modified.
-    Then:
-        - Ensure the test data file is required.
-    """
-    pack = repo.create_pack()
-    modeling_rule_name = 'MyModelingRule'
-    modeling_rule_yml_content = {
-        'id': 'modeling-rule',
-        'name': modeling_rule_name,
-        'fromversion': '6.10.0',
-        'tags': 'tag',
-        'rules': '',
-        'schema': '',
-    }
-    modeling_rule = pack.create_modeling_rule(modeling_rule_name, modeling_rule_yml_content)
-    modeling_rule.testdata._file_path.unlink()
-    mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
-    mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git',
-                        return_value=({modeling_rule.schema.path}, set(), set()))
-    mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
-    mocker.patch.object(ValidateManager, 'is_old_file_format', return_value=False)
-    mocker.patch.object(ValidateManager, 'ignore_files_irrelevant_for_validation', return_value=False)
-    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
-    std_output = StringIO()
-    with contextlib.redirect_stdout(std_output):
-        with ChangeCWD(repo.path):
-            res = validate_manager.run_validation_using_git()
-    captured_stdout = std_output.getvalue()
-    assert "[MR104]" in captured_stdout, captured_stdout
-    assert not res
-
-
-@pytest.mark.parametrize('modified_file', ['yml', 'rules', 'schema', 'testdata'])
-def test_run_validation_using_git_modify_existing_incomplete_testdata(mocker, repo, modified_file):
-    """
-    Given:
-        - A pack with a modeling rule content entity defined exists.
-        - The modeling rule version supports testing via usage of testdata.
-        - The testdata file is incomplete.
-    When:
-        - One of the component files has been modified.
-    Then:
-        - Ensure an error about the incomplete test data file is returned.
-    """
-    from typer.testing import CliRunner
-
-    from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_td_app
-    pack = repo.create_pack()
-    modeling_rule_name = 'MyModelingRule'
-    modeling_rule_yml_content = {
-        'id': 'modeling-rule',
-        'name': modeling_rule_name,
-        'fromversion': '6.10.0',
-        'tags': 'tag',
-        'rules': '',
-        'schema': '',
-    }
-    modeling_rule = pack.create_modeling_rule(modeling_rule_name, modeling_rule_yml_content)
-    modeling_rule.testdata._file_path.unlink()
-    with open('demisto_sdk/tests/test_files/modeling_rules.xif') as f:
-        xif_rules = f.read()
-        modeling_rule.rules.write(xif_rules)
-    runner = CliRunner()
-    result = runner.invoke(init_td_app, [modeling_rule.testdata._file_path.parent.as_posix()])
-    assert result.exit_code == 0
-
-    mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
-    modified_files = {modeling_rule.yml.path}
-    if modified_file == 'rules':
-        modified_files = {modeling_rule.rules.path}
-    elif modified_file == 'schema':
-        modified_files = {modeling_rule.schema.path}
-    elif modified_file == 'testdata':
-        modified_files = {modeling_rule.testdata.path}
-    mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git',
-                        return_value=(modified_files, set(), set()))
-    mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
-    mocker.patch.object(ValidateManager, 'is_old_file_format', return_value=False)
-    mocker.patch.object(ValidateManager, 'ignore_files_irrelevant_for_validation', return_value=False)
-    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
-    std_output = StringIO()
-    with contextlib.redirect_stdout(std_output):
-        with ChangeCWD(repo.path):
-            res = validate_manager.run_validation_using_git()
-    captured_stdout = std_output.getvalue()
-    assert "[MR105]" in captured_stdout, captured_stdout
-    assert not res
-
-
-def test_run_validation_using_git_add_modeling_rule_that_supports_td(mocker, repo):
-    """
-    Given:
-        - A pack with a modeling rule content entity does not previously exist.
-        - The modeling rule being added has a version that supports testing via usage of testdata.
-    When:
-        - The modeling rule yml, xif, and schema file have been added.
-    Then:
-        - Ensure the validation fails on requiring a test data file be added.
-    """
-    pack = repo.create_pack()
-    modeling_rule_name = 'MyModelingRule'
-    modeling_rule_yml_content = {
-        'id': 'modeling-rule',
-        'name': modeling_rule_name,
-        'fromversion': '6.10.0',
-        'tags': 'tag',
-        'rules': '',
-        'schema': '',
-    }
-    modeling_rule = pack.create_modeling_rule(modeling_rule_name, modeling_rule_yml_content)
-    modeling_rule.testdata._file_path.unlink()
-    mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
-    mocker.patch.object(
-        ValidateManager, 'get_unfiltered_changed_files_from_git',
-        return_value=(set(), {modeling_rule.yml.path, modeling_rule.rules.path, modeling_rule.schema.path}, set())
-    )
-    mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
-    mocker.patch.object(ValidateManager, 'is_old_file_format', return_value=False)
-    mocker.patch.object(ValidateManager, 'ignore_files_irrelevant_for_validation', return_value=False)
-    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
-    std_output = StringIO()
-    with contextlib.redirect_stdout(std_output):
-        with ChangeCWD(repo.path):
-            res = validate_manager.run_validation_using_git()
-    captured_stdout = std_output.getvalue()
-    assert "[MR104]" in captured_stdout, captured_stdout
     assert not res

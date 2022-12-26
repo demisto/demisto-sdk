@@ -1,5 +1,5 @@
 import pprint
-from typing import Dict, List
+from typing import List
 
 import click
 
@@ -90,7 +90,7 @@ class ReleaseNotesChecker:
         else:
             self.file_path = rn_file_path
             self.file_content = rn_file_content
-            self.notes = {}  # type:Dict
+            self.notes: dict = {}
 
     def add_note(self, line, note):
         """Add note about a release notes line"""

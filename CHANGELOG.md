@@ -1,9 +1,16 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where modeling rules with arbitrary whitespace characters were not parsed correctly.
+* Added support for the **nativeimage** key for an integration/script in the **prepare-content** command.
+* Fixed an issue where downloading content layouts with `detailsV2=None` resulted in an error.
+
+## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.
 * Added hidden properties to integration command argument and script argument.
 * Added `--override-existing` to **upload** that skips the confirmation prompt for overriding existing content packs. @mattbibbydw
-* Fixed an issue where **validate** failed in private repo due to attempts to read from nonexisting file.
+* Fixed an issue where **validate** failed in private repos when attempting to read from a nonexisting `approved_categories.json`.
+* Fixed an issue where **validate** used absolute paths when getting remote `pack_metadata.json` files in private repos.
+* Fixed an issue in **download**, where names of custom scripts were replaced with UUIDs in IncidentFields and Layouts.
 
 ## 1.8.0
 * Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.

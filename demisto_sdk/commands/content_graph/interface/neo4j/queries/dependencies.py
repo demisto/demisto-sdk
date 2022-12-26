@@ -154,7 +154,7 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
             -(integration:{ContentType.INTEGRATION})
     WHERE {is_target_available("content_item", "integration")}
     AND NOT command.object_id IN {list(REPUTATION_COMMAND_NAMES)}
-    WITH command, count(rcmd) as command_count
+    WITH command, count(DISTINCT rcmd) as command_count
 
     MATCH (content_item:{ContentType.BASE_CONTENT})
         -[r:{RelationshipType.USES}]->

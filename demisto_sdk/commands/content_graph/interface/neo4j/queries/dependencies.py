@@ -125,7 +125,7 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
             marketplaces = [], mp IN content_item.marketplaces |
             CASE WHEN mp <> "{marketplace}" THEN marketplaces + mp ELSE marketplaces END
         )
-        RETURN content_item.node_id AS excluded_content_item, dependency.content_type + ":" + dependency.object_id AS reason
+        RETURN content_item.path AS excluded_content_item, dependency.content_type + ":" + dependency.object_id AS reason
     """
     result = run_query(tx, query)
     outputs: Dict[str, Set[str]] = {}
@@ -133,6 +133,9 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
         outputs.setdefault(row["excluded_content_item"], set()).add(row["reason"])
     logger.info(f"Removed {marketplace} from marketplaces for {len(outputs.keys())} content items.")
     logger.debug(f"Excluded content items: {dict(sorted(outputs.items()))}")
+    import json
+    with open(f'artifacts/removed_from_marketplace-{marketplace}.json', 'w') as fp:
+        json.dump(dict(sorted(outputs.items())), fp, indent=4)
 
 
 def update_uses_for_integration_commands(tx: Transaction) -> None:
@@ -215,3 +218,7 @@ def create_depends_on_relationships(tx: Transaction) -> None:
         logger.debug(f"Created DEPENDS_ON relationship between {dep[0]} and {dep[1]}")
         for reason in reasons:
             logger.debug(f"Reason: {reason.get('source')} -> {reason.get('target')} (mandatorily: {reason.get('mandatorily')})")
+
+    import json
+    with open('artifacts/depends_on.json', 'w') as fp:
+        json.dump(outputs, fp, indent=4)

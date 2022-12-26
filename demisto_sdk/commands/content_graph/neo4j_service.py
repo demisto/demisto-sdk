@@ -106,7 +106,7 @@ def _download_apoc(is_running_on_docker: bool):
     if _is_apoc_available(plugins_folder):
         logger.debug("APOC is already available, skipping installation")
         return
-    logger.info("Downloading APOC...")
+    logger.debug("Downloading APOC...")
     # Download APOC_URL and save it to plugins folder in neo4j
     response = requests.get(APOC_URL, verify=False, stream=True)
     total_size = int(response.headers.get("content-length", 0))

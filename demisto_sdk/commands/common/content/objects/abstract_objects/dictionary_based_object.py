@@ -77,6 +77,8 @@ class DictionaryBasedObject(GeneralObject):
             return as_dict.get('trigger_id')
         elif 'content_global_id' in as_dict.keys():
             return as_dict.get('content_global_id')
+        elif 'rule_id' in as_dict.keys():
+            return as_dict.get('rule_id')
         else:
             return as_dict.get('id')
 

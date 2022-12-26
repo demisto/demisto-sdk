@@ -1,3 +1,4 @@
+from collections import defaultdict
 import logging
 from typing import Any, Dict, List, Tuple
 import json
@@ -228,17 +229,18 @@ def create_depends_on_relationships(tx: Transaction) -> None:
             pack_a, pack_b, reasons
     """
     result = run_query(tx, query)
-    outputs: Dict[Tuple[str, str], List[Dict[str, Any]]] = {}
+    outputs: Dict[str, Dict[str, list]] = {}
     for row in result:
-        dep = row["pack_a"], row["pack_b"]
-        outputs[dep] = row["reasons"]
-    outputs = dict(sorted(outputs.items()))
-    for dep, reasons in outputs.items():
-        logger.debug(f"Created DEPENDS_ON relationship between {dep[0]} and {dep[1]}")
-        for reason in reasons:
-            logger.debug(
-                f"Reason: {reason.get('source')} -> {reason.get('target')} (mandatorily: {reason.get('mandatorily')})"
-            )
+        pack_a = row["pack_a"]
+        pack_b = row["pack_b"]
+        outputs.setdefault(pack_a, {}).setdefault(pack_b, []).extend(row["reasons"])
+    for pack_a, pack_b in outputs.items():
+        for pack_b, reasons in pack_b.items():
+            logger.debug(f"Created DEPENDS_ON relationship between {pack_a} and {pack_b}")
+            for reason in reasons:
+                logger.debug(
+                    f"Reason: {reason.get('source')} -> {reason.get('target')} (mandatorily: {reason.get('mandatorily')})"
+                )
 
     if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
         with open(f"{artifacts_folder}/depends_on.json", "w") as fp:

@@ -1150,7 +1150,7 @@ class TestIntegrationValidator:
         ('community', 4, False, False),
         ('partner', 4, False, True),
     ])
-    def test_is_api_token_in_credential_type(self, pack, support, parameter_type, expected_result):
+    def test_is_api_token_in_credential_type(self, pack, support, parameter_type, hidden, expected_result):
         """
         Given
             - An integration with API token parameter in non credential type.
@@ -1169,7 +1169,8 @@ class TestIntegrationValidator:
             'configuration': [{
                 'display': 'API token',
                 'name': 'token',
-                'type': parameter_type  # Encrypted text failed
+                'type': parameter_type,  # Encrypted text failed
+                'hidden': hidden
             }]
         })
 

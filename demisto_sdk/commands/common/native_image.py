@@ -31,9 +31,11 @@ class NativeImageConfig(Singleton, BaseModel):
     native_images: Dict[str, NativeImage]
     ignored_content_items: List[IgnoredContentItem]
     docker_images_to_native_images_mapping: Dict[str, List] = {}
+    native_image_config_file_path: str = ''
 
     def __init__(self, native_image_config_file_path: str = f'Tests/{NATIVE_IMAGE_FILE_NAME}'):
         super().__init__(**self.load(native_image_config_file_path))
+        self.native_image_config_file_path = native_image_config_file_path
         self.docker_images_to_native_images_mapping = self.__docker_images_to_native_images_support()
 
     def __docker_images_to_native_images_support(self):
@@ -67,6 +69,23 @@ class NativeImageConfig(Singleton, BaseModel):
         native_image_config_content, _ = get_dict_from_file(native_image_config_file_path)
         return native_image_config_content
 
+    def get_native_image_reference(self, native_image):
+        """
+        Gets the docker reference of the given native image
+
+        Args:
+            native_image (str): native image (for example: 'native:8.1')
+
+
+        Returns: The docker ref
+        """
+        if native_image_obj := self.native_images.get(native_image):
+            return native_image_obj.docker_ref
+
+        else:  # desirable native image not in self.native_images
+            raise Exception(f'The requested native image: {native_image} is not supported.\n '
+                            f'For supported native image versions please see: {self.native_image_config_file_path}.')
+
 
 class ScriptIntegrationSupportedNativeImages:
 
@@ -84,8 +103,8 @@ class ScriptIntegrationSupportedNativeImages:
     def __init__(
         self,
         _id: str,
-        docker_image: Optional[str],
-        native_image_config: NativeImageConfig
+        native_image_config: NativeImageConfig,
+        docker_image: Optional[str] = None
     ):
         self.id = _id
         self.docker_image = extract_docker_image_from_text(
@@ -117,8 +136,7 @@ class ScriptIntegrationSupportedNativeImages:
 
     def get_supported_native_image_versions(self, get_raw_version: bool = False) -> List[str]:
         """
-        Get the native-images that the integration/script supports. Disregards native-images that are supported which
-        should be ignored.
+        Get the native-images that the integration/script supports. Disregards native-images that should be ignored.
 
         Args:
             get_raw_version (bool): whether to extract the raw server version from the native image name, for example:
@@ -126,7 +144,7 @@ class ScriptIntegrationSupportedNativeImages:
         """
         if native_images := self.__docker_image_to_native_images_support():
             # in case there is a script/integration that should be ignored on a specific native image,
-            # the native image(s) which doesn't support him will be removed.
+            # the native image(s) which doesn't support it will be removed.
             ignored_native_images = self.__get_ignored_native_images()
             native_images = [
                 native_image for native_image in native_images if native_image not in ignored_native_images

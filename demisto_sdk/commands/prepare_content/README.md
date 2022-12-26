@@ -39,7 +39,7 @@ This command has three main functions:
     * **-c, --custom**
       Adds a custom label to the name/display/id of the unified yml
     * **-ini, --ignore-native-image**
-       Whether to ignore the addition of the nativeImage key to the yml of a script/integration. Defaults to False.
+       Whether to ignore the addition of the nativeimage key to the yml of a script/integration. Defaults to False.
 
     **Examples**:
     `demisto-sdk unify -i Integrations/MyInt -o Integrations`

@@ -130,7 +130,7 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
             marketplaces = [], mp IN content_item.marketplaces |
             CASE WHEN mp <> "{marketplace}" THEN marketplaces + mp ELSE marketplaces END
         )
-        RETURN content_item.path AS excluded_content_item, dependency.content_type + ":" + dependency.object_id AS reason
+        RETURN content_item.object_id AS excluded_content_item, dependency.content_type + ":" + dependency.object_id AS reason
     """
     result = run_query(tx, query)
     outputs: Dict[str, List[str]] = {}

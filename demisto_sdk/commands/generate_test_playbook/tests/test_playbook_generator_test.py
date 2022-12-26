@@ -6,8 +6,8 @@ import pytest
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
-from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import (
-    PlaybookTestsGenerator, get_command_examples)
+from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import (PlaybookTestsGenerator,
+                                                                                 get_command_examples)
 
 yaml = YAML_Handler()
 
@@ -16,7 +16,7 @@ class TestGenerateTestPlaybook:
     TEMP_DIR = 'temp'
     TEST_FILE_PATH = Path(git_path()) / 'demisto_sdk' / 'tests' / 'test_files'
     DUMMY_INTEGRATION_YML_PATH = TEST_FILE_PATH / 'fake_integration.yml'
-    CREATED_DIRS = list()  # type: list
+    CREATED_DIRS: list = list()
 
     @classmethod
     def setup_class(cls):

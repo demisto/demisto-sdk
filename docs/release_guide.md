@@ -1,6 +1,7 @@
 # Demisto-SDK Release Guide
 
 Throughout the guide, `X.Y.Z` will mark the upcoming version.
+The scope of the upgrade is decided by the SDK owner on each release, based on the amount of updates and their effect.
 
 ## Pre-release validations
 

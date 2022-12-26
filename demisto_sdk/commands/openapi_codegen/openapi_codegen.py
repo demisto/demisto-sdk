@@ -8,16 +8,14 @@ from typing import Any, List, Optional, Union
 import autopep8
 
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.hook_validations.docker import \
-    DockerImageValidator
+from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.tools import camel_to_snake, print_error
-from demisto_sdk.commands.generate_integration.base_code import (
-    BASE_ARGUMENT, BASE_BASIC_AUTH, BASE_CLIENT, BASE_CODE_TEMPLATE,
-    BASE_CREDENTIALS, BASE_DATA, BASE_FUNCTION, BASE_HEADER,
-    BASE_LIST_FUNCTIONS, BASE_PARAMS, BASE_PROPS, BASE_REQUEST_FUNCTION,
-    BASE_TOKEN)
-from demisto_sdk.commands.generate_integration.XSOARIntegration import \
-    XSOARIntegration
+from demisto_sdk.commands.generate_integration.base_code import (BASE_ARGUMENT, BASE_BASIC_AUTH, BASE_CLIENT,
+                                                                 BASE_CODE_TEMPLATE, BASE_CREDENTIALS, BASE_DATA,
+                                                                 BASE_FUNCTION, BASE_HEADER, BASE_LIST_FUNCTIONS,
+                                                                 BASE_PARAMS, BASE_PROPS, BASE_REQUEST_FUNCTION,
+                                                                 BASE_TOKEN)
+from demisto_sdk.commands.generate_integration.XSOARIntegration import XSOARIntegration
 
 json = JSON_Handler()
 

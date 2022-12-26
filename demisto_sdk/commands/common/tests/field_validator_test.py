@@ -1,13 +1,11 @@
 from distutils.version import LooseVersion
-from typing import List
+from typing import Dict, List
+from unittest.mock import patch
 
 import pytest
-from mock import patch
 
-from demisto_sdk.commands.common.hook_validations.field_base_validator import (
-    FieldBaseValidator, GroupFieldTypes)
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
+from demisto_sdk.commands.common.hook_validations.field_base_validator import FieldBaseValidator, GroupFieldTypes
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 
 INDICATOR_GROUP_NUMBER = 2
 INCIDENT_GROUP_NUMBER = 0
@@ -82,7 +80,7 @@ class TestFieldValidator:
                 validator.is_valid_name()
                 sys.stdout = old_stdout
 
-            with open('file', 'r') as temp_out:
+            with open('file') as temp_out:
                 output = temp_out.read()
                 assert ('IF100' in str(output)) is answer
             # remove the temp file
@@ -336,10 +334,10 @@ class TestFieldValidator:
         validator = FieldBaseValidator(structure, set(), set())
         assert validator.is_valid_version() == is_valid, f'is_valid_version({version}) returns {not is_valid}.'
 
-    IS_FROM_VERSION_CHANGED_NO_OLD = {}  # type: dict[any, any]
+    IS_FROM_VERSION_CHANGED_NO_OLD: Dict[any, any] = {}
     IS_FROM_VERSION_CHANGED_OLD = {"fromVersion": "5.0.0"}
     IS_FROM_VERSION_CHANGED_NEW = {"fromVersion": "5.0.0"}
-    IS_FROM_VERSION_CHANGED_NO_NEW = {}  # type: dict[any, any]
+    IS_FROM_VERSION_CHANGED_NO_NEW: Dict[any, any] = {}
     IS_FROM_VERSION_CHANGED_NEW_HIGHER = {"fromVersion": "5.5.0"}
     IS_CHANGED_FROM_VERSION_INPUTS = [
         (IS_FROM_VERSION_CHANGED_NO_OLD, IS_FROM_VERSION_CHANGED_NO_OLD, False),
@@ -429,8 +427,7 @@ class TestFieldValidator:
             Then
             - Ensure validate fails when the field name does not start with the pack name prefix.
         """
-        from demisto_sdk.commands.common.hook_validations import \
-            field_base_validator
+        from demisto_sdk.commands.common.hook_validations import field_base_validator
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
             structure = StructureValidator("")
             structure.current_file = current_file

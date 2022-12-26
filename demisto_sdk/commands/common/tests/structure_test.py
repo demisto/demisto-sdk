@@ -5,38 +5,34 @@ from typing import List, Tuple
 
 import pytest
 
-from demisto_sdk.commands.common.constants import (
-    CODE_FILES_REGEX, PACKAGE_YML_FILE_REGEX,
-    PACKS_CLASSIFIER_JSON_5_9_9_REGEX, PACKS_CLASSIFIER_JSON_REGEX,
-    PACKS_DASHBOARD_JSON_REGEX, PACKS_INCIDENT_FIELD_JSON_REGEX,
-    PACKS_INCIDENT_TYPE_JSON_REGEX, PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
-    PACKS_INTEGRATION_PY_REGEX, PACKS_INTEGRATION_TEST_PY_REGEX,
-    PACKS_INTEGRATION_YML_REGEX, PACKS_LAYOUT_JSON_REGEX,
-    PACKS_LAYOUTS_CONTAINER_JSON_REGEX, PACKS_MAPPER_JSON_REGEX,
-    PACKS_SCRIPT_PY_REGEX, PACKS_SCRIPT_TEST_PLAYBOOK,
-    PACKS_SCRIPT_TEST_PY_REGEX, PACKS_SCRIPT_YML_REGEX,
-    PACKS_WIDGET_JSON_REGEX, PLAYBOOK_README_REGEX, PLAYBOOK_YML_REGEX,
-    TEST_PLAYBOOK_YML_REGEX)
+from demisto_sdk.commands.common.constants import (CODE_FILES_REGEX, PACKAGE_YML_FILE_REGEX,
+                                                   PACKS_CLASSIFIER_JSON_5_9_9_REGEX, PACKS_CLASSIFIER_JSON_REGEX,
+                                                   PACKS_DASHBOARD_JSON_REGEX, PACKS_INCIDENT_FIELD_JSON_REGEX,
+                                                   PACKS_INCIDENT_TYPE_JSON_REGEX,
+                                                   PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, PACKS_INTEGRATION_PY_REGEX,
+                                                   PACKS_INTEGRATION_TEST_PY_REGEX, PACKS_INTEGRATION_YML_REGEX,
+                                                   PACKS_LAYOUT_JSON_REGEX, PACKS_LAYOUTS_CONTAINER_JSON_REGEX,
+                                                   PACKS_MAPPER_JSON_REGEX, PACKS_SCRIPT_PY_REGEX,
+                                                   PACKS_SCRIPT_TEST_PLAYBOOK, PACKS_SCRIPT_TEST_PY_REGEX,
+                                                   PACKS_SCRIPT_YML_REGEX, PACKS_WIDGET_JSON_REGEX,
+                                                   PLAYBOOK_README_REGEX, PLAYBOOK_YML_REGEX, TEST_PLAYBOOK_YML_REGEX)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
-from demisto_sdk.commands.common.hook_validations.structure import (
-    StructureValidator, checked_type_by_reg)
-from demisto_sdk.tests.constants_test import (
-    DASHBOARD_TARGET, DIR_LIST, INCIDENT_FIELD_TARGET,
-    INDICATORFIELD_EXACT_SCHEME, INDICATORFIELD_EXTRA_FIELDS,
-    INDICATORFIELD_MISSING_AND_EXTRA_FIELDS, INDICATORFIELD_MISSING_FIELD,
-    INTEGRATION_TARGET, INVALID_DASHBOARD_PATH, INVALID_INTEGRATION_ID_PATH,
-    INVALID_INTEGRATION_YML_1, INVALID_INTEGRATION_YML_2,
-    INVALID_INTEGRATION_YML_3, INVALID_INTEGRATION_YML_4,
-    INVALID_LAYOUT_CONTAINER_PATH, INVALID_LAYOUT_PATH, INVALID_PLAYBOOK_PATH,
-    INVALID_REPUTATION_FILE, INVALID_WIDGET_PATH, LAYOUT_TARGET,
-    LAYOUTS_CONTAINER_TARGET, PLAYBOOK_PACK_TARGET, PLAYBOOK_TARGET,
-    VALID_DASHBOARD_PATH, VALID_INTEGRATION_ID_PATH,
-    VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_CONTAINER_PATH,
-    VALID_LAYOUT_PATH, VALID_PLAYBOOK_ARCSIGHT_ADD_DOMAIN_PATH,
-    VALID_PLAYBOOK_ID_PATH, VALID_REPUTATION_FILE, VALID_TEST_PLAYBOOK_PATH,
-    VALID_WIDGET_PATH, WIDGET_TARGET)
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator, checked_type_by_reg
+from demisto_sdk.tests.constants_test import (DASHBOARD_TARGET, DIR_LIST, INCIDENT_FIELD_TARGET,
+                                              INDICATORFIELD_EXACT_SCHEME, INDICATORFIELD_EXTRA_FIELDS,
+                                              INDICATORFIELD_MISSING_AND_EXTRA_FIELDS, INDICATORFIELD_MISSING_FIELD,
+                                              INTEGRATION_TARGET, INVALID_DASHBOARD_PATH, INVALID_INTEGRATION_ID_PATH,
+                                              INVALID_INTEGRATION_YML_1, INVALID_INTEGRATION_YML_2,
+                                              INVALID_INTEGRATION_YML_3, INVALID_INTEGRATION_YML_4,
+                                              INVALID_LAYOUT_CONTAINER_PATH, INVALID_LAYOUT_PATH, INVALID_PLAYBOOK_PATH,
+                                              INVALID_REPUTATION_FILE, INVALID_WIDGET_PATH, LAYOUT_TARGET,
+                                              LAYOUTS_CONTAINER_TARGET, PLAYBOOK_PACK_TARGET, PLAYBOOK_TARGET,
+                                              VALID_DASHBOARD_PATH, VALID_INTEGRATION_ID_PATH,
+                                              VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_CONTAINER_PATH,
+                                              VALID_LAYOUT_PATH, VALID_PLAYBOOK_ARCSIGHT_ADD_DOMAIN_PATH,
+                                              VALID_PLAYBOOK_ID_PATH, VALID_REPUTATION_FILE, VALID_TEST_PLAYBOOK_PATH,
+                                              VALID_WIDGET_PATH, WIDGET_TARGET)
 from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
@@ -56,7 +52,7 @@ class TestStructureValidator:
         INCIDENT_FIELD_TARGET,
         PLAYBOOK_PACK_TARGET,
     ]
-    CREATED_DIRS = list()  # type: List
+    CREATED_DIRS: List = list()
 
     @classmethod
     def setup_class(cls):
@@ -141,7 +137,7 @@ class TestStructureValidator:
         structure.scheme_name = None
         assert structure.is_valid_file_path() is answer
 
-    INPUTS_IS_VALID_FILE = [
+    INPUTS_IS_VALID_FILE: List[Tuple[str, str, bool]] = [
         (VALID_LAYOUT_PATH, LAYOUT_TARGET, True),
         (INVALID_LAYOUT_PATH, LAYOUT_TARGET, False),
         (VALID_LAYOUT_CONTAINER_PATH, LAYOUTS_CONTAINER_TARGET, True),
@@ -153,7 +149,7 @@ class TestStructureValidator:
         (VALID_TEST_PLAYBOOK_PATH, PLAYBOOK_TARGET, True),
         (VALID_INTEGRATION_TEST_PATH, INTEGRATION_TARGET, True),
         (INVALID_PLAYBOOK_PATH, INTEGRATION_TARGET, False),
-    ]  # type: List[Tuple[str, str, bool]]
+    ]
 
     @pytest.mark.parametrize('source, target, answer', INPUTS_IS_VALID_FILE)
     def test_is_file_valid(self, source, target, answer, mocker):
@@ -185,14 +181,14 @@ class TestStructureValidator:
     expected_error_6 = 'The value "Network Securitys" in \'category\' is invalid ' \
                        '- legal values include: \'Analytics & SIEM\', \'Utilities\', \'Messaging\''
 
-    TEST_ERRORS = [
+    TEST_ERRORS: List[Tuple[str, str, str, str]] = [
         (INVALID_INTEGRATION_YML_1, 'integration', pykwalify_error_1, expected_error_1),
         (INVALID_INTEGRATION_YML_2, 'integration', pykwalify_error_2, expected_error_2),
         (INVALID_INTEGRATION_YML_3, 'integration', pykwalify_error_3, expected_error_3),
         (INVALID_INTEGRATION_YML_4, 'integration', pykwalify_error_4, expected_error_4),
         (INVALID_INTEGRATION_YML_4, 'integration', pykwalify_error_5, expected_error_5),
         (INVALID_INTEGRATION_YML_4, 'integration', pykwalify_error_6, expected_error_6),
-    ]  # type: List[Tuple[str,str,str, str]]
+    ]
 
     @pytest.mark.parametrize('path, scheme , error, correct', TEST_ERRORS)
     def test_print_error_line(self, path, scheme, error, correct, mocker):

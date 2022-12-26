@@ -6,6 +6,8 @@ from typing import Set, Tuple, Union
 import click
 import gitdb
 from git import InvalidGitRepositoryError, Repo
+from git.diff import Lit_change_type
+from git.remote import Remote
 
 
 class GitUtil:
@@ -81,7 +83,7 @@ class GitUtil:
             self.debug_print(debug=debug, status='Modified', staged=set(), committed=committed)
             return committed
 
-        untracked = set()  # type: Set
+        untracked: Set = set()
         if include_untracked:
             # get all untracked modified files
             untracked = self._get_untracked_files('M')
@@ -169,8 +171,8 @@ class GitUtil:
             self.debug_print(debug=debug, status='Added', staged=set(), committed=committed)
             return committed
 
-        untracked_added = set()  # type: Set
-        untracked_modified = set()  # type: Set
+        untracked_added: Set = set()
+        untracked_modified: Set = set()
         if include_untracked:
             # get all untracked added files
             untracked_added = self._get_untracked_files('A')
@@ -247,7 +249,7 @@ class GitUtil:
         if committed_only:
             return committed
 
-        untracked = set()  # type: Set
+        untracked: Set = set()
         if include_untracked:
             # get all untracked deleted files
             untracked = self._get_untracked_files('D')
@@ -317,7 +319,7 @@ class GitUtil:
 
             return committed
 
-        untracked = set()  # type:Set
+        untracked: Set = set()
         if include_untracked:
             # get all untracked renamed files
             untracked = self._get_untracked_files('R')
@@ -390,11 +392,11 @@ class GitUtil:
                     in self.repo.git.diff('--name-only',
                                           f'{branch}...{current_branch_or_hash}').split('\n')}
 
-    def _only_last_commit(self, prev_ver: str, requested_status: str) -> Set:  # pragma: no cover
+    def _only_last_commit(self, prev_ver: str, requested_status: Lit_change_type) -> Set:  # pragma: no cover
         """Get all the files that were changed in the last commit of a given type when checking a branch against itself.
         Args:
             prev_ver (str): The base branch against which the comparison is made.
-            requested_status (str): M(odified), A(dded), R(enamed), D(eleted) - the git status to return
+            requested_status (Lit_change_type): M(odified), A(dded), R(enamed), D(eleted) - the git status to return
         Returns:
             Set: of Paths to files changed in the the last commit or an empty set if not
             running on master against master.
@@ -567,7 +569,7 @@ class GitUtil:
         """
         relative_file_path = os.path.relpath(full_file_path, self.git_path())
         try:
-            remote_name = self.repo.remote()
+            remote_name: Union[Remote, str] = self.repo.remote()
         except ValueError as exc:
             if "Remote named 'origin' didn't exist" in str(exc):
                 remote_name = 'origin'

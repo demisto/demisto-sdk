@@ -1,5 +1,5 @@
 import pprint
-from typing import Dict, List
+from typing import List
 
 import click
 
@@ -63,6 +63,11 @@ class ReleaseNotesChecker:
         'Note: ',
         'Started adoption process.',
         'Completed adoption process.',
+        'Improved layout',
+        'Created a new layout',
+        'Playbook now supports',
+        'Created a new playbook',
+        'Updated the'
     }
 
     RN_FULL_LINE_TEMPLATES = {
@@ -85,7 +90,7 @@ class ReleaseNotesChecker:
         else:
             self.file_path = rn_file_path
             self.file_content = rn_file_content
-            self.notes = {}  # type:Dict
+            self.notes: dict = {}
 
     def add_note(self, line, note):
         """Add note about a release notes line"""
@@ -131,12 +136,23 @@ class ReleaseNotesChecker:
     def check_rn(self) -> bool:
         """Check if an RN file is up to our standards"""
         show_template_message = False
+        is_new_content_item = False
 
         for line in self.file_content:
             line = line.lstrip(' -')
             line = line.rstrip()
+
+            if line.startswith('##### New:'):
+                is_new_content_item = True
+                continue
+
             # skip headers
             if line.startswith(('#', "*")) or line.isspace() or not line:
+                is_new_content_item = False
+                continue
+
+            if is_new_content_item:
+                # The description of new content items does not need to conform to templates
                 continue
 
             if not self.check_templates(line):

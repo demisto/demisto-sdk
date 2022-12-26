@@ -17,21 +17,18 @@ from packaging.version import parse
 
 from demisto_sdk.__main__ import main, upload
 from demisto_sdk.commands.common import constants
-from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
-                                                   INTEGRATIONS_DIR,
-                                                   LAYOUTS_DIR, SCRIPTS_DIR,
-                                                   TEST_PLAYBOOKS_DIR,
-                                                   FileType)
-from demisto_sdk.commands.common.content.objects.pack_objects.pack import (
-    DELETE_VERIFY_KEY_ACTION, TURN_VERIFICATION_ERROR_MSG, Pack)
+from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, INTEGRATIONS_DIR, LAYOUTS_DIR, SCRIPTS_DIR,
+                                                   TEST_PLAYBOOKS_DIR, FileType)
+from demisto_sdk.commands.common.content.objects.pack_objects.pack import (DELETE_VERIFY_KEY_ACTION,
+                                                                           TURN_VERIFICATION_ERROR_MSG, Pack)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yml_paths_in_dir, src_root
+from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 from demisto_sdk.commands.test_content import tools
 from demisto_sdk.commands.upload import uploader
-from demisto_sdk.commands.upload.uploader import (
-    ItemDetacher, Uploader, parse_error_response, print_summary,
-    sort_directories_based_on_dependencies)
+from demisto_sdk.commands.upload.uploader import (ItemDetacher, Uploader, parse_error_response, print_summary,
+                                                  sort_directories_based_on_dependencies)
 from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
@@ -46,7 +43,7 @@ if not hasattr(inspect, '_orig_findsource'):
         try:
             return inspect._orig_findsource(*args, **kwargs)
         except IndexError:
-            raise IOError("Invalid line")
+            raise OSError("Invalid line")
 
     inspect._orig_findsource = inspect.findsource
     inspect.findsource = findsource
@@ -64,6 +61,7 @@ def demisto_client_configure(mocker):
 
 def test_upload_integration_positive(demisto_client_configure, mocker):
     mocker.patch.object(demisto_client, 'configure', return_value="object")
+    mocker.patch.object(IntegrationScript, 'get_supported_native_images', return_value=[])
     integration_pckg_path = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_example/Integrations/Securonix/'
     integration_pckg_uploader = Uploader(input=integration_pckg_path, insecure=False, verbose=False)
     with patch.object(integration_pckg_uploader, 'client', return_value='ok'):
@@ -329,7 +327,7 @@ def test_upload_incident_type_correct_file_change(demisto_client_configure, mock
 
     def save_file(file):
         global DATA
-        with open(file, 'r') as f:
+        with open(file) as f:
             DATA = f.read()
         return
 
@@ -377,7 +375,7 @@ def test_upload_incident_field_correct_file_change(demisto_client_configure, moc
 
     def save_file(file):
         global DATA
-        with open(file, 'r') as f:
+        with open(file) as f:
             DATA = f.read()
         return
 
@@ -422,6 +420,7 @@ def test_upload_an_integration_directory(demisto_client_configure, mocker):
         - Ensure success upload message is printed as expected
     """
     mocker.patch.object(demisto_client, 'configure', return_value="object")
+    mocker.patch.object(IntegrationScript, 'get_supported_native_images', return_value=[])
     integration_dir_name = "UploadTest"
     integration_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Integrations/{integration_dir_name}"
     uploader = Uploader(input=integration_path, insecure=False, verbose=False)
@@ -446,6 +445,7 @@ def test_upload_a_script_directory(demisto_client_configure, mocker):
         - Ensure success upload message is printed as expected
     """
     mocker.patch.object(demisto_client, 'configure', return_value="object")
+    mocker.patch.object(IntegrationScript, 'get_supported_native_images', return_value=[])
     script_dir_name = "DummyScript"
     scripts_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/{script_dir_name}"
     uploader = Uploader(input=scripts_path, insecure=False, verbose=False)
@@ -494,6 +494,7 @@ def test_upload_pack(demisto_client_configure, mocker):
         - Check that all expected content entities that appear in the pack are reported as uploaded.
     """
     mocker.patch.object(demisto_client, 'configure', return_value="object")
+    mocker.patch.object(IntegrationScript, 'get_supported_native_images', return_value=[])
     pack_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack"
     uploader = Uploader(input=pack_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, 'client')

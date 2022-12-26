@@ -26,11 +26,6 @@ mapping:
     type: bool
   category:
     type: str
-    enum: [
-    'Analytics & SIEM', 'Utilities', 'Messaging', 'Endpoint', 'Network Security',
-    'Vulnerability Management', 'Case Management',
-    'Forensics & Malware Analysis', 'IT Services', 'Data Enrichment & Threat Intelligence',
-     'Authentication', 'Database', 'Deception', 'Email Gateway', 'Identity and Access Management','File Integrity Management']
     required: true
   sectionOrder:
     type: seq
@@ -81,6 +76,10 @@ mapping:
         type: seq
         sequence:
         - type: str
+      nativeImage:
+        type: seq
+        sequence:
+        - type: str
       isfetch:
         type: bool
       isfetchevents:
@@ -118,6 +117,10 @@ mapping:
     type: bool
   hidden:
     type: bool
+  videos:
+    type: seq
+    sequence:
+      - type: str
   versionedfields:
     type: any
   defaultEnabled:
@@ -134,7 +137,7 @@ mapping:
     type: seq
     sequence:
       - type: str
-        enum: ['xsoar', 'marketplacev2']
+        enum: ['xsoar', 'marketplacev2', 'xpanse']
 
 # integration->configuration
 schema;configuration_schema:
@@ -242,6 +245,8 @@ schema;argument_schema:
       type: bool
     type:
       type: str
+    hidden:
+      type: bool
 
 
 # integration->script->command->outputs

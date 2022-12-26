@@ -6,8 +6,7 @@ from prettytable import PrettyTable
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import (
-    BaseValidator, error_codes)
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
 from demisto_sdk.commands.common.tools import get_dict_from_file
 
 json = JSON_Handler()
@@ -42,7 +41,7 @@ class XSOARConfigJsonValidator(BaseValidator):
             Dict[str, Any]. The contents of the configuration file.
         """
         try:
-            with open(self.configuration_file_path, 'r') as f:
+            with open(self.configuration_file_path) as f:
                 config_json = json.load(f)
         except Exception:
             error_message, error_code = Errors.xsoar_config_file_is_not_json(self.configuration_file_path)

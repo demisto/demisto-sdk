@@ -16,23 +16,17 @@ from mergedeep import merge
 from tabulate import tabulate
 from urllib3.exceptions import MaxRetryError
 
-from demisto_sdk.commands.common.constants import (
-    CONTENT_ENTITIES_DIRS, CONTENT_FILE_ENDINGS,
-    DELETED_JSON_FIELDS_BY_DEMISTO, DELETED_YML_FIELDS_BY_DEMISTO,
-    ENTITY_NAME_SEPARATORS, ENTITY_TYPE_TO_DIR, FILE_EXIST_REASON,
-    FILE_NOT_IN_CC_REASON, INTEGRATIONS_DIR, PLAYBOOKS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR)
+from demisto_sdk.commands.common.constants import (CONTENT_ENTITIES_DIRS, CONTENT_FILE_ENDINGS,
+                                                   DELETED_JSON_FIELDS_BY_DEMISTO, DELETED_YML_FIELDS_BY_DEMISTO,
+                                                   ENTITY_NAME_SEPARATORS, ENTITY_TYPE_TO_DIR, FILE_EXIST_REASON,
+                                                   FILE_NOT_IN_CC_REASON, INCIDENT_FIELD_FILE_NAME_REGEX,
+                                                   INTEGRATIONS_DIR, LAYOUT_FILE_NAME__REGEX, PLAYBOOK_REGEX,
+                                                   PLAYBOOKS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, UUID_REGEX)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
-                                               get_child_directories,
-                                               get_child_files, get_code_lang,
-                                               get_dict_from_file,
-                                               get_entity_id_by_entity_type,
-                                               get_entity_name_by_entity_type,
-                                               get_files_in_dir, get_json,
-                                               get_yaml, get_yml_paths_in_dir,
-                                               print_color,
-                                               retrieve_file_ending)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_child_directories, get_child_files,
+                                               get_code_lang, get_dict_from_file, get_entity_id_by_entity_type,
+                                               get_entity_name_by_entity_type, get_files_in_dir, get_json, get_yaml,
+                                               get_yml_paths_in_dir, print_color, retrieve_file_ending)
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
@@ -208,7 +202,8 @@ class Downloader:
 
     def handle_api_exception(self, e):
         if e.status == 401:
-            print_color('\nVerify that the environment variable DEMISTO_API_KEY is configured properly.\n',
+            print_color("\nAuthentication error: please verify that the appropriate environment variables "
+                        "(either DEMISTO_USERNAME and DEMISTO_PASSWORD, or just DEMISTO_API_KEY) are properly configured.\n",
                         LOG_COLORS.RED)
         print_color(f'Exception raised when fetching custom content:\nStatus: {e}', LOG_COLORS.NATIVE)
 
@@ -229,9 +224,10 @@ class Downloader:
         playbook_id = file_yaml_object.get('id')
         playbook_name = file_yaml_object.get('name')
         if playbook_id and playbook_name and (playbook_name in self.input_files or self.all_custom_content):
-            # download the playbook yaml in case playbook name appears in the input_files or --all-custom-content flag is true
+            # download the playbook yaml in case playbook name appears in the input_files
+            # or --all-custom-content flag is true
 
-            # this will make sure that we save the downloaded files in the custom cotent temp dir
+            # this will make sure that we save the downloaded files in the custom content temp dir
             if self.client and self.client.api_client and self.client.api_client.configuration:
                 api_resp = demisto_client.generic_request_func(self.client, f'/playbook/{playbook_id}/yaml', 'GET')
                 status_code = api_resp[1]
@@ -241,6 +237,59 @@ class Downloader:
                 return ast.literal_eval(api_resp[0]).decode('utf-8')
 
         return playbook_string
+
+    def handle_incidentfield(self, incidentfield_string: str, scripts_mapper: dict) -> str:
+        # In case the incident field uses a custom script, replace the id value of the script with its name
+        file_json_object = json.loads(incidentfield_string)
+        incidentfield_name = file_json_object.get('name')
+        script = file_json_object.get('script')
+        if incidentfield_name and (incidentfield_name in self.input_files or self.all_custom_content):
+            if script and script in scripts_mapper:
+                incidentfield_string = incidentfield_string.replace(script, scripts_mapper[script])
+
+        return incidentfield_string
+
+    def handle_layout(self, layout_string, scripts_mapper):
+        # In case the layout uses a custom script, replace the id value of the script with its name
+        file_json_object = json.loads(layout_string)
+        layout_name = file_json_object.get('name')
+        if layout_name and (layout_name in self.input_files or self.all_custom_content):
+            for tab in file_json_object.get('detailsV2', {}).get('tabs', ()):
+                for section in tab.get('sections', ()):
+                    for item in section.get('items', ()):
+                        script_id = item.get('scriptId')
+                        if script_id and script_id in scripts_mapper:
+                            layout_string = layout_string.replace(script_id, scripts_mapper[script_id])
+
+        return layout_string
+
+    @staticmethod
+    def map_script(script_string: str, scripts_mapper: dict) -> dict:
+        script_yml = yaml.load(script_string)
+        script_id = script_yml.get('commonfields').get('id')
+        if re.search(UUID_REGEX, script_id):
+            scripts_mapper[script_id] = script_yml.get('name')
+        return scripts_mapper
+
+    def handle_file(self, string_to_write, member_name, scripts_id_name):
+
+        if 'automation-' in member_name:
+            scripts_id_name = self.map_script(string_to_write, scripts_id_name)
+
+        if not self.list_files and re.search(INCIDENT_FIELD_FILE_NAME_REGEX, member_name):
+            string_to_write = self.handle_incidentfield(string_to_write, scripts_id_name)
+
+        if not self.list_files and re.search(PLAYBOOK_REGEX, member_name):
+            #  if the content item is playbook and list-file flag is true, we should download the
+            #  file via direct REST API because there are props like scriptName, that playbook from custom
+            #  content bundle don't contain
+
+            string_to_write = self.download_playbook_yaml(string_to_write)
+
+        if not self.list_files and re.search(LAYOUT_FILE_NAME__REGEX, member_name):
+            string_to_write = self.handle_layout(string_to_write, scripts_id_name)
+
+        return string_to_write, scripts_id_name
 
     def fetch_custom_content(self) -> bool:
         """
@@ -253,9 +302,11 @@ class Downloader:
             api_response: tuple = demisto_client.generic_request_func(self.client, '/content/bundle', 'GET')
             body: bytes = ast.literal_eval(api_response[0])
             io_bytes = io.BytesIO(body)
+
             # Demisto's custom content file is of type tar.gz
             tar = tarfile.open(fileobj=io_bytes, mode='r')
 
+            scripts_id_name: dict = {}
             for member in tar.getmembers():
                 file_name: str = self.update_file_prefix(member.name.strip('/'))
                 file_path: str = os.path.join(self.custom_content_temp_dir, file_name)
@@ -264,15 +315,17 @@ class Downloader:
                 # File might empty
                 if extracted_file:
                     string_to_write = extracted_file.read().decode('utf-8')
+                    string_to_write, scripts_id_name = self.handle_file(string_to_write, member.name, scripts_id_name)
 
-                    if not self.list_files and re.search(r'playbook-.*\.yml', member.name):
-                        # if the content item is playbook and list-file flag is true, we should download the file via direct REST API
-                        # because there are props like scriptName, that playbook from custom content bundle don't contain
+                    try:
+                        with open(file_path, 'w') as file:
+                            file.write(string_to_write)
 
-                        string_to_write = self.download_playbook_yaml(string_to_write)
-
-                    with open(file_path, 'w') as file:
-                        file.write(string_to_write)
+                    except Exception as e:
+                        print(f'encountered exception {type(e)}: {e}')
+                        print('trying to write with encoding=utf8')
+                        with open(file_path, 'w', encoding='utf8') as file:
+                            file.write(string_to_write)
                 else:
                     raise FileNotFoundError(f'Could not extract files from tar file: {file_path}')
 
@@ -338,7 +391,7 @@ class Downloader:
                 api_response = demisto_client.generic_request_func(self.client, endpoint, req_type, body=req_body)
                 system_items_list = ast.literal_eval(api_response[0])
 
-            self.arrange_response(system_items_list)
+            system_items_list = self.arrange_response(system_items_list)
 
             for item in system_items_list:  # type: ignore
                 file_name: str = self.build_file_name(item)
@@ -357,7 +410,7 @@ class Downloader:
             self.handle_max_retry_error(e)
             return False
         except Exception as e:
-            print_color(f'Exception raised when fetching custom content:\n{e}', LOG_COLORS.NATIVE)
+            print_color(f'Exception raised when fetching system content:\n{e}', LOG_COLORS.NATIVE)
             return False
 
     def get_custom_content_objects(self) -> List[dict]:
@@ -510,7 +563,7 @@ class Downloader:
         :return: The main file id & name
         """
         main_file_data: dict = dict()
-        main_file_path: str = str()
+        main_file_path: str = ''
 
         # Entities which contain yml files
         if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR, PLAYBOOKS_DIR, TEST_PLAYBOOKS_DIR):
@@ -755,7 +808,7 @@ class Downloader:
 
         extractor = YmlSplitter(input=file_path, output=temp_dir, file_type=file_type, base_name=base_name,
                                 no_logging=not self.log_verbose, no_pipenv=True, no_readme=True,
-                                no_auto_create_dir=True)
+                                no_auto_create_dir=True, no_code_formatting=self.no_code_formatting)
         extractor.extract_to_package_format()
 
         extracted_file_paths: list = get_child_files(temp_dir)
@@ -936,8 +989,7 @@ class Downloader:
                                           dictor(pack_obj_data, field)}, splitter='dot')
 
         if file_ending == 'yml':
-            with open(file_path_to_write, 'r') as yf:
-                file_yaml_object = yaml.load(yf)
+            file_yaml_object = get_yaml(file_path_to_write)
             if pack_obj_data:
                 merge(file_yaml_object, preserved_data)
             with open(file_path_to_write, 'w') as yf:
@@ -1007,7 +1059,7 @@ class Downloader:
         Log files downloaded/merged
         :return: None
         """
-        log_msg, added_msg, merged_msg = str(), str(), str()
+        log_msg, added_msg, merged_msg = '', '', ''
         if self.num_added_files:
             files = 'file' if self.num_added_files == 1 else 'files'
             added_msg = f'{self.num_added_files} {files} added'

@@ -1,11 +1,10 @@
 import os
+from unittest import mock
 
-import mock
 import pytest
 
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.docker import \
-    DockerImageValidator
+from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
 from TestSuite.test_tools import ChangeCWD
@@ -13,47 +12,47 @@ from TestSuite.test_tools import ChangeCWD
 RETURN_ERROR_TARGET = 'GetDockerImageLatestTag.return_error'
 
 MOCK_TAG_LIST = [{
-    u'last_updated': u'2019-10-23T09:13:30.84299Z',
-    u'name': u'1.0.0.2876',
-    u'repository': 7863337,
-    u'creator': 4824052,
-    u'image_id': None,
-    u'v2': True,
-    u'last_updater_username': u'containersci',
-    u'last_updater': 4824052,
-    u'images': [{
-        u'features': u'',
-        u'os_features': u'',
-        u'variant': None,
-        u'os_version': None,
-        u'architecture': u'amd64',
-        u'os': u'linux',
-        u'digest': u'DIGEST',
-        u'size': 79019268
+    'last_updated': '2019-10-23T09:13:30.84299Z',
+    'name': '1.0.0.2876',
+    'repository': 7863337,
+    'creator': 4824052,
+    'image_id': None,
+    'v2': True,
+    'last_updater_username': 'containersci',
+    'last_updater': 4824052,
+    'images': [{
+        'features': '',
+        'os_features': '',
+        'variant': None,
+        'os_version': None,
+        'architecture': 'amd64',
+        'os': 'linux',
+        'digest': 'DIGEST',
+        'size': 79019268
     }],
-    u'full_size': 79019268,
-    u'id': 73482510
+    'full_size': 79019268,
+    'id': 73482510
 }, {
-    u'last_updated': u'2019-10-16T06:47:29.631011Z',
-    u'name': u'1.0.0.2689',
-    u'repository': 7863337,
-    u'creator': 4824052,
-    u'image_id': None,
-    u'v2': True,
-    u'last_updater_username': u'containersci',
-    u'last_updater': 4824052,
-    u'images': [{
-        u'features': u'',
-        u'os_features': u'',
-        u'variant': None,
-        u'os_version': None,
-        u'architecture': u'amd64',
-        u'os': u'linux',
-        u'digest': u'DIGEST',
-        u'size': 77021619
+    'last_updated': '2019-10-16T06:47:29.631011Z',
+    'name': '1.0.0.2689',
+    'repository': 7863337,
+    'creator': 4824052,
+    'image_id': None,
+    'v2': True,
+    'last_updater_username': 'containersci',
+    'last_updater': 4824052,
+    'images': [{
+        'features': '',
+        'os_features': '',
+        'variant': None,
+        'os_version': None,
+        'architecture': 'amd64',
+        'os': 'linux',
+        'digest': 'DIGEST',
+        'size': 77021619
     }],
-    u'full_size': 77021619,
-    u'id': 72714981
+    'full_size': 77021619,
+    'id': 72714981
 }]
 
 FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))

@@ -1,22 +1,21 @@
 import os
 import shutil
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
-from mock import patch
 
-from demisto_sdk.commands.common.constants import (
-    AGENT_CONFIG_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, CONTENT_ENTITIES_DIRS,
-    DASHBOARDS_DIR, DELETED_JSON_FIELDS_BY_DEMISTO,
-    DELETED_YML_FIELDS_BY_DEMISTO, GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR,
-    GENERIC_MODULES_DIR, GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR,
-    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
-    INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, MODELING_RULES_DIR,
-    PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, REPORTS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, WIDGETS_DIR, WIZARDS_DIR)
+from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONNECTIONS_DIR, CONTENT_ENTITIES_DIRS,
+                                                   DASHBOARDS_DIR, DELETED_JSON_FIELDS_BY_DEMISTO,
+                                                   DELETED_YML_FIELDS_BY_DEMISTO, GENERIC_DEFINITIONS_DIR,
+                                                   GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR, GENERIC_TYPES_DIR,
+                                                   INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+                                                   INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR,
+                                                   LISTS_DIR, MODELING_RULES_DIR, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
+                                                   REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR,
+                                                   WIZARDS_DIR, XDRC_TEMPLATE_DIR)
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import (get_child_files, get_json,
-                                               get_yaml)
+from demisto_sdk.commands.common.tools import get_child_files, get_json, get_yaml
 from demisto_sdk.commands.download.downloader import Downloader
 
 yaml = YAML_Handler()
@@ -154,14 +153,14 @@ class Environment:
             TEST_PLAYBOOKS_DIR: [], REPORTS_DIR: [], DASHBOARDS_DIR: [], WIDGETS_DIR: [], INCIDENT_FIELDS_DIR: [],
             INDICATOR_FIELDS_DIR: [], INCIDENT_TYPES_DIR: [], CLASSIFIERS_DIR: [], CONNECTIONS_DIR: [],
             INDICATOR_TYPES_DIR: [], GENERIC_TYPES_DIR: [], GENERIC_FIELDS_DIR: [], GENERIC_MODULES_DIR: [],
-            GENERIC_DEFINITIONS_DIR: [], MODELING_RULES_DIR: [], AGENT_CONFIG_DIR: []
+            GENERIC_DEFINITIONS_DIR: [], MODELING_RULES_DIR: [], XDRC_TEMPLATE_DIR: []
         }
 
         self.INTEGRATION_CUSTOM_CONTENT_OBJECT = {'id': 'Test Integration', 'name': 'Test Integration',
                                                   'path': self.CUSTOM_CONTENT_INTEGRATION_PATH,
                                                   'entity': 'Integrations', 'type': 'integration', 'file_ending': 'yml',
                                                   'code_lang': 'python'}
-        self.SCRIPT_CUSTOM_CONTENT_OBJECT = {'id': 'TestScript', 'name': 'TestScript',
+        self.SCRIPT_CUSTOM_CONTENT_OBJECT = {'id': 'f1e4c6e5-0d44-48a0-8020-a9711243e918', 'name': 'TestScript',
                                              'path': self.CUSTOM_CONTENT_SCRIPT_PATH, 'entity': 'Scripts',
                                              'type': 'script', 'file_ending': 'yml', 'code_lang': 'python'}
         self.PLAYBOOK_CUSTOM_CONTENT_OBJECT = {'id': 'DummyPlaybook',
@@ -442,6 +441,7 @@ class TestMergeExistingFile:
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
             downloader.log_verbose = False
+            downloader.no_code_formatting = False
             downloader.merge_and_extract_existing_file(env.INTEGRATION_CUSTOM_CONTENT_OBJECT)
             stdout, _ = capsys.readouterr()
             assert 'Merged' in stdout
@@ -475,6 +475,7 @@ class TestMergeExistingFile:
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
             downloader.log_verbose = False
+            downloader.no_code_formatting = False
             downloader.merge_and_extract_existing_file(env.INTEGRATION_CUSTOM_CONTENT_OBJECT)
             paths = [file['path'] for file in env.INTEGRATION_PACK_OBJECT['Test Integration']]
             for path in paths:
@@ -491,10 +492,10 @@ class TestMergeExistingFile:
                             assert True
                         else:
                             assert False
-            with open(env.INTEGRATION_PACK_OBJECT['Test Integration'][5]['path'], 'r') as description_file:
+            with open(env.INTEGRATION_PACK_OBJECT['Test Integration'][5]['path']) as description_file:
                 description_data = description_file.read()
             assert 'Test Integration Long Description TEST' in description_data
-            with open(env.INTEGRATION_PACK_OBJECT['Test Integration'][0]['path'], 'r') as code_file:
+            with open(env.INTEGRATION_PACK_OBJECT['Test Integration'][0]['path']) as code_file:
                 code_data = code_file.read()
             assert 'TEST' in code_data
 
@@ -626,8 +627,7 @@ class TestMergeExistingFile:
         downloader.update_data(env.CUSTOM_CONTENT_INTEGRATION_PATH,
                                f'{env.INTEGRATION_INSTANCE_PATH}/TestIntegration.yml', 'yml')
 
-        with open(env.CUSTOM_CONTENT_INTEGRATION_PATH, 'r') as yf:
-            file_yaml_object = yaml.load(yf)
+        file_yaml_object = get_yaml(env.CUSTOM_CONTENT_INTEGRATION_PATH)
         for field in DELETED_YML_FIELDS_BY_DEMISTO:
             obj = file_yaml_object
             dotted_path_list = field.split('.')
@@ -772,3 +772,27 @@ def test_build_file_name():
         downloader.system_item_type = 'Field'
         file_name = downloader.build_file_name({'id': 'id 1'})
         assert file_name == 'id_1.json'
+
+
+@pytest.mark.parametrize('original_string, object_name, scripts_mapper, expected_string, expected_mapper', [
+    ('name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918', 'automation-Testing.yml', {},
+     'name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918',
+     {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"}),
+    ('{\n\t"name":"TestingField",\n\t"script":"f1e4c6e5-0d44-48a0-8020-a9711243e918"\n}',
+     'incidentfield-TestingField.json', {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
+     '{\n\t"name":"TestingField",\n\t"script":"TestingScript"\n}',
+     {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"}),
+    ('{\n\t"name":"TestingLayout",\n\t"detailsV2":{\n\t\t"tabs":[\n\t\t\t{\n\t\t\t\t"sections":[\n\t\t\t\t\t{\n\t\t\t\t'
+     '\t\t"items":[\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t"scriptId":"f1e4c6e5-0d44-48a0-8020-a9711243e918"\n\t\t\t\t\t\t'
+     '\t}\n\t\t\t\t\t\t]\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t]\n\t}\n}',
+     'layoutcontainer-TestingLayout.json', {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
+     '{\n\t"name":"TestingLayout",\n\t"detailsV2":{\n\t\t"tabs":[\n\t\t\t{\n\t\t\t\t"sections":[\n\t\t\t\t\t{\n\t\t\t\t'
+     '\t\t"items":[\n\t\t\t\t\t\t\t{\n\t\t\t\t\t\t\t\t"scriptId":"TestingScript"\n\t\t\t\t\t\t'
+     '\t}\n\t\t\t\t\t\t]\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t]\n\t}\n}',
+     {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"})
+])
+def test_handle_file(original_string, object_name, scripts_mapper, expected_string, expected_mapper):
+    downloader = Downloader(output='', input='', regex='', all_custom_content=True)
+    final_string, final_mapper = downloader.handle_file(original_string, object_name, scripts_mapper)
+    assert final_string == expected_string
+    assert final_mapper == expected_mapper

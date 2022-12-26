@@ -1,4 +1,5 @@
 import os
+from contextlib import nullcontext as does_not_raise
 
 import click
 import pytest
@@ -8,19 +9,13 @@ from git import GitCommandError
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (PACK_METADATA_DESC,
-                                                   PACK_METADATA_SUPPORT,
-                                                   PACK_METADATA_TAGS,
-                                                   PACK_METADATA_USE_CASES,
-                                                   PACKS_PACK_META_FILE_NAME,
-                                                   PACKS_README_FILE_NAME,
-                                                   XSOAR_SUPPORT)
+from demisto_sdk.commands.common.constants import (PACK_METADATA_DESC, PACK_METADATA_SUPPORT, PACK_METADATA_TAGS,
+                                                   PACK_METADATA_USE_CASES, PACKS_PACK_META_FILE_NAME,
+                                                   PACKS_README_FILE_NAME, XSOAR_SUPPORT)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
-    PackUniqueFilesValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.test_tools import ChangeCWD
 
@@ -94,7 +89,8 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_and_pack_description', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_images', return_value=True)
-        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': {}}, 'json'))
+        mocker.patch.object(PackUniqueFilesValidator, 'is_categories_field_match_standard', return_value=True)
         assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator('fake')
         mocker.patch.object(fake_validator, '_read_metadata_content', return_value=dict())
@@ -104,7 +100,8 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_and_pack_description', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_images', return_value=True)
-        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': {}}, 'json'))
+        mocker.patch.object(PackUniqueFilesValidator, 'is_categories_field_match_standard', return_value=True)
         assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator('fake')
         mocker.patch.object(fake_validator, '_read_metadata_content', return_value=dict())
@@ -131,7 +128,7 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=json.dumps(pack_metadata_no_email_and_url))
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value=None)
-        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': {}}, 'json'))
         pack = repo.create_pack('PackName')
         pack.pack_metadata.write_json(pack_metadata_no_email_and_url)
         with ChangeCWD(repo.path):
@@ -165,7 +162,7 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=json.dumps(pack_metadata_changed_url))
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value=None)
-        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': {}}, 'json'))
         pack = repo.create_pack('PackName')
         pack.pack_metadata.write_json(pack_metadata_changed_url)
         with ChangeCWD(repo.path):
@@ -199,7 +196,7 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=json.dumps(pack_metadata_price_changed))
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value=None)
-        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': {}}, 'json'))
         pack = repo.create_pack('PackName')
         pack.pack_metadata.write_json(pack_metadata_price_changed)
         with ChangeCWD(repo.path):
@@ -331,9 +328,11 @@ class TestPackUniqueFilesValidator:
                 assert 'The pack metadata contains non approved usecases:' in self.validator.get_errors()
 
     @pytest.mark.parametrize('tags, is_valid, branch_tags', [
-        ([], True, []),
-        (['Machine Learning', 'Spam'], True, ['Machine Learning', 'Spam']),
-        (['NonApprovedTag', 'GDPR'], False, ['GDPR']),
+        ([], True, {'common': [], "xsoar": [], "marketplacev2": [], "xpanse": []}),
+        (['Machine Learning', 'Spam'], True, {'common': ['Machine Learning', 'Spam'], "xsoar": [], "marketplacev2": [], "xpanse": []}),
+        (['NonApprovedTag', 'GDPR'], False, {'common': ['GDPR'], "xsoar": [], "marketplacev2": [], "xpanse": []}),
+        (['marketplacev2:Data Source'], True, {'common': [], "xsoar": [], "marketplacev2": ['Data Source'], "xpanse": []}),
+        (['marketplacev2:NonApprovedTag', 'Spam'], False, {'common': ['Spam'], "xsoar": [], "marketplacev2": ['Data Source'], "xpanse": []})
     ])
     def test_is_approved_tags(self, repo, tags, is_valid, branch_tags, mocker):
         """
@@ -341,6 +340,8 @@ class TestPackUniqueFilesValidator:
             - Case A: Pack without tags
             - Case B: Pack with approved tags (Machine Learning and Spam)
             - Case C: Pack with non-approved tags (NonApprovedTag) and approved tags (GDPR)
+            - Case D: Pack with approved xsiam tags (Data Source)
+            - Case E: Pack with non-approved xsiam tags (NonApprovedTag) and approved common tag (spam)
         When:
             - Validating approved tags
 
@@ -348,6 +349,9 @@ class TestPackUniqueFilesValidator:
             - Case A: Ensure validation passes as there are no tags to verify
             - Case B: Ensure validation passes as both tags are approved
             - Case C: Ensure validation fails as it contains a non-approved tags (NonApprovedTag)
+                      Verify expected error is printed
+            - Case D: Ensure validation passes as tag is approved
+            - Case E: Ensure validation fails as it contains a non-approved xsiam tags (NonApprovedTag)
                       Verify expected error is printed
         """
         self.restart_validator()
@@ -366,6 +370,62 @@ class TestPackUniqueFilesValidator:
             assert self.validator._is_approved_tags() == is_valid
             if not is_valid:
                 assert 'The pack metadata contains non approved tags:' in self.validator.get_errors()
+
+    @pytest.mark.parametrize('tags, is_valid, branch_tags', [
+        (['NonApprovedPref:Spam', 'Spam'], False, {'common': ['Spam'], "xsoar": [], "marketplacev2": [], "xpanse": []})
+    ])
+    def test_is_approved_tags_with_non_approved_prefix(self, repo, tags, is_valid, branch_tags, mocker):
+        """
+        Given:
+            - Pack metadata with non approved tag prefix, with approved tag
+        When:
+            - Validating approved tags
+        Then:
+            - Ensure validation failes as there is non approved tag prefix
+        """
+        self.restart_validator()
+        pack_name = 'PackName'
+        pack = repo.create_pack(pack_name)
+        pack.pack_metadata.write_json({
+            PACK_METADATA_USE_CASES: [],
+            PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
+            PACK_METADATA_TAGS: tags,
+        })
+
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': branch_tags}, 'json'))
+        self.validator.pack_path = pack.path
+
+        with ChangeCWD(repo.path):
+            assert self.validator._is_approved_tags() == is_valid
+
+    @pytest.mark.parametrize('tags, is_valid', [
+        (['marketplacev2,xpanse:Data Source'], True),
+        (['xsoar,NonApprovedTagPrefix:tag'], False)])
+    def test_is_approved_tag_prefix(self, repo, tags, is_valid, mocker):
+        """
+        Given:
+            - Pack metadata with tags
+        When:
+            - Runing the _is_approved_tag_prefixes validation
+        Then:
+            - Validating the expected result
+        """
+        self.restart_validator()
+        pack_name = 'PackName'
+        pack = repo.create_pack(pack_name)
+        pack.pack_metadata.write_json({
+            PACK_METADATA_USE_CASES: [],
+            PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
+            PACK_METADATA_TAGS: tags,
+        })
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
+        self.validator.pack_path = pack.path
+
+        with ChangeCWD(repo.path):
+            assert self.validator._is_approved_tag_prefixes() == is_valid
+            if not is_valid:
+                assert 'The pack metadata contains a tag with an invalid prefix:' in self.validator.get_errors()
 
     @pytest.mark.parametrize('pack_content, tags, is_valid', [
         ("none", [], True),
@@ -476,16 +536,24 @@ class TestPackUniqueFilesValidator:
         class MyRepo:
             active_branch = 'not-master'
 
+            def remote(self):
+                return 'remote_path'
+
             class gitClass:
                 def show(self, var):
                     raise GitCommandError("A", "B")
 
+                def rev_parse(self, var):
+                    return repo.path
+
             git = gitClass()
 
-        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo', return_value=MyRepo)
-        res = self.validator.get_master_private_repo_meta_file(str(pack.pack_metadata.path))
-        assert not res
-        assert "Got an error while trying to connect to git" in capsys.readouterr().out
+        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo', return_value=MyRepo())
+        mocker.patch('demisto_sdk.commands.common.tools.git.Repo', return_value=MyRepo())
+        with ChangeCWD(repo.path):
+            res = self.validator.get_master_private_repo_meta_file(str(pack.pack_metadata.path))
+            assert not res
+            assert "Got an error while trying to connect to git" in capsys.readouterr().out
 
     def test_get_master_private_repo_meta_file_file_not_found(self, mocker, repo, capsys):
         """
@@ -507,17 +575,75 @@ class TestPackUniqueFilesValidator:
         class MyRepo:
             active_branch = 'not-master'
 
+            def remote(self):
+                return 'remote_path'
+
             class gitClass:
                 def show(self, var):
                     return None
 
+                def rev_parse(self, var):
+                    return repo.path
+
             git = gitClass()
 
-        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo', return_value=MyRepo)
+        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo', return_value=MyRepo())
+        mocker.patch('demisto_sdk.commands.common.tools.git.Repo', return_value=MyRepo())
         res = self.validator.get_master_private_repo_meta_file(str(pack.pack_metadata.path))
-        assert not res
-        assert "Unable to find previous pack_metadata.json file - skipping price change validation" in \
-               capsys.readouterr().out
+        with ChangeCWD(repo.path):
+            assert not res
+            assert "Unable to find previous pack_metadata.json file - skipping price change validation" in \
+                capsys.readouterr().out
+
+    def test_get_master_private_repo_meta_file_relative_path(self, mocker, repo):
+        """
+        Given:
+            - A repo which runs on non-master branch.
+            - A remote repo.
+
+        When:
+            - Running get_master_private_repo_meta_file.
+
+        Then:
+            - Ensure the remote metadata path is constructed correctly.
+        """
+        self.restart_validator()
+        pack_name = 'PackName'
+        pack = repo.create_pack(pack_name)
+        pack.pack_metadata.write_json(PACK_METADATA_PARTNER)
+        self.validator.prev_ver = 'prev_ver'
+
+        class MyRepo:
+            active_branch = 'not-master'
+
+            def remote(self):
+                return 'remote_path'
+
+            class gitClass:
+                remote_file_path = 'remote_path/prev_ver:Packs/PackName/pack_metadata.json'
+
+                def show(self, var):
+                    if var == self.remote_file_path:
+                        return json.dumps(PACK_METADATA_PARTNER)
+                    else:
+                        raise Exception(f'file path {var} does not match expected path {self.remote_file_path}')
+
+                def rev_parse(self, var):
+                    return repo.path
+
+                def remote(self):
+                    return 'remote_path'
+
+            git = gitClass()
+
+        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.Repo', return_value=MyRepo())
+        mocker.patch('demisto_sdk.commands.common.tools.git.Repo', return_value=MyRepo())
+        mocker.patch('demisto_sdk.commands.common.git_util.Repo', return_value=MyRepo())
+
+        with ChangeCWD(repo.path):
+            with does_not_raise():
+                res = self.validator.get_master_private_repo_meta_file(str(pack.pack_metadata.path))
+                assert res == PACK_METADATA_PARTNER
 
     @pytest.mark.parametrize('text, result', README_INPUT_RESULTS_LIST)
     def test_validate_pack_readme_file_is_not_empty_partner(self, mocker, text, result):
@@ -585,8 +711,7 @@ class TestPackUniqueFilesValidator:
                     - Validation succeed
                     - Valid absolute image paths were not caught
         """
-        from demisto_sdk.commands.common.hook_validations.readme import \
-            ReadMeValidator
+        from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 
         self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack2'))
         mocker.patch.object(ReadMeValidator, 'check_readme_relative_image_paths',

@@ -10,31 +10,18 @@ from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version
 from tabulate import tabulate
 
-from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
-                                                   CONTENT_ENTITIES_DIRS,
-                                                   DASHBOARDS_DIR,
-                                                   INCIDENT_FIELDS_DIR,
-                                                   INCIDENT_TYPES_DIR,
-                                                   INDICATOR_FIELDS_DIR,
-                                                   INDICATOR_TYPES_DIR,
-                                                   INTEGRATIONS_DIR, JOBS_DIR,
-                                                   LAYOUTS_DIR, LISTS_DIR,
-                                                   PLAYBOOKS_DIR, REPORTS_DIR,
-                                                   SCRIPTS_DIR,
-                                                   TEST_PLAYBOOKS_DIR,
-                                                   WIDGETS_DIR, FileType)
+from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, CONTENT_ENTITIES_DIRS, DASHBOARDS_DIR,
+                                                   INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+                                                   INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR,
+                                                   LISTS_DIR, PLAYBOOKS_DIR, REPORTS_DIR, SCRIPTS_DIR,
+                                                   TEST_PLAYBOOKS_DIR, WIDGETS_DIR, FileType)
 from demisto_sdk.commands.common.content.errors import ContentFactoryError
-from demisto_sdk.commands.common.content.objects.abstract_objects import (
-    JSONObject, YAMLObject)
+from demisto_sdk.commands.common.content.objects.abstract_objects import JSONObject, YAMLObject
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.content.objects_factory import \
-    path_to_pack_object
+from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (find_type,
-                                               get_child_directories,
-                                               get_demisto_version, get_file,
-                                               get_parent_directory_name,
-                                               print_v)
+from demisto_sdk.commands.common.tools import (find_type, get_child_directories, get_demisto_version, get_file,
+                                               get_parent_directory_name, print_v)
 
 json = JSON_Handler()
 
@@ -101,7 +88,7 @@ class Uploader:
         """
 
     def __init__(self, input: str, insecure: bool = False, verbose: bool = False, pack_names: list = None,
-                 skip_validation: bool = False, detached_files: bool = False, reattach: bool = False):
+                 skip_validation: bool = False, detached_files: bool = False, reattach: bool = False, override_existing: bool = False):
         self.path = input
         self.log_verbose = verbose
         verify = (not insecure) if insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
@@ -114,6 +101,7 @@ class Uploader:
         self.skip_upload_packs_validation = skip_validation
         self.is_files_to_detached = detached_files
         self.reattach_files = reattach
+        self.override_existing = override_existing
 
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance.
@@ -225,7 +213,7 @@ class Uploader:
                     click.secho(f"Input path {path} is not uploading due to version mismatch.\n"
                                 f"XSOAR version is: {self.demisto_version} while the file's version is "
                                 f"{upload_object.from_version} - {upload_object.to_version}", fg='bright_red')
-                self.unuploaded_due_to_version.append((file_name, entity_type.value, self.demisto_version,
+                self.unuploaded_due_to_version.append((file_name, entity_type.value, self.demisto_version,  # type: ignore
                                                        upload_object.from_version, upload_object.to_version))
                 return ERROR_RETURN_CODE
         else:
@@ -324,7 +312,7 @@ class Uploader:
             return ERROR_RETURN_CODE
 
     def notify_user_should_override_packs(self):
-        """Notify the user about possible overridden packs"""
+        """Notify the user about possible overridden packs."""
 
         response = self.client.generic_request('/contentpacks/metadata/installed', "GET")
         installed_packs = eval(response[0])
@@ -334,10 +322,11 @@ class Uploader:
             if common_packs:
                 pack_names = '\n'.join(common_packs)
                 click.secho(f'This command will overwrite the following packs:\n{pack_names}.\n'
-                            'Any changes made on XSOAR will be lost.\n'
-                            'Are you sure you want to continue? Y/[N]', fg='bright_red')
-                answer = str(input())
-                return answer in ['y', 'Y', 'yes']
+                            'Any changes made on XSOAR will be lost.', fg='bright_red')
+                if not self.override_existing:
+                    click.secho('Are you sure you want to continue? Y/[N]', fg='bright_red')
+                    answer = str(input())
+                    return answer in ['y', 'Y', 'yes']
 
         return True
 

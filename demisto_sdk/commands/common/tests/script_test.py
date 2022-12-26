@@ -1,11 +1,10 @@
 import os
+from unittest.mock import patch
 
 import pytest
-from mock import patch
 
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from TestSuite.test_tools import ChangeCWD
 
 

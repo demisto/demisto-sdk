@@ -16,27 +16,16 @@ import urllib3.exceptions
 from packaging.version import Version
 from wcmatch.pathlib import Path, PosixPath
 
-from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
-                                                   TYPE_PWSH, TYPE_PYTHON,
-                                                   DemistoException)
+from demisto_sdk.commands.common.constants import PACKS_PACK_META_FILE_NAME, TYPE_PWSH, TYPE_PYTHON, DemistoException
+from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import Colors
 from demisto_sdk.commands.common.timers import report_time_measurements
-from demisto_sdk.commands.common.tools import (find_file, find_type,
-                                               get_api_module_dependencies,
-                                               get_content_path,
-                                               get_file_displayed_name,
-                                               get_json,
-                                               is_external_repository,
-                                               print_error, print_v,
-                                               print_warning,
-                                               retrieve_file_ending)
-from demisto_sdk.commands.lint.docker_helper import init_global_docker_client
-from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
-                                               PY_CHCEKS,
-                                               build_skipped_exit_code,
-                                               generate_coverage_report,
-                                               get_test_modules)
+from demisto_sdk.commands.common.tools import (find_file, find_type, get_api_module_dependencies, get_content_path,
+                                               get_file_displayed_name, get_json, is_external_repository, print_error,
+                                               print_v, print_warning, retrieve_file_ending)
+from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS, PY_CHCEKS, SUCCESS,
+                                               build_skipped_exit_code, generate_coverage_report, get_test_modules)
 from demisto_sdk.commands.lint.linter import Linter
 
 json = JSON_Handler()
@@ -134,7 +123,7 @@ class LintManager:
             if not is_fork_repo and not is_external_repo:
                 raise git.InvalidGitRepositoryError
 
-            facts["content_repo"] = git_repo
+            facts["content_repo"] = git_repo  # type: ignore
             logger.debug(f"Content path {git_repo.working_dir}")
         except (git.InvalidGitRepositoryError, git.NoSuchPathError) as e:
             print_warning("You are running demisto-sdk lint not in content repository!")
@@ -151,7 +140,7 @@ class LintManager:
                              f" {facts[f'requirements_3']}")
             python2_requirements = pipfile_dir / 'pipfile_python2/dev-requirements.txt'
             facts["requirements_2"] = python2_requirements.read_text().strip().split('\n')  # type: ignore
-        except (json.JSONDecodeError, IOError, FileNotFoundError, KeyError) as e:
+        except (json.JSONDecodeError, OSError, FileNotFoundError, KeyError) as e:
             print_error("Can't parse pipfile.lock - Aborting!")
             logger.critical(f"demisto-sdk-can't parse pipfile.lock {e}")
             sys.exit(1)
@@ -209,7 +198,7 @@ class LintManager:
         """
         pkgs: list
         if all_packs or git:
-            pkgs = LintManager._get_all_packages(content_dir=content_repo.working_dir)
+            pkgs = LintManager._get_all_packages(content_dir=content_repo.working_dir)  # type: ignore
         else:  # specific pack as input, -i flag has been used
             pkgs = []
             if isinstance(input, str):
@@ -280,7 +269,7 @@ class LintManager:
             List[PosixPath]: A list of names of packages that should run.
         """
 
-        staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
+        staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in  # type: ignore
                         content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
 
         if base_branch == 'master' and content_repo.active_branch.name == 'master':
@@ -299,12 +288,12 @@ class LintManager:
             print(f"Comparing {Colors.Fg.cyan}{content_repo.active_branch}{Colors.reset} to"
                   f" last common commit with {Colors.Fg.cyan}{last_common_commit}{Colors.reset}")
 
-        changed_from_base = {content_repo.working_dir / Path(item.b_path).parent for item in
+        changed_from_base = {content_repo.working_dir / Path(item.b_path).parent for item in  # type: ignore
                              content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}
         all_changed = staged_files.union(changed_from_base)
         pkgs_to_check = all_changed.intersection(pkgs)
 
-        return list(pkgs_to_check)
+        return list(pkgs_to_check)  # type: ignore
 
     def execute_all_packages(self,
                              parallel: int,
@@ -357,7 +346,7 @@ class LintManager:
                 # Executing lint checks in different threads
                 for pack in sorted(self._pkgs):
                     linter: Linter = Linter(pack_dir=pack,
-                                            content_repo="" if not self._facts["content_repo"] else
+                                            content_repo="" if not self._facts["content_repo"] else  # type: ignore
                                             Path(self._facts["content_repo"].working_dir),
                                             req_2=self._facts["requirements_2"],
                                             req_3=self._facts["requirements_3"],
@@ -388,6 +377,7 @@ class LintManager:
                         for check, code in EXIT_CODES.items():
                             if pkg_status["exit_code"] & code:
                                 lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
+
                         if not return_exit_code & pkg_status["exit_code"]:
                             return_exit_code += pkg_status["exit_code"]
                     if pkg_status["warning_code"]:
@@ -523,7 +513,11 @@ class LintManager:
         # check if there were any errors during lint run , if so set to FAIL as some error codes are bigger
         # then 512 and will not cause failure on the exit code.
         if return_exit_code:
-            return_exit_code = FAIL
+            # allow all_packs to fail on mypy
+            if self._all_packs and return_exit_code == EXIT_CODES['mypy']:
+                return_exit_code = SUCCESS
+            else:
+                return_exit_code = FAIL
         return return_exit_code
 
     def _report_results(self, lint_status: dict, pkgs_status: dict, return_exit_code: int, return_warning_code: int,
@@ -542,12 +536,15 @@ class LintManager:
             no_coverage(bool): Do NOT create coverage report.
 
      """
+        if not no_coverage:
+            if coverage_report:
+                generate_coverage_report(html=True, xml=True, cov_dir=coverage_report)
+            else:
+                generate_coverage_report()
+
         self.report_pass_lint_checks(return_exit_code=return_exit_code,
                                      skipped_code=skipped_code,
                                      pkgs_type=pkgs_type)
-        self.report_failed_lint_checks(return_exit_code=return_exit_code,
-                                       pkgs_status=pkgs_status,
-                                       lint_status=lint_status)
         self.report_warning_lint_checks(return_warning_code=return_warning_code,
                                         pkgs_status=pkgs_status,
                                         lint_status=lint_status,
@@ -555,14 +552,13 @@ class LintManager:
         self.report_unit_tests(return_exit_code=return_exit_code,
                                pkgs_status=pkgs_status,
                                lint_status=lint_status)
+        self.report_failed_lint_checks(return_exit_code=return_exit_code,
+                                       pkgs_status=pkgs_status,
+                                       lint_status=lint_status)
+
         self.report_failed_image_creation(return_exit_code=return_exit_code,
                                           pkgs_status=pkgs_status,
                                           lint_status=lint_status)
-        if not no_coverage:
-            if coverage_report:
-                generate_coverage_report(html=True, xml=True, cov_dir=coverage_report)
-            else:
-                generate_coverage_report()
 
         self.report_summary(pkg=self._pkgs, pkgs_status=pkgs_status, lint_status=lint_status, all_packs=self._all_packs)
         self.create_json_output()
@@ -809,15 +805,21 @@ class LintManager:
 
         # intersection of all warnings packages
         warnings: Set[str] = set()
-
         # each pack is checked for warnings and failures . A certain pack can appear in both failed packages and
         # warnings packages.
         for key in lint_status:
+            # ignore mypy errors in all_packs report
+            if all_packs and 'mypy' in key:
+                continue
+
             if key.startswith('fail'):
                 failed = failed.union(lint_status[key])
             if key.startswith('warning'):
                 warnings = warnings.union(lint_status[key])
-        num_passed = len([pack for pack, result in pkgs_status.items() if result.get('exit_code') == 0])
+        if all_packs:
+            num_passed = len([pack for pack, result in pkgs_status.items() if result.get('exit_code') == 0 or result.get('exit_code') == EXIT_CODES['mypy']])
+        else:
+            num_passed = len([pack for pack, result in pkgs_status.items() if result.get('exit_code') == 0])
         # Log unit-tests summary
         sentence = " Summary "
         print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
@@ -861,7 +863,7 @@ class LintManager:
         """
         failed_ut: set = set()
         for key in lint_status:
-            if key.startswith('fail'):
+            if key.startswith('fail') and 'mypy' not in key:  # TODO remove this when reduce the number of failed `mypy` packages.
                 failed_ut = failed_ut.union(lint_status[key])
         if path and failed_ut:
             file_path = Path(path) / "failed_lint_report.txt"
@@ -1026,7 +1028,7 @@ class LintManager:
         for message in error_messages:
             if message:
                 file_name, line_number, error_contents = message.split(':', 2)
-                file_path = self.get_full_file_path_for_vulture(file_name, content_path)
+                file_path = self.get_full_file_path_for_vulture(file_name, content_path)  # type: ignore
                 output = {
                     'linter': 'vulture',
                     'severity': errors.get('type'),

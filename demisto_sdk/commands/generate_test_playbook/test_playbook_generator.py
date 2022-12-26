@@ -5,6 +5,7 @@ import click
 
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.upload.uploader import Uploader
 
 json = JSON_Handler()
@@ -117,7 +118,7 @@ def create_end_task(id):
 
 
 def create_automation_task(_id, automation_name, item_type: str, args: Optional[Dict] = None, brand: str = ""):
-    script_args = {}  # type:Dict
+    script_args: Dict = {}
     if args and len(args) > 0:
         for arg, val in args.items():
             script_args[arg] = {
@@ -289,10 +290,10 @@ def get_command_examples(commands_file_path, entity_type) -> dict:
     Return:
         dict. Arguments separated by the commands.
     """
-    command_examples = []  # type: list
+    command_examples: list = []
 
     if entity_type == FileType.INTEGRATION.value:
-        with open(commands_file_path, 'r') as examples_file:
+        with open(commands_file_path) as examples_file:
             command_examples = examples_file.read().splitlines()
     else:
         command_examples = commands_file_path.split('\n')
@@ -377,21 +378,14 @@ class PlaybookTestsGenerator:
         local directory
 
         """
-        try:
-            with open(self.integration_yml_path, 'r') as yf:
-                yaml_obj = yaml.load(yf)
-
-                yaml_obj.get('name')
-        except FileNotFoundError as ex:
+        if not Path(self.integration_yml_path).exists():
+            click.secho(f"File {self.integration_yml_path} was not found when trying to generate a test playbook", fg='bright_red')
             if self.verbose:
-                raise
+                raise FileNotFoundError()
+            else:
+                return
 
-            click.secho(str(ex), fg='bright_red')
-            return
-        except AttributeError:
-            click.secho(f'Error - failed to parse: {self.integration_yml_path}.\nProbably invalid yml file',
-                        fg='bright_red')
-            return
+        yaml_obj = get_yaml(self.integration_yml_path)
 
         test_playbook = Playbook(
             name=self.name,

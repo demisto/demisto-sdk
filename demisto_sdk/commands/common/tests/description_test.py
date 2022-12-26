@@ -4,8 +4,7 @@ import os
 import pytest
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.hook_validations.description import \
-    DescriptionValidator
+from demisto_sdk.commands.common.hook_validations.description import DescriptionValidator
 from TestSuite.test_tools import ChangeCWD
 
 yaml = YAML_Handler()

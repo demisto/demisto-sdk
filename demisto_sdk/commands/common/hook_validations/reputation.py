@@ -1,13 +1,10 @@
 import re
 from distutils.version import LooseVersion
 
-from demisto_sdk.commands.common.constants import \
-    DEFAULT_CONTENT_ITEM_FROM_VERSION
+from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    error_codes
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
 
 # Valid indicator type can include letters, numbers whitespaces, ampersands and underscores.
 VALID_INDICATOR_TYPE = '^[A-Za-z0-9_& ]*$'
@@ -39,8 +36,7 @@ class ReputationValidator(ContentEntityValidator):
         return is_reputation_valid
 
     @error_codes('RP100')
-    def is_valid_version(self):
-        # type: () -> bool
+    def is_valid_version(self) -> bool:
         """Validate that the reputations file as version of -1."""
         is_valid = True
 
@@ -55,8 +51,7 @@ class ReputationValidator(ContentEntityValidator):
         return is_valid
 
     @error_codes('RP101')
-    def is_valid_expiration(self):
-        # type: () -> bool
+    def is_valid_expiration(self) -> bool:
         """Validate that the expiration field of a 5.5 reputation file is numeric."""
         from_version = self.current_file.get('fromVersion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
         if LooseVersion(from_version) >= LooseVersion('5.5.0'):
@@ -69,8 +64,7 @@ class ReputationValidator(ContentEntityValidator):
         return True
 
     @error_codes('RP104')
-    def is_required_fields_empty(self):
-        # type: () -> bool
+    def is_required_fields_empty(self) -> bool:
         """Validate that id and details fields are not empty.
         Returns:
             bool. True if id and details fields are not empty, False otherwise.
@@ -84,8 +78,7 @@ class ReputationValidator(ContentEntityValidator):
         return True
 
     @error_codes('RP102')
-    def is_id_equals_details(self):
-        # type: () -> bool
+    def is_id_equals_details(self) -> bool:
         """Validate that the id equal details."""
         id_ = self.current_file.get('id', None)
         details = self.current_file.get('details', None)
@@ -96,8 +89,7 @@ class ReputationValidator(ContentEntityValidator):
         return True
 
     @error_codes('RP103')
-    def is_valid_indicator_type_id(self):
-        # type: () -> bool
+    def is_valid_indicator_type_id(self) -> bool:
         """Validate that id field is valid.
         Returns:
             bool. True if id field is valid, False otherwise.

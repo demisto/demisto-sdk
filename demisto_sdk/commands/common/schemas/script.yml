@@ -73,6 +73,10 @@ mapping:
     type: seq
     sequence:
     - type: str
+  nativeImage:
+    type: seq
+    sequence:
+    - type: str
   runonce:
     type: bool
   tests:
@@ -102,7 +106,7 @@ mapping:
     type: seq
     sequence:
       - type: str
-        enum: ['xsoar', 'marketplacev2']
+        enum: ['xsoar', 'marketplacev2', 'xpanse']
 
 # script->args
 schema;argument_schema:
@@ -137,6 +141,8 @@ schema;argument_schema:
       type: bool
     type:
       type: str
+    hidden:
+      type: bool
 
 # script->outputs
 schema;output_schema:

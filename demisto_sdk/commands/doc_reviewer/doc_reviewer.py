@@ -5,25 +5,20 @@ import string
 import sys
 from configparser import ConfigParser
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import List, Optional, Tuple
 
 import click
 import nltk
 from nltk.corpus import brown, webtext
 from spellchecker import SpellChecker
 
-from demisto_sdk.commands.common.constants import (PACKS_PACK_IGNORE_FILE_NAME,
-                                                   FileType)
-from demisto_sdk.commands.common.content import (Content, Integration,
-                                                 Playbook, ReleaseNote, Script,
-                                                 path_to_pack_object)
-from demisto_sdk.commands.common.content.objects.abstract_objects import \
-    TextObject
+from demisto_sdk.commands.common.constants import PACKS_PACK_IGNORE_FILE_NAME, FileType
+from demisto_sdk.commands.common.content import Content, Integration, Playbook, ReleaseNote, Script, path_to_pack_object
+from demisto_sdk.commands.common.content.objects.abstract_objects import TextObject
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
     YAMLContentObject
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.tools import (add_default_pack_known_words,
-                                               find_type)
+from demisto_sdk.commands.common.tools import add_default_pack_known_words, find_type
 from demisto_sdk.commands.doc_reviewer.known_words import KNOWN_WORDS
 from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
 
@@ -71,14 +66,14 @@ class DocReviewer:
         self.current_pack = None
         self.files: list = []
         self.spellchecker = SpellChecker()
-        self.unknown_words = {}  # type:Dict
+        self.unknown_words: dict = {}
         self.no_camel_case = no_camel_case
         self.found_misspelled = False
         self.no_failure = no_failure
         self.expand_dictionary = expand_dictionary
-        self.files_with_misspells = set()  # type:Set
-        self.files_without_misspells = set()  # type:Set
-        self.malformed_rn_files = set()  # type:Set
+        self.files_with_misspells: set = set()
+        self.files_without_misspells: set = set()
+        self.malformed_rn_files: set = set()
 
     @staticmethod
     def find_known_words_from_pack(file_path: str) -> Tuple[str, list]:

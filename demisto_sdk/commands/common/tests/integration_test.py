@@ -1,19 +1,17 @@
+import io
 import os
+from contextlib import redirect_stdout
 from copy import deepcopy
 from typing import Any, Dict, List, Optional
+from unittest.mock import mock_open, patch
 
 import pytest
-from mock import mock_open, patch
 
-from demisto_sdk.commands.common.constants import (
-    ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS, FIRST_FETCH_PARAM,
-    INCIDENT_FETCH_REQUIRED_PARAMS, MAX_FETCH_PARAM, MarketplaceVersions)
-from demisto_sdk.commands.common.default_additional_info_loader import \
-    load_default_additional_info_dict
-from demisto_sdk.commands.common.hook_validations.integration import \
-    IntegrationValidator
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
+from demisto_sdk.commands.common.constants import (ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS, FIRST_FETCH_PARAM,
+                                                   INCIDENT_FETCH_REQUIRED_PARAMS, MAX_FETCH_PARAM, MarketplaceVersions)
+from demisto_sdk.commands.common.default_additional_info_loader import load_default_additional_info_dict
+from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.integration import Integration
 from TestSuite.test_tools import ChangeCWD
@@ -24,8 +22,8 @@ FEED_REQUIRED_PARAMS_STRUCTURE = [dict(required_param.get('must_equal'), **requi
                                        name=required_param.get('name')) for required_param in FEED_REQUIRED_PARAMS]
 
 
-def mock_structure(file_path=None, current_file=None, old_file=None, quiet_bc=False):
-    # type: (Optional[str], Optional[dict], Optional[dict], Optional[bool]) -> StructureValidator
+def mock_structure(file_path: Optional[str] = None, current_file: Optional[dict] = None,
+                   old_file: Optional[dict] = None, quiet_bc: Optional[bool] = False) -> StructureValidator:
     with patch.object(StructureValidator, '__init__', lambda a, b: None):
         structure = StructureValidator(file_path)
         structure.is_valid = True
@@ -44,7 +42,7 @@ class TestIntegrationValidator:
     SCRIPT_WITH_DOCKER_IMAGE_1 = {"script": {"dockerimage": "test"}}
     SCRIPT_WITH_DOCKER_IMAGE_2 = {"script": {"dockerimage": "test1"}}
     SCRIPT_WITH_NO_DOCKER_IMAGE = {"script": {"no": "dockerimage"}}
-    EMPTY_CASE = {}  # type: dict[any, any]
+    EMPTY_CASE: Dict[Any, Any] = {}
     IS_DOCKER_IMAGE_CHANGED = [
         (SCRIPT_WITH_DOCKER_IMAGE_1, SCRIPT_WITH_NO_DOCKER_IMAGE, True),
         (SCRIPT_WITH_DOCKER_IMAGE_1, SCRIPT_WITH_DOCKER_IMAGE_2, True),
@@ -142,24 +140,50 @@ class TestIntegrationValidator:
     IS_CONTEXT_CHANGED_ADDED_COMMAND = [{"name": "test", "outputs": [{"contextPath": "test"}]},
                                         {"name": "test2", "outputs": [{"contextPath": "new command"}]}]
     IS_CONTEXT_CHANGED_NO_OUTPUTS = [{"name": "test"}]
+    MULTIPLE_CHANGES_OLD = [{"name": "command1", "outputs": [{"contextPath": "old_command1_path"}]},
+                            {"name": "command2", "outputs": [{"contextPath": "old_command2_path"}]}]
+    MULTIPLE_CHANGES_NEW = [{"name": "command1", "outputs": [{"contextPath": "new_command1_path"}]},
+                            {"name": "command2", "outputs": [{"contextPath": "new_command2_path"}]}]
+    MULTIPLE_COMMANDS_NO_OUTPUTS_ONE = [{"name": "command1", "outputs": [{"contextPath": "old_command1_path"}]},
+                                        {"name": "command2"}]
+    MULTIPLE_COMMANDS_NO_OUTPUTS_ALL = [{"name": "command1"}, {"name": "command2"}]
     IS_CHANGED_CONTEXT_INPUTS = [
-        (IS_CONTEXT_CHANGED_OLD, IS_CONTEXT_CHANGED_OLD, True),
-        (IS_CONTEXT_CHANGED_NEW, IS_CONTEXT_CHANGED_OLD, False),
-        (IS_CONTEXT_CHANGED_NEW, IS_CONTEXT_CHANGED_ADDED_PATH, False),
-        (IS_CONTEXT_CHANGED_ADDED_PATH, IS_CONTEXT_CHANGED_NEW, True),
-        (IS_CONTEXT_CHANGED_ADDED_COMMAND, IS_CONTEXT_CHANGED_OLD, True),
-        (IS_CONTEXT_CHANGED_ADDED_COMMAND, IS_CONTEXT_CHANGED_NEW, False),
-        (IS_CONTEXT_CHANGED_NO_OUTPUTS, IS_CONTEXT_CHANGED_NO_OUTPUTS, True),
-        (IS_CONTEXT_CHANGED_NO_OUTPUTS, IS_CONTEXT_CHANGED_OLD, False),
+        pytest.param(IS_CONTEXT_CHANGED_OLD, IS_CONTEXT_CHANGED_OLD, True, [],
+                     id="no change"),
+        pytest.param(IS_CONTEXT_CHANGED_NEW, IS_CONTEXT_CHANGED_OLD, False, ["test"],
+                     id="context path change"),
+        pytest.param(IS_CONTEXT_CHANGED_NEW, IS_CONTEXT_CHANGED_ADDED_PATH, False, ["test"],
+                     id="removed context path"),
+        pytest.param(IS_CONTEXT_CHANGED_ADDED_PATH, IS_CONTEXT_CHANGED_NEW, True, [],
+                     id="added context path"),
+        pytest.param(IS_CONTEXT_CHANGED_ADDED_COMMAND, IS_CONTEXT_CHANGED_OLD, True, [],
+                     id="added new command"),
+        pytest.param(IS_CONTEXT_CHANGED_ADDED_COMMAND, IS_CONTEXT_CHANGED_NEW, False, ["test"],
+                     id="added new command and changed context of old command"),
+        pytest.param(IS_CONTEXT_CHANGED_NO_OUTPUTS, IS_CONTEXT_CHANGED_NO_OUTPUTS, True, [],
+                     id="no change with no outputs"),
+        pytest.param(IS_CONTEXT_CHANGED_NO_OUTPUTS, IS_CONTEXT_CHANGED_OLD, False, ["test"],
+                     id="deleted command outputs"),
+        pytest.param(MULTIPLE_CHANGES_NEW, MULTIPLE_CHANGES_OLD, False, ["command1", "command2"],
+                     id="context changes in multiple commands"),
+        pytest.param(MULTIPLE_COMMANDS_NO_OUTPUTS_ONE, MULTIPLE_CHANGES_OLD, False, ["command2"],
+                     id="no changes in one command output and deleted outputs for other command"),
+        pytest.param(MULTIPLE_COMMANDS_NO_OUTPUTS_ALL, MULTIPLE_CHANGES_OLD, False, ["command1", "command2"],
+                     id="deleted outputs for two command")
     ]
 
-    @pytest.mark.parametrize("current, old, answer", IS_CHANGED_CONTEXT_INPUTS)
-    def test_no_change_to_context_path(self, current, old, answer):
+    @pytest.mark.parametrize("current, old, answer, changed_command_names", IS_CHANGED_CONTEXT_INPUTS)
+    def test_no_change_to_context_path(self, current, old, answer, changed_command_names):
         current = {'script': {'commands': current}}
         old = {'script': {'commands': old}}
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
-        assert validator.no_change_to_context_path() is answer
+        stdout_print = io.StringIO()
+        with redirect_stdout(stdout_print):
+            assert validator.no_change_to_context_path() is answer
+        printed_errors = stdout_print.getvalue()
+        for changed_command_name in changed_command_names:
+            assert changed_command_name in printed_errors
         structure.quiet_bc = True
         assert validator.no_change_to_context_path() is True  # if quiet_bc is true should always succeed
 
@@ -634,13 +658,15 @@ class TestIntegrationValidator:
     VALID_CATEGORY2 = {"category": "File Integrity Management"}
 
     IS_VALID_CATEGORY_INPUTS = [
-        (VALID_CATEGORY1, True),
-        (VALID_CATEGORY2, True),
-        (INVALID_CATEGORY, False)
+        (VALID_CATEGORY1, True, ['Endpoint']),
+        (VALID_CATEGORY2, True, ['File Integrity Management']),
+        (INVALID_CATEGORY, False, [])
     ]
 
-    @pytest.mark.parametrize("current, answer", IS_VALID_CATEGORY_INPUTS)
-    def test_is_valid_category(self, current, answer):
+    @pytest.mark.parametrize("current, answer, valid_list_mock", IS_VALID_CATEGORY_INPUTS)
+    def test_is_valid_category(self, mocker, current, answer, valid_list_mock):
+        mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
+                     return_value=valid_list_mock)
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current
@@ -1220,7 +1246,7 @@ class TestIntegrationValidator:
         (['true'], False),
         (['True'], False),
         (MarketplaceVersions.XSOAR, False),
-        ([MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2], False),
+        ([MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XPANSE], False),
         ('🥲', False),
         ('Trüe', False),
         ('TRUE', False),

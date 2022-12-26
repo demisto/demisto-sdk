@@ -1,13 +1,10 @@
 import pytest
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.constants import (
-    CONTRIBUTORS_README_TEMPLATE, PACKS_DIR, PLAYBOOKS_DIR)
+from demisto_sdk.commands.common.constants import CONTRIBUTORS_README_TEMPLATE, PACKS_DIR, PLAYBOOKS_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects import Readme
-from demisto_sdk.commands.common.content.objects.pack_objects.contributors.contributors import \
-    Contributors
-from demisto_sdk.commands.common.content.objects_factory import \
-    path_to_pack_object
+from demisto_sdk.commands.common.content.objects.pack_objects.contributors.contributors import Contributors
+from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.tools import src_root
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
@@ -47,6 +44,6 @@ def test_mention_contributors_in_readme(pack):
     expected_contribution_section = CONTRIBUTORS_README_TEMPLATE.format(
         contributors_names=' - Contributor1\n - Contributor2\n')
     expected_readme = initial_readme_text + expected_contribution_section
-    with open(readme.path, 'r') as readme_file:
+    with open(readme.path) as readme_file:
         readme_file_content = readme_file.read()
     assert readme_file_content == expected_readme

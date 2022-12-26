@@ -5,16 +5,11 @@ from typing import List, Optional
 
 from packaging.version import parse
 
-from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import \
-    base_msg
-from demisto_sdk.commands.lint.resources.pylint_plugins.certified_partner_level_checker import \
-    cert_partner_msg
-from demisto_sdk.commands.lint.resources.pylint_plugins.community_level_checker import \
-    community_msg
-from demisto_sdk.commands.lint.resources.pylint_plugins.partner_level_checker import \
-    partner_msg
-from demisto_sdk.commands.lint.resources.pylint_plugins.xsoar_level_checker import \
-    xsoar_msg
+from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import base_msg
+from demisto_sdk.commands.lint.resources.pylint_plugins.certified_partner_level_checker import cert_partner_msg
+from demisto_sdk.commands.lint.resources.pylint_plugins.community_level_checker import community_msg
+from demisto_sdk.commands.lint.resources.pylint_plugins.partner_level_checker import partner_msg
+from demisto_sdk.commands.lint.resources.pylint_plugins.xsoar_level_checker import xsoar_msg
 
 # Third party packages
 # Local imports
@@ -170,8 +165,10 @@ def build_mypy_command(files: List[Path], version: str, content_repo: Path = Non
     command += " --allow-redefinition"
     # Get the full path to the file.
     command += " --show-absolute-path"
-    # Ignore site packages because running on host
-    command += " --no-site-packages"
+
+    # If the command fails due to mypy bug, print the traceback
+    command += " --show-traceback"
+
     # Point cache to be .mypy_cache in the content repo
     command += f" --cache-dir={content_repo/'.mypy_cache' if content_repo else '/dev/null'}"
     # Generating path patterns - file1 file2 file3,..
@@ -226,8 +223,8 @@ def build_pylint_command(files: List[Path], docker_version: Optional[str] = None
 
     if docker_version:
         py_ver = parse(docker_version)
-        major = py_ver.major
-        minor = py_ver.minor
+        major = py_ver.major  # type: ignore
+        minor = py_ver.minor  # type: ignore
 
         if major == 3 and minor >= 9:
             disable.append('unsubscriptable-object')

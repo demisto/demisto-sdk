@@ -1,8 +1,6 @@
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    error_codes
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
 from demisto_sdk.commands.common.tools import is_string_uuid
 
 
@@ -37,7 +35,7 @@ class TestPlaybookValidator(ContentEntityValidator):
             self.are_fromversion_toversion_synchronized(),
         ])
 
-    def is_valid_version(self):  # type: () -> bool
+    def is_valid_version(self) -> bool:
         """Check whether the test playbook version is equal to DEFAULT_VERSION (see base_validator class)
 
         Return:

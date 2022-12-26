@@ -6,16 +6,13 @@ from typing import Any, Dict, Set, Union
 import click
 import dictdiffer
 
-from demisto_sdk.commands.common.constants import (GENERAL_DEFAULT_FROMVERSION,
-                                                   VERSION_5_5_0)
+from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION, VERSION_5_5_0
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
-                                               get_max_version,
-                                               get_remote_file,
-                                               is_file_from_content_repo)
-from demisto_sdk.commands.format.format_constants import (
-    DEFAULT_VERSION, ERROR_RETURN_CODE, JSON_FROM_SERVER_VERSION_KEY,
-    OLD_FILE_TYPES, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file, get_max_version, get_remote_file,
+                                               get_yaml, is_file_from_content_repo)
+from demisto_sdk.commands.format.format_constants import (DEFAULT_VERSION, ERROR_RETURN_CODE,
+                                                          JSON_FROM_SERVER_VERSION_KEY, OLD_FILE_TYPES,
+                                                          SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 yaml = YAML_Handler(allow_duplicate_keys=True)
@@ -113,9 +110,8 @@ class BaseUpdate:
 
     def remove_unnecessary_keys(self):
         """Removes keys that are in file but not in schema of file type"""
-        with open(self.schema_path, 'r') as file_obj:
-            schema = yaml.load(file_obj)
-            extended_schema = self.recursive_extend_schema(schema, schema)
+        schema = get_yaml(self.schema_path)
+        extended_schema = self.recursive_extend_schema(schema, schema)
         if self.verbose:
             print('Removing Unnecessary fields from file')
         if isinstance(extended_schema, dict):
@@ -289,9 +285,8 @@ class BaseUpdate:
         Returns:
             List of keys that should be deleted in file
         """
-        with open(self.schema_path, 'r') as file_obj:
-            a = yaml.load(file_obj)
-        schema_fields = a.get('mapping').keys()
+        yaml_content = get_yaml(self.schema_path)
+        schema_fields = yaml_content.get('mapping').keys()
         arguments_to_remove = set(self.data.keys()) - set(schema_fields)
         return arguments_to_remove
 

@@ -26,7 +26,7 @@ class TextObject(GeneralObject):
         Raises:
             ContentInitializeError: If path not valid.
         """
-        path = Path(path)
+        path = Path(path)  # type: ignore
         if not (path.exists() and path.is_file()):
             raise exc.ContentInitializeError(TextObject, path)
 
@@ -45,7 +45,7 @@ class TextObject(GeneralObject):
         if not self._text:
             try:
                 self._text = self.path.read_text()
-            except IOError as e:
+            except OSError as e:
                 raise exc.ContentSerializeError(self, self.path, str(e))
 
     def to_str(self):

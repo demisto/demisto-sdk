@@ -9,28 +9,28 @@ import pytest
 
 import demisto_sdk.commands.common.tools as tools
 import demisto_sdk.commands.common.update_id_set as uis
-from demisto_sdk.commands.common.constants import (
-    FILETYPE_TO_DEFAULT_FROMVERSION, JOBS_DIR, WIZARDS_DIR, FileType,
-    MarketplaceVersions)
+from demisto_sdk.commands.common.constants import (FILETYPE_TO_DEFAULT_FROMVERSION, JOBS_DIR, WIZARDS_DIR, FileType,
+                                                   MarketplaceVersions)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.update_id_set import (
-    add_item_to_exclusion_dict, does_dict_have_alternative_key,
-    find_duplicates, get_agent_config_data, get_classifier_data,
-    get_correlation_rule_data, get_dashboard_data,
-    get_fields_by_script_argument,
-    get_filters_and_transformers_from_complex_value,
-    get_filters_and_transformers_from_playbook, get_general_data,
-    get_generic_field_data, get_generic_module_data, get_generic_type_data,
-    get_incident_fields_by_playbook_input, get_incident_type_data,
-    get_indicator_type_data, get_layout_data, get_mapper_data,
-    get_modeling_rule_data, get_pack_metadata_data, get_parsing_rule_data,
-    get_playbook_data, get_report_data, get_script_data, get_trigger_data,
-    get_values_for_keys_recursively, get_widget_data, get_xsiam_dashboard_data,
-    get_xsiam_report_data, has_duplicate, merge_id_sets, process_general_items,
-    process_incident_fields, process_integration, process_jobs,
-    process_layoutscontainers, process_script, process_wizards,
-    re_create_id_set, should_skip_item_by_mp)
+from demisto_sdk.commands.common.update_id_set import (add_item_to_exclusion_dict, does_dict_have_alternative_key,
+                                                       find_duplicates, get_classifier_data, get_correlation_rule_data,
+                                                       get_dashboard_data, get_fields_by_script_argument,
+                                                       get_filters_and_transformers_from_complex_value,
+                                                       get_filters_and_transformers_from_playbook, get_general_data,
+                                                       get_generic_field_data, get_generic_module_data,
+                                                       get_generic_type_data, get_incident_fields_by_playbook_input,
+                                                       get_incident_type_data, get_indicator_type_data, get_layout_data,
+                                                       get_mapper_data, get_modeling_rule_data, get_pack_metadata_data,
+                                                       get_parsing_rule_data, get_playbook_data, get_report_data,
+                                                       get_script_data, get_trigger_data,
+                                                       get_values_for_keys_recursively, get_widget_data,
+                                                       get_xdrc_template_data, get_xsiam_dashboard_data,
+                                                       get_xsiam_report_data, has_duplicate, merge_id_sets,
+                                                       process_general_items, process_incident_fields,
+                                                       process_integration, process_jobs, process_layoutscontainers,
+                                                       process_script, process_wizards, re_create_id_set,
+                                                       should_skip_item_by_mp)
 from TestSuite.utils import IsEqualFunctions
 
 json = JSON_Handler()
@@ -3071,42 +3071,42 @@ class TestTriggers:
         assert f'adding {trigger._file_path} to id_set' in captured.out
 
 
-class TestAgentConfigs:
+class TestXDRCTemplates:
     @staticmethod
-    def test_process_agent_configs(mocker, capsys, pack):
+    def test_process_xdrc_templates(mocker, capsys, pack):
         """
         Given
-            - A repo with a XSIAM Agent Config object.
+            - A repo with a XSIAM XDRC Template object.
         When
-            - Parsing the XSIAM Agent Config files.
+            - Parsing the XSIAM XDRC Template files.
         Then
             - Verify result as expeted.
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        agent_config = pack.create_agent_config("agent_config_name", {"content_global_id": "agent_config_id",
-                                                                      "name": "agent_config_name",
-                                                                      "os_type": "os_type_test",
-                                                                      "profile_type": "profile_type_test",
-                                                                      "yaml_template": 'yaml_test'
-                                                                      })
-        res = process_general_items(agent_config.path, {pack.name: {}},
-                                    MarketplaceVersions.MarketplaceV2.value, True, (FileType.AGENT_CONFIG,),
-                                    get_agent_config_data, 'json')
+        xdrc_template = pack.create_xdrc_template("xdrc_template_name", {"content_global_id": "xdrc_template_id",
+                                                                         "name": "xdrc_template_name",
+                                                                         "os_type": "os_type_test",
+                                                                         "profile_type": "profile_type_test",
+                                                                         "yaml_template": 'yaml_test'
+                                                                         })
+        res = process_general_items(xdrc_template.path, {pack.name: {}},
+                                    MarketplaceVersions.MarketplaceV2.value, True, (FileType.XDRC_TEMPLATE,),
+                                    get_xdrc_template_data, 'json')
 
         captured = capsys.readouterr()
-        agent_config_result = res[0][0]['agent_config_id']
+        xdrc_template_result = res[0][0]['xdrc_template_id']
 
         assert len(res) == 2
-        assert 'name' in agent_config_result.keys()
-        assert 'display_name' in agent_config_result.keys()
-        assert 'file_path' in agent_config_result.keys()
-        assert 'pack' in agent_config_result.keys()
+        assert 'name' in xdrc_template_result.keys()
+        assert 'display_name' in xdrc_template_result.keys()
+        assert 'file_path' in xdrc_template_result.keys()
+        assert 'pack' in xdrc_template_result.keys()
 
-        assert agent_config_result['name'] == agent_config._file_path.parts[-1].split('.')[0]
-        assert agent_config_result['file_path'] == agent_config.path
-        assert agent_config_result['pack'] == pack.name
+        assert xdrc_template_result['name'] == xdrc_template._file_path.parts[-1].split('.')[0]
+        assert xdrc_template_result['file_path'] == xdrc_template.path
+        assert xdrc_template_result['pack'] == pack.name
 
-        assert f'adding {agent_config._file_path} to id_set' in captured.out
+        assert f'adding {xdrc_template._file_path} to id_set' in captured.out
 
 
 def test_merge_id_sets(tmp_path):

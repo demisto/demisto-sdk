@@ -8,12 +8,11 @@ from pkg_resources import parse_version
 
 from demisto_sdk.commands.common.constants import IronBankDockers
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import (
-    BaseValidator, error_codes)
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
 from demisto_sdk.commands.common.tools import get_yaml
 
 # disable insecure warnings
-requests.packages.urllib3.disable_warnings()
+requests.packages.urllib3.disable_warnings()  # type: ignore
 
 ACCEPT_HEADER = {
     'Accept': 'application/json, '
@@ -161,7 +160,7 @@ class DockerImageValidator(BaseValidator):
         Authenticate to the docker service. Return an authentication token if authentication is required.
         """
         res = requests.get(
-            'https://{}/v2/'.format(registry),
+            f'https://{registry}/v2/',
             headers=ACCEPT_HEADER,
             timeout=TIMEOUT,
             verify=verify_ssl
@@ -177,7 +176,7 @@ class DockerImageValidator(BaseValidator):
                 if parse_auth:
                     realm, service = parse_auth
             params = {
-                'scope': 'repository:{}:pull'.format(image_name),
+                'scope': f'repository:{image_name}:pull',
                 'service': service
             }
             res = requests.get(
@@ -262,10 +261,10 @@ class DockerImageValidator(BaseValidator):
         auth_token = DockerImageValidator.docker_auth(docker_image_name, False, DEFAULT_REGISTRY)
         headers = ACCEPT_HEADER.copy()
         if auth_token:
-            headers['Authorization'] = 'Bearer {}'.format(auth_token)
+            headers['Authorization'] = f'Bearer {auth_token}'
         # first try to get the docker image tags using normal http request
         res = requests.get(
-            url='https://hub.docker.com/v2/repositories/{}/tags'.format(docker_image_name),
+            url=f'https://hub.docker.com/v2/repositories/{docker_image_name}/tags',
             verify=False,
             timeout=TIMEOUT,
         )
@@ -279,7 +278,7 @@ class DockerImageValidator(BaseValidator):
             # if http request did not succeed than get tags using the API.
             # See: https://docs.docker.com/registry/spec/api/#listing-image-tags
             res = requests.get(
-                'https://{}/v2/{}/tags/list'.format(DEFAULT_REGISTRY, docker_image_name),
+                f'https://{DEFAULT_REGISTRY}/v2/{docker_image_name}/tags/list',
                 headers=headers,
                 timeout=TIMEOUT,
                 verify=False

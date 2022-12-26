@@ -4,40 +4,36 @@ import sys
 import uuid
 from collections import OrderedDict
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 import click
 import pytest
-from mock import Mock, patch
 
-from demisto_sdk.commands.common.constants import (
-    ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS,
-    GENERAL_DEFAULT_FROMVERSION, INCIDENT_FETCH_REQUIRED_PARAMS,
-    NO_TESTS_DEPRECATED, MarketplaceVersions)
+from demisto_sdk.commands.common.constants import (ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS,
+                                                   GENERAL_DEFAULT_FROMVERSION, INCIDENT_FETCH_REQUIRED_PARAMS,
+                                                   NO_TESTS_DEPRECATED, MarketplaceVersions)
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.hook_validations.docker import \
-    DockerImageValidator
-from demisto_sdk.commands.common.hook_validations.integration import \
-    IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
-from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
-                                                         TestPlaybookYMLFormat)
+from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat, TestPlaybookYMLFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
-from demisto_sdk.tests.constants_test import (
-    DESTINATION_FORMAT_INTEGRATION, DESTINATION_FORMAT_INTEGRATION_COPY,
-    DESTINATION_FORMAT_PLAYBOOK, DESTINATION_FORMAT_PLAYBOOK_COPY,
-    DESTINATION_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_TEST_PLAYBOOK,
-    FEED_INTEGRATION_EMPTY_VALID, FEED_INTEGRATION_INVALID,
-    FEED_INTEGRATION_VALID, GIT_ROOT, INTEGRATION_PATH, PLAYBOOK_PATH,
-    PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS, SOURCE_BETA_INTEGRATION_FILE,
-    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_INTEGRATION_DEFAULT_VALUE,
-    SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
-    SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
-    SOURCE_FORMAT_SCRIPT_COPY, SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
+from demisto_sdk.tests.constants_test import (DESTINATION_FORMAT_INTEGRATION, DESTINATION_FORMAT_INTEGRATION_COPY,
+                                              DESTINATION_FORMAT_PLAYBOOK, DESTINATION_FORMAT_PLAYBOOK_COPY,
+                                              DESTINATION_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_TEST_PLAYBOOK,
+                                              FEED_INTEGRATION_EMPTY_VALID, FEED_INTEGRATION_INVALID,
+                                              FEED_INTEGRATION_VALID, GIT_ROOT, INTEGRATION_PATH, PLAYBOOK_PATH,
+                                              PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS, SOURCE_BETA_INTEGRATION_FILE,
+                                              SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_INTEGRATION_DEFAULT_VALUE,
+                                              SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
+                                              SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
+                                              SOURCE_FORMAT_SCRIPT_COPY, SOURCE_FORMAT_TEST_PLAYBOOK,
+                                              TEST_PLAYBOOK_PATH)
 from TestSuite.test_tools import ChangeCWD
 
 yaml = YAML_Handler()
@@ -66,7 +62,7 @@ class TestFormatting:
             - Ensure comments are being preserved
         """
         schema_path = os.path.normpath(
-            os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
+            os.path.join(__file__, "..", "..", "..", "common", "schemas", f'{file_type}.yml'))
         base_yml = formatter(source_path, path=schema_path)
         yaml.dump(base_yml.data, sys.stdout)
         stdout, _ = capsys.readouterr()
@@ -75,7 +71,7 @@ class TestFormatting:
     @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', BASIC_YML_TEST_PACKS)
     def test_basic_yml_updates(self, mocker, source_path, destination_path, formatter, yml_title, file_type):
         schema_path = os.path.normpath(
-            os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
+            os.path.join(__file__, "..", "..", "..", "common", "schemas", f'{file_type}.yml'))
         from demisto_sdk.commands.format import update_generic
         mocker.patch.object(update_generic, 'get_remote_file', return_value={})
         base_yml = formatter(source_path, path=schema_path)
@@ -91,8 +87,7 @@ class TestFormatting:
         base_yml = IntegrationYMLFormat(source_path, path=schema_path)
         base_yml.set_params_default_additional_info()
 
-        from demisto_sdk.commands.common.default_additional_info_loader import \
-            load_default_additional_info_dict
+        from demisto_sdk.commands.common.default_additional_info_loader import load_default_additional_info_dict
         default_additional_info = load_default_additional_info_dict()
 
         api_key_param = base_yml.data['configuration'][4]
@@ -140,7 +135,7 @@ class TestFormatting:
     @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', BASIC_YML_TEST_PACKS)
     def test_save_output_file(self, source_path, destination_path, formatter, yml_title, file_type):
         schema_path = os.path.normpath(
-            os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
+            os.path.join(__file__, "..", "..", "..", "common", "schemas", f'{file_type}.yml'))
         saved_file_path = os.path.join(os.path.dirname(source_path), os.path.basename(destination_path))
         base_yml = formatter(input=source_path, output=saved_file_path, path=schema_path)
         base_yml.save_yml_to_destination_file()
@@ -157,7 +152,7 @@ class TestFormatting:
                              INTEGRATION_PROXY_SSL_PACK)
     def test_proxy_ssl_descriptions(self, source_path, argument_name, argument_description, file_type, appearances):
         schema_path = os.path.normpath(
-            os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
+            os.path.join(__file__, "..", "..", "..", "common", "schemas", f'{file_type}.yml'))
         base_yml = IntegrationYMLFormat(source_path, path=schema_path, verbose=True)
         base_yml.update_proxy_insecure_param_to_default()
 
@@ -187,7 +182,7 @@ class TestFormatting:
                              INTEGRATION_BANG_COMMANDS_ARGUMENTS_PACK)
     def test_bang_commands_default_arguments(self, source_path, file_type, bang_command, verifications):
         schema_path = os.path.normpath(
-            os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
+            os.path.join(__file__, "..", "..", "..", "common", "schemas", f'{file_type}.yml'))
         base_yml = IntegrationYMLFormat(source_path, path=schema_path, verbose=True)
         base_yml.set_reputation_commands_basic_argument_as_needed()
 
@@ -304,7 +299,7 @@ class TestFormatting:
     ])
     def test_pwsh_format(self, tmpdir, yml_file, yml_type):
         schema_path = os.path.normpath(
-            os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(yml_type)))
+            os.path.join(__file__, "..", "..", "..", "common", "schemas", f'{yml_type}.yml'))
         dest = str(tmpdir.join('pwsh_format_res.yml'))
         src_file = f'{GIT_ROOT}/demisto_sdk/tests/test_files/{yml_file}'
         if yml_type == 'script':
@@ -334,13 +329,13 @@ class TestFormatting:
         - Ensure 'yes' string in the playbook condition remains string and do not change to boolean.
         """
         schema_path = os.path.normpath(
-            os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
+            os.path.join(__file__, "..", "..", "..", "common", "schemas", f'{file_type}.yml'))
         saved_file_path = os.path.join(os.path.dirname(source_path), os.path.basename(destination_path))
         base_yml = formatter(input=source_path, output=saved_file_path, path=schema_path)
         base_yml.save_yml_to_destination_file()
         assert os.path.isfile(saved_file_path)
 
-        with open(saved_file_path, 'r') as f:
+        with open(saved_file_path) as f:
             yaml_content = yaml.load(f)
             assert 'yes' in yaml_content['tasks']['27']['nexttasks']
         os.remove(saved_file_path)
@@ -525,6 +520,7 @@ class TestFormatting:
         mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
                             return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
 
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
@@ -533,7 +529,7 @@ class TestFormatting:
             lambda _: 'N'
         )
         res = format_manager(input=target, verbose=True, assume_yes=True)
-        with open(target, 'r') as f:
+        with open(target) as f:
             yaml_content = yaml.load(f)
             params = yaml_content['configuration']
             for param in params:
@@ -567,11 +563,11 @@ class TestFormatting:
         mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
                             return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
-
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
         res = format_manager(input=target, verbose=True, clear_cache=True, assume_yes=True)
-        with open(target, 'r') as f:
+        with open(target) as f:
             yaml_content = yaml.load(f)
             params = yaml_content['configuration']
             for counter, param in enumerate(params):
@@ -1057,8 +1053,7 @@ class TestFormatting:
         Then
             - Ensure that the integration fromversion is set to GENERAL_DEFAULT_FROMVERSION
         """
-        from demisto_sdk.commands.common.constants import \
-            GENERAL_DEFAULT_FROMVERSION
+        from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
 
         pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
         integration = pack.create_integration()
@@ -1075,8 +1070,7 @@ class TestFormatting:
         Then
             - Ensure that the integration fromversion is set to GENERAL_DEFAULT_FROMVERSION
         """
-        from demisto_sdk.commands.common.constants import \
-            GENERAL_DEFAULT_FROMVERSION
+        from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
 
         pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
         script = pack.create_script()

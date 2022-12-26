@@ -2,12 +2,9 @@ from typing import Optional, Tuple
 
 import click
 
-from demisto_sdk.commands.common.hook_validations.readme import (
-    ReadmeUrl, get_relative_urls)
+from demisto_sdk.commands.common.hook_validations.readme import ReadmeUrl, get_relative_urls
 from demisto_sdk.commands.common.tools import print_error
-from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
-                                                          SKIP_RETURN_CODE,
-                                                          SUCCESS_RETURN_CODE)
+from demisto_sdk.commands.format.format_constants import ERROR_RETURN_CODE, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
 
@@ -29,7 +26,7 @@ class ReadmeFormat(BaseUpdate):
                  **kwargs):
         super().__init__(input=input, output=output, path=path, no_validate=no_validate,
                          verbose=verbose, **kwargs)
-        with open(self.source_file, 'r') as f:
+        with open(self.source_file) as f:
             self.readme_content = f.read()
 
     def replace_url_in_content(self, relative_url: ReadmeUrl, new_url: str):

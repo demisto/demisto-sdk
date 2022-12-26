@@ -1,14 +1,10 @@
 import glob
 from typing import List, Optional
 
-from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
-                                                   PACKS_INTEGRATION_YML_REGEX,
-                                                   FileType)
+from demisto_sdk.commands.common.constants import BETA_INTEGRATION_DISCLAIMER, PACKS_INTEGRATION_YML_REGEX, FileType
 from demisto_sdk.commands.common.errors import FOUND_FILES_AND_ERRORS, Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import (
-    BaseValidator, error_codes)
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.tools import find_type, get_yaml, os, re
 
 CONTRIBUTOR_DETAILED_DESC = 'Contributed Integration'
@@ -179,7 +175,7 @@ class DescriptionValidator(BaseValidator):
                 yml_or_file = 'in the yml file'
 
                 # find in which line the description begins in the yml
-                with open(self.file_path, 'r') as f:
+                with open(self.file_path) as f:
                     for line_n, line in enumerate(f.readlines()):
                         if 'detaileddescription:' in line:
                             yml_line_num = line_n + 1

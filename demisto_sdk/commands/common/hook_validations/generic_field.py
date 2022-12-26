@@ -2,10 +2,8 @@
 This module is designed to validate the correctness of generic field entities in content.
 """
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    error_codes
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
 
 GENERIC_FIELD_GROUP = 4
 GENERIC_FIELD_ID_PREFIX = 'generic_'
@@ -35,8 +33,7 @@ class GenericFieldValidator(ContentEntityValidator):
         pass
 
     @error_codes('GF100')
-    def is_valid_group(self):
-        # type: () -> bool
+    def is_valid_group(self) -> bool:
         group = self.current_file.get("group")
         if group == GENERIC_FIELD_GROUP:
             return True
@@ -48,8 +45,7 @@ class GenericFieldValidator(ContentEntityValidator):
         return True
 
     @error_codes('GF101')
-    def is_valid_id_prefix(self):
-        # type: () -> bool
+    def is_valid_id_prefix(self) -> bool:
         """
         Validate that the field 'id' starts with the generic field id's prefix
         """
@@ -64,8 +60,7 @@ class GenericFieldValidator(ContentEntityValidator):
         return True
 
     @error_codes('GF102')
-    def is_valid_unsearchable_key(self):
-        # type: () -> bool
+    def is_valid_unsearchable_key(self) -> bool:
         """Validate that the unsearchable key is set to true
         Returns:
             bool. Whether the file's unsearchable key is set to true.

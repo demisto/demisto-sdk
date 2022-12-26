@@ -2,8 +2,7 @@ from threading import Thread, currentThread
 
 import pytest
 
-from demisto_sdk.commands.test_content.ParallelLoggingManager import \
-    ParallelLoggingManager
+from demisto_sdk.commands.test_content.ParallelLoggingManager import ParallelLoggingManager
 
 
 class TestParallelLoggingManager:
@@ -137,7 +136,7 @@ class TestParallelLoggingManager:
         Returns:
             A list with the log file lines
         """
-        with open(log_file_path, 'r') as log_file:
+        with open(log_file_path) as log_file:
             log_file_lines = log_file.readlines()
         return log_file_lines
 

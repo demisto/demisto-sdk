@@ -1,11 +1,8 @@
 import pytest
 
-from demisto_sdk.commands.common.hook_validations.deprecation import \
-    DeprecationValidator
-from demisto_sdk.commands.common.hook_validations.integration import \
-    IntegrationValidator
-from demisto_sdk.commands.common.hook_validations.playbook import \
-    PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.deprecation import DeprecationValidator
+from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.tests.integration_test import mock_structure
 
@@ -92,8 +89,7 @@ mocked_id_set = {
 }
 
 
-def mock_deprecation_manager():
-    # type: () -> DeprecationValidator
+def mock_deprecation_manager() -> DeprecationValidator:
     deprecation_validator = DeprecationValidator(mocked_id_set)
     return deprecation_validator
 

@@ -5,18 +5,12 @@ from typing import Callable, List
 
 import click
 
-from demisto_sdk.commands.common.constants import (KNOWN_FILE_STATUSES,
-                                                   PACKS_PACK_META_FILE_NAME,
-                                                   TESTS_AND_DOC_DIRECTORIES,
-                                                   FileType)
+from demisto_sdk.commands.common.constants import (KNOWN_FILE_STATUSES, PACKS_PACK_META_FILE_NAME,
+                                                   TESTS_AND_DOC_DIRECTORIES, FileType)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
-from demisto_sdk.commands.common.tools import (filter_packagify_changes,
-                                               find_type, get_pack_name,
-                                               has_remote_configured,
-                                               is_origin_content_repo,
-                                               run_command)
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+from demisto_sdk.commands.common.tools import (filter_packagify_changes, find_type, get_pack_name,
+                                               has_remote_configured, is_origin_content_repo, run_command)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 
@@ -150,7 +144,7 @@ def get_modified_and_added_files(compare_type,
                 click.echo("Collecting all local changed files against the content master")
 
             # only changes against prev_ver (without local changes)
-            all_changed_files_string = run_command('git diff --name-status {}'.format(prev_ver))
+            all_changed_files_string = run_command(f'git diff --name-status {prev_ver}')
             modified_files_from_tag, added_files_from_tag, _, _, changed_meta_files_from_tag, \
                 ignored_files_from_tag, new_packs_from_tag = \
                 filter_changed_files(all_changed_files_string, print_ignored_files=print_ignored_files)
@@ -237,7 +231,7 @@ def filter_changed_files(files_string, tag='master', print_ignored_files=False):
                 if file_path not in ignored_files:
                     ignored_files.add(file_path)
                     if print_ignored_files:
-                        click.secho('Ignoring file path: {} - code file'.format(file_path), fg="yellow")
+                        click.secho(f'Ignoring file path: {file_path} - code file', fg="yellow")
                 continue
 
             # ignore changes in TESTS_DIRECTORIES files.
@@ -245,7 +239,7 @@ def filter_changed_files(files_string, tag='master', print_ignored_files=False):
                 if file_path not in ignored_files:
                     ignored_files.add(file_path)
                     if print_ignored_files:
-                        click.secho('Ignoring file path: {} - test file'.format(file_path), fg="yellow")
+                        click.secho(f'Ignoring file path: {file_path} - test file', fg="yellow")
                 continue
 
             # identify deleted files
@@ -255,7 +249,7 @@ def filter_changed_files(files_string, tag='master', print_ignored_files=False):
             # ignore directories
             elif not os.path.isfile(file_path):
                 if print_ignored_files:
-                    click.secho('Ignoring file path: {} - directory'.format(file_path), fg="yellow")
+                    click.secho(f'Ignoring file path: {file_path} - directory', fg="yellow")
                 continue
 
             # changes in old scripts and integrations - unified python scripts/integrations
@@ -293,17 +287,17 @@ def filter_changed_files(files_string, tag='master', print_ignored_files=False):
                     if file_path not in ignored_files:
                         ignored_files.add(file_path)
                         if print_ignored_files:
-                            click.secho('Ignoring file path: {} - system file'.format(file_path), fg="yellow")
+                            click.secho(f'Ignoring file path: {file_path} - system file', fg="yellow")
                     else:
                         if print_ignored_files:
-                            click.secho('Ignoring file path: {} - system file'.format(file_path), fg="yellow")
+                            click.secho(f'Ignoring file path: {file_path} - system file', fg="yellow")
 
         # handle a case where a file was deleted locally though recognised as added against master.
         except FileNotFoundError:
             if file_path not in ignored_files:
                 ignored_files.add(file_path)
                 if print_ignored_files:
-                    click.secho('Ignoring file path: {} - File not found'.format(file_path), fg="yellow")
+                    click.secho(f'Ignoring file path: {file_path} - File not found', fg="yellow")
 
     modified_files_list, added_files_list, deleted_files = filter_packagify_changes(
         modified_files_list,

@@ -22,22 +22,16 @@ from demisto_client.demisto_api import DefaultApi, Incident
 from demisto_client.demisto_api.rest import ApiException
 from slack import WebClient as SlackClient
 
-from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-    FILTER_CONF, PB_Status)
+from demisto_sdk.commands.common.constants import (DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
+                                                   FILTER_CONF, PB_Status)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import get_demisto_version
-from demisto_sdk.commands.test_content.constants import (
-    CONTENT_BUILD_SSH_USER, LOAD_BALANCER_DNS)
+from demisto_sdk.commands.test_content.constants import CONTENT_BUILD_SSH_USER, LOAD_BALANCER_DNS
 from demisto_sdk.commands.test_content.Docker import Docker
-from demisto_sdk.commands.test_content.IntegrationsLock import \
-    acquire_test_lock
-from demisto_sdk.commands.test_content.mock_server import (RESULT, MITMProxy,
-                                                           run_with_mock)
-from demisto_sdk.commands.test_content.ParallelLoggingManager import \
-    ParallelLoggingManager
-from demisto_sdk.commands.test_content.tools import (
-    get_ui_url, is_redhat_instance, update_server_configuration)
+from demisto_sdk.commands.test_content.IntegrationsLock import acquire_test_lock
+from demisto_sdk.commands.test_content.mock_server import RESULT, MITMProxy, run_with_mock
+from demisto_sdk.commands.test_content.ParallelLoggingManager import ParallelLoggingManager
+from demisto_sdk.commands.test_content.tools import get_ui_url, is_redhat_instance, update_server_configuration
 
 json = JSON_Handler()
 
@@ -526,7 +520,7 @@ class BuildContext:
         self.xsiam_servers_path = kwargs.get('xsiam_servers_path')
         self.conf, self.secret_conf = self._load_conf_files(kwargs['conf'], kwargs['secret'])
         if self.is_xsiam:
-            with open(kwargs.get('xsiam_servers_api_keys_path'), 'r') as json_file:  # type: ignore[arg-type]
+            with open(kwargs.get('xsiam_servers_api_keys_path')) as json_file:  # type: ignore[arg-type]
                 xsiam_servers_api_keys = json.loads(json_file.read())
             self.xsiam_conf = self._load_xsiam_file(self.xsiam_servers_path)
             self.env_json = [self.xsiam_conf.get(self.xsiam_machine, {})]
@@ -661,7 +655,7 @@ class BuildContext:
         Returns:
             A list of playbook IDs that should be run in the current build
         """
-        with open(FILTER_CONF, 'r') as filter_file:
+        with open(FILTER_CONF) as filter_file:
             filtered_tests = [line.strip('\n') for line in filter_file.readlines()]
 
         return filtered_tests
@@ -766,7 +760,7 @@ class BuildContext:
         if not os.path.isfile(ENV_RESULTS_PATH):
             return {}
 
-        with open(ENV_RESULTS_PATH, 'r') as json_file:
+        with open(ENV_RESULTS_PATH) as json_file:
             return json.load(json_file)
 
     def _get_server_numeric_version(self) -> str:
@@ -853,7 +847,7 @@ class BuildContext:
             user_name = os.getenv('GITLAB_USER_LOGIN') or self._get_user_name_from_circle()
             res = self.slack_client.api_call('users.list')
 
-            user_list = res.get('members', [])
+            user_list = res.get('members', [])  # type: ignore
             for user in user_list:
                 profile = user.get('profile', {})
                 name = profile.get('real_name_normalized', '')
@@ -1763,7 +1757,7 @@ class TestContext:
         """
         if self.build_context.is_nightly and self.build_context.memCheck and not self.build_context.is_local_run:
             stdout, stderr = self._get_circle_memory_data()
-            text = 'Memory Usage: {}'.format(stdout) if not stderr else stderr
+            text = f'Memory Usage: {stdout}' if not stderr else stderr
             self._send_slack_message(SLACK_MEM_CHANNEL_ID, text, 'Content CircleCI', 'False')
             stdout, stderr = self._get_circle_processes_data()
             text = stdout if not stderr else stderr

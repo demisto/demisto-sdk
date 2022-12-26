@@ -13,8 +13,10 @@ from demisto_sdk.commands.content_graph.common import NEO4J_DATABASE_HTTP, NEO4J
 
 REPO_PATH = Path(get_content_path())  # type: ignore
 
-NEO4J_SERVICE_IMAGE = "neo4j:4.4.12"
-NEO4J_ADMIN_IMAGE = "neo4j/neo4j-admin:4.4.12"
+NEO4J_VERSION = "4.4.12"
+
+NEO4J_SERVICE_IMAGE = f"neo4j:{NEO4J_VERSION}"
+NEO4J_ADMIN_IMAGE = f"neo4j/neo4j-admin:{NEO4J_VERSION}"
 
 LOCAL_NEO4J_PATH = Path("/var/lib/neo4j")
 NEO4J_IMPORT_FOLDER = "import"
@@ -22,9 +24,7 @@ NEO4J_DATA_FOLDER = "data"
 NEO4J_PLUGINS_FOLDER = "plugins"
 
 # When updating the APOC version, make sure to update the checksum as well
-APOC_URL = "https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases/download/4.4.0.12/apoc-4.4.0.12-all.jar"
-APOC_CHECKSUM = "a2bebf7f4aeae23677e369a51ac7d4d0"
-
+APOC_URL_VERSIONS = "https://neo4j-contrib.github.io/neo4j-apoc-procedures/versions.json"
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -94,21 +94,30 @@ def _get_plugins_folder(is_running_on_docker: bool) -> Path:
     return plugins_path
 
 
-def _is_apoc_available(plugins_path: Path) -> bool:
+def _is_apoc_available(plugins_path: Path, sha1: str) -> bool:
     for plugin in plugins_path.iterdir():
-        if plugin.name.startswith("apoc") and hashlib.md5(plugin.read_bytes()).hexdigest() == APOC_CHECKSUM:
+        if plugin.name.startswith("apoc") and hashlib.sha1(plugin.read_bytes()).hexdigest() == sha1:
             return True
     return False
 
 
 def _download_apoc(is_running_on_docker: bool):
+    apocs = [apoc for apoc in requests.get(APOC_URL_VERSIONS, verify=False).json()["versions"]
+             if apoc["neo4j"] == NEO4J_VERSION]
+    if not apocs:
+        logger.debug(f"Could not find APOC for neo4j version {NEO4J_VERSION}")
+        return
+    download_url = apocs[0].get("jar")
+    sha1 = apocs[0].get("sha1")
     plugins_folder = _get_plugins_folder(is_running_on_docker)
-    if _is_apoc_available(plugins_folder):
+    plugins_folder.mkdir(parents=True, exist_ok=True)
+
+    if _is_apoc_available(plugins_folder, sha1):
         logger.info("APOC is already available")
         return
     logger.info("Downloading APOC...")
     # Download APOC_URL and save it to plugins folder in neo4j
-    response = requests.get(APOC_URL, verify=False, stream=True)
+    response = requests.get(download_url, verify=False, stream=True)
     total_size = int(response.headers.get("content-length", 0))
 
     with open(plugins_folder / "apoc.jar", "wb") as f:

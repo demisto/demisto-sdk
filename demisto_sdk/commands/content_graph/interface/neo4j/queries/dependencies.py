@@ -191,7 +191,6 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
         is_cmd_mandatory = "mandatory" if row["is_cmd_mandatory"] else "optional"
         integrations = row["integrations"]
         is_integ_mandatory = "mandatory" if row["is_integ_mandatory"] else "optional"
-        content_item = row["content_item"]
         msg = (
             f"{content_item} uses command {command} ({is_cmd_mandatory}), "
             f"new {is_integ_mandatory} relationships to integrations: {integrations}"

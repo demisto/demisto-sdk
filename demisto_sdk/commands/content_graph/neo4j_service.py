@@ -132,13 +132,15 @@ def start(use_docker: bool = True):
         use_docker (bool, optional): Whether use docker or run locally. Defaults to True.
     """
     use_docker = _should_use_docker(use_docker)
-    _download_apoc(use_docker)
     if not use_docker:
         _neo4j_admin_command("set-initial-password", f"neo4j-admin set-initial-password {NEO4J_PASSWORD}")
         run_command("neo4j start", cwd=REPO_PATH, is_silenced=False)
 
     else:
         Path.mkdir(REPO_PATH / NEO4J_FOLDER, exist_ok=True, parents=True)
+        # we download apoc only if we are running on docker
+        # if the user is running locally he needs to setup apoc manually
+        _download_apoc(use_docker)
         docker_client = _get_docker_client()
         _stop_neo4j_service_docker(docker_client)
         docker_client.containers.run(

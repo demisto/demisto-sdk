@@ -1,12 +1,16 @@
 import logging
-from typing import Any, Dict, List, Set, Tuple
-
+from typing import Any, Dict, List, Tuple
+import json
+import os
 from neo4j import Transaction
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions, GENERIC_COMMANDS_NAMES
 from demisto_sdk.commands.content_graph.common import ContentType, Neo4jRelationshipResult, RelationshipType
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (is_target_available, run_query,
-                                                                               to_neo4j_map)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
+    is_target_available,
+    run_query,
+    to_neo4j_map,
+)
 
 IGNORED_PACKS_IN_DEPENDENCY_CALC = ["NonSupported", "Base", "ApiModules"]
 
@@ -133,10 +137,9 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
         outputs.setdefault(row["excluded_content_item"], list()).append(row["reason"])
     logger.info(f"Removed {marketplace} from marketplaces for {len(outputs.keys())} content items.")
     logger.debug(f"Excluded content items: {dict(sorted(outputs.items()))}")
-    import json
-    import os
-    with open(f'{os.getenv("ARTIFACTS_FOLDER")}/removed_from_marketplace-{marketplace}.json', 'w') as fp:
-        json.dump(dict(sorted(outputs.items())), fp, indent=4)
+    if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
+        with open(f"{artifacts_folder}/removed_from_marketplace-{marketplace}.json", "w") as fp:
+            json.dump(dict(sorted(outputs.items())), fp, indent=4)
 
 
 def update_uses_for_integration_commands(tx: Transaction) -> None:
@@ -172,12 +175,27 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
         SET u.mandatorily = CASE WHEN command_count = 1 THEN r.mandatorily ELSE false END
     ON MATCH
         SET u.mandatorily = u.mandatorily OR (CASE WHEN command_count = 1 THEN r.mandatorily ELSE false END)
-    RETURN count(u) as uses_relationships
+    RETURN
+        content_item.node_id AS content_item,
+        r.mandatorily AS is_cmd_mandatory,
+        collect(integration.object_id) AS integrations,
+        u.mandatorily AS is_integ_mandatory,
+        command.name AS command
 
     """
-    result = run_query(tx, query).single()
-    uses_count = result["uses_relationships"]
-    logger.info(f"Merged {uses_count} USES relationships based on commands.")
+    result = run_query(tx, query)
+    for row in result:
+        content_item = row["content_item"]
+        command = row["command"]
+        is_cmd_mandatory = "mandatory" if row["is_cmd_mandatory"] else "optional"
+        integrations = row["integrations"]
+        is_integ_mandatory = "mandatory" if row["is_integ_mandatory"] else "optional"
+        content_item = row["content_item"]
+        msg = (
+            f"{content_item} uses command {command} ({is_cmd_mandatory}), "
+            f"new {is_integ_mandatory} rels to integrations: {integrations}"
+        )
+        logger.debug(msg)
 
 
 def create_depends_on_relationships(tx: Transaction) -> None:
@@ -218,9 +236,10 @@ def create_depends_on_relationships(tx: Transaction) -> None:
     for dep, reasons in outputs.items():
         logger.debug(f"Created DEPENDS_ON relationship between {dep[0]} and {dep[1]}")
         for reason in reasons:
-            logger.debug(f"Reason: {reason.get('source')} -> {reason.get('target')} (mandatorily: {reason.get('mandatorily')})")
+            logger.debug(
+                f"Reason: {reason.get('source')} -> {reason.get('target')} (mandatorily: {reason.get('mandatorily')})"
+            )
 
-    import json
-    import os
-    with open(f'{os.getenv("ARTIFACTS_FOLDER")}/depends_on.json', 'w') as fp:
-        json.dump(outputs, fp, indent=4)
+    if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
+        with open(f"{artifacts_folder}/depends_on.json", "w") as fp:
+            json.dump(outputs, fp, indent=4)

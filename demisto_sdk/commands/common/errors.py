@@ -1000,7 +1000,6 @@ class Errors:
     def invalid_deprecation__only_description_deprecated():
         return 'All integrations whose description states are deprecated, must have `deprecated:true`.'
 
-
     @staticmethod
     @error_code_decorator
     def invalid_deprecated_integration_description():

@@ -508,13 +508,13 @@ class TestDeprecatedIntegration:
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         pack = repo.create_pack('PackName')
-        
+
         valid_integration_yml = deepcopy(get_yaml(join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")))
         valid_integration_yml['deprecated'] = True
         valid_integration_yml['display'] = 'ServiceNow (Deprecated)'
         valid_integration_yml['description'] = 'Deprecated. Use the ServiceNow v2 integration instead.'
         integration = pack.create_integration(yml=valid_integration_yml)
-        
+
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
@@ -561,12 +561,12 @@ class TestDeprecatedIntegration:
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         pack = repo.create_pack('PackName')
-        
+
         yml = deepcopy(get_yaml(join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")))
         yml['display'] += ' (Deprecated)'
         yml['deprecated'] = False  # redefining the default, for explicitness and sanity
         integration = pack.create_integration(yml=yml)
-        
+
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
@@ -574,8 +574,8 @@ class TestDeprecatedIntegration:
         assert 'IN157' in result.stdout
         assert result.exit_code == 1
 
-    @pytest.mark.parametrize('description',('Deprecated. Use the ServiceNow v2 integration instead.',
-                                            'Deprecated. No available replacement.'))
+    @pytest.mark.parametrize('description', ('Deprecated. Use the ServiceNow v2 integration instead.',
+                                             'Deprecated. No available replacement.'))
     def test_invalid_deprecation__only_description_deprecated(self, mocker, repo, description: str):
         """
         Given
@@ -588,12 +588,12 @@ class TestDeprecatedIntegration:
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         pack = repo.create_pack('PackName')
-        
+
         yml = deepcopy(get_yaml(join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")))
         yml['description'] = description
         yml['deprecated'] = False  # redefining the default, for explicitness and sanity
         integration = pack.create_integration(yml=yml)
-        
+
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],

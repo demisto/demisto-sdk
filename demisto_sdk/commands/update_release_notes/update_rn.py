@@ -9,9 +9,10 @@ from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Any, Optional, Tuple, Union
 
-from demisto_sdk.commands.common.constants import (ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEPRECATED_REGEXES,
-                                                   IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, XSIAM_DASHBOARDS_DIR,
-                                                   XSIAM_REPORTS_DIR, FileType)
+from demisto_sdk.commands.common.constants import (ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEPRECATED_DESC_REGEX,
+                                                   DEPRECATED_NO_REPLACE_DESC_REGEX, IGNORED_PACK_NAMES,
+                                                   RN_HEADER_BY_FILE_TYPE, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
+                                                   FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects import Integration, Playbook, Script
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \

@@ -6,11 +6,11 @@ from typing import Dict, Optional
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (ALERT_FETCH_REQUIRED_PARAMS, BANG_COMMAND_ARGS_MAPPING_DICT,
                                                    BANG_COMMAND_NAMES, DBOT_SCORES_DICT,
-                                                   DEFAULT_CONTENT_ITEM_FROM_VERSION, DEPRECATED_DESC_REGEX, DEPRECATED_NO_REPLACE_DESC_REGEX, DEPRECATED_REGEXES,
-                                                   ENDPOINT_COMMAND_NAME, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
-                                                   FEED_REQUIRED_PARAMS, FIRST_FETCH, FIRST_FETCH_PARAM,
-                                                   INCIDENT_FETCH_REQUIRED_PARAMS, IOC_OUTPUTS_DICT, MAX_FETCH,
-                                                   MAX_FETCH_PARAM, PACKS_DIR, PACKS_PACK_META_FILE_NAME,
+                                                   DEFAULT_CONTENT_ITEM_FROM_VERSION, DEPRECATED_DESC_REGEX,
+                                                   DEPRECATED_NO_REPLACE_DESC_REGEX, ENDPOINT_COMMAND_NAME,
+                                                   ENDPOINT_FLEXIBLE_REQUIRED_ARGS, FEED_REQUIRED_PARAMS, FIRST_FETCH,
+                                                   FIRST_FETCH_PARAM, INCIDENT_FETCH_REQUIRED_PARAMS, IOC_OUTPUTS_DICT,
+                                                   MAX_FETCH, MAX_FETCH_PARAM, PACKS_DIR, PACKS_PACK_META_FILE_NAME,
                                                    PYTHON_SUBTYPES, REPUTATION_COMMAND_NAMES, TYPE_PWSH,
                                                    XSOAR_CONTEXT_STANDARD_URL, XSOAR_SUPPORT, MarketplaceVersions)
 from demisto_sdk.commands.common.default_additional_info_loader import load_default_additional_info_dict
@@ -202,37 +202,37 @@ class IntegrationValidator(ContentEntityValidator):
     def _is_valid_deprecated_integration_display_name(self) -> bool:
         is_deprecated = self.current_file.get('deprecated', False)
         is_display_name_deprecated = self.current_file.get('display', '').endswith('(Deprecated)')
-        
+
         if is_deprecated and not is_display_name_deprecated:
             error_message, error_code = Errors.invalid_deprecated_integration_display_name()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
-            
+
         if (not is_deprecated) and is_display_name_deprecated:
             error_message, error_code = Errors.invalid_integration_deprecation__only_display_name_suffix()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
-            
+
         return True
 
     @error_codes('IN128,IN158')
     def _is_valid_deprecated_integration_description(self) -> bool:
         is_deprecated = self.current_file.get('deprecated', False)
         description = self.current_file.get('description', '')
-        
+
         description_indicates_deprecation = any((re.search(DEPRECATED_DESC_REGEX, description),
                                                  re.search(DEPRECATED_NO_REPLACE_DESC_REGEX, description)))
-        
+
         if is_deprecated and not description_indicates_deprecation:
             error_message, error_code = Errors.invalid_deprecated_integration_description()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
-        
+
         if (not is_deprecated) and description_indicates_deprecation:
             error_message, error_code = Errors.invalid_deprecation__only_description_deprecated()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
-            
+
         return True
 
     @error_codes('IN152')

@@ -6,7 +6,6 @@ from pathlib import Path
 import docker
 import requests
 from requests.adapters import HTTPAdapter, Retry
-from tqdm import tqdm
 
 from demisto_sdk.commands.common.tools import get_content_path, run_command
 from demisto_sdk.commands.content_graph.common import NEO4J_DATABASE_HTTP, NEO4J_FOLDER, NEO4J_PASSWORD
@@ -108,14 +107,12 @@ def _download_apoc():
     if _is_apoc_available(plugins_folder, sha1):
         logger.debug("APOC is already available, skipping installation")
         return
-    logger.debug("Downloading APOC...")
+    logger.info("Downloading APOC plugin, please wait...")
     # Download APOC_URL and save it to plugins folder in neo4j
     response = requests.get(download_url, verify=False, stream=True)
-    total_size = int(response.headers.get("content-length", 0))
 
     with open(plugins_folder / "apoc.jar", "wb") as f:
-        for data in tqdm(response.iter_content(1024), total=total_size // 1024, unit="MB", unit_scale=True):
-            f.write(data)
+        f.write(response.content)
 
 
 def start(use_docker: bool = True):

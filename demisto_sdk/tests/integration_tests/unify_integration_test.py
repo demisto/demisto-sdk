@@ -152,16 +152,17 @@ class TestIntegrationScriptUnifier:
     @pytest.mark.parametrize("flag", [True, False])
     def test_add_custom_section_flag_integration(self, repo, flag):
         """
-            Given:
-                - An integration with a name of sample(yml)
+        Given:
+            - An integration with a name of sample(yml)
 
-            When:
-                - Running the Unify command
-                first run with -c flag on
-                second run without -c flag
+        When:
+            - Running the Unify command
+            first run with -c flag on
+            second run without -c flag
 
-            Then:
-                - Check that the 'Test' label was added or not to the unified yml
+        Then:
+            - Check that the 'Test' label was added or not to the unified yml
+            - make sure the nativeImage was key was added with the native-images.
         """
         pack = repo.create_pack('PackName')
         integration = pack.create_integration('dummy-integration')
@@ -180,18 +181,20 @@ class TestIntegrationScriptUnifier:
                     assert unified_yml_data.get('name') == 'Sample - Test'
                 else:
                     assert unified_yml_data.get('name') == 'Sample'
+                assert unified_yml_data.get('script').get('nativeimage') == ['8.1', '8.2']
 
     def test_add_custom_section_flag(self, repo):
         """
-            Given:
-                - A script with the name sample_script(yml)
+        Given:
+            - A script with the name sample_script(yml)
 
-            When:
-                - running the Unify command with the -c flag
+        When:
+            - running the Unify command with the -c flag
 
-            Then:
-                - check that the 'Test' label was appended to the name of the script
-                in the unified yml
+        Then:
+            - check that the 'Test' label was appended to the name of the script
+            in the unified yml
+            - make sure the nativeimage was key was added with the native-images.
         """
         pack = repo.create_pack('PackName')
         script = pack.create_script('dummy-script', 'script-code')
@@ -203,3 +206,49 @@ class TestIntegrationScriptUnifier:
             with open(os.path.join(script.path, 'script-dummy-script.yml')) as unified_yml:
                 unified_yml_data = yaml.load(unified_yml)
                 assert unified_yml_data.get('name') == 'sample_script - Test'
+                assert unified_yml_data.get('nativeimage') == ['8.1', '8.2']
+
+    def test_ignore_native_image_integration(self, repo):
+        """
+        Given:
+            - integration that can use native-images
+
+        When:
+            - running the Unify command along with -ini flag
+
+        Then:
+            - make sure the nativeimage key is not added to the integration unified yml.
+        """
+        pack = repo.create_pack('PackName')
+        integration = pack.create_integration('dummy-integration')
+        integration.create_default_integration()
+
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            runner.invoke(main, [UNIFY_CMD, '-i', f'{integration.path}', '-ini'])
+
+            with open(os.path.join(integration.path, 'integration-dummy-integration.yml')) as unified_yml:
+                unified_yml_data = yaml.load(unified_yml)
+                assert 'nativeimage' not in unified_yml_data.get('script')
+
+    def test_ignore_native_image_script(self, repo):
+        """
+        Given:
+            - script that can use native-images
+
+        When:
+            - running the Unify command along with -ini flag
+
+        Then:
+            - make sure the nativeImage key is not added to the script unified yml.
+        """
+        pack = repo.create_pack('PackName')
+        script = pack.create_script('dummy-script', 'script-code')
+        script.create_default_script()
+
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            runner.invoke(main, [UNIFY_CMD, '-i', f'{script.path}', '-ini'])
+            with open(os.path.join(script.path, 'script-dummy-script.yml')) as unified_yml:
+                unified_yml_data = yaml.load(unified_yml)
+                assert 'nativeimage' not in unified_yml_data

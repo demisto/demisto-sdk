@@ -14,7 +14,7 @@ class Neo4jImportHandler:
 
     def clean_import_dir(self) -> None:
         for file in self.import_path.iterdir():
-            os.remove(file)
+            shutil.rmtree(file) if file.is_dir() else os.remove(file)
 
     def get_nodes_files(self) -> List[str]:
         return [file.name for file in self.import_path.iterdir() if '.nodes.' in file.name]

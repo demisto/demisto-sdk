@@ -27,7 +27,8 @@ __all__ = [
     "WizardParser",
     "XSIAMDashboardParser",
     "XSIAMReportParser",
-    "XDRCTemplateParser"
+    "XDRCTemplateParser",
+    "LayoutRuleParser"
 ]
 
 from demisto_sdk.commands.content_graph.parsers.classifier import ClassifierParser
@@ -58,3 +59,4 @@ from demisto_sdk.commands.content_graph.parsers.wizard import WizardParser
 from demisto_sdk.commands.content_graph.parsers.xdrc_template import XDRCTemplateParser
 from demisto_sdk.commands.content_graph.parsers.xsiam_dashboard import XSIAMDashboardParser
 from demisto_sdk.commands.content_graph.parsers.xsiam_report import XSIAMReportParser
+from demisto_sdk.commands.content_graph.parsers.layout_rule import LayoutRuleParser

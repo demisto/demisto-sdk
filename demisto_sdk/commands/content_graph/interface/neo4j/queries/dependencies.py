@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Tuple
 import json
 import os
 from neo4j import Transaction
-
+from demisto_sdk.commands.common.constants import DEPRECATED_CONTENT_PACK
 from demisto_sdk.commands.common.constants import MarketplaceVersions, GENERIC_COMMANDS_NAMES
 from demisto_sdk.commands.content_graph.common import ContentType, Neo4jRelationshipResult, RelationshipType
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
@@ -56,8 +56,13 @@ def create_pack_dependencies(tx: Transaction) -> None:
 
 
 def delete_deprecatedcontent_relationship(tx: Transaction) -> None:
+    """
+    This will delete any USES relationship between a content item and a content item in the deprecated content pack.
+    At the moment, we do not want to consider this pack in the dependency calculation.
+    """
     query = f"""
-        MATCH (source) - [r:{RelationshipType.USES}] -> (target) - [:{RelationshipType.IN_PACK}] -> (:{ContentType.PACK}{{object_id: "DeprecatedContent"}})
+        MATCH (source) - [r:{RelationshipType.USES}] -> (target) - [:{RelationshipType.IN_PACK}] ->
+        (:{ContentType.PACK}{{object_id: "{DEPRECATED_CONTENT_PACK}"}})
         DELETE r
         RETURN source.node_id AS source, target.node_id AS target, type(r) AS r
     """
@@ -109,6 +114,8 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
     To make sure the dependency is not in this marketplace, we make sure there is no alternative with
     the same content type and id as the dependency which is in the marketplace.
 
+    In addition, we will not handle cases which the dependency is a generic command, as we assume it exists.
+    
     If such dependencies were found, we drop the content item from the marketplace.
     """
     query = f"""

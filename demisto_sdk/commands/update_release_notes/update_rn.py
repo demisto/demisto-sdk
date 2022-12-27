@@ -10,18 +10,12 @@ from pathlib import Path
 from typing import Any, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEPRECATED_REGEXES,
-<< << << < HEAD
                                                    IGNORED_PACK_NAMES, RN_CONTENT_ENTITY_WITH_STARS,
-                                                   RN_HEADER_BY_FILE_TYPE, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
-                                                   FileType)
-== == == =
-                                                   IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE,
-                                                   SKIP_RELEASE_NOTES_FOR_TYPES, XSIAM_DASHBOARDS_DIR,
-                                                   XSIAM_REPORTS_DIR, FileType) >>
->>>> > fe0b6e49829d270390b5bac07c0785b1f2668b24
+                                                   RN_HEADER_BY_FILE_TYPE, SKIP_RELEASE_NOTES_FOR_TYPES,
+                                                   XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects import Integration, Playbook, Script
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
     YAMLContentObject
 from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.common.git_util import GitUtil

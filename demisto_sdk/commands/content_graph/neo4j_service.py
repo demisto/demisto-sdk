@@ -94,8 +94,7 @@ def _is_apoc_available(plugins_path: Path, sha1: str) -> bool:
 
 
 def _download_apoc():
-    apocs = [apoc for apoc in requests.get(APOC_URL_VERSIONS, verify=False).json()
-             if apoc["neo4j"] == NEO4J_VERSION]
+    apocs = [apoc for apoc in requests.get(APOC_URL_VERSIONS, verify=False).json() if apoc["neo4j"] == NEO4J_VERSION]
     if not apocs:
         logger.debug(f"Could not find APOC for neo4j version {NEO4J_VERSION}")
         return
@@ -125,7 +124,8 @@ def start(use_docker: bool = True):
     if not use_docker:
         _neo4j_admin_command("set-initial-password", f"neo4j-admin set-initial-password {NEO4J_PASSWORD}")
         run_command("neo4j start", cwd=REPO_PATH, is_silenced=False)
-
+        # health check to make sure that neo4j is up
+        _wait_until_service_is_up()
     else:
         Path.mkdir(REPO_PATH / NEO4J_FOLDER, exist_ok=True, parents=True)
         # we download apoc only if we are running on docker
@@ -151,9 +151,13 @@ def start(use_docker: bool = True):
                 "NEO4J_dbms_security_procedures_unrestricted": "apoc.*",
                 "NEO4J_dbms_security_procedures_allowlist": "apoc.*",
             },
+            healthcheck={
+                "test": f"curl --fail {NEO4J_DATABASE_HTTP} || exit 1",
+                "interval": 5 * 1000000000,
+                "timeout": 10 * 1000000000,
+                "retries": 10,
+            },
         )
-    # health check to make sure that neo4j is up
-    _wait_until_service_is_up()
 
 
 def stop(use_docker: bool):

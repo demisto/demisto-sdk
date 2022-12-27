@@ -6,9 +6,9 @@ from pathlib import Path
 from typing import List
 
 from pydantic import BaseModel, DirectoryPath
-from demisto_sdk.commands.common.cpu_count import cpu_count
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.tools import get_content_path
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 

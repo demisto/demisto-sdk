@@ -30,7 +30,7 @@ class RepositoryParser:
             packs_to_parse (Optional[List[str]]): A list of packs to parse. If not provided, parses all packs.
         """
         self.path: Path = path
-            
+
         self.packs_to_parse: Optional[List[str]] = packs_to_parse
         try:
             with multiprocessing.Pool(processes=cpu_count()) as pool:

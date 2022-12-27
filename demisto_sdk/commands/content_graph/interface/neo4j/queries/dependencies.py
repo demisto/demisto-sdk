@@ -1,17 +1,14 @@
-from collections import defaultdict
-import logging
-from typing import Any, Dict, List, Tuple
 import json
+import logging
 import os
+from typing import Dict, List
+
 from neo4j import Transaction
-from demisto_sdk.commands.common.constants import DEPRECATED_CONTENT_PACK
-from demisto_sdk.commands.common.constants import MarketplaceVersions, GENERIC_COMMANDS_NAMES
+
+from demisto_sdk.commands.common.constants import DEPRECATED_CONTENT_PACK, GENERIC_COMMANDS_NAMES, MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, Neo4jRelationshipResult, RelationshipType
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
-    is_target_available,
-    run_query,
-    to_neo4j_map,
-)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (is_target_available, run_query,
+                                                                               to_neo4j_map)
 
 IGNORED_PACKS_IN_DEPENDENCY_CALC = ["NonSupported", "Base", "ApiModules"]
 
@@ -115,7 +112,7 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
     the same content type and id as the dependency which is in the marketplace.
 
     In addition, we will not handle cases which the dependency is a generic command, as we assume it exists.
-    
+
     If such dependencies were found, we drop the content item from the marketplace.
     """
     query = f"""

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any, Generator, List, Optional
 from packaging.version import parse
 from pydantic import BaseModel, Field, validator
 
-from demisto_sdk.commands.common.constants import CONTRIBUTORS_README_TEMPLATE, MarketplaceVersions
+from demisto_sdk.commands.common.constants import BASE_PACK, CONTRIBUTORS_README_TEMPLATE, MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import MarketplaceTagParser, get_content_path
 from demisto_sdk.commands.content_graph.common import (PACK_METADATA_FILENAME, ContentType, Nodes, Relationships,
@@ -42,14 +42,13 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
-from demisto_sdk.commands.common.constants import BASE_PACK
-
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
 logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
+
 
 class PackContentItems(BaseModel):
     # The alias is for marshalling purposes

@@ -4,10 +4,10 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set
 
 from neo4j import GraphDatabase, Neo4jDriver, Session, graph
-from demisto_sdk.commands.common.cpu_count import cpu_count
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.content_graph.common import (NEO4J_DATABASE_URL, NEO4J_PASSWORD, NEO4J_USERNAME, ContentType,
                                                        Neo4jRelationshipResult, RelationshipType)
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface

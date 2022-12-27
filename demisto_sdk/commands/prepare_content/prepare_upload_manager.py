@@ -32,7 +32,7 @@ class PrepareUploadManager:
                 input = input.parent
             output = input / content_item.normalize_name
         else:
-            if not output.is_file():
+            if output.is_dir():
                 output = output / content_item.normalize_name
 
         if isinstance(content_item, Pack):

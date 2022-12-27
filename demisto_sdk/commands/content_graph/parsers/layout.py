@@ -31,7 +31,7 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
         self.details_v2: bool = bool(self.json_data.get("detailsV2"))
         self.mobile: bool = bool(self.json_data.get("mobile"))
 
-        # self.connect_to_dependencies()
+        self.connect_to_dependencies()
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

@@ -854,10 +854,10 @@ class TestRNUpdateUnit:
 - **XDR Alerts**
 
 #### Object Types
-- **(Asset) - Sample GenericType**
+- **Sample GenericType**
 
 #### Object Fields
-- **(Asset) - Sample GenericField**
+- **Sample GenericField**
 """
     CHANGED_FILES = {
         ("Cortex XDR Incident", FileType.INCIDENT_TYPE): {"description": "", "is_new_file": False},
@@ -880,10 +880,10 @@ class TestRNUpdateUnit:
 - **XDR Alerts**
 
 #### Object Types
-- **(Asset) - Sample GenericType**
+- **Sample GenericType**
 
 #### Object Fields
-- **(Asset) - Sample GenericField**
+- **Sample GenericField**
 
 #### Integrations
 ##### Cortex XDR - IR

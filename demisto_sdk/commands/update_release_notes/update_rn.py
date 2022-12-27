@@ -676,10 +676,11 @@ class UpdateRN:
                 rn_desc += f'- Updated the Docker image to: *{docker_image}*.'
 
             if _header_by_type and _header_by_type in current_rn_without_docker_images:
-                for line in current_rn.replace('#####', '').split('\n'):
-                    if line == content_name and docker_image:
-                        new_rn = self.handle_existing_rn_with_docker_image(new_rn, _header_by_type, docker_image,
-                                                                           content_name)
+                for line in current_rn.replace('#####', '').replace('**', '').split('\n'):
+                    if content_name == line.replace('-', '', 1).strip():
+                        if docker_image:
+                            new_rn = self.handle_existing_rn_with_docker_image(new_rn, _header_by_type, docker_image,
+                                                                               content_name)
                         break
                 else:
                     self.existing_rn_changed = True

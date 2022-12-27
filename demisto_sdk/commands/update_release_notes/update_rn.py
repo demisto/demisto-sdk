@@ -676,10 +676,11 @@ class UpdateRN:
                 rn_desc += f'- Updated the Docker image to: *{docker_image}*.'
 
             if _header_by_type and _header_by_type in current_rn_without_docker_images:
-                if content_name in current_rn_without_docker_images:
-                    if docker_image:
+                for line in current_rn.replace('#####', '').split('\n'):
+                    if line == content_name and docker_image:
                         new_rn = self.handle_existing_rn_with_docker_image(new_rn, _header_by_type, docker_image,
                                                                            content_name)
+                        break
                 else:
                     self.existing_rn_changed = True
                     rn_parts = new_rn.split(_header_by_type)
@@ -723,9 +724,8 @@ class UpdateRN:
             # Splitting again by content name to append the docker image release note to corresponding
             # content entry only
             content_parts = rn_parts[1].split(f'{content_name}\n')
-            if len(content_parts) > 1:
-                new_rn = f'{rn_parts[0]}{header_by_type}{content_parts[0]}{content_name}\n{new_rn_part}\n' \
-                         f'{content_parts[1]}'
+            new_rn = f'{rn_parts[0]}{header_by_type}{content_parts[0]}{content_name}\n{new_rn_part}\n' \
+                     f'{content_parts[1]}'
         else:
             print_warning(f'Could not parse release notes {new_rn} by header type: {header_by_type}')
         return new_rn

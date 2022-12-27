@@ -992,13 +992,15 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_integration_deprecation__only_display_name_suffix():
-        return 'All integrations whose display_names end with `(Deprecated)` must have `deprecated:true`.'
+    def invalid_integration_deprecation__only_display_name_suffix(path: str):
+        return 'All integrations whose display_names end with `(Deprecated)` must have `deprecated:true`.' \
+            f'Please run demisto-sdk format --deprecate -i {path}'
 
     @staticmethod
     @error_code_decorator
-    def invalid_deprecation__only_description_deprecated():
-        return 'All integrations whose description states are deprecated, must have `deprecated:true`.'
+    def invalid_deprecation__only_description_deprecated(path: str):
+        return 'All integrations whose description states are deprecated, must have `deprecated:true`.' \
+            f'Please run demisto-sdk format --deprecate -i {path}'
 
     @staticmethod
     @error_code_decorator

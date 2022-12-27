@@ -1718,3 +1718,36 @@ class TestisContextChanged:
         if remove_readme:
             os.remove(integration.readme.path)
         assert integration_validator.validate_readme_exists(integration_validator.validate_all) is expected_result
+
+    @pytest.mark.parametrize(
+        "integration_yml, is_validation_ok",
+        [
+            (
+                {'script': {'nativeimage': 'test'}, 'commonfields': {'id': 'test'}},
+                False
+            ),
+            (
+                {'commonfields': {'id': 'test'}},
+                True
+            )
+        ]
+    )
+    def test_is_native_image_does_not_exist_in_yml_fail(self, repo, integration_yml, is_validation_ok):
+        """
+          Given:
+              - Case A: integration yml that has the nativeimage key
+              - Case B: integration yml that does not have the nativeimage key
+
+          When:
+              - when executing the is_native_image_does_not_exist_in_yml method
+
+          Then:
+              - Case A: make sure the validation fails.
+              - Case B: make sure the validation pass.
+        """
+        pack = repo.create_pack('test')
+        integration = pack.create_integration(yml=integration_yml)
+        structure_validator = StructureValidator(integration.yml.path)
+        integration_validator = IntegrationValidator(structure_validator)
+
+        assert integration_validator.is_native_image_does_not_exist_in_yml() == is_validation_ok

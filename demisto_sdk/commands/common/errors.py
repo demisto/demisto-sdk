@@ -247,6 +247,7 @@ ERROR_CODE = {
     'missing_reliability_parameter': {'code': 'IN154', 'ui_applicable': False, 'related_field': 'configuration'},
     'integration_is_deprecated_and_used': {'code': 'IN155', 'ui_applicable': True, 'related_field': 'deprecated'},
     'invalid_hidden_attribute_for_param': {'code': 'IN156', 'ui_applicable': False, 'related_field': 'hidden'},
+    'nativeimage_exist_in_integration_yml': {'code': 'IN157', 'ui_applicable': False, 'related_field': 'script'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -398,6 +399,7 @@ ERROR_CODE = {
     "incident_in_script_arg": {'code': "SC105", 'ui_applicable': True, 'related_field': 'args.name'},
     "runas_is_dbotrole": {'code': "SC106", 'ui_applicable': False, 'related_field': 'runas'},
     'script_is_deprecated_and_used': {'code': 'SC107', 'ui_applicable': True, 'related_field': 'deprecated'},
+    'nativeimage_exist_in_script_yml': {'code': 'SC108', 'ui_applicable': False, 'related_field': 'nativeimage'},
 
     # ST - Structures
     "structure_doesnt_match_scheme": {'code': "ST100", 'ui_applicable': False, 'related_field': ''},
@@ -2614,3 +2616,13 @@ class Errors:
     @error_code_decorator
     def correlation_rule_starts_with_hyphen():
         return "Correlation rule files cannot start with a hyphen, please remove it."
+
+    @staticmethod
+    @error_code_decorator
+    def nativeimage_exist_in_integration_yml(integration_id):
+        return f'integration {integration_id} contains the nativeimage key in its yml, please remove it.'
+
+    @staticmethod
+    @error_code_decorator
+    def nativeimage_exist_in_script_yml(script_id):
+        return f'script {script_id} contains the nativeimage key in its yml, please remove it.'

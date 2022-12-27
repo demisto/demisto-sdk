@@ -1204,12 +1204,12 @@ def get_all_docker_images(script_obj) -> List[str]:
     """Gets a yml as dict and returns a list of all 'dockerimage' values in the yml.
 
     Args:
-        script_obj (dict): A yml dict (of the integration/script that lint runs on).
+        script_obj (dict): A yml dict.
 
     Returns:
-        List. A list of all docker images that appears in the integration/script yml.
+        List. A list of all docker images.
     """
-    # this makes sure the first docker in the list is the main docker image
+    # this makes sure the first docker in the list is the main docker image.
     def_docker_image = DEF_DOCKER
     if script_obj.get('type') == TYPE_PWSH:
         def_docker_image = DEF_DOCKER_PWSH

@@ -152,7 +152,7 @@ def start(use_docker: bool = True):
                 "NEO4J_dbms_security_procedures_unrestricted": "apoc.*",
                 "NEO4J_dbms_security_procedures_allowlist": "apoc.*",
             },
-            healthcheck={"test": "curl --fail http://localhost:7474 || exit 1", "interval": 5 * 1000000000, "timeout": 10 * 1000000000},
+            healthcheck={"test": f"curl --fail {NEO4J_DATABASE_HTTP} || exit 1", "interval": 5 * 1000000000, "timeout": 10 * 1000000000},
         )
 
 

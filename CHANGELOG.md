@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Added the `--docker-image` argument to the **lint** command, which allows determine the docker image to run lint on. Possible options are: `'naive:<server version>'`, `'native:latest'`, `'all'`, a specific demisto docker image (from Docker Hub) or the default `'from-yml'`.
 * Fixed an issue where modeling rules with arbitrary whitespace characters were not parsed correctly.
 * Added support for the **nativeImage** key for an integration/script in the **prepare-content** command.
 

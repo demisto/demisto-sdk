@@ -640,7 +640,7 @@ def secrets(config, **kwargs):
               help="The timeout (in seconds) for requests done by the docker client.", type=int)
 @click.option("-di", "--docker-image", default='from-yml',
               help="The docker image to check package on. "
-                   "Possible values: 'naive:<server version>', 'native:latest', 'all, a specific docker image tag"
+                   "Possible values: 'naive:<server version>', 'native:latest', 'all', a specific demisto docker image"
                    " (from Docker Hub) or the default 'from-yml'.")
 @click.option("-idp", "--id-set-path", help="Path to id_set.json, relevant for when using the "
                                             "--check-dependent-api-module flag.",

@@ -94,8 +94,7 @@ def _is_apoc_available(plugins_path: Path, sha1: str) -> bool:
 
 
 def _download_apoc():
-    apocs = [apoc for apoc in requests.get(APOC_URL_VERSIONS, verify=False).json()
-             if apoc["neo4j"] == NEO4J_VERSION]
+    apocs = [apoc for apoc in requests.get(APOC_URL_VERSIONS, verify=False).json() if apoc["neo4j"] == NEO4J_VERSION]
     if not apocs:
         logger.debug(f"Could not find APOC for neo4j version {NEO4J_VERSION}")
         return
@@ -152,7 +151,12 @@ def start(use_docker: bool = True):
                 "NEO4J_dbms_security_procedures_unrestricted": "apoc.*",
                 "NEO4J_dbms_security_procedures_allowlist": "apoc.*",
             },
-            healthcheck={"test": f"curl --fail {NEO4J_DATABASE_HTTP} || exit 1", "interval": 5 * 1000000000, "timeout": 10 * 1000000000},
+            healthcheck={
+                "test": f"curl --fail {NEO4J_DATABASE_HTTP} || exit 1",
+                "interval": 5 * 1000000000,
+                "timeout": 10 * 1000000000,
+                "retries": 10,
+            },
         )
 
 

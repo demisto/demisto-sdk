@@ -1212,6 +1212,13 @@ class Linter:
         log_prompt = f"{self._pack_name} - Get All Docker Images For Lint"
         imgs = []
 
+        if docker_image_flag == 'from-yml': # the default option
+            # Desirable docker images are the docker images from the yml file (alt-dockerimages included)
+            imgs = self._get_docker_images_from_yml(script_obj)
+            if imgs:
+                logger.info(f"{log_prompt} - Docker image to run on are: {', '.join(imgs)}.")
+            return imgs
+
         di_from_yml = script_obj.get('dockerimage')
         # If the 'dockerimage' key does not exist in yml - run on native image checks will be skipped
         native_image_config_obj = NativeImageConfig()
@@ -1246,12 +1253,6 @@ class Linter:
             else:
                 # Integration/Script does not support native images
                 logger.info(f"{log_prompt} - Skipping checks on docker - {script_id} does not support native images.")
-
-        elif docker_image_flag == 'from-yml':
-            # Desirable docker images are the docker images from the yml file (alt-dockerimages included)
-            imgs = self._get_docker_images_from_yml(script_obj)
-            if imgs:
-                logger.info(f"{log_prompt} - Docker image to run on are: {', '.join(imgs)}.")
 
         elif docker_image_flag == 'all':
             # desirable docker images are the docker images from the yml file, the native image of the current server

@@ -105,11 +105,11 @@ class ContentType(str, enum.Enum):
     @staticmethod
     def server_names() -> List[str]:
         return [c.server_name for c in ContentType] + ["indicatorfield", "mapper"]
-    
+
     @staticmethod
     def values() -> Iterator[str]:
         return (c.value for c in ContentType)
-    
+
     @classmethod
     def by_path(cls, path: Path) -> "ContentType":
         for idx, folder in enumerate(path.parts):

@@ -1212,7 +1212,7 @@ class Linter:
         log_prompt = f"{self._pack_name} - Get All Docker Images For Lint"
         imgs = []
 
-        if docker_image_flag == 'from-yml': # the default option
+        if docker_image_flag == 'from-yml':  # the default option
             # Desirable docker images are the docker images from the yml file (alt-dockerimages included)
             imgs = self._get_docker_images_from_yml(script_obj)
             if imgs:

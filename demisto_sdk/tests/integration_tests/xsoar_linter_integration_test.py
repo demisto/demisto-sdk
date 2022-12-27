@@ -142,7 +142,7 @@ def test_xsoar_linter_errors(mocker, file, python_version, support_level, long_r
     - file to run the linter on.
     - Python version of the file.
     - expected exit code of the xsoar linter function.
-    - expected error messages of the xosar linter.
+    - expected error messages of the xsoar linter.
 
     When
     - Running xsoar linter using demisto lint.

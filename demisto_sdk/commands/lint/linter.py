@@ -52,11 +52,11 @@ class Linter:
             req_3(list): requirements for docker using python3.
             docker_engine(bool):  Whether docker engine detected by docker-sdk.
             docker_timeout(int): Timeout for docker requests.
-            docker_image(str): Desirable docker image to run lint on.
+            docker_image(str): Desirable docker image to run lint on (default value is 'from-yml).
     """
 
     def __init__(self, pack_dir: Path, content_repo: Path, req_3: list, req_2: list, docker_engine: bool,
-                 docker_timeout: int, docker_image: str):
+                 docker_timeout: int, docker_image: str = 'from-yml'):
         self._req_3 = req_3
         self._req_2 = req_2
         self._content_repo = content_repo
@@ -253,7 +253,7 @@ class Linter:
                 if not self._facts["images"]:
                     if not self._facts["python_version"]:
                         imgs = get_all_docker_images(script_obj=script_obj)
-                        py_num: str = get_python_version_from_image(image=imgs[0], timeout=self.docker_timeout)
+                        py_num = get_python_version_from_image(image=imgs[0], timeout=self.docker_timeout)
                         self._facts["python_version"] = py_num
 
                 # Checking whatever *test* exists in package
@@ -1099,12 +1099,14 @@ class Linter:
                 f"{log_prompt} - Skipping checks on docker for {native_image}. The requested native image: "
                 f"{native_image} is not supported. For supported native image versions please see: "
                 f"'Tests/docker_native_image_config.json'")
+            return None
 
         elif native_image not in supported_native_images:
             # Integration/Script doesn't support the requested native image
             logger.info(
                 f"{log_prompt} - Skipping checks on docker for {native_image} - {script_id} does not support the "
                 f"requested native image: {native_image}.")
+            return None
 
         else:
             # Integration/Script supports the requested native image - find the relevant tag to run on

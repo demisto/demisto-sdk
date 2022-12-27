@@ -6,7 +6,7 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 
 
-class LayoutRuleParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
+class LayoutRuleParser(JSONContentItemParser, content_type=ContentType.LAYOUT_RULE):
     def __init__(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:

@@ -715,30 +715,6 @@ class TestRNUpdate:
         assert 'test_pack' in rn_desc
         assert '(Available from Cortex XSOAR 6.5.0).' not in rn_desc
 
-    @staticmethod
-    def test_update_rn_new_trigger(repo):
-        """
-        Case - new trigger, XSIAM, fromversion exists, description exists
-        Expected - release note should contain New, description and version but should not contain
-        (Available from Cortex XSOAR {fromversion}).
-        """
-        pack = repo.create_pack('test_pack')
-        new_trigger = pack.create_trigger(name='incident field',
-                                          content={'description': 'description for testing',
-                                                   'fromversion': '6.5.0'})
-        update_rn = UpdateRN(pack_path=pack.path, update_type='minor', added_files=new_trigger.path,
-                             modified_files_in_pack=set())
-
-        rn_desc = update_rn.build_rn_desc(_type=FileType.TRIGGER, content_name=pack.name, is_new_file=True,
-                                          desc=new_trigger.read_json_as_dict().get('description'),
-                                          from_version=new_trigger.read_json_as_dict().get('fromversion'))
-
-        assert '##### New:' not in rn_desc  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
-        assert 'description for testing' in rn_desc  # check if release note contains description when description
-        # not empty
-        assert '(Available from Cortex XSOAR 6.5.0).' not in rn_desc  # check if release note contains fromversion
-        # when exists
-
     def test_update_rn_with_deprecated_and_text(self, mocker):
         """
             Given:

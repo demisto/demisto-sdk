@@ -1,7 +1,13 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where the **prepare-content** command output invalid automation name when used with the --*custom* argument.
 * Fixed an issue where modeling rules with arbitrary whitespace characters were not parsed correctly.
-* Added support for the **nativeImage** key for an integration/script in the **prepare-content** command.
+* Added support for the **nativeimage** key for an integration/script in the **prepare-content** command.
+* Changed the **validate** command to fail on the IN145 error code only when the parameter with type 4 is not hidden.
+* Fixed an issue where downloading content layouts with `detailsV2=None` resulted in an error.
+* Fixed an issue where **xdrctemplate** was missing 'external' prefix.
+* Fixed an issue in **prepare-content** command providing output path.
+* Updated the **validate** and **update-release-notes** commands to skip the *Triggers Recommendations* content type.
 * Added a new validation to the **validate** command to verify that the release notes headers are in the correct format.
 
 ## 1.8.1

@@ -4,8 +4,7 @@ import re
 from typing import Dict, List, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (CUSTOM_CONTENT_FILE_ENDINGS, ENTITY_TYPE_TO_DIR, PACKS_DIR,
-                                                   RN_CONTENT_ENTITY_WITH_STARS, RN_HEADER_BY_FILE_TYPE,
-                                                   SKIP_RELEASE_NOTES_FOR_TYPES)
+                                                   RN_HEADER_BY_FILE_TYPE, SKIP_RELEASE_NOTES_FOR_TYPES)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
 from demisto_sdk.commands.common.tools import (extract_docker_image_from_text, find_type, get_dict_from_file,
@@ -13,9 +12,9 @@ from demisto_sdk.commands.common.tools import (extract_docker_image_from_text, f
                                                get_pack_name, get_release_notes_file_path, get_yaml)
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
-ENTITY_TYPE_SECTION_REGEX = re.compile(r'^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)', re.M)
-ENTITY_SECTION_REGEX = re.compile(r'^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|'
-                                  r'^- \*\*(.+)\*\*$\n', re.M)
+CONTENT_TYPE_SECTION_REGEX = re.compile(r'^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)', re.M)
+CONTENT_ITEM_SECTION_REGEX = re.compile(r'^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|'
+                                        r'^- \*\*(.+)\*\*$\n', re.M)
 
 
 class ReleaseNotesValidator(BaseValidator):
@@ -57,16 +56,16 @@ class ReleaseNotesValidator(BaseValidator):
         Args:
             None.
         Return:
-            The headers of the release notes file.
+            A dictionary representation of the release notes file that maps content types' headers to their corresponding content items' headers.
         """
         headers: Dict = {}
         # Get all sections from the release notes using regex
-        rn_sections = ENTITY_TYPE_SECTION_REGEX.findall(self.latest_release_notes)
+        rn_sections = CONTENT_TYPE_SECTION_REGEX.findall(self.latest_release_notes)
         for section in rn_sections:
             section = self.filter_nones(ls=section)
             content_type = section[0]
             content_type_sections_str = section[1]
-            content_type_sections_ls = ENTITY_SECTION_REGEX.findall(content_type_sections_str)
+            content_type_sections_ls = CONTENT_ITEM_SECTION_REGEX.findall(content_type_sections_str)
             if not content_type_sections_ls:
                 #  Did not find content items headers under content type - might be duo to invalid format.
                 #  Will raise error in rn_valid_header_format.
@@ -98,11 +97,8 @@ class ReleaseNotesValidator(BaseValidator):
         Return:
             None.
         """
-        contents_with_stars = [RN_HEADER_BY_FILE_TYPE[content] for content in RN_CONTENT_ENTITY_WITH_STARS]
         for content_type, content_items in headers.items():
             content_items = self.filter_nones(ls=content_items)
-            if content_type in contents_with_stars:
-                content_items = list(map(lambda x: x.replace('**', ''), content_items))
             headers[content_type] = [item.replace('New:', '').strip() for item in content_items]
 
     @error_codes('RN113')
@@ -117,7 +113,8 @@ class ReleaseNotesValidator(BaseValidator):
         # Get all the content type headers
         rn_valid_headers = RN_HEADER_BY_FILE_TYPE.values()
         if content_type not in rn_valid_headers:
-            error_message, error_code = Errors.release_notes_invalid_content_type_header(content_type=content_type, pack_name=self.pack_name)
+            error_message, error_code = Errors.release_notes_invalid_content_type_header(content_type=content_type,
+                                                                                         pack_name=self.pack_name)
             if self.handle_error(error_message, error_code, self.release_notes_file_path):
                 return False
         return True
@@ -269,12 +266,12 @@ class ReleaseNotesValidator(BaseValidator):
         validations = []
 
         headers = self.extract_rn_headers()
-        # validations.append(self.validate_special_forms(headers))
         self.filter_rn_headers(headers=headers)
         for content_type, content_items in headers.items():
             validations.append(self.rn_valid_header_format(content_type=content_type, content_items=content_items))
             validations.append(self.validate_content_type_header(content_type=content_type))
-            validations.append(self.validate_content_item_header(content_type=content_type, content_items=content_items))
+            validations.append(
+                self.validate_content_item_header(content_type=content_type, content_items=content_items))
         return all(validations)
 
     @staticmethod

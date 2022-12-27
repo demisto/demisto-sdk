@@ -254,7 +254,7 @@ class Downloader:
         file_json_object = json.loads(layout_string)
         layout_name = file_json_object.get('name')
         if layout_name and (layout_name in self.input_files or self.all_custom_content):
-            for tab in file_json_object.get('detailsV2', {}).get('tabs', ()):
+            for tab in (file_json_object.get('detailsV2') or {}).get('tabs', ()):
                 for section in tab.get('sections', ()):
                     for item in section.get('items', ()):
                         script_id = item.get('scriptId')

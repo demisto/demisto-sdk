@@ -111,13 +111,13 @@ class IntegrationScriptUnifier(Unifier):
     @staticmethod
     def add_custom_section(unified_yml: Dict, custom: str = '', is_script_package: bool = False) -> Dict:
         """
-            Args:
-                unified_yml - The unified_yml
-            Returns:
-                 the unified yml with the id/name/display appended with the custom label
-                 if the fields exsits.
+        Args:
+            unified_yml - The unified_yml
+        Returns:
+             the unified yml with the id/name/display appended with the custom label
+             if the fields exsits.
         """
-        to_append = f' - {custom}'
+        to_append = custom if is_script_package else f' - {custom}'
         if unified_yml.get('name'):
             unified_yml['name'] += to_append
         if unified_yml.get('commonfields', {}).get('id'):

@@ -85,6 +85,6 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             logger.debug(
                 f'Adding the following native images {supported_native_images} to integration {self.object_id}'
             )
-            data['script']['nativeImage'] = supported_native_images
+            data['script']['nativeimage'] = supported_native_images
 
         return data

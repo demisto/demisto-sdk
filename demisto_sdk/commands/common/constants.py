@@ -212,6 +212,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.INCIDENT_FIELD.value: INCIDENT_FIELDS_DIR,
     FileType.INCIDENT_TYPE.value: INCIDENT_TYPES_DIR,
     FileType.INDICATOR_FIELD.value: INDICATOR_FIELDS_DIR,
+    FileType.INDICATOR_TYPE.value: INDICATOR_TYPES_DIR,
     FileType.CONNECTION.value: CONNECTIONS_DIR,
     FileType.CLASSIFIER.value: CLASSIFIERS_DIR,
     FileType.DASHBOARD.value: DASHBOARDS_DIR,
@@ -1412,7 +1413,7 @@ MAX_FETCH = 'max_fetch'
 
 SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
                                 FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE, None,
-                                FileType.RELEASE_NOTES_CONFIG, FileType.CONTRIBUTORS, FileType.TRIGGER,)
+                                FileType.RELEASE_NOTES_CONFIG, FileType.CONTRIBUTORS)
 
 LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggregatedreliability', 'detectedips',
                                      'detectedhosts', 'modified', 'expiration', 'timestamp', 'shortdesc',

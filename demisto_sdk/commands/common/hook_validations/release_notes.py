@@ -270,8 +270,7 @@ class ReleaseNotesValidator(BaseValidator):
         for content_type, content_items in headers.items():
             validations.append(self.rn_valid_header_format(content_type=content_type, content_items=content_items))
             validations.append(self.validate_content_type_header(content_type=content_type))
-            validations.append(
-                self.validate_content_item_header(content_type=content_type, content_items=content_items))
+            validations.append(self.validate_content_item_header(content_type=content_type, content_items=content_items))
         return all(validations)
 
     @staticmethod

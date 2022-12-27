@@ -5,6 +5,8 @@
 * Added support for the **nativeimage** key for an integration/script in the **prepare-content** command.
 * Changed the **validate** command to fail on the IN145 error code only when the parameter with type 4 is not hidden.
 * Fixed an issue where downloading content layouts with `detailsV2=None` resulted in an error.
+* Fixed an issue where **xdrctemplate** was missing 'external' prefix.
+* Fixed an issue in **prepare-content** command providing output path.
 
 ## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.

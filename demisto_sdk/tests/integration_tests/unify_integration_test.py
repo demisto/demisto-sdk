@@ -181,7 +181,7 @@ class TestIntegrationScriptUnifier:
                     assert unified_yml_data.get('name') == 'Sample - Test'
                 else:
                     assert unified_yml_data.get('name') == 'Sample'
-                assert unified_yml_data.get('script').get('nativeImage') == ['8.1', '8.2']
+                assert unified_yml_data.get('script').get('nativeimage') == ['8.1', '8.2']
 
     def test_add_custom_section_flag(self, repo):
         """
@@ -194,7 +194,7 @@ class TestIntegrationScriptUnifier:
         Then:
             - check that the 'Test' label was appended to the name of the script
             in the unified yml
-            - make sure the nativeImage was key was added with the native-images.
+            - make sure the nativeimage was key was added with the native-images.
         """
         pack = repo.create_pack('PackName')
         script = pack.create_script('dummy-script', 'script-code')
@@ -206,7 +206,7 @@ class TestIntegrationScriptUnifier:
             with open(os.path.join(script.path, 'script-dummy-script.yml')) as unified_yml:
                 unified_yml_data = yaml.load(unified_yml)
                 assert unified_yml_data.get('name') == 'sample_script - Test'
-                assert unified_yml_data.get('nativeImage') == ['8.1', '8.2']
+                assert unified_yml_data.get('nativeimage') == ['8.1', '8.2']
 
     def test_ignore_native_image_integration(self, repo):
         """
@@ -217,7 +217,7 @@ class TestIntegrationScriptUnifier:
             - running the Unify command along with -ini flag
 
         Then:
-            - make sure the nativeImage key is not added to the integration unified yml.
+            - make sure the nativeimage key is not added to the integration unified yml.
         """
         pack = repo.create_pack('PackName')
         integration = pack.create_integration('dummy-integration')
@@ -229,7 +229,7 @@ class TestIntegrationScriptUnifier:
 
             with open(os.path.join(integration.path, 'integration-dummy-integration.yml')) as unified_yml:
                 unified_yml_data = yaml.load(unified_yml)
-                assert 'nativeImage' not in unified_yml_data.get('script')
+                assert 'nativeimage' not in unified_yml_data.get('script')
 
     def test_ignore_native_image_script(self, repo):
         """
@@ -251,4 +251,4 @@ class TestIntegrationScriptUnifier:
             runner.invoke(main, [UNIFY_CMD, '-i', f'{script.path}', '-ini'])
             with open(os.path.join(script.path, 'script-dummy-script.yml')) as unified_yml:
                 unified_yml_data = yaml.load(unified_yml)
-                assert 'nativeImage' not in unified_yml_data
+                assert 'nativeimage' not in unified_yml_data

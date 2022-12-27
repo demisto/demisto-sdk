@@ -1,7 +1,8 @@
 # Changelog
 ## Unreleased
 * Fixed an issue where modeling rules with arbitrary whitespace characters were not parsed correctly.
-* Added support for the **nativeImage** key for an integration/script in the **prepare-content** command.
+* Added support for the **nativeimage** key for an integration/script in the **prepare-content** command.
+* Fixed an issue where downloading content layouts with `detailsV2=None` resulted in an error.
 * Fixed an issue where **xdrctemplate** was missing 'external' prefix.
 * Fixed an issue in **prepare-content** command providing output path.
 

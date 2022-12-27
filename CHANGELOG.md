@@ -7,8 +7,9 @@
 * Fixed an issue where downloading content layouts with `detailsV2=None` resulted in an error.
 * Fixed an issue where **xdrctemplate** was missing 'external' prefix.
 * Fixed an issue in **prepare-content** command providing output path.
-* Fixed an issue where **update-release-notes** fails to update *MicrosoftApiModule* dependent integrations.
 * Updated the **validate** and **update-release-notes** commands to skip the *Triggers Recommendations* content type.
+* Fixed an issue where **update-release-notes** fails to update *MicrosoftApiModule* dependent integrations.
+
 
 ## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.

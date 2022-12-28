@@ -1586,12 +1586,12 @@ def process_layoutscontainers(file_path: str, packs: Dict[str, Dict], marketplac
 
         layout_data = get_layoutscontainer_data(file_path, packs=packs)
 
-        # only indicator layouts are supported in marketplace v2.
-        layout_group = list(layout_data.values())[0].get('group')
-        if marketplace == MarketplaceVersions.MarketplaceV2.value and layout_group == 'incident':
-            print(f'incident layoutcontainer "{file_path}" is not supported in marketplace v2, excluding.')
-            add_item_to_exclusion_dict(excluded_items_from_id_set, file_path, list(layout_data.keys())[0])
-            return result, excluded_items_from_id_set
+        # # only indicator layouts are supported in marketplace v2.
+        # layout_group = list(layout_data.values())[0].get('group')
+        # if marketplace == MarketplaceVersions.MarketplaceV2.value and layout_group == 'incident':
+        #     print(f'incident layoutcontainer "{file_path}" is not supported in marketplace v2, excluding.')
+        #     add_item_to_exclusion_dict(excluded_items_from_id_set, file_path, list(layout_data.keys())[0])
+        #     return result, excluded_items_from_id_set
 
         if print_logs:
             print(f'adding {file_path} to id_set')

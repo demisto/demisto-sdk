@@ -2,8 +2,11 @@ from typing import List
 
 import pytest
 
-from demisto_sdk.commands.common.native_image import (NativeImageConfig, ScriptIntegrationSupportedNativeImages,
-                                                      file_to_native_image_config)
+from demisto_sdk.commands.common.native_image import (
+    NativeImageConfig,
+    ScriptIntegrationSupportedNativeImages,
+    file_to_native_image_config,
+)
 
 
 @pytest.fixture
@@ -39,44 +42,41 @@ def test_docker_images_to_supported_native_images(native_image_config):
     - make sure each docker image is getting mapped correctly
     """
     assert native_image_config.docker_images_to_native_images_mapping == {
-        'python3': ['native:8.1', 'native:8.2'],
-        'py3-tools': ['native:8.1', 'native:8.2'],
-        'unzip': ['native:8.1', 'native:8.2'],
-        'chromium': ['native:8.1', 'native:8.2'],
-        'tesseract': ['native:8.1', 'native:8.2'],
-        'pan-os-python': ['native:8.2'],
-        'tld': ['native:8.1']
+        "python3": ["native:8.1", "native:8.2"],
+        "py3-tools": ["native:8.1", "native:8.2"],
+        "unzip": ["native:8.1", "native:8.2"],
+        "chromium": ["native:8.1", "native:8.2"],
+        "tesseract": ["native:8.1", "native:8.2"],
+        "pan-os-python": ["native:8.2"],
+        "tld": ["native:8.1"],
     }
 
 
 class TestScriptIntegrationSupportedNativeImages:
-
     @pytest.mark.parametrize(
-        '_id, docker_image, expected_native_images',
+        "_id, docker_image, expected_native_images",
         [
             (
-                'UnzipFile', 'demisto/unzip:1.0.0.23423', ['8.2'],
+                "UnzipFile",
+                "demisto/unzip:1.0.0.23423",
+                ["8.2"],
             ),
+            ("Panorama", "demisto/pan-os-python:1.0.0.30307", []),
+            ("Image OCR", "demisto/tesseract:1.0.0.36078", []),
             (
-                'Panorama', 'demisto/pan-os-python:1.0.0.30307', []
+                "Prisma Cloud Compute",
+                "demisto/python3:3.10.1.25933",
+                ["8.1", "8.2"],
             ),
-            (
-                'Image OCR', 'demisto/tesseract:1.0.0.36078', []
-            ),
-            (
-                'Prisma Cloud Compute', 'demisto/python3:3.10.1.25933', ['8.1', '8.2'],
-            ),
-            (
-                'SSDeepSimilarity', 'demisto/ssdeep:1.0.0.23743', []
-            ),
-        ]
+            ("SSDeepSimilarity", "demisto/ssdeep:1.0.0.23743", []),
+        ],
     )
     def test_get_supported_native_image_versions(
         self,
         native_image_config,
         _id: str,
         docker_image: str,
-        expected_native_images: List[str]
+        expected_native_images: List[str],
     ):
         """
         Given
@@ -97,6 +97,9 @@ class TestScriptIntegrationSupportedNativeImages:
             _id=_id, docker_image=docker_image, native_image_config=native_image_config
         )
 
-        assert native_image_supported_versions.get_supported_native_image_versions(
-            get_raw_version=True
-        ) == expected_native_images
+        assert (
+            native_image_supported_versions.get_supported_native_image_versions(
+                get_raw_version=True
+            )
+            == expected_native_images
+        )

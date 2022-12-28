@@ -27,8 +27,13 @@ class RelationshipData(BaseModel):
         """This is the unique identifier of the relationship"""
 
         return hash(
-            (self.source.database_id, self.target.database_id, self.relationship_type,
-             self.source.content_type, self.target.content_type)
+            (
+                self.source.database_id,
+                self.target.database_id,
+                self.relationship_type,
+                self.source.content_type,
+                self.target.content_type,
+            )
         )
 
     def __eq__(self, __o: object) -> bool:

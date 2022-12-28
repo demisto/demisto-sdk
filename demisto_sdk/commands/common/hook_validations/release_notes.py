@@ -14,7 +14,7 @@ from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
 CONTENT_TYPE_SECTION_REGEX = re.compile(r'^#### ([\w ]+)$\n([\w\W]*?)(?=^#### )|^#### ([\w ]+)$\n([\w\W]*)', re.M)
 CONTENT_ITEM_SECTION_REGEX = re.compile(r'^##### (.+)$\n([\w\W]*?)(?=^##### )|^##### (.+)$\n([\w\W]*)|'
-                                        r'^- (New: )?\*\*(.+)\*\*$\n', re.M)
+                                        r'^- (?:New: )?\*\*(.+)\*\*$\n', re.M)
 
 
 class ReleaseNotesValidator(BaseValidator):

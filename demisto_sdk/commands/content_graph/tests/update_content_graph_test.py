@@ -230,6 +230,7 @@ def _compare_relationships(pack_a: Pack, pack_b: Pack) -> None:
             assert content_item_source
             assert content_item_target_id
             if relationship_type == RelationshipType.IN_PACK:
+                assert content_item_source.in_pack, f"{content_item_source.object_id} is not in pack."
                 assert content_item_source.in_pack.object_id == content_item_target_id
             if relationship_type == RelationshipType.IMPORTS:
                 assert content_item_source.imports[0].object_id == content_item_target_id
@@ -423,7 +424,6 @@ class TestUpdateContentGraph:
                 content_type=ContentType.PACK,
                 all_level_dependencies=True,
             )
-
             compare(
                 repository.packs,
                 packs_from_graph,

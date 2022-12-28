@@ -204,7 +204,7 @@ class IntegrationValidator(ContentEntityValidator):
         is_display_name_deprecated = self.current_file.get('display', '').endswith('(Deprecated)')
 
         if is_deprecated and not is_display_name_deprecated:
-            error_message, error_code = Errors.invalid_deprecated_integration_display_name(self.file_path)
+            error_message, error_code = Errors.invalid_deprecated_integration_display_name()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 
@@ -224,7 +224,7 @@ class IntegrationValidator(ContentEntityValidator):
                                                  re.search(DEPRECATED_NO_REPLACE_DESC_REGEX, description)))
 
         if is_deprecated and not description_indicates_deprecation:
-            error_message, error_code = Errors.invalid_deprecated_integration_description(self.file_path)
+            error_message, error_code = Errors.invalid_deprecated_integration_description()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 

@@ -168,6 +168,9 @@ class ValidateManager:
             FileType.DOC_IMAGE,
             FileType.MODELING_RULE_SCHEMA,
             FileType.XSIAM_REPORT_IMAGE,
+            FileType.PIPFILE,
+            FileType.TXT,
+            FileType.JAVASCRIPT_FILE
         )
 
         self.is_external_repo = is_external_repo
@@ -196,6 +199,7 @@ class ValidateManager:
         if not self.skip_conf_json:
             self.conf_json_validator = ConfJsonValidator(specific_validations=self.specific_validations)
             self.conf_json_data = self.conf_json_validator.conf_data
+        
 
     def is_node_exist(self) -> bool:
         """ Check if node interpreter exists.
@@ -280,6 +284,7 @@ class ValidateManager:
         """Run validations only on specific files
         """
         files_validation_result = set()
+        self.setup_git_params()
 
         for path in self.file_path.split(','):
             error_ignore_list = self.get_error_ignore_list(get_pack_name(path))
@@ -434,16 +439,9 @@ class ValidateManager:
 
     def run_validation_on_package(self, package_path, pack_error_ignore_list):
         package_entities_validation_results = set()
-
         for file_name in os.listdir(package_path):
             file_path = os.path.join(package_path, file_name)
-            should_validate_xsiam_item = self.should_validate_xsiam_content(package_path)
-            should_validate_py_file = file_path.endswith('.py') and file_name not in SKIPPED_FILES
-            if file_path.endswith('.yml') or file_path.endswith('.md') or should_validate_py_file or should_validate_xsiam_item:
-                package_entities_validation_results.add(self.run_validations_on_file(file_path, pack_error_ignore_list))
-
-            else:
-                self.ignored_files.add(file_path)
+            package_entities_validation_results.add(self.run_validations_on_file(file_path, pack_error_ignore_list))
 
         return all(package_entities_validation_results)
 
@@ -497,6 +495,10 @@ class ValidateManager:
                 return False
 
         return True
+    
+    def is_skipped_file(self, file_path):
+        file_name = os.path.basename(file_path)
+        return file_name in SKIPPED_FILES
 
     # flake8: noqa: C901
     def run_validations_on_file(self, file_path, pack_error_ignore_list, is_modified=False,
@@ -519,8 +521,9 @@ class ValidateManager:
         file_type = find_type(file_path)
 
         is_added_file = file_path in added_files if added_files else False
-
-        if file_type in self.skipped_file_types or file_path.endswith('_unified.yml'):
+        if file_path.endswith('.xif'):
+            file_path = file_path.replace('.xif', '.yml')             
+        if file_type in self.skipped_file_types or file_path.endswith('_unified.yml') or self.is_skipped_file(file_path) or self.git_util._is_file_ignored(file_path) or self.detect_file_level(file_path) == PathLevel.PACKAGE:
             self.ignored_files.add(file_path)
             return True
         elif not self.is_valid_file_type(file_type, file_path):

@@ -1426,6 +1426,12 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
 
     elif path.parent.name == DOC_FILES_DIR:
         return FileType.DOC_FILE
+    
+    elif path.name == 'Pipfile' or path.suffix == '.lock':
+        return FileType.PIPFILE
+    
+    elif path.name == 'commands_example' or path.name == 'commands_examples' or path.name == 'command_examples' or path.suffix == '.txt':
+        return FileType.TXT
 
     return None
 

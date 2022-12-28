@@ -164,6 +164,8 @@ class FileType(str, Enum):
     INDICATOR_TYPE = 'indicatortype'
     TOOL = 'tools'
     PACK_METADATA = 'packmetadata'
+    PIPFILE = 'pipfile'
+    TXT = 'txt'
 
 
 RN_HEADER_BY_FILE_TYPE = {

@@ -4,15 +4,30 @@ from typing import Dict, List, Tuple
 
 import click
 
-from demisto_sdk.commands.common.constants import JOB, TESTS_AND_DOC_DIRECTORIES, FileType
+from demisto_sdk.commands.common.constants import (
+    JOB,
+    TESTS_AND_DOC_DIRECTORIES,
+    FileType,
+)
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.tools import find_type, get_files_in_dir, print_error, print_success, print_warning
+from demisto_sdk.commands.common.tools import (
+    find_type,
+    get_files_in_dir,
+    print_error,
+    print_success,
+    print_warning,
+)
 from demisto_sdk.commands.format.format_constants import SCHEMAS_PATH
-from demisto_sdk.commands.format.update_classifier import ClassifierJSONFormat, OldClassifierJSONFormat
+from demisto_sdk.commands.format.update_classifier import (
+    ClassifierJSONFormat,
+    OldClassifierJSONFormat,
+)
 from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_description import DescriptionFormat
-from demisto_sdk.commands.format.update_genericdefinition import GenericDefinitionJSONFormat
+from demisto_sdk.commands.format.update_genericdefinition import (
+    GenericDefinitionJSONFormat,
+)
 from demisto_sdk.commands.format.update_genericfield import GenericFieldJSONFormat
 from demisto_sdk.commands.format.update_genericmodule import GenericModuleJSONFormat
 from demisto_sdk.commands.format.update_generictype import GenericTypeJSONFormat
@@ -26,7 +41,10 @@ from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_lists import ListsFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
 from demisto_sdk.commands.format.update_pack_metadata import PackMetadataJsonFormat
-from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat, TestPlaybookYMLFormat
+from demisto_sdk.commands.format.update_playbook import (
+    PlaybookYMLFormat,
+    TestPlaybookYMLFormat,
+)
 from demisto_sdk.commands.format.update_pre_process_rules import PreProcessRulesFormat
 from demisto_sdk.commands.format.update_pythonfile import PythonFileFormat
 from demisto_sdk.commands.format.update_readme import ReadmeFormat

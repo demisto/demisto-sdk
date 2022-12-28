@@ -3,7 +3,9 @@ from typing import List, Optional, Union
 from wcmatch.pathlib import EXTMATCH, Path
 
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.prepare_content.prepare_upload_manager import PrepareUploadManager
+from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
+    PrepareUploadManager,
+)
 
 from .yaml_content_object import YAMLContentObject
 

@@ -7,7 +7,11 @@ from typing import TYPE_CHECKING, Any, Generator, List, Optional
 from packaging.version import parse
 from pydantic import BaseModel, Field, validator
 
-from demisto_sdk.commands.common.constants import BASE_PACK, CONTRIBUTORS_README_TEMPLATE, MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    BASE_PACK,
+    CONTRIBUTORS_README_TEMPLATE,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import MarketplaceTagParser, get_content_path
 from demisto_sdk.commands.content_graph.common import (
@@ -22,7 +26,9 @@ from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
-from demisto_sdk.commands.content_graph.objects.generic_definition import GenericDefinition
+from demisto_sdk.commands.content_graph.objects.generic_definition import (
+    GenericDefinition,
+)
 from demisto_sdk.commands.content_graph.objects.generic_field import GenericField
 from demisto_sdk.commands.content_graph.objects.generic_module import GenericModule
 from demisto_sdk.commands.content_graph.objects.generic_type import GenericType

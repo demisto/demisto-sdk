@@ -16,7 +16,12 @@ import urllib3.exceptions
 from packaging.version import Version
 from wcmatch.pathlib import Path, PosixPath
 
-from demisto_sdk.commands.common.constants import PACKS_PACK_META_FILE_NAME, TYPE_PWSH, TYPE_PYTHON, DemistoException
+from demisto_sdk.commands.common.constants import (
+    PACKS_PACK_META_FILE_NAME,
+    TYPE_PWSH,
+    TYPE_PYTHON,
+    DemistoException,
+)
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import Colors

@@ -760,7 +760,9 @@ class TestCommandGeneration:
         integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
-            from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import YMLMetadataCollector
+            from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
+                YMLMetadataCollector,
+            )
 
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
 

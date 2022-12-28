@@ -10,7 +10,9 @@ from typing import List
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
+    ContentEntityValidator,
+)
 from demisto_sdk.commands.common.tools import get_files_in_dir
 
 yaml = YAML_Handler()

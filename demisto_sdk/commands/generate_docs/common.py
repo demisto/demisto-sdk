@@ -4,7 +4,12 @@ import re
 from typing import Dict, List, Tuple
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import LOG_COLORS, print_color, print_warning, run_command
+from demisto_sdk.commands.common.tools import (
+    LOG_COLORS,
+    print_color,
+    print_warning,
+    run_command,
+)
 from demisto_sdk.commands.run_cmd.runner import Runner
 
 json = JSON_Handler()

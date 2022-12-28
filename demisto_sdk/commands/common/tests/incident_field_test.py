@@ -1,6 +1,8 @@
 import pytest
 
-from demisto_sdk.commands.common.hook_validations.incident_field import IncidentFieldValidator
+from demisto_sdk.commands.common.hook_validations.incident_field import (
+    IncidentFieldValidator,
+)
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 
 INCIDENT_GROUP_NUMBER = 0

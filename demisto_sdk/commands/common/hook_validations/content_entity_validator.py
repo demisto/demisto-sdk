@@ -24,8 +24,13 @@ from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
-from demisto_sdk.commands.common.hook_validations.structure import StructureValidator  # noqa:F401
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator,
+    error_codes,
+)
+from demisto_sdk.commands.common.hook_validations.structure import (  # noqa:F401
+    StructureValidator,
+)
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,

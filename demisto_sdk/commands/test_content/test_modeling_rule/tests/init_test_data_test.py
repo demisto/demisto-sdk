@@ -52,7 +52,9 @@ def test_init_test_data_create(pack):
         - Ensure the test data file is created.
         - Ensure the test data file contains the correct number of events.
     """
-    from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_test_data_app
+    from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import (
+        app as init_test_data_app,
+    )
 
     runner = CliRunner()
     mr = pack.create_modeling_rule(
@@ -83,7 +85,9 @@ def test_init_test_data_update_with_unchanged_modeling_rule(pack):
     Then:
         - Ensure the test data file contains the correct number of events.
     """
-    from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_test_data_app
+    from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import (
+        app as init_test_data_app,
+    )
 
     runner = CliRunner()
     pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -122,7 +126,9 @@ def test_init_test_data_update_with_reduced_modeling_rule(pack):
             the expected values dictionary for the previously existing events.
         - Ensure the test data file contains the correct number of events.
     """
-    from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_test_data_app
+    from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import (
+        app as init_test_data_app,
+    )
 
     runner = CliRunner()
     pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
@@ -181,7 +187,9 @@ def test_init_test_data_update_with_extended_modeling_rule(pack):
         - Ensure the new field is added to the expected values dictionary for the previously existing
             events.
     """
-    from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_test_data_app
+    from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import (
+        app as init_test_data_app,
+    )
 
     runner = CliRunner()
 
@@ -242,7 +250,9 @@ class TestInitTestDataMultiInput:
             - Ensure the test data files are created.
             - Ensure the test data files contain the correct number of events.
         """
-        from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_test_data_app
+        from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import (
+            app as init_test_data_app,
+        )
 
         runner = CliRunner()
         mr_1 = pack.create_modeling_rule(
@@ -284,7 +294,9 @@ class TestInitTestDataMultiInput:
             - Ensure the test data file contain the correct number of events.
             - Ensure the command returns a non-zero exit code.
         """
-        from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_test_data_app
+        from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import (
+            app as init_test_data_app,
+        )
 
         runner = CliRunner()
         mr_1 = pack.create_modeling_rule(

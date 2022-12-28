@@ -5,7 +5,11 @@ import click
 
 from demisto_sdk.commands.common.constants import BETA_INTEGRATION_DISCLAIMER
 from demisto_sdk.commands.common.tools import find_type
-from demisto_sdk.commands.format.format_constants import ERROR_RETURN_CODE, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE
+from demisto_sdk.commands.format.format_constants import (
+    ERROR_RETURN_CODE,
+    SKIP_RETURN_CODE,
+    SUCCESS_RETURN_CODE,
+)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
 CONTRIBUTOR_DETAILED_DESC = "Contributed Integration"

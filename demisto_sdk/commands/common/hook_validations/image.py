@@ -10,7 +10,10 @@ from demisto_sdk.commands.common.constants import (
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
 )
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator,
+    error_codes,
+)
 from demisto_sdk.commands.common.tools import get_yaml, os, re
 
 

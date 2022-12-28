@@ -425,7 +425,9 @@ class TestPostmanCodeGen:
         - ensure the config file is generated
         - the config file should be identical to the one we have under resources folder
         """
-        from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+        from demisto_sdk.commands.common.hook_validations.docker import (
+            DockerImageValidator,
+        )
 
         mocker.patch.object(
             DockerImageValidator,

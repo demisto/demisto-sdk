@@ -21,7 +21,11 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content.objects.pack_objects import Integration, Playbook, Script
+from demisto_sdk.commands.common.content.objects.pack_objects import (
+    Integration,
+    Playbook,
+    Script,
+)
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import (
     YAMLContentObject,
 )

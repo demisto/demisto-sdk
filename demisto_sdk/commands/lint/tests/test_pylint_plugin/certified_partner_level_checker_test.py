@@ -1,7 +1,9 @@
 import astroid
 import pylint.testutils
 
-from demisto_sdk.commands.lint.resources.pylint_plugins import certified_partner_level_checker
+from demisto_sdk.commands.lint.resources.pylint_plugins import (
+    certified_partner_level_checker,
+)
 
 # You can find documentation about adding new test checker here:
 # http://pylint.pycqa.org/en/latest/how_tos/custom_checkers.html#write-a-checker

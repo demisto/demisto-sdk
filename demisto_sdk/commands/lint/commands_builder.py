@@ -6,10 +6,18 @@ from typing import List, Optional
 from packaging.version import parse
 
 from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import base_msg
-from demisto_sdk.commands.lint.resources.pylint_plugins.certified_partner_level_checker import cert_partner_msg
-from demisto_sdk.commands.lint.resources.pylint_plugins.community_level_checker import community_msg
-from demisto_sdk.commands.lint.resources.pylint_plugins.partner_level_checker import partner_msg
-from demisto_sdk.commands.lint.resources.pylint_plugins.xsoar_level_checker import xsoar_msg
+from demisto_sdk.commands.lint.resources.pylint_plugins.certified_partner_level_checker import (
+    cert_partner_msg,
+)
+from demisto_sdk.commands.lint.resources.pylint_plugins.community_level_checker import (
+    community_msg,
+)
+from demisto_sdk.commands.lint.resources.pylint_plugins.partner_level_checker import (
+    partner_msg,
+)
+from demisto_sdk.commands.lint.resources.pylint_plugins.xsoar_level_checker import (
+    xsoar_msg,
+)
 
 # Third party packages
 # Local imports

@@ -22,24 +22,45 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
+    ContentEntityValidator,
+)
 from demisto_sdk.commands.common.hook_validations.dashboard import DashboardValidator
-from demisto_sdk.commands.common.hook_validations.description import DescriptionValidator
-from demisto_sdk.commands.common.hook_validations.generic_field import GenericFieldValidator
+from demisto_sdk.commands.common.hook_validations.description import (
+    DescriptionValidator,
+)
+from demisto_sdk.commands.common.hook_validations.generic_field import (
+    GenericFieldValidator,
+)
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.hook_validations.incident_field import IncidentFieldValidator
-from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
-from demisto_sdk.commands.common.hook_validations.layout import LayoutsContainerValidator, LayoutValidator
-from demisto_sdk.commands.common.hook_validations.old_release_notes import OldReleaseNotesValidator
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
+from demisto_sdk.commands.common.hook_validations.incident_field import (
+    IncidentFieldValidator,
+)
+from demisto_sdk.commands.common.hook_validations.integration import (
+    IntegrationValidator,
+)
+from demisto_sdk.commands.common.hook_validations.layout import (
+    LayoutsContainerValidator,
+    LayoutValidator,
+)
+from demisto_sdk.commands.common.hook_validations.old_release_notes import (
+    OldReleaseNotesValidator,
+)
+from demisto_sdk.commands.common.hook_validations.pack_unique_files import (
+    PackUniqueFilesValidator,
+)
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
-from demisto_sdk.commands.common.hook_validations.release_notes import ReleaseNotesValidator
+from demisto_sdk.commands.common.hook_validations.release_notes import (
+    ReleaseNotesValidator,
+)
 from demisto_sdk.commands.common.hook_validations.reputation import ReputationValidator
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
+from demisto_sdk.commands.prepare_content.integration_script_unifier import (
+    IntegrationScriptUnifier,
+)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (
     CONF_JSON_MOCK_PATH,
@@ -106,7 +127,9 @@ from demisto_sdk.tests.constants_test import (
     VALID_WIDGET_PATH,
     WIDGET_TARGET,
 )
-from demisto_sdk.tests.test_files.validate_integration_test_valid_types import INCIDENT_FIELD
+from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
+    INCIDENT_FIELD,
+)
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
 

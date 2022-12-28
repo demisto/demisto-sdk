@@ -3,8 +3,16 @@ from typing import List, Tuple
 import click
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import get_dict_from_file, get_item_marketplaces, open_id_set_file
-from demisto_sdk.commands.format.format_constants import ERROR_RETURN_CODE, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE
+from demisto_sdk.commands.common.tools import (
+    get_dict_from_file,
+    get_item_marketplaces,
+    open_id_set_file,
+)
+from demisto_sdk.commands.format.format_constants import (
+    ERROR_RETURN_CODE,
+    SKIP_RETURN_CODE,
+    SUCCESS_RETURN_CODE,
+)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 json = JSON_Handler()

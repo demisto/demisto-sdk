@@ -8,7 +8,10 @@ from pkg_resources import parse_version
 
 from demisto_sdk.commands.common.constants import IronBankDockers
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator,
+    error_codes,
+)
 from demisto_sdk.commands.common.tools import get_yaml
 
 # disable insecure warnings

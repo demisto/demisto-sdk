@@ -70,7 +70,9 @@ from demisto_sdk.commands.common.tools import (
     print_error,
     print_warning,
 )
-from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
+from demisto_sdk.commands.prepare_content.integration_script_unifier import (
+    IntegrationScriptUnifier,
+)
 
 json = JSON_Handler()
 

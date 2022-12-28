@@ -15,7 +15,10 @@ from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorParam,
     ParameterType,
 )
-from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import determine_type, flatten_json
+from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import (
+    determine_type,
+    flatten_json,
+)
 
 json = JSON_Handler()
 

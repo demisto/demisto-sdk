@@ -1,5 +1,8 @@
 from demisto_sdk.commands.test_content.mock_server import MITMProxy
-from demisto_sdk.commands.test_content.TestContentClasses import BuildContext, ServerContext
+from demisto_sdk.commands.test_content.TestContentClasses import (
+    BuildContext,
+    ServerContext,
+)
 from demisto_sdk.commands.test_content.tests.build_context_test import (
     generate_content_conf_json,
     generate_integration_configuration,

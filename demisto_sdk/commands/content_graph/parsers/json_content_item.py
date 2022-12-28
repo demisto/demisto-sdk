@@ -8,7 +8,10 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.tools import get_files_in_dir, get_json
-from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItemException
+from demisto_sdk.commands.content_graph.parsers.content_item import (
+    ContentItemParser,
+    NotAContentItemException,
+)
 
 logger = logging.getLogger("demisto-sdk")
 

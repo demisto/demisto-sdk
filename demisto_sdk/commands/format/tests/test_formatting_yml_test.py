@@ -19,14 +19,19 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
-from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.integration import (
+    IntegrationValidator,
+)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
-from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat, TestPlaybookYMLFormat
+from demisto_sdk.commands.format.update_playbook import (
+    PlaybookYMLFormat,
+    TestPlaybookYMLFormat,
+)
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INTEGRATION,
@@ -146,7 +151,9 @@ class TestFormatting:
         base_yml = IntegrationYMLFormat(source_path, path=schema_path)
         base_yml.set_params_default_additional_info()
 
-        from demisto_sdk.commands.common.default_additional_info_loader import load_default_additional_info_dict
+        from demisto_sdk.commands.common.default_additional_info_loader import (
+            load_default_additional_info_dict,
+        )
 
         default_additional_info = load_default_additional_info_dict()
 

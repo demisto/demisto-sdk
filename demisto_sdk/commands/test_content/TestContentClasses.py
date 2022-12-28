@@ -30,12 +30,25 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import get_demisto_version
-from demisto_sdk.commands.test_content.constants import CONTENT_BUILD_SSH_USER, LOAD_BALANCER_DNS
+from demisto_sdk.commands.test_content.constants import (
+    CONTENT_BUILD_SSH_USER,
+    LOAD_BALANCER_DNS,
+)
 from demisto_sdk.commands.test_content.Docker import Docker
 from demisto_sdk.commands.test_content.IntegrationsLock import acquire_test_lock
-from demisto_sdk.commands.test_content.mock_server import RESULT, MITMProxy, run_with_mock
-from demisto_sdk.commands.test_content.ParallelLoggingManager import ParallelLoggingManager
-from demisto_sdk.commands.test_content.tools import get_ui_url, is_redhat_instance, update_server_configuration
+from demisto_sdk.commands.test_content.mock_server import (
+    RESULT,
+    MITMProxy,
+    run_with_mock,
+)
+from demisto_sdk.commands.test_content.ParallelLoggingManager import (
+    ParallelLoggingManager,
+)
+from demisto_sdk.commands.test_content.tools import (
+    get_ui_url,
+    is_redhat_instance,
+    update_server_configuration,
+)
 
 json = JSON_Handler()
 

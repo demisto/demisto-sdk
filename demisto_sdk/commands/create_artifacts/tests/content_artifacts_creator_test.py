@@ -229,7 +229,9 @@ def test_contains_indicator_type():
 
 
 def test_create_content_artifacts(mock_git):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsManager
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager,
+    )
 
     with temp_dir() as temp:
         config = ArtifactsManager(
@@ -255,7 +257,9 @@ def test_create_content_artifacts_by_id_set(mock_git):
     2. An item of a pack does not exist under the pack's section in the id set - the item will not exist as an artifact.
 
     """
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsManager
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager,
+    )
 
     with temp_dir() as temp:
         config = ArtifactsManager(
@@ -278,7 +282,9 @@ def test_create_content_artifacts_by_id_set(mock_git):
 
 def test_create_private_content_artifacts(private_repo):
     from demisto_sdk.commands.common.content import Content
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsManager
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager,
+    )
 
     with temp_dir() as temp:
         config = ArtifactsManager(
@@ -299,7 +305,9 @@ def test_create_private_content_artifacts(private_repo):
 
 @pytest.mark.parametrize(argnames="suffix", argvalues=["yml", "json"])
 def test_malformed_file_failure(suffix: str, mock_git):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsManager
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager,
+    )
 
     with temp_dir() as temp:
         config = ArtifactsManager(
@@ -318,7 +326,9 @@ def test_malformed_file_failure(suffix: str, mock_git):
 
 
 def test_duplicate_file_failure(mock_git):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsManager
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager,
+    )
 
     with temp_dir() as temp:
         config = ArtifactsManager(
@@ -351,7 +361,10 @@ def test_sign_packs_failure(repo, capsys, key, tool):
 
     """
     import demisto_sdk.commands.create_artifacts.content_artifacts_creator as cca
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsManager, sign_packs
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager,
+        sign_packs,
+    )
 
     cca.logger = logging_setup(2)
 

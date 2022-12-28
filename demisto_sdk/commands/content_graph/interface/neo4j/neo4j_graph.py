@@ -17,8 +17,13 @@ from demisto_sdk.commands.content_graph.common import (
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
-from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import Neo4jImportHandler
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import create_constraints, drop_constraints
+from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import (
+    Neo4jImportHandler,
+)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import (
+    create_constraints,
+    drop_constraints,
+)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
     create_pack_dependencies,
     get_all_level_packs_dependencies,
@@ -32,7 +37,9 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export im
     post_import_write_queries,
     pre_export_write_queries,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import create_indexes
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import (
+    create_indexes,
+)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     _match,
     create_nodes,
@@ -45,7 +52,11 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
     _match_relationships,
     create_relationships,
 )
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent, UnknownContent, content_type_to_model
+from demisto_sdk.commands.content_graph.objects.base_content import (
+    BaseContent,
+    UnknownContent,
+    content_type_to_model,
+)
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData

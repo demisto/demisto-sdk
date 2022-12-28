@@ -1,6 +1,8 @@
 import copy
 
-from demisto_sdk.commands.integration_diff.integration_diff_detector import IntegrationDiffDetector
+from demisto_sdk.commands.integration_diff.integration_diff_detector import (
+    IntegrationDiffDetector,
+)
 
 
 class TestIntegrationDiffDetector:

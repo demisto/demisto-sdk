@@ -89,7 +89,9 @@ class TestCodeGenerator:
         - ensure code is generated
         - esnrue the code is identical to what is stored under test_files folder
         """
-        from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+        from demisto_sdk.commands.common.hook_validations.docker import (
+            DockerImageValidator,
+        )
 
         mocker.patch.object(
             DockerImageValidator,
@@ -130,7 +132,9 @@ class TestCodeGenerator:
         Then
         - ensure it generates the yml successfully and the yml is the exact as expected yml from test_files folder
         """
-        from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+        from demisto_sdk.commands.common.hook_validations.docker import (
+            DockerImageValidator,
+        )
 
         mocker.patch.object(
             DockerImageValidator,
@@ -162,7 +166,9 @@ class TestCodeGenerator:
         - ensure VirusTotalTest dir contains VirusTotalTest.py
         - ensure VirusTotalTest dir contains VirusTotalTest.yml
         """
-        from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+        from demisto_sdk.commands.common.hook_validations.docker import (
+            DockerImageValidator,
+        )
 
         mocker.patch.object(
             DockerImageValidator,
@@ -193,7 +199,9 @@ class TestCodeGenerator:
         - ensure integration-VirusTotalTest.yml exists
         - ensure the unified file contains the script
         """
-        from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+        from demisto_sdk.commands.common.hook_validations.docker import (
+            DockerImageValidator,
+        )
 
         mocker.patch.object(
             DockerImageValidator,

@@ -2,7 +2,9 @@ from threading import Thread, currentThread
 
 import pytest
 
-from demisto_sdk.commands.test_content.ParallelLoggingManager import ParallelLoggingManager
+from demisto_sdk.commands.test_content.ParallelLoggingManager import (
+    ParallelLoggingManager,
+)
 
 
 class TestParallelLoggingManager:

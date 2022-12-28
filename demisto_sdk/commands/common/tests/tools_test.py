@@ -30,8 +30,13 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content.tests.objects.pack_objects.pack_ignore.pack_ignore_test import PACK_IGNORE
-from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitCredentials
+from demisto_sdk.commands.common.content.tests.objects.pack_objects.pack_ignore.pack_ignore_test import (
+    PACK_IGNORE,
+)
+from demisto_sdk.commands.common.git_content_config import (
+    GitContentConfig,
+    GitCredentials,
+)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path

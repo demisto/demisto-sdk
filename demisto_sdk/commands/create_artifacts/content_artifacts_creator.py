@@ -51,8 +51,15 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.content import Content, ContentError, ContentFactoryError, Pack
-from demisto_sdk.commands.common.content.objects.abstract_objects.text_object import TextObject
+from demisto_sdk.commands.common.content import (
+    Content,
+    ContentError,
+    ContentFactoryError,
+    Pack,
+)
+from demisto_sdk.commands.common.content.objects.abstract_objects.text_object import (
+    TextObject,
+)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject,
     Script,

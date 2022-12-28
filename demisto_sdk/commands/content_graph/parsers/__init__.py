@@ -31,16 +31,28 @@ __all__ = [
 ]
 
 from demisto_sdk.commands.content_graph.parsers.classifier import ClassifierParser
-from demisto_sdk.commands.content_graph.parsers.correlation_rule import CorrelationRuleParser
+from demisto_sdk.commands.content_graph.parsers.correlation_rule import (
+    CorrelationRuleParser,
+)
 from demisto_sdk.commands.content_graph.parsers.dashboard import DashboardParser
-from demisto_sdk.commands.content_graph.parsers.generic_definition import GenericDefinitionParser
+from demisto_sdk.commands.content_graph.parsers.generic_definition import (
+    GenericDefinitionParser,
+)
 from demisto_sdk.commands.content_graph.parsers.generic_field import GenericFieldParser
-from demisto_sdk.commands.content_graph.parsers.generic_module import GenericModuleParser
+from demisto_sdk.commands.content_graph.parsers.generic_module import (
+    GenericModuleParser,
+)
 from demisto_sdk.commands.content_graph.parsers.generic_type import GenericTypeParser
-from demisto_sdk.commands.content_graph.parsers.incident_field import IncidentFieldParser
+from demisto_sdk.commands.content_graph.parsers.incident_field import (
+    IncidentFieldParser,
+)
 from demisto_sdk.commands.content_graph.parsers.incident_type import IncidentTypeParser
-from demisto_sdk.commands.content_graph.parsers.indicator_field import IndicatorFieldParser
-from demisto_sdk.commands.content_graph.parsers.indicator_type import IndicatorTypeParser
+from demisto_sdk.commands.content_graph.parsers.indicator_field import (
+    IndicatorFieldParser,
+)
+from demisto_sdk.commands.content_graph.parsers.indicator_type import (
+    IndicatorTypeParser,
+)
 from demisto_sdk.commands.content_graph.parsers.integration import IntegrationParser
 from demisto_sdk.commands.content_graph.parsers.job import JobParser
 from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
@@ -56,5 +68,7 @@ from demisto_sdk.commands.content_graph.parsers.trigger import TriggerParser
 from demisto_sdk.commands.content_graph.parsers.widget import WidgetParser
 from demisto_sdk.commands.content_graph.parsers.wizard import WizardParser
 from demisto_sdk.commands.content_graph.parsers.xdrc_template import XDRCTemplateParser
-from demisto_sdk.commands.content_graph.parsers.xsiam_dashboard import XSIAMDashboardParser
+from demisto_sdk.commands.content_graph.parsers.xsiam_dashboard import (
+    XSIAMDashboardParser,
+)
 from demisto_sdk.commands.content_graph.parsers.xsiam_report import XSIAMReportParser

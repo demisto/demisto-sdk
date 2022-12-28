@@ -16,8 +16,16 @@ import urllib3.exceptions
 from packaging.version import parse
 from wcmatch.pathlib import NEGATE, Path
 
-from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, PACKS_PACK_META_FILE_NAME, TYPE_PWSH, TYPE_PYTHON
-from demisto_sdk.commands.common.docker_helper import get_docker, init_global_docker_client
+from demisto_sdk.commands.common.constants import (
+    INTEGRATIONS_DIR,
+    PACKS_PACK_META_FILE_NAME,
+    TYPE_PWSH,
+    TYPE_PYTHON,
+)
+from demisto_sdk.commands.common.docker_helper import (
+    get_docker,
+    init_global_docker_client,
+)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.timers import timer
 from demisto_sdk.commands.common.tools import get_all_docker_images, run_command_os

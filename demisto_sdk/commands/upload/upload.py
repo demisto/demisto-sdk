@@ -2,7 +2,10 @@ import os
 import shutil
 import tempfile
 
-from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE, MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    ENV_DEMISTO_SDK_MARKETPLACE,
+    MarketplaceVersions,
+)
 from demisto_sdk.utils.utils import check_configuration_file
 
 

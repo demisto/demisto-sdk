@@ -29,12 +29,22 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_SUPPORT,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.default_additional_info_loader import load_default_additional_info_dict
-from demisto_sdk.commands.common.errors import FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS, Errors
+from demisto_sdk.commands.common.default_additional_info_loader import (
+    load_default_additional_info_dict,
+)
+from demisto_sdk.commands.common.errors import (
+    FOUND_FILES_AND_ERRORS,
+    FOUND_FILES_AND_IGNORED_ERRORS,
+    Errors,
+)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
-from demisto_sdk.commands.common.hook_validations.description import DescriptionValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
+    ContentEntityValidator,
+)
+from demisto_sdk.commands.common.hook_validations.description import (
+    DescriptionValidator,
+)
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (

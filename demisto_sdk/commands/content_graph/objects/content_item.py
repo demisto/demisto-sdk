@@ -2,7 +2,11 @@ from abc import abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Set
 
-from demisto_sdk.commands.common.handlers import JSON_Handler, XSOAR_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import (
+    JSON_Handler,
+    XSOAR_Handler,
+    YAML_Handler,
+)
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.pack import Pack

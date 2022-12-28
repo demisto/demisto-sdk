@@ -6,7 +6,10 @@ from typing import Dict, List, Tuple
 
 import click
 
-from demisto_sdk.commands.common.constants import LAYOUT_AND_MAPPER_BUILT_IN_FIELDS, FileType
+from demisto_sdk.commands.common.constants import (
+    LAYOUT_AND_MAPPER_BUILT_IN_FIELDS,
+    FileType,
+)
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (
     LAYOUT_CONTAINER_FIELDS,

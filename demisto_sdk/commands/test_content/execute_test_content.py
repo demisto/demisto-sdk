@@ -4,8 +4,13 @@ from threading import Thread
 
 import requests
 
-from demisto_sdk.commands.test_content.ParallelLoggingManager import ParallelLoggingManager
-from demisto_sdk.commands.test_content.TestContentClasses import BuildContext, ServerContext
+from demisto_sdk.commands.test_content.ParallelLoggingManager import (
+    ParallelLoggingManager,
+)
+from demisto_sdk.commands.test_content.TestContentClasses import (
+    BuildContext,
+    ServerContext,
+)
 
 SKIPPED_CONTENT_COMMENT = (
     "The following integrations/tests were collected by the CI build but are currently skipped. "

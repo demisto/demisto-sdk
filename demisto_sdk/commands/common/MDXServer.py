@@ -10,7 +10,10 @@ import docker.errors
 import docker.models.containers
 
 from demisto_sdk.commands.common.constants import DEPENDENCIES_DOCKER
-from demisto_sdk.commands.common.docker_helper import get_docker, init_global_docker_client
+from demisto_sdk.commands.common.docker_helper import (
+    get_docker,
+    init_global_docker_client,
+)
 from demisto_sdk.commands.common.errors import Errors
 
 EXPECTED_SUCCESS_MESSAGE = "MDX server is listening on port"

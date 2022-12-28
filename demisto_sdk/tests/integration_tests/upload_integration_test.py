@@ -44,7 +44,9 @@ def test_integration_upload_pack_positive(demisto_client, mocker, repo):
     - Ensure upload runs successfully.
     - Ensure success upload message is printed.
     """
-    from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
+    from demisto_sdk.commands.content_graph.objects.integration_script import (
+        IntegrationScript,
+    )
 
     mocker.patch.object(
         IntegrationScript, "get_supported_native_images", return_value=[]

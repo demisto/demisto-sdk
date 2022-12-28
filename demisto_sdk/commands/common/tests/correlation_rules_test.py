@@ -1,5 +1,9 @@
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
-from demisto_sdk.commands.common.hook_validations.correlation_rule import CorrelationRuleValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
+    ContentEntityValidator,
+)
+from demisto_sdk.commands.common.hook_validations.correlation_rule import (
+    CorrelationRuleValidator,
+)
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml

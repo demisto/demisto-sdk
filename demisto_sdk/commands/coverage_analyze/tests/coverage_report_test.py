@@ -8,7 +8,10 @@ import pytest
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
-from demisto_sdk.commands.coverage_analyze.helpers import fix_file_path, get_coverage_obj
+from demisto_sdk.commands.coverage_analyze.helpers import (
+    fix_file_path,
+    get_coverage_obj,
+)
 from demisto_sdk.commands.coverage_analyze.tests.helpers_test import (
     COVERAGE_FILES_DIR,
     JSON_MIN_DATA_FILE,

@@ -10,7 +10,10 @@ from unittest import mock
 
 import pytest
 
-from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_TO_VERSION, FileType
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_TO_VERSION,
+    FileType,
+)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json
@@ -1019,7 +1022,9 @@ class TestRNUpdate:
         Then:
         - Ensure file is filtered.
         """
-        from demisto_sdk.commands.update_release_notes.update_rn_manager import UpdateReleaseNotesManager
+        from demisto_sdk.commands.update_release_notes.update_rn_manager import (
+            UpdateReleaseNotesManager,
+        )
         from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
         manager = UpdateReleaseNotesManager(user_input="BitcoinAbuse")
@@ -1848,7 +1853,9 @@ class TestRNUpdateUnit:
             - Call print_error with the appropriate error message
         """
         import demisto_sdk.commands.update_release_notes.update_rn
-        from demisto_sdk.commands.update_release_notes.update_rn import update_api_modules_dependents_rn
+        from demisto_sdk.commands.update_release_notes.update_rn import (
+            update_api_modules_dependents_rn,
+        )
 
         if os.path.exists(DEFAULT_ID_SET_PATH):
             os.remove(DEFAULT_ID_SET_PATH)
@@ -1872,7 +1879,10 @@ class TestRNUpdateUnit:
         Then
             - Ensure execute_update_mock is called
         """
-        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN, update_api_modules_dependents_rn
+        from demisto_sdk.commands.update_release_notes.update_rn import (
+            UpdateRN,
+            update_api_modules_dependents_rn,
+        )
 
         mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
 
@@ -1916,7 +1926,9 @@ class TestRNUpdateUnit:
         Then
             - No changes should be done in release notes
         """
-        from demisto_sdk.commands.update_release_notes.update_rn import check_docker_image_changed
+        from demisto_sdk.commands.update_release_notes.update_rn import (
+            check_docker_image_changed,
+        )
 
         return_value = "+category: Utilities\
                         +commonfields:\
@@ -1963,7 +1975,9 @@ class TestRNUpdateUnit:
             - Case 1: Should extract the dockerimage version for integration yml demonstration.
             - Case 2: Should extract the dockerimage version for script yml demonstration.
         """
-        from demisto_sdk.commands.update_release_notes.update_rn import check_docker_image_changed
+        from demisto_sdk.commands.update_release_notes.update_rn import (
+            check_docker_image_changed,
+        )
 
         return_value = "+  dockerimage: demisto/python3:3.9.8.24399"
 
@@ -2335,7 +2349,9 @@ def test_get_from_version_at_update_rn(integration):
         - Case 1: Assert that the `fromversion` value is 5.0.0
         - Case 2: Assert that the `fromversion` value is None
     """
-    from demisto_sdk.commands.update_release_notes.update_rn import get_from_version_at_update_rn
+    from demisto_sdk.commands.update_release_notes.update_rn import (
+        get_from_version_at_update_rn,
+    )
 
     integration.yml.write_dict({"fromversion": "5.0.0"})
     fromversion = get_from_version_at_update_rn(integration.yml.path)

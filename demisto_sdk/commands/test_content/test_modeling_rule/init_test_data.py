@@ -6,7 +6,9 @@ from typing import List, Set
 
 import typer
 
-from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import ModelingRule
+from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
+    ModelingRule,
+)
 from demisto_sdk.commands.common.logger import setup_rich_logging
 from demisto_sdk.commands.test_content.xsiam_tools.test_data import EventLog, TestData
 

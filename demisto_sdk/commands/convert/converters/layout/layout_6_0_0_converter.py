@@ -2,9 +2,13 @@ import shutil
 from typing import Dict, List, Set
 
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import LayoutObject
+from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import (
+    LayoutObject,
+)
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.convert.converters.layout.layout_base_converter import LayoutBaseConverter
+from demisto_sdk.commands.convert.converters.layout.layout_base_converter import (
+    LayoutBaseConverter,
+)
 
 
 class LayoutSixConverter(LayoutBaseConverter):

@@ -3,7 +3,9 @@ import os
 import pytest
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.prepare_content.generic_module_unifier import GenericModuleUnifier
+from demisto_sdk.commands.prepare_content.generic_module_unifier import (
+    GenericModuleUnifier,
+)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     DASHBOARD,
     GENERIC_MODULE,

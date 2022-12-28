@@ -38,11 +38,17 @@ from demisto_sdk.commands.common.tools import (
     get_display_name,
 )
 from demisto_sdk.commands.format.format_module import format_manager
-from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_integration_doc
-from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
+from demisto_sdk.commands.generate_docs.generate_integration_doc import (
+    generate_integration_doc,
+)
+from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
+    generate_playbook_doc,
+)
 from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
-from demisto_sdk.commands.update_release_notes.update_rn_manager import UpdateReleaseNotesManager
+from demisto_sdk.commands.update_release_notes.update_rn_manager import (
+    UpdateReleaseNotesManager,
+)
 
 json = JSON_Handler()
 

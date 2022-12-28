@@ -7,9 +7,16 @@ import pytest
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.format import update_dashboard, update_incidenttype, update_indicatortype
+from demisto_sdk.commands.format import (
+    update_dashboard,
+    update_incidenttype,
+    update_indicatortype,
+)
 from demisto_sdk.commands.format.format_module import format_manager
-from demisto_sdk.commands.format.update_classifier import ClassifierJSONFormat, OldClassifierJSONFormat
+from demisto_sdk.commands.format.update_classifier import (
+    ClassifierJSONFormat,
+    OldClassifierJSONFormat,
+)
 from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_generic import BaseUpdate

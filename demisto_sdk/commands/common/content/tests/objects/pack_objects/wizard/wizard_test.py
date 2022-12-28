@@ -1,4 +1,6 @@
-from demisto_sdk.commands.common.content.objects.pack_objects.wizard.wizard import Wizard
+from demisto_sdk.commands.common.content.objects.pack_objects.wizard.wizard import (
+    Wizard,
+)
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 
 sample_wizard_name = "sample-wizard"

@@ -10,7 +10,11 @@ from typing import Optional
 from ruamel.yaml.scalarstring import PlainScalarString, SingleQuotedScalarString
 
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON, TYPE_TO_EXTENSION
+from demisto_sdk.commands.common.constants import (
+    TYPE_PWSH,
+    TYPE_PYTHON,
+    TYPE_TO_EXTENSION,
+)
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS,
@@ -22,7 +26,9 @@ from demisto_sdk.commands.common.tools import (
     print_color,
     print_error,
 )
-from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
+from demisto_sdk.commands.prepare_content.integration_script_unifier import (
+    IntegrationScriptUnifier,
+)
 
 yaml = YAML_Handler()
 

@@ -62,7 +62,9 @@ class TestOpenAPICodeGen:
         Then
             - Ensure the configuration file is generated correctly
         """
-        from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+        from demisto_sdk.commands.common.hook_validations.docker import (
+            DockerImageValidator,
+        )
 
         mocker.patch.object(
             DockerImageValidator,
@@ -93,7 +95,9 @@ class TestOpenAPICodeGen:
            - Ensure the yaml file is generated correctly
         """
 
-        from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+        from demisto_sdk.commands.common.hook_validations.docker import (
+            DockerImageValidator,
+        )
 
         mocker.patch.object(
             DockerImageValidator,

@@ -6,7 +6,12 @@ from shutil import rmtree
 import pytest
 from packaging.version import parse
 
-from demisto_sdk.commands.common.constants import PACKS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL
+from demisto_sdk.commands.common.constants import (
+    PACKS_DIR,
+    XSOAR_AUTHOR,
+    XSOAR_SUPPORT,
+    XSOAR_SUPPORT_URL,
+)
 from demisto_sdk.commands.common.content.objects.pack_objects import PackMetaData
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
@@ -185,7 +190,9 @@ def test_load_user_metadata_basic(repo):
         - Verify that pack's metadata information was loaded successfully.
 
     """
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsManager
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager,
+    )
 
     pack_1 = repo.setup_one_pack("Pack1")
     pack_1.pack_metadata.write_json(
@@ -247,7 +254,9 @@ def test_load_user_metadata_advanced(repo):
         - Verify that pack's metadata information was loaded successfully.
 
     """
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsManager
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager,
+    )
 
     pack_1 = repo.setup_one_pack("Pack1")
     pack_1.pack_metadata.write_json(

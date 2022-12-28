@@ -3,7 +3,10 @@ from requests.sessions import HTTPAdapter
 from urllib3 import Retry
 
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
-from demisto_sdk.commands.common.MDXServer import DEMISTO_DEPS_DOCKER_NAME, start_docker_MDX_server
+from demisto_sdk.commands.common.MDXServer import (
+    DEMISTO_DEPS_DOCKER_NAME,
+    start_docker_MDX_server,
+)
 
 SERVER_DNS = "docker"  # switch to localhost for testing locally
 

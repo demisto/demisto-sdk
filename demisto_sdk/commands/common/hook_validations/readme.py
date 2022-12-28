@@ -16,13 +16,26 @@ from requests.adapters import HTTPAdapter
 from requests.exceptions import HTTPError
 from urllib3.util import Retry
 
-from demisto_sdk.commands.common.constants import RELATIVE_HREF_URL_REGEX, RELATIVE_MARKDOWN_URL_REGEX
+from demisto_sdk.commands.common.constants import (
+    RELATIVE_HREF_URL_REGEX,
+    RELATIVE_MARKDOWN_URL_REGEX,
+)
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
-from demisto_sdk.commands.common.errors import FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS, Errors
+from demisto_sdk.commands.common.errors import (
+    FOUND_FILES_AND_ERRORS,
+    FOUND_FILES_AND_IGNORED_ERRORS,
+    Errors,
+)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
-from demisto_sdk.commands.common.MDXServer import start_docker_MDX_server, start_local_MDX_server
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator,
+    error_codes,
+)
+from demisto_sdk.commands.common.MDXServer import (
+    start_docker_MDX_server,
+    start_local_MDX_server,
+)
 from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme,
     get_content_path,

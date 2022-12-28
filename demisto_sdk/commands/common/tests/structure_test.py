@@ -31,7 +31,10 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
-from demisto_sdk.commands.common.hook_validations.structure import StructureValidator, checked_type_by_reg
+from demisto_sdk.commands.common.hook_validations.structure import (
+    StructureValidator,
+    checked_type_by_reg,
+)
 from demisto_sdk.tests.constants_test import (
     DASHBOARD_TARGET,
     DIR_LIST,

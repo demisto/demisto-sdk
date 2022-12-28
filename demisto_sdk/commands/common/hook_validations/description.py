@@ -1,9 +1,16 @@
 import glob
 from typing import List, Optional
 
-from demisto_sdk.commands.common.constants import BETA_INTEGRATION_DISCLAIMER, PACKS_INTEGRATION_YML_REGEX, FileType
+from demisto_sdk.commands.common.constants import (
+    BETA_INTEGRATION_DISCLAIMER,
+    PACKS_INTEGRATION_YML_REGEX,
+    FileType,
+)
 from demisto_sdk.commands.common.errors import FOUND_FILES_AND_ERRORS, Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator,
+    error_codes,
+)
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.tools import find_type, get_yaml, os, re
 

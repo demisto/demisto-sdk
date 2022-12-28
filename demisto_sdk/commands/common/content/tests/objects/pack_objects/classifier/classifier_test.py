@@ -1,5 +1,9 @@
 from demisto_sdk.commands.common.constants import CLASSIFIERS_DIR, PACKS_DIR
-from demisto_sdk.commands.common.content.objects.pack_objects import Classifier, ClassifierMapper, OldClassifier
+from demisto_sdk.commands.common.content.objects.pack_objects import (
+    Classifier,
+    ClassifierMapper,
+    OldClassifier,
+)
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.tools import src_root
 

@@ -6,7 +6,10 @@ from pydantic import BaseModel
 from demisto_sdk.commands.common.constants import NATIVE_IMAGE_FILE_NAME
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.singleton import Singleton
-from demisto_sdk.commands.common.tools import extract_docker_image_from_text, get_dict_from_file
+from demisto_sdk.commands.common.tools import (
+    extract_docker_image_from_text,
+    get_dict_from_file,
+)
 
 json = JSON_Handler()
 logger = logging.getLogger("demisto-sdk")

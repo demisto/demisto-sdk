@@ -10,7 +10,12 @@ import click
 from inflection import dasherize, underscore
 from ruamel.yaml.scalarstring import FoldedScalarString
 
-from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_PREFIX, TYPE_TO_EXTENSION, FileType, MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_IMAGE_PREFIX,
+    TYPE_TO_EXTENSION,
+    FileType,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS,

@@ -32,7 +32,6 @@ repos:
       rev: v5.11.3
       hooks:
           - id: isort
-            types: [python]
             exclude: demisto_sdk/commands/init/templates/.*
     - repo: https://github.com/asottile/pyupgrade
       rev: v3.3.1

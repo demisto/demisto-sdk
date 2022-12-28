@@ -9,7 +9,11 @@ from demisto_sdk.commands.common.tools import (
     get_invalid_incident_fields_from_mapper,
 )
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
-from demisto_sdk.commands.format.format_constants import ERROR_RETURN_CODE, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE
+from demisto_sdk.commands.format.format_constants import (
+    ERROR_RETURN_CODE,
+    SKIP_RETURN_CODE,
+    SUCCESS_RETURN_CODE,
+)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 logger = logging.getLogger("demisto-sdk")

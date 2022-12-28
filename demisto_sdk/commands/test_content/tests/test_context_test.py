@@ -21,7 +21,9 @@ from demisto_sdk.commands.test_content.tests.build_context_test import (
     get_mocked_build_context,
 )
 from demisto_sdk.commands.test_content.tests.DemistoClientMock import DemistoClientMock
-from demisto_sdk.commands.test_content.tests.server_context_test import generate_mocked_server_context
+from demisto_sdk.commands.test_content.tests.server_context_test import (
+    generate_mocked_server_context,
+)
 
 json = JSON_Handler()
 

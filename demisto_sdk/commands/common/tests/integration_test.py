@@ -15,8 +15,12 @@ from demisto_sdk.commands.common.constants import (
     MAX_FETCH_PARAM,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.default_additional_info_loader import load_default_additional_info_dict
-from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
+from demisto_sdk.commands.common.default_additional_info_loader import (
+    load_default_additional_info_dict,
+)
+from demisto_sdk.commands.common.hook_validations.integration import (
+    IntegrationValidator,
+)
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.integration import Integration

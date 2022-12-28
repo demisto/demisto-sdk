@@ -3,9 +3,13 @@ from typing import Optional
 
 import pytest
 
-from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import Classifier
+from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import (
+    Classifier,
+)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.convert.converters.classifier.classifier_base_converter import ClassifierBaseConverter
+from demisto_sdk.commands.convert.converters.classifier.classifier_base_converter import (
+    ClassifierBaseConverter,
+)
 
 
 class TestLayoutBaseConverter:

@@ -389,7 +389,9 @@ def test_get_outputs():
 
 
 def test_get_playbook_dependencies():
-    from demisto_sdk.commands.generate_docs.generate_playbook_doc import get_playbook_dependencies
+    from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
+        get_playbook_dependencies,
+    )
 
     playbook = get_yaml(TEST_PLAYBOOK_PATH)
 
@@ -448,7 +450,9 @@ def test_generate_image_link(playbook_name, custom_image_path, expected_result):
     Then
     - Validate that the output of the command matches the expected result.
     """
-    from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_image_path
+    from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
+        generate_image_path,
+    )
 
     output = generate_image_path(playbook_name, custom_image_path)
 
@@ -1361,7 +1365,9 @@ def test_scripts_in_playbook(repo):
     Then
         - Ensure that the scripts we get are from both the script and scriptName fields.
     """
-    from demisto_sdk.commands.generate_docs.generate_playbook_doc import get_playbook_dependencies
+    from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
+        get_playbook_dependencies,
+    )
 
     pack = repo.create_pack("pack")
     playbook = pack.create_playbook("LargePlaybook")
@@ -1499,7 +1505,9 @@ def test_add_access_data_of_type_credentials(
     Case b: 'Password' is added as default for display password name missing.
     Case c: Both display name and display password name are added.
     """
-    from demisto_sdk.commands.generate_docs.generate_integration_doc import add_access_data_of_type_credentials
+    from demisto_sdk.commands.generate_docs.generate_integration_doc import (
+        add_access_data_of_type_credentials,
+    )
 
     add_access_data_of_type_credentials(access_data, credentials_conf)
     assert access_data == expected
@@ -1515,7 +1523,9 @@ def test_generate_versions_differences_section(monkeypatch):
         - Add a section of differences between versions in README.
     """
 
-    from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_versions_differences_section
+    from demisto_sdk.commands.generate_docs.generate_integration_doc import (
+        generate_versions_differences_section,
+    )
 
     monkeypatch.setattr("builtins.input", lambda _: "")
     section = generate_versions_differences_section("", "", "Integration_Display_Name")

@@ -4,8 +4,12 @@ from demisto_sdk.commands.common.tools import FileType, find_type, print_error
 from demisto_sdk.commands.generate_outputs.generate_context.generate_integration_context import (
     generate_integration_context,
 )
-from demisto_sdk.commands.generate_outputs.generate_descriptions.generate_descriptions import generate_ai_descriptions
-from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import json_to_outputs
+from demisto_sdk.commands.generate_outputs.generate_descriptions.generate_descriptions import (
+    generate_ai_descriptions,
+)
+from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import (
+    json_to_outputs,
+)
 
 
 def json_to_outputs_flow(kwargs):

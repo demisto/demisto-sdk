@@ -1,4 +1,6 @@
-from demisto_sdk.commands.common.hook_validations.pre_process_rule import PreProcessRuleValidator
+from demisto_sdk.commands.common.hook_validations.pre_process_rule import (
+    PreProcessRuleValidator,
+)
 
 
 class TestPreProcessRuleValidator:

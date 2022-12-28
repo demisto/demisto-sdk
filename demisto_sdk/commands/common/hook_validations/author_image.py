@@ -1,6 +1,10 @@
 from typing import Optional
 
-from demisto_sdk.commands.common.constants import PACK_METADATA_SUPPORT, PACKS_DIR, PACKS_PACK_META_FILE_NAME
+from demisto_sdk.commands.common.constants import (
+    PACK_METADATA_SUPPORT,
+    PACKS_DIR,
+    PACKS_PACK_META_FILE_NAME,
+)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes

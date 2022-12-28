@@ -5,8 +5,16 @@ from typing import Dict, List
 
 from neo4j import Transaction
 
-from demisto_sdk.commands.common.constants import DEPRECATED_CONTENT_PACK, GENERIC_COMMANDS_NAMES, MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentType, Neo4jRelationshipResult, RelationshipType
+from demisto_sdk.commands.common.constants import (
+    DEPRECATED_CONTENT_PACK,
+    GENERIC_COMMANDS_NAMES,
+    MarketplaceVersions,
+)
+from demisto_sdk.commands.content_graph.common import (
+    ContentType,
+    Neo4jRelationshipResult,
+    RelationshipType,
+)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     is_target_available,
     run_query,

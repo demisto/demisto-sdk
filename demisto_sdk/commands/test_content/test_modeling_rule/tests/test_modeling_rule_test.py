@@ -127,8 +127,13 @@ class TestVerifyResults:
         Then:
             - Verify the function returns successfully.
         """
-        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import verify_results
-        from demisto_sdk.commands.test_content.xsiam_tools.test_data import EventLog, TestData
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            verify_results,
+        )
+        from demisto_sdk.commands.test_content.xsiam_tools.test_data import (
+            EventLog,
+            TestData,
+        )
 
         # Arrange
         query_results = [
@@ -173,8 +178,13 @@ class TestVerifyResults:
         Then:
             - Verify the function raises a typer.Exit exception.
         """
-        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import verify_results
-        from demisto_sdk.commands.test_content.xsiam_tools.test_data import EventLog, TestData
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            verify_results,
+        )
+        from demisto_sdk.commands.test_content.xsiam_tools.test_data import (
+            EventLog,
+            TestData,
+        )
 
         # Arrange
         query_results = [
@@ -329,7 +339,9 @@ class TestTheTestModelingRuleCommandSingleRule:
         """
         from functools import partial
 
-        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import check_dataset_exists
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            check_dataset_exists,
+        )
 
         func_path = (
             "demisto_sdk.commands.test_content.test_modeling_rule."
@@ -412,7 +424,9 @@ class TestTheTestModelingRuleCommandSingleRule:
         """
         from functools import partial
 
-        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import check_dataset_exists
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            check_dataset_exists,
+        )
 
         func_path = (
             "demisto_sdk.commands.test_content.test_modeling_rule."
@@ -507,7 +521,9 @@ class TestTheTestModelingRuleCommandSingleRule:
         """
         from functools import partial
 
-        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import check_dataset_exists
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            check_dataset_exists,
+        )
 
         func_path = (
             "demisto_sdk.commands.test_content.test_modeling_rule."
@@ -608,7 +624,9 @@ class TestTheTestModelingRuleCommandSingleRule:
         """
         from functools import partial
 
-        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import check_dataset_exists
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            check_dataset_exists,
+        )
 
         func_path = (
             "demisto_sdk.commands.test_content.test_modeling_rule."
@@ -731,7 +749,9 @@ class TestTheTestModelingRuleCommandSingleRule:
         """
         from functools import partial
 
-        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import check_dataset_exists
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            check_dataset_exists,
+        )
 
         func_path = (
             "demisto_sdk.commands.test_content.test_modeling_rule."

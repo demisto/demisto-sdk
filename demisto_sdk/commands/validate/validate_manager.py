@@ -40,49 +40,101 @@ from demisto_sdk.commands.common.errors import (
     get_all_error_codes,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.hook_validations.author_image import AuthorImageValidator
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
+from demisto_sdk.commands.common.hook_validations.author_image import (
+    AuthorImageValidator,
+)
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator,
+    error_codes,
+)
 from demisto_sdk.commands.common.hook_validations.classifier import ClassifierValidator
 from demisto_sdk.commands.common.hook_validations.conf_json import ConfJsonValidator
-from demisto_sdk.commands.common.hook_validations.correlation_rule import CorrelationRuleValidator
+from demisto_sdk.commands.common.hook_validations.correlation_rule import (
+    CorrelationRuleValidator,
+)
 from demisto_sdk.commands.common.hook_validations.dashboard import DashboardValidator
-from demisto_sdk.commands.common.hook_validations.deprecation import DeprecationValidator
-from demisto_sdk.commands.common.hook_validations.description import DescriptionValidator
-from demisto_sdk.commands.common.hook_validations.generic_definition import GenericDefinitionValidator
-from demisto_sdk.commands.common.hook_validations.generic_field import GenericFieldValidator
-from demisto_sdk.commands.common.hook_validations.generic_module import GenericModuleValidator
-from demisto_sdk.commands.common.hook_validations.generic_type import GenericTypeValidator
+from demisto_sdk.commands.common.hook_validations.deprecation import (
+    DeprecationValidator,
+)
+from demisto_sdk.commands.common.hook_validations.description import (
+    DescriptionValidator,
+)
+from demisto_sdk.commands.common.hook_validations.generic_definition import (
+    GenericDefinitionValidator,
+)
+from demisto_sdk.commands.common.hook_validations.generic_field import (
+    GenericFieldValidator,
+)
+from demisto_sdk.commands.common.hook_validations.generic_module import (
+    GenericModuleValidator,
+)
+from demisto_sdk.commands.common.hook_validations.generic_type import (
+    GenericTypeValidator,
+)
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.hook_validations.incident_field import IncidentFieldValidator
-from demisto_sdk.commands.common.hook_validations.incident_type import IncidentTypeValidator
-from demisto_sdk.commands.common.hook_validations.indicator_field import IndicatorFieldValidator
-from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.incident_field import (
+    IncidentFieldValidator,
+)
+from demisto_sdk.commands.common.hook_validations.incident_type import (
+    IncidentTypeValidator,
+)
+from demisto_sdk.commands.common.hook_validations.indicator_field import (
+    IndicatorFieldValidator,
+)
+from demisto_sdk.commands.common.hook_validations.integration import (
+    IntegrationValidator,
+)
 from demisto_sdk.commands.common.hook_validations.job import JobValidator
-from demisto_sdk.commands.common.hook_validations.layout import LayoutsContainerValidator, LayoutValidator
+from demisto_sdk.commands.common.hook_validations.layout import (
+    LayoutsContainerValidator,
+    LayoutValidator,
+)
 from demisto_sdk.commands.common.hook_validations.lists import ListsValidator
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
-from demisto_sdk.commands.common.hook_validations.modeling_rule import ModelingRuleValidator
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
-from demisto_sdk.commands.common.hook_validations.parsing_rule import ParsingRuleValidator
+from demisto_sdk.commands.common.hook_validations.modeling_rule import (
+    ModelingRuleValidator,
+)
+from demisto_sdk.commands.common.hook_validations.pack_unique_files import (
+    PackUniqueFilesValidator,
+)
+from demisto_sdk.commands.common.hook_validations.parsing_rule import (
+    ParsingRuleValidator,
+)
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
-from demisto_sdk.commands.common.hook_validations.pre_process_rule import PreProcessRuleValidator
+from demisto_sdk.commands.common.hook_validations.pre_process_rule import (
+    PreProcessRuleValidator,
+)
 from demisto_sdk.commands.common.hook_validations.python_file import PythonFileValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.hook_validations.release_notes import ReleaseNotesValidator
-from demisto_sdk.commands.common.hook_validations.release_notes_config import ReleaseNotesConfigValidator
+from demisto_sdk.commands.common.hook_validations.release_notes import (
+    ReleaseNotesValidator,
+)
+from demisto_sdk.commands.common.hook_validations.release_notes_config import (
+    ReleaseNotesConfigValidator,
+)
 from demisto_sdk.commands.common.hook_validations.report import ReportValidator
 from demisto_sdk.commands.common.hook_validations.reputation import ReputationValidator
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
-from demisto_sdk.commands.common.hook_validations.test_playbook import TestPlaybookValidator
+from demisto_sdk.commands.common.hook_validations.test_playbook import (
+    TestPlaybookValidator,
+)
 from demisto_sdk.commands.common.hook_validations.triggers import TriggersValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.hook_validations.wizard import WizardValidator
-from demisto_sdk.commands.common.hook_validations.xdrc_templates import XDRCTemplatesValidator
-from demisto_sdk.commands.common.hook_validations.xsiam_dashboard import XSIAMDashboardValidator
-from demisto_sdk.commands.common.hook_validations.xsiam_report import XSIAMReportValidator
-from demisto_sdk.commands.common.hook_validations.xsoar_config_json import XSOARConfigJsonValidator
+from demisto_sdk.commands.common.hook_validations.xdrc_templates import (
+    XDRCTemplatesValidator,
+)
+from demisto_sdk.commands.common.hook_validations.xsiam_dashboard import (
+    XSIAMDashboardValidator,
+)
+from demisto_sdk.commands.common.hook_validations.xsiam_report import (
+    XSIAMReportValidator,
+)
+from demisto_sdk.commands.common.hook_validations.xsoar_config_json import (
+    XSOARConfigJsonValidator,
+)
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,

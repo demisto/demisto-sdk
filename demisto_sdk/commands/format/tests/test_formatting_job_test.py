@@ -1,6 +1,10 @@
 import pytest
 
-from demisto_sdk.commands.common.constants import FILETYPE_TO_DEFAULT_FROMVERSION, JOB, FileType
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION,
+    JOB,
+    FileType,
+)
 from demisto_sdk.commands.format.format_module import run_format_on_file
 
 

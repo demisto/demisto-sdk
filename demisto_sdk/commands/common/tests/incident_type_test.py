@@ -3,7 +3,9 @@ from unittest.mock import patch
 
 import pytest
 
-from demisto_sdk.commands.common.hook_validations.incident_type import IncidentTypeValidator
+from demisto_sdk.commands.common.hook_validations.incident_type import (
+    IncidentTypeValidator,
+)
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 
 

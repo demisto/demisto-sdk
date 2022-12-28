@@ -118,7 +118,9 @@ def test_insert_outputs(mocker):
     Then
       - Ensure the outputs are inserted correctly
     """
-    from demisto_sdk.commands.generate_outputs.generate_context import generate_integration_context
+    from demisto_sdk.commands.generate_outputs.generate_context import (
+        generate_integration_context,
+    )
 
     command_name = "zoom-fetch-recording"
     mocker.patch.object(
@@ -157,7 +159,9 @@ def test_generate_integration_context(mocker, tmpdir):
     Then
       - Ensure the outputs are inserted correctly
     """
-    from demisto_sdk.commands.generate_outputs.generate_context import generate_integration_context
+    from demisto_sdk.commands.generate_outputs.generate_context import (
+        generate_integration_context,
+    )
 
     command_name = "zoom-fetch-recording"
     mocker.patch.object(

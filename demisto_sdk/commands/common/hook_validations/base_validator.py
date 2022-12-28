@@ -5,7 +5,12 @@ from typing import Optional
 import click
 from ruamel.yaml.comments import CommentedSeq
 
-from demisto_sdk.commands.common.constants import PACK_METADATA_SUPPORT, PACKS_DIR, PACKS_PACK_META_FILE_NAME, FileType
+from demisto_sdk.commands.common.constants import (
+    PACK_METADATA_SUPPORT,
+    PACKS_DIR,
+    PACKS_PACK_META_FILE_NAME,
+    FileType,
+)
 from demisto_sdk.commands.common.errors import (
     ALLOWED_IGNORE_ERRORS,
     FOUND_FILES_AND_ERRORS,

@@ -3,7 +3,9 @@ from typing import Union
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import OLD_INDICATOR_TYPE, FileType
-from demisto_sdk.commands.common.content.objects.abstract_objects.general_object import GeneralObject
+from demisto_sdk.commands.common.content.objects.abstract_objects.general_object import (
+    GeneralObject,
+)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool,
     AuthorImage,

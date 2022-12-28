@@ -1,9 +1,15 @@
 import pytest
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.constants import CONTRIBUTORS_README_TEMPLATE, PACKS_DIR, PLAYBOOKS_DIR
+from demisto_sdk.commands.common.constants import (
+    CONTRIBUTORS_README_TEMPLATE,
+    PACKS_DIR,
+    PLAYBOOKS_DIR,
+)
 from demisto_sdk.commands.common.content.objects.pack_objects import Readme
-from demisto_sdk.commands.common.content.objects.pack_objects.contributors.contributors import Contributors
+from demisto_sdk.commands.common.content.objects.pack_objects.contributors.contributors import (
+    Contributors,
+)
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.tools import src_root
 

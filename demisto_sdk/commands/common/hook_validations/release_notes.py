@@ -11,7 +11,10 @@ from demisto_sdk.commands.common.constants import (
     SKIP_RELEASE_NOTES_FOR_TYPES,
 )
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator,
+    error_codes,
+)
 from demisto_sdk.commands.common.tools import (
     extract_docker_image_from_text,
     find_type,

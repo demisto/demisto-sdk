@@ -11,8 +11,14 @@ import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
-from demisto_sdk.commands.common.tools import get_script_or_sub_playbook_tasks_from_playbook, get_yaml
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator,
+    error_codes,
+)
+from demisto_sdk.commands.common.tools import (
+    get_script_or_sub_playbook_tasks_from_playbook,
+    get_yaml,
+)
 from demisto_sdk.commands.common.update_id_set import (
     get_classifier_data,
     get_incident_field_data,
@@ -26,7 +32,9 @@ from demisto_sdk.commands.common.update_id_set import (
     get_playbook_data,
     get_script_data,
 )
-from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
+from demisto_sdk.commands.prepare_content.integration_script_unifier import (
+    IntegrationScriptUnifier,
+)
 
 
 class IDSetValidations(BaseValidator):

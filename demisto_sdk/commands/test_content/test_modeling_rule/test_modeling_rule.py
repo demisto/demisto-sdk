@@ -17,10 +17,16 @@ from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.mode
     ModelingRule,
     SingleModelingRule,
 )
-from demisto_sdk.commands.common.logger import set_console_stream_handler, setup_rich_logging
+from demisto_sdk.commands.common.logger import (
+    set_console_stream_handler,
+    setup_rich_logging,
+)
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
 from demisto_sdk.commands.test_content.xsiam_tools import xsiam_client
-from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import XsiamApiClient, XsiamApiClientConfig
+from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
+    XsiamApiClient,
+    XsiamApiClientConfig,
+)
 from demisto_sdk.commands.upload.upload import upload_content_entity as upload_cmd
 from demisto_sdk.utils.utils import get_containing_pack
 
@@ -414,7 +420,9 @@ def validate_modeling_rule(
                     show_default=True,
                 )
 
-                from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_td_app
+                from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import (
+                    app as init_td_app,
+                )
 
                 if not init_td_app.registered_commands:
                     err = (

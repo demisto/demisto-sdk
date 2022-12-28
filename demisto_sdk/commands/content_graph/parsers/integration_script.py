@@ -3,7 +3,9 @@ from pathlib import Path
 from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.parsers.yaml_content_item import YAMLContentItemParser
+from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
+    YAMLContentItemParser,
+)
 
 
 class IntegrationScriptParser(YAMLContentItemParser):

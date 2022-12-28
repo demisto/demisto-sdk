@@ -8,7 +8,9 @@ import pytest
 from demisto_sdk.__main__ import xsoar_config_file_update
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import src_root
-from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import XSOARConfigFileUpdater
+from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import (
+    XSOARConfigFileUpdater,
+)
 
 json = JSON_Handler()
 

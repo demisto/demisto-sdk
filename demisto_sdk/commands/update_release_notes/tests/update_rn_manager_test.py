@@ -1,6 +1,8 @@
 import pytest
 
-from demisto_sdk.commands.update_release_notes.update_rn_manager import UpdateReleaseNotesManager
+from demisto_sdk.commands.update_release_notes.update_rn_manager import (
+    UpdateReleaseNotesManager,
+)
 
 
 class TestUpdateRNManager:
@@ -189,7 +191,9 @@ class TestUpdateRNManager:
         Then:
             - The update is successfully executed and no error is raised.
         """
-        from demisto_sdk.commands.update_release_notes.update_rn_manager import UpdateReleaseNotesManager
+        from demisto_sdk.commands.update_release_notes.update_rn_manager import (
+            UpdateReleaseNotesManager,
+        )
 
         mocker.patch.object(
             UpdateReleaseNotesManager,
@@ -214,7 +218,9 @@ class TestUpdateRNManager:
         Then:
             - The update is successfully executed on both packs and no error is raised.
         """
-        from demisto_sdk.commands.update_release_notes.update_rn_manager import UpdateReleaseNotesManager
+        from demisto_sdk.commands.update_release_notes.update_rn_manager import (
+            UpdateReleaseNotesManager,
+        )
         from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
         mocker.patch.object(ValidateManager, "setup_git_params")

@@ -4,7 +4,9 @@ from distutils.version import LooseVersion
 from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
+    ContentEntityValidator,
+)
 
 # Valid indicator type can include letters, numbers whitespaces, ampersands and underscores.
 VALID_INDICATOR_TYPE = "^[A-Za-z0-9_& ]*$"

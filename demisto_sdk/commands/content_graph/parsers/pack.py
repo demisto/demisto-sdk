@@ -11,8 +11,13 @@ from demisto_sdk.commands.content_graph.common import (
     Relationships,
 )
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
-from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItemException
-from demisto_sdk.commands.content_graph.parsers.content_items_list import ContentItemsList
+from demisto_sdk.commands.content_graph.parsers.content_item import (
+    ContentItemParser,
+    NotAContentItemException,
+)
+from demisto_sdk.commands.content_graph.parsers.content_items_list import (
+    ContentItemsList,
+)
 
 logger = logging.getLogger("demisto-sdk")
 

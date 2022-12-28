@@ -602,7 +602,7 @@ class GitUtil:
                                                       include_untracked=include_untracked,
                                                       get_only_current_file_names=True)
         return modified_files.union(added_files).union(renamed_files)
-    
+
     def _is_file_ignored(self, file_path: str) -> bool:
         """return wether the file is in .gitignore file or not.
         Args:

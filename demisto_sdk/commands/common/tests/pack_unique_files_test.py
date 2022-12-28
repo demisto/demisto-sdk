@@ -16,7 +16,9 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
+from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.git_util import GitUtil
 from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
@@ -129,6 +131,7 @@ class TestPackUniqueFilesValidator:
                             return_value=json.dumps(pack_metadata_no_email_and_url))
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value=None)
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': {}}, 'json'))
+        mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
         pack = repo.create_pack('PackName')
         pack.pack_metadata.write_json(pack_metadata_no_email_and_url)
         with ChangeCWD(repo.path):
@@ -156,6 +159,7 @@ class TestPackUniqueFilesValidator:
         pack_metadata_changed_url['url'] = url
 
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_name', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, 'get_master_private_repo_meta_file', return_value=None)
@@ -191,6 +195,7 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_name', return_value=True)
+        mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, 'get_master_private_repo_meta_file',
                             return_value=PACK_METADATA_PARTNER)
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',

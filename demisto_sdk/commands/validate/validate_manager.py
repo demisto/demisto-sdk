@@ -199,7 +199,6 @@ class ValidateManager:
         if not self.skip_conf_json:
             self.conf_json_validator = ConfJsonValidator(specific_validations=self.specific_validations)
             self.conf_json_data = self.conf_json_validator.conf_data
-        
 
     def is_node_exist(self) -> bool:
         """ Check if node interpreter exists.
@@ -495,10 +494,17 @@ class ValidateManager:
                 return False
 
         return True
-    
-    def is_skipped_file(self, file_path):
-        file_name = os.path.basename(file_path)
-        return file_name in SKIPPED_FILES
+
+    def is_skipped_file(self, file_path: str) -> bool:
+        """check wether the file in the given file_path is in the SKIPPED_FILES list.
+
+        Args:
+            file_path: the file on which to run.
+
+        Returns:
+            bool. true if file is in SKIPPED_FILES list, false otherwise.
+        """
+        return Path(file_path).name in SKIPPED_FILES
 
     # flake8: noqa: C901
     def run_validations_on_file(self, file_path, pack_error_ignore_list, is_modified=False,
@@ -522,7 +528,7 @@ class ValidateManager:
 
         is_added_file = file_path in added_files if added_files else False
         if file_path.endswith('.xif'):
-            file_path = file_path.replace('.xif', '.yml')             
+            file_path = file_path.replace('.xif', '.yml')
         if file_type in self.skipped_file_types or file_path.endswith('_unified.yml') or self.is_skipped_file(file_path) or self.git_util._is_file_ignored(file_path) or self.detect_file_level(file_path) == PathLevel.PACKAGE:
             self.ignored_files.add(file_path)
             return True

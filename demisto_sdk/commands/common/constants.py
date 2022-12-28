@@ -166,6 +166,7 @@ class FileType(str, Enum):
     PACK_METADATA = 'packmetadata'
     PIPFILE = 'pipfile'
     TXT = 'txt'
+    PIPFILE_LOCK = 'pipfilelock'
 
 
 RN_HEADER_BY_FILE_TYPE = {

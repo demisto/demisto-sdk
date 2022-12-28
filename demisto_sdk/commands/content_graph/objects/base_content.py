@@ -51,6 +51,7 @@ class BaseContentMetaclass(ModelMetaclass):
 
 
 class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
+    database_id: Optional[int] = Field(None, exclude=True, repr=False)  # used for the database
     object_id: str = Field(alias="id")
     content_type: ClassVar[ContentType] = Field(include=True)
     node_id: str
@@ -65,15 +66,14 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
-        state = self.__dict__.copy()
+        dict_copy = self.__dict__.copy()
 
-        # This object cannot be pickled
-        del state["relationships_data"]
-        return state
-
-    def __setstate__(self, state) -> None:
-        """Needed to for the object to be pickled correctly (to use multiprocessing)"""
-        self.__dict__.update(state)
+        # remove the relationships_data field, because it's not picklable
+        dict_copy["relationships_data"] = defaultdict(set)
+        return {
+            '__dict__': dict_copy,
+            '__fields_set__': self.__fields_set__,
+        }
 
     @property
     def normalize_name(self) -> str:
@@ -127,8 +127,12 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     def dump(self, path: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         pass
 
+    def add_relationship(self, relationship_type: RelationshipType, relationship: "RelationshipData") -> None:
+        self.relationships_data[relationship_type].add(relationship)
 
-class ServerContent(BaseContent):
+
+class UnknownContent(BaseContent):
+    """A model for non-existing content items used by existing content items. """
     not_in_repository: bool = True
     node_id: str = ""  # just because it's missing from the db
     object_id: str = ""

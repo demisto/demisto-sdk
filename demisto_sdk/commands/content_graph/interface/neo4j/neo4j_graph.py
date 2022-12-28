@@ -1,4 +1,5 @@
 import logging
+from multiprocessing import Pool
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set
 
@@ -6,8 +7,9 @@ from neo4j import GraphDatabase, Neo4jDriver, Session, graph
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.content_graph.common import (NEO4J_DATABASE_URL, NEO4J_PASSWORD, NEO4J_USERNAME, ContentType,
-                                                       Neo4jResult, RelationshipType)
+                                                       Neo4jRelationshipResult, RelationshipType)
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import Neo4jImportHandler
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import create_constraints, drop_constraints
@@ -24,13 +26,37 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (_m
                                                                               delete_all_graph_nodes, duplicates_exist,
                                                                               remove_empty_properties,
                                                                               remove_server_nodes)
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import create_relationships
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent, ServerContent, content_type_to_model
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (_match_relationships,
+                                                                                      create_relationships)
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent, UnknownContent, content_type_to_model
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
 logger = logging.getLogger("demisto-sdk")
+
+
+def _parse_node(element_id: int, node: dict) -> BaseContent:
+    """Parses nodes to content objects and adds it to mapping
+
+    Args:
+        nodes (Iterable[graph.Node]): List of nodes to parse
+
+    Raises:
+        NoModelException: If no model found to parse on
+    """
+    obj: BaseContent
+    content_type = node.get("content_type", "")
+    if node.get("not_in_repository"):
+        obj = UnknownContent.parse_obj(node)
+
+    else:
+        model = content_type_to_model.get(content_type)
+        if not model:
+            raise NoModelException(f"No model for {content_type}")
+        obj = model.parse_obj(node)
+    obj.database_id = element_id
+    return obj
 
 
 class NoModelException(Exception):
@@ -55,7 +81,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         if start_service or not neo4j_service.is_alive():
             neo4j_service.start(use_docker)
         self.output_file = output_file
-        self.use_docker = use_docker
+        self.use_docker = neo4j_service._should_use_docker(use_docker)
 
     def __enter__(self) -> "Neo4jContentGraphInterface":
         return self
@@ -69,73 +95,41 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def close(self) -> None:
         self.driver.close()
 
-    def _add_to_mapping(self, nodes: Iterable[graph.Node], marketplace: MarketplaceVersions = None) -> None:
-        """Parses nodes to content objects and adds it to mapping
-
-        Args:
-            nodes (Iterable[graph.Node]): List of nodes to parse
-
-        Raises:
-            NoModelException: If no model found to parse on
-        """
-        for node in nodes:
-            element_id = node.id
-            if element_id in Neo4jContentGraphInterface._id_to_obj:
-                continue
-            content_type = node.get("content_type")
-            if node.get("not_in_repository") or node.get("is_server_item"):
-                server_content = ServerContent.parse_obj(node)
-                Neo4jContentGraphInterface._id_to_obj[element_id] = server_content
-
-            else:
-                model = content_type_to_model.get(content_type)
-                if not model:
-                    raise NoModelException(f"No model for {content_type}")
-                obj = model.parse_obj(node)
-                Neo4jContentGraphInterface._id_to_obj[element_id] = obj
-
-    def _add_relationships_to_objects(self, result: List[Neo4jResult]) -> List[BaseContent]:
+    def _add_relationships_to_objects(self, session: Session, result: Dict[int, Neo4jRelationshipResult], marketplace: Optional[MarketplaceVersions]):
         """This adds relationships to given object
 
         Args:
+            session (Session): Neo4j session
             result (List[Neo4jResult]): Result from neo4j query
 
         Returns:
             List[BaseContent]: The objects to return with relationships
         """
-        final_result = []
-        for res in result:
-            obj = Neo4jContentGraphInterface._id_to_obj[res.node_from.id]
+        content_item_nodes: Set[int] = set()
+        packs: List[Pack] = []
+        nodes_to = []
+        for res in result.values():
+            nodes_to.extend(res.nodes_to)
+        self._add_nodes_to_mapping(nodes_to)
+        for id, res in result.items():
+            obj = Neo4jContentGraphInterface._id_to_obj[id]
             self._add_relationships(obj, res.relationships, res.nodes_to)
-            if isinstance(obj, Pack) and not list(obj.content_items):
-                obj.set_content_items()  # type: ignore[union-attr]
+            if isinstance(obj, Pack) and not obj.content_items:
+                packs.append(obj)
+                content_item_nodes.update(
+                    node.id for node, rel in zip(res.nodes_to, res.relationships) if rel.type == RelationshipType.IN_PACK
+                )
+
             if isinstance(obj, Integration) and not obj.commands:
                 obj.set_commands()  # type: ignore[union-attr]
 
-            final_result.append(obj)
-        return final_result
+        if content_item_nodes:
+            content_items_result = session.read_transaction(_match_relationships, content_item_nodes, marketplace)
+            self._add_relationships_to_objects(session, content_items_result, marketplace)
 
-    def _get_nodes_set_from_result(
-        self, result: List[Neo4jResult], pack_nodes: Set[graph.Node], content_items_nodes: Set[graph.Node]
-    ) -> Set[graph.Node]:
-        """
-        Generate a nodes set of all the nodes in the neo4j result.
-
-        Args:
-            result (List[Neo4JResult]): result from noe4j query
-            content_items_nodes (Set[graph.Node]): the content items nodes of pack
-
-        Returns:
-            Set[graph.Node]): A set of all nodes that returned by query
-        """
-        nodes_set = set()
-        for res in result:
-            nodes_set.update(set(res.nodes_to) | {res.node_from})
-            if res.node_from.get("content_type") == ContentType.PACK:
-                pack_nodes.update({res.node_from.id})
-                content_items_nodes.update({int(node_to.id) for _, node_to in zip(res.relationships, res.nodes_to)})
-
-        return nodes_set
+        # we need to set content items only after they are fully loaded
+        for pack in packs:
+            pack.set_content_items()
 
     def _add_relationships(
         self,
@@ -153,35 +147,39 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             nodes_to (List[graph.Node]): The list of nodes of the target
         """
         for node_to, rel in zip(nodes_to, relationships):
-            obj.relationships_data[rel.type].add(
-                RelationshipData(
-                    relationship_type=rel.type,
-                    source=Neo4jContentGraphInterface._id_to_obj[rel.start_node.id],
-                    target=Neo4jContentGraphInterface._id_to_obj[rel.end_node.id],
-                    content_item=Neo4jContentGraphInterface._id_to_obj[node_to.id],
-                    is_direct=True,
-                    **rel,
-                )
-            )
+            obj.add_relationship(rel.type,
+                                 RelationshipData(
+                                     relationship_type=rel.type,
+                                     source=Neo4jContentGraphInterface._id_to_obj[rel.start_node.id],
+                                     target=Neo4jContentGraphInterface._id_to_obj[rel.end_node.id],
+                                     content_item=Neo4jContentGraphInterface._id_to_obj[node_to.id],
+                                     is_direct=True,
+                                     **rel,
+                                 )
+                                 )
 
-    def _add_all_level_dependencies(self, session: Session, marketplace: MarketplaceVersions, pack_nodes):
-        mandatorily_dependencies: List[Neo4jResult] = session.read_transaction(
-            get_all_level_packs_dependencies, marketplace, pack_nodes, True
+    def _add_all_level_dependencies(self, session: Session, marketplace: MarketplaceVersions, pack_nodes: Iterable[graph.Node]):
+        """Helper method to add all level dependencies
+
+        Args:
+            session (Session): neo4j session
+            marketplace (MarketplaceVersions): Marketplace version to check for dependencies
+            pack_nodes (List[graph.Node]): List of the pack nodes
+        """
+        mandatorily_dependencies: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
+            get_all_level_packs_dependencies, pack_nodes, marketplace, True
         )
-        content_items_nodes: Set[graph.Node] = set()
-        nodes_set = self._get_nodes_set_from_result(mandatorily_dependencies, set(), content_items_nodes)
-        self._add_to_mapping(nodes_set, marketplace)
-        if content_items_nodes:
-            self._search(
-                marketplace,
-                filter_list=content_items_nodes,
-            )
+        nodes_to = []
+        for pack_depends_on_relationship in mandatorily_dependencies.values():
+            nodes_to.extend(pack_depends_on_relationship.nodes_to)
+        self._add_nodes_to_mapping(nodes_to)
 
-        for pack in mandatorily_dependencies:
-            obj = Neo4jContentGraphInterface._id_to_obj[pack.node_from.id]
-            for node_to in pack.nodes_to:
-                target = Neo4jContentGraphInterface._id_to_obj[node_to.id]
-                obj.relationships_data[RelationshipType.DEPENDS_ON].add(
+        for pack_id, pack_depends_on_relationship in mandatorily_dependencies.items():
+            obj = Neo4jContentGraphInterface._id_to_obj[pack_id]
+            for node in pack_depends_on_relationship.nodes_to:
+                target = Neo4jContentGraphInterface._id_to_obj[node.id]
+                obj.add_relationship(
+                    RelationshipType.DEPENDS_ON,
                     RelationshipData(
                         relationship_type=RelationshipType.DEPENDS_ON,
                         source=obj,
@@ -192,41 +190,51 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                     )
                 )
 
+    def _add_nodes_to_mapping(self, nodes: List[graph.Node]) -> None:
+        """Add nodes to the content models mapping
+
+        Args:
+            nodes (List[graph.Node]): list of nodes to add
+        """
+        nodes = filter(lambda node: node.id not in self._id_to_obj, nodes)
+        if not nodes:
+            logger.debug("No nodes to parse packs because all of them in mapping", self._id_to_obj)
+            return
+        with Pool(processes=cpu_count()) as pool:
+            results = pool.starmap(_parse_node, ((node.id, dict(node.items())) for node in nodes))
+            for result in results:
+                assert result.database_id is not None
+                self._id_to_obj[result.database_id] = result
+
     def _search(
         self,
         marketplace: MarketplaceVersions = None,
         content_type: Optional[ContentType] = None,
-        filter_list: Optional[Iterable[int]] = None,
+        ids_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,
-        level: int = 0,
         **properties,
     ) -> List[BaseContent]:
         """
         This is the implementation for the search function.
 
-        The `level` argument is an extra argument provided to limit the recursion level.
         """
         with self.driver.session() as session:
-            result: List[Neo4jResult] = session.read_transaction(
-                _match, marketplace, content_type, filter_list, **properties
+            results: List[graph.Node] = session.read_transaction(
+                _match, marketplace, content_type, ids_list, **properties
             )
-            content_items_nodes: Set[graph.Node] = set()
-            pack_nodes: Set[graph.Node] = set()
-            nodes_set = self._get_nodes_set_from_result(result, pack_nodes, content_items_nodes)
-            self._add_to_mapping(nodes_set, marketplace)
+            self._add_nodes_to_mapping(results)
 
-            if content_items_nodes and level < 2:
-                # limit recursion level is 2, because worst case is `Pack`, and there are two levels until the command
-                self._search(
-                    marketplace,
-                    filter_list=content_items_nodes,
-                    level=level + 1,
-                )
+            nodes_without_relationships = {result.id for result in results if not self._id_to_obj[result.id].relationships_data}
 
-            final_result = self._add_relationships_to_objects(result)
+            relationships: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
+                _match_relationships, nodes_without_relationships, marketplace
+            )
+            self._add_relationships_to_objects(session, relationships, marketplace)
+
+            pack_nodes = {result.id for result in results if isinstance(self._id_to_obj[result.id], Pack)}
             if all_level_dependencies and pack_nodes and marketplace:
                 self._add_all_level_dependencies(session, marketplace, pack_nodes)
-            return final_result
+            return [self._id_to_obj[result.id] for result in results]
 
     def create_indexes_and_constraints(self) -> None:
         with self.driver.session() as session:
@@ -292,7 +300,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self,
         marketplace: MarketplaceVersions = None,
         content_type: Optional[ContentType] = None,
-        filter_list: Optional[Iterable[int]] = None,
+        ids_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,
         **properties,
     ) -> List[BaseContent]:
@@ -302,7 +310,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Args:
             marketplace (MarketplaceVersions, optional): Marketplace to search by. Defaults to None.
             content_type (Optional[ContentType], optional): The content_type to filter. Defaults to None.
-            filter_list (Optional[Iterable[int]], optional): A list of unique IDs to filter. Defaults to None.
+            ids_list (Optional[Iterable[int]], optional): A list of unique IDs to filter. Defaults to None.
             all_level_dependencies (bool, optional): Whether to return all level dependencies. Defaults to False.
             **properties: A key, value filter for the search. For example: `search(object_id="QRadar")`.
 
@@ -310,7 +318,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             List[BaseContent]: The search results
         """
         super().search()
-        return self._search(marketplace, content_type, filter_list, all_level_dependencies, 0, **properties)
+        return self._search(marketplace, content_type, ids_list, all_level_dependencies, **properties)
 
     def create_pack_dependencies(self):
         with self.driver.session() as session:

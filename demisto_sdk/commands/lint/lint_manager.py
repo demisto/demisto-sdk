@@ -360,9 +360,7 @@ class LintManager:
 
         staged_files = {
             content_repo.working_dir / Path(item.b_path).parent  # type: ignore[operator]
-            for item in content_repo.active_branch.commit.tree.diff(
-                None, paths=pkgs
-            )
+            for item in content_repo.active_branch.commit.tree.diff(None, paths=pkgs)
         }
 
         if base_branch == "master" and content_repo.active_branch.name == "master":

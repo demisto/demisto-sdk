@@ -15,8 +15,8 @@ from git import GitCommandError, Repo
 from packaging.version import parse
 
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import API_MODULES_PACK  # PACK_METADATA_PRICE,
-from demisto_sdk.commands.common.constants import (
+from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
+    API_MODULES_PACK,
     EXCLUDED_DISPLAY_NAME_WORDS,
     INTEGRATIONS_DIR,
     PACK_METADATA_CATEGORIES,

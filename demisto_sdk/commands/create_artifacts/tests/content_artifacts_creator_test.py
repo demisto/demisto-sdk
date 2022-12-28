@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from filecmp import cmp, dircmp
+from filecmp import dircmp
 from pathlib import Path
 from shutil import copyfile, copytree, rmtree
 
@@ -152,36 +152,6 @@ def private_repo():
         yield TEST_PRIVATE_CONTENT_REPO
     finally:
         rmtree(TEST_PRIVATE_CONTENT_REPO)
-
-
-def test_modify_common_server_constants():
-    """Modify global variables in CommonServerPython.py
-
-    When: CommonServerPython.py contains:
-            - Global variable - CONTENT_RELEASE_VERSION = '0.0.0'
-            - Global variable - CONTENT_BRANCH_NAME = ''
-
-    Given: Parameters:
-            - Content version x.x.x
-            - Active branch - xxxx
-
-    Then: CommonServerPython.py changes:
-            - Global variable - CONTENT_RELEASE_VERSION = 'x.x.x'
-            - Global variable - CONTENT_BRANCH_NAME = 'xxxx'
-
-    Notes:
-        - After test clean up changes.
-    """
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import modify_common_server_constants
-
-    path_before = COMMON_SERVER / "CommonServerPython.py"
-    path_excepted = COMMON_SERVER / "CommonServerPython_modified.py"
-    old_data = path_before.read_text()
-    modify_common_server_constants(path_before, "6.0.0", "test")
-
-    assert cmp(path_before, path_excepted)
-
-    path_before.write_text(old_data)
 
 
 def test_dump_pack(mock_git):

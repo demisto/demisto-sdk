@@ -1748,12 +1748,18 @@ class TestIntegrationValidator:
             assert validator.is_api_token_in_credential_type() == expected_result
 
     IS_SKIPPED_INPUTS = [
-        ({"skipped_integrations": {"SomeIntegration": "No instance"}}, False),
-        ({"skipped_integrations": {"SomeOtherIntegration": "No instance"}}, True),
+        ({"skipped_integrations": {"SomeIntegration": "No instance"}}, False, False),
+        ({"skipped_integrations": {"SomeOtherIntegration": "No instance"}}, True, True),
+        (
+            {"skipped_integrations": {"SomeOtherIntegration": "Other reason"}},
+            False,
+            True,
+        ),
+        ({"skipped_integrations": {"SomeIntegration": "Other reason"}}, False, True),
     ]
 
-    @pytest.mark.parametrize("conf_dict, answer", IS_SKIPPED_INPUTS)
-    def test_is_unskipped_integration(self, conf_dict, answer):
+    @pytest.mark.parametrize("conf_dict, has_unittests, answer", IS_SKIPPED_INPUTS)
+    def test_is_unskipped_integration(self, mocker, conf_dict, has_unittests, answer):
         """
         Given:
             - An integration.
@@ -1767,6 +1773,10 @@ class TestIntegrationValidator:
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current
+        validator.file_path = "Packs/VirusTotal/Integrations/VirusTotal/Virus_Total.yml"
+        mocker.patch.object(
+            IntegrationValidator, "has_unittest", return_value=has_unittests
+        )
         assert validator.is_unskipped_integration(conf_dict) is answer
 
     VERIFY_REPUTATION_COMMANDS = [

@@ -395,7 +395,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         """
         return [
             field  # type: ignore[misc]
-            for field in fields 
+            for field in fields
             if normalize_field_name(field=field.get("fieldId", "")).lower()
             not in get_invalid_incident_fields_from_layout(
                 layout_incident_fields=fields, content_fields=content_fields

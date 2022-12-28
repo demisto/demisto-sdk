@@ -220,7 +220,7 @@ class XsiamApiClient(XsiamApiInterface):
         )
         try:
             data = response.json()
-        except requests.exceptions.JSONDecodeError:  #type: ignore[attr-defined]
+        except requests.exceptions.JSONDecodeError:  # type: ignore[attr-defined]
             error = response.text
             err_msg = f"Failed to push using {token_type} - with status code {response.status_code}"
             err_msg += f"\n{error}" if error else ""

@@ -25,7 +25,11 @@ class IncidentFieldParser(
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XPANSE}
+        return {
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XPANSE,
+        }
 
     def connect_to_dependencies(self) -> None:
         """Collects incident types used as optional dependencies, and scripts as mandatory dependencies."""

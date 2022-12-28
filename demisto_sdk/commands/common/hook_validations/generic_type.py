@@ -14,9 +14,7 @@ class GenericTypeValidator(ContentEntityValidator):
         """
         Check whether the generic type is valid or not
         """
-        answers = [
-            super().is_valid_generic_object_file()
-        ]
+        answers = [super().is_valid_generic_object_file()]
 
         return all(answers)
 

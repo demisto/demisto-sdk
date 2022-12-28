@@ -7,23 +7,28 @@ from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None, quiet_bc=False):
-    with patch.object(StructureValidator, '__init__', lambda a, b: None):
+    with patch.object(StructureValidator, "__init__", lambda a, b: None):
         structure = StructureValidator(file_path)
         structure.is_valid = True
-        structure.scheme_name = 'widget'
+        structure.scheme_name = "widget"
         structure.file_path = file_path
         structure.current_file = current_file
         structure.old_file = old_file
-        structure.prev_ver = 'master'
-        structure.branch_name = ''
+        structure.prev_ver = "master"
+        structure.branch_name = ""
         structure.quiet_bc = quiet_bc
         structure.specific_validations = None
         return structure
 
 
-@pytest.mark.parametrize('current_file, answer', [({'dataType': 'metrics', 'fromVersion': '6.2.0'}, True),
-                                                  ({'dataType': 'metrics', 'fromVersion': '5.5.0'}, False),
-                                                  ({'dataType': 'incidents', 'fromVersion': '6.2.0'}, True)])
+@pytest.mark.parametrize(
+    "current_file, answer",
+    [
+        ({"dataType": "metrics", "fromVersion": "6.2.0"}, True),
+        ({"dataType": "metrics", "fromVersion": "5.5.0"}, False),
+        ({"dataType": "incidents", "fromVersion": "6.2.0"}, True),
+    ],
+)
 def test_is_valid_fromversion(current_file, answer):
     """
     Given:

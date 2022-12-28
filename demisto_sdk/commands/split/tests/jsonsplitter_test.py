@@ -8,7 +8,9 @@ from TestSuite.test_tools import ChangeCWD
 json = JSON_Handler()
 
 
-EXTRACTED_DASHBOARD = UNIFIED_GENERIC_MODULE.get('views')[0].get('tabs')[0].get('dashboard')
+EXTRACTED_DASHBOARD = (
+    UNIFIED_GENERIC_MODULE.get("views")[0].get("tabs")[0].get("dashboard")
+)
 
 
 def test_split_json(repo):
@@ -23,10 +25,14 @@ def test_split_json(repo):
         - Ensure dashboard is extracted to the requested location.
         - Ensure the generic module file is edited properly in place.
     """
-    pack = repo.create_pack('PackName')
-    generic_module = pack.create_generic_module("generic-module", UNIFIED_GENERIC_MODULE)
+    pack = repo.create_pack("PackName")
+    generic_module = pack.create_generic_module(
+        "generic-module", UNIFIED_GENERIC_MODULE
+    )
     json_splitter = JsonSplitter(input=generic_module.path, output=pack.path)
-    expected_dashboard_path = str(pack.path) + "/" + EXTRACTED_DASHBOARD.get('name') + '.json'
+    expected_dashboard_path = (
+        str(pack.path) + "/" + EXTRACTED_DASHBOARD.get("name") + ".json"
+    )
 
     with ChangeCWD(pack.repo_path):
         res = json_splitter.split_json()

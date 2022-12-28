@@ -105,7 +105,9 @@ class ContentItem(BaseContent):
         with self.path.open() as f:
             return self.handler.load(f)
 
-    def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
+    def prepare_for_upload(
+        self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
+    ) -> dict:
         data = self.data
         # data = MarketplaceSuffixPreparer.prepare(data, marketplace)
         return data
@@ -121,10 +123,12 @@ class ContentItem(BaseContent):
         summary_res = self.dict(include=self.metadata_fields(), by_alias=True)
         if marketplace and marketplace != MarketplaceVersions.XSOAR:
             data = self.data
-            if 'id' in summary_res:
-                summary_res['id'] = data.get('commonfields', {}).get('id_x2') or self.object_id
-            if 'name' in summary_res:
-                summary_res['name'] = data.get('name_x2') or self.name
+            if "id" in summary_res:
+                summary_res["id"] = (
+                    data.get("commonfields", {}).get("id_x2") or self.object_id
+                )
+            if "name" in summary_res:
+                summary_res["name"] = data.get("name_x2") or self.name
         return summary_res
 
     @abstractmethod
@@ -151,7 +155,11 @@ class ContentItem(BaseContent):
                     name = name.removeprefix(f"{prefix}-")  # type: ignore[attr-defined]
                 except AttributeError:
                     # not supported in python 3.8
-                    name = name[:len(prefix) + 1] if name.startswith(f"{prefix}-") else name
+                    name = (
+                        name[: len(prefix) + 1]
+                        if name.startswith(f"{prefix}-")
+                        else name
+                    )
         normalized = f"{self.content_type.server_name}-{name}"
         logger.info(f"Normalized file name from {name} to {normalized}")
         return normalized

@@ -27,7 +27,7 @@ __all__ = [
     "WizardParser",
     "XSIAMDashboardParser",
     "XSIAMReportParser",
-    "XDRCTemplateParser"
+    "XDRCTemplateParser",
 ]
 
 from demisto_sdk.commands.content_graph.parsers.classifier import ClassifierParser

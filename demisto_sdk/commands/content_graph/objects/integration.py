@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 
-logger = logging.getLogger('demisto-sdk')
+logger = logging.getLogger("demisto-sdk")
 
 
 class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
@@ -75,16 +75,18 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             "commands": {"name": True, "description": True},
         }
 
-    def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
+    def prepare_for_upload(
+        self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
+    ) -> dict:
         data = super().prepare_for_upload(marketplace, **kwargs)
 
         if supported_native_images := self.get_supported_native_images(
             marketplace=marketplace,
-            ignore_native_image=kwargs.get('ignore_native_image') or False
+            ignore_native_image=kwargs.get("ignore_native_image") or False,
         ):
             logger.debug(
-                f'Adding the following native images {supported_native_images} to integration {self.object_id}'
+                f"Adding the following native images {supported_native_images} to integration {self.object_id}"
             )
-            data['script']['nativeimage'] = supported_native_images
+            data["script"]["nativeimage"] = supported_native_images
 
         return data

@@ -5,19 +5,16 @@ from urllib3 import Retry
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 from demisto_sdk.commands.common.MDXServer import DEMISTO_DEPS_DOCKER_NAME, start_docker_MDX_server
 
-SERVER_DNS = 'docker'  # switch to localhost for testing locally
+SERVER_DNS = "docker"  # switch to localhost for testing locally
 
 
 def assert_successful_mdx_call():
     session = requests.Session()
     retry = Retry(total=2)
     adapter = HTTPAdapter(max_retries=retry)
-    session.mount('http://', adapter)
+    session.mount("http://", adapter)
     response = session.request(
-        'POST',
-        f'http://{SERVER_DNS}:6161',
-        data='## Hello',
-        timeout=20
+        "POST", f"http://{SERVER_DNS}:6161", data="## Hello", timeout=20
     )
     assert response.status_code == 200
 
@@ -26,19 +23,18 @@ def assert_not_successful_mdx_call():
     session = requests.Session()
     retry = Retry(total=2)
     adapter = HTTPAdapter(max_retries=retry)
-    session.mount('http://', adapter)
+    session.mount("http://", adapter)
     response = session.request(
-        'POST',
-        f'http://{SERVER_DNS}:6161',
-        data='<div> Hello',
-        timeout=20
+        "POST", f"http://{SERVER_DNS}:6161", data="<div> Hello", timeout=20
     )
     assert response.status_code == 500
 
 
 def container_is_up():
-    return any(container.name == DEMISTO_DEPS_DOCKER_NAME
-               for container in init_global_docker_client().containers.list())
+    return any(
+        container.name == DEMISTO_DEPS_DOCKER_NAME
+        for container in init_global_docker_client().containers.list()
+    )
 
 
 def test_is_file_not_valid():

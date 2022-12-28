@@ -7,14 +7,13 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONCon
 
 
 class XDRCTemplateParser(JSONContentItemParser, content_type=ContentType.XDRC_TEMPLATE):
-
     def __init__(
-            self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
         super().__init__(path, pack_marketplaces)
-        self.content_global_id = self.json_data.get('content_global_id')
-        self.os_type = self.json_data.get('os_type')
-        self.profile_type = self.json_data.get('profile_type')
+        self.content_global_id = self.json_data.get("content_global_id")
+        self.os_type = self.json_data.get("os_type")
+        self.profile_type = self.json_data.get("profile_type")
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
@@ -22,4 +21,4 @@ class XDRCTemplateParser(JSONContentItemParser, content_type=ContentType.XDRC_TE
 
     @property
     def object_id(self) -> Optional[str]:
-        return self.json_data.get('content_global_id')
+        return self.json_data.get("content_global_id")

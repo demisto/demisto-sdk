@@ -65,6 +65,6 @@ class TestNeo4jQueries:
                     "object_id": "rel_data.source_id",
                     "content_type": "rel_data.source_type",
                 }
-            ) ==
-            "{object_id: rel_data.source_id, content_type: rel_data.source_type}"
+            )
+            == "{object_id: rel_data.source_id, content_type: rel_data.source_type}"
         )

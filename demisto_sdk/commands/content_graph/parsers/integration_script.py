@@ -23,4 +23,8 @@ class IntegrationScriptParser(YAMLContentItemParser):
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XPANSE}
+        return {
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XPANSE,
+        }

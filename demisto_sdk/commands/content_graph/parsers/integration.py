@@ -82,7 +82,9 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         """
         if self.is_unified or self.script_info.get("script") not in ("-", "", None):
             return self.script_info.get("script")
-        return IntegrationScriptUnifier.get_script_or_integration_package_data(self.path.parent)[1]
+        return IntegrationScriptUnifier.get_script_or_integration_package_data(
+            self.path.parent
+        )[1]
 
     def connect_to_api_modules(self) -> None:
         """Creates IMPORTS relationships with the API modules used in the integration."""

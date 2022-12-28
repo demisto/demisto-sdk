@@ -6,10 +6,16 @@ from demisto_sdk.commands.common.content.objects.abstract_objects import YAMLObj
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import src_root
 
-TEST_DATA = src_root() / 'tests' / 'test_files'
-TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
-TEST_VALID_YAML = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / PLAYBOOKS_DIR / 'playbook-sample_new.yml'
-TEST_NOT_VALID_YAML = TEST_DATA / 'malformed.yaml'
+TEST_DATA = src_root() / "tests" / "test_files"
+TEST_CONTENT_REPO = TEST_DATA / "content_slim"
+TEST_VALID_YAML = (
+    TEST_CONTENT_REPO
+    / PACKS_DIR
+    / "Sample01"
+    / PLAYBOOKS_DIR
+    / "playbook-sample_new.yml"
+)
+TEST_NOT_VALID_YAML = TEST_DATA / "malformed.yaml"
 
 yaml = YAML_Handler(width=50000)
 
@@ -30,10 +36,12 @@ class TestValidYAML:
         if default_value:
             assert obj.get("no such key", default_value) == default_value
         else:
-            assert obj["fromversion"] == yaml.load(TEST_VALID_YAML.open())["fromversion"]
+            assert (
+                obj["fromversion"] == yaml.load(TEST_VALID_YAML.open())["fromversion"]
+            )
 
     def test_dump(self, datadir):
-        expected_file = TEST_VALID_YAML.parent / f'prefix-{TEST_VALID_YAML.name}'
+        expected_file = TEST_VALID_YAML.parent / f"prefix-{TEST_VALID_YAML.name}"
         obj = YAMLObject(TEST_VALID_YAML, "prefix")
         assert obj.dump()[0] == expected_file
         assert obj.to_dict() == yaml.load(expected_file.open())
@@ -48,4 +56,4 @@ class TestInvalidYAML:
 
     def test_malformed_yaml_path(self, datadir):
         with pytest.raises(ContentInitializeError):
-            YAMLObject('Not valid path')
+            YAMLObject("Not valid path")

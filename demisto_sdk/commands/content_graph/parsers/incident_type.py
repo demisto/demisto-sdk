@@ -21,7 +21,11 @@ class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDEN
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XPANSE}
+        return {
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XPANSE,
+        }
 
     def connect_to_dependencies(self) -> None:
         """Collects the script, playbook and layout used by the incident type as mandatory dependencies."""

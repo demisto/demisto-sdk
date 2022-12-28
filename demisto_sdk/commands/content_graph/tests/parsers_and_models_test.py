@@ -3,8 +3,11 @@ from typing import Dict, List, Optional, Set
 
 import pytest
 
-from demisto_sdk.commands.common.constants import (DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-                                                   MarketplaceVersions)
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    DEFAULT_CONTENT_ITEM_TO_VERSION,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.content_graph.common import ContentType, Relationships, RelationshipType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
@@ -197,17 +200,17 @@ class PackModelVerifier:
         assert expected_url is None or model.url == expected_url
         assert expected_author is None or model.author == expected_author
         assert (
-            expected_certification is None or
-            model.certification == expected_certification
+            expected_certification is None
+            or model.certification == expected_certification
         )
         assert expected_hidden is None or model.hidden == expected_hidden
         assert (
-            expected_server_min_version is None or
-            model.server_min_version == expected_server_min_version
+            expected_server_min_version is None
+            or model.server_min_version == expected_server_min_version
         )
         assert (
-            expected_current_version is None or
-            model.current_version == expected_current_version
+            expected_current_version is None
+            or model.current_version == expected_current_version
         )
         assert expected_tags is None or model.tags == expected_tags
         assert expected_categories is None or model.categories == expected_categories

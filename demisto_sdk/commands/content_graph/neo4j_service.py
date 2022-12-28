@@ -23,7 +23,9 @@ NEO4J_DATA_FOLDER = "data"
 NEO4J_PLUGINS_FOLDER = "plugins"
 
 # When updating the APOC version, make sure to update the checksum as well
-APOC_URL_VERSIONS = "https://neo4j-contrib.github.io/neo4j-apoc-procedures/versions.json"
+APOC_URL_VERSIONS = (
+    "https://neo4j-contrib.github.io/neo4j-apoc-procedures/versions.json"
+)
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -88,13 +90,20 @@ def _should_use_docker(use_docker: bool) -> bool:
 
 def _is_apoc_available(plugins_path: Path, sha1: str) -> bool:
     for plugin in plugins_path.iterdir():
-        if plugin.name.startswith("apoc") and hashlib.sha1(plugin.read_bytes()).hexdigest() == sha1:
+        if (
+            plugin.name.startswith("apoc")
+            and hashlib.sha1(plugin.read_bytes()).hexdigest() == sha1
+        ):
             return True
     return False
 
 
 def _download_apoc():
-    apocs = [apoc for apoc in requests.get(APOC_URL_VERSIONS, verify=False).json() if apoc["neo4j"] == NEO4J_VERSION]
+    apocs = [
+        apoc
+        for apoc in requests.get(APOC_URL_VERSIONS, verify=False).json()
+        if apoc["neo4j"] == NEO4J_VERSION
+    ]
     if not apocs:
         logger.debug(f"Could not find APOC for neo4j version {NEO4J_VERSION}")
         return
@@ -122,7 +131,9 @@ def start(use_docker: bool = True):
     """
     use_docker = _should_use_docker(use_docker)
     if not use_docker:
-        _neo4j_admin_command("set-initial-password", f"neo4j-admin set-initial-password {NEO4J_PASSWORD}")
+        _neo4j_admin_command(
+            "set-initial-password", f"neo4j-admin set-initial-password {NEO4J_PASSWORD}"
+        )
         run_command("neo4j start", cwd=REPO_PATH, is_silenced=False)
         # health check to make sure that neo4j is up
         _wait_until_service_is_up()
@@ -211,7 +222,11 @@ def dump(output_path: Path, use_docker=True):
     dump_path = Path("/backups/content-graph.dump") if use_docker else output_path
     command = f"neo4j-admin dump --database=neo4j --to={dump_path}"
     # The actual path in the host is different than the path in the container
-    real_path = (REPO_PATH / NEO4J_FOLDER / "backups" / "content-graph.dump") if use_docker else output_path
+    real_path = (
+        (REPO_PATH / NEO4J_FOLDER / "backups" / "content-graph.dump")
+        if use_docker
+        else output_path
+    )
     real_path.unlink(missing_ok=True)
     _neo4j_admin_command("dump", command)
     if use_docker:

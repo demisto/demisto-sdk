@@ -15,4 +15,4 @@ class TestWizard:
         Test that wizards created from files whose name does not start with `wizard-` are normalized correctly.
         """
         obj = Wizard(datadir[sample_file_path])
-        assert obj.normalize_file_name() == f'wizard-{sample_wizard_name}.json'
+        assert obj.normalize_file_name() == f"wizard-{sample_wizard_name}.json"

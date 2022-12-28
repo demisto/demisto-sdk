@@ -20,8 +20,10 @@ class IntegrationScript(ContentItem):
     description: Optional[str]
     is_unified: bool = Field(False, exclude=True)
 
-    def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
-        if not kwargs.get('unify_only'):
+    def prepare_for_upload(
+        self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
+    ) -> dict:
+        if not kwargs.get("unify_only"):
             data = super().prepare_for_upload(marketplace)
         else:
             data = self.data
@@ -30,14 +32,12 @@ class IntegrationScript(ContentItem):
         return data
 
     def get_supported_native_images(
-        self,
-        marketplace: MarketplaceVersions,
-        ignore_native_image: bool = False
+        self, marketplace: MarketplaceVersions, ignore_native_image: bool = False
     ) -> List[str]:
         if marketplace == MarketplaceVersions.XSOAR and not ignore_native_image:
             return ScriptIntegrationSupportedNativeImages(
                 _id=self.object_id,
                 docker_image=self.docker_image,
-                native_image_config=file_to_native_image_config()
+                native_image_config=file_to_native_image_config(),
             ).get_supported_native_image_versions(get_raw_version=True)
         return []

@@ -2,8 +2,11 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from demisto_sdk.commands.common.constants import (DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-                                                   MarketplaceVersions)
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    DEFAULT_CONTENT_ITEM_TO_VERSION,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.tools import get_files_in_dir, get_json
 from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItemException
 

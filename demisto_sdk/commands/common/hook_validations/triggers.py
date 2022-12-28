@@ -17,7 +17,9 @@ class TriggersValidator(ContentEntityValidator):
         Note: For now we return True regardless of the item content. More info:
         https://github.com/demisto/etc/issues/48151#issuecomment-1109660727
         """
-        logging.debug('Automatically considering XSIAM content item as valid, see issue #48151')
+        logging.debug(
+            "Automatically considering XSIAM content item as valid, see issue #48151"
+        )
         return True
 
     def is_valid_version(self):

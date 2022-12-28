@@ -13,7 +13,7 @@ def test_no_leading_hyphen():
     When: running dataset_name_matches_in_xif_and_schema.
     Then: Validate that the correlation rule is invalid.
     """
-    invalid_correlation_file = f'{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/invalid_correlation_rule.yml'
+    invalid_correlation_file = f"{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/invalid_correlation_rule.yml"
     invalid_correlation_yaml = get_yaml(invalid_correlation_file)
     structure_validator = StructureValidator(invalid_correlation_file)
     structure_validator.current_file = invalid_correlation_yaml

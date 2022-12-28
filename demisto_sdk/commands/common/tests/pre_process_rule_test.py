@@ -2,7 +2,6 @@ from demisto_sdk.commands.common.hook_validations.pre_process_rule import PrePro
 
 
 class TestPreProcessRuleValidator:
-
     def test_get_field_name(self):
         """
         Given
@@ -13,7 +12,7 @@ class TestPreProcessRuleValidator:
         - Return the field name itself
         """
 
-        assert 'foo1' == PreProcessRuleValidator.get_field_name('foo1')
-        assert 'foo2' == PreProcessRuleValidator.get_field_name('${foo2')
-        assert 'foo3' == PreProcessRuleValidator.get_field_name('foo3}')
-        assert 'foo4' == PreProcessRuleValidator.get_field_name('${foo4}')
+        assert "foo1" == PreProcessRuleValidator.get_field_name("foo1")
+        assert "foo2" == PreProcessRuleValidator.get_field_name("${foo2")
+        assert "foo3" == PreProcessRuleValidator.get_field_name("foo3}")
+        assert "foo4" == PreProcessRuleValidator.get_field_name("${foo4}")

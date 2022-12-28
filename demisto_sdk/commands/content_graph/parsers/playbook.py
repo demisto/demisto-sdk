@@ -37,7 +37,11 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XPANSE}
+        return {
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XPANSE,
+        }
 
     def is_mandatory_dependency(self, task_id: str) -> bool:
         try:
@@ -89,7 +93,9 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
                 for incident_field in get_fields_by_script_argument(task):
                     if incident_field not in IGNORED_FIELDS:
                         self.add_dependency_by_id(
-                            incident_field, ContentType.INDICATOR_FIELD, is_mandatory=False
+                            incident_field,
+                            ContentType.INDICATOR_FIELD,
+                            is_mandatory=False,
                         )
 
             elif command in LIST_COMMANDS:

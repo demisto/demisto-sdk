@@ -189,7 +189,9 @@ def create_relationships_by_type(
 
     result = run_query(tx, query, data=data).single()
     merged_relationships_count: int = result["relationships_merged"]
-    logger.info(f"Merged {merged_relationships_count} relationships of type {relationship}.")
+    logger.info(
+        f"Merged {merged_relationships_count} relationships of type {relationship}."
+    )
 
 
 def _match_relationships(
@@ -207,7 +209,11 @@ def _match_relationships(
     Returns:
         Dict[int, Neo4jRelationshipResult]: Dictionary of neo4j ids to Neo4jRelationshipResult
     """
-    marketplace_where = f"AND '{marketplace}' IN node_from.marketplaces AND '{marketplace}' IN node_to.marketplaces" if marketplace else ""
+    marketplace_where = (
+        f"AND '{marketplace}' IN node_from.marketplaces AND '{marketplace}' IN node_to.marketplaces"
+        if marketplace
+        else ""
+    )
     query = f"""
     UNWIND $ids_list AS id
     MATCH (node_from) - [relationship] - (node_to)
@@ -217,7 +223,7 @@ def _match_relationships(
     """
     return {
         int(item["node_from_id"]): Neo4jRelationshipResult(
-            relationships=item.get("relationships"),
-            nodes_to=item.get("nodes_to"))
+            relationships=item.get("relationships"), nodes_to=item.get("nodes_to")
+        )
         for item in run_query(tx, query, ids_list=list(ids_list) if ids_list else None)
     }

@@ -12,9 +12,19 @@ class XDRCTemplatesValidator(ContentEntityValidator):
     XSIAMDashboardValidator is designed to validate the correctness of the file structure we enter to content repo.
     """
 
-    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, json_file_path=None):
-        super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         json_file_path=json_file_path)
+    def __init__(
+        self,
+        structure_validator,
+        ignored_errors=None,
+        print_as_warnings=False,
+        json_file_path=None,
+    ):
+        super().__init__(
+            structure_validator,
+            ignored_errors=ignored_errors,
+            print_as_warnings=print_as_warnings,
+            json_file_path=json_file_path,
+        )
         self._is_valid = True
 
     def is_valid_file(self, validate_rn=True, is_new_file=False, use_git=False):
@@ -38,7 +48,9 @@ class XDRCTemplatesValidator(ContentEntityValidator):
         Validates all file naming is as convention.
         """
         if not self.validate_xsiam_content_item_title(self.file_path):
-            error_message, error_code = Errors.xdrc_templates_files_naming_error([self.file_path])
+            error_message, error_code = Errors.xdrc_templates_files_naming_error(
+                [self.file_path]
+            )
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False

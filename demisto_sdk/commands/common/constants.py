@@ -214,6 +214,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.INCIDENT_FIELD.value: INCIDENT_FIELDS_DIR,
     FileType.INCIDENT_TYPE.value: INCIDENT_TYPES_DIR,
     FileType.INDICATOR_FIELD.value: INDICATOR_FIELDS_DIR,
+    FileType.INDICATOR_TYPE.value: INDICATOR_TYPES_DIR,
     FileType.CONNECTION.value: CONNECTIONS_DIR,
     FileType.CLASSIFIER.value: CLASSIFIERS_DIR,
     FileType.DASHBOARD.value: DASHBOARDS_DIR,
@@ -233,6 +234,8 @@ ENTITY_TYPE_TO_DIR = {
     FileType.MODELING_RULE.value: MODELING_RULES_DIR,
     FileType.WIZARD.value: WIZARDS_DIR,
     FileType.XDRC_TEMPLATE.value: XDRC_TEMPLATE_DIR,
+    FileType.CORRELATION_RULE.value: CORRELATION_RULES_DIR,
+    FileType.XSIAM_DASHBOARD.value: XSIAM_DASHBOARDS_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -297,6 +300,9 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     JOBS_DIR,
     WIZARDS_DIR,
 ]
+
+RN_CONTENT_ENTITY_WITH_STARS = [FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
+                                FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD]
 
 DEFAULT_IMAGE_PREFIX = 'data:image/png;base64,'
 DEFAULT_IMAGE_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAMAAAC5zwKfAAACYVBMVEVHcEwAT4UAT4UAT4YAf/8A//8AT4UAf78AT4U' \
@@ -1409,7 +1415,7 @@ MAX_FETCH = 'max_fetch'
 
 SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileType.TEST_PLAYBOOK,
                                 FileType.TEST_SCRIPT, FileType.DOC_IMAGE, FileType.AUTHOR_IMAGE, None,
-                                FileType.RELEASE_NOTES_CONFIG, FileType.CONTRIBUTORS, FileType.TRIGGER,)
+                                FileType.RELEASE_NOTES_CONFIG, FileType.CONTRIBUTORS)
 
 LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggregatedreliability', 'detectedips',
                                      'detectedhosts', 'modified', 'expiration', 'timestamp', 'shortdesc',

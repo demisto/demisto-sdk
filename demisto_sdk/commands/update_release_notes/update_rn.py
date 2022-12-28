@@ -599,9 +599,7 @@ class UpdateRN:
         """
         if _type in RN_CONTENT_ENTITY_WITH_STARS:
             if is_new_file:
-                rn_desc = f'##### New: {content_name}\n'
-                if desc:
-                    rn_desc = f'{rn_desc}- {desc}'
+                rn_desc = f'##### New: **{content_name}**\n'
             else:
                 rn_desc = f'- **{content_name}**\n'
 

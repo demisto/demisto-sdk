@@ -28,9 +28,10 @@ def is_target_available(source: str, target: str) -> str:
     """
     return f"""({intersects(f'{source}.marketplaces', f'{target}.marketplaces')}
 AND
-{versioned(f'{source}.toversion')} >= {versioned(f'{target}.fromversion')}
+    {versioned(f'{source}.toversion')} >= {versioned(f'{target}.fromversion')}
 AND
-{versioned(f'{target}.toversion')} >= {versioned(f'{source}.fromversion')})"""
+    {versioned(f'{target}.toversion')} >= {versioned(f'{source}.fromversion')})
+    """
 
 
 def node_map(properties: Dict[str, Any]) -> str:

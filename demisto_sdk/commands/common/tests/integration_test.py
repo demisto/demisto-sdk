@@ -1143,13 +1143,14 @@ class TestIntegrationValidator:
 
         assert validator.name_not_contain_the_type()
 
-    @pytest.mark.parametrize('support, parameter_type, expected_result', [
-        ('xsoar', 4, False),
-        ('xsoar', 9, True),
-        ('community', 4, True),
-        ('partner', 4, True),
+    @pytest.mark.parametrize('support, parameter_type, hidden, expected_result', [
+        ('xsoar', 4, False, False),
+        ('xsoar', 9, False, True),
+        ('xsoar', 4, True, True),
+        ('community', 4, False, True),
+        ('partner', 4, False, True),
     ])
-    def test_is_api_token_in_credential_type(self, pack, support, parameter_type, expected_result):
+    def test_is_api_token_in_credential_type(self, pack, support, parameter_type, hidden, expected_result):
         """
         Given
             - An integration with API token parameter in non credential type.
@@ -1168,7 +1169,8 @@ class TestIntegrationValidator:
             'configuration': [{
                 'display': 'API token',
                 'name': 'token',
-                'type': parameter_type  # Encrypted text failed
+                'type': parameter_type,  # Encrypted text failed
+                'hidden': hidden
             }]
         })
 

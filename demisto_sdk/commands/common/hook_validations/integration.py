@@ -1606,7 +1606,7 @@ class IntegrationValidator(ContentEntityValidator):
 
             conf_params = self.current_file.get('configuration', [])
             for param in conf_params:
-                if param.get('type') == 4:
+                if param.get('type') == 4 and not param.get('hidden'):
                     error_message, error_code = Errors.api_token_is_not_in_credential_type(param.get('name'))
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         return False

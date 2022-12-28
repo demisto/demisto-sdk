@@ -7,7 +7,8 @@ from requests import Response
 
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER, FILETYPE_TO_DEFAULT_FROMVERSION,
                                                    INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME,
-                                                   FileType, MarketplaceVersions)
+                                                   RN_CONTENT_ENTITY_WITH_STARS, RN_HEADER_BY_FILE_TYPE, FileType,
+                                                   MarketplaceVersions)
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 
 FOUND_FILES_AND_ERRORS: list = []
@@ -26,7 +27,7 @@ ALLOWED_IGNORE_ERRORS = [
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
     'IM111',
-    'RN112',
+    'RN112', 'RN113', 'RN114', 'RN115',
     'MR104', 'MR105',
 ]
 
@@ -382,6 +383,11 @@ ERROR_CODE = {
     "release_notes_config_file_missing_release_notes": {'code': "RN110", 'ui_applicable': False, 'related_field': ''},
     "release_notes_docker_image_not_match_yaml": {'code': "RN111", 'ui_applicable': False, 'related_field': ''},
     "release_notes_bc_json_file_missing": {'code': "RN112", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_invalid_content_type_header": {'code': "RN113", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_invalid_content_name_header": {'code': "RN114", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_invalid_header_format": {'code': "RN115", 'ui_applicable': False, 'related_field': ''},
+
+
 
     # RP - Reputations (Indicator Types)
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
@@ -1359,6 +1365,33 @@ class Errors:
                'without a matching JSON file (with the same name as the release note file, e.g. 1_2_3.json). ' \
                f'Please run \"demisto-sdk update-release-notes -i {json_path[:-4]}md -bc\". ' \
                'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
+
+    @staticmethod
+    @error_code_decorator
+    def release_notes_invalid_content_type_header(content_type: str, pack_name: str):
+        return f'The content type header "{content_type}" is either an invalid content type or does not exist in the "{pack_name}" pack.\n' \
+               f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n' \
+               'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
+
+    @staticmethod
+    @error_code_decorator
+    def release_notes_invalid_content_name_header(content_name_header: str, pack_name: str, content_type: str):
+        return f'The {content_type} "{content_name_header}" does not exist in the "{pack_name}" pack.\n' \
+               f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n' \
+               'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
+
+    @staticmethod
+    @error_code_decorator
+    def release_notes_invalid_header_format(content_type: str, pack_name: str):
+        contents_with_stars = [RN_HEADER_BY_FILE_TYPE[content] for content in RN_CONTENT_ENTITY_WITH_STARS]
+        error = f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n' \
+                'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
+
+        if content_type in contents_with_stars:
+            error = f'Did not find content items headers under "{content_type}" - might be duo to missing "**" symbols in the header.\n{error}'
+        else:
+            error = f'Did not find content items headers under "{content_type}" - might be duo to invalid format.\n{error}'
+        return error
 
     @staticmethod
     @error_code_decorator

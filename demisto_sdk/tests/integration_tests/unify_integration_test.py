@@ -205,7 +205,7 @@ class TestIntegrationScriptUnifier:
             runner.invoke(main, [UNIFY_CMD, '-i', f'{script.path}', '-c', 'Test'])
             with open(os.path.join(script.path, 'script-dummy-script.yml')) as unified_yml:
                 unified_yml_data = yaml.load(unified_yml)
-                assert unified_yml_data.get('name') == 'sample_script - Test'
+                assert unified_yml_data.get('name') == 'sample_scriptTest'
                 assert unified_yml_data.get('nativeimage') == ['8.1', '8.2']
 
     def test_ignore_native_image_integration(self, repo):

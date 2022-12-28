@@ -20,8 +20,7 @@ PACK_CONTRIBUTORS_FILENAME = "CONTRIBUTORS.json"
 UNIFIED_FILES_SUFFIXES = [".yml", ".json"]
 
 
-class Neo4jResult(NamedTuple):
-    node_from: graph.Node
+class Neo4jRelationshipResult(NamedTuple):
     relationships: List[graph.Relationship]
     nodes_to: List[graph.Node]
 
@@ -107,6 +106,10 @@ class ContentType(str, enum.Enum):
     def server_names() -> List[str]:
         return [c.server_name for c in ContentType] + ["indicatorfield", "mapper"]
 
+    @staticmethod
+    def values() -> Iterator[str]:
+        return (c.value for c in ContentType)
+
     @classmethod
     def by_path(cls, path: Path) -> "ContentType":
         for idx, folder in enumerate(path.parts):
@@ -116,10 +119,12 @@ class ContentType(str, enum.Enum):
         else:
             # less safe option - will raise an exception if the path
             # is not to the content item directory or file
-            if path.is_dir():
+            if path.parts[-2][:-1] in ContentType.values():
                 content_type_dir = path.parts[-2]
-            else:
+            elif path.parts[-3][:-1] in ContentType.values():
                 content_type_dir = path.parts[-3]
+            else:
+                raise ValueError(f"Could not find content type in path {path}")
         return cls(content_type_dir[:-1])  # remove the `s`
 
     @staticmethod

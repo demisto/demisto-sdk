@@ -11,8 +11,9 @@ from typing import Any, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEPRECATED_DESC_REGEX,
                                                    DEPRECATED_NO_REPLACE_DESC_REGEX, IGNORED_PACK_NAMES,
-                                                   RN_HEADER_BY_FILE_TYPE, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
-                                                   FileType)
+                                                   RN_CONTENT_ENTITY_WITH_STARS,
+                                                   RN_HEADER_BY_FILE_TYPE, SKIP_RELEASE_NOTES_FOR_TYPES, XSIAM_REPORTS_DIR,
+                                                   XSIAM_DASHBOARDS_DIR, FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects import Integration, Playbook, Script
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
@@ -194,6 +195,8 @@ class UpdateRN:
         changed_files = {}
         for packfile in self.modified_files_in_pack:
             file_name, file_type = self.get_changed_file_name_and_type(packfile)
+            if file_type in SKIP_RELEASE_NOTES_FOR_TYPES:
+                continue
             if 'yml' in packfile and file_type in [FileType.INTEGRATION, FileType.BETA_INTEGRATION,
                                                    FileType.SCRIPT] and packfile not in self.added_files:
                 docker_image_name: Optional[str] = check_docker_image_changed(main_branch=self.main_branch,
@@ -595,8 +598,7 @@ class UpdateRN:
             :return
             The release notes description
         """
-        if _type in (FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
-                     FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
+        if _type in RN_CONTENT_ENTITY_WITH_STARS:
 
             rn_desc = f'- **{content_name}**\n'
 
@@ -623,9 +625,6 @@ class UpdateRN:
                         rn_desc += deprecate_rn
                     else:
                         rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
-
-        if _type == FileType.TRIGGER:
-            rn_desc = f'- {desc}'  # Issue - https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
 
         if docker_image:
             rn_desc += f'- Updated the Docker image to: *{docker_image}*.\n'

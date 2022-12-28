@@ -2,8 +2,7 @@
 # E203 space before ':' - handled by black in slice operators
 extend-ignore = E203
 # F403 unable to detect undefined names
-# W503 line break before binary operator
 # F405 may be undefined, or defined from star imports
-ignore = F403, F405, W503
+ignore = F403, F405, W503, W504
 max-line-length = 160
 max-complexity = 30

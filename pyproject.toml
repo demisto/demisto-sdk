@@ -145,6 +145,7 @@ sort_by_size = true
 [tool.isort]
 atomic = true
 line_length = 120
+profile = "black"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

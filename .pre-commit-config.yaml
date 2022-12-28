@@ -28,10 +28,6 @@ repos:
       rev: "6.0.0"
       hooks:
           - id: flake8
-    - repo: https://github.com/pre-commit/mirrors-autopep8
-      rev: v2.0.1
-      hooks:
-          - id: autopep8
     - repo: https://github.com/timothycrosley/isort
       rev: v5.11.3
       hooks:

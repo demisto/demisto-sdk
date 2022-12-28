@@ -9,6 +9,7 @@
 * Fixed an issue in **prepare-content** command providing output path.
 * Updated the **validate** and **update-release-notes** commands to skip the *Triggers Recommendations* content type.
 * Added a new validation to the **validate** command to verify that the release notes headers are in the correct format.
+* Fixed an issue where the **update-release-notes** command didn't add release-notes properly to some *new* content items.
 
 ## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.

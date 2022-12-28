@@ -599,8 +599,12 @@ class UpdateRN:
         """
         if _type in (FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
                      FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
-
-            rn_desc = f'- **{content_name}**\n'
+            if is_new_file:
+                rn_desc = f'##### New: {content_name}\n'
+                if desc:
+                    rn_desc = f'{rn_desc}- {desc}'
+            else:
+                rn_desc = f'- **{content_name}**\n'
 
         elif _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):
             definition_name = get_definition_name(path, self.pack_path)

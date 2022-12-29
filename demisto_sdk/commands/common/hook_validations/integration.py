@@ -1452,7 +1452,7 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             bool. True if the parameter is hidden but because is replaced by a type 9 parameter. False otherwise.
         """
-        for param in self.current_file.get("configuration", []):
+        for param in self.current_file.get("configuration", ()):
             if param.get("type") == 9 and display_name.lower() in (
                 param.get("display", "").lower(),
                 param.get("displaypassword", "").lower(),

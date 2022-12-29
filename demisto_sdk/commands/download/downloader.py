@@ -334,9 +334,8 @@ class Downloader:
     def replace_uuids(self, string_to_write: str, uuid_dict: dict) -> str:
         uuids = re.findall(UUID_REGEX, string_to_write)
 
-        for uuid in uuids:
-            if uuid in uuid_dict:
-                string_to_write = string_to_write.replace(uuid, uuid_dict[uuid])
+        for uuid in set(uuids).intersection(uuid_dict):
+            string_to_write = string_to_write.replace(uuid, uuid_dict[uuid])
         return string_to_write
 
     def handle_file(self, string_to_write, member_name, scripts_id_name):

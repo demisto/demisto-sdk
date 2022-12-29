@@ -11,7 +11,7 @@
 * Added a new validation to the **validate** command to verify that the release notes headers are in the correct format.
 * Changed the **validate** command to fail on the IN140 error code only when the skipped integration has no unit tests.
 * Changed **validate** to allow hiding parameters of type 4 (secret) when replacing with type 9 (credentials) with the same name.
-* Fixed an issue where **download** didn't identify playbook and downloaded files with UUID instead of file or script name.
+* Fixed an issue where **download** didn't identify playbooks properly, and downloaded files with UUIDs instead of file/script names.
 
 ## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.

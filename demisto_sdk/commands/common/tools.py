@@ -291,7 +291,7 @@ def get_files_in_dir(
 
     if path.is_file:
         if path.suffix in suffixes:
-            return [path]
+            return [str(path)]
         return []
 
     # from here on, path is surely a directory

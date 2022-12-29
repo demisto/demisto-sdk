@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
@@ -34,7 +34,7 @@ class NativeImageConfig(Singleton, BaseModel):
     native_images: Dict[str, NativeImage]
     ignored_content_items: List[IgnoredContentItem]
     docker_images_to_native_images_mapping: Dict[str, List] = {}
-    native_image_config_file_path: str = ''
+    native_image_config_file_path: str = ""
 
     def __init__(
         self, native_image_config_file_path: str = f"Tests/{NATIVE_IMAGE_FILE_NAME}"
@@ -82,10 +82,7 @@ class NativeImageConfig(Singleton, BaseModel):
         )
         return native_image_config_content
 
-    def get_native_image_reference(
-            self,
-            native_image
-    ) -> str:
+    def get_native_image_reference(self, native_image) -> Union[str, None]:
         """
         Gets the docker reference of the given native image
 
@@ -98,8 +95,10 @@ class NativeImageConfig(Singleton, BaseModel):
             return native_image_obj.docker_ref
 
         else:  # desirable native image not in self.native_images
-            raise Exception(f'The requested native image: {native_image} is not supported.\n '
-                            f'For supported native image versions please see: {self.native_image_config_file_path}.')
+            raise Exception(
+                f"The requested native image: {native_image} is not supported.\n "
+                f"For supported native image versions please see: {self.native_image_config_file_path}."
+            )
 
 
 class ScriptIntegrationSupportedNativeImages:
@@ -114,13 +113,14 @@ class ScriptIntegrationSupportedNativeImages:
         _id (str): the ID that the script/integration has.
         docker_image (str): the docker image that the integration/script uses. (dockerimage key in the yml).
     """
-    NATIVE_LATEST = 'native:latest'
+
+    NATIVE_LATEST = "native:latest"
 
     def __init__(
         self,
         _id: str,
         native_image_config: NativeImageConfig,
-        docker_image: Optional[str] = None
+        docker_image: Optional[str] = None,
     ):
         self.id = _id
         self.docker_image = (
@@ -158,9 +158,7 @@ class ScriptIntegrationSupportedNativeImages:
         return []
 
     def get_supported_native_image_versions(
-        self,
-        get_raw_version: bool = False,
-        ignore_latest: bool = True
+        self, get_raw_version: bool = False, ignore_latest: bool = True
     ) -> List[str]:
         """
         Get the native-images that the integration/script supports. Disregards native-images that should be ignored.

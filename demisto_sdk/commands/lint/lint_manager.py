@@ -469,7 +469,7 @@ class LintManager:
                         req_3=self._facts["requirements_3"],
                         docker_engine=self._facts["docker_engine"],
                         docker_timeout=docker_timeout,
-                        docker_image=docker_image
+                        docker_image=docker_image,
                     )
                     results.append(
                         executor.submit(

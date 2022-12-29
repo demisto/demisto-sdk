@@ -890,9 +890,9 @@ def secrets(config, **kwargs):
 @click.option(
     "-di",
     "--docker-image",
-    default='from-yml',
+    default="from-yml",
     help="The docker image to check package on. Possible values: 'naive:<server version>', 'native:latest', 'all',"
-         " a specific demisto docker image (from Docker Hub) or the default 'from-yml'.",
+    " a specific demisto docker image (from Docker Hub) or the default 'from-yml'.",
 )
 @click.option(
     "-idp",
@@ -962,7 +962,7 @@ def lint(**kwargs):
         no_coverage=kwargs.get("no_coverage"),  # type: ignore[arg-type]
         coverage_report=kwargs.get("coverage_report"),  # type: ignore[arg-type]
         docker_timeout=kwargs.get("docker_timeout"),  # type: ignore[arg-type]
-        docker_image=kwargs.get('docker_image'),  # type: ignore[arg-type]
+        docker_image=kwargs.get("docker_image"),  # type: ignore[arg-type]
         time_measurements_dir=kwargs.get("time_measurements_dir"),  # type: ignore[arg-type]
     )
 

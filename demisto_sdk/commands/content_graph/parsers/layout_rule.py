@@ -27,6 +27,6 @@ class LayoutRuleParser(JSONContentItemParser, content_type=ContentType.LAYOUT_RU
         return {MarketplaceVersions.MarketplaceV2}
 
     def connect_to_dependencies(self) -> None:
-        """Collects the playbook used in the trigger as a mandatory dependency."""
+        """Collects t he playbook used in the trigger as a mandatory dependency."""
         if layout := self.json_data.get("layout_id"):
             self.add_dependency_by_id(layout, ContentType.LAYOUT)

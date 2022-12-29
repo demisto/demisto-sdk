@@ -36,28 +36,48 @@ def test_integration_init_integration_positive(monkeypatch, tmp_path):
     pack_dev_email = "mario1@super.com,mario2@super.com"
     pack_tags = "SuperTag1,SuperTag2"
     pack_reviewers = "GithubUser1, GithubUser2"
-    create_integration = 'Y'
-    from_version = '6.0.0'
-    use_category_from_pack_metadata = 'Y'
+    create_integration = "Y"
+    from_version = "6.0.0"
+    use_category_from_pack_metadata = "Y"
     integration_name = "SuperIntegration"
-    use_dir_name_as_id = 'Y'
-    marketplaces = 'xsoar , marketplacev2'
-    inputs = [fill_pack_metadata, pack_display_name, pack_desc, support_type, pack_category, marketplaces,
-              pack_author, pack_url, pack_email, pack_dev_email, pack_tags, pack_reviewers, create_integration,
-              use_category_from_pack_metadata, integration_name, use_dir_name_as_id, from_version]
+    use_dir_name_as_id = "Y"
+    marketplaces = "xsoar , marketplacev2"
+    inputs = [
+        fill_pack_metadata,
+        pack_display_name,
+        pack_desc,
+        support_type,
+        pack_category,
+        marketplaces,
+        pack_author,
+        pack_url,
+        pack_email,
+        pack_dev_email,
+        pack_tags,
+        pack_reviewers,
+        create_integration,
+        use_category_from_pack_metadata,
+        integration_name,
+        use_dir_name_as_id,
+        from_version,
+    ]
 
-    d = tmp_path / 'TestPacks'
+    d = tmp_path / "TestPacks"
     d.mkdir()
     tmp_dir_path = Path(d)
     tmp_pack_path = tmp_dir_path / pack_name
-    tmp_pack_metadata_path = tmp_pack_path / 'pack_metadata.json'
-    tmp_integration_path = tmp_pack_path / 'Integrations' / integration_name
+    tmp_pack_metadata_path = tmp_pack_path / "pack_metadata.json"
+    tmp_integration_path = tmp_pack_path / "Integrations" / integration_name
 
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, [INIT_CMD, '-o', tmp_dir_path, '-n', pack_name], input='\n'.join(inputs))
+    result = runner.invoke(
+        main, [INIT_CMD, "-o", tmp_dir_path, "-n", pack_name], input="\n".join(inputs)
+    )
 
     assert result.exit_code == 0
-    assert f"Successfully created the pack SuperPack in: {tmp_pack_path}" in result.stdout
+    assert (
+        f"Successfully created the pack SuperPack in: {tmp_pack_path}" in result.stdout
+    )
     assert f"Created pack metadata at path : {tmp_pack_metadata_path}" in result.stdout
     assert f"Finished creating integration: {tmp_integration_path}." in result.stdout
     assert result.stderr == ""
@@ -73,26 +93,33 @@ def test_integration_init_integration_positive(monkeypatch, tmp_path):
             "url": pack_url,
             "email": pack_email,
             "devEmail": ["mario1@super.com", "mario2@super.com"],
-            "categories": [
-                       "Endpoint"
-            ],
+            "categories": ["Endpoint"],
             "tags": pack_tags.split(","),
             "useCases": [],
             "keywords": [],
             "githubUser": ["GithubUser1", "GithubUser2"],
-            "marketplaces": ['xsoar', 'marketplacev2'],
+            "marketplaces": ["xsoar", "marketplacev2"],
             # testing for subset (<=) to avoid testing created and modified timestamps
         }.items() <= metadata_json.items()
 
     integration_dir_files = {file for file in listdir(tmp_integration_path)}
     assert {
-        "Pipfile", "Pipfile.lock", f"{integration_name}.py",
-        f"{integration_name}.yml", f"{integration_name}_description.md", f"{integration_name}_test.py",
-        f"{integration_name}_image.png", "test_data", "README.md", "command_examples"
+        "Pipfile",
+        "Pipfile.lock",
+        f"{integration_name}.py",
+        f"{integration_name}.yml",
+        f"{integration_name}_description.md",
+        f"{integration_name}_test.py",
+        f"{integration_name}_image.png",
+        "test_data",
+        "README.md",
+        "command_examples",
     } == integration_dir_files
 
 
-def test_integration_init_integration_positive_no_inline_pack_name(monkeypatch, tmp_path):
+def test_integration_init_integration_positive_no_inline_pack_name(
+    monkeypatch, tmp_path
+):
     """
     Given
     - Inputs to init pack with integration without a preset pack name in the command line.
@@ -116,28 +143,49 @@ def test_integration_init_integration_positive_no_inline_pack_name(monkeypatch, 
     pack_dev_email = "mario1@super.com,mario2@super.com"
     pack_tags = "SuperTag1,SuperTag2"
     pack_reviewers = "GithubUser1, GithubUser2"
-    create_integration = 'Y'
-    from_version = '6.0.0'
-    use_category_from_pack_metadata = 'Y'
+    create_integration = "Y"
+    from_version = "6.0.0"
+    use_category_from_pack_metadata = "Y"
     integration_name = "SuperIntegration"
-    use_dir_name_as_id = 'Y'
-    marketplaces = 'xsoar,marketplacev2'
-    inputs = [pack_name, fill_pack_metadata, pack_display_name, pack_desc, support_type, pack_category, marketplaces,
-              pack_author, pack_url, pack_email, pack_dev_email, pack_tags, pack_reviewers, create_integration,
-              use_category_from_pack_metadata, integration_name, use_dir_name_as_id, from_version]
+    use_dir_name_as_id = "Y"
+    marketplaces = "xsoar,marketplacev2"
+    inputs = [
+        pack_name,
+        fill_pack_metadata,
+        pack_display_name,
+        pack_desc,
+        support_type,
+        pack_category,
+        marketplaces,
+        pack_author,
+        pack_url,
+        pack_email,
+        pack_dev_email,
+        pack_tags,
+        pack_reviewers,
+        create_integration,
+        use_category_from_pack_metadata,
+        integration_name,
+        use_dir_name_as_id,
+        from_version,
+    ]
 
-    d = tmp_path / 'TestPacks'
+    d = tmp_path / "TestPacks"
     d.mkdir()
     tmp_dir_path = Path(d)
     tmp_pack_path = tmp_dir_path / pack_name
-    tmp_pack_metadata_path = tmp_pack_path / 'pack_metadata.json'
-    tmp_integration_path = tmp_pack_path / 'Integrations' / integration_name
+    tmp_pack_metadata_path = tmp_pack_path / "pack_metadata.json"
+    tmp_integration_path = tmp_pack_path / "Integrations" / integration_name
 
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, [INIT_CMD, '-o', tmp_dir_path], input='\n'.join(inputs))
+    result = runner.invoke(
+        main, [INIT_CMD, "-o", tmp_dir_path], input="\n".join(inputs)
+    )
 
     assert result.exit_code == 0
-    assert f"Successfully created the pack SuperPack in: {tmp_pack_path}" in result.stdout
+    assert (
+        f"Successfully created the pack SuperPack in: {tmp_pack_path}" in result.stdout
+    )
     assert f"Created pack metadata at path : {tmp_pack_metadata_path}" in result.stdout
     assert f"Finished creating integration: {tmp_integration_path}." in result.stdout
     assert result.stderr == ""
@@ -153,20 +201,25 @@ def test_integration_init_integration_positive_no_inline_pack_name(monkeypatch, 
             "url": pack_url,
             "email": pack_email,
             "devEmail": ["mario1@super.com", "mario2@super.com"],
-            "categories": [
-                       "Endpoint"
-            ],
+            "categories": ["Endpoint"],
             "tags": pack_tags.split(","),
             "useCases": [],
             "keywords": [],
             "githubUser": ["GithubUser1", "GithubUser2"],
-            "marketplaces": ['xsoar', 'marketplacev2'],
+            "marketplaces": ["xsoar", "marketplacev2"],
             # testing for subset (<=) to avoid testing created and modified timestamps
         }.items() <= metadata_json.items()
 
     integration_dir_files = {file for file in listdir(tmp_integration_path)}
     assert {
-        "Pipfile", "Pipfile.lock", f"{integration_name}.py",
-        f"{integration_name}.yml", f"{integration_name}_description.md", f"{integration_name}_test.py",
-        f"{integration_name}_image.png", "test_data", "README.md", "command_examples"
+        "Pipfile",
+        "Pipfile.lock",
+        f"{integration_name}.py",
+        f"{integration_name}.yml",
+        f"{integration_name}_description.md",
+        f"{integration_name}_test.py",
+        f"{integration_name}_image.png",
+        "test_data",
+        "README.md",
+        "command_examples",
     } == integration_dir_files

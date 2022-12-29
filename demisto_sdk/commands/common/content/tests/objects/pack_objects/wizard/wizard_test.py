@@ -1,4 +1,6 @@
-from demisto_sdk.commands.common.content.objects.pack_objects.wizard.wizard import Wizard
+from demisto_sdk.commands.common.content.objects.pack_objects.wizard.wizard import (
+    Wizard,
+)
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 
 sample_wizard_name = "sample-wizard"
@@ -15,4 +17,4 @@ class TestWizard:
         Test that wizards created from files whose name does not start with `wizard-` are normalized correctly.
         """
         obj = Wizard(datadir[sample_file_path])
-        assert obj.normalize_file_name() == f'wizard-{sample_wizard_name}.json'
+        assert obj.normalize_file_name() == f"wizard-{sample_wizard_name}.json"

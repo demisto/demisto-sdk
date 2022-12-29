@@ -332,6 +332,16 @@ class Downloader:
         return scripts_mapper
 
     def replace_uuids(self, string_to_write: str, uuid_dict: dict) -> str:
+        """
+        Replace all occurrences of UUIDs in a string with their corresponding values from a dictionary.
+
+        Parameters:
+        - string_to_write (str): The string to search for UUIDs in.
+        - uuid_dict (dict): A dictionary mapping UUIDs to their corresponding values.
+
+        Returns:
+        - str: The modified string with all UUIDs replaced.
+        """
         uuids = re.findall(UUID_REGEX, string_to_write)
 
         for uuid in uuids:

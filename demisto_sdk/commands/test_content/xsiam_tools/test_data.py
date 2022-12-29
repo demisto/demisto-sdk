@@ -16,29 +16,32 @@ class EventLog(BaseModel):
 class TestData(BaseModel):
     data: List[EventLog] = Field(default_factory=lambda: [EventLog()])
 
-    @validator('data', each_item=True)
+    @validator("data", each_item=True)
     def validate_expected_values(cls, v):
         for k in v.expected_values.keys():
-            if not k.casefold().startswith('xdm.'):
+            if not k.casefold().startswith("xdm."):
                 err = "The expected values mapping keys are expected to start with 'xdm.' (case insensitive)"
                 raise ValueError(err)
         return v
 
 
 class CompletedTestData(TestData):
-
-    @validator('data')
+    @validator("data")
     def validate_expected_values(cls, v):
         for test_data_event in v:
-            if not test_data_event.expected_values or not any(test_data_event.expected_values.values()):
+            if not test_data_event.expected_values or not any(
+                test_data_event.expected_values.values()
+            ):
                 err = "The expected values mapping is required for each test data event"
                 if not any(test_data_event.expected_values.values()):
-                    err = ("No values were provided in expected values mapping - all were null"
-                           " - you must provide at least one")
+                    err = (
+                        "No values were provided in expected values mapping - all were null"
+                        " - you must provide at least one"
+                    )
                 raise ValueError(err)
         return v
 
-    @validator('data')
+    @validator("data")
     def validate_event_data(cls, v):
         for test_data_event in v:
             if not test_data_event.event_data:

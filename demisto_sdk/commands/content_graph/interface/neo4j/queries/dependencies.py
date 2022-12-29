@@ -5,10 +5,21 @@ from typing import Dict, List
 
 from neo4j import Transaction
 
-from demisto_sdk.commands.common.constants import DEPRECATED_CONTENT_PACK, GENERIC_COMMANDS_NAMES, MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentType, Neo4jRelationshipResult, RelationshipType
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (is_target_available, run_query,
-                                                                               to_neo4j_map)
+from demisto_sdk.commands.common.constants import (
+    DEPRECATED_CONTENT_PACK,
+    GENERIC_COMMANDS_NAMES,
+    MarketplaceVersions,
+)
+from demisto_sdk.commands.content_graph.common import (
+    ContentType,
+    Neo4jRelationshipResult,
+    RelationshipType,
+)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
+    is_target_available,
+    run_query,
+    to_neo4j_map,
+)
 
 IGNORED_PACKS_IN_DEPENDENCY_CALC = ["NonSupported", "Base", "ApiModules"]
 
@@ -68,7 +79,9 @@ def delete_deprecatedcontent_relationship(tx: Transaction) -> None:
         source = row["source"]
         target = row["target"]
         relationship = row["r"]
-        logger.debug(f"Deleted relationship {relationship} between {source} and {target}")
+        logger.debug(
+            f"Deleted relationship {relationship} between {source} and {target}"
+        )
 
 
 def remove_existing_depends_on_relationships(tx: Transaction) -> None:
@@ -140,10 +153,14 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
     outputs: Dict[str, List[str]] = {}
     for row in result:
         outputs.setdefault(row["excluded_content_item"], list()).append(row["reason"])
-    logger.info(f"Removed {marketplace} from marketplaces for {len(outputs.keys())} content items.")
+    logger.info(
+        f"Removed {marketplace} from marketplaces for {len(outputs.keys())} content items."
+    )
     logger.debug(f"Excluded content items: {dict(sorted(outputs.items()))}")
     if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
-        with open(f"{artifacts_folder}/removed_from_marketplace-{marketplace}.json", "w") as fp:
+        with open(
+            f"{artifacts_folder}/removed_from_marketplace-{marketplace}.json", "w"
+        ) as fp:
             json.dump(dict(sorted(outputs.items())), fp, indent=4)
 
 
@@ -239,7 +256,9 @@ def create_depends_on_relationships(tx: Transaction) -> None:
         outputs.setdefault(pack_a, {}).setdefault(pack_b, []).extend(row["reasons"])
     for pack_a, pack_b in outputs.items():
         for pack_b, reasons in pack_b.items():
-            logger.debug(f"Created DEPENDS_ON relationship between {pack_a} and {pack_b}")
+            logger.debug(
+                f"Created DEPENDS_ON relationship between {pack_a} and {pack_b}"
+            )
             for reason in reasons:
                 logger.debug(
                     f"Reason: {reason.get('source')} -> {reason.get('target')} (mandatorily: {reason.get('mandatorily')})"

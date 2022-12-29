@@ -3,7 +3,9 @@ from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
+from demisto_sdk.commands.content_graph.parsers.json_content_item import (
+    JSONContentItemParser,
+)
 
 
 class IncidentFieldParser(
@@ -25,7 +27,11 @@ class IncidentFieldParser(
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XPANSE}
+        return {
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XPANSE,
+        }
 
     def connect_to_dependencies(self) -> None:
         """Collects incident types used as optional dependencies, and scripts as mandatory dependencies."""

@@ -2191,7 +2191,7 @@ class TestIsFeedParamsExist:
             {"type": 9, "displaypassword": "API key"},
         ]
     }
-    HIDDEN_TRUE_BUT_REPLACED_AND_NOT_REPLACED = {
+    HIDDEN_ONE_REPLACED_4_TO_9_OTHER_NOT = {
         "configuration": [
             {"type": 4, "display": "API key", "hidden": True},
             {"type": 9, "displaypassword": "API key"},
@@ -2208,7 +2208,7 @@ class TestIsFeedParamsExist:
         (HIDDEN_ALLOWED_FEED_REPUTATION, True),
         (HIDDEN_TRUE_BUT_REPLACED_USER, True),
         (HIDDEN_TRUE_BUT_REPLACED_PASSWORD, True),
-        (HIDDEN_TRUE_BUT_REPLACED_AND_NOT_REPLACED, False),
+        (HIDDEN_ONE_REPLACED_4_TO_9_OTHER_NOT, False),
     ]
 
     @pytest.mark.parametrize("current, answer", IS_VALID_HIDDEN_PARAMS)

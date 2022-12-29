@@ -2,9 +2,14 @@ import os
 import re
 from typing import Optional
 
-from demisto_sdk.commands.common.constants import (API_MODULES_PACK, DEFAULT_CONTENT_ITEM_FROM_VERSION,
-                                                   DEPRECATED_DESC_REGEX, DEPRECATED_NO_REPLACE_DESC_REGEX,
-                                                   PYTHON_SUBTYPES, TYPE_PWSH)
+from demisto_sdk.commands.common.constants import (
+    API_MODULES_PACK,
+    DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    DEPRECATED_DESC_REGEX,
+    DEPRECATED_NO_REPLACE_DESC_REGEX,
+    PYTHON_SUBTYPES,
+    TYPE_PWSH,
+)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
@@ -331,11 +336,15 @@ class ScriptValidator(ContentEntityValidator):
 
     @error_codes("SC101")
     def is_valid_as_deprecated(self) -> bool:
-        is_deprecated = self.current_file.get('deprecated', False)
-        comment = self.current_file.get('comment', '')
+        is_deprecated = self.current_file.get("deprecated", False)
+        comment = self.current_file.get("comment", "")
 
-        if is_deprecated and not any((re.search(DEPRECATED_DESC_REGEX, comment),
-                                      re.search(DEPRECATED_NO_REPLACE_DESC_REGEX, comment))):
+        if is_deprecated and not any(
+            (
+                re.search(DEPRECATED_DESC_REGEX, comment),
+                re.search(DEPRECATED_NO_REPLACE_DESC_REGEX, comment),
+            )
+        ):
             error_message, error_code = Errors.invalid_deprecated_script()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False

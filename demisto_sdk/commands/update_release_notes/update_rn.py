@@ -9,11 +9,18 @@ from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Any, Optional, Tuple, Union
 
-from demisto_sdk.commands.common.constants import (ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEPRECATED_DESC_REGEX,
-                                                   DEPRECATED_NO_REPLACE_DESC_REGEX, IGNORED_PACK_NAMES,
-                                                   RN_CONTENT_ENTITY_WITH_STARS, RN_HEADER_BY_FILE_TYPE,
-                                                   SKIP_RELEASE_NOTES_FOR_TYPES, XSIAM_DASHBOARDS_DIR,
-                                                   XSIAM_REPORTS_DIR, FileType)
+from demisto_sdk.commands.common.constants import (
+    ALL_FILES_VALIDATION_IGNORE_WHITELIST,
+    DEPRECATED_DESC_REGEX,
+    DEPRECATED_NO_REPLACE_DESC_REGEX,
+    IGNORED_PACK_NAMES,
+    RN_CONTENT_ENTITY_WITH_STARS,
+    RN_HEADER_BY_FILE_TYPE,
+    SKIP_RELEASE_NOTES_FOR_TYPES,
+    XSIAM_DASHBOARDS_DIR,
+    XSIAM_REPORTS_DIR,
+    FileType,
+)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     Integration,
@@ -65,7 +72,9 @@ def get_deprecated_comment_from_desc(description: str) -> str:
         If a deprecated description is found return it for rn.
     """
     deprecate_line_with_replacement = re.findall(DEPRECATED_DESC_REGEX, description)
-    deprecate_line_no_replacement = re.findall(DEPRECATED_NO_REPLACE_DESC_REGEX, description)
+    deprecate_line_no_replacement = re.findall(
+        DEPRECATED_NO_REPLACE_DESC_REGEX, description
+    )
 
     deprecate_line = deprecate_line_with_replacement + deprecate_line_no_replacement
     return deprecate_line[0] if deprecate_line else ""

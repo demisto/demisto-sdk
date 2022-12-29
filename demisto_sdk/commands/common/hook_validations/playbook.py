@@ -3,7 +3,10 @@ from typing import Dict, Set
 
 import click
 
-from demisto_sdk.commands.common.constants import DEPRECATED_DESC_REGEX, DEPRECATED_NO_REPLACE_DESC_REGEX
+from demisto_sdk.commands.common.constants import (
+    DEPRECATED_DESC_REGEX,
+    DEPRECATED_NO_REPLACE_DESC_REGEX,
+)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
@@ -487,11 +490,15 @@ class PlaybookValidator(ContentEntityValidator):
 
     @error_codes("PB104")
     def is_valid_as_deprecated(self) -> bool:
-        is_deprecated = self.current_file.get('deprecated', False)
-        description = self.current_file.get('description', '')
+        is_deprecated = self.current_file.get("deprecated", False)
+        description = self.current_file.get("description", "")
 
-        if is_deprecated and not any((re.search(DEPRECATED_DESC_REGEX, description),
-                                      re.search(DEPRECATED_NO_REPLACE_DESC_REGEX, description))):
+        if is_deprecated and not any(
+            (
+                re.search(DEPRECATED_DESC_REGEX, description),
+                re.search(DEPRECATED_NO_REPLACE_DESC_REGEX, description),
+            )
+        ):
             error_message, error_code = Errors.invalid_deprecated_playbook()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False

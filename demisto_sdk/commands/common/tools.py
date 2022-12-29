@@ -1583,13 +1583,16 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.parent.name == DOC_FILES_DIR:
         return FileType.DOC_FILE
 
-    elif path.name == 'Pipfile':
+    elif path.name == "Pipfile":
         return FileType.PIPFILE
 
-    elif path.suffix == '.lock':
+    elif path.suffix == ".lock":
         return FileType.PIPFILE_LOCK
 
-    elif path.name in ('commands_example', 'commands_examples', 'command_examples') or path.suffix == '.txt':
+    elif (
+        path.name in ("commands_example", "commands_examples", "command_examples")
+        or path.suffix == ".txt"
+    ):
         return FileType.TXT
 
     return None

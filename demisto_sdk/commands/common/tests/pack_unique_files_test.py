@@ -183,9 +183,7 @@ class TestPackUniqueFilesValidator:
         - Ensure validate found errors.
         """
         pack_metadata_no_email_and_url = PACK_METADATA_PARTNER.copy()
-        mocker.patch.object(
-            ValidateManager, 'setup_git_params', return_value=True
-        )
+        mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
         pack_metadata_no_email_and_url["email"] = ""
         pack_metadata_no_email_and_url["url"] = ""
         mocker.patch.object(tools, "is_external_repository", return_value=True)
@@ -246,9 +244,7 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(
             PackUniqueFilesValidator, "validate_pack_name", return_value=True
         )
-        mocker.patch.object(
-            ValidateManager, 'setup_git_params', return_value=True
-        )
+        mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
         mocker.patch.object(
             PackUniqueFilesValidator,
             "get_master_private_repo_meta_file",
@@ -313,9 +309,7 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(
             tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json")
         )
-        mocker.patch.object(
-            ValidateManager, 'setup_git_params', return_value=True
-        )
+        mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
         pack = repo.create_pack("PackName")
         pack.pack_metadata.write_json(pack_metadata_price_changed)
         with ChangeCWD(repo.path):

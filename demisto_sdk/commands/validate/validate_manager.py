@@ -294,7 +294,7 @@ class ValidateManager:
             FileType.PIPFILE_LOCK,
             FileType.TXT,
             FileType.JAVASCRIPT_FILE,
-            FileType.POWERSHELL_FILE
+            FileType.POWERSHELL_FILE,
         )
 
         self.is_external_repo = is_external_repo
@@ -639,7 +639,9 @@ class ValidateManager:
         package_entities_validation_results = set()
         for file_name in os.listdir(package_path):
             file_path = os.path.join(package_path, file_name)
-            package_entities_validation_results.add(self.run_validations_on_file(file_path, pack_error_ignore_list))
+            package_entities_validation_results.add(
+                self.run_validations_on_file(file_path, pack_error_ignore_list)
+            )
 
         return all(package_entities_validation_results)
 
@@ -745,9 +747,15 @@ class ValidateManager:
         file_type = find_type(file_path)
 
         is_added_file = file_path in added_files if added_files else False
-        if file_path.endswith('.xif'):
-            file_path = file_path.replace('.xif', '.yml')
-        if file_type in self.skipped_file_types or file_path.endswith('_unified.yml') or self.is_skipped_file(file_path) or self.git_util._is_file_ignored(file_path) or self.detect_file_level(file_path) == PathLevel.PACKAGE:
+        if file_path.endswith(".xif"):
+            file_path = file_path.replace(".xif", ".yml")
+        if (
+            file_type in self.skipped_file_types
+            or file_path.endswith("_unified.yml")
+            or self.is_skipped_file(file_path)
+            or self.git_util._is_file_ignored(file_path)
+            or self.detect_file_level(file_path) == PathLevel.PACKAGE
+        ):
             self.ignored_files.add(file_path)
             return True
         elif not self.is_valid_file_type(file_type, file_path):

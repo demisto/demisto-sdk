@@ -4306,9 +4306,15 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def nativeimage_exist_in_integration_yml(integration_id):
-        return f"integration {integration_id} contains the nativeimage key in its yml, please remove it."
+        return (
+            f"integration {integration_id} contains the nativeimage key in its yml, "
+            f"this key is added only during the upload flow, please remove it."
+        )
 
     @staticmethod
     @error_code_decorator
     def nativeimage_exist_in_script_yml(script_id):
-        return f"script {script_id} contains the nativeimage key in its yml, please remove it."
+        return (
+            f"script {script_id} contains the nativeimage key in its yml, "
+            f"this key is added only during the upload flow, please remove it."
+        )

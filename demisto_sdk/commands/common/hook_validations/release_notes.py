@@ -209,14 +209,15 @@ class ReleaseNotesValidator(BaseValidator):
                 error_message, error_code, self.release_notes_file_path
             ):
                 is_valid = False
-        content_items_display_names = [
-            get_display_name(item) for item in content_type_dir_list
-        ]
+
         content_items_display_names = set(
-            filter(lambda x: isinstance(x, str), content_items_display_names)
+            filter(
+                lambda x: isinstance(x, str),
+                (get_display_name(item) for item in content_type_dir_list),
+            )
         )
-        diff = set(content_items) - content_items_display_names
-        for header in diff:
+
+        for header in set(content_items).difference(content_items_display_names):
             (
                 error_message,
                 error_code,

@@ -547,3 +547,33 @@ class TestScriptValidator:
             script_validator.validate_readme_exists(script_validator.validate_all)
             is expected_result
         )
+
+    @pytest.mark.parametrize(
+        "script_yml, is_validation_ok",
+        [
+            ({"nativeimage": "test", "commonfields": {"id": "test"}}, False),
+            ({"commonfields": {"id": "test"}}, True),
+        ],
+    )
+    def test_is_native_image_does_not_exist_in_yml_fail(
+        self, repo, script_yml, is_validation_ok
+    ):
+        """
+        Given:
+            - Case A: script yml that has the nativeimage key
+            - Case B: script yml that does not have the nativeimage key
+        When:
+            - when executing the is_native_image_does_not_exist_in_yml method
+        Then:
+            - Case A: make sure the validation fails.
+            - Case B: make sure the validation pass.
+        """
+        pack = repo.create_pack("test")
+        script = pack.create_script(yml=script_yml)
+        structure_validator = StructureValidator(script.yml.path)
+        integration_validator = ScriptValidator(structure_validator)
+
+        assert (
+            integration_validator.is_nativeimage_key_does_not_exist_in_yml()
+            == is_validation_ok
+        )

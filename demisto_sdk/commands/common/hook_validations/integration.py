@@ -173,6 +173,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_endpoint_command(),
             self.is_api_token_in_credential_type(),
             self.are_common_outputs_with_description(),
+            self.is_native_image_does_not_exist_in_yml(),
         ]
 
         return all(answers)
@@ -2272,4 +2273,14 @@ class IntegrationValidator(ContentEntityValidator):
         if not test_path.exists():
             return False
 
+        return True
+
+    @error_codes("IN157")
+    def is_native_image_does_not_exist_in_yml(self):
+        if self.current_file.get("script", {}).get("nativeimage"):
+            error_message, error_code = Errors.nativeimage_exist_in_integration_yml(
+                self.current_file.get("commonfields", {}).get("id")
+            )
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
         return True

@@ -167,6 +167,7 @@ class FileType(str, Enum):
     PIPFILE = "pipfile"
     TXT = "txt"
     PIPFILE_LOCK = "pipfilelock"
+    PYLINTRC = "pylintrc"
 
 
 RN_HEADER_BY_FILE_TYPE = {

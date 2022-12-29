@@ -1446,6 +1446,20 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
+    def _is_type4_replaced_by_type9(self, display_name: str) -> bool:
+        """
+        This function is used to check the case where a parameter is hidden but because is type 4 and is replaced by a type 9 parameter.
+        Returns:
+            bool. True if the parameter is hidden but because is replaced by a type 9 parameter. False otherwise.
+        """
+        for param in self.current_file.get("configuration", []):
+            if param.get("type") == 9 and display_name.lower() in (
+                param.get("display", "").lower(),
+                param.get("displaypassword", "").lower(),
+            ):
+                return True
+        return False
+
     @error_codes("IN124,IN156")
     def is_valid_hidden_params(self) -> bool:
         """
@@ -1470,6 +1484,8 @@ class IntegrationValidator(ContentEntityValidator):
 
         for param in self.current_file.get("configuration", ()):
             name = param.get("name", "")
+            display_name = param.get("display", "")
+            type_ = param.get("type")
             hidden = param.get("hidden")
 
             invalid_type = not isinstance(hidden, (type(None), bool, list, str))
@@ -1489,6 +1505,8 @@ class IntegrationValidator(ContentEntityValidator):
             ) == set(MarketplaceVersions)
 
             if invalid_bool or hidden_in_all_marketplaces:
+                if type_ == 4 and self._is_type4_replaced_by_type9(display_name):
+                    continue
                 error_message, error_code = Errors.param_not_allowed_to_hide(name)
                 if self.handle_error(
                     error_message, error_code, file_path=self.file_path

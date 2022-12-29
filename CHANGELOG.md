@@ -10,6 +10,7 @@
 * Updated the **validate** and **update-release-notes** commands to skip the *Triggers Recommendations* content type.
 * Added a new validation to the **validate** command to verify that the release notes headers are in the correct format.
 * Changed the **validate** command to fail on the IN140 error code only when the skipped integration has no unit tests.
+* Changed the **validate** command to don't fall on the IN124 error code when the parameter is of type 4 and is replaced with a new parameter of type 9.
 
 ## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.

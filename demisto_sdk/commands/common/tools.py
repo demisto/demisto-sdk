@@ -274,11 +274,11 @@ def print_color(obj, color):
 
 
 def get_files_in_dir(
-    project_dir: str,
-    file_endings: list,
+    path: str,
+    suffixes: list,
     recursive: bool = True,
     ignore_test_files: bool = False,
-) -> list:
+) -> List[str]:
     """
     Gets the project directory and returns the path of all yml, json and py files in it
     Args:
@@ -287,21 +287,30 @@ def get_files_in_dir(
         recursive: Indicates whether search should be recursive or not
     :return: The path of files with file_endings in the current dir
     """
-    files = []
-    excludes = []
+    path = Path(path)
 
-    project_path = Path(project_dir)
-    glob_function = project_path.rglob if recursive else project_path.glob
-    for file_type in file_endings:
-        pattern = f"*.{file_type}"
-        if project_dir.endswith(file_type):
-            return [project_dir]
+    if path.is_file:
+        if path.suffix in suffixes:
+            return [path]
+        return []
+
+    # from here on, path is surely a directory
+    include = []
+    exclude = []
+
+    path_globber = path.rglob if recursive else path.glob
+
+    for suffix in suffixes:
+        pattern = f"*.{suffix}"
+        include.extend(path_globber(pattern))
+
         if ignore_test_files:
             for test_dir in TESTS_AND_DOC_DIRECTORIES:
-                exclude_pattern = f"**/{test_dir}/" + pattern
-                excludes.extend([str(f) for f in glob_function(exclude_pattern)])
-        files.extend([str(f) for f in glob_function(pattern)])
-    return list(set(files) - set(excludes))
+                exclude.extend(
+                    path_globber(f"**/{test_dir}/{pattern}")
+                )  # note glob_function is build into glob_function
+
+    return list(map(str, set(include).difference(exclude)))
 
 
 def src_root() -> Path:

@@ -28,7 +28,6 @@ from demisto_sdk.commands.common.constants import (
     INCIDENT_FIELD_FILE_NAME_REGEX,
     INTEGRATIONS_DIR,
     LAYOUT_FILE_NAME__REGEX,
-    PLAYBOOK_REGEX,
     PLAYBOOKS_DIR,
     SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR,
@@ -332,6 +331,14 @@ class Downloader:
             scripts_mapper[script_id] = script_yml.get("name")
         return scripts_mapper
 
+    def replace_uuids(self, string_to_write: str, uuid_dict: dict) -> str:
+        uuids = re.findall(UUID_REGEX, string_to_write)
+
+        for uuid in uuids:
+            if uuid in uuid_dict:
+                string_to_write = string_to_write.replace(uuid, uuid_dict[uuid])
+        return string_to_write
+
     def handle_file(self, string_to_write, member_name, scripts_id_name):
 
         if "automation-" in member_name:
@@ -344,7 +351,7 @@ class Downloader:
                 string_to_write, scripts_id_name
             )
 
-        if not self.list_files and re.search(PLAYBOOK_REGEX, member_name):
+        if not self.list_files and re.search(r"playbook-.*\.yml", member_name):
             #  if the content item is playbook and list-file flag is true, we should download the
             #  file via direct REST API because there are props like scriptName, that playbook from custom
             #  content bundle don't contain
@@ -388,6 +395,9 @@ class Downloader:
                         string_to_write, member.name, scripts_id_name
                     )
 
+                    string_to_write = self.replace_uuids(
+                        string_to_write, scripts_id_name
+                    )
                     try:
                         with open(file_path, "w") as file:
                             file.write(string_to_write)

@@ -23,7 +23,7 @@ from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.native_image import NativeImageConfig, ScriptIntegrationSupportedNativeImages
 from demisto_sdk.commands.common.timers import timer
-from demisto_sdk.commands.common.tools import extract_docker_image_from_text, get_all_docker_images, run_command_os
+from demisto_sdk.commands.common.tools import get_all_docker_images, run_command_os
 from demisto_sdk.commands.lint.commands_builder import (build_bandit_command, build_flake8_command, build_mypy_command,
                                                         build_pwsh_analyze_command, build_pwsh_test_command,
                                                         build_pylint_command, build_pytest_command,

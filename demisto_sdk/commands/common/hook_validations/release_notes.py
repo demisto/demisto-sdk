@@ -193,7 +193,10 @@ class ReleaseNotesValidator(BaseValidator):
         content_type_path = os.path.join(self.pack_path, content_type_dir_name)
 
         content_type_dir_list = get_files_in_dir(
-            content_type_path, CUSTOM_CONTENT_FILE_ENDINGS, recursive=True
+            content_type_path,
+            CUSTOM_CONTENT_FILE_ENDINGS,
+            recursive=True,
+            ignore_test_files=True,
         )
         if not content_type_dir_list:
             (

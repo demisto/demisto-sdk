@@ -167,7 +167,7 @@ class ScriptIntegrationSupportedNativeImages:
 
         Args:
             get_raw_version (bool): whether to extract the raw server version from the native image name, for example:
-            'native:8.2' will become '8.2' for each one of the native-images that are supported.
+                                    'native:8.2' will become '8.2' for each one of the native-images that are supported.
             ignore_latest (bool): whether to ignore the latest native image.
         """
         if native_images := self.__docker_image_to_native_images_support():

@@ -39,7 +39,7 @@ class AgentTool(GeneralObject):
         return path
 
     def _serialize(self, dest_dir: Path, zip: bool = True) -> List[Path]:
-        """ Serialize Agent tool.
+        """Serialize Agent tool.
 
         Args:
             dest_dir: Destination directory.
@@ -54,15 +54,19 @@ class AgentTool(GeneralObject):
         """
         created_files: List[Path] = []
         if zip:
-            zip_file = (dest_dir / self.normalize_file_name()).with_suffix('.zip')
+            zip_file = (dest_dir / self.normalize_file_name()).with_suffix(".zip")
             created_files.append(zip_file)
-            with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            with zipfile.ZipFile(zip_file, "w", zipfile.ZIP_DEFLATED) as zipf:
                 zipf.comment = b'{ "system": true }'
                 for root, _, files in os.walk(self.path):
                     for file_name in files:
                         zipf.write(os.path.join(root, file_name), file_name)
         else:
-            created_files.extend(Path(copytree(src=self.path, dst=dest_dir / self.normalize_file_name())).iterdir())
+            created_files.extend(
+                Path(
+                    copytree(src=self.path, dst=dest_dir / self.normalize_file_name())
+                ).iterdir()
+            )
 
         return created_files
 
@@ -71,7 +75,7 @@ class AgentTool(GeneralObject):
         pass
 
     def dump(self, dest_dir: Optional[Union[Path, str]] = None, zip: bool = True):
-        """ Dump Agent tool.
+        """Dump Agent tool.
         Args:
             dest_dir: Destination directory.
             zip: True if agent tool should be zipped when serializing.

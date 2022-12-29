@@ -43,18 +43,16 @@ from HelloWorldScript import say_hello, say_hello_command
 
 
 def test_say_hello():
-    result = say_hello('Dbot')
+    result = say_hello("Dbot")
 
-    assert result == 'Hello Dbot'
+    assert result == "Hello Dbot"
 
 
 def test_say_hello_command():
-    args = {
-        'name': 'Dbot'
-    }
+    args = {"name": "Dbot"}
 
     readable_output, outputs, raw_response = say_hello_command(args)
 
-    assert readable_output == '## Hello Dbot'
-    assert outputs['HelloWorld']['hello'] == 'Hello Dbot'
-    assert raw_response == 'Hello Dbot'
+    assert readable_output == "## Hello Dbot"
+    assert outputs["HelloWorld"]["hello"] == "Hello Dbot"
+    assert raw_response == "Hello Dbot"

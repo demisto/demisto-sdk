@@ -14,7 +14,7 @@ class YAML(File):
             self.write_dict(yml)
 
     def write_dict(self, yml: dict):
-        yaml.dump(yml, self._tmp_path.open('w+'))
+        yaml.dump(yml, self._tmp_path.open("w+"))
 
     def read_dict(self):
         return yaml.load(self._tmp_path.open())
@@ -31,4 +31,4 @@ class YAML(File):
             self.write_dict(yml_contents)
 
     def update_description(self, description: str):
-        self.update({'description': description})
+        self.update({"description": description})

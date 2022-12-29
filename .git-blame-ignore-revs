@@ -10,3 +10,6 @@
 
 # upgraded pre-commit hooks, replace py2-syle imports with py3
 1be4eda8be326de293ce765c1f0c067c46c18257
+
+# apply the Black formatting to the whole repo
+c798d7368c7e10e79de16de80a1c02423c57e1a9

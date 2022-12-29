@@ -1228,3 +1228,33 @@ def test_handle_file(
     )
     assert final_string == expected_string
     assert final_mapper == expected_mapper
+
+
+@pytest.mark.parametrize(
+    "original_string, uuids_to_name_map, expected_string",
+    [
+        (
+            "name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
+            {},
+            "name: TestingScript\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
+        ),
+        (
+            '{"name":"TestingField","script":"f1e4c6e5-0d44-48a0-8020-a9711243e918"}',
+            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
+            '{"name":"TestingField","script":"TestingScript"}',
+        ),
+        (
+            '{"name":"TestingLayout","detailsV2":{"tabs":[{"sections":[{'
+            '"items":[{"scriptId":"f1e4c6e5-0d44-48a0-8020-a9711243e918"'
+            "}]}]}]}}",
+            {"f1e4c6e5-0d44-48a0-8020-a9711243e918": "TestingScript"},
+            '{"name":"TestingLayout","detailsV2":{"tabs":[{"sections":[{'
+            '"items":[{"scriptId":"TestingScript"'
+            "}]}]}]}}",
+        ),
+    ],
+)
+def test_replace_uuids(original_string, uuids_to_name_map, expected_string):
+    downloader = Downloader(output="", input="", regex="", all_custom_content=True)
+    final_string = downloader.replace_uuids(original_string, uuids_to_name_map)
+    assert final_string == expected_string

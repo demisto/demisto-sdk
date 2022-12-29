@@ -37,7 +37,10 @@ class JSONObject(DictionaryBasedObject):
                 path = next(path.glob(["*.json"]))  # type: ignore
             except StopIteration:
                 raise exc.ContentInitializeError(JSONObject, path)
-        elif not (path.is_file() and path.suffix in [".json"]) and path.name != 'metadata.json':
+        elif (
+            not (path.is_file() and path.suffix in [".json"])
+            and path.name != "metadata.json"
+        ):
             raise exc.ContentInitializeError(JSONObject, path)
 
         return path
@@ -50,11 +53,9 @@ class JSONObject(DictionaryBasedObject):
             raise exc.ContentSerializeError(self, self.path, str(e))
 
     def _serialize(self, dest_dir: Path):
-        """Dump dictionary to json file
-
-        """
+        """Dump dictionary to json file"""
         dest_file = self._create_target_dump_dir(dest_dir) / self.normalize_file_name()
-        with open(dest_file, 'w') as file:
+        with open(dest_file, "w") as file:
             json.dump(self.to_dict(), file)
         return [dest_file]
 

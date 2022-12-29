@@ -20,8 +20,12 @@ class Readme(TextObject):
 
     @staticmethod
     def prepare_contributors_text(contrib_list):
-        fixed_contributor_names = [f' - {contrib_name}\n' for contrib_name in contrib_list]
-        return CONTRIBUTORS_README_TEMPLATE.format(contributors_names=''.join(fixed_contributor_names))
+        fixed_contributor_names = [
+            f" - {contrib_name}\n" for contrib_name in contrib_list
+        ]
+        return CONTRIBUTORS_README_TEMPLATE.format(
+            contributors_names="".join(fixed_contributor_names)
+        )
 
     def mention_contributors_in_readme(self):
         """Mention contributors in pack readme"""
@@ -30,7 +34,7 @@ class Readme(TextObject):
                 with open(self.contributors.path) as contributors_file:
                     contributor_list = json.load(contributors_file)
                 contribution_data = self.prepare_contributors_text(contributor_list)
-                with open(self._path, 'a+') as readme_file:
+                with open(self._path, "a+") as readme_file:
                     readme_file.write(contribution_data)
         except Exception as e:
             print(e)
@@ -38,7 +42,7 @@ class Readme(TextObject):
     def handle_marketplace_tags(self):
         """Remove marketplace tags depending on marketplace version"""
         try:
-            with open(self._path, 'r+') as f:
+            with open(self._path, "r+") as f:
                 text = f.read()
                 parsed_text = get_mp_tag_parser().parse_text(text)
                 if len(text) != len(parsed_text):

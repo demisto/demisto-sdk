@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 class File:
-    def __init__(self, tmp_path: Path, repo_path: str, txt: str = ''):
+    def __init__(self, tmp_path: Path, repo_path: str, txt: str = ""):
         self._tmp_path = tmp_path
         self._repo_path = repo_path
         self.path = str(self._tmp_path)
@@ -11,7 +11,7 @@ class File:
         self.write(txt)
 
     def write(self, txt: str):
-        self._tmp_path.write_text(txt, encoding='utf-8')
+        self._tmp_path.write_text(txt, encoding="utf-8")
 
     def write_bytes(self, txt: bytes):
         self._tmp_path.write_bytes(txt)
@@ -23,4 +23,4 @@ class File:
         return self._tmp_path.read_bytes()
 
     def write_list(self, lst: list):
-        self.write('\n'.join(lst))
+        self.write("\n".join(lst))

@@ -8,6 +8,8 @@
 * Fixed an issue where **xdrctemplate** was missing 'external' prefix.
 * Fixed an issue in **prepare-content** command providing output path.
 * Updated the **validate** and **update-release-notes** commands to skip the *Triggers Recommendations* content type.
+* Added a new validation to the **validate** command to verify that the release notes headers are in the correct format.
+* Changed the **validate** command to fail on the IN140 error code only when the skipped integration has no unit tests.
 * Added validation that checks that the `nativeimage` key is not defined in script/integration yml.
 * Added to the **format** command the ability to remove `nativeimage` key in case defined in script/integration yml.
 

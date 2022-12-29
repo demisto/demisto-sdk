@@ -1,12 +1,16 @@
 import logging
 from typing import Any, Dict, Iterable, List, Optional
 
-from neo4j import Transaction
+from neo4j import Transaction, graph
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import SERVER_CONTENT_ITEMS, ContentType, Neo4jResult
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (intersects, run_query, to_neo4j_map,
-                                                                               versioned)
+from demisto_sdk.commands.content_graph.common import SERVER_CONTENT_ITEMS, ContentType
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
+    intersects,
+    run_query,
+    to_neo4j_map,
+    versioned,
+)
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -122,30 +126,45 @@ def _match(
     tx: Transaction,
     marketplace: MarketplaceVersions = None,
     content_type: Optional[ContentType] = None,
-    filter_list: Optional[Iterable[int]] = None,
+    ids_list: Optional[Iterable[int]] = None,
     **properties,
-) -> List[Neo4jResult]:
+) -> List[graph.Node]:
+    """A query to match nodes in the graph.
+
+    Args:
+        tx: Neo4j transaction.
+        marketplace: The marketplace to filter by.
+        content_type: The content type to filter by.
+        ids_list: A list of neo4j ids to filter by.
+
+    Returns:
+        List[graph.Node]: list of neo4j nodes.
+    """
     params_str = to_neo4j_map(properties)
 
     content_type_str = f":{content_type}" if content_type else ""
     where = []
-    if marketplace or filter_list:
+    if marketplace or ids_list:
         where.append("WHERE")
-        if filter_list:
-            where.append("id(node_from) IN $filter_list")
-        if filter_list and marketplace:
+        if ids_list:
+            where.append("node_id = id(node)")
+        if ids_list and marketplace:
             where.append("AND")
         if marketplace:
-            where.append(f"'{marketplace}' IN node_from.marketplaces AND '{marketplace}' IN node_to.marketplaces")
-
+            where.append(f"'{marketplace}' IN node.marketplaces")
     query = f"""
-    MATCH (node_from{content_type_str}{params_str}) - [relationship] - (node_to)
+    MATCH (node{content_type_str}{params_str})
     {" ".join(where)}
-    RETURN node_from, collect(relationship) as relationships, collect(node_to) as nodes_to
+    RETURN node
     """
+    if ids_list:
+        query = "UNWIND $filter_list AS node_id\n" + query
+
     return [
-        Neo4jResult(node_from=item.get("node_from"), relationships=item.get("relationships"), nodes_to=item.get("nodes_to"))
-        for item in run_query(tx, query, filter_list=list(filter_list) if filter_list else None)
+        item.get("node")
+        for item in run_query(
+            tx, query, filter_list=list(ids_list) if ids_list else None
+        )
     ]
 
 

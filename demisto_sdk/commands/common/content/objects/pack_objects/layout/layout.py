@@ -5,8 +5,9 @@ import demisto_client
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
-    JSONContentObject
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
+    JSONContentObject,
+)
 
 
 class LayoutObject(JSONContentObject):
@@ -67,7 +68,7 @@ class Layout(LayoutObject):
         Returns:
             (Optional[str]): ID of the layout.
         """
-        return self.get('layout', dict()).get('id')
+        return self.get("layout", dict()).get("id")
 
     def get_layout_sections(self) -> Optional[List]:
         """
@@ -76,7 +77,7 @@ class Layout(LayoutObject):
         Returns:
             (Optional[List]): Sections of the layout if exists.
         """
-        return self.get('layout', dict()).get('sections')
+        return self.get("layout", dict()).get("sections")
 
     def get_layout_tabs(self) -> Optional[List]:
         """
@@ -85,7 +86,7 @@ class Layout(LayoutObject):
         Returns:
             (Optional[List]): Tabs of the layout if exists.
         """
-        return self.get('layout', dict()).get('tabs')
+        return self.get("layout", dict()).get("tabs")
 
 
 class LayoutsContainer(LayoutObject):
@@ -99,7 +100,7 @@ class LayoutsContainer(LayoutObject):
         Returns:
             (str): ID of the layout.
         """
-        return self.get('id')
+        return self.get("id")
 
     def get_layout_sections(self) -> Optional[List]:
         """
@@ -108,7 +109,7 @@ class LayoutsContainer(LayoutObject):
         Returns:
             (Optional[List]): ID of the layout.
         """
-        return self.get('sections')
+        return self.get("sections")
 
     def get_layout_tabs(self) -> Optional[List]:
         """
@@ -117,4 +118,4 @@ class LayoutsContainer(LayoutObject):
         Returns:
             (Optional[List]): ID of the layout.
         """
-        return self.get('tabs')
+        return self.get("tabs")

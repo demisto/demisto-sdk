@@ -169,8 +169,10 @@ class ValidateManager:
             FileType.MODELING_RULE_SCHEMA,
             FileType.XSIAM_REPORT_IMAGE,
             FileType.PIPFILE,
+            FileType.PIPFILE_LOCK,
             FileType.TXT,
-            FileType.JAVASCRIPT_FILE
+            FileType.JAVASCRIPT_FILE,
+            FileType.POWERSHELL_FILE
         )
 
         self.is_external_repo = is_external_repo

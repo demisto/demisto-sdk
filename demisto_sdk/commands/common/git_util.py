@@ -5,7 +5,7 @@ from typing import Set, Tuple, Union
 
 import click
 import gitdb
-from git import InvalidGitRepositoryError, Repo
+from git import GitCommandError, InvalidGitRepositoryError, Repo
 from git.diff import Lit_change_type
 from git.remote import Remote
 
@@ -612,6 +612,6 @@ class GitUtil:
         """
         try:
             self.repo.git.check_ignore(file_path)
-        except Exception:
+        except GitCommandError:
             return False
         return True

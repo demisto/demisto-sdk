@@ -1429,11 +1429,11 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
 
     elif path.name == 'Pipfile':
         return FileType.PIPFILE
-    
+
     elif path.suffix == '.lock':
         return FileType.PIPFILE_LOCK
 
-    elif path.name in('commands_example', 'commands_examples', 'command_examples') or path.suffix == '.txt':
+    elif path.name in ('commands_example', 'commands_examples', 'command_examples') or path.suffix == '.txt':
         return FileType.TXT
 
     return None

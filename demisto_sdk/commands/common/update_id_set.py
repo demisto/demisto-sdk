@@ -21,11 +21,11 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR, COMMON_TYPES
                                                    DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_DEFINITIONS_DIR,
                                                    GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR, GENERIC_TYPES_DIR,
                                                    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
-                                                   INDICATOR_TYPES_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR,
-                                                   MODELING_RULES_DIR, PARSING_RULES_DIR, REPORTS_DIR, SCRIPTS_DIR,
-                                                   TEST_PLAYBOOKS_DIR, TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR,
-                                                   XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, FileType,
-                                                   MarketplaceVersions)
+                                                   INDICATOR_TYPES_DIR, JOBS_DIR, LAYOUT_RULES_DIR, LAYOUTS_DIR,
+                                                   LISTS_DIR, MAPPERS_DIR, MODELING_RULES_DIR, PARSING_RULES_DIR,
+                                                   REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TRIGGER_DIR,
+                                                   WIDGETS_DIR, WIZARDS_DIR, XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR,
+                                                   XSIAM_REPORTS_DIR, FileType, MarketplaceVersions)
 from demisto_sdk.commands.common.content_constant_paths import (DEFAULT_ID_SET_PATH, MP_V2_ID_SET_PATH,
                                                                 XPANSE_ID_SET_PATH)
 from demisto_sdk.commands.common.cpu_count import cpu_count
@@ -47,17 +47,20 @@ ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Cla
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes', 'GenericFields', 'GenericModules',
                    'GenericDefinitions', 'Lists', 'Jobs', 'ParsingRules', 'ModelingRules',
-                   'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'Wizards', 'XDRCTemplates']
+                   'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'Wizards', 'XDRCTemplates',
+                   'LayoutRules']
 
 CONTENT_MP_V2_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                           'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                           'Layouts', 'Mappers', 'Packs', 'Lists', 'ParsingRules', 'ModelingRules',
-                          'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'XDRCTemplates']
+                          'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'XDRCTemplates',
+                          'LayoutRules']
 
 ID_SET_MP_V2_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                          'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                          'Layouts', 'Mappers', 'Lists', 'ParsingRules', 'ModelingRules',
-                         'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'XDRCTemplates']
+                         'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'XDRCTemplates',
+                         'LayoutRules']
 
 CONTENT_XPANSE_ENTITIES = ['Packs', 'Integrations', 'Scripts', 'Playbooks', 'IncidentFields', 'IncidentTypes']
 
@@ -1583,12 +1586,12 @@ def process_layoutscontainers(file_path: str, packs: Dict[str, Dict], marketplac
 
         layout_data = get_layoutscontainer_data(file_path, packs=packs)
 
-        # only indicator layouts are supported in marketplace v2.
-        layout_group = list(layout_data.values())[0].get('group')
-        if marketplace == MarketplaceVersions.MarketplaceV2.value and layout_group == 'incident':
-            print(f'incident layoutcontainer "{file_path}" is not supported in marketplace v2, excluding.')
-            add_item_to_exclusion_dict(excluded_items_from_id_set, file_path, list(layout_data.keys())[0])
-            return result, excluded_items_from_id_set
+        # # only indicator layouts are supported in marketplace v2.
+        # layout_group = list(layout_data.values())[0].get('group')
+        # if marketplace == MarketplaceVersions.MarketplaceV2.value and layout_group == 'incident':
+        #     print(f'incident layoutcontainer "{file_path}" is not supported in marketplace v2, excluding.')
+        #     add_item_to_exclusion_dict(excluded_items_from_id_set, file_path, list(layout_data.keys())[0])
+        #     return result, excluded_items_from_id_set
 
         if print_logs:
             print(f'adding {file_path} to id_set')
@@ -1937,6 +1940,25 @@ def get_wizard_data(path: str, packs: Dict[str, Dict] = None):
     return {json_data.get('id'): data}
 
 
+def get_layout_rule_data(path: str, packs: Dict[str, Dict] = None):
+    json_data = get_json(path)
+
+    id_ = json_data.get('rule_id')
+    name = json_data.get('rule_name')
+    layout_id = json_data.get('layout_id')
+    display_name = get_display_name(path, json_data)
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+    marketplaces = [MarketplaceVersions.MarketplaceV2.value]
+
+    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
+                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
+    data.update({'layout_id': layout_id})
+
+    return {id_: data}
+
+
 class IDSetType(Enum):
     PLAYBOOK = 'playbooks'
     INTEGRATION = 'integrations'
@@ -2137,6 +2159,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
     triggers_list = []
     wizards_list = []
     xdrc_templates_list = []
+    layout_rules_list = []
     packs_dict: Dict[str, Dict] = {}
     excluded_items_by_pack: Dict[str, set] = {}
     excluded_items_by_type: Dict[str, set] = {}
@@ -2728,6 +2751,28 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
+        if 'LayoutRules' in objects_to_create:
+            print_color("\nStarting iteration over LayoutRules", LOG_COLORS.GREEN)
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=FileType.LAYOUT_RULE,
+                                                                       data_extraction_func=get_layout_rule_data,
+                                                                       suffix='json'
+                                                                       ),
+                                                               get_general_paths(LAYOUT_RULES_DIR,
+                                                                                 pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('LayoutRules',
+                                                                                               []).append(_id)
+                layout_rules_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
+
+        progress_bar.update(1)
+
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
     # it shouldn't take too much time
@@ -2753,6 +2798,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
     new_ids_dict['Wizards'] = sort(wizards_list)
     new_ids_dict['Packs'] = packs_dict
     new_ids_dict['XDRCTemplates'] = sort(xdrc_templates_list)
+    new_ids_dict['LayoutRules'] = sort(layout_rules_list)
 
     if marketplace != MarketplaceVersions.MarketplaceV2.value:
         new_ids_dict['GenericTypes'] = sort(generic_types_list)

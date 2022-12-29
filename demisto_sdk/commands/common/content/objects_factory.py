@@ -10,9 +10,9 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (AgentTool,
                                                                       GenericDefinition, GenericField, GenericModule,
                                                                       GenericType, IncidentField, IncidentType,
                                                                       IndicatorField, IndicatorType, Integration, Job,
-                                                                      Layout, LayoutsContainer, Lists, ModelingRule,
-                                                                      OldClassifier, OldIndicatorType, PackIgnore,
-                                                                      PackMetaData, ParsingRule, Playbook,
+                                                                      Layout, LayoutRule, LayoutsContainer, Lists,
+                                                                      ModelingRule, OldClassifier, OldIndicatorType,
+                                                                      PackIgnore, PackMetaData, ParsingRule, Playbook,
                                                                       PreProcessRule, Readme, ReleaseNote,
                                                                       ReleaseNoteConfig, Report, Script, SecretIgnore,
                                                                       Trigger, Widget, Wizard, XDRCTemplate,
@@ -67,6 +67,7 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.TRIGGER: Trigger,
     FileType.WIZARD: Wizard,
     FileType.XDRC_TEMPLATE: XDRCTemplate,
+    FileType.LAYOUT_RULE: LayoutRule
 }
 
 TYPE_CONVERSION_BY_FILE_NAME = {

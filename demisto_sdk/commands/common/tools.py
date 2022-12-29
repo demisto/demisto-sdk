@@ -39,18 +39,19 @@ from demisto_sdk.commands.common.constants import (ALL_FILES_VALIDATION_IGNORE_W
                                                    DOC_FILES_DIR, ENV_DEMISTO_SDK_MARKETPLACE, ID_IN_COMMONFIELDS,
                                                    ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
                                                    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR,
-                                                   JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, MARKETPLACE_KEY_PACK_METADATA,
-                                                   METADATA_FILE_NAME, MODELING_RULES_DIR,
-                                                   NON_LETTERS_OR_NUMBERS_PATTERN, OFFICIAL_CONTENT_ID_SET_PATH,
-                                                   PACK_METADATA_IRON_BANK_TAG, PACKAGE_SUPPORTING_DIRECTORIES,
-                                                   PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
-                                                   PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
-                                                   PACKS_README_FILE_NAME, PARSING_RULES_DIR, PLAYBOOKS_DIR,
-                                                   PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX,
-                                                   REPORTS_DIR, SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR,
-                                                   TRIGGER_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-                                                   XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
-                                                   XSOAR_CONFIG_FILE, FileType, IdSetKeys, MarketplaceVersions, urljoin)
+                                                   JOBS_DIR, LAYOUT_RULES_DIR, LAYOUTS_DIR, LISTS_DIR,
+                                                   MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME,
+                                                   MODELING_RULES_DIR, NON_LETTERS_OR_NUMBERS_PATTERN,
+                                                   OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
+                                                   PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
+                                                   PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME,
+                                                   PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME, PARSING_RULES_DIR,
+                                                   PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR,
+                                                   RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR, SIEM_ONLY_ENTITIES,
+                                                   TEST_PLAYBOOKS_DIR, TRIGGER_DIR, TYPE_PWSH, UNRELEASE_HEADER,
+                                                   UUID_REGEX, WIDGETS_DIR, XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR,
+                                                   XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE, FileType, IdSetKeys,
+                                                   MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
@@ -1373,6 +1374,8 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.MODELING_RULE_TEST_DATA
         elif MODELING_RULES_DIR in path.parts and path.stem.casefold().endswith('_schema'):
             return FileType.MODELING_RULE_SCHEMA
+        elif LAYOUT_RULES_DIR in path.parts:
+            return FileType.LAYOUT_RULE
 
     elif path.name.endswith('_image.png'):
         if path.name.endswith('Author_image.png'):
@@ -1575,6 +1578,9 @@ def find_type(
 
         if 'profile_type' in _dict and 'yaml_template' in _dict:
             return FileType.XDRC_TEMPLATE
+
+        if 'rule_id' in _dict:
+            return FileType.LAYOUT_RULE
 
         # When using it for all files validation- sometimes 'id' can be integer
         if 'id' in _dict:
@@ -1881,6 +1887,8 @@ def _get_file_id(file_type: str, file_content: Dict):
         return file_content.get('id', '')
     elif file_type in ID_IN_COMMONFIELDS:
         return file_content.get('commonfields', {}).get('id')
+    elif file_type == FileType.LAYOUT_RULE:
+        return file_content.get('rule_id', '')
     return file_content.get('trigger_id', '')
 
 
@@ -2109,7 +2117,8 @@ def item_type_to_content_items_header(item_type):
         "correlationrule": "correlationRule",
         "modelingrule": "modelingRule",
         "parsingrule": "parsingRule",
-        "xdrctemplate": "XDRCTemplate"
+        "xdrctemplate": "XDRCTemplate",
+        "layoutrule": "layoutRule"
     }
 
     return f'{converter.get(item_type, item_type)}s'
@@ -2886,6 +2895,8 @@ def get_display_name(file_path, file_data={}) -> str:
         name = file_data.get('id', None)
     elif 'trigger_name' in file_data:
         name = file_data.get('trigger_name')
+    elif 'rule_name' in file_data:
+        name = file_data.get('rule_name')
 
     elif 'dashboards_data' in file_data and file_data.get('dashboards_data') \
             and isinstance(file_data['dashboards_data'], list):

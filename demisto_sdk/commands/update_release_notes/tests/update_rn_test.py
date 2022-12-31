@@ -1129,7 +1129,7 @@ class TestRNUpdate:
             from_version=new_incident_field.read_json_as_dict().get("fromversion"),
         )
 
-        assert "##### New:" not in rn_desc
+        assert f"- New: **{new_incident_field}**" not in rn_desc
         assert "test_pack" in rn_desc
         assert "(Available from Cortex XSOAR 6.5.0)." not in rn_desc
 

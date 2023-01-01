@@ -1583,7 +1583,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.parent.name == DOC_FILES_DIR:
         return FileType.DOC_FILE
 
-    elif path.name == "Pipfile":
+    elif path.name in ("pipfile", "Pipfile"):
         return FileType.PIPFILE
 
     elif path.suffix == ".lock":
@@ -1594,7 +1594,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         or path.suffix == ".txt"
     ):
         return FileType.TXT
-    elif path.name == '.pylintrc':
+    elif path.name == ".pylintrc":
         return FileType.PYLINTRC
 
     return None

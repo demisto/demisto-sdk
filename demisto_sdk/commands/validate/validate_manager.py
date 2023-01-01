@@ -749,6 +749,8 @@ class ValidateManager:
         file_type = find_type(file_path)
 
         is_added_file = file_path in added_files if added_files else False
+        if file_type == FileType.MODELING_RULE_TEST_DATA:
+            file_path = file_path.replace("_testdata.json", ".yml")
         if file_path.endswith(".xif"):
             file_path = file_path.replace(".xif", ".yml")
         if (

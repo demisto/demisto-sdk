@@ -76,6 +76,7 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR,
     SIEM_ONLY_ENTITIES,
     TEST_PLAYBOOKS_DIR,
+    TESTS_AND_DOC_DIRECTORIES,
     TRIGGER_DIR,
     TYPE_PWSH,
     UNRELEASE_HEADER,
@@ -273,7 +274,10 @@ def print_color(obj, color):
 
 
 def get_files_in_dir(
-    project_dir: str, file_endings: list, recursive: bool = True
+    project_dir: str,
+    file_endings: list,
+    recursive: bool = True,
+    ignore_test_files: bool = False,
 ) -> list:
     """
     Gets the project directory and returns the path of all yml, json and py files in it
@@ -284,13 +288,20 @@ def get_files_in_dir(
     :return: The path of files with file_endings in the current dir
     """
     files = []
+    excludes = []
+
     project_path = Path(project_dir)
     glob_function = project_path.rglob if recursive else project_path.glob
     for file_type in file_endings:
+        pattern = f"*.{file_type}"
         if project_dir.endswith(file_type):
             return [project_dir]
-        files.extend([str(f) for f in glob_function(f"*.{file_type}")])
-    return files
+        if ignore_test_files:
+            for test_dir in TESTS_AND_DOC_DIRECTORIES:
+                exclude_pattern = f"**/{test_dir}/" + pattern
+                excludes.extend([str(f) for f in glob_function(exclude_pattern)])
+        files.extend([str(f) for f in glob_function(pattern)])
+    return list(set(files) - set(excludes))
 
 
 def src_root() -> Path:

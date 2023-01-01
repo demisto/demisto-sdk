@@ -23,6 +23,7 @@ from demisto_sdk.commands.format.update_classifier import (
     OldClassifierJSONFormat,
 )
 from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
+from demisto_sdk.commands.format.update_correlation_rule import CorrelationRuleYMLFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_description import DescriptionFormat
 from demisto_sdk.commands.format.update_genericdefinition import (
@@ -51,6 +52,7 @@ from demisto_sdk.commands.format.update_readme import ReadmeFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
+from demisto_sdk.commands.format.update_xsiam_dashboard import XSIAMDashboardJSONFormat
 from demisto_sdk.commands.lint.commands_builder import excluded_files
 
 FILE_TYPE_AND_LINKED_CLASS = {
@@ -83,6 +85,8 @@ FILE_TYPE_AND_LINKED_CLASS = {
     JOB: JobJSONFormat,
     "readme": ReadmeFormat,
     "metadata": PackMetadataJsonFormat,
+    "correlationrule": CorrelationRuleYMLFormat,
+    "xsiamdashboard": XSIAMDashboardJSONFormat,
 }
 
 UNFORMATTED_FILES = [

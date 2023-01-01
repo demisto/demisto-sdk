@@ -1267,6 +1267,8 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.GENERIC_FIELD: "6.5.0",
     FileType.GENERIC_MODULE: "6.5.0",
     FileType.GENERIC_DEFINITION: "6.5.0",
+    FileType.CORRELATION_RULE: "6.10.0",
+    FileType.XSIAM_DASHBOARD: "6.10.0",
 }
 # This constant below should always be two versions before the latest server version
 GENERAL_DEFAULT_FROMVERSION = "6.5.0"

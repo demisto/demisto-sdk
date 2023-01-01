@@ -81,5 +81,4 @@ class Neo4jImportHandler:
                 )
 
     def zip_import_dir(self, output_file: Path) -> None:
-        output_file = output_file.with_suffix(".zip")
         shutil.make_archive(str(output_file), "zip", self.import_path)

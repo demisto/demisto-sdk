@@ -93,7 +93,13 @@ class LintManager:
             for changed_api_module in changed_api_modules:
                 print(f'Checking for packages dependent on the modified API module {changed_api_module}...')
                 with Neo4jContentGraphInterface() as graph:
-                    api_module_node = graph.search(object_id=changed_api_module)[0]
+                    api_module_nodes = graph.search(object_id=changed_api_module)
+                    api_module_node = api_module_nodes[0] if api_module_nodes else None
+                    if not api_module_node:
+                        raise ValueError(f"The modified API module `{changed_api_module}` was not found in the "
+                                         f"content graph. Please check that it is up to date, and run"
+                                         f" `demisto-sdk update-content-graph` if necessary.")
+
                     dependent_items += [dependency.path for dependency in api_module_node.imported_by]
 
             dependent_on_api_module = self._get_packages(content_repo=self._facts["content_repo"],

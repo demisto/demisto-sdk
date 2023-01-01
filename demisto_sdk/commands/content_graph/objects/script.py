@@ -27,7 +27,7 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
         return data
 
     @property
-    def imported_by(self) -> list:
+    def imported_by(self) -> List[IntegrationScript]:
         return [
             r.content_item
             for r in self.relationships_data[RelationshipType.IMPORTS]

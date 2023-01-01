@@ -32,7 +32,7 @@ def create_content_graph(
     if dependencies:
         content_graph_interface.create_pack_dependencies()
     if output_path:
-        output_path = output_path / f"{marketplace.value}.zip"
+        output_path = output_path / marketplace.value
     if export:
         content_graph_interface.export_graph(output_path)
 
@@ -52,6 +52,8 @@ def update_content_graph(
     """
     if use_git and imported_path:
         raise ValueError("Cannot use both git and imported path")
+    if packs_to_update is None:
+        packs_to_update = []
     builder = ContentGraphBuilder(content_graph_interface)
     if not packs_to_update and not imported_path:
         # If no arguments were given, we will use the git diff to get the packs to update
@@ -60,15 +62,11 @@ def update_content_graph(
     if use_git:
         try:
             with TemporaryFile() as temp_file:
-                download_content_graph(Path(temp_file.name))
-                # TODO return filepath of the downloaded file
-                content_graph_interface.import_graph(
-                    Path(temp_file.name) / f"{marketplace.value}.zip"
-                )
+                official_content_graph = download_content_graph(Path(temp_file.name))
+                content_graph_interface.import_graph(official_content_graph)
 
             latest_commit = get_latest_upload_flow_commit_hash()
-            # TODO - add to current list
-            packs_to_update = list(GitUtil().get_all_changed_pack_ids(latest_commit))
+            packs_to_update.extend(GitUtil().get_all_changed_pack_ids(latest_commit))
         except Exception as e:
             logger.info("Failed to download from bucket. Will create a new graph")
             logger.debug(f"Error: {e}")
@@ -80,7 +78,7 @@ def update_content_graph(
     if dependencies:
         content_graph_interface.create_pack_dependencies()
     if output_path:
-        output_path = output_path / f"{marketplace.value}.zip"
+        output_path = output_path / marketplace.value
     content_graph_interface.export_graph(output_path)
 
 

@@ -2894,7 +2894,7 @@ def error_code(config, **kwargs):
 @click.option(
     "-o",
     "--output-file",
-    type=click.Path(resolve_path=True),
+    type=click.Path(resolve_path=True, path_type=Path),
     default=None,
     help="The output content graph ZIP file.",
 )
@@ -2971,7 +2971,7 @@ def create_content_graph(
 @click.option(
     "-i",
     "--imported-path",
-    type=click.Path(resolve_path=True, exists=True, file_okay=True, dir_okay=False),
+    type=click.Path(path_type=Path, resolve_path=True, exists=True, file_okay=True, dir_okay=False),
     default=None,
     help="Path to content zip file to import",
 )
@@ -2992,7 +2992,7 @@ def create_content_graph(
 @click.option(
     "-o",
     "--output-file",
-    type=click.Path(resolve_path=True),
+    type=click.Path(resolve_path=True, path_type=Path),
     default=None,
     help="Zip file to export the graph to",
 )
@@ -3035,7 +3035,7 @@ def update_content_graph(
         quiet=kwargs.get("quiet"),  # type: ignore[arg-type]
         log_path=kwargs.get("log_path"),
     )  # type: ignore[arg-type]
-
+    
     with Neo4jContentGraphInterface() as content_graph_interface:
         update_content_graph_command(
             content_graph_interface,

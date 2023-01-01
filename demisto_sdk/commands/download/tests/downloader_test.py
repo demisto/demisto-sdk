@@ -1230,6 +1230,22 @@ def test_handle_file(
     assert final_mapper == expected_mapper
 
 
+def test_download_playbook_yaml_is_called():
+    """
+    Test that the `download_playbook_yaml` method is called when `handle_file` is called,
+    if member name contains the word playbook.
+    """
+    downloader = Downloader(output="", input="", regex="", all_custom_content=True)
+    with patch.object(downloader, "download_playbook_yaml") as mock:
+        downloader.handle_file(
+            "name: TestingPlaybook\ncommonfields:\n id: f1e4c6e5-0d44-48a0-8020-a9711243e918",
+            "playbook-Testing.yml",
+            {},
+        )
+
+    mock.assert_called()
+
+
 @pytest.mark.parametrize(
     "original_string, uuids_to_name_map, expected_string",
     [

@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Updated the default general `fromVersion` value on **format** to `6.8.0`
 * Fixed an issue where the **prepare-content** command output invalid automation name when used with the --*custom* argument.
 * Fixed an issue where modeling rules with arbitrary whitespace characters were not parsed correctly.
 * Added support for the **nativeimage** key for an integration/script in the **prepare-content** command.

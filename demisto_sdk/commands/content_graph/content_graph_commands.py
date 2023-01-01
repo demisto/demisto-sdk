@@ -49,7 +49,7 @@ def update_content_graph(
 
     if use_git and not packs_to_update and not imported_path:
         latest_commit = get_latest_upload_flow_commit_hash()
-        packs_to_update = GitUtil().get_all_changed_pack_names(latest_commit)
+        packs_to_update = list(GitUtil().get_all_changed_pack_names(latest_commit))
         import_handler.download_from_bucket(import_handler.import_path)
     elif imported_path:
         with ZipFile(imported_path, "r") as zip_obj:

@@ -3,7 +3,6 @@ from typing import Any, Dict, List
 
 import pytest
 from pytest_mock import MockerFixture
-from TestSuite.test_tools import ChangeCWD
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -27,6 +26,7 @@ from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json
 from TestSuite.repo import Repo
+from TestSuite.test_tools import ChangeCWD
 
 # Fixtures for mock content object models
 

@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import shutil
 from pathlib import Path
@@ -7,17 +8,28 @@ import requests
 from requests.adapters import HTTPAdapter, Retry
 
 from demisto_sdk.commands.common.tools import get_content_path, run_command
-from demisto_sdk.commands.content_graph.common import NEO4J_DATABASE_HTTP, NEO4J_FOLDER, NEO4J_PASSWORD
+from demisto_sdk.commands.content_graph.common import (
+    NEO4J_DATABASE_HTTP,
+    NEO4J_FOLDER,
+    NEO4J_PASSWORD,
+)
 
 REPO_PATH = Path(get_content_path())  # type: ignore
 
-NEO4J_SERVICE_IMAGE = "neo4j:4.4.12"
-NEO4J_ADMIN_IMAGE = "neo4j/neo4j-admin:4.4.12"
+NEO4J_VERSION = "4.4.12"
+
+NEO4J_SERVICE_IMAGE = f"neo4j:{NEO4J_VERSION}"
+NEO4J_ADMIN_IMAGE = f"neo4j/neo4j-admin:{NEO4J_VERSION}"
 
 LOCAL_NEO4J_PATH = Path("/var/lib/neo4j")
 NEO4J_IMPORT_FOLDER = "import"
 NEO4J_DATA_FOLDER = "data"
 NEO4J_PLUGINS_FOLDER = "plugins"
+
+# When updating the APOC version, make sure to update the checksum as well
+APOC_URL_VERSIONS = (
+    "https://neo4j-contrib.github.io/neo4j-apoc-procedures/versions.json"
+)
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -80,6 +92,41 @@ def _should_use_docker(use_docker: bool) -> bool:
     return use_docker or not IS_NEO4J_ADMIN_AVAILABLE
 
 
+def _is_apoc_available(plugins_path: Path, sha1: str) -> bool:
+    for plugin in plugins_path.iterdir():
+        if (
+            plugin.name.startswith("apoc")
+            and hashlib.sha1(plugin.read_bytes()).hexdigest() == sha1
+        ):
+            return True
+    return False
+
+
+def _download_apoc():
+    apocs = [
+        apoc
+        for apoc in requests.get(APOC_URL_VERSIONS, verify=False).json()
+        if apoc["neo4j"] == NEO4J_VERSION
+    ]
+    if not apocs:
+        logger.debug(f"Could not find APOC for neo4j version {NEO4J_VERSION}")
+        return
+    download_url = apocs[0].get("downloadUrl")
+    sha1 = apocs[0].get("sha1")
+    plugins_folder = REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER
+    plugins_folder.mkdir(parents=True, exist_ok=True)
+
+    if _is_apoc_available(plugins_folder, sha1):
+        logger.debug("APOC is already available, skipping installation")
+        return
+    logger.info("Downloading APOC plugin, please wait...")
+    # Download APOC_URL and save it to plugins folder in neo4j
+    response = requests.get(download_url, verify=False, stream=True)
+
+    with open(plugins_folder / "apoc.jar", "wb") as f:
+        f.write(response.content)
+
+
 def start(use_docker: bool = True):
     """Starting the neo4j service
 
@@ -92,9 +139,13 @@ def start(use_docker: bool = True):
             "set-initial-password", f"neo4j-admin set-initial-password {NEO4J_PASSWORD}"
         )
         run_command("neo4j start", cwd=REPO_PATH, is_silenced=False)
-
+        # health check to make sure that neo4j is up
+        _wait_until_service_is_up()
     else:
         Path.mkdir(REPO_PATH / NEO4J_FOLDER, exist_ok=True, parents=True)
+        # we download apoc only if we are running on docker
+        # if the user is running locally he needs to setup apoc manually
+        _download_apoc()
         docker_client = _get_docker_client()
         _stop_neo4j_service_docker(docker_client)
         docker_client.containers.run(
@@ -102,9 +153,9 @@ def start(use_docker: bool = True):
             name="neo4j-content",
             ports={"7474/tcp": 7474, "7687/tcp": 7687, "7473/tcp": 7473},
             volumes=[
-                f'{REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER}:/{NEO4J_DATA_FOLDER}',
-                f'{REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER}:{LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER}',
-                f'{REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER}:/{NEO4J_PLUGINS_FOLDER}'
+                f"{REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER}:/{NEO4J_DATA_FOLDER}",
+                f"{REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER}:{LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER}",
+                f"{REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER}:/{NEO4J_PLUGINS_FOLDER}",
             ],
             detach=True,
             environment={
@@ -112,13 +163,16 @@ def start(use_docker: bool = True):
                 "NEO4J_apoc_export_file_enabled": "true",
                 "NEO4J_apoc_import_file_enabled": "true",
                 "NEO4J_apoc_import_file_use__neo4j__config": "true",
-                "NEO4JLABS_PLUGINS": '["apoc"]',
                 "NEO4J_dbms_security_procedures_unrestricted": "apoc.*",
                 "NEO4J_dbms_security_procedures_allowlist": "apoc.*",
             },
+            healthcheck={
+                "test": f"curl --fail {NEO4J_DATABASE_HTTP} || exit 1",
+                "interval": 5 * 1000000000,
+                "timeout": 10 * 1000000000,
+                "retries": 10,
+            },
         )
-    # health check to make sure that neo4j is up
-    _wait_until_service_is_up()
 
 
 def stop(use_docker: bool):

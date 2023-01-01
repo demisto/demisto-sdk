@@ -37,7 +37,7 @@ def say_hello(name: str) -> str:
     :rtype: ``str``
     """
 
-    return f'Hello {name}'
+    return f"Hello {name}"
 
 
 def say_hello_command(args: Dict[str, Any]) -> Tuple[str, dict, str]:
@@ -63,22 +63,14 @@ def say_hello_command(args: Dict[str, Any]) -> Tuple[str, dict, str]:
     # Check the HelloWorld comments from the HelloWorld Integration
     # as the command "say_hello_command" is the same.
 
-    name = args.get('name', None)
+    name = args.get("name", None)
 
     original_result = say_hello(name)
 
-    markdown = f'## {original_result}'
-    outputs = {
-        'HelloWorld': {
-            'hello': original_result
-        }
-    }
+    markdown = f"## {original_result}"
+    outputs = {"HelloWorld": {"hello": original_result}}
 
-    return (
-        markdown,
-        outputs,
-        original_result
-    )
+    return (markdown, outputs, original_result)
 
 
 def main():
@@ -86,8 +78,8 @@ def main():
         return_outputs(*say_hello_command(demisto.args()))
     except Exception as ex:
         demisto.error(traceback.format_exc())  # print the traceback
-        return_error(f'Failed to execute HelloWorldScript. Error: {str(ex)}')
+        return_error(f"Failed to execute HelloWorldScript. Error: {str(ex)}")
 
 
-if __name__ in ('__main__', '__builtin__', 'builtins'):  # pragma: no cover
+if __name__ in ("__main__", "__builtin__", "builtins"):  # pragma: no cover
     main()

@@ -9,10 +9,11 @@ class Unifier(ABC):
 
     @staticmethod
     @abstractmethod
-    def unify(path: Path,
-              data: dict,
-              marketplace: MarketplaceVersions = None,
-              **kwargs,
-              ) -> dict:
+    def unify(
+        path: Path,
+        data: dict,
+        marketplace: MarketplaceVersions = None,
+        **kwargs,
+    ) -> dict:
         """Merges the various components to create a unified output yml file."""
         ...

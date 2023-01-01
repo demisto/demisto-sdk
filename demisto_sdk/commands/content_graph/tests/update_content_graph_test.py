@@ -206,11 +206,10 @@ def _get_pack_by_id(repository: ContentDTO, pack_id: str) -> Pack:
 
 
 def dump_csv_import_files(csv_files_dir: Path) -> None:
-    for is_docker in [True, False]:
-        import_path = neo4j_service.get_neo4j_import_path(is_docker).as_posix()
-        if Path(import_path).is_dir():
-            shutil.rmtree(import_path)
-            copy_tree(csv_files_dir.as_posix(), import_path)
+    import_path = neo4j_service.get_neo4j_import_path().as_posix()
+    if Path(import_path).is_dir():
+        shutil.rmtree(import_path)
+        copy_tree(csv_files_dir.as_posix(), import_path)
 
 
 # COMPARISON HELPER FUNCTIONS
@@ -355,10 +354,6 @@ def _testcase2__pack3__remove_relationship(repository: ContentDTO) -> List[Pack]
 
 
 class TestUpdateContentGraph:
-    @classmethod
-    def teardown_class(cls):
-        """Stops the graph interface service. Runs once, after all tests."""
-        stop_content_graph()
 
     def test_merge_graphs(self):
         """

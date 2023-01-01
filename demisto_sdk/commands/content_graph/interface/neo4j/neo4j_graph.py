@@ -106,7 +106,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def __enter__(self) -> "Neo4jContentGraphInterface":
         if not neo4j_service.is_alive():
-            neo4j_service.USE_DOCKER = True
             neo4j_service.start()
         return self
 

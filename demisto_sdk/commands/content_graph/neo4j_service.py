@@ -24,11 +24,7 @@ NEO4J_DATA_FOLDER = "data"
 NEO4J_PLUGINS_FOLDER = "plugins"
 
 # When updating the APOC version, make sure to update the checksum as well
-APOC_URL_VERSIONS = (
-    "https://neo4j-contrib.github.io/neo4j-apoc-procedures/versions.json"
-)
-
-USE_DOCKER = False
+APOC_URL_VERSIONS = "https://neo4j-contrib.github.io/neo4j-apoc-procedures/versions.json"
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -72,20 +68,13 @@ def _stop_neo4j_service_docker(docker_client: docker.DockerClient):
 
 def _is_apoc_available(plugins_path: Path, sha1: str) -> bool:
     for plugin in plugins_path.iterdir():
-        if (
-            plugin.name.startswith("apoc")
-            and hashlib.sha1(plugin.read_bytes()).hexdigest() == sha1
-        ):
+        if plugin.name.startswith("apoc") and hashlib.sha1(plugin.read_bytes()).hexdigest() == sha1:
             return True
     return False
 
 
 def _download_apoc():
-    apocs = [
-        apoc
-        for apoc in requests.get(APOC_URL_VERSIONS, verify=False).json()
-        if apoc["neo4j"] == NEO4J_VERSION
-    ]
+    apocs = [apoc for apoc in requests.get(APOC_URL_VERSIONS, verify=False).json() if apoc["neo4j"] == NEO4J_VERSION]
     if not apocs:
         logger.debug(f"Could not find APOC for neo4j version {NEO4J_VERSION}")
         return
@@ -162,6 +151,6 @@ def is_alive():
 
 
 def get_neo4j_import_path() -> Path:
-    if USE_DOCKER:
-        return REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER
-    return LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER
+    if LOCAL_NEO4J_PATH.exists():
+        return LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER
+    return REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER

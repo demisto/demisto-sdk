@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from tempfile import TemporaryFile
+from tempfile import NamedTemporaryFile
 from typing import List, Optional
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
@@ -61,7 +61,7 @@ def update_content_graph(
 
     if use_git:
         try:
-            with TemporaryFile() as temp_file:
+            with NamedTemporaryFile() as temp_file:
                 official_content_graph = download_content_graph(Path(temp_file.name))
                 content_graph_interface.import_graph(official_content_graph)
 

@@ -361,7 +361,7 @@ class TestCreateContentGraph:
         )
 
         with ContentGraphInterface() as interface:
-            create_content_graph(interface, output_file=tmp_path / "graph.zip")
+            create_content_graph(interface, output_folder=tmp_path / "graph.zip")
             packs = interface.search(
                 marketplace=MarketplaceVersions.XSOAR, content_type=ContentType.PACK
             )

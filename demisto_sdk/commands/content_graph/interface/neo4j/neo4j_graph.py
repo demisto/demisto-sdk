@@ -316,7 +316,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.write_transaction(remove_server_nodes)
 
-    def import_graph(self) -> None:
+    def import_graph(self, imported_path: Optional[Path] = None) -> None:
         """Imports CSV files to neo4j, by:
         1. Dropping the constraints (we temporarily allow creating duplicate nodes from different repos)
         2. Preparing the CSV files for import and importing them
@@ -327,7 +327,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Args:
             external_import_paths (List[Path]): A list of external repositories' import paths.
         """
-        import_handler = Neo4jImportHandler()
+        import_handler = Neo4jImportHandler(imported_path)
         import_handler.ensure_data_uniqueness()
         node_files = import_handler.get_nodes_files()
         relationship_files = import_handler.get_relationships_files()

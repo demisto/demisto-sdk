@@ -12,7 +12,11 @@ import typer
 from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE, FileType
+from demisto_sdk.commands.common.constants import (
+    ENV_DEMISTO_SDK_MARKETPLACE,
+    FileType,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.content_constant_paths import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH,
 )
@@ -2893,10 +2897,20 @@ def error_code(config, **kwargs):
 @click.help_option("-h", "--help")
 @click.option(
     "-o",
-    "--output-file",
-    type=click.Path(resolve_path=True, path_type=Path),
+    "--output-folder",
+    type=click.Path(resolve_path=True, path_type=Path, dir_okay=True, file_okay=False),
     default=None,
     help="The output content graph ZIP file.",
+)
+@click.option(
+    "-mp",
+    "--marketplace",
+    help="The marketplace the artifacts are created for, that "
+    "determines which artifacts are created for each pack. "
+    "Default is the XSOAR marketplace, that has all of the packs "
+    "artifacts.",
+    default="xsoar",
+    type=click.Choice([marketplace.value for marketplace in MarketplaceVersions]),
 )
 @click.option(
     "-se",
@@ -2931,9 +2945,10 @@ def error_code(config, **kwargs):
     type=click.Path(resolve_path=True),
 )
 def create_content_graph(
+    marketplace: str = MarketplaceVersions.XSOAR,
     skip_export: bool = False,
     no_dependencies: bool = False,
-    output_file: Path = None,
+    output_folder: Path = None,
     **kwargs,
 ):
     from demisto_sdk.commands.common.logger import logging_setup
@@ -2949,9 +2964,10 @@ def create_content_graph(
     with Neo4jContentGraphInterface() as content_graph_interface:
         create_content_graph_command(
             content_graph_interface,
-            not no_dependencies,
+            marketplace=MarketplaceVersions(marketplace),
+            dependencies=not no_dependencies,
             export=not skip_export,
-            output_file=output_file,
+            output_folder=output_folder,
         )
 
 
@@ -2960,6 +2976,16 @@ def create_content_graph(
     hidden=True,
 )
 @click.help_option("-h", "--help")
+@click.option(
+    "-mp",
+    "--marketplace",
+    help="The marketplace the artifacts are created for, that "
+    "determines which artifacts are created for each pack. "
+    "Default is the XSOAR marketplace, that has all of the packs "
+    "artifacts.",
+    default="xsoar",
+    type=click.Choice([marketplace.value for marketplace in MarketplaceVersions]),
+)
 @click.option(
     "-g",
     "--use-git",
@@ -2971,7 +2997,9 @@ def create_content_graph(
 @click.option(
     "-i",
     "--imported-path",
-    type=click.Path(path_type=Path, resolve_path=True, exists=True, file_okay=True, dir_okay=False),
+    type=click.Path(
+        path_type=Path, resolve_path=True, exists=True, file_okay=True, dir_okay=False
+    ),
     default=None,
     help="Path to content zip file to import",
 )
@@ -2991,8 +3019,8 @@ def create_content_graph(
 )
 @click.option(
     "-o",
-    "--output-file",
-    type=click.Path(resolve_path=True, path_type=Path),
+    "--output-folder",
+    type=click.Path(resolve_path=True, path_type=Path, dir_okay=True, file_okay=False),
     default=None,
     help="Zip file to export the graph to",
 )
@@ -3016,10 +3044,11 @@ def create_content_graph(
 )
 def update_content_graph(
     use_git: bool = False,
+    marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
     imported_path: Path = None,
     packs: list = None,
     no_dependencies: bool = False,
-    output_file: Path = None,
+    output_folder: Path = None,
     **kwargs,
 ):
     from demisto_sdk.commands.common.logger import logging_setup
@@ -3035,15 +3064,16 @@ def update_content_graph(
         quiet=kwargs.get("quiet"),  # type: ignore[arg-type]
         log_path=kwargs.get("log_path"),
     )  # type: ignore[arg-type]
-    
+
     with Neo4jContentGraphInterface() as content_graph_interface:
         update_content_graph_command(
             content_graph_interface,
+            marketplace=marketplace,
             use_git=use_git,
             imported_path=imported_path,
             packs_to_update=packs or [],
             dependencies=not no_dependencies,
-            output_file=output_file,
+            output_folder=output_folder,
         )
 
 

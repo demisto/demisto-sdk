@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import Any, Dict, List
+from zipfile import ZipFile
 
 import pytest
-from pytest_mock import MockerFixture
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -361,7 +361,7 @@ class TestCreateContentGraph:
         )
 
         with ContentGraphInterface() as interface:
-            create_content_graph(interface)
+            create_content_graph(interface, output_file=tmp_path / "graph.zip")
             packs = interface.search(
                 marketplace=MarketplaceVersions.XSOAR, content_type=ContentType.PACK
             )
@@ -402,21 +402,14 @@ class TestCreateContentGraph:
         assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script0.yml")
         assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script1.yml")
 
-    def test_create_content_graph_end_to_end_with_existing_service(
-        self, repo: Repo, tmp_path: Path, mocker: MockerFixture
-    ):
-        """
-        Given:
-            - A repository with a pack TestPack, containing an integration TestIntegration.
-        When:
-            - Running create_content_graph() with an existing, running service.
-        Then:
-            - Make sure the service remains available by querying for all content items in the graph.
-            - Make sure there is a single integration in the query response.
-        """
-        self.test_create_content_graph_end_to_end(
-            repo, tmp_path=tmp_path, mocker=mocker
-        )
+        # make sure that the output file zip is created
+        assert Path.exists(tmp_path / "graph.zip")
+        with ZipFile(tmp_path / "graph.zip", "r") as zip_obj:
+            zip_obj.extractall(tmp_path / "extracted")
+            # make sure that the extracted files are all .csv
+            extracted_files = list(tmp_path.glob("extracted/*"))
+            assert extracted_files
+            assert all(file.suffix == ".csv" for file in extracted_files)
 
     def test_create_content_graph_relationships(
         self,

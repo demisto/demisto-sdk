@@ -1,7 +1,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Iterable, Set, Tuple, Union
+from typing import Set, Tuple, Union
 
 import click
 import gitdb
@@ -457,10 +457,12 @@ class GitUtil:
 
         return all_renamed_files
 
-    def get_all_changed_pack_names(self, prev_ver: str) -> Iterable[str]:
-        for file in self.get_all_changed_files(prev_ver):
-            if "Packs" in file.parts:
-                yield file.parts[1]
+    def get_all_changed_pack_names(self, prev_ver: str) -> Set[str]:
+        return {
+            file.parts[1]
+            for file in self.get_all_changed_files(prev_ver)
+            if "Packs" in file.parts
+        }
 
     def _get_untracked_files(self, requested_status: str) -> set:
         """return all untracked files of the given requested status.

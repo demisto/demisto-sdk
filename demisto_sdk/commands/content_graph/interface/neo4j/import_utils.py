@@ -1,4 +1,5 @@
 import csv
+import logging
 import os
 import shutil
 from pathlib import Path
@@ -10,10 +11,13 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import download_content_graph
 from demisto_sdk.commands.content_graph.neo4j_service import get_neo4j_import_path
 
+logger = logging.getLogger("demisto-sdk")
+
 
 class Neo4jImportHandler:
     def __init__(self) -> None:
         self.import_path: Path = get_neo4j_import_path()
+        logger.debug(f"Import path: {self.import_path}")
 
     def clean_import_dir(self) -> None:
         for file in self.import_path.iterdir():
@@ -79,6 +83,7 @@ class Neo4jImportHandler:
         shutil.make_archive(str(output_file), "zip", self.import_path)
 
     def download_from_bucket(self):
+        logger.info("Downloading content graph from bucket")
         with TemporaryDirectory() as temp_dir:
             download_content_graph(Path(temp_dir))
             # TODO handle different marketplace versions in the future

@@ -61,6 +61,7 @@ from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.hook_validations.test_playbook import TestPlaybookValidator
 from demisto_sdk.commands.common.hook_validations.triggers import TriggersValidator
+from demisto_sdk.commands.common.hook_validations.layout_rule import LayoutRuleValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.hook_validations.wizard import WizardValidator
 from demisto_sdk.commands.common.hook_validations.xdrc_templates import XDRCTemplatesValidator
@@ -1169,6 +1170,12 @@ class ValidateManager:
                                                print_as_warnings=self.print_ignored_errors,
                                                json_file_path=self.json_file_path)
         return triggers_validator.is_valid_file(validate_rn=False)
+
+    def validate_layout_rules(self, structure_validator, pack_error_ignore_list):
+        layout_rules_validator = LayoutRuleValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                                     print_as_warnings=self.print_ignored_errors,
+                                                     json_file_path=self.json_file_path)
+        return layout_rules_validator.is_valid_file(validate_rn=False)
 
     def validate_xsiam_report(self, structure_validator, pack_error_ignore_list):
         xsiam_report_validator = XSIAMReportValidator(structure_validator, ignored_errors=pack_error_ignore_list,

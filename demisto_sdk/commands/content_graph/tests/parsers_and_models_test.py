@@ -1166,6 +1166,40 @@ class TestParsersAndModels:
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
 
+    def test_layout_rule_parser(self, pack: Pack):
+        """
+        Given:
+            - A pack with a layout rule.
+        When:
+            - Creating the content item's parser and model.
+        Then:
+            - Verify all relationships of the content item are collected.
+            - Verify the generic content item properties are parsed correctly.
+            - Verify the specific properties of the content item are parsed correctly.
+        """
+        from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
+        from demisto_sdk.commands.content_graph.parsers.layout_rule import LayoutRuleParser
+
+        rule = pack.create_layout_rule("TestLayoutRule", load_json("layoutrule.json"))
+        rule_path = Path(rule.path)
+        parser = LayoutRuleParser(rule_path, list(MarketplaceVersions))
+        RelationshipsVerifier.run(
+            parser.relationships,
+            dependency_ids={
+                "test_layout_id": ContentType.LAYOUT,
+            },
+        )
+        model = LayoutRule.from_orm(parser)
+        ContentItemModelVerifier.run(
+            model,
+            expected_id="rule_test",
+            expected_name="test rule name",
+            expected_path=rule_path,
+            expected_content_type=ContentType.LAYOUT_RULE,
+            expected_fromversion='6.0.0',
+            expected_toversion='6.1.9',
+        )
+
     def test_widget_parser(self, pack: Pack):
         """
         Given:

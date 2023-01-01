@@ -342,7 +342,8 @@ ERROR_CODE = {
     "incorrect_value_references": {'code': "PB121", 'ui_applicable': False, 'related_field': 'taskid'},
     "playbook_unhandled_task_branches": {'code': "PB122", 'ui_applicable': True, 'related_field': 'conditions'},
     "playbook_unhandled_reply_options": {'code': "PB123", 'ui_applicable': True, 'related_field': 'conditions'},
-    "playbook_unhandled_script_condition_branches": {'code': "PB124", 'ui_applicable': True, 'related_field': 'conditions'},
+    "playbook_unhandled_script_condition_branches": {'code': "PB124", 'ui_applicable': True,
+                                                     'related_field': 'conditions'},
     "playbook_only_default_next": {'code': "PB125", 'ui_applicable': True, 'related_field': 'conditions'},
     "playbook_only_default_reply_option": {'code': "PB126", 'ui_applicable': True, 'related_field': 'message'},
 
@@ -501,7 +502,10 @@ ERROR_CODE = {
     "xdrc_templates_files_naming_error": {'code': 'XT100', 'ui_applicable': False, 'related_field': ''},
 
     # XD - XSIAM Dashboards
-    "xsiam_dashboards_files_naming_error": {'code': 'XD100', 'ui_applicable': False, 'related_field': ''}
+    "xsiam_dashboards_files_naming_error": {'code': 'XD100', 'ui_applicable': False, 'related_field': ''},
+
+    # LR - Layout Rules
+    "layout_rule_keys_are_missing": {'code': 'LR100', 'ui_applicable': False, 'related_field': ''}
 }
 
 
@@ -1458,7 +1462,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def content_entity_version_not_match_playbook_version(
-        main_playbook: str, entities_names_and_version: str, main_playbook_version: str, content_sub_type: str
+            main_playbook: str, entities_names_and_version: str, main_playbook_version: str, content_sub_type: str
     ):
         return f"Playbook {main_playbook} with 'fromversion' {main_playbook_version} uses the following" \
                f" {content_sub_type} with an invalid 'fromversion': [{entities_names_and_version}]. " \
@@ -2252,8 +2256,8 @@ class Errors:
     @error_code_decorator
     def incorrect_value_references(task_key, value, task_name, section_name):
         return f"On task: '{task_name}' with ID: '{task_key}', an input with the value: '{value}' was passed as string, rather than as " \
-            f"a reference in the '{section_name}' section. Change the reference to 'From previous tasks' from 'As value'" \
-            " , or change the value to ${" + value + "}."
+               f"a reference in the '{section_name}' section. Change the reference to 'From previous tasks' from 'As value'" \
+               " , or change the value to ${" + value + "}."
 
     @staticmethod
     @error_code_decorator
@@ -2560,6 +2564,11 @@ class Errors:
     def modeling_rule_keys_are_missing():
         return "The 'rules' key or the 'schema' key is missing from the modeling rule yml file. " \
                'Make sure to add them to your yml file with an empty string as value.'
+
+    @staticmethod
+    @error_code_decorator
+    def layout_rule_keys_are_missing(missing_fields):
+        return f"Layout rule fields are missing in the json file:  {str(missing_fields)}"
 
     @staticmethod
     @error_code_decorator

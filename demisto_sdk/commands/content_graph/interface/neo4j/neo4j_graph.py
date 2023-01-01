@@ -340,14 +340,15 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.write_transaction(create_constraints)
             session.write_transaction(remove_empty_properties)
 
-    def export_graph(self, output_file: Optional[Path] = None) -> None:
-        Neo4jImportHandler().clean_import_dir()
+    def export_graph(self, output_path: Optional[Path] = None) -> None:
+        import_handler = Neo4jImportHandler()
+        import_handler.clean_import_dir()
         with self.driver.session() as session:
             session.write_transaction(pre_export_write_queries)
             session.write_transaction(export_to_csv, self.repo_path.name)
             session.write_transaction(post_export_write_queries)
-        if output_file:
-            Neo4jImportHandler().zip_import_dir(output_file)
+        if output_path:
+            import_handler.zip_import_dir(output_path)
 
     def clean_graph(self):
         with self.driver.session() as session:

@@ -35,7 +35,7 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def export_graph(self, output_file: Optional[Path] = None) -> None:
+    def export_graph(self, output_path: Optional[Path] = None) -> None:
         pass
 
     @abstractmethod

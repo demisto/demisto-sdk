@@ -34,7 +34,6 @@ class ContentGraphBuilder:
         """
         if not packs_to_update:
             return
-        self.content_graph.import_graph()
         self._parse_and_model_content(packs_to_update)
         self._create_or_update_graph()
 

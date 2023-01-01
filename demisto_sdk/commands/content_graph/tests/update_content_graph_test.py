@@ -2,6 +2,7 @@ import shutil
 from distutils.dir_util import copy_tree
 from pathlib import Path
 from typing import Any, Callable, Dict, List
+from zipfile import ZipFile
 
 import pytest
 
@@ -413,6 +414,7 @@ class TestUpdateContentGraph:
     )
     def test_update_content_graph(
         self,
+        tmp_path,
         repository: ContentDTO,
         commit_func: Callable[[ContentDTO], List[Pack]],
         expected_added_dependencies: List[Dict[str, Any]],
@@ -457,7 +459,7 @@ class TestUpdateContentGraph:
 
             # update the graph accordingly
             update_content_graph(
-                interface, packs_to_update=pack_ids_to_update, dependencies=True
+                interface, packs_to_update=pack_ids_to_update, dependencies=True, output_path=tmp_path / "graph.zip"
             )
             packs_from_graph = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
@@ -471,3 +473,12 @@ class TestUpdateContentGraph:
                 expected_removed_dependencies,
                 after_update=True,
             )
+        # make sure that the output file zip is created
+        assert Path.exists(tmp_path / "graph.zip")
+        with ZipFile(tmp_path / "graph.zip", "r") as zip_obj:
+            zip_obj.extractall(tmp_path / "extracted")
+            # make sure that the extracted files are all .csv
+            extracted_files = list(tmp_path.glob("extracted/*"))
+            assert extracted_files
+            assert all(file.suffix == ".csv" for file in extracted_files)
+

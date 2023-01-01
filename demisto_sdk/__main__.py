@@ -2897,10 +2897,10 @@ def error_code(config, **kwargs):
 @click.help_option("-h", "--help")
 @click.option(
     "-o",
-    "--output-folder",
+    "--output-path",
     type=click.Path(resolve_path=True, path_type=Path, dir_okay=True, file_okay=False),
     default=None,
-    help="The output content graph ZIP file.",
+    help="Output folder to place the zip file of the graph exported CSVs files",
 )
 @click.option(
     "-mp",
@@ -2948,7 +2948,7 @@ def create_content_graph(
     marketplace: str = MarketplaceVersions.XSOAR,
     skip_export: bool = False,
     no_dependencies: bool = False,
-    output_folder: Path = None,
+    output_path: Path = None,
     **kwargs,
 ):
     from demisto_sdk.commands.common.logger import logging_setup
@@ -2967,7 +2967,7 @@ def create_content_graph(
             marketplace=MarketplaceVersions(marketplace),
             dependencies=not no_dependencies,
             export=not skip_export,
-            output_folder=output_folder,
+            output_path=output_path,
         )
 
 
@@ -3019,10 +3019,10 @@ def create_content_graph(
 )
 @click.option(
     "-o",
-    "--output-folder",
+    "--output-path",
     type=click.Path(resolve_path=True, path_type=Path, dir_okay=True, file_okay=False),
     default=None,
-    help="Zip file to export the graph to",
+    help="Output folder to place the zip file of the graph exported CSVs files",
 )
 @click.option(
     "-v",
@@ -3048,7 +3048,7 @@ def update_content_graph(
     imported_path: Path = None,
     packs: list = None,
     no_dependencies: bool = False,
-    output_folder: Path = None,
+    output_path: Path = None,
     **kwargs,
 ):
     from demisto_sdk.commands.common.logger import logging_setup
@@ -3068,12 +3068,12 @@ def update_content_graph(
     with Neo4jContentGraphInterface() as content_graph_interface:
         update_content_graph_command(
             content_graph_interface,
-            marketplace=marketplace,
+            marketplace=MarketplaceVersions(marketplace),
             use_git=use_git,
             imported_path=imported_path,
             packs_to_update=packs or [],
             dependencies=not no_dependencies,
-            output_folder=output_folder,
+            output_path=output_path,
         )
 
 

@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 
 import pytest
 from pytest_mock import MockerFixture
+from TestSuite.test_tools import ChangeCWD
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -391,8 +392,8 @@ class TestCreateContentGraph:
             script.object_id for script in packs[0].content_items.script
         }
         assert returned_scripts == {"SampleScript", "TestApiModule"}
-
-        content_cto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
+        with ChangeCWD(repo.path):
+            content_cto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
         assert Path.exists(tmp_path / "TestPack")
         assert Path.exists(tmp_path / "TestPack" / "metadata.json")
         assert Path.exists(

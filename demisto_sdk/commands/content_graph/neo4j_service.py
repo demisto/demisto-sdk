@@ -6,7 +6,7 @@ from pathlib import Path
 import docker
 import requests
 
-from demisto_sdk.commands.common.tools import get_content_path
+from demisto_sdk.commands.common.tools import get_content_path, run_command
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_HTTP,
     NEO4J_FOLDER,
@@ -25,9 +25,7 @@ NEO4J_DATA_FOLDER = "data"
 NEO4J_PLUGINS_FOLDER = "plugins"
 
 # When updating the APOC version, make sure to update the checksum as well
-APOC_URL_VERSIONS = (
-    "https://neo4j-contrib.github.io/neo4j-apoc-procedures/versions.json"
-)
+APOC_URL_VERSIONS = "https://neo4j-contrib.github.io/neo4j-apoc-procedures/versions.json"
 
 USE_DOCKER = False
 
@@ -73,20 +71,13 @@ def _stop_neo4j_service_docker(docker_client: docker.DockerClient):
 
 def _is_apoc_available(plugins_path: Path, sha1: str) -> bool:
     for plugin in plugins_path.iterdir():
-        if (
-            plugin.name.startswith("apoc")
-            and hashlib.sha1(plugin.read_bytes()).hexdigest() == sha1
-        ):
+        if plugin.name.startswith("apoc") and hashlib.sha1(plugin.read_bytes()).hexdigest() == sha1:
             return True
     return False
 
 
 def _download_apoc():
-    apocs = [
-        apoc
-        for apoc in requests.get(APOC_URL_VERSIONS, verify=False).json()
-        if apoc["neo4j"] == NEO4J_VERSION
-    ]
+    apocs = [apoc for apoc in requests.get(APOC_URL_VERSIONS, verify=False).json() if apoc["neo4j"] == NEO4J_VERSION]
     if not apocs:
         logger.debug(f"Could not find APOC for neo4j version {NEO4J_VERSION}")
         return
@@ -113,6 +104,7 @@ def start():
     """
     if is_alive():
         return
+
     Path.mkdir(REPO_PATH / NEO4J_FOLDER, exist_ok=True, parents=True)
     # we download apoc only if we are running on docker
     # if the user is running locally he needs to setup apoc manually
@@ -143,7 +135,6 @@ def start():
             "timeout": 10 * 1000000000,
             "retries": 10,
         },
-        user=os.getuid() or 1000,
     )
 
 

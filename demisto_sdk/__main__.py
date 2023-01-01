@@ -2892,13 +2892,11 @@ def error_code(config, **kwargs):
 )
 @click.help_option("-h", "--help")
 @click.option(
-    "-ud",
-    "--use-docker",
-    is_flag=True,
-    help="Use docker service to run the content graph",
-)
-@click.option(
-    "-us", "--use-existing", is_flag=True, help="Use existing service", default=False
+    "-o",
+    "--output-file",
+    type=click.Path(resolve_path=True),
+    default=None,
+    help="The output content graph ZIP file.",
 )
 @click.option(
     "-se",
@@ -2913,9 +2911,6 @@ def error_code(config, **kwargs):
     is_flag=True,
     help="Whether or not to include dependencies.",
     default=False,
-)
-@click.option(
-    "-o", "--output-file", type=click.Path(), help="dump file output", default=None
 )
 @click.option(
     "-v",
@@ -2936,8 +2931,6 @@ def error_code(config, **kwargs):
     type=click.Path(resolve_path=True),
 )
 def create_content_graph(
-    use_docker: bool = False,
-    use_existing: bool = False,
     skip_export: bool = False,
     no_dependencies: bool = False,
     output_file: Path = None,
@@ -2953,13 +2946,12 @@ def create_content_graph(
         quiet=kwargs.get("quiet"),  # type: ignore[arg-type]
         log_path=kwargs.get("log_path"),
     )  # type: ignore[arg-type]
-    with Neo4jContentGraphInterface(
-        start_service=not use_existing,
-        output_file=Path(output_file) if output_file else None,
-        use_docker=use_docker,
-    ) as content_graph_interface:
+    with Neo4jContentGraphInterface() as content_graph_interface:
         create_content_graph_command(
-            content_graph_interface, not no_dependencies, export=not skip_export
+            content_graph_interface,
+            not no_dependencies,
+            export=not skip_export,
+            output_file=output_file,
         )
 
 
@@ -2969,13 +2961,19 @@ def create_content_graph(
 )
 @click.help_option("-h", "--help")
 @click.option(
-    "-ud",
-    "--use-docker",
+    "-g",
+    "--use-git",
     is_flag=True,
-    help="Use docker service to run the content graph",
+    show_default=True,
+    default=False,
+    help="Whether to use git to determine the packs to update",
 )
 @click.option(
-    "-us", "--use-existing", is_flag=True, help="Use existing service", default=False
+    "-i",
+    "--imported-path",
+    type=click.Path(resolve_path=True, exists=True, file_okay=True, dir_okay=False),
+    default=None,
+    help="Path to content zip file to import",
 )
 @click.option(
     "-p",
@@ -2992,7 +2990,11 @@ def create_content_graph(
     default=False,
 )
 @click.option(
-    "-o", "--output-file", type=click.Path(), help="dump file output", default=None
+    "-o",
+    "--output-file",
+    type=click.Path(resolve_path=True),
+    default=None,
+    help="Zip file to export the graph to",
 )
 @click.option(
     "-v",
@@ -3013,8 +3015,8 @@ def create_content_graph(
     type=click.Path(resolve_path=True),
 )
 def update_content_graph(
-    use_docker: bool = False,
-    use_existing: bool = False,
+    use_git: bool = False,
+    imported_path: Path = None,
     packs: list = None,
     no_dependencies: bool = False,
     output_file: Path = None,
@@ -3034,15 +3036,14 @@ def update_content_graph(
         log_path=kwargs.get("log_path"),
     )  # type: ignore[arg-type]
 
-    with Neo4jContentGraphInterface(
-        start_service=not use_existing,
-        output_file=output_file,
-        use_docker=use_docker,
-    ) as content_graph_interface:
+    with Neo4jContentGraphInterface() as content_graph_interface:
         update_content_graph_command(
             content_graph_interface,
+            use_git=use_git,
+            imported_path=imported_path,
             packs_to_update=packs or [],
             dependencies=not no_dependencies,
+            output_file=output_file,
         )
 
 

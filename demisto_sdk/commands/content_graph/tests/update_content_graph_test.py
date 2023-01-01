@@ -391,7 +391,7 @@ class TestUpdateContentGraph:
                 )
             )
 
-        with ContentGraphInterface(start_service=True) as interface:
+        with ContentGraphInterface() as interface:
             dump_csv_import_files(
                 TEST_DATA_PATH / "mock_import_files_multiple_repos__valid"
             )

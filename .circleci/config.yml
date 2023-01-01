@@ -69,6 +69,7 @@ references:
           sudo echo "apoc.import.file.enabled=true" >> $apoc_conf_file
           sudo echo "apoc.import.file.use_neo4j_config=true" >> $apoc_conf_file
           neo4j-admin set-initial-password test
+          neo4j start
 
     install_node_ci: &install_node_ci
       - node/install-packages:

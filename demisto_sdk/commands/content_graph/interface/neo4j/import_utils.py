@@ -2,15 +2,18 @@ import csv
 import os
 import shutil
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import List, Set
+from zipfile import ZipFile
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import download_content_graph
 from demisto_sdk.commands.content_graph.neo4j_service import get_neo4j_import_path
 
 
 class Neo4jImportHandler:
-    def __init__(self, is_running_on_docker: bool) -> None:
-        self.import_path: Path = get_neo4j_import_path(is_running_on_docker)
+    def __init__(self) -> None:
+        self.import_path: Path = get_neo4j_import_path()
 
     def clean_import_dir(self) -> None:
         for file in self.import_path.iterdir():
@@ -70,3 +73,16 @@ class Neo4jImportHandler:
                 shutil.move(
                     tempfile.name, (self.import_path / filename.name).as_posix()
                 )
+
+    def zip_import_dir(self, output_file: Path) -> None:
+        output_file = output_file.with_suffix(".zip")
+        shutil.make_archive(str(output_file), "zip", self.import_path)
+
+    def download_from_bucket(self):
+        with TemporaryDirectory() as temp_dir:
+            download_content_graph(Path(temp_dir))
+            # TODO handle different marketplace versions in the future
+            with ZipFile(
+                Path(temp_dir) / MarketplaceVersions.XSOAR.value, "r"
+            ) as zip_obj:
+                zip_obj.extractall(str(self.import_path))

@@ -327,9 +327,16 @@ def create_mini_content(repository: ContentDTO):
 
 
 class TestCreateContentGraph:
-    def _test_create_content_graph_end_to_end(
-        self, repo: Repo, start_service: bool, tmp_path: Path, mocker
-    ):
+    def test_create_content_graph_end_to_end(self, repo: Repo, tmp_path: Path, mocker):
+        """
+        Given:
+            - A repository with a pack TestPack, containing an integration TestIntegration.
+        When:
+            - Running create_content_graph()
+        Then:
+            - Make sure the service remains available by querying for all content items in the graph.
+            - Make sure there is a single integration in the query response.
+        """
         import demisto_sdk.commands.content_graph.objects.repository as repo_module
 
         mocker.patch.object(
@@ -352,7 +359,7 @@ class TestCreateContentGraph:
             name="SampleClassifier", content=load_json("classifier.json")
         )
 
-        with ContentGraphInterface(start_service=start_service) as interface:
+        with ContentGraphInterface() as interface:
             create_content_graph(interface)
             packs = interface.search(
                 marketplace=MarketplaceVersions.XSOAR, content_type=ContentType.PACK
@@ -394,22 +401,6 @@ class TestCreateContentGraph:
         assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script0.yml")
         assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script1.yml")
 
-    def test_create_content_graph_end_to_end_with_new_service(
-        self, repo: Repo, tmp_path: Path, mocker: MockerFixture
-    ):
-        """
-        Given:
-            - A repository with a pack TestPack, containing an integration TestIntegration.
-        When:
-            - Running create_content_graph() with a new service.
-        Then:
-            - Make sure the service remains available by querying for all content items in the graph.
-            - Make sure there is a single integration in the query response.
-        """
-        self._test_create_content_graph_end_to_end(
-            repo, start_service=True, tmp_path=tmp_path, mocker=mocker
-        )
-
     def test_create_content_graph_end_to_end_with_existing_service(
         self, repo: Repo, tmp_path: Path, mocker: MockerFixture
     ):
@@ -422,8 +413,8 @@ class TestCreateContentGraph:
             - Make sure the service remains available by querying for all content items in the graph.
             - Make sure there is a single integration in the query response.
         """
-        self._test_create_content_graph_end_to_end(
-            repo, start_service=False, tmp_path=tmp_path, mocker=mocker
+        self.test_create_content_graph_end_to_end(
+            repo, tmp_path=tmp_path, mocker=mocker
         )
 
     def test_create_content_graph_relationships(
@@ -783,26 +774,4 @@ class TestCreateContentGraph:
         Then:
             - Make sure no exception is raised.
         """
-        stop_content_graph()
-
-    def test_dump_content_graph(self, tmp_path: Path, repo: Repo):
-        """
-        Given:
-            - A mocked model of a repository with a pack TestPack, containing an integration.
-        When:
-            - Running create_content_graph().
-        Then:
-            - Make sure the graph is dumped to the correct path.
-        """
-        pack = repo.create_pack("TestPack")
-        pack.pack_metadata.write_json(load_json("pack_metadata.json"))
-        integration = pack.create_integration()
-        integration.create_default_integration("TestIntegration")
-
-        with ContentGraphInterface(
-            start_service=True, output_file=tmp_path / "content.dump"
-        ) as interface:
-            create_content_graph(interface)
-
-        assert Path.exists(tmp_path / "content.dump"), "Make sure dump file created"
         stop_content_graph()

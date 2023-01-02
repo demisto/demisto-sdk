@@ -18,5 +18,5 @@ class LayoutRule(JSONBased):
     def create_default_trigger(self):
         self.write_json({
             'rule_id': self.name,
-            'rule_name': self.name,
+            'layout_rule_name': self.name,
         })

@@ -34,7 +34,7 @@ from demisto_sdk.commands.common.native_image import (
     ScriptIntegrationSupportedNativeImages,
 )
 from demisto_sdk.commands.common.timers import timer
-from demisto_sdk.commands.common.tools import run_command_os, get_docker_images_from_yml
+from demisto_sdk.commands.common.tools import get_docker_images_from_yml, run_command_os
 from demisto_sdk.commands.lint.commands_builder import (
     build_bandit_command,
     build_flake8_command,
@@ -1412,12 +1412,12 @@ class Linter:
 
         if native_image not in native_image_config.native_images:
             # Server version is invalid or not exist in the docker_native_image_config.json
-            err_msg = f"{log_prompt} - Skipping checks on docker for {native_image}. The requested native image: " \
-                      f"{native_image} is not supported. For supported native image versions please see: " \
-                      f"'Tests/docker_native_image_config.json'"
-            logger.error(
-                err_msg
+            err_msg = (
+                f"{log_prompt} - Skipping checks on docker for {native_image}. The requested native image: "
+                f"{native_image} is not supported. For supported native image versions please see: "
+                f"'Tests/docker_native_image_config.json'"
             )
+            logger.error(err_msg)
             raise ValueError(err_msg)
 
         elif native_image not in supported_native_images:
@@ -1430,9 +1430,7 @@ class Linter:
 
         else:
             # Integration/Script supports the requested native image - find the relevant tag to run on
-            return native_image_config.get_native_image_reference(
-                native_image
-            )
+            return native_image_config.get_native_image_reference(native_image)
 
     def _get_all_docker_images(
         self,

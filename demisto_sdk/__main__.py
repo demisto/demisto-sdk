@@ -896,8 +896,8 @@ def secrets(config, **kwargs):
     "--docker-image",
     default="from-yml",
     help="The docker image to check package on. Possible values: 'naive:<xsoar ng server version>', 'native:latest',"
-         " 'all', a specific docker image from Docker Hub (e.g devdemisto/python3:3.10.9.12345) or the default"
-         " 'from-yml'.",
+    " 'all', a specific docker image from Docker Hub (e.g devdemisto/python3:3.10.9.12345) or the default"
+    " 'from-yml'.",
 )
 @click.option(
     "-idp",

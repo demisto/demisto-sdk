@@ -5,8 +5,9 @@ import demisto_client
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import LAYOUT_RULE, FileType
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
-    JSONContentObject
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
+    JSONContentObject,
+)
 from demisto_sdk.commands.common.tools import generate_xsiam_normalized_name
 
 
@@ -37,7 +38,7 @@ class LayoutRule(JSONContentObject):
         new_file_path = created_files[0]
 
         # export XSIAM 1.3 items only with the external prefix
-        if not new_file_path.name.startswith('external-'):
+        if not new_file_path.name.startswith("external-"):
             move_to_path = new_file_path.parent / self.normalize_file_name()
             shutil.move(new_file_path.as_posix(), move_to_path)
             created_files.remove(new_file_path)

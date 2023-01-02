@@ -32,6 +32,7 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_FIELDS_DIR,
     INDICATOR_TYPES_DIR,
     JOBS_DIR,
+    LAYOUT_RULES_DIR,
     LAYOUTS_DIR,
     LISTS_DIR,
     MAPPERS_DIR,
@@ -48,7 +49,6 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_REPORTS_DIR,
     FileType,
     MarketplaceVersions,
-    LAYOUT_RULES_DIR
 )
 from demisto_sdk.commands.common.content_constant_paths import (
     DEFAULT_ID_SET_PATH,
@@ -132,7 +132,7 @@ ID_SET_ENTITIES = [
     "Triggers",
     "Wizards",
     "XDRCTemplates",
-    "LayoutRules"
+    "LayoutRules",
 ]
 
 CONTENT_MP_V2_ENTITIES = [
@@ -156,7 +156,7 @@ CONTENT_MP_V2_ENTITIES = [
     "XSIAMReports",
     "Triggers",
     "XDRCTemplates",
-    "LayoutRules"
+    "LayoutRules",
 ]
 
 ID_SET_MP_V2_ENTITIES = [
@@ -179,7 +179,7 @@ ID_SET_MP_V2_ENTITIES = [
     "XSIAMReports",
     "Triggers",
     "XDRCTemplates",
-    "LayoutRules"
+    "LayoutRules",
 ]
 
 CONTENT_XPANSE_ENTITIES = [
@@ -2091,20 +2091,6 @@ def process_layoutscontainers(
 
         layout_data = get_layoutscontainer_data(file_path, packs=packs)
 
-        # only indicator layouts are supported in marketplace v2.
-        layout_group = list(layout_data.values())[0].get("group")
-        if (
-            marketplace == MarketplaceVersions.MarketplaceV2.value
-            and layout_group == "incident"
-        ):
-            print(
-                f'incident layoutcontainer "{file_path}" is not supported in marketplace v2, excluding.'
-            )
-            add_item_to_exclusion_dict(
-                excluded_items_from_id_set, file_path, list(layout_data.keys())[0]
-            )
-            return result, excluded_items_from_id_set
-
         if print_logs:
             print(f"adding {file_path} to id_set")
         result.append(layout_data)
@@ -2494,18 +2480,25 @@ def get_wizard_data(path: str, packs: Dict[str, Dict] = None):
 def get_layout_rule_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
 
-    id_ = json_data.get('rule_id')
-    name = json_data.get('rule_name')
-    layout_id = json_data.get('layout_id')
+    id_ = json_data.get("rule_id")
+    name = json_data.get("rule_name")
+    layout_id = json_data.get("layout_id")
     display_name = get_display_name(path, json_data)
-    fromversion = json_data.get('fromVersion')
-    toversion = json_data.get('toVersion')
+    fromversion = json_data.get("fromVersion")
+    toversion = json_data.get("toVersion")
     pack = get_pack_name(path)
     marketplaces = [MarketplaceVersions.MarketplaceV2.value]
 
-    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
-                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
-    data.update({'layout_id': layout_id})
+    data = create_common_entity_data(
+        path=path,
+        name=name,
+        display_name=display_name,
+        to_version=toversion,
+        from_version=fromversion,
+        pack=pack,
+        marketplaces=marketplaces,
+    )
+    data.update({"layout_id": layout_id})
 
     return {id_: data}
 
@@ -3561,6 +3554,27 @@ def re_create_id_set(  # noqa: C901
 
         progress_bar.update(1)
 
+        if "LayoutRules" in objects_to_create:
+            print_color("\nStarting iteration over LayoutRules", LOG_COLORS.GREEN)
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=FileType.LAYOUT_RULE,
+                                                                       data_extraction_func=get_layout_rule_data,
+                                                                       suffix="json"
+                                                                       ),
+                                                               get_general_paths(LAYOUT_RULES_DIR,
+                                                                                 pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get("pack"):
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault("LayoutRules",
+                                                                                               []).append(_id)
+                layout_rules_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
+
+        progress_bar.update(1)
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
     # it shouldn't take too much time

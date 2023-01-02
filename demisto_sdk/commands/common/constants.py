@@ -168,6 +168,7 @@ class FileType(str, Enum):
     PACK_METADATA = "packmetadata"
     LAYOUT_RULE = "layoutrule"
 
+
 RN_HEADER_BY_FILE_TYPE = {
     FileType.PLAYBOOK: "Playbooks",
     FileType.INTEGRATION: "Integrations",
@@ -202,7 +203,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.TRIGGER: "Triggers Recommendations",  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
     FileType.WIZARD: "Wizards",
     FileType.XDRC_TEMPLATE: "XDRC Templates",
-    FileType.LAYOUT_RULE: "Layout Rules"
+    FileType.LAYOUT_RULE: "Layout Rules",
 }
 
 ENTITY_TYPE_TO_DIR = {
@@ -237,7 +238,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.XDRC_TEMPLATE.value: XDRC_TEMPLATE_DIR,
     FileType.CORRELATION_RULE.value: CORRELATION_RULES_DIR,
     FileType.XSIAM_DASHBOARD.value: XSIAM_DASHBOARDS_DIR,
-    FileType.LAYOUT_RULE.value: LAYOUT_RULES_DIR
+    FileType.LAYOUT_RULE.value: LAYOUT_RULES_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -248,7 +249,7 @@ SIEM_ONLY_ENTITIES = [
     FileType.XSIAM_REPORT.value,
     FileType.TRIGGER.value,
     FileType.XDRC_TEMPLATE.value,
-    FileType.LAYOUT_RULE.value
+    FileType.LAYOUT_RULE.value,
 ]
 
 CONTENT_FILE_ENDINGS = ["py", "yml", "png", "json", "md"]
@@ -288,7 +289,7 @@ CONTENT_ENTITIES_DIRS = [
     WIZARDS_DIR,
     MODELING_RULES_DIR,
     XDRC_TEMPLATE_DIR,
-    LAYOUT_RULES_DIR
+    LAYOUT_RULES_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -1575,7 +1576,7 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     TRIGGER_DIR,
     WIZARDS_DIR,
     XDRC_TEMPLATE_DIR,
-    LAYOUT_RULES_DIR
+    LAYOUT_RULES_DIR,
 }
 
 

@@ -1748,7 +1748,11 @@ ERROR_CODE = {
         "related_field": "",
     },
     # LR - Layout Rules
-    "layout_rule_keys_are_missing": {'code': 'LR100', 'ui_applicable': False, 'related_field': ''}
+    "layout_rule_keys_are_missing": {
+        "code": "LR100",
+        "ui_applicable": False,
+        "related_field": "",
+    },
 }
 
 
@@ -4264,7 +4268,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def layout_rule_keys_are_missing(missing_fields):
-        return f"Layout rule fields are missing in the json file:  {str(missing_fields)}"
+        return (
+            f"Layout rule fields are missing in the json file:  {str(missing_fields)}"
+        )
 
     @staticmethod
     @error_code_decorator

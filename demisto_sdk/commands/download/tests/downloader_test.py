@@ -23,6 +23,7 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
     JOBS_DIR,
     LAYOUT_RULES_DIR,
+    LAYOUTS_DIR,
     LISTS_DIR,
     MODELING_RULES_DIR,
     PLAYBOOKS_DIR,
@@ -33,7 +34,6 @@ from demisto_sdk.commands.common.constants import (
     WIDGETS_DIR,
     WIZARDS_DIR,
     XDRC_TEMPLATE_DIR,
-    LAYOUTS_DIR
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import get_child_files, get_json, get_yaml
@@ -288,7 +288,7 @@ class Environment:
             GENERIC_DEFINITIONS_DIR: [],
             MODELING_RULES_DIR: [],
             XDRC_TEMPLATE_DIR: [],
-            LAYOUT_RULES_DIR: []
+            LAYOUT_RULES_DIR: [],
         }
 
         self.INTEGRATION_CUSTOM_CONTENT_OBJECT = {

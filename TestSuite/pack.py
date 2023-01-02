@@ -4,13 +4,13 @@ from typing import Dict, List, Optional
 from demisto_sdk.commands.common.constants import (
     CORRELATION_RULES_DIR,
     DEFAULT_IMAGE_BASE64,
+    LAYOUT_RULES_DIR,
     MODELING_RULES_DIR,
     PARSING_RULES_DIR,
     TRIGGER_DIR,
     XDRC_TEMPLATE_DIR,
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
-    LAYOUT_RULES_DIR
 )
 from TestSuite.correlation_rule import CorrelationRule
 from TestSuite.file import File

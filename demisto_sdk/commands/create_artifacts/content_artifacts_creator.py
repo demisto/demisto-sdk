@@ -29,6 +29,7 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR,
     JOBS_DIR,
+    LAYOUT_RULES_DIR,
     LAYOUTS_DIR,
     LISTS_DIR,
     MODELING_RULES_DIR,
@@ -50,7 +51,6 @@ from demisto_sdk.commands.common.constants import (
     ContentItems,
     FileType,
     MarketplaceVersions,
-    LAYOUT_RULES_DIR
 )
 from demisto_sdk.commands.common.content import (
     Content,
@@ -146,7 +146,7 @@ XSIAM_MARKETPLACE_ITEMS_TO_DUMP = [
     FileType.METADATA,
     FileType.README,
     FileType.AUTHOR_IMAGE,
-    FileType.LAYOUT_RULE
+    FileType.LAYOUT_RULE,
 ]
 XPANSE_MARKETPLACE_ITEMS_TO_DUMP = [
     FileType.INCIDENT_FIELD,
@@ -339,7 +339,7 @@ class ContentItemsHandler:
             ContentItems.TRIGGERS: [],
             ContentItems.WIZARDS: [],
             ContentItems.XDRC_TEMPLATE: [],
-            ContentItems.LAYOUT_RULES: []
+            ContentItems.LAYOUT_RULES: [],
         }
         self.content_folder_name_to_func: Dict[str, Callable] = {
             SCRIPTS_DIR: self.add_script_as_content_item,
@@ -369,7 +369,7 @@ class ContentItemsHandler:
             TRIGGER_DIR: self.add_trigger_as_content_item,
             WIZARDS_DIR: self.add_wizards_as_content_item,
             XDRC_TEMPLATE_DIR: self.add_xdrc_template_as_content_item,
-            LAYOUT_RULES_DIR: self.add_layout_rule_as_content_item
+            LAYOUT_RULES_DIR: self.add_layout_rule_as_content_item,
         }
         self.id_set = id_set
         self.alternate_fields = alternate_fields
@@ -640,15 +640,17 @@ class ContentItemsHandler:
         )
 
     def add_layout_rule_as_content_item(self, content_object: ContentObject):
-        if content_object.get('description') is not None:
-            self.content_items[ContentItems.LAYOUT_RULES].append({
-                'name': content_object.get('name', ''),
-                'description': content_object.get('description')
-            })
+        if content_object.get("description") is not None:
+            self.content_items[ContentItems.LAYOUT_RULES].append(
+                {
+                    "name": content_object.get("name", ""),
+                    "description": content_object.get("description"),
+                }
+            )
         else:
-            self.content_items[ContentItems.LAYOUT_RULES].append({
-                'name': content_object.get('name', '')
-            })
+            self.content_items[ContentItems.LAYOUT_RULES].append(
+                {"name": content_object.get("name", "")}
+            )
 
 
 @contextmanager
@@ -1184,7 +1186,9 @@ def handle_xdrc_template(
         pack_report += dump_pack_conditionally(artifact_manager, xdrc_template)
 
 
-def handle_layout_rule(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
+def handle_layout_rule(
+    content_items_handler, pack, pack_report, artifact_manager, **kwargs
+):
     for layout_rule in pack.layout_rules:
         content_items_handler.handle_content_item(layout_rule)
         pack_report += dump_pack_conditionally(artifact_manager, layout_rule)
@@ -1326,7 +1330,7 @@ def dump_pack(
         FileType.METADATA: handle_metadata,
         FileType.README: handle_readme,
         FileType.AUTHOR_IMAGE: handle_author_image,
-        FileType.LAYOUT_RULE: handle_layout_rule
+        FileType.LAYOUT_RULE: handle_layout_rule,
     }
 
     items_to_dump = MARKETPLACE_TO_ITEMS_MAPPING.get(

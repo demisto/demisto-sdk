@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR,
     JOBS_DIR,
+    LAYOUT_RULES_DIR,
     LAYOUTS_DIR,
     LISTS_DIR,
     MODELING_RULES_DIR,
@@ -45,7 +46,6 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     FileType,
-    LAYOUT_RULES_DIR
 )
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool,
@@ -68,6 +68,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     Integration,
     Job,
     LayoutObject,
+    LayoutRule,
     Lists,
     ModelingRule,
     OldClassifier,
@@ -88,7 +89,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     XDRCTemplate,
     XSIAMDashboard,
     XSIAMReport,
-    LayoutRule
 )
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.tools import get_demisto_version, is_object_in_id_set
@@ -381,8 +381,9 @@ class Pack:
 
     @property
     def layout_rules(self) -> Iterator[LayoutRule]:
-        return self._content_files_list_generator_factory(dir_name=LAYOUT_RULES_DIR,
-                                                          suffix='json')
+        return self._content_files_list_generator_factory(
+            dir_name=LAYOUT_RULES_DIR, suffix="json"
+        )
 
     @property
     def pack_metadata(self) -> Optional[PackMetaData]:

@@ -90,6 +90,7 @@ from demisto_sdk.commands.common.hook_validations.layout import (
     LayoutsContainerValidator,
     LayoutValidator,
 )
+from demisto_sdk.commands.common.hook_validations.layout_rule import LayoutRuleValidator
 from demisto_sdk.commands.common.hook_validations.lists import ListsValidator
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.modeling_rule import (
@@ -121,7 +122,6 @@ from demisto_sdk.commands.common.hook_validations.test_playbook import (
     TestPlaybookValidator,
 )
 from demisto_sdk.commands.common.hook_validations.triggers import TriggersValidator
-from demisto_sdk.commands.common.hook_validations.layout_rule import LayoutRuleValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.hook_validations.wizard import WizardValidator
 from demisto_sdk.commands.common.hook_validations.xdrc_templates import (
@@ -1690,9 +1690,12 @@ class ValidateManager:
         return triggers_validator.is_valid_file(validate_rn=False)
 
     def validate_layout_rules(self, structure_validator, pack_error_ignore_list):
-        layout_rules_validator = LayoutRuleValidator(structure_validator, ignored_errors=pack_error_ignore_list,
-                                                     print_as_warnings=self.print_ignored_errors,
-                                                     json_file_path=self.json_file_path)
+        layout_rules_validator = LayoutRuleValidator(
+            structure_validator,
+            ignored_errors=pack_error_ignore_list,
+            print_as_warnings=self.print_ignored_errors,
+            json_file_path=self.json_file_path,
+        )
         return layout_rules_validator.is_valid_file(validate_rn=False)
 
     def validate_xsiam_report(self, structure_validator, pack_error_ignore_list):

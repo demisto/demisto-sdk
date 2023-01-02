@@ -123,7 +123,7 @@ class TestIDSetCreator:
             "Triggers",
             "Wizards",
             "XDRCTemplates",
-            "LayoutRules"
+            "LayoutRules",
         }
 
         assert keys == expected_keys, (
@@ -242,7 +242,7 @@ def test_create_id_set_flow(repo, mocker):
             "XSIAMReports",
             "Triggers",
             "XDRCTemplates",
-            "LayoutRules"
+            "LayoutRules",
         ]:
             continue
         entity_content_in_id_set = id_set_content.get(id_set_entity)

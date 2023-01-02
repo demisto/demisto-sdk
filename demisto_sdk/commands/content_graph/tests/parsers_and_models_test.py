@@ -1235,7 +1235,9 @@ class TestParsersAndModels:
             - Verify the specific properties of the content item are parsed correctly.
         """
         from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
-        from demisto_sdk.commands.content_graph.parsers.layout_rule import LayoutRuleParser
+        from demisto_sdk.commands.content_graph.parsers.layout_rule import (
+            LayoutRuleParser,
+        )
 
         rule = pack.create_layout_rule("TestLayoutRule", load_json("layoutrule.json"))
         rule_path = Path(rule.path)
@@ -1253,8 +1255,8 @@ class TestParsersAndModels:
             expected_name="test rule name",
             expected_path=rule_path,
             expected_content_type=ContentType.LAYOUT_RULE,
-            expected_fromversion='6.0.0',
-            expected_toversion='6.1.9',
+            expected_fromversion="6.0.0",
+            expected_toversion="6.1.9",
         )
 
     def test_widget_parser(self, pack: Pack):

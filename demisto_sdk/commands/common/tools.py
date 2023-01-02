@@ -52,6 +52,7 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR,
     JOBS_DIR,
+    LAYOUT_RULES_DIR,
     LAYOUTS_DIR,
     LISTS_DIR,
     MARKETPLACE_KEY_PACK_METADATA,
@@ -92,7 +93,6 @@ from demisto_sdk.commands.common.constants import (
     IdSetKeys,
     MarketplaceVersions,
     urljoin,
-    LAYOUT_RULES_DIR
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -1767,7 +1767,7 @@ def find_type(
         if "profile_type" in _dict and "yaml_template" in _dict:
             return FileType.XDRC_TEMPLATE
 
-        if 'rule_id' in _dict:
+        if "rule_id" in _dict:
             return FileType.LAYOUT_RULE
 
         # When using it for all files validation- sometimes 'id' can be integer
@@ -2122,7 +2122,7 @@ def _get_file_id(file_type: str, file_content: Dict):
     elif file_type in ID_IN_COMMONFIELDS:
         return file_content.get("commonfields", {}).get("id")
     elif file_type == FileType.LAYOUT_RULE:
-        return file_content.get('rule_id', '')
+        return file_content.get("rule_id", "")
     return file_content.get("trigger_id", "")
 
 
@@ -2343,7 +2343,7 @@ def item_type_to_content_items_header(item_type):
         "modelingrule": "modelingRule",
         "parsingrule": "parsingRule",
         "xdrctemplate": "XDRCTemplate",
-        "layoutrule": "layoutRule"
+        "layoutrule": "layoutRule",
     }
 
     return f"{converter.get(item_type, item_type)}s"

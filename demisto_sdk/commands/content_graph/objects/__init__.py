@@ -30,7 +30,7 @@ __all__ = [
     "XSIAMReport",
     "XDRCTemplate",
     "RelationshipData",
-    "LayoutRule"
+    "LayoutRule",
 ]
 
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
@@ -49,6 +49,7 @@ from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorT
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.job import Job
 from demisto_sdk.commands.content_graph.objects.layout import Layout
+from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
 from demisto_sdk.commands.content_graph.objects.list import List
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
@@ -65,4 +66,3 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
-from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule

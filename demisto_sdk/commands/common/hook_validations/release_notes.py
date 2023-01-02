@@ -193,7 +193,10 @@ class ReleaseNotesValidator(BaseValidator):
         content_type_path = os.path.join(self.pack_path, content_type_dir_name)
 
         content_type_dir_list = get_files_in_dir(
-            content_type_path, CUSTOM_CONTENT_FILE_ENDINGS, recursive=True
+            content_type_path,
+            CUSTOM_CONTENT_FILE_ENDINGS,
+            recursive=True,
+            ignore_test_files=True,
         )
         if not content_type_dir_list:
             (
@@ -208,10 +211,13 @@ class ReleaseNotesValidator(BaseValidator):
                 is_valid = False
 
         content_items_display_names = set(
-            map(lambda item: get_display_name(item), content_type_dir_list)
+            filter(
+                lambda x: isinstance(x, str),
+                (get_display_name(item) for item in content_type_dir_list),
+            )
         )
-        diff = set(content_items) - content_items_display_names
-        for header in diff:
+
+        for header in set(content_items).difference(content_items_display_names):
             (
                 error_message,
                 error_code,

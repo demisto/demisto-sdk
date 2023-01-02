@@ -107,6 +107,7 @@ class ScriptValidator(ContentEntityValidator):
                 self.name_not_contain_the_type(),
                 self.runas_is_not_dbtrole(),
                 self.is_script_deprecated_and_used(),
+                self.is_nativeimage_key_does_not_exist_in_yml(),
             ]
         )
         # check only on added files
@@ -520,3 +521,16 @@ class ScriptValidator(ContentEntityValidator):
                     is_valid = False
 
         return is_valid
+
+    @error_codes("SC108")
+    def is_nativeimage_key_does_not_exist_in_yml(self):
+        """
+        Checks that the nativeimage key is not hardcoded in the yml of a script.
+        """
+        if self.current_file.get("nativeimage"):
+            error_message, error_code = Errors.nativeimage_exist_in_script_yml(
+                self.current_file.get("commonfields", {}).get("id")
+            )
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True

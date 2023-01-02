@@ -1774,3 +1774,49 @@ class TestFormatting:
             config not in base_yml.data["configuration"]
             for config in configs_to_be_removed
         )
+
+    @pytest.mark.parametrize(
+        "integration_yml",
+        [
+            {"script": {"nativeimage": "test"}, "commonfields": {"id": "test"}},
+            {"commonfields": {"id": "test"}, "script": {"dockerimage": "test"}},
+        ],
+    )
+    def test_remove_nativeimage_tag_if_exist_integration(self, pack, integration_yml):
+        """
+        Given:
+          - Case A: integration yml that has the nativeimage key
+          - Case B: integration yml that does not have the nativeimage key
+        When:
+          - when executing the remove_nativeimage_tag_if_exist method
+        Then:
+          - in both cases make sure that the nativeimage key does not exist anymore
+        """
+        integration = pack.create_integration(yml=integration_yml)
+        integration_yml_format = IntegrationYMLFormat(input=integration.yml.path)
+
+        integration_yml_format.remove_nativeimage_tag_if_exist()
+        assert "nativeimage" not in integration_yml_format.data.get("script")
+
+    @pytest.mark.parametrize(
+        "script_yml",
+        [
+            {"nativeimage": "test", "commonfields": {"id": "test"}},
+            {"commonfields": {"id": "test"}, "dockerimage": "test"},
+        ],
+    )
+    def test_remove_nativeimage_tag_if_exist_script(self, pack, script_yml):
+        """
+        Given:
+          - Case A: script yml that has the nativeimage key
+          - Case B: script yml that does not have the nativeimage key
+        When:
+          - when executing the remove_nativeimage_tag_if_exist method
+        Then:
+          - in both cases make sure that the nativeimage key does not exist anymore
+        """
+        script = pack.create_script(yml=script_yml)
+        script_yml_format = ScriptYMLFormat(input=script.yml.path)
+
+        script_yml_format.remove_nativeimage_tag_if_exist()
+        assert "nativeimage" not in script_yml_format.data

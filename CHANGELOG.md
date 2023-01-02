@@ -12,6 +12,10 @@
 * Added a new validation to the **validate** command to verify that the release notes headers are in the correct format.
 * Changed the **validate** command to fail on the IN140 error code only when the skipped integration has no unit tests.
 * Changed **validate** to allow hiding parameters of type 4 (secret) when replacing with type 9 (credentials) with the same name.
+* Fixed an issue where the **update-release-notes** command didn't add release-notes properly to some *new* content items.
+* Added validation that checks that the `nativeimage` key is not defined in script/integration yml.
+* Added to the **format** command the ability to remove `nativeimage` key in case defined in script/integration yml.
+* Fixed an issue where **doc-review** failed when reviewing command name in some cases.
 
 ## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.

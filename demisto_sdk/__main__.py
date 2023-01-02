@@ -2972,7 +2972,7 @@ def create_content_graph(
     "Default is the XSOAR marketplace, that has all of the packs "
     "artifacts.",
     default="xsoar",
-    type=click.Choice([marketplace.value for marketplace in MarketplaceVersions]),
+    type=click.Choice(list(MarketplaceVersions)),
 )
 @click.option(
     "-g",

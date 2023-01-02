@@ -1848,7 +1848,9 @@ def get_latest_upload_flow_commit_hash() -> str:
     """
     response_json = requests.get(OFFICIAL_INDEX_JSON_PATH).json()
     if not isinstance(response_json, dict):
-        raise ValueError(f"The index.json file is not in the expected format: {response_json}")
+        raise ValueError(
+            f"The index.json file is not in the expected format: {response_json}"
+        )
     last_commit = response_json.get("commit")
     if not last_commit:
         raise ValueError("The latest commit hash was not found in the index.json file")

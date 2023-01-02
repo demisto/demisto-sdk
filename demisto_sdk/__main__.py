@@ -2936,7 +2936,6 @@ def error_code(config, **kwargs):
 )
 def create_content_graph(
     marketplace: str = MarketplaceVersions.XSOAR,
-    skip_export: bool = False,
     no_dependencies: bool = False,
     output_path: Path = None,
     **kwargs,
@@ -2956,7 +2955,6 @@ def create_content_graph(
             content_graph_interface,
             marketplace=MarketplaceVersions(marketplace),
             dependencies=not no_dependencies,
-            export=not skip_export,
             output_path=output_path,
         )
 

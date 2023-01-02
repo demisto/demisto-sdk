@@ -439,7 +439,7 @@ class TestUpdateContentGraph:
         """
         with ContentGraphInterface() as interface:
             # create the graph with dependencies
-            create_content_graph(interface, export=True, dependencies=True, output_path=tmp_path)
+            create_content_graph(interface, dependencies=True, output_path=tmp_path)
             packs_from_graph = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
                 content_type=ContentType.PACK,

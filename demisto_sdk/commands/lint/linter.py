@@ -85,7 +85,7 @@ class Linter:
         req_3(list): requirements for docker using python3.
         docker_engine(bool):  Whether docker engine detected by docker-sdk.
         docker_timeout(int): Timeout for docker requests.
-        docker_image(str): Desirable docker image to run lint on (default value is 'from-yml).
+        docker_image_flag(str): Indicates the desirable docker image to run lint on (default value is 'from-yml).
     """
 
     def __init__(
@@ -96,7 +96,7 @@ class Linter:
         req_2: list,
         docker_engine: bool,
         docker_timeout: int,
-        docker_image: str = "from-yml",
+        docker_image_flag: str = "from-yml",
     ):
         self._req_3 = req_3
         self._req_2 = req_2
@@ -107,7 +107,7 @@ class Linter:
 
         self._pack_name = None
         self.docker_timeout = docker_timeout
-        self.docker_image = docker_image
+        self.docker_image_flag = docker_image_flag
         # Docker client init
         if docker_engine:
             self._docker_client: docker.DockerClient = init_global_docker_client(
@@ -306,7 +306,7 @@ class Linter:
             images = self._get_docker_images_for_lint(
                 script_obj=script_obj,
                 script_id=yml_obj_id,
-                docker_image_flag=self.docker_image,
+                docker_image_flag=self.docker_image_flag,
             )
             if not images:
                 # If no docker images to run on - skip checks in both docker and host

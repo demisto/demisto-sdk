@@ -419,7 +419,7 @@ class LintManager:
         keep_container: bool,
         test_xml: str,
         docker_timeout: int,
-        docker_image: str,
+        docker_image_flag: str,
         lint_status: dict,
         pkgs_status: dict,
         pkgs_type: list,
@@ -441,7 +441,7 @@ class LintManager:
             keep_container(bool): Whether to keep the test container
             test_xml(str): Path for saving pytest xml results
             docker_timeout(int): timeout for docker requests
-            docker_image(str): desirable docker image to run lint on
+            docker_image_flag(str): indicates the desirable docker image to run lint on
             pkgs_type: List of the pack types
             pkgs_status: Dictionary for pack status (keys are packs, the values are their status)
             lint_status: Dictionary for the lint status  (the keys are the linters, the values are a list of packs)
@@ -469,7 +469,7 @@ class LintManager:
                         req_3=self._facts["requirements_3"],
                         docker_engine=self._facts["docker_engine"],
                         docker_timeout=docker_timeout,
-                        docker_image=docker_image,
+                        docker_image_flag=docker_image_flag,
                     )
                     results.append(
                         executor.submit(
@@ -559,7 +559,7 @@ class LintManager:
         test_xml: str,
         failure_report: str,
         docker_timeout: int,
-        docker_image: str,
+        docker_image_flag: str,
         time_measurements_dir: str = None,
     ) -> int:
         """Runs the Lint command on all given packages.
@@ -581,7 +581,7 @@ class LintManager:
             test_xml(str): Path for saving pytest xml results
             failure_report(str): Path for store failed packs report
             docker_timeout(int): timeout for docker requests
-            docker_image(str): desirable docker image to run lint on
+            docker_image_flag(str): indicates the desirable docker image to run lint on
             time_measurements_dir(str): the directory fo exporting the time measurements info
             total_timeout (int): amount of seconds for the task
 
@@ -645,7 +645,7 @@ class LintManager:
             keep_container=keep_container,
             test_xml=test_xml,
             docker_timeout=docker_timeout,
-            docker_image=docker_image,
+            docker_image_flag=docker_image_flag,
             no_pwsh_analyze=no_pwsh_analyze,
             lint_status=lint_status,
             pkgs_status=pkgs_status,

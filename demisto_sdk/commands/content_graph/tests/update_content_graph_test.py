@@ -123,9 +123,7 @@ def repository(mocker) -> ContentDTO:
                 "SamplePack2",
                 ContentType.PACK,
             ),
-            mock_relationship(
-                "TestApiModule", ContentType.SCRIPT, "SamplePack2", ContentType.PACK
-            ),
+            mock_relationship("TestApiModule", ContentType.SCRIPT, "SamplePack2", ContentType.PACK),
         ],
         RelationshipType.USES_BY_ID: [
             mock_relationship(
@@ -193,9 +191,7 @@ def update_repository(
 ) -> List[str]:
     updated_packs = commit_func(repository)
     pack_ids_to_update = [pack.object_id for pack in updated_packs]
-    repository.packs = [
-        pack for pack in repository.packs if pack.object_id not in pack_ids_to_update
-    ]
+    repository.packs = [pack for pack in repository.packs if pack.object_id not in pack_ids_to_update]
     repository.packs.extend(updated_packs)
     return pack_ids_to_update
 
@@ -231,17 +227,11 @@ def compare(
         assert pack_a.to_dict() == pack_b.to_dict()
         _compare_content_items(list(pack_a.content_items), list(pack_b.content_items))
         _compare_relationships(pack_a, pack_b)
-    _verify_dependencies_existence(
-        packs_from_graph, expected_added_dependencies, should_exist=after_update
-    )
-    _verify_dependencies_existence(
-        packs_from_graph, expected_removed_dependencies, should_exist=not after_update
-    )
+    _verify_dependencies_existence(packs_from_graph, expected_added_dependencies, should_exist=after_update)
+    _verify_dependencies_existence(packs_from_graph, expected_removed_dependencies, should_exist=not after_update)
 
 
-def _compare_content_items(
-    content_items_list_a: List[ContentItem], content_items_list_b: List[ContentItem]
-) -> None:
+def _compare_content_items(content_items_list_a: List[ContentItem], content_items_list_b: List[ContentItem]) -> None:
     assert len(content_items_list_a) == len(content_items_list_b)
     for ci_a, ci_b in zip(content_items_list_a, content_items_list_b):
         assert ci_a.to_dict() == ci_b.to_dict()
@@ -250,30 +240,19 @@ def _compare_content_items(
 def _compare_relationships(pack_a: Pack, pack_b: Pack) -> None:
     for relationship_type, relationships in pack_a.relationships.items():
         for relationship in relationships:
-            content_item_source = find_model_for_id(
-                [pack_b], relationship.get("source_id")
-            )
+            content_item_source = find_model_for_id([pack_b], relationship.get("source_id"))
             content_item_target_id = relationship.get("target")
             assert content_item_source
             assert content_item_target_id
             if relationship_type == RelationshipType.IN_PACK:
-                assert (
-                    content_item_source.in_pack
-                ), f"{content_item_source.object_id} is not in pack."
+                assert content_item_source.in_pack, f"{content_item_source.object_id} is not in pack."
                 assert content_item_source.in_pack.object_id == content_item_target_id
             if relationship_type == RelationshipType.IMPORTS:
-                assert (
-                    content_item_source.imports[0].object_id == content_item_target_id
-                )
+                assert content_item_source.imports[0].object_id == content_item_target_id
             if relationship_type == RelationshipType.USES_BY_ID:
-                assert (
-                    content_item_source.uses[0].content_item.object_id
-                    == content_item_target_id
-                )
+                assert content_item_source.uses[0].content_item.object_id == content_item_target_id
             if relationship_type == RelationshipType.TESTED_BY:
-                assert (
-                    content_item_source.tested_by[0].object_id == content_item_target_id
-                )
+                assert content_item_source.tested_by[0].object_id == content_item_target_id
 
 
 def _verify_dependencies_existence(
@@ -285,15 +264,9 @@ def _verify_dependencies_existence(
         for pack in packs:
             if pack.object_id == dependency["source_id"]:
                 if should_exist:
-                    assert any(
-                        r.target.object_id == dependency["target"]
-                        for r in pack.depends_on
-                    )
+                    assert any(r.target.object_id == dependency["target"] for r in pack.depends_on)
                 else:
-                    assert all(
-                        r.target.object_id != dependency["target"]
-                        for r in pack.depends_on
-                    )
+                    assert all(r.target.object_id != dependency["target"] for r in pack.depends_on)
                 break
         else:
             assert False
@@ -356,11 +329,6 @@ def _testcase2__pack3__remove_relationship(repository: ContentDTO) -> List[Pack]
 
 
 class TestUpdateContentGraph:
-    @classmethod
-    def teardown_class(cls):
-        """Stops the graph interface service. Runs once, after all tests."""
-        stop_content_graph()
-
     def test_merge_graphs(self):
         """
         Given:
@@ -393,9 +361,7 @@ class TestUpdateContentGraph:
             )
 
         with ContentGraphInterface() as interface:
-            dump_csv_import_files(
-                TEST_DATA_PATH / "mock_import_files_multiple_repos__valid"
-            )
+            dump_csv_import_files(TEST_DATA_PATH / "mock_import_files_multiple_repos__valid")
             update_content_graph(interface, packs_to_update=[])
             assert get_nodes_count_by_type(interface, ContentType.PACK) == 2
             assert get_nodes_count_by_type(interface, ContentType.INTEGRATION) == 2

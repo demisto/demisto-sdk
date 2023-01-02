@@ -48,6 +48,7 @@ def setup(mocker):
     )
     mocker.patch.object(neo4j_service, "REPO_PATH", GIT_PATH)
     mocker.patch.object(ContentGraphInterface, "repo_path", GIT_PATH)
+    stop_content_graph()
 
 
 @pytest.fixture

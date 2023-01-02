@@ -12,6 +12,7 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.content_graph_commands import (
     create_content_graph,
+    stop_content_graph,
     update_content_graph,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
@@ -354,6 +355,11 @@ def _testcase2__pack3__remove_relationship(repository: ContentDTO) -> List[Pack]
 
 
 class TestUpdateContentGraph:
+    @classmethod
+    def teardown_class(cls):
+        """Stops the graph interface service. Runs once, after all tests."""
+        stop_content_graph()
+
     def test_merge_graphs(self):
         """
         Given:

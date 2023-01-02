@@ -643,13 +643,13 @@ class ContentItemsHandler:
         if content_object.get("description") is not None:
             self.content_items[ContentItems.LAYOUT_RULES].append(
                 {
-                    "name": content_object.get("name", ""),
+                    "name": content_object.get("layout_rule_name", ""),
                     "description": content_object.get("description"),
                 }
             )
         else:
             self.content_items[ContentItems.LAYOUT_RULES].append(
-                {"name": content_object.get("name", "")}
+                {"name": content_object.get("layout_rule_name", "")}
             )
 
 

@@ -26,7 +26,6 @@ class LayoutRule(JSONContentObject):
         Returns:
             The result of the upload command from demisto_client
         """
-        # return client.import_triggers(file=self.path)
         pass
 
     def type(self):

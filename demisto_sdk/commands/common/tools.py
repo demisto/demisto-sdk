@@ -3192,8 +3192,8 @@ def get_display_name(file_path, file_data={}) -> str:
         name = file_data.get("id", None)
     elif "trigger_name" in file_data:
         name = file_data.get("trigger_name")
-    elif "rule_name" in file_data:
-        name = file_data.get("rule_name")
+    elif "layout_rule_name" in file_data:
+        name = file_data.get("layout_rule_name")
 
     elif (
         "dashboards_data" in file_data

@@ -138,7 +138,7 @@ def start():
         healthcheck={
             "test": f"curl --fail {NEO4J_DATABASE_HTTP} || exit 1",
             "interval": 5 * 1000000000,
-            "timeout": 10 * 1000000000,
+            "timeout": 15 * 1000000000,
             "retries": 10,
         },
     )

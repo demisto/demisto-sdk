@@ -55,24 +55,18 @@ def update_content_graph(
     if packs_to_update is None:
         packs_to_update = []
     builder = ContentGraphBuilder(content_graph_interface)
+    if not imported_path:
+        get_or_create_graph(content_graph_interface, builder)
+    else:
+        content_graph_interface.import_graph(imported_path)
+
     if not packs_to_update and not imported_path:
         # If no arguments were given, we will use the git diff to get the packs to update
         use_git = True
 
     if use_git:
-        try:
-            with NamedTemporaryFile() as temp_file:
-                official_content_graph = download_content_graph(Path(temp_file.name))
-                content_graph_interface.import_graph(official_content_graph)
-
-            latest_commit = get_latest_upload_flow_commit_hash()
-            packs_to_update.extend(GitUtil().get_all_changed_pack_ids(latest_commit))
-        except Exception as e:
-            logger.info("Failed to download from bucket. Will create a new graph")
-            logger.debug(f"Error: {e}")
-            builder.create_graph()
-    if imported_path:
-        content_graph_interface.import_graph(imported_path)
+        latest_commit = get_latest_upload_flow_commit_hash()
+        packs_to_update.extend(GitUtil().get_all_changed_pack_ids(latest_commit))
     logger.info(f"Updating the following packs: {packs_to_update}")
     builder.update_graph(packs_to_update)
     if dependencies:
@@ -80,6 +74,16 @@ def update_content_graph(
     if output_path:
         output_path = output_path / marketplace.value
     content_graph_interface.export_graph(output_path)
+
+def get_or_create_graph(content_graph_interface: ContentGraphInterface, builder: ContentGraphBuilder):
+    try:
+        with NamedTemporaryFile() as temp_file:
+            official_content_graph = download_content_graph(Path(temp_file.name))
+            content_graph_interface.import_graph(official_content_graph)
+    except Exception as e:
+        logger.info("Failed to download from bucket. Will create a new graph")
+        logger.debug(f"Error: {e}")
+        builder.create_graph()
 
 
 def stop_content_graph() -> None:

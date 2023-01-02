@@ -10,7 +10,8 @@ from demisto_sdk.commands.common.constants import (
     BANG_COMMAND_NAMES,
     DBOT_SCORES_DICT,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
-    DEPRECATED_REGEXES,
+    DEPRECATED_DESC_REGEX,
+    DEPRECATED_NO_REPLACE_DESC_REGEX,
     ENDPOINT_COMMAND_NAME,
     ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
     FEED_REQUIRED_PARAMS,
@@ -173,6 +174,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_endpoint_command(),
             self.is_api_token_in_credential_type(),
             self.are_common_outputs_with_description(),
+            self.is_native_image_does_not_exist_in_yml(),
         ]
 
         return all(answers)
@@ -266,46 +268,61 @@ class IntegrationValidator(ContentEntityValidator):
                     self.is_valid = False
         return self.is_valid
 
-    @error_codes("IN127")
+    @error_codes("IN127,IN157")
     def _is_valid_deprecated_integration_display_name(self) -> bool:
-        is_valid = True
         is_deprecated = self.current_file.get("deprecated", False)
-        display_name = self.current_file.get("display", "")
-        if is_deprecated:
-            if not display_name.endswith("(Deprecated)"):
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.invalid_deprecated_integration_display_name()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
-                    is_valid = False
-        return is_valid
+        is_display_name_deprecated = self.current_file.get("display", "").endswith(
+            "(Deprecated)"
+        )
 
-    @error_codes("IN128")
+        if is_deprecated and (not is_display_name_deprecated):
+            (
+                error_message,
+                error_code,
+            ) = Errors.invalid_deprecated_integration_display_name()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+
+        if (not is_deprecated) and is_display_name_deprecated:
+            (
+                error_message,
+                error_code,
+            ) = Errors.invalid_integration_deprecation__only_display_name_suffix(
+                self.file_path
+            )
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+
+        return True
+
+    @error_codes("IN128,IN158")
     def _is_valid_deprecated_integration_description(self) -> bool:
-        is_valid = True
         is_deprecated = self.current_file.get("deprecated", False)
         description = self.current_file.get("description", "")
-        deprecated_v2_regex = DEPRECATED_REGEXES[0]
-        deprecated_no_replace_regex = DEPRECATED_REGEXES[1]
-        if is_deprecated:
-            if re.search(deprecated_v2_regex, description) or re.search(
-                deprecated_no_replace_regex, description
-            ):
-                pass
-            else:
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.invalid_deprecated_integration_description()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
-                    is_valid = False
 
-        return is_valid
+        description_indicates_deprecation = any(
+            (
+                re.search(DEPRECATED_DESC_REGEX, description),
+                re.search(DEPRECATED_NO_REPLACE_DESC_REGEX, description),
+            )
+        )
+
+        if is_deprecated and (not description_indicates_deprecation):
+            (
+                error_message,
+                error_code,
+            ) = Errors.invalid_deprecated_integration_description()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+
+        if (not is_deprecated) and description_indicates_deprecation:
+            (
+                error_message,
+                error_code,
+            ) = Errors.invalid_deprecation__only_description_deprecated(self.file_path)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True
 
     @error_codes("IN152")
     def is_valid_default_value_for_checkbox(self) -> bool:
@@ -2290,4 +2307,14 @@ class IntegrationValidator(ContentEntityValidator):
         if not test_path.exists():
             return False
 
+        return True
+
+    @error_codes("IN157")
+    def is_native_image_does_not_exist_in_yml(self):
+        if self.current_file.get("script", {}).get("nativeimage"):
+            error_message, error_code = Errors.nativeimage_exist_in_integration_yml(
+                self.current_file.get("commonfields", {}).get("id")
+            )
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
         return True

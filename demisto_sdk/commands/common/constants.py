@@ -1022,6 +1022,7 @@ TESTS_AND_DOC_DIRECTORIES = [
     "tests_data",
     "doc_files",
     "doc_imgs",
+    "TestData",
 ]
 
 VALIDATION_USING_GIT_IGNORABLE_DATA = (
@@ -1065,6 +1066,14 @@ def urljoin(*args: str):
 
 OFFICIAL_CONTENT_ID_SET_PATH = (
     "https://storage.googleapis.com/marketplace-dist/content/id_set.json"
+)
+
+OFFICIAL_CONTENT_GRAPH_PATH = (
+    "https://storage.googleapis.com/marketplace-dist-dev/content_graph"
+)
+
+OFFICIAL_INDEX_JSON_PATH = (
+    "https://storage.googleapis.com/marketplace-dist/content/packs/index.json"
 )
 
 # Run all test signal
@@ -1456,6 +1465,7 @@ SKIP_RELEASE_NOTES_FOR_TYPES = (
     None,
     FileType.RELEASE_NOTES_CONFIG,
     FileType.CONTRIBUTORS,
+    FileType.TRIGGER,
 )
 
 LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = [

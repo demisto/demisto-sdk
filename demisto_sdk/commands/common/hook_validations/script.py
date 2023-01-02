@@ -5,7 +5,8 @@ from typing import Optional
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
-    DEPRECATED_REGEXES,
+    DEPRECATED_DESC_REGEX,
+    DEPRECATED_NO_REPLACE_DESC_REGEX,
     PYTHON_SUBTYPES,
     TYPE_PWSH,
 )
@@ -106,6 +107,7 @@ class ScriptValidator(ContentEntityValidator):
                 self.name_not_contain_the_type(),
                 self.runas_is_not_dbtrole(),
                 self.is_script_deprecated_and_used(),
+                self.is_nativeimage_key_does_not_exist_in_yml(),
             ]
         )
         # check only on added files
@@ -335,23 +337,19 @@ class ScriptValidator(ContentEntityValidator):
 
     @error_codes("SC101")
     def is_valid_as_deprecated(self) -> bool:
-        is_valid = True
         is_deprecated = self.current_file.get("deprecated", False)
         comment = self.current_file.get("comment", "")
-        deprecated_v2_regex = DEPRECATED_REGEXES[0]
-        deprecated_no_replace_regex = DEPRECATED_REGEXES[1]
-        if is_deprecated:
-            if re.search(deprecated_v2_regex, comment) or re.search(
-                deprecated_no_replace_regex, comment
-            ):
-                pass
-            else:
-                error_message, error_code = Errors.invalid_deprecated_script()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
-                    is_valid = False
-        return is_valid
+
+        if is_deprecated and not any(
+            (
+                re.search(DEPRECATED_DESC_REGEX, comment),
+                re.search(DEPRECATED_NO_REPLACE_DESC_REGEX, comment),
+            )
+        ):
+            error_message, error_code = Errors.invalid_deprecated_script()
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True
 
     @error_codes("SC104,SC103")
     def is_valid_script_file_path(self) -> bool:
@@ -523,3 +521,16 @@ class ScriptValidator(ContentEntityValidator):
                     is_valid = False
 
         return is_valid
+
+    @error_codes("SC108")
+    def is_nativeimage_key_does_not_exist_in_yml(self):
+        """
+        Checks that the nativeimage key is not hardcoded in the yml of a script.
+        """
+        if self.current_file.get("nativeimage"):
+            error_message, error_code = Errors.nativeimage_exist_in_script_yml(
+                self.current_file.get("commonfields", {}).get("id")
+            )
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True

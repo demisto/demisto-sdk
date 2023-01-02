@@ -30,6 +30,7 @@ ALLOWED_IGNORE_ERRORS = [
     "BA111",
     "BA112",
     "BA113",
+    "BA114",  # TODO remove in the next release (week 3, 2023).
     "BA116",
     "BA119",
     "DS107",
@@ -740,6 +741,16 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "display",
     },
+    "invalid_integration_deprecation__only_display_name_suffix": {
+        "code": "IN157",
+        "ui_applicable": False,
+        "related_field": "deprecated",
+    },
+    "invalid_deprecation__only_description_deprecated": {
+        "code": "IN158",
+        "ui_applicable": False,
+        "related_field": "deprecated",
+    },
     "invalid_deprecated_integration_description": {
         "code": "IN128",
         "ui_applicable": False,
@@ -884,6 +895,11 @@ ERROR_CODE = {
         "code": "IN156",
         "ui_applicable": False,
         "related_field": "hidden",
+    },
+    "nativeimage_exist_in_integration_yml": {
+        "code": "IN157",
+        "ui_applicable": False,
+        "related_field": "script",
     },
     # IT - Incident Types
     "incident_type_integer_field": {
@@ -1527,6 +1543,11 @@ ERROR_CODE = {
         "code": "SC107",
         "ui_applicable": True,
         "related_field": "deprecated",
+    },
+    "nativeimage_exist_in_script_yml": {
+        "code": "SC108",
+        "ui_applicable": False,
+        "related_field": "nativeimage",
     },
     # ST - Structures
     "structure_doesnt_match_scheme": {
@@ -2313,6 +2334,22 @@ class Errors:
     @error_code_decorator
     def invalid_deprecated_integration_display_name():
         return 'The display_name (display) of all deprecated integrations should end with (Deprecated)".'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_integration_deprecation__only_display_name_suffix(path: str):
+        return (
+            "All integrations whose display_names end with `(Deprecated)` must have `deprecated:true`."
+            f"Please run demisto-sdk format --deprecate -i {path}"
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_deprecation__only_description_deprecated(path: str):
+        return (
+            "All integrations whose description states are deprecated, must have `deprecated:true`."
+            f"Please run demisto-sdk format --deprecate -i {path}"
+        )
 
     @staticmethod
     @error_code_decorator
@@ -4292,3 +4329,19 @@ class Errors:
     @error_code_decorator
     def correlation_rule_starts_with_hyphen():
         return "Correlation rule files cannot start with a hyphen, please remove it."
+
+    @staticmethod
+    @error_code_decorator
+    def nativeimage_exist_in_integration_yml(integration_id):
+        return (
+            f"integration {integration_id} contains the nativeimage key in its yml, "
+            f"this key is added only during the upload flow, please remove it."
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def nativeimage_exist_in_script_yml(script_id):
+        return (
+            f"script {script_id} contains the nativeimage key in its yml, "
+            f"this key is added only during the upload flow, please remove it."
+        )

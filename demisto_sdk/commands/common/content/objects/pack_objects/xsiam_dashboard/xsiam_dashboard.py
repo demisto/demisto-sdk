@@ -7,10 +7,12 @@ from packaging.version import Version
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import XSIAM_DASHBOARD, FileType
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
-    JSONContentObject
-from demisto_sdk.commands.common.content.objects.pack_objects.xsiam_dashboard_image.xsiam_dashboard_image import \
-    XSIAMDashboardImage
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
+    JSONContentObject,
+)
+from demisto_sdk.commands.common.content.objects.pack_objects.xsiam_dashboard_image.xsiam_dashboard_image import (
+    XSIAMDashboardImage,
+)
 from demisto_sdk.commands.common.tools import generate_xsiam_normalized_name
 
 
@@ -27,7 +29,12 @@ class XSIAMDashboard(JSONContentObject):
             Image path or None if image not found.
         """
         if not self._image_file:
-            image_file = next(self._path.parent.glob(patterns=fr"{re.escape(self.path.stem)}_image.png"), None)
+            image_file = next(
+                self._path.parent.glob(
+                    patterns=rf"{re.escape(self.path.stem)}_image.png"
+                ),
+                None,
+            )
             if image_file:
                 self._image_file = XSIAMDashboardImage(image_file)
 
@@ -64,28 +71,28 @@ class XSIAMDashboard(JSONContentObject):
 
         new_file_path = created_files[0]
 
-        if Version(self.get('fromVersion', '0.0.0')) >= Version('6.10.0'):
+        if Version(self.get("fromVersion", "0.0.0")) >= Version("6.10.0"):
             # export XSIAM 1.3 items only with the external prefix
-            if not new_file_path.name.startswith('external-'):
+            if not new_file_path.name.startswith("external-"):
                 move_to_path = new_file_path.parent / self.normalize_file_name()
                 shutil.move(new_file_path.as_posix(), move_to_path)
                 created_files.remove(new_file_path)
                 created_files.append(move_to_path)
 
-        elif Version(self.get('toVersion', '99.99.99')) < Version('6.10.0'):
+        elif Version(self.get("toVersion", "99.99.99")) < Version("6.10.0"):
             # export XSIAM 1.2 items only without the external prefix
-            if new_file_path.name.startswith('external-'):
-                move_to_path = Path(str(new_file_path).replace('external-', ''))
+            if new_file_path.name.startswith("external-"):
+                move_to_path = Path(str(new_file_path).replace("external-", ""))
                 shutil.move(new_file_path.as_posix(), move_to_path)
                 created_files.remove(new_file_path)
                 created_files.append(move_to_path)
 
         else:
             # export 2 versions of the file, with/without the external prefix.
-            if new_file_path.name.startswith('external-'):
-                copy_to_path = str(new_file_path).replace('external-', '')
+            if new_file_path.name.startswith("external-"):
+                copy_to_path = str(new_file_path).replace("external-", "")
             else:
-                copy_to_path = f'{new_file_path.parent}/{self.normalize_file_name()}'
+                copy_to_path = f"{new_file_path.parent}/{self.normalize_file_name()}"
 
             shutil.copyfile(new_file_path, copy_to_path)
 

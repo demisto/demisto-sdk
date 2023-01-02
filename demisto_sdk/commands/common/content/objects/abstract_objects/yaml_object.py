@@ -35,11 +35,17 @@ class YAMLObject(DictionaryBasedObject):
         path = Path(path)  # type: ignore
         if path.is_dir():
             try:
-                path = next(path.glob(patterns=r'@(*.yml|*yaml|!*unified*)', flags=EXTGLOB | NEGATE))  # type: ignore
+                path = next(path.glob(patterns=r"@(*.yml|*yaml|!*unified*)", flags=EXTGLOB | NEGATE))  # type: ignore
             except StopIteration:
-                raise exc.ContentInitializeError(path, path, "Can't find yaml or yml file in path (excluding unified).")
+                raise exc.ContentInitializeError(
+                    path,
+                    path,
+                    "Can't find yaml or yml file in path (excluding unified).",
+                )
         elif not (path.is_file() and path.suffix in [".yaml", ".yml"]):
-            raise exc.ContentInitializeError(path, path, "file suffix isn't yaml or yml.")
+            raise exc.ContentInitializeError(
+                path, path, "file suffix isn't yaml or yml."
+            )
 
         return path
 
@@ -51,10 +57,9 @@ class YAMLObject(DictionaryBasedObject):
             raise exc.ContentSerializeError(self, self.path, e.problem)
 
     def _serialize(self, dest_dir: Path):
-        """Dump dictionary to yml file
-         """
+        """Dump dictionary to yml file"""
         dest_file = self._create_target_dump_dir(dest_dir) / self.normalize_file_name()
-        with open(dest_file, 'w') as file:
+        with open(dest_file, "w") as file:
             yaml.dump(self._as_dict, file)
         return [dest_file]
 

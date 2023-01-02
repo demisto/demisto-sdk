@@ -1554,7 +1554,7 @@ class TestLayouts:
         ("indicator", MarketplaceVersions.XSOAR.value, False),
         ("indicator", MarketplaceVersions.MarketplaceV2.value, False),
         ("incident", MarketplaceVersions.XSOAR.value, False),
-        ("incident", MarketplaceVersions.MarketplaceV2.value, True),
+        ("incident", MarketplaceVersions.MarketplaceV2.value, False),
     ]
 
     @staticmethod

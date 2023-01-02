@@ -26,6 +26,9 @@ def create_content_graph(
 
     Args:
         content_graph_interface (ContentGraphInterface): The content graph interface.
+        marketplace (MarketplaceVersions): The marketplace to update.
+        dependencies (bool): Whether to create the dependencies.
+        output_path (Path): The path to export the graph zip to.
     """
     ContentGraphBuilder(content_graph_interface).create_graph()
     if dependencies:
@@ -47,6 +50,12 @@ def update_content_graph(
     """This function creates a new content graph database in neo4j from the content path
     Args:
         content_graph_interface (ContentGraphInterface): The content graph interface.
+        marketplace (MarketplaceVersions): The marketplace to update.
+        use_git (bool): Whether to use git to get the packs to update.
+        imported_path (Path): The path to the imported graph.
+        packs_to_update (List[str]): The packs to update.
+        dependencies (bool): Whether to create the dependencies.
+        output_path (Path): The path to export the graph zip to.
     """
     if use_git and imported_path:
         raise ValueError("Cannot use both git and imported path")

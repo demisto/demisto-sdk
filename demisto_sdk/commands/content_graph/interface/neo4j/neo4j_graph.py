@@ -325,6 +325,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
         Args:
             external_import_paths (List[Path]): A list of external repositories' import paths.
+            imported_path (Path): The path to import the graph from.
         """
         import_handler = Neo4jImportHandler(imported_path)
         import_handler.ensure_data_uniqueness()

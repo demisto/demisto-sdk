@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where demisto-py failed to upload content to XSIAM when `DEMISTO_USERNAME` environment variable is set.
 * Fixed an issue where the **prepare-content** command output invalid automation name when used with the --*custom* argument.
 * Fixed an issue where modeling rules with arbitrary whitespace characters were not parsed correctly.
 * Added support for the **nativeImage** key for an integration/script in the **prepare-content** command.

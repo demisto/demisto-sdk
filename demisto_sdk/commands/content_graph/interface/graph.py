@@ -31,11 +31,11 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def import_graph(self) -> None:
+    def import_graph(self, imported_path: Optional[Path] = None) -> None:
         pass
 
     @abstractmethod
-    def export_graph(self) -> None:
+    def export_graph(self, output_path: Optional[Path] = None) -> None:
         pass
 
     @abstractmethod

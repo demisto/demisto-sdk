@@ -9,6 +9,8 @@ from git import InvalidGitRepositoryError, Repo
 from git.diff import Lit_change_type
 from git.remote import Remote
 
+from demisto_sdk.commands.content_graph.common import PACKS_FOLDER
+
 
 class GitUtil:
     repo: Repo
@@ -456,6 +458,13 @@ class GitUtil:
             return all_renamed_files_only_new
 
         return all_renamed_files
+
+    def get_all_changed_pack_ids(self, prev_ver: str) -> Set[str]:
+        return {
+            file.parts[1]
+            for file in self.get_all_changed_files(prev_ver)
+            if PACKS_FOLDER in file.parts
+        }
 
     def _get_untracked_files(self, requested_status: str) -> set:
         """return all untracked files of the given requested status.

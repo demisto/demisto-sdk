@@ -41,7 +41,9 @@ class ContentGraphBuilder:
         self.content_graph.clean_graph()
         self.content_graph.create_indexes_and_constraints()
 
-    def _parse_and_model_content(self, packs_to_parse: Optional[List[str]] = None) -> None:
+    def _parse_and_model_content(
+        self, packs_to_parse: Optional[List[str]] = None
+    ) -> None:
         content_dto: ContentDTO = self._create_content_dto(packs_to_parse)
         self._collect_nodes_and_relationships_from_model(content_dto)
 
@@ -52,10 +54,14 @@ class ContentGraphBuilder:
             path (Path): The repository path.
             packs_to_parse (Optional[List[str]]): A list of packs to parse. If not provided, parses all packs.
         """
-        repository_parser = RepositoryParser(self.content_graph.repo_path, packs_to_parse)
+        repository_parser = RepositoryParser(
+            self.content_graph.repo_path, packs_to_parse
+        )
         return ContentDTO.from_orm(repository_parser)
 
-    def _collect_nodes_and_relationships_from_model(self, content_dto: ContentDTO) -> None:
+    def _collect_nodes_and_relationships_from_model(
+        self, content_dto: ContentDTO
+    ) -> None:
         for pack in content_dto.packs:
             self.nodes.update(pack.to_nodes())
             self.relationships.update(pack.relationships)

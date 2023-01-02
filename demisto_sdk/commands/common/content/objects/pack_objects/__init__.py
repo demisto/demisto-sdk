@@ -46,5 +46,8 @@ from .xdrc_template.xdrc_template import XDRCTemplate
 from .xsiam_dashboard.xsiam_dashboard import XSIAMDashboard
 from .xsiam_report.xsiam_report import XSIAMReport
 
-__all__ = [name for name, obj in locals().items()
-           if not (name.startswith('_') or inspect.ismodule(obj))]
+__all__ = [
+    name
+    for name, obj in locals().items()
+    if not (name.startswith("_") or inspect.ismodule(obj))
+]

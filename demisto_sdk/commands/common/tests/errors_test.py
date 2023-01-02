@@ -4,7 +4,7 @@ import unittest
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.errors import Errors
 
-ERROR_CODE_REGEX = re.compile(r'[A-Z]{2}\d{3}')
+ERROR_CODE_REGEX = re.compile(r"[A-Z]{2}\d{3}")
 
 
 class TestErrors(unittest.TestCase):
@@ -15,7 +15,10 @@ class TestErrors(unittest.TestCase):
         Then: Return error message with the input value as a tuple containing error and error code.
         """
         file_name = "test file.gif"
-        expected_result = ("Please remove spaces from the file's name: 'test file.gif'.", 'BA103')
+        expected_result = (
+            "Please remove spaces from the file's name: 'test file.gif'.",
+            "BA103",
+        )
         result = Errors.file_name_include_spaces_error(file_name)
         assert expected_result == result
 
@@ -26,7 +29,10 @@ class TestErrors(unittest.TestCase):
         Then: Return error message with the input value as a tuple containing error and error code.
         """
         param_name = "test param"
-        expected_result = ("The required field of the test param parameter should be False", "IN102")
+        expected_result = (
+            "The required field of the test param parameter should be False",
+            "IN102",
+        )
         result = Errors.wrong_required_value(param_name)
         assert result == expected_result
 
@@ -46,7 +52,9 @@ class TestErrors(unittest.TestCase):
         When: Returning an error message
         Then: Return error message with the input value as a tuple containing error and error code.
         """
-        expected_result = "You may need RN in this file, please verify if they are required."
+        expected_result = (
+            "You may need RN in this file, please verify if they are required."
+        )
         result = Errors.might_need_release_notes()
         assert result == expected_result
 
@@ -76,7 +84,9 @@ class TestErrors(unittest.TestCase):
         When: Returning an error message
         Then: Return error message with the input value as a string containing error.
         """
-        expected_result = "ID may have changed, please make sure to check you have the correct one."
+        expected_result = (
+            "ID may have changed, please make sure to check you have the correct one."
+        )
         result = Errors.id_might_changed()
         assert result == expected_result
 
@@ -86,11 +96,16 @@ class TestErrors(unittest.TestCase):
         When: Returning an error message
         Then: Return error message with the input value as a tuple containing error and error code.
         """
-        expected_result = ('The name attribute of myIntegration.yml (currently FileName) '
-                           'should be identical to its `id` attribute (FileID)', 'BA101')
+        expected_result = (
+            "The name attribute of myIntegration.yml (currently FileName) "
+            "should be identical to its `id` attribute (FileID)",
+            "BA101",
+        )
         name = "FileName"
         file_id = "FileID"
-        result = Errors.id_should_equal_name(name, file_id, 'packs/myPack/integrations/myIntegration/myIntegration.yml')
+        result = Errors.id_should_equal_name(
+            name, file_id, "packs/myPack/integrations/myIntegration/myIntegration.yml"
+        )
         assert result == expected_result
 
     def test_file_type_not_supported(self):
@@ -99,13 +114,15 @@ class TestErrors(unittest.TestCase):
         When: Returning an error message
         Then: Return error message with the input value as a tuple containing error and error code.
         """
-        error_statement = f"File type {FileType.CONF_JSON} is not supported in the validate command.\n" \
-                          "The validate command supports: Integrations, Scripts, Playbooks, " \
-                          "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields," \
-                          " Object types, Object modules, Images, Release notes, Layouts, Jobs, Wizards, " \
-                          "Descriptions And Modeling Rules."
+        error_statement = (
+            f"File type {FileType.CONF_JSON} is not supported in the validate command.\n"
+            "The validate command supports: Integrations, Scripts, Playbooks, "
+            "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields,"
+            " Object types, Object modules, Images, Release notes, Layouts, Jobs, Wizards, "
+            "Descriptions And Modeling Rules."
+        )
         expected_result = (error_statement, "BA102")
-        result = Errors.file_type_not_supported(FileType.CONF_JSON, 'dummy_path')
+        result = Errors.file_type_not_supported(FileType.CONF_JSON, "dummy_path")
         assert result == expected_result
 
     def test_invalid_context_output(self):
@@ -114,8 +131,10 @@ class TestErrors(unittest.TestCase):
         When: Returning an error message
         Then: Return error message with the input value as a tuple containing error and error code.
         """
-        expected_result = ("Invalid context output for command TestCommand. Output is BadOutput",
-                           "IN115")
+        expected_result = (
+            "Invalid context output for command TestCommand. Output is BadOutput",
+            "IN115",
+        )
         command_name = "TestCommand"
         output_name = "BadOutput"
         result = Errors.invalid_context_output(command_name, output_name)
@@ -127,8 +146,10 @@ class TestErrors(unittest.TestCase):
         When: Returning an error message
         Then: Return error message with the input value as a tuple containing error and error code.
         """
-        expected_result = ('The display name of the ParamName parameter should be \'ParamDisplay\'',
-                           "IN100")
+        expected_result = (
+            "The display name of the ParamName parameter should be 'ParamDisplay'",
+            "IN100",
+        )
         param_name = "ParamName"
         param_display = "ParamDisplay"
         result = Errors.wrong_display_name(param_name, param_display)
@@ -142,9 +163,11 @@ class TestErrors(unittest.TestCase):
         """
         path = "https://github.com/demisto/content/blob/123/Packs/TestPack/doc_files/test.png"
         alternative_path = "https://github.com/demisto/content/raw/123/Packs/TestPack/doc_files/test.png"
-        error_statement = f'Detected following image url:\n{path}\n' \
-                          f'Which is not the raw link. You probably want to use the following raw image url:\n' \
-                          f'{alternative_path}'
+        error_statement = (
+            f"Detected following image url:\n{path}\n"
+            f"Which is not the raw link. You probably want to use the following raw image url:\n"
+            f"{alternative_path}"
+        )
         expected_result = (error_statement, "RM101")
         result = Errors.image_path_error(path, alternative_path)
         assert result == expected_result
@@ -158,26 +181,42 @@ class TestErrors(unittest.TestCase):
         integration_id = "dummy_integration"
         expected = f"The integration {integration_id} is currently in skipped. Please add working tests and unskip."
 
-        assert Errors.integration_is_skipped(integration_id, skip_comment=None)[0] == expected
-        assert Errors.integration_is_skipped(integration_id, skip_comment='')[0] == expected
-        assert Errors.integration_is_skipped(integration_id)[0] == expected  # skip_comment argument is None by default
+        assert (
+            Errors.integration_is_skipped(integration_id, skip_comment=None)[0]
+            == expected
+        )
+        assert (
+            Errors.integration_is_skipped(integration_id, skip_comment="")[0]
+            == expected
+        )
+        assert (
+            Errors.integration_is_skipped(integration_id)[0] == expected
+        )  # skip_comment argument is None by default
 
     def test_integration_is_skipped__comment(self):
         integration_id = "dummy_integration"
         skip_comment = "Issue 00000"
 
-        expected = f"The integration {integration_id} is currently in skipped. Please add working tests and " + \
-                   f"unskip. Skip comment: {skip_comment}"
+        expected = (
+            f"The integration {integration_id} is currently in skipped. Please add working tests and "
+            + f"unskip. Skip comment: {skip_comment}"
+        )
 
         result = Errors.integration_is_skipped(integration_id, skip_comment)
         assert result[0] == expected
 
     def test_allowed_ignore_errors_format(self):
         from demisto_sdk.commands.common.errors import ALLOWED_IGNORE_ERRORS
+
         for error in ALLOWED_IGNORE_ERRORS:
-            assert ERROR_CODE_REGEX.fullmatch(error), f'{error} does not match an error code format'
+            assert ERROR_CODE_REGEX.fullmatch(
+                error
+            ), f"{error} does not match an error code format"
 
     def test_error_code_format(self):
         from demisto_sdk.commands.common.errors import ERROR_CODE
+
         for error in ERROR_CODE.values():
-            assert ERROR_CODE_REGEX.fullmatch(error['code']), f'{error} does not match an error code format'
+            assert ERROR_CODE_REGEX.fullmatch(
+                error["code"]
+            ), f"{error} does not match an error code format"

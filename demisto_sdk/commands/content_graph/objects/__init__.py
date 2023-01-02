@@ -36,7 +36,9 @@ __all__ = [
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
-from demisto_sdk.commands.content_graph.objects.generic_definition import GenericDefinition
+from demisto_sdk.commands.content_graph.objects.generic_definition import (
+    GenericDefinition,
+)
 from demisto_sdk.commands.content_graph.objects.generic_field import GenericField
 from demisto_sdk.commands.content_graph.objects.generic_module import GenericModule
 from demisto_sdk.commands.content_graph.objects.generic_type import GenericType

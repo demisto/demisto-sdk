@@ -7,17 +7,28 @@ from typing import TYPE_CHECKING, Any, Generator, List, Optional
 from packaging.version import parse
 from pydantic import BaseModel, Field, validator
 
-from demisto_sdk.commands.common.constants import CONTRIBUTORS_README_TEMPLATE, MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    BASE_PACK,
+    CONTRIBUTORS_README_TEMPLATE,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import MarketplaceTagParser, get_content_path
-from demisto_sdk.commands.content_graph.common import (PACK_METADATA_FILENAME, ContentType, Nodes, Relationships,
-                                                       RelationshipType)
+from demisto_sdk.commands.content_graph.common import (
+    PACK_METADATA_FILENAME,
+    ContentType,
+    Nodes,
+    Relationships,
+    RelationshipType,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
-from demisto_sdk.commands.content_graph.objects.generic_definition import GenericDefinition
+from demisto_sdk.commands.content_graph.objects.generic_definition import (
+    GenericDefinition,
+)
 from demisto_sdk.commands.content_graph.objects.generic_field import GenericField
 from demisto_sdk.commands.content_graph.objects.generic_module import GenericModule
 from demisto_sdk.commands.content_graph.objects.generic_type import GenericType
@@ -102,6 +113,10 @@ class PackContentItems(BaseModel):
         for content_items in vars(self).values():
             yield from content_items
 
+    def __bool__(self) -> bool:
+        """Used for easier determination of content items existence in a pack."""
+        return bool(list(self))
+
     class Config:
         arbitrary_types_allowed = True
         orm_mode = True
@@ -184,11 +199,13 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         ]
         content_item_dct = defaultdict(list)
         for c in content_items:
-            content_item_dct[c.content_type].append(c)
+            content_item_dct[c.content_type.value].append(c)
 
         # If there is no server_min_version, set it to the maximum of its content items fromversion
-        self.server_min_version = self.server_min_version or str(max(parse(content_item.fromversion) for content_item in content_items))
-        self.content_items = PackContentItems.parse_obj(content_item_dct)
+        self.server_min_version = self.server_min_version or str(
+            max(parse(content_item.fromversion) for content_item in content_items)
+        )
+        self.content_items = PackContentItems(**content_item_dct)
 
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
         metadata = self.dict(exclude={"path", "node_id", "content_type"})
@@ -229,9 +246,13 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         try:
             path.mkdir(exist_ok=True, parents=True)
             for content_item in self.content_items:
-                content_item.dump(
-                    path / content_item.content_type.as_folder, marketplace
-                )
+                folder = content_item.content_type.as_folder
+                if (
+                    content_item.content_type == ContentType.SCRIPT
+                    and content_item.is_test
+                ):
+                    folder = ContentType.TEST_PLAYBOOK.as_folder
+                content_item.dump(path / folder, marketplace)
             self.dump_metadata(path / "metadata.json", marketplace)
             self.dump_readme(path / "README.md", marketplace)
             shutil.copy(
@@ -245,10 +266,28 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 shutil.copy(self.path / "Author_image.png", path / "Author_image.png")
             except FileNotFoundError:
                 logger.info(f'No such file {self.path / "Author_image.png"}')
+            if self.object_id == BASE_PACK:
+                self.handle_base_pack(path)
+
             logger.info(f"Dumped pack {self.name}. Files: {list(path.iterdir())}")
         except Exception as e:
             logger.error(f"Failed dumping pack {self.name}: {e}")
             raise
+
+    def handle_base_pack(self, path: Path):
+        content_path = Path(get_content_path())  # type: ignore
+        documentation_path = content_path / "Documentation"
+        documentation_output = path / "Documentation"
+        documentation_output.mkdir(exist_ok=True, parents=True)
+        shutil.copy(
+            documentation_path / "doc-howto.json",
+            documentation_output / "doc-howto.json",
+        )
+        if (documentation_path / "doc-CommonServer.json").exists():
+            shutil.copy(
+                documentation_path / "doc-CommonServer.json",
+                documentation_output / "doc-CommonServer.json",
+            )
 
     def to_nodes(self) -> Nodes:
         return Nodes(

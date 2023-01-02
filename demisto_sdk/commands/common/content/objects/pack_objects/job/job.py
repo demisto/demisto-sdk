@@ -4,8 +4,9 @@ from typing import Union
 from demisto_client.demisto_api import DefaultApi
 
 from demisto_sdk.commands.common.constants import JOB, FileType
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
-    JSONContentObject
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
+    JSONContentObject,
+)
 
 
 class Job(JSONContentObject):
@@ -21,10 +22,10 @@ class Job(JSONContentObject):
             The result of the upload command from demisto_client
         """
         return client.generic_request(
-            method='POST',
-            path='jobs/import',
-            files={'file': str(self.path)},
-            content_type='multipart/form-data'
+            method="POST",
+            path="jobs/import",
+            files={"file": str(self.path)},
+            content_type="multipart/form-data",
         )
 
     def type(self):

@@ -7,8 +7,12 @@ from neo4j import graph
 
 NEO4J_ADMIN_DOCKER = ""
 
-NEO4J_DATABASE_HTTP = os.getenv("DEMISTO_SDK_NEO4J_DATABASE_HTTP", "http://127.0.0.1:7474")
-NEO4J_DATABASE_URL = os.getenv("DEMISTO_SDK_NEO4J_DATABASE_URL", "bolt://127.0.0.1:7687")
+NEO4J_DATABASE_HTTP = os.getenv(
+    "DEMISTO_SDK_NEO4J_DATABASE_HTTP", "http://127.0.0.1:7474"
+)
+NEO4J_DATABASE_URL = os.getenv(
+    "DEMISTO_SDK_NEO4J_DATABASE_URL", "bolt://127.0.0.1:7687"
+)
 NEO4J_USERNAME = os.getenv("DEMISTO_SDK_NEO4J_USERNAME", "neo4j")
 NEO4J_PASSWORD = os.getenv("DEMISTO_SDK_NEO4J_PASSWORD", "test")
 
@@ -20,8 +24,7 @@ PACK_CONTRIBUTORS_FILENAME = "CONTRIBUTORS.json"
 UNIFIED_FILES_SUFFIXES = [".yml", ".json"]
 
 
-class Neo4jResult(NamedTuple):
-    node_from: graph.Node
+class Neo4jRelationshipResult(NamedTuple):
     relationships: List[graph.Relationship]
     nodes_to: List[graph.Node]
 
@@ -73,7 +76,7 @@ class ContentType(str, enum.Enum):
     XSIAM_DASHBOARD = "XSIAMDashboard"
     XSIAM_REPORT = "XSIAMReport"
     WIZARD = "Wizard"
-    XDRC_TEMPLATE = 'XDRCTemplate'
+    XDRC_TEMPLATE = "XDRCTemplate"
     LAYOUT_RULE = 'LayoutRule'
 
     @property
@@ -108,6 +111,10 @@ class ContentType(str, enum.Enum):
     def server_names() -> List[str]:
         return [c.server_name for c in ContentType] + ["indicatorfield", "mapper"]
 
+    @staticmethod
+    def values() -> Iterator[str]:
+        return (c.value for c in ContentType)
+
     @classmethod
     def by_path(cls, path: Path) -> "ContentType":
         for idx, folder in enumerate(path.parts):
@@ -117,10 +124,12 @@ class ContentType(str, enum.Enum):
         else:
             # less safe option - will raise an exception if the path
             # is not to the content item directory or file
-            if path.is_dir():
+            if path.parts[-2][:-1] in ContentType.values():
                 content_type_dir = path.parts[-2]
-            else:
+            elif path.parts[-3][:-1] in ContentType.values():
                 content_type_dir = path.parts[-3]
+            else:
+                raise ValueError(f"Could not find content type in path {path}")
         return cls(content_type_dir[:-1])  # remove the `s`
 
     @staticmethod
@@ -148,7 +157,10 @@ class ContentType(str, enum.Enum):
         for content_type in ContentType:
             if content_type in ContentType.abstract_types():
                 continue
-            if not include_non_content_items and content_type in ContentType.non_content_items():
+            if (
+                not include_non_content_items
+                and content_type in ContentType.non_content_items()
+            ):
                 continue
             yield content_type
 
@@ -188,7 +200,9 @@ class Relationships(dict):
 
     def update(self, other: "Relationships") -> None:  # type: ignore
         for relationship, parsed_data in other.items():
-            if relationship not in RelationshipType or not isinstance(parsed_data, list):
+            if relationship not in RelationshipType or not isinstance(
+                parsed_data, list
+            ):
                 raise TypeError
             self.add_batch(relationship, parsed_data)
 
@@ -426,7 +440,6 @@ SERVER_CONTENT_ITEMS = {
         "searchRelationships",
         "getSystemDiagnostics",
         "triggerDebugMirroringRun",
-
         # Filters
         "isEqual",
         "isNotEqual",
@@ -472,7 +485,6 @@ SERVER_CONTENT_ITEMS = {
         "isNotIdenticalIncident",
         "containsGeneral",
         "notContainsGeneral",
-
         # Transformers
         "toUpperCase",
         "toLowerCase",
@@ -521,7 +533,6 @@ SERVER_CONTENT_ITEMS = {
         "ad-authentication-roles",
         "ad-authenticate-and-roles",
         "ad-groups",
-
         # activedir integration commands
         "ad-search",
         "ad-expire-password",
@@ -537,7 +548,6 @@ SERVER_CONTENT_ITEMS = {
         "ad-modify-computer-ou",
         "ad-create-contact",
         "ad-update-contact",
-
         # carbonblackprotection integration commands
         "cbp-fileCatalog-search",
         "cbp-fileInstance-search",
@@ -563,7 +573,6 @@ SERVER_CONTENT_ITEMS = {
         "cbp-approvalRequest-search",
         "cbp-serverConfig-search",
         "cbp-policy-search",
-
         # carbonblack integration commands
         "cb-version",
         "cb-process",
@@ -599,23 +608,18 @@ SERVER_CONTENT_ITEMS = {
         "cb-get-hash-blacklist",
         "cb-get-process",
         "cb-get-processes",
-
         # cylance integration commands
         "file",
         "cy-upload",
-
         # duo integration commands
         "duo-authenticate",
         "duo-authenticate-status",
         "duo-check",
         "duo-preauth",
-
         # elasticsearch integration commands
         "search",
-
         # fcm integration commands
         "fcm-push",
-
         # google integration commands
         "googleapps-list-users",
         "googleapps-get-user",
@@ -630,16 +634,13 @@ SERVER_CONTENT_ITEMS = {
         "googleapps-chrome-device-action",
         "googleapps-get-chrome-devices-for-user",
         "googleapps-gmail-get-attachment",
-
         # kafka integration commands
         "kafka-publish-msg",
         "kafka-print-topics",
         "kafka-consume-msg",
         "kafka-fetch-partitions",
-
         # mail-sender integration commands
         "send-mail",
-
         # mattermost integration commands
         "send-notification",
         "mattermost-send",
@@ -648,38 +649,31 @@ SERVER_CONTENT_ITEMS = {
         "close-channel",
         "mattermost-mirror-investigation",
         "mirror-investigation",
-
         # esm integration commands
         "search",
         "esmFetchAllFields",
-
         # mysql integration commands
         "query",
-
         # nexpose integration commands
         "vulnerability-list",
         "vulnerability-details",
         "generate-adhoc-report",
         "send-xml",
-
         # pagerduty integration commands
         "PagerDutyGetUsersOnCall",
         "PagerDutyGetAllSchedules",
         "PagerDutyGetUsersOnCallNow",
         "PagerDutyIncidents",
         "pagerDutySubmitEvent",
-
         # remoteaccess integration commands
         "ssh",
         "copy-to",
         "copy-from",
-
         # sharedagent integration commands
         "sharedagent_create",
         "execute",
         "sharedagent_remove",
         "sharedagent_status",
-
         # slack integration commands
         "send-notification",
         "slack-send",
@@ -688,10 +682,8 @@ SERVER_CONTENT_ITEMS = {
         "close-channel",
         "slack-close-channel",
         "slack-send-file",
-
         # mssql integration commands
         "query",
-
         # threatcentral integration commands
         "Threat-Central",
     ],

@@ -75,6 +75,13 @@ logger = logging.getLogger("demisto-sdk")
 NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
 
 
+class DockerImageFlagOption(Enum):
+    FROM_YML = "from-yml"
+    NATIVE = "native:"
+    NATIVE_LATEST = "native:latest"
+    ALL_IMAGES = "all"
+
+
 class Linter:
     """Linter used to activate lint command on single package
 
@@ -96,7 +103,7 @@ class Linter:
         req_2: list,
         docker_engine: bool,
         docker_timeout: int,
-        docker_image_flag: str = "from-yml",
+        docker_image_flag: str = DockerImageFlagOption.FROM_YML.value,
     ):
         self._req_3 = req_3
         self._req_2 = req_2
@@ -1338,12 +1345,6 @@ class Linter:
             logger.debug("Failed getting the commands from the yml file")
         return commands_list
 
-    class DockerImageFlagOption(Enum):
-        FROM_YML = "from-yml"
-        NATIVE = "native:"
-        NATIVE_LATEST = "native:latest"
-        ALL_IMAGES = "all"
-
     def _get_latest_native_image(
         self, script_id: str, supported_native_images: Set[str]
     ) -> Union[str, None]:
@@ -1361,14 +1362,14 @@ class Linter:
         logger.info(f"{log_prompt} - Started")
 
         if (
-            self.DockerImageFlagOption.NATIVE_LATEST.value
+            DockerImageFlagOption.NATIVE_LATEST.value
             not in supported_native_images
         ):
             # Integration/Script doesn't support the requested native image
             logger.info(
-                f"{log_prompt} - Skipping checks on docker for {self.DockerImageFlagOption.NATIVE_LATEST.value} -"
+                f"{log_prompt} - Skipping checks on docker for {DockerImageFlagOption.NATIVE_LATEST.value} -"
                 f" {script_id} does not support the requested native image:"
-                f" {self.DockerImageFlagOption.NATIVE_LATEST.value}."
+                f" {DockerImageFlagOption.NATIVE_LATEST.value}."
             )
             return None
 
@@ -1461,7 +1462,7 @@ class Linter:
 
         # Get native images:
         for native_image in native_image_config.native_images:
-            if native_image != self.DockerImageFlagOption.NATIVE_LATEST.value:
+            if native_image != DockerImageFlagOption.NATIVE_LATEST.value:
                 native_image_ref = self._get_versioned_native_image(
                     native_image,
                     native_image_config,
@@ -1510,7 +1511,7 @@ class Linter:
         imgs = []
 
         if (
-            docker_image_flag == self.DockerImageFlagOption.FROM_YML.value
+            docker_image_flag == DockerImageFlagOption.FROM_YML.value
         ):  # the default option
             # Desirable docker images are the docker images from the yml file (alt-dockerimages included)
             imgs = get_docker_images_from_yml(script_obj)
@@ -1534,13 +1535,13 @@ class Linter:
             )
         )
 
-        if docker_image_flag.startswith(self.DockerImageFlagOption.NATIVE.value):
+        if docker_image_flag.startswith(DockerImageFlagOption.NATIVE.value):
             # Desirable docker image to run on is a native image
 
             if supported_native_images:
                 # Integration/Script supports native images
 
-                if docker_image_flag == self.DockerImageFlagOption.NATIVE_LATEST.value:
+                if docker_image_flag == DockerImageFlagOption.NATIVE_LATEST.value:
                     # Desirable docker image to run on is the latest native image - get the latest tag from Docker Hub
                     latest_native_image_ref = self._get_latest_native_image(
                         script_id, supported_native_images
@@ -1573,7 +1574,7 @@ class Linter:
                     f"support native images."
                 )
 
-        elif docker_image_flag == self.DockerImageFlagOption.ALL_IMAGES.value:
+        elif docker_image_flag == DockerImageFlagOption.ALL_IMAGES.value:
             # Desirable docker images are the docker images from the yml file, the native image of the current server
             # version, the native image of the previous server version, and the native latest.
             imgs = self._get_all_docker_images(

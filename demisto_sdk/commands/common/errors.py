@@ -30,6 +30,7 @@ ALLOWED_IGNORE_ERRORS = [
     "BA111",
     "BA112",
     "BA113",
+    "BA114",  # TODO remove in the next release (in two weeks)
     "BA116",
     "BA119",
     "DS107",

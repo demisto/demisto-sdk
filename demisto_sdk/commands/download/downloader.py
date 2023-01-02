@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 import tarfile
+from pathlib import Path
 from tempfile import mkdtemp
 from typing import Dict, List, Tuple, Union
 
@@ -349,7 +350,9 @@ class Downloader:
             string_to_write = string_to_write.replace(uuid, uuid_dict[uuid])
         return string_to_write
 
-    def handle_file(self, string_to_write, member_name, scripts_id_name):
+    def handle_file(
+        self, string_to_write: str, member_name: str, scripts_id_name: dict
+    ):
 
         if not self.list_files and re.search(
             INCIDENT_FIELD_FILE_NAME_REGEX, member_name
@@ -411,20 +414,22 @@ class Downloader:
                         f"Could not extract files from tar file: {file_path}"
                     )
 
-            for tup in strings_to_write:
-                string_to_write = self.handle_file(tup[0], tup[1], scripts_id_name)
+            for string_to_write, file_name in strings_to_write:
+                string_to_write = self.handle_file(
+                    string_to_write=string_to_write,
+                    member_name=file_name,
+                    scripts_id_name=scripts_id_name,
+                )
                 string_to_write = self.replace_uuids(string_to_write, scripts_id_name)
-                file_name = self.update_file_prefix(tup[1].strip("/"))
-                file_path = os.path.join(self.custom_content_temp_dir, file_name)
+                file_name = self.update_file_prefix(file_name.strip("/"))
+                path = Path(self.custom_content_temp_dir, file_name)
                 try:
-                    with open(file_path, "w") as file:
-                        file.write(string_to_write)
+                    path.write_text(string_to_write)
 
                 except Exception as e:
                     print(f"encountered exception {type(e)}: {e}")
                     print("trying to write with encoding=utf8")
-                    with open(file_path, "w", encoding="utf8") as file:
-                        file.write(string_to_write)
+                    path.write_text(string_to_write, encoding="utf8")
             return True
 
         except ApiException as e:

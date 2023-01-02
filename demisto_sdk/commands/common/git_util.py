@@ -794,8 +794,4 @@ class GitUtil:
         Returns:
             bool: True if the file is ignored. Otherwise, return False.
         """
-        try:
-            self.repo.git.check_ignore(file_path)
-        except GitCommandError:
-            return False
-        return True
+        return not self.repo.ignored(file_path)

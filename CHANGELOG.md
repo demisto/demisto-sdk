@@ -15,6 +15,7 @@
 * Added validation that checks that the `nativeimage` key is not defined in script/integration yml.
 * Added to the **format** command the ability to remove `nativeimage` key in case defined in script/integration yml.
 * Fixed an issue where **doc-review** failed when reviewing command name in some cases.
+* Fixed an issue where **update-release-notes** fails to update *MicrosoftApiModule* dependent integrations.
 
 ## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.

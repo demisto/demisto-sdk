@@ -20,7 +20,6 @@ def create_content_graph(
     content_graph_interface: ContentGraphInterface,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
     dependencies: bool = True,
-    export: bool = False,
     output_path: Optional[Path] = None,
 ) -> None:
     """This function creates a new content graph database in neo4j from the content path
@@ -33,8 +32,7 @@ def create_content_graph(
         content_graph_interface.create_pack_dependencies()
     if output_path:
         output_path = output_path / marketplace.value
-    if export:
-        content_graph_interface.export_graph(output_path)
+    content_graph_interface.export_graph(output_path)
 
 
 def update_content_graph(

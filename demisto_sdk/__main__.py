@@ -2910,13 +2910,6 @@ def error_code(config, **kwargs):
     type=click.Choice([marketplace.value for marketplace in MarketplaceVersions]),
 )
 @click.option(
-    "-se",
-    "--skip-export",
-    is_flag=True,
-    help="Whether or not to skip exporting to CSV.",
-    default=False,
-)
-@click.option(
     "-nd",
     "--no-dependencies",
     is_flag=True,

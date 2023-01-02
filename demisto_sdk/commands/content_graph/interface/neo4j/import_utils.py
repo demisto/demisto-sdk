@@ -14,6 +14,14 @@ logger = logging.getLogger("demisto-sdk")
 
 class Neo4jImportHandler:
     def __init__(self, imported_path: Optional[Path] = None) -> None:
+        """This class handles the import of data to neo4j.
+        import_path is the path to the directory where the data is located.
+        
+
+        Args:
+            imported_path (Optional[Path], optional): A zip file path to import the graph from. Defaults to None.
+                                                      If not given, the graph will use the content in the `import_path` directory.
+        """
         self.import_path: Path = get_neo4j_import_path()
         logger.debug(f"Import path: {self.import_path}")
         if imported_path:

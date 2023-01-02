@@ -361,7 +361,7 @@ class TestCreateContentGraph:
         )
 
         with ContentGraphInterface() as interface:
-            create_content_graph(interface, output_path=tmp_path / "graph.zip")
+            create_content_graph(interface, output_path=tmp_path)
             packs = interface.search(
                 marketplace=MarketplaceVersions.XSOAR, content_type=ContentType.PACK
             )
@@ -403,8 +403,8 @@ class TestCreateContentGraph:
         assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script1.yml")
 
         # make sure that the output file zip is created
-        assert Path.exists(tmp_path / "graph.zip")
-        with ZipFile(tmp_path / "graph.zip", "r") as zip_obj:
+        assert Path.exists(tmp_path / "xsoar.zip")
+        with ZipFile(tmp_path / "xsoar.zip", "r") as zip_obj:
             zip_obj.extractall(tmp_path / "extracted")
             # make sure that the extracted files are all .csv
             extracted_files = list(tmp_path.glob("extracted/*"))

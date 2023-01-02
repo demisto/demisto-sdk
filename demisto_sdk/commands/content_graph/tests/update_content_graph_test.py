@@ -439,7 +439,7 @@ class TestUpdateContentGraph:
         """
         with ContentGraphInterface() as interface:
             # create the graph with dependencies
-            create_content_graph(interface, export=True, dependencies=True, output_path=tmp_path / "graph.zip")
+            create_content_graph(interface, export=True, dependencies=True, output_path=tmp_path)
             packs_from_graph = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
                 content_type=ContentType.PACK,
@@ -462,7 +462,7 @@ class TestUpdateContentGraph:
                 interface,
                 packs_to_update=pack_ids_to_update,
                 dependencies=True,
-                output_path=tmp_path / "graph.zip",
+                output_path=tmp_path,
             )
             packs_from_graph = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
@@ -477,8 +477,8 @@ class TestUpdateContentGraph:
                 after_update=True,
             )
         # make sure that the output file zip is created
-        assert Path.exists(tmp_path / "graph.zip")
-        with ZipFile(tmp_path / "graph.zip", "r") as zip_obj:
+        assert Path.exists(tmp_path / "xsoar.zip")
+        with ZipFile(tmp_path / "xsoar.zip", "r") as zip_obj:
             zip_obj.extractall(tmp_path / "extracted")
             # make sure that the extracted files are all .csv
             extracted_files = list(tmp_path.glob("extracted/*"))

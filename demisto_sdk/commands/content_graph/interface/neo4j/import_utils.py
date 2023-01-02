@@ -16,7 +16,7 @@ class Neo4jImportHandler:
     def __init__(self, imported_path: Optional[Path] = None) -> None:
         """This class handles the import of data to neo4j.
         import_path is the path to the directory where the data is located.
-        
+
 
         Args:
             imported_path (Optional[Path], optional): A zip file path to import the graph from. Defaults to None.

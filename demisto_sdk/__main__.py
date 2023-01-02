@@ -2907,7 +2907,7 @@ def error_code(config, **kwargs):
     "--marketplace",
     help="The marketplace to generate the graph for.",
     default="xsoar",
-    type=click.Choice([marketplace.value for marketplace in MarketplaceVersions]),
+    type=click.Choice(list(MarketplaceVersions)),
 )
 @click.option(
     "-nd",

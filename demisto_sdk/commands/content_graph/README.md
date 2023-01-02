@@ -25,15 +25,15 @@ This commands parses all content packs under the repository, including their rel
 #### Arguments
 
 * **-o, --output-path**
-  
+
     Output folder to place the zip file of the graph exported CSVs files
 
 * **-mp, --marketplace**
-    
+
     The marketplace to generate the graph for.
 
 * **-se, --skip-export**
-  
+
     Whether or not to skip exporting to CSV.
 
 
@@ -61,19 +61,19 @@ This commands downloads the official content graph, imports it locally, and upda
 #### Arguments
 
 * **-o, --output-path**
-  
+
     Output folder to place the zip file of the graph exported CSVs files
 
 * **-mp, --marketplace**
-    
+
     The marketplace to generate the graph for.
 
 * **-g, --use-git**
-  
+
     Whether to use git to determine the packs to update.
 
 * **-p, --packs**
-  
+
     A comma-separated list of packs to update.
 
 * **-i, --imported_path**

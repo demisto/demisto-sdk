@@ -1834,12 +1834,9 @@ def download_content_graph(
     """Getting the Content Graph from official content's bucket"""
     if output_path.is_dir():
         output_path = output_path / f"{marketplace.value}.zip"
-    with open(output_path, "wb") as f:
-        f.write(
-            requests.get(
-                f"{OFFICIAL_CONTENT_GRAPH_PATH}/{marketplace.value}.zip"
-            ).content
-        )
+    output_path.write_bytes(
+        requests.get(f"{OFFICIAL_CONTENT_GRAPH_PATH}/{marketplace.value}.zip").content
+    )
     return output_path
 
 
@@ -1851,7 +1848,7 @@ def get_latest_upload_flow_commit_hash() -> str:
     """
     response_json = requests.get(OFFICIAL_INDEX_JSON_PATH).json()
     if not isinstance(response_json, dict):
-        raise ValueError("The index.json file is not in the expected format")
+        raise ValueError(f"The index.json file is not in the expected format: {response_json}")
     last_commit = response_json.get("commit")
     if not last_commit:
         raise ValueError("The latest commit hash was not found in the index.json file")

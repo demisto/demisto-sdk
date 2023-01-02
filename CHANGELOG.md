@@ -2,11 +2,12 @@
 ## Unreleased
 * Fixed an issue where the **prepare-content** command output invalid automation name when used with the --*custom* argument.
 * Fixed an issue where modeling rules with arbitrary whitespace characters were not parsed correctly.
-* Added support for **layout_rule** to content graph.
-* Added support for the **nativeimage** key for an integration/script in the **prepare-content** command.
+* Added support for the **nativeImage** key for an integration/script in the **prepare-content** command.
+* Added **validate** checks for integrations declared deprecated (display name, description) but missing the `deprecated` flag.
 * Changed the **validate** command to fail on the IN145 error code only when the parameter with type 4 is not hidden.
 * Fixed an issue where downloading content layouts with `detailsV2=None` resulted in an error.
 * Fixed an issue where **xdrctemplate** was missing 'external' prefix.
+* Added support for **layout_rule** to content graph.
 * Fixed an issue in **prepare-content** command providing output path.
 * Updated the **validate** and **update-release-notes** commands to skip the *Triggers Recommendations* content type.
 * Added a new validation to the **validate** command to verify that the release notes headers are in the correct format.
@@ -15,6 +16,8 @@
 * Fixed an issue where the **update-release-notes** command didn't add release-notes properly to some *new* content items.
 * Added validation that checks that the `nativeimage` key is not defined in script/integration yml.
 * Added to the **format** command the ability to remove `nativeimage` key in case defined in script/integration yml.
+* Enhanced the **update-content-graph** command to support `--use-git`, `--imported_path` and `--output-path` arguments.
+* Fixed an issue where **doc-review** failed when reviewing command name in some cases.
 
 ## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.

@@ -1075,6 +1075,14 @@ OFFICIAL_CONTENT_ID_SET_PATH = (
     "https://storage.googleapis.com/marketplace-dist/content/id_set.json"
 )
 
+OFFICIAL_CONTENT_GRAPH_PATH = (
+    "https://storage.googleapis.com/marketplace-dist-dev/content_graph"
+)
+
+OFFICIAL_INDEX_JSON_PATH = (
+    "https://storage.googleapis.com/marketplace-dist/content/packs/index.json"
+)
+
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = "Run all tests"
 FILTER_CONF = "./artifacts/filter_file.txt"

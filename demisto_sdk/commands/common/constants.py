@@ -1026,6 +1026,7 @@ TESTS_AND_DOC_DIRECTORIES = [
     "tests_data",
     "doc_files",
     "doc_imgs",
+    "TestData",
 ]
 
 VALIDATION_USING_GIT_IGNORABLE_DATA = (

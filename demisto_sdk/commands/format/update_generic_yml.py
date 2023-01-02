@@ -151,6 +151,7 @@ class BaseUpdateYML(BaseUpdate):
         if self.deprecate:
             self.update_deprecate(file_type=file_type)
         self.sync_data_to_master()
+        self.remove_nativeimage_tag_if_exist()
 
     def update_tests(self) -> None:
         """
@@ -369,3 +370,12 @@ class BaseUpdateYML(BaseUpdate):
             self.id_and_version_location["id"] = self.id_and_version_location[
                 "id"
             ].strip()
+
+    def remove_nativeimage_tag_if_exist(self):
+        if self.data.get("nativeimage"):  # script
+            self.data.pop("nativeimage")
+        elif script_section := self.data.get("script"):
+            if isinstance(script_section, dict) and script_section.get(
+                "nativeimage"
+            ):  # integration
+                script_section.pop("nativeimage")

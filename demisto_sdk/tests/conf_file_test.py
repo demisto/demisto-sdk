@@ -2,7 +2,9 @@ from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.integration import (
+    IntegrationValidator,
+)
 from TestSuite.test_tools import ChangeCWD
 
 
@@ -19,26 +21,26 @@ def test_conf_file_custom(mocker, repo):
     - Ensure validate runs on the specific file when the conf file is not in place.
     - Ensure validate runs on all files after the conf file is in place.
     """
-    mocker.patch.object(tools, 'is_external_repository', return_value=True)
-    mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
-    pack = repo.create_pack('tempPack')
-    integration = pack.create_integration('myInt')
+    mocker.patch.object(tools, "is_external_repository", return_value=True)
+    mocker.patch.object(IntegrationValidator, "is_valid_category", return_value=True)
+    pack = repo.create_pack("tempPack")
+    integration = pack.create_integration("myInt")
     integration.create_default_integration()
-    test_playbook = pack.create_test_playbook('myInt_test_playbook')
+    test_playbook = pack.create_test_playbook("myInt_test_playbook")
     test_playbook.create_default_playbook()
-    integration.yml.update({'tests': ['myInt_test_playbook']})
+    integration.yml.update({"tests": ["myInt_test_playbook"]})
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         # pre-conf file - see validate fail on docker related issue
         res = runner.invoke(main, f"validate -i {integration.yml.path}")
-        assert '================= Validating file ' in res.stdout
-        assert 'DO106' in res.stdout
+        assert "================= Validating file " in res.stdout
+        assert "DO106" in res.stdout
 
-    repo.make_file('.demisto-sdk-conf', '[validate]\nno_docker_checks=True')
+    repo.make_file(".demisto-sdk-conf", "[validate]\nno_docker_checks=True")
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         # post-conf file - see validate not fail on docker related issue as we are skipping
         res = runner.invoke(main, f"validate -i {integration.yml.path}")
-        assert '================= Validating file ' in res.stdout
-        assert 'DO106' not in res.stdout
+        assert "================= Validating file " in res.stdout
+        assert "DO106" not in res.stdout

@@ -3556,23 +3556,31 @@ def re_create_id_set(  # noqa: C901
 
         if "LayoutRules" in objects_to_create:
             print_color("\nStarting iteration over LayoutRules", LOG_COLORS.GREEN)
-            for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
-                                                                       packs=packs_dict,
-                                                                       marketplace=marketplace,
-                                                                       print_logs=print_logs,
-                                                                       expected_file_types=FileType.LAYOUT_RULE,
-                                                                       data_extraction_func=get_layout_rule_data,
-                                                                       suffix="json"
-                                                                       ),
-                                                               get_general_paths(LAYOUT_RULES_DIR,
-                                                                                 pack_to_create)):
-                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+            for arr, excluded_items_from_iteration in pool.map(
+                partial(
+                    process_general_items,
+                    packs=packs_dict,
+                    marketplace=marketplace,
+                    print_logs=print_logs,
+                    expected_file_types=FileType.LAYOUT_RULE,
+                    data_extraction_func=get_layout_rule_data,
+                    suffix="json",
+                ),
+                get_general_paths(LAYOUT_RULES_DIR, pack_to_create),
+            ):
+                for _id, data in (
+                    arr[0].items() if arr and isinstance(arr, list) else {}
+                ):
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault("LayoutRules",
-                                                                                               []).append(_id)
+                        packs_dict[data.get("pack")].setdefault(
+                            "ContentItems", {}
+                        ).setdefault("LayoutRules", []).append(_id)
                 layout_rules_list.extend(arr)
-                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
-                                           excluded_items_from_iteration)
+                update_excluded_items_dict(
+                    excluded_items_by_pack,
+                    excluded_items_by_type,
+                    excluded_items_from_iteration,
+                )
 
         progress_bar.update(1)
     new_ids_dict = OrderedDict()

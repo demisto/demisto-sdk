@@ -1361,10 +1361,7 @@ class Linter:
         log_prompt = f"{self._pack_name} - Get Latest Native Image"
         logger.info(f"{log_prompt} - Started")
 
-        if (
-            DockerImageFlagOption.NATIVE_LATEST.value
-            not in supported_native_images
-        ):
+        if DockerImageFlagOption.NATIVE_LATEST.value not in supported_native_images:
             # Integration/Script doesn't support the requested native image
             logger.info(
                 f"{log_prompt} - Skipping checks on docker for {DockerImageFlagOption.NATIVE_LATEST.value} -"

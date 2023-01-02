@@ -24,7 +24,10 @@ class BaseUpdateJSON(BaseUpdate):
         data (dict): JSON file data arranged in a Dict.
     """
 
-    NON_VERSIONED_JSON_TYPES = ["XSIAMDashboardJSONFormat"]
+    NON_VERSIONED_JSON_TYPES = [  # todo + consider moving to update_generic.py
+        "XSIAMDashboardJSONFormat",
+        "TriggerRecommendationJSONFormat",
+    ]
 
     def __init__(
         self,

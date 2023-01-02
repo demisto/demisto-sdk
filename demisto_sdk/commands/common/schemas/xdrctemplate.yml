@@ -1,0 +1,43 @@
+type: map
+mapping:
+  filebeat.inputs:
+    type: seq
+    required: true
+    sequence:
+      - include: filebeat.inputs_schema
+
+
+schema;filebeat.inputs_schema:
+  type:
+    type: str
+    required: true
+  enabled:
+    type: bool
+    required: true
+  id:
+    type: str
+    required: true
+  paths:
+    type: seq
+    required: true
+    allowempty: true
+    sequence:
+      type: str
+  processors:
+    type: seq
+    required: true
+    allowempty: true
+    sequence:
+      allowempty: true
+      type: map
+      mapping:
+        add_fields:
+          type: map
+          mapping:
+            fields:
+              type: map
+              mapping:
+                vendor:
+                  type: str
+                product:
+                  type: str

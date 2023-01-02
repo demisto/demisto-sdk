@@ -87,6 +87,10 @@ FILE_TYPE_AND_LINKED_CLASS = {
     "metadata": PackMetadataJsonFormat,
     "correlationrule": CorrelationRuleYMLFormat,
     "xsiamdashboard": XSIAMDashboardJSONFormat,
+    "modelingrule": None,  # todo
+    "parsingrule": None,
+    "trigger": None,
+    "xdrctemplate": None,
 }
 
 UNFORMATTED_FILES = [

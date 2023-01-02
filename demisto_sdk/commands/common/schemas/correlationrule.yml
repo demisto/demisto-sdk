@@ -50,6 +50,8 @@ mapping:
     type: str
   user_defined_category:
     type: str
+  user_defined_severity:
+    type: str
   xql_query:
     type: str
     required: true

@@ -31,9 +31,18 @@ This commands parses all content packs under the repository, including their rel
 
     Use existing service.
 
-* **-d, --dependencies**
+* **-se, --skip-export**
 
-    Whether dependencies should be included in the graph.
+    Whether or not to skip exporting to CSV. Defaults to false.
+    Note: using docker, the import directory to which the CSV files are downloaded, is mounted from `$REPO_PATH/neo4j-data/import`
+
+* **-nd, --no-dependencies**
+
+    Whether or not to include dependencies.
+
+* **-o, --output-file**
+
+    dump file output.
 
 * **-v, --verbose**
 
@@ -46,3 +55,14 @@ This commands parses all content packs under the repository, including their rel
 * **-lp, --log-path**
 
     Path to store all levels of logs.
+
+
+### update-content-graph
+**Updates a content graph of a given repository.**
+The command imports a content graph representing its previous state (e.g., last upload commit), and then updates only the packs given as arguments.
+
+#### Arguments
+In addition to all of *create-content-graph* arguments:
+* **-p, --packs**
+
+    A comma-separated list of packs to update.

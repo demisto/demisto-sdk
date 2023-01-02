@@ -24,7 +24,6 @@ schema;dashboards_data_schema:
       required: true
     description:
       type: str
-      required: true
     default_dashboard_id:
       type: number
       required: true
@@ -42,8 +41,22 @@ schema;layout_schema:
       type: str
       required: true
     data:
+      type: seq
+      required: true
+      sequence:
+        - include: layout_data_schema
+
+
+schema;layout_data_schema:
+  type: map
+  mapping:
+    key:
+      type: str
+      required: true
+    data:
       type: map
       required: true
+      allowempty: True
 
 
 schema;widgets_data_schema:
@@ -64,9 +77,11 @@ schema;widgets_data_schema:
     data:
       type: map
       required: true
+      allowempty: True
     support_time_range:
       type: bool
       required: true
     additional_info:
       type: map
       required: true
+      allowempty: true

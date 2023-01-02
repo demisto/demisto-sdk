@@ -35,6 +35,8 @@ class CorrelationRuleYMLFormat(BaseUpdateYML):
             verbose=verbose,
             **kwargs,
         )
+        if isinstance(self.data, list) and len(self.data) == 1:
+            self.data = self.data[0]
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the Correlation Rules YML updater."""

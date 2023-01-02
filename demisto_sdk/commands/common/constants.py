@@ -529,6 +529,10 @@ PACKS_CORRELATION_RULES_YML_REGEX = (
     rf"{PACKS_CORRELATION_RULES_DIR_REGEX}/(?:correlationrule-)?([^/]+)\.yml"
 )
 
+PACKS_PARSING_RULES_DIR_REGEX = rf"{PACK_DIR_REGEX}/{PARSING_RULES_DIR}"
+PACKS_PARSING_RULES_YML_REGEX = (
+    rf"{PACKS_PARSING_RULES_DIR_REGEX}/(?:parsingrule-)?([^/]+)\.yml"
+)
 
 PACKS_LAYOUTS_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{LAYOUTS_DIR}"
 PACKS_LAYOUT_JSON_REGEX = (
@@ -796,6 +800,9 @@ YML_ALL_PLAYBOOKS_REGEX: List[str] = sum(
 
 YML_ALL_CORRELATION_RULES_REGEXES = [
     PACKS_CORRELATION_RULES_YML_REGEX,
+]
+YML_ALL_PARSING_RULES_REGEXES = [
+    PACKS_PARSING_RULES_YML_REGEX,
 ]
 
 YML_ALL_REGEXES: List[str] = sum(
@@ -1182,6 +1189,8 @@ SCHEMA_TO_REGEX = {
     WIZARD: JSON_ALL_WIZARD_REGEXES,
     "correlationrule": YML_ALL_CORRELATION_RULES_REGEXES,
     "xsiamdashboard": JSON_ALL_XSIAM_DASHBOARDS_REGEXES,
+    "parsingrule": YML_ALL_CORRELATION_RULES_REGEXES,
+    "modelingrule-json": None,  # todo: probably this is the direction for yml+json
 }
 
 EXTERNAL_PR_REGEX = r"^pull/(\d+)$"
@@ -1287,6 +1296,10 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.GENERIC_MODULE: "6.5.0",
     FileType.GENERIC_DEFINITION: "6.5.0",
     FileType.CORRELATION_RULE: "6.10.0",
+    FileType.PARSING_RULE: "6.10.0",
+    # FileType.XDRC_TEMPLATE: "6.10.0",  # todo: is it relevant?
+    FileType.XSIAM_REPORT: "6.10.0",
+    FileType.MODELING_RULE: "6.10.0",
     FileType.XSIAM_DASHBOARD: "6.10.0",
 }
 # This constant below should always be two versions before the latest server version

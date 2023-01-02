@@ -33,24 +33,66 @@ from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
 from ruamel.yaml.comments import CommentedSeq
 
-from demisto_sdk.commands.common.constants import (ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK,
-                                                   CLASSIFIERS_DIR, DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
-                                                   DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-                                                   DOC_FILES_DIR, ENV_DEMISTO_SDK_MARKETPLACE, ID_IN_COMMONFIELDS,
-                                                   ID_IN_ROOT, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-                                                   INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR,
-                                                   JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, MARKETPLACE_KEY_PACK_METADATA,
-                                                   METADATA_FILE_NAME, MODELING_RULES_DIR,
-                                                   NON_LETTERS_OR_NUMBERS_PATTERN, OFFICIAL_CONTENT_ID_SET_PATH,
-                                                   PACK_METADATA_IRON_BANK_TAG, PACKAGE_SUPPORTING_DIRECTORIES,
-                                                   PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
-                                                   PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
-                                                   PACKS_README_FILE_NAME, PARSING_RULES_DIR, PLAYBOOKS_DIR,
-                                                   PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX,
-                                                   REPORTS_DIR, SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR,
-                                                   TRIGGER_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-                                                   XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
-                                                   XSOAR_CONFIG_FILE, FileType, IdSetKeys, MarketplaceVersions, urljoin)
+from demisto_sdk.commands.common.constants import (
+    ALL_FILES_VALIDATION_IGNORE_WHITELIST,
+    API_MODULES_PACK,
+    CLASSIFIERS_DIR,
+    DASHBOARDS_DIR,
+    DEF_DOCKER,
+    DEF_DOCKER_PWSH,
+    DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    DEFAULT_CONTENT_ITEM_TO_VERSION,
+    DOC_FILES_DIR,
+    ENV_DEMISTO_SDK_MARKETPLACE,
+    ID_IN_COMMONFIELDS,
+    ID_IN_ROOT,
+    INCIDENT_FIELDS_DIR,
+    INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR,
+    INDICATOR_TYPES_DIR,
+    INTEGRATIONS_DIR,
+    JOBS_DIR,
+    LAYOUTS_DIR,
+    LISTS_DIR,
+    MARKETPLACE_KEY_PACK_METADATA,
+    METADATA_FILE_NAME,
+    MODELING_RULES_DIR,
+    NON_LETTERS_OR_NUMBERS_PATTERN,
+    OFFICIAL_CONTENT_GRAPH_PATH,
+    OFFICIAL_CONTENT_ID_SET_PATH,
+    OFFICIAL_INDEX_JSON_PATH,
+    PACK_METADATA_IRON_BANK_TAG,
+    PACKAGE_SUPPORTING_DIRECTORIES,
+    PACKAGE_YML_FILE_REGEX,
+    PACKS_DIR,
+    PACKS_DIR_REGEX,
+    PACKS_PACK_IGNORE_FILE_NAME,
+    PACKS_PACK_META_FILE_NAME,
+    PACKS_README_FILE_NAME,
+    PARSING_RULES_DIR,
+    PLAYBOOKS_DIR,
+    PRE_PROCESS_RULES_DIR,
+    RELEASE_NOTES_DIR,
+    RELEASE_NOTES_REGEX,
+    REPORTS_DIR,
+    SCRIPTS_DIR,
+    SIEM_ONLY_ENTITIES,
+    TEST_PLAYBOOKS_DIR,
+    TESTS_AND_DOC_DIRECTORIES,
+    TRIGGER_DIR,
+    TYPE_PWSH,
+    UNRELEASE_HEADER,
+    UUID_REGEX,
+    WIDGETS_DIR,
+    XDRC_TEMPLATE_DIR,
+    XSIAM_DASHBOARDS_DIR,
+    XSIAM_REPORTS_DIR,
+    XSOAR_CONFIG_FILE,
+    FileType,
+    IdSetKeys,
+    MarketplaceVersions,
+    urljoin,
+)
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
@@ -77,7 +119,7 @@ class TagParser:
     def __init__(self, tag_prefix: str, tag_suffix: str, remove_tag_text: bool = True):
         self._tag_prefix = tag_prefix
         self._tag_suffix = tag_suffix
-        self._pattern = re.compile(fr'{tag_prefix}((.|\s)+?){tag_suffix}')
+        self._pattern = re.compile(rf"{tag_prefix}((.|\s)+?){tag_suffix}")
         self._remove_tag_text = remove_tag_text
 
     def parse(self, text: str, remove_tag: Optional[bool] = None) -> str:
@@ -91,12 +133,14 @@ class TagParser:
             Text with no wrapper tags.
         """
         if text and 0 <= text.find(self._tag_prefix) < text.find(self._tag_suffix):
-            remove_tag = remove_tag if isinstance(remove_tag, bool) else self._remove_tag_text
+            remove_tag = (
+                remove_tag if isinstance(remove_tag, bool) else self._remove_tag_text
+            )
             # collect {orignal_text: text_to_replace}
             matches = re.finditer(self._pattern, text)
             replace_map = {}
             for match in matches:
-                replace_val = '' if remove_tag else match.group(1)
+                replace_val = "" if remove_tag else match.group(1)
                 replace_map[re.escape(match.group())] = replace_val
 
             # replace collected text->replacement
@@ -106,14 +150,14 @@ class TagParser:
 
 
 class MarketplaceTagParser:
-    XSOAR_PREFIX = '<~XSOAR>\n'
-    XSOAR_SUFFIX = '\n</~XSOAR>\n'
-    XSOAR_INLINE_PREFIX = '<~XSOAR>'
-    XSOAR_INLINE_SUFFIX = '</~XSOAR>'
-    XSIAM_PREFIX = '<~XSIAM>\n'
-    XSIAM_SUFFIX = '\n</~XSIAM>\n'
-    XSIAM_INLINE_PREFIX = '<~XSIAM>'
-    XSIAM_INLINE_SUFFIX = '</~XSIAM>'
+    XSOAR_PREFIX = "<~XSOAR>\n"
+    XSOAR_SUFFIX = "\n</~XSOAR>\n"
+    XSOAR_INLINE_PREFIX = "<~XSOAR>"
+    XSOAR_INLINE_SUFFIX = "</~XSOAR>"
+    XSIAM_PREFIX = "<~XSIAM>\n"
+    XSIAM_SUFFIX = "\n</~XSIAM>\n"
+    XSIAM_INLINE_PREFIX = "<~XSIAM>"
+    XSIAM_INLINE_SUFFIX = "</~XSIAM>"
 
     def __init__(self, marketplace: str = MarketplaceVersions.XSOAR.value):
         self.marketplace = marketplace
@@ -142,7 +186,9 @@ class MarketplaceTagParser:
     def marketplace(self, marketplace):
         self._marketplace = marketplace
         self._should_remove_xsoar_text = marketplace != MarketplaceVersions.XSOAR.value
-        self._should_remove_xsiam_text = marketplace != MarketplaceVersions.MarketplaceV2.value
+        self._should_remove_xsiam_text = (
+            marketplace != MarketplaceVersions.MarketplaceV2.value
+        )
 
     def parse_text(self, text):
         # the order of parse is important. inline should always be checked after paragraph tag
@@ -166,20 +212,28 @@ MARKETPLACE_TAG_PARSER = None
 
 LOG_VERBOSE = False
 
-LAYOUT_CONTAINER_FIELDS = {'details', 'detailsV2', 'edit', 'close', 'mobile', 'quickView', 'indicatorsQuickView',
-                           'indicatorsDetails'}
-SDK_PYPI_VERSION = r'https://pypi.org/pypi/demisto-sdk/json'
+LAYOUT_CONTAINER_FIELDS = {
+    "details",
+    "detailsV2",
+    "edit",
+    "close",
+    "mobile",
+    "quickView",
+    "indicatorsQuickView",
+    "indicatorsDetails",
+}
+SDK_PYPI_VERSION = r"https://pypi.org/pypi/demisto-sdk/json"
 
-SUFFIX_TO_REMOVE = ('_dev', '_copy')
+SUFFIX_TO_REMOVE = ("_dev", "_copy")
 
 
 def generate_xsiam_normalized_name(file_name, prefix):
-    if file_name.startswith(f'external-{prefix}-'):
+    if file_name.startswith(f"external-{prefix}-"):
         return file_name
-    elif file_name.startswith(f'{prefix}-'):
-        return file_name.replace(f'{prefix}-', f'external-{prefix}-')
+    elif file_name.startswith(f"{prefix}-"):
+        return file_name.replace(f"{prefix}-", f"external-{prefix}-")
     else:
-        return f'external-{prefix}-{file_name}'
+        return f"external-{prefix}-{file_name}"
 
 
 def set_log_verbose(verbose: bool):
@@ -195,11 +249,12 @@ def get_mp_tag_parser():
     global MARKETPLACE_TAG_PARSER
     if MARKETPLACE_TAG_PARSER is None:
         MARKETPLACE_TAG_PARSER = MarketplaceTagParser(
-            os.getenv(ENV_DEMISTO_SDK_MARKETPLACE, MarketplaceVersions.XSOAR.value))
+            os.getenv(ENV_DEMISTO_SDK_MARKETPLACE, MarketplaceVersions.XSOAR.value)
+        )
     return MARKETPLACE_TAG_PARSER
 
 
-def get_yml_paths_in_dir(project_dir: str, error_msg: str = '') -> Tuple[list, str]:
+def get_yml_paths_in_dir(project_dir: str, error_msg: str = "") -> Tuple[list, str]:
     """
     Gets the project directory and returns the path of the first yml file in that directory
     :param project_dir: string path to the project_dir
@@ -207,20 +262,25 @@ def get_yml_paths_in_dir(project_dir: str, error_msg: str = '') -> Tuple[list, s
     :return: first returned argument is the list of all yml files paths in the directory, second returned argument is a
     string path to the first yml file in project_dir
     """
-    yml_files = glob.glob(os.path.join(project_dir, '*.yml'))
+    yml_files = glob.glob(os.path.join(project_dir, "*.yml"))
     if not yml_files:
         if error_msg:
             print(error_msg)
-        return [], ''
+        return [], ""
     return yml_files, yml_files[0]
 
 
 # print srt in the given color
 def print_color(obj, color):
-    print(f'{color}{obj}{LOG_COLORS.NATIVE}')
+    print(f"{color}{obj}{LOG_COLORS.NATIVE}")
 
 
-def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = True) -> list:
+def get_files_in_dir(
+    project_dir: str,
+    file_endings: list,
+    recursive: bool = True,
+    ignore_test_files: bool = False,
+) -> list:
     """
     Gets the project directory and returns the path of all yml, json and py files in it
     Args:
@@ -230,25 +290,31 @@ def get_files_in_dir(project_dir: str, file_endings: list, recursive: bool = Tru
     :return: The path of files with file_endings in the current dir
     """
     files = []
+    excludes = []
+
     project_path = Path(project_dir)
     glob_function = project_path.rglob if recursive else project_path.glob
     for file_type in file_endings:
+        pattern = f"*.{file_type}"
         if project_dir.endswith(file_type):
             return [project_dir]
-        files.extend([str(f) for f in glob_function(f'*.{file_type}')])
-    return files
+        if ignore_test_files:
+            for test_dir in TESTS_AND_DOC_DIRECTORIES:
+                exclude_pattern = f"**/{test_dir}/" + pattern
+                excludes.extend([str(f) for f in glob_function(exclude_pattern)])
+        files.extend([str(f) for f in glob_function(pattern)])
+    return list(set(files) - set(excludes))
 
 
 def src_root() -> Path:
-    """ Demisto-sdk absolute path from src root.
+    """Demisto-sdk absolute path from src root.
 
     Returns:
         Path: src root path.
     """
-    git_dir = git.Repo(Path.cwd(),
-                       search_parent_directories=True).working_tree_dir
+    git_dir = git.Repo(Path.cwd(), search_parent_directories=True).working_tree_dir
 
-    return Path(git_dir) / 'demisto_sdk'  # type: ignore
+    return Path(git_dir) / "demisto_sdk"  # type: ignore
 
 
 def print_error(error_str):
@@ -276,23 +342,28 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
         string. The output of the command you are trying to execute.
     """
     if is_silenced:
-        p = Popen(command.split(), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=cwd)
+        p = Popen(
+            command.split(), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=cwd
+        )
     else:
         p = Popen(command.split(), cwd=cwd)  # type: ignore
 
     output, err = p.communicate()
     if err:
         if exit_on_error:
-            print_error(f'Failed to run command {command}\nerror details:\n{err}')
+            print_error(f"Failed to run command {command}\nerror details:\n{err}")
             sys.exit(1)
         else:
-            raise RuntimeError(f'Failed to run command {command}\nerror details:\n{err}')
+            raise RuntimeError(
+                f"Failed to run command {command}\nerror details:\n{err}"
+            )
 
     return output
 
 
 core_pack_list: Optional[
-    list] = None  # Initiated in get_core_pack_list function. Here to create a "cached" core_pack_list
+    list
+] = None  # Initiated in get_core_pack_list function. Here to create a "cached" core_pack_list
 
 
 @lru_cache(maxsize=128)
@@ -306,16 +377,26 @@ def get_core_pack_list() -> list:
     if isinstance(core_pack_list, list):
         return core_pack_list
     if not is_external_repository():
-        core_pack_list = get_remote_file(
-            'Tests/Marketplace/core_packs_list.json',
-            git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
-                                                git_provider=GitProvider.GitHub)
-        ) or []
-        core_pack_list.extend(get_remote_file(
-            'Tests/Marketplace/core_packs_mpv2_list.json',
-            git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
-                                                git_provider=GitProvider.GitHub)
-        ) or [])
+        core_pack_list = (
+            get_remote_file(
+                "Tests/Marketplace/core_packs_list.json",
+                git_content_config=GitContentConfig(
+                    repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
+                    git_provider=GitProvider.GitHub,
+                ),
+            )
+            or []
+        )
+        core_pack_list.extend(
+            get_remote_file(
+                "Tests/Marketplace/core_packs_mpv2_list.json",
+                git_content_config=GitContentConfig(
+                    repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
+                    git_provider=GitProvider.GitHub,
+                ),
+            )
+            or []
+        )
         core_pack_list = list(set(core_pack_list))
     else:
         # no core packs in external repos.
@@ -324,11 +405,13 @@ def get_core_pack_list() -> list:
 
 
 def get_local_remote_file(
-        full_file_path: str,
-        tag: str = 'master',
-        return_content: bool = False,
+    full_file_path: str,
+    tag: str = "master",
+    return_content: bool = False,
 ):
-    repo = git.Repo(search_parent_directories=True)  # the full file path could be a git file path
+    repo = git.Repo(
+        search_parent_directories=True
+    )  # the full file path could be a git file path
     repo_git_util = GitUtil(repo)
     git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
     file_content = repo_git_util.get_local_remote_file_content(git_path)
@@ -340,17 +423,19 @@ def get_local_remote_file(
 
 
 def get_remote_file_from_api(
-        full_file_path: str,
-        git_content_config: Optional[GitContentConfig],
-        tag: str = 'master',
-        return_content: bool = False,
-        suppress_print: bool = False,
+    full_file_path: str,
+    git_content_config: Optional[GitContentConfig],
+    tag: str = "master",
+    return_content: bool = False,
+    suppress_print: bool = False,
 ):
     if not git_content_config:
         git_content_config = GitContentConfig()
     if git_content_config.git_provider == GitProvider.GitLab:
         full_file_path_quote_plus = urllib.parse.quote_plus(full_file_path)
-        git_path = urljoin(git_content_config.base_api, 'files', full_file_path_quote_plus, 'raw')
+        git_path = urljoin(
+            git_content_config.base_api, "files", full_file_path_quote_plus, "raw"
+        )
     else:  # github
         git_path = urljoin(git_content_config.base_api, tag, full_file_path)
 
@@ -360,45 +445,53 @@ def get_remote_file_from_api(
         github_token = git_content_config.CREDENTIALS.github_token
         gitlab_token = git_content_config.CREDENTIALS.gitlab_token
         if git_content_config.git_provider == GitProvider.GitLab:
-            res = requests.get(git_path,
-                               params={'ref': tag},
-                               headers={'PRIVATE-TOKEN': gitlab_token},
-                               verify=False)
+            res = requests.get(
+                git_path,
+                params={"ref": tag},
+                headers={"PRIVATE-TOKEN": gitlab_token},
+                verify=False,
+            )
             res.raise_for_status()
         else:  # Github
-            res = requests.get(git_path, verify=False, timeout=10, headers={
-                'Authorization': f"Bearer {github_token}" if github_token else '',
-                'Accept': f'application/vnd.github.VERSION.raw',
-            })  # Sometime we need headers
+            res = requests.get(
+                git_path,
+                verify=False,
+                timeout=10,
+                headers={
+                    "Authorization": f"Bearer {github_token}" if github_token else "",
+                    "Accept": f"application/vnd.github.VERSION.raw",
+                },
+            )  # Sometime we need headers
             if not res.ok:  # sometime we need param token
                 res = requests.get(
-                    git_path,
-                    verify=False,
-                    timeout=10,
-                    params={'token': github_token}
+                    git_path, verify=False, timeout=10, params={"token": github_token}
                 )
 
         res.raise_for_status()
     except requests.exceptions.RequestException as exc:
         # Replace token secret if needed
-        err_msg: str = str(exc).replace(github_token, 'XXX') if github_token else str(exc)
-        err_msg = err_msg.replace(gitlab_token, 'XXX') if gitlab_token else err_msg
+        err_msg: str = (
+            str(exc).replace(github_token, "XXX") if github_token else str(exc)
+        )
+        err_msg = err_msg.replace(gitlab_token, "XXX") if gitlab_token else err_msg
         if not suppress_print:
             if is_external_repository():
                 click.secho(
                     f'You are working in a private repository: "{git_content_config.current_repository}".\n'
-                    f'The github/gitlab token in your environment is undefined.\n'
-                    f'Getting file from local repository instead. \n'
-                    f'If you wish to get the file from the remote repository, \n'
-                    f'Please define your github or gitlab token in your environment.\n'
-                    f'`export {GitContentConfig.CREDENTIALS.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n'
-                    f'export {GitContentConfig.CREDENTIALS.ENV_GITLAB_TOKEN_NAME}=<TOKEN>', fg='yellow'
+                    f"The github/gitlab token in your environment is undefined.\n"
+                    f"Getting file from local repository instead. \n"
+                    f"If you wish to get the file from the remote repository, \n"
+                    f"Please define your github or gitlab token in your environment.\n"
+                    f"`export {GitContentConfig.CREDENTIALS.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n"
+                    f"export {GitContentConfig.CREDENTIALS.ENV_GITLAB_TOKEN_NAME}=<TOKEN>",
+                    fg="yellow",
                 )
 
             click.secho(
                 f'Could not find the old entity file under "{git_path}".\n'
-                'please make sure that you did not break backward compatibility.\n'
-                f'Reason: {err_msg}', fg='yellow'
+                "please make sure that you did not break backward compatibility.\n"
+                f"Reason: {err_msg}",
+                fg="yellow",
             )
         return {}
     file_content = res.content
@@ -408,12 +501,12 @@ def get_remote_file_from_api(
 
 
 def get_file_details(
-        file_content,
-        full_file_path: str,
+    file_content,
+    full_file_path: str,
 ) -> Dict:
-    if full_file_path.endswith('json'):
+    if full_file_path.endswith("json"):
         file_details = json.loads(file_content)
-    elif full_file_path.endswith('yml'):
+    elif full_file_path.endswith("yml"):
         file_details = yaml.load(file_content)
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
@@ -423,11 +516,11 @@ def get_file_details(
 
 @lru_cache(maxsize=128)
 def get_remote_file(
-        full_file_path: str,
-        tag: str = 'master',
-        return_content: bool = False,
-        suppress_print: bool = False,
-        git_content_config: Optional[GitContentConfig] = None,
+    full_file_path: str,
+    tag: str = "master",
+    return_content: bool = False,
+    suppress_print: bool = False,
+    git_content_config: Optional[GitContentConfig] = None,
 ):
     """
     Args:
@@ -440,18 +533,22 @@ def get_remote_file(
         The file content in the required format.
 
     """
-    tag = tag.replace('origin/', '').replace('demisto/', '')
+    tag = tag.replace("origin/", "").replace("demisto/", "")
     if not git_content_config:
         try:
             return get_local_remote_file(full_file_path, tag, return_content)
         except Exception as e:
             if not suppress_print:
-                click.secho(f"Could not get local remote file because of: {str(e)}\n"
-                            f"Searching the remote file content with the API.")
-    return get_remote_file_from_api(full_file_path, git_content_config, tag, return_content, suppress_print)
+                click.secho(
+                    f"Could not get local remote file because of: {str(e)}\n"
+                    f"Searching the remote file content with the API."
+                )
+    return get_remote_file_from_api(
+        full_file_path, git_content_config, tag, return_content, suppress_print
+    )
 
 
-def filter_files_on_pack(pack: str, file_paths_list='') -> set:
+def filter_files_on_pack(pack: str, file_paths_list="") -> set:
     """
     filter_files_changes_on_pack.
 
@@ -468,7 +565,7 @@ def filter_files_on_pack(pack: str, file_paths_list='') -> set:
     return files_paths_on_pack
 
 
-def filter_packagify_changes(modified_files, added_files, removed_files, tag='master'):
+def filter_packagify_changes(modified_files, added_files, removed_files, tag="master"):
     """
     Mark scripts/integrations that were removed and added as modified.
 
@@ -487,11 +584,13 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
                 continue
             details = get_remote_file(file_path, tag)
             if details:
-                uniq_identifier = '_'.join([
-                    details['name'],
-                    details.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION),
-                    details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)
-                ])
+                uniq_identifier = "_".join(
+                    [
+                        details["name"],
+                        details.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION),
+                        details.get("toversion", DEFAULT_CONTENT_ITEM_TO_VERSION),
+                    ]
+                )
                 packagify_diff[uniq_identifier] = file_path
 
     updated_added_files = set()
@@ -503,11 +602,13 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
             with open(file_path) as f:
                 details = yaml.load(f)
 
-            uniq_identifier = '_'.join([
-                details['name'],
-                details.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION),
-                details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)
-            ])
+            uniq_identifier = "_".join(
+                [
+                    details["name"],
+                    details.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION),
+                    details.get("toversion", DEFAULT_CONTENT_ITEM_TO_VERSION),
+                ]
+            )
             if uniq_identifier in packagify_diff:
                 # if name appears as added and removed, this is packagify process - treat as modified.
                 removed_files.remove(packagify_diff[uniq_identifier])
@@ -531,8 +632,9 @@ def get_child_directories(directory):
     if not os.path.isdir(directory):
         return []
     child_directories = [
-        os.path.join(directory, path) for
-        path in os.listdir(directory) if os.path.isdir(os.path.join(directory, path))
+        os.path.join(directory, path)
+        for path in os.listdir(directory)
+        if os.path.isdir(os.path.join(directory, path))
     ]
     return child_directories
 
@@ -542,8 +644,9 @@ def get_child_files(directory):
     if not os.path.isdir(directory):
         return []
     child_files = [
-        os.path.join(directory, path) for
-        path in os.listdir(directory) if os.path.isfile(os.path.join(directory, path))
+        os.path.join(directory, path)
+        for path in os.listdir(directory)
+        if os.path.isfile(os.path.join(directory, path))
     ]
     return child_files
 
@@ -555,7 +658,7 @@ def has_remote_configured():
     opposed to the master branch of the fork.
     :return: bool : True if remote is configured, False if not.
     """
-    remotes = run_command('git remote -v')
+    remotes = run_command("git remote -v")
     if re.search(GitContentConfig.CONTENT_GITHUB_UPSTREAM, remotes):
         return True
     else:
@@ -568,7 +671,7 @@ def is_origin_content_repo():
     validation needs to be ran against the origin master branch or the upstream master branch
     :return: bool : True if remote is configured, False if not.
     """
-    remotes = run_command('git remote -v')
+    remotes = run_command("git remote -v")
     if re.search(GitContentConfig.CONTENT_GITHUB_ORIGIN, remotes):
         return True
     else:
@@ -582,21 +685,26 @@ def get_last_remote_release_version():
     :return: tag
     """
     if not os.environ.get(
-            'CI'):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment variable
+        "CI"
+    ):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment variable
         try:
             pypi_request = requests.get(SDK_PYPI_VERSION, verify=False, timeout=5)
             pypi_request.raise_for_status()
             pypi_json = pypi_request.json()
-            version = pypi_json.get('info', {}).get('version', '')
+            version = pypi_json.get("info", {}).get("version", "")
             return version
         except Exception as exc:
             exc_msg = str(exc)
             if isinstance(exc, requests.exceptions.ConnectionError):
-                exc_msg = f'{exc_msg[exc_msg.find(">") + 3:-3]}.\n' \
-                          f'This may happen if you are not connected to the internet.'
-            print_warning(f'Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}')
+                exc_msg = (
+                    f'{exc_msg[exc_msg.find(">") + 3:-3]}.\n'
+                    f"This may happen if you are not connected to the internet."
+                )
+            print_warning(
+                f"Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}"
+            )
 
-    return ''
+    return ""
 
 
 def _read_file(file_path: Path) -> str:
@@ -609,7 +717,7 @@ def _read_file(file_path: Path) -> str:
         str: file contents
     """
     try:
-        return file_path.read_text(encoding='utf8')
+        return file_path.read_text(encoding="utf8")
 
     except UnicodeDecodeError:
         try:
@@ -634,14 +742,18 @@ def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool =
     if type_of_file in file_path.suffix:  # e.g. 'yml' in '.yml'
         file_content = _read_file(file_path)
         try:
-            if type_of_file in ('yml', '.yml'):
-                replaced = re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
+            if type_of_file in ("yml", ".yml"):
+                replaced = re.sub(
+                    r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content
+                )
                 result = yaml.load(io.StringIO(replaced))
             else:
                 result = json.load(io.StringIO(file_content))
 
         except Exception as e:
-            raise ValueError(f"{file_path} has a structure issue of file type {type_of_file}\n{e}")
+            raise ValueError(
+                f"{file_path} has a structure issue of file type {type_of_file}\n{e}"
+            )
 
         if isinstance(result, (dict, list)):
             return result
@@ -649,28 +761,33 @@ def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool =
 
 
 def get_yaml(file_path, cache_clear=False):
-    return get_file(file_path, 'yml', clear_cache=cache_clear)
+    return get_file(file_path, "yml", clear_cache=cache_clear)
 
 
 def get_json(file_path, cache_clear=False):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, 'json', clear_cache=cache_clear)
+    return get_file(file_path, "json", clear_cache=cache_clear)
 
 
 def get_script_or_integration_id(file_path):
     data_dictionary = get_yaml(file_path)
 
     if data_dictionary:
-        commonfields = data_dictionary.get('commonfields', {})
-        return commonfields.get('id', ['-', ])
+        commonfields = data_dictionary.get("commonfields", {})
+        return commonfields.get(
+            "id",
+            [
+                "-",
+            ],
+        )
 
 
 def get_api_module_integrations_set(changed_api_modules: Set, integration_set: Set):
     integrations_set = list()
     for integration in integration_set:
         integration_data = list(integration.values())[0]
-        if changed_api_modules & set(integration_data.get('api_modules', [])):
+        if changed_api_modules & set(integration_data.get("api_modules", [])):
             integrations_set.append(integration_data)
     return integrations_set
 
@@ -681,9 +798,9 @@ def get_api_module_ids(file_list) -> Set:
     if file_list:
         for pf in file_list:
             parent = pf
-            while f'/{API_MODULES_PACK}/Scripts/' in parent:
+            while f"/{API_MODULES_PACK}/Scripts/" in parent:
                 parent = get_parent_directory_name(parent, abs_path=True)
-                if f'/{API_MODULES_PACK}/Scripts/' in parent:
+                if f"/{API_MODULES_PACK}/Scripts/" in parent:
                     pf = parent
             if parent != pf:
                 api_module_set.add(os.path.basename(pf))
@@ -699,15 +816,17 @@ def get_entity_id_by_entity_type(data: dict, content_entity: str):
     """
     try:
         if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
-            return data.get('commonfields', {}).get('id', '')
+            return data.get("commonfields", {}).get("id", "")
         elif content_entity == LAYOUTS_DIR:
-            return data.get('typeId', '')
+            return data.get("typeId", "")
         else:
-            return data.get('id', '')
+            return data.get("id", "")
 
     except AttributeError:
-        raise ValueError(f"Could not retrieve id from file of type {content_entity} - make sure the file structure is "
-                         f"valid")
+        raise ValueError(
+            f"Could not retrieve id from file of type {content_entity} - make sure the file structure is "
+            f"valid"
+        )
 
 
 def get_entity_name_by_entity_type(data: dict, content_entity: str):
@@ -719,15 +838,16 @@ def get_entity_name_by_entity_type(data: dict, content_entity: str):
     """
     try:
         if content_entity == LAYOUTS_DIR:
-            if 'typeId' in data:
-                return data.get('typeId', '')
-            return data.get('name', '')  # for layoutscontainer
-        return data.get('name', '')
+            if "typeId" in data:
+                return data.get("typeId", "")
+            return data.get("name", "")  # for layoutscontainer
+        return data.get("name", "")
 
     except AttributeError:
         raise ValueError(
             f"Could not retrieve name from file of type {content_entity} - make sure the file structure is "
-            f"valid")
+            f"valid"
+        )
 
 
 def collect_ids(file_path):
@@ -735,37 +855,48 @@ def collect_ids(file_path):
     data_dictionary = get_yaml(file_path)
 
     if data_dictionary:
-        return data_dictionary.get('id', '-')
+        return data_dictionary.get("id", "-")
 
 
 def get_from_version(file_path):
-    data_dictionary = get_yaml(file_path) if file_path.endswith('yml') else get_json(file_path)
+    data_dictionary = (
+        get_yaml(file_path) if file_path.endswith("yml") else get_json(file_path)
+    )
 
     if data_dictionary:
-        from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary \
-            else data_dictionary.get('fromVersion', '')
+        from_version = (
+            data_dictionary.get("fromversion")
+            if "fromversion" in data_dictionary
+            else data_dictionary.get("fromVersion", "")
+        )
 
         if not from_version:
-            logging.warning(f'fromversion/fromVersion was not found in {data_dictionary.get("id", "")}')
-            return ''
+            logging.warning(
+                f'fromversion/fromVersion was not found in {data_dictionary.get("id", "")}'
+            )
+            return ""
 
-        if not re.match(r'^\d{1,2}\.\d{1,2}\.\d{1,2}$', from_version):
-            raise ValueError(f'{file_path} fromversion is invalid "{from_version}". '
-                             'Should be of format: "x.x.x". for example: "4.5.0"')
+        if not re.match(r"^\d{1,2}\.\d{1,2}\.\d{1,2}$", from_version):
+            raise ValueError(
+                f'{file_path} fromversion is invalid "{from_version}". '
+                'Should be of format: "x.x.x". for example: "4.5.0"'
+            )
 
         return from_version
 
-    return ''
+    return ""
 
 
 def get_to_version(file_path):
     data_dictionary = get_yaml(file_path)
 
     if data_dictionary:
-        to_version = data_dictionary.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)
-        if not re.match(r'^\d{1,2}\.\d{1,2}\.\d{1,2}$', to_version):
-            raise ValueError(f'{file_path} toversion is invalid "{to_version}". '
-                             'Should be of format: "x.x.x". for example: "4.5.0"')
+        to_version = data_dictionary.get("toversion", DEFAULT_CONTENT_ITEM_TO_VERSION)
+        if not re.match(r"^\d{1,2}\.\d{1,2}\.\d{1,2}$", to_version):
+            raise ValueError(
+                f'{file_path} toversion is invalid "{to_version}". '
+                'Should be of format: "x.x.x". for example: "4.5.0"'
+            )
 
         return to_version
 
@@ -775,20 +906,20 @@ def get_to_version(file_path):
 def str2bool(v):
     if isinstance(v, bool):
         return v
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+    if v.lower() in ("yes", "true", "t", "y", "1"):
         return True
 
-    if v.lower() in ('no', 'false', 'f', 'n', '0'):
+    if v.lower() in ("no", "false", "f", "n", "0"):
         return False
 
-    raise argparse.ArgumentTypeError('Boolean value expected.')
+    raise argparse.ArgumentTypeError("Boolean value expected.")
 
 
 def to_dict(obj):
     if isinstance(obj, Enum):
         return obj.name
 
-    if not hasattr(obj, '__dict__'):
+    if not hasattr(obj, "__dict__"):
         return obj
 
     result = {}
@@ -812,15 +943,15 @@ def old_get_release_notes_file_path(file_path):
 
     # CHANGELOG in pack sub dirs
     if re.match(PACKAGE_YML_FILE_REGEX, file_path):
-        return os.path.join(dir_name, 'CHANGELOG.md')
+        return os.path.join(dir_name, "CHANGELOG.md")
 
     # We got the CHANGELOG file to get its release notes
-    if file_path.endswith('CHANGELOG.md'):
+    if file_path.endswith("CHANGELOG.md"):
         return file_path
 
     # outside of packages, change log file will include the original file name.
     file_name = os.path.basename(file_path)
-    return os.path.join(dir_name, os.path.splitext(file_name)[0] + '_CHANGELOG.md')
+    return os.path.join(dir_name, os.path.splitext(file_name)[0] + "_CHANGELOG.md")
 
 
 def old_get_latest_release_notes_text(rn_path):
@@ -840,7 +971,7 @@ def old_get_latest_release_notes_text(rn_path):
         # get release notes up to release header
         new_rn = new_rn[0].rstrip()
     else:
-        new_rn = rn.replace(UNRELEASE_HEADER, '')  # type: ignore
+        new_rn = rn.replace(UNRELEASE_HEADER, "")  # type: ignore
 
     return new_rn if new_rn else None
 
@@ -856,16 +987,18 @@ def get_release_notes_file_path(file_path):
         print_warning("Release notes were not found.")
         return None
     else:
-        if bool(re.search(r'\d{1,2}_\d{1,2}_\d{1,2}\.md', file_path)):
+        if bool(re.search(r"\d{1,2}_\d{1,2}_\d{1,2}\.md", file_path)):
             return file_path
         else:
-            print_warning(f'Unsupported file type found in ReleaseNotes directory - {file_path}')
+            print_warning(
+                f"Unsupported file type found in ReleaseNotes directory - {file_path}"
+            )
             return None
 
 
 def get_latest_release_notes_text(rn_path):
     if rn_path is None:
-        print_warning('Path to release notes not found.')
+        print_warning("Path to release notes not found.")
         rn = None
     else:
         try:
@@ -873,10 +1006,12 @@ def get_latest_release_notes_text(rn_path):
                 rn = f.read()
 
             if not rn:
-                print_error(f'Release Notes may not be empty. Please fill out correctly. - {rn_path}')
+                print_error(
+                    f"Release Notes may not be empty. Please fill out correctly. - {rn_path}"
+                )
                 return None
         except OSError:
-            return ''
+            return ""
 
     return rn if rn else None
 
@@ -893,11 +1028,11 @@ def format_version(version):
     """
     formatted_version = version
     if not version:
-        formatted_version = '0.0.0'
-    elif len(version.split('.')) == 1:
-        formatted_version = f'{version}.0.0'
-    elif len(version.split('.')) == 2:
-        formatted_version = f'{version}.0'
+        formatted_version = "0.0.0"
+    elif len(version.split(".")) == 1:
+        formatted_version = f"{version}.0.0"
+    elif len(version.split(".")) == 2:
+        formatted_version = f"{version}.0"
 
     return formatted_version
 
@@ -982,7 +1117,9 @@ def add_default_pack_known_words(file_path):
     Returns: A list of all the Pack's content the doc_reviewer should ignore.
 
     """
-    default_pack_known_words = [get_pack_name(file_path), ]
+    default_pack_known_words = [
+        get_pack_name(file_path),
+    ]
     default_pack_known_words.extend(get_integration_name_and_command_names(file_path))
     default_pack_known_words.extend(get_scripts_names(file_path))
     return default_pack_known_words
@@ -1001,7 +1138,9 @@ def get_integration_name_and_command_names(file_path):
     Returns: (set) of all the commands and integrations names found.
 
     """
-    integrations_dir_path = os.path.join(PACKS_DIR, get_pack_name(file_path), INTEGRATIONS_DIR)
+    integrations_dir_path = os.path.join(
+        PACKS_DIR, get_pack_name(file_path), INTEGRATIONS_DIR
+    )
     command_names: Set[str] = set()
     if not glob.glob(integrations_dir_path):
         return command_names
@@ -1011,10 +1150,14 @@ def get_integration_name_and_command_names(file_path):
         for integration in found_integrations:
             command_names.add(integration)
 
-            integration_path_full = os.path.join(integrations_dir_path, integration, f'{integration}.yml')
+            integration_path_full = os.path.join(
+                integrations_dir_path, integration, f"{integration}.yml"
+            )
             yml_dict = get_yaml(integration_path_full)
-            commands = yml_dict.get("script", {}).get('commands', [])
-            command_names = command_names.union({command.get('name') for command in commands})
+            commands = yml_dict.get("script", {}).get("commands", [])
+            command_names = command_names.union(
+                {command.get("name") for command in commands}
+            )
 
     return command_names
 
@@ -1038,13 +1181,15 @@ def get_scripts_names(file_path):
     found_scripts: List[str] = os.listdir(scripts_dir_path)
     if found_scripts:
         for script in found_scripts:
-            if script.endswith('.md'):
+            if script.endswith(".md"):
                 continue  # in case the script is in the old version of CommonScripts - JS code, ignore the md file
-            elif script.endswith('.yml'):
+            elif script.endswith(".yml"):
                 # in case the script is in the old version of CommonScripts - JS code, only yml exists not in a dir
                 script_path_full = os.path.join(scripts_dir_path, script)
             else:
-                script_path_full = os.path.join(scripts_dir_path, script, f'{script}.yml')
+                script_path_full = os.path.join(
+                    scripts_dir_path, script, f"{script}.yml"
+                )
             try:
                 yml_dict = get_yaml(script_path_full)
                 scripts_names.add(yml_dict.get("name"))
@@ -1066,9 +1211,9 @@ def get_pack_name(file_path):
     """
     file_path = Path(file_path)
     parts = file_path.parts
-    if 'Packs' not in parts:
+    if "Packs" not in parts:
         return None
-    pack_name_index = parts.index('Packs') + 1
+    pack_name_index = parts.index("Packs") + 1
     if len(parts) <= pack_name_index:
         return None
     return parts[pack_name_index]
@@ -1139,8 +1284,8 @@ def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # 
     """
     for test_playbook_dict in test_playbooks_list:
         test_playbook_id = list(test_playbook_dict.keys())[0]
-        test_playbook_path = test_playbook_dict[test_playbook_id].get('file_path')
-        test_playbook_pack = test_playbook_dict[test_playbook_id].get('pack')
+        test_playbook_path = test_playbook_dict[test_playbook_id].get("file_path")
+        test_playbook_pack = test_playbook_dict[test_playbook_id].get("pack")
         if not test_playbook_path or not test_playbook_pack:
             continue
 
@@ -1149,7 +1294,9 @@ def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # 
     return None, None
 
 
-def get_ignore_pack_skipped_tests(pack_name: str, modified_packs: set, id_set: dict) -> set:
+def get_ignore_pack_skipped_tests(
+    pack_name: str, modified_packs: set, id_set: dict
+) -> set:
     """
     Retrieve the skipped tests of a given pack, as detailed in the .pack-ignore file
 
@@ -1170,7 +1317,7 @@ def get_ignore_pack_skipped_tests(pack_name: str, modified_packs: set, id_set: d
         modified_packs = {pack_name}
     ignored_tests_set = set()
     file_name_to_ignore_dict: Dict[str, List[str]] = {}
-    test_playbooks = id_set.get('TestPlaybooks', {})
+    test_playbooks = id_set.get("TestPlaybooks", {})
 
     pack_ignore_path = get_pack_ignore_file_path(pack_name)
     if pack_name in modified_packs:
@@ -1186,14 +1333,16 @@ def get_ignore_pack_skipped_tests(pack_name: str, modified_packs: set, id_set: d
                         # given section is of type file
                         file_name: str = section[5:]
                         for key in config[section]:
-                            if key == 'ignore':
+                            if key == "ignore":
                                 # group ignore codes to a list
-                                file_name_to_ignore_dict[file_name] = str(config[section][key]).split(',')
+                                file_name_to_ignore_dict[file_name] = str(
+                                    config[section][key]
+                                ).split(",")
             except MissingSectionHeaderError:
                 pass
 
     for file_name, ignore_list in file_name_to_ignore_dict.items():
-        if any(ignore_code == 'auto-test' for ignore_code in ignore_list):
+        if any(ignore_code == "auto-test" for ignore_code in ignore_list):
             test_id, test_pack = get_test_playbook_id(test_playbooks, file_name)
             if test_id:
                 ignored_tests_set.add(test_id)
@@ -1211,13 +1360,13 @@ def get_all_docker_images(script_obj) -> List[str]:
     """
     # this makes sure the first docker in the list is the main docker image.
     def_docker_image = DEF_DOCKER
-    if script_obj.get('type') == TYPE_PWSH:
+    if script_obj.get("type") == TYPE_PWSH:
         def_docker_image = DEF_DOCKER_PWSH
-    imgs = [script_obj.get('dockerimage') or def_docker_image]
+    imgs = [script_obj.get("dockerimage") or def_docker_image]
 
     # get additional docker images
     for key in script_obj.keys():
-        if 'dockerimage' in key and key != 'dockerimage':
+        if "dockerimage" in key and key != "dockerimage":
             if isinstance(script_obj.get(key), str):
                 imgs.append(script_obj.get(key))
 
@@ -1240,17 +1389,30 @@ def get_python_version(docker_image, log_verbose=None, no_prints=False):
     if log_verbose is None:
         log_verbose = LOG_VERBOSE
     stderr_out = None if log_verbose else DEVNULL
-    py_ver = check_output(["docker", "run", "--rm", docker_image,
-                           "python", "-c",
-                           "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))"],
-                          text=True, stderr=stderr_out).strip()
+    py_ver = check_output(
+        [
+            "docker",
+            "run",
+            "--rm",
+            docker_image,
+            "python",
+            "-c",
+            "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))",
+        ],
+        text=True,
+        stderr=stderr_out,
+    ).strip()
     if not no_prints:
         print(f"Detected python version: [{py_ver}] for docker image: {docker_image}")
 
     py_num = float(py_ver)
     if py_num < 2.7 or (3 < py_num < 3.4):  # pylint can only work on python 3.4 and up
-        raise ValueError("Python vesion for docker image: {} is not supported: {}. "
-                         "We only support python 2.7.* and python3 >= 3.4.".format(docker_image, py_num))
+        raise ValueError(
+            "Python vesion for docker image: {} is not supported: {}. "
+            "We only support python 2.7.* and python3 >= 3.4.".format(
+                docker_image, py_num
+            )
+        )
     return py_num
 
 
@@ -1287,14 +1449,16 @@ def get_dev_requirements(py_version, envs_dirs_base):
     """
     env_dir = get_pipenv_dir(py_version, envs_dirs_base)
     stderr_out = None if LOG_VERBOSE else DEVNULL
-    requirements = check_output(['pipenv', 'lock', '-r', '-d'], cwd=env_dir, text=True,
-                                stderr=stderr_out)
+    requirements = check_output(
+        ["pipenv", "lock", "-r", "-d"], cwd=env_dir, text=True, stderr=stderr_out
+    )
     print_v(f"dev requirements:\n{requirements}")
     return requirements
 
 
-def get_dict_from_file(path: str,
-                       raises_error: bool = True, clear_cache: bool = False) -> Tuple[Dict, Union[str, None]]:
+def get_dict_from_file(
+    path: str, raises_error: bool = True, clear_cache: bool = False
+) -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
 
@@ -1308,18 +1472,18 @@ def get_dict_from_file(path: str,
     """
     try:
         if path:
-            if path.endswith('.yml'):
-                return get_yaml(path, cache_clear=clear_cache), 'yml'
-            elif path.endswith('.json'):
+            if path.endswith(".yml"):
+                return get_yaml(path, cache_clear=clear_cache), "yml"
+            elif path.endswith(".json"):
                 res = get_json(path, cache_clear=clear_cache)
                 if isinstance(res, list) and len(res) == 1 and isinstance(res[0], dict):
-                    return res[0], 'json'
+                    return res[0], "json"
                 else:
-                    return res, 'json'
-            elif path.endswith('.py'):
-                return {}, 'py'
-            elif path.endswith('.xif'):
-                return {}, 'xif'
+                    return res, "json"
+            elif path.endswith(".py"):
+                return {}, "py"
+            elif path.endswith(".xif"):
+                return {}, "xif"
     except FileNotFoundError as e:
         if raises_error:
             raise
@@ -1328,7 +1492,7 @@ def get_dict_from_file(path: str,
 
 
 @lru_cache
-def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
+def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     """Find FileType value of a path, without accessing the file.
     This function is here as we want to implement lru_cache and we can do it on `find_type`
     as dict is not hashable.
@@ -1336,17 +1500,17 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     It's also theoretically faster, as files are not opened.
     """
     path = Path(path)
-    if path.suffix == '.md':
-        if 'README' in path.name:
+    if path.suffix == ".md":
+        if "README" in path.name:
             return FileType.README
         elif RELEASE_NOTES_DIR in path.parts:
             return FileType.RELEASE_NOTES
-        elif 'description' in path.name:
+        elif "description" in path.name:
             return FileType.DESCRIPTION
-        elif path.name.endswith('CHANGELOG.md'):
+        elif path.name.endswith("CHANGELOG.md"):
             return FileType.CHANGELOG
 
-    if path.suffix == '.json':
+    if path.suffix == ".json":
         if RELEASE_NOTES_DIR in path.parts:
             return FileType.RELEASE_NOTES_CONFIG
         elif LISTS_DIR in os.path.dirname(path):
@@ -1365,17 +1529,19 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.METADATA
         elif path.name.endswith(XSOAR_CONFIG_FILE):
             return FileType.XSOAR_CONFIG
-        elif 'CONTRIBUTORS' in path.name:
+        elif "CONTRIBUTORS" in path.name:
             return FileType.CONTRIBUTORS
         elif XDRC_TEMPLATE_DIR in path.parts:
             return FileType.XDRC_TEMPLATE
-        elif MODELING_RULES_DIR in path.parts and 'testdata' in path.stem.casefold():
+        elif MODELING_RULES_DIR in path.parts and "testdata" in path.stem.casefold():
             return FileType.MODELING_RULE_TEST_DATA
-        elif MODELING_RULES_DIR in path.parts and path.stem.casefold().endswith('_schema'):
+        elif MODELING_RULES_DIR in path.parts and path.stem.casefold().endswith(
+            "_schema"
+        ):
             return FileType.MODELING_RULE_SCHEMA
 
-    elif path.name.endswith('_image.png'):
-        if path.name.endswith('Author_image.png'):
+    elif path.name.endswith("_image.png"):
+        if path.name.endswith("Author_image.png"):
             return FileType.AUTHOR_IMAGE
         elif XSIAM_DASHBOARDS_DIR in path.parts:
             return FileType.XSIAM_DASHBOARD_IMAGE
@@ -1383,32 +1549,35 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.XSIAM_REPORT_IMAGE
         return FileType.IMAGE
 
-    elif path.suffix == '.png' and DOC_FILES_DIR in path.parts:
+    elif path.suffix == ".png" and DOC_FILES_DIR in path.parts:
         return FileType.DOC_IMAGE
 
-    elif path.suffix == '.ps1':
+    elif path.suffix == ".ps1":
         return FileType.POWERSHELL_FILE
 
-    elif path.suffix == '.py':
+    elif path.suffix == ".py":
         return FileType.PYTHON_FILE
 
-    elif path.suffix == '.js':
+    elif path.suffix == ".js":
         return FileType.JAVASCRIPT_FILE
 
-    elif path.suffix == '.xif':
+    elif path.suffix == ".xif":
         if MODELING_RULES_DIR in path.parts:
             return FileType.MODELING_RULE_XIF
         return FileType.XIF_FILE
 
-    elif path.suffix == '.yml':
-        if path.parts[0] in {'.circleci', '.gitlab'}:
+    elif path.suffix == ".yml":
+        if path.parts[0] in {".circleci", ".gitlab"}:
             return FileType.BUILD_CONFIG_FILE
 
-        elif path.parent.name == SCRIPTS_DIR and path.name.startswith('script-'):
+        elif path.parent.name == SCRIPTS_DIR and path.name.startswith("script-"):
             # Packs/myPack/Scripts/script-myScript.yml
             return FileType.SCRIPT
 
-        elif path.parent.parent.name == SCRIPTS_DIR and path.name == f'{path.parent.name}.yml':
+        elif (
+            path.parent.parent.name == SCRIPTS_DIR
+            and path.name == f"{path.parent.name}.yml"
+        ):
             # Packs/myPack/Scripts/myScript/myScript.yml
             return FileType.SCRIPT
 
@@ -1434,12 +1603,12 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
 
 
 def find_type(
-        path: str = '',
-        _dict=None,
-        file_type: Optional[str] = None,
-        ignore_sub_categories: bool = False,
-        ignore_invalid_schema_file: bool = False,
-        clear_cache: bool = False
+    path: str = "",
+    _dict=None,
+    file_type: Optional[str] = None,
+    ignore_sub_categories: bool = False,
+    ignore_invalid_schema_file: bool = False,
+    clear_cache: bool = False,
 ):
     """
     returns the content file type
@@ -1473,148 +1642,172 @@ def find_type(
             return None
         raise err
 
-    if file_type == 'yml' or path.lower().endswith('.yml'):
-        if 'category' in _dict:
-            if _dict.get('beta') and not ignore_sub_categories:
+    if file_type == "yml" or path.lower().endswith(".yml"):
+        if "category" in _dict:
+            if _dict.get("beta") and not ignore_sub_categories:
                 return FileType.BETA_INTEGRATION
 
             return FileType.INTEGRATION
 
-        if 'script' in _dict:
+        if "script" in _dict:
             if TEST_PLAYBOOKS_DIR in Path(path).parts and not ignore_sub_categories:
                 return FileType.TEST_SCRIPT
 
             return FileType.SCRIPT
 
-        if 'tasks' in _dict:
+        if "tasks" in _dict:
             if TEST_PLAYBOOKS_DIR in Path(path).parts:
                 return FileType.TEST_PLAYBOOK
 
             return FileType.PLAYBOOK
 
-        if 'rules' in _dict:
-            if 'samples' in _dict and PARSING_RULES_DIR in Path(path).parts:
+        if "rules" in _dict:
+            if "samples" in _dict and PARSING_RULES_DIR in Path(path).parts:
                 return FileType.PARSING_RULE
 
             if MODELING_RULES_DIR in Path(path).parts:
                 return FileType.MODELING_RULE
 
-        if 'global_rule_id' in _dict or (isinstance(_dict, CommentedSeq) and _dict and 'global_rule_id' in _dict[0]):
+        if "global_rule_id" in _dict or (
+            isinstance(_dict, CommentedSeq) and _dict and "global_rule_id" in _dict[0]
+        ):
             return FileType.CORRELATION_RULE
 
-    if file_type == 'json' or path.lower().endswith('.json'):
-        if path.lower().endswith('_schema.json') and MODELING_RULES_DIR in Path(path).parts:
+    if file_type == "json" or path.lower().endswith(".json"):
+        if (
+            path.lower().endswith("_schema.json")
+            and MODELING_RULES_DIR in Path(path).parts
+        ):
             return FileType.MODELING_RULE_SCHEMA
 
-        if 'widgetType' in _dict:
+        if "widgetType" in _dict:
             return FileType.WIDGET
 
-        if 'orientation' in _dict:
+        if "orientation" in _dict:
             return FileType.REPORT
 
-        if 'color' in _dict and 'cliName' not in _dict:
-            if 'definitionId' in _dict and _dict['definitionId'] and \
-                    _dict['definitionId'].lower() not in ['incident', 'indicator']:
+        if "color" in _dict and "cliName" not in _dict:
+            if (
+                "definitionId" in _dict
+                and _dict["definitionId"]
+                and _dict["definitionId"].lower() not in ["incident", "indicator"]
+            ):
                 return FileType.GENERIC_TYPE
             return FileType.INCIDENT_TYPE
 
         # 'regex' key can be found in new reputations files while 'reputations' key is for the old reputations
         # located in reputations.json file.
-        if 'regex' in _dict or 'reputations' in _dict:
+        if "regex" in _dict or "reputations" in _dict:
             return FileType.REPUTATION
 
-        if 'brandName' in _dict and 'transformer' in _dict:
+        if "brandName" in _dict and "transformer" in _dict:
             return FileType.OLD_CLASSIFIER
 
-        if ('transformer' in _dict and 'keyTypeMap' in _dict) or 'mapping' in _dict:
-            if _dict.get('type') and _dict.get('type') == 'classification':
+        if ("transformer" in _dict and "keyTypeMap" in _dict) or "mapping" in _dict:
+            if _dict.get("type") and _dict.get("type") == "classification":
                 return FileType.CLASSIFIER
-            elif _dict.get('type') and 'mapping' in _dict.get('type'):
+            elif _dict.get("type") and "mapping" in _dict.get("type"):
                 return FileType.MAPPER
             return None
 
-        if 'canvasContextConnections' in _dict:
+        if "canvasContextConnections" in _dict:
             return FileType.CONNECTION
 
-        if 'layout' in _dict or 'kind' in _dict:  # it's a Layout or Dashboard but not a Generic Object
-            if 'kind' in _dict or 'typeId' in _dict:
+        if (
+            "layout" in _dict or "kind" in _dict
+        ):  # it's a Layout or Dashboard but not a Generic Object
+            if "kind" in _dict or "typeId" in _dict:
                 return FileType.LAYOUT
 
             return FileType.DASHBOARD
 
-        if 'group' in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
+        if "group" in _dict and LAYOUT_CONTAINER_FIELDS.intersection(_dict):
             return FileType.LAYOUTS_CONTAINER
 
-        if 'scriptName' in _dict and 'existingEventsFilters' in _dict and 'readyExistingEventsFilters' in _dict and \
-                'newEventFilters' in _dict and 'readyNewEventFilters' in _dict:
+        if (
+            "scriptName" in _dict
+            and "existingEventsFilters" in _dict
+            and "readyExistingEventsFilters" in _dict
+            and "newEventFilters" in _dict
+            and "readyNewEventFilters" in _dict
+        ):
             return FileType.PRE_PROCESS_RULES
 
-        if 'allRead' in _dict and 'truncated' in _dict:
+        if "allRead" in _dict and "truncated" in _dict:
             return FileType.LISTS
 
-        if 'definitionIds' in _dict and 'views' in _dict:
+        if "definitionIds" in _dict and "views" in _dict:
             return FileType.GENERIC_MODULE
 
-        if 'auditable' in _dict:
+        if "auditable" in _dict:
             return FileType.GENERIC_DEFINITION
 
-        if isinstance(_dict, dict) and {'isAllFeeds', 'selectedFeeds', 'isFeed'}.issubset(_dict.keys()):
+        if isinstance(_dict, dict) and {
+            "isAllFeeds",
+            "selectedFeeds",
+            "isFeed",
+        }.issubset(_dict.keys()):
             return FileType.JOB
 
-        if isinstance(_dict, dict) and 'wizard' in _dict:
+        if isinstance(_dict, dict) and "wizard" in _dict:
             return FileType.WIZARD
 
-        if 'dashboards_data' in _dict:
+        if "dashboards_data" in _dict:
             return FileType.XSIAM_DASHBOARD
 
-        if 'templates_data' in _dict:
+        if "templates_data" in _dict:
             return FileType.XSIAM_REPORT
 
-        if 'trigger_id' in _dict:
+        if "trigger_id" in _dict:
             return FileType.TRIGGER
 
-        if 'profile_type' in _dict and 'yaml_template' in _dict:
+        if "profile_type" in _dict and "yaml_template" in _dict:
             return FileType.XDRC_TEMPLATE
 
         # When using it for all files validation- sometimes 'id' can be integer
-        if 'id' in _dict:
-            if isinstance(_dict['id'], str):
-                if 'definitionId' in _dict and _dict['definitionId'] and \
-                        _dict['definitionId'].lower() not in ['incident', 'indicator']:
+        if "id" in _dict:
+            if isinstance(_dict["id"], str):
+                if (
+                    "definitionId" in _dict
+                    and _dict["definitionId"]
+                    and _dict["definitionId"].lower() not in ["incident", "indicator"]
+                ):
                     return FileType.GENERIC_FIELD
-                _id = _dict['id'].lower()
-                if _id.startswith('incident'):
+                _id = _dict["id"].lower()
+                if _id.startswith("incident"):
                     return FileType.INCIDENT_FIELD
-                if _id.startswith('indicator'):
+                if _id.startswith("indicator"):
                     return FileType.INDICATOR_FIELD
             else:
-                print(f'The file {path} could not be recognized, please update the "id" to be a string')
+                print(
+                    f'The file {path} could not be recognized, please update the "id" to be a string'
+                )
 
     return None
 
 
 def get_common_server_path(env_dir):
     common_server_dir = get_common_server_dir(env_dir)
-    return os.path.join(common_server_dir, 'CommonServerPython.py')
+    return os.path.join(common_server_dir, "CommonServerPython.py")
 
 
 def get_common_server_path_pwsh(env_dir):
     common_server_dir = get_common_server_dir_pwsh(env_dir)
-    return os.path.join(common_server_dir, 'CommonServerPowerShell.ps1')
+    return os.path.join(common_server_dir, "CommonServerPowerShell.ps1")
 
 
 def _get_common_server_dir_general(env_dir, name):
-    common_server_pack_path = os.path.join(env_dir, 'Packs', 'Base', 'Scripts', name)
+    common_server_pack_path = os.path.join(env_dir, "Packs", "Base", "Scripts", name)
 
     return common_server_pack_path
 
 
 def get_common_server_dir(env_dir):
-    return _get_common_server_dir_general(env_dir, 'CommonServerPython')
+    return _get_common_server_dir_general(env_dir, "CommonServerPython")
 
 
 def get_common_server_dir_pwsh(env_dir):
-    return _get_common_server_dir_general(env_dir, 'CommonServerPowerShell')
+    return _get_common_server_dir_general(env_dir, "CommonServerPowerShell")
 
 
 def is_external_repository() -> bool:
@@ -1624,7 +1817,7 @@ def is_external_repository() -> bool:
     """
     try:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
-        private_settings_path = os.path.join(git_repo.working_dir, '.private-repo-settings')  # type: ignore
+        private_settings_path = os.path.join(git_repo.working_dir, ".private-repo-settings")  # type: ignore
         return os.path.exists(private_settings_path)
     except git.InvalidGitRepositoryError:
         return True
@@ -1635,34 +1828,64 @@ def get_content_id_set() -> dict:
     return requests.get(OFFICIAL_CONTENT_ID_SET_PATH).json()
 
 
+def download_content_graph(
+    output_path: Path, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR
+) -> Path:
+    """Getting the Content Graph from official content's bucket"""
+    if output_path.is_dir():
+        output_path = output_path / f"{marketplace.value}.zip"
+    output_path.write_bytes(
+        requests.get(f"{OFFICIAL_CONTENT_GRAPH_PATH}/{marketplace.value}.zip").content
+    )
+    return output_path
+
+
+def get_latest_upload_flow_commit_hash() -> str:
+    """Getting the latest commit hash of the upload flow from official content's bucket
+
+    Returns:
+        str: the last commit hash of the upload flow
+    """
+    response_json = requests.get(OFFICIAL_INDEX_JSON_PATH).json()
+    if not isinstance(response_json, dict):
+        raise ValueError(
+            f"The index.json file is not in the expected format: {response_json}"
+        )
+    last_commit = response_json.get("commit")
+    if not last_commit:
+        raise ValueError("The latest commit hash was not found in the index.json file")
+    return last_commit
+
+
 def get_content_path() -> Union[str, PathLike, None]:
-    """ Get abs content path, from any CWD
+    """Get abs content path, from any CWD
     Returns:
         str: Absolute content path
     """
     try:
-        if content_path := os.getenv('DEMISTO_SDK_CONTENT_PATH'):
+        if content_path := os.getenv("DEMISTO_SDK_CONTENT_PATH"):
             git_repo = git.Repo(content_path)
-            logger.debug(f'Using content path: {content_path}')
+            logger.debug(f"Using content path: {content_path}")
         else:
             git_repo = git.Repo(Path.cwd(), search_parent_directories=True)
 
         remote_url = git_repo.remote().urls.__next__()
-        is_fork_repo = 'content' in remote_url
+        is_fork_repo = "content" in remote_url
         is_external_repo = is_external_repository()
 
         if not is_fork_repo and not is_external_repo:
             raise git.InvalidGitRepositoryError
         return git_repo.working_dir
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
-        if not os.getenv('DEMISTO_SDK_IGNORE_CONTENT_WARNING'):
+        if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
             print_warning("Please run demisto-sdk in content repository!")
-    return ''
+    return ""
 
 
-def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ) -> \
-        Tuple[str, str, int]:
-    """ Run command in subprocess tty
+def run_command_os(
+    command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ
+) -> Tuple[str, str, int]:
+    """Run command in subprocess tty
     Args:
         command(str): Command to be executed.
         cwd(Path): Path from pathlib object to be executed
@@ -1681,11 +1904,11 @@ def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, 
             env=env,
             stdout=PIPE,
             stderr=PIPE,
-            universal_newlines=True
+            universal_newlines=True,
         )
         stdout, stderr = process.communicate()
     except OSError as e:
-        return '', str(e), 1
+        return "", str(e), 1
 
     return stdout, stderr, process.returncode
 
@@ -1700,8 +1923,8 @@ def pascal_case(st: str) -> str:
     Returns:
         str -- converted string
     """
-    words = re.findall(r'[a-zA-Z0-9]+', st)
-    return ''.join(''.join([w[0].upper(), w[1:]]) for w in words)
+    words = re.findall(r"[a-zA-Z0-9]+", st)
+    return "".join("".join([w[0].upper(), w[1:]]) for w in words)
 
 
 def capital_case(st: str) -> str:
@@ -1715,9 +1938,9 @@ def capital_case(st: str) -> str:
     """
     if len(st) >= 1:
         words = st.split()
-        return ' '.join([f'{s[:1].upper()}{s[1:]}' for s in words if len(s) >= 1])
+        return " ".join([f"{s[:1].upper()}{s[1:]}" for s in words if len(s) >= 1])
     else:
-        return ''
+        return ""
 
 
 def get_last_release_version():
@@ -1726,15 +1949,15 @@ def get_last_release_version():
 
     :return: tag
     """
-    tags = run_command('git tag').split('\n')
-    tags = [tag for tag in tags if re.match(r'\d+\.\d+\.\d+', tag) is not None]
+    tags = run_command("git tag").split("\n")
+    tags = [tag for tag in tags if re.match(r"\d+\.\d+\.\d+", tag) is not None]
     tags.sort(key=LooseVersion, reverse=True)
 
     return tags[0]
 
 
 def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
-    """ Check if an absolute file_path is part of content repo.
+    """Check if an absolute file_path is part of content repo.
     Args:
         file_path (str): The file path which is checked.
     Returns:
@@ -1742,46 +1965,48 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
         str: relative path of file in content repo.
     """
     try:
-        git_repo = git.Repo(os.getcwd(),
-                            search_parent_directories=True)
+        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
         remote_url = git_repo.remote().urls.__next__()
-        is_fork_repo = 'content' in remote_url
+        is_fork_repo = "content" in remote_url
         is_external_repo = is_external_repository()
 
         if not is_fork_repo and not is_external_repo:
-            return False, ''
+            return False, ""
         content_path_parts = Path(git_repo.working_dir).parts  # type: ignore
         input_path_parts = Path(file_path).parts
-        input_path_parts_prefix = input_path_parts[:len(content_path_parts)]
+        input_path_parts_prefix = input_path_parts[: len(content_path_parts)]
         if content_path_parts == input_path_parts_prefix:
-            return True, '/'.join(input_path_parts[len(content_path_parts):])
+            return True, "/".join(input_path_parts[len(content_path_parts) :])
         else:
-            return False, ''
+            return False, ""
 
     except Exception as e:
         click.secho(f"Unable to identify the repository: {e}")
-        return False, ''
+        return False, ""
 
 
 def should_file_skip_validation(file_path: str) -> bool:
     """Check if the file cannot be validated under 'run_all_validations_on_file' method for various reasons,
-        either if it's a test file, or if it's a file that's been validated somewhere else
-        Args:
-            file_path (str): The file path which is checked.
-        Returns:
-            bool: True if the file's validation should be skipped, False otherwise.
-        """
+    either if it's a test file, or if it's a file that's been validated somewhere else
+    Args:
+        file_path (str): The file path which is checked.
+    Returns:
+        bool: True if the file's validation should be skipped, False otherwise.
+    """
     file_extension = os.path.splitext(file_path)[-1]
     # We validate only yml json and .md files
-    if file_extension not in ['.yml', '.json', '.md']:
+    if file_extension not in [".yml", ".json", ".md"]:
         return True
-    if any(ignore_pattern in file_path.lower() for ignore_pattern in ALL_FILES_VALIDATION_IGNORE_WHITELIST):
+    if any(
+        ignore_pattern in file_path.lower()
+        for ignore_pattern in ALL_FILES_VALIDATION_IGNORE_WHITELIST
+    ):
         return True
     # Ignoring changelog and description files since these are checked on the integration validation
-    if 'changelog' in file_path.lower() or 'description' in file_path.lower():
+    if "changelog" in file_path.lower() or "description" in file_path.lower():
         return True
     # unified files should not be validated
-    if file_path.endswith('_unified.yml'):
+    if file_path.endswith("_unified.yml"):
         return True
     return False
 
@@ -1795,12 +2020,14 @@ def retrieve_file_ending(file_path: str) -> str:
     os_split: tuple = os.path.splitext(file_path)
     if os_split:
         file_ending: str = os_split[1]
-        if file_ending and '.' in file_ending:
+        if file_ending and "." in file_ending:
             return file_ending[1:]
-    return ''
+    return ""
 
 
-def is_test_config_match(test_config: dict, test_playbook_id: str = '', integration_id: str = '') -> bool:
+def is_test_config_match(
+    test_config: dict, test_playbook_id: str = "", integration_id: str = ""
+) -> bool:
     """
     Given a test configuration from conf.json file, this method checks if the configuration is configured for the
     test playbook or for integration_id.
@@ -1816,11 +2043,14 @@ def is_test_config_match(test_config: dict, test_playbook_id: str = '', integrat
     Returns:
         True if the test configuration contains the test playbook and the content item or False if not
     """
-    test_playbook_match = test_playbook_id == test_config.get('playbookID')
-    test_integrations = test_config.get('integrations')
+    test_playbook_match = test_playbook_id == test_config.get("playbookID")
+    test_integrations = test_config.get("integrations")
     if isinstance(test_integrations, list):
         integration_match = any(
-            test_integration for test_integration in test_integrations if test_integration == integration_id)
+            test_integration
+            for test_integration in test_integrations
+            if test_integration == integration_id
+        )
     else:
         integration_match = test_integrations == integration_id
     # If both playbook id and integration id are given
@@ -1838,7 +2068,9 @@ def is_test_config_match(test_config: dict, test_playbook_id: str = '', integrat
     return False
 
 
-def get_not_registered_tests(conf_json_tests: list, content_item_id: str, file_type: str, test_playbooks: list) -> list:
+def get_not_registered_tests(
+    conf_json_tests: list, content_item_id: str, file_type: str, test_playbooks: list
+) -> list:
     """
     Return all test playbooks that are not configured in conf.json file
     Args:
@@ -1852,15 +2084,17 @@ def get_not_registered_tests(conf_json_tests: list, content_item_id: str, file_t
     """
     not_registered_tests = []
     for test in test_playbooks:
-        if file_type == 'playbook':
+        if file_type == "playbook":
             test_registered_in_conf_json = any(
-                test_config for test_config in conf_json_tests if is_test_config_match(test_config,
-                                                                                       test_playbook_id=test)
+                test_config
+                for test_config in conf_json_tests
+                if is_test_config_match(test_config, test_playbook_id=test)
             )
         else:
             test_registered_in_conf_json = any(
-                test_config for test_config in conf_json_tests if is_test_config_match(test_config,
-                                                                                       integration_id=content_item_id)
+                test_config
+                for test_config in conf_json_tests
+                if is_test_config_match(test_config, integration_id=content_item_id)
             )
         if not test_registered_in_conf_json:
             not_registered_tests.append(test)
@@ -1878,81 +2112,69 @@ def _get_file_id(file_type: str, file_content: Dict):
         The file's content ID
     """
     if file_type in ID_IN_ROOT:
-        return file_content.get('id', '')
+        return file_content.get("id", "")
     elif file_type in ID_IN_COMMONFIELDS:
-        return file_content.get('commonfields', {}).get('id')
-    return file_content.get('trigger_id', '')
+        return file_content.get("commonfields", {}).get("id")
+    return file_content.get("trigger_id", "")
 
 
 def is_path_of_integration_directory(path: str) -> bool:
-    """Returns true if directory is integration directory false if not.
-    """
+    """Returns true if directory is integration directory false if not."""
     return os.path.basename(path) == INTEGRATIONS_DIR
 
 
 def is_path_of_script_directory(path: str) -> bool:
-    """Returns true if directory is script directory false if not.
-    """
+    """Returns true if directory is script directory false if not."""
     return os.path.basename(path) == SCRIPTS_DIR
 
 
 def is_path_of_playbook_directory(path: str) -> bool:
-    """Returns true if directory is playbook directory false if not.
-    """
+    """Returns true if directory is playbook directory false if not."""
     return os.path.basename(path) == PLAYBOOKS_DIR
 
 
 def is_path_of_test_playbook_directory(path: str) -> bool:
-    """Returns true if directory is test_playbook directory false if not.
-    """
+    """Returns true if directory is test_playbook directory false if not."""
     return os.path.basename(path) == TEST_PLAYBOOKS_DIR
 
 
 def is_path_of_report_directory(path: str) -> bool:
-    """Returns true if directory is report directory false if not.
-    """
+    """Returns true if directory is report directory false if not."""
     return os.path.basename(path) == REPORTS_DIR
 
 
 def is_path_of_dashboard_directory(path: str) -> bool:
-    """Returns true if directory is integration directory false if not.
-    """
+    """Returns true if directory is integration directory false if not."""
     return os.path.basename(path) == DASHBOARDS_DIR
 
 
 def is_path_of_widget_directory(path: str) -> bool:
-    """Returns true if directory is integration directory false if not.
-    """
+    """Returns true if directory is integration directory false if not."""
     return os.path.basename(path) == WIDGETS_DIR
 
 
 def is_path_of_incident_field_directory(path: str) -> bool:
-    """Returns true if directory is integration directory false if not.
-    """
+    """Returns true if directory is integration directory false if not."""
     return os.path.basename(path) == INCIDENT_FIELDS_DIR
 
 
 def is_path_of_incident_type_directory(path: str) -> bool:
-    """Returns true if directory is integration directory false if not.
-    """
+    """Returns true if directory is integration directory false if not."""
     return os.path.basename(path) == INCIDENT_TYPES_DIR
 
 
 def is_path_of_indicator_field_directory(path: str) -> bool:
-    """Returns true if directory is integration directory false if not.
-    """
+    """Returns true if directory is integration directory false if not."""
     return os.path.basename(path) == INDICATOR_FIELDS_DIR
 
 
 def is_path_of_layout_directory(path: str) -> bool:
-    """Returns true if directory is integration directory false if not.
-    """
+    """Returns true if directory is integration directory false if not."""
     return os.path.basename(path) == LAYOUTS_DIR
 
 
 def is_path_of_pre_process_rules_directory(path: str) -> bool:
-    """Returns true if directory is pre-processing rules directory, false if not.
-    """
+    """Returns true if directory is pre-processing rules directory, false if not."""
     return os.path.basename(path) == PRE_PROCESS_RULES_DIR
 
 
@@ -1961,8 +2183,7 @@ def is_path_of_lists_directory(path: str) -> bool:
 
 
 def is_path_of_classifier_directory(path: str) -> bool:
-    """Returns true if directory is integration directory false if not.
-    """
+    """Returns true if directory is integration directory false if not."""
     return os.path.basename(path) == CLASSIFIERS_DIR
 
 
@@ -1987,10 +2208,10 @@ def get_code_lang(file_data: dict, file_entity: str) -> str:
     :return: The code language
     """
     if file_entity == INTEGRATIONS_DIR:
-        return file_data.get('script', {}).get('type', '')
+        return file_data.get("script", {}).get("type", "")
     elif file_entity == SCRIPTS_DIR:
-        return file_data.get('type', {})
-    return ''
+        return file_data.get("type", {})
+    return ""
 
 
 def camel_to_snake(camel: str) -> str:
@@ -2002,8 +2223,8 @@ def camel_to_snake(camel: str) -> str:
     Returns:
         str: The snake case string.
     """
-    camel_to_snake_pattern = re.compile(r'(?<!^)(?=[A-Z][a-z])')
-    snake = camel_to_snake_pattern.sub('_', camel).lower()
+    camel_to_snake_pattern = re.compile(r"(?<!^)(?=[A-Z][a-z])")
+    snake = camel_to_snake_pattern.sub("_", camel).lower()
     return snake
 
 
@@ -2028,21 +2249,21 @@ def get_demisto_version(client: demisto_client) -> Union[Version, LegacyVersion]
         the server version of the Demisto instance.
     """
     try:
-        resp = client.generic_request('/about', 'GET')
+        resp = client.generic_request("/about", "GET")
         about_data = json.loads(resp[0].replace("'", '"'))
-        return parse(about_data.get('demistoVersion'))  # type: ignore
+        return parse(about_data.get("demistoVersion"))  # type: ignore
     except Exception:
         return parse("0")
 
 
 def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
     """
-       Converts a string representation of lists to a python list
-       Args:
-              arg: string or list of string.
-              separator: A string separator to separate the strings, the default is a comma.
-       Returns:
-             list, contains strings.
+    Converts a string representation of lists to a python list
+    Args:
+           arg: string or list of string.
+           separator: A string separator to separate the strings, the default is a comma.
+    Returns:
+          list, contains strings.
 
     """
     if not arg:
@@ -2050,13 +2271,15 @@ def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
     if isinstance(arg, list):
         return arg
     if isinstance(arg, str):
-        if arg[0] == '[' and arg[-1] == ']':
+        if arg[0] == "[" and arg[-1] == "]":
             return json.loads(arg)
         return [s.strip() for s in arg.split(separator)]
     return [arg]
 
 
-def get_file_version_suffix_if_exists(current_file: Dict, check_in_display: bool = False) -> Optional[str]:
+def get_file_version_suffix_if_exists(
+    current_file: Dict, check_in_display: bool = False
+) -> Optional[str]:
     """
     Checks if current YML file name is versioned or no, e.g, ends with v<number>.
     Args:
@@ -2066,8 +2289,8 @@ def get_file_version_suffix_if_exists(current_file: Dict, check_in_display: bool
     Returns:
         (Optional[str]): Number of the version as a string, if the file ends with version suffix. None otherwise.
     """
-    versioned_file_regex = r'v([0-9]+)$'
-    name = current_file.get('display') if check_in_display else current_file.get('name')
+    versioned_file_regex = r"v([0-9]+)$"
+    name = current_file.get("display") if check_in_display else current_file.get("name")
     if not name:
         return None
     matching_regex = re.findall(versioned_file_regex, name.lower())
@@ -2078,15 +2301,19 @@ def get_file_version_suffix_if_exists(current_file: Dict, check_in_display: bool
 
 def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
     fields_list = []
-    for item in ['IncidentFields', 'IndicatorFields']:
+    for item in ["IncidentFields", "IndicatorFields"]:
         all_item_fields = id_set_file.get(item)
         for item_field in all_item_fields:
             for field, field_info in item_field.items():
-                if entity_type == 'mapper' or entity_type == 'old classifier':
-                    fields_list.append(field_info.get('name', ''))
-                    fields_list.append(field.replace('incident_', '').replace('indicator_', ''))
-                elif entity_type == 'layout':
-                    fields_list.append(field.replace('incident_', '').replace('indicator_', ''))
+                if entity_type == "mapper" or entity_type == "old classifier":
+                    fields_list.append(field_info.get("name", ""))
+                    fields_list.append(
+                        field.replace("incident_", "").replace("indicator_", "")
+                    )
+                elif entity_type == "layout":
+                    fields_list.append(
+                        field.replace("incident_", "").replace("indicator_", "")
+                    )
     return fields_list
 
 
@@ -2098,21 +2325,19 @@ def item_type_to_content_items_header(item_type):
         "incidentfield": "incidentField",
         "layoutscontainer": "layout",
         "betaintegration": "integration",
-
         # GOM
         "genericdefinition": "genericDefinition",
         "genericfield": "genericField",
         "genericmodule": "genericModule",
         "generictype": "genericType",
-
         # SIEM content
         "correlationrule": "correlationRule",
         "modelingrule": "modelingRule",
         "parsingrule": "parsingRule",
-        "xdrctemplate": "XDRCTemplate"
+        "xdrctemplate": "XDRCTemplate",
     }
 
-    return f'{converter.get(item_type, item_type)}s'
+    return f"{converter.get(item_type, item_type)}s"
 
 
 def is_object_in_id_set(object_id, item_type, pack_info_from_id_set):
@@ -2128,7 +2353,7 @@ def is_object_in_id_set(object_id, item_type, pack_info_from_id_set):
     Returns:
 
     """
-    content_items = pack_info_from_id_set.get('ContentItems', {})
+    content_items = pack_info_from_id_set.get("ContentItems", {})
     items_ids = content_items.get(item_type_to_content_items_header(item_type), [])
 
     return object_id in items_ids
@@ -2155,7 +2380,7 @@ def extract_multiple_keys_from_dict(key: str, var: dict):
 
     Returns: A generator that generates value in an occurrence of the nested key in var.
     """
-    if hasattr(var, 'items'):
+    if hasattr(var, "items"):
         for k, v in var.items():
             if k == key:
                 yield v
@@ -2179,7 +2404,7 @@ def find_file(root_path, file_name):
             found_file = find_file(file_path, file_name)
             if found_file:
                 return found_file
-    return ''
+    return ""
 
 
 @lru_cache
@@ -2188,21 +2413,36 @@ def get_file_displayed_name(file_path):
     If there is no displayed name - returns the file name"""
     file_type = find_type(file_path)
     if FileType.INTEGRATION == file_type:
-        return get_yaml(file_path).get('display')
-    elif file_type in [FileType.SCRIPT, FileType.TEST_SCRIPT, FileType.PLAYBOOK, FileType.TEST_PLAYBOOK]:
-        return get_yaml(file_path).get('name')
-    elif file_type in [FileType.MAPPER, FileType.CLASSIFIER, FileType.INCIDENT_FIELD, FileType.INCIDENT_TYPE,
-                       FileType.INDICATOR_FIELD, FileType.LAYOUTS_CONTAINER, FileType.PRE_PROCESS_RULES,
-                       FileType.DASHBOARD, FileType.WIDGET,
-                       FileType.REPORT, FileType.JOB, FileType.WIZARD]:
+        return get_yaml(file_path).get("display")
+    elif file_type in [
+        FileType.SCRIPT,
+        FileType.TEST_SCRIPT,
+        FileType.PLAYBOOK,
+        FileType.TEST_PLAYBOOK,
+    ]:
+        return get_yaml(file_path).get("name")
+    elif file_type in [
+        FileType.MAPPER,
+        FileType.CLASSIFIER,
+        FileType.INCIDENT_FIELD,
+        FileType.INCIDENT_TYPE,
+        FileType.INDICATOR_FIELD,
+        FileType.LAYOUTS_CONTAINER,
+        FileType.PRE_PROCESS_RULES,
+        FileType.DASHBOARD,
+        FileType.WIDGET,
+        FileType.REPORT,
+        FileType.JOB,
+        FileType.WIZARD,
+    ]:
         res = get_json(file_path)
-        return res.get('name') if isinstance(res, dict) else res[0].get('name')
+        return res.get("name") if isinstance(res, dict) else res[0].get("name")
     elif file_type == FileType.OLD_CLASSIFIER:
-        return get_json(file_path).get('brandName')
+        return get_json(file_path).get("brandName")
     elif file_type == FileType.LAYOUT:
-        return get_json(file_path).get('TypeName')
+        return get_json(file_path).get("TypeName")
     elif file_type == FileType.REPUTATION:
-        return get_json(file_path).get('id')
+        return get_json(file_path).get("id")
     else:
         return os.path.basename(file_path)
 
@@ -2221,57 +2461,71 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
 
     # Gets the data from the README
     # the pattern to get the context part out of command section:
-    context_section_pattern = r"\| *\*\*Path\*\* *\| *\*\*Type\*\* *\| *\*\*Description\*\* *\|.(.*?)#{3,5}"
+    context_section_pattern = (
+        r"\| *\*\*Path\*\* *\| *\*\*Type\*\* *\| *\*\*Description\*\* *\|.(.*?)#{3,5}"
+    )
     # the pattern to get the value in the first column under the outputs table:
     context_path_pattern = r"\| *(\S.*?\S) *\| *[^\|]* *\| *[^\|]* *\|"
-    readme_content += "### "  # mark end of file so last pattern of regex will be recognized.
+    readme_content += (
+        "### "  # mark end of file so last pattern of regex will be recognized.
+    )
     commands = yml_dict.get("script", {})
 
     # handles scripts
     if not commands:
         return different_contexts
-    commands = commands.get('commands', [])
+    commands = commands.get("commands", [])
     for command in commands:
-        command_name = command.get('name')
+        command_name = command.get("name")
 
         # Gets all context path in the relevant command section from README file
-        command_section_pattern = fr" Base Command..`{command_name}`.(.*?)\n### "  # pattern to get command section
+        command_section_pattern = rf" Base Command..`{command_name}`.(.*?)\n### "  # pattern to get command section
         command_section = re.findall(command_section_pattern, readme_content, re.DOTALL)
         if not command_section:
             continue
-        if not command_section[0].endswith('###'):
-            command_section[0] += '###'  # mark end of file so last pattern of regex will be recognized.
-        context_section = re.findall(context_section_pattern, command_section[0], re.DOTALL)
+        if not command_section[0].endswith("###"):
+            command_section[
+                0
+            ] += "###"  # mark end of file so last pattern of regex will be recognized.
+        context_section = re.findall(
+            context_section_pattern, command_section[0], re.DOTALL
+        )
         if not context_section:
             context_path_in_command = set()
         else:
-            context_path_in_command = set(re.findall(context_path_pattern, context_section[0], re.DOTALL))
+            context_path_in_command = set(
+                re.findall(context_path_pattern, context_section[0], re.DOTALL)
+            )
 
             # remove the header line ---- (could be of any length)
             for path in context_path_in_command:
-                if not path.replace('-', ''):
+                if not path.replace("-", ""):
                     context_path_in_command.remove(path)
                     break
 
         # handles cases of old integrations with context in 'important' section
-        if 'important' in command:
-            command.pop('important')
+        if "important" in command:
+            command.pop("important")
 
         # Gets all context path in the relevant command section from YML file
-        existing_context_in_yml = set(extract_multiple_keys_from_dict("contextPath", command))
+        existing_context_in_yml = set(
+            extract_multiple_keys_from_dict("contextPath", command)
+        )
 
         # finds diff between YML and README
         only_in_yml_paths = existing_context_in_yml - context_path_in_command
         only_in_readme_paths = context_path_in_command - existing_context_in_yml
         if only_in_yml_paths or only_in_readme_paths:
-            different_contexts[command_name] = {"only in yml": only_in_yml_paths,
-                                                "only in readme": only_in_readme_paths}
+            different_contexts[command_name] = {
+                "only in yml": only_in_yml_paths,
+                "only in readme": only_in_readme_paths,
+            }
 
     return different_contexts
 
 
 def write_yml(yml_path: str, yml_data: Dict):
-    with open(yml_path, 'w') as f:
+    with open(yml_path, "w") as f:
         yaml.dump(yml_data, f)  # ruamel preservers multilines
 
 
@@ -2285,9 +2539,9 @@ def to_kebab_case(s: str):
     """
     if s:
         new_s = s.lower()
-        new_s = re.sub('[ ,.-]+', '-', new_s)
-        new_s = re.sub('[^A-Za-z0-9-]+', '', new_s)
-        m = re.search('[a-z0-9]+(-[a-z]+)*', new_s)
+        new_s = re.sub("[ ,.-]+", "-", new_s)
+        new_s = re.sub("[^A-Za-z0-9-]+", "", new_s)
+        m = re.search("[a-z0-9]+(-[a-z]+)*", new_s)
         if m:
             return m.group(0)
         else:
@@ -2307,13 +2561,13 @@ def to_pascal_case(s: str):
 
     """
     if s:
-        if re.search(r'^[A-Z][a-z]+(?:[A-Z][a-z]+)*$', s):
+        if re.search(r"^[A-Z][a-z]+(?:[A-Z][a-z]+)*$", s):
             return s
 
         new_s = s.lower()
-        new_s = re.sub(r'[ -\.]+', '-', new_s)
-        new_s = ''.join([t.title() for t in new_s.split('-')])
-        new_s = re.sub(r'[^A-Za-z0-9]+', '', new_s)
+        new_s = re.sub(r"[ -\.]+", "-", new_s)
+        new_s = "".join([t.title() for t in new_s.split("-")])
+        new_s = re.sub(r"[^A-Za-z0-9]+", "", new_s)
 
         return new_s
 
@@ -2327,13 +2581,15 @@ def get_approved_usecases() -> list:
         List of approved usecases
     """
     return get_remote_file(
-        'Tests/Marketplace/approved_usecases.json',
-        git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
-    ).get('approved_list', [])
+        "Tests/Marketplace/approved_usecases.json",
+        git_content_config=GitContentConfig(
+            repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+        ),
+    ).get("approved_list", [])
 
 
 def get_pack_metadata(file_path: str) -> dict:
-    """ Get the pack_metadata dict, of the pack containing the given file path.
+    """Get the pack_metadata dict, of the pack containing the given file path.
 
     Args:
         file_path(str): file path
@@ -2344,7 +2600,7 @@ def get_pack_metadata(file_path: str) -> dict:
     """
     pack_path = file_path if PACKS_DIR in file_path else os.path.realpath(__file__)
     match = re.search(rf".*{PACKS_DIR}[/\\]([^/\\]+)[/\\]?", pack_path)
-    directory = match.group() if match else ''
+    directory = match.group() if match else ""
 
     try:
         metadata_path = os.path.join(directory, PACKS_PACK_META_FILE_NAME)
@@ -2377,7 +2633,7 @@ def get_relative_path_from_packs_dir(file_path: str) -> str:
     if PACKS_DIR not in file_path or file_path.startswith(PACKS_DIR):
         return file_path
 
-    return file_path[file_path.find(PACKS_DIR):]
+    return file_path[file_path.find(PACKS_DIR) :]
 
 
 def is_uuid(s: str) -> Optional[Match]:
@@ -2392,7 +2648,7 @@ def is_uuid(s: str) -> Optional[Match]:
     return re.match(UUID_REGEX, s)
 
 
-def get_release_note_entries(version='') -> list:
+def get_release_note_entries(version="") -> list:
     """
     Gets the release notes entries for the current version.
 
@@ -2403,19 +2659,24 @@ def get_release_note_entries(version='') -> list:
         list: A list of the release notes given from the CHANGELOG file.
     """
 
-    changelog_file_content = get_remote_file(full_file_path='CHANGELOG.md',
-                                             return_content=True,
-                                             git_content_config=GitContentConfig(repo_name='demisto/demisto-sdk')
-                                             ).decode('utf-8').split('\n')
+    changelog_file_content = (
+        get_remote_file(
+            full_file_path="CHANGELOG.md",
+            return_content=True,
+            git_content_config=GitContentConfig(repo_name="demisto/demisto-sdk"),
+        )
+        .decode("utf-8")
+        .split("\n")
+    )
 
-    if not version or 'dev' in version:
-        version = 'Unreleased'
+    if not version or "dev" in version:
+        version = "Unreleased"
 
-    if f'## {version}' not in changelog_file_content:
+    if f"## {version}" not in changelog_file_content:
         return []
 
-    result = changelog_file_content[changelog_file_content.index(f'## {version}') + 1:]
-    result = result[:result.index('')]
+    result = changelog_file_content[changelog_file_content.index(f"## {version}") + 1 :]
+    result = result[: result.index("")]
 
     return result
 
@@ -2427,8 +2688,10 @@ def get_current_usecases() -> list:
         List of approved usecases from current branch
     """
     if not is_external_repository():
-        approved_usecases_json, _ = get_dict_from_file('Tests/Marketplace/approved_usecases.json')
-        return approved_usecases_json.get('approved_list', [])
+        approved_usecases_json, _ = get_dict_from_file(
+            "Tests/Marketplace/approved_usecases.json"
+        )
+        return approved_usecases_json.get("approved_list", [])
     return []
 
 
@@ -2439,13 +2702,22 @@ def get_approved_tags_from_branch() -> Dict[str, List[str]]:
         Dict of approved tags from current branch
     """
     if not is_external_repository():
-        approved_tags_json, _ = get_dict_from_file('Tests/Marketplace/approved_tags.json')
-        if isinstance(approved_tags_json.get('approved_list'), list):
-            print_warning('You are using a deprecated version of the file aproved_tags.json, consider pulling from master'
-                          ' to update it.')
-            return {'common': approved_tags_json.get('approved_list', []), 'xsoar': [], 'marketplacev2': [], 'xpanse': []}
+        approved_tags_json, _ = get_dict_from_file(
+            "Tests/Marketplace/approved_tags.json"
+        )
+        if isinstance(approved_tags_json.get("approved_list"), list):
+            print_warning(
+                "You are using a deprecated version of the file aproved_tags.json, consider pulling from master"
+                " to update it."
+            )
+            return {
+                "common": approved_tags_json.get("approved_list", []),
+                "xsoar": [],
+                "marketplacev2": [],
+                "xpanse": [],
+            }
 
-        return approved_tags_json.get('approved_list', {})
+        return approved_tags_json.get("approved_list", {})
     return {}
 
 
@@ -2457,19 +2729,21 @@ def get_current_categories() -> list:
     """
     if is_external_repository():
         return []
-    approved_categories_json, _ = get_dict_from_file('Tests/Marketplace/approved_categories.json')
-    return approved_categories_json.get('approved_list', [])
+    approved_categories_json, _ = get_dict_from_file(
+        "Tests/Marketplace/approved_categories.json"
+    )
+    return approved_categories_json.get("approved_list", [])
 
 
 @contextmanager
 def suppress_stdout():
     """
-        Temporarily suppress console output without effecting error outputs.
-        Example of use:
+    Temporarily suppress console output without effecting error outputs.
+    Example of use:
 
-            with suppress_stdout():
-                print('This message will not be printed')
-            print('This message will be printed')
+        with suppress_stdout():
+            print('This message will not be printed')
+        print('This message will be printed')
     """
     with open(os.devnull, "w") as devnull:
         try:
@@ -2482,20 +2756,20 @@ def suppress_stdout():
 
 def get_definition_name(path: str, pack_path: str) -> Optional[str]:
     r"""
-        param:
-            path (str): path to the file which needs a definition name (generic field\generic type file)
-            pack_path (str): relevant pack path
+    param:
+        path (str): path to the file which needs a definition name (generic field\generic type file)
+        pack_path (str): relevant pack path
 
-        :rtype: ``str``
-        :return:
-            for generic type and generic field return associated generic definition name folder
+    :rtype: ``str``
+    :return:
+        for generic type and generic field return associated generic definition name folder
 
     """
 
     try:
         file_dictionary = get_json(path)
-        definition_id = file_dictionary['definitionId']
-        generic_def_path = os.path.join(pack_path, 'GenericDefinitions')
+        definition_id = file_dictionary["definitionId"]
+        generic_def_path = os.path.join(pack_path, "GenericDefinitions")
         file_names_lst = os.listdir(generic_def_path)
         for file in file_names_lst:
             if str.find(file, definition_id):
@@ -2509,30 +2783,38 @@ def get_definition_name(path: str, pack_path: str) -> Optional[str]:
         return None
 
     except (FileNotFoundError, AttributeError):
-        print("Error while retrieving definition name for definitionId " + definition_id +
-              "\n Check file structure and make sure all relevant fields are entered properly")
+        print(
+            "Error while retrieving definition name for definitionId "
+            + definition_id
+            + "\n Check file structure and make sure all relevant fields are entered properly"
+        )
         return None
 
 
 def is_iron_bank_pack(file_path):
     metadata = get_pack_metadata(file_path)
-    return PACK_METADATA_IRON_BANK_TAG in metadata.get('tags', [])
+    return PACK_METADATA_IRON_BANK_TAG in metadata.get("tags", [])
 
 
-def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, main_playbook_data: Dict) -> List[Dict]:
+def get_script_or_sub_playbook_tasks_from_playbook(
+    searched_entity_name: str, main_playbook_data: Dict
+) -> List[Dict]:
     """Get the tasks data for a task running the searched_entity_name (script/playbook).
 
     Returns:
         List. A list of dicts representing tasks running the searched_entity_name.
     """
     searched_tasks: List = []
-    tasks = main_playbook_data.get('tasks', {})
+    tasks = main_playbook_data.get("tasks", {})
     if not tasks:
         return searched_tasks
 
     for task_data in tasks.values():
-        task_details = task_data.get('task', {})
-        found_entity = searched_entity_name in {task_details.get('scriptName'), task_details.get('playbookName')}
+        task_details = task_data.get("task", {})
+        found_entity = searched_entity_name in {
+            task_details.get("scriptName"),
+            task_details.get("playbookName"),
+        }
 
         if found_entity:
             searched_tasks.append(task_data)
@@ -2552,11 +2834,11 @@ def extract_docker_image_from_text(text: str, with_no_tag: bool = False):
     Returns:
         str: The docker image version if exists, otherwise, return None.
     """
-    match = (re.search(r'(demisto/.+:([0-9]+)(((\.)[0-9]+)+))', text))
+    match = re.search(r"(demisto/.+:([0-9]+)(((\.)[0-9]+)+))", text)
     if match:
         docker_image = match.group(1)
         if with_no_tag:
-            return docker_image.replace('demisto/', '').split(':')[0]
+            return docker_image.replace("demisto/", "").split(":")[0]
         return docker_image
     else:
         return None
@@ -2567,15 +2849,20 @@ def get_current_repo() -> Tuple[str, str, str]:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
         parsed_git = giturlparse.parse(git_repo.remotes.origin.url)
         host = parsed_git.host
-        if '@' in host:
-            host = host.split('@')[1]
+        if "@" in host:
+            host = host.split("@")[1]
         return host, parsed_git.owner, parsed_git.repo
     except git.InvalidGitRepositoryError:
-        print_warning('git repo is not found')
-        return "Unknown source", '', ''
+        print_warning("git repo is not found")
+        return "Unknown source", "", ""
 
 
-def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None, item_type: str = None) -> List:
+def get_item_marketplaces(
+    item_path: str,
+    item_data: Dict = None,
+    packs: Dict[str, Dict] = None,
+    item_type: str = None,
+) -> List:
     """
     Return the supporting marketplaces of the item.
 
@@ -2596,17 +2883,19 @@ def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[st
         item_data = get_file(item_path, file_type)
 
     # first check, check field 'marketplaces' in the item's file
-    marketplaces = item_data.get('marketplaces', [])  # type: ignore
+    marketplaces = item_data.get("marketplaces", [])  # type: ignore
 
     # second check, check the metadata of the pack
     if not marketplaces:
-        if 'pack_metadata' in item_path:
+        if "pack_metadata" in item_path:
             # default supporting marketplace
             marketplaces = [MarketplaceVersions.XSOAR.value]
         else:
             pack_name = get_pack_name(item_path)
             if packs and packs.get(pack_name):
-                marketplaces = packs.get(pack_name, {}).get('marketplaces', [MarketplaceVersions.XSOAR.value])
+                marketplaces = packs.get(pack_name, {}).get(
+                    "marketplaces", [MarketplaceVersions.XSOAR.value]
+                )
             else:
                 marketplaces = get_mp_types_from_metadata_by_item(item_path)
 
@@ -2623,7 +2912,9 @@ def get_mp_types_from_metadata_by_item(file_path):
     Returns:
         list of names of supporting marketplaces (current options are marketplacev2 and xsoar)
     """
-    if METADATA_FILE_NAME in Path(file_path).parts:  # for when the type is pack, the item we get is the metadata path
+    if (
+        METADATA_FILE_NAME in Path(file_path).parts
+    ):  # for when the type is pack, the item we get is the metadata path
         metadata_path = file_path
     else:
         metadata_path_parts = get_pack_dir(file_path)
@@ -2652,14 +2943,14 @@ def get_pack_dir(path):
     """
     parts = Path(path).parts
     for index in range(len(parts)):
-        if parts[index] == 'Packs':
-            return parts[:index + 2]
+        if parts[index] == "Packs":
+            return parts[: index + 2]
     return []
 
 
 @contextmanager
 def ProcessPoolHandler() -> ProcessPool:
-    """ Process pool Handler which terminate all processes in case of Exception.
+    """Process pool Handler which terminate all processes in case of Exception.
 
     Yields:
         ProcessPool: Pebble process pool.
@@ -2711,8 +3002,8 @@ def get_api_module_dependencies(pkgs, id_set_path, verbose):
     using_scripts, using_integrations = [], []
     for script in scripts:
         script_info = list(script.values())[0]
-        script_name = script_info.get('name')
-        script_api_modules = script_info.get('api_modules', [])
+        script_name = script_info.get("name")
+        script_api_modules = script_info.get("api_modules", [])
         if intersection := changed_api_modules & set(script_api_modules):
             if verbose:
                 print(f"found script {script_name} dependent on {intersection}")
@@ -2720,17 +3011,22 @@ def get_api_module_dependencies(pkgs, id_set_path, verbose):
 
     for integration in integrations:
         integration_info = list(integration.values())[0]
-        integration_name = integration_info.get('name')
-        script_api_modules = integration_info.get('api_modules', [])
+        integration_name = integration_info.get("name")
+        script_api_modules = integration_info.get("api_modules", [])
         if intersection := changed_api_modules & set(script_api_modules):
             if verbose:
-                print(f"found integration {integration_name} dependent on {intersection}")
+                print(
+                    f"found integration {integration_name} dependent on {intersection}"
+                )
             using_integrations.extend(list(integration.values()))
 
-    using_scripts_pkg_paths = [Path(script.get('file_path')).parent.absolute() for
-                               script in using_scripts]
-    using_integrations_pkg_paths = [Path(integration.get('file_path')).parent.absolute() for
-                                    integration in using_integrations]
+    using_scripts_pkg_paths = [
+        Path(script.get("file_path")).parent.absolute() for script in using_scripts
+    ]
+    using_integrations_pkg_paths = [
+        Path(integration.get("file_path")).parent.absolute()
+        for integration in using_integrations
+    ]
     return list(set(using_integrations_pkg_paths + using_scripts_pkg_paths))
 
 
@@ -2751,19 +3047,19 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
     detailed_commands = []
     scripts_and_pbs = []
     if file_type in {FileType.TEST_PLAYBOOK, FileType.PLAYBOOK}:
-        tasks = data.get('tasks')
+        tasks = data.get("tasks")
         for task_num in tasks.keys():
             task = tasks[task_num]
-            inner_task = task.get('task')
-            task_type = task.get('type')
-            if inner_task and task_type == 'regular' or task_type == 'playbook':
-                if inner_task.get('iscommand'):
-                    commands.append(inner_task.get('script'))
+            inner_task = task.get("task")
+            task_type = task.get("type")
+            if inner_task and task_type == "regular" or task_type == "playbook":
+                if inner_task.get("iscommand"):
+                    commands.append(inner_task.get("script"))
                 else:
-                    if task_type == 'playbook':
-                        scripts_and_pbs.append(inner_task.get('playbookName'))
-                    elif inner_task.get('scriptName'):
-                        scripts_and_pbs.append(inner_task.get('scriptName'))
+                    if task_type == "playbook":
+                        scripts_and_pbs.append(inner_task.get("playbookName"))
+                    elif inner_task.get("scriptName"):
+                        scripts_and_pbs.append(inner_task.get("scriptName"))
         if file_type == FileType.PLAYBOOK:
             playbook_id = get_entity_id_by_entity_type(data, PLAYBOOKS_DIR)
             scripts_and_pbs.append(playbook_id)
@@ -2771,31 +3067,28 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
     if file_type == FileType.SCRIPT:
         script_id = get_entity_id_by_entity_type(data, SCRIPTS_DIR)
         scripts_and_pbs = [script_id]
-        if data.get('dependson'):
-            commands = data.get('dependson').get('must', [])
+        if data.get("dependson"):
+            commands = data.get("dependson").get("must", [])
 
     if file_type == FileType.INTEGRATION:
-        integration_commands = data.get('script', {}).get('commands')
+        integration_commands = data.get("script", {}).get("commands")
         for integration_command in integration_commands:
-            commands.append(integration_command.get('name'))
+            commands.append(integration_command.get("name"))
 
     for command in commands:
-        command_parts = command.split('|||')
+        command_parts = command.split("|||")
         if len(command_parts) == 2:
-            detailed_commands.append({
-                'id': command_parts[1],
-                'source': command_parts[0]
-            })
+            detailed_commands.append(
+                {"id": command_parts[1], "source": command_parts[0]}
+            )
         else:
-            detailed_commands.append({
-                'id': command_parts[0]
-            })
+            detailed_commands.append({"id": command_parts[0]})
 
     return detailed_commands, scripts_and_pbs
 
 
 def get_url_with_retries(url: str, retries: int, backoff_factor: int = 1, **kwargs):
-    kwargs['stream'] = True
+    kwargs["stream"] = True
     session = requests.Session()
     exception = Exception()
     for _ in range(retries):
@@ -2814,8 +3107,12 @@ def order_dict(data):
     """
     Order dict by default order
     """
-    return OrderedDict({k: order_dict(v) if isinstance(v, dict) else v
-                        for k, v in sorted(data.items())})
+    return OrderedDict(
+        {
+            k: order_dict(v) if isinstance(v, dict) else v
+            for k, v in sorted(data.items())
+        }
+    )
 
 
 def extract_none_deprecated_command_names_from_yml(yml_data: dict) -> list:
@@ -2828,9 +3125,9 @@ def extract_none_deprecated_command_names_from_yml(yml_data: dict) -> list:
         list: a list of all the commands names
     """
     commands_ls = []
-    for command in yml_data.get('script', {}).get('commands', {}):
-        if command.get('name') and not command.get('deprecated'):
-            commands_ls.append(command.get('name'))
+    for command in yml_data.get("script", {}).get("commands", {}):
+        if command.get("name") and not command.get("deprecated"):
+            commands_ls.append(command.get("name"))
     return commands_ls
 
 
@@ -2844,58 +3141,64 @@ def extract_deprecated_command_names_from_yml(yml_data: dict) -> list:
         list: a list of all the commands names
     """
     commands_ls = []
-    for command in yml_data.get('script', {}).get('commands', {}):
-        if command.get('deprecated'):
-            commands_ls.append(command.get('name'))
+    for command in yml_data.get("script", {}).get("commands", {}):
+        if command.get("deprecated"):
+            commands_ls.append(command.get("name"))
     return commands_ls
 
 
 def remove_copy_and_dev_suffixes_from_str(field_name: str) -> str:
-    for _ in range(field_name.count('_')):
+    for _ in range(field_name.count("_")):
         for suffix in SUFFIX_TO_REMOVE:
             if field_name.endswith(suffix):
-                field_name = field_name[:-len(suffix)]
+                field_name = field_name[: -len(suffix)]
     return field_name
 
 
 def get_display_name(file_path, file_data={}) -> str:
-    """ Gets the entity display name from the file.
+    """Gets the entity display name from the file.
 
-        :param file_path: The entity file path
-        :param file_data: The entity file data
+    :param file_path: The entity file path
+    :param file_data: The entity file data
 
-        :rtype: ``str``
-        :return The display name
+    :rtype: ``str``
+    :return The display name
     """
     if not file_data:
         file_extension = os.path.splitext(file_path)[1]
-        if file_extension in ['.yml', '.json']:
+        if file_extension in [".yml", ".json"]:
             file_data = get_file(file_path, file_extension)
 
-    if 'display' in file_data:
-        name = file_data.get('display', None)
-    elif 'layout' in file_data and isinstance(file_data['layout'], dict):
-        name = file_data['layout'].get('id')
-    elif 'name' in file_data:
-        name = file_data.get('name', None)
-    elif 'TypeName' in file_data:
-        name = file_data.get('TypeName', None)
-    elif 'brandName' in file_data:
-        name = file_data.get('brandName', None)
-    elif 'id' in file_data:
-        name = file_data.get('id', None)
-    elif 'trigger_name' in file_data:
-        name = file_data.get('trigger_name')
+    if "display" in file_data:
+        name = file_data.get("display", None)
+    elif "layout" in file_data and isinstance(file_data["layout"], dict):
+        name = file_data["layout"].get("id")
+    elif "name" in file_data:
+        name = file_data.get("name", None)
+    elif "TypeName" in file_data:
+        name = file_data.get("TypeName", None)
+    elif "brandName" in file_data:
+        name = file_data.get("brandName", None)
+    elif "id" in file_data:
+        name = file_data.get("id", None)
+    elif "trigger_name" in file_data:
+        name = file_data.get("trigger_name")
 
-    elif 'dashboards_data' in file_data and file_data.get('dashboards_data') \
-            and isinstance(file_data['dashboards_data'], list):
-        dashboard_data = file_data.get('dashboards_data', [{}])[0]
-        name = dashboard_data.get('name')
+    elif (
+        "dashboards_data" in file_data
+        and file_data.get("dashboards_data")
+        and isinstance(file_data["dashboards_data"], list)
+    ):
+        dashboard_data = file_data.get("dashboards_data", [{}])[0]
+        name = dashboard_data.get("name")
 
-    elif 'templates_data' in file_data and file_data.get('templates_data') \
-            and isinstance(file_data['templates_data'], list):
-        r_name = file_data.get('templates_data', [{}])[0]
-        name = r_name.get('report_name')
+    elif (
+        "templates_data" in file_data
+        and file_data.get("templates_data")
+        and isinstance(file_data["templates_data"], list)
+    ):
+        r_name = file_data.get("templates_data", [{}])[0]
+        name = r_name.get("report_name")
 
     else:
         name = os.path.basename(file_path)
@@ -2920,29 +3223,39 @@ def get_invalid_incident_fields_from_mapper(
     Raises:
         ValueError: in case the mapping type has an incorrect value provided.
     """
-    if mapping_type not in {'mapping-incoming', 'mapping-outgoing'}:
-        raise ValueError(f'Invalid mapping-type value {mapping_type}, should be: mapping-incoming/mapping-outgoing')
+    if mapping_type not in {"mapping-incoming", "mapping-outgoing"}:
+        raise ValueError(
+            f"Invalid mapping-type value {mapping_type}, should be: mapping-incoming/mapping-outgoing"
+        )
 
     non_existent_fields = []
 
     for inc_name, inc_info in mapper_incident_fields.items():
         # incoming mapper
         if mapping_type == "mapping-incoming":
-            if inc_name not in content_fields and inc_name.lower() not in content_fields:
+            if (
+                inc_name not in content_fields
+                and inc_name.lower() not in content_fields
+            ):
                 non_existent_fields.append(inc_name)
         # outgoing mapper
         if mapping_type == "mapping-outgoing":
             # for inc timer type: "field.StartDate, and for using filters: "simple": "".
-            if simple := inc_info.get('simple'):
-                if '.' in simple:
-                    simple = simple.split('.')[0]
-                if simple not in content_fields and simple.lower() not in content_fields:
+            if simple := inc_info.get("simple"):
+                if "." in simple:
+                    simple = simple.split(".")[0]
+                if (
+                    simple not in content_fields
+                    and simple.lower() not in content_fields
+                ):
                     non_existent_fields.append(inc_name)
 
     return non_existent_fields
 
 
-def get_invalid_incident_fields_from_layout(layout_incident_fields: List[Dict], content_fields: List[str]) -> List[str]:
+def get_invalid_incident_fields_from_layout(
+    layout_incident_fields: List[Dict], content_fields: List[str]
+) -> List[str]:
     """
     Get a list of incident fields which are not part of the content items (not part of id_json) from a specific
     layout item/section.
@@ -2959,8 +3272,14 @@ def get_invalid_incident_fields_from_layout(layout_incident_fields: List[Dict], 
 
     if layout_incident_fields and content_fields:
         for incident_field_info in layout_incident_fields:
-            inc_field_id = normalize_field_name(field=incident_field_info.get('fieldId', ''))
-            if inc_field_id and inc_field_id.lower() not in content_fields and inc_field_id not in content_fields:
+            inc_field_id = normalize_field_name(
+                field=incident_field_info.get("fieldId", "")
+            )
+            if (
+                inc_field_id
+                and inc_field_id.lower() not in content_fields
+                and inc_field_id not in content_fields
+            ):
                 non_existent_fields.append(inc_field_id)
 
     return non_existent_fields
@@ -2976,27 +3295,27 @@ def normalize_field_name(field: str) -> str:
     Args:
         field (str): the incident/indicator field.
     """
-    return field.replace('incident_', '').replace('indicator_', '')
+    return field.replace("incident_", "").replace("indicator_", "")
 
 
 def string_to_bool(
-        input_: str,
-        accept_lower_case: bool = True,
-        accept_title: bool = True,
-        accept_upper_case: bool = False,
-        accept_yes_no: bool = False,
-        accept_int: bool = False,
-        accept_single_letter: bool = False,
+    input_: str,
+    accept_lower_case: bool = True,
+    accept_title: bool = True,
+    accept_upper_case: bool = False,
+    accept_yes_no: bool = False,
+    accept_int: bool = False,
+    accept_single_letter: bool = False,
 ) -> Optional[bool]:
     if not isinstance(input_, str):
-        raise ValueError('cannot convert non-string to bool')
+        raise ValueError("cannot convert non-string to bool")
 
-    _considered_true = ['true']
-    _considered_false = ['false']
+    _considered_true = ["true"]
+    _considered_false = ["false"]
 
     for (condition, true_value, false_value) in (
-            (accept_yes_no, 'yes', 'no'),
-            (accept_int, '1', '0')
+        (accept_yes_no, "yes", "no"),
+        (accept_int, "1", "0"),
     ):
         if condition:
             _considered_true.append(true_value)
@@ -3006,16 +3325,18 @@ def string_to_bool(
     considered_false: Set[str] = set()
 
     for (condition, func) in (
-            (accept_lower_case, lambda x: x.lower()),
-            (accept_title, lambda x: x.title()),
-            (accept_upper_case, lambda x: x.upper()),
+        (accept_lower_case, lambda x: x.lower()),
+        (accept_title, lambda x: x.title()),
+        (accept_upper_case, lambda x: x.upper()),
     ):
         if condition:
             considered_true.update(map(func, _considered_true))
             considered_false.update(map(func, _considered_false))
 
     if accept_single_letter:
-        considered_true.update(tuple(_[0] for _ in considered_true))  # note this takes considered_true as input
+        considered_true.update(
+            tuple(_[0] for _ in considered_true)
+        )  # note this takes considered_true as input
         considered_false.update(tuple(_[0] for _ in considered_false))
 
     if input_ in considered_true:
@@ -3024,7 +3345,7 @@ def string_to_bool(
     if input_ in considered_false:
         return False
 
-    raise ValueError(f'cannot convert string {input_} to bool')
+    raise ValueError(f"cannot convert string {input_} to bool")
 
 
 def field_to_cli_name(field_name: str) -> str:
@@ -3040,4 +3361,4 @@ def field_to_cli_name(field_name: str) -> str:
     Args:
         field_name (str): the incident/indicator field name.
     """
-    return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, '', field_name).lower()
+    return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, "", field_name).lower()

@@ -5,8 +5,12 @@ from neo4j import Transaction, graph
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import SERVER_CONTENT_ITEMS, ContentType
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (intersects, run_query, to_neo4j_map,
-                                                                               versioned)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
+    intersects,
+    run_query,
+    to_neo4j_map,
+    versioned,
+)
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -156,8 +160,12 @@ def _match(
     if ids_list:
         query = "UNWIND $filter_list AS node_id\n" + query
 
-    return [item.get('node') for item in
-            run_query(tx, query, filter_list=list(ids_list) if ids_list else None)]
+    return [
+        item.get("node")
+        for item in run_query(
+            tx, query, filter_list=list(ids_list) if ids_list else None
+        )
+    ]
 
 
 def delete_all_graph_nodes(tx: Transaction) -> None:

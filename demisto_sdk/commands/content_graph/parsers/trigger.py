@@ -3,7 +3,9 @@ from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
+from demisto_sdk.commands.content_graph.parsers.json_content_item import (
+    JSONContentItemParser,
+)
 
 
 class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):

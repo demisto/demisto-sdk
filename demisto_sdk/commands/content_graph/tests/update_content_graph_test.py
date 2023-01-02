@@ -2,6 +2,7 @@ import shutil
 from distutils.dir_util import copy_tree
 from pathlib import Path
 from typing import Any, Callable, Dict, List
+from zipfile import ZipFile
 
 import pytest
 
@@ -9,17 +10,27 @@ import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.content_graph_commands import (create_content_graph, stop_content_graph,
-                                                                       update_content_graph)
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
-    Neo4jContentGraphInterface as ContentGraphInterface
+from demisto_sdk.commands.content_graph.content_graph_commands import (
+    create_content_graph,
+    stop_content_graph,
+    update_content_graph,
+)
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
+    Neo4jContentGraphInterface as ContentGraphInterface,
+)
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
-from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (find_model_for_id, mock_classifier,
-                                                                                mock_integration, mock_pack,
-                                                                                mock_playbook, mock_relationship,
-                                                                                mock_script, mock_test_playbook)
+from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
+    find_model_for_id,
+    mock_classifier,
+    mock_integration,
+    mock_pack,
+    mock_playbook,
+    mock_relationship,
+    mock_script,
+    mock_test_playbook,
+)
 from demisto_sdk.commands.content_graph.tests.test_tools import TEST_DATA_PATH
 
 GIT_PATH = Path(git_path())
@@ -31,9 +42,13 @@ GIT_PATH = Path(git_path())
 @pytest.fixture(autouse=True)
 def setup(mocker):
     """Auto-used fixture for setup before every test run"""
-    mocker.patch("demisto_sdk.commands.content_graph.objects.base_content.get_content_path", return_value=GIT_PATH)
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.objects.base_content.get_content_path",
+        return_value=GIT_PATH,
+    )
     mocker.patch.object(neo4j_service, "REPO_PATH", GIT_PATH)
     mocker.patch.object(ContentGraphInterface, "repo_path", GIT_PATH)
+    stop_content_graph()
 
 
 @pytest.fixture
@@ -108,11 +123,17 @@ def repository(mocker) -> ContentDTO:
                 "SamplePack2",
                 ContentType.PACK,
             ),
-            mock_relationship("TestApiModule", ContentType.SCRIPT, "SamplePack2", ContentType.PACK),
+            mock_relationship(
+                "TestApiModule", ContentType.SCRIPT, "SamplePack2", ContentType.PACK
+            ),
         ],
         RelationshipType.USES_BY_ID: [
             mock_relationship(
-                "TestApiModule", ContentType.SCRIPT, "SampleScript2", ContentType.SCRIPT, mandatorily=True
+                "TestApiModule",
+                ContentType.SCRIPT,
+                "SampleScript2",
+                ContentType.SCRIPT,
+                mandatorily=True,
             ),
         ],
     }
@@ -172,7 +193,9 @@ def update_repository(
 ) -> List[str]:
     updated_packs = commit_func(repository)
     pack_ids_to_update = [pack.object_id for pack in updated_packs]
-    repository.packs = [pack for pack in repository.packs if pack.object_id not in pack_ids_to_update]
+    repository.packs = [
+        pack for pack in repository.packs if pack.object_id not in pack_ids_to_update
+    ]
     repository.packs.extend(updated_packs)
     return pack_ids_to_update
 
@@ -185,11 +208,10 @@ def _get_pack_by_id(repository: ContentDTO, pack_id: str) -> Pack:
 
 
 def dump_csv_import_files(csv_files_dir: Path) -> None:
-    for is_docker in [True, False]:
-        import_path = neo4j_service.get_neo4j_import_path(is_docker).as_posix()
-        if Path(import_path).is_dir():
-            shutil.rmtree(import_path)
-            copy_tree(csv_files_dir.as_posix(), import_path)
+    import_path = neo4j_service.get_neo4j_import_path().as_posix()
+    if Path(import_path).is_dir():
+        shutil.rmtree(import_path)
+        copy_tree(csv_files_dir.as_posix(), import_path)
 
 
 # COMPARISON HELPER FUNCTIONS
@@ -209,13 +231,16 @@ def compare(
         assert pack_a.to_dict() == pack_b.to_dict()
         _compare_content_items(list(pack_a.content_items), list(pack_b.content_items))
         _compare_relationships(pack_a, pack_b)
-    _verify_dependencies_existence(packs_from_graph, expected_added_dependencies, should_exist=after_update)
-    _verify_dependencies_existence(packs_from_graph, expected_removed_dependencies, should_exist=not after_update)
+    _verify_dependencies_existence(
+        packs_from_graph, expected_added_dependencies, should_exist=after_update
+    )
+    _verify_dependencies_existence(
+        packs_from_graph, expected_removed_dependencies, should_exist=not after_update
+    )
 
 
 def _compare_content_items(
-    content_items_list_a: List[ContentItem],
-    content_items_list_b: List[ContentItem]
+    content_items_list_a: List[ContentItem], content_items_list_b: List[ContentItem]
 ) -> None:
     assert len(content_items_list_a) == len(content_items_list_b)
     for ci_a, ci_b in zip(content_items_list_a, content_items_list_b):
@@ -225,19 +250,30 @@ def _compare_content_items(
 def _compare_relationships(pack_a: Pack, pack_b: Pack) -> None:
     for relationship_type, relationships in pack_a.relationships.items():
         for relationship in relationships:
-            content_item_source = find_model_for_id([pack_b], relationship.get("source_id"))
+            content_item_source = find_model_for_id(
+                [pack_b], relationship.get("source_id")
+            )
             content_item_target_id = relationship.get("target")
             assert content_item_source
             assert content_item_target_id
             if relationship_type == RelationshipType.IN_PACK:
-                assert content_item_source.in_pack, f"{content_item_source.object_id} is not in pack."
+                assert (
+                    content_item_source.in_pack
+                ), f"{content_item_source.object_id} is not in pack."
                 assert content_item_source.in_pack.object_id == content_item_target_id
             if relationship_type == RelationshipType.IMPORTS:
-                assert content_item_source.imports[0].object_id == content_item_target_id
+                assert (
+                    content_item_source.imports[0].object_id == content_item_target_id
+                )
             if relationship_type == RelationshipType.USES_BY_ID:
-                assert content_item_source.uses[0].content_item.object_id == content_item_target_id
+                assert (
+                    content_item_source.uses[0].content_item.object_id
+                    == content_item_target_id
+                )
             if relationship_type == RelationshipType.TESTED_BY:
-                assert content_item_source.tested_by[0].object_id == content_item_target_id
+                assert (
+                    content_item_source.tested_by[0].object_id == content_item_target_id
+                )
 
 
 def _verify_dependencies_existence(
@@ -249,9 +285,15 @@ def _verify_dependencies_existence(
         for pack in packs:
             if pack.object_id == dependency["source_id"]:
                 if should_exist:
-                    assert any(r.target.object_id == dependency["target"] for r in pack.depends_on)
+                    assert any(
+                        r.target.object_id == dependency["target"]
+                        for r in pack.depends_on
+                    )
                 else:
-                    assert all(r.target.object_id != dependency["target"] for r in pack.depends_on)
+                    assert all(
+                        r.target.object_id != dependency["target"]
+                        for r in pack.depends_on
+                    )
                 break
         else:
             assert False
@@ -314,12 +356,6 @@ def _testcase2__pack3__remove_relationship(repository: ContentDTO) -> List[Pack]
 
 
 class TestUpdateContentGraph:
-    @classmethod
-    def teardown_class(cls):
-        """Stops the graph interface service. Runs once, after all tests.
-        """
-        stop_content_graph()
-
     def test_merge_graphs(self):
         """
         Given:
@@ -339,17 +375,22 @@ class TestUpdateContentGraph:
               2. Two integrations, using the same (single) command
               3. One classifier
         """
+
         def get_nodes_count_by_type(
             interface: ContentGraphInterface,
             content_type: ContentType,
         ) -> int:
-            return len(interface.search(
-                marketplace=MarketplaceVersions.XSOAR,
-                content_type=content_type,
-            ))
+            return len(
+                interface.search(
+                    marketplace=MarketplaceVersions.XSOAR,
+                    content_type=content_type,
+                )
+            )
 
-        with ContentGraphInterface(start_service=True) as interface:
-            dump_csv_import_files(TEST_DATA_PATH / "mock_import_files_multiple_repos__valid")
+        with ContentGraphInterface() as interface:
+            dump_csv_import_files(
+                TEST_DATA_PATH / "mock_import_files_multiple_repos__valid"
+            )
             update_content_graph(interface, packs_to_update=[])
             assert get_nodes_count_by_type(interface, ContentType.PACK) == 2
             assert get_nodes_count_by_type(interface, ContentType.INTEGRATION) == 2
@@ -371,10 +412,11 @@ class TestUpdateContentGraph:
                 [mock_dependency("SamplePack2", "SamplePack3")],
                 id="Remove USES relationship, causing removing a dependency",
             ),
-        ]
+        ],
     )
     def test_update_content_graph(
         self,
+        tmp_path,
         repository: ContentDTO,
         commit_func: Callable[[ContentDTO], List[Pack]],
         expected_added_dependencies: List[Dict[str, Any]],
@@ -399,7 +441,7 @@ class TestUpdateContentGraph:
         """
         with ContentGraphInterface() as interface:
             # create the graph with dependencies
-            create_content_graph(interface, export=True, dependencies=True)
+            create_content_graph(interface, dependencies=True, output_path=tmp_path)
             packs_from_graph = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
                 content_type=ContentType.PACK,
@@ -418,7 +460,12 @@ class TestUpdateContentGraph:
             pack_ids_to_update = update_repository(repository, commit_func)
 
             # update the graph accordingly
-            update_content_graph(interface, packs_to_update=pack_ids_to_update, dependencies=True)
+            update_content_graph(
+                interface,
+                packs_to_update=pack_ids_to_update,
+                dependencies=True,
+                output_path=tmp_path,
+            )
             packs_from_graph = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
                 content_type=ContentType.PACK,
@@ -431,3 +478,11 @@ class TestUpdateContentGraph:
                 expected_removed_dependencies,
                 after_update=True,
             )
+        # make sure that the output file zip is created
+        assert Path.exists(tmp_path / "xsoar.zip")
+        with ZipFile(tmp_path / "xsoar.zip", "r") as zip_obj:
+            zip_obj.extractall(tmp_path / "extracted")
+            # make sure that the extracted files are all .csv
+            extracted_files = list(tmp_path.glob("extracted/*"))
+            assert extracted_files
+            assert all(file.suffix == ".csv" for file in extracted_files)

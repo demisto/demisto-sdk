@@ -58,7 +58,9 @@ from demisto_sdk.commands.common.constants import (
     METADATA_FILE_NAME,
     MODELING_RULES_DIR,
     NON_LETTERS_OR_NUMBERS_PATTERN,
+    OFFICIAL_CONTENT_GRAPH_PATH,
     OFFICIAL_CONTENT_ID_SET_PATH,
+    OFFICIAL_INDEX_JSON_PATH,
     PACK_METADATA_IRON_BANK_TAG,
     PACKAGE_SUPPORTING_DIRECTORIES,
     PACKAGE_YML_FILE_REGEX,
@@ -1840,6 +1842,35 @@ def is_external_repository() -> bool:
 def get_content_id_set() -> dict:
     """Getting the ID Set from official content's bucket"""
     return requests.get(OFFICIAL_CONTENT_ID_SET_PATH).json()
+
+
+def download_content_graph(
+    output_path: Path, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR
+) -> Path:
+    """Getting the Content Graph from official content's bucket"""
+    if output_path.is_dir():
+        output_path = output_path / f"{marketplace.value}.zip"
+    output_path.write_bytes(
+        requests.get(f"{OFFICIAL_CONTENT_GRAPH_PATH}/{marketplace.value}.zip").content
+    )
+    return output_path
+
+
+def get_latest_upload_flow_commit_hash() -> str:
+    """Getting the latest commit hash of the upload flow from official content's bucket
+
+    Returns:
+        str: the last commit hash of the upload flow
+    """
+    response_json = requests.get(OFFICIAL_INDEX_JSON_PATH).json()
+    if not isinstance(response_json, dict):
+        raise ValueError(
+            f"The index.json file is not in the expected format: {response_json}"
+        )
+    last_commit = response_json.get("commit")
+    if not last_commit:
+        raise ValueError("The latest commit hash was not found in the index.json file")
+    return last_commit
 
 
 def get_content_path() -> Union[str, PathLike, None]:

@@ -740,6 +740,16 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "display",
     },
+    "invalid_integration_deprecation__only_display_name_suffix": {
+        "code": "IN157",
+        "ui_applicable": False,
+        "related_field": "deprecated",
+    },
+    "invalid_deprecation__only_description_deprecated": {
+        "code": "IN158",
+        "ui_applicable": False,
+        "related_field": "deprecated",
+    },
     "invalid_deprecated_integration_description": {
         "code": "IN128",
         "ui_applicable": False,
@@ -2323,6 +2333,22 @@ class Errors:
     @error_code_decorator
     def invalid_deprecated_integration_display_name():
         return 'The display_name (display) of all deprecated integrations should end with (Deprecated)".'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_integration_deprecation__only_display_name_suffix(path: str):
+        return (
+            "All integrations whose display_names end with `(Deprecated)` must have `deprecated:true`."
+            f"Please run demisto-sdk format --deprecate -i {path}"
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_deprecation__only_description_deprecated(path: str):
+        return (
+            "All integrations whose description states are deprecated, must have `deprecated:true`."
+            f"Please run demisto-sdk format --deprecate -i {path}"
+        )
 
     @staticmethod
     @error_code_decorator

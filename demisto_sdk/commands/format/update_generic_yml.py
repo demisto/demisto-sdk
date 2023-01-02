@@ -93,8 +93,12 @@ class BaseUpdateYML(BaseUpdate):
 
     def get_id_and_version_for_data(self, data):
         yml_type = self.__class__.__name__
-        path = self.ID_AND_VERSION_PATH_BY_YML_TYPE[yml_type]
-        return data.get(path, data)
+        try:
+            path = self.ID_AND_VERSION_PATH_BY_YML_TYPE[yml_type]
+            return data.get(path, data)
+        except KeyError:
+            # content type is not relevant for checks using this property
+            return None
 
     def update_id_to_equal_name(self) -> None:
         """Updates the id of the YML to be the same as it's name
@@ -145,8 +149,9 @@ class BaseUpdateYML(BaseUpdate):
         self.remove_copy_and_dev_suffixes_from_name()
         self.remove_unnecessary_keys()
         self.remove_spaces_end_of_id_and_name()
-        self.update_id_to_equal_name()
-        self.set_version_to_default(self.id_and_version_location)
+        if self.id_and_version_location:
+            self.update_id_to_equal_name()
+            self.set_version_to_default(self.id_and_version_location)
         self.copy_tests_from_old_file()
         if self.deprecate:
             self.update_deprecate(file_type=file_type)
@@ -367,9 +372,10 @@ class BaseUpdateYML(BaseUpdate):
             if self.verbose:
                 click.echo("Updating YML ID and name to be without spaces at the end")
             self.data["name"] = self.data["name"].strip()
-            self.id_and_version_location["id"] = self.id_and_version_location[
-                "id"
-            ].strip()
+            if self.id_and_version_location:
+                self.id_and_version_location["id"] = self.id_and_version_location[
+                    "id"
+                ].strip()
 
     def remove_nativeimage_tag_if_exist(self):
         if self.data.get("nativeimage"):  # script

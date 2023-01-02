@@ -50,6 +50,11 @@ class BaseUpdate:
         interactive (bool): Whether to run the format interactively or not (usually for contribution management)
     """
 
+    NO_FROMVERSION_TYPES = [
+        "CorrelationRuleYMLFormat",
+        "XSIAMDashboardJSONFormat",
+    ]
+
     def __init__(
         self,
         input: str = "",
@@ -323,6 +328,8 @@ class BaseUpdate:
             default_from_version: default fromVersion specific to the content type.
             file_type: the file type.
         """
+        if not self.from_version_key:
+            return  # nothing to format
         current_fromversion_value = self.data.get(self.from_version_key, "")
         if self.verbose:
             click.echo("Setting fromVersion field")
@@ -353,6 +360,8 @@ class BaseUpdate:
 
     def set_from_version_key_name(self) -> Union[str, None]:
         """fromversion key is different between yml and json , in yml file : fromversion, in json files : fromVersion"""
+        if self.__class__.__name__ in self.NO_FROMVERSION_TYPES:
+            return None
         if self.file_type == "yml":
             return "fromversion"
         elif self.file_type == "json":
@@ -427,6 +436,8 @@ class BaseUpdate:
 
     def check_server_version(self):
         """Checks for fromServerVersion entry in the file, and changeing it accordingly."""
+        if not self.from_version_key:
+            return  # nothing to check
         current_from_server_version = self.data.get(self.json_from_server_version_key)
         current_from_version = self.data.get(self.from_version_key)
         old_from_server_version = self.old_file.get(self.json_from_server_version_key)

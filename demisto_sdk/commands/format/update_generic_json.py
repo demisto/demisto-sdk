@@ -24,6 +24,8 @@ class BaseUpdateJSON(BaseUpdate):
         data (dict): JSON file data arranged in a Dict.
     """
 
+    NON_VERSIONED_JSON_TYPES = ["XSIAMDashboardJSONFormat"]
+
     def __init__(
         self,
         input: str = "",
@@ -78,7 +80,8 @@ class BaseUpdateJSON(BaseUpdate):
         self, default_from_version: Optional[str] = "", file_type: str = ""
     ):
         """Manager function for the generic JSON updates."""
-        self.set_version_to_default()
+        if self.__class__.__name__ not in self.NON_VERSIONED_JSON_TYPES:
+            self.set_version_to_default()
         self.remove_null_fields()
         self.check_server_version()
         self.remove_unnecessary_keys()

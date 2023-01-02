@@ -296,7 +296,8 @@ class ValidateManager:
             FileType.JAVASCRIPT_FILE,
             FileType.POWERSHELL_FILE,
             FileType.PYLINTRC,
-            FileType.SECRET_IGNORE
+            FileType.SECRET_IGNORE,
+            FileType.LICENSE,
         )
 
         self.is_external_repo = is_external_repo

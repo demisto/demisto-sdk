@@ -2,10 +2,20 @@ from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common.content.content import Content
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.integration import (
     IntegrationValidator,
 )
+from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from TestSuite.test_tools import ChangeCWD
+
+
+class MyRepo:
+    active_branch = "not-master"
+
+    def remote(self):
+        return "remote_path"
 
 
 def test_conf_file_custom(mocker, repo):
@@ -23,6 +33,13 @@ def test_conf_file_custom(mocker, repo):
     """
     mocker.patch.object(tools, "is_external_repository", return_value=True)
     mocker.patch.object(IntegrationValidator, "is_valid_category", return_value=True)
+    mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+    mocker.patch.object(Content, "git", return_value=MyRepo())
+    mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
+    mocker.patch.object(
+        GitUtil, "get_current_git_branch_or_hash", return_value="master"
+    )
+    mocker.patch.object(GitUtil, "_is_file_ignored", return_value=False)
     pack = repo.create_pack("tempPack")
     integration = pack.create_integration("myInt")
     integration.create_default_integration()

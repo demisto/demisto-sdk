@@ -1607,6 +1607,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         return FileType.TXT
     elif path.name == ".pylintrc":
         return FileType.PYLINTRC
+    elif path.name == "LICENSE":
+        return FileType.LICENSE
 
     return None
 

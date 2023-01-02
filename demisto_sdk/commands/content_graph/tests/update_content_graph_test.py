@@ -459,7 +459,10 @@ class TestUpdateContentGraph:
 
             # update the graph accordingly
             update_content_graph(
-                interface, packs_to_update=pack_ids_to_update, dependencies=True, output_path=tmp_path / "graph.zip"
+                interface,
+                packs_to_update=pack_ids_to_update,
+                dependencies=True,
+                output_path=tmp_path / "graph.zip",
             )
             packs_from_graph = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
@@ -481,4 +484,3 @@ class TestUpdateContentGraph:
             extracted_files = list(tmp_path.glob("extracted/*"))
             assert extracted_files
             assert all(file.suffix == ".csv" for file in extracted_files)
-

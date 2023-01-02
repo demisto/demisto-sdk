@@ -75,7 +75,10 @@ def update_content_graph(
         output_path = output_path / marketplace.value
     content_graph_interface.export_graph(output_path)
 
-def get_or_create_graph(content_graph_interface: ContentGraphInterface, builder: ContentGraphBuilder):
+
+def get_or_create_graph(
+    content_graph_interface: ContentGraphInterface, builder: ContentGraphBuilder
+):
     try:
         with NamedTemporaryFile() as temp_file:
             official_content_graph = download_content_graph(Path(temp_file.name))

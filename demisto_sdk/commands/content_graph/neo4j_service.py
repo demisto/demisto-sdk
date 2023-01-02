@@ -110,9 +110,7 @@ def start():
     """
     if is_alive():
         return
-    if not is_running_on_docker():
-        logger.info("Neo4J is installed locally, start with `neo4j start`")
-        return
+
     Path.mkdir(REPO_PATH / NEO4J_FOLDER, exist_ok=True, parents=True)
     # we download apoc only if we are running on docker
     # if the user is running locally he needs to setup apoc manually

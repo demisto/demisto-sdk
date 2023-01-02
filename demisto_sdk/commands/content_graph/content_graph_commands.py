@@ -52,21 +52,20 @@ def update_content_graph(
     """
     if use_git and imported_path:
         raise ValueError("Cannot use both git and imported path")
-    if packs_to_update is None:
-        packs_to_update = []
-    builder = ContentGraphBuilder(content_graph_interface)
-    if not imported_path:
-        get_or_create_graph(content_graph_interface, builder)
-    else:
-        content_graph_interface.import_graph(imported_path)
-
-    if not packs_to_update and not imported_path:
+    if packs_to_update is None and not imported_path:
         # If no arguments were given, we will use the git diff to get the packs to update
         use_git = True
 
+    if packs_to_update is None:
+        packs_to_update = []
+    builder = ContentGraphBuilder(content_graph_interface)
+
     if use_git:
+        get_or_create_graph(content_graph_interface, builder)
         latest_commit = get_latest_upload_flow_commit_hash()
         packs_to_update.extend(GitUtil().get_all_changed_pack_ids(latest_commit))
+    else:
+        content_graph_interface.import_graph(imported_path)
     logger.info(f"Updating the following packs: {packs_to_update}")
     builder.update_graph(packs_to_update)
     if dependencies:

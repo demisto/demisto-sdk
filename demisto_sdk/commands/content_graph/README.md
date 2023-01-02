@@ -23,17 +23,66 @@ This commands parses all content packs under the repository, including their rel
 ![Parsers](images/parsers.png) ![Models](images/models.png)
 
 #### Arguments
-* **-ud, --use-docker**
 
-    Use docker to create the content graph.
+* **-o, --output-path**
+  
+    Output folder to place the zip file of the graph exported CSVs files
 
-* **-us, --use-existing**
+* **-mp, --marketplace**
+    
+    The marketplace to generate the graph for.
 
-    Use existing service.
+* **-se, --skip-export**
+  
+    Whether or not to skip exporting to CSV.
 
-* **-d, --dependencies**
 
-    Whether dependencies should be included in the graph.
+* **-nd, --no-dependencies**
+
+    Whether skip dependencies should be included in the graph.
+
+* **-v, --verbose**
+
+    Verbosity level -v / -vv / .. / -vvv.
+
+* **-q, --quite**
+
+    Quiet output, only output results in the end.
+
+* **-lp, --log-path**
+
+    Path to store all levels of logs.
+
+
+### update-content-graph
+**Updates the content graph from the official content graph**
+This commands downloads the official content graph, imports it locally, and updates it with the changes in the given repository or by an argument of packs to update with.
+
+#### Arguments
+
+* **-o, --output-path**
+  
+    Output folder to place the zip file of the graph exported CSVs files
+
+* **-mp, --marketplace**
+    
+    The marketplace to generate the graph for.
+
+* **-g, --use-git**
+  
+    Whether to use git to determine the packs to update.
+
+* **-p, --packs**
+  
+    A comma-separated list of packs to update.
+
+* **-i, --imported_path**
+
+    Path to content graph zip file to import.
+
+* **-nd, --no-dependencies**
+
+    Whether skip dependencies should be included in the graph.
 
 * **-v, --verbose**
 

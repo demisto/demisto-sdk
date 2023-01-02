@@ -2905,10 +2905,7 @@ def error_code(config, **kwargs):
 @click.option(
     "-mp",
     "--marketplace",
-    help="The marketplace the artifacts are created for, that "
-    "determines which artifacts are created for each pack. "
-    "Default is the XSOAR marketplace, that has all of the packs "
-    "artifacts.",
+    help="The marketplace to generate the graph for.",
     default="xsoar",
     type=click.Choice([marketplace.value for marketplace in MarketplaceVersions]),
 )
@@ -3001,7 +2998,7 @@ def create_content_graph(
         path_type=Path, resolve_path=True, exists=True, file_okay=True, dir_okay=False
     ),
     default=None,
-    help="Path to content zip file to import",
+    help="Path to content graph zip file to import",
 )
 @click.option(
     "-p",

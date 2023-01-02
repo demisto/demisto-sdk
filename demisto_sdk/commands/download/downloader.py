@@ -6,7 +6,7 @@ import re
 import shutil
 import tarfile
 from tempfile import mkdtemp
-from typing import Dict, List, Union
+from typing import Dict, List, Tuple, Union
 
 import demisto_client.demisto_api
 from demisto_client.demisto_api.rest import ApiException
@@ -28,6 +28,7 @@ from demisto_sdk.commands.common.constants import (
     INCIDENT_FIELD_FILE_NAME_REGEX,
     INTEGRATIONS_DIR,
     LAYOUT_FILE_NAME__REGEX,
+    PLAYBOOK_REGEX,
     PLAYBOOKS_DIR,
     SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR,
@@ -350,9 +351,6 @@ class Downloader:
 
     def handle_file(self, string_to_write, member_name, scripts_id_name):
 
-        if "automation-" in member_name:
-            scripts_id_name = self.map_script(string_to_write, scripts_id_name)
-
         if not self.list_files and re.search(
             INCIDENT_FIELD_FILE_NAME_REGEX, member_name
         ):
@@ -360,7 +358,7 @@ class Downloader:
                 string_to_write, scripts_id_name
             )
 
-        if not self.list_files and re.search(r"playbook-.*\.yml", member_name):
+        if not self.list_files and re.search(PLAYBOOK_REGEX, member_name):
             #  if the content item is playbook and list-file flag is true, we should download the
             #  file via direct REST API because there are props like scriptName, that playbook from custom
             #  content bundle don't contain
@@ -370,7 +368,7 @@ class Downloader:
         if not self.list_files and re.search(LAYOUT_FILE_NAME__REGEX, member_name):
             string_to_write = self.handle_layout(string_to_write, scripts_id_name)
 
-        return string_to_write, scripts_id_name
+        return string_to_write
 
     def fetch_custom_content(self) -> bool:
         """
@@ -392,35 +390,41 @@ class Downloader:
             tar = tarfile.open(fileobj=io_bytes, mode="r")
 
             scripts_id_name: dict = {}
+            strings_to_write: List[Tuple[str, str]] = []
             for member in tar.getmembers():
                 file_name: str = self.update_file_prefix(member.name.strip("/"))
                 file_path: str = os.path.join(self.custom_content_temp_dir, file_name)
 
                 extracted_file = tar.extractfile(member)
-                # File might empty
                 if extracted_file:
                     string_to_write = extracted_file.read().decode("utf-8")
-                    string_to_write, scripts_id_name = self.handle_file(
-                        string_to_write, member.name, scripts_id_name
-                    )
-
-                    string_to_write = self.replace_uuids(
-                        string_to_write, scripts_id_name
-                    )
-                    try:
-                        with open(file_path, "w") as file:
-                            file.write(string_to_write)
-
-                    except Exception as e:
-                        print(f"encountered exception {type(e)}: {e}")
-                        print("trying to write with encoding=utf8")
-                        with open(file_path, "w", encoding="utf8") as file:
-                            file.write(string_to_write)
+                    if (
+                        "automation-" in member.name.lower()
+                        or "integration-" in member.name.lower()
+                    ):
+                        scripts_id_name = self.map_script(
+                            string_to_write, scripts_id_name
+                        )
+                    strings_to_write.append((string_to_write, member.name))
                 else:
                     raise FileNotFoundError(
                         f"Could not extract files from tar file: {file_path}"
                     )
 
+            for tup in strings_to_write:
+                string_to_write = self.handle_file(tup[0], tup[1], scripts_id_name)
+                string_to_write = self.replace_uuids(string_to_write, scripts_id_name)
+                file_name = self.update_file_prefix(tup[1].strip("/"))
+                file_path = os.path.join(self.custom_content_temp_dir, file_name)
+                try:
+                    with open(file_path, "w") as file:
+                        file.write(string_to_write)
+
+                except Exception as e:
+                    print(f"encountered exception {type(e)}: {e}")
+                    print("trying to write with encoding=utf8")
+                    with open(file_path, "w", encoding="utf8") as file:
+                        file.write(string_to_write)
             return True
 
         except ApiException as e:

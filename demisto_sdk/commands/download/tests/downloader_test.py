@@ -1223,11 +1223,8 @@ def test_handle_file(
     original_string, object_name, scripts_mapper, expected_string, expected_mapper
 ):
     downloader = Downloader(output="", input="", regex="", all_custom_content=True)
-    final_string, final_mapper = downloader.handle_file(
-        original_string, object_name, scripts_mapper
-    )
+    final_string = downloader.handle_file(original_string, object_name, scripts_mapper)
     assert final_string == expected_string
-    assert final_mapper == expected_mapper
 
 
 def test_download_playbook_yaml_is_called():

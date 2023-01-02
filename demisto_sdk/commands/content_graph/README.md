@@ -32,11 +32,6 @@ This commands parses all content packs under the repository, including their rel
 
     The marketplace to generate the graph for.
 
-* **-se, --skip-export**
-
-    Whether or not to skip exporting to CSV.
-
-
 * **-nd, --no-dependencies**
 
     Whether skip dependencies should be included in the graph.

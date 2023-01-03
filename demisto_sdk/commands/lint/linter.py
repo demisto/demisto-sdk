@@ -1406,7 +1406,9 @@ class Linter:
         log_prompt = f"{self._pack_name} - Get Versioned Native Image"
         logger.info(f"{log_prompt} - {native_image} - Started")
 
-        native_image_config = NativeImageConfig()  # parsed docker_native_image_config.json file (a singleton obj)
+        native_image_config = (
+            NativeImageConfig()
+        )  # parsed docker_native_image_config.json file (a singleton obj)
         if native_image not in native_image_config.native_images:
             # Server version is invalid or not exist in the docker_native_image_config.json
             err_msg = (
@@ -1455,7 +1457,9 @@ class Linter:
         imgs = get_docker_images_from_yml(script_obj)
 
         # Get native images:
-        native_image_config = NativeImageConfig()  # parsed docker_native_image_config.json file (a singleton obj)
+        native_image_config = (
+            NativeImageConfig()
+        )  # parsed docker_native_image_config.json file (a singleton obj)
         for native_image in native_image_config.native_images:
             if native_image != DockerImageFlagOption.NATIVE_LATEST.value:
                 native_image_ref = self._get_versioned_native_image(
@@ -1517,7 +1521,9 @@ class Linter:
 
         di_from_yml = script_obj.get("dockerimage")
         # If the 'dockerimage' key does not exist in yml - run on native image checks will be skipped
-        native_image_config = NativeImageConfig() # parsed docker_native_image_config.json file (a singleton obj)
+        native_image_config = (
+            NativeImageConfig()
+        )  # parsed docker_native_image_config.json file (a singleton obj)
         supported_native_images_obj = ScriptIntegrationSupportedNativeImages(
             _id=script_id,
             native_image_config=native_image_config,

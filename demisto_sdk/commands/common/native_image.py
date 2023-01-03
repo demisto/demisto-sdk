@@ -34,13 +34,11 @@ class NativeImageConfig(Singleton, BaseModel):
     native_images: Dict[str, NativeImage]
     ignored_content_items: List[IgnoredContentItem]
     docker_images_to_native_images_mapping: Dict[str, List] = {}
-    native_image_config_file_path: str = ""
 
     def __init__(
         self, native_image_config_file_path: str = f"Tests/{NATIVE_IMAGE_FILE_NAME}"
     ):
         super().__init__(**self.load(native_image_config_file_path))
-        self.native_image_config_file_path = native_image_config_file_path
         self.docker_images_to_native_images_mapping = (
             self.__docker_images_to_native_images_support()
         )
@@ -95,10 +93,7 @@ class NativeImageConfig(Singleton, BaseModel):
             return native_image_obj.docker_ref
 
         else:  # desirable native image not in self.native_images
-            raise Exception(
-                f"The requested native image: {native_image} is not supported.\n "
-                f"For supported native image versions please see: {self.native_image_config_file_path}."
-            )
+            return None
 
 
 class ScriptIntegrationSupportedNativeImages:

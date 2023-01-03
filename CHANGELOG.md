@@ -21,6 +21,7 @@
 * Enhanced the **update-content-graph** command to support `--use-git`, `--imported_path` and `--output-path` arguments.
 * Fixed an issue where **doc-review** failed when reviewing command name in some cases.
 * Fixed an issue where **download** didn't identify playbooks properly, and downloaded files with UUIDs instead of file/script names.
+* Fixed an issue where **update-release-notes** fails to update *MicrosoftApiModule* dependent integrations.
 
 
 ## 1.8.1

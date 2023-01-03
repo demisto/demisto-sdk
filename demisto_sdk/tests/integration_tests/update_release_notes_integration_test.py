@@ -346,7 +346,7 @@ def test_update_release_notes_existing(demisto_client, mocker):
         + "- Azure.CloudIPs Feed Integration.\n"
         + "\n"
         + "#### Incident Fields\n"
-        + "- **City**"
+        + "- **City**\n\n"
     )
 
     input_rn = (

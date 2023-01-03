@@ -821,7 +821,6 @@ class UpdateRN:
             is_new_file = data.get("is_new_file")
             desc = data.get("description", "")
             docker_image = data.get("dockerimage")
-            path = data.get("path")
             rn_desc = ""
             if _type is None:
                 continue
@@ -833,7 +832,6 @@ class UpdateRN:
                 desc=desc,
                 is_new_file=is_new_file,
                 docker_image=docker_image,
-                path=path,
             )
             if _header_by_type and _header_by_type in current_rn_without_docker_images:
                 if self.does_content_item_header_exist_in_rns(
@@ -859,7 +857,7 @@ class UpdateRN:
                     if len(rn_parts) > 1:
                         new_rn = f"{rn_parts[0]}{_header_by_type}{new_rn_part[:-1]}{rn_parts[1]}"
                 else:
-                    new_rn_part = f"\n#### {_header_by_type}{rn_desc}"
+                    new_rn_part = f"\n#### {_header_by_type}{rn_desc}\n"
                     new_rn += new_rn_part
         if new_rn != current_rn:
             self.existing_rn_changed = True

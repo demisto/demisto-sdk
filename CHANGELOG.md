@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where demisto-py failed to upload content to XSIAM when `DEMISTO_USERNAME` environment variable is set.
 * Fixed an issue where the **prepare-content** command output invalid automation name when used with the --*custom* argument.
 * Fixed an issue where modeling rules with arbitrary whitespace characters were not parsed correctly.
 * Added support for the **nativeImage** key for an integration/script in the **prepare-content** command.
@@ -19,6 +20,8 @@
 * Added to the **format** command the ability to remove `nativeimage` key in case defined in script/integration yml.
 * Enhanced the **update-content-graph** command to support `--use-git`, `--imported_path` and `--output-path` arguments.
 * Fixed an issue where **doc-review** failed when reviewing command name in some cases.
+* Fixed an issue where **download** didn't identify playbooks properly, and downloaded files with UUIDs instead of file/script names.
+
 
 ## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.

@@ -782,6 +782,23 @@ class UpdateRN:
             rn_desc += f"- Updated the Docker image to: *{docker_image}*.\n"
         return rn_desc
 
+    def does_content_item_header_exist_in_rns(
+        self, current_rn: str, content_name: str
+    ) -> bool:
+        """
+        Checks whether the content item header exists in the release notes.
+
+        Args:
+            current_rn: The current release notes.
+            content_name: The content item name.
+        Returns:
+            True if the content item header exists in the release notes, False otherwise.
+        """
+        for line in current_rn.replace("#####", "").replace("**", "").split("\n"):
+            if content_name == line.replace("-", "", 1).strip():
+                return True
+        return False
+
     def update_existing_rn(self, current_rn, changed_files) -> str:
         """Update the existing release notes.
 
@@ -843,7 +860,9 @@ class UpdateRN:
                 rn_desc += f"- Updated the Docker image to: *{docker_image}*."
 
             if _header_by_type and _header_by_type in current_rn_without_docker_images:
-                if content_name in current_rn_without_docker_images:
+                if self.does_content_item_header_exist_in_rns(
+                    current_rn_without_docker_images, content_name
+                ):
                     if docker_image:
                         new_rn = self.handle_existing_rn_with_docker_image(
                             new_rn, _header_by_type, docker_image, content_name

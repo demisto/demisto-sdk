@@ -1613,7 +1613,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
         mocker.patch(
             "demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn",
-            return_value=None,
+            return_value="",
         )
 
         update_rn = UpdateRN(

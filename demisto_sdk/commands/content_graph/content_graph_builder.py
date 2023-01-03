@@ -32,10 +32,10 @@ class ContentGraphBuilder:
         Args:
             packs_to_update (Optional[List[str]]): A list of packs to update.
         """
-        self.content_graph.import_graph()
-        if packs_to_update:
-            self._parse_and_model_content(packs_to_update)
-            self._create_or_update_graph()
+        if not packs_to_update:
+            return
+        self._parse_and_model_content(packs_to_update)
+        self._create_or_update_graph()
 
     def _preprepare_database(self) -> None:
         self.content_graph.clean_graph()

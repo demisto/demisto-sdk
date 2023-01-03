@@ -42,6 +42,7 @@ def update_content_graph(
     content_graph_interface: ContentGraphInterface,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
     use_git: bool = False,
+    prev_ver: Optional[str] = None,
     imported_path: Optional[Path] = None,
     packs_to_update: Optional[List[str]] = None,
     dependencies: bool = True,
@@ -69,8 +70,9 @@ def update_content_graph(
 
     if use_git:
         get_or_create_graph(content_graph_interface, builder)
-        latest_commit = get_latest_upload_flow_commit_hash()
-        packs_to_update.extend(GitUtil().get_all_changed_pack_ids(latest_commit))
+        if not prev_ver:
+            prev_ver = get_latest_upload_flow_commit_hash()
+        packs_to_update.extend(GitUtil().get_all_changed_pack_ids(prev_ver))
     else:
         content_graph_interface.import_graph(imported_path)
     logger.info(f"Updating the following packs: {packs_to_update}")

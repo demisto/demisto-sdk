@@ -67,6 +67,10 @@ This commands downloads the official content graph, imports it locally, and upda
 
     Whether to use git to determine the packs to update.
 
+* **-pv, --prev-ver**
+
+    Previous branch or SHA1 commit to update the content graph. Default is the latest upload flow commit.
+
 * **-p, --packs**
 
     A comma-separated list of packs to update.

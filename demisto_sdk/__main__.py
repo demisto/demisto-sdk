@@ -4,7 +4,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import IO, Any, Dict
+from typing import IO, Any, Dict, Optional
 
 import click
 import git
@@ -2983,6 +2983,12 @@ def create_content_graph(
     help="Whether to use git to determine the packs to update",
 )
 @click.option(
+    "-pv",
+    "--prev-ver",
+    default=None,
+    help="Previous branch or SHA1 commit to update the content graph. Default is the latest upload flow commit."
+)
+@click.option(
     "-i",
     "--imported-path",
     type=click.Path(
@@ -3032,11 +3038,12 @@ def create_content_graph(
 )
 def update_content_graph(
     use_git: bool = False,
+    prev_ver: Optional[str] = None,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
     imported_path: Path = None,
-    packs: list = None,
+    packs: Optional[list] = None,
     no_dependencies: bool = False,
-    output_path: Path = None,
+    output_path: Optional[Path] = None,
     **kwargs,
 ):
     from demisto_sdk.commands.common.logger import logging_setup
@@ -3058,6 +3065,7 @@ def update_content_graph(
             content_graph_interface,
             marketplace=MarketplaceVersions(marketplace),
             use_git=use_git,
+            prev_ver=prev_ver,
             imported_path=imported_path,
             packs_to_update=packs or [],
             dependencies=not no_dependencies,

@@ -19,7 +19,7 @@
 * Enhanced the **update-content-graph** command to support `--use-git`, `--imported_path` and `--output-path` arguments.
 * Fixed an issue where **doc-review** failed when reviewing command name in some cases.
 * Fixed an issue where **download** didn't identify playbooks properly, and downloaded files with UUIDs instead of file/script names.
-
+* Added `--prev-ver` argument to **update-release-notes** command, to update the content graph with the previous git Commit hash or branch.
 
 ## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.

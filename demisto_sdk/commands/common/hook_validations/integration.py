@@ -1502,6 +1502,7 @@ class IntegrationValidator(ContentEntityValidator):
         for param in self.current_file.get("configuration", ()):
             name = param.get("name", "")
             display_name = param.get("display", "")
+            type_ = param.get("type")
             hidden = param.get("hidden")
 
             invalid_type = not isinstance(hidden, (type(None), bool, list, str))
@@ -1521,7 +1522,7 @@ class IntegrationValidator(ContentEntityValidator):
             ) == set(MarketplaceVersions)
 
             if invalid_bool or hidden_in_all_marketplaces:
-                if self._is_replaced_by_type9(display_name):
+                if type_ in (0, 4, 14) and self._is_replaced_by_type9(display_name):
                     continue
                 error_message, error_code = Errors.param_not_allowed_to_hide(name)
                 if self.handle_error(

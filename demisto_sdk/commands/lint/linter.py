@@ -1345,30 +1345,70 @@ class Linter:
             logger.debug("Failed getting the commands from the yml file")
         return commands_list
 
+    def _is_native_image_support_script(
+            self,
+            native_image: str,
+            supported_native_images: Set[str],
+            script_id: str,
+    ) -> bool:
+        """
+        Gets a native image name (flag) and checks if it supports the integration/script that lint runs on.
+
+        Args:
+            native_image (str): Name of the Native image to run on.
+            supported_native_images (set): A set including the names of the native images that support the
+                                           script/integration that lint runs on.
+            script_id (str): The ID of the integration/script that lint runs on.
+        Returns (bool): True - if the native image supports the integration/script that lint runs on.
+                        False - Otherwise.
+        """
+        if native_image not in supported_native_images:
+            # Integration/Script isn't supported by the requested native image
+            logger.info(
+                f"Skipping checks on docker for {native_image} - {script_id} is not supported by the "
+                f"requested native image: {native_image}."
+            )
+            return False
+
+        return True
+
+    def _check_if_native_image_in_config_file(
+            self,
+            native_image: str,
+    ) -> None:
+        """
+        Gets a native image name (flag), and raises an exception if it doesn't exist in the
+        docker_native_image_config.json file.
+        Args:
+            native_image (str): Name of the Native image to run on.
+        Returns (None): None
+        """
+        native_image_config = (
+            NativeImageConfig()
+        )  # parsed docker_native_image_config.json file (a singleton obj)
+
+        if native_image not in native_image_config.native_images:
+            # Server version is invalid or not exist in the docker_native_image_config.json
+            err_msg = f"The requested native image: {native_image} is not supported. For supported native image" \
+                      f" versions please see: 'Tests/docker_native_image_config.json'"
+            logger.error(
+                f"Skipping checks on docker for {native_image} - {err_msg}"
+            )
+            raise ValueError(
+                err_msg
+            )
+
     def _get_latest_native_image(
-        self, script_id: str, supported_native_images: Set[str]
+        self, script_id: str
     ) -> Union[str, None]:
         """
         Gets the latest tag of the native image from Docker Hub.
-        If the integration/script that lint runs on doesn't support the latest native image - write to the logs that the
-        checks on docker will be skipped.
         Args:
             script_id (str): The ID of the integration/script that lint runs on.
-            supported_native_images (set): A set including the names of the native images supported for the
-                                        script/integration that lint runs on.
         Returns: The latest native image.
         """
         log_prompt = f"{self._pack_name} - Get Latest Native Image"
         logger.info(f"{log_prompt} - Started")
-
-        if DockerImageFlagOption.NATIVE_LATEST.value not in supported_native_images:
-            # Integration/Script doesn't support the requested native image
-            logger.info(
-                f"{log_prompt} - Skipping checks on docker for {DockerImageFlagOption.NATIVE_LATEST.value} -"
-                f" {script_id} does not support the requested native image:"
-                f" {DockerImageFlagOption.NATIVE_LATEST.value}."
-            )
-            return None
 
         latest_tag = DockerImageValidator.get_docker_image_latest_tag_request(
             NATIVE_IMAGE_DOCKER_NAME
@@ -1389,47 +1429,20 @@ class Linter:
     def _get_versioned_native_image(
         self,
         native_image: str,
-        supported_native_images: Set[str],
-        script_id: str,
     ) -> Union[str, None]:
         """
-        Gets a versioned native image name, and finds it's reference (tag) in the docker_native_image_config.json
-        file. If the native image name doesn't exist in the file or the integration/script that lint runs on doesn't
-        support this native image - write to the logs that the checks on docker will be skipped.
+        Gets a versioned native image name, and finds it's reference (tag) in the docker_native_image_config.json file.
         Args:
             native_image (str): Name of the Native image to run on.
-            supported_native_images (set): A set including the names of the native images supported for the
-                                           script/integration that lint runs on.
-            script_id (str): The ID of the integration/script that lint runs on.
         Returns (str): The native image reference (tag).
         """
-        log_prompt = f"{self._pack_name} - Get Versioned Native Image"
-        logger.info(f"{log_prompt} - {native_image} - Started")
+        logger.info(f"{self._pack_name} - Get Versioned Native Image - {native_image} - Started")
 
         native_image_config = (
             NativeImageConfig()
         )  # parsed docker_native_image_config.json file (a singleton obj)
-        if native_image not in native_image_config.native_images:
-            # Server version is invalid or not exist in the docker_native_image_config.json
-            err_msg = (
-                f"{log_prompt} - Skipping checks on docker for {native_image}. The requested native image: "
-                f"{native_image} is not supported. For supported native image versions please see: "
-                f"'Tests/docker_native_image_config.json'"
-            )
-            logger.error(err_msg)
-            raise ValueError(err_msg)
 
-        elif native_image not in supported_native_images:
-            # Integration/Script doesn't support the requested native image
-            logger.info(
-                f"{log_prompt} - Skipping checks on docker for {native_image} - {script_id} does not support the "
-                f"requested native image: {native_image}."
-            )
-            return None
-
-        else:
-            # Integration/Script supports the requested native image - find the relevant tag to run on
-            return native_image_config.get_native_image_reference(native_image)
+        return native_image_config.get_native_image_reference(native_image)
 
     def _get_all_docker_images(
         self,
@@ -1448,34 +1461,35 @@ class Linter:
             script_id (str): The ID of the integration/script that lint runs on.
             supported_native_images (set): A set including the names of the native images supported for the
                                            script/integration that lint runs on.
-        Returns (List): A list includong all the docker images to run on.
+        Returns (List): A list including all the docker images to run on.
         """
         log_prompt = f"{self._pack_name} - Get All Docker Images"
         logger.info(f"{log_prompt} - Started")
 
         # Get docker images from yml:
+        logger.info(f"{self._pack_name} - Get Docker Image from YML - Started")
         imgs = get_docker_images_from_yml(script_obj)
 
         # Get native images:
         native_image_config = (
             NativeImageConfig()
         )  # parsed docker_native_image_config.json file (a singleton obj)
+
         for native_image in native_image_config.native_images:
-            if native_image != DockerImageFlagOption.NATIVE_LATEST.value:
-                native_image_ref = self._get_versioned_native_image(
-                    native_image,
-                    supported_native_images,
-                    script_id,
-                )
+            if self._is_native_image_support_script(native_image, supported_native_images, script_id):
+
+                if native_image == DockerImageFlagOption.NATIVE_LATEST.value:
+                    #  Get native latest from Docker Hub
+                    native_image_ref = self._get_latest_native_image(
+                        script_id
+                    )
+                else:  # versioned native image
+                    native_image_ref = self._get_versioned_native_image(
+                        native_image
+                    )
+
                 if native_image_ref:
                     imgs.append(native_image_ref)
-
-        # Get native latest:
-        latest_native_image_ref = self._get_latest_native_image(
-            script_id, supported_native_images
-        )
-        if latest_native_image_ref:
-            imgs.append(latest_native_image_ref)
 
         return imgs
 
@@ -1512,10 +1526,11 @@ class Linter:
             docker_image_flag == DockerImageFlagOption.FROM_YML.value
         ):  # the default option
             # Desirable docker images are the docker images from the yml file (alt-dockerimages included)
+            logger.info(f"{self._pack_name} - Get Docker Image from YML - Started")
             imgs = get_docker_images_from_yml(script_obj)
             if imgs:
                 logger.info(
-                    f"{log_prompt} - Docker image to run on are: {', '.join(imgs)}"
+                    f"{log_prompt} - Docker images to run on are: {', '.join(imgs)}"
                 )
             return imgs
 
@@ -1538,14 +1553,15 @@ class Linter:
         if docker_image_flag.startswith(DockerImageFlagOption.NATIVE.value):
             # Desirable docker image to run on is a native image
 
-            if supported_native_images:
-                # Integration/Script supports native images
+            self._check_if_native_image_in_config_file(docker_image_flag)
+
+            if self._is_native_image_support_script(docker_image_flag, supported_native_images, script_id):
+                # Integration/Script is supported by the requested native image
 
                 if docker_image_flag == DockerImageFlagOption.NATIVE_LATEST.value:
                     # Desirable docker image to run on is the latest native image - get the latest tag from Docker Hub
-                    latest_native_image_ref = self._get_latest_native_image(
-                        script_id, supported_native_images
-                    )
+                    latest_native_image_ref = self._get_latest_native_image(script_id)
+
                     if latest_native_image_ref:
                         imgs.append(latest_native_image_ref)
                         logger.info(
@@ -1553,25 +1569,15 @@ class Linter:
                         )
 
                 else:
-                    # Desirable docker image to run on is a specific native image - get the docker ref from the
+                    # Desirable docker image to run on is a versioned native image - get the docker ref from the
                     # docker_native_image_config.json
-                    native_image_ref = self._get_versioned_native_image(
-                        docker_image_flag,
-                        supported_native_images,
-                        script_id,
-                    )
+                    native_image_ref = self._get_versioned_native_image(docker_image_flag)
+
                     if native_image_ref:
                         imgs.append(native_image_ref)
                         logger.info(
                             f"{log_prompt} - Native image to run on is: {native_image_ref}"
                         )
-
-            else:
-                # Integration/Script does not support native images
-                logger.info(
-                    f"{log_prompt} - Skipping checks on docker for {docker_image_flag} - {script_id} does not "
-                    f"support native images."
-                )
 
         elif docker_image_flag == DockerImageFlagOption.ALL_IMAGES.value:
             # Desirable docker images are the docker images from the yml file, the native image of the current server
@@ -1581,7 +1587,7 @@ class Linter:
             )
             if imgs:
                 logger.info(
-                    f"{log_prompt} - Docker image to run on are: {', '.join(imgs)}"
+                    f"{log_prompt} - Docker images to run on are: {', '.join(imgs)}"
                 )
 
         else:

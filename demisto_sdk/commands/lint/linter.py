@@ -310,7 +310,7 @@ class Linter:
                 # Getting python version from docker image - verifying if not valid docker image configured
                 for image in self._facts["images"]:
                     py_num: str = get_python_version_from_image(
-                        image=image[0], timeout=self.docker_timeout
+                        image=image[0]
                     )
                     image[1] = py_num
                     logger.info(

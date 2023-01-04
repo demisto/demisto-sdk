@@ -2106,6 +2106,10 @@ class TestRNUpdateUnit:
             "get_changed_file_name_and_type",
             return_value=("Test", FileType.INTEGRATION),
         )
+        mocker.patch(
+            "demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn",
+            return_value="",
+        )
 
         client = UpdateRN(
             pack_path="Packs/Test",

@@ -46,7 +46,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     is_fetch_events: bool = False
     is_feed: bool = False
     category: str
-    commands: List[Command] = Field([], exclude=True)
+    commands: List[Command] = []
 
     @property
     def imports(self) -> List["Script"]:
@@ -74,12 +74,10 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             "name": True,
             "description": True,
             "category": True,
-            "commands": {"name": True, "description": True},
+            "commands": {"__all__": {"name": True, "description": True}},
         }
 
-    def prepare_for_upload(
-        self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
-    ) -> dict:
+    def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
         data = super().prepare_for_upload(marketplace, **kwargs)
 
         if supported_native_images := self.get_supported_native_images(

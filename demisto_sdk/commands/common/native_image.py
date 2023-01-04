@@ -33,6 +33,7 @@ def _extract_native_image_version_for_server(native_image: str) -> str:
 class NativeImageConfig(Singleton, BaseModel):
     native_images: Dict[str, NativeImage]
     ignored_content_items: List[IgnoredContentItem]
+    flags_versions_mapping: Dict[str, str]
     docker_images_to_native_images_mapping: Dict[str, List] = {}
 
     def __init__(

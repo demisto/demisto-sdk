@@ -8,7 +8,6 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.tools import (
     download_content_graph,
-    get_latest_upload_flow_commit_hash,
 )
 from demisto_sdk.commands.content_graph.content_graph_builder import ContentGraphBuilder
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface

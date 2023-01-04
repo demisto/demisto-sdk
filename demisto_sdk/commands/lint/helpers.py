@@ -28,6 +28,8 @@ from demisto_sdk.commands.common.constants import (
     DemistoException,
 )
 
+PANW_ARTIFACTORY = "docker-io.art.code.pan.run/"
+
 # Python2 requirements
 PYTHON2_REQ = ["flake8", "vulture"]
 
@@ -316,12 +318,14 @@ def get_python_version_from_image(image: str) -> str:
     # skip pwoershell images
     if "pwsh" in image or "powershell" in image:
         return "3.10"
-    if 'docker-io.art.code.pan.run/' in image:
+    logger.info(f"Getting python version for image: {image}")
+    if PANW_ARTIFACTORY in image:
         try:
-            image = image.removeprefix('docker-io.art.code.pan.run')  # type: ignore[attr-defined]
+            image = image.removeprefix(PANW_ARTIFACTORY)  # type: ignore[attr-defined]
         except AttributeError:
             # python 3.8 does not support removeprefix
-            image = image.replace('docker-io.art.code.pan.run', '')
+            image = image.replace(PANW_ARTIFACTORY, '')
+        logger.info(f"Changed image to {image}")
     if ":" not in image:
         repo = image
         tag = "latest"

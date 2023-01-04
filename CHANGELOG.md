@@ -20,7 +20,7 @@
 * Fixed an issue where **doc-review** failed when reviewing command name in some cases.
 * Fixed an issue where **download** didn't identify playbooks properly, and downloaded files with UUIDs instead of file/script names.
 * Fixed an issue where **update-release-notes** fails to update *MicrosoftApiModule* dependent integrations.
-* Updated the **update-release-notes** command headers format to a *Generic* content type.
+* Updated the **update-release-notes** command to use the stars headers format for the *Generic* content types.
 
 
 ## 1.8.1

@@ -335,6 +335,8 @@ def verify_pack_exists_on_tenant(
                         f"[red]Failed to upload pack {containing_pack_id} to tenant[/red]",
                         extra={"markup": True},
                     )
+                # wait for pack to finish installing
+                sleep(1)
             else:
                 upload_result = 1
         if not interactive or not upload_result == 0:

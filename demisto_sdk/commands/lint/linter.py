@@ -1532,7 +1532,9 @@ class Linter:
             List. A list of all desirable docker images references.
         """
         log_prompt = f"{self._pack_name} - Get All Docker Images For Lint"
-        logger.info(f"{log_prompt} - Requested docker image flag is: '{docker_image_flag}'")
+        logger.info(
+            f"{log_prompt} - Requested docker image flag is: '{docker_image_flag}'"
+        )
         imgs = []
 
         if (
@@ -1565,18 +1567,24 @@ class Linter:
         if docker_image_flag.startswith(DockerImageFlagOption.NATIVE.value):
             # Desirable docker image to run on is a native image
 
-            if docker_image_flag not in (DockerImageFlagOption.NATIVE_DEV.value,
-                                         DockerImageFlagOption.NATIVE_GA.value,
-                                         DockerImageFlagOption.NATIVE_MAINTENANCE.value):
+            if docker_image_flag not in (
+                DockerImageFlagOption.NATIVE_DEV.value,
+                DockerImageFlagOption.NATIVE_GA.value,
+                DockerImageFlagOption.NATIVE_MAINTENANCE.value,
+            ):
                 err_msg = (
                     f"The requested native image: '{docker_image_flag}' is not supported. The possible options are: "
                     f"'native:ga', 'native:maintenance' and 'native:dev'. For supported native image"
                     f" versions please see: 'Tests/docker_native_image_config.json'"
                 )
-                logger.error(f"Skipping checks on docker for '{docker_image_flag}' - {err_msg}")
+                logger.error(
+                    f"Skipping checks on docker for '{docker_image_flag}' - {err_msg}"
+                )
                 raise ValueError(err_msg)
 
-            if native_image := self._get_native_image_name_from_config_file(docker_image_flag):
+            if native_image := self._get_native_image_name_from_config_file(
+                docker_image_flag
+            ):
 
                 if self._is_native_image_support_script(
                     native_image, supported_native_images, script_id

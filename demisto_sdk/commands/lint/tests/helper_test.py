@@ -110,7 +110,7 @@ def test_cache_of_get_python_version_from_image():
     """
     from demisto_sdk.commands.lint import helpers
 
-    image = "demisto/python3:3.10.9.42476"
+    image = "demisto/python3:3.9.8.12345"
 
     cache_info_before = helpers.get_python_version_from_image.cache_info()
     helpers.get_python_version_from_image(image)

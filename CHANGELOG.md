@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+
+## 1.8.2
 * Fixed an issue where demisto-py failed to upload content to XSIAM when `DEMISTO_USERNAME` environment variable is set.
 * Fixed an issue where the **prepare-content** command output invalid automation name when used with the --*custom* argument.
 * Fixed an issue where modeling rules with arbitrary whitespace characters were not parsed correctly.

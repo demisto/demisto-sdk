@@ -2179,19 +2179,37 @@ class TestIsFeedParamsExist:
             {"name": "feedReputation", "required": "false", "hidden": True}
         ]
     }
-    HIDDEN_TRUE_BUT_REPLACED_USER = {
+    HIDDEN_TRUE_BUT_REPLACED_TYPE_0 = {
         "configuration": [
-            {"type": 4, "display": "Username", "hidden": True},
+            {"type": 0, "display": "Username", "hidden": True},
             {"type": 9, "display": "Username"},
         ]
     }
-    HIDDEN_TRUE_BUT_REPLACED_PASSWORD = {
+    HIDDEN_TRUE_BUT_REPLACED_TYPE_12 = {
+        "configuration": [
+            {"type": 12, "display": "Username", "hidden": True},
+            {"type": 9, "display": "Username"},
+        ]
+    }
+    HIDDEN_TRUE_BUT_REPLACED_TYPE_14 = {
+        "configuration": [
+            {"type": 14, "display": "Username", "hidden": True},
+            {"type": 9, "display": "Username"},
+        ]
+    }
+    HIDDEN_TRUE_BUT_REPLACED_BY_NOT_ALLOWED = {
+        "configuration": [
+            {"type": 5, "display": "Username", "hidden": True},
+            {"type": 9, "display": "Username"},
+        ]
+    }
+    HIDDEN_TRUE_BUT_REPLACED_4 = {
         "configuration": [
             {"type": 4, "display": "Api key", "hidden": True},
             {"type": 9, "displaypassword": "API key"},
         ]
     }
-    HIDDEN_ONE_REPLACED_4_TO_9_OTHER_NOT = {
+    HIDDEN_ONE_REPLACED_TO_9_OTHER_NOT = {
         "configuration": [
             {"type": 4, "display": "API key", "hidden": True},
             {"type": 9, "displaypassword": "API key"},
@@ -2206,9 +2224,12 @@ class TestIsFeedParamsExist:
         (HIDDEN_TRUE_AND_FALSE, False),
         (HIDDEN_ALLOWED_TRUE, True),
         (HIDDEN_ALLOWED_FEED_REPUTATION, True),
-        (HIDDEN_TRUE_BUT_REPLACED_USER, True),
-        (HIDDEN_TRUE_BUT_REPLACED_PASSWORD, True),
-        (HIDDEN_ONE_REPLACED_4_TO_9_OTHER_NOT, False),
+        (HIDDEN_TRUE_BUT_REPLACED_TYPE_0, True),
+        (HIDDEN_TRUE_BUT_REPLACED_TYPE_12, True),
+        (HIDDEN_TRUE_BUT_REPLACED_TYPE_14, True),
+        (HIDDEN_TRUE_BUT_REPLACED_BY_NOT_ALLOWED, False),
+        (HIDDEN_TRUE_BUT_REPLACED_4, True),
+        (HIDDEN_ONE_REPLACED_TO_9_OTHER_NOT, False),
     ]
 
     @pytest.mark.parametrize("current, answer", IS_VALID_HIDDEN_PARAMS)

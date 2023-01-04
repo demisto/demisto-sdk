@@ -1,7 +1,7 @@
 # Changelog
 ## Unreleased
+* Changed **validate** to allow hiding parameters of type 0, 4, 12 and 14 when replacing with type 9 (credentials) with the same name.
 * Fixed an issue where **update-release-notes** fails to update *MicrosoftApiModule* dependent integrations.
-
 
 ## 1.8.2
 * Fixed an issue where demisto-py failed to upload content to XSIAM when `DEMISTO_USERNAME` environment variable is set.

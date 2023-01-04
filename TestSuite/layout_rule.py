@@ -15,12 +15,12 @@ class LayoutRule(JSONBased):
         if json_content:
             self.write_json(json_content)
         else:
-            self.create_default_trigger()
+            self.create_default_layout_rule()
 
-    def create_default_trigger(self):
+    def create_default_layout_rule(self):
         self.write_json(
             {
                 "rule_id": self.name,
-                "layout_rule_name": self.name,
+                "rule_name": self.name,
             }
         )

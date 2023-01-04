@@ -3737,7 +3737,7 @@ class TestLayoutRules:
         """
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
         layout_rule = pack.create_layout_rule(
-            "rule_name", {"rule_id": "rule_id", "layout_rule_name": "rule_name"}
+            "rule_name", {"rule_id": "rule_id", "rule_name": "rule_name"}
         )
         res = process_general_items(
             layout_rule.path,

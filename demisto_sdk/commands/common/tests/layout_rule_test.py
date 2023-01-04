@@ -20,7 +20,7 @@ def test_are_all_fields_exist(repo):
             "rule_id": "test_rule",
             "layout_id": "test_layout_id",
             "description": "This trigger is test",
-            "layout_rule_name": "test rule name",
+            "rule_name": "test rule name",
             "alerts_filter": {
                 "filter": {
                     "AND": [

@@ -55,7 +55,7 @@ class LayoutRuleValidator(ContentEntityValidator):
             "rule_id",
             "layout_id",
             "description",
-            "layout_rule_name",
+            "rule_name",
             "alerts_filter",
         )
         missing_fields = []

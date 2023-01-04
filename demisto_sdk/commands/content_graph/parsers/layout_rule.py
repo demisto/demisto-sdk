@@ -22,7 +22,7 @@ class LayoutRuleParser(JSONContentItemParser, content_type=ContentType.LAYOUT_RU
 
     @property
     def name(self) -> Optional[str]:
-        return self.json_data.get("layout_rule_name")
+        return self.json_data.get("rule_name")
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

@@ -2481,7 +2481,7 @@ def get_layout_rule_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
 
     id_ = json_data.get("rule_id")
-    name = json_data.get("layout_rule_name")
+    name = json_data.get("rule_name")
     layout_id = json_data.get("layout_id")
     display_name = get_display_name(path, json_data)
     fromversion = json_data.get("fromVersion")

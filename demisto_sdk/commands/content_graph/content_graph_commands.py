@@ -68,9 +68,9 @@ def update_content_graph(
     builder = ContentGraphBuilder(content_graph_interface)
 
     if use_git:
-        get_or_create_graph(content_graph_interface, builder)
-        latest_commit = get_latest_upload_flow_commit_hash()
-        packs_to_update.extend(GitUtil().get_all_changed_pack_ids(latest_commit))
+        metadata = get_or_create_graph(content_graph_interface, builder)
+        if metadata and (commit := metadata.get("commit")):
+            packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
     else:
         content_graph_interface.import_graph(imported_path)
     logger.info(f"Updating the following packs: {packs_to_update}")
@@ -82,17 +82,26 @@ def update_content_graph(
     content_graph_interface.export_graph(output_path)
 
 
-def get_or_create_graph(
-    content_graph_interface: ContentGraphInterface, builder: ContentGraphBuilder
-):
+def get_or_create_graph(content_graph_interface: ContentGraphInterface, builder: ContentGraphBuilder) -> Optional[dict]:
+    """Get or create a content graph.
+    If the graph is not in the bucket or there are network issues, it will create a new one.
+
+    Args:
+        content_graph_interface (ContentGraphInterface)
+        builder (ContentGraphBuilder)
+
+    Returns:
+        Optional[dict]: The metadata of the graph, includes the commit hash.
+    """
     try:
         with NamedTemporaryFile() as temp_file:
             official_content_graph = download_content_graph(Path(temp_file.name))
-            content_graph_interface.import_graph(official_content_graph)
+            return content_graph_interface.import_graph(official_content_graph)
     except Exception as e:
-        logger.info("Failed to download from bucket. Will create a new graph")
+        logger.warning("Failed to download from bucket. Will create a new graph")
         logger.debug(f"Error: {e}")
         builder.create_graph()
+        return None
 
 
 def stop_content_graph() -> None:

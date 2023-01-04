@@ -6,8 +6,13 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import List, Optional, Set
 from zipfile import ZipFile
+from demisto_sdk.commands.common.git_util import GitUtil
 
 from demisto_sdk.commands.content_graph.neo4j_service import get_neo4j_import_path
+
+from demisto_sdk.commands.common.handlers import JSON_Handler
+
+json = JSON_Handler()
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -35,16 +40,10 @@ class Neo4jImportHandler:
             os.remove(file)
 
     def get_nodes_files(self) -> List[str]:
-        return [
-            file.name for file in self.import_path.iterdir() if ".nodes." in file.name
-        ]
+        return [file.name for file in self.import_path.iterdir() if ".nodes." in file.name]
 
     def get_relationships_files(self) -> List[str]:
-        return [
-            file.name
-            for file in self.import_path.iterdir()
-            if ".relationships." in file.name
-        ]
+        return [file.name for file in self.import_path.iterdir() if ".relationships." in file.name]
 
     def ensure_data_uniqueness(self) -> None:
         if len(sources := self._get_import_sources()) > 1:
@@ -79,15 +78,23 @@ class Neo4jImportHandler:
                     writer.writerow(next(reader))  # skip headers row
                     for row in reader:
                         row[0] = f"{prefix}{row[0]}"
-                        row[1] = (
-                            f"{prefix}{row[1]}"
-                            if "relationships" in filename.name
-                            else row[1]
-                        )
+                        row[1] = f"{prefix}{row[1]}" if "relationships" in filename.name else row[1]
                         writer.writerow(row)
-                shutil.move(
-                    tempfile.name, (self.import_path / filename.name).as_posix()
-                )
+                shutil.move(tempfile.name, (self.import_path / filename.name).as_posix())
+
+    def add_metadata(self) -> None:
+        """Adds metadata to the graph."""
+        metadata = {
+            "commit": GitUtil().get_current_commit_hash(),
+        }
+        with open(self.import_path / "metadata.json", "w") as f:
+            json.dump(metadata, f)
+    
+    def get_metadata(self) -> dict:
+        """Returns the metadata of the graph."""
+        with open(self.import_path / "metadata.json", "r") as f:
+            return json.load(f)
 
     def zip_import_dir(self, output_file: Path) -> None:
+        # get current commit hash
         shutil.make_archive(str(output_file), "zip", self.import_path)

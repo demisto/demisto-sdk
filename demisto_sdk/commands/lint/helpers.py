@@ -316,6 +316,12 @@ def get_python_version_from_image(image: str) -> str:
     # skip pwoershell images
     if "pwsh" in image or "powershell" in image:
         return "3.10"
+    if 'docker-io.art.code.pan.run/' in image:
+        try:
+            image = image.removeprefix('docker-io.art.code.pan.run')  # type: ignore[attr-defined]
+        except AttributeError:
+            # python 3.8 does not support removeprefix
+            image = image.replace('docker-io.art.code.pan.run', '')
     if ":" not in image:
         repo = image
         tag = "latest"

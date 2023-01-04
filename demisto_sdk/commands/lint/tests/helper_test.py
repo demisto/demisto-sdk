@@ -78,22 +78,21 @@ def test_build_skipped_exit_code(
 
 
 @pytest.mark.parametrize(
-    argnames="image, output, expected",
+    argnames="image, expected",
     argvalues=[
-        ("alpine", b"3.7\n", "3.7"),
-        ("alpine-3", b"2.7\n", "2.7"),
-        ("alpine-310", b"3.10\n", "3.10"),
-        ("demisto/python3:3.9.8.24399", "", "3.9"),
-        ("demisto/python:2.7.18.24398", "", "2.7"),
+        ("demisto/akamai:1.0.0.43032", "3.10"),
+        ("demisto/ml:1.0.0.43360", "3.10"),
+        ("demisto/threatconnect-sdk:1.0.0.40412", "2.7"),
+        ("demisto/python3:3.9.8.24399", "3.9"),
+        ("demisto/python:2.7.18.24398", "2.7"),
     ],
 )
 def test_get_python_version_from_image(
-    image: str, output: bytes, expected: float, mocker
+    image: str,
+    expected: str,
 ):
     from demisto_sdk.commands.lint import helpers
 
-    mocker.patch.object(helpers, "init_global_docker_client")
-    helpers.init_global_docker_client().containers.run.return_value = output
     assert expected == helpers.get_python_version_from_image(image)
 
 
@@ -110,7 +109,7 @@ def test_cache_of_get_python_version_from_image():
     """
     from demisto_sdk.commands.lint import helpers
 
-    image = "demisto/python3:3.9.8.12345"
+    image = "demisto/python3:3.10.9.42476"
 
     cache_info_before = helpers.get_python_version_from_image.cache_info()
     helpers.get_python_version_from_image(image)

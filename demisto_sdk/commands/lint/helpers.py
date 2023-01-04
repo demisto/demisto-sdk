@@ -3,7 +3,6 @@ import io
 import logging
 import os
 import re
-import shlex
 import shutil
 import sqlite3
 import tarfile
@@ -28,7 +27,8 @@ from demisto_sdk.commands.common.constants import (
     TYPE_PYTHON,
     DemistoException,
 )
-from demisto_sdk.commands.common.docker_helper import init_global_docker_client
+
+PANW_ARTIFACTORY = "docker-io.art.code.pan.run/"
 
 # Python2 requirements
 PYTHON2_REQ = ["flake8", "vulture"]
@@ -305,7 +305,7 @@ def add_tmp_lint_files(
 
 
 @lru_cache(maxsize=300)
-def get_python_version_from_image(image: str, timeout: int = 60) -> str:
+def get_python_version_from_image(image: str) -> str:
     """Get python version from docker image
 
     Args:
@@ -317,38 +317,54 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
     """
     # skip pwoershell images
     if "pwsh" in image or "powershell" in image:
-        return "3.8"
+        return "3.10"
+    logger.info(f"Getting python version for image: {image}")
+    if PANW_ARTIFACTORY in image:
+        try:
+            image = image.removeprefix(PANW_ARTIFACTORY)  # type: ignore[attr-defined]
+        except AttributeError:
+            # python 3.8 does not support removeprefix
+            image = image.replace(PANW_ARTIFACTORY, '')
+        logger.info(f"Changed image to {image}")
+    if ":" not in image:
+        repo = image
+        tag = "latest"
+    else:
+        repo, tag = image.split(":")
+    response = requests.get(
+        f"https://auth.docker.io/token?service=registry.docker.io&scope=repository:{repo}:pull"
+    )
+    token_json = response.json()
+    token = token_json["token"]
 
-    match_group = re.match(r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+)", image)
-    if match_group:
-        return match_group.groupdict()["python_version"]
-    py_num = None
-    # Run three times
-    log_prompt = f"Get python version from image {image}"
-    docker_client = init_global_docker_client(timeout=timeout, log_prompt=log_prompt)
-    logger.info(f"{log_prompt} - Start")
-    try:
-        logger.debug(f"{log_prompt} - Running `sys.version_info` in the image")
-        command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
+    # Get manifest
+    headers = {
+        "Accept": "application/vnd.docker.distribution.manifest.v2+json",
+        "Authorization": f"Bearer {token}",
+    }
+    response = requests.get(
+        f"https://registry-1.docker.io/v2/{repo}/manifests/{tag}", headers=headers
+    )
+    manifest_json = response.json()
+    digest = manifest_json["config"]["digest"]
 
-        py_num = docker_client.containers.run(
-            image=image,
-            command=shlex.split(command),
-            remove=True,
-            restart_policy={"Name": "on-failure", "MaximumRetryCount": 3},
-        )
-        # Wait for container to finish
-        logger.debug(f"{log_prompt} - Container finished running. {py_num=}")
-
-        # Get python version
-        py_num = parse(py_num.decode("utf-8")).base_version
-
-    except Exception:
-        logger.exception(
-            f"{log_prompt} - Failed detecting Python version for image {image}"
-        )
-    logger.info(f"{log_prompt} - End. Python version is {py_num}")
-    return py_num if py_num else "3.8"
+    # Get image
+    headers = {
+        "Accept": "application/vnd.docker.container.image.v1+json",
+        "Authorization": f"Bearer {token}",
+    }
+    response = requests.get(
+        f"https://registry-1.docker.io/v2/{repo}/blobs/{digest}", headers=headers
+    )
+    image_json = response.json()
+    python_version_envs = [
+        env for env in image_json["config"]["Env"] if env.startswith("PYTHON_VERSION=")
+    ]
+    if not python_version_envs:
+        return "3.10"
+    python_version = python_version_envs[0].split("=")[1]
+    py_major, py_minor, py_rev = python_version.split(".")
+    return f"{py_major}.{py_minor}"
 
 
 def get_file_from_container(

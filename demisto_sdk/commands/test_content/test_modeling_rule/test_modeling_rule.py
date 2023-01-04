@@ -154,8 +154,8 @@ def generate_xql_query(rule: SingleModelingRule, test_data_event_ids: List[str])
         [f'"{td_event_id}"' for td_event_id in test_data_event_ids]
     )
     query = (
-        f"datamodel dataset in({rule.dataset}) | filter {rule.dataset}.test_data_event_id in({td_event_ids}) "
-        f"| dedup {rule.dataset}.test_data_event_id by desc _insert_time | fields "
+        f"config timeframe = 10y | datamodel dataset in({rule.dataset}) | filter {rule.dataset}.test_data_event_id "
+        f"in({td_event_ids}) | dedup {rule.dataset}.test_data_event_id by desc _insert_time | fields "
         f"{rule.dataset}.test_data_event_id, {fields}"
     )
     return query
@@ -218,7 +218,7 @@ def check_dataset_exists(
         f'[cyan]Checking if dataset "{dataset}" exists on the tenant...[/cyan]',
         extra={"markup": True},
     )
-    query = f"dataset = {dataset}"
+    query = f"config timeframe = 10y | dataset = {dataset}"
     for i in range(timeout // interval):
         logger.debug(f"Check #{i+1}...")
         try:

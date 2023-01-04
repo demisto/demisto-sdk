@@ -47,6 +47,7 @@ from demisto_sdk.commands.lint.helpers import (
     RL,
     SUCCESS,
     WARNING,
+    PANW_ARTIFACTORY,
     add_tmp_lint_files,
     add_typing_module,
     coverage_report_editor,
@@ -291,7 +292,7 @@ class Linter:
             ]
             if os.getenv("GITLAB_CI", False):
                 self._facts["images"] = [
-                    [f"docker-io.art.code.pan.run/{image[0]}", -1]
+                    [f"{PANW_ARTIFACTORY}{image[0]}", -1]
                     for image in self._facts["images"]
                 ]
             # Gather environment variables for docker execution
@@ -890,7 +891,7 @@ class Linter:
                     for _ in range(2):
                         try:
                             test_image_name_to_push = test_image_name.replace(
-                                "docker-io.art.code.pan.run/", ""
+                                PANW_ARTIFACTORY, ""
                             )
                             self._docker_client.images.push(test_image_name_to_push)
                             logger.info(

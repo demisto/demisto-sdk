@@ -110,7 +110,9 @@ def build_skipped_exit_code(
     return skipped_code
 
 
-def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -> Dict[Path, bytes]:
+def get_test_modules(
+    content_repo: Optional[git.Repo], is_external_repo: bool
+) -> Dict[Path, bytes]:
     """Get required test modules from content repository - {remote}/master
     1. Tests/demistomock/demistomock.py
     2. Tests/scripts/dev_envs/pytest/conftest.py
@@ -134,7 +136,9 @@ def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -
             Path("Tests/scripts/dev_envs/pytest/conftest.py"),
             Path("Packs/Base/Scripts/CommonServerPython/CommonServerPython.py"),
             Path("Tests/demistomock/demistomock.ps1"),
-            Path("Packs/Base/Scripts/CommonServerPowerShell/CommonServerPowerShell.ps1"),
+            Path(
+                "Packs/Base/Scripts/CommonServerPowerShell/CommonServerPowerShell.ps1"
+            ),
         ]
     modules_content = {}
     if content_repo:
@@ -149,14 +153,20 @@ def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -
                     # Remove import of DemistoClassApiModule in CommonServerPython,
                     # since tests don't use this class and the import fails the tests.
                     modules_content[module] = (
-                        (module_full_path).read_bytes().replace(b"from DemistoClassApiModule import *", b"")
+                        (module_full_path)
+                        .read_bytes()
+                        .replace(b"from DemistoClassApiModule import *", b"")
                     )
-                    logger.debug(f"Changed file {module_full_path} without demisto import")
+                    logger.debug(
+                        f"Changed file {module_full_path} without demisto import"
+                    )
                 else:
                     modules_content[module] = (module_full_path).read_bytes()
             except FileNotFoundError:
                 module_not_found = True
-                logger.warning(f"Module {module} was not found, possibly deleted due to being in a feature branch")
+                logger.warning(
+                    f"Module {module} was not found, possibly deleted due to being in a feature branch"
+                )
 
         if module_not_found and is_external_repo:
             raise DemistoException("Unable to find module in external repository")
@@ -206,7 +216,9 @@ def add_typing_module(lint_files: List[Path], python_version: str):
                     back_file = lint_file.with_suffix(".bak")
                     original_file.rename(back_file)
                     data = back_file.read_text()
-                    original_file.write_text("from typing import *  # noqa: F401" + "\n" + data)
+                    original_file.write_text(
+                        "from typing import *  # noqa: F401" + "\n" + data
+                    )
                     back_lint_files.append(back_file)
                     added_modules.append(original_file)
         yield
@@ -270,7 +282,11 @@ def add_tmp_lint_files(
                 module_match = re.search(module_regex, data)
                 if module_match:
                     module_name = module_match.group(1)
-                    rel_api_path = Path("Packs/ApiModules/Scripts") / module_name / f"{module_name}.py"
+                    rel_api_path = (
+                        Path("Packs/ApiModules/Scripts")
+                        / module_name
+                        / f"{module_name}.py"
+                    )
                     cur_path = pack_path / f"{module_name}.py"
                     if content_repo:
                         module_path = content_repo / rel_api_path
@@ -306,7 +322,9 @@ def get_python_version_from_image(image: str) -> str:
         tag = "latest"
     else:
         repo, tag = image.split(":")
-    response = requests.get(f"https://auth.docker.io/token?service=registry.docker.io&scope=repository:{repo}:pull")
+    response = requests.get(
+        f"https://auth.docker.io/token?service=registry.docker.io&scope=repository:{repo}:pull"
+    )
     token_json = response.json()
     token = token_json["token"]
 
@@ -315,7 +333,9 @@ def get_python_version_from_image(image: str) -> str:
         "Accept": "application/vnd.docker.distribution.manifest.v2+json",
         "Authorization": f"Bearer {token}",
     }
-    response = requests.get(f"https://registry-1.docker.io/v2/{repo}/manifests/{tag}", headers=headers)
+    response = requests.get(
+        f"https://registry-1.docker.io/v2/{repo}/manifests/{tag}", headers=headers
+    )
     manifest_json = response.json()
     digest = manifest_json["config"]["digest"]
 
@@ -324,9 +344,13 @@ def get_python_version_from_image(image: str) -> str:
         "Accept": "application/vnd.docker.container.image.v1+json",
         "Authorization": f"Bearer {token}",
     }
-    response = requests.get(f"https://registry-1.docker.io/v2/{repo}/blobs/{digest}", headers=headers)
+    response = requests.get(
+        f"https://registry-1.docker.io/v2/{repo}/blobs/{digest}", headers=headers
+    )
     image_json = response.json()
-    python_version_envs = [env for env in image_json["config"]["Env"] if env.startswith("PYTHON_VERSION=")]
+    python_version_envs = [
+        env for env in image_json["config"]["Env"] if env.startswith("PYTHON_VERSION=")
+    ]
     if not python_version_envs:
         return "3.10"
     python_version = python_version_envs[0].split("=")[1]
@@ -334,7 +358,9 @@ def get_python_version_from_image(image: str) -> str:
     return f"{py_major}.{py_minor}"
 
 
-def get_file_from_container(container_obj: Container, container_path: str, encoding: str = "") -> Union[str, bytes]:
+def get_file_from_container(
+    container_obj: Container, container_path: str, encoding: str = ""
+) -> Union[str, bytes]:
     """Copy file from container.
 
     Args:
@@ -361,7 +387,9 @@ def get_file_from_container(container_obj: Container, container_path: str, encod
     return data
 
 
-def copy_dir_to_container(container_obj: Container, host_path: Path, container_path: Path):
+def copy_dir_to_container(
+    container_obj: Container, host_path: Path, container_path: Path
+):
     """Copy all content directory from container.
 
     Args:
@@ -383,26 +411,36 @@ def copy_dir_to_container(container_obj: Container, host_path: Path, container_p
         archive.add(
             ".",
             recursive=True,
-            filter=lambda tarinfo: (tarinfo if not re.search(excluded_regex, Path(tarinfo.name).name) else None),
+            filter=lambda tarinfo: (
+                tarinfo
+                if not re.search(excluded_regex, Path(tarinfo.name).name)
+                else None
+            ),
         )
         os.chdir(old_cwd)
 
     for trial in range(2):
-        status = container_obj.put_archive(path=container_path, data=file_like_object.getvalue())
+        status = container_obj.put_archive(
+            path=container_path, data=file_like_object.getvalue()
+        )
         if status:
             break
         elif trial == 1:
             raise docker.errors.APIError(message="unable to copy dir to container")
 
 
-def stream_docker_container_output(streamer: Generator, logging_level: Callable = logger.info) -> None:
+def stream_docker_container_output(
+    streamer: Generator, logging_level: Callable = logger.info
+) -> None:
     """Stream container logs
 
     Args:
         streamer(Generator): Generator created by docker-sdk
     """
     try:
-        wrapper = textwrap.TextWrapper(initial_indent="\t", subsequent_indent="\t", width=150)
+        wrapper = textwrap.TextWrapper(
+            initial_indent="\t", subsequent_indent="\t", width=150
+        )
         for chunk in streamer:
             logging_level(wrapper.fill(str(chunk.decode("utf-8"))))
     except Exception:
@@ -421,13 +459,21 @@ def pylint_plugin(dest: Path):
 
     try:
         for file in plugin_dirs.iterdir():
-            if file.is_file() and file.name != "__pycache__" and file.name.split(".")[1] != "pyc":
+            if (
+                file.is_file()
+                and file.name != "__pycache__"
+                and file.name.split(".")[1] != "pyc"
+            ):
                 os.symlink(file, dest / file.name)
 
         yield
     finally:
         for file in plugin_dirs.iterdir():
-            if file.is_file() and file.name != "__pycache__" and file.name.split(".")[1] != "pyc":
+            if (
+                file.is_file()
+                and file.name != "__pycache__"
+                and file.name.split(".")[1] != "pyc"
+            ):
                 if os.path.lexists(dest / f"{file.name}"):
                     (dest / f"{file.name}").unlink()
 
@@ -485,7 +531,9 @@ def coverage_report_editor(coverage_file, code_file_absolute_path):
         if not index == 1:
             logger.debug("unexpected file list in coverage report")
         else:
-            cursor.execute("UPDATE file SET path = ? WHERE id = ?", (code_file_absolute_path, 1))
+            cursor.execute(
+                "UPDATE file SET path = ? WHERE id = ?", (code_file_absolute_path, 1)
+            )
             sql_connection.commit()
         cursor.close()
     if not index == 1:
@@ -500,7 +548,9 @@ def coverage_files():
         yield str(cov_path)
 
 
-def generate_coverage_report(html=False, xml=False, report=True, cov_dir="coverage_report"):
+def generate_coverage_report(
+    html=False, xml=False, report=True, cov_dir="coverage_report"
+):
     """
     Args:
         html(bool): should generate an html report. default false
@@ -527,7 +577,11 @@ def generate_coverage_report(html=False, xml=False, report=True, cov_dir="covera
         try:
             cov.report(file=report_data)
         except coverage.misc.CoverageException as warning:
-            if isinstance(warning.args, tuple) and warning.args and warning.args[0] == "No data to report.":
+            if (
+                isinstance(warning.args, tuple)
+                and warning.args
+                and warning.args[0] == "No data to report."
+            ):
                 logger.info(f"No coverage data in file {cov_file}")
                 return
             raise warning

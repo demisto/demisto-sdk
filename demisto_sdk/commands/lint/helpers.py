@@ -318,7 +318,11 @@ def get_python_version_from_image(image: str) -> str:
     # skip pwoershell images
     if "pwsh" in image or "powershell" in image:
         return "3.8"
-    repo, tag = image.split(":")
+    if ":" not in image:
+        repo = image
+        tag = "latest"
+    else:
+        repo, tag = image.split(":")
     response = requests.get(f"https://auth.docker.io/token?service=registry.docker.io&scope=repository:{repo}:pull")
     token_json = response.json()
     token = token_json['token']

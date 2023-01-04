@@ -2185,6 +2185,12 @@ class TestIsFeedParamsExist:
             {"type": 9, "display": "Username"},
         ]
     }
+    HIDDEN_TRUE_BUT_REPLACED_TYPE_12 = {
+        "configuration": [
+            {"type": 12, "display": "Username", "hidden": True},
+            {"type": 9, "display": "Username"},
+        ]
+    }
     HIDDEN_TRUE_BUT_REPLACED_TYPE_14 = {
         "configuration": [
             {"type": 14, "display": "Username", "hidden": True},
@@ -2219,6 +2225,7 @@ class TestIsFeedParamsExist:
         (HIDDEN_ALLOWED_TRUE, True),
         (HIDDEN_ALLOWED_FEED_REPUTATION, True),
         (HIDDEN_TRUE_BUT_REPLACED_TYPE_0, True),
+        (HIDDEN_TRUE_BUT_REPLACED_TYPE_12, True),
         (HIDDEN_TRUE_BUT_REPLACED_TYPE_14, True),
         (HIDDEN_TRUE_BUT_REPLACED_BY_NOT_ALLOWED, False),
         (HIDDEN_TRUE_BUT_REPLACED_4, True),

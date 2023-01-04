@@ -1522,7 +1522,7 @@ class IntegrationValidator(ContentEntityValidator):
             ) == set(MarketplaceVersions)
 
             if invalid_bool or hidden_in_all_marketplaces:
-                if type_ in (0, 4, 14) and self._is_replaced_by_type9(display_name):
+                if type_ in (0, 4, 12, 14) and self._is_replaced_by_type9(display_name):
                     continue
                 error_message, error_code = Errors.param_not_allowed_to_hide(name)
                 if self.handle_error(

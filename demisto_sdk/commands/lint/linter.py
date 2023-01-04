@@ -1403,6 +1403,7 @@ class Linter:
                 f"'{docker_image_flag}' is not supported. For supported native image versions please see:"
                 f" 'Tests/docker_native_image_config.json'."
             )
+            return None
 
     def _get_dev_native_image(self, script_id: str) -> Union[str, None]:
         """

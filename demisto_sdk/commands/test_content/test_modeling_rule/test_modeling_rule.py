@@ -229,6 +229,15 @@ def check_dataset_exists(
                     f"[green]Dataset {dataset} exists[/green]", extra={"markup": True}
                 )
                 return
+            else:
+                err = (
+                    f"[red]Dataset {dataset} exists but no results were returned. This could mean that your testdata "
+                    "does not meet the criteria for an associated Parsing Rule and is therefore being dropped from "
+                    "the dataset. Check to see if a Parsing Rule exists for your dataset and that your testdata "
+                    "meets the criteria for that rule.[/red]"
+                )
+                logger.error(err, extra={"markup": True})
+                raise typer.Exit(1)
         except requests.exceptions.HTTPError:
             pass
         sleep(interval)

@@ -3,7 +3,6 @@ import io
 import logging
 import os
 import re
-import shlex
 import shutil
 import sqlite3
 import tarfile
@@ -323,27 +322,41 @@ def get_python_version_from_image(image: str) -> str:
         tag = "latest"
     else:
         repo, tag = image.split(":")
-    response = requests.get(f"https://auth.docker.io/token?service=registry.docker.io&scope=repository:{repo}:pull")
+    response = requests.get(
+        f"https://auth.docker.io/token?service=registry.docker.io&scope=repository:{repo}:pull"
+    )
     token_json = response.json()
-    token = token_json['token']
+    token = token_json["token"]
 
     # Get manifest
     headers = {
         "Accept": "application/vnd.docker.distribution.manifest.v2+json",
-        "Authorization": f"Bearer {token}"
+        "Authorization": f"Bearer {token}",
     }
-    response = requests.get(f"https://registry-1.docker.io/v2/{repo}/manifests/{tag}", headers=headers)
+    response = requests.get(
+        f"https://registry-1.docker.io/v2/{repo}/manifests/{tag}", headers=headers
+    )
     manifest_json = response.json()
-    digest = manifest_json['config']['digest']
+    digest = manifest_json["config"]["digest"]
 
     # Get image
     headers = {
         "Accept": "application/vnd.docker.container.image.v1+json",
-        "Authorization": f"Bearer {token}"
+        "Authorization": f"Bearer {token}",
     }
-    response = requests.get(f"https://registry-1.docker.io/v2/{repo}/blobs/{digest}", headers=headers)
+    response = requests.get(
+        f"https://registry-1.docker.io/v2/{repo}/blobs/{digest}", headers=headers
+    )
     image_json = response.json()
-    py_major, py_minor, py_rev = [env for env in image_json['config']['Env'] if env.startswith("PYTHON_VERSION")][0].split("=")[1].split(".")
+    py_major, py_minor, py_rev = (
+        [
+            env
+            for env in image_json["config"]["Env"]
+            if env.startswith("PYTHON_VERSION")
+        ][0]
+        .split("=")[1]
+        .split(".")
+    )
     return f"{py_major}.{py_minor}"
 
 

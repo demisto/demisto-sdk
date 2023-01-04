@@ -88,9 +88,11 @@ def test_build_skipped_exit_code(
     ],
 )
 def test_get_python_version_from_image(
-    image: str, expected: str,
+    image: str,
+    expected: str,
 ):
     from demisto_sdk.commands.lint import helpers
+
     assert expected == helpers.get_python_version_from_image(image)
 
 

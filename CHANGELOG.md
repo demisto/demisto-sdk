@@ -1,6 +1,10 @@
 # Changelog
 ## Unreleased
 * Added the `--docker-image` argument to the **lint** command, which allows determining the docker image to run lint on. Possible options are: `'naive:ga'`, `'naive:maintenance'`, `'native:dev'`, `'all'`, a specific docker image (from Docker Hub) or, the default `'from-yml'`.
+* Changed **validate** to allow hiding parameters of type 0, 4, 12 and 14 when replacing with type 9 (credentials) with the same name.
+* Fixed an issue where **update-release-notes** fails to update *MicrosoftApiModule* dependent integrations.
+
+## 1.8.2
 * Fixed an issue where demisto-py failed to upload content to XSIAM when `DEMISTO_USERNAME` environment variable is set.
 * Fixed an issue where the **prepare-content** command output invalid automation name when used with the --*custom* argument.
 * Fixed an issue where modeling rules with arbitrary whitespace characters were not parsed correctly.
@@ -19,6 +23,8 @@
 * Added to the **format** command the ability to remove `nativeimage` key in case defined in script/integration yml.
 * Enhanced the **update-content-graph** command to support `--use-git`, `--imported_path` and `--output-path` arguments.
 * Fixed an issue where **doc-review** failed when reviewing command name in some cases.
+* Fixed an issue where **download** didn't identify playbooks properly, and downloaded files with UUIDs instead of file/script names.
+
 
 ## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.

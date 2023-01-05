@@ -2,8 +2,10 @@ import os
 from os import path
 from pathlib import Path
 from typing import List
+from enum import Enum
 
 import pytest
+from click.testing import CliRunner, Result
 
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.tools import find_type, get_yaml
@@ -11,6 +13,9 @@ from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 from demisto_sdk.tests.integration_tests.validate_integration_test import (
     AZURE_FEED_PACK_PATH,
 )
+from demisto_sdk import __main__
+
+from TestSuite.pack import Pack
 from TestSuite.json_based import JSONBased
 from TestSuite.test_tools import ChangeCWD
 
@@ -309,6 +314,158 @@ class TestDocReviewPack:
         assert rn.path in doc_reviewer.malformed_rn_files
         assert not doc_reviewer.found_misspelled
         assert not result
+
+
+class TestDocReviewXSOAROnly:
+
+    """
+    Tests for the `--xsoar-only` flag.
+    """
+    default_args = ["--xsoar-only"]
+
+    class CommandResultCode(Enum):
+        SUCCESS = 0
+        FAIL = 1
+
+    def run_doc_review_cmd(self, cmd_args: List[str]) -> Result:
+
+        args: List[str] = self.default_args + cmd_args
+
+        return CliRunner().invoke(__main__.doc_review, args)
+
+    def test_valid_supported_pack(self, supported_pack: Pack):
+
+        cmd_args: List[str] = [
+            "--input", supported_pack.path,
+        ]
+
+        result = self.run_doc_review_cmd(cmd_args)
+
+        assert result.exit_code == self.CommandResultCode.SUCCESS.value
+        # output_lines: List[str] = result.output.splitlines()
+
+        # for line in output_lines:
+
+        #     if pack.path in line:
+        #         print(line)
+
+    def test_valid_non_supported_pack(self, non_supported_pack: Pack):
+
+        cmd_args: List[str] = [
+            "--input", non_supported_pack.path,
+        ]
+
+        result = self.run_doc_review_cmd(cmd_args)
+
+        assert result.exit_code == self.CommandResultCode.SUCCESS.value
+
+    def test_valid_multiple_supported_packs(self, supported_packs: List[Pack]):
+
+        cmd_args: List[str] = ["--xsoar-only"]
+        for pack in supported_packs:
+            cmd_args.append("--input")
+            cmd_args.append(pack.path)
+
+        result = self.run_doc_review_cmd(cmd_args)
+
+        assert result.exit_code == self.CommandResultCode.SUCCESS.value
+
+        
+
+
+
+
+    # def test_xsoar_supported_pack_release_notes(self, valid_spelled_xsoar_supported_content_pack):
+
+    #     """
+    #     Given:
+    #         - A Pack with valid spelling.
+
+    #     When:
+    #         - The `--release-notes` flag is set.
+    #         - The `--xsoar-only` flag is set.
+    #         - The Pack is XSOAR-supported.
+
+    #     Then:
+    #         - No files should be checked.
+    #     """
+
+    #     doc_reviewer = DocReviewer(
+    #         file_paths=[valid_spelled_xsoar_supported_content_pack.path],
+    #         release_notes_only=True,
+    #         xsoar_only=True
+    #     )
+
+    #     assert doc_reviewer.files == []
+
+    # def test_xsoar_non_supported_pack_release_notes(self, valid_spelled_xsoar_non_supported_content_pack):
+
+    #     """
+    #     Given:
+    #         - A Pack with valid spelling.
+
+    #     When:
+    #         - The `--release-notes` flag is set.
+    #         - The `--xsoar-only` flag is set.
+    #         - The Pack is XSOAR-supported.
+
+    #     Then:
+    #         - No files should be checked.
+    #     """
+
+    #     doc_reviewer = DocReviewer(
+    #         file_paths=[valid_spelled_xsoar_non_supported_content_pack.path],
+    #         release_notes_only=True,
+    #         xsoar_only=True
+    #     )
+
+    #     assert doc_reviewer.files == []
+
+    # def test_non_xsoar_supported_pack_release_notes(self, misspelled_xsoar_supported_content_pack):
+
+    #     """
+    #     Given:
+    #         - A Pack with valid spelling.
+
+    #     When:
+    #         - The `--release-notes` flag is set.
+    #         - The `--xsoar-only` flag is set.
+    #         - The Pack is XSOAR-supported.
+
+    #     Then:
+    #         - No files should be checked.
+    #     """
+
+    #     doc_reviewer = DocReviewer(
+    #         file_paths=[misspelled_xsoar_supported_content_pack.path],
+    #         release_notes_only=True,
+    #         xsoar_only=True
+    #     )
+
+    #     assert doc_reviewer.files == []
+
+    # def test_misspelled_xsoar_supported_pack_release_notes(self, misspelled_non_xsoar_supported_content_pack):
+
+    #     """
+    #     Given:
+    #         - A Pack with invalid spelling.
+
+    #     When:
+    #         - The `--release-notes` flag is set.
+    #         - The `--xsoar-only` flag is set.
+    #         - The Pack is XSOAR-supported.
+
+    #     Then:
+    #         - No files should be checked.
+    #     """
+
+    #     doc_reviewer = DocReviewer(
+    #         file_paths=[misspelled_non_xsoar_supported_content_pack.path],
+    #         release_notes_only=True,
+    #         xsoar_only=True
+    #     )
+
+    #     assert doc_reviewer.files == []
 
 
 @pytest.mark.usefixtures("are_mock_calls_supported_in_python_version")

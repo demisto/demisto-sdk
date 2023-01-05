@@ -93,8 +93,7 @@ class NativeImageConfig(Singleton, BaseModel):
         if native_image_obj := self.native_images.get(native_image):
             return native_image_obj.docker_ref
 
-        else:  # desirable native image not in self.native_images
-            return None
+        return None
 
 
 class ScriptIntegrationSupportedNativeImages:

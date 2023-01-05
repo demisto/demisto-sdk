@@ -2,6 +2,7 @@
 ## Unreleased
 * Changed **validate** to allow hiding parameters of type 0, 4, 12 and 14 when replacing with type 9 (credentials) with the same name.
 * Fixed an issue where **update-release-notes** fails to update *MicrosoftApiModule* dependent integrations.
+* Fixed an issue where the **upload** command failed because `docker_native_image_config.json` file could not be found.
 
 ## 1.8.2
 * Fixed an issue where demisto-py failed to upload content to XSIAM when `DEMISTO_USERNAME` environment variable is set.
@@ -23,9 +24,6 @@
 * Enhanced the **update-content-graph** command to support `--use-git`, `--imported_path` and `--output-path` arguments.
 * Fixed an issue where **doc-review** failed when reviewing command name in some cases.
 * Fixed an issue where **download** didn't identify playbooks properly, and downloaded files with UUIDs instead of file/script names.
-* Fixed an issue where **update-release-notes** fails to update *MicrosoftApiModule* dependent integrations.
-* Updated the **update-release-notes** command to use the stars headers format for the *Generic* content types.
-
 
 
 ## 1.8.1

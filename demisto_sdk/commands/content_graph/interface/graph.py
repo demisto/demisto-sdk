@@ -22,6 +22,7 @@ class ContentGraphInterface(ABC):
     def import_path(self) -> Path:
         pass
 
+    @property
     def metadata(self) -> Optional[dict]:
         try:
             with (self.import_path / METADATA_FILE_NAME).open() as f:
@@ -30,7 +31,7 @@ class ContentGraphInterface(ABC):
             return None
 
     def commit(self) -> Optional[str]:
-        metadata = self.metadata()
+        metadata = self.metadata
         if metadata:
             return metadata.get("commit")
         return None

@@ -41,6 +41,8 @@ The scope of the upgrade is decided by the SDK owner on each release, based on t
 The following should _only_ be done when new PRs were mergerd between the nightly trigger and the release start. This is seldom required.
 
 **SDK nightly**
+
+
 0) Run the following from content `./Utils/trigger_nightly_sdk_build.sh -b master -sr <sdk branch name> -ch dummy-channel -g -ct <gitlab_token>`
 
 1) Under the content repo, change the `demisto-sdk` dependency under [pyproject.toml]([url](https://github.com/demisto/content/blob/master/pyproject.toml)) to `demisto_sdk = {git = "https://github.com/demisto/demisto-sdk.git", rev =<commit hash here>}`

@@ -346,7 +346,7 @@ def test_update_release_notes_existing(demisto_client, mocker):
         + "- Azure.CloudIPs Feed Integration.\n"
         + "\n"
         + "#### Incident Fields\n"
-        + "- **City**"
+        + "- **City**\n\n"
     )
 
     input_rn = (
@@ -382,7 +382,10 @@ def test_update_release_notes_existing(demisto_client, mocker):
     mocker.patch(
         "demisto_sdk.commands.common.tools.get_pack_name", return_value="FeedAzureValid"
     )
-
+    mocker.patch(
+        "demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn",
+        return_value="",
+    )
     result = runner.invoke(
         main, [UPDATE_RN_COMMAND, "-i", join("Packs", "FeedAzureValid")]
     )

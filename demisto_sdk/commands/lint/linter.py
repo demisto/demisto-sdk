@@ -1561,7 +1561,7 @@ class Linter:
         )
         supported_native_images = set(
             supported_native_images_obj.get_supported_native_image_versions(
-                ignore_latest=False
+                only_production_tags=False
             )
         )
 

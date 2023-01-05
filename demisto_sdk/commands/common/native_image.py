@@ -154,7 +154,7 @@ class ScriptIntegrationSupportedNativeImages:
         return []
 
     def get_supported_native_image_versions(
-        self, get_raw_version: bool = False, ignore_latest: bool = True
+        self, get_raw_version: bool = False, only_production_tags: bool = True
     ) -> List[str]:
         """
         Get the native-images that the integration/script supports. Disregards native-images that should be ignored.
@@ -162,7 +162,7 @@ class ScriptIntegrationSupportedNativeImages:
         Args:
             get_raw_version (bool): whether to extract the raw server version from the native image name, for example:
                                     'native:8.2' will become '8.2' for each one of the native-images that are supported.
-            ignore_latest (bool): whether to ignore the latest native image.
+            only_production_tags (bool): whether to ignore the latest native image.
         """
         if native_images := self.__docker_image_to_native_images_support():
             # in case there is a script/integration that should be ignored on a specific native image,
@@ -174,7 +174,7 @@ class ScriptIntegrationSupportedNativeImages:
                 if native_image not in ignored_native_images
             ]
 
-            if ignore_latest and self.NATIVE_LATEST in native_images:
+            if only_production_tags and self.NATIVE_LATEST in native_images:
                 native_images.remove(self.NATIVE_LATEST)
 
             if get_raw_version:

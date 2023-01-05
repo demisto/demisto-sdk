@@ -5,12 +5,14 @@ from typing import Callable
 import pytest
 from wcmatch.pathlib import Path
 
-from TestSuite.test_tools import ChangeCWD
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.lint import linter
+from TestSuite.test_tools import ChangeCWD
 
 
-def initiate_linter(demisto_content, integration_path, docker_engine=False, docker_image_flag=None):
+def initiate_linter(
+    demisto_content, integration_path, docker_engine=False, docker_image_flag=None
+):
     return linter.Linter(
         content_repo=demisto_content,
         pack_dir=Path(integration_path),
@@ -18,7 +20,7 @@ def initiate_linter(demisto_content, integration_path, docker_engine=False, dock
         req_3=[],
         docker_engine=docker_engine,
         docker_timeout=60,
-        docker_image_flag=docker_image_flag
+        docker_image_flag=docker_image_flag,
     )
 
 
@@ -136,36 +138,49 @@ class TestDockerImagesCollection:
             ("native:maintenance", "demisto/py3-native:8.1.0.12345"),
             ("native:dev", "demisto/py3-native:8.3.0.12345"),
             ("from-yml", "demisto/py3-tools:1.0.0.42258"),
-            ("all", ["demisto/py3-tools:1.0.0.42258", "demisto/py3-native:8.1.0.12345",
-                     "demisto/py3-native:8.2.0.12345", "demisto/py3-native:8.3.0.12345"]),
+            (
+                "all",
+                [
+                    "demisto/py3-tools:1.0.0.42258",
+                    "demisto/py3-native:8.1.0.12345",
+                    "demisto/py3-native:8.2.0.12345",
+                    "demisto/py3-native:8.3.0.12345",
+                ],
+            ),
         ],
     )
     def test_docker_images_according_to_docker_image_flag(
         self, mocker, pack, docker_image_flag, exp_images
     ):
         """
-            Given
-                - An integration to run lint on, and a docker image flag:
-                    1. docker image flag = "native:ga"
-                    2. docker image flag = "native:maintenance"
-                    3. docker image flag = "native:dev"
-                    4. docker image flag = "from-yml"
-                    5. docker image flag = "all"
-            When
-                - running the linter.
-            Then
-                - Ensure that the docker images that lint will run on are as expected:
-                    1. The native ga image that is defined in the native configuration file
-                    2. The native maintenance image that is defined in the native configuration file
-                    3. The latest tag of the native image from Docker Hub (mocked tag).
-                    4. The docker image that is defined in the integration's yml file.
-                    5. All 4 images from tests: 1-4.
+        Given
+            - An integration to run lint on, and a docker image flag:
+                1. docker image flag = "native:ga"
+                2. docker image flag = "native:maintenance"
+                3. docker image flag = "native:dev"
+                4. docker image flag = "from-yml"
+                5. docker image flag = "all"
+        When
+            - running the linter.
+        Then
+            - Ensure that the docker images that lint will run on are as expected:
+                1. The native ga image that is defined in the native configuration file
+                2. The native maintenance image that is defined in the native configuration file
+                3. The latest tag of the native image from Docker Hub (mocked tag).
+                4. The docker image that is defined in the integration's yml file.
+                5. All 4 images from tests: 1-4.
         """
-        mocker.patch("demisto_sdk.commands.lint.helpers.get_python_version_from_image", return_value='3.7')
+        mocker.patch(
+            "demisto_sdk.commands.lint.helpers.get_python_version_from_image",
+            return_value="3.7",
+        )
         # TODO: need to mock this function because it throws errors
         native_image_latest_tag = "8.3.0.12345"
-        mocker.patch.object(DockerImageValidator, "get_docker_image_latest_tag_request",
-                            return_value=native_image_latest_tag)
+        mocker.patch.object(
+            DockerImageValidator,
+            "get_docker_image_latest_tag_request",
+            return_value=native_image_latest_tag,
+        )
 
         integration_name = "TestIntegration"
         docker_image_yml = "demisto/py3-tools:1.0.0.42258"
@@ -180,13 +195,20 @@ class TestDockerImagesCollection:
                 "subtype": "python3",
                 "script": "",
                 "commands": [],
-                "dockerimage": docker_image_yml
+                "dockerimage": docker_image_yml,
             },
         }
-        test_integration = pack.create_integration(name=integration_name, yml=integration_yml)
+        test_integration = pack.create_integration(
+            name=integration_name, yml=integration_yml
+        )
 
         with ChangeCWD(pack.repo_path):
-            runner = initiate_linter(pack.repo_path, test_integration.path, True, docker_image_flag=docker_image_flag)
+            runner = initiate_linter(
+                pack.repo_path,
+                test_integration.path,
+                True,
+                docker_image_flag=docker_image_flag,
+            )
             runner._gather_facts(modules={})
 
         actual_image = runner._facts["images"]

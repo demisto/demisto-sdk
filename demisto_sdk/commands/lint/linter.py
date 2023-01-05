@@ -19,10 +19,10 @@ from wcmatch.pathlib import NEGATE, Path
 
 from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
+    NATIVE_IMAGE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
     TYPE_PWSH,
     TYPE_PYTHON,
-    NATIVE_IMAGE_FILE_NAME,
 )
 from demisto_sdk.commands.common.docker_helper import (
     get_docker,

@@ -50,6 +50,6 @@ class IntegrationScript(ContentItem):
                     native_image_config=file_to_native_image_config(),
                 ).get_supported_native_image_versions(get_raw_version=True)
             except FileNotFoundError:
-                logger.debug(f"The {NATIVE_IMAGE_FILE_NAME} could not be found.")
+                logger.debug(f"The {NATIVE_IMAGE_FILE_NAME} file could not be found.")
                 return []
         return []

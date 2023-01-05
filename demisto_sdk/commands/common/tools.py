@@ -62,6 +62,7 @@ from demisto_sdk.commands.common.constants import (
     OFFICIAL_CONTENT_ID_SET_PATH,
     OFFICIAL_INDEX_JSON_PATH,
     PACK_METADATA_IRON_BANK_TAG,
+    PACK_METADATA_SUPPORT,
     PACKAGE_SUPPORTING_DIRECTORIES,
     PACKAGE_YML_FILE_REGEX,
     PACKS_DIR,
@@ -88,12 +89,11 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     XSOAR_CONFIG_FILE,
+    XSOAR_SUPPORT,
     FileType,
     IdSetKeys,
     MarketplaceVersions,
     urljoin,
-    PACK_METADATA_SUPPORT,
-    XSOAR_SUPPORT,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil

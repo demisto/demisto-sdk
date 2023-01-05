@@ -1,8 +1,10 @@
-import pytest
-from TestSuite.pack import Pack
 from pathlib import PosixPath
 from types import SimpleNamespace
 from typing import List
+
+import pytest
+
+from TestSuite.pack import Pack
 
 
 @pytest.fixture()

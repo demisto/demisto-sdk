@@ -14,7 +14,7 @@
 * Fixed an issue where the **update-release-notes** command didn't add release-notes properly to some *new* content items.
 * Added validation that checks that the `nativeimage` key is not defined in script/integration yml.
 * Added to the **format** command the ability to remove `nativeimage` key in case defined in script/integration yml.
-
+* Added the flag `--xsoar-only` to the **doc-review** command which enables reviewing documents that belong to XSOAR-supported Packs.
 ## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.
 * Added hidden properties to integration command argument and script argument.

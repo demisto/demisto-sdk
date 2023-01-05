@@ -321,6 +321,7 @@ class TestDocReviewXSOAROnly:
     """
     Tests for the `--xsoar-only` flag.
     """
+
     default_args = ["--xsoar-only"]
 
     class CommandResultCode(Enum):
@@ -336,7 +337,8 @@ class TestDocReviewXSOAROnly:
     def test_valid_supported_pack(self, supported_pack: Pack):
 
         cmd_args: List[str] = [
-            "--input", supported_pack.path,
+            "--input",
+            supported_pack.path,
         ]
 
         result = self.run_doc_review_cmd(cmd_args)
@@ -352,7 +354,8 @@ class TestDocReviewXSOAROnly:
     def test_valid_non_supported_pack(self, non_supported_pack: Pack):
 
         cmd_args: List[str] = [
-            "--input", non_supported_pack.path,
+            "--input",
+            non_supported_pack.path,
         ]
 
         result = self.run_doc_review_cmd(cmd_args)
@@ -369,11 +372,6 @@ class TestDocReviewXSOAROnly:
         result = self.run_doc_review_cmd(cmd_args)
 
         assert result.exit_code == self.CommandResultCode.SUCCESS.value
-
-        
-
-
-
 
     # def test_xsoar_supported_pack_release_notes(self, valid_spelled_xsoar_supported_content_pack):
 

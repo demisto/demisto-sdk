@@ -93,7 +93,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     urljoin,
     PACK_METADATA_SUPPORT,
-    XSOAR_SUPPORT
+    XSOAR_SUPPORT,
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -2633,14 +2633,14 @@ def is_pack_path(input_path: str) -> bool:
 def is_xsoar_supported_pack(file_path: str) -> bool:
 
     """
-    Takes a path to a file and returns a boolean indicating 
+    Takes a path to a file and returns a boolean indicating
     whether this file belongs to an XSOAR-supported Pack.
 
     Args:
         - `file_path` (`str`): The path of the file.
 
     Returns:
-        - `bool` 
+        - `bool`
     """
 
     return get_pack_metadata(file_path).get(PACK_METADATA_SUPPORT) == XSOAR_SUPPORT

@@ -82,9 +82,7 @@ def valid_spelled_xsoar_supported_content_pack(tmp_path: PosixPath) -> Pack:
         version="release-note-1",
         content="\n#### Scripts\n##### ScriptName\n- Added the feature.",
     )
-    pack.pack_metadata.update({
-        "support": "xsoar"
-    })
+    pack.pack_metadata.update({"support": "xsoar"})
 
     return pack
 
@@ -111,12 +109,10 @@ def valid_spelled_xsoar_supported_content_packs(tmp_path: PosixPath) -> List[Pac
             version="release-note-1",
             content="\n#### Scripts\n##### ScriptName\n- Added the feature.",
         )
-        pack.pack_metadata.update({
-            "support": "xsoar"
-        })
+        pack.pack_metadata.update({"support": "xsoar"})
 
         packs.append(pack)
-        
+
     return packs
 
 
@@ -137,8 +133,6 @@ def valid_spelled_xsoar_non_supported_content_pack(tmp_path: PosixPath) -> Pack:
         version="release-note-1",
         content="\n#### Scripts\n##### ScriptName\n- Added the feature.",
     )
-    pack.pack_metadata.update({
-        "support": "community"
-    })
+    pack.pack_metadata.update({"support": "community"})
 
     return pack

@@ -208,7 +208,7 @@ class DocReviewer:
                     file, ignore_invalid_schema_file=self.ignore_invalid_schema_file
                 )
                 in self.SUPPORTED_FILE_TYPES
-            ):            
+            ):
                 self.files.append(file)
 
     def get_files_to_run_on(self, file_path=None):

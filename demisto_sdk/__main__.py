@@ -2630,7 +2630,7 @@ def test_content(**kwargs):
     "content directory.",
     default=False
 )
-def doc_review(*args, **kwargs):
+def doc_review(**kwargs):
     """Check the spelling in .md and .yml files as well as review release notes"""
     from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 

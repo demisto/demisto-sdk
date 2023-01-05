@@ -8,7 +8,8 @@ The scope of the upgrade is decided by the SDK owner on each release, based on t
 1) Branch out from the latest SDK PR used for a nightly test, name the branch `X.Y.Z`.
 2) Make sure the **CHANGELOG.md** file is in order. Add a subtitle `## X.Y.Z` under the `## Unreleased`, leaving the unreleased list empty.
 3) Run `poetry update` (in the SDK folder).
-5) Run `poetry version X.Y.Z`.
+4) Run `poetry version X.Y.Z`.
+5) Run `poetry lock --no-update`.
 6) Make sure that all the following passed:
   - [content nightly](https://code.pan.run/xsoar/content/-/pipeline_schedules)
   - [SDK nightly](https://code.pan.run/xsoar/content/-/pipeline_schedules)
@@ -39,13 +40,24 @@ The scope of the upgrade is decided by the SDK owner on each release, based on t
 ## Triggering nightlies manually
 The following should _only_ be done when new PRs were mergerd between the nightly trigger and the release start. This is seldom required.
 
+**SDK nightly**
+0) Run the following from content `./Utils/trigger_nightly_sdk_build.sh -b master -sr <sdk branch name> -ch dummy-channel -g -ct <gitlab_token>`
+
 1) Under the content repo, change the `demisto-sdk` dependency under [pyproject.toml]([url](https://github.com/demisto/content/blob/master/pyproject.toml)) to `demisto_sdk = {git = "https://github.com/demisto/demisto-sdk.git", rev =<commit hash here>}`
 2) Push your branch to remote, and run `./Utils/gitlab_triggers/trigger_content_nightly_build.sh -ct <gitlab_token> -b <new_content_branch_name>`.
   **Note:** if you're on `content/master`, a notification will be sent to the slack [channel](https://panw-global.slack.com/archives/G011E63JXPB). The destination channel can be set via argument.  Wait until the nightly sdk completes (2-3h)
 3) Open a PR for that content branch, and verify that the build triggered is green.
+
+**Gold**
+
 4) Update [content-internal](https://code.pan.run/xsoar/content-internal-dist/-/blob/master/.gitlab/.gitlab-ci.yml): replace the `pip3 install git+https://github.com/demisto/demisto-sdk.git@master#egg=demisto-sdk` line with: `pip3 install git+https://github.com/demisto/demisto-sdk.git@<release-branch-name>#egg=demisto-sdk`, and push to remote.
 5) Run `./.gitlab/trigger_content_gold_nightly_build.sh -ct <gitlab_token> -b <internal_dist_branch_name>`.
   **Note:** if you're on `content-internal-dist/master`, a notification will be sent to the content-team slack channel. The destination channel can be set via argument.
+
 6) Discard both PRs (content & internal)
+
+**Private**
+
+
 7) In Demisto's content-private [**config.yml**](https://github.com/demisto/content-private/blob/master/.github/workflows/config.yml), replace `pip3 install demisto-sdk` with `pip3 install git+https://github.com/demisto/demisto-sdk.git@<sdk-release-branch-name>.`
 8) Open a PR for that content-private branch, and verify the build triggered finishes. Once successful, discard this change and close the PR.

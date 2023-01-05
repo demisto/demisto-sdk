@@ -82,7 +82,7 @@ class Neo4jImportHandler:
                         writer.writerow(row)
                 shutil.move(tempfile.name, (self.import_path / filename.name).as_posix())
 
-    def add_metadata(self) -> None:
+    def dump_metadata(self) -> None:
         """Adds metadata to the graph."""
         metadata = {
             "commit": GitUtil().get_current_commit_hash(),

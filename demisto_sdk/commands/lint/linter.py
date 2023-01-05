@@ -21,7 +21,8 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
     PACKS_PACK_META_FILE_NAME,
     TYPE_PWSH,
-    TYPE_PYTHON, NATIVE_IMAGE_FILE_NAME,
+    TYPE_PYTHON,
+    NATIVE_IMAGE_FILE_NAME,
 )
 from demisto_sdk.commands.common.docker_helper import (
     get_docker,
@@ -1392,7 +1393,9 @@ class Linter:
             NativeImageConfig()
         )  # parsed docker_native_image_config.json file (a singleton obj)
 
-        if native_image := native_image_config.flags_versions_mapping.get(docker_image_flag):
+        if native_image := native_image_config.flags_versions_mapping.get(
+            docker_image_flag
+        ):
             return native_image
 
         else:
@@ -1415,12 +1418,16 @@ class Linter:
         logger.info(f"{log_prompt} - Started")
 
         # Get the latest tag of the native image from Docker Hub
-        latest_native_image_tag = DockerImageValidator.get_docker_image_latest_tag_request(
-            NATIVE_IMAGE_DOCKER_NAME
+        latest_native_image_tag = (
+            DockerImageValidator.get_docker_image_latest_tag_request(
+                NATIVE_IMAGE_DOCKER_NAME
+            )
         )
 
         if latest_native_image_tag:
-            dev_native_image_full_name = f"{NATIVE_IMAGE_DOCKER_NAME}:{latest_native_image_tag}"
+            dev_native_image_full_name = (
+                f"{NATIVE_IMAGE_DOCKER_NAME}:{latest_native_image_tag}"
+            )
             return dev_native_image_full_name
 
         else:  # latest tag not found

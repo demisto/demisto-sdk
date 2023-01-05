@@ -33,7 +33,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.type = self.script_info.get("subtype") or self.script_info.get("type")
         if self.type == "python":
             self.type += "2"
-        self.commands = []
+        self.commands: List[CommandParser] = []
         self.connect_to_commands()
         self.connect_to_dependencies()
         self.connect_to_api_modules()

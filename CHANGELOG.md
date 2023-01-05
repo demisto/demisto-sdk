@@ -22,7 +22,7 @@
 * Fixed an issue where **doc-review** failed when reviewing command name in some cases.
 * Fixed an issue where **download** didn't identify playbooks properly, and downloaded files with UUIDs instead of file/script names.
 * Fixed an issue where **update-release-notes** fails to update *MicrosoftApiModule* dependent integrations.
-* Added commit hash to the content graph zip, to use in **update-content-graph**.
+* Added a metadata file to the content graph zip, to be used in the **update-content-graph** command.
 
 
 ## 1.8.1

@@ -21,7 +21,7 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
     PACKS_PACK_META_FILE_NAME,
     TYPE_PWSH,
-    TYPE_PYTHON,
+    TYPE_PYTHON, NATIVE_IMAGE_FILE_NAME,
 )
 from demisto_sdk.commands.common.docker_helper import (
     get_docker,
@@ -1368,7 +1368,7 @@ class Linter:
             # Integration/Script isn't supported by the requested native image
             logger.info(
                 f"Skipping checks on docker for {native_image} - {script_id} is not supported by the "
-                f"requested native image: {native_image}."
+                f"requested native image: {native_image}"
             )
             return False
 
@@ -1400,7 +1400,7 @@ class Linter:
             logger.info(
                 f"Skipping checks on docker for '{docker_image_flag}' - The requested native image: "
                 f"'{docker_image_flag}' is not supported. For supported native image versions please see:"
-                f" 'Tests/docker_native_image_config.json'."
+                f" 'Tests/{NATIVE_IMAGE_FILE_NAME}'"
             )
             return None
 
@@ -1575,7 +1575,7 @@ class Linter:
                 err_msg = (
                     f"The requested native image: '{docker_image_flag}' is not supported. The possible options are: "
                     f"'native:ga', 'native:maintenance' and 'native:dev'. For supported native image"
-                    f" versions please see: 'Tests/docker_native_image_config.json'"
+                    f" versions please see: 'Tests/{NATIVE_IMAGE_FILE_NAME}'"
                 )
                 logger.error(
                     f"Skipping checks on docker for '{docker_image_flag}' - {err_msg}"

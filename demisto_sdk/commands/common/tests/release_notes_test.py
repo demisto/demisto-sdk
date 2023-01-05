@@ -732,6 +732,7 @@ def test_validate_headers(mocker, repo):
     pack.create_classifier("test")
     pack.create_widget("test")
     pack.create_xsiam_dashboard("xsiam-dashboard-test")
+    pack.create_trigger("trigger-test")
     assert validator.validate_release_notes_headers()
 
 

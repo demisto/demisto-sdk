@@ -87,9 +87,9 @@ CORRELATION_RULE = "correlationrule"
 XSIAM_DASHBOARD = "xsiamdashboard"
 XSIAM_REPORT = "xsiamreport"
 TRIGGER = "trigger"
+TRIGGER_RECOMMENDATION = "triggersrecommendation"
 WIZARD = "wizard"
 XDRC_TEMPLATE = "xdrctemplate"
-
 MARKETPLACE_KEY_PACK_METADATA = "marketplaces"
 
 # ENV VARIABLES
@@ -234,6 +234,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.XDRC_TEMPLATE.value: XDRC_TEMPLATE_DIR,
     FileType.CORRELATION_RULE.value: CORRELATION_RULES_DIR,
     FileType.XSIAM_DASHBOARD.value: XSIAM_DASHBOARDS_DIR,
+    TRIGGER_RECOMMENDATION: TRIGGER_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [

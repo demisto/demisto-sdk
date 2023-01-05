@@ -109,7 +109,7 @@ class ScriptIntegrationSupportedNativeImages:
         docker_image (str): the docker image that the integration/script uses. (dockerimage key in the yml).
     """
 
-    NATIVE_LATEST = "native:latest"
+    NATIVE_DEV = "native:dev"
 
     def __init__(
         self,
@@ -173,8 +173,8 @@ class ScriptIntegrationSupportedNativeImages:
                 if native_image not in ignored_native_images
             ]
 
-            if only_production_tags and self.NATIVE_LATEST in native_images:
-                native_images.remove(self.NATIVE_LATEST)
+            if only_production_tags and self.NATIVE_DEV in native_images:
+                native_images.remove(self.NATIVE_DEV)
 
             if get_raw_version:
                 return list(

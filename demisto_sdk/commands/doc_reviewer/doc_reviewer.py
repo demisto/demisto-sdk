@@ -26,7 +26,11 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
     YAMLContentObject,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.tools import add_default_pack_known_words, find_type, is_xsoar_supported_pack
+from demisto_sdk.commands.common.tools import (
+    add_default_pack_known_words,
+    find_type,
+    is_xsoar_supported_pack,
+)
 from demisto_sdk.commands.doc_reviewer.known_words import KNOWN_WORDS
 from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
 
@@ -301,7 +305,10 @@ class DocReviewer:
             # --xsoar-only flag is specified.
             # If the file is a path
             if self.is_xsoar_supported_rn_only and not is_xsoar_supported_pack(file):
-                click.secho(f"File '{file}' was skipped because it does not to belong to an XSOAR-supported Pack", fg='yellow')
+                click.secho(
+                    f"File '{file}' was skipped because it does not to belong to an XSOAR-supported Pack",
+                    fg="yellow",
+                )
                 continue
 
             restarted_spellchecker = self.update_known_words_from_pack(file)

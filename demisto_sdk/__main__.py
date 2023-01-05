@@ -2623,7 +2623,7 @@ def test_content(**kwargs):
     "--xsoar-only",
     is_flag=True,
     help="Run only on files from XSOAR-supported Packs.",
-    default=False
+    default=False,
 )
 @click.option(
     "-pkw",
@@ -2632,7 +2632,7 @@ def test_content(**kwargs):
     help="Will find and load the known_words file from the pack. "
     "To use this option make sure you are running from the "
     "content directory.",
-    default=False
+    default=False,
 )
 def doc_review(**kwargs):
     """Check the spelling in .md and .yml files as well as review release notes"""

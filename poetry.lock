@@ -1367,14 +1367,17 @@ python-versions = "*"
 
 [[package]]
 name = "neo4j"
-version = "4.4.10"
+version = "5.3.0"
 description = "Neo4j Bolt driver for Python"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 pytz = "*"
+
+[package.extras]
+pandas = ["pandas (>=1.0.0)"]
 
 [[package]]
 name = "nest-asyncio"
@@ -2829,7 +2832,7 @@ build = ["gsutil"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "984e2b7815c4fe1b4011e0a948cff45720a2e7df89b442aa1044c0de6d0fc54b"
+content-hash = "19a64d1bea87c464a05d96a03753607cbc8feddabf4d7088c535e7321f36e15e"
 
 [metadata.files]
 aiohttp = [
@@ -3969,7 +3972,7 @@ mypy-extensions = [
     {file = "mypy_extensions-0.4.3.tar.gz", hash = "sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8"},
 ]
 neo4j = [
-    {file = "neo4j-4.4.10.tar.gz", hash = "sha256:26db4f9c8f628e53bda62f15cf2a7bfac6e2073e962da761c7164b6b122fca44"},
+    {file = "neo4j-5.3.0.tar.gz", hash = "sha256:0c1c7d8812eed60da0a442d1e0f35edbda248255703e506a081cb70e083b3b5c"},
 ]
 nest-asyncio = [
     {file = "nest_asyncio-1.5.6-py3-none-any.whl", hash = "sha256:b9a953fb40dceaa587d109609098db21900182b16440652454a146cffb06e8b8"},

@@ -3,7 +3,10 @@ from typing import List, Optional
 
 from pydantic import Field
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    NATIVE_IMAGE_FILE_NAME,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.native_image import (
     ScriptIntegrationSupportedNativeImages,
@@ -47,5 +50,6 @@ class IntegrationScript(ContentItem):
                     native_image_config=file_to_native_image_config(),
                 ).get_supported_native_image_versions(get_raw_version=True)
             except FileNotFoundError:
+                logger.debug(f"The {NATIVE_IMAGE_FILE_NAME} could not be found.")
                 return []
         return []

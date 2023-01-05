@@ -410,6 +410,8 @@ class DocReviewer:
         word = self.remove_punctuation(word)
         sub_words = []
         if "-" in word:
+            if not self.spellchecker.unknown([word]):
+                return
             sub_words.extend(word.split("-"))
         elif not self.no_camel_case and self.is_camel_case(word):
             sub_words.extend(self.camel_case_split(word))

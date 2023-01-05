@@ -12,7 +12,11 @@ import typer
 from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE, FileType
+from demisto_sdk.commands.common.constants import (
+    ENV_DEMISTO_SDK_MARKETPLACE,
+    FileType,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.content_constant_paths import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH,
 )
@@ -2900,20 +2904,18 @@ def error_code(config, **kwargs):
 )
 @click.help_option("-h", "--help")
 @click.option(
-    "-ud",
-    "--use-docker",
-    is_flag=True,
-    help="Use docker service to run the content graph",
+    "-o",
+    "--output-path",
+    type=click.Path(resolve_path=True, path_type=Path, dir_okay=True, file_okay=False),
+    default=None,
+    help="Output folder to place the zip file of the graph exported CSVs files",
 )
 @click.option(
-    "-us", "--use-existing", is_flag=True, help="Use existing service", default=False
-)
-@click.option(
-    "-se",
-    "--skip-export",
-    is_flag=True,
-    help="Whether or not to skip exporting to CSV.",
-    default=False,
+    "-mp",
+    "--marketplace",
+    help="The marketplace to generate the graph for.",
+    default="xsoar",
+    type=click.Choice(list(MarketplaceVersions)),
 )
 @click.option(
     "-nd",
@@ -2921,9 +2923,6 @@ def error_code(config, **kwargs):
     is_flag=True,
     help="Whether or not to include dependencies.",
     default=False,
-)
-@click.option(
-    "-o", "--output-file", type=click.Path(), help="dump file output", default=None
 )
 @click.option(
     "-v",
@@ -2944,11 +2943,9 @@ def error_code(config, **kwargs):
     type=click.Path(resolve_path=True),
 )
 def create_content_graph(
-    use_docker: bool = False,
-    use_existing: bool = False,
-    skip_export: bool = False,
+    marketplace: str = MarketplaceVersions.XSOAR,
     no_dependencies: bool = False,
-    output_file: Path = None,
+    output_path: Path = None,
     **kwargs,
 ):
     from demisto_sdk.commands.common.logger import logging_setup
@@ -2961,13 +2958,12 @@ def create_content_graph(
         quiet=kwargs.get("quiet"),  # type: ignore[arg-type]
         log_path=kwargs.get("log_path"),
     )  # type: ignore[arg-type]
-    with Neo4jContentGraphInterface(
-        start_service=not use_existing,
-        output_file=Path(output_file) if output_file else None,
-        use_docker=use_docker,
-    ) as content_graph_interface:
+    with Neo4jContentGraphInterface() as content_graph_interface:
         create_content_graph_command(
-            content_graph_interface, not no_dependencies, export=not skip_export
+            content_graph_interface,
+            marketplace=MarketplaceVersions(marketplace),
+            dependencies=not no_dependencies,
+            output_path=output_path,
         )
 
 
@@ -2977,13 +2973,31 @@ def create_content_graph(
 )
 @click.help_option("-h", "--help")
 @click.option(
-    "-ud",
-    "--use-docker",
-    is_flag=True,
-    help="Use docker service to run the content graph",
+    "-mp",
+    "--marketplace",
+    help="The marketplace the artifacts are created for, that "
+    "determines which artifacts are created for each pack. "
+    "Default is the XSOAR marketplace, that has all of the packs "
+    "artifacts.",
+    default="xsoar",
+    type=click.Choice(list(MarketplaceVersions)),
 )
 @click.option(
-    "-us", "--use-existing", is_flag=True, help="Use existing service", default=False
+    "-g",
+    "--use-git",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="Whether to use git to determine the packs to update",
+)
+@click.option(
+    "-i",
+    "--imported-path",
+    type=click.Path(
+        path_type=Path, resolve_path=True, exists=True, file_okay=True, dir_okay=False
+    ),
+    default=None,
+    help="Path to content graph zip file to import",
 )
 @click.option(
     "-p",
@@ -3000,7 +3014,11 @@ def create_content_graph(
     default=False,
 )
 @click.option(
-    "-o", "--output-file", type=click.Path(), help="dump file output", default=None
+    "-o",
+    "--output-path",
+    type=click.Path(resolve_path=True, path_type=Path, dir_okay=True, file_okay=False),
+    default=None,
+    help="Output folder to place the zip file of the graph exported CSVs files",
 )
 @click.option(
     "-v",
@@ -3021,11 +3039,12 @@ def create_content_graph(
     type=click.Path(resolve_path=True),
 )
 def update_content_graph(
-    use_docker: bool = False,
-    use_existing: bool = False,
+    use_git: bool = False,
+    marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+    imported_path: Path = None,
     packs: list = None,
     no_dependencies: bool = False,
-    output_file: Path = None,
+    output_path: Path = None,
     **kwargs,
 ):
     from demisto_sdk.commands.common.logger import logging_setup
@@ -3042,15 +3061,15 @@ def update_content_graph(
         log_path=kwargs.get("log_path"),
     )  # type: ignore[arg-type]
 
-    with Neo4jContentGraphInterface(
-        start_service=not use_existing,
-        output_file=output_file,
-        use_docker=use_docker,
-    ) as content_graph_interface:
+    with Neo4jContentGraphInterface() as content_graph_interface:
         update_content_graph_command(
             content_graph_interface,
+            marketplace=MarketplaceVersions(marketplace),
+            use_git=use_git,
+            imported_path=imported_path,
             packs_to_update=packs or [],
             dependencies=not no_dependencies,
+            output_path=output_path,
         )
 
 

@@ -20,7 +20,9 @@ class CommandParser:
 
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
-    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
+    def __init__(
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+    ) -> None:
         super().__init__(path, pack_marketplaces)
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.category = self.yml_data["category"]
@@ -58,25 +60,35 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                 deprecated=deprecated,
                 description=description,
             )
-            self.commands.append(CommandParser(name=name, description=description, deprecated=deprecated))
+            self.commands.append(
+                CommandParser(name=name, description=description, deprecated=deprecated)
+            )
 
     def connect_to_dependencies(self) -> None:
         """Collects the default classifier, mappers and incident type used as mandatory dependencies."""
         if default_classifier := self.yml_data.get("defaultclassifier"):
             if default_classifier != "null":
-                self.add_dependency_by_id(default_classifier, ContentType.CLASSIFIER, is_mandatory=False)
+                self.add_dependency_by_id(
+                    default_classifier, ContentType.CLASSIFIER, is_mandatory=False
+                )
 
         if default_mapper_in := self.yml_data.get("defaultmapperin"):
             if default_mapper_in != "null":
-                self.add_dependency_by_id(default_mapper_in, ContentType.MAPPER, is_mandatory=False)
+                self.add_dependency_by_id(
+                    default_mapper_in, ContentType.MAPPER, is_mandatory=False
+                )
 
         if default_mapper_out := self.yml_data.get("defaultmapperout"):
             if default_mapper_out != "null":
-                self.add_dependency_by_id(default_mapper_out, ContentType.MAPPER, is_mandatory=False)
+                self.add_dependency_by_id(
+                    default_mapper_out, ContentType.MAPPER, is_mandatory=False
+                )
 
         if default_incident_type := self.yml_data.get("defaultIncidentType"):
             if default_incident_type != "null":
-                self.add_dependency_by_id(default_incident_type, ContentType.INCIDENT_TYPE, is_mandatory=False)
+                self.add_dependency_by_id(
+                    default_incident_type, ContentType.INCIDENT_TYPE, is_mandatory=False
+                )
 
     def get_code(self) -> Optional[str]:
         """Gets the integration code.
@@ -88,7 +100,9 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         """
         if self.is_unified or self.script_info.get("script") not in ("-", "", None):
             return self.script_info.get("script")
-        return IntegrationScriptUnifier.get_script_or_integration_package_data(self.path.parent)[1]
+        return IntegrationScriptUnifier.get_script_or_integration_package_data(
+            self.path.parent
+        )[1]
 
     def connect_to_api_modules(self) -> None:
         """Creates IMPORTS relationships with the API modules used in the integration."""
@@ -97,4 +111,6 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             raise ValueError("Integration code is not available")
         api_modules = IntegrationScriptUnifier.check_api_module_imports(code).values()
         for api_module in api_modules:
-            self.add_relationship(RelationshipType.IMPORTS, api_module, ContentType.SCRIPT)
+            self.add_relationship(
+                RelationshipType.IMPORTS, api_module, ContentType.SCRIPT
+            )

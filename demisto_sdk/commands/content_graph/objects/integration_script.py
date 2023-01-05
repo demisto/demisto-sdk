@@ -39,10 +39,13 @@ class IntegrationScript(ContentItem):
     def get_supported_native_images(
         self, marketplace: MarketplaceVersions, ignore_native_image: bool = False
     ) -> List[str]:
-        if marketplace == MarketplaceVersions.XSOAR and not ignore_native_image:
-            return ScriptIntegrationSupportedNativeImages(
-                _id=self.object_id,
-                docker_image=self.docker_image,
-                native_image_config=file_to_native_image_config(),
-            ).get_supported_native_image_versions(get_raw_version=True)
-        return []
+        try:
+            if marketplace == MarketplaceVersions.XSOAR and not ignore_native_image:
+                return ScriptIntegrationSupportedNativeImages(
+                    _id=self.object_id,
+                    docker_image=self.docker_image,
+                    native_image_config=file_to_native_image_config(),
+                ).get_supported_native_image_versions(get_raw_version=True)
+            return []
+        except FileNotFoundError:
+            return []

@@ -1555,7 +1555,7 @@ class ContentItems(Enum):
     TRIGGERS = ("trigger",)
     WIZARDS = ("wizard",)
     XDRC_TEMPLATE = "xdrctemplate"
-    LAYOUT_RULES = "layoutrules"
+    LAYOUT_RULES = "layoutrule"
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {

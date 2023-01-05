@@ -11,7 +11,7 @@ from TestSuite.test_tools import ChangeCWD
 
 
 def initiate_linter(
-    demisto_content, integration_path, docker_engine=False, docker_image_flag=None
+    demisto_content, integration_path, docker_engine=False, docker_image_flag='from-yml'
 ):
     return linter.Linter(
         content_repo=demisto_content,

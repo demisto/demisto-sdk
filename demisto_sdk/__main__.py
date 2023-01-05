@@ -2615,15 +2615,22 @@ def test_content(**kwargs):
     "-rn", "--release-notes", is_flag=True, help="Will run only on release notes files"
 )
 @click.option(
+    "-xs",
+    "--xsoar-only",
+    is_flag=True,
+    help="Run only on files from XSOAR-supported Packs.",
+    default=False
+)
+@click.option(
     "-pkw",
     "--use-packs-known-words",
     is_flag=True,
     help="Will find and load the known_words file from the pack. "
     "To use this option make sure you are running from the "
     "content directory.",
-    default=False,
+    default=False
 )
-def doc_review(**kwargs):
+def doc_review(*args, **kwargs):
     """Check the spelling in .md and .yml files as well as review release notes"""
     from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 
@@ -2637,6 +2644,7 @@ def doc_review(**kwargs):
         use_git=kwargs.get("use_git"),
         prev_ver=kwargs.get("prev_ver"),
         release_notes_only=kwargs.get("release_notes"),
+        xsoar_only=kwargs.get("xsoar_only"),
         load_known_words_from_pack=kwargs.get("use_packs_known_words"),
     )
     result = doc_reviewer.run_doc_review()

@@ -6,9 +6,7 @@ from typing import List, Optional
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.tools import (
-    download_content_graph,
-)
+from demisto_sdk.commands.common.tools import download_content_graph
 from demisto_sdk.commands.content_graph.content_graph_builder import ContentGraphBuilder
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 
@@ -67,8 +65,8 @@ def update_content_graph(
     builder = ContentGraphBuilder(content_graph_interface)
 
     if use_git:
-        metadata = get_or_create_graph(content_graph_interface, builder)
-        if metadata and (commit := metadata.get("commit")):
+        get_or_create_graph(content_graph_interface, builder)
+        if commit := content_graph_interface.commit:
             packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
     else:
         content_graph_interface.import_graph(imported_path)
@@ -81,7 +79,9 @@ def update_content_graph(
     content_graph_interface.export_graph(output_path)
 
 
-def get_or_create_graph(content_graph_interface: ContentGraphInterface, builder: ContentGraphBuilder) -> Optional[dict]:
+def get_or_create_graph(
+    content_graph_interface: ContentGraphInterface, builder: ContentGraphBuilder
+) -> None:
     """Get or create a content graph.
     If the graph is not in the bucket or there are network issues, it will create a new one.
 
@@ -89,18 +89,15 @@ def get_or_create_graph(content_graph_interface: ContentGraphInterface, builder:
         content_graph_interface (ContentGraphInterface)
         builder (ContentGraphBuilder)
 
-    Returns:
-        Optional[dict]: The metadata of the graph, includes the commit hash.
     """
     try:
         with NamedTemporaryFile() as temp_file:
             official_content_graph = download_content_graph(Path(temp_file.name))
-            return content_graph_interface.import_graph(official_content_graph)
+            content_graph_interface.import_graph(official_content_graph)
     except Exception as e:
         logger.warning("Failed to download from bucket. Will create a new graph")
         logger.debug(f"Error: {e}")
         builder.create_graph()
-        return None
 
 
 def stop_content_graph() -> None:

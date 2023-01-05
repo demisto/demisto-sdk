@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from typing import List, Optional
 
 from pydantic import Field
@@ -50,6 +51,10 @@ class IntegrationScript(ContentItem):
                     native_image_config=file_to_native_image_config(),
                 ).get_supported_native_image_versions(get_raw_version=True)
             except FileNotFoundError:
-                logger.debug(f"The {NATIVE_IMAGE_FILE_NAME} file could not be found.")
-                return []
+                if not Path(f"Tests/{NATIVE_IMAGE_FILE_NAME}").exists():
+                    logger.debug(
+                        f"The {NATIVE_IMAGE_FILE_NAME} file could not be found."
+                    )
+                    return []
+                raise
         return []

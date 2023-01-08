@@ -53,13 +53,12 @@ def test_docker_images_to_supported_native_images(native_image_config):
 
 
 @pytest.mark.parametrize(
-        "native_image, expected_image_reference",
-        [
-            ("native:8.1", "demisto/py3-native:8.1.0.12345"),
-            ("native:8.4", None)
-        ],
-    )
-def test_get_native_image_reference(native_image_config, native_image, expected_image_reference):
+    "native_image, expected_image_reference",
+    [("native:8.1", "demisto/py3-native:8.1.0.12345"), ("native:8.4", None)],
+)
+def test_get_native_image_reference(
+    native_image_config, native_image, expected_image_reference
+):
     """
     Given
     - native image configuration file, native image name:

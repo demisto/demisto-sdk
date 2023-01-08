@@ -32,9 +32,8 @@ class ContentGraphInterface(ABC):
             return None
 
     def commit(self) -> Optional[str]:
-        metadata = self.metadata
-        if metadata:
-            return metadata.get("commit")
+        if self.metadata:
+            return self.metadata.get("commit")
         return None
 
     def dump_metadata(self) -> None:

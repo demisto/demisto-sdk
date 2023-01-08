@@ -52,6 +52,22 @@ def test_docker_images_to_supported_native_images(native_image_config):
     }
 
 
+def test_get_native_image_reference(native_image_config):
+    """
+    Given
+    - native image configuration file, native image name
+
+    When
+    - running the get_native_image_reference() function
+
+    Then
+    - make sure the right docker references is extracted
+    """
+    assert native_image_config.get_native_image_reference(
+        "native:8.1"
+    ) == "demisto/py3-native:8.1.0.12345"
+
+
 class TestScriptIntegrationSupportedNativeImages:
     @pytest.mark.parametrize(
         "_id, docker_image, expected_native_images",

@@ -463,7 +463,7 @@ class GitUtil:
         return {
             file.parts[1]
             for file in self.get_all_changed_files(prev_ver)
-            if PACKS_FOLDER in file.parts
+            if PACKS_FOLDER == file.parts[0]
         }
 
     def _get_untracked_files(self, requested_status: str) -> set:

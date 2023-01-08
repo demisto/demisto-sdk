@@ -1,3 +1,4 @@
+import shutil
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
@@ -17,8 +18,8 @@ METADATA_FILE_NAME = "metadata.json"
 class ContentGraphInterface(ABC):
     repo_path = Path(get_content_path())  # type: ignore
 
-    @abstractmethod
     @property
+    @abstractmethod
     def import_path(self) -> Path:
         pass
 
@@ -43,6 +44,9 @@ class ContentGraphInterface(ABC):
         }
         with open(self.import_path / METADATA_FILE_NAME, "w") as f:
             json.dump(metadata, f)
+
+    def zip_import_dir(self, output_file: Path) -> None:
+        shutil.make_archive(str(output_file), "zip", self.import_path)
 
     @abstractmethod
     def create_indexes_and_constraints(self) -> None:

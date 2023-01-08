@@ -303,7 +303,6 @@ class DocReviewer:
             click.echo(f"\nChecking file {file}")
 
             # --xsoar-only flag is specified.
-            # If the file is a path
             if self.is_xsoar_supported_rn_only and not is_xsoar_supported_pack(file):
                 click.secho(
                     f"File '{file}' was skipped because it does not to belong to an XSOAR-supported Pack",

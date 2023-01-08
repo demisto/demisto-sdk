@@ -81,7 +81,7 @@ class NativeImageConfig(Singleton, BaseModel):
         )
         return native_image_config_content
 
-    def get_native_image_reference(self, native_image) -> Union[str, None]:
+    def get_native_image_reference(self, native_image) -> Optional[str]:
         """
         Gets the docker reference of the given native image
 

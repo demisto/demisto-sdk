@@ -84,8 +84,8 @@ class TestRNUpdate:
             "##### Hello World Job #2\n- %%UPDATE_RN%%\n"
             "\n#### Layouts\n- **Hello World Layout**\n"
             "- **Second Hello World Layout**\n"
-            "\n#### Modules\n##### Hello World Generic Module\n- %%UPDATE_RN%%\n"
-            "\n#### Objects\n##### Hello World Generic Definition\n- %%UPDATE_RN%%\n"
+            "\n#### Modules\n- **Hello World Generic Module**\n"
+            "\n#### Objects\n- **Hello World Generic Definition**\n"
             "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n"
             "\n#### Reports\n##### Hello World Report\n- %%UPDATE_RN%%\n"
             "\n#### Scripts\n##### Hello World Script\n- %%UPDATE_RN%%\n"
@@ -197,8 +197,8 @@ class TestRNUpdate:
             - return a markdown string
         """
         expected_result = (
-            "\n#### Object Fields\n- **(Object) - Sample Generic Field**\n"
-            "\n#### Object Types\n- **(Object) - Sample Generic Type**\n"
+            "\n#### Object Fields\n- **Sample Generic Field**\n"
+            "\n#### Object Types\n- **Sample Generic Type**\n"
         )
 
         pack_path = TestRNUpdate.FILES_PATH + "/generic_testing"
@@ -1369,9 +1369,9 @@ class TestRNUpdateUnit:
 #### Integrations
 ##### Cortex XDR - IR
 - %%UPDATE_RN%%
-
 ##### Sample
 - %%UPDATE_RN%%
+
 """
 
     diff_package = [
@@ -1612,9 +1612,10 @@ class TestRNUpdateUnit:
 
         mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
         mocker.patch(
-            "demisto_sdk.commands.update_release_notes.update_rn.get_definition_name",
-            return_value="Asset",
+            "demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn",
+            return_value="",
         )
+
         update_rn = UpdateRN(
             pack_path="Packs/HelloWorld",
             update_type="minor",
@@ -2104,6 +2105,10 @@ class TestRNUpdateUnit:
             UpdateRN,
             "get_changed_file_name_and_type",
             return_value=("Test", FileType.INTEGRATION),
+        )
+        mocker.patch(
+            "demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn",
+            return_value="",
         )
 
         client = UpdateRN(

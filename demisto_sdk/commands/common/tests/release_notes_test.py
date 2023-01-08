@@ -749,12 +749,10 @@ TEST_RELEASE_NOTES_INVALID_HEADERS = [
         },
     ),
     (
-        """#### FakeContentType
-                                      ##### Test
-                                      - Added x y z""",
+        """#### FakeContentType\n##### Test\n- Added x y z""",
         "FakeContentType",
         {
-            "rn_valid_header_format": False,
+            "rn_valid_header_format": True,
             "validate_content_type_header": False,
             "validate_content_item_header": False,
         },

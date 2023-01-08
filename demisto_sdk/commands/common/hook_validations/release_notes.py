@@ -6,6 +6,7 @@ from typing import Dict, List, Tuple, Union
 from demisto_sdk.commands.common.constants import (
     CUSTOM_CONTENT_FILE_ENDINGS,
     ENTITY_TYPE_TO_DIR,
+    FILE_TYPE_BY_RN_HEADER,
     PACKS_DIR,
     RN_HEADER_BY_FILE_TYPE,
     SKIP_RELEASE_NOTES_FOR_TYPES,
@@ -186,10 +187,12 @@ class ReleaseNotesValidator(BaseValidator):
             True if the content item is valid, False otherwise.
         """
         is_valid = True
-        entity_type = content_type.replace(" ", "")
-        entity_type = entity_type[:-1] if entity_type.endswith("s") else entity_type
+        entity_type = FILE_TYPE_BY_RN_HEADER.get(content_type, "")
 
-        content_type_dir_name = ENTITY_TYPE_TO_DIR.get(entity_type.lower(), entity_type)
+        # entity_type = content_type.replace(" ", "")
+        # entity_type = entity_type[:-1] if entity_type.endswith("s") else entity_type
+
+        content_type_dir_name = ENTITY_TYPE_TO_DIR.get(entity_type, entity_type)
         content_type_path = os.path.join(self.pack_path, content_type_dir_name)
 
         content_type_dir_list = get_files_in_dir(

@@ -317,6 +317,10 @@ RN_CONTENT_ENTITY_WITH_STARS = [
     FileType.INCIDENT_FIELD,
     FileType.INDICATOR_FIELD,
     FileType.TRIGGER,
+    FileType.GENERIC_DEFINITION,
+    FileType.GENERIC_MODULE,
+    FileType.GENERIC_TYPE,
+    FileType.GENERIC_FIELD,
 ]
 
 DEFAULT_IMAGE_PREFIX = "data:image/png;base64,"

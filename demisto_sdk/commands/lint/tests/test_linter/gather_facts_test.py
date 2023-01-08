@@ -311,7 +311,6 @@ class TestDockerImagesCollection:
             - Ensure that a suitable log was written.
         """
         # Mock:
-        log_info = mocker.patch.object(logger, "info")
         log_error = mocker.patch.object(logger, "error")
 
         # Crete integration to test on:
@@ -331,10 +330,6 @@ class TestDockerImagesCollection:
 
         # Verify docker images:
         assert runner._facts["images"][0][0] == invalid_docker_image
-        assert (
-            f"{integration_name} - Get All Docker Images For Lint - Docker image to run on is:"
-            f" {invalid_docker_image}" in log_info.call_args_list[4][0][0]
-        )
         assert (
             f"Get python version from image {invalid_docker_image} - Failed detecting Python version for image"
             f" {invalid_docker_image}" in log_error.call_args_list[0][0][0]

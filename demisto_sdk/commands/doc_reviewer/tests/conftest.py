@@ -138,3 +138,47 @@ def valid_spelled_xsoar_non_supported_content_pack(tmp_path: PosixPath) -> Pack:
     pack.pack_metadata.update({"support": "community"})
 
     return pack
+
+
+@pytest.fixture(name="non_supported_pack_mispelled")
+def invalid_xsoar_non_supported_content_pack(tmp_path: PosixPath) -> Pack:
+    """
+    Create a non-XSOAR-supported Pack with mispelled content.
+    """
+
+    temp_pack_dir = tmp_path / "Packs"
+    temp_pack_dir.mkdir()
+
+    temp_repo = SimpleNamespace()
+    setattr(temp_repo, "path", str(temp_pack_dir / ".git"))
+
+    pack = Pack(packs_dir=temp_pack_dir, name="TempPack", repo=temp_repo)
+    pack.create_release_notes(
+        version="release-note-1",
+        content="\n#### Scrts\n##### ScrName\n-.",
+    )
+    pack.pack_metadata.update({"support": "community"})
+
+    return pack
+
+
+@pytest.fixture(name="supported_pack_mispelled")
+def invalid_xsoar_supported_content_pack(tmp_path: PosixPath) -> Pack:
+    """
+    Create a non-XSOAR-supported Pack with mispelled content.
+    """
+
+    temp_pack_dir = tmp_path / "Packs"
+    temp_pack_dir.mkdir()
+
+    temp_repo = SimpleNamespace()
+    setattr(temp_repo, "path", str(temp_pack_dir / ".git"))
+
+    pack = Pack(packs_dir=temp_pack_dir, name="TempPack", repo=temp_repo)
+    pack.create_release_notes(
+        version="release-note-1",
+        content="\n#### Scrts\n##### ScrName\n-.",
+    )
+    pack.pack_metadata.update({"support": "xsoar"})
+
+    return pack

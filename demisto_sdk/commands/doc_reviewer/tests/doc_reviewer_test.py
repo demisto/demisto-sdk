@@ -324,16 +324,36 @@ class TestDocReviewXSOAROnly:
     default_args = ["--xsoar-only"]
 
     class CommandResultCode(Enum):
+
+        """
+        Holds result code for the execution of `doc-review` command.
+        """
+
         SUCCESS = 0
         FAIL = 1
 
     def run_doc_review_cmd(self, cmd_args: List[str]) -> Result:
+
+        """
+        Uses the Click CLI runner to invoke a command with input arguments and returns the result
+        """
 
         args: List[str] = self.default_args + cmd_args
 
         return CliRunner().invoke(__main__.doc_review, args)
 
     def test_valid_supported_pack(self, supported_pack: Pack):
+
+        """
+        Given -
+            An XSOAR-supported Pack with correct spelling.
+
+        When -
+            Running `doc-review` on XSOAR-supported Pack with `--xsoar-only` flag set.
+
+        Then -
+            Ensure `doc-review` succeeds.
+        """
 
         cmd_args: List[str] = [
             "--input",
@@ -343,14 +363,19 @@ class TestDocReviewXSOAROnly:
         result = self.run_doc_review_cmd(cmd_args)
 
         assert result.exit_code == self.CommandResultCode.SUCCESS.value
-        # output_lines: List[str] = result.output.splitlines()
-
-        # for line in output_lines:
-
-        #     if pack.path in line:
-        #         print(line)
 
     def test_valid_non_supported_pack(self, non_supported_pack: Pack):
+
+        """
+        Given -
+            A non-XSOAR-supported Pack with correct spelling.
+
+        When -
+            Running `doc-review` on a non-XSOAR-supported Pack with `--xsoar-only` flag set.
+
+        Then -
+            Ensure `doc-review` succeeds.
+        """
 
         cmd_args: List[str] = [
             "--input",
@@ -363,6 +388,17 @@ class TestDocReviewXSOAROnly:
 
     def test_valid_multiple_supported_packs(self, supported_packs: List[Pack]):
 
+        """
+        Given -
+            2 XSOAR-supported Packs with correct spelling.
+
+        When -
+            Running `doc-review` on XSOAR-supported Pack with `--xsoar-only` flag set.
+
+        Then -
+            Ensure `doc-review` succeeds.
+        """
+
         cmd_args: List[str] = ["--xsoar-only"]
         for pack in supported_packs:
             cmd_args.append("--input")
@@ -372,97 +408,49 @@ class TestDocReviewXSOAROnly:
 
         assert result.exit_code == self.CommandResultCode.SUCCESS.value
 
-    # def test_xsoar_supported_pack_release_notes(self, valid_spelled_xsoar_supported_content_pack):
+    def test_invalid_non_supported_pack(self, non_supported_pack_mispelled: Pack):
 
-    #     """
-    #     Given:
-    #         - A Pack with valid spelling.
+        """
+        Given -
+            A non-XSOAR-supported Pack with incorrect spelling.
 
-    #     When:
-    #         - The `--release-notes` flag is set.
-    #         - The `--xsoar-only` flag is set.
-    #         - The Pack is XSOAR-supported.
+        When -
+            Running `doc-review` on a non-XSOAR-supported Pack with `--xsoar-only` flag set.
 
-    #     Then:
-    #         - No files should be checked.
-    #     """
+        Then -
+            Ensure `doc-review` succeeds.
+        """
 
-    #     doc_reviewer = DocReviewer(
-    #         file_paths=[valid_spelled_xsoar_supported_content_pack.path],
-    #         release_notes_only=True,
-    #         xsoar_only=True
-    #     )
+        cmd_args: List[str] = [
+            "--input",
+            non_supported_pack_mispelled.path,
+        ]
 
-    #     assert doc_reviewer.files == []
+        result = self.run_doc_review_cmd(cmd_args)
 
-    # def test_xsoar_non_supported_pack_release_notes(self, valid_spelled_xsoar_non_supported_content_pack):
+        assert result.exit_code == self.CommandResultCode.SUCCESS.value
 
-    #     """
-    #     Given:
-    #         - A Pack with valid spelling.
+    def test_invalid_supported_pack(self, supported_pack_mispelled: Pack):
 
-    #     When:
-    #         - The `--release-notes` flag is set.
-    #         - The `--xsoar-only` flag is set.
-    #         - The Pack is XSOAR-supported.
+        """
+        Given -
+            A XSOAR-supported Pack with incorrect spelling.
 
-    #     Then:
-    #         - No files should be checked.
-    #     """
+        When -
+            Running `doc-review` on a non-XSOAR-supported Pack with `--xsoar-only` flag set.
 
-    #     doc_reviewer = DocReviewer(
-    #         file_paths=[valid_spelled_xsoar_non_supported_content_pack.path],
-    #         release_notes_only=True,
-    #         xsoar_only=True
-    #     )
+        Then -
+            Ensure `doc-review` succeeds.
+        """
 
-    #     assert doc_reviewer.files == []
+        cmd_args: List[str] = [
+            "--input",
+            supported_pack_mispelled.path,
+        ]
 
-    # def test_non_xsoar_supported_pack_release_notes(self, misspelled_xsoar_supported_content_pack):
+        result = self.run_doc_review_cmd(cmd_args)
 
-    #     """
-    #     Given:
-    #         - A Pack with valid spelling.
-
-    #     When:
-    #         - The `--release-notes` flag is set.
-    #         - The `--xsoar-only` flag is set.
-    #         - The Pack is XSOAR-supported.
-
-    #     Then:
-    #         - No files should be checked.
-    #     """
-
-    #     doc_reviewer = DocReviewer(
-    #         file_paths=[misspelled_xsoar_supported_content_pack.path],
-    #         release_notes_only=True,
-    #         xsoar_only=True
-    #     )
-
-    #     assert doc_reviewer.files == []
-
-    # def test_misspelled_xsoar_supported_pack_release_notes(self, misspelled_non_xsoar_supported_content_pack):
-
-    #     """
-    #     Given:
-    #         - A Pack with invalid spelling.
-
-    #     When:
-    #         - The `--release-notes` flag is set.
-    #         - The `--xsoar-only` flag is set.
-    #         - The Pack is XSOAR-supported.
-
-    #     Then:
-    #         - No files should be checked.
-    #     """
-
-    #     doc_reviewer = DocReviewer(
-    #         file_paths=[misspelled_non_xsoar_supported_content_pack.path],
-    #         release_notes_only=True,
-    #         xsoar_only=True
-    #     )
-
-    #     assert doc_reviewer.files == []
+        assert result.exit_code == self.CommandResultCode.FAIL.value
 
 
 @pytest.mark.usefixtures("are_mock_calls_supported_in_python_version")

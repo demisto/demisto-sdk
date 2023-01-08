@@ -934,6 +934,9 @@ def test_get_api_module_dependent_items(
     mocker.patch.object(LintManager, "_gather_facts", return_value={"content_repo": ""})
 
     mocker.patch.object(Neo4jContentGraphInterface, "__init__", return_value=None)
+    mocker.patch.object(
+        Neo4jContentGraphInterface, "__enter__", return_value=Neo4jContentGraphInterface
+    )
     mocker.patch.object(Neo4jContentGraphInterface, "__exit__", return_value=None)
     mocker.patch("demisto_sdk.commands.lint.lint_manager.update_content_graph")
     mocker.patch.object(

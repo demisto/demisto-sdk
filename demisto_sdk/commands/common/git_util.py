@@ -466,14 +466,7 @@ class GitUtil:
             for file in self.get_all_changed_files(prev_ver)
             if PACKS_FOLDER in file.parts
         }
-    
-    def get_all_changed_integrations_and_scripts(self, prev_ver: str) -> Set[Path]:
-        return {
-            file
-            for file in self.get_all_changed_files(prev_ver)
-            if file.suffix == ".yml" and INTEGRATIONS_DIR in file.parts or SCRIPTS_DIR in file.parts
-        }
-    
+        
     def _get_untracked_files(self, requested_status: str) -> set:
         """return all untracked files of the given requested status.
         Args:

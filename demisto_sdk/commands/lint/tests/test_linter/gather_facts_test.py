@@ -419,7 +419,7 @@ class TestDockerImagesCollection:
                 f"Skipping run lint in host as well." in log.call_args_list[-1][0][0]
             )
 
-    def test_wrong_native_docker_image_flag(self, pack):
+    def test_wrong_native_docker_image_flag(self, mocker, pack):
         """
         This test checks that if a native docker image flag with a wrong suffix was given, a suitable
         exception is raised.
@@ -432,6 +432,9 @@ class TestDockerImagesCollection:
         Then
             - Ensure that the a suitable exception is raised.
         """
+        # Mock:
+        log = mocker.patch.object(logger, "error")
+
         # Crete integration to test on:
         integration_name = "TestIntegration"
         test_integration = pack.create_integration(name=integration_name)
@@ -449,13 +452,16 @@ class TestDockerImagesCollection:
                 runner._gather_facts(modules={})
 
         # Verify docker images:
+        expected_err_msg = (
+            f"The requested native image: '{docker_image_flag}' is not supported. "
+            f"The possible options are: 'native:ga', 'native:maintenance' and 'native:dev'. "
+            f"For supported native image versions please see: 'Tests/docker_native_image_config.json'"
+        )
         assert runner._facts["images"] == []
+        assert str(e.value) == expected_err_msg
         assert (
-            str(e.value)
-            == f"The requested native image: '{docker_image_flag}' is not supported."
-            f" The possible options are: 'native:ga', 'native:maintenance' and 'native:dev'."
-            f" For supported native image versions please see:"
-            f" 'Tests/docker_native_image_config.json'"
+            log.call_args_list[0][0][0]
+            == f"Skipping checks on docker for '{docker_image_flag}' - {expected_err_msg}"
         )
 
     def test_docker_image_flag_version_not_exists_in_native_config_file(

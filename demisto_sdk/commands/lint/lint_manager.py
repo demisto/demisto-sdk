@@ -39,6 +39,9 @@ from demisto_sdk.commands.common.tools import (
     print_warning,
     retrieve_file_ending,
 )
+from demisto_sdk.commands.content_graph.content_graph_commands import (
+    update_content_graph,
+)
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface,
 )
@@ -131,7 +134,11 @@ class LintManager:
                 print(
                     f"Checking for packages dependent on the modified API module {changed_api_module}..."
                 )
+
                 with Neo4jContentGraphInterface() as graph:
+                    print("Updating graph...")
+                    update_content_graph(graph, use_git=True, dependencies=True)
+
                     api_module_nodes = graph.search(object_id=changed_api_module)
                     api_module_node = api_module_nodes[0] if api_module_nodes else None
                     if not api_module_node:

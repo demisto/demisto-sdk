@@ -20,7 +20,7 @@ class LayoutRule(JSONContentObject):
 
     def upload(self, client: demisto_client):
         """
-        Upload the trigger to demisto_client
+        Upload the layout rule to demisto_client
         Args:
             client: The demisto_client object of the desired XSOAR machine to upload to.
         Returns:

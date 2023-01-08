@@ -37,8 +37,8 @@ alter
     xdm.observer.vendor = _vendor,
     xdm.target.process.executable.file_type = fileType;
 """
-DEFAULT_MODELING_RULE_NAME = 'TestModelingRule'
-DEFAULT_MODELING_RULE_NAME_2 = 'TestModelingRule2'
+DEFAULT_MODELING_RULE_NAME = "TestModelingRule"
+DEFAULT_MODELING_RULE_NAME_2 = "TestModelingRule2"
 
 
 def test_init_test_data_create(pack):
@@ -52,15 +52,22 @@ def test_init_test_data_create(pack):
         - Ensure the test data file is created.
         - Ensure the test data file contains the correct number of events.
     """
-    from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_test_data_app
+    from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import (
+        app as init_test_data_app,
+    )
+
     runner = CliRunner()
-    mr = pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
+    mr = pack.create_modeling_rule(
+        DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT
+    )
     mr.testdata._file_path.unlink()
     mrule_dir = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
-    test_data_file = mrule_dir / f'{DEFAULT_MODELING_RULE_NAME}_testdata.json'
+    test_data_file = mrule_dir / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
     assert test_data_file.exists() is False
     count = 1
-    result = runner.invoke(init_test_data_app, [mrule_dir.as_posix(), f'--count={count}'])
+    result = runner.invoke(
+        init_test_data_app, [mrule_dir.as_posix(), f"--count={count}"]
+    )
     assert result.exit_code == 0
     assert test_data_file.exists() is True
     test_data = TestData.parse_file(test_data_file.as_posix())
@@ -78,19 +85,26 @@ def test_init_test_data_update_with_unchanged_modeling_rule(pack):
     Then:
         - Ensure the test data file contains the correct number of events.
     """
-    from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_test_data_app
+    from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import (
+        app as init_test_data_app,
+    )
+
     runner = CliRunner()
     pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
     mrule_dir = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
-    test_data_file = mrule_dir / f'{DEFAULT_MODELING_RULE_NAME}_testdata.json'
+    test_data_file = mrule_dir / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
     count = 1
-    result = runner.invoke(init_test_data_app, [mrule_dir.as_posix(), f'--count={count}'])
+    result = runner.invoke(
+        init_test_data_app, [mrule_dir.as_posix(), f"--count={count}"]
+    )
     assert result.exit_code == 0
     assert test_data_file.exists() is True
     test_data = TestData.parse_file(test_data_file.as_posix())
     assert len(test_data.data) == count
     count = 2
-    result = runner.invoke(init_test_data_app, [mrule_dir.as_posix(), f'--count={count}'])
+    result = runner.invoke(
+        init_test_data_app, [mrule_dir.as_posix(), f"--count={count}"]
+    )
     assert result.exit_code == 0
     assert test_data_file.exists() is True
     test_data = TestData.parse_file(test_data_file.as_posix())
@@ -112,35 +126,50 @@ def test_init_test_data_update_with_reduced_modeling_rule(pack):
             the expected values dictionary for the previously existing events.
         - Ensure the test data file contains the correct number of events.
     """
-    from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_test_data_app
+    from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import (
+        app as init_test_data_app,
+    )
+
     runner = CliRunner()
     pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
     mrule_dir = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
-    test_data_file = mrule_dir / f'{DEFAULT_MODELING_RULE_NAME}_testdata.json'
+    test_data_file = mrule_dir / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
     count = 1
-    result = runner.invoke(init_test_data_app, [mrule_dir.as_posix(), f'--count={count}'])
+    result = runner.invoke(
+        init_test_data_app, [mrule_dir.as_posix(), f"--count={count}"]
+    )
     assert result.exit_code == 0
     assert test_data_file.exists() is True
     test_data = TestData.parse_file(test_data_file.as_posix())
     assert len(test_data.data) == count
 
     # verify field exists in the expected values dictionary for test data event 0
-    field_to_remove = 'xdm.source.user.username'
-    assert test_data.data[0].expected_values and field_to_remove in test_data.data[0].expected_values
-    updated_rule_text = ONE_MODEL_RULE_TEXT.replace(f'\n    {field_to_remove} = suser,', '')
+    field_to_remove = "xdm.source.user.username"
+    assert (
+        test_data.data[0].expected_values
+        and field_to_remove in test_data.data[0].expected_values
+    )
+    updated_rule_text = ONE_MODEL_RULE_TEXT.replace(
+        f"\n    {field_to_remove} = suser,", ""
+    )
 
     # update the modeling rule with the updated rule text
-    with open(mrule_dir / f'{DEFAULT_MODELING_RULE_NAME}.xif', 'w') as f:
+    with open(mrule_dir / f"{DEFAULT_MODELING_RULE_NAME}.xif", "w") as f:
         f.write(updated_rule_text)
 
     count = 2
-    result = runner.invoke(init_test_data_app, [mrule_dir.as_posix(), f'--count={count}'])
+    result = runner.invoke(
+        init_test_data_app, [mrule_dir.as_posix(), f"--count={count}"]
+    )
     assert result.exit_code == 0
     assert test_data_file.exists() is True
     test_data = TestData.parse_file(test_data_file.as_posix())
     assert len(test_data.data) == count
     for test_data_event in test_data.data:
-        assert test_data_event.expected_values and field_to_remove not in test_data_event.expected_values
+        assert (
+            test_data_event.expected_values
+            and field_to_remove not in test_data_event.expected_values
+        )
 
 
 def test_init_test_data_update_with_extended_modeling_rule(pack):
@@ -158,37 +187,52 @@ def test_init_test_data_update_with_extended_modeling_rule(pack):
         - Ensure the new field is added to the expected values dictionary for the previously existing
             events.
     """
-    from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_test_data_app
+    from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import (
+        app as init_test_data_app,
+    )
+
     runner = CliRunner()
 
-    field_to_add = 'xdm.source.user.username'
-    reduced_rule_text = ONE_MODEL_RULE_TEXT.replace(f'\n    {field_to_add} = suser,', '')
+    field_to_add = "xdm.source.user.username"
+    reduced_rule_text = ONE_MODEL_RULE_TEXT.replace(
+        f"\n    {field_to_add} = suser,", ""
+    )
 
     pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=reduced_rule_text)
     mrule_dir = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
-    test_data_file = mrule_dir / f'{DEFAULT_MODELING_RULE_NAME}_testdata.json'
+    test_data_file = mrule_dir / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
     count = 1
-    result = runner.invoke(init_test_data_app, [mrule_dir.as_posix(), f'--count={count}'])
+    result = runner.invoke(
+        init_test_data_app, [mrule_dir.as_posix(), f"--count={count}"]
+    )
     assert result.exit_code == 0
     assert test_data_file.exists() is True
     test_data = TestData.parse_file(test_data_file.as_posix())
     assert len(test_data.data) == count
 
     # verify field does not exist in the expected values dictionary for test data event 0
-    assert test_data.data[0].expected_values and field_to_add not in test_data.data[0].expected_values
+    assert (
+        test_data.data[0].expected_values
+        and field_to_add not in test_data.data[0].expected_values
+    )
 
     # update the modeling rule with the updated rule text
-    with open(mrule_dir / f'{DEFAULT_MODELING_RULE_NAME}.xif', 'w') as f:
+    with open(mrule_dir / f"{DEFAULT_MODELING_RULE_NAME}.xif", "w") as f:
         f.write(ONE_MODEL_RULE_TEXT)
 
     count = 2
-    result = runner.invoke(init_test_data_app, [mrule_dir.as_posix(), f'--count={count}'])
+    result = runner.invoke(
+        init_test_data_app, [mrule_dir.as_posix(), f"--count={count}"]
+    )
     assert result.exit_code == 0
     assert test_data_file.exists() is True
     test_data = TestData.parse_file(test_data_file.as_posix())
     assert len(test_data.data) == count
     for test_data_event in test_data.data:
-        assert test_data_event.expected_values and field_to_add in test_data_event.expected_values
+        assert (
+            test_data_event.expected_values
+            and field_to_add in test_data_event.expected_values
+        )
 
 
 class TestInitTestDataMultiInput:
@@ -206,18 +250,28 @@ class TestInitTestDataMultiInput:
             - Ensure the test data files are created.
             - Ensure the test data files contain the correct number of events.
         """
-        from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_test_data_app
+        from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import (
+            app as init_test_data_app,
+        )
+
         runner = CliRunner()
-        mr_1 = pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
-        mr_2 = pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME_2, rules=ONE_MODEL_RULE_TEXT)
+        mr_1 = pack.create_modeling_rule(
+            DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT
+        )
+        mr_2 = pack.create_modeling_rule(
+            DEFAULT_MODELING_RULE_NAME_2, rules=ONE_MODEL_RULE_TEXT
+        )
         mr_1.testdata._file_path.unlink()
         mr_2.testdata._file_path.unlink()
         mrule_dir = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
         mrule_dir_2 = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME_2)
-        test_data_file = mrule_dir / f'{DEFAULT_MODELING_RULE_NAME}_testdata.json'
-        test_data_file_2 = mrule_dir_2 / f'{DEFAULT_MODELING_RULE_NAME_2}_testdata.json'
+        test_data_file = mrule_dir / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
+        test_data_file_2 = mrule_dir_2 / f"{DEFAULT_MODELING_RULE_NAME_2}_testdata.json"
         count = 1
-        result = runner.invoke(init_test_data_app, [mrule_dir.as_posix(), mrule_dir_2.as_posix(), f'--count={count}'])
+        result = runner.invoke(
+            init_test_data_app,
+            [mrule_dir.as_posix(), mrule_dir_2.as_posix(), f"--count={count}"],
+        )
         assert result.exit_code == 0
         assert test_data_file.exists() is True
         assert test_data_file_2.exists() is True
@@ -240,18 +294,27 @@ class TestInitTestDataMultiInput:
             - Ensure the test data file contain the correct number of events.
             - Ensure the command returns a non-zero exit code.
         """
-        from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import app as init_test_data_app
+        from demisto_sdk.commands.test_content.test_modeling_rule.init_test_data import (
+            app as init_test_data_app,
+        )
+
         runner = CliRunner()
-        mr_1 = pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
-        mr_2 = pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME_2, rules=ONE_MODEL_RULE_TEXT)
+        mr_1 = pack.create_modeling_rule(
+            DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT
+        )
+        mr_2 = pack.create_modeling_rule(
+            DEFAULT_MODELING_RULE_NAME_2, rules=ONE_MODEL_RULE_TEXT
+        )
         mr_1.testdata._file_path.unlink()
         mr_2.testdata._file_path.unlink()
         mrule_dir = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
         mrule_dir_2 = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME_2)
-        test_data_file = mrule_dir / f'{DEFAULT_MODELING_RULE_NAME}_testdata.json'
-        test_data_file_2 = mrule_dir_2 / f'{DEFAULT_MODELING_RULE_NAME_2}_testdata.json'
+        test_data_file = mrule_dir / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
+        test_data_file_2 = mrule_dir_2 / f"{DEFAULT_MODELING_RULE_NAME_2}_testdata.json"
         count = 1
-        result = runner.invoke(init_test_data_app, [pack.path, mrule_dir.as_posix(), f'--count={count}'])
+        result = runner.invoke(
+            init_test_data_app, [pack.path, mrule_dir.as_posix(), f"--count={count}"]
+        )
         assert result.exit_code != 0
         assert test_data_file.exists() is True
         assert test_data_file_2.exists() is False

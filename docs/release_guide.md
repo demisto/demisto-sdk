@@ -10,7 +10,8 @@ The scope of the upgrade is decided by the SDK owner on each release, based on t
 3) Run `poetry update` (in the SDK folder).
 4) Run `poetry version X.Y.Z`.
 5) Run `poetry lock --no-update`.
-6) Make sure that all the following passed:
+6) Push branch to remote.
+7) Make sure that all the following passed:
   - [content nightly](https://code.pan.run/xsoar/content/-/pipeline_schedules)
   - [SDK nightly](https://code.pan.run/xsoar/content/-/pipeline_schedules)
   - [SDK master](https://github.com/demisto/demisto-sdk) (last post-merge build passed)

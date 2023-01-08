@@ -182,3 +182,45 @@ def invalid_xsoar_supported_content_pack(tmp_path: PosixPath) -> Pack:
     pack.pack_metadata.update({"support": "xsoar"})
 
     return pack
+
+
+@pytest.fixture(name="mix_invalid_packs")
+def mix_mispelled_xsoar_supported_and_not_content_packs(
+    tmp_path: PosixPath,
+) -> List[Pack]:
+    """
+    Create two Packs, one XSOAR-supported, one not. Both invalid.
+    """
+
+    packs: List[Pack] = []
+
+    temp_pack_dir = tmp_path / "Packs"
+    if not temp_pack_dir.exists():
+        temp_pack_dir.mkdir()
+
+    # Create community Pack
+    temp_repo = SimpleNamespace()
+    setattr(temp_repo, "path", str(temp_pack_dir / ".git"))
+
+    community_pack = Pack(packs_dir=temp_pack_dir, name="CommunityPack", repo=temp_repo)
+    community_pack.create_release_notes(
+        version="release-note-CommunityPack",
+        content="\n#### Sfhasbfkhabf\n##### Sfhasbfkhabf\n- someinvalidstring.",
+    )
+    community_pack.pack_metadata.update({"support": "community"})
+
+    # Create XSOAR Pack
+    temp_repo = SimpleNamespace()
+    setattr(temp_repo, "path", str(temp_pack_dir / ".git"))
+
+    xsoar_pack = Pack(packs_dir=temp_pack_dir, name="XSOARPack", repo=temp_repo)
+    xsoar_pack.create_release_notes(
+        version="release-note-XSOARPack",
+        content="\n#### Sfhasbfkhabf\n##### Sfhasbfkhabf\n- someinvalidstring.",
+    )
+    xsoar_pack.pack_metadata.update({"support": "xsoar"})
+
+    packs.append(community_pack)
+    packs.append(xsoar_pack)
+
+    return packs

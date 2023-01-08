@@ -452,6 +452,28 @@ class TestDocReviewXSOAROnly:
 
         assert result.exit_code == self.CommandResultCode.FAIL.value
 
+    def test_invalid_mix_packs(self, mix_invalid_packs: List[Pack]):
+
+        """
+        Given -
+            2 Packs, one community, one XSOAR-supported with incorrect spelling.
+
+        When -
+            Running `doc-review` on both Packs with `--xsoar-only` flag set.
+
+        Then -
+            Ensure `doc-review` fails.
+        """
+
+        cmd_args: List[str] = ["--xsoar-only"]
+        for pack in mix_invalid_packs:
+            cmd_args.append("--input")
+            cmd_args.append(pack.path)
+
+        result = self.run_doc_review_cmd(cmd_args)
+
+        assert result.exit_code == self.CommandResultCode.FAIL.value
+
 
 @pytest.mark.usefixtures("are_mock_calls_supported_in_python_version")
 class TestDocReviewPrinting:

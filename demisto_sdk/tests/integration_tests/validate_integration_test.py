@@ -4,9 +4,10 @@ from os.path import join
 
 import pytest
 from click.testing import CliRunner
-
+from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
+from unittest import TestCase
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
@@ -103,6 +104,20 @@ CONF_JSON_MOCK = {
 }
 
 
+class MyRepo:
+    active_branch = "not-master"
+
+    def remote(self):
+        return "remote_path"
+
+
+def set_git_test_env(mocker):
+    mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+    mocker.patch.object(Content, "git", return_value=MyRepo())
+    mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
+    mocker.patch.object(GitUtil, "_is_file_ignored", return_value=False)
+
+
 class TestGenericFieldValidation:
     def test_valid_generic_field(self, mocker, repo):
         """
@@ -116,6 +131,7 @@ class TestGenericFieldValidation:
         - Ensure validation passes.
         - Ensure success validation message is printed.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         pack.create_generic_field("generic-field", GENERIC_FIELD)
@@ -140,6 +156,7 @@ class TestGenericFieldValidation:
         Then
         - Ensure validation fails on ST108 - a field which doesn't defined in the scheme.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         generic_field_copy = GENERIC_FIELD.copy()
@@ -177,6 +194,7 @@ class TestGenericFieldValidation:
         Then
         - Ensure validation fails with the right error code.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         generic_field_copy = GENERIC_FIELD.copy()
@@ -194,7 +212,8 @@ class TestGenericFieldValidation:
         assert "The files were found as invalid" in result.stdout
 
 
-class TestGenericTypeValidation:
+class TestGenericTypeValidation():
+
     def test_valid_generic_type(self, mocker, repo):
         """
         Given
@@ -207,6 +226,7 @@ class TestGenericTypeValidation:
         - Ensure validation passes.
         - Ensure success validation message is printed.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         pack.create_generic_type("generic-type", GENERIC_TYPE)
@@ -231,6 +251,7 @@ class TestGenericTypeValidation:
         Then
         - Ensure validation fails on ST108 - a field which doesn't defined in the scheme.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         generic_type_copy = GENERIC_TYPE.copy()
@@ -258,6 +279,7 @@ class TestGenericTypeValidation:
         Then
         - Ensure validation fails on BA106 - no minimal fromversion in file.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         generic_type_copy = GENERIC_TYPE.copy()
@@ -288,6 +310,7 @@ class TestGenericModuleValidation:
         - Ensure validation passes.
         - Ensure success validation message is printed.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         pack.create_generic_module("generic-module", GENERIC_MODULE)
@@ -312,6 +335,7 @@ class TestGenericModuleValidation:
         Then
         - Ensure validation fails on ST108 - a field which doesn't defined in the scheme.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         generic_module_copy = GENERIC_MODULE.copy()
@@ -339,6 +363,7 @@ class TestGenericModuleValidation:
         Then
         - Ensure validation fails on BA106 - no minimal fromversion in file.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         generic_module_copy = GENERIC_MODULE.copy()
@@ -369,6 +394,7 @@ class TestGenericDefinitionValidation:
         - Ensure validation passes.
         - Ensure success validation message is printed.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         generic_def_copy = GENERIC_DEFINITION.copy()
@@ -395,6 +421,7 @@ class TestGenericDefinitionValidation:
         Then
         - Ensure validation fails.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         generic_def_copy = GENERIC_DEFINITION.copy()
@@ -423,6 +450,7 @@ class TestGenericDefinitionValidation:
         Then
         - Ensure validation fails on BA106 - no minimal fromversion in file.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         generic_def_copy = GENERIC_DEFINITION.copy()
@@ -454,6 +482,7 @@ class TestIncidentFieldValidation:
         - Ensure validation passes.
         - Ensure success validation message is printed.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         pack.create_incident_field("incident-field", INCIDENT_FIELD)
@@ -478,6 +507,7 @@ class TestIncidentFieldValidation:
         Then
         - Ensure validation fails on IF102 - wrong system field value.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         incident_field_copy = INCIDENT_FIELD.copy()
@@ -506,6 +536,7 @@ class TestIncidentFieldValidation:
         - Ensure validation passes.
         - Ensure success validation message is printed.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         incident_field_copy = INCIDENT_FIELD.copy()
@@ -567,6 +598,7 @@ class TestIncidentFieldValidation:
         Then
         - Ensure validation fails on IF114 - incident field with non existent script id
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         incident_field_copy = INCIDENT_FIELD.copy()
@@ -623,6 +655,7 @@ class TestDeprecatedIntegration:
         Then
         - Ensure validation passes.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         pack = repo.create_pack("PackName")
@@ -659,6 +692,7 @@ class TestDeprecatedIntegration:
         Then
         - Ensure validation fails on - invalid_deprecated_integration.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         pack = repo.create_pack("PackName")
@@ -690,6 +724,7 @@ class TestDeprecatedIntegration:
         Then
                 Ensure validation fails
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         pack = repo.create_pack("PackName")
@@ -729,6 +764,7 @@ class TestDeprecatedIntegration:
         Then
                 Ensure validation fails
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         pack = repo.create_pack("PackName")
@@ -761,6 +797,7 @@ class TestDeprecatedIntegration:
         Then
         - Ensure validation fails on - invalid_deprecated_integration.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         pack = repo.create_pack("PackName")
@@ -795,6 +832,7 @@ class TestDeprecatedIntegration:
         Then
         - Ensure validation passes.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         pack = repo.create_pack("PackName")
@@ -838,6 +876,7 @@ class TestDeprecatedIntegration:
         Then
         - Ensure validation passes.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         mocker.patch.object(
@@ -903,6 +942,7 @@ class TestDeprecatedIntegration:
         Then
         - Ensure validation passes.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         pack = repo.create_pack("PackName")
@@ -942,6 +982,7 @@ class TestDeprecatedIntegration:
         Then
         - Ensure validation passes.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
@@ -1005,6 +1046,7 @@ class TestIntegrationValidation:
         Then
         - Ensure validate passes and identifies the file as an integration.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         pack_integration_path = join(
@@ -1038,6 +1080,7 @@ class TestIntegrationValidation:
         Then
         - Ensure validate fails on wrong required value
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(
             PackUniqueFilesValidator, "are_valid_files", return_value=""
@@ -1107,6 +1150,7 @@ class TestIntegrationValidation:
         Then
         - Ensure validate fails on IN119 - wrong fromversion in feed integration.
         """
+        set_git_test_env(mocker)
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         mocker.patch.object(
@@ -1143,6 +1187,7 @@ class TestIntegrationValidation:
         - Ensure validation fails.
         - Ensure failure message on non-latest docker image.
         """
+        set_git_test_env(mocker)
         pack_integration_path = join(
             AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml"
         )

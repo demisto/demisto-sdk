@@ -485,4 +485,4 @@ class TestUpdateContentGraph:
             # make sure that the extracted files are all .csv
             extracted_files = list(tmp_path.glob("extracted/*"))
             assert extracted_files
-            assert all(file.suffix == ".csv" for file in extracted_files)
+            assert all(file.suffix == ".csv" or file.name == 'metadata.json' for file in extracted_files)

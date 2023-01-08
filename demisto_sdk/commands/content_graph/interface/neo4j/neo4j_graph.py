@@ -353,7 +353,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.write_transaction(post_export_write_queries)
         self.dump_metadata()
         if output_path:
-            self._import_handler.zip_import_dir(output_path)
+            self.zip_import_dir(output_path)
 
     def clean_graph(self):
         with self.driver.session() as session:

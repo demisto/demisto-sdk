@@ -63,9 +63,10 @@ def test_get_native_image_reference(native_image_config):
     Then
     - make sure the right docker references is extracted
     """
-    assert native_image_config.get_native_image_reference(
-        "native:8.1"
-    ) == "demisto/py3-native:8.1.0.12345"
+    assert (
+        native_image_config.get_native_image_reference("native:8.1")
+        == "demisto/py3-native:8.1.0.12345"
+    )
 
 
 class TestScriptIntegrationSupportedNativeImages:

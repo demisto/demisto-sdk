@@ -1477,7 +1477,6 @@ SKIP_RELEASE_NOTES_FOR_TYPES = (
     None,
     FileType.RELEASE_NOTES_CONFIG,
     FileType.CONTRIBUTORS,
-    FileType.LAYOUT_RULE,
     FileType.TRIGGER,
 )
 

@@ -38,7 +38,6 @@ from demisto_sdk.commands.common.tools import (
     find_type,
     get_api_module_ids,
     get_api_module_integrations_set,
-    get_definition_name,
     get_display_name,
     get_from_version,
     get_json,
@@ -749,10 +748,6 @@ class UpdateRN:
                 rn_desc = f"- New: **{content_name}**\n"
             else:
                 rn_desc = f"- **{content_name}**\n"
-
-        elif _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):
-            definition_name = get_definition_name(path, self.pack_path)
-            rn_desc = f"- **({definition_name}) - {content_name}**\n"
         else:
             if is_new_file:
                 rn_desc = f"##### New: {content_name}\n- {desc}"
@@ -782,6 +777,23 @@ class UpdateRN:
             rn_desc += f"- Updated the Docker image to: *{docker_image}*.\n"
         return rn_desc
 
+    def does_content_item_header_exist_in_rns(
+        self, current_rn: str, content_name: str
+    ) -> bool:
+        """
+        Checks whether the content item header exists in the release notes.
+
+        Args:
+            current_rn: The current release notes.
+            content_name: The content item name.
+        Returns:
+            True if the content item header exists in the release notes, False otherwise.
+        """
+        for line in current_rn.replace("#####", "").replace("**", "").split("\n"):
+            if content_name == line.replace("-", "", 1).strip():
+                return True
+        return False
+
     def update_existing_rn(self, current_rn, changed_files) -> str:
         """Update the existing release notes.
 
@@ -809,41 +821,22 @@ class UpdateRN:
             is_new_file = data.get("is_new_file")
             desc = data.get("description", "")
             docker_image = data.get("dockerimage")
-            path = data.get("path")
-
+            rn_desc = ""
             if _type is None:
                 continue
 
             _header_by_type = RN_HEADER_BY_FILE_TYPE.get(_type)
-            if _type in (
-                FileType.CONNECTION,
-                FileType.INCIDENT_TYPE,
-                FileType.REPUTATION,
-                FileType.LAYOUT,
-                FileType.INCIDENT_FIELD,
-                FileType.JOB,
-                FileType.WIZARD,
-            ):
-                rn_desc = f"\n- **{content_name}**"
-
-            elif _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):
-                definition_name = get_definition_name(path, self.pack_path)
-                rn_desc = f"\n- **({definition_name}) - {content_name}**"
-
-            elif _type == FileType.TRIGGER:
-                rn_desc = f"\n- {desc}"  # Issue https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
-
-            else:
-                rn_desc = (
-                    f"\n##### New: {content_name}\n- {desc}\n"
-                    if is_new_file
-                    else f"\n##### {content_name}\n- %%UPDATE_RN%%\n"
-                )
-            if docker_image:
-                rn_desc += f"- Updated the Docker image to: *{docker_image}*."
-
+            rn_desc += "\n" + self.build_rn_desc(
+                _type=_type,
+                content_name=content_name,
+                desc=desc,
+                is_new_file=is_new_file,
+                docker_image=docker_image,
+            )
             if _header_by_type and _header_by_type in current_rn_without_docker_images:
-                if content_name in current_rn_without_docker_images:
+                if self.does_content_item_header_exist_in_rns(
+                    current_rn_without_docker_images, content_name
+                ):
                     if docker_image:
                         new_rn = self.handle_existing_rn_with_docker_image(
                             new_rn, _header_by_type, docker_image, content_name
@@ -853,9 +846,7 @@ class UpdateRN:
                     rn_parts = new_rn.split(_header_by_type)
                     new_rn_part = rn_desc
                     if len(rn_parts) > 1:
-                        new_rn = (
-                            f"{rn_parts[0]}{_header_by_type}{new_rn_part}{rn_parts[1]}"
-                        )
+                        new_rn = f"{rn_parts[0]}{_header_by_type}{new_rn_part[:-1]}{rn_parts[1]}"
                     else:
                         new_rn = "".join(rn_parts) + new_rn_part
             else:
@@ -864,11 +855,9 @@ class UpdateRN:
                     rn_parts = new_rn.split(_header_by_type)
                     new_rn_part = rn_desc
                     if len(rn_parts) > 1:
-                        new_rn = (
-                            f"{rn_parts[0]}{_header_by_type}{new_rn_part}{rn_parts[1]}"
-                        )
+                        new_rn = f"{rn_parts[0]}{_header_by_type}{new_rn_part[:-1]}{rn_parts[1]}"
                 else:
-                    new_rn_part = f"\n#### {_header_by_type}{rn_desc}"
+                    new_rn_part = f"\n#### {_header_by_type}{rn_desc}\n"
                     new_rn += new_rn_part
         if new_rn != current_rn:
             self.existing_rn_changed = True

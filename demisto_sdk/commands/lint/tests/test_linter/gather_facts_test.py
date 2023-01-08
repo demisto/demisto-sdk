@@ -14,8 +14,10 @@ logger = logging.getLogger("demisto-sdk")
 
 
 def initiate_linter(
-    demisto_content, integration_path, docker_engine=False,
-        docker_image_flag=linter.DockerImageFlagOption.FROM_YML.value
+    demisto_content,
+    integration_path,
+    docker_engine=False,
+    docker_image_flag=linter.DockerImageFlagOption.FROM_YML.value,
 ):
     return linter.Linter(
         content_repo=demisto_content,
@@ -138,10 +140,22 @@ class TestDockerImagesCollection:
     @pytest.mark.parametrize(
         argnames="docker_image_flag, exp_images ",
         argvalues=[
-            (linter.DockerImageFlagOption.NATIVE_GA.value, "demisto/py3-native:8.2.0.12345"),
-            (linter.DockerImageFlagOption.NATIVE_MAINTENANCE.value, "demisto/py3-native:8.1.0.12345"),
-            (linter.DockerImageFlagOption.NATIVE_DEV.value, "demisto/py3-native:8.3.0.12345"),
-            (linter.DockerImageFlagOption.FROM_YML.value, "demisto/py3-tools:1.0.0.42258"),
+            (
+                linter.DockerImageFlagOption.NATIVE_GA.value,
+                "demisto/py3-native:8.2.0.12345",
+            ),
+            (
+                linter.DockerImageFlagOption.NATIVE_MAINTENANCE.value,
+                "demisto/py3-native:8.1.0.12345",
+            ),
+            (
+                linter.DockerImageFlagOption.NATIVE_DEV.value,
+                "demisto/py3-native:8.3.0.12345",
+            ),
+            (
+                linter.DockerImageFlagOption.FROM_YML.value,
+                "demisto/py3-tools:1.0.0.42258",
+            ),
             (
                 linter.DockerImageFlagOption.ALL_IMAGES.value,
                 [
@@ -151,7 +165,7 @@ class TestDockerImagesCollection:
                     "demisto/py3-native:8.3.0.12345",
                 ],
             ),
-            ("demisto/py3-tools:1.0.0.40800", "demisto/py3-tools:1.0.0.40800")
+            ("demisto/py3-tools:1.0.0.40800", "demisto/py3-tools:1.0.0.40800"),
         ],
     )
     def test_docker_images_according_to_docker_image_flag(
@@ -235,7 +249,8 @@ class TestDockerImagesCollection:
             (linter.DockerImageFlagOption.NATIVE_GA.value, "native:8.2"),
             (linter.DockerImageFlagOption.NATIVE_MAINTENANCE.value, "native:8.1"),
             (linter.DockerImageFlagOption.NATIVE_DEV.value, "native:dev"),
-    ])
+        ],
+    )
     def test_docker_images_key_not_exists_in_yml(
         self, mocker, pack, docker_image_flag, exp_versioned_native_image_name
     ):
@@ -259,9 +274,7 @@ class TestDockerImagesCollection:
 
         # Crete integration to test on:
         integration_name = "TestIntegration"
-        test_integration = pack.create_integration(
-            name=integration_name
-        )
+        test_integration = pack.create_integration(name=integration_name)
 
         # Run lint:
         with ChangeCWD(pack.repo_path):
@@ -275,14 +288,17 @@ class TestDockerImagesCollection:
 
         # Verify docker images:
         assert runner._facts["images"] == []
-        assert f"Skipping checks on docker for {exp_versioned_native_image_name} - TestIntegration is not supported" \
-               f" by the requested native image: {exp_versioned_native_image_name}" in log.call_args_list[-2][0][0]
-        assert f"{integration_name} - Facts - No docker images to run on - " \
-               f"Skipping run lint in host as well." in log.call_args_list[-1][0][0]
+        assert (
+            f"Skipping checks on docker for {exp_versioned_native_image_name} - TestIntegration is not supported"
+            f" by the requested native image: {exp_versioned_native_image_name}"
+            in log.call_args_list[-2][0][0]
+        )
+        assert (
+            f"{integration_name} - Facts - No docker images to run on - "
+            f"Skipping run lint in host as well." in log.call_args_list[-1][0][0]
+        )
 
-    def test_invalid_docker_image_as_docker_image_flag(
-        self, mocker, pack
-    ):
+    def test_invalid_docker_image_as_docker_image_flag(self, mocker, pack):
         """
         This test checks that if an invalid docker image was given as the docker image flag, the linter will try to
         run the unit test on it and will write suitable logs.
@@ -300,9 +316,7 @@ class TestDockerImagesCollection:
 
         # Crete integration to test on:
         integration_name = "TestIntegration"
-        test_integration = pack.create_integration(
-            name=integration_name
-        )
+        test_integration = pack.create_integration(name=integration_name)
 
         # Run lint:
         invalid_docker_image = "demisto/blabla:1.0.0.40800"
@@ -311,16 +325,20 @@ class TestDockerImagesCollection:
                 pack.repo_path,
                 test_integration.path,
                 True,
-                docker_image_flag=invalid_docker_image
+                docker_image_flag=invalid_docker_image,
             )
             runner._gather_facts(modules={})
 
         # Verify docker images:
         assert runner._facts["images"][0][0] == invalid_docker_image
-        assert f"{integration_name} - Get All Docker Images For Lint - Docker image to run on is:" \
-               f" {invalid_docker_image}" in log_info.call_args_list[4][0][0]
-        assert f"Get python version from image {invalid_docker_image} - Failed detecting Python version for image" \
-               f" {invalid_docker_image}" in log_error.call_args_list[0][0][0]
+        assert (
+            f"{integration_name} - Get All Docker Images For Lint - Docker image to run on is:"
+            f" {invalid_docker_image}" in log_info.call_args_list[4][0][0]
+        )
+        assert (
+            f"Get python version from image {invalid_docker_image} - Failed detecting Python version for image"
+            f" {invalid_docker_image}" in log_error.call_args_list[0][0][0]
+        )
 
     @pytest.mark.parametrize(
         argnames="docker_image_flag, exp_versioned_native_image_name",
@@ -328,10 +346,11 @@ class TestDockerImagesCollection:
             (linter.DockerImageFlagOption.NATIVE_GA.value, "native:8.2"),
             (linter.DockerImageFlagOption.NATIVE_MAINTENANCE.value, "native:8.1"),
             (linter.DockerImageFlagOption.NATIVE_DEV.value, "native:dev"),
-            (linter.DockerImageFlagOption.ALL_IMAGES.value, "native:dev")
-        ])
+            (linter.DockerImageFlagOption.ALL_IMAGES.value, "native:dev"),
+        ],
+    )
     def test_integration_not_supported_by_requested_native_image(
-            self, mocker, pack, docker_image_flag, exp_versioned_native_image_name
+        self, mocker, pack, docker_image_flag, exp_versioned_native_image_name
     ):
         """
         This test checks that if a docker image flag of a native image was given (native:ga, native:maintenance,
@@ -395,14 +414,17 @@ class TestDockerImagesCollection:
             assert docker_images[0][0] == docker_image_yml
         else:
             assert len(docker_images) == 0
-            assert f"Skipping checks on docker for {exp_versioned_native_image_name} - TestIntegration is not supported" \
-                   f" by the requested native image: {exp_versioned_native_image_name}" in log.call_args_list[-2][0][0]
-            assert f"{integration_name} - Facts - No docker images to run on - " \
-                   f"Skipping run lint in host as well." in log.call_args_list[-1][0][0]
+            assert (
+                f"Skipping checks on docker for {exp_versioned_native_image_name} - TestIntegration is not supported"
+                f" by the requested native image: {exp_versioned_native_image_name}"
+                in log.call_args_list[-2][0][0]
+            )
+            assert (
+                f"{integration_name} - Facts - No docker images to run on - "
+                f"Skipping run lint in host as well." in log.call_args_list[-1][0][0]
+            )
 
-    def test_wrong_native_docker_image_flag(
-        self, pack
-    ):
+    def test_wrong_native_docker_image_flag(self, pack):
         """
         This test checks that if a native docker image flag with a wrong suffix was given, a suitable
         exception is raised.
@@ -417,9 +439,7 @@ class TestDockerImagesCollection:
         """
         # Crete integration to test on:
         integration_name = "TestIntegration"
-        test_integration = pack.create_integration(
-            name=integration_name
-        )
+        test_integration = pack.create_integration(name=integration_name)
 
         # Run lint:
         docker_image_flag = "native:wrong_suffix"
@@ -435,13 +455,16 @@ class TestDockerImagesCollection:
 
         # Verify docker images:
         assert runner._facts["images"] == []
-        assert str(e.value) == f"The requested native image: '{docker_image_flag}' is not supported." \
-                               f" The possible options are: 'native:ga', 'native:maintenance' and 'native:dev'." \
-                               f" For supported native image versions please see:" \
-                               f" 'Tests/docker_native_image_config.json'"
+        assert (
+            str(e.value)
+            == f"The requested native image: '{docker_image_flag}' is not supported."
+            f" The possible options are: 'native:ga', 'native:maintenance' and 'native:dev'."
+            f" For supported native image versions please see:"
+            f" 'Tests/docker_native_image_config.json'"
+        )
 
     def test_docker_image_flag_version_not_exists_in_native_config_file(
-            self, mocker, pack
+        self, mocker, pack
     ):
         """
         This test checks that if a native docker image flag was given, and the flag doesn't have a mapped native
@@ -458,44 +481,43 @@ class TestDockerImagesCollection:
         """
         # Mock:
         native_image_config_mock = {
-            "native_images":{
-      "native:8.1":{
-         "supported_docker_images":[
-           "python3",
-           "py3-tools",
-           "unzip",
-           "chromium",
-           "tesseract",
-           "tld"
-         ],
-        "docker_ref": "demisto/py3-native:8.1.0.12345"
-      }},
-   "ignored_content_items":[
-      {
-         "id":"UnzipFile",
-         "reason":"this is just a test",
-         "ignored_native_images":[
-            "native:8.1"
-         ]
-      },
-   ],
-   "flags_versions_mapping": {
-      "native:dev" : "native:dev",
-      "native:ga" : "native:8.2",
-      "native:maintenance" : ""
-   }
-}
+            "native_images": {
+                "native:8.1": {
+                    "supported_docker_images": [
+                        "python3",
+                        "py3-tools",
+                        "unzip",
+                        "chromium",
+                        "tesseract",
+                        "tld",
+                    ],
+                    "docker_ref": "demisto/py3-native:8.1.0.12345",
+                }
+            },
+            "ignored_content_items": [
+                {
+                    "id": "UnzipFile",
+                    "reason": "this is just a test",
+                    "ignored_native_images": ["native:8.1"],
+                },
+            ],
+            "flags_versions_mapping": {
+                "native:dev": "native:dev",
+                "native:ga": "native:8.2",
+                "native:maintenance": "",
+            },
+        }
 
         mocker.patch.object(linter, "get_python_version_from_image", return_value="3.8")
-        mocker.patch("demisto_sdk.commands.common.native_image.NativeImageConfig.load",
-                     return_value=native_image_config_mock)
+        mocker.patch(
+            "demisto_sdk.commands.common.native_image.NativeImageConfig.load",
+            return_value=native_image_config_mock,
+        )
         log = mocker.patch.object(logger, "info")
 
         # Crete integration to test on:
         integration_name = "TestIntegration"
-        test_integration = pack.create_integration(
-            name=integration_name
-        )
+        test_integration = pack.create_integration(name=integration_name)
 
         # Run lint:
         docker_image_flag = "native:maintenance"
@@ -510,11 +532,15 @@ class TestDockerImagesCollection:
 
         # Verify docker images:
         assert runner._facts["images"] == []
-        assert f"Skipping checks on docker for '{docker_image_flag}' - The requested native image:" \
-               f" '{docker_image_flag}' is not supported. For supported native image versions please see:" \
-               f" 'Tests/docker_native_image_config.json'" in log.call_args_list[-2][0][0]
-        assert f"{integration_name} - Facts - No docker images to run on - " \
-               f"Skipping run lint in host as well." in log.call_args_list[-1][0][0]
+        assert (
+            f"Skipping checks on docker for '{docker_image_flag}' - The requested native image:"
+            f" '{docker_image_flag}' is not supported. For supported native image versions please see:"
+            f" 'Tests/docker_native_image_config.json'" in log.call_args_list[-2][0][0]
+        )
+        assert (
+            f"{integration_name} - Facts - No docker images to run on - "
+            f"Skipping run lint in host as well." in log.call_args_list[-1][0][0]
+        )
 
 
 class TestTestsCollection:

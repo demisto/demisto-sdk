@@ -189,7 +189,6 @@ class ReleaseNotesValidator(BaseValidator):
         is_valid = True
         entity_type = FILE_TYPE_BY_RN_HEADER.get(content_type, "")
 
-
         content_type_dir_name = ENTITY_TYPE_TO_DIR.get(entity_type, entity_type)
         content_type_path = os.path.join(self.pack_path, content_type_dir_name)
 

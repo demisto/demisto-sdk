@@ -298,6 +298,7 @@ class ValidateManager:
             FileType.PYLINTRC,
             FileType.SECRET_IGNORE,
             FileType.LICENSE,
+            FileType.UNIFIED_YML,
         )
 
         self.is_external_repo = is_external_repo
@@ -756,7 +757,6 @@ class ValidateManager:
             file_path = file_path.replace(".xif", ".yml")
         if (
             file_type in self.skipped_file_types
-            or file_path.endswith("_unified.yml")
             or self.is_skipped_file(file_path)
             or self.git_util._is_file_ignored(file_path)
             or self.detect_file_level(file_path) == PathLevel.PACKAGE

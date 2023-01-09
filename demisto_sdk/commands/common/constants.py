@@ -169,6 +169,7 @@ class FileType(str, Enum):
     PIPFILE_LOCK = "pipfilelock"
     PYLINTRC = "pylintrc"
     LICENSE = "license"
+    UNIFIED_YML = "unified_yml"
 
 
 RN_HEADER_BY_FILE_TYPE = {

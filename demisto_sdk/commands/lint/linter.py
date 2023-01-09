@@ -1461,7 +1461,7 @@ class Linter:
                 f" Docker Hub."
             )
             logger.error(err_msg)
-            raise Exception(err_msg)
+            raise RuntimeError(err_msg)
 
     def _get_versioned_native_image(
         self,

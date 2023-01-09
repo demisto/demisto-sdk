@@ -1194,7 +1194,6 @@ SCHEMA_TO_REGEX = {
     ],
     "report": [PACKS_REPORT_JSON_REGEX],
     "modelingrule": [MODELING_RULE_YML_REGEX],
-    "modelingrule-schema": [MODELING_RULE_SCHEMA_REGEX],
     "release-notes": [PACKS_RELEASE_NOTES_REGEX],
     "genericfield": JSON_ALL_GENERIC_FIELDS_REGEXES,
     "generictype": JSON_ALL_GENERIC_TYPES_REGEXES,
@@ -1208,7 +1207,7 @@ SCHEMA_TO_REGEX = {
     "xsiamreport": [XSIAM_REPORT_JSON_REGEX],
     "trigger": [TRIGGER_JSON_REGEX],
     "xdrctemplate": [XDRC_TEMPLATE_JSON_REGEX],
-    "xdrctemplate-yml": [XDRC_TEMPLATE_YML_REGEX],
+    "xdrctemplateyml": [XDRC_TEMPLATE_YML_REGEX],
 }
 
 EXTERNAL_PR_REGEX = r"^pull/(\d+)$"

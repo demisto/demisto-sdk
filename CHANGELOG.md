@@ -1,8 +1,20 @@
 # Changelog
 ## Unreleased
+
+## 1.8.3
+* Changed **validate** to allow hiding parameters of type 0, 4, 12 and 14 when replacing with type 9 (credentials) with the same name.
+* Fixed an issue where **update-release-notes** fails to update *MicrosoftApiModule* dependent integrations.
+* Fixed an issue where the **upload** command failed because `docker_native_image_config.json` file could not be found.
+* Added a metadata file to the content graph zip, to be used in the **update-content-graph** command.
+
+
+
+## 1.8.2
+* Fixed an issue where demisto-py failed to upload content to XSIAM when `DEMISTO_USERNAME` environment variable is set.
 * Fixed an issue where the **prepare-content** command output invalid automation name when used with the --*custom* argument.
 * Fixed an issue where modeling rules with arbitrary whitespace characters were not parsed correctly.
-* Added support for the **nativeimage** key for an integration/script in the **prepare-content** command.
+* Added support for the **nativeImage** key for an integration/script in the **prepare-content** command.
+* Added **validate** checks for integrations declared deprecated (display name, description) but missing the `deprecated` flag.
 * Changed the **validate** command to fail on the IN145 error code only when the parameter with type 4 is not hidden.
 * Fixed an issue where downloading content layouts with `detailsV2=None` resulted in an error.
 * Fixed an issue where **xdrctemplate** was missing 'external' prefix.
@@ -14,6 +26,10 @@
 * Fixed an issue where the **update-release-notes** command didn't add release-notes properly to some *new* content items.
 * Added validation that checks that the `nativeimage` key is not defined in script/integration yml.
 * Added to the **format** command the ability to remove `nativeimage` key in case defined in script/integration yml.
+* Enhanced the **update-content-graph** command to support `--use-git`, `--imported_path` and `--output-path` arguments.
+* Fixed an issue where **doc-review** failed when reviewing command name in some cases.
+* Fixed an issue where **download** didn't identify playbooks properly, and downloaded files with UUIDs instead of file/script names.
+
 
 ## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.

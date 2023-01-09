@@ -16,6 +16,9 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
 from demisto_sdk.commands.common.hook_validations.integration import (
     IntegrationValidator,
 )
+from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.common.content.content import Content
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
 from demisto_sdk.commands.common.tools import get_dict_from_file, is_test_config_match
 from demisto_sdk.commands.format import format_module, update_generic
@@ -95,6 +98,20 @@ CONF_JSON_ORIGINAL_CONTENT = {
         {"integrations": "TestCreateDuplicates", "playbookID": "PagerDuty Test"},
     ]
 }
+
+
+class MyRepo:
+    active_branch = "not-master"
+
+    def remote(self):
+        return "remote_path"
+
+@pytest.fixture(autouse=True)
+def set_git_test_env(mocker):
+    mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+    mocker.patch.object(Content, "git", return_value=MyRepo())
+    mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
+    mocker.patch.object(GitUtil, "_is_file_ignored", return_value=False)
 
 
 @pytest.mark.parametrize("source_yml", BASIC_YML_CONTENTS)

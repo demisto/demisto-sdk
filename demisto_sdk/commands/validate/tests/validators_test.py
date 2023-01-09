@@ -62,6 +62,7 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.tests.constants_test import (
     CONF_JSON_MOCK_PATH,
     DASHBOARD_TARGET,
@@ -134,6 +135,20 @@ from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
+
+
+class MyRepo:
+    active_branch = "not-master"
+
+    def remote(self):
+        return "remote_path"
+
+@pytest.fixture(autouse=True)
+def set_git_test_env(mocker):
+    mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+    mocker.patch.object(Content, "git", return_value=MyRepo())
+    mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
+    mocker.patch.object(GitUtil, "_is_file_ignored", return_value=False)
 
 
 class TestValidators:

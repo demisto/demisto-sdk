@@ -66,6 +66,7 @@ from demisto_sdk.tests.constants_test import (
     INVALID_WIDGET_PATH,
     LAYOUT_TARGET,
     LAYOUTS_CONTAINER_TARGET,
+    PACK_TARGET,
     PLAYBOOK_PACK_TARGET,
     PLAYBOOK_TARGET,
     VALID_DASHBOARD_PATH,
@@ -697,12 +698,14 @@ def _get_dummy_xsiam_pack_items(valid: bool = True) -> List[str]:
     return [f for f in files if not os.path.isdir(f)]
 
 
-class TestXSIAMStructureValidator:
+class TestXSIAMStructureValidator(TestStructureValidator):
     @staticmethod
     def _get_dummy_xsiam_pack_items(valid: bool = True) -> List[str]:
-        files = glob(
-            DUMMY_XSIAM_PACK_PATH + "/*/valid_*/*" if valid else "/*/invalid_*/*"
-        )
+        patterns = [
+            f"{DUMMY_XSIAM_PACK_PATH}{'/*/valid_*' if valid else '/*/invalid_*'}",
+            f"{DUMMY_XSIAM_PACK_PATH}{'/*/valid_*/*' if valid else '/*/invalid_*/*'}",
+        ]
+        files = glob(patterns[0]) + glob(patterns[1])
         res = [f for f in files if not os.path.isdir(f)]
         assert res  # make sure files exist
         return res
@@ -712,12 +715,14 @@ class TestXSIAMStructureValidator:
     ] + [(f, False) for f in _get_dummy_xsiam_pack_items(valid=False)]
 
     @pytest.mark.parametrize("file_path, answer", IS_VALID_XSIAM_FILE_INPUTS)
-    def test_is_xsiam_file_valid(self, file_path, answer, mocker, tmpdir):
+    def test_is_xsiam_file_valid(self, file_path, answer, mocker):
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
+        mocker.patch.object(StructureValidator, "is_valid_file_path", return_value=True)
         try:
-            temp_filepath = file_path.replace(DUMMY_XSIAM_PACK_PATH, str(tmpdir))
+            temp_filepath = file_path.replace(DUMMY_XSIAM_PACK_PATH, PACK_TARGET)
             copyfile(file_path, temp_filepath)
             structure = StructureValidator(temp_filepath)
             assert structure.is_valid_file() is answer
         finally:
-            os.remove(temp_filepath)
+            pass
+            # os.remove(temp_filepath)

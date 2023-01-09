@@ -499,6 +499,13 @@ DIR_LIST = [
     f"{PACK_TARGET}/{constants.INDICATOR_TYPES_DIR}",
     f"{PACK_TARGET}/{constants.CONNECTIONS_DIR}",
     f"{PACK_TARGET}/{constants.INDICATOR_FIELDS_DIR}",
+    f"{PACK_TARGET}/{constants.CORRELATION_RULES_DIR}",
+    f"{PACK_TARGET}/{constants.MODELING_RULES_DIR}",
+    f"{PACK_TARGET}/{constants.PARSING_RULES_DIR}",
+    f"{PACK_TARGET}/{constants.XSIAM_DASHBOARDS_DIR}",
+    f"{PACK_TARGET}/{constants.XSIAM_REPORTS_DIR}",
+    f"{PACK_TARGET}/{constants.TRIGGER_DIR}",
+    f"{PACK_TARGET}/{constants.XDRC_TEMPLATE_DIR}",
     constants.TESTS_DIR,
 ]
 

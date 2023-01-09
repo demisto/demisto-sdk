@@ -26,6 +26,8 @@ from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_correlation_rule import CorrelationRuleYMLFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_description import DescriptionFormat
+from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
+from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_genericdefinition import (
     GenericDefinitionJSONFormat,
 )
@@ -52,8 +54,6 @@ from demisto_sdk.commands.format.update_readme import ReadmeFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
-from demisto_sdk.commands.format.update_xsiam_dashboard import XSIAMDashboardJSONFormat
-from demisto_sdk.commands.format.update_xsiam_report import XSIAMReportJSONFormat
 from demisto_sdk.commands.lint.commands_builder import excluded_files
 
 FILE_TYPE_AND_LINKED_CLASS = {
@@ -87,12 +87,14 @@ FILE_TYPE_AND_LINKED_CLASS = {
     "readme": ReadmeFormat,
     "metadata": PackMetadataJsonFormat,
     "correlationrule": CorrelationRuleYMLFormat,
-    "xsiamdashboard": XSIAMDashboardJSONFormat,
-    "xsiamreport": XSIAMReportJSONFormat,
-    "modelingrule": None,  # todo
-    "parsingrule": None,
-    "trigger": None,
-    "xdrctemplate": None,
+    "xsiamdashboard": BaseUpdateJSON,
+    "xsiamreport": BaseUpdateJSON,
+    "modelingrule": BaseUpdateYML,
+    "modelingrule-schema": BaseUpdateJSON,
+    "parsingrule": BaseUpdateYML,
+    "trigger": BaseUpdateJSON,
+    "xdrctemplate": BaseUpdateJSON,
+    "xdrctemplate-yml": BaseUpdateYML,
 }
 
 UNFORMATTED_FILES = [

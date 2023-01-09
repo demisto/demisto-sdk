@@ -50,11 +50,6 @@ class BaseUpdate:
         interactive (bool): Whether to run the format interactively or not (usually for contribution management)
     """
 
-    NO_FROMVERSION_TYPES = [
-        "CorrelationRuleYMLFormat",
-        "XSIAMDashboardJSONFormat",
-    ]
-
     def __init__(
         self,
         input: str = "",
@@ -360,8 +355,6 @@ class BaseUpdate:
 
     def set_from_version_key_name(self) -> Union[str, None]:
         """fromversion key is different between yml and json , in yml file : fromversion, in json files : fromVersion"""
-        if self.__class__.__name__ in self.NO_FROMVERSION_TYPES:
-            return None
         if self.file_type == "yml":
             return "fromversion"
         elif self.file_type == "json":

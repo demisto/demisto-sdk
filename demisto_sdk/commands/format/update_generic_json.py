@@ -1,13 +1,21 @@
+import traceback
 from distutils.version import LooseVersion
-from typing import Optional
+from typing import Optional, Tuple
 
 import click
 
-from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_TO_VERSION
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_TO_VERSION,
+    FILETYPE_TO_DEFAULT_FROMVERSION,
+    FileType,
+)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.tools import get_yaml, is_uuid, print_error
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES,
+    ERROR_RETURN_CODE,
+    SKIP_RETURN_CODE,
+    SUCCESS_RETURN_CODE,
     TO_VERSION_5_9_9,
 )
 from demisto_sdk.commands.format.update_generic import BaseUpdate
@@ -23,11 +31,6 @@ class BaseUpdateJSON(BaseUpdate):
         output (str): the desired file name to save the updated version of the YML to.
         data (dict): JSON file data arranged in a Dict.
     """
-
-    NON_VERSIONED_JSON_TYPES = [  # todo + consider moving to update_generic.py
-        "XSIAMDashboardJSONFormat",
-        "TriggerRecommendationJSONFormat",
-    ]
 
     def __init__(
         self,
@@ -83,8 +86,7 @@ class BaseUpdateJSON(BaseUpdate):
         self, default_from_version: Optional[str] = "", file_type: str = ""
     ):
         """Manager function for the generic JSON updates."""
-        if self.__class__.__name__ not in self.NON_VERSIONED_JSON_TYPES:
-            self.set_version_to_default()
+        self.set_version_to_default()
         self.remove_null_fields()
         self.check_server_version()
         self.remove_unnecessary_keys()
@@ -169,3 +171,38 @@ class BaseUpdateJSON(BaseUpdate):
                 self.data["name"] = self.data["name"].strip()
             if "id" in self.data:
                 self.data["id"] = self.data["id"].strip()
+
+    def format_file(self) -> Tuple[int, int]:
+        """Manager function for the JSON updater."""
+        format_res = self.run_format()
+        if format_res:
+            return format_res, SKIP_RETURN_CODE
+        else:
+            return format_res, self.initiate_file_validator()
+
+    def run_format(self) -> int:
+        try:
+            click.secho(
+                f"\n======= Updating file: {self.source_file} =======", fg="white"
+            )
+            self.update_json(
+                default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(
+                    FileType(self.file_type)
+                )
+            )
+            self.save_json_to_destination_file()
+            return SUCCESS_RETURN_CODE
+        except Exception as err:
+            print(
+                "".join(
+                    traceback.format_exception(
+                        type(err), value=err, tb=err.__traceback__
+                    )
+                )
+            )
+            if self.verbose:
+                click.secho(
+                    f"\nFailed to update file {self.source_file}. Error: {err}",
+                    fg="red",
+                )
+            return ERROR_RETURN_CODE

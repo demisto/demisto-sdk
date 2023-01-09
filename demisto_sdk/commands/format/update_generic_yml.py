@@ -1,10 +1,12 @@
 import os
-from typing import Dict, List, Optional
+import traceback
+from typing import Dict, List, Optional, Tuple
 
 import click
 
 from demisto_sdk.commands.common.constants import (
     ENTITY_TYPE_TO_DIR,
+    FILETYPE_TO_DEFAULT_FROMVERSION,
     INTEGRATION,
     NO_TESTS_DEPRECATED,
     PLAYBOOK,
@@ -22,6 +24,11 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
     is_uuid,
     listdir_fullpath,
+)
+from demisto_sdk.commands.format.format_constants import (
+    ERROR_RETURN_CODE,
+    SKIP_RETURN_CODE,
+    SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
@@ -385,3 +392,38 @@ class BaseUpdateYML(BaseUpdate):
                 "nativeimage"
             ):  # integration
                 script_section.pop("nativeimage")
+
+    def format_file(self) -> Tuple[int, int]:
+        """Manager function for the Correlation Rules YML updater."""
+        format_res = self.run_format()
+        if format_res:
+            return format_res, SKIP_RETURN_CODE
+        else:
+            return format_res, self.initiate_file_validator()
+
+    def run_format(self) -> int:
+        try:
+            click.secho(
+                f"\n======= Updating file: {self.source_file} =======", fg="white"
+            )
+            self.update_yml(
+                default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(
+                    FileType(self.file_type)
+                )
+            )
+            self.save_yml_to_destination_file()
+            return SUCCESS_RETURN_CODE
+        except Exception as err:
+            print(
+                "".join(
+                    traceback.format_exception(
+                        type(err), value=err, tb=err.__traceback__
+                    )
+                )
+            )
+            if self.verbose:
+                click.secho(
+                    f"\nFailed to update file {self.source_file}. Error: {err}",
+                    fg="red",
+                )
+            return ERROR_RETURN_CODE

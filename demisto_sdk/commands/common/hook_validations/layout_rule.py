@@ -36,9 +36,8 @@ class LayoutRuleValidator(ContentEntityValidator):
         Note: For now we return True regardless of the item content. More info:
         https://github.com/demisto/etc/issues/48151#issuecomment-1109660727
         """
-        self.are_all_fields_exist()
 
-        return self._is_valid
+        return True
 
     def is_valid_version(self):
         """
@@ -46,29 +45,3 @@ class LayoutRuleValidator(ContentEntityValidator):
         """
         pass
 
-    @error_codes("LR100")
-    def are_all_fields_exist(self):
-        """
-        Check that all mandatory fields exist in the json file.
-        """
-        fields_to_check = (
-            "rule_id",
-            "layout_id",
-            "description",
-            "rule_name",
-            "alerts_filter",
-        )
-        missing_fields = []
-        with open(self.file_path) as sf:
-            rule_content = json.load(sf)
-            for field in fields_to_check:
-                if field not in rule_content.keys():
-                    missing_fields.append(field)
-        if missing_fields:
-            error_message, error_code = Errors.layout_rule_keys_are_missing(
-                missing_fields
-            )
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self._is_valid = False
-                return False
-        return True

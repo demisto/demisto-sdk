@@ -1748,12 +1748,6 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
-    # LR - Layout Rules
-    "layout_rule_keys_are_missing": {
-        "code": "LR100",
-        "ui_applicable": False,
-        "related_field": "",
-    },
 }
 
 
@@ -4264,13 +4258,6 @@ class Errors:
         return (
             "The 'rules' key or the 'schema' key is missing from the modeling rule yml file. "
             "Make sure to add them to your yml file with an empty string as value."
-        )
-
-    @staticmethod
-    @error_code_decorator
-    def layout_rule_keys_are_missing(missing_fields):
-        return (
-            f"Layout rule fields are missing in the json file:  {str(missing_fields)}"
         )
 
     @staticmethod

@@ -3064,6 +3064,10 @@ def update_content_graph(
             output_path=output_path,
         )
 
+@main.command()
+def pre_commit():
+    from demisto_sdk.commands.pre_commit.pre_commit_command import manager
+    manager()
 
 @main.result_callback()
 def exit_from_program(result=0, **kwargs):

@@ -501,3 +501,5 @@ DIR_LIST = [
     f"{PACK_TARGET}/{constants.INDICATOR_FIELDS_DIR}",
     constants.TESTS_DIR,
 ]
+
+DUMMY_XSIAM_PACK_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/DummyXSIAMPack"

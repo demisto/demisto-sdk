@@ -1,4 +1,5 @@
 import os
+from glob import glob
 from os.path import isfile
 from shutil import copyfile
 from typing import List, Tuple
@@ -7,6 +8,7 @@ import pytest
 
 from demisto_sdk.commands.common.constants import (
     CODE_FILES_REGEX,
+    CORRELATION_RULES_YML_REGEX,
     PACKAGE_YML_FILE_REGEX,
     PACKS_CLASSIFIER_JSON_5_9_9_REGEX,
     PACKS_CLASSIFIER_JSON_REGEX,
@@ -25,9 +27,15 @@ from demisto_sdk.commands.common.constants import (
     PACKS_SCRIPT_TEST_PY_REGEX,
     PACKS_SCRIPT_YML_REGEX,
     PACKS_WIDGET_JSON_REGEX,
+    PARSING_RULES_YML_REGEX,
     PLAYBOOK_README_REGEX,
     PLAYBOOK_YML_REGEX,
     TEST_PLAYBOOK_YML_REGEX,
+    TRIGGER_JSON_REGEX,
+    XDRC_TEMPLATE_JSON_REGEX,
+    XDRC_TEMPLATE_YML_REGEX,
+    XSIAM_DASHBOARD_JSON_REGEX,
+    XSIAM_REPORT_JSON_REGEX,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
@@ -38,6 +46,7 @@ from demisto_sdk.commands.common.hook_validations.structure import (
 from demisto_sdk.tests.constants_test import (
     DASHBOARD_TARGET,
     DIR_LIST,
+    DUMMY_XSIAM_PACK_PATH,
     INCIDENT_FIELD_TARGET,
     INDICATORFIELD_EXACT_SCHEME,
     INDICATORFIELD_EXTRA_FIELDS,
@@ -594,6 +603,41 @@ class TestGetMatchingRegex:
             [TEST_PLAYBOOK_YML_REGEX],
         ),
         (
+            ["Packs/CyberArkIdentity/XSIAMDashboards/CyberArkDashboard.json"],
+            [],
+            [XSIAM_DASHBOARD_JSON_REGEX],
+        ),
+        (
+            ["Packs/DeveloperTools/XSIAMReports/MockReport.json"],
+            [],
+            [XSIAM_REPORT_JSON_REGEX],
+        ),
+        (
+            ["Packs/Core/Triggers/Trigger_-_NGFW_Scan.json"],
+            [],
+            [TRIGGER_JSON_REGEX],
+        ),
+        (
+            ["Packs/Tableau/XDRCTemplates/Tableau/Tableau.json"],
+            [],
+            [XDRC_TEMPLATE_JSON_REGEX],
+        ),
+        (
+            ["Packs/Tableau/XDRCTemplates/Tableau/Tableau.yml"],
+            [],
+            [XDRC_TEMPLATE_YML_REGEX],
+        ),
+        (
+            ["Packs/AlibabaActionTrail/CorrelationRules/Alibaba_Correlation.yml"],
+            [],
+            [CORRELATION_RULES_YML_REGEX],
+        ),
+        (
+            ["Packs/Jira/ParsingRules/JiraParsingRules/JiraParsingRules.yml"],
+            [],
+            [PARSING_RULES_YML_REGEX],
+        ),
+        (
             [
                 "Packs/SomeScript/Scripts/ScriptName/ScriptName.ps1",
                 "Packs/SomeIntegration/Integrations/IntegrationName/IntegrationName.ps1",
@@ -646,3 +690,34 @@ class TestGetMatchingRegex:
             file_path=file_path, predefined_scheme="releasenotesconfig"
         )
         assert validator.is_valid_scheme() is expected
+
+
+def _get_dummy_xsiam_pack_items(valid: bool = True) -> List[str]:
+    files = glob(DUMMY_XSIAM_PACK_PATH + "/*/valid_*" if valid else "/*/invalid_*")
+    return [f for f in files if not os.path.isdir(f)]
+
+
+class TestXSIAMStructureValidator:
+    @staticmethod
+    def _get_dummy_xsiam_pack_items(valid: bool = True) -> List[str]:
+        files = glob(
+            DUMMY_XSIAM_PACK_PATH + "/*/valid_*/*" if valid else "/*/invalid_*/*"
+        )
+        res = [f for f in files if not os.path.isdir(f)]
+        assert res  # make sure files exist
+        return res
+
+    IS_VALID_XSIAM_FILE_INPUTS: List[Tuple[str, bool]] = [
+        (f, True) for f in _get_dummy_xsiam_pack_items(valid=True)
+    ] + [(f, False) for f in _get_dummy_xsiam_pack_items(valid=False)]
+
+    @pytest.mark.parametrize("file_path, answer", IS_VALID_XSIAM_FILE_INPUTS)
+    def test_is_xsiam_file_valid(self, file_path, answer, mocker, tmpdir):
+        mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
+        try:
+            temp_filepath = file_path.replace(DUMMY_XSIAM_PACK_PATH, str(tmpdir))
+            copyfile(file_path, temp_filepath)
+            structure = StructureValidator(temp_filepath)
+            assert structure.is_valid_file() is answer
+        finally:
+            os.remove(temp_filepath)

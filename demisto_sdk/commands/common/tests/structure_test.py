@@ -19,6 +19,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_INTEGRATION_YML_REGEX,
     PACKS_LAYOUT_JSON_REGEX,
     PACKS_LAYOUTS_CONTAINER_JSON_REGEX,
+    PACK_LAYOUT_RULE_JSON_REGEX,
     PACKS_MAPPER_JSON_REGEX,
     PACKS_SCRIPT_PY_REGEX,
     PACKS_SCRIPT_TEST_PLAYBOOK,
@@ -613,6 +614,11 @@ class TestGetMatchingRegex:
             ],
             CODE_FILES_REGEX,
         ),
+        (
+            ["Packs/PackName/LayoutRules/test_layout_rule.json"],
+            ["Packs/PackName/test_layout_rule.json"],
+            [PACK_LAYOUT_RULE_JSON_REGEX]
+        )
     ]
 
     @pytest.mark.parametrize("acceptable,non_acceptable,regex", test_packs_regex_params)

@@ -30,7 +30,7 @@ The scope of the upgrade is decided by the SDK owner on each release, based on t
 6) If the build is successful, and `vX.Y.Z` shows in [PyPi](https://pypi.org/project/demisto-sdk/), your release is public! 🎉
 7) Merge the X.Y.Z SDK branch to master.
 8) Under the **Content** repo, git checkout to a new X.Y.Z branch.
-Run `poetry add demisto-sdk==X.Y.Z && poetry update`. Should any dependency conflicts occur, consult with the SDK owner.
+Run `poetry add demisto-sdk==X.Y.Z`. Should any dependency conflicts occur, consult with the SDK owner.
   **NOTE**: it may take up to an hour for the Gitlab's PyPi mirror to sync with PyPi ang have X.Y.Z available, so the build _may_ fail. Should this happen, wait ~1h and retry.
 1) Wait for the build to finish, and merge it.
 2)  Announce regarding the SDK release [here](https://panw-global.slack.com/archives/G011E63JXPB):

@@ -323,8 +323,6 @@ class BaseUpdate:
             default_from_version: default fromVersion specific to the content type.
             file_type: the file type.
         """
-        if not self.from_version_key:
-            return  # nothing to format
         current_fromversion_value = self.data.get(self.from_version_key, "")
         if self.verbose:
             click.echo("Setting fromVersion field")
@@ -429,8 +427,6 @@ class BaseUpdate:
 
     def check_server_version(self):
         """Checks for fromServerVersion entry in the file, and changeing it accordingly."""
-        if not self.from_version_key:
-            return  # nothing to check
         current_from_server_version = self.data.get(self.json_from_server_version_key)
         current_from_version = self.data.get(self.from_version_key)
         old_from_server_version = self.old_file.get(self.json_from_server_version_key)

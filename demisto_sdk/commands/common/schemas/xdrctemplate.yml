@@ -1,43 +1,22 @@
 type: map
 mapping:
-  filebeat.inputs:
-    type: seq
-    required: true
-    sequence:
-      - include: filebeat.inputs_schema
-
-
-schema;filebeat.inputs_schema:
-  type:
+  os_type:
     type: str
     required: true
-  enabled:
-    type: bool
-    required: true
-  id:
+  profile_type:
     type: str
     required: true
-  paths:
-    type: seq
+  name:
+    type: str
+    required: true
+  content_global_id:
+    type: str
     required: true
     allowempty: true
-    sequence:
-      type: str
-  processors:
-    type: seq
+  from_xdr_version:
+    type: str
+    required: true
+  yaml_template:
+    type: str
     required: true
     allowempty: true
-    sequence:
-      allowempty: true
-      type: map
-      mapping:
-        add_fields:
-          type: map
-          mapping:
-            fields:
-              type: map
-              mapping:
-                vendor:
-                  type: str
-                product:
-                  type: str

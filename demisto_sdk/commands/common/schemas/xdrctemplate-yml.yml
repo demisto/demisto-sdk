@@ -16,7 +16,6 @@ schema;filebeat.inputs_schema:
     required: true
   id:
     type: str
-    required: true
   paths:
     type: seq
     required: true
@@ -27,17 +26,3 @@ schema;filebeat.inputs_schema:
     type: seq
     required: true
     allowempty: true
-    sequence:
-      allowempty: true
-      type: map
-      mapping:
-        add_fields:
-          type: map
-          mapping:
-            fields:
-              type: map
-              mapping:
-                vendor:
-                  type: str
-                product:
-                  type: str

@@ -20,7 +20,7 @@ mapping:
     type: str
     required: true
     allowempty: true
-  samples:
+  schema:
     type: str
     required: true
     allowempty: true

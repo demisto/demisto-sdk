@@ -89,11 +89,11 @@ class BaseUpdateJSON(BaseUpdate):
         self.set_version_to_default()
         self.remove_null_fields()
         self.check_server_version()
-        self.remove_unnecessary_keys()
         self.remove_spaces_end_of_id_and_name()
         self.set_fromVersion(
             default_from_version=default_from_version, file_type=file_type
         )
+        self.remove_unnecessary_keys()
         self.sync_data_to_master()
 
     def set_toVersion(self):

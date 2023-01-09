@@ -12,9 +12,6 @@ mapping:
   fromVersion:
     type: str
     required: true
-  toVersion:
-    type: str
-    required: true
   description:
     type: str
     required: false

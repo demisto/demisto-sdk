@@ -1045,7 +1045,9 @@ class ValidateManager:
             return self.validate_job(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.LAYOUT_RULE:
-            return self.validate_layout_rules(structure_validator, pack_error_ignore_list)
+            return self.validate_layout_rules(
+                structure_validator, pack_error_ignore_list
+            )
 
         elif file_type == FileType.CONTRIBUTORS:
             # This is temporarily - need to add a proper contributors validations

@@ -1375,6 +1375,31 @@ class Linter:
 
         return True
 
+    def _check_native_image_flag(self, docker_image_flag):
+        """
+        Gets a native docker image flag and verify that it is one of the following: 'native:ga', 'native:maintenance'
+        or 'native:dev'.
+        If it isn't, raises a suitable exception.
+        Args:
+            docker_image_flag (str): Requested docker image flag.
+        Returns (None): None
+        """
+
+        if docker_image_flag not in (
+            DockerImageFlagOption.NATIVE_DEV.value,
+            DockerImageFlagOption.NATIVE_GA.value,
+            DockerImageFlagOption.NATIVE_MAINTENANCE.value,
+        ):
+            err_msg = (
+                f"The requested native image: '{docker_image_flag}' is not supported. The possible options are: "
+                f"'native:ga', 'native:maintenance' and 'native:dev'. For supported native image"
+                f" versions please see: 'Tests/{NATIVE_IMAGE_FILE_NAME}'"
+            )
+            logger.error(
+                f"Skipping checks on docker for '{docker_image_flag}' - {err_msg}"
+            )
+            raise ValueError(err_msg)
+
     def _get_native_image_name_from_config_file(
         self,
         docker_image_flag: str,
@@ -1574,20 +1599,7 @@ class Linter:
         if docker_image_flag.startswith(DockerImageFlagOption.NATIVE.value):
             # Desirable docker image to run on is a native image
 
-            if docker_image_flag not in (
-                DockerImageFlagOption.NATIVE_DEV.value,
-                DockerImageFlagOption.NATIVE_GA.value,
-                DockerImageFlagOption.NATIVE_MAINTENANCE.value,
-            ):
-                err_msg = (
-                    f"The requested native image: '{docker_image_flag}' is not supported. The possible options are: "
-                    f"'native:ga', 'native:maintenance' and 'native:dev'. For supported native image"
-                    f" versions please see: 'Tests/{NATIVE_IMAGE_FILE_NAME}'"
-                )
-                logger.error(
-                    f"Skipping checks on docker for '{docker_image_flag}' - {err_msg}"
-                )
-                raise ValueError(err_msg)
+            self._check_native_image_flag(docker_image_flag)
 
             if native_image := self._get_native_image_name_from_config_file(
                 docker_image_flag

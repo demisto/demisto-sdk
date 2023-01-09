@@ -53,6 +53,7 @@ from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
 from demisto_sdk.commands.format.update_xsiam_dashboard import XSIAMDashboardJSONFormat
+from demisto_sdk.commands.format.update_xsiam_report import XSIAMReportJSONFormat
 from demisto_sdk.commands.lint.commands_builder import excluded_files
 
 FILE_TYPE_AND_LINKED_CLASS = {
@@ -87,6 +88,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
     "metadata": PackMetadataJsonFormat,
     "correlationrule": CorrelationRuleYMLFormat,
     "xsiamdashboard": XSIAMDashboardJSONFormat,
+    "xsiamreport": XSIAMReportJSONFormat,
     "modelingrule": None,  # todo
     "parsingrule": None,
     "trigger": None,

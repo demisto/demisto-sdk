@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.constants import (
     TEST_PLAYBOOK,
     FileType,
 )
+from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -62,7 +63,6 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
-from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.tests.constants_test import (
     CONF_JSON_MOCK_PATH,
     DASHBOARD_TARGET,
@@ -142,6 +142,7 @@ class MyRepo:
 
     def remote(self):
         return "remote_path"
+
 
 @pytest.fixture(autouse=True)
 def set_git_test_env(mocker):

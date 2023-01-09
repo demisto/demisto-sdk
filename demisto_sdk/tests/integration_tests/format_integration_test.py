@@ -9,6 +9,8 @@ from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
+from demisto_sdk.commands.common.content.content import Content
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
@@ -16,9 +18,6 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
 from demisto_sdk.commands.common.hook_validations.integration import (
     IntegrationValidator,
 )
-from demisto_sdk.commands.validate.validate_manager import ValidateManager
-from demisto_sdk.commands.common.content.content import Content
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
 from demisto_sdk.commands.common.tools import get_dict_from_file, is_test_config_match
 from demisto_sdk.commands.format import format_module, update_generic
@@ -27,6 +26,7 @@ from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
 from demisto_sdk.commands.lint.commands_builder import excluded_files
+from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INTEGRATION_COPY,
     DESTINATION_FORMAT_PLAYBOOK_COPY,
@@ -105,6 +105,7 @@ class MyRepo:
 
     def remote(self):
         return "remote_path"
+
 
 @pytest.fixture(autouse=True)
 def set_git_test_env(mocker):

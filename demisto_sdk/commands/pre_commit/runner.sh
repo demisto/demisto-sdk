@@ -1,14 +1,5 @@
 #!/bin/sh
 echo "Running pre-commit hooks"
 set -e
-
-name=$1
-content_path=$2
-image=$3
-relative_path=$4
-# generate a random string to use as a container name
-
-docker rm -f "$name" || true
-docker build --build-arg IMAGENAME=$image -t "$name" .
-docker run --rm -v "$content_path":/content -w /content/$relative_path $name pytest .
-echo "DONE"
+python -m pip install --root-user-action=ignore --no-cache-dir -q pytest pytest-mock requests-mock pytest-asyncio pytest-xdist pytest-datadir-ng freezegun pytest-json pytest-cov
+pytest /content/Packs/QRadar/Integrations/QRadar_v3 -v

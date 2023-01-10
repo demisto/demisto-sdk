@@ -53,4 +53,8 @@ repos:
       rev: v1.0.0
       hooks:
           - id: check-poetry
-    
+  
+    - repo: https://github.com/demisto/demisto-sdk
+      rev: master
+      hooks:
+        = id: content-test-runner

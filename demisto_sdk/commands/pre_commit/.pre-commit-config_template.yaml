@@ -44,6 +44,7 @@ repos:
           - id: mypy
             language: system
             args: [--ignore-missing-imports, --check-untyped-defs, --show-error-codes, --follow-imports=silent, --allow-redefinition, --python-version=3.10]
+    
     - repo: https://github.com/pycqa/flake8
       rev: "6.0.0"
       hooks:
@@ -55,6 +56,6 @@ repos:
           - id: check-poetry
   
     - repo: https://github.com/demisto/demisto-sdk
-      rev: master
+      rev: 8006728d715a30e1dddf5f5ea3ebb3812c8247b0
       hooks:
         = id: content-test-runner

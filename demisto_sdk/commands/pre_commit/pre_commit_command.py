@@ -65,39 +65,6 @@ def find_hook(hook_name: str):
     raise ValueError(f"Could not find hook {hook_name}")
 
 
-@cache
-def get_python_version_from_image(image: Optional[str]) -> str:
-    # check with docker hub the PYTHON_VERSION env var
-    if not image:
-        return "3.10"
-    if ":" not in image:
-        repo = image
-        tag = "latest"
-    else:
-        repo, tag = image.split(":")
-    response = requests.get(f"https://auth.docker.io/token?service=registry.docker.io&scope=repository:{repo}:pull")
-    token = response.json()["token"]
-    response = requests.get(
-        f"https://registry-1.docker.io/v2/{repo}/manifests/{tag}",
-        headers={
-            "Accept": "application/vnd.docker.distribution.manifest.v2+json",
-            "Authorization": f"Bearer {token}",
-        },
-    )
-    digest = response.json()["config"]["digest"]
-    response = requests.get(
-        f"https://registry-1.docker.io/v2/{repo}/blobs/{digest}",
-        headers={
-            "Accept": "application/vnd.docker.distribution.manifest.v2+json",
-            "Authorization": f"Bearer {token}",
-        },
-    )
-    python_version_envs = [env for env in response.json()["config"]["Env"] if env.startswith("PYTHON_VERSION=")]
-    if not python_version_envs:
-        return "3.10"
-    version = Version(python_version_envs[0].split("=")[1])
-    return f"{version.major}.{version.minor}"
-
 
 def manager():
     # Get all changed integrations and scripts

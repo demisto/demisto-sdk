@@ -6,7 +6,7 @@ from uuid import uuid4
 from demisto_sdk.commands.common.tools import get_content_path
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
-
+import demisto_sdk.commands.common.docker_helper as docker_helper
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser()
@@ -20,6 +20,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         if not isinstance(integration_script, IntegrationScript):
             print(f"Skipping {filename} as it is not a content item.")
             continue
+        docker_helper.init_global_docker_client().run
         # run runner.sh
         subprocess.Popen(
             f"sh -x runner.sh '{integration_script.object_id.replace(' ', '').lower()}' '{get_content_path()}' '{integration_script.docker_image}' '{integration_script.path.parent.relative_to(get_content_path())}'",

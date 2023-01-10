@@ -11,16 +11,9 @@ mapping:
     required: true
   toversion:
     type: str
-    required: false
   tags:
     type: str
-    required: true
-    allowempty: true
   rules:
     type: str
-    required: true
-    allowempty: true
   schema:
     type: str
-    required: true
-    allowempty: true

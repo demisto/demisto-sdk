@@ -12,11 +12,9 @@ mapping:
   content_global_id:
     type: str
     required: true
-    allowempty: true
   from_xdr_version:
     type: str
     required: true
   yaml_template:
     type: str
     required: true
-    allowempty: true

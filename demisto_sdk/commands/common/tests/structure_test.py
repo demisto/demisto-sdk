@@ -701,27 +701,46 @@ def _get_dummy_xsiam_pack_items(valid: bool = True) -> List[str]:
 class TestXSIAMStructureValidator(TestStructureValidator):
     @staticmethod
     def _get_dummy_xsiam_pack_items(valid: bool = True) -> List[str]:
+        """Prepares a path list of the DummyXSIAMPack content item files.
+        The files' schemas are valid iff valid is True.
+
+        Args:
+            valid (bool, optional): Whether to collect valid or invalid files. Defaults to True.
+
+        Returns:
+            List[str]: The list of file paths.
+        """
         files = glob(
             f"{DUMMY_XSIAM_PACK_PATH}/**/{'valid' if valid else 'invalid'}_*",
             recursive=True,
         )
-        res = [f for f in files if not os.path.isdir(f)]
-        assert res  # make sure files exist
-        return res
+        paths = [f for f in files if not os.path.isdir(f)]
+        assert paths  # make sure files exist
+        return paths
 
     IS_VALID_XSIAM_FILE_INPUTS: List[Tuple[str, bool]] = [
         (f, True) for f in _get_dummy_xsiam_pack_items(valid=True)
     ] + [(f, False) for f in _get_dummy_xsiam_pack_items(valid=False)]
 
-    @pytest.mark.parametrize("file_path, answer", IS_VALID_XSIAM_FILE_INPUTS)
-    def test_is_xsiam_file_valid(self, file_path, answer, mocker):
+    @pytest.mark.parametrize("file_path, expected_answer", IS_VALID_XSIAM_FILE_INPUTS)
+    def test_is_xsiam_file_valid(self, file_path, expected_answer, mocker):
+        """
+        Given:
+            An XSIAM content item under `file_path` path.
+        When:
+            Running StructureValidator.is_valid_file()
+        Then:
+            Verify whether the file schema is valid or not, according to `expected_answer` value.
+        """
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
-        mocker.patch.object(StructureValidator, "is_valid_file_path", return_value=True)
         try:
+            # make a temporary copy of the file in a valid location
             temp_filepath = file_path.replace(DUMMY_XSIAM_PACK_PATH, PACK_TARGET)
             copyfile(file_path, temp_filepath)
+
+            # validate the temporary file
             structure = StructureValidator(temp_filepath)
-            assert structure.is_valid_file() is answer
+            assert structure.is_valid_file() is expected_answer
         finally:
-            pass
+            # delete the temporary file
             os.remove(temp_filepath)

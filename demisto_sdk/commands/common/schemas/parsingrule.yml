@@ -20,9 +20,5 @@ mapping:
       - type: str
   rules:
     type: str
-    required: true
-    allowempty: true
   samples:
     type: str
-    required: true
-    allowempty: true

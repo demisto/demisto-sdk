@@ -1,0 +1,5 @@
+-   id: pytest
+    name: pytest
+    description: pytest with docker
+    entry: pytest .
+    language: docker

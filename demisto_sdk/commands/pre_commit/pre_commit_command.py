@@ -1,5 +1,6 @@
 from collections import defaultdict
 from dataclasses import dataclass
+from functools import cache
 import subprocess
 from packaging.version import Version
 from pathlib import Path
@@ -48,9 +49,10 @@ class PreCommit:
 
             mypy = find_hook("mypy")
             mypy["args"][-1] = f"--python-version={python_version}"
-            with open(CONTENT_PATH / '.pre-commit-config.yaml', "w") as f:
+            with open(CONTENT_PATH / ".pre-commit-config.yaml", "w") as f:
                 yaml.dump(PRECOMMIT_TEMPLATE, f)
-            subprocess.run(["pre-commit", "run", "--files", *changed_files])
+            print(f"Running pre-commit for {integration_script}")
+            subprocess.run(["pre-commit", "run", "--files", *changed_files, "--show-diff-on-failure"])
 
 
 def find_hook(hook_name: str):
@@ -61,6 +63,7 @@ def find_hook(hook_name: str):
     raise ValueError(f"Could not find hook {hook_name}")
 
 
+@cache
 def get_python_version_from_image(image: Optional[str]) -> str:
     # check with docker hub the PYTHON_VERSION env var
     if not image:

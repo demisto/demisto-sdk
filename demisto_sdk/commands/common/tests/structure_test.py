@@ -695,30 +695,25 @@ class TestGetMatchingRegex:
 
 
 def _get_dummy_xsiam_pack_items(valid: bool = True) -> List[str]:
-    files = glob(DUMMY_XSIAM_PACK_PATH + "/*/valid_*" if valid else "/*/invalid_*")
-    return [f for f in files if not os.path.isdir(f)]
+    """Prepares a path list of the DummyXSIAMPack content item files.
+    The files' schemas are valid iff valid is True.
+
+    Args:
+        valid (bool, optional): Whether to collect valid or invalid files. Defaults to True.
+
+    Returns:
+        List[str]: The list of file paths.
+    """
+    files = glob(
+        f"{DUMMY_XSIAM_PACK_PATH}/**/{'valid' if valid else 'invalid'}_*",
+        recursive=True,
+    )
+    paths = [f for f in files if not os.path.isdir(f)]
+    assert paths  # make sure files exist
+    return paths
 
 
 class TestXSIAMStructureValidator(TestStructureValidator):
-    @staticmethod
-    def _get_dummy_xsiam_pack_items(valid: bool = True) -> List[str]:
-        """Prepares a path list of the DummyXSIAMPack content item files.
-        The files' schemas are valid iff valid is True.
-
-        Args:
-            valid (bool, optional): Whether to collect valid or invalid files. Defaults to True.
-
-        Returns:
-            List[str]: The list of file paths.
-        """
-        files = glob(
-            f"{DUMMY_XSIAM_PACK_PATH}/**/{'valid' if valid else 'invalid'}_*",
-            recursive=True,
-        )
-        paths = [f for f in files if not os.path.isdir(f)]
-        assert paths  # make sure files exist
-        return paths
-
     IS_VALID_XSIAM_FILE_INPUTS: List[Tuple[str, bool]] = [
         (f, True) for f in _get_dummy_xsiam_pack_items(valid=True)
     ] + [(f, False) for f in _get_dummy_xsiam_pack_items(valid=False)]

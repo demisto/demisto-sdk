@@ -33,7 +33,6 @@ def test_are_all_fields_exist(repo):
                 }
             },
             "fromVersion": "6.0.0",
-            "toVersion": "6.1.9",
         },
     )
     structure_validator = StructureValidator(dummy_layout_rule.path)

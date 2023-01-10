@@ -18,6 +18,8 @@ exclude = ["TestSuite/**", "*/tests/*", "tests"]
 
 [tool.poetry.scripts]
 demisto-sdk = "demisto_sdk.__main__:main"
+run-content-tests = "demisto_sdk.commands.pre_commit.test_runner:main"
+
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"

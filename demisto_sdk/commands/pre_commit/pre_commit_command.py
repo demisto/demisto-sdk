@@ -15,6 +15,8 @@ from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 
 yaml = YAML_Handler()
 
+NEEDS_PYVERSION = ['mypy', 'pyupgrade']
+
 PRECOMMIT_TEMPLATE_PATH = Path(__file__).parent / ".pre-commit-config_template.yaml"
 
 
@@ -52,7 +54,7 @@ class PreCommit:
             with open(CONTENT_PATH / ".pre-commit-config.yaml", "w") as f:
                 yaml.dump(PRECOMMIT_TEMPLATE, f)
             print(f"Running pre-commit for {integration_script}")
-            subprocess.run(["pre-commit", "run", "--files", *changed_files, "--show-diff-on-failure"])
+            subprocess.run(["pre-commit", "run", "--files", *changed_files, "-v"])
 
 
 def find_hook(hook_name: str):

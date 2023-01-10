@@ -759,7 +759,7 @@ class ValidateManager:
             file_type in self.skipped_file_types
             or self.is_skipped_file(file_path)
             or self.git_util._is_file_ignored(file_path)
-            or self.detect_file_level(file_path) == PathLevel.PACKAGE
+            or self.detect_file_level(file_path) in (PathLevel.PACKAGE, PathLevel.CONTENT_ENTITY_DIR)
         ):
             self.ignored_files.add(file_path)
             return True

@@ -6,6 +6,9 @@
 * Fixed an issue where **update-release-notes** fails to update *MicrosoftApiModule* dependent integrations.
 * Added the flag `--xsoar-only` to the **doc-review** command which enables reviewing documents that belong to XSOAR-supported Packs.
 * Fixed an issue where the **upload** command failed because `docker_native_image_config.json` file could not be found.
+* Added a metadata file to the content graph zip, to be used in the **update-content-graph** command.
+* Updated the **validate** and **update-release-notes** commands to unskip the *Triggers Recommendations* content type.
+
 
 ## 1.8.2
 * Fixed an issue where demisto-py failed to upload content to XSIAM when `DEMISTO_USERNAME` environment variable is set.

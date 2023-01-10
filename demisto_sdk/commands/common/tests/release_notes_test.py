@@ -732,6 +732,7 @@ def test_validate_headers(mocker, repo):
     pack.create_classifier("test")
     pack.create_widget("test")
     pack.create_xsiam_dashboard("xsiam-dashboard-test")
+    pack.create_trigger("trigger-test")
     assert validator.validate_release_notes_headers()
 
 
@@ -748,12 +749,10 @@ TEST_RELEASE_NOTES_INVALID_HEADERS = [
         },
     ),
     (
-        """#### FakeContentType
-                                      ##### Test
-                                      - Added x y z""",
+        """#### FakeContentType\n##### Test\n- Added x y z""",
         "FakeContentType",
         {
-            "rn_valid_header_format": False,
+            "rn_valid_header_format": True,
             "validate_content_type_header": False,
             "validate_content_item_header": False,
         },

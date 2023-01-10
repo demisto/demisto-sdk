@@ -1,5 +1,6 @@
 import enum
 from pathlib import Path
+import re
 from typing import NamedTuple, Optional, Union
 
 
@@ -40,7 +41,7 @@ class RuffParser(BaseParser):
     def parse_line(raw: Union[str, dict]) -> ParseResult:
         if not isinstance(raw, dict):
             raise ValueError(f"must be a dictionary, got {raw}")
-        
+
         return ParseResult(
             error_code=raw['code'],
             row_start=raw['location']['row'],
@@ -62,16 +63,34 @@ class Flake8Parser(BaseParser):
 
 class MypyParser(BaseParser):
     linter_type = LinterType.MYPY
+    _line_regex = re.compile(
+        r"^(?P<path>[^:]+?):(?P<row_start>\d+):(?P<col_start>\d+):(?P<row_end>\d+):(?P<col_end>\d+):(?P<error_type>[\w\s]+):(?P<error_message>[^\:\[]+)\[(?P<error_code>[^\]]+)]$")
 
     @staticmethod
     def parse_line(raw: Union[str, dict]) -> ParseResult:
         if not isinstance(raw, str):
             raise ValueError(f"must be a string, got {raw}")
 
-        """Packs/ipinfo/Integrations/ipinfo_v2/ipinfo_v2.py:13: error: Incompatible types in assignment (expression has type "str", variable has type "int")"""
-        if raw.count(":") != 3:
-            raise ValueError("unexpected `:` count")
-        path, line_start, error_type, error_description = raw.split(":")
+        if not (match := MypyParser._line_regex.match(raw)):
+            raise ValueError(f"did not match on {raw}")
+
+        match_dict = match.groupdict()
+
+        raw_error_type = match_dict['error_type']
+        if 'error' in raw_error_type:
+            error_type = ErrorType.ERROR
+        elif 'warning' in raw_error_type:
+            error_type = ErrorType.WARNING
+        else:
+            error_type = None
+            
         return ParseResult(
-            error_code=
+            error_code=match_dict['error_code'],
+            row_start=int(match_dict['row_start']),
+            row_end=int(match_dict['row_end']),
+            col_start=int(match_dict['col_start']),
+            col_end=int(match_dict['col_end']),
+            path=Path(match_dict['path']),
+            error_type=error_type,
+            error_message=match_dict['error_message']
         )

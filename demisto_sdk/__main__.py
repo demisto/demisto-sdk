@@ -3052,7 +3052,9 @@ def update_content_graph(
         quiet=kwargs.get("quiet"),  # type: ignore[arg-type]
         log_path=kwargs.get("log_path"),
     )  # type: ignore[arg-type]
-
+    if packs and not isinstance(packs, list):
+        # for some reason packs provided as tuple from click interface
+        packs = list(packs)
     with Neo4jContentGraphInterface() as content_graph_interface:
         update_content_graph_command(
             content_graph_interface,

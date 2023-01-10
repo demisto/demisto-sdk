@@ -408,7 +408,7 @@ class BaseUpdateYML(BaseUpdate):
             )
             self.update_yml(
                 default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(
-                    FileType(self.file_type)
+                    FileType(self.source_file_type)
                 )
             )
             self.save_yml_to_destination_file()

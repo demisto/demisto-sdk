@@ -187,7 +187,7 @@ class BaseUpdateJSON(BaseUpdate):
             )
             self.update_json(
                 default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(
-                    FileType(self.file_type)
+                    FileType(self.source_file_type)
                 )
             )
             self.save_json_to_destination_file()

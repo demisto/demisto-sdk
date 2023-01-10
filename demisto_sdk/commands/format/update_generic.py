@@ -1,7 +1,7 @@
 import os
 import re
 from copy import deepcopy
-from typing import Any, Dict, Set, Union
+from typing import Any, Dict, Optional, Set, Union
 
 import click
 import dictdiffer
@@ -9,10 +9,12 @@ import dictdiffer
 from demisto_sdk.commands.common.constants import (
     GENERAL_DEFAULT_FROMVERSION,
     VERSION_5_5_0,
+    FileType,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS,
+    find_type_by_path,
     get_dict_from_file,
     get_max_version,
     get_remote_file,
@@ -124,6 +126,10 @@ class BaseUpdate:
             return os.path.join(source_dir, file_name)
         else:
             return output_file_path
+
+    @property
+    def source_file_type(self) -> Optional[FileType]:
+        return find_type_by_path(self.source_file)
 
     def set_version_to_default(self, location=None):
         self.set_default_value("version", DEFAULT_VERSION, location)

@@ -699,7 +699,7 @@ class BuildContext:
         if IS_XSIAM:
             server_url = url
         else:
-            server_url = f'https://{url}'
+            server_url = f"https://{url}"
         return self.get_all_installed_integrations_configurations(server_url)
 
     def get_all_installed_integrations_configurations(self, server_url: str) -> list:
@@ -871,9 +871,12 @@ class BuildContext:
         if self.server:
             return [self.server]
         if self.is_xsiam:
-            return [env.get('base_url') for env in self.env_json]
-        return [env.get('InstanceDNS') for env in self.env_json if
-                env.get('Role') == self.server_version]
+            return [env.get("base_url") for env in self.env_json]
+        return [
+            env.get("InstanceDNS")
+            for env in self.env_json
+            if env.get("Role") == self.server_version
+        ]
 
     @staticmethod
     def _parse_tests_list_arg(tests_list: str):
@@ -2029,10 +2032,12 @@ class TestContext:
         )
 
     def _notify_failed_test(self):
-        text = f'{self.build_context.build_name} - {self.playbook} Failed\n' \
-               f'for more details browse into the following link\n' \
-               f'{get_ui_url(self.client.api_client.configuration.host)}'
-        text += f'/#/WorkPlan/{self.incident_id}' if self.incident_id else ''
+        text = (
+            f"{self.build_context.build_name} - {self.playbook} Failed\n"
+            f"for more details browse into the following link\n"
+            f"{get_ui_url(self.client.api_client.configuration.host)}"
+        )
+        text += f"/#/WorkPlan/{self.incident_id}" if self.incident_id else ""
         if self.build_context.slack_user_id:
             self.build_context.slack_client.api_call(
                 "chat.postMessage",
@@ -2517,9 +2522,12 @@ class TestContext:
 
 
 class ServerContext:
-
-    def __init__(self, build_context: BuildContext, server_private_ip: str,
-                 use_retries_mechanism: bool = True):
+    def __init__(
+        self,
+        build_context: BuildContext,
+        server_private_ip: str,
+        use_retries_mechanism: bool = True,
+    ):
         self.build_context = build_context
         self.server_ip = server_private_ip
         if IS_XSIAM:
@@ -2527,7 +2535,7 @@ class ServerContext:
             # we use client without demisto username
             os.environ.pop("DEMISTO_USERNAME", None)
         else:
-            self.server_url = f'https://{self.server_ip}'
+            self.server_url = f"https://{self.server_ip}"
         self.client: Optional[DefaultApi] = None
         self._configure_new_client()
         # currently not supported on XSIAM (etc/#47851)

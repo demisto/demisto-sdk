@@ -25,7 +25,7 @@ class Docker:
     DEFAULT_CONTAINER_PIDS_USAGE = 3
     DEFAULT_PWSH_CONTAINER_MEMORY_USAGE = 140
     DEFAULT_PWSH_CONTAINER_PIDS_USAGE = 24
-    SSH_OPTIONS = 'ssh -o StrictHostKeyChecking=no'
+    SSH_OPTIONS = "ssh -o StrictHostKeyChecking=no"
 
     @classmethod
     def _build_ssh_command(cls, server_ip, remote_command, force_tty=False):
@@ -40,8 +40,8 @@ class Docker:
             str: full ssh command
 
         """
-        remote_server = f'{SSH_USER}@{server_ip}'
-        ssh_prefix = f'{cls.SSH_OPTIONS} {remote_server}'
+        remote_server = f"{SSH_USER}@{server_ip}"
+        ssh_prefix = f"{cls.SSH_OPTIONS} {remote_server}"
         if force_tty:
             ssh_prefix += " -t"
         # escaping the remote command with single quotes

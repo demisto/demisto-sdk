@@ -1,1 +1,1 @@
-SSH_USER = 'gcp-user'
+SSH_USER = "gcp-user"

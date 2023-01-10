@@ -525,6 +525,5 @@ def test_get_instances_ips(mocker, tmp_path):
     Then:
         - Ensure that the instance ips are returnd.
     """
-    build_context = get_mocked_build_context(mocker,
-                                             tmp_path)
-    assert build_context.instances_ips == ['1.1.1.1']
+    build_context = get_mocked_build_context(mocker, tmp_path)
+    assert build_context.instances_ips == ["1.1.1.1"]

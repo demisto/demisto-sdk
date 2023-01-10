@@ -23,8 +23,6 @@ mapping:
     allowempty: true
   crontab:
     type: str
-    required: true
-    allowempty: true
   dataset:
     type: str
     required: true

@@ -501,11 +501,17 @@ DIR_LIST = [
     f"{PACK_TARGET}/{constants.INDICATOR_FIELDS_DIR}",
     f"{PACK_TARGET}/{constants.CORRELATION_RULES_DIR}",
     f"{PACK_TARGET}/{constants.MODELING_RULES_DIR}",
+    f"{PACK_TARGET}/{constants.MODELING_RULES_DIR}/valid_modeling_rule",
+    f"{PACK_TARGET}/{constants.MODELING_RULES_DIR}/invalid_modeling_rule",
     f"{PACK_TARGET}/{constants.PARSING_RULES_DIR}",
+    f"{PACK_TARGET}/{constants.PARSING_RULES_DIR}/valid_parsing_rule",
+    f"{PACK_TARGET}/{constants.PARSING_RULES_DIR}/invalid_parsing_rule",
     f"{PACK_TARGET}/{constants.XSIAM_DASHBOARDS_DIR}",
     f"{PACK_TARGET}/{constants.XSIAM_REPORTS_DIR}",
     f"{PACK_TARGET}/{constants.TRIGGER_DIR}",
     f"{PACK_TARGET}/{constants.XDRC_TEMPLATE_DIR}",
+    f"{PACK_TARGET}/{constants.XDRC_TEMPLATE_DIR}/valid_xdrc_template",
+    f"{PACK_TARGET}/{constants.XDRC_TEMPLATE_DIR}/invalid_xdrc_template",
     constants.TESTS_DIR,
 ]
 

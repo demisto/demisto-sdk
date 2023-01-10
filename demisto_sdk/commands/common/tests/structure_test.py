@@ -701,11 +701,14 @@ def _get_dummy_xsiam_pack_items(valid: bool = True) -> List[str]:
 class TestXSIAMStructureValidator(TestStructureValidator):
     @staticmethod
     def _get_dummy_xsiam_pack_items(valid: bool = True) -> List[str]:
-        patterns = [
-            f"{DUMMY_XSIAM_PACK_PATH}{'/*/valid_*' if valid else '/*/invalid_*'}",
-            f"{DUMMY_XSIAM_PACK_PATH}{'/*/valid_*/*' if valid else '/*/invalid_*/*'}",
-        ]
-        files = glob(patterns[0]) + glob(patterns[1])
+        # patterns = [
+        #     f"{DUMMY_XSIAM_PACK_PATH}{'/*/valid_*' if valid else '/*/invalid_*'}",
+        #     f"{DUMMY_XSIAM_PACK_PATH}{'/*/valid_*/*' if valid else '/*/invalid_*/*'}",
+        # ]
+        # files = glob(patterns[0]) + glob(patterns[1])
+        files = glob(
+            f"{DUMMY_XSIAM_PACK_PATH}{'/*/valid_*' if valid else '/*/invalid_*'}"
+        )
         res = [f for f in files if not os.path.isdir(f)]
         assert res  # make sure files exist
         return res
@@ -725,4 +728,4 @@ class TestXSIAMStructureValidator(TestStructureValidator):
             assert structure.is_valid_file() is answer
         finally:
             pass
-            # os.remove(temp_filepath)
+            os.remove(temp_filepath)

@@ -39,8 +39,8 @@ class RuffParser(BaseParser):
             col_start=raw['location']['column'],
             row_end=raw['end_location']['row'],
             col_end=raw['end_location']['column'],
-            path=raw['filename']
-            error_message=raw['message']
+            path=raw['filename'],
+            error_message=raw['message'],
         )
 
 

@@ -7,7 +7,6 @@ import click
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     FILETYPE_TO_DEFAULT_FROMVERSION,
-    FileType,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.tools import get_yaml, is_uuid, print_error
@@ -187,7 +186,7 @@ class BaseUpdateJSON(BaseUpdate):
             )
             self.update_json(
                 default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(
-                    FileType(self.source_file_type)
+                    self.source_file_type  # type: ignore
                 )
             )
             self.save_json_to_destination_file()

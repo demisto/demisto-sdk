@@ -1,7 +1,6 @@
 """
 This module is designed to validate the correctness of generic definition entities in content.
 """
-import json
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
@@ -44,4 +43,3 @@ class LayoutRuleValidator(ContentEntityValidator):
         May deleted or be edited in the future by the use of XSIAM new content
         """
         pass
-

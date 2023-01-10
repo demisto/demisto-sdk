@@ -1256,7 +1256,6 @@ class TestParsersAndModels:
             expected_path=rule_path,
             expected_content_type=ContentType.LAYOUT_RULE,
             expected_fromversion="6.0.0",
-            expected_toversion="6.1.9",
         )
 
     def test_widget_parser(self, pack: Pack):

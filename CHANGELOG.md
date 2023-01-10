@@ -1,11 +1,16 @@
 # Changelog
 ## Unreleased
 * Added the `--docker-image` argument to the **lint** command, which allows determining the docker image to run lint on. Possible options are: `'naive:ga'`, `'naive:maintenance'`, `'native:dev'`, `'all'`, a specific docker image (from Docker Hub) or, the default `'from-yml'`.
+* Fixed an issue in **prepare-content** command where large code lines were broken.
+
 
 ## 1.8.3
 * Changed **validate** to allow hiding parameters of type 0, 4, 12 and 14 when replacing with type 9 (credentials) with the same name.
 * Fixed an issue where **update-release-notes** fails to update *MicrosoftApiModule* dependent integrations.
 * Fixed an issue where the **upload** command failed because `docker_native_image_config.json` file could not be found.
+* Added a metadata file to the content graph zip, to be used in the **update-content-graph** command.
+* Updated the **validate** and **update-release-notes** commands to unskip the *Triggers Recommendations* content type.
+
 
 ## 1.8.2
 * Fixed an issue where demisto-py failed to upload content to XSIAM when `DEMISTO_USERNAME` environment variable is set.

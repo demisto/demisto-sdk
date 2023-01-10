@@ -1,13 +1,195 @@
 type: map
 mapping:
-  templates_data:
+  id:
+    type: str
+    required: True
+  name:
+    type: str
+    required: True
+  description:
+    type: str
+    required: True
+  fromVersion:
+    type: str
+  toVersion:
+    type: str
+  reportType:
+    type: str
+  tags:
     type: seq
+    required: True
     sequence:
-      - type: map
+      - type: str
+  createdBy:
+    type: str
+    required: True
+  latestReportName:
+    type: str
+  modified:
+    type: str
+  type:
+    type: str
+    required: True
+    enum: ['pdf', 'csv', 'docx']
+  orientation:
+    type: str
+    required: True
+    enum: ['landscape', 'portrait', '']
+  recipients:
+    type: seq
+    required: True
+    allowempty: true
+    sequence:
+      - type: str
+  system:
+    type: bool
+  locked:
+    type: bool
+  runOnce:
+    type: bool
+  times:
+    type: int
+  startDate:
+    type: str
+  recurrent:
+    type: bool
+  nextScheduledTime:
+    type: str
+  endingDate:
+    type: str
+  timezoneOffset:
+    type: int
+  latestScheduledReportTime:
+    type: str
+  latestReportTime:
+    type: str
+  cronView:
+    type: bool
+  scheduled:
+    type: bool
+  runningUser:
+    type: str
+  paperSize:
+    type: str
+  latestReportUsername:
+    type: str
+  sensitive:
+    type: bool
+  disableHeader:
+    type: bool
+  dashboard:
+    type: map
+    mapping:
+      id:
+        type: str
+      version:
+        type: int
+      modified:
+        type: str
+      fromDate:
+        type: str
+      toDate:
+        type: str
+      fromDateLicense:
+        type: str
+      name:
+        type: str
+      isPredefined:
+        type: bool
+      period:
+        type: map
         mapping:
-          id:
+          byTo:
+            type: str
+          byFrom:
+            type: str
+          toValue:
+            type: int
+          fromValue:
+            type: int
+          field:
+            type: str
+      layout:
+        type: seq
+        sequence:
+          - include: layout_schema
+  decoder:
+    type: map
+    mapping:
+      regex;(.+):
+        type: map
+        mapping:
+          type:
             type: str
             required: True
-          name:
+            enum: ['string', 'date', 'duration', 'image']
+          value:
+            type: scalar
+          description:
             type: str
-            required: True
+  sections:
+    type: any
+    required: True
+
+schema;layout_schema:
+  type: map
+  mapping:
+    id:
+      type: str
+    forceRange:
+      type: bool
+    x:
+      type: int
+    y:
+      type: int
+    i:
+      type: str
+    w:
+      type: int
+    h:
+      type: int
+    widget:
+      type: map
+      mapping:
+        size:
+          type: int
+        dataType:
+          type: str
+        params:
+          type: any
+        query:
+          type: str
+        modified:
+          type: str
+        name:
+          type: str
+        isPredefined:
+          type: bool
+        version:
+          type: int
+        id:
+          type: str
+        widgetType:
+          type: str
+        dateRange:
+          type: map
+          mapping:
+            fromDate:
+              type: str
+            toDate:
+              type: str
+            fromDateLicense:
+              type: str
+            period:
+              type: map
+              mapping:
+                byTo:
+                  type: str
+                byFrom:
+                  type: str
+                toValue:
+                  type: int
+                fromValue:
+                  type: int
+                field:
+                  type: str

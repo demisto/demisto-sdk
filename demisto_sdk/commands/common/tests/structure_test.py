@@ -1,4 +1,5 @@
 import os
+import shutil
 from glob import glob
 from os.path import isfile
 from shutil import copyfile
@@ -122,7 +123,7 @@ class TestStructureValidator:
                 os.remove(target)
         for directory in cls.CREATED_DIRS:
             if os.path.exists(directory):
-                os.rmdir(directory)
+                shutil.rmtree(directory)
 
     SCHEME_VALIDATION_INPUTS = [
         (

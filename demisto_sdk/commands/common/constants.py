@@ -1211,7 +1211,6 @@ SCHEMA_TO_REGEX = {
     "xsiamreport": [XSIAM_REPORT_JSON_REGEX],
     "trigger": [TRIGGER_JSON_REGEX],
     "xdrctemplate": [XDRC_TEMPLATE_JSON_REGEX],
-    "xdrctemplateyml": [XDRC_TEMPLATE_YML_REGEX],
 }
 
 EXTERNAL_PR_REGEX = r"^pull/(\d+)$"

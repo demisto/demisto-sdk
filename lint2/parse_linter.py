@@ -57,7 +57,19 @@ class Flake8Parser(BaseParser):
 
     @staticmethod
     def parse_line(raw: Union[str, dict]) -> ParseResult:
-        ...
+        if not isinstance(raw, dict):
+            raise ValueError(f"must be a dictionary, got {raw}")
+        return ParseResult(
+            error_code=raw['code'],
+            row_start=raw['line_number'],
+            error_message=raw['text'],
+            path=Path(raw['filename']),
+            error_type=None,
+            row_end=None,
+            col_start=raw.get('column_number'),
+            col_end=None   
+        )
+
 
 
 class MypyParser(BaseParser):

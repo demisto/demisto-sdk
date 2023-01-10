@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+* Fixed an issue in **prepare-content** command where large code lines were broken.
+
 
 ## 1.8.3
 * Changed **validate** to allow hiding parameters of type 0, 4, 12 and 14 when replacing with type 9 (credentials) with the same name.

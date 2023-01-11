@@ -71,6 +71,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
 
     def metadata_fields(self):
         return {
+            "object_id": True,
             "name": True,
             "description": True,
             "category": True,

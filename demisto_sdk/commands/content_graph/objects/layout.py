@@ -21,4 +21,4 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
     mobile: bool
 
     def metadata_fields(self) -> Set[str]:
-        return {"name", "description"}
+        return {"object_id", "name", "description"}

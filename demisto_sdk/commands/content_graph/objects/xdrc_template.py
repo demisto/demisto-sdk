@@ -16,7 +16,7 @@ class XDRCTemplate(ContentItemXSIAM, content_type=ContentType.XDRC_TEMPLATE):
     profile_type: str
 
     def metadata_fields(self) -> Set[str]:
-        return {"name", "os_type", "profile_type"}
+        return {"object_id", "content_global_id", "name", "os_type", "profile_type"}
 
     def prepare_for_upload(
         self,

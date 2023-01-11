@@ -23,7 +23,7 @@ class IndicatorFieldParser(
 
     @property
     def object_id(self) -> Optional[str]:
-        return self.json_data.get("cliName")
+        return self.json_data.get("id")
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

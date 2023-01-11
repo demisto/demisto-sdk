@@ -2,4 +2,4 @@
     name: content-test-runner
     description: Run content test using docker
     entry: run-content-tests
-    language: system
+    language: python

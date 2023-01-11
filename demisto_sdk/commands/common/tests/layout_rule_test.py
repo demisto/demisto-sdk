@@ -6,7 +6,7 @@ from TestSuite.test_tools import ChangeCWD
 yaml = YAML_Handler()
 
 
-def test_are_all_fields_exist(repo):
+def test_is_valid_file(repo):
     """
     Given: A layout rule json
     When: running are_all_fields_exist
@@ -36,6 +36,7 @@ def test_are_all_fields_exist(repo):
         },
     )
     structure_validator = StructureValidator(dummy_layout_rule.path)
+    assert structure_validator.is_valid_scheme()
     with ChangeCWD(repo.path):
         layout_rule_validator = LayoutRuleValidator(structure_validator)
-        assert layout_rule_validator.are_all_fields_exist()
+        assert layout_rule_validator.is_valid_file()

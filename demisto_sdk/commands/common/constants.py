@@ -91,7 +91,6 @@ TRIGGER = "trigger"
 WIZARD = "wizard"
 XDRC_TEMPLATE = "xdrctemplate"
 LAYOUT_RULE = "layoutrule"
-
 MARKETPLACE_KEY_PACK_METADATA = "marketplaces"
 
 # ENV VARIABLES
@@ -206,6 +205,10 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.LAYOUT_RULE: "Layout Rules",
 }
 
+FILE_TYPE_BY_RN_HEADER = {
+    header: file_type for file_type, header in RN_HEADER_BY_FILE_TYPE.items()
+}
+
 ENTITY_TYPE_TO_DIR = {
     FileType.INTEGRATION.value: INTEGRATIONS_DIR,
     FileType.PLAYBOOK.value: PLAYBOOKS_DIR,
@@ -238,6 +241,8 @@ ENTITY_TYPE_TO_DIR = {
     FileType.XDRC_TEMPLATE.value: XDRC_TEMPLATE_DIR,
     FileType.CORRELATION_RULE.value: CORRELATION_RULES_DIR,
     FileType.XSIAM_DASHBOARD.value: XSIAM_DASHBOARDS_DIR,
+    FileType.TRIGGER.value: TRIGGER_DIR,
+    FileType.OLD_CLASSIFIER.value: CLASSIFIERS_DIR,
     FileType.LAYOUT_RULE.value: LAYOUT_RULES_DIR,
 }
 
@@ -318,6 +323,7 @@ RN_CONTENT_ENTITY_WITH_STARS = [
     FileType.LAYOUT,
     FileType.INCIDENT_FIELD,
     FileType.INDICATOR_FIELD,
+    FileType.TRIGGER,
     FileType.GENERIC_DEFINITION,
     FileType.GENERIC_MODULE,
     FileType.GENERIC_TYPE,
@@ -1487,7 +1493,6 @@ SKIP_RELEASE_NOTES_FOR_TYPES = (
     None,
     FileType.RELEASE_NOTES_CONFIG,
     FileType.CONTRIBUTORS,
-    FileType.TRIGGER,
 )
 
 LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = [

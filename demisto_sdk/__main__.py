@@ -511,11 +511,9 @@ def zip_packs(**kwargs) -> int:
 @click.option(
     "-i",
     "--input",
-    nargs=0,
     type=click.Path(exists=True, resolve_path=True),
     help="The path of the content pack/file to validate specifically.",
 )
-@click.argument("input", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @click.option(
     "--skip-pack-release-notes",
     is_flag=True,
@@ -590,7 +588,7 @@ def validate(config, **kwargs):
     check_configuration_file("validate", kwargs)
     sys.path.append(config.configuration.env_dir)
 
-    file_paths = kwargs["input"]
+    file_path = kwargs["input"]
 
     if kwargs["post_commit"] and kwargs["staged"]:
         print_error("Could not supply the staged flag with the post-commit flag")
@@ -598,7 +596,7 @@ def validate(config, **kwargs):
     try:
         is_external_repo = is_external_repository()
         # default validate to -g --post-commit
-        if not kwargs.get("validate_all") and not kwargs["use_git"] and not file_paths:
+        if not kwargs.get("validate_all") and not kwargs["use_git"] and not file_path:
             kwargs["use_git"] = True
             kwargs["post_commit"] = True
         validator = ValidateManager(

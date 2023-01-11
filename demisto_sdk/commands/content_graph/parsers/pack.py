@@ -4,11 +4,20 @@ from typing import Any, Dict, Iterator, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_json
-from demisto_sdk.commands.content_graph.common import (PACK_CONTRIBUTORS_FILENAME, PACK_METADATA_FILENAME, ContentType,
-                                                       Relationships)
+from demisto_sdk.commands.content_graph.common import (
+    PACK_CONTRIBUTORS_FILENAME,
+    PACK_METADATA_FILENAME,
+    ContentType,
+    Relationships,
+)
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
-from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItemException
-from demisto_sdk.commands.content_graph.parsers.content_items_list import ContentItemsList
+from demisto_sdk.commands.content_graph.parsers.content_item import (
+    ContentItemParser,
+    NotAContentItemException,
+)
+from demisto_sdk.commands.content_graph.parsers.content_items_list import (
+    ContentItemsList,
+)
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -146,12 +155,6 @@ class PackParser(BaseContentParser, PackMetadataParser):
     def parse_pack_folders(self) -> None:
         """Parses all pack content items by iterating its folders."""
         for folder_path in ContentType.pack_folders(self.path):
-            if ContentType.by_folder(folder_path.name) in [
-                ContentType.GENERIC_FIELD, ContentType.GENERIC_TYPE
-            ]:
-                folder_path = folder_path / "ThreatIntelReport"
-                if not folder_path.is_dir():
-                    continue
             for (
                 content_item_path
             ) in folder_path.iterdir():  # todo: consider multiprocessing

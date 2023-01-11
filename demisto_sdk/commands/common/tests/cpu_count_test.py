@@ -1,4 +1,8 @@
-from demisto_sdk.commands.common.cpu_count import DEMISTO_SDK_MAX_CPU_CORES, cpu_count, os
+from demisto_sdk.commands.common.cpu_count import (
+    DEMISTO_SDK_MAX_CPU_CORES,
+    cpu_count,
+    os,
+)
 
 
 def test_with_env_set(mocker):

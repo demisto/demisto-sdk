@@ -2,7 +2,9 @@
 This module is designed to validate the correctness of generic module entities in content.
 """
 
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
+    ContentEntityValidator,
+)
 
 
 class GenericModuleValidator(ContentEntityValidator):
@@ -14,9 +16,7 @@ class GenericModuleValidator(ContentEntityValidator):
         """
         Check whether the generic module is valid or not
         """
-        answers = [
-            super().is_valid_generic_object_file()
-        ]
+        answers = [super().is_valid_generic_object_file()]
 
         return all(answers)
 

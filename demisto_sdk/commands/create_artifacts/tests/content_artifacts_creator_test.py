@@ -6,12 +6,17 @@ from typing import List
 
 import pytest
 
-from demisto_sdk.commands.common.constants import PACKS_DIR, TEST_PLAYBOOKS_DIR, MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    PACKS_DIR,
+    TEST_PLAYBOOKS_DIR,
+    MarketplaceVersions,
+)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import src_root
-from demisto_sdk.commands.prepare_content.prepare_upload_manager import PrepareUploadManager
-
+from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
+    PrepareUploadManager,
+)
 from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
@@ -428,30 +433,43 @@ def get_value_from_dict(object, path):
     return rv
 
 
-@pytest.mark.parametrize(argnames="artifact, keys_paths",
-                         argvalues=[
-                             ('demisto_sdk/tests/test_files/content_repo_with_alternative_fields/Packs/'
-                              'DummyPackAlternativeFields/IncidentFields/incidentfield-sample_packs.json',
-                              ['name']),
-                             ('demisto_sdk/tests/test_files/content_repo_with_alternative_fields/Packs/'
-                              'DummyPackAlternativeFields/Integrations/integration-sample_packs.yml',
-                              ['name']),
-                             ('demisto_sdk/tests/test_files/content_repo_with_alternative_fields/Packs/'
-                              'DummyPackAlternativeFields/Playbooks/playbook-sample_packs.yml',
-                              ['name', 'tasks.task_num.task.scriptName']
-                              ),
-                             ('demisto_sdk/tests/test_files/content_repo_with_alternative_fields/Packs/'
-                              'DummyPackAlternativeFields/Scripts/script-sample_packs.yml',
-                              ['commonfields.id', 'name', 'comment']
-                              )
-                         ])
+@pytest.mark.parametrize(
+    argnames="artifact, keys_paths",
+    argvalues=[
+        (
+            "demisto_sdk/tests/test_files/content_repo_with_alternative_fields/Packs/"
+            "DummyPackAlternativeFields/IncidentFields/incidentfield-sample_packs.json",
+            ["name"],
+        ),
+        (
+            "demisto_sdk/tests/test_files/content_repo_with_alternative_fields/Packs/"
+            "DummyPackAlternativeFields/Integrations/integration-sample_packs.yml",
+            ["name"],
+        ),
+        (
+            "demisto_sdk/tests/test_files/content_repo_with_alternative_fields/Packs/"
+            "DummyPackAlternativeFields/Playbooks/playbook-sample_packs.yml",
+            ["name", "tasks.task_num.task.scriptName"],
+        ),
+        (
+            "demisto_sdk/tests/test_files/content_repo_with_alternative_fields/Packs/"
+            "DummyPackAlternativeFields/Scripts/script-sample_packs.yml",
+            ["commonfields.id", "name", "comment"],
+        ),
+    ],
+)
 def test_use_alternative_fields(artifact: str, keys_paths: List[str]):
     with temp_dir() as temp:
-        PrepareUploadManager.prepare_for_upload(artifact, output=temp, marketplace=MarketplaceVersions.MarketplaceV2,
-                                                force=True,
-                                                )
-        filename = artifact.split('/')[-1]
+        PrepareUploadManager.prepare_for_upload(
+            artifact,
+            output=temp,
+            marketplace=MarketplaceVersions.MarketplaceV2,
+            force=True,
+        )
+        filename = artifact.split("/")[-1]
         original_data = load_file(artifact)
         modified_data = load_file(temp / filename)
         for current_key_path in keys_paths:
-            assert get_value_from_dict(original_data, current_key_path + '_x2') == get_value_from_dict(modified_data, current_key_path)
+            assert get_value_from_dict(
+                original_data, current_key_path + "_x2"
+            ) == get_value_from_dict(modified_data, current_key_path)

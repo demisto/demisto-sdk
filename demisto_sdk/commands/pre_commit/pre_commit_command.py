@@ -71,7 +71,7 @@ class PreCommit:
                 self.handle_mypy(self.hooks["mypy"], python_version)
             with open(CONTENT_PATH / ".pre-commit-config.yaml", "w") as f:
                 yaml.dump(PRECOMMIT_TEMPLATE, f)
-            print(f"Running pre-commit for {integration_script}")
+            print(f"Running pre-commit for {changed_files} with python version {python_version}")
             env = os.environ.copy()
             if not test:
                 env['SKIP'] = "content-test-runner"

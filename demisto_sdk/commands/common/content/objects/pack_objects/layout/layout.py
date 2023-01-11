@@ -1,3 +1,4 @@
+import tempfile
 from abc import abstractmethod
 from typing import List, Optional, Union
 
@@ -24,6 +25,10 @@ class LayoutObject(JSONContentObject):
         Returns:
             The result of the upload command from demisto_client.
         """
+        if self.layout_type == FileType.LAYOUTS_CONTAINER:
+            with tempfile.TemporaryDirectory() as _dir:
+                return client.import_layout(file=self._unify(_dir)[0])
+
         return client.import_layout(file=self.path)
 
     @abstractmethod

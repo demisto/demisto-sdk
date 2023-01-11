@@ -36,7 +36,7 @@ class XDRCTemplate(JSONContentObject):
     def type(self):
         return FileType.XDRC_TEMPLATE
 
-    def _unify(self, dest_dir: Path = None) -> List[Path]:
+    def _unify(self, dest_dir: Path = None, output: str = "") -> List[Path]:
         """Unify XDRCTemplate in destination dir.
 
         Args:
@@ -45,18 +45,9 @@ class XDRCTemplate(JSONContentObject):
         Returns:
             List[Path]: List of new created files.
         """
-        if isinstance(dest_dir, str):
-            dest_dir = Path(dest_dir)
-        # Unify step
-        return [
-            Path(
-                str(
-                    PrepareUploadManager.prepare_for_upload(
-                        input=self.path, output=dest_dir / self.normalize_file_name()  # type: ignore[operator]
-                    )
-                )
-            )
-        ]
+        if not output:
+            output = self.normalize_file_name()
+        return super()._unify(dest_dir=dest_dir, output=output)
 
     def _create_target_dump_dir(
         self, dest_dir: Optional[Union[Path, str]] = None

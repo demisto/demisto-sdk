@@ -16,6 +16,9 @@ from demisto_sdk.commands.common.content.objects.pack_objects.readme.readme impo
     Readme,
 )
 from demisto_sdk.commands.common.tools import get_json
+from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
+    PrepareUploadManager,
+)
 
 
 class JSONContentObject(JSONObject):
@@ -133,3 +136,26 @@ class JSONContentObject(JSONObject):
         """
         data = get_json(str(self.path))
         return isinstance(data, list)
+
+    def _unify(self, dest_dir: Path = None, output: str = "") -> List[Path]:
+        """Unify JSONBasedContentObject in destination dir.
+
+        Args:
+            dest_dir: Destination directory.
+            output: output suffix to add the destination directory.
+
+        Returns:
+            List[Path]: List of new created unified json files.
+        """
+        if isinstance(dest_dir, str):
+            dest_dir = Path(dest_dir)
+        # Unify step
+        return [
+            Path(
+                str(
+                    PrepareUploadManager.prepare_for_upload(
+                        input=self.path, output=dest_dir / output  # type: ignore[operator]
+                    )
+                )
+            )
+        ]

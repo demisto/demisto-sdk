@@ -50,7 +50,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             exit_code = container.wait()['StatusCode']
             if exit_code:
                 print(f"Test failed. Exit code: {exit_code}")
-                return exit_code
+                return 1
         except Exception as e:
             logger.error(f"Failed to run test for {filename}: {e}")
             return 1

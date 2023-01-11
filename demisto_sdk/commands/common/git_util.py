@@ -509,7 +509,7 @@ class GitUtil:
             return {
                 Path(os.path.join(item))
                 for item in self.repo.git.diff(
-                    f"--name-only {'--cached' if staged else ''}", f"{remote}/{branch}...{current_branch_or_hash}"
+                    f"--name-only{' --cached' if staged else ''}", f"{remote}/{branch}...{current_branch_or_hash}"
                 ).split("\n")
             }
 

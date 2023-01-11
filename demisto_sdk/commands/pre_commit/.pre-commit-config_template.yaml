@@ -58,4 +58,4 @@ repos:
     - repo: https://github.com/demisto/demisto-sdk
       rev: 8006728d715a30e1dddf5f5ea3ebb3812c8247b0
       hooks:
-        = id: content-test-runner
+        - id: content-test-runner

@@ -495,7 +495,7 @@ class GitUtil:
 
         return extracted_paths
 
-    def _get_all_changed_files(self, prev_ver: str) -> Set[Path]:
+    def _get_all_changed_files(self, prev_ver: str, staged: bool = False) -> Set[Path]:
         """Get all the files changed in the current branch without status distinction.
         Args:
             prev_ver (str): The base branch against which the comparison is made.
@@ -509,7 +509,7 @@ class GitUtil:
             return {
                 Path(os.path.join(item))
                 for item in self.repo.git.diff(
-                    "--name-only", f"{remote}/{branch}...{current_branch_or_hash}"
+                    f"--name-only {'--cached' if staged else ''}", f"{remote}/{branch}...{current_branch_or_hash}"
                 ).split("\n")
             }
 

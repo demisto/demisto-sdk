@@ -4,7 +4,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import IO, Any, Dict
+from typing import IO, Any, Dict, Iterable
 
 import click
 import git
@@ -3064,9 +3064,35 @@ def update_content_graph(
         )
 
 @main.command()
-def pre_commit():
-    from demisto_sdk.commands.pre_commit.pre_commit_command import manager
-    manager()
+@click.help_option("-h", "--help")
+@click.option(
+    "-i",
+    "--input",
+    help="The path to the input file to run the command on.",
+    multiple=True,
+    type=click.Path(exists=True, path_type=Path),
+)
+@click.option(
+    "-g",
+    "--use-git",
+    help="Whether to use git to determine which files to run the command on",
+    is_flag=True,
+)
+@click.option(
+    "-s",
+    "--staged",
+    help="Whether to run on staged files only",
+    is_flag=True,
+)
+@click.option(
+    "-a",
+    "--all-files",
+    help="Whether to run precommit on all files",
+    is_flag=True
+)
+def pre_commit(input: Iterable[Path], use_git: bool, staged: bool, all_files: bool):
+    from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit
+    pre_commit(input, use_git, staged, all_files)
 
 @main.result_callback()
 def exit_from_program(result=0, **kwargs):

@@ -6,7 +6,7 @@
 - id: validate
   name: validate
   description: validate content
-  entry: demisto-sdk validate
+  entry: demisto-sdk validate -i
   pass_filenames: true
   language: python
 - id: format

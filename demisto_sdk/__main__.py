@@ -511,11 +511,11 @@ def zip_packs(**kwargs) -> int:
 @click.option(
     "-i",
     "--input",
-    "--filenames",
-    multiple=True,
+    nargs=0,
     type=click.Path(exists=True, resolve_path=True),
     help="The path of the content pack/file to validate specifically.",
 )
+@click.argument("input", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @click.option(
     "--skip-pack-release-notes",
     is_flag=True,

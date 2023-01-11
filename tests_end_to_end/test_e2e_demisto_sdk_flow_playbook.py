@@ -74,7 +74,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
         f"Validating playbook {tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
     )
     ValidateManager(
-        file_path=f"{tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
+        file_paths=f"{tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
     ).run_validation()
 
     print(
@@ -161,7 +161,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
         f"Validating playbook {tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
     )
     ValidateManager(
-        file_path=f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
+        file_paths=f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
     ).run_validation()
 
     print(

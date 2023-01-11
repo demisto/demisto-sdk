@@ -6,7 +6,7 @@
 - id: validate
   name: validate
   description: validate content
-  entry: demisto-sdk validate -i
+  entry: demisto-sdk validate
   language: python
 - id: format
   name: format

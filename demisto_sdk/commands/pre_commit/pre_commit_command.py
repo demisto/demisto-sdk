@@ -75,7 +75,7 @@ class PreCommit:
             env = os.environ.copy()
             if not test:
                 env['SKIP'] = "content-test-runner"
-            subprocess.run(["pre-commit", "run", "--files", *changed_files], env=env)
+            subprocess.run(["pre-commit", "run", "--files", *changed_files, "-v"], env=env)
 
 
 def find_hook(hook_name: str):

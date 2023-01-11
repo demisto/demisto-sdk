@@ -1,5 +1,15 @@
--   id: content-test-runner
-    name: content-test-runner
-    description: Run content test using docker
-    entry: run-content-tests
-    language: python
+- id: content-test-runner
+  name: content-test-runner
+  description: Run content test using docker
+  entry: run-content-tests
+  language: python
+- id: validate
+  name: validate
+  description: validate content
+  entry: demisto-sdk validate
+  language: python
+- id: format
+  name: format
+  description: format content
+  entry: demisto-sdk format
+  language: python

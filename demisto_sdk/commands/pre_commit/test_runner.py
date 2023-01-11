@@ -47,6 +47,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 detach=True,
             )
             stream_docker_container_output(container.logs(stream=True), logging_level=logger.info)
+            exit_code = container.wait()['StatusCode']
+            if exit_code:
+                print(f"Test failed. Exit code: {exit_code}")
+                return exit_code
         except Exception as e:
             logger.error(f"Failed to run test for {filename}: {e}")
             return 1

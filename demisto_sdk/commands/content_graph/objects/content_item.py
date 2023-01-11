@@ -102,7 +102,12 @@ class ContentItem(BaseContent):
 
     @property
     def handler(self) -> XSOAR_Handler:
-        return JSON_Handler() if self.path.suffix.lower() == ".json" else YAML_Handler()
+        # we use a high value so the code lines will not break
+        return (
+            JSON_Handler()
+            if self.path.suffix.lower() == ".json"
+            else YAML_Handler(50_000)
+        )
 
     @property
     def data(self) -> dict:

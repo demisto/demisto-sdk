@@ -605,7 +605,7 @@ def validate(config, **kwargs):
             prev_ver=kwargs["prev_ver"],
             skip_conf_json=kwargs["no_conf_json"],
             use_git=kwargs["use_git"],
-            file_paths=file_paths,
+            file_path=file_path,
             validate_all=kwargs.get("validate_all"),
             validate_id_set=kwargs["id_set"],
             skip_pack_rn_validation=kwargs["skip_pack_release_notes"],

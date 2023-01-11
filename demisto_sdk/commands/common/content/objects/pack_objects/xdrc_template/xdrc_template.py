@@ -9,9 +9,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
     JSONContentObject,
 )
 from demisto_sdk.commands.common.tools import generate_xsiam_normalized_name
-from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
-    PrepareUploadManager,
-)
 
 
 class XDRCTemplate(JSONContentObject):
@@ -45,9 +42,9 @@ class XDRCTemplate(JSONContentObject):
         Returns:
             List[Path]: List of new created files.
         """
-        if not output:
-            output = self.normalize_file_name()
-        return super()._unify(dest_dir=dest_dir, output=output)
+        return super()._unify(
+            dest_dir=dest_dir, output=output or self.normalize_file_name()
+        )
 
     def _create_target_dump_dir(
         self, dest_dir: Optional[Union[Path, str]] = None

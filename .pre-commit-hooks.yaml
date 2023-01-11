@@ -3,5 +3,3 @@
     description: Run content test using docker
     entry: run-content-tests
     language: system
-    files: ^Packs/[^/]+/Integrations/[^/]+/[^/]+\.yml$
-    types: [yaml]

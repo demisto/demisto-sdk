@@ -611,7 +611,7 @@ class TestValidators:
         mocker.patch.object(
             IntegrationValidator, "is_api_token_in_credential_type", return_value=True
         )
-        validate_manager = ValidateManager(file_paths=file_path, skip_conf_json=True)
+        validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
 
     INVALID_FILES_PATHS_FOR_ALL_VALIDATIONS = [
@@ -658,7 +658,7 @@ class TestValidators:
         mocker.patch.object(
             IntegrationValidator, "is_valid_category", return_value=True
         )
-        validate_manager = ValidateManager(file_paths=file_path, skip_conf_json=True)
+        validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert not validate_manager.run_validation_on_specific_files()
 
     def test_run_all_validations_on_file_with_modified_id(self, mocker, integration):
@@ -863,7 +863,7 @@ class TestValidators:
         assert is_valid
 
     def test_pack_validation(self):
-        validate_manager = ValidateManager(file_paths=VALID_PACK, skip_conf_json=True)
+        validate_manager = ValidateManager(file_path=VALID_PACK, skip_conf_json=True)
         is_valid = validate_manager.run_validation_on_package(VALID_PACK, None)
         assert is_valid
 
@@ -2377,7 +2377,7 @@ def test_job_sanity(repo, is_feed: bool):
     pack = repo.create_pack()
     job = pack.create_job(is_feed=is_feed, name="job_name")
     validate_manager = ValidateManager(
-        check_is_unskipped=False, file_paths=job.path, skip_conf_json=True
+        check_is_unskipped=False, file_path=job.path, skip_conf_json=True
     )
 
     with ChangeCWD(repo.path):
@@ -2402,7 +2402,7 @@ def test_job_from_version(repo, capsys, is_feed: bool, version: Optional[str]):
     job = pack.create_job(is_feed, "job_name")
     job.update({"fromVersion": version})
     validate_manager = ValidateManager(
-        check_is_unskipped=False, file_paths=job.path, skip_conf_json=True
+        check_is_unskipped=False, file_path=job.path, skip_conf_json=True
     )
 
     with ChangeCWD(repo.path):
@@ -2429,7 +2429,7 @@ def test_job_non_feed_with_selected_feeds(repo, capsys):
     pack = repo.create_pack()
     job = pack.create_job(is_feed=False, name="job_name", selected_feeds=["feed_name"])
     validate_manager = ValidateManager(
-        check_is_unskipped=False, file_paths=job.path, skip_conf_json=True
+        check_is_unskipped=False, file_path=job.path, skip_conf_json=True
     )
 
     with ChangeCWD(repo.path):
@@ -2457,7 +2457,7 @@ def test_job_both_selected_and_all_feeds_in_job(repo, capsys):
     job = pack.create_job(is_feed=True, name="job_name", selected_feeds=["feed_name"])
     job.update({"isAllFeeds": True})
     validate_manager = ValidateManager(
-        check_is_unskipped=False, file_paths=job.path, skip_conf_json=True
+        check_is_unskipped=False, file_path=job.path, skip_conf_json=True
     )
 
     with ChangeCWD(repo.path):
@@ -2490,7 +2490,7 @@ def test_job_blank_name(repo, capsys, name: str, is_feed: bool):
     )  # name is appended with number in create_job, so it must be explicitly set here
 
     validate_manager = ValidateManager(
-        check_is_unskipped=False, file_paths=job.path, skip_conf_json=True
+        check_is_unskipped=False, file_path=job.path, skip_conf_json=True
     )
 
     with ChangeCWD(repo.path):
@@ -2521,7 +2521,7 @@ def test_job_missing_name(repo, capsys, is_feed: bool):
     )  # some name is appended with number in create_job, so it must be explicitly removed
 
     validate_manager = ValidateManager(
-        check_is_unskipped=False, file_paths=job.path, skip_conf_json=True
+        check_is_unskipped=False, file_path=job.path, skip_conf_json=True
     )
 
     with ChangeCWD(repo.path):
@@ -2554,7 +2554,7 @@ def test_job_unexpected_field_values_in_non_feed_job(
     job = pack.create_job(is_feed=True, name="job_name")
     job.update({"isAllFeeds": False})
     validate_manager = ValidateManager(
-        check_is_unskipped=False, file_paths=job.path, skip_conf_json=True
+        check_is_unskipped=False, file_path=job.path, skip_conf_json=True
     )
 
     with ChangeCWD(repo.path):
@@ -2634,7 +2634,7 @@ def test_validate_contributors_file(repo):
     contributors_file = pack.create_contributors_file('["- Test UserName"]')
 
     validate_manager = ValidateManager(
-        check_is_unskipped=False, file_paths=contributors_file.path, skip_conf_json=True
+        check_is_unskipped=False, file_path=contributors_file.path, skip_conf_json=True
     )
     assert validate_manager.run_validation_on_specific_files()
 

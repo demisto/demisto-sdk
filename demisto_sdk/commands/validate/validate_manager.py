@@ -172,7 +172,7 @@ class ValidateManager:
         print_ignored_files=False,
         skip_conf_json=True,
         validate_id_set=False,
-        file_paths=None,
+        file_path=None,
         validate_all=False,
         is_external_repo=False,
         skip_pack_rn_validation=False,
@@ -240,7 +240,7 @@ class ValidateManager:
         self.should_run_validation = BaseValidator(
             specific_validations=specific_validations
         ).should_run_validation
-        self.file_paths = file_paths
+        self.file_path = file_path
         self.id_set_path = id_set_path or DEFAULT_ID_SET_PATH
         # create the id_set only once per run.
         self.id_set_file = self.get_id_set_file(
@@ -368,7 +368,7 @@ class ValidateManager:
             is_valid = self.run_validation_on_all_packs()
         elif self.use_git:
             is_valid = self.run_validation_using_git()
-        elif self.file_paths:
+        elif self.file_path:
             is_valid = self.run_validation_on_specific_files()
         else:
             # default validate to -g --post-commit
@@ -412,7 +412,7 @@ class ValidateManager:
         """Run validations only on specific files"""
         files_validation_result = set()
 
-        for path in self.file_paths:
+        for path in self.file_path.split(","):
             error_ignore_list = self.get_error_ignore_list(get_pack_name(path))
             file_level = self.detect_file_level(path)
 
@@ -1149,7 +1149,7 @@ class ValidateManager:
         filtered_added_files: Set = set()
         filtered_old_format: Set = set()
 
-        for path in self.file_paths:
+        for path in self.file_path.split(","):
             path = get_relative_path_from_packs_dir(path)
             file_level = self.detect_file_level(path)
             if file_level == PathLevel.FILE:
@@ -1188,7 +1188,7 @@ class ValidateManager:
         ) = self.get_changed_files_from_git()
 
         # filter to only specified paths if given
-        if self.file_paths:
+        if self.file_path:
             (
                 modified_files,
                 added_files,

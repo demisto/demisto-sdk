@@ -140,7 +140,7 @@ class UpdateReleaseNotesManager:
             silence_init_prints=True,
             skip_conf_json=True,
             check_is_unskipped=False,
-            file_paths=self.given_pack,
+            file_path=self.given_pack,
         )
 
     def get_git_changed_files(self) -> Tuple[set, set, set]:

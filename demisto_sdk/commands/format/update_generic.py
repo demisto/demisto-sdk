@@ -406,7 +406,7 @@ class BaseUpdate:
                 )
             return SKIP_RETURN_CODE
         else:
-            self.validate_manager.file_paths = self.output_file
+            self.validate_manager.file_path = self.output_file
             if self.is_old_file(self.output_file, self.prev_ver):
                 validation_result = self.validate_manager.run_validation_using_git()
             else:

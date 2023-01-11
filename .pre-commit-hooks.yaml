@@ -6,11 +6,11 @@
 - id: validate
   name: validate
   description: validate content
-  entry: demisto-sdk validate -i
+  entry: validate-hook
   pass_filenames: true
   language: python
 - id: format
   name: format
   description: format content
-  entry: demisto-sdk format
+  entry: format-hook
   language: python

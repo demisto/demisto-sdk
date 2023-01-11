@@ -511,7 +511,7 @@ def zip_packs(**kwargs) -> int:
 @click.option(
     "-i",
     "--input",
-    type=click.Path(exists=True, resolve_path=True),
+    type=PathsParamType(exists=True, resolve_path=True),
     help="The path of the content pack/file to validate specifically.",
 )
 @click.option(
@@ -1056,7 +1056,7 @@ def coverage_analyze(**kwargs):
     "--input",
     help="The path of the script yml file\n"
     "If no input is specified, the format will be executed on all new/changed files.",
-    type=click.Path(exists=True, resolve_path=True),
+    type=PathsParamType(exists=True, resolve_path=True),
 )
 @click.option(
     "-o",

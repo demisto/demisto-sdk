@@ -38,10 +38,11 @@ repos:
             args: [--py310-plus]
             
 
-    - repo: https://github.com/pre-commit/mirrors-mypy
-      rev: v0.982
+    - repo: local
       hooks:
           - id: mypy
+            name: mypy
+            entry: mypy
             language: system
             args: [--ignore-missing-imports, --check-untyped-defs, --show-error-codes, --follow-imports=silent, --allow-redefinition, --python-version=3.10]
     
@@ -56,8 +57,8 @@ repos:
           - id: check-poetry
   
     - repo: https://github.com/demisto/demisto-sdk
-      rev: c3ce05cd7e9b07be5eada94ff328c865bb536a29
+      rev: 90432eebb6dc403f788490e3a4256d73f838b7a7
       hooks:
         # - id: content-test-runner
-        # - id: format
+        - id: format
         - id: validate

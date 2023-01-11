@@ -145,7 +145,9 @@ def format_manager(
     use_git = use_git or not input
 
     if input:
-        files = get_files_in_dir(input, supported_file_types)
+        files = []
+        for i in input.split(','):
+            files.extend(get_files_in_dir(i, supported_file_types))
 
     elif use_git:
         files = get_files_to_format_from_git(
@@ -156,6 +158,10 @@ def format_manager(
         raise Exception(
             "The given output path is not a specific file path.\n"
             "Only file path can be a output path.  Please specify a correct output."
+        )
+    if output and input and ',' in input:
+        raise Exception(
+            "Could not use the output argument if provided a list of file paths"
         )
 
     log_list = []

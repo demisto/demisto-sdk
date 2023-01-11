@@ -1,0 +1,47 @@
+type: map
+mapping:
+  rule_id:
+    type: str
+    required: true
+  rule_name:
+    type: str
+    required: true
+  layout_id:
+    type: str
+    required: true
+  fromVersion:
+    type: str
+    required: true
+  description:
+    type: str
+    required: false
+  alerts_filter:
+    type: map
+    mapping:
+      filter:
+        type: map
+        mapping:
+          OR:
+            type: seq
+            required: false
+            sequence:
+              - include: filter_schema
+          AND:
+            type: seq
+            required: false
+            sequence:
+              - include: filter_schema
+
+
+schema;filter_schema:
+  type: map
+  mapping:
+    SEARCH_FIELD:
+      type: str
+      required: true
+    SEARCH_TYPE:
+      type: str
+      required: true
+    SEARCH_VALUE:
+      type: str
+      required: true

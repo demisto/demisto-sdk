@@ -305,7 +305,7 @@ class DocReviewer:
             # --xsoar-only flag is specified.
             if self.is_xsoar_supported_rn_only and not is_xsoar_supported_pack(file):
                 click.secho(
-                    f"File '{file}' was skipped because it does not to belong to an XSOAR-supported Pack",
+                    f"File '{file}' was skipped because it does not belong to an XSOAR-supported Pack",
                     fg="yellow",
                 )
                 continue

@@ -4,6 +4,8 @@ from typing import List
 
 import pytest
 
+from demisto_sdk.commands.common.constants import PACK_SUPPORT_OPTIONS, XSOAR_SUPPORT
+from demisto_sdk.commands.common.tools import PACK_METADATA_SUPPORT
 from TestSuite.pack import Pack
 
 
@@ -84,7 +86,7 @@ def valid_spelled_xsoar_supported_content_pack(tmp_path: PosixPath) -> Pack:
         version="release-note-1",
         content="\n#### Scripts\n##### ScriptName\n- Added the feature.",
     )
-    pack.pack_metadata.update({"support": "xsoar"})
+    pack.pack_metadata.update({PACK_METADATA_SUPPORT: XSOAR_SUPPORT})
 
     return pack
 
@@ -111,7 +113,7 @@ def valid_spelled_xsoar_supported_content_packs(tmp_path: PosixPath) -> List[Pac
             version="release-note-1",
             content="\n#### Scripts\n##### ScriptName\n- Added the feature.",
         )
-        pack.pack_metadata.update({"support": "xsoar"})
+        pack.pack_metadata.update({PACK_METADATA_SUPPORT: XSOAR_SUPPORT})
 
         packs.append(pack)
 
@@ -135,7 +137,7 @@ def valid_spelled_xsoar_non_supported_content_pack(tmp_path: PosixPath) -> Pack:
         version="release-note-1",
         content="\n#### Scripts\n##### ScriptName\n- Added the feature.",
     )
-    pack.pack_metadata.update({"support": "community"})
+    pack.pack_metadata.update({PACK_METADATA_SUPPORT: PACK_SUPPORT_OPTIONS[3]})
 
     return pack
 
@@ -157,7 +159,7 @@ def invalid_xsoar_non_supported_content_pack(tmp_path: PosixPath) -> Pack:
         version="release-note-1",
         content="\n#### Scrts\n##### ScrName\n-.",
     )
-    pack.pack_metadata.update({"support": "community"})
+    pack.pack_metadata.update({PACK_METADATA_SUPPORT: PACK_SUPPORT_OPTIONS[3]})
 
     return pack
 
@@ -179,13 +181,13 @@ def invalid_xsoar_supported_content_pack(tmp_path: PosixPath) -> Pack:
         version="release-note-1",
         content="\n#### Scrts\n##### ScrName\n-.",
     )
-    pack.pack_metadata.update({"support": "xsoar"})
+    pack.pack_metadata.update({PACK_METADATA_SUPPORT: XSOAR_SUPPORT})
 
     return pack
 
 
 @pytest.fixture(name="mix_invalid_packs")
-def mix_mispelled_xsoar_supported_and_not_content_packs(
+def mix_misspelled_xsoar_supported_and_not_content_packs(
     tmp_path: PosixPath,
 ) -> List[Pack]:
     """
@@ -207,7 +209,9 @@ def mix_mispelled_xsoar_supported_and_not_content_packs(
         version="release-note-CommunityPack",
         content="\n#### Sfhasbfkhabf\n##### Sfhasbfkhabf\n- someinvalidstring.",
     )
-    community_pack.pack_metadata.update({"support": "community"})
+    community_pack.pack_metadata.update(
+        {PACK_METADATA_SUPPORT: PACK_SUPPORT_OPTIONS[3]}
+    )
 
     # Create XSOAR Pack
     temp_repo = SimpleNamespace()
@@ -218,7 +222,7 @@ def mix_mispelled_xsoar_supported_and_not_content_packs(
         version="release-note-XSOARPack",
         content="\n#### Sfhasbfkhabf\n##### Sfhasbfkhabf\n- someinvalidstring.",
     )
-    xsoar_pack.pack_metadata.update({"support": "xsoar"})
+    xsoar_pack.pack_metadata.update({PACK_METADATA_SUPPORT: XSOAR_SUPPORT})
 
     packs.append(community_pack)
     packs.append(xsoar_pack)

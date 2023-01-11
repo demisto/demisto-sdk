@@ -1,15 +1,14 @@
 from collections import defaultdict
 from dataclasses import dataclass
-from functools import cache
+import os
 import subprocess
 from packaging.version import Version
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Set, Union
+from typing import Dict, Iterable, List, Optional, Set
 from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, SCRIPTS_DIR
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
-import requests
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.docker_helper import get_python_version_from_image
@@ -41,10 +40,10 @@ class PreCommit:
     files_to_run: Set[Path]
 
     def __post_init__(self):
-        self.hooks = defaultdict(list)
+        self.hooks = {}
         for repo in PRECOMMIT_TEMPLATE["repos"]:
             for hook in repo["hooks"]:
-                self.hooks[hook["id"]].append(hook)
+                self.hooks[hook["id"]] = hook
 
     @staticmethod
     def handle_mypy(mypy_hook: dict, python_version: str):
@@ -54,7 +53,7 @@ class PreCommit:
     def handle_pyupgrade(pyupgrade_hook: dict, python_version: str):
         pyupgrade_hook["args"][-1] = f"--{PYUPGRADE_MAPPING[python_version]}"
 
-    def run(self):
+    def run(self, test: bool = False):
         python_version_to_files = defaultdict(set)
         for integration_script, changed_files in self.integrations_scripts.items():
             content_item: Optional[IntegrationScript] = BaseContent.from_path(integration_script)  # type: ignore
@@ -73,7 +72,10 @@ class PreCommit:
             with open(CONTENT_PATH / ".pre-commit-config.yaml", "w") as f:
                 yaml.dump(PRECOMMIT_TEMPLATE, f)
             print(f"Running pre-commit for {integration_script}")
-            subprocess.run(["pre-commit", "run", "--files", *changed_files])
+            env = os.environ.copy()
+            if not test:
+                env['SKIP'] = "content-test-runner"
+            subprocess.run(["pre-commit", "run", "--files", *changed_files], env=env)
 
 
 def find_hook(hook_name: str):
@@ -101,7 +103,7 @@ def pre_commit(
     elif all_files:
         files_to_run = set(Path(CONTENT_PATH).rglob("*"))
 
-    categorize_files(files_to_run).run()
+    categorize_files(files_to_run).run(test)
 
 
 def categorize_files(files: Set[Path]) -> PreCommit:

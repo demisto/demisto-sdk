@@ -3090,9 +3090,15 @@ def update_content_graph(
     help="Whether to run precommit on all files",
     is_flag=True
 )
-def pre_commit(input: Iterable[Path], use_git: bool, staged: bool, all_files: bool):
+@click.option(
+    "-t",
+    "--test",
+    help="Whether to run tests",
+    is_flag=True,
+)
+def pre_commit(input: Iterable[Path], use_git: bool, staged: bool, all_files: bool, test: bool):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit
-    pre_commit(input, use_git, staged, all_files)
+    pre_commit(input, use_git, staged, all_files, test)
 
 @main.result_callback()
 def exit_from_program(result=0, **kwargs):

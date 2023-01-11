@@ -31,21 +31,22 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     for filename in args.filenames:
         integration_script = BaseContent.from_path(Path(filename))
-        print(integration_script)
         if not isinstance(integration_script, IntegrationScript):
             print(f"Skipping {filename} as it is not a content item.")
             continue
+        working_dir = f"/content/{integration_script.path.parent.relative_to(CONTENT_PATH)}"
+
         try:
             container = docker_client.containers.run(
                 image=integration_script.docker_image,
                 remove=True,
                 environment={"PYTHONPATH": ":".join(PYTHONPATH)},
                 volumes=[f"{CONTENT_PATH}:/content", f"{(Path(__file__).parent / 'runner.sh')}:/runner.sh"],
-                command=f"sh /runner.sh",
-                working_dir=f"/content/{integration_script.path.parent.relative_to(CONTENT_PATH)}",
+                command="sh /runner.sh",
+                working_dir=working_dir,
                 detach=True,
             )
-            stream_docker_container_output(container.logs(stream=True), logging_level=logger.debug)
+            stream_docker_container_output(container.logs(stream=True), logging_level=logger.info)
         except Exception as e:
             logger.error(f"Failed to run test for {filename}: {e}")
             return 1

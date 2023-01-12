@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue in **prepare-content** command where large code lines were broken.
 * Fixed an issue where running **validate** on a specific pack didn't test all the relevant entities.
 
 ## 1.8.3
@@ -7,7 +8,7 @@
 * Fixed an issue where **update-release-notes** fails to update *MicrosoftApiModule* dependent integrations.
 * Fixed an issue where the **upload** command failed because `docker_native_image_config.json` file could not be found.
 * Added a metadata file to the content graph zip, to be used in the **update-content-graph** command.
-
+* Updated the **validate** and **update-release-notes** commands to unskip the *Triggers Recommendations* content type.
 
 
 ## 1.8.2

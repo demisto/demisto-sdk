@@ -22,6 +22,13 @@ yaml = YAML_Handler()
 DEFAULT_PYTHON_VERSION = "3.10"
 EMPTY_PYTHON_VERSION = "2.7"
 
+PYTHONPATH = [
+    Path(CONTENT_PATH / "Packs" / "Base" / "Scripts" / "CommonServerPython"),
+    Path(CONTENT_PATH / "Tests" / "demistomock"),
+]
+
+PYTHONPATH.extend(dir for dir in Path(CONTENT_PATH / "Packs" / "ApiModules" / "Scripts").iterdir())
+
 PRECOMMIT_TEMPLATE_PATH = Path(__file__).parent / ".pre-commit-config_template.yaml"
 
 SKIPPED_HOOKS = ("format", "validate")
@@ -61,17 +68,19 @@ class PreCommit:
 
     def run(self, test: bool = False, skip_hooks: Optional[List[str]] = None):
         # handle skipped hooks
-        env = os.environ.copy()
+        precommit_env = os.environ.copy()
         skipped_hooks = list(SKIPPED_HOOKS)
         skipped_hooks.extend(skip_hooks or [])
         if not test:
             skipped_hooks.append("content-test-runner")
-        env["SKIP"] = ",".join(skipped_hooks)
+        precommit_env["SKIP"] = ",".join(skipped_hooks)
+        precommit_env["PYTHONPATH"] = ":".join(str(path) for path in PYTHONPATH)
+        precommit_env["MYPYPATH"] = ":".join(str(path) for path in PYTHONPATH)
         for python_version, changed_files in self.python_version_to_files.items():
             if python_version.startswith("2"):
                 if test:
                     subprocess.run(
-                        ["pre-commit", "run", "content-test-runner", "--files", *changed_files, "-v"], env=env
+                        ["pre-commit", "run", "content-test-runner", "--files", *changed_files, "-v"], env=precommit_env
                     )
                 continue
             if python_version != DEFAULT_PYTHON_VERSION:
@@ -82,7 +91,7 @@ class PreCommit:
             print(f"Running pre-commit for {changed_files} with python version {python_version}")
             # use chunks because OS does not support such large comments
             for chunk in more_itertools.chunked_even(changed_files, 10_000):
-                subprocess.run(["pre-commit", "run", "--files", *chunk, "-v"], env=env)
+                subprocess.run(["pre-commit", "run", "--files", *chunk, "-v"], env=precommit_env)
 
         # remove the config file
         shutil.rmtree(CONTENT_PATH / ".pre-commit-config.yaml")

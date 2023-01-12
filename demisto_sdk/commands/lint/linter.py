@@ -1368,7 +1368,7 @@ class Linter:
         if native_image not in supported_native_images:
             # Integration/Script isn't supported by the requested native image
             logger.info(
-                f"Skipping checks on docker for {native_image} - {script_id} is not supported by the "
+                f"{script_id} - Skipping checks on docker for {native_image} - {script_id} is not supported by the "
                 f"requested native image: {native_image}"
             )
             return False

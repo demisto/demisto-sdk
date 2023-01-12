@@ -42,12 +42,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         try:
             container = docker_client.containers.run(
                 image=docker_image,
+                name=f"demisto-sdk-test-{integration_script.object_id}",
                 remove=True,
                 environment={"PYTHONPATH": ":".join(PYTHONPATH)},
                 volumes=[f"{CONTENT_PATH}:/content", f"{(Path(__file__).parent / 'runner.sh')}:/runner.sh"],
                 command="sh /runner.sh",
                 working_dir=working_dir,
                 detach=True,
+                restart_policy={"Name": "on-failure", "MaximumRetryCount": 3},
             )
             stream_docker_container_output(container.logs(stream=True), logging_level=logger.info)
             exit_code = container.attrs["State"]["ExitCode"]

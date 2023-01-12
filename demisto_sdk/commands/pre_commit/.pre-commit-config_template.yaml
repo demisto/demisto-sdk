@@ -13,7 +13,12 @@ repos:
             language_version: python3
           - id: name-tests-test
             files: .+_test.py$
-
+    
+    - repo: https://github.com/charliermarsh/ruff
+      rev: "v0.0.219"
+      hooks:
+          - id: ruff
+            args: [line-length=120, --target-version=py310]
 
     - repo: https://github.com/pre-commit/mirrors-autopep8
       rev: "v2.0.1"
@@ -48,10 +53,6 @@ repos:
             types: [python]
             args: [--ignore-missing-imports, --check-untyped-defs, --show-error-codes, --follow-imports=silent, --allow-redefinition, --python-version=3.10]
             exclude: .*_test.py$
-    - repo: https://github.com/pycqa/flake8
-      rev: "6.0.0"
-      hooks:
-          - id: flake8
 
     - repo: https://gitlab.com/smop/pre-commit-hooks
       rev: v1.0.0

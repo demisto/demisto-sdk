@@ -30,6 +30,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("filenames", nargs="*")
     args = parser.parse_args(argv)
 
+    ret_val = 0
     for filename in args.filenames:
         integration_script = BaseContent.from_path(Path(filename))
         if not isinstance(integration_script, IntegrationScript):
@@ -40,7 +41,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         if os.getenv("GITLAB_CI"):
             docker_image = f"docker-io.art.code.pan.run/{docker_image}"
         try:
-            container = docker_client.containers.run(
+            container = docker_client.containers.create(
                 image=docker_image,
                 name=f"demisto-sdk-test-{integration_script.object_id}",
                 environment={"PYTHONPATH": ":".join(PYTHONPATH)},
@@ -50,16 +51,21 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 detach=True,
                 restart_policy={"Name": "on-failure", "MaximumRetryCount": 3},
             )
-            stream_docker_container_output(container.logs(stream=True), logging_level=logger.info)
-            exit_code = container.attrs["State"]["ExitCode"]
+            container.start()
+            stream_docker_container_output(container.logs(stream=True))
+            # wait for container to finish
+            container_status = container.wait(condition="exited")
+            # Get container exit code
+            container_exit_code = container_status.get("StatusCode")
+
             container.remove(force=True)
-            if exit_code:
-                print(f"Test failed. Exit code: {exit_code}")
-                return 1
+            if container_exit_code:
+                print(f"Some test failed Test failed. Exit code: {container_exit_code}")
+                ret_val = 1
         except Exception as e:
             logger.error(f"Failed to run test for {filename}: {e}")
-            return 1
-    return 0
+            ret_val = 1
+    return ret_val
 
 
 if __name__ == "__main__":

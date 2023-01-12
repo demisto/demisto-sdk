@@ -78,8 +78,9 @@ class PreCommit:
     def handle_pycln(pycln_hook):
         pycln_hook["args"] = [f"--skip-imports={','.join(path.name for path in PYTHONPATH)},demisto"]
 
-    def run(self, test: bool = False, skip_hooks: Optional[List[str]] = None):
+    def run(self, test: bool = False, skip_hooks: Optional[List[str]] = None) -> int:
         # handle skipped hooks
+        ret_val = 0
         precommit_env = os.environ.copy()
         skipped_hooks = list(SKIPPED_HOOKS)
         skipped_hooks.extend(skip_hooks or [])
@@ -92,9 +93,11 @@ class PreCommit:
         for python_version, changed_files in self.python_version_to_files.items():
             if python_version.startswith("2"):
                 if test:
-                    subprocess.run(
+                    response = subprocess.run(
                         ["pre-commit", "run", "content-test-runner", "--files", *changed_files, "-v"], env=precommit_env
                     )
+                    if response.returncode != 0:
+                        ret_val = response.returncode
                 continue
             if python_version != DEFAULT_PYTHON_VERSION:
                 self.handle_pyupgrade(self.hooks["pyupgrade"], python_version)
@@ -104,11 +107,12 @@ class PreCommit:
             print(f"Running pre-commit for {changed_files} with python version {python_version}")
             # use chunks because OS does not support such large comments
             for chunk in more_itertools.chunked_even(changed_files, 10_000):
-                subprocess.run(["pre-commit", "run", "--files", *chunk, "-v"], env=precommit_env)
-
+                response = subprocess.run(["pre-commit", "run", "--files", *chunk, "-v"], env=precommit_env)
+                if response.returncode:
+                    ret_val = 1
         # remove the config file
         shutil.rmtree(CONTENT_PATH / ".pre-commit-config.yaml", ignore_errors=True)
-
+        return ret_val
 
 def find_hook(hook_name: str):
     for hook in PRECOMMIT_TEMPLATE["repos"]:
@@ -138,7 +142,7 @@ def pre_commit(
         files_to_run = staged_files | git_util._get_all_changed_files("origin/master")
     elif all_files:
         files_to_run = git_util.get_all_files()
-    categorize_files(files_to_run).run(test, skip_hooks)
+    return categorize_files(files_to_run).run(test, skip_hooks)
 
 
 def categorize_files(files: Set[Path]) -> PreCommit:

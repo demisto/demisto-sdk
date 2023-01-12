@@ -3105,7 +3105,7 @@ def update_content_graph(
 )
 def pre_commit(input: Iterable[Path], use_git: bool, staged: bool, all_files: bool, test: bool):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit
-    pre_commit(input, use_git, staged, all_files, test)
+    sys.exit(pre_commit(input, use_git, staged, all_files, test))
 
 @main.result_callback()
 def exit_from_program(result=0, **kwargs):

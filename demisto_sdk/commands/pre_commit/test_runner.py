@@ -45,9 +45,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             container = docker_client.containers.create(
                 image=docker_image,
                 name=f"demisto-sdk-test-{integration_script.object_id}",
-                environment={"PYTHONPATH": ":".join(PYTHONPATH),
-                             "REQUESTS_CA_BUNDLE": '/etc/ssl/certs/ca-certificates.crt'},
-                volumes=[f"{CONTENT_PATH}:/content", f"{(Path(__file__).parent / 'runner.sh')}:/runner.sh"],
+                environment={
+                    "PYTHONPATH": ":".join(PYTHONPATH),
+                    "REQUESTS_CA_BUNDLE": "/etc/ssl/certs/ca-certificates.crt",
+                },
+                volumes=[
+                    f"{CONTENT_PATH}:/content",
+                    f"{(Path(__file__).parent / 'runner.sh')}:/runner.sh",
+                    "/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt",
+                    "/etc/pip.conf:/etc/pip.conf",
+                ],
                 command="sh /runner.sh",
                 working_dir=working_dir,
                 detach=True,

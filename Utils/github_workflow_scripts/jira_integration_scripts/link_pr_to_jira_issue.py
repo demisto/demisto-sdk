@@ -30,7 +30,7 @@ def arguments_handler():
         "-m",
         "--is_merged",
         help="Boolean. Whether the PR was merged or not.",
-        action=argparse.BooleanOptionalAction,
+        action=argparse.BooleanOptionalAction,  # type: ignore
     )
     parser.add_argument("-u", "--username", help="The instance username.")
     parser.add_argument("-s", "--password", help="The instance password.")

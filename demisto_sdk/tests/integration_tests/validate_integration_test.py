@@ -3898,6 +3898,7 @@ class TestAllFilesValidator:
             PackUniqueFilesValidator, "are_valid_files", return_value=""
         )
         mocker.patch.object(ValidateManager, "validate_readme", return_value=True)
+        mocker.patch.object(ImageValidator, "validate_size", return_value=True)
         mocker.patch.object(ValidateManager, "is_node_exist", return_value=True)
         mocker.patch(
             "demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories",

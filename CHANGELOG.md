@@ -9,6 +9,7 @@
 * Fixed an issue where the **upload** command failed because `docker_native_image_config.json` file could not be found.
 * Added a metadata file to the content graph zip, to be used in the **update-content-graph** command.
 * Updated the **validate** and **update-release-notes** commands to unskip the *Triggers Recommendations* content type.
+* Added support for auto-close **Jira** tickets.
 
 
 ## 1.8.2

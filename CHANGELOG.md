@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Fixed an issue in **prepare-content** command where large code lines were broken.
+* Added a logger warning to **get_demisto_version**, the task will now fail with a more informative message.
 
 
 ## 1.8.3

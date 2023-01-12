@@ -73,7 +73,7 @@ class PreCommit:
             with open(CONTENT_PATH / ".pre-commit-config.yaml", "w") as f:
                 yaml.dump(PRECOMMIT_TEMPLATE, f)
             print(f"Running pre-commit for {changed_files} with python version {python_version}")
-            for chunk in more_itertools.chunked_even(changed_files, 20_000):
+            for chunk in more_itertools.chunked_even(changed_files, 10_000):
                 subprocess.run(["pre-commit", "run", "--files", *chunk, "-v"], env=env)
 
 

@@ -73,6 +73,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 ret_val = 1
         except Exception as e:
             logger.error(f"Failed to run test for {filename}: {e}")
+            if container:
+                logger.info(container.logs())
             ret_val = 1
     return ret_val
 

@@ -55,6 +55,8 @@ class PreCommit:
 
     @staticmethod
     def handle_pyupgrade(pyupgrade_hook: dict, python_version: str):
+        if python_version not in PYUPGRADE_MAPPING:
+            raise ValueError(f"pyupgrade does not support python version {python_version}")
         pyupgrade_hook["args"][-1] = f"--{PYUPGRADE_MAPPING[python_version]}"
 
     def run(self, test: bool = False, skip_hooks: Optional[List[str]] = None):

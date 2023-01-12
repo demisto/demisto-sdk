@@ -24,7 +24,7 @@ CAN_MOUNT_FILES = bool(os.getenv("GITLAB_CI", False)) or (
 )
 # find me regex to find the python version for 'demisto/python3:3.10.6.33415'
 
-PYTHON_IMAGE_REGEX = re.compile(r"python.*:(\d+\.\d+\.\d+)")
+PYTHON_IMAGE_REGEX = re.compile(r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+)")
 
 
 class DockerException(Exception):
@@ -254,8 +254,8 @@ def get_python_version_from_image(image: Optional[str]) -> Optional[Version]:
     # check with docker hub the PYTHON_VERSION env var
     if not image:
         return None
-    if match := PYTHON_IMAGE_REGEX.search(image):
-        return Version(match.group(1))
+    if match := PYTHON_IMAGE_REGEX.match(image):
+        return Version(match.groupdict()["python_version"])
     if ":" not in image:
         repo = image
         tag = "latest"

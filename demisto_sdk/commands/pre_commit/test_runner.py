@@ -50,7 +50,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 detach=True,
             )
             stream_docker_container_output(container.logs(stream=True), logging_level=logger.info)
-            exit_code = container.wait()['StatusCode']
+            exit_code = container.attrs["State"]["ExitCode"]
             if exit_code:
                 print(f"Test failed. Exit code: {exit_code}")
                 return 1

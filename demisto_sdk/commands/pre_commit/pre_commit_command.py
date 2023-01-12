@@ -94,7 +94,7 @@ class PreCommit:
                 subprocess.run(["pre-commit", "run", "--files", *chunk, "-v"], env=precommit_env)
 
         # remove the config file
-        shutil.rmtree(CONTENT_PATH / ".pre-commit-config.yaml")
+        shutil.rmtree(CONTENT_PATH / ".pre-commit-config.yaml", ignore_errors=True)
 
 
 def find_hook(hook_name: str):
@@ -125,7 +125,6 @@ def pre_commit(
         files_to_run = staged_files | git_util._get_all_changed_files("origin/master")
     elif all_files:
         files_to_run = git_util.get_all_files()
-
     categorize_files(files_to_run).run(test, skip_hooks)
 
 

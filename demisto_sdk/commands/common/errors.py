@@ -3229,8 +3229,10 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def layout_container_contains_invalid_types(invalid_types):
-        return f"The following invalid types were found in the layout: {str(invalid_types)}. Those types are not" \
-               f" supported in XSIAM, remove them or change the layout to be XSOAR only"
+        return (
+            f"The following invalid types were found in the layout: {str(invalid_types)}. Those types are not"
+            f" supported in XSIAM, remove them or change the layout to be XSOAR only"
+        )
 
     @staticmethod
     def suggest_fix_non_existent_script_id() -> str:

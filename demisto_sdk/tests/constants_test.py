@@ -512,6 +512,7 @@ DIR_LIST = [
     f"{PACK_TARGET}/{constants.XDRC_TEMPLATE_DIR}",
     f"{PACK_TARGET}/{constants.XDRC_TEMPLATE_DIR}/xdrctemplate-invalid",
     f"{PACK_TARGET}/{constants.XDRC_TEMPLATE_DIR}/xdrctemplate-valid",
+    f"{PACK_TARGET}/{constants.LAYOUT_RULES_DIR}",
     constants.TESTS_DIR,
 ]
 

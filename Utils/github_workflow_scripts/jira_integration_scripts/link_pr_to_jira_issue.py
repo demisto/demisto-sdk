@@ -112,7 +112,9 @@ def trigger_generic_webhook(options):
     }
     print(body)
     # post to Content Gold
-    res = requests.post(instance_url, json=body, auth=(username, password))
+    res = requests.post(
+        instance_url.replace("http", "https"), json=body, auth=(username, password)
+    )
 
     if res.status_code != 200:
         print(

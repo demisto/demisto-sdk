@@ -3,7 +3,7 @@
   description: Run content test using docker
   entry: run-unit-tests
   language: python
-  files: ^Packs/.*/(?:Integrations|Scripts)/.*.py$
+  files: ^Packs/.*/(?:Integrations|Scripts)/.*.yml$
 - id: validate
   name: validate
   description: validate content

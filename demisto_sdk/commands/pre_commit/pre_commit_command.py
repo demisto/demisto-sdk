@@ -155,7 +155,7 @@ def categorize_files(files: Set[Path]) -> PreCommit:
             version = Version(python_version)
             python_version = f"{version.major}.{version.minor}"
         python_versions_to_files[python_version or EMPTY_PYTHON_VERSION].update(
-            integrations_scripts_mapping[integration_script_path]
+            integrations_scripts_mapping[integration_script_path] | {integration_script.path}
         )
     python_versions_to_files[DEFAULT_PYTHON_VERSION].update(files_to_run)
 

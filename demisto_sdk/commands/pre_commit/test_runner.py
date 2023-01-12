@@ -43,7 +43,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             container = docker_client.containers.run(
                 image=docker_image,
                 name=f"demisto-sdk-test-{integration_script.object_id}",
-                remove=True,
                 environment={"PYTHONPATH": ":".join(PYTHONPATH)},
                 volumes=[f"{CONTENT_PATH}:/content", f"{(Path(__file__).parent / 'runner.sh')}:/runner.sh"],
                 command="sh /runner.sh",
@@ -53,6 +52,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             )
             stream_docker_container_output(container.logs(stream=True), logging_level=logger.info)
             exit_code = container.attrs["State"]["ExitCode"]
+            container.remove(force=True)
             if exit_code:
                 print(f"Test failed. Exit code: {exit_code}")
                 return 1

@@ -96,6 +96,7 @@ class PreCommit:
         # remove the config file
         shutil.rmtree(CONTENT_PATH / ".pre-commit-config.yaml")
 
+
 def find_hook(hook_name: str):
     for hook in PRECOMMIT_TEMPLATE["repos"]:
         for hook in hook["hooks"]:
@@ -154,7 +155,9 @@ def categorize_files(files: Set[Path]) -> PreCommit:
         if python_version := integration_script.python_version:
             version = Version(python_version)
             python_version = f"{version.major}.{version.minor}"
-        python_versions_to_files[python_version or EMPTY_PYTHON_VERSION].update(integrations_scripts_mapping[integration_script_path])
+        python_versions_to_files[python_version or EMPTY_PYTHON_VERSION].update(
+            integrations_scripts_mapping[integration_script_path]
+        )
     python_versions_to_files[DEFAULT_PYTHON_VERSION].update(files_to_run)
 
     return PreCommit(python_versions_to_files)

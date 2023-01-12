@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 from pathlib import Path
 from typing import Optional, Sequence
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -35,10 +36,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             print(f"Skipping {filename} as it is not a content item.")
             continue
         working_dir = f"/content/{integration_script.path.parent.relative_to(CONTENT_PATH)}"
-
+        docker_image = integration_script.docker_image
+        if os.getenv("GITLAB_CI"):
+            docker_image = f"docker-io.art.code.pan.run/{docker_image}"
         try:
             container = docker_client.containers.run(
-                image=integration_script.docker_image,
+                image=docker_image,
                 remove=True,
                 environment={"PYTHONPATH": ":".join(PYTHONPATH)},
                 volumes=[f"{CONTENT_PATH}:/content", f"{(Path(__file__).parent / 'runner.sh')}:/runner.sh"],

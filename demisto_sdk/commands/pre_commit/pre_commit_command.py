@@ -42,6 +42,14 @@ PYUPGRADE_MAPPING = {
 }
 
 
+def python_version_to_pyupgrade(python_version: str):
+    return f"py{python_version.replace('.', '')}-plus"
+
+
+def python_version_to_ruff(python_version: str):
+    return f"py{python_version.replace('.', '')}"
+
+
 with open(PRECOMMIT_TEMPLATE_PATH, "r") as f:
     PRECOMMIT_TEMPLATE = yaml.load(f)
 
@@ -62,9 +70,15 @@ class PreCommit:
 
     @staticmethod
     def handle_pyupgrade(pyupgrade_hook: dict, python_version: str):
-        if python_version not in PYUPGRADE_MAPPING:
-            raise ValueError(f"pyupgrade does not support python version {python_version}")
-        pyupgrade_hook["args"][-1] = f"--{PYUPGRADE_MAPPING[python_version]}"
+        pyupgrade_hook["args"][-1] = f"--{python_version_to_pyupgrade(python_version)}"
+
+    @staticmethod
+    def handle_ruff(ruff_hook: dict, python_version: str):
+        ruff_hook["args"][-1] = f"--{python_version_to_ruff(python_version)}"
+
+    @staticmethod
+    def handle_pycln(pycln_hook):
+        pycln_hook["args"] = [f"--skip-imports={','(path.name for path in PYTHONPATH)},demisto"]
 
     def run(self, test: bool = False, skip_hooks: Optional[List[str]] = None):
         # handle skipped hooks
@@ -76,6 +90,7 @@ class PreCommit:
         precommit_env["SKIP"] = ",".join(skipped_hooks)
         precommit_env["PYTHONPATH"] = ":".join(str(path) for path in PYTHONPATH)
         precommit_env["MYPYPATH"] = ":".join(str(path) for path in PYTHONPATH)
+        self.handle_pycln(self.hooks["pycln"])
         for python_version, changed_files in self.python_version_to_files.items():
             if python_version.startswith("2"):
                 if test:

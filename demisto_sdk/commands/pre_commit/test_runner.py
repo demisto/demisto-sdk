@@ -40,11 +40,13 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         docker_image = integration_script.docker_image
         if os.getenv("GITLAB_CI"):
             docker_image = f"docker-io.art.code.pan.run/{docker_image}"
+        logger.info(f"Running test for {filename} with docker image {docker_image}")
         try:
             container = docker_client.containers.create(
                 image=docker_image,
                 name=f"demisto-sdk-test-{integration_script.object_id}",
-                environment={"PYTHONPATH": ":".join(PYTHONPATH)},
+                environment={"PYTHONPATH": ":".join(PYTHONPATH),
+                             "REQUESTS_CA_BUNDLE": '/etc/ssl/certs/ca-certificates.crt'},
                 volumes=[f"{CONTENT_PATH}:/content", f"{(Path(__file__).parent / 'runner.sh')}:/runner.sh"],
                 command="sh /runner.sh",
                 working_dir=working_dir,

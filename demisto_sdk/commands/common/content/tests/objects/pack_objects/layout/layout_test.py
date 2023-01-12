@@ -38,6 +38,16 @@ class TestLayoutsContainer:
             )[0]
             with open(str(layouts_container_to_upload_path)) as f:
                 layouts_container_to_upload = json.load(f)
-                assert "fromVersion" in layouts_container_to_upload
-                assert "fromServerVersion" in layouts_container_to_upload
-                assert "toServerVersion" in layouts_container_to_upload
+            assert "fromVersion" in layouts_container_to_upload
+            assert "fromServerVersion" in layouts_container_to_upload
+            assert "toVersion" in layouts_container_to_upload
+            assert "toServerVersion" in layouts_container_to_upload
+
+            assert (
+                layouts_container_to_upload["fromVersion"]
+                == layouts_container_to_upload["fromServerVersion"]
+            )
+            assert (
+                layouts_container_to_upload["toVersion"]
+                == layouts_container_to_upload["toServerVersion"]
+            )

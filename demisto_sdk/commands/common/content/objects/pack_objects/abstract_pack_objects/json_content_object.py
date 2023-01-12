@@ -137,24 +137,27 @@ class JSONContentObject(JSONObject):
         data = get_json(str(self.path))
         return isinstance(data, list)
 
-    def _unify(self, dest_dir: Path = None, output: str = "") -> List[Path]:
+    def _unify(
+        self, dest_dir: Optional[Union[Path, str]] = None, output: str = ""
+    ) -> List[Path]:
         """Unify JSONBasedContentObject in destination dir.
 
         Args:
-            dest_dir: Destination directory.
+            dest_dir: Destination directory, if not provided the destination directory will be the current working dir.
             output: output suffix to add the destination directory.
 
         Returns:
             List[Path]: List of new created unified json files.
         """
-        if isinstance(dest_dir, str):
-            dest_dir = Path(dest_dir)
+        if dest_dir is None:
+            dest_dir = ""
+
         # Unify step
         return [
             Path(
                 str(
                     PrepareUploadManager.prepare_for_upload(
-                        input=self.path, output=dest_dir / output  # type: ignore[operator]
+                        input=self.path, output=Path(dest_dir, output)  # type: ignore[arg-type]
                     )
                 )
             )

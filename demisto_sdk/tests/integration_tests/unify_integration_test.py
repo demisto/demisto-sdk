@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
@@ -299,7 +300,9 @@ class TestLayoutUnifer:
             - make sure the 'fromServerVersion' was added
             - make sure the 'toServerVersion' was added
             - make sure the 'fromVersion' was not deleted.
+            - make sure the 'toVersion' was not deleted.
             - make sure the 'fromServerVersion' and 'fromVersion' are the same.
+            - make sure the 'toVersion' and 'toServerVersion' are the same.
         """
 
         pack = repo.create_pack("test")
@@ -319,12 +322,16 @@ class TestLayoutUnifer:
             result = runner.invoke(
                 main, [UNIFY_CMD, "-i", f"{layout.path}", "-o", output]
             )
+
             assert not result.exception
             assert not result.stderr
-            with open(os.path.join(output)) as updated_layout:
-                layout_data = json.load(updated_layout)
-                assert "fromVersion" in layout_data
-                assert "fromServerVersion" in layout_data
-                assert "toServerVersion" in layout_data
 
-                assert layout_data["fromVersion"] == layout_data["fromServerVersion"]
+            with open(Path(output).name) as updated_layout:
+                layout_data = json.load(updated_layout)
+            assert "fromVersion" in layout_data
+            assert "fromServerVersion" in layout_data
+            assert "toVersion" in layout_data
+            assert "toServerVersion" in layout_data
+
+            assert layout_data["fromVersion"] == layout_data["fromServerVersion"]
+            assert layout_data["toVersion"] == layout_data["toServerVersion"]

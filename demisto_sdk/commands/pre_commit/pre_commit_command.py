@@ -59,10 +59,14 @@ class PreCommit:
         # handle skipped hooks
         env = os.environ.copy()
         skipped_hooks = list(SKIPPED_HOOKS)
-        if test:
+        if not test:
             skipped_hooks.append("content-test-runner")
         env["SKIP"] = ",".join(skipped_hooks)
         for python_version, changed_files in self.python_version_to_files.items():
+            if python_version.startswith("2"):
+                if test:
+                    subprocess.run(["pre-commit", "run", "content-test-runner", "--files", *changed_files, "-v"], env=env)
+                continue
             if python_version != DEFAULT_PYTHON_VERSION:
                 self.handle_pyupgrade(self.hooks["pyupgrade"], python_version)
                 self.handle_mypy(self.hooks["mypy"], python_version)
@@ -120,17 +124,15 @@ def categorize_files(files: Set[Path]) -> PreCommit:
     python_versions_to_files = defaultdict(set)
     with multiprocessing.Pool() as pool:
         integrations_scripts = pool.map(BaseContent.from_path, integrations_scripts_mapping.keys())
-    # integrations_scripts = []
-    # for integration_script_path in integrations_scripts_mapping.keys():
-    #     integrations_scripts.append(BaseContent.from_path(integration_script_path))
     
     for integration_script in integrations_scripts:
         if not integration_script or not isinstance(integration_script, IntegrationScript):
             continue
+        integration_script_path = integration_script.path.parent.relative_to(CONTENT_PATH)
         if python_version := integration_script.python_version:
             version = Version(python_version)
             python_version = f"{version.major}.{version.minor}"
-        python_versions_to_files[python_version or DEFAULT_PYTHON_VERSION].update(integrations_scripts_mapping[integration_script.path.parent])
+        python_versions_to_files[python_version or DEFAULT_PYTHON_VERSION].update(integrations_scripts_mapping[integration_script_path])
     python_versions_to_files[DEFAULT_PYTHON_VERSION].update(files_to_run)
     
     return PreCommit(python_versions_to_files)

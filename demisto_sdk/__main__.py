@@ -3080,24 +3080,28 @@ def update_content_graph(
     "--use-git",
     help="Whether to use git to determine which files to run the command on",
     is_flag=True,
+    default=False,
 )
 @click.option(
     "-s",
     "--staged",
     help="Whether to run on staged files only",
     is_flag=True,
+    default=False,
 )
 @click.option(
     "-a",
     "--all-files",
     help="Whether to run precommit on all files",
-    is_flag=True
+    is_flag=True,
+    default=False,
 )
 @click.option(
     "-t",
     "--test",
     help="Whether to run tests",
     is_flag=True,
+    default=False,
 )
 def pre_commit(input: Iterable[Path], use_git: bool, staged: bool, all_files: bool, test: bool):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit

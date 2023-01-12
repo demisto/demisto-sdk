@@ -10,9 +10,7 @@ from demisto_sdk.commands.common.docker_helper import get_python_version_from_im
 
 
 class IntegrationScriptParser(YAMLContentItemParser):
-    def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
-    ) -> None:
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         self.is_unified = YAMLContentItemParser.is_unified_file(path)
         super().__init__(path, pack_marketplaces)
 
@@ -25,12 +23,12 @@ class IntegrationScriptParser(YAMLContentItemParser):
         if version := get_python_version_from_image(self.docker_image):
             return str(version)
         return None
-    
+
     @property
     @abstractmethod
     def docker_image(self) -> Optional[str]:
         ...
-        
+
     @abstractmethod
     def get_code(self) -> Optional[str]:
         pass

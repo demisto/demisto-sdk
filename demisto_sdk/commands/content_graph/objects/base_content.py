@@ -111,8 +111,11 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         logger.info(f"Loading content item from path: {path}")
         if path.is_dir() and path.parent.name == "Packs":  # if the path given is a pack
             return content_type_to_model[ContentType.PACK].from_orm(PackParser(path))
-        content_item_parser = ContentItemParser.from_path(path)
-
+        try:
+            content_item_parser = ContentItemParser.from_path(path)
+        except Exception as e:
+            logger.error(f"Could not parse content item from path: {path}. Error: {e}")
+            return None
         if not content_item_parser:
             # This is a workaround because `create-content-artifacts` still creates deprecated content items
             demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = (

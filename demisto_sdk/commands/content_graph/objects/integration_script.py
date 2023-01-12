@@ -28,7 +28,8 @@ class IntegrationScript(ContentItem):
     docker_image: Optional[str]
     description: Optional[str]
     is_unified: bool = Field(False, exclude=True)
-
+    python_version: Optional[str]
+    
     def prepare_for_upload(
         self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
     ) -> dict:

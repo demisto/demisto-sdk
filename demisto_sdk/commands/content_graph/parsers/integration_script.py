@@ -6,6 +6,7 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
 )
+from demisto_sdk.commands.common.docker_helper import get_python_version_from_image
 
 
 class IntegrationScriptParser(YAMLContentItemParser):
@@ -19,6 +20,17 @@ class IntegrationScriptParser(YAMLContentItemParser):
     def object_id(self) -> Optional[str]:
         return self.yml_data.get("commonfields", {}).get("id")
 
+    @property
+    def python_version(self) -> Optional[str]:
+        if version := get_python_version_from_image(self.docker_image):
+            return str(version)
+        return None
+    
+    @property
+    @abstractmethod
+    def docker_image(self) -> Optional[str]:
+        ...
+        
     @abstractmethod
     def get_code(self) -> Optional[str]:
         pass

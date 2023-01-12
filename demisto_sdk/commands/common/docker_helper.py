@@ -1,12 +1,12 @@
 import functools
 import logging
 import os
+import re
 import shutil
 import tarfile
 import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
-
 import docker
 from docker.types import Mount
 import requests
@@ -19,11 +19,11 @@ FILES_SRC_TARGET = List[Tuple[os.PathLike, str]]
 # this will be used to determine if the system supports mounts
 CAN_MOUNT_FILES = bool(os.getenv("GITLAB_CI", False)) or (
     (not os.getenv("CIRCLECI", False))
-    and (
-        (not os.getenv("DOCKER_HOST"))
-        or os.getenv("DOCKER_HOST", "").lower().startswith("unix:")
-    )
+    and ((not os.getenv("DOCKER_HOST")) or os.getenv("DOCKER_HOST", "").lower().startswith("unix:"))
 )
+# find me regex to find the python version for 'demisto/python3:3.10.6.33415'
+
+PYTHON_IMAGE_REGEX = re.compile(r"python.*:(\d+\.\d+\.\d+)")
 
 
 class DockerException(Exception):
@@ -67,13 +67,9 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
 
 class DockerBase:
     def __init__(self):
-        self.tmp_dir_name = tempfile.TemporaryDirectory(
-            prefix=os.path.join(os.getcwd(), "tmp")
-        )
+        self.tmp_dir_name = tempfile.TemporaryDirectory(prefix=os.path.join(os.getcwd(), "tmp"))
         self.tmp_dir = Path(self.tmp_dir_name.name)
-        installation_scripts = (
-            Path(__file__).parent.parent / "lint" / "resources" / "installation_scripts"
-        )
+        installation_scripts = Path(__file__).parent.parent / "lint" / "resources" / "installation_scripts"
         self.installation_scripts = {
             TYPE_PYTHON: installation_scripts / "python_image.sh",
             TYPE_PWSH: installation_scripts / "powershell_image.sh",
@@ -111,9 +107,7 @@ class DockerBase:
             return docker_client
 
     @staticmethod
-    def copy_files_container(
-        container: docker.models.containers.Container, files: FILES_SRC_TARGET
-    ):
+    def copy_files_container(container: docker.models.containers.Container, files: FILES_SRC_TARGET):
         """
         Args:
             container: the container object.
@@ -141,10 +135,8 @@ class DockerBase:
         """
         Creates a container and pushing requested files to the container.
         """
-        container: docker.models.containers.Container = (
-            init_global_docker_client().containers.create(
-                image=image, command=command, environment=environment, **kwargs
-            )
+        container: docker.models.containers.Container = init_global_docker_client().containers.create(
+            image=image, command=command, environment=environment, **kwargs
         )
         if files_to_push:
             self.copy_files_container(container, files_to_push)
@@ -171,9 +163,7 @@ class DockerBase:
             2. running the istallation scripts
             3. committing the docker changes (installed packages) to a new local image
         """
-        self.requirements.write_text(
-            "\n".join(install_packages) if install_packages else ""
-        )
+        self.requirements.write_text("\n".join(install_packages) if install_packages else "")
         logger.debug(f"Trying to pull image {base_image}")
         self.pull_image(base_image)
         container = self.create_container(
@@ -188,9 +178,7 @@ class DockerBase:
                 build_log=container.logs(),
             )
         repository, tag = image.split(":")
-        container.commit(
-            repository=repository, tag=tag, changes=self.changes[container_type]
-        )
+        container.commit(repository=repository, tag=tag, changes=self.changes[container_type])
         return image
 
 
@@ -203,9 +191,7 @@ class MountableDocker(DockerBase):
         ]
         for file in files:
             if file.exists():
-                self._files_to_push_on_installation.append(
-                    (shutil.copyfile(file, self.tmp_dir / file.name), str(file))
-                )
+                self._files_to_push_on_installation.append((shutil.copyfile(file, self.tmp_dir / file.name), str(file)))
 
     @staticmethod
     def get_mounts(files: FILES_SRC_TARGET) -> List[Mount]:
@@ -261,35 +247,54 @@ class MountableDocker(DockerBase):
 def get_docker():
     return MountableDocker() if CAN_MOUNT_FILES else DockerBase()
 
+
 @functools.lru_cache
-def get_python_version_from_image(image: Optional[str]) -> str:
+def get_python_version_from_image(image: Optional[str]) -> Optional[Version]:
     # check with docker hub the PYTHON_VERSION env var
     if not image:
-        return "3.10"
+        return None
+    if match := PYTHON_IMAGE_REGEX.search(image):
+        return Version(match.group(1))
     if ":" not in image:
         repo = image
         tag = "latest"
     else:
         repo, tag = image.split(":")
-    response = requests.get(f"https://auth.docker.io/token?service=registry.docker.io&scope=repository:{repo}:pull")
-    token = response.json()["token"]
-    response = requests.get(
-        f"https://registry-1.docker.io/v2/{repo}/manifests/{tag}",
-        headers={
-            "Accept": "application/vnd.docker.distribution.manifest.v2+json",
-            "Authorization": f"Bearer {token}",
-        },
-    )
-    digest = response.json()["config"]["digest"]
-    response = requests.get(
-        f"https://registry-1.docker.io/v2/{repo}/blobs/{digest}",
-        headers={
-            "Accept": "application/vnd.docker.distribution.manifest.v2+json",
-            "Authorization": f"Bearer {token}",
-        },
-    )
-    python_version_envs = [env for env in response.json()["config"]["Env"] if env.startswith("PYTHON_VERSION=")]
-    if not python_version_envs:
-        return "3.10"
-    version = Version(python_version_envs[0].split("=")[1])
-    return f"{version.major}.{version.minor}"
+    try:
+        response = requests.get(f"https://auth.docker.io/token?service=registry.docker.io&scope=repository:{repo}:pull")
+        token = response.json()["token"]
+        auth = None
+        if (docker_user := os.getenv("DOCKERHUB_USER")) and (docker_pass := os.getenv("DOCKERHUB_PASSWORD")):
+            auth = (docker_user, docker_pass)
+        session = requests.Session()
+        from requests.adapters import HTTPAdapter
+        session.mount("https://", HTTPAdapter(max_retries=5))
+        response = session.get(
+            f"https://registry-1.docker.io/v2/{repo}/manifests/{tag}",
+            headers={
+                "Accept": "application/vnd.docker.distribution.manifest.v2+json",
+                "Authorization": f"Bearer {token}",
+            },
+            auth=auth,
+        )
+        if not response.ok:
+            logger.error(f"Failed to get python version from docker hub: {response.text}")
+            return None
+        digest = response.json()["config"]["digest"]
+        response = session.get(
+            f"https://registry-1.docker.io/v2/{repo}/blobs/{digest}",
+            headers={
+                "Accept": "application/vnd.docker.distribution.manifest.v2+json",
+                "Authorization": f"Bearer {token}",
+            },
+        )
+        if not response.ok:
+            logger.error(f"Failed to get python version from docker hub: {response.text}")
+            return None
+        python_version_envs = [env for env in response.json()["config"]["Env"] if env.startswith("PYTHON_VERSION=")]
+        if not python_version_envs:
+            return None
+        return Version(python_version_envs[0].split("=")[1])
+    except Exception as e:
+        logger.error(f"Failed to get python version from docker hub: {e}")
+        return None

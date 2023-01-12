@@ -27,6 +27,9 @@ class GitUtil:
         else:
             self.repo = repo
 
+    def get_all_files(self):
+        return {Path(path) for path in self.repo.git.ls_files().split('\n')}
+    
     def modified_files(
         self,
         prev_ver: str = "",

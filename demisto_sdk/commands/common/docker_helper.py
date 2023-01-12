@@ -261,11 +261,15 @@ def get_python_version_from_image(image: Optional[str]) -> Optional[Version]:
     else:
         repo, tag = image.split(":")
     try:
-        response = requests.get(f"https://auth.docker.io/token?service=registry.docker.io&scope=repository:{repo}:pull")
-        token = response.json()["token"]
         auth = None
         if (docker_user := os.getenv("DOCKERHUB_USER")) and (docker_pass := os.getenv("DOCKERHUB_PASSWORD")):
             auth = (docker_user, docker_pass)
+
+        response = requests.get(
+            f"https://auth.docker.io/token?service=registry.docker.io&scope=repository:{repo}:pull",
+            auth=auth,
+            )
+        token = response.json()["token"]
         session = requests.Session()
         from requests.adapters import HTTPAdapter
         session.mount("https://", HTTPAdapter(max_retries=5))
@@ -275,7 +279,6 @@ def get_python_version_from_image(image: Optional[str]) -> Optional[Version]:
                 "Accept": "application/vnd.docker.distribution.manifest.v2+json",
                 "Authorization": f"Bearer {token}",
             },
-            auth=auth,
         )
         if not response.ok:
             logger.error(f"Failed to get python version from docker hub: {response.text}")

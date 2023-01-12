@@ -118,11 +118,11 @@ def categorize_files(files: Set[Path]) -> PreCommit:
             files_to_run.append(file)
     
     python_versions_to_files = defaultdict(set)
-    # with multiprocessing.Pool() as pool:
-    #     integrations_scripts = pool.map(BaseContent.from_path, integrations_scripts_mapping.keys())
-    integrations_scripts = []
-    for integration_script_path in integrations_scripts_mapping.keys():
-        integrations_scripts.append(BaseContent.from_path(integration_script_path))
+    with multiprocessing.Pool() as pool:
+        integrations_scripts = pool.map(BaseContent.from_path, integrations_scripts_mapping.keys())
+    # integrations_scripts = []
+    # for integration_script_path in integrations_scripts_mapping.keys():
+    #     integrations_scripts.append(BaseContent.from_path(integration_script_path))
     
     for integration_script in integrations_scripts:
         if not integration_script or not isinstance(integration_script, IntegrationScript):

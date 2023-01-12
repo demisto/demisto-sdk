@@ -129,7 +129,7 @@ def pre_commit(
 
 
 def categorize_files(files: Set[Path]) -> PreCommit:
-    integrations_scripts_mapping = defaultdict(list)
+    integrations_scripts_mapping = defaultdict(set)
     files_to_run = []
     for file in files:
         if file.is_dir():
@@ -139,7 +139,7 @@ def categorize_files(files: Set[Path]) -> PreCommit:
             if not find_path_index:
                 raise Exception(f"Could not find integration/script path for {file}")
             integration_script_path = Path(*file.parts[: next(find_path_index) + 1])
-            integrations_scripts_mapping[integration_script_path].append(file)
+            integrations_scripts_mapping[integration_script_path].add(file)
         else:
             files_to_run.append(file)
 

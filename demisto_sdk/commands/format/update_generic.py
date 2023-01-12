@@ -13,6 +13,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS,
+    find_type,
     get_dict_from_file,
     get_max_version,
     get_remote_file,
@@ -65,6 +66,7 @@ class BaseUpdate:
         **kwargs,
     ):
         self.source_file = input
+        self.source_file_type = find_type(self.source_file)
         self.output_file = self.set_output_file_path(output)
         self.verbose = verbose
         _, self.relative_content_path = is_file_from_content_repo(self.output_file)

@@ -1,10 +1,12 @@
 import os
-from typing import Dict, List, Optional
+import traceback
+from typing import Dict, List, Optional, Tuple
 
 import click
 
 from demisto_sdk.commands.common.constants import (
     ENTITY_TYPE_TO_DIR,
+    FILETYPE_TO_DEFAULT_FROMVERSION,
     INTEGRATION,
     NO_TESTS_DEPRECATED,
     PLAYBOOK,
@@ -22,6 +24,11 @@ from demisto_sdk.commands.common.tools import (
     get_yaml,
     is_uuid,
     listdir_fullpath,
+)
+from demisto_sdk.commands.format.format_constants import (
+    ERROR_RETURN_CODE,
+    SKIP_RETURN_CODE,
+    SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
@@ -93,8 +100,12 @@ class BaseUpdateYML(BaseUpdate):
 
     def get_id_and_version_for_data(self, data):
         yml_type = self.__class__.__name__
-        path = self.ID_AND_VERSION_PATH_BY_YML_TYPE[yml_type]
-        return data.get(path, data)
+        try:
+            path = self.ID_AND_VERSION_PATH_BY_YML_TYPE[yml_type]
+            return data.get(path, data)
+        except KeyError:
+            # content type is not relevant for checks using this property
+            return None
 
     def update_id_to_equal_name(self) -> None:
         """Updates the id of the YML to be the same as it's name
@@ -145,8 +156,9 @@ class BaseUpdateYML(BaseUpdate):
         self.remove_copy_and_dev_suffixes_from_name()
         self.remove_unnecessary_keys()
         self.remove_spaces_end_of_id_and_name()
-        self.update_id_to_equal_name()
-        self.set_version_to_default(self.id_and_version_location)
+        if self.id_and_version_location:
+            self.update_id_to_equal_name()
+            self.set_version_to_default(self.id_and_version_location)
         self.copy_tests_from_old_file()
         if self.deprecate:
             self.update_deprecate(file_type=file_type)
@@ -367,9 +379,10 @@ class BaseUpdateYML(BaseUpdate):
             if self.verbose:
                 click.echo("Updating YML ID and name to be without spaces at the end")
             self.data["name"] = self.data["name"].strip()
-            self.id_and_version_location["id"] = self.id_and_version_location[
-                "id"
-            ].strip()
+            if self.id_and_version_location:
+                self.id_and_version_location["id"] = self.id_and_version_location[
+                    "id"
+                ].strip()
 
     def remove_nativeimage_tag_if_exist(self):
         if self.data.get("nativeimage"):  # script
@@ -379,3 +392,38 @@ class BaseUpdateYML(BaseUpdate):
                 "nativeimage"
             ):  # integration
                 script_section.pop("nativeimage")
+
+    def format_file(self) -> Tuple[int, int]:
+        """Manager function for the Correlation Rules YML updater."""
+        format_res = self.run_format()
+        if format_res:
+            return format_res, SKIP_RETURN_CODE
+        else:
+            return format_res, self.initiate_file_validator()
+
+    def run_format(self) -> int:
+        try:
+            click.secho(
+                f"\n======= Updating file: {self.source_file} =======", fg="white"
+            )
+            self.update_yml(
+                default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(
+                    self.source_file_type  # type: ignore
+                )
+            )
+            self.save_yml_to_destination_file()
+            return SUCCESS_RETURN_CODE
+        except Exception as err:
+            print(
+                "".join(
+                    traceback.format_exception(
+                        type(err), value=err, tb=err.__traceback__
+                    )
+                )
+            )
+            if self.verbose:
+                click.secho(
+                    f"\nFailed to update file {self.source_file}. Error: {err}",
+                    fg="red",
+                )
+            return ERROR_RETURN_CODE

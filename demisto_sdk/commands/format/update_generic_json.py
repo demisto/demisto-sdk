@@ -1,13 +1,20 @@
+import traceback
 from distutils.version import LooseVersion
-from typing import Optional
+from typing import Optional, Tuple
 
 import click
 
-from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_TO_VERSION
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_TO_VERSION,
+    FILETYPE_TO_DEFAULT_FROMVERSION,
+)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.tools import get_yaml, is_uuid, print_error
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES,
+    ERROR_RETURN_CODE,
+    SKIP_RETURN_CODE,
+    SUCCESS_RETURN_CODE,
     TO_VERSION_5_9_9,
 )
 from demisto_sdk.commands.format.update_generic import BaseUpdate
@@ -81,11 +88,11 @@ class BaseUpdateJSON(BaseUpdate):
         self.set_version_to_default()
         self.remove_null_fields()
         self.check_server_version()
-        self.remove_unnecessary_keys()
         self.remove_spaces_end_of_id_and_name()
         self.set_fromVersion(
             default_from_version=default_from_version, file_type=file_type
         )
+        self.remove_unnecessary_keys()
         self.sync_data_to_master()
 
     def set_toVersion(self):
@@ -163,3 +170,38 @@ class BaseUpdateJSON(BaseUpdate):
                 self.data["name"] = self.data["name"].strip()
             if "id" in self.data:
                 self.data["id"] = self.data["id"].strip()
+
+    def format_file(self) -> Tuple[int, int]:
+        """Manager function for the JSON updater."""
+        format_res = self.run_format()
+        if format_res:
+            return format_res, SKIP_RETURN_CODE
+        else:
+            return format_res, self.initiate_file_validator()
+
+    def run_format(self) -> int:
+        try:
+            click.secho(
+                f"\n======= Updating file: {self.source_file} =======", fg="white"
+            )
+            self.update_json(
+                default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(
+                    self.source_file_type  # type: ignore
+                )
+            )
+            self.save_json_to_destination_file()
+            return SUCCESS_RETURN_CODE
+        except Exception as err:
+            print(
+                "".join(
+                    traceback.format_exception(
+                        type(err), value=err, tb=err.__traceback__
+                    )
+                )
+            )
+            if self.verbose:
+                click.secho(
+                    f"\nFailed to update file {self.source_file}. Error: {err}",
+                    fg="red",
+                )
+            return ERROR_RETURN_CODE

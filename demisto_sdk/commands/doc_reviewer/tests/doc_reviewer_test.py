@@ -1,4 +1,5 @@
 import os
+import re
 from enum import Enum
 from os import path
 from pathlib import Path
@@ -9,7 +10,11 @@ from click.testing import CliRunner, Result
 
 from demisto_sdk import __main__
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.tools import find_type, get_yaml
+from demisto_sdk.commands.common.tools import (
+    find_type,
+    get_yaml,
+    is_xsoar_supported_pack,
+)
 from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 from demisto_sdk.tests.integration_tests.validate_integration_test import (
     AZURE_FEED_PACK_PATH,
@@ -484,6 +489,9 @@ class TestDocReviewPrinting:
     MOCKED_FILES = ["file1", "file2"]
     GREEN_FG = {"fg": "green"}
     BRIGHT_RED_FG = {"fg": "bright_red"}
+    README_SKIPPED_REGEX = r"^File '.*/README.md' was skipped because it does not belong to an XSOAR-supported Pack"
+    RN_SKIPPED_REGEX = r"^File '.*/ReleaseNotes/.*.md' was skipped because it does not belong to an XSOAR-supported Pack"
+    FILE_MISSPELL_FOUND_REGEX = r"Words that might be misspelled were found in .*:"
 
     class SpelledFileType:
         """
@@ -634,6 +642,50 @@ class TestDocReviewPrinting:
         forth_call = secho_mocker.mock_calls[3]
         assert "file1\nfile2" in forth_call.args[0]
         assert forth_call.kwargs == self.BRIGHT_RED_FG
+
+    def test_printing_skip_non_xsoar_supported_file(
+        self, mix_invalid_packs: List[Pack], mocker
+    ):
+        """
+        Given:
+            - A list of Packs (1 XSOAR-supported and 1 community-supported).
+
+        When -
+            Printing doc review report.
+
+        Then:
+            - Ensure that misspelled file in XSOAR-supported Pack is printed in report.
+            - Ensure that misspelled file in community-supported Pack is skipped in report
+        """
+
+        t = TestDocReviewXSOAROnly()
+
+        cmd_args: List[str] = []
+        for pack in mix_invalid_packs:
+            cmd_args.append("--input")
+            cmd_args.append(pack.path)
+
+            if is_xsoar_supported_pack(pack.path):
+                expected_supported = (
+                    f"Words that might be misspelled were found in {pack.path}"
+                )
+            else:
+                expected_not_supported_readme = f"File '{pack.readme.path}' was skipped because it does not belong to an XSOAR-supported Pack"
+                expected_not_supported_rn = f"File '{pack.release_notes[0].path}' was skipped because it does not belong to an XSOAR-supported Pack"
+
+        doc_review_report = t.run_doc_review_cmd(cmd_args)
+
+        report_output_lines = doc_review_report.output.splitlines()
+
+        for line in report_output_lines:
+            if re.match(self.README_SKIPPED_REGEX, line):
+                assert expected_not_supported_readme == line
+
+            if re.match(self.RN_SKIPPED_REGEX, line):
+                assert expected_not_supported_rn == line
+
+            if re.match(self.FILE_MISSPELL_FOUND_REGEX, line):
+                assert expected_supported == line
 
 
 WORDS = [

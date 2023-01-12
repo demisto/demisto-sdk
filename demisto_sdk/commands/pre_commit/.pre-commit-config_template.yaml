@@ -24,7 +24,7 @@ repos:
       rev: v2.1.2
       hooks:
         - id: pycln
-          args: ["--skip-imports=CommonServerPython,CommonServerUserPython,demisto"]
+          args: ["--skip-imports"]
 
 
     - repo: https://github.com/timothycrosley/isort

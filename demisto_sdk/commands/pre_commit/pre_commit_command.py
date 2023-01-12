@@ -1,6 +1,5 @@
 from collections import defaultdict
 from dataclasses import dataclass
-import itertools
 import os
 import shutil
 import subprocess
@@ -15,7 +14,6 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-from demisto_sdk.commands.common.docker_helper import get_python_version_from_image
 
 yaml = YAML_Handler()
 
@@ -78,7 +76,7 @@ class PreCommit:
 
     @staticmethod
     def handle_pycln(pycln_hook):
-        pycln_hook["args"] = [f"--skip-imports={','(path.name for path in PYTHONPATH)},demisto"]
+        pycln_hook["args"] = [f"--skip-imports={','.join(path.name for path in PYTHONPATH)},demisto"]
 
     def run(self, test: bool = False, skip_hooks: Optional[List[str]] = None):
         # handle skipped hooks

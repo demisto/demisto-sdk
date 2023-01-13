@@ -21,6 +21,7 @@ DEFAULT_PYTHON_VERSION = "3.10"
 EMPTY_PYTHON_VERSION = "2.7"
 
 PYTHONPATH = [
+    Path(CONTENT_PATH),
     Path(CONTENT_PATH / "Packs" / "Base" / "Scripts" / "CommonServerPython"),
     Path(CONTENT_PATH / "Tests" / "demistomock"),
 ]
@@ -51,6 +52,8 @@ def python_version_to_ruff(python_version: str):
 with open(PRECOMMIT_TEMPLATE_PATH, "r") as f:
     PRECOMMIT_TEMPLATE = yaml.load(f)
 
+
+(CONTENT_PATH / "CommonServerUserPython.py").touch()
 
 @dataclass
 class PreCommit:

@@ -59,11 +59,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 command="sh /runner.sh",
                 working_dir=working_dir,
                 detach=True,
-                restart_policy={"Name": "on-failure", "MaximumRetryCount": 3},
             )
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
-            container_exit_code = container.attrs["State"]["ExitCode"]
+            container_exit_code = container.wait()["StatusCode"]
             container.remove(force=True)
             if container_exit_code:
                 print(f"Some test failed Test failed. Exit code: {container_exit_code}")

@@ -116,9 +116,9 @@ class PreCommit:
                     if GITHUB_ACTIONS:
                         print(f"{test_path}:{line}: {message}")
                         core.error(
-                            "Packs/QRadar/Integrations/QRadar_v3/QRadar_v3_test.py failed!!!",
+                            message,
                             title="Pytest",
-                            file="Packs/QRadar/Integrations/QRadar_v3/QRadar_v3_test.py",
+                            file=str(test_path),
                             start_line=str(line),
                         )
                         # print_github_actions_output(
@@ -173,7 +173,7 @@ class PreCommit:
                     if response.returncode != 0:
                         ret_val = response.returncode
                 continue
-            # self.handle_ruff(self.hooks["ruff"], python_version, no_fix)
+            self.handle_ruff(self.hooks["ruff"], python_version, no_fix)
             if python_version != DEFAULT_PYTHON_VERSION:
                 self.handle_pyupgrade(self.hooks["pyupgrade"], python_version)
                 self.handle_mypy(self.hooks["mypy"], python_version)

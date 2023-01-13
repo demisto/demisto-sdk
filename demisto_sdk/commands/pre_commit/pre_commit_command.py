@@ -106,7 +106,7 @@ class PreCommit:
                     crash = test["call"]["crash"]
                     traceback = test["call"]["traceback"]
                     traceback_message = ", ".join(t["message"] for t in traceback)
-                    file = Path(crash["path"]).relative_to("/content").absolute()
+                    file = Path(crash["path"]).relative_to("/content")
                     line = crash["lineno"]
                     message = (
                         f"Test {test['nodeid']} failed. \n Traceback: {traceback_message} \n"
@@ -114,7 +114,7 @@ class PreCommit:
                     )
                     if GITHUB_ACTIONS:
                         print_github_actions_output(
-                            command="error", title="Pytest", file=str(file), line=str(line), message=test['call']['longrepr']
+                            command="error", title="Pytest", file=str(file), line=str(line), message=f"Tracebacks: {traceback_message}"
                         )
                     else:
                         print(f"{file}:{line}: {message}")
@@ -125,7 +125,7 @@ class PreCommit:
                     filepath = integration_script_path.with_name(match.group(1))
                 if GITHUB_ACTIONS:
                     print_github_actions_output(
-                        command="warning", title="Pytest", file=filepath, line=str(warning["lineno"]), message=message
+                        command="warning", title="Pytest", file=str(filepath), line=str(warning["lineno"]), message=message
                     )
                 else:
                     print(f"{filepath}:{warning['lineno']}: {message}")

@@ -106,7 +106,8 @@ class PreCommit:
                     file = Path(crash["path"]).relative_to("/content")
                     line = crash["lineno"]
                     message = (
-                        f"Test {test['nodeid']} failed. \n Traceback: {traceback_message} \n {test['call']['longrepr']}"
+                        f"Test {test['nodeid']} failed. \n **Traceback:** {traceback_message} \n"
+                        f"{test['call']['longrepr']}"
                     )
                     if GITHUB_ACTIONS:
                         print(f"::error file={file},line={line},col=1::{message}")

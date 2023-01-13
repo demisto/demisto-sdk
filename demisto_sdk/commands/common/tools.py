@@ -3218,8 +3218,11 @@ def field_to_cli_name(field_name: str) -> str:
     """
     return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, "", field_name).lower()
 
+def _escape(s):
+    return s.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
 
-def print_github_actions_message(
+
+def print_github_actions_output(
     command: str,
     message: str,
     title: Optional[str] = None,
@@ -3229,18 +3232,17 @@ def print_github_actions_message(
     end_line: Optional[int] = None,
     end_col: Optional[int] = None,
 ) -> None:
-    commands = [f"::{command}"]
+    arguments = []
     if title:
-        commands.append(f"title={title}")
+        arguments.append(f"title={title}")
     if file:
-        commands.append(f"file={file}")
+        arguments.append(f"file={file}")
     if line:
-        commands.append(f"line={line}")
+        arguments.append(f"line={line}")
     if col:
-        commands.append(f"col={col}")
+        arguments.append(f"col={col}")
     if end_line:
-        commands.append(f"endLine={end_line}")
+        arguments.append(f"endLine={end_line}")
     if end_col:
-        commands.append(f"endColumn={end_col}")
-    commands.append(f"::{message}")
-    print(" ".join(commands))
+        arguments.append(f"endColumn={end_col}")
+    print(f"::{command} ', '.join(arguments)::{_escape(message)}")

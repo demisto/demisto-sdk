@@ -69,10 +69,7 @@ class PathsParamType(click.Path):
 
         split_paths = value.split(",")
         # check the validity of each of the paths
-        _ = [
-            super(PathsParamType, self).convert(path, param, ctx)
-            for path in split_paths
-        ]
+        _ = [super(PathsParamType, self).convert(path, param, ctx) for path in split_paths]
         return value
 
 
@@ -87,9 +84,7 @@ class VersionParamType(click.ParamType):
 
     def convert(self, value, param, ctx):
         version_sections = value.split(".")
-        if len(version_sections) == 3 and all(
-            version_section.isdigit() for version_section in version_sections
-        ):
+        if len(version_sections) == 3 and all(version_section.isdigit() for version_section in version_sections):
             return value
         else:
             self.fail(
@@ -145,9 +140,7 @@ def main(config, version, release_notes):
     from demisto_sdk.commands.common.tools import get_content_path
 
     dotenv.load_dotenv(Path(get_content_path()) / ".env", override=True)  # type: ignore # load .env file from the cwd
-    if (
-        not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK") or version
-    ):  # If the key exists/called to version
+    if not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK") or version:  # If the key exists/called to version
         try:
             __version__ = get_distribution("demisto-sdk").version
         except DistributionNotFound:
@@ -169,9 +162,7 @@ def main(config, version, release_notes):
                 if not rn_entries:
                     print_warning("\nCould not get the release notes for this version.")
                 else:
-                    click.echo(
-                        "\nThe following are the release note entries for the current version:\n"
-                    )
+                    click.echo("\nThe following are the release note entries for the current version:\n")
                     for rn in rn_entries:
                         click.echo(rn)
                     click.echo("")
@@ -233,9 +224,7 @@ def split(config, **kwargs):
         FileType.MODELING_RULE,
         FileType.PARSING_RULE,
     ]:
-        print_error(
-            "File is not an Integration, Script, Generic Module, Modeling Rule or Parsing Rule."
-        )
+        print_error("File is not an Integration, Script, Generic Module, Modeling Rule or Parsing Rule.")
         return 1
 
     if file_type in [
@@ -244,9 +233,7 @@ def split(config, **kwargs):
         FileType.MODELING_RULE,
         FileType.PARSING_RULE,
     ]:
-        yml_splitter = YmlSplitter(
-            configuration=config.configuration, file_type=file_type.value, **kwargs
-        )
+        yml_splitter = YmlSplitter(configuration=config.configuration, file_type=file_type.value, **kwargs)
         return yml_splitter.extract_to_package_format()
 
     else:
@@ -264,9 +251,7 @@ def split(config, **kwargs):
 @main.command(hidden=True)
 @click.help_option("-h", "--help")
 @click.option("--input", "-i", help="The yml file to extract from", required=True)
-@click.option(
-    "--output", "-o", required=True, help="The output file to write the code to"
-)
+@click.option("--output", "-o", required=True, help="The output file to write the code to")
 @click.option(
     "--no-demisto-mock",
     help="Don't add an import for demisto mock, false by default",
@@ -275,8 +260,7 @@ def split(config, **kwargs):
 )
 @click.option(
     "--no-common-server",
-    help="Don't add an import for CommonServerPython."
-    "If not specified will import unless this is CommonServerPython",
+    help="Don't add an import for CommonServerPython." "If not specified will import unless this is CommonServerPython",
     is_flag=True,
     show_default=True,
 )
@@ -290,9 +274,7 @@ def extract_code(config, **kwargs):
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
         print_error("File is not an Integration or Script.")
         return 1
-    extractor = YmlSplitter(
-        configuration=config.configuration, file_type=file_type.value, **kwargs
-    )
+    extractor = YmlSplitter(configuration=config.configuration, file_type=file_type.value, **kwargs)
     return extractor.extract_code(kwargs["outfile"])
 
 
@@ -306,9 +288,7 @@ def extract_code(config, **kwargs):
     required=True,
     type=click.Path(dir_okay=True),
 )
-@click.option(
-    "-o", "--output", help="The output dir to write the unified yml to", required=False
-)
+@click.option("-o", "--output", help="The output dir to write the unified yml to", required=False)
 @click.option(
     "-c",
     "--custom",
@@ -400,9 +380,7 @@ main.add_command(prepare_content, name="unify")
     help="Upload the unified packs to the marketplace.",
     default=False,
 )
-@click.option(
-    "--zip-all", is_flag=True, help="Zip all the packs in one zip file.", default=False
-)
+@click.option("--zip-all", is_flag=True, help="Zip all the packs in one zip file.", default=False)
 def zip_packs(**kwargs) -> int:
     """Generating zipped packs that are ready to be uploaded to Cortex XSOAR machine."""
     from demisto_sdk.commands.common.logger import logging_setup
@@ -423,9 +401,7 @@ def zip_packs(**kwargs) -> int:
     if marketplace := kwargs.get("marketplace"):
         os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
 
-    packs_zipper = PacksZipper(
-        zip_all=zip_all, pack_paths=kwargs.pop("input"), quiet_mode=zip_all, **kwargs
-    )
+    packs_zipper = PacksZipper(zip_all=zip_all, pack_paths=kwargs.pop("input"), quiet_mode=zip_all, **kwargs)
     zip_path, unified_pack_names = packs_zipper.zip_packs()
 
     if should_upload and zip_path:
@@ -458,9 +434,7 @@ def zip_packs(**kwargs) -> int:
     help="The path of the id-set.json used for validations.",
     type=click.Path(resolve_path=True),
 )
-@click.option(
-    "--prev-ver", help="Previous branch or SHA1 commit to run checks against."
-)
+@click.option("--prev-ver", help="Previous branch or SHA1 commit to run checks against.")
 @click.option(
     "--no-backward-comp",
     is_flag=True,
@@ -490,15 +464,13 @@ def zip_packs(**kwargs) -> int:
     "-st",
     "--staged",
     is_flag=True,
-    help="Whether the validation should ignore unstaged files."
-    "This applies only when the -g flag is supplied.",
+    help="Whether the validation should ignore unstaged files." "This applies only when the -g flag is supplied.",
 )
 @click.option(
     "-iu",
     "--include-untracked",
     is_flag=True,
-    help="Whether to include untracked files in the validation. "
-    "This applies only when the -g flag is supplied.",
+    help="Whether to include untracked files in the validation. " "This applies only when the -g flag is supplied.",
 )
 @click.option(
     "-a",
@@ -519,17 +491,13 @@ def zip_packs(**kwargs) -> int:
     is_flag=True,
     help="Skip validation of pack release notes.",
 )
-@click.option(
-    "--print-ignored-errors", is_flag=True, help="Print ignored errors as warnings."
-)
+@click.option("--print-ignored-errors", is_flag=True, help="Print ignored errors as warnings.")
 @click.option(
     "--print-ignored-files",
     is_flag=True,
     help="Print which files were ignored by the command.",
 )
-@click.option(
-    "--no-docker-checks", is_flag=True, help="Whether to run docker image validation."
-)
+@click.option("--no-docker-checks", is_flag=True, help="Whether to run docker image validation.")
 @click.option(
     "--silence-init-prints",
     is_flag=True,
@@ -540,23 +508,15 @@ def zip_packs(**kwargs) -> int:
     is_flag=True,
     help="Skip validation of pack dependencies.",
 )
-@click.option(
-    "--create-id-set", is_flag=True, help="Whether to create the id_set.json file."
-)
+@click.option("--create-id-set", is_flag=True, help="Whether to create the id_set.json file.")
 @click.option(
     "-j",
     "--json-file",
     help="The JSON file path to which to output the command results.",
 )
-@click.option(
-    "--skip-schema-check", is_flag=True, help="Whether to skip the file schema check."
-)
-@click.option(
-    "--debug-git", is_flag=True, help="Whether to print debug logs for git statuses."
-)
-@click.option(
-    "--print-pykwalify", is_flag=True, help="Whether to print the pykwalify log errors."
-)
+@click.option("--skip-schema-check", is_flag=True, help="Whether to skip the file schema check.")
+@click.option("--debug-git", is_flag=True, help="Whether to print debug logs for git statuses.")
+@click.option("--print-pykwalify", is_flag=True, help="Whether to print the pykwalify log errors.")
 @click.option(
     "--quiet-bc-validation",
     help="Set backwards compatibility validation's errors as warnings.",
@@ -650,8 +610,7 @@ def validate(config, **kwargs):
 @click.option("--zip/--no-zip", help="Zip content artifacts folders", default=True)
 @click.option(
     "--packs",
-    help="Create only content_packs artifacts. "
-    "Used for server version 5.5.0 and earlier.",
+    help="Create only content_packs artifacts. " "Used for server version 5.5.0 and earlier.",
     is_flag=True,
 )
 @click.option(
@@ -683,9 +642,7 @@ def validate(config, **kwargs):
     "-p",
     "--pack-names",
     help=(
-        "Packs to create artifacts for. Optional values are: `all` or "
-        "csv list of packs. "
-        "Default is set to `all`"
+        "Packs to create artifacts for. Optional values are: `all` or " "csv list of packs. " "Default is set to `all`"
     ),
     default="all",
     hidden=True,
@@ -830,9 +787,7 @@ def secrets(config, **kwargs):
     default=2,
     show_default=True,
 )
-@click.option(
-    "-q", "--quiet", is_flag=True, help="Quiet output, only output results in the end"
-)
+@click.option("-q", "--quiet", is_flag=True, help="Quiet output, only output results in the end")
 @click.option(
     "-p",
     "--parallel",
@@ -894,8 +849,7 @@ def secrets(config, **kwargs):
 @click.option(
     "-idp",
     "--id-set-path",
-    help="Path to id_set.json, relevant for when using the "
-    "--check-dependent-api-module flag.",
+    help="Path to id_set.json, relevant for when using the " "--check-dependent-api-module flag.",
     type=click.Path(resolve_path=True),
     default="Tests/id_set.json",
 )
@@ -903,9 +857,7 @@ def secrets(config, **kwargs):
     "-cdam",
     "--check-dependent-api-module",
     is_flag=True,
-    help="Run unit tests and lint on all packages that "
-    "are dependent on the found "
-    "modified api modules.",
+    help="Run unit tests and lint on all packages that " "are dependent on the found " "modified api modules.",
     default=False,
 )
 @click.option(
@@ -1017,16 +969,12 @@ def coverage_analyze(**kwargs):
     from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
 
     try:
-        no_degradation_check = (
-            kwargs["allowed_coverage_degradation_percentage"] == 100.0
-        )
+        no_degradation_check = kwargs["allowed_coverage_degradation_percentage"] == 100.0
         no_min_coverage_enforcement = kwargs["no_min_coverage_enforcement"]
 
         cov_report = CoverageReport(
             default_min_coverage=kwargs["default_min_coverage"],
-            allowed_coverage_degradation_percentage=kwargs[
-                "allowed_coverage_degradation_percentage"
-            ],
+            allowed_coverage_degradation_percentage=kwargs["allowed_coverage_degradation_percentage"],
             coverage_file=kwargs["input"],
             no_cache=kwargs.get("no_cache", False),
             report_dir=kwargs["report_dir"],
@@ -1036,11 +984,7 @@ def coverage_analyze(**kwargs):
         )
         cov_report.coverage_report()
         # if no_degradation_check=True we will suppress the minimum coverage check
-        if (
-            no_degradation_check
-            or cov_report.coverage_diff_report()
-            or no_min_coverage_enforcement
-        ):
+        if no_degradation_check or cov_report.coverage_diff_report() or no_min_coverage_enforcement:
             return 0
     except Exception as error:
         logging.getLogger("demisto-sdk").error(error)
@@ -1065,9 +1009,7 @@ def coverage_analyze(**kwargs):
     type=click.Path(resolve_path=True),
 )
 @click.option("-fv", "--from-version", help="Specify fromversion of the pack")
-@click.option(
-    "-nv", "--no-validate", help="Set when validate on file is not wanted", is_flag=True
-)
+@click.option("-nv", "--no-validate", help="Set when validate on file is not wanted", is_flag=True)
 @click.option(
     "-ud",
     "--update-docker",
@@ -1093,9 +1035,7 @@ def coverage_analyze(**kwargs):
     help="Use git to automatically recognize which files changed and run format on them.",
     is_flag=True,
 )
-@click.option(
-    "--prev-ver", help="Previous branch or SHA1 commit to run checks against."
-)
+@click.option("--prev-ver", help="Previous branch or SHA1 commit to run checks against.")
 @click.option(
     "-iu",
     "--include-untracked",
@@ -1249,9 +1189,7 @@ def upload(**kwargs):
 )
 @click.option("--insecure", help="Skip certificate validation", is_flag=True)
 @click.option("-v", "--verbose", help="Verbose output", is_flag=True)
-@click.option(
-    "-f", "--force", help="Whether to override existing files or not", is_flag=True
-)
+@click.option("-f", "--force", help="Whether to override existing files or not", is_flag=True)
 @click.option(
     "-lf",
     "--list-files",
@@ -1380,8 +1318,7 @@ def xsoar_config_file_update(**kwargs):
 )
 @click.option(
     "--debug-path",
-    help="The path to save the debug file at, if not specified the debug file will be printed to the "
-    "terminal",
+    help="The path to save the debug file at, if not specified the debug file will be printed to the " "terminal",
 )
 @click.option(
     "--json-to-outputs",
@@ -1399,8 +1336,7 @@ def xsoar_config_file_update(**kwargs):
 @click.option(
     "-r",
     "--raw-response",
-    help="Used with `json-to-outputs` flag. Use the raw response of the query for"
-    " `json-to-outputs`",
+    help="Used with `json-to-outputs` flag. Use the raw response of the query for" " `json-to-outputs`",
     is_flag=True,
 )
 def run(**kwargs):
@@ -1461,9 +1397,7 @@ def run_playbook(**kwargs):
     "can be a path to specific test playbook or path to pack name for example: Packs/GitHub.",
     required=False,
 )
-@click.option(
-    "--all", is_flag=True, help="Run all the test playbooks from this repository."
-)
+@click.option("--all", is_flag=True, help="Run all the test playbooks from this repository.")
 @click.option(
     "--wait",
     "-w",
@@ -1509,8 +1443,7 @@ def run_test_playbook(**kwargs):
 @click.option(
     "-p",
     "--prefix",
-    help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the "
-    "script generates",
+    help="Output prefix like Jira.Ticket, VirusTotal.IP, the base path for the outputs that the " "script generates",
     required=False,
 )
 @click.option(
@@ -1574,9 +1507,7 @@ def generate_outputs(**kwargs):
 # ====================== generate-test-playbook ====================== #
 @main.command()
 @click.help_option("-h", "--help")
-@click.option(
-    "-i", "--input", required=True, help="Specify integration/script yml path"
-)
+@click.option("-i", "--input", required=True, help="Specify integration/script yml path")
 @click.option(
     "-o",
     "--output",
@@ -1646,9 +1577,7 @@ def generate_test_playbook(**kwargs):
     check_configuration_file("generate-test-playbook", kwargs)
     file_type: FileType = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
-        print_error(
-            "Generating test playbook is possible only for an Integration or a Script."
-        )
+        print_error("Generating test playbook is possible only for an Integration or a Script.")
         return 1
 
     try:
@@ -1666,24 +1595,19 @@ def generate_test_playbook(**kwargs):
 
 @main.command()
 @click.help_option("-h", "--help")
-@click.option(
-    "-n", "--name", help="The name of the directory and file you want to create"
-)
+@click.option("-n", "--name", help="The name of the directory and file you want to create")
 @click.option("--id", help="The id used in the yml file of the integration or script")
 @click.option(
     "-o",
     "--output",
-    help="The output dir to write the object into. The default one is the current working "
-    "directory.",
+    help="The output dir to write the object into. The default one is the current working " "directory.",
 )
 @click.option(
     "--integration",
     is_flag=True,
     help="Create an Integration based on BaseIntegration template",
 )
-@click.option(
-    "--script", is_flag=True, help="Create a Script based on BaseScript example"
-)
+@click.option("--script", is_flag=True, help="Create a Script based on BaseScript example")
 @click.option("--pack", is_flag=True, help="Create pack and its sub directories")
 @click.option(
     "-t",
@@ -1823,9 +1747,7 @@ def generate_docs(**kwargs):
             _generate_docs_for_file(file_kwargs)
 
     else:
-        print_error(
-            f"Input {input_path} is neither a valid yml file, nor a folder named Playbooks."
-        )
+        print_error(f"Input {input_path} is neither a valid yml file, nor a folder named Playbooks.")
         return 1
 
     return 0
@@ -1862,17 +1784,9 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
             output_path
             and (not os.path.isfile(os.path.join(output_path, "README.md")))
             or (not output_path)
-            and (
-                not os.path.isfile(
-                    os.path.join(
-                        os.path.dirname(os.path.realpath(input_path)), "README.md"
-                    )
-                )
-            )
+            and (not os.path.isfile(os.path.join(os.path.dirname(os.path.realpath(input_path)), "README.md")))
         ):
-            print_error(
-                "The `command` argument must be presented with existing `README.md` docs."
-            )
+            print_error("The `command` argument must be presented with existing `README.md` docs.")
             return 1
 
     file_type = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
@@ -2034,9 +1948,7 @@ def merge_id_sets(**kwargs):
     help="The type of update being done. [major, minor, revision, documentation]",
     type=click.Choice(["major", "minor", "revision", "documentation"]),
 )
-@click.option(
-    "-v", "--version", help="Bump to a specific version.", type=VersionParamType()
-)
+@click.option("-v", "--version", help="Bump to a specific version.", type=VersionParamType())
 @click.option(
     "-g",
     "--use-git",
@@ -2053,9 +1965,7 @@ def merge_id_sets(**kwargs):
     "--text",
     help="Text to add to all of the release notes files.",
 )
-@click.option(
-    "--prev-ver", help="Previous branch or SHA1 commit to run checks against."
-)
+@click.option("--prev-ver", help="Previous branch or SHA1 commit to run checks against.")
 @click.option(
     "--pre_release",
     help="Indicates that this change should be designated a pre-release version.",
@@ -2081,9 +1991,7 @@ def update_release_notes(**kwargs):
 
     check_configuration_file("update-release-notes", kwargs)
     if kwargs.get("force") and not kwargs.get("input"):
-        print_error(
-            "Please add a specific pack in order to force a release notes update."
-        )
+        print_error("Please add a specific pack in order to force a release notes update.")
         sys.exit(0)
 
     if not kwargs.get("use_git") and not kwargs.get("input"):
@@ -2175,8 +2083,7 @@ def update_release_notes(**kwargs):
 @click.option(
     "-d",
     "--dependency",
-    help="Find which items in a specific content pack appears as a mandatory "
-    "dependency of the searched pack ",
+    help="Find which items in a specific content pack appears as a mandatory " "dependency of the searched pack ",
     required=False,
 )
 def find_dependencies(**kwargs):
@@ -2300,13 +2207,9 @@ def postman_codegen(
                 output=str(output),
             )
             yml_splitter.extract_to_package_format()
-            print_success(
-                f"Package generated at {str(Path(output).absolute())} successfully"
-            )
+            print_success(f"Package generated at {str(Path(output).absolute())} successfully")
         else:
-            print_success(
-                f"Integration generated at {str(yml_path.absolute())} successfully"
-            )
+            print_success(f"Integration generated at {str(yml_path.absolute())} successfully")
 
 
 # ====================== generate-integration ====================== #
@@ -2346,13 +2249,9 @@ def generate_integration(input: IO, output: Path, verbose: bool):
 
 
 # ====================== openapi-codegen ====================== #
-@main.command(
-    short_help="""Generates a Cortex XSOAR integration given an OpenAPI specification file."""
-)
+@main.command(short_help="""Generates a Cortex XSOAR integration given an OpenAPI specification file.""")
 @click.help_option("-h", "--help")
-@click.option(
-    "-i", "--input_file", help="The swagger file to load in JSON format", required=True
-)
+@click.option("-i", "--input_file", help="The swagger file to load in JSON format", required=True)
 @click.option(
     "-cf",
     "--config_file",
@@ -2391,15 +2290,12 @@ def generate_integration(input: IO, output: Path, verbose: bool):
     required=False,
 )
 @click.option("-v", "--verbose", is_flag=True, help="Be verbose with the log output")
-@click.option(
-    "-f", "--fix_code", is_flag=True, help="Fix the python code using autopep8"
-)
+@click.option("-f", "--fix_code", is_flag=True, help="Fix the python code using autopep8")
 @click.option(
     "-a",
     "--use_default",
     is_flag=True,
-    help="Use the automatically generated integration configuration"
-    " (Skip the second run).",
+    help="Use the automatically generated integration configuration" " (Skip the second run).",
 )
 def openapi_codegen(**kwargs):
     """Generates a Cortex XSOAR integration given an OpenAPI specification file.
@@ -2489,15 +2385,11 @@ def openapi_codegen(**kwargs):
             if fix_code:
                 command_to_run = command_to_run + " -f"
 
-            click.echo(
-                f"Run the command again with the created configuration file(after a review): {command_to_run}"
-            )
+            click.echo(f"Run the command again with the created configuration file(after a review): {command_to_run}")
             sys.exit(0)
 
     if integration.save_package(output_dir):
-        print_success(
-            f"Successfully finished generating integration code and saved it in {output_dir}"
-        )
+        print_success(f"Successfully finished generating integration code and saved it in {output_dir}")
     else:
         print_error(f"There was an error creating the package in {output_dir}")
         sys.exit(1)
@@ -2509,9 +2401,7 @@ def openapi_codegen(**kwargs):
     hidden=True,
 )
 @click.help_option("-h", "--help")
-@click.option(
-    "-k", "--api-key", help="The Demisto API key for the server", required=True
-)
+@click.option("-k", "--api-key", help="The Demisto API key for the server", required=True)
 @click.option("-s", "--server", help="The server URL to connect to")
 @click.option("-c", "--conf", help="Path to content conf.json file", required=True)
 @click.option("-e", "--secret", help="Path to content-test-conf conf.json file")
@@ -2519,9 +2409,7 @@ def openapi_codegen(**kwargs):
 @click.option("-t", "--slack", help="The token for slack", required=True)
 @click.option("-a", "--circleci", help="The token for circleci", required=True)
 @click.option("-b", "--build-number", help="The build number", required=True)
-@click.option(
-    "-g", "--branch-name", help="The current content branch name", required=True
-)
+@click.option("-g", "--branch-name", help="The current content branch name", required=True)
 @click.option("-i", "--is-ami", type=bool, help="is AMI build or not", default=False)
 @click.option(
     "-m",
@@ -2545,16 +2433,10 @@ def openapi_codegen(**kwargs):
     "determine success according to most of the runs",
     default=False,
 )
-@click.option(
-    "--server-type", help="Which server runs the tests? XSIAM or XSOAR", default="XSOAR"
-)
-@click.option(
-    "-x", "--xsiam-machine", help="XSIAM machine to use, if it is XSIAM build."
-)
+@click.option("--server-type", help="Which server runs the tests? XSIAM or XSOAR", default="XSOAR")
+@click.option("-x", "--xsiam-machine", help="XSIAM machine to use, if it is XSIAM build.")
 @click.option("--xsiam-servers-path", help="Path to secret xsiam server metadata file.")
-@click.option(
-    "--xsiam-servers-api-keys-path", help="Path to file with XSIAM Servers api keys."
-)
+@click.option("--xsiam-servers-api-keys-path", help="Path to file with XSIAM Servers api keys.")
 def test_content(**kwargs):
     """Configure instances for the integration needed to run tests_to_run tests.
     Run test module on each integration.
@@ -2573,9 +2455,7 @@ def test_content(**kwargs):
 # ====================== doc-review ====================== #
 @main.command()
 @click.help_option("-h", "--help")
-@click.option(
-    "-i", "--input", type=str, help="The path to the file to check", multiple=True
-)
+@click.option("-i", "--input", type=str, help="The path to the file to check", multiple=True)
 @click.option(
     "--no-camel-case",
     is_flag=True,
@@ -2599,9 +2479,7 @@ def test_content(**kwargs):
     help="Whether to expand the base dictionary to include more words - "
     "will download 'brown' corpus from nltk package",
 )
-@click.option(
-    "--templates", is_flag=True, help="Whether to print release notes templates"
-)
+@click.option("--templates", is_flag=True, help="Whether to print release notes templates")
 @click.option(
     "-g",
     "--use-git",
@@ -2612,12 +2490,9 @@ def test_content(**kwargs):
 @click.option(
     "--prev-ver",
     type=str,
-    help="The branch against which changes will be detected "
-    "if '-g' flag is set. Default is 'demisto/master'",
+    help="The branch against which changes will be detected " "if '-g' flag is set. Default is 'demisto/master'",
 )
-@click.option(
-    "-rn", "--release-notes", is_flag=True, help="Will run only on release notes files"
-)
+@click.option("-rn", "--release-notes", is_flag=True, help="Will run only on release notes files")
 @click.option(
     "-pkw",
     "--use-packs-known-words",
@@ -2754,9 +2629,7 @@ def generate_yml_from_python(**kwargs):
     required=True,
     help="The path of the content pack/directory/file to convert.",
 )
-@click.option(
-    "-v", "--version", required=True, help="Version the input to be compatible with."
-)
+@click.option("-v", "--version", required=True, help="Version the input to be compatible with.")
 @pass_config
 def convert(config, **kwargs):
     """
@@ -2806,24 +2679,19 @@ def convert(config, **kwargs):
     show_default=True,
 )
 @click.option("-i", "--input_path", help="Valid integration file path.", required=True)
-@click.option(
-    "-q", "--quiet", is_flag=True, help="Quiet output, only output results in the end"
-)
+@click.option("-q", "--quiet", is_flag=True, help="Quiet output, only output results in the end")
 @click.option(
     "-lp",
     "--log-path",
     help="Path to store all levels of logs",
     type=click.Path(resolve_path=True),
 )
-@click.option(
-    "-d", "--use_demisto", help="Run commands at Demisto automatically.", is_flag=True
-)
+@click.option("-d", "--use_demisto", help="Run commands at Demisto automatically.", is_flag=True)
 @click.option("--insecure", help="Skip certificate validation", is_flag=True)
 @click.option(
     "-e",
     "--examples",
-    help="Integrations: path for file containing command examples."
-    " Each command should be in a separate line.",
+    help="Integrations: path for file containing command examples." " Each command should be in a separate line.",
 )
 @click.option(
     "-a",
@@ -2860,9 +2728,7 @@ def generate_unit_tests(
         quiet=quiet,  # type: ignore[arg-type]
         log_path=log_path,
     )  # type: ignore[arg-type]
-    return run_generate_unit_tests(
-        input_path, commands, output_dir, examples, insecure, use_demisto, append
-    )
+    return run_generate_unit_tests(input_path, commands, output_dir, examples, insecure, use_demisto, append)
 
 
 @main.command(
@@ -2925,9 +2791,7 @@ def error_code(config, **kwargs):
     default=2,
     show_default=True,
 )
-@click.option(
-    "-q", "--quiet", is_flag=True, help="Quiet output, only output results in the end"
-)
+@click.option("-q", "--quiet", is_flag=True, help="Quiet output, only output results in the end")
 @click.option(
     "-lp",
     "--log-path",
@@ -2985,9 +2849,7 @@ def create_content_graph(
 @click.option(
     "-i",
     "--imported-path",
-    type=click.Path(
-        path_type=Path, resolve_path=True, exists=True, file_okay=True, dir_okay=False
-    ),
+    type=click.Path(path_type=Path, resolve_path=True, exists=True, file_okay=True, dir_okay=False),
     default=None,
     help="Path to content graph zip file to import",
 )
@@ -3021,9 +2883,7 @@ def create_content_graph(
     default=2,
     show_default=True,
 )
-@click.option(
-    "-q", "--quiet", is_flag=True, help="Quiet output, only output results in the end"
-)
+@click.option("-q", "--quiet", is_flag=True, help="Quiet output, only output results in the end")
 @click.option(
     "-lp",
     "--log-path",
@@ -3066,6 +2926,7 @@ def update_content_graph(
             output_path=output_path,
         )
 
+
 @main.command()
 @click.help_option("-h", "--help")
 @click.option(
@@ -3107,11 +2968,35 @@ def update_content_graph(
     "--skip",
     help="A comma seperated hooks of precommit hooks to skip",
 )
-def pre_commit(input: Iterable[Path], use_git: bool, staged: bool, all_files: bool, test: bool, skip: str):
+@click.option(
+    "-v",
+    "--verbose",
+    help="Verbose output",
+    is_flag=True,
+    default=False,
+)
+@click.option(
+    "--show-diff-on-failure",
+    help="Show diff on failure",
+    is_flag=True,
+    default=False,
+)
+def pre_commit(
+    input: Iterable[Path],
+    use_git: bool,
+    staged: bool,
+    all_files: bool,
+    test: bool,
+    skip: str,
+    verbose: bool,
+    show_diff_on_failure: bool,
+):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit
+
     if skip:
         skip = skip.split(",")
-    sys.exit(pre_commit(input, use_git, staged, all_files, test, skip))
+    sys.exit(pre_commit(input, use_git, staged, all_files, test, skip, verbose, show_diff_on_failure))
+
 
 @main.result_callback()
 def exit_from_program(result=0, **kwargs):

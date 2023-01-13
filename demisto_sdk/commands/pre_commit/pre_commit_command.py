@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set
 from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, SCRIPTS_DIR
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.tools import print_github_actions_output
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 from demisto_sdk.commands.common.handlers import YAML_Handler, JSON_Handler
@@ -43,10 +44,6 @@ PYUPGRADE_MAPPING = {
     "3.8": "py38-plus",
     "3.7": "py37-plus",
 }
-
-def _escape(s):
-    return s.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
-
 
 
 def python_version_to_pyupgrade(python_version: str):
@@ -88,7 +85,7 @@ class PreCommit:
     @staticmethod
     def handle_ruff(ruff_hook: dict, python_version: str):
         ruff_hook["args"][-1] = f"--target-version={python_version_to_ruff(python_version)}"
-        if os.getenv("GITHUB_ACTIONS"):
+        if GITHUB_ACTIONS:
             ruff_hook["args"].append("--format=github")
 
     @staticmethod
@@ -108,14 +105,15 @@ class PreCommit:
                     traceback = test["call"]["traceback"]
                     traceback_message = ", ".join(t["message"] for t in traceback)
                     file = Path(crash["path"]).relative_to("/content").absolute()
-                    print(file)
                     line = crash["lineno"]
                     message = (
                         f"Test {test['nodeid']} failed. \n Traceback: {traceback_message} \n"
                         f"{test['call']['longrepr']}"
                     )
                     if GITHUB_ACTIONS:
-                        print(f"::error title=Pytest,file={file},line={line}::{_escape(message)}")
+                        print_github_actions_output(
+                            command="error", title="Pytest", file=str(file), line=line, message=test['call']['longrepr']
+                        )
                     else:
                         print(f"{file}:{line}: {message}")
             for warning in report.get("warnings", []):
@@ -124,7 +122,9 @@ class PreCommit:
                 if match := re.match(r".* (.*)::", message):
                     filepath = integration_script_path.with_name(match.group(1))
                 if GITHUB_ACTIONS:
-                    print(f"::warning title=Pytest,file={filepath},line={warning['lineno']}::{_escape(message)}")
+                    print_github_actions_output(
+                        command="warning", title="Pytest", file=filepath, line=warning["lineno"], message=message
+                    )
                 else:
                     print(f"{filepath}:{warning['lineno']}: {message}")
 
@@ -132,7 +132,13 @@ class PreCommit:
         if test:
             self.handle_pytest_results()
 
-    def run(self, test: bool = False, skip_hooks: Optional[List[str]] = None) -> int:
+    def run(
+        self,
+        test: bool = False,
+        skip_hooks: Optional[List[str]] = None,
+        verbose: bool = False,
+        show_diff_on_failure: bool = False,
+    ) -> int:
         # handle skipped hooks
         ret_val = 0
         precommit_env = os.environ.copy()
@@ -149,7 +155,7 @@ class PreCommit:
             if python_version.startswith("2"):
                 if test:
                     response = subprocess.run(
-                        ["pre-commit", "run", "run-unit-test", "--files", *changed_files, "-v"],
+                        ["pre-commit", "run", "run-unit-test", "--files", *changed_files, "-v" if verbose else ""],
                         env=precommit_env,
                         cwd=CONTENT_PATH,
                     )
@@ -165,7 +171,16 @@ class PreCommit:
             # use chunks because OS does not support such large comments
             for chunk in more_itertools.chunked_even(changed_files, 10_000):
                 response = subprocess.run(
-                    ["pre-commit", "run", "--files", *chunk, "-v"], env=precommit_env, cwd=CONTENT_PATH
+                    [
+                        "pre-commit",
+                        "run",
+                        "--files",
+                        *chunk,
+                        "-v" if verbose else "",
+                        "--show-diff-on-failure" if show_diff_on_failure else "",
+                    ],
+                    env=precommit_env,
+                    cwd=CONTENT_PATH,
                 )
                 if response.returncode:
                     ret_val = 1
@@ -185,11 +200,13 @@ def find_hook(hook_name: str):
 
 def pre_commit(
     input_files: Iterable[Path],
-    use_git=False,
-    staged_only=False,
-    all_files=False,
-    test=False,
+    use_git: bool = False,
+    staged_only: bool = False,
+    all_files: bool = False,
+    test: bool = False,
     skip_hooks: Optional[List[str]] = None,
+    verbose: bool = False,
+    show_diff_on_failure: bool = False,
 ):
     if not any((input_files, staged_only, use_git, all_files)):
         use_git = True
@@ -204,7 +221,7 @@ def pre_commit(
         files_to_run = staged_files | git_util._get_all_changed_files()
     elif all_files:
         files_to_run = git_util.get_all_files()
-    return categorize_files(files_to_run).run(test, skip_hooks)
+    return categorize_files(files_to_run).run(test, skip_hooks, verbose, show_diff_on_failure)
 
 
 def categorize_files(files: Set[Path]) -> PreCommit:

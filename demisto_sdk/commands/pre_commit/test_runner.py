@@ -13,7 +13,6 @@ from demisto_sdk.commands.lint.helpers import stream_docker_container_output
 logging_setup(1)
 
 logger = logging.getLogger("demisto-sdk")
-docker_client = docker_helper.init_global_docker_client()
 
 PYTHONPATH = [
     Path(CONTENT_PATH / "Packs" / "Base" / "Scripts" / "CommonServerPython"),
@@ -30,6 +29,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("filenames", nargs="*")
     args = parser.parse_args(argv)
     print(f"{os.getenv('DOCKER_HOST')=}")
+    docker_client = docker_helper.init_global_docker_client()
 
     ret_val = 0
     for filename in args.filenames:
@@ -39,8 +39,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             continue
         working_dir = f"/content/{integration_script.path.parent.relative_to(CONTENT_PATH)}"
         docker_image = integration_script.docker_image
-        # if os.getenv("GITLAB_CI"):
-        #     docker_image = f"docker-io.art.code.pan.run/{docker_image}"
+        if os.getenv("GITLAB_CI"):
+            docker_image = f"docker-io.art.code.pan.run/{docker_image}"
         logger.info(f"Running test for {filename} with docker image {docker_image}")
         try:
             container = docker_client.containers.create(

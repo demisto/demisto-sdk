@@ -52,6 +52,7 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
         docker_user = os.getenv("DOCKERHUB_USER")
         docker_pass = os.getenv("DOCKERHUB_PASSWORD")
         if docker_user and docker_pass:
+            logger.info(f"{log_prompt} - logging in to docker registry")
             try:
                 DOCKER_CLIENT.login(
                     username=docker_user,

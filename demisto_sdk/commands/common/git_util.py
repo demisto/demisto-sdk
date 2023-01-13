@@ -462,8 +462,6 @@ class GitUtil:
         Returns:
             Set: of Paths to files changed in the current branch.
         """
-        if staged_only:
-            return {Path(item) for item in self.repo.git.diff("--cached", "--name-only").split("\n") if item}
         remote, branch = self.handle_prev_ver(prev_ver)
         current_branch_or_hash = self.get_current_git_branch_or_hash()
         if remote:

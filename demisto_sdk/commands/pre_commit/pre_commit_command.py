@@ -98,7 +98,9 @@ class PreCommit:
             if python_version.startswith("2"):
                 if test:
                     response = subprocess.run(
-                        ["pre-commit", "run", "run-unit-test", "--files", *changed_files, "-v"], env=precommit_env
+                        ["pre-commit", "run", "run-unit-test", "--files", *changed_files, "-v"],
+                        env=precommit_env,
+                        cwd=CONTENT_PATH,
                     )
                     if response.returncode != 0:
                         ret_val = response.returncode
@@ -110,7 +112,9 @@ class PreCommit:
                 yaml.dump(PRECOMMIT_TEMPLATE, f)
             # use chunks because OS does not support such large comments
             for chunk in more_itertools.chunked_even(changed_files, 10_000):
-                response = subprocess.run(["pre-commit", "run", "--files", *chunk, "-v"], env=precommit_env)
+                response = subprocess.run(
+                    ["pre-commit", "run", "--files", *chunk, "-v"], env=precommit_env, cwd=CONTENT_PATH
+                )
                 if response.returncode:
                     ret_val = 1
         # remove the config file

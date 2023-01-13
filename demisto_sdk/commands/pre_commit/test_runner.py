@@ -29,6 +29,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("filenames", nargs="*")
     args = parser.parse_args(argv)
+    print(f"{os.getenv('DOCKER_HOST')=}")
 
     ret_val = 0
     for filename in args.filenames:

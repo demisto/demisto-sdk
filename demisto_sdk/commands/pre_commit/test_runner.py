@@ -44,9 +44,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         logger.info(f"Running test for {filename} with docker image {docker_image}")
         try:
             docker_client.images.pull(docker_image)
-            container = docker_client.containers.create(
+            container = docker_client.containers.run(
                 image=docker_image,
-                name=f"demisto-sdk-test-{integration_script.object_id}",
                 environment={
                     "PYTHONPATH": ":".join(PYTHONPATH),
                     "REQUESTS_CA_BUNDLE": "/etc/ssl/certs/ca-certificates.crt",
@@ -60,16 +59,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 command="sh /runner.sh",
                 working_dir=working_dir,
                 detach=True,
+                remove=True,
                 restart_policy={"Name": "on-failure", "MaximumRetryCount": 3},
             )
-            container.start()
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
-            container_status = container.wait(condition="exited")
-            # Get container exit code
-            container_exit_code = container_status.get("StatusCode")
-
-            container.remove(force=True)
+            container_exit_code = container.attrs["State"]["ExitCode"]
             if container_exit_code:
                 print(f"Some test failed Test failed. Exit code: {container_exit_code}")
                 ret_val = 1

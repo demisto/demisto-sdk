@@ -114,6 +114,7 @@ class PreCommit:
                         f"{test['call']['longrepr']}"
                     )
                     if GITHUB_ACTIONS:
+                        print(f"{test_path}:{line}: {message}")
                         core.error(
                             "Packs/QRadar/Integrations/QRadar_v3/QRadar_v3_test.py failed!!!",
                             title="Pytest",

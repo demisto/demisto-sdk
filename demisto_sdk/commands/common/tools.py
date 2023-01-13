@@ -3219,7 +3219,7 @@ def field_to_cli_name(field_name: str) -> str:
     return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, "", field_name).lower()
 
 def _escape(s):
-    return s.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+    return s.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A").replace("\"", "")
 
 
 def print_github_actions_output(

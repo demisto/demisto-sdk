@@ -29,7 +29,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("filenames", nargs="*")
     args = parser.parse_args(argv)
-    print(f"{os.getenv('DOCKER_HOST')=}")
     docker_client = docker_helper.init_global_docker_client()
 
     ret_val = 0

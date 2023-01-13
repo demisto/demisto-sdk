@@ -455,7 +455,7 @@ class GitUtil:
         """
         return {Path(item) for item in self.repo.git.diff("--cached", "--name-only").split("\n") if item}
 
-    def _get_all_changed_files(self, prev_ver: str) -> Set[Path]:
+    def _get_all_changed_files(self, prev_ver: str = "") -> Set[Path]:
         """Get all the files changed in the current branch without status distinction.
         Args:
             prev_ver (str): The base branch against which the comparison is made.

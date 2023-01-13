@@ -147,7 +147,7 @@ def pre_commit(
     elif staged_only:
         files_to_run = staged_files
     elif use_git:
-        files_to_run = staged_files | git_util._get_all_changed_files("origin/master")
+        files_to_run = staged_files | git_util._get_all_changed_files()
     elif all_files:
         files_to_run = git_util.get_all_files()
     return categorize_files(files_to_run).run(test, skip_hooks)

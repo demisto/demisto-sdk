@@ -22,6 +22,6 @@
 - id: update-docker-image
   name: update docker image
   description: update docker image
-  entry: demisto-sdk format -ud
+  entry: demisto-sdk format -ud --no-validate
   language: python
   files: ^Packs/.*/(?:Integrations|Scripts)/.*.yml$

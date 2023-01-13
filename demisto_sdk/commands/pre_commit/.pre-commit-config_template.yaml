@@ -14,11 +14,11 @@ repos:
       - id: name-tests-test
         files: .+_test.py$
 
-  # - repo: https://github.com/charliermarsh/ruff-pre-commit
-  #   rev: "v0.0.220"
-  #   hooks:
-  #     - id: ruff
-  #       args: [--line-length=120, --target-version=py310]
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: "v0.0.220"
+    hooks:
+      - id: ruff
+        args: [--line-length=120, --target-version=py310]
 
   - repo: https://github.com/PyCQA/flake8
     rev: "6.0.0"
@@ -54,8 +54,9 @@ repos:
         exclude: .*_test.py$
 
   - repo: https://github.com/demisto/demisto-sdk
-    rev: 4e96d9d67dbfe2aab9c7986b42694792560c4403
+    rev: bc49e130b903a21f637e69ac1b9828a309f61c6b
     hooks:
       - id: run-unit-tests
+      - id: update-docker-image
       - id: format
       - id: validate

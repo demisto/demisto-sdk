@@ -60,7 +60,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 working_dir=working_dir,
                 detach=True,
             )
-            stream_docker_container_output(container.logs(stream=True))
+            stream_docker_container_output(container.logs(stream=True), logger.debug)
             # wait for container to finish
             container_exit_code = container.wait()["StatusCode"]
             container.remove(force=True)

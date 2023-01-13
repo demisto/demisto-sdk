@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set
 from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, SCRIPTS_DIR
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.tools import print_github_actions_output
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 from demisto_sdk.commands.common.handlers import YAML_Handler, JSON_Handler
@@ -22,7 +21,6 @@ yaml = YAML_Handler()
 json = JSON_Handler()
 
 GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS")
-GITHUB_ACTIONS = True
 DEFAULT_PYTHON_VERSION = "3.10"
 EMPTY_PYTHON_VERSION = "2.7"
 
@@ -104,28 +102,26 @@ class PreCommit:
             with report_path.open() as f:
                 report = json.load(f)
             for test in report["tests"]:
-                if test["outcome"] == "failed":
-                    crash = test["call"]["crash"]
-                    traceback = test["call"]["traceback"]
-                    traceback_message = ", ".join(t["message"] for t in traceback)
-                    line = crash["lineno"]
-                    message = (
-                        f"Test {test['nodeid']} failed. \n Traceback: {traceback_message} \n"
-                        f"{test['call']['longrepr']}"
+                if test["outcome"] != "failed":
+                    print(f"Test {test['nodeid']} passed.")
+                    continue
+                crash = test["call"]["crash"]
+                traceback = test["call"]["traceback"]
+                traceback_message = ", ".join(t["message"] for t in traceback)
+                line = crash["lineno"]
+                message = (
+                    f"Test {test['nodeid']} failed. \n Traceback: {traceback_message} \n"
+                    f"{test['call']['longrepr']}"
+                )
+                if GITHUB_ACTIONS:
+                    core.error(
+                        message,
+                        title="Pytest",
+                        file=str(test_path),
+                        start_line=str(line),
                     )
-                    if GITHUB_ACTIONS:
-                        print(f"{test_path}:{line}: {message}")
-                        core.error(
-                            message,
-                            title="Pytest",
-                            file=str(test_path),
-                            start_line=str(line),
-                        )
-                        # print_github_actions_output(
-                        #     command="warning", title="Pytest", file=str(test_path), line=str(line), message="pytest failed!"
-                        # )
-                    else:
-                        print(f"{test_path}:{line}: {message}")
+                else:
+                    print(f"{test_path}:{line}: {message}")
             for warning in report.get("warnings", []):
                 message = warning["message"]
                 filepath = None
@@ -149,8 +145,6 @@ class PreCommit:
         no_fix: bool = False,
     ) -> int:
         # handle skipped hooks
-        if GITHUB_ACTIONS:
-            core.start_group("Pre-commit")
         ret_val = 0
         precommit_env = os.environ.copy()
         skipped_hooks = list(SKIPPED_HOOKS)
@@ -175,7 +169,7 @@ class PreCommit:
                     if response.returncode != 0:
                         ret_val = response.returncode
                 continue
-            # self.handle_ruff(self.hooks["ruff"], python_version, no_fix)
+            self.handle_ruff(self.hooks["ruff"], python_version, no_fix)
             if python_version != DEFAULT_PYTHON_VERSION:
                 self.handle_pyupgrade(self.hooks["pyupgrade"], python_version)
                 self.handle_mypy(self.hooks["mypy"], python_version)
@@ -200,9 +194,6 @@ class PreCommit:
         # remove the config file
         shutil.rmtree(CONTENT_PATH / ".pre-commit-config.yaml", ignore_errors=True)
         self.handle_results(test)
-        if GITHUB_ACTIONS:
-            core.end_group("Pre-commit")
-
         return ret_val
 
 

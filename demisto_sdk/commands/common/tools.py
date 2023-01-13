@@ -3218,31 +3218,35 @@ def field_to_cli_name(field_name: str) -> str:
     """
     return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, "", field_name).lower()
 
-def _escape(s):
-    return s.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A").replace("\"", "'")
+def _escape_data(s) -> str:
+    return s.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
 
+def _escape_property(s) -> str:
+    return s.replace('%', '%25').replace('\r', '%0D') \
+        .replace('\n', '%0A').replace(':', '%3A').replace(',', '%2C')
+        
 
 def print_github_actions_output(
     command: str,
     message: str,
     title: Optional[str] = None,
     file: Optional[str] = None,
-    line: Optional[int] = None,
-    col: Optional[int] = None,
-    end_line: Optional[int] = None,
-    end_col: Optional[int] = None,
+    line: Optional[str] = None,
+    col: Optional[str] = None,
+    end_line: Optional[str] = None,
+    end_col: Optional[str] = None,
 ) -> None:
     arguments = []
     if title:
-        arguments.append(f"title={title}")
+        arguments.append(f"title={_escape_property(title)}")
     if file:
-        arguments.append(f"file={file}")
+        arguments.append(f"file={_escape_property(file)}")
     if line:
-        arguments.append(f"line={line}")
+        arguments.append(f"line={_escape_property(line)}")
     if col:
-        arguments.append(f"col={col}")
+        arguments.append(f"col={_escape_property(col)}")
     if end_line:
-        arguments.append(f"endLine={end_line}")
+        arguments.append(f"endLine={_escape_property(end_line)}")
     if end_col:
-        arguments.append(f"endColumn={end_col}")
-    print(f"::{command} {', '.join(arguments)}::{_escape(message)}")
+        arguments.append(f"endColumn={_escape_property(end_col)}")
+    print(f"::{command} {','.join(arguments)}::{_escape_data(message)}")

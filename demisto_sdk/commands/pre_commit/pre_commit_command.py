@@ -83,8 +83,10 @@ class PreCommit:
         pyupgrade_hook["args"][-1] = f"--{python_version_to_pyupgrade(python_version)}"
 
     @staticmethod
-    def handle_ruff(ruff_hook: dict, python_version: str):
+    def handle_ruff(ruff_hook: dict, python_version: str, no_fix: bool = False):
         ruff_hook["args"][-1] = f"--target-version={python_version_to_ruff(python_version)}"
+        if not no_fix:
+            ruff_hook["args"].append("--fix")
         if GITHUB_ACTIONS:
             ruff_hook["args"].append("--format=github")
 
@@ -112,7 +114,7 @@ class PreCommit:
                     )
                     if GITHUB_ACTIONS:
                         print_github_actions_output(
-                            command="error", title="Pytest", file=str(file), line=line, message=test['call']['longrepr']
+                            command="error", title="Pytest", file=str(file), line=str(line), message=test['call']['longrepr']
                         )
                     else:
                         print(f"{file}:{line}: {message}")
@@ -123,7 +125,7 @@ class PreCommit:
                     filepath = integration_script_path.with_name(match.group(1))
                 if GITHUB_ACTIONS:
                     print_github_actions_output(
-                        command="warning", title="Pytest", file=filepath, line=warning["lineno"], message=message
+                        command="warning", title="Pytest", file=filepath, line=str(warning["lineno"]), message=message
                     )
                 else:
                     print(f"{filepath}:{warning['lineno']}: {message}")
@@ -138,6 +140,7 @@ class PreCommit:
         skip_hooks: Optional[List[str]] = None,
         verbose: bool = False,
         show_diff_on_failure: bool = False,
+        no_fix: bool = False,
     ) -> int:
         # handle skipped hooks
         ret_val = 0
@@ -146,6 +149,8 @@ class PreCommit:
         skipped_hooks.extend(skip_hooks or [])
         if not test:
             skipped_hooks.append("run-unit-tests")
+        if no_fix:
+            skipped_hooks.append("autopep8")
         precommit_env["SKIP"] = ",".join(skipped_hooks)
         precommit_env["PYTHONPATH"] = ":".join(str(path) for path in PYTHONPATH)
         precommit_env["MYPYPATH"] = ":".join(str(path) for path in PYTHONPATH)
@@ -162,7 +167,7 @@ class PreCommit:
                     if response.returncode != 0:
                         ret_val = response.returncode
                 continue
-            self.handle_ruff(self.hooks["ruff"], python_version)
+            self.handle_ruff(self.hooks["ruff"], python_version, no_fix)
             if python_version != DEFAULT_PYTHON_VERSION:
                 self.handle_pyupgrade(self.hooks["pyupgrade"], python_version)
                 self.handle_mypy(self.hooks["mypy"], python_version)
@@ -207,6 +212,7 @@ def pre_commit(
     skip_hooks: Optional[List[str]] = None,
     verbose: bool = False,
     show_diff_on_failure: bool = False,
+    no_fix: bool = False,
 ):
     if not any((input_files, staged_only, use_git, all_files)):
         use_git = True
@@ -221,7 +227,7 @@ def pre_commit(
         files_to_run = staged_files | git_util._get_all_changed_files()
     elif all_files:
         files_to_run = git_util.get_all_files()
-    return categorize_files(files_to_run).run(test, skip_hooks, verbose, show_diff_on_failure)
+    return categorize_files(files_to_run).run(test, skip_hooks, verbose, show_diff_on_failure, no_fix)
 
 
 def categorize_files(files: Set[Path]) -> PreCommit:

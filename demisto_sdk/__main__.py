@@ -2958,6 +2958,11 @@ def update_content_graph(
     default=False,
 )
 @click.option(
+    "--no-fix",
+    help="Whether to skip fixing code files",
+    is_flag=True,   
+)
+@click.option(
     "-t",
     "--test",
     help="Whether to run tests",
@@ -2990,12 +2995,13 @@ def pre_commit(
     skip: str,
     verbose: bool,
     show_diff_on_failure: bool,
+    no_fix: bool,
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit
 
     if skip:
-        skip = skip.split(",")
-    sys.exit(pre_commit(input, use_git, staged, all_files, test, skip, verbose, show_diff_on_failure))
+        skip = skip.split(",")  # type: ignore[assignment]
+    sys.exit(pre_commit(input, use_git, staged, all_files, test, skip, verbose, show_diff_on_failure, no_fix))
 
 
 @main.result_callback()

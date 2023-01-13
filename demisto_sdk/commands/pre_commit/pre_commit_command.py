@@ -103,7 +103,7 @@ class PreCommit:
                     crash = test["call"]["crash"]
                     traceback = test["call"]["traceback"]
                     traceback_message = ", ".join(t["message"] for t in traceback)
-                    file = Path(crash["path"]).relative_to("/content")
+                    file = Path(crash["path"]).relative_to("/content").absolute()
                     print(file)
                     line = crash["lineno"]
                     message = (
@@ -118,7 +118,7 @@ class PreCommit:
                 message = warning["message"]
                 filepath = None
                 if match := re.match(r".* (.*)::", message):
-                    filepath = match.group(1)
+                    filepath = integration_script_path.with_name(match.group(1))
                 if GITHUB_ACTIONS:
                     print(f"::warning file={filepath},line={warning['lineno']}::{message}")
                 else:

@@ -99,6 +99,7 @@ class PreCommit:
     def handle_pytest_results(self):
         for integration_script_path in filter(lambda x: INTEGRATION_SCRIPT_REGEX.match(str(x)), self.all_files):
             report_path = integration_script_path.with_name(".report.json")
+            test_path = integration_script_path.with_name(f"{integration_script_path.with_suffix('').name}_test.py")
             with report_path.open() as f:
                 report = json.load(f)
             for test in report["tests"]:
@@ -106,7 +107,6 @@ class PreCommit:
                     crash = test["call"]["crash"]
                     traceback = test["call"]["traceback"]
                     traceback_message = ", ".join(t["message"] for t in traceback)
-                    file = Path(crash["path"]).relative_to("/content")
                     line = crash["lineno"]
                     message = (
                         f"Test {test['nodeid']} failed. \n Traceback: {traceback_message} \n"
@@ -114,7 +114,7 @@ class PreCommit:
                     )
                     if GITHUB_ACTIONS:
                         print_github_actions_output(
-                            command="error", title="Pytest", file=str(file), line=str(line), message=f"Tracebacks: {traceback_message}"
+                            command="error", title="Pytest", file=str(test_path), line=str(line), message=f"Tracebacks: {traceback_message}"
                         )
                     else:
                         print(f"{file}:{line}: {message}")

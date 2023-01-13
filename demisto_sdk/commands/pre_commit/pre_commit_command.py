@@ -131,9 +131,9 @@ class PreCommit:
                 if match := re.match(r".* (.*)::", message):
                     filepath = integration_script_path.with_name(match.group(1))
                 if GITHUB_ACTIONS:
-                    core.warning(message, title="Pytest", file=str(filepath), start_line=str(warning["lineno"]))
+                    core.warning(message, title="Pytest", file=str(filepath))
                 else:
-                    print(f"{filepath}:{warning['lineno']}: {message}")
+                    print(f"{filepath} {message}")
 
     def handle_results(self, test: bool = False):
         if test:

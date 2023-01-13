@@ -149,6 +149,8 @@ class PreCommit:
         no_fix: bool = False,
     ) -> int:
         # handle skipped hooks
+        if GITHUB_ACTIONS:
+            core.start_group("Pre-commit")
         ret_val = 0
         precommit_env = os.environ.copy()
         skipped_hooks = list(SKIPPED_HOOKS)
@@ -198,6 +200,9 @@ class PreCommit:
         # remove the config file
         shutil.rmtree(CONTENT_PATH / ".pre-commit-config.yaml", ignore_errors=True)
         self.handle_results(test)
+        if GITHUB_ACTIONS:
+            core.end_group("Pre-commit")
+
         return ret_val
 
 

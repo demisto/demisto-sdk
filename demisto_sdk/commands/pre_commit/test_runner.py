@@ -65,13 +65,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             container_exit_code = container.wait()["StatusCode"]
             container.remove(force=True)
             if container_exit_code:
-                print(f"Some test failed Test failed. Exit code: {container_exit_code}")
+                print(f"Some tests failed. Exit code: {container_exit_code}")
                 ret_val = 1
         except Exception as e:
-            logger.error(f"Failed to run test for {filename}: {e}")
             raise Exception(f"Failed to run test for {filename}: {e}")
-            logger.info(container.logs())
-            ret_val = 1
     return ret_val
 
 

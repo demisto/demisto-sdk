@@ -43,6 +43,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             docker_image = f"docker-io.art.code.pan.run/{docker_image}"
         logger.info(f"Running test for {filename} with docker image {docker_image}")
         try:
+            docker_client.images.pull(docker_image)
             container = docker_client.containers.create(
                 image=docker_image,
                 name=f"demisto-sdk-test-{integration_script.object_id}",

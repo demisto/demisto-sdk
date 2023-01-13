@@ -3218,10 +3218,14 @@ def field_to_cli_name(field_name: str) -> str:
     """
     return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, "", field_name).lower()
 
-def _escape_data(s) -> str:
+def _escape_data(s: str) -> str:
+    if not isinstance(s, str):
+        s = str(s)
     return s.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
 
-def _escape_property(s) -> str:
+def _escape_property(s: str) -> str:
+    if not isinstance(s, str):
+        s = str(s)
     return s.replace('%', '%25').replace('\r', '%0D') \
         .replace('\n', '%0A').replace(':', '%3A').replace(',', '%2C')
         

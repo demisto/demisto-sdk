@@ -100,6 +100,7 @@ class PreCommit:
         for integration_script_path in filter(lambda x: INTEGRATION_SCRIPT_REGEX.match(str(x)), self.all_files):
             report_path = integration_script_path.with_name(".report.json")
             test_path = integration_script_path.with_name(f"{integration_script_path.with_suffix('').name}_test.py")
+            print(test_path)
             with report_path.open() as f:
                 report = json.load(f)
             for test in report["tests"]:
@@ -114,10 +115,10 @@ class PreCommit:
                     )
                     if GITHUB_ACTIONS:
                         print_github_actions_output(
-                            command="error", title="Pytest", file=str(test_path), line=str(line), message=f"Tracebacks: {traceback_message}"
+                            command="error", title="Pytest", file=str(test_path), line=str(line), message="pytest failed!"
                         )
                     else:
-                        print(f"{file}:{line}: {message}")
+                        print(f"{test_path}:{line}: {message}")
             for warning in report.get("warnings", []):
                 message = warning["message"]
                 filepath = None

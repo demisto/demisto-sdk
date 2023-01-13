@@ -115,7 +115,7 @@ class PreCommit:
                         f"{test['call']['longrepr']}"
                     )
                     if GITHUB_ACTIONS:
-                        print(f"::error title=Pytest,file={file},line={line}::'{message}'")
+                        print(f"::error title=Pytest,file={file},line={line}::{_escape(message)}")
                     else:
                         print(f"{file}:{line}: {message}")
             for warning in report.get("warnings", []):

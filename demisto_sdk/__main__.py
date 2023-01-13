@@ -3103,9 +3103,15 @@ def update_content_graph(
     is_flag=True,
     default=False,
 )
-def pre_commit(input: Iterable[Path], use_git: bool, staged: bool, all_files: bool, test: bool):
+@click.option(
+    "--skip",
+    help="A comma seperated hooks of precommit hooks to skip",
+)
+def pre_commit(input: Iterable[Path], use_git: bool, staged: bool, all_files: bool, test: bool, skip: str):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit
-    sys.exit(pre_commit(input, use_git, staged, all_files, test))
+    if skip:
+        skip = skip.split(",")
+    sys.exit(pre_commit(input, use_git, staged, all_files, test, skip))
 
 @main.result_callback()
 def exit_from_program(result=0, **kwargs):

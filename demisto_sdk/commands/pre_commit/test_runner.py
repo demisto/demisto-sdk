@@ -60,7 +60,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 working_dir=working_dir,
                 detach=True,
                 remove=True,
-                restart_policy={"Name": "on-failure", "MaximumRetryCount": 3},
             )
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish

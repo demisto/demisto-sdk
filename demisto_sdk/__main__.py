@@ -4,7 +4,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import IO, Any, Dict, Iterable
+from typing import IO, Any, Dict, Iterable, Tuple
 
 import click
 import git
@@ -539,11 +539,13 @@ def zip_packs(**kwargs) -> int:
     help="Run specific validations by stating the error codes.",
     is_flag=False,
 )
+@click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @pass_config
-def validate(config, **kwargs):
+def validate(config, file_paths, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
-
+    if file_paths:
+        kwargs["input"] = ",".join(file_paths)
     run_with_mp = not kwargs.pop("no_multiprocessing")
     check_configuration_file("validate", kwargs)
     sys.path.append(config.configuration.env_dir)
@@ -998,7 +1000,7 @@ def coverage_analyze(**kwargs):
 @click.option(
     "-i",
     "--input",
-    help="The path of the script yml file\n"
+    help="The path of the script yml file or a comma separated list\n"
     "If no input is specified, the format will be executed on all new/changed files.",
     type=PathsParamType(exists=True, resolve_path=True),
 )
@@ -1054,8 +1056,9 @@ def coverage_analyze(**kwargs):
     help="The path of the id_set json file.",
     type=click.Path(exists=True, resolve_path=True),
 )
+@click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 def format(
-    input: Path,
+    input: str,
     output: Path,
     from_version: str,
     no_validate: bool,
@@ -1068,13 +1071,15 @@ def format(
     include_untracked: bool,
     add_tests: bool,
     id_set_path: str,
+    file_paths: Tuple[str, ...],
 ):
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
     incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file/genericfield/generictype/
     genericmodule/genericdefinition.
     """
     from demisto_sdk.commands.format.format_module import format_manager
-
+    if file_paths:
+        input = ",".join(file_paths)
     return format_manager(
         str(input) if input else None,
         str(output) if output else None,

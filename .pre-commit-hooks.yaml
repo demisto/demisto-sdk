@@ -7,11 +7,21 @@
 - id: validate
   name: validate
   description: validate content
-  entry: run-hook validate
+  entry: demisto-sdk validate
   pass_filenames: true
   language: python
+  files: ^Packs/.*/(?:Integrations|Scripts)/.*.yml$
+
 - id: format
   name: format
   description: format content
-  entry: run-hook format
+  entry: demisto-sdk format
   language: python
+  files: ^Packs/.*/(?:Integrations|Scripts)/.*.yml$
+
+- id: update-docker-image
+  name: update docker image
+  description: update docker image
+  entry: demisto-sdk format -ud
+  language: python
+  files: ^Packs/.*/(?:Integrations|Scripts)/.*.yml$

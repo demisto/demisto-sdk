@@ -39,11 +39,6 @@ repos:
             types: [python]
             args: [--ignore-missing-imports, --check-untyped-defs, --show-error-codes, --follow-imports=silent, --allow-redefinition, --python-version=3.10]
             exclude: .*_test.py$
-
-    - repo: https://gitlab.com/smop/pre-commit-hooks
-      rev: v1.0.0
-      hooks:
-          - id: check-poetry
   
     - repo: https://github.com/demisto/demisto-sdk
       rev: 24e21e5c34af7bca56917ca6fa0d786a10e8bfe3

@@ -100,8 +100,8 @@ class PreCommit:
                 report = json.load(f)
             for test in report["tests"]:
                 if test["outcome"] == "failed":
-                    crash = test["crash"]
-                    traceback = test["traceback"]
+                    crash = test["call"]["crash"]
+                    traceback = test["call"]["traceback"]
                     file = Path(crash["path"]).relative_to(CONTENT_PATH)
                     line = crash["lineno"]
                     message = (

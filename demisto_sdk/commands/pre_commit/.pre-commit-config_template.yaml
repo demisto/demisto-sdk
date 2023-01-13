@@ -18,12 +18,7 @@ repos:
     rev: "v0.0.220"
     hooks:
       - id: ruff
-        args: [--line-length=120, --target-version=py310]
-
-  - repo: https://github.com/PyCQA/flake8
-    rev: "6.0.0"
-    hooks:
-      - id: flake8
+        args: [--target-version=py310]
 
   - repo: https://github.com/pre-commit/mirrors-autopep8
     rev: "v2.0.1"
@@ -54,7 +49,7 @@ repos:
         exclude: .*_test.py$
 
   - repo: https://github.com/demisto/demisto-sdk
-    rev: bc49e130b903a21f637e69ac1b9828a309f61c6b
+    rev: d47fe3aa218f266c605f981c1ff725ae7d5db40e
     hooks:
       - id: run-unit-tests
       - id: update-docker-image

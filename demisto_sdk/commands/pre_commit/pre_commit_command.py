@@ -16,7 +16,9 @@ from demisto_sdk.commands.content_graph.objects.integration_script import Integr
 from demisto_sdk.commands.common.handlers import YAML_Handler, JSON_Handler
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from actions_toolkit import core
+import logging
 
+logger = logging.getLogger("demisto-sdk")
 yaml = YAML_Handler()
 json = JSON_Handler()
 
@@ -37,17 +39,6 @@ PRECOMMIT_TEMPLATE_PATH = Path(__file__).parent / ".pre-commit-config_template.y
 SKIPPED_HOOKS = ("format", "validate")
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
-PYUPGRADE_MAPPING = {
-    "3.10": "py310-plus",
-    "3.9": "py39-plus",
-    "3.8": "py38-plus",
-    "3.7": "py37-plus",
-}
-
-
-def python_version_to_pyupgrade(python_version: str):
-    return f"py{python_version.replace('.', '')}-plus"
-
 
 def python_version_to_ruff(python_version: str):
     return f"py{python_version.replace('.', '')}"
@@ -77,9 +68,6 @@ class PreCommit:
     def handle_mypy(mypy_hook: dict, python_version: str):
         mypy_hook["args"][-1] = f"--python-version={python_version}"
 
-    @staticmethod
-    def handle_pyupgrade(pyupgrade_hook: dict, python_version: str):
-        pyupgrade_hook["args"][-1] = f"--{python_version_to_pyupgrade(python_version)}"
 
     @staticmethod
     def handle_ruff(ruff_hook: dict, python_version: str, no_fix: bool = False):
@@ -101,10 +89,12 @@ class PreCommit:
             test_path = integration_script_path.with_name(f"{integration_script_path.with_suffix('').name}_test.py")
             with report_path.open() as f:
                 report = json.load(f)
+            test_passed = True
             for test in report["tests"]:
                 if test["outcome"] != "failed":
-                    print(f"Test {test['nodeid']} passed.")
+                    logger.debug(f"Test passed: {test['nodeid']}.")
                     continue
+                test_passed = False
                 crash = test["call"]["crash"]
                 traceback = test["call"]["traceback"]
                 traceback_message = ", ".join(t["message"] for t in traceback)
@@ -121,7 +111,7 @@ class PreCommit:
                         start_line=str(line),
                     )
                 else:
-                    print(f"{test_path}:{line}: {message}")
+                    logger.error(f"Test failed: {test_path}:{line}: {message}")
             for warning in report.get("warnings", []):
                 message = warning["message"]
                 filepath = None
@@ -130,7 +120,9 @@ class PreCommit:
                 if GITHUB_ACTIONS:
                     core.warning(message, title="Pytest", file=str(filepath))
                 else:
-                    print(f"{filepath} {message}")
+                    logger.warning(f"Test warning: {filepath} {message}")
+            if test_passed:
+                logger.info(f"Test passed: {integration_script_path}.")
 
     def handle_results(self, test: bool = False):
         if test:
@@ -171,7 +163,6 @@ class PreCommit:
                 continue
             self.handle_ruff(self.hooks["ruff"], python_version, no_fix)
             if python_version != DEFAULT_PYTHON_VERSION:
-                self.handle_pyupgrade(self.hooks["pyupgrade"], python_version)
                 self.handle_mypy(self.hooks["mypy"], python_version)
             with open(CONTENT_PATH / ".pre-commit-config.yaml", "w") as f:
                 yaml.dump(PRECOMMIT_TEMPLATE, f)

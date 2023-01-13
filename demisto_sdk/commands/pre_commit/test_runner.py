@@ -38,8 +38,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             continue
         working_dir = f"/content/{integration_script.path.parent.relative_to(CONTENT_PATH)}"
         docker_image = integration_script.docker_image
-        if os.getenv("GITLAB_CI"):
-            docker_image = f"docker-io.art.code.pan.run/{docker_image}"
+        # if os.getenv("GITLAB_CI"):
+        #     docker_image = f"docker-io.art.code.pan.run/{docker_image}"
         logger.info(f"Running test for {filename} with docker image {docker_image}")
         try:
             container = docker_client.containers.create(
@@ -73,8 +73,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 ret_val = 1
         except Exception as e:
             logger.error(f"Failed to run test for {filename}: {e}")
-            if container:
-                logger.info(container.logs())
+            raise Exception(f"Failed to run test for {filename}: {e}")
+            logger.info(container.logs())
             ret_val = 1
     return ret_val
 

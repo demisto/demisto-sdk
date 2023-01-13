@@ -83,7 +83,7 @@ class PreCommit:
 
     @staticmethod
     def handle_ruff(ruff_hook: dict, python_version: str):
-        ruff_hook["args"][-1] = f"--{python_version_to_ruff(python_version)}"
+        ruff_hook["args"][-1] = f"--target-version={python_version_to_ruff(python_version)}"
         if os.getenv("GITHUB_ACTIONS"):
             ruff_hook["args"].append("--format=github")
 
@@ -102,16 +102,17 @@ class PreCommit:
                 if test["outcome"] == "failed":
                     crash = test["call"]["crash"]
                     traceback = test["call"]["traceback"]
-                    file = Path(crash["path"]).relative_to(CONTENT_PATH)
+                    traceback_message = ", ".join(t["message"] for t in traceback)
+                    file = Path(crash["path"]).relative_to("/content")
                     line = crash["lineno"]
                     message = (
-                        f"Test {test['nodeid']} failed. \n Traceback: {traceback['message']} \n {test['longrepr']}"
+                        f"Test {test['nodeid']} failed. \n Traceback: {traceback_message} \n {test['call']['longrepr']}"
                     )
                     if GITHUB_ACTIONS:
                         print(f"::error file={file},line={line},col=1::{message}")
                     else:
                         print(f"{file}:{line}: {message}")
-            for warning in report["warnings"]:
+            for warning in report.get("warnings", []):
                 message = warning["message"]
                 filepath = None
                 if match := re.match(r".* (.*)::", message):
@@ -121,7 +122,6 @@ class PreCommit:
                 else:
                     print(f"{filepath}:{warning['lineno']}: {message}")
 
-    
     def handle_results(self, test: bool = False):
         if test:
             self.handle_pytest_results()

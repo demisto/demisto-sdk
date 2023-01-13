@@ -58,7 +58,7 @@ repos:
           - id: check-poetry
   
     - repo: https://github.com/demisto/demisto-sdk
-      rev: fc39915d1d45c883abb76ad135cacec6e7e84c1e
+      rev: 61cda8613a90c29f0b2ec1b1be86a10b5551f420
       hooks:
         - id: run-unit-tests
         - id: format

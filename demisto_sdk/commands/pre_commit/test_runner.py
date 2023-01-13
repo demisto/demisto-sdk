@@ -15,6 +15,7 @@ logging_setup(1)
 logger = logging.getLogger("demisto-sdk")
 
 PYTHONPATH = [
+    Path(CONTENT_PATH),
     Path(CONTENT_PATH / "Packs" / "Base" / "Scripts" / "CommonServerPython"),
     Path(CONTENT_PATH / "Tests" / "demistomock"),
 ]

@@ -16,12 +16,13 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 from demisto_sdk.commands.common.handlers import YAML_Handler, JSON_Handler
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from actions_toolkit import core
 
 yaml = YAML_Handler()
 json = JSON_Handler()
 
 GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS")
-
+GITHUB_ACTIONS = True
 DEFAULT_PYTHON_VERSION = "3.10"
 EMPTY_PYTHON_VERSION = "2.7"
 
@@ -100,7 +101,6 @@ class PreCommit:
         for integration_script_path in filter(lambda x: INTEGRATION_SCRIPT_REGEX.match(str(x)), self.all_files):
             report_path = integration_script_path.with_name(".report.json")
             test_path = integration_script_path.with_name(f"{integration_script_path.with_suffix('').name}_test.py")
-            print(test_path)
             with report_path.open() as f:
                 report = json.load(f)
             for test in report["tests"]:
@@ -114,9 +114,10 @@ class PreCommit:
                         f"{test['call']['longrepr']}"
                     )
                     if GITHUB_ACTIONS:
-                        print_github_actions_output(
-                            command="error", title="Pytest", file=str(test_path), line=str(line), message="pytest failed!"
-                        )
+                        core.error("Test failed!", title="Pytest", file=str(test_path), line=str(line))
+                        # print_github_actions_output(
+                        #     command="warning", title="Pytest", file=str(test_path), line=str(line), message="pytest failed!"
+                        # )
                     else:
                         print(f"{test_path}:{line}: {message}")
             for warning in report.get("warnings", []):
@@ -125,10 +126,7 @@ class PreCommit:
                 if match := re.match(r".* (.*)::", message):
                     filepath = integration_script_path.with_name(match.group(1))
                 if GITHUB_ACTIONS:
-                    pass
-                    # print_github_actions_output(
-                    #     command="warning", title="Pytest", file=str(filepath), line=str(warning["lineno"]), message=message
-                    # )
+                    core.warning(message, title="Pytest", file=str(filepath), line=str(warning["lineno"]))
                 else:
                     print(f"{filepath}:{warning['lineno']}: {message}")
 

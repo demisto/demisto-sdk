@@ -30,18 +30,6 @@ repos:
       hooks:
         - id: pycln
 
-    - repo: https://github.com/timothycrosley/isort
-      rev: v5.11.3
-      hooks:
-          - id: isort
-
-    - repo: https://github.com/asottile/pyupgrade
-      rev: v3.3.1
-      hooks:
-          - id: pyupgrade
-            args: [--py310-plus]
-            
-
     - repo: local
       hooks:
           - id: mypy

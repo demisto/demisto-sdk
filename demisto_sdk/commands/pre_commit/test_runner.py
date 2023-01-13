@@ -49,6 +49,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 environment={
                     "PYTHONPATH": ":".join(PYTHONPATH),
                     "REQUESTS_CA_BUNDLE": "/etc/ssl/certs/ca-certificates.crt",
+                    "GITHUB_ACTIONS": os.getenv("GITHUB_ACTIONS"),
+                    "PYTEST_RUN_PATH": str(integration_script.path.parent.relative_to(CONTENT_PATH)),
                 },
                 volumes=[
                     f"{CONTENT_PATH}:/content",

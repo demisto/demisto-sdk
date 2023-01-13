@@ -76,7 +76,9 @@ class PreCommit:
 
     @staticmethod
     def handle_pycln(pycln_hook):
-        pycln_hook["args"] = [f"--skip-imports={','.join(path.name for path in PYTHONPATH)},demisto"]
+        pycln_hook["args"] = [
+            f"--skip-imports={','.join(path.name for path in PYTHONPATH)},demisto,CommonServerUserPython"
+        ]
 
     def run(self, test: bool = False, skip_hooks: Optional[List[str]] = None) -> int:
         # handle skipped hooks
@@ -85,17 +87,18 @@ class PreCommit:
         skipped_hooks = list(SKIPPED_HOOKS)
         skipped_hooks.extend(skip_hooks or [])
         if not test:
-            skipped_hooks.append("content-test-runner")
+            skipped_hooks.append("run-unit-tests")
         precommit_env["SKIP"] = ",".join(skipped_hooks)
         precommit_env["PYTHONPATH"] = ":".join(str(path) for path in PYTHONPATH)
         precommit_env["MYPYPATH"] = ":".join(str(path) for path in PYTHONPATH)
         print(f"{precommit_env.get('DOCKER_HOST')=}")
         self.handle_pycln(self.hooks["pycln"])
         for python_version, changed_files in self.python_version_to_files.items():
+            print(f"Running pre-commit for {changed_files} with python version {python_version}")
             if python_version.startswith("2"):
                 if test:
                     response = subprocess.run(
-                        ["pre-commit", "run", "content-test-runner", "--files", *changed_files, "-v"], env=precommit_env
+                        ["pre-commit", "run", "run-unit-test", "--files", *changed_files, "-v"], env=precommit_env
                     )
                     if response.returncode != 0:
                         ret_val = response.returncode
@@ -105,7 +108,6 @@ class PreCommit:
                 self.handle_mypy(self.hooks["mypy"], python_version)
             with open(CONTENT_PATH / ".pre-commit-config.yaml", "w") as f:
                 yaml.dump(PRECOMMIT_TEMPLATE, f)
-            print(f"Running pre-commit for {changed_files} with python version {python_version}")
             # use chunks because OS does not support such large comments
             for chunk in more_itertools.chunked_even(changed_files, 10_000):
                 response = subprocess.run(["pre-commit", "run", "--files", *chunk, "-v"], env=precommit_env)
@@ -114,6 +116,7 @@ class PreCommit:
         # remove the config file
         shutil.rmtree(CONTENT_PATH / ".pre-commit-config.yaml", ignore_errors=True)
         return ret_val
+
 
 def find_hook(hook_name: str):
     for hook in PRECOMMIT_TEMPLATE["repos"]:

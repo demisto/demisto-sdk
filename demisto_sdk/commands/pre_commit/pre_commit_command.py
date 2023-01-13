@@ -125,9 +125,10 @@ class PreCommit:
                 if match := re.match(r".* (.*)::", message):
                     filepath = integration_script_path.with_name(match.group(1))
                 if GITHUB_ACTIONS:
-                    print_github_actions_output(
-                        command="warning", title="Pytest", file=str(filepath), line=str(warning["lineno"]), message=message
-                    )
+                    pass
+                    # print_github_actions_output(
+                    #     command="warning", title="Pytest", file=str(filepath), line=str(warning["lineno"]), message=message
+                    # )
                 else:
                     print(f"{filepath}:{warning['lineno']}: {message}")
 

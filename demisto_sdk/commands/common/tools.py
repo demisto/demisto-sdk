@@ -3245,4 +3245,4 @@ def print_github_actions_output(
         arguments.append(f"endLine={end_line}")
     if end_col:
         arguments.append(f"endColumn={end_col}")
-    print(f"::{command} ', '.join(arguments)::{_escape(message)}")
+    print(f"::{command} {', '.join(arguments)}::{_escape(message)}")

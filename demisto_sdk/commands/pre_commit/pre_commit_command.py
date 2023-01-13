@@ -1,6 +1,7 @@
 from collections import defaultdict
 from dataclasses import dataclass
 import os
+import re
 import shutil
 import subprocess
 import multiprocessing
@@ -12,10 +13,13 @@ from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, SCRIPTS_DIR
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import YAML_Handler, JSON_Handler
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 
 yaml = YAML_Handler()
+json = JSON_Handler()
+
+GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS")
 
 DEFAULT_PYTHON_VERSION = "3.10"
 EMPTY_PYTHON_VERSION = "2.7"
@@ -32,7 +36,7 @@ PRECOMMIT_TEMPLATE_PATH = Path(__file__).parent / ".pre-commit-config_template.y
 
 SKIPPED_HOOKS = ("format", "validate")
 
-
+INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
 PYUPGRADE_MAPPING = {
     "3.10": "py310-plus",
     "3.9": "py39-plus",
@@ -65,6 +69,9 @@ class PreCommit:
         for repo in PRECOMMIT_TEMPLATE["repos"]:
             for hook in repo["hooks"]:
                 self.hooks[hook["id"]] = hook
+        self.all_files: Set[Path] = set()
+        for _, files in self.python_version_to_files.items():
+            self.all_files |= files
 
     @staticmethod
     def handle_mypy(mypy_hook: dict, python_version: str):
@@ -77,12 +84,47 @@ class PreCommit:
     @staticmethod
     def handle_ruff(ruff_hook: dict, python_version: str):
         ruff_hook["args"][-1] = f"--{python_version_to_ruff(python_version)}"
+        if os.getenv("GITHUB_ACTIONS"):
+            ruff_hook["args"].append("--format=github")
 
     @staticmethod
     def handle_pycln(pycln_hook):
         pycln_hook["args"] = [
             f"--skip-imports={','.join(path.name for path in PYTHONPATH)},demisto,CommonServerUserPython"
         ]
+
+    def handle_pytest_results(self):
+        for integration_script_path in filter(lambda x: INTEGRATION_SCRIPT_REGEX.match(str(x)), self.all_files):
+            report_path = integration_script_path.with_name(".report.json")
+            with report_path.open() as f:
+                report = json.load(f)
+            for test in report["tests"]:
+                if test["outcome"] == "failed":
+                    crash = test["crash"]
+                    traceback = test["traceback"]
+                    file = Path(crash["path"]).relative_to(CONTENT_PATH)
+                    line = crash["lineno"]
+                    message = (
+                        f"Test {test['nodeid']} failed. \n Traceback: {traceback['message']} \n {test['longrepr']}"
+                    )
+                    if GITHUB_ACTIONS:
+                        print(f"::error file={file},line={line},col=1::{message}")
+                    else:
+                        print(f"{file}:{line}: {message}")
+            for warning in report["warnings"]:
+                message = warning["message"]
+                filepath = None
+                if match := re.match(r".* (.*)::", message):
+                    filepath = match.group(1)
+                if GITHUB_ACTIONS:
+                    print(f"::warning file={filepath},line={warning['lineno']},col=1::{message}")
+                else:
+                    print(f"{filepath}:{warning['lineno']}: {message}")
+
+    
+    def handle_results(self, test: bool = False):
+        if test:
+            self.handle_pytest_results()
 
     def run(self, test: bool = False, skip_hooks: Optional[List[str]] = None) -> int:
         # handle skipped hooks
@@ -108,6 +150,7 @@ class PreCommit:
                     if response.returncode != 0:
                         ret_val = response.returncode
                 continue
+            self.handle_ruff(self.hooks["ruff"], python_version)
             if python_version != DEFAULT_PYTHON_VERSION:
                 self.handle_pyupgrade(self.hooks["pyupgrade"], python_version)
                 self.handle_mypy(self.hooks["mypy"], python_version)
@@ -122,6 +165,7 @@ class PreCommit:
                     ret_val = 1
         # remove the config file
         shutil.rmtree(CONTENT_PATH / ".pre-commit-config.yaml", ignore_errors=True)
+        self.handle_results(test)
         return ret_val
 
 
@@ -147,9 +191,7 @@ def pre_commit(
     staged_files = git_util._get_staged_files()
     files_to_run: Set[Path] = set()
     if input_files:
-        files_to_run = {file.relative_to(CONTENT_PATH)
-                        if file.is_absolute() else file
-                        for file in input_files}
+        files_to_run = {file.relative_to(CONTENT_PATH) if file.is_absolute() else file for file in input_files}
     elif staged_only:
         files_to_run = staged_files
     elif use_git:

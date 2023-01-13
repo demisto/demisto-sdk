@@ -114,7 +114,7 @@ class PreCommit:
                         f"{test['call']['longrepr']}"
                     )
                     if GITHUB_ACTIONS:
-                        core.error("Test failed!", title="Pytest", file=str(test_path), line=str(line))
+                        core.error("Test failed!", title="Pytest", file=str(test_path), start_line=str(line))
                         # print_github_actions_output(
                         #     command="warning", title="Pytest", file=str(test_path), line=str(line), message="pytest failed!"
                         # )
@@ -126,7 +126,7 @@ class PreCommit:
                 if match := re.match(r".* (.*)::", message):
                     filepath = integration_script_path.with_name(match.group(1))
                 if GITHUB_ACTIONS:
-                    core.warning(message, title="Pytest", file=str(filepath), line=str(warning["lineno"]))
+                    core.warning(message, title="Pytest", file=str(filepath), start_line=str(warning["lineno"]))
                 else:
                     print(f"{filepath}:{warning['lineno']}: {message}")
 

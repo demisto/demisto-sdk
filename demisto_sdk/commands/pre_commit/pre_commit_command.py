@@ -154,7 +154,7 @@ def pre_commit(
         files_to_run = staged_files | git_util._get_all_changed_files()
     elif all_files:
         files_to_run = git_util.get_all_files()
-    files_to_run = {file.relative_to(CONTENT_PATH) for file in files_to_run if file.is_absolute()}
+    files_to_run = {file.relative_to(CONTENT_PATH) if file.is_absolute() else file for file in files_to_run}
     return categorize_files(files_to_run).run(test, skip_hooks)
 
 

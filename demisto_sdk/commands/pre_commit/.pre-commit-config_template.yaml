@@ -48,6 +48,11 @@ repos:
           ]
         exclude: .*_test.py$
 
+      - id: is-build-files-changed
+        name: is-build-files-changed
+        entry: sh -c ./Tests/scripts/is_file_up_to_date.sh .circleci/config.yml $(git branch --show-current) true && sh -c ./Tests/scripts/is_file_up_to_date.sh .gitlab $(git branch --show-current) true
+        language: script
+
   - repo: https://github.com/demisto/demisto-sdk
     rev: d47fe3aa218f266c605f981c1ff725ae7d5db40e
     hooks:

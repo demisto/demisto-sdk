@@ -175,7 +175,7 @@ class PreCommit:
                     if response.returncode != 0:
                         ret_val = response.returncode
                 continue
-            self.handle_ruff(self.hooks["ruff"], python_version, no_fix)
+            # self.handle_ruff(self.hooks["ruff"], python_version, no_fix)
             if python_version != DEFAULT_PYTHON_VERSION:
                 self.handle_pyupgrade(self.hooks["pyupgrade"], python_version)
                 self.handle_mypy(self.hooks["mypy"], python_version)

@@ -133,9 +133,7 @@ class TagParser:
             Text with no wrapper tags.
         """
         if text and 0 <= text.find(self._tag_prefix) < text.find(self._tag_suffix):
-            remove_tag = (
-                remove_tag if isinstance(remove_tag, bool) else self._remove_tag_text
-            )
+            remove_tag = remove_tag if isinstance(remove_tag, bool) else self._remove_tag_text
             # collect {orignal_text: text_to_replace}
             matches = re.finditer(self._pattern, text)
             replace_map = {}
@@ -186,9 +184,7 @@ class MarketplaceTagParser:
     def marketplace(self, marketplace):
         self._marketplace = marketplace
         self._should_remove_xsoar_text = marketplace != MarketplaceVersions.XSOAR.value
-        self._should_remove_xsiam_text = (
-            marketplace != MarketplaceVersions.MarketplaceV2.value
-        )
+        self._should_remove_xsiam_text = marketplace != MarketplaceVersions.MarketplaceV2.value
 
     def parse_text(self, text):
         # the order of parse is important. inline should always be checked after paragraph tag
@@ -342,9 +338,7 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
         string. The output of the command you are trying to execute.
     """
     if is_silenced:
-        p = Popen(
-            command.split(), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=cwd
-        )
+        p = Popen(command.split(), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=cwd)
     else:
         p = Popen(command.split(), cwd=cwd)  # type: ignore
 
@@ -354,9 +348,7 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
             print_error(f"Failed to run command {command}\nerror details:\n{err}")
             sys.exit(1)
         else:
-            raise RuntimeError(
-                f"Failed to run command {command}\nerror details:\n{err}"
-            )
+            raise RuntimeError(f"Failed to run command {command}\nerror details:\n{err}")
 
     return output
 
@@ -409,9 +401,7 @@ def get_local_remote_file(
     tag: str = "master",
     return_content: bool = False,
 ):
-    repo = git.Repo(
-        search_parent_directories=True
-    )  # the full file path could be a git file path
+    repo = git.Repo(search_parent_directories=True)  # the full file path could be a git file path
     repo_git_util = GitUtil(repo)
     git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
     file_content = repo_git_util.get_local_remote_file_content(git_path)
@@ -433,9 +423,7 @@ def get_remote_file_from_api(
         git_content_config = GitContentConfig()
     if git_content_config.git_provider == GitProvider.GitLab:
         full_file_path_quote_plus = urllib.parse.quote_plus(full_file_path)
-        git_path = urljoin(
-            git_content_config.base_api, "files", full_file_path_quote_plus, "raw"
-        )
+        git_path = urljoin(git_content_config.base_api, "files", full_file_path_quote_plus, "raw")
     else:  # github
         git_path = urljoin(git_content_config.base_api, tag, full_file_path)
 
@@ -463,16 +451,12 @@ def get_remote_file_from_api(
                 },
             )  # Sometime we need headers
             if not res.ok:  # sometime we need param token
-                res = requests.get(
-                    git_path, verify=False, timeout=10, params={"token": github_token}
-                )
+                res = requests.get(git_path, verify=False, timeout=10, params={"token": github_token})
 
         res.raise_for_status()
     except requests.exceptions.RequestException as exc:
         # Replace token secret if needed
-        err_msg: str = (
-            str(exc).replace(github_token, "XXX") if github_token else str(exc)
-        )
+        err_msg: str = str(exc).replace(github_token, "XXX") if github_token else str(exc)
         err_msg = err_msg.replace(gitlab_token, "XXX") if gitlab_token else err_msg
         if not suppress_print:
             if is_external_repository():
@@ -543,9 +527,7 @@ def get_remote_file(
                     f"Could not get local remote file because of: {str(e)}\n"
                     f"Searching the remote file content with the API."
                 )
-    return get_remote_file_from_api(
-        full_file_path, git_content_config, tag, return_content, suppress_print
-    )
+    return get_remote_file_from_api(full_file_path, git_content_config, tag, return_content, suppress_print)
 
 
 def filter_files_on_pack(pack: str, file_paths_list="") -> set:
@@ -632,9 +614,7 @@ def get_child_directories(directory):
     if not os.path.isdir(directory):
         return []
     child_directories = [
-        os.path.join(directory, path)
-        for path in os.listdir(directory)
-        if os.path.isdir(os.path.join(directory, path))
+        os.path.join(directory, path) for path in os.listdir(directory) if os.path.isdir(os.path.join(directory, path))
     ]
     return child_directories
 
@@ -644,9 +624,7 @@ def get_child_files(directory):
     if not os.path.isdir(directory):
         return []
     child_files = [
-        os.path.join(directory, path)
-        for path in os.listdir(directory)
-        if os.path.isfile(os.path.join(directory, path))
+        os.path.join(directory, path) for path in os.listdir(directory) if os.path.isfile(os.path.join(directory, path))
     ]
     return child_files
 
@@ -700,9 +678,7 @@ def get_last_remote_release_version():
                     f'{exc_msg[exc_msg.find(">") + 3:-3]}.\n'
                     f"This may happen if you are not connected to the internet."
                 )
-            print_warning(
-                f"Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}"
-            )
+            print_warning(f"Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}")
 
     return ""
 
@@ -743,17 +719,13 @@ def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool =
         file_content = _read_file(file_path)
         try:
             if type_of_file in ("yml", ".yml"):
-                replaced = re.sub(
-                    r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content
-                )
+                replaced = re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
                 result = yaml.load(io.StringIO(replaced))
             else:
                 result = json.load(io.StringIO(file_content))
 
         except Exception as e:
-            raise ValueError(
-                f"{file_path} has a structure issue of file type {type_of_file}\n{e}"
-            )
+            raise ValueError(f"{file_path} has a structure issue of file type {type_of_file}\n{e}")
 
         if isinstance(result, (dict, list)):
             return result
@@ -824,8 +796,7 @@ def get_entity_id_by_entity_type(data: dict, content_entity: str):
 
     except AttributeError:
         raise ValueError(
-            f"Could not retrieve id from file of type {content_entity} - make sure the file structure is "
-            f"valid"
+            f"Could not retrieve id from file of type {content_entity} - make sure the file structure is " f"valid"
         )
 
 
@@ -845,8 +816,7 @@ def get_entity_name_by_entity_type(data: dict, content_entity: str):
 
     except AttributeError:
         raise ValueError(
-            f"Could not retrieve name from file of type {content_entity} - make sure the file structure is "
-            f"valid"
+            f"Could not retrieve name from file of type {content_entity} - make sure the file structure is " f"valid"
         )
 
 
@@ -859,9 +829,7 @@ def collect_ids(file_path):
 
 
 def get_from_version(file_path):
-    data_dictionary = (
-        get_yaml(file_path) if file_path.endswith("yml") else get_json(file_path)
-    )
+    data_dictionary = get_yaml(file_path) if file_path.endswith("yml") else get_json(file_path)
 
     if data_dictionary:
         from_version = (
@@ -871,9 +839,7 @@ def get_from_version(file_path):
         )
 
         if not from_version:
-            logging.warning(
-                f'fromversion/fromVersion was not found in {data_dictionary.get("id", "")}'
-            )
+            logging.warning(f'fromversion/fromVersion was not found in {data_dictionary.get("id", "")}')
             return ""
 
         if not re.match(r"^\d{1,2}\.\d{1,2}\.\d{1,2}$", from_version):
@@ -990,9 +956,7 @@ def get_release_notes_file_path(file_path):
         if bool(re.search(r"\d{1,2}_\d{1,2}_\d{1,2}\.md", file_path)):
             return file_path
         else:
-            print_warning(
-                f"Unsupported file type found in ReleaseNotes directory - {file_path}"
-            )
+            print_warning(f"Unsupported file type found in ReleaseNotes directory - {file_path}")
             return None
 
 
@@ -1006,9 +970,7 @@ def get_latest_release_notes_text(rn_path):
                 rn = f.read()
 
             if not rn:
-                print_error(
-                    f"Release Notes may not be empty. Please fill out correctly. - {rn_path}"
-                )
+                print_error(f"Release Notes may not be empty. Please fill out correctly. - {rn_path}")
                 return None
         except OSError:
             return ""
@@ -1138,9 +1100,7 @@ def get_integration_name_and_command_names(file_path):
     Returns: (set) of all the commands and integrations names found.
 
     """
-    integrations_dir_path = os.path.join(
-        PACKS_DIR, get_pack_name(file_path), INTEGRATIONS_DIR
-    )
+    integrations_dir_path = os.path.join(PACKS_DIR, get_pack_name(file_path), INTEGRATIONS_DIR)
     command_names: Set[str] = set()
     if not glob.glob(integrations_dir_path):
         return command_names
@@ -1150,14 +1110,10 @@ def get_integration_name_and_command_names(file_path):
         for integration in found_integrations:
             command_names.add(integration)
 
-            integration_path_full = os.path.join(
-                integrations_dir_path, integration, f"{integration}.yml"
-            )
+            integration_path_full = os.path.join(integrations_dir_path, integration, f"{integration}.yml")
             yml_dict = get_yaml(integration_path_full)
             commands = yml_dict.get("script", {}).get("commands", [])
-            command_names = command_names.union(
-                {command.get("name") for command in commands}
-            )
+            command_names = command_names.union({command.get("name") for command in commands})
 
     return command_names
 
@@ -1187,9 +1143,7 @@ def get_scripts_names(file_path):
                 # in case the script is in the old version of CommonScripts - JS code, only yml exists not in a dir
                 script_path_full = os.path.join(scripts_dir_path, script)
             else:
-                script_path_full = os.path.join(
-                    scripts_dir_path, script, f"{script}.yml"
-                )
+                script_path_full = os.path.join(scripts_dir_path, script, f"{script}.yml")
             try:
                 yml_dict = get_yaml(script_path_full)
                 scripts_names.add(yml_dict.get("name"))
@@ -1294,9 +1248,7 @@ def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # 
     return None, None
 
 
-def get_ignore_pack_skipped_tests(
-    pack_name: str, modified_packs: set, id_set: dict
-) -> set:
+def get_ignore_pack_skipped_tests(pack_name: str, modified_packs: set, id_set: dict) -> set:
     """
     Retrieve the skipped tests of a given pack, as detailed in the .pack-ignore file
 
@@ -1335,9 +1287,7 @@ def get_ignore_pack_skipped_tests(
                         for key in config[section]:
                             if key == "ignore":
                                 # group ignore codes to a list
-                                file_name_to_ignore_dict[file_name] = str(
-                                    config[section][key]
-                                ).split(",")
+                                file_name_to_ignore_dict[file_name] = str(config[section][key]).split(",")
             except MissingSectionHeaderError:
                 pass
 
@@ -1409,9 +1359,7 @@ def get_python_version(docker_image, log_verbose=None, no_prints=False):
     if py_num < 2.7 or (3 < py_num < 3.4):  # pylint can only work on python 3.4 and up
         raise ValueError(
             "Python vesion for docker image: {} is not supported: {}. "
-            "We only support python 2.7.* and python3 >= 3.4.".format(
-                docker_image, py_num
-            )
+            "We only support python 2.7.* and python3 >= 3.4.".format(docker_image, py_num)
         )
     return py_num
 
@@ -1449,9 +1397,7 @@ def get_dev_requirements(py_version, envs_dirs_base):
     """
     env_dir = get_pipenv_dir(py_version, envs_dirs_base)
     stderr_out = None if LOG_VERBOSE else DEVNULL
-    requirements = check_output(
-        ["pipenv", "lock", "-r", "-d"], cwd=env_dir, text=True, stderr=stderr_out
-    )
+    requirements = check_output(["pipenv", "lock", "-r", "-d"], cwd=env_dir, text=True, stderr=stderr_out)
     print_v(f"dev requirements:\n{requirements}")
     return requirements
 
@@ -1535,9 +1481,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.XDRC_TEMPLATE
         elif MODELING_RULES_DIR in path.parts and "testdata" in path.stem.casefold():
             return FileType.MODELING_RULE_TEST_DATA
-        elif MODELING_RULES_DIR in path.parts and path.stem.casefold().endswith(
-            "_schema"
-        ):
+        elif MODELING_RULES_DIR in path.parts and path.stem.casefold().endswith("_schema"):
             return FileType.MODELING_RULE_SCHEMA
 
     elif path.name.endswith("_image.png"):
@@ -1574,10 +1518,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             # Packs/myPack/Scripts/script-myScript.yml
             return FileType.SCRIPT
 
-        elif (
-            path.parent.parent.name == SCRIPTS_DIR
-            and path.name == f"{path.parent.name}.yml"
-        ):
+        elif path.parent.parent.name == SCRIPTS_DIR and path.name == f"{path.parent.name}.yml":
             # Packs/myPack/Scripts/myScript/myScript.yml
             return FileType.SCRIPT
 
@@ -1668,16 +1609,11 @@ def find_type(
             if MODELING_RULES_DIR in Path(path).parts:
                 return FileType.MODELING_RULE
 
-        if "global_rule_id" in _dict or (
-            isinstance(_dict, CommentedSeq) and _dict and "global_rule_id" in _dict[0]
-        ):
+        if "global_rule_id" in _dict or (isinstance(_dict, CommentedSeq) and _dict and "global_rule_id" in _dict[0]):
             return FileType.CORRELATION_RULE
 
     if file_type == "json" or path.lower().endswith(".json"):
-        if (
-            path.lower().endswith("_schema.json")
-            and MODELING_RULES_DIR in Path(path).parts
-        ):
+        if path.lower().endswith("_schema.json") and MODELING_RULES_DIR in Path(path).parts:
             return FileType.MODELING_RULE_SCHEMA
 
         if "widgetType" in _dict:
@@ -1713,9 +1649,7 @@ def find_type(
         if "canvasContextConnections" in _dict:
             return FileType.CONNECTION
 
-        if (
-            "layout" in _dict or "kind" in _dict
-        ):  # it's a Layout or Dashboard but not a Generic Object
+        if "layout" in _dict or "kind" in _dict:  # it's a Layout or Dashboard but not a Generic Object
             if "kind" in _dict or "typeId" in _dict:
                 return FileType.LAYOUT
 
@@ -1779,9 +1713,7 @@ def find_type(
                 if _id.startswith("indicator"):
                     return FileType.INDICATOR_FIELD
             else:
-                print(
-                    f'The file {path} could not be recognized, please update the "id" to be a string'
-                )
+                print(f'The file {path} could not be recognized, please update the "id" to be a string')
 
     return None
 
@@ -1828,15 +1760,11 @@ def get_content_id_set() -> dict:
     return requests.get(OFFICIAL_CONTENT_ID_SET_PATH).json()
 
 
-def download_content_graph(
-    output_path: Path, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR
-) -> Path:
+def download_content_graph(output_path: Path, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR) -> Path:
     """Getting the Content Graph from official content's bucket"""
     if output_path.is_dir():
         output_path = output_path / f"{marketplace.value}.zip"
-    output_path.write_bytes(
-        requests.get(f"{OFFICIAL_CONTENT_GRAPH_PATH}/{marketplace.value}.zip").content
-    )
+    output_path.write_bytes(requests.get(f"{OFFICIAL_CONTENT_GRAPH_PATH}/{marketplace.value}.zip").content)
     return output_path
 
 
@@ -1848,9 +1776,7 @@ def get_latest_upload_flow_commit_hash() -> str:
     """
     response_json = requests.get(OFFICIAL_INDEX_JSON_PATH).json()
     if not isinstance(response_json, dict):
-        raise ValueError(
-            f"The index.json file is not in the expected format: {response_json}"
-        )
+        raise ValueError(f"The index.json file is not in the expected format: {response_json}")
     last_commit = response_json.get("commit")
     if not last_commit:
         raise ValueError("The latest commit hash was not found in the index.json file")
@@ -1997,10 +1923,7 @@ def should_file_skip_validation(file_path: str) -> bool:
     # We validate only yml json and .md files
     if file_extension not in [".yml", ".json", ".md"]:
         return True
-    if any(
-        ignore_pattern in file_path.lower()
-        for ignore_pattern in ALL_FILES_VALIDATION_IGNORE_WHITELIST
-    ):
+    if any(ignore_pattern in file_path.lower() for ignore_pattern in ALL_FILES_VALIDATION_IGNORE_WHITELIST):
         return True
     # Ignoring changelog and description files since these are checked on the integration validation
     if "changelog" in file_path.lower() or "description" in file_path.lower():
@@ -2025,9 +1948,7 @@ def retrieve_file_ending(file_path: str) -> str:
     return ""
 
 
-def is_test_config_match(
-    test_config: dict, test_playbook_id: str = "", integration_id: str = ""
-) -> bool:
+def is_test_config_match(test_config: dict, test_playbook_id: str = "", integration_id: str = "") -> bool:
     """
     Given a test configuration from conf.json file, this method checks if the configuration is configured for the
     test playbook or for integration_id.
@@ -2047,9 +1968,7 @@ def is_test_config_match(
     test_integrations = test_config.get("integrations")
     if isinstance(test_integrations, list):
         integration_match = any(
-            test_integration
-            for test_integration in test_integrations
-            if test_integration == integration_id
+            test_integration for test_integration in test_integrations if test_integration == integration_id
         )
     else:
         integration_match = test_integrations == integration_id
@@ -2068,9 +1987,7 @@ def is_test_config_match(
     return False
 
 
-def get_not_registered_tests(
-    conf_json_tests: list, content_item_id: str, file_type: str, test_playbooks: list
-) -> list:
+def get_not_registered_tests(conf_json_tests: list, content_item_id: str, file_type: str, test_playbooks: list) -> list:
     """
     Return all test playbooks that are not configured in conf.json file
     Args:
@@ -2277,9 +2194,7 @@ def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
     return [arg]
 
 
-def get_file_version_suffix_if_exists(
-    current_file: Dict, check_in_display: bool = False
-) -> Optional[str]:
+def get_file_version_suffix_if_exists(current_file: Dict, check_in_display: bool = False) -> Optional[str]:
     """
     Checks if current YML file name is versioned or no, e.g, ends with v<number>.
     Args:
@@ -2307,13 +2222,9 @@ def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
             for field, field_info in item_field.items():
                 if entity_type == "mapper" or entity_type == "old classifier":
                     fields_list.append(field_info.get("name", ""))
-                    fields_list.append(
-                        field.replace("incident_", "").replace("indicator_", "")
-                    )
+                    fields_list.append(field.replace("incident_", "").replace("indicator_", ""))
                 elif entity_type == "layout":
-                    fields_list.append(
-                        field.replace("incident_", "").replace("indicator_", "")
-                    )
+                    fields_list.append(field.replace("incident_", "").replace("indicator_", ""))
     return fields_list
 
 
@@ -2461,14 +2372,10 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
 
     # Gets the data from the README
     # the pattern to get the context part out of command section:
-    context_section_pattern = (
-        r"\| *\*\*Path\*\* *\| *\*\*Type\*\* *\| *\*\*Description\*\* *\|.(.*?)#{3,5}"
-    )
+    context_section_pattern = r"\| *\*\*Path\*\* *\| *\*\*Type\*\* *\| *\*\*Description\*\* *\|.(.*?)#{3,5}"
     # the pattern to get the value in the first column under the outputs table:
     context_path_pattern = r"\| *(\S.*?\S) *\| *[^\|]* *\| *[^\|]* *\|"
-    readme_content += (
-        "### "  # mark end of file so last pattern of regex will be recognized.
-    )
+    readme_content += "### "  # mark end of file so last pattern of regex will be recognized.
     commands = yml_dict.get("script", {})
 
     # handles scripts
@@ -2484,18 +2391,12 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
         if not command_section:
             continue
         if not command_section[0].endswith("###"):
-            command_section[
-                0
-            ] += "###"  # mark end of file so last pattern of regex will be recognized.
-        context_section = re.findall(
-            context_section_pattern, command_section[0], re.DOTALL
-        )
+            command_section[0] += "###"  # mark end of file so last pattern of regex will be recognized.
+        context_section = re.findall(context_section_pattern, command_section[0], re.DOTALL)
         if not context_section:
             context_path_in_command = set()
         else:
-            context_path_in_command = set(
-                re.findall(context_path_pattern, context_section[0], re.DOTALL)
-            )
+            context_path_in_command = set(re.findall(context_path_pattern, context_section[0], re.DOTALL))
 
             # remove the header line ---- (could be of any length)
             for path in context_path_in_command:
@@ -2508,9 +2409,7 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
             command.pop("important")
 
         # Gets all context path in the relevant command section from YML file
-        existing_context_in_yml = set(
-            extract_multiple_keys_from_dict("contextPath", command)
-        )
+        existing_context_in_yml = set(extract_multiple_keys_from_dict("contextPath", command))
 
         # finds diff between YML and README
         only_in_yml_paths = existing_context_in_yml - context_path_in_command
@@ -2582,9 +2481,7 @@ def get_approved_usecases() -> list:
     """
     return get_remote_file(
         "Tests/Marketplace/approved_usecases.json",
-        git_content_config=GitContentConfig(
-            repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
-        ),
+        git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME),
     ).get("approved_list", [])
 
 
@@ -2688,9 +2585,7 @@ def get_current_usecases() -> list:
         List of approved usecases from current branch
     """
     if not is_external_repository():
-        approved_usecases_json, _ = get_dict_from_file(
-            "Tests/Marketplace/approved_usecases.json"
-        )
+        approved_usecases_json, _ = get_dict_from_file("Tests/Marketplace/approved_usecases.json")
         return approved_usecases_json.get("approved_list", [])
     return []
 
@@ -2702,9 +2597,7 @@ def get_approved_tags_from_branch() -> Dict[str, List[str]]:
         Dict of approved tags from current branch
     """
     if not is_external_repository():
-        approved_tags_json, _ = get_dict_from_file(
-            "Tests/Marketplace/approved_tags.json"
-        )
+        approved_tags_json, _ = get_dict_from_file("Tests/Marketplace/approved_tags.json")
         if isinstance(approved_tags_json.get("approved_list"), list):
             print_warning(
                 "You are using a deprecated version of the file aproved_tags.json, consider pulling from master"
@@ -2729,9 +2622,7 @@ def get_current_categories() -> list:
     """
     if is_external_repository():
         return []
-    approved_categories_json, _ = get_dict_from_file(
-        "Tests/Marketplace/approved_categories.json"
-    )
+    approved_categories_json, _ = get_dict_from_file("Tests/Marketplace/approved_categories.json")
     return approved_categories_json.get("approved_list", [])
 
 
@@ -2796,9 +2687,7 @@ def is_iron_bank_pack(file_path):
     return PACK_METADATA_IRON_BANK_TAG in metadata.get("tags", [])
 
 
-def get_script_or_sub_playbook_tasks_from_playbook(
-    searched_entity_name: str, main_playbook_data: Dict
-) -> List[Dict]:
+def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, main_playbook_data: Dict) -> List[Dict]:
     """Get the tasks data for a task running the searched_entity_name (script/playbook).
 
     Returns:
@@ -2893,9 +2782,7 @@ def get_item_marketplaces(
         else:
             pack_name = get_pack_name(item_path)
             if packs and packs.get(pack_name):
-                marketplaces = packs.get(pack_name, {}).get(
-                    "marketplaces", [MarketplaceVersions.XSOAR.value]
-                )
+                marketplaces = packs.get(pack_name, {}).get("marketplaces", [MarketplaceVersions.XSOAR.value])
             else:
                 marketplaces = get_mp_types_from_metadata_by_item(item_path)
 
@@ -2912,9 +2799,7 @@ def get_mp_types_from_metadata_by_item(file_path):
     Returns:
         list of names of supporting marketplaces (current options are marketplacev2 and xsoar)
     """
-    if (
-        METADATA_FILE_NAME in Path(file_path).parts
-    ):  # for when the type is pack, the item we get is the metadata path
+    if METADATA_FILE_NAME in Path(file_path).parts:  # for when the type is pack, the item we get is the metadata path
         metadata_path = file_path
     else:
         metadata_path_parts = get_pack_dir(file_path)
@@ -3015,17 +2900,12 @@ def get_api_module_dependencies(pkgs, id_set_path, verbose):
         script_api_modules = integration_info.get("api_modules", [])
         if intersection := changed_api_modules & set(script_api_modules):
             if verbose:
-                print(
-                    f"found integration {integration_name} dependent on {intersection}"
-                )
+                print(f"found integration {integration_name} dependent on {intersection}")
             using_integrations.extend(list(integration.values()))
 
-    using_scripts_pkg_paths = [
-        Path(script.get("file_path")).parent.absolute() for script in using_scripts
-    ]
+    using_scripts_pkg_paths = [Path(script.get("file_path")).parent.absolute() for script in using_scripts]
     using_integrations_pkg_paths = [
-        Path(integration.get("file_path")).parent.absolute()
-        for integration in using_integrations
+        Path(integration.get("file_path")).parent.absolute() for integration in using_integrations
     ]
     return list(set(using_integrations_pkg_paths + using_scripts_pkg_paths))
 
@@ -3078,9 +2958,7 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
     for command in commands:
         command_parts = command.split("|||")
         if len(command_parts) == 2:
-            detailed_commands.append(
-                {"id": command_parts[1], "source": command_parts[0]}
-            )
+            detailed_commands.append({"id": command_parts[1], "source": command_parts[0]})
         else:
             detailed_commands.append({"id": command_parts[0]})
 
@@ -3107,12 +2985,7 @@ def order_dict(data):
     """
     Order dict by default order
     """
-    return OrderedDict(
-        {
-            k: order_dict(v) if isinstance(v, dict) else v
-            for k, v in sorted(data.items())
-        }
-    )
+    return OrderedDict({k: order_dict(v) if isinstance(v, dict) else v for k, v in sorted(data.items())})
 
 
 def extract_none_deprecated_command_names_from_yml(yml_data: dict) -> list:
@@ -3224,19 +3097,14 @@ def get_invalid_incident_fields_from_mapper(
         ValueError: in case the mapping type has an incorrect value provided.
     """
     if mapping_type not in {"mapping-incoming", "mapping-outgoing"}:
-        raise ValueError(
-            f"Invalid mapping-type value {mapping_type}, should be: mapping-incoming/mapping-outgoing"
-        )
+        raise ValueError(f"Invalid mapping-type value {mapping_type}, should be: mapping-incoming/mapping-outgoing")
 
     non_existent_fields = []
 
     for inc_name, inc_info in mapper_incident_fields.items():
         # incoming mapper
         if mapping_type == "mapping-incoming":
-            if (
-                inc_name not in content_fields
-                and inc_name.lower() not in content_fields
-            ):
+            if inc_name not in content_fields and inc_name.lower() not in content_fields:
                 non_existent_fields.append(inc_name)
         # outgoing mapper
         if mapping_type == "mapping-outgoing":
@@ -3244,18 +3112,13 @@ def get_invalid_incident_fields_from_mapper(
             if simple := inc_info.get("simple"):
                 if "." in simple:
                     simple = simple.split(".")[0]
-                if (
-                    simple not in content_fields
-                    and simple.lower() not in content_fields
-                ):
+                if simple not in content_fields and simple.lower() not in content_fields:
                     non_existent_fields.append(inc_name)
 
     return non_existent_fields
 
 
-def get_invalid_incident_fields_from_layout(
-    layout_incident_fields: List[Dict], content_fields: List[str]
-) -> List[str]:
+def get_invalid_incident_fields_from_layout(layout_incident_fields: List[Dict], content_fields: List[str]) -> List[str]:
     """
     Get a list of incident fields which are not part of the content items (not part of id_json) from a specific
     layout item/section.
@@ -3272,14 +3135,8 @@ def get_invalid_incident_fields_from_layout(
 
     if layout_incident_fields and content_fields:
         for incident_field_info in layout_incident_fields:
-            inc_field_id = normalize_field_name(
-                field=incident_field_info.get("fieldId", "")
-            )
-            if (
-                inc_field_id
-                and inc_field_id.lower() not in content_fields
-                and inc_field_id not in content_fields
-            ):
+            inc_field_id = normalize_field_name(field=incident_field_info.get("fieldId", ""))
+            if inc_field_id and inc_field_id.lower() not in content_fields and inc_field_id not in content_fields:
                 non_existent_fields.append(inc_field_id)
 
     return non_existent_fields
@@ -3334,9 +3191,7 @@ def string_to_bool(
             considered_false.update(map(func, _considered_false))
 
     if accept_single_letter:
-        considered_true.update(
-            tuple(_[0] for _ in considered_true)
-        )  # note this takes considered_true as input
+        considered_true.update(tuple(_[0] for _ in considered_true))  # note this takes considered_true as input
         considered_false.update(tuple(_[0] for _ in considered_false))
 
     if input_ in considered_true:
@@ -3362,3 +3217,30 @@ def field_to_cli_name(field_name: str) -> str:
         field_name (str): the incident/indicator field name.
     """
     return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, "", field_name).lower()
+
+
+def print_github_actions_message(
+    command: str,
+    message: str,
+    title: Optional[str] = None,
+    file: Optional[str] = None,
+    line: Optional[int] = None,
+    col: Optional[int] = None,
+    end_line: Optional[int] = None,
+    end_col: Optional[int] = None,
+) -> None:
+    commands = [f"::{command}"]
+    if title:
+        commands.append(f"title={title}")
+    if file:
+        commands.append(f"file={file}")
+    if line:
+        commands.append(f"line={line}")
+    if col:
+        commands.append(f"col={col}")
+    if end_line:
+        commands.append(f"endLine={end_line}")
+    if end_col:
+        commands.append(f"endColumn={end_col}")
+    commands.append(f"::{message}")
+    print(" ".join(commands))

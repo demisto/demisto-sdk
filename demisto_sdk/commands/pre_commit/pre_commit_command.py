@@ -44,6 +44,10 @@ PYUPGRADE_MAPPING = {
     "3.7": "py37-plus",
 }
 
+def _escape(s):
+    return s.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+
 
 def python_version_to_pyupgrade(python_version: str):
     return f"py{python_version.replace('.', '')}-plus"
@@ -111,7 +115,7 @@ class PreCommit:
                         f"{test['call']['longrepr']}"
                     )
                     if GITHUB_ACTIONS:
-                        print(f"::error title=Pytest file={file},line={line}::'{message}'")
+                        print(f"::error title=Pytest,file={file},line={line}::'{message}'")
                     else:
                         print(f"{file}:{line}: {message}")
             for warning in report.get("warnings", []):
@@ -120,7 +124,7 @@ class PreCommit:
                 if match := re.match(r".* (.*)::", message):
                     filepath = integration_script_path.with_name(match.group(1))
                 if GITHUB_ACTIONS:
-                    print(f"::warning file={filepath},line={warning['lineno']}::{message}")
+                    print(f"::warning title=Pytest,file={filepath},line={warning['lineno']}::{_escape(message)}")
                 else:
                     print(f"{filepath}:{warning['lineno']}: {message}")
 

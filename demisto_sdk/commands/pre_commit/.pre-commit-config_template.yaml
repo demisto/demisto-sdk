@@ -54,7 +54,7 @@ repos:
         exclude: .*_test.py$
 
   - repo: https://github.com/demisto/demisto-sdk
-    rev: 24e21e5c34af7bca56917ca6fa0d786a10e8bfe3
+    rev: 4e96d9d67dbfe2aab9c7986b42694792560c4403
     hooks:
       - id: run-unit-tests
       - id: format

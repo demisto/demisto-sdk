@@ -55,6 +55,7 @@ with open(PRECOMMIT_TEMPLATE_PATH, "r") as f:
 
 (CONTENT_PATH / "CommonServerUserPython.py").touch()
 
+
 @dataclass
 class PreCommit:
     python_version_to_files: Dict[str, Set[Path]]
@@ -147,14 +148,15 @@ def pre_commit(
     staged_files = git_util._get_staged_files()
     files_to_run: Set[Path] = set()
     if input_files:
-        files_to_run = set(input_files)
+        files_to_run = {file.relative_to(CONTENT_PATH)
+                        if file.is_absolute() else file
+                        for file in input_files}
     elif staged_only:
         files_to_run = staged_files
     elif use_git:
         files_to_run = staged_files | git_util._get_all_changed_files()
     elif all_files:
         files_to_run = git_util.get_all_files()
-    files_to_run = {file.relative_to(CONTENT_PATH) if file.is_absolute() else file for file in files_to_run}
     return categorize_files(files_to_run).run(test, skip_hooks)
 
 
@@ -185,7 +187,7 @@ def categorize_files(files: Set[Path]) -> PreCommit:
             version = Version(python_version)
             python_version = f"{version.major}.{version.minor}"
         python_versions_to_files[python_version or EMPTY_PYTHON_VERSION].update(
-            integrations_scripts_mapping[integration_script_path] | {integration_script.path}
+            integrations_scripts_mapping[integration_script_path] | {integration_script.path.relative_to(CONTENT_PATH)}
         )
     python_versions_to_files[DEFAULT_PYTHON_VERSION].update(files_to_run)
 

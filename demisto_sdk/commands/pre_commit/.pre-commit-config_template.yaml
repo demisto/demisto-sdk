@@ -53,7 +53,7 @@ repos:
         language: script
 
   - repo: https://github.com/demisto/demisto-sdk
-    rev: bee0f012fb04fbcd1e7cd908c175cfec413879a6
+    rev: f5ef78b60b329d8ae89998a05cdeb90ca229dee3
     hooks:
       - id: run-unit-tests
       - id: update-docker-image

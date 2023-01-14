@@ -83,50 +83,6 @@ class PreCommit:
             f"--skip-imports={','.join(path.name for path in PYTHONPATH)},demisto,CommonServerUserPython"
         ]
 
-    def handle_pytest_results(self):
-        for integration_script_path in filter(lambda x: INTEGRATION_SCRIPT_REGEX.match(str(x)), self.all_files):
-            report_path = integration_script_path.with_name(".report.json")
-            test_path = integration_script_path.with_name(f"{integration_script_path.with_suffix('').name}_test.py")
-            with report_path.open() as f:
-                report = json.load(f)
-            test_passed = True
-            for test in report["tests"]:
-                if test["outcome"] != "failed":
-                    logger.debug(f"Test passed: {test['nodeid']}.")
-                    continue
-                test_passed = False
-                crash = test["call"]["crash"]
-                traceback = test["call"]["traceback"]
-                traceback_message = ", ".join(t["message"] for t in traceback)
-                line = crash["lineno"]
-                message = (
-                    f"Test {test['nodeid']} failed. \n Traceback: {traceback_message} \n" f"{test['call']['longrepr']}"
-                )
-                if GITHUB_ACTIONS:
-                    core.error(
-                        message,
-                        title="Pytest",
-                        file=str(test_path),
-                        start_line=str(line),
-                    )
-                else:
-                    logger.error(f"Test failed: {test_path}:{line}: {message}")
-            for warning in report.get("warnings", []):
-                message = warning["message"]
-                filepath = None
-                if match := re.match(r".* (.*)::", message):
-                    filepath = integration_script_path.with_name(match.group(1))
-                if GITHUB_ACTIONS:
-                    core.warning(message, title="Pytest", file=str(filepath))
-                else:
-                    logger.warning(f"Test warning: {filepath} {message}")
-            if test_passed:
-                logger.info(f"Test passed: {integration_script_path}.")
-
-    def handle_results(self, test: bool = False):
-        if test:
-            self.handle_pytest_results()
-
     def run(
         self,
         test: bool = False,

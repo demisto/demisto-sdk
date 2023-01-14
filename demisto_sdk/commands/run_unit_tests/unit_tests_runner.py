@@ -1,6 +1,7 @@
 import logging
 import os
 from pathlib import Path
+import shutil
 from typing import List
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -31,6 +32,7 @@ def unit_test_runner(file_paths: List[Path]) -> int:
         logger.info(f"Running test for {filename} with docker image {docker_image}")
         try:
             docker_client.images.pull(docker_image)
+            shutil.copy(Path(__file__).parent / ".pytest.ini", integration_script.path.parent / '.pytest.ini')
             container = docker_client.containers.run(
                 image=docker_image,
                 environment={
@@ -42,6 +44,7 @@ def unit_test_runner(file_paths: List[Path]) -> int:
                     f"{(Path(__file__).parent / 'pytest_runner.sh')}:/runner.sh",
                     "/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt",
                     "/etc/pip.conf:/etc/pip.conf",
+                    
                 ],
                 command="sh /runner.sh",
                 working_dir=working_dir,
@@ -51,11 +54,12 @@ def unit_test_runner(file_paths: List[Path]) -> int:
             # wait for container to finish
             container_exit_code = container.wait()["StatusCode"]
             if container_exit_code:
-                logger.error(f"Some tests failed. Exit code: {container_exit_code}")
-                stream_docker_container_output(container.logs(stream=True), logger.error)
+                logger.error(f"Some tests failed. Run with -v to see full results. Exit code: {container_exit_code}")
                 ret_val = 1
             else:
                 logger.info(f"All tests passed for {filename}")
+            # remove file
+            shutil.rmtree(integration_script.path.parent / '.pytest.ini', ignore_errors=True)
             container.remove(force=True)
         except Exception as e:
             raise Exception(f"Failed to run test for {filename}: {e}")

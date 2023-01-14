@@ -50,13 +50,13 @@ def unit_test_runner(file_paths: List[Path]) -> int:
             stream_docker_container_output(container.logs(stream=True), logger.debug)
             # wait for container to finish
             container_exit_code = container.wait()["StatusCode"]
-            container.remove(force=True)
             if container_exit_code:
                 logger.error(f"Some tests failed. Exit code: {container_exit_code}")
                 stream_docker_container_output(container.logs(stream=True), logger.error)
                 ret_val = 1
             else:
                 logger.info(f"All tests passed for {filename}")
+            container.remove(force=True)
         except Exception as e:
             raise Exception(f"Failed to run test for {filename}: {e}")
     return ret_val

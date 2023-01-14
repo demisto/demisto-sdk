@@ -71,7 +71,7 @@ class PreCommit:
 
     @staticmethod
     def handle_ruff(ruff_hook: dict, python_version: str, no_fix: bool = False):
-        ruff_hook["args"][-1] = f"--target-version={python_version_to_ruff(python_version)}"
+        ruff_hook["args"] = [f"--target-version={python_version_to_ruff(python_version)}"]
         if not no_fix:
             ruff_hook["args"].append("--fix")
         if GITHUB_ACTIONS:
@@ -154,7 +154,7 @@ class PreCommit:
             if python_version.startswith("2"):
                 if test:
                     response = subprocess.run(
-                        ["pre-commit", "run", "run-unit-test", "--files", *changed_files, "-v" if verbose else ""],
+                        ["pre-commit", "run", "run-unit-tests", "--files", *changed_files, "-v" if verbose else ""],
                         env=precommit_env,
                         cwd=CONTENT_PATH,
                     )

@@ -18,7 +18,6 @@ repos:
     rev: "v0.0.220"
     hooks:
       - id: ruff
-        args: [--target-version=py310]
 
   - repo: https://github.com/pre-commit/mirrors-autopep8
     rev: "v2.0.1"
@@ -50,11 +49,11 @@ repos:
 
       - id: is-build-files-changed
         name: is-build-files-changed
-        entry: sh -c ./Tests/scripts/is_file_up_to_date.sh .circleci/config.yml $(git branch --show-current) true && sh -c ./Tests/scripts/is_file_up_to_date.sh .gitlab $(git branch --show-current) true
+        entry: ./Tests/scripts/is_file_up_to_date.sh .circleci/config.yml $(git branch --show-current) true && ./Tests/scripts/is_file_up_to_date.sh .gitlab $(git branch --show-current) true
         language: script
 
   - repo: https://github.com/demisto/demisto-sdk
-    rev: d47fe3aa218f266c605f981c1ff725ae7d5db40e
+    rev: a9c80cc10934bfb33bc65f181988b3a12e65ec77
     hooks:
       - id: run-unit-tests
       - id: update-docker-image

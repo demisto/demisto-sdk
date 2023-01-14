@@ -3008,6 +3008,17 @@ def pre_commit(
         skip = skip.split(",")  # type: ignore[assignment]
     sys.exit(pre_commit(input, use_git, staged, all_files, test, skip, verbose, show_diff_on_failure, no_fix))
 
+@main.command(short_help="Run unit tests in a docker for integrations and scripts")
+@click.help_option("-h", "--help")
+@click.option("-v", "--verbose", is_flag=True, help="Verbose output")
+@click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
+def run_unit_tests(file_paths: Tuple[str, ...], verbose: bool):
+    from demisto_sdk.commands.run_unit_tests.unit_tests_runner import unit_test_runner
+    from demisto_sdk.commands.common.logger import logging_setup
+    if verbose:
+        logging_setup(3)
+    sys.exit(unit_test_runner(file_paths))
+
 
 @main.result_callback()
 def exit_from_program(result=0, **kwargs):

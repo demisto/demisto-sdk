@@ -1,10 +1,8 @@
-import argparse
 import logging
 import os
 from pathlib import Path
 from typing import List
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
-from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 import demisto_sdk.commands.common.docker_helper as docker_helper
@@ -17,7 +15,7 @@ logger = logging.getLogger("demisto-sdk")
 DOCKER_PYTHONPATH = [f"/content/{path.relative_to(CONTENT_PATH)}" for path in PYTHONPATH]
 
 
-def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
+def unit_test_runner(file_paths: List[Path]) -> int:
     docker_client = docker_helper.init_global_docker_client()
 
     ret_val = 0

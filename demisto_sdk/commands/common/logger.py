@@ -34,7 +34,7 @@ def logging_setup(
 
     levels = {1: logging.INFO, 2: logging.WARNING, 3: logging.DEBUG}
 
-    log_level: int = levels.get(verbose, levels[2])
+    log_level: int = levels.get(verbose, levels[1])
     l.setLevel(log_level)
     fmt = logging.Formatter(
         "%(asctime)s [%(levelname)s]: %(message)s", datefmt=DATE_FORMAT

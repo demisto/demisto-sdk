@@ -40,6 +40,7 @@ SKIPPED_HOOKS = ("format", "validate")
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
 
+
 def python_version_to_ruff(python_version: str):
     return f"py{python_version.replace('.', '')}"
 
@@ -67,7 +68,6 @@ class PreCommit:
     @staticmethod
     def handle_mypy(mypy_hook: dict, python_version: str):
         mypy_hook["args"][-1] = f"--python-version={python_version}"
-
 
     @staticmethod
     def handle_ruff(ruff_hook: dict, python_version: str, no_fix: bool = False):
@@ -100,8 +100,7 @@ class PreCommit:
                 traceback_message = ", ".join(t["message"] for t in traceback)
                 line = crash["lineno"]
                 message = (
-                    f"Test {test['nodeid']} failed. \n Traceback: {traceback_message} \n"
-                    f"{test['call']['longrepr']}"
+                    f"Test {test['nodeid']} failed. \n Traceback: {traceback_message} \n" f"{test['call']['longrepr']}"
                 )
                 if GITHUB_ACTIONS:
                     core.error(

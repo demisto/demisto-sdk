@@ -184,7 +184,7 @@ class PreCommit:
                     ret_val = 1
         # remove the config file
         shutil.rmtree(CONTENT_PATH / ".pre-commit-config.yaml", ignore_errors=True)
-        self.handle_results(test)
+        # self.handle_results(test)
         return ret_val
 
 

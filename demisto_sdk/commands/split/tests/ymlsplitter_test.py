@@ -416,17 +416,6 @@ def test_extract_to_package_format_pwsh(tmpdir):
 
 def test_extract_to_package_format_py(pack, mocker, tmp_path):
     mocker.patch.object(YmlSplitter, "extract_image", return_value="12312321")
-    mocker.patch(
-        "demisto_sdk.commands.split.ymlsplitter.get_pip_requirements",
-        return_value="""certifi==2017.11.5
-chardet==3.0.4
-idna==2.6
-olefile==0.44
-PyYAML==3.12
-requests==2.18.4
-urllib3==1.22
-""",
-    )
     integration = pack.create_integration("Sample")
     integration.create_default_integration()
     out = tmp_path / "TestIntegration"

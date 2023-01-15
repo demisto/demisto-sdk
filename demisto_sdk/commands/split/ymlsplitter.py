@@ -174,7 +174,6 @@ class YmlSplitter:
                 yml_readme = self.input.parent / f"{self.input.stem}_README.md"
                 readme = output_path / "README.md"
                 if yml_readme.exists():
-                    found_readme = True
                     self.print_logs(
                         f"Copying {readme} to {readme}", log_color=LOG_COLORS.NATIVE
                     )

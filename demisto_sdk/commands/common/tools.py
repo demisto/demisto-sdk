@@ -2255,6 +2255,9 @@ def get_demisto_version(client: demisto_client) -> Union[Version, LegacyVersion]
         about_data = json.loads(resp[0].replace("'", '"'))
         return parse(about_data.get("demistoVersion"))  # type: ignore
     except Exception:
+        logger.warning(
+            "Could not parse Xsoar version, please make sure the environment is properly configured."
+        )
         return parse("0")
 
 

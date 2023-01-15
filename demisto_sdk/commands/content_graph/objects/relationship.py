@@ -18,6 +18,7 @@ class RelationshipData(BaseModel):
 
     # USES, DEPENDS_ON relationship properties
     mandatorily: bool = False
+    is_test: bool = False
 
     # HAS_COMMAND relationship properties
     description: Optional[str] = None

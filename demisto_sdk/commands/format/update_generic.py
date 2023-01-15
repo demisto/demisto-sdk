@@ -79,7 +79,8 @@ class BaseUpdate:
             self.prev_ver,
             self.verbose,
         )
-        self.schema = get_yaml(path)
+        self.schema_path = path
+        self.schema = self.get_schema()
         self.extended_schema: dict = self.recursive_extend_schema(self.schema, self.schema)  # type: ignore
         self.from_version = from_version
         self.no_validate = no_validate
@@ -161,6 +162,12 @@ class BaseUpdate:
             self.recursive_remove_unnecessary_keys(
                 self.extended_schema.get("mapping", {}), self.data
             )
+
+    def get_schema(self) -> dict:
+        try:
+            return get_yaml(self.schema_path)
+        except FileNotFoundError:
+            return {}
 
     @staticmethod
     def recursive_extend_schema(
@@ -360,7 +367,7 @@ class BaseUpdate:
         Returns:
             List of keys that should be deleted in file
         """
-        schema_fields = self.schema.get("mapping").keys()
+        schema_fields = self.schema.get("mapping", {}).keys()
         arguments_to_remove = set(self.data.keys()) - set(schema_fields)
         return arguments_to_remove
 

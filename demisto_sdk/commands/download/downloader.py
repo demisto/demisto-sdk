@@ -976,7 +976,6 @@ class Downloader:
             file_type=file_type,
             base_name=base_name,
             no_logging=not self.log_verbose,
-            no_pipenv=True,
             no_readme=True,
             no_auto_create_dir=True,
             no_code_formatting=self.no_code_formatting,
@@ -1094,7 +1093,6 @@ class Downloader:
             base_name=dir_name,
             no_auto_create_dir=True,
             no_logging=not self.log_verbose,
-            no_pipenv=True,
             no_code_formatting=self.no_code_formatting,
         )
         extractor.extract_to_package_format()

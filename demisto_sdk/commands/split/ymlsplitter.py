@@ -2,8 +2,6 @@ import base64
 import os
 import re
 import shutil
-import subprocess
-import tempfile
 from io import open
 from pathlib import Path
 from typing import Optional
@@ -21,9 +19,6 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS,
-    get_docker_images_from_yml,
-    get_pipenv_dir,
-    get_python_version,
     get_yaml,
     pascal_case,
     print_color,
@@ -39,22 +34,6 @@ REGEX_MODULE = r"### GENERATED CODE ###((.|\s)+?)### END GENERATED CODE ###"
 INTEGRATIONS_DOCS_REFERENCE = "https://xsoar.pan.dev/docs/reference/integrations/"
 
 
-def get_pip_requirements(docker_image: str):
-    return subprocess.check_output(
-        [
-            "docker",
-            "run",
-            "--rm",
-            docker_image,
-            "pip",
-            "freeze",
-            "--disable-pip-version-check",
-        ],
-        text=True,
-        stderr=subprocess.DEVNULL,
-    ).strip()
-
-
 class YmlSplitter:
     """YmlSplitter is a class that's designed to split a yml file to it's components.
 
@@ -66,7 +45,6 @@ class YmlSplitter:
         no_auto_create_dir (bool): whether to create a dir
         base_name (str): the base name of all extracted files
         no_readme (bool): whether to extract readme
-        no_pipenv (boo): whether to create pipenv
         no_code_formatting (bool): whether to avoid basic formatting on the code, i.e. autopep8 and isort
         file_type (str): yml file type (integration/script/modeling or parsing rule)
         configuration (Configuration): Configuration object
@@ -84,7 +62,6 @@ class YmlSplitter:
         configuration: Configuration = None,
         base_name: str = "",
         no_readme: bool = False,
-        no_pipenv: bool = False,
         no_logging: bool = False,
         no_code_formatting: bool = False,
         **_,  # ignoring unexpected kwargs
@@ -96,7 +73,6 @@ class YmlSplitter:
         self.file_type = file_type
         self.base_name = base_name
         self.readme = not no_readme
-        self.pipenv = not no_pipenv
         self.logging = not no_logging
         self.run_code_formatting: bool = not no_code_formatting
         self.lines_inserted_at_code_start = 0

@@ -206,12 +206,6 @@ def main(config, version, release_notes):
     show_default=True,
 )
 @click.option(
-    "--no-pipenv",
-    help="Don't auto create pipenv for requirements installation. (only for yml files)",
-    is_flag=True,
-    show_default=True,
-)
-@click.option(
     "--new-module-file",
     help="Create a new module file instead of editing the existing file. (only for json files)",
     is_flag=True,

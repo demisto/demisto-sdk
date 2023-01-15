@@ -177,7 +177,6 @@ def test_convert_contribution_zip_updated_pack(
         description=description,
         author=author,
         create_new=False,
-        no_pipenv=True,
     )
     contrib_converter_inst.convert_contribution_to_pack()
     converted_pack_path = repo_dir / "Packs" / "TestPack"
@@ -270,7 +269,6 @@ def test_convert_contribution_zip_outputs_structure(
         contribution=contribution_path,
         description=description,
         author=author,
-        no_pipenv=True,
     )
     contrib_converter_inst.convert_contribution_to_pack()
 
@@ -395,7 +393,6 @@ def test_convert_contribution_zip(
         contribution=contribution_path,
         description=description,
         author=author,
-        no_pipenv=True,
     )
     contrib_converter_inst.convert_contribution_to_pack()
 
@@ -532,7 +529,6 @@ def test_convert_contribution_zip_with_args(
         description=description,
         author=author,
         gh_user=gh_user,
-        no_pipenv=True,
     )
     contrib_converter_inst.convert_contribution_to_pack()
 

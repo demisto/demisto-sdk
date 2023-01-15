@@ -2,7 +2,6 @@ import base64
 import os
 import re
 import shutil
-from io import open
 from pathlib import Path
 from typing import Optional
 
@@ -193,7 +192,9 @@ class YmlSplitter:
                         log_color=LOG_COLORS.NATIVE,
                     )
                     try:
-                        autopep8.fix_code(code_file, options={'max_line_length': 130, 'in_place': 1})
+                        autopep8.fix_code(
+                            code_file, options={"max_line_length": 130, "in_place": 1}
+                        )
                     except FileNotFoundError:
                         self.print_logs(
                             "autopep8 skipped! It doesn't seem you have autopep8 installed.\n"

@@ -114,7 +114,6 @@ def rename_file_in_zip(
     os.replace(modded_zip_file, path_to_zip)
 
 
-@patch("demisto_sdk.commands.split.ymlsplitter.get_python_version")
 @patch("demisto_sdk.commands.init.contribution_converter.get_content_path")
 def test_convert_contribution_zip_updated_pack(
     get_content_path_mock, get_python_version_mock, tmp_path, mocker
@@ -205,7 +204,6 @@ def test_convert_contribution_zip_updated_pack(
     assert not unified_yml_in_sample.exists()
 
 
-@patch("demisto_sdk.commands.split.ymlsplitter.get_python_version")
 @patch("demisto_sdk.commands.init.contribution_converter.get_content_path")
 def test_convert_contribution_zip_outputs_structure(
     get_content_path_mock, get_python_version_mock, tmp_path, mocker
@@ -328,7 +326,6 @@ def test_convert_contribution_zip_outputs_structure(
     assert not unified_yml_in_sample.exists()
 
 
-@patch("demisto_sdk.commands.split.ymlsplitter.get_python_version")
 @patch("demisto_sdk.commands.init.contribution_converter.get_content_path")
 def test_convert_contribution_zip(
     get_content_path_mock, get_python_version_mock, tmp_path, mocker
@@ -461,7 +458,6 @@ def test_convert_contribution_zip(
     }
 
 
-@patch("demisto_sdk.commands.split.ymlsplitter.get_python_version")
 @patch("demisto_sdk.commands.init.contribution_converter.get_content_path")
 def test_convert_contribution_zip_with_args(
     get_content_path_mock, get_python_version_mock, tmp_path, mocker

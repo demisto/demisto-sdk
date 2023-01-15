@@ -169,7 +169,6 @@ class YmlSplitter:
             with open(yaml_out, "w") as yf:
                 yaml.dump(yaml_obj, yf)
             # check if there is a README and if found, set found_readme to True
-            found_readme = False
             if self.readme:
                 yml_readme = self.input.parent / f"{self.input.stem}_README.md"
                 readme = output_path / "README.md"

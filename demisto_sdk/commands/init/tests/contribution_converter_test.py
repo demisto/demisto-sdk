@@ -115,9 +115,7 @@ def rename_file_in_zip(
 
 
 @patch("demisto_sdk.commands.init.contribution_converter.get_content_path")
-def test_convert_contribution_zip_updated_pack(
-    get_content_path_mock, tmp_path, mocker
-):
+def test_convert_contribution_zip_updated_pack(get_content_path_mock, tmp_path, mocker):
     """
     Create a fake contribution zip file and test that it is converted to a Pack correctly.
     The pack already exists, checking the update flow.
@@ -323,9 +321,7 @@ def test_convert_contribution_zip_outputs_structure(
 
 
 @patch("demisto_sdk.commands.init.contribution_converter.get_content_path")
-def test_convert_contribution_zip(
-    get_content_path_mock, tmp_path, mocker
-):
+def test_convert_contribution_zip(get_content_path_mock, tmp_path, mocker):
     """Create a fake contribution zip file and test that it is converted to a Pack correctly
 
     Args:
@@ -453,9 +449,7 @@ def test_convert_contribution_zip(
 
 
 @patch("demisto_sdk.commands.init.contribution_converter.get_content_path")
-def test_convert_contribution_zip_with_args(
-    get_content_path_mock, tmp_path, mocker
-):
+def test_convert_contribution_zip_with_args(get_content_path_mock, tmp_path, mocker):
     """Convert a contribution zip to a pack and test that the converted pack's 'pack_metadata.json' is correct
 
     Args:

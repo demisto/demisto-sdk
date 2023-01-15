@@ -151,7 +151,7 @@ class BaseUpdateYML(BaseUpdate):
         """Manager function for the generic YML updates."""
 
         self.remove_copy_and_dev_suffixes_from_name()
-        self.get_schema_and_remove_unnecessary_keys()
+        self.remove_unnecessary_keys()
         self.remove_spaces_end_of_id_and_name()
         self.set_fromVersion(
             default_from_version=default_from_version, file_type=file_type

@@ -1,7 +1,7 @@
 import os
 import re
 from copy import deepcopy
-from typing import Any, Dict, Optional, Set, Union
+from typing import Any, Dict, Set, Union
 
 import click
 import dictdiffer
@@ -79,8 +79,8 @@ class BaseUpdate:
             self.prev_ver,
             self.verbose,
         )
-        self.schema_path = path
-        self.extended_schema: Optional[dict] = None
+        self.schema = get_yaml(path)
+        self.extended_schema: dict = self.recursive_extend_schema(self.schema, self.schema)  # type: ignore
         self.from_version = from_version
         self.no_validate = no_validate
         self.assume_yes = assume_yes
@@ -153,10 +153,8 @@ class BaseUpdate:
         else:
             self.data[key] = value
 
-    def get_schema_and_remove_unnecessary_keys(self):
+    def remove_unnecessary_keys(self):
         """Removes keys that are in file but not in schema of file type"""
-        schema = get_yaml(self.schema_path)
-        self.extended_schema = self.recursive_extend_schema(schema, schema)  # type: ignore
         if self.verbose:
             print("Removing Unnecessary fields from file")
         if isinstance(self.extended_schema, dict):
@@ -362,8 +360,7 @@ class BaseUpdate:
         Returns:
             List of keys that should be deleted in file
         """
-        yaml_content = get_yaml(self.schema_path)
-        schema_fields = yaml_content.get("mapping").keys()
+        schema_fields = self.schema.get("mapping").keys()
         arguments_to_remove = set(self.data.keys()) - set(schema_fields)
         return arguments_to_remove
 

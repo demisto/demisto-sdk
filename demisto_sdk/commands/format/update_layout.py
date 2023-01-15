@@ -16,7 +16,6 @@ from demisto_sdk.commands.common.tools import (
     LOG_COLORS,
     get_all_incident_and_indicator_fields_from_id_set,
     get_invalid_incident_fields_from_layout,
-    get_yaml,
     normalize_field_name,
     print_color,
     print_error,
@@ -182,7 +181,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
             self.output_file = new_output_path
 
-    def get_schema_and_remove_unnecessary_keys(self):
+    def remove_unnecessary_keys(self):
         """Removes keys that are in file but not in schema of file type"""
         arguments_to_remove, layout_kind_args_to_remove = self.arguments_to_remove()
         for key in arguments_to_remove:
@@ -241,12 +240,11 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 Dict with layout kinds as keys and set of keys that should
                 be deleted as values.
         """
-        yaml_content = get_yaml(self.schema_path)
-        schema_fields = yaml_content.get("mapping").keys()
+        schema_fields = self.schema.get("mapping").keys()
         first_level_args = set(self.data.keys()) - set(schema_fields)
 
         second_level_args = {}
-        kind_schema = yaml_content["mapping"][LAYOUT_KIND]["mapping"].keys()
+        kind_schema = self.schema["mapping"][LAYOUT_KIND]["mapping"].keys()
         second_level_args[LAYOUT_KIND] = set(self.data[LAYOUT_KIND].keys()) - set(
             kind_schema
         )
@@ -261,14 +259,13 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 Dict with layout kinds as keys and set of keys that should
                 be deleted as values.
         """
-        yaml_content = get_yaml(self.schema_path)
-        schema_fields = yaml_content.get("mapping").keys()
+        schema_fields = self.schema.get("mapping").keys()
         first_level_args = set(self.data.keys()) - set(schema_fields)
 
         second_level_args = {}
         for kind in LAYOUTS_CONTAINER_KINDS:
             if kind in self.data:
-                kind_schema = yaml_content["mapping"][kind]["mapping"].keys()
+                kind_schema = self.schema["mapping"][kind]["mapping"].keys()
                 second_level_args[kind] = set(self.data[kind].keys()) - set(kind_schema)
 
         return first_level_args, second_level_args

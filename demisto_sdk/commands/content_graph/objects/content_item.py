@@ -120,7 +120,6 @@ class ContentItem(BaseContent):
     ) -> dict:
         data = self.data
         return MarketplaceSuffixPreparer.prepare(data, marketplace)
-        return data
 
     def summary(self, marketplace: Optional[MarketplaceVersions] = None) -> dict:
         """Summary of a content item (the most important metadata fields)

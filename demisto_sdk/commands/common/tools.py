@@ -1349,14 +1349,16 @@ def get_ignore_pack_skipped_tests(
     return ignored_tests_set
 
 
-def get_all_docker_images(script_obj) -> List[str]:
-    """Gets a yml as dict and returns a list of all 'dockerimage' values in the yml.
+def get_docker_images_from_yml(script_obj) -> List[str]:
+    """
+    Gets a yml as dict of the script/integration that lint runs on, and returns a list of all 'dockerimage' values
+    in the yml (including 'alt_dockerimages' if the key exist).
 
     Args:
-        script_obj (dict): A yml dict.
+        script_obj (dict): A yml as dict of the integration/script that lint runs on.
 
     Returns:
-        List. A list of all docker images.
+        (List): A list including all the docker images of the integration/script.
     """
     # this makes sure the first docker in the list is the main docker image.
     def_docker_image = DEF_DOCKER

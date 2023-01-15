@@ -24,7 +24,7 @@ def unit_test_runner(file_paths: List[Path]) -> int:
     for filename in file_paths:
         integration_script = BaseContent.from_path(Path(filename))
         if not isinstance(integration_script, IntegrationScript):
-            print(f"Skipping {filename} as it is not a content item.")
+            logger.warning(f"Skipping {filename} as it is not a content item.")
             continue
         working_dir = f"/content/{integration_script.path.parent.relative_to(CONTENT_PATH)}"
         docker_image = integration_script.docker_image or DEFAULT_DOCKER_IMAGE

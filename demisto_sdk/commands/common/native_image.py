@@ -17,7 +17,7 @@ logger = logging.getLogger("demisto-sdk")
 
 class NativeImage(BaseModel):
     supported_docker_images: List[str]
-    docker_ref: str
+    docker_ref: Optional[str]
 
 
 class IgnoredContentItem(BaseModel):
@@ -33,6 +33,7 @@ def _extract_native_image_version_for_server(native_image: str) -> str:
 class NativeImageConfig(Singleton, BaseModel):
     native_images: Dict[str, NativeImage]
     ignored_content_items: List[IgnoredContentItem]
+    flags_versions_mapping: Dict[str, str] = {}
     docker_images_to_native_images_mapping: Dict[str, List] = {}
 
     def __init__(
@@ -80,6 +81,20 @@ class NativeImageConfig(Singleton, BaseModel):
         )
         return native_image_config_content
 
+    def get_native_image_reference(self, native_image) -> Optional[str]:
+        """
+        Gets the docker reference of the given native image
+
+        Args:
+            native_image (str): native image (for example: 'native:8.1')
+
+        Returns: The docker ref
+        """
+        if native_image_obj := self.native_images.get(native_image):
+            return native_image_obj.docker_ref
+
+        return None
+
 
 class ScriptIntegrationSupportedNativeImages:
 
@@ -94,11 +109,13 @@ class ScriptIntegrationSupportedNativeImages:
         docker_image (str): the docker image that the integration/script uses. (dockerimage key in the yml).
     """
 
+    NATIVE_DEV = "native:dev"
+
     def __init__(
         self,
         _id: str,
-        docker_image: Optional[str],
         native_image_config: NativeImageConfig,
+        docker_image: Optional[str] = None,
     ):
         self.id = _id
         self.docker_image = (
@@ -136,25 +153,29 @@ class ScriptIntegrationSupportedNativeImages:
         return []
 
     def get_supported_native_image_versions(
-        self, get_raw_version: bool = False
+        self, get_raw_version: bool = False, only_production_tags: bool = True
     ) -> List[str]:
         """
-        Get the native-images that the integration/script supports. Disregards native-images that are supported which
-        should be ignored.
+        Get the native-images that the integration/script supports. Disregards native-images that should be ignored.
 
         Args:
             get_raw_version (bool): whether to extract the raw server version from the native image name, for example:
-              'native:8.2' will become '8.2' for each one of the native-images that are supported.
+                                    'native:8.2' will become '8.2' for each one of the native-images that are supported.
+            only_production_tags (bool): whether to ignore the latest native image.
         """
         if native_images := self.__docker_image_to_native_images_support():
             # in case there is a script/integration that should be ignored on a specific native image,
-            # the native image(s) which doesn't support him will be removed.
+            # the native image(s) which doesn't support it will be removed.
             ignored_native_images = self.__get_ignored_native_images()
             native_images = [
                 native_image
                 for native_image in native_images
                 if native_image not in ignored_native_images
             ]
+
+            if only_production_tags and self.NATIVE_DEV in native_images:
+                native_images.remove(self.NATIVE_DEV)
+
             if get_raw_version:
                 return list(
                     map(_extract_native_image_version_for_server, native_images)

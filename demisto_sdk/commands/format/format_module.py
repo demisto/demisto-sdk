@@ -90,6 +90,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
     "xsiamdashboard": BaseUpdateJSON,
     "xsiamreport": BaseUpdateJSON,
     "modelingrule": BaseUpdateYML,
+    "modelingruleschema": BaseUpdateJSON,
     "parsingrule": BaseUpdateYML,
     "trigger": BaseUpdateJSON,
     "xdrctemplate": BaseUpdateJSON,

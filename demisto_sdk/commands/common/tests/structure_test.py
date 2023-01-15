@@ -10,6 +10,8 @@ import pytest
 from demisto_sdk.commands.common.constants import (
     CODE_FILES_REGEX,
     CORRELATION_RULES_YML_REGEX,
+    MODELING_RULE_SCHEMA_REGEX,
+    MODELING_RULE_YML_REGEX,
     PACKAGE_YML_FILE_REGEX,
     PACKS_CLASSIFIER_JSON_5_9_9_REGEX,
     PACKS_CLASSIFIER_JSON_REGEX,
@@ -638,6 +640,18 @@ class TestGetMatchingRegex:
             ["Packs/Jira/ParsingRules/JiraParsingRules/JiraParsingRules.yml"],
             [],
             [PARSING_RULES_YML_REGEX],
+        ),
+        (
+            [
+                "Packs/Okta/ModelingRules/OktaModelingRules/OktaModelingRules_schema.json"
+            ],
+            [],
+            [MODELING_RULE_SCHEMA_REGEX],
+        ),
+        (
+            ["Packs/Okta/ModelingRules/OktaModelingRules/OktaModelingRules.yml"],
+            [],
+            [MODELING_RULE_YML_REGEX],
         ),
         (
             [

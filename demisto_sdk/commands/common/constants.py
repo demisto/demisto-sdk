@@ -1203,6 +1203,7 @@ SCHEMA_TO_REGEX = {
     ],
     "report": [PACKS_REPORT_JSON_REGEX],
     "modelingrule": [MODELING_RULE_YML_REGEX],
+    "modelingruleschema": [MODELING_RULE_SCHEMA_REGEX],
     "release-notes": [PACKS_RELEASE_NOTES_REGEX],
     "genericfield": JSON_ALL_GENERIC_FIELDS_REGEXES,
     "generictype": JSON_ALL_GENERIC_TYPES_REGEXES,

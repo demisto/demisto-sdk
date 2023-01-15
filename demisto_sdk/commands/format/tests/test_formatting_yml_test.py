@@ -618,7 +618,7 @@ class TestFormatting:
             .keys()
         )
 
-        base_yml.remove_unnecessary_keys()
+        base_yml.get_schema_and_remove_unnecessary_keys()
 
         # Assert the unnecessary keys were successfully removed
         assert "excessiveKey" not in base_yml.data.keys()

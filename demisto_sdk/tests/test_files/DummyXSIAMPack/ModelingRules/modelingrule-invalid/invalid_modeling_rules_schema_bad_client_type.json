@@ -1,0 +1,8 @@
+{
+  "okta_okta_raw": {
+    "client": {
+      "type": "string2",
+      "is_array": false
+    }
+  }
+}

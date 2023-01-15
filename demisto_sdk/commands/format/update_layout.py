@@ -182,7 +182,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
             self.output_file = new_output_path
 
-    def remove_unnecessary_keys(self):
+    def get_schema_and_remove_unnecessary_keys(self):
         """Removes keys that are in file but not in schema of file type"""
         arguments_to_remove, layout_kind_args_to_remove = self.arguments_to_remove()
         for key in arguments_to_remove:

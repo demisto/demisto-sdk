@@ -900,14 +900,6 @@ def secrets(config, **kwargs):
     " 'from-yml'.",
 )
 @click.option(
-    "-idp",
-    "--id-set-path",
-    help="Path to id_set.json, relevant for when using the "
-    "--check-dependent-api-module flag.",
-    type=click.Path(resolve_path=True),
-    default="Tests/id_set.json",
-)
-@click.option(
     "-cdam",
     "--check-dependent-api-module",
     is_flag=True,
@@ -947,7 +939,6 @@ def lint(**kwargs):
         quiet=kwargs.get("quiet"),  # type: ignore[arg-type]
         prev_ver=kwargs.get("prev_ver"),  # type: ignore[arg-type]
         json_file_path=kwargs.get("json_file"),  # type: ignore[arg-type]
-        id_set_path=kwargs.get("id_set_path"),  # type: ignore[arg-type]
         check_dependent_api_module=kwargs.get("check_dependent_api_module"),  # type: ignore[arg-type]
     )
     return lint_manager.run(

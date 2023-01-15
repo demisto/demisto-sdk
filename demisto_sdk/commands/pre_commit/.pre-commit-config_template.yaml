@@ -60,7 +60,7 @@ repos:
 
   - repo: https://github.com/demisto/demisto-sdk
     # Replace with the latest release version or master
-    rev: 8d99b426a033346cfaf09bc27990cd1572fb70f1
+    rev: 6081691448e8243691d28c458fa2870d6ca634d8
     hooks:
       - id: update-docker-image
 

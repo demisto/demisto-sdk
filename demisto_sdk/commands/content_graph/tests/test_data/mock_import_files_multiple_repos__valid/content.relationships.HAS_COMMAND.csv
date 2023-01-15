@@ -1,0 +1,2 @@
+:START_ID,:END_ID,:TYPE,deprecated:boolean,description
+2,3,HAS_COMMAND,false,test command.

@@ -22,6 +22,18 @@ def intersects(arr1: str, arr2: str) -> str:
     return f"any(elem IN {arr1} WHERE elem IN {arr2})"
 
 
+def is_target_available(source: str, target: str) -> str:
+    """Builds a query that determines if a target content item is available for use by
+    a source content item (i.e. they share a marketplace and have overlapping versions).
+    """
+    return f"""({intersects(f'{source}.marketplaces', f'{target}.marketplaces')}
+AND
+    {versioned(f'{source}.toversion')} >= {versioned(f'{target}.fromversion')}
+AND
+    {versioned(f'{target}.toversion')} >= {versioned(f'{source}.fromversion')})
+    """
+
+
 def node_map(properties: Dict[str, Any]) -> str:
     """Returns a string representation of a map in neo4j format."""
     return f'{{{", ".join([f"{k}: {v}" for k, v in properties.items()])}}}'

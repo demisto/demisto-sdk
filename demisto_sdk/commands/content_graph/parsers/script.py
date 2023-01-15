@@ -4,7 +4,12 @@ from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.integration_script import IntegrationScriptParser
+from demisto_sdk.commands.content_graph.parsers.integration_script import (
+    IntegrationScriptParser,
+)
+from demisto_sdk.commands.prepare_content.integration_script_unifier import (
+    IntegrationScriptUnifier,
+)
 
 EXECUTE_CMD_PATTERN = re.compile(
     r"execute_?command\(['\"]([a-zA-Z-_]+)['\"].*", re.IGNORECASE
@@ -53,9 +58,9 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
         """
         if self.is_unified or self.yml_data.get("script") not in ["-", ""]:
             return self.yml_data.get("script")
-        if not self.unifier:
-            raise ValueError("Unifier object is not initialized")
-        return self.unifier.get_script_or_integration_package_data()[1]
+        return IntegrationScriptUnifier.get_script_or_integration_package_data(
+            self.path.parent
+        )[1]
 
     def get_depends_on(self) -> Set[str]:
         depends_on: List[str] = self.yml_data.get("dependson", {}).get("must", [])

@@ -119,7 +119,7 @@ class ContentItem(BaseContent):
         self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
     ) -> dict:
         data = self.data
-        data = MarketplaceSuffixPreparer.prepare(data, marketplace)
+        return MarketplaceSuffixPreparer.prepare(data, marketplace)
         return data
 
     def summary(self, marketplace: Optional[MarketplaceVersions] = None) -> dict:

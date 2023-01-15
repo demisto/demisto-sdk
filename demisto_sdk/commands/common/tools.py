@@ -62,6 +62,7 @@ from demisto_sdk.commands.common.constants import (
     OFFICIAL_CONTENT_ID_SET_PATH,
     OFFICIAL_INDEX_JSON_PATH,
     PACK_METADATA_IRON_BANK_TAG,
+    PACK_METADATA_SUPPORT,
     PACKAGE_SUPPORTING_DIRECTORIES,
     PACKAGE_YML_FILE_REGEX,
     PACKS_DIR,
@@ -88,6 +89,7 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     XSOAR_CONFIG_FILE,
+    XSOAR_SUPPORT,
     FileType,
     IdSetKeys,
     MarketplaceVersions,
@@ -2631,6 +2633,22 @@ def is_pack_path(input_path: str) -> bool:
         - False if the input path is not for a given pack.
     """
     return os.path.basename(os.path.dirname(input_path)) == PACKS_DIR
+
+
+def is_xsoar_supported_pack(file_path: str) -> bool:
+
+    """
+    Takes a path to a file and returns a boolean indicating
+    whether this file belongs to an XSOAR-supported Pack.
+
+    Args:
+        - `file_path` (`str`): The path of the file.
+
+    Returns:
+        - `bool`
+    """
+
+    return get_pack_metadata(file_path).get(PACK_METADATA_SUPPORT) == XSOAR_SUPPORT
 
 
 def get_relative_path_from_packs_dir(file_path: str) -> str:

@@ -43,6 +43,7 @@ INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.ym
 with open(PRECOMMIT_TEMPLATE_PATH) as f:
     PRECOMMIT_TEMPLATE = yaml.load(f)
 
+
 @dataclass
 class PreCommitRunner:
     """This class is responsible of running pre-commit hooks."""
@@ -80,17 +81,13 @@ class PreCommitRunner:
         if no_fix:
             skipped_hooks.append("autopep8")
         if force_run_hooks:
-            skipped_hooks = [
-                hook for hook in skipped_hooks if hook not in force_run_hooks
-            ]
+            skipped_hooks = [hook for hook in skipped_hooks if hook not in force_run_hooks]
         precommit_env["SKIP"] = ",".join(skipped_hooks)
         precommit_env["PYTHONPATH"] = ":".join(str(path) for path in PYTHONPATH)
         precommit_env["MYPYPATH"] = ":".join(str(path) for path in PYTHONPATH)
         PyclnHook(self.hooks["pycn"]).prepare_hook(PYTHONPATH)
         for python_version, changed_files in self.python_version_to_files.items():
-            logger.info(
-                f"Running pre-commit for {changed_files} with python version {python_version}"
-            )
+            logger.info(f"Running pre-commit for {changed_files} with python version {python_version}")
             if python_version.startswith("2"):
                 # python2 supports only unit-tests?
                 if test:
@@ -109,9 +106,7 @@ class PreCommitRunner:
                     if response.returncode != 0:
                         ret_val = response.returncode
                 continue
-            RuffHook(self.hooks["ruff"]).prepare_hook(
-                python_version, no_fix, GITHUB_ACTIONS
-            )
+            RuffHook(self.hooks["ruff"]).prepare_hook(python_version, no_fix, GITHUB_ACTIONS)
             if python_version != DEFAULT_PYTHON_VERSION:
                 MypyHook(self.hooks["mypy"]).prepare_hook(python_version)
             with open(CONTENT_PATH / ".pre-commit-config.yaml", "w") as f:
@@ -135,6 +130,51 @@ class PreCommitRunner:
         # remove the config file in the end of the file
         shutil.rmtree(CONTENT_PATH / ".pre-commit-config.yaml", ignore_errors=True)
         return ret_val
+
+
+def categorize_files(files: Set[Path]) -> PreCommitRunner:
+    """This function categorizes the files to run pre-commit on, and returns the PreCommitRunner object.
+
+    Args:
+        files (Set[Path]): files to run pre-commit on.
+
+    Raises:
+        Exception: If invalid files were given.
+
+    Returns:
+        PreCommitRunner: PreCommitRunner object.
+    """
+    integrations_scripts_mapping = defaultdict(set)
+    files_to_run = []
+    for file in files:
+        if file.is_dir():
+            continue
+        if set(file.parts) & {INTEGRATIONS_DIR, SCRIPTS_DIR}:
+            find_path_index = (i + 1 for i, part in enumerate(file.parts) if part in {INTEGRATIONS_DIR, SCRIPTS_DIR})
+            if not find_path_index:
+                raise Exception(f"Could not find integration/script path for {file}")
+            integration_script_path = Path(*file.parts[: next(find_path_index) + 1])
+            integrations_scripts_mapping[integration_script_path].add(file)
+        else:
+            files_to_run.append(file)
+
+    python_versions_to_files = defaultdict(set)
+    with multiprocessing.Pool() as pool:
+        integrations_scripts = pool.map(BaseContent.from_path, integrations_scripts_mapping.keys())
+
+    for integration_script in integrations_scripts:
+        if not integration_script or not isinstance(integration_script, IntegrationScript):
+            continue
+        integration_script_path = integration_script.path.parent.relative_to(CONTENT_PATH)
+        if python_version := integration_script.python_version:
+            version = Version(python_version)
+            python_version = f"{version.major}.{version.minor}"
+        python_versions_to_files[python_version or EMPTY_PYTHON_VERSION].update(
+            integrations_scripts_mapping[integration_script_path] | {integration_script.path.relative_to(CONTENT_PATH)}
+        )
+    python_versions_to_files[DEFAULT_PYTHON_VERSION].update(files_to_run)
+
+    return PreCommitRunner(python_versions_to_files)
 
 
 def pre_commit_manager(
@@ -176,72 +216,11 @@ def pre_commit_manager(
     files_to_run: Set[Path] = set()
     if input_files:
         # convert all paths to relative paths
-        files_to_run = {
-            file.relative_to(CONTENT_PATH) if file.is_absolute() else file
-            for file in input_files
-        }
+        files_to_run = {file.relative_to(CONTENT_PATH) if file.is_absolute() else file for file in input_files}
     elif staged_only:
         files_to_run = staged_files
     elif use_git:
         files_to_run = staged_files | git_util._get_all_changed_files()
     elif all_files:
         files_to_run = git_util.get_all_files()
-    return categorize_files(files_to_run).run(
-        test, skip_hooks, force_run_hooks, verbose, show_diff_on_failure, no_fix
-    )
-
-
-def categorize_files(files: Set[Path]) -> PreCommitRunner:
-    """This function categorizes the files to run pre-commit on, and returns the PreCommitRunner object.
-
-    Args:
-        files (Set[Path]): files to run pre-commit on.
-
-    Raises:
-        Exception: If invalid files were given.
-
-    Returns:
-        PreCommitRunner: PreCommitRunner object.
-    """
-    integrations_scripts_mapping = defaultdict(set)
-    files_to_run = []
-    for file in files:
-        if file.is_dir():
-            continue
-        if set(file.parts) & {INTEGRATIONS_DIR, SCRIPTS_DIR}:
-            find_path_index = (
-                i + 1
-                for i, part in enumerate(file.parts)
-                if part in {INTEGRATIONS_DIR, SCRIPTS_DIR}
-            )
-            if not find_path_index:
-                raise Exception(f"Could not find integration/script path for {file}")
-            integration_script_path = Path(*file.parts[: next(find_path_index) + 1])
-            integrations_scripts_mapping[integration_script_path].add(file)
-        else:
-            files_to_run.append(file)
-
-    python_versions_to_files = defaultdict(set)
-    with multiprocessing.Pool() as pool:
-        integrations_scripts = pool.map(
-            BaseContent.from_path, integrations_scripts_mapping.keys()
-        )
-
-    for integration_script in integrations_scripts:
-        if not integration_script or not isinstance(
-            integration_script, IntegrationScript
-        ):
-            continue
-        integration_script_path = integration_script.path.parent.relative_to(
-            CONTENT_PATH
-        )
-        if python_version := integration_script.python_version:
-            version = Version(python_version)
-            python_version = f"{version.major}.{version.minor}"
-        python_versions_to_files[python_version or EMPTY_PYTHON_VERSION].update(
-            integrations_scripts_mapping[integration_script_path]
-            | {integration_script.path.relative_to(CONTENT_PATH)}
-        )
-    python_versions_to_files[DEFAULT_PYTHON_VERSION].update(files_to_run)
-
-    return PreCommitRunner(python_versions_to_files)
+    return categorize_files(files_to_run).run(test, skip_hooks, force_run_hooks, verbose, show_diff_on_failure, no_fix)

@@ -58,7 +58,7 @@ repos:
       - id: flake8
 
   - repo: https://github.com/demisto/demisto-sdk
-    rev: c6119e87fe6bc41a133e9395e7a4a973731631e5
+    rev: 8d99b426a033346cfaf09bc27990cd1572fb70f1
     hooks:
       - id: run-unit-tests
       - id: update-docker-image

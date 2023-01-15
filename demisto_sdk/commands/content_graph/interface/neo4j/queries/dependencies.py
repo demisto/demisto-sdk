@@ -235,7 +235,7 @@ def create_depends_on_relationships(tx: Transaction) -> None:
         ) AS common_marketplaces
         SET dep.marketplaces = common_marketplaces,
             dep.mandatorily = r.mandatorily OR dep.mandatorily
-            dep.is_test = r.is_test AND a.is_test
+            dep.is_test = dep.is_test AND a.is_test
         WITH
             pack_a.object_id AS pack_a,
             pack_b.object_id AS pack_b,

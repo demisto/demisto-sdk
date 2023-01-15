@@ -895,7 +895,7 @@ def secrets(config, **kwargs):
     "-di",
     "--docker-image",
     default="from-yml",
-    help="The docker image to check package on. Possible values: 'naive:maintenance', 'naive:ga', 'native:dev',"
+    help="The docker image to check package on. Possible values: 'native:maintenance', 'native:ga', 'native:dev',"
     " 'all', a specific docker image from Docker Hub (e.g devdemisto/python3:3.10.9.12345) or the default"
     " 'from-yml'.",
 )

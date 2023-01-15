@@ -291,7 +291,7 @@ class TestLayoutUnifer:
     def test_layout_unify(self, repo):
         """
         Given:
-            - layout that has only 'fromVersion' field.
+            - layout that has 'fromVersion' field and 'toVersion' filed.
 
         When:
             - running the Unify command along with -ini flag on the layout.

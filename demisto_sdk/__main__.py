@@ -3158,14 +3158,14 @@ def pre_commit(
     show_diff_on_failure: bool,
     no_fix: bool,
 ):
-    from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit
+    from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
     if skip:
         skip = skip.split(",")  # type: ignore[assignment]
     if force_run_hooks:
         force_run_hooks = force_run_hooks.split(",")  # type: ignore[assignment]
     sys.exit(
-        pre_commit(
+        pre_commit_manager(
             input,
             use_git,
             staged,

@@ -59,6 +59,7 @@ repos:
       - id: flake8
 
   - repo: https://github.com/demisto/demisto-sdk
+    # Replace with the latest release version
     rev: 8d99b426a033346cfaf09bc27990cd1572fb70f1
     hooks:
       - id: run-unit-tests

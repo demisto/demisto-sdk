@@ -42,10 +42,6 @@ INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.ym
 with open(PRECOMMIT_TEMPLATE_PATH) as f:
     PRECOMMIT_TEMPLATE = yaml.load(f)
 
-
-(CONTENT_PATH / "CommonServerUserPython.py").touch()
-
-
 @dataclass
 class PreCommitRunner:
     """This class is responsible of running pre-commit hooks."""
@@ -140,7 +136,7 @@ class PreCommitRunner:
         return ret_val
 
 
-def pre_commit(
+def pre_commit_manager(
     input_files: Optional[Iterable[Path]] = None,
     use_git: bool = False,
     staged_only: bool = False,
@@ -169,6 +165,9 @@ def pre_commit(
     Returns:
         int: Return code of pre-commit.
     """
+    # We have imports to this module, however it does not exists in the repo.
+    (CONTENT_PATH / "CommonServerUserPython.py").touch()
+
     if not any((input_files, staged_only, use_git, all_files)):
         use_git = True
     git_util = GitUtil()

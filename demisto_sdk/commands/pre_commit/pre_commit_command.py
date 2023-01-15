@@ -175,6 +175,7 @@ def pre_commit_manager(
     staged_files = git_util._get_staged_files()
     files_to_run: Set[Path] = set()
     if input_files:
+        # convert all paths to relative paths
         files_to_run = {
             file.relative_to(CONTENT_PATH) if file.is_absolute() else file
             for file in input_files

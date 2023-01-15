@@ -60,8 +60,11 @@ def unit_test_runner(file_paths: List[Path]) -> int:
             else:
                 logger.info(f"All tests passed for {filename}")
             # remove file
-            shutil.rmtree(integration_script.path.parent / '.pytest.ini', ignore_errors=True)
             container.remove(force=True)
         except Exception as e:
-            raise Exception(f"Failed to run test for {filename}: {e}")
+            logger.error(f"Failed to run test for {filename}: {e}")
+            ret_val = 1
+        finally:
+            # remove pytest.ini no matter the results
+            shutil.rmtree(integration_script.path.parent / '.pytest.ini', ignore_errors=True)
     return ret_val

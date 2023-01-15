@@ -200,9 +200,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             content_item_dct[c.content_type.value].append(c)
 
         # If there is no server_min_version, set it to the maximum of its content items fromversion
-        self.server_min_version = self.server_min_version or str(
-            max(parse(content_item.fromversion) for content_item in content_items)
-        )
+        if content_items:
+            self.server_min_version = self.server_min_version or str(
+                max(parse(content_item.fromversion) for content_item in content_items)
+            )
         self.content_items = PackContentItems(**content_item_dct)
 
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:

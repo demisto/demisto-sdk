@@ -459,16 +459,32 @@ def get_value_from_dict(object, path):
     ],
 )
 def test_use_alternative_fields(artifact: str, keys_paths: List[str]):
+    # filename = artifact.split("/")[-1]
+    # with temp_dir() as temp:
+    #     output_file = temp / filename
+    #     PrepareUploadManager.prepare_for_upload(
+    #         artifact,
+    #         output=output_file,
+    #         marketplace=MarketplaceVersions.MarketplaceV2,
+    #         force=True,
+    #     )
+    #     original_data = load_file(artifact)
+    #     # import pdb; pdb.set_trace()
+    #     modified_data = load_file(output_file)
+    filename = artifact.split("/")[-1]
     with temp_dir() as temp:
+        output_file = temp / filename
         PrepareUploadManager.prepare_for_upload(
             artifact,
-            output=temp,
+            # output=temp,
+            output=output_file,
             marketplace=MarketplaceVersions.MarketplaceV2,
             force=True,
         )
-        filename = artifact.split("/")[-1]
         original_data = load_file(artifact)
-        modified_data = load_file(temp / filename)
+        # import pdb; pdb.set_trace()
+        # modified_data = load_file(temp / filename)
+        modified_data = load_file(output_file)
         for current_key_path in keys_paths:
             assert get_value_from_dict(
                 original_data, current_key_path + "_x2"

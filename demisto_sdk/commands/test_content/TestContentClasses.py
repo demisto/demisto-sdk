@@ -1540,7 +1540,7 @@ class Integration:
                     credentials = params[key]
                     param_value = {
                         "credential": "",
-                        "identifier": credentials["identifier"],
+                        "identifier": credentials.get("identifier", ""),
                         "password": credentials["password"],
                         "passwordChanged": False,
                     }

@@ -892,11 +892,12 @@ def secrets(config, **kwargs):
     type=int,
 )
 @click.option(
-    "-dt",
-    "--docker-timeout",
-    default=60,
-    help="The timeout (in seconds) for requests done by the docker client.",
-    type=int,
+    "-di",
+    "--docker-image",
+    default="from-yml",
+    help="The docker image to check package on. Possible values: 'native:maintenance', 'native:ga', 'native:dev',"
+    " 'all', a specific docker image from Docker Hub (e.g devdemisto/python3:3.10.9.12345) or the default"
+    " 'from-yml'.",
 )
 @click.option(
     "-cdam",
@@ -918,7 +919,7 @@ def lint(**kwargs):
     2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.
     Meant to be used with integrations/scripts that use the folder (package) structure.
     Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
-    If no additional flags specifying the packs are given,will lint only changed files.
+    If no additional flags specifying the packs are given, will lint only changed files.
     """
     from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.lint.lint_manager import LintManager
@@ -957,6 +958,7 @@ def lint(**kwargs):
         no_coverage=kwargs.get("no_coverage"),  # type: ignore[arg-type]
         coverage_report=kwargs.get("coverage_report"),  # type: ignore[arg-type]
         docker_timeout=kwargs.get("docker_timeout"),  # type: ignore[arg-type]
+        docker_image_flag=kwargs.get("docker_image"),  # type: ignore[arg-type]
         time_measurements_dir=kwargs.get("time_measurements_dir"),  # type: ignore[arg-type]
     )
 
@@ -3050,7 +3052,9 @@ def update_content_graph(
         quiet=kwargs.get("quiet"),  # type: ignore[arg-type]
         log_path=kwargs.get("log_path"),
     )  # type: ignore[arg-type]
-
+    if packs and not isinstance(packs, list):
+        # for some reason packs provided as tuple from click interface
+        packs = list(packs)
     with Neo4jContentGraphInterface() as content_graph_interface:
         update_content_graph_command(
             content_graph_interface,

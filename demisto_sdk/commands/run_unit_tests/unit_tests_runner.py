@@ -15,6 +15,7 @@ logger = logging.getLogger("demisto-sdk")
 
 DOCKER_PYTHONPATH = [f"/content/{path.relative_to(CONTENT_PATH)}" for path in PYTHONPATH]
 
+DEFAULT_DOCKER_IMAGE = "demisto/python:1.3-alpine"
 
 def unit_test_runner(file_paths: List[Path]) -> int:
     docker_client = docker_helper.init_global_docker_client()
@@ -26,7 +27,7 @@ def unit_test_runner(file_paths: List[Path]) -> int:
             print(f"Skipping {filename} as it is not a content item.")
             continue
         working_dir = f"/content/{integration_script.path.parent.relative_to(CONTENT_PATH)}"
-        docker_image = integration_script.docker_image
+        docker_image = integration_script.docker_image or DEFAULT_DOCKER_IMAGE
         if os.getenv("GITLAB_CI"):
             docker_image = f"docker-io.art.code.pan.run/{docker_image}"
         logger.info(f"Running test for {filename} with docker image {docker_image}")

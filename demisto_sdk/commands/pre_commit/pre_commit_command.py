@@ -11,7 +11,6 @@ from typing import Dict, Iterable, List, Optional, Set
 
 import more_itertools
 from packaging.version import Version
-from pkg_resources import get_distribution
 
 from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, SCRIPTS_DIR
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH

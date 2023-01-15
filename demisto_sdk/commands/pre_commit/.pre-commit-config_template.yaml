@@ -51,6 +51,11 @@ repos:
         name: is-build-files-changed
         entry: ./Tests/scripts/is_file_up_to_date.sh .circleci/config.yml $(git branch --show-current) true && ./Tests/scripts/is_file_up_to_date.sh .gitlab $(git branch --show-current) true
         language: script
+  
+  - repo: https://github.com/PyCQA/flake8
+    rev: "6.0.0"
+    hooks:
+      - id: flake8
 
   - repo: https://github.com/demisto/demisto-sdk
     rev: c6119e87fe6bc41a133e9395e7a4a973731631e5

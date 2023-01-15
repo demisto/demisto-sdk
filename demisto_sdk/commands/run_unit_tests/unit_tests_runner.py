@@ -17,6 +17,7 @@ DOCKER_PYTHONPATH = [f"/content/{path.relative_to(CONTENT_PATH)}" for path in PY
 
 DEFAULT_DOCKER_IMAGE = "demisto/python:1.3-alpine"
 
+
 def unit_test_runner(file_paths: List[Path]) -> int:
     docker_client = docker_helper.init_global_docker_client()
 
@@ -42,10 +43,10 @@ def unit_test_runner(file_paths: List[Path]) -> int:
                 },
                 volumes=[
                     f"{CONTENT_PATH}:/content",
+                    f"{CONTENT_PATH / 'Tests' / 'scripts' / 'dev_envs' / 'pytest' / 'conftest.py'}:conftest.py",
                     f"{(Path(__file__).parent / 'pytest_runner.sh')}:/runner.sh",
                     "/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt",
                     "/etc/pip.conf:/etc/pip.conf",
-                    
                 ],
                 command="sh /runner.sh",
                 working_dir=working_dir,

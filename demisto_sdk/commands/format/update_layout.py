@@ -240,7 +240,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 Dict with layout kinds as keys and set of keys that should
                 be deleted as values.
         """
-        schema_fields = self.schema.get("mapping").keys()
+        schema_fields = self.schema.get("mapping", {}).keys()
         first_level_args = set(self.data.keys()) - set(schema_fields)
 
         second_level_args = {}
@@ -259,7 +259,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 Dict with layout kinds as keys and set of keys that should
                 be deleted as values.
         """
-        schema_fields = self.schema.get("mapping").keys()
+        schema_fields = self.schema.get("mapping", {}).keys()
         first_level_args = set(self.data.keys()) - set(schema_fields)
 
         second_level_args = {}

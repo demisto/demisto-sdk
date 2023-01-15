@@ -118,7 +118,7 @@ class BaseUpdateJSON(BaseUpdate):
 
     def remove_null_fields(self):
         """Remove empty fields from file root."""
-        schema_fields = self.schema.get("mapping").keys()
+        schema_fields = self.schema.get("mapping", {}).keys()
         for field in schema_fields:
             # We want to keep 'false' and 0 values, and avoid removing fields that are required in the schema.
             if (

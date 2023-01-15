@@ -43,7 +43,6 @@ repos:
             --show-error-codes,
             --follow-imports=silent,
             --allow-redefinition,
-            --junit-xml=.report_mypy.xml,
             --python-version=3.10,
           ]
         exclude: .*_test.py$

@@ -3,6 +3,7 @@
 * Added the `--docker-image` argument to the **lint** command, which allows determining the docker image to run lint on. Possible options are: `'native:ga'`, `'native:maintenance'`, `'native:dev'`, `'all'`, a specific docker image (from Docker Hub) or, the default `'from-yml'`.
 * Fixed an issue in **prepare-content** command where large code lines were broken.
 * Added a logger warning to **get_demisto_version**, the task will now fail with a more informative message.
+* Fixed an issue where the **upload** and **prepare-content** commands didn't add `fromServerVersion` and `toServerVersion` to layouts.
 
 
 ## 1.8.3

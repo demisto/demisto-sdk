@@ -146,7 +146,7 @@ def format_manager(
 
     if input:
         files = []
-        for i in input.split(','):
+        for i in input.split(","):
             files.extend(get_files_in_dir(i, supported_file_types))
 
     elif use_git:
@@ -159,7 +159,7 @@ def format_manager(
             "The given output path is not a specific file path.\n"
             "Only file path can be a output path.  Please specify a correct output."
         )
-    if output and input and ',' in input:
+    if output and input and "," in input:
         raise Exception(
             "Could not use the output argument if provided a list of file paths"
         )

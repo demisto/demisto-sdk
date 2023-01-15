@@ -1,19 +1,23 @@
 import logging
 import os
-from pathlib import Path
 import shutil
+from pathlib import Path
 from typing import List
+
+import demisto_sdk.commands.common.docker_helper as docker_helper
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
-import demisto_sdk.commands.common.docker_helper as docker_helper
+from demisto_sdk.commands.content_graph.objects.integration_script import (
+    IntegrationScript,
+)
 from demisto_sdk.commands.lint.helpers import stream_docker_container_output
-
 
 logger = logging.getLogger("demisto-sdk")
 
 
-DOCKER_PYTHONPATH = [f"/content/{path.relative_to(CONTENT_PATH)}" for path in PYTHONPATH]
+DOCKER_PYTHONPATH = [
+    f"/content/{path.relative_to(CONTENT_PATH)}" for path in PYTHONPATH
+]
 
 DEFAULT_DOCKER_IMAGE = "demisto/python:1.3-alpine"
 
@@ -27,14 +31,19 @@ def unit_test_runner(file_paths: List[Path]) -> int:
         if not isinstance(integration_script, IntegrationScript):
             logger.warning(f"Skipping {filename} as it is not a content item.")
             continue
-        working_dir = f"/content/{integration_script.path.parent.relative_to(CONTENT_PATH)}"
+        working_dir = (
+            f"/content/{integration_script.path.parent.relative_to(CONTENT_PATH)}"
+        )
         docker_image = integration_script.docker_image or DEFAULT_DOCKER_IMAGE
         if os.getenv("GITLAB_CI"):
             docker_image = f"docker-io.art.code.pan.run/{docker_image}"
         logger.info(f"Running test for {filename} with docker image {docker_image}")
         try:
             docker_client.images.pull(docker_image)
-            shutil.copy(Path(__file__).parent / ".pytest.ini", integration_script.path.parent / '.pytest.ini')
+            shutil.copy(
+                Path(__file__).parent / ".pytest.ini",
+                integration_script.path.parent / ".pytest.ini",
+            )
             container = docker_client.containers.run(
                 image=docker_image,
                 environment={
@@ -56,7 +65,9 @@ def unit_test_runner(file_paths: List[Path]) -> int:
             # wait for container to finish
             container_exit_code = container.wait()["StatusCode"]
             if container_exit_code:
-                logger.error(f"Some tests failed. Run with -v to see full results. Exit code: {container_exit_code}")
+                logger.error(
+                    f"Some tests failed. Run with -v to see full results. Exit code: {container_exit_code}"
+                )
                 ret_val = 1
             else:
                 logger.info(f"All tests passed for {filename}")
@@ -67,5 +78,7 @@ def unit_test_runner(file_paths: List[Path]) -> int:
             ret_val = 1
         finally:
             # remove pytest.ini no matter the results
-            shutil.rmtree(integration_script.path.parent / '.pytest.ini', ignore_errors=True)
+            shutil.rmtree(
+                integration_script.path.parent / ".pytest.ini", ignore_errors=True
+            )
     return ret_val

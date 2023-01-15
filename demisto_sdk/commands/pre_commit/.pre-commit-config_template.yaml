@@ -52,7 +52,7 @@ repos:
         description: Checks if build files are changed, and checkout to current if it is.
         entry: ./Tests/scripts/is_file_up_to_date.sh .circleci/config.yml $(git branch --show-current) true && ./Tests/scripts/is_file_up_to_date.sh .gitlab $(git branch --show-current) true
         language: script
-  
+
   - repo: https://github.com/PyCQA/flake8
     rev: "6.0.0"
     hooks:

@@ -40,7 +40,7 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
     @property
     def docker_image(self) -> Optional[str]:
         return self.yml_data.get("dockerimage")
-    
+
     def connect_to_dependencies(self) -> None:
         """Creates USES_COMMAND_OR_SCRIPT mandatory relationships with the commands/scripts used.
         At this stage, we can't determine whether the dependencies are commands or scripts.

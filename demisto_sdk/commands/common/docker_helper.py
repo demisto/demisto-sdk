@@ -26,7 +26,6 @@ CAN_MOUNT_FILES = bool(os.getenv("GITLAB_CI", False)) or (
         or os.getenv("DOCKER_HOST", "").lower().startswith("unix:")
     )
 )
-# find me regex to find the python version for 'demisto/python3:3.10.6.33415'
 
 PYTHON_IMAGE_REGEX = re.compile(r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+)")
 

@@ -54,6 +54,7 @@ def update_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
+    download_from_remote = False
     if not imported_path:
         # If no imported path is given, we will download the graph from the bucket
         download_from_remote = True

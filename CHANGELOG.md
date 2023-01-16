@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where the Slack notifier was using a deprecated argument.
 
 ## 1.8.3
 * Changed **validate** to allow hiding parameters of type 0, 4, 12 and 14 when replacing with type 9 (credentials) with the same name.

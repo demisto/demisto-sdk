@@ -55,7 +55,9 @@ def update_content_graph(
         output_path (Path): The path to export the graph zip to.
     """
     if use_git and imported_path:
-        logger.debug("The imported path will be ignored since we are using git to get the packs to update.")
+        logger.debug(
+            "The imported path will be ignored since we are using git to get the packs to update."
+        )
         content_graph_interface.clean_import_dir()
     if packs_to_update is None and not imported_path:
         # If no arguments were given, we will use the git diff to get the packs to update

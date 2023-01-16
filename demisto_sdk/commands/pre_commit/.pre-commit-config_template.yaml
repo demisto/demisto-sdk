@@ -47,10 +47,16 @@ repos:
           ]
         exclude: .*_test.py$
 
-      - id: are-build-files-changed
-        name: are-build-files-changed
-        description: Checks if build files are changed, and checkout to current if it is.
-        entry: ./Tests/scripts/is_file_up_to_date.sh .circleci/config.yml $(git branch --show-current) true && ./Tests/scripts/is_file_up_to_date.sh .gitlab $(git branch --show-current) true
+      - id: is-circle-changed
+        name: is-circle-changed
+        description: Checks if circle files are changed, and checkout to current if it is.
+        entry: ./Tests/scripts/is_file_up_to_date.sh .circleci/config.yml "" true
+        language: script
+  
+      - id: is-gitlab-changed
+        name: is-circle-changed
+        description: Checks if gitlab files are changed, and checkout to current if it is.
+        entry: ./Tests/scripts/is_file_up_to_date.sh .gitlab "" true
         language: script
 
   - repo: https://github.com/PyCQA/flake8

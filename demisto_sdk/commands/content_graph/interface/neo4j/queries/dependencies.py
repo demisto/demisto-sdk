@@ -239,7 +239,7 @@ def create_depends_on_relationships(tx: Transaction) -> None:
             CASE WHEN mp IN pack_b.marketplaces THEN marketplaces + mp ELSE marketplaces END
         ) AS common_marketplaces
         SET dep.marketplaces = common_marketplaces,
-            dep.mandatorily = r.mandatorily OR dep.mandatorily,
+            dep.mandatorily = r.mandatorily OR dep.mandatorily
         WITH
             pack_a.object_id AS pack_a,
             pack_b.object_id AS pack_b,

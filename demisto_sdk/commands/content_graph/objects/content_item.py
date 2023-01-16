@@ -21,8 +21,9 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_content_path
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-
-# from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import MarketplaceSuffixPreparer
+from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
+    MarketplaceSuffixPreparer,
+)
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -118,8 +119,7 @@ class ContentItem(BaseContent):
         self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
     ) -> dict:
         data = self.data
-        # data = MarketplaceSuffixPreparer.prepare(data, marketplace)
-        return data
+        return MarketplaceSuffixPreparer.prepare(data, marketplace)
 
     def summary(self, marketplace: Optional[MarketplaceVersions] = None) -> dict:
         """Summary of a content item (the most important metadata fields)

@@ -1603,7 +1603,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.name.lower() == "pipfile":
         return FileType.PIPFILE
 
-    elif path.name.lower()== "pipfile.lock":
+    elif path.name.lower() == "pipfile.lock":
         return FileType.PIPFILE_LOCK
 
     elif (

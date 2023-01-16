@@ -299,7 +299,7 @@ class ValidateManager:
             FileType.SECRET_IGNORE,
             FileType.LICENSE,
             FileType.UNIFIED_YML,
-            FileType.PACK_IGNORE
+            FileType.PACK_IGNORE,
         )
 
         self.is_external_repo = is_external_repo

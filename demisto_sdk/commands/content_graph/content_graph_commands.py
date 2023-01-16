@@ -54,11 +54,6 @@ def update_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
-    if use_git and imported_path:
-        logger.debug(
-            "The imported path will be ignored since we are using git to get the packs to update."
-        )
-        content_graph_interface.clean_import_dir()
     if packs_to_update is None and not imported_path:
         # If no arguments were given, we will use the git diff to get the packs to update
         use_git = True
@@ -68,12 +63,13 @@ def update_content_graph(
     builder = ContentGraphBuilder(content_graph_interface)
 
     if use_git:
+        # getting the graph from remote, so we need to clean the import dir
+        content_graph_interface.clean_import_dir()
         extract_remote_import_files(content_graph_interface, builder)
+        if commit := content_graph_interface.commit:
+            packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
 
     content_graph_interface.import_graph(imported_path)
-
-    if commit := content_graph_interface.commit:
-        packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
 
     logger.info(f"Updating the following packs: {packs_to_update}")
     builder.update_graph(packs_to_update)

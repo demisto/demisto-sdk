@@ -86,7 +86,7 @@ class PreCommitRunner:
         precommit_env["SKIP"] = ",".join(skipped_hooks)
         precommit_env["PYTHONPATH"] = ":".join(str(path) for path in PYTHONPATH)
         precommit_env["MYPYPATH"] = ":".join(str(path) for path in PYTHONPATH)
-        PyclnHook(self.hooks["pycn"]).prepare_hook(PYTHONPATH)
+        PyclnHook(self.hooks["pycln"]).prepare_hook(PYTHONPATH)
         for python_version, changed_files in self.python_version_to_files.items():
             logger.info(
                 f"Running pre-commit for {changed_files} with python version {python_version}"

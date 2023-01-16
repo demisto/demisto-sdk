@@ -1,8 +1,28 @@
 # Changelog
 ## Unreleased
+* Fixed an issue where the Slack notifier was using a deprecated argument.
+* Added the `--docker-image` argument to the **lint** command, which allows determining the docker image to run lint on. Possible options are: `'native:ga'`, `'native:maintenance'`, `'native:dev'`, `'all'`, a specific docker image (from Docker Hub) or, the default `'from-yml'`.
+* Fixed an issue in **prepare-content** command where large code lines were broken.
+* Added a logger warning to **get_demisto_version**, the task will now fail with a more informative message.
+* Fixed an issue where the **upload** and **prepare-content** commands didn't add `fromServerVersion` and `toServerVersion` to layouts.
+* Updated **lint** to use graph instead of id_set when running with `--check-dependent-api-module` flag.
+
+
+## 1.8.3
+* Changed **validate** to allow hiding parameters of type 0, 4, 12 and 14 when replacing with type 9 (credentials) with the same name.
+* Fixed an issue where **update-release-notes** fails to update *MicrosoftApiModule* dependent integrations.
+* Added the flag `--xsoar-only` to the **doc-review** command which enables reviewing documents that belong to XSOAR-supported Packs.
+* Fixed an issue where the **upload** command failed because `docker_native_image_config.json` file could not be found.
+* Added a metadata file to the content graph zip, to be used in the **update-content-graph** command.
+* Updated the **validate** and **update-release-notes** commands to unskip the *Triggers Recommendations* content type.
+
+
+## 1.8.2
+* Fixed an issue where demisto-py failed to upload content to XSIAM when `DEMISTO_USERNAME` environment variable is set.
 * Fixed an issue where the **prepare-content** command output invalid automation name when used with the --*custom* argument.
 * Fixed an issue where modeling rules with arbitrary whitespace characters were not parsed correctly.
-* Added support for the **nativeimage** key for an integration/script in the **prepare-content** command.
+* Added support for the **nativeImage** key for an integration/script in the **prepare-content** command.
+* Added **validate** checks for integrations declared deprecated (display name, description) but missing the `deprecated` flag.
 * Changed the **validate** command to fail on the IN145 error code only when the parameter with type 4 is not hidden.
 * Fixed an issue where downloading content layouts with `detailsV2=None` resulted in an error.
 * Fixed an issue where **xdrctemplate** was missing 'external' prefix.
@@ -14,6 +34,10 @@
 * Fixed an issue where the **update-release-notes** command didn't add release-notes properly to some *new* content items.
 * Added validation that checks that the `nativeimage` key is not defined in script/integration yml.
 * Added to the **format** command the ability to remove `nativeimage` key in case defined in script/integration yml.
+* Enhanced the **update-content-graph** command to support `--use-git`, `--imported_path` and `--output-path` arguments.
+* Fixed an issue where **doc-review** failed when reviewing command name in some cases.
+* Fixed an issue where **download** didn't identify playbooks properly, and downloaded files with UUIDs instead of file/script names.
+
 
 ## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.
@@ -22,6 +46,7 @@
 * Fixed an issue where **validate** failed in private repos when attempting to read from a nonexisting `approved_categories.json`.
 * Fixed an issue where **validate** used absolute paths when getting remote `pack_metadata.json` files in private repos.
 * Fixed an issue in **download**, where names of custom scripts were replaced with UUIDs in IncidentFields and Layouts.
+* Fixed an issue where fields ending with `_x2` where not replaced in the appropriate Marketplace.
 
 ## 1.8.0
 * Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.

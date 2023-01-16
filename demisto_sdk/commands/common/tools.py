@@ -58,8 +58,11 @@ from demisto_sdk.commands.common.constants import (
     METADATA_FILE_NAME,
     MODELING_RULES_DIR,
     NON_LETTERS_OR_NUMBERS_PATTERN,
+    OFFICIAL_CONTENT_GRAPH_PATH,
     OFFICIAL_CONTENT_ID_SET_PATH,
+    OFFICIAL_INDEX_JSON_PATH,
     PACK_METADATA_IRON_BANK_TAG,
+    PACK_METADATA_SUPPORT,
     PACKAGE_SUPPORTING_DIRECTORIES,
     PACKAGE_YML_FILE_REGEX,
     PACKS_DIR,
@@ -86,6 +89,7 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     XSOAR_CONFIG_FILE,
+    XSOAR_SUPPORT,
     FileType,
     IdSetKeys,
     MarketplaceVersions,
@@ -1370,14 +1374,16 @@ def get_ignore_pack_skipped_tests(
     return ignored_tests_set
 
 
-def get_all_docker_images(script_obj) -> List[str]:
-    """Gets a yml as dict and returns a list of all 'dockerimage' values in the yml.
+def get_docker_images_from_yml(script_obj) -> List[str]:
+    """
+    Gets a yml as dict of the script/integration that lint runs on, and returns a list of all 'dockerimage' values
+    in the yml (including 'alt_dockerimages' if the key exist).
 
     Args:
-        script_obj (dict): A yml dict.
+        script_obj (dict): A yml as dict of the integration/script that lint runs on.
 
     Returns:
-        List. A list of all docker images.
+        (List): A list including all the docker images of the integration/script.
     """
     # this makes sure the first docker in the list is the main docker image.
     def_docker_image = DEF_DOCKER
@@ -1849,6 +1855,35 @@ def get_content_id_set() -> dict:
     return requests.get(OFFICIAL_CONTENT_ID_SET_PATH).json()
 
 
+def download_content_graph(
+    output_path: Path, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR
+) -> Path:
+    """Getting the Content Graph from official content's bucket"""
+    if output_path.is_dir():
+        output_path = output_path / f"{marketplace.value}.zip"
+    output_path.write_bytes(
+        requests.get(f"{OFFICIAL_CONTENT_GRAPH_PATH}/{marketplace.value}.zip").content
+    )
+    return output_path
+
+
+def get_latest_upload_flow_commit_hash() -> str:
+    """Getting the latest commit hash of the upload flow from official content's bucket
+
+    Returns:
+        str: the last commit hash of the upload flow
+    """
+    response_json = requests.get(OFFICIAL_INDEX_JSON_PATH).json()
+    if not isinstance(response_json, dict):
+        raise ValueError(
+            f"The index.json file is not in the expected format: {response_json}"
+        )
+    last_commit = response_json.get("commit")
+    if not last_commit:
+        raise ValueError("The latest commit hash was not found in the index.json file")
+    return last_commit
+
+
 def get_content_path() -> Union[str, PathLike, None]:
     """Get abs content path, from any CWD
     Returns:
@@ -2245,6 +2280,9 @@ def get_demisto_version(client: demisto_client) -> Union[Version, LegacyVersion]
         about_data = json.loads(resp[0].replace("'", '"'))
         return parse(about_data.get("demistoVersion"))  # type: ignore
     except Exception:
+        logger.warning(
+            "Could not parse Xsoar version, please make sure the environment is properly configured."
+        )
         return parse("0")
 
 
@@ -2618,6 +2656,22 @@ def is_pack_path(input_path: str) -> bool:
         - False if the input path is not for a given pack.
     """
     return os.path.basename(os.path.dirname(input_path)) == PACKS_DIR
+
+
+def is_xsoar_supported_pack(file_path: str) -> bool:
+
+    """
+    Takes a path to a file and returns a boolean indicating
+    whether this file belongs to an XSOAR-supported Pack.
+
+    Args:
+        - `file_path` (`str`): The path of the file.
+
+    Returns:
+        - `bool`
+    """
+
+    return get_pack_metadata(file_path).get(PACK_METADATA_SUPPORT) == XSOAR_SUPPORT
 
 
 def get_relative_path_from_packs_dir(file_path: str) -> str:

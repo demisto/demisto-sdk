@@ -89,7 +89,6 @@ XSIAM_REPORT = "xsiamreport"
 TRIGGER = "trigger"
 WIZARD = "wizard"
 XDRC_TEMPLATE = "xdrctemplate"
-
 MARKETPLACE_KEY_PACK_METADATA = "marketplaces"
 
 # ENV VARIABLES
@@ -202,6 +201,10 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.XDRC_TEMPLATE: "XDRC Templates",
 }
 
+FILE_TYPE_BY_RN_HEADER = {
+    header: file_type for file_type, header in RN_HEADER_BY_FILE_TYPE.items()
+}
+
 ENTITY_TYPE_TO_DIR = {
     FileType.INTEGRATION.value: INTEGRATIONS_DIR,
     FileType.PLAYBOOK.value: PLAYBOOKS_DIR,
@@ -234,6 +237,8 @@ ENTITY_TYPE_TO_DIR = {
     FileType.XDRC_TEMPLATE.value: XDRC_TEMPLATE_DIR,
     FileType.CORRELATION_RULE.value: CORRELATION_RULES_DIR,
     FileType.XSIAM_DASHBOARD.value: XSIAM_DASHBOARDS_DIR,
+    FileType.TRIGGER.value: TRIGGER_DIR,
+    FileType.OLD_CLASSIFIER.value: CLASSIFIERS_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -311,6 +316,11 @@ RN_CONTENT_ENTITY_WITH_STARS = [
     FileType.LAYOUT,
     FileType.INCIDENT_FIELD,
     FileType.INDICATOR_FIELD,
+    FileType.TRIGGER,
+    FileType.GENERIC_DEFINITION,
+    FileType.GENERIC_MODULE,
+    FileType.GENERIC_TYPE,
+    FileType.GENERIC_FIELD,
 ]
 
 DEFAULT_IMAGE_PREFIX = "data:image/png;base64,"
@@ -634,7 +644,11 @@ PACKS_TOOLS_REGEX = (
     rf"{CAN_START_WITH_DOT_SLASH}{PACKS_DIR}/([^/]+)/{TOOLS_DIR}/([^.]+)\.zip"
 )
 
-PLAYBOOK_REGEX = rf"{CAN_START_WITH_DOT_SLASH}(?!Test){PLAYBOOKS_DIR}/playbook-.*\.yml$"
+PLAYBOOK_REGEX = r"playbook-.*\.yml$"
+
+PLAYBOOK_REGEX_PATH = (
+    rf"{CAN_START_WITH_DOT_SLASH}(?!Test){PLAYBOOKS_DIR}/{PLAYBOOK_REGEX}"
+)
 
 TEST_PLAYBOOK_REGEX = (
     rf"{CAN_START_WITH_DOT_SLASH}{TEST_PLAYBOOKS_DIR}/(?!script-).*\.yml$"
@@ -743,7 +757,7 @@ PYTHON_TEST_REGEXES = [PACKS_SCRIPT_TEST_PY_REGEX, PACKS_INTEGRATION_TEST_PY_REG
 
 PYTHON_INTEGRATION_REGEXES = [PACKS_INTEGRATION_PY_REGEX]
 
-PLAYBOOKS_REGEXES_LIST = [PLAYBOOK_REGEX, TEST_PLAYBOOK_REGEX]
+PLAYBOOKS_REGEXES_LIST = [PLAYBOOK_REGEX_PATH, TEST_PLAYBOOK_REGEX]
 
 PYTHON_SCRIPT_REGEXES = [PACKS_SCRIPT_PY_REGEX]
 
@@ -1066,6 +1080,14 @@ def urljoin(*args: str):
 
 OFFICIAL_CONTENT_ID_SET_PATH = (
     "https://storage.googleapis.com/marketplace-dist/content/id_set.json"
+)
+
+OFFICIAL_CONTENT_GRAPH_PATH = (
+    "https://storage.googleapis.com/marketplace-dist-dev/content_graph"
+)
+
+OFFICIAL_INDEX_JSON_PATH = (
+    "https://storage.googleapis.com/marketplace-dist/content/packs/index.json"
 )
 
 # Run all test signal

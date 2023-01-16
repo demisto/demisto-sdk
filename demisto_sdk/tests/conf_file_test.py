@@ -36,7 +36,7 @@ def test_conf_file_custom(mocker, repo):
     mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
     mocker.patch.object(Content, "git", return_value=MyRepo())
     mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
-    mocker.patch.object(GitUtil, "_is_file_ignored", return_value=False)
+    mocker.patch.object(GitUtil, "_is_file_git_ignored", return_value=False)
     pack = repo.create_pack("tempPack")
     integration = pack.create_integration("myInt")
     integration.create_default_integration()

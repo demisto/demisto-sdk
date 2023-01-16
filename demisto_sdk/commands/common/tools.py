@@ -1600,10 +1600,10 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.parent.name == DOC_FILES_DIR:
         return FileType.DOC_FILE
 
-    elif path.name in ("pipfile", "Pipfile"):
+    elif path.name.lower() == "pipfile":
         return FileType.PIPFILE
 
-    elif path.suffix == ".lock":
+    elif path.name.lower()== "pipfile.lock":
         return FileType.PIPFILE_LOCK
 
     elif (

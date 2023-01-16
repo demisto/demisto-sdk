@@ -796,11 +796,13 @@ class GitUtil:
         )
         return modified_files.union(added_files).union(renamed_files)
 
-    def _is_file_ignored(self, file_path: str) -> bool:
+    def _is_file_git_ignored(self, file_path: str) -> bool:
         """return wether the file is in .gitignore file or not.
         Args:
             file_path (str): the file to check.
         Returns:
             bool: True if the file is ignored. Otherwise, return False.
         """
-        return not self.repo.ignored(file_path)
+        if self.repo.ignored(file_path):
+            return True
+        return False

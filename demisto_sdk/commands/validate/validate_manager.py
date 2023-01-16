@@ -299,6 +299,7 @@ class ValidateManager:
             FileType.SECRET_IGNORE,
             FileType.LICENSE,
             FileType.UNIFIED_YML,
+            FileType.PACK_IGNORE
         )
 
         self.is_external_repo = is_external_repo
@@ -758,7 +759,7 @@ class ValidateManager:
         if (
             file_type in self.skipped_file_types
             or self.is_skipped_file(file_path)
-            or self.git_util._is_file_ignored(file_path)
+            or self.git_util._is_file_git_ignored(file_path)
             or self.detect_file_level(file_path)
             in (PathLevel.PACKAGE, PathLevel.CONTENT_ENTITY_DIR)
         ):

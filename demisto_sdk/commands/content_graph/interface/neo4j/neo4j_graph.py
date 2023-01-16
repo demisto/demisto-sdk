@@ -121,7 +121,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         return self._import_handler.clean_import_dir()
 
     def move_to_import_dir(self, imported_path: Path) -> None:
-        return super().move_to_import_dir(imported_path)
+        return self._import_handler.from_path(imported_path)
 
     def close(self) -> None:
         self.driver.close()

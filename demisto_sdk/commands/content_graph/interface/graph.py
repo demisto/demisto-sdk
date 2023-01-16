@@ -22,6 +22,14 @@ class ContentGraphInterface(ABC):
     @abstractmethod
     def import_path(self) -> Path:
         pass
+    
+    @abstractmethod
+    def clean_import_dir(self) -> None:
+        pass
+
+    @abstractmethod
+    def move_to_import_dir(self, imported_path: Path) -> None:
+        pass
 
     @property
     def metadata(self) -> Optional[dict]:
@@ -30,7 +38,8 @@ class ContentGraphInterface(ABC):
                 return json.load(f)
         except FileNotFoundError:
             return None
-
+    
+    @property
     def commit(self) -> Optional[str]:
         if self.metadata:
             return self.metadata.get("commit")

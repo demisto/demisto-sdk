@@ -55,7 +55,7 @@ def update_content_graph(
         output_path (Path): The path to export the graph zip to.
     """
     if use_git and imported_path:
-        raise ValueError("Cannot use both git and imported path")
+        content_graph_interface.clean_import_dir()
     if packs_to_update is None and not imported_path:
         # If no arguments were given, we will use the git diff to get the packs to update
         use_git = True
@@ -63,13 +63,16 @@ def update_content_graph(
     if packs_to_update is None:
         packs_to_update = []
     builder = ContentGraphBuilder(content_graph_interface)
-
+    
     if use_git:
         get_or_create_graph(content_graph_interface, builder)
-        if commit := content_graph_interface.commit:
-            packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
-    else:
-        content_graph_interface.import_graph(imported_path)
+
+    content_graph_interface.import_graph(imported_path)
+
+    print(f"{content_graph_interface.commit=}")
+    if commit := content_graph_interface.commit:
+        packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
+
     logger.info(f"Updating the following packs: {packs_to_update}")
     builder.update_graph(packs_to_update)
     if dependencies:
@@ -83,7 +86,7 @@ def get_or_create_graph(
     content_graph_interface: ContentGraphInterface, builder: ContentGraphBuilder
 ) -> None:
     """Get or create a content graph.
-    If the graph is not in the bucket or there are network issues, it will create a new one.
+    If the graph is not in the bucket or there are deminetwork issues, it will create a new one.
 
     Args:
         content_graph_interface (ContentGraphInterface)
@@ -93,7 +96,7 @@ def get_or_create_graph(
     try:
         with NamedTemporaryFile() as temp_file:
             official_content_graph = download_content_graph(Path(temp_file.name))
-            content_graph_interface.import_graph(official_content_graph)
+            content_graph_interface.move_to_import_dir(official_content_graph)
     except Exception as e:
         logger.warning("Failed to download from bucket. Will create a new graph")
         logger.debug(f"Error: {e}")

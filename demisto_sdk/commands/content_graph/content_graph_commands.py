@@ -65,11 +65,10 @@ def update_content_graph(
     builder = ContentGraphBuilder(content_graph_interface)
 
     if use_git:
-        get_or_create_graph(content_graph_interface, builder)
+        extract_remote_import_files(content_graph_interface, builder)
 
     content_graph_interface.import_graph(imported_path)
 
-    print(f"{content_graph_interface.commit=}")
     if commit := content_graph_interface.commit:
         packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
 
@@ -82,11 +81,11 @@ def update_content_graph(
     content_graph_interface.export_graph(output_path)
 
 
-def get_or_create_graph(
+def extract_remote_import_files(
     content_graph_interface: ContentGraphInterface, builder: ContentGraphBuilder
 ) -> None:
     """Get or create a content graph.
-    If the graph is not in the bucket or there are deminetwork issues, it will create a new one.
+    If the graph is not in the bucket or there are network issues, it will create a new one.
 
     Args:
         content_graph_interface (ContentGraphInterface)

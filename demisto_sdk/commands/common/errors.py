@@ -1737,6 +1737,32 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    # GR - Graph validations
+    "uses_with_invalid_marketplaces": {
+        "code": "GR100",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "uses_with_invalid_fromversions": {
+        "code": "GR101",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "using_unknown_content": {
+        "code": "GR102",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "duplicate_display_name": {
+        "code": "GR103",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "uses_with_invalid_toversions": {
+        "code": "GR104",
+        "ui_applicable": False,
+        "related_field": "",
+    },
 }
 
 
@@ -4318,3 +4344,43 @@ class Errors:
             f"script {script_id} contains the nativeimage key in its yml, "
             f"this key is added only during the upload flow, please remove it."
         )
+
+    @staticmethod
+    @error_code_decorator
+    def uses_with_invalid_marketplaces(
+        content_name: str, marketplaces: list, content_items: list
+    ):
+        return (
+            f"Content item '{content_name}' with marketplaces: '{', '.join(marketplaces)}' is using content items: "
+            f"'{', '.join(content_items)}' that have incompatible marketplaces."
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def uses_with_invalid_fromversions(
+        content_name: str, fromversion: str, content_items: list
+    ):
+        return (
+            f"Content item '{content_name}' with from_version: '{fromversion}' is using content items: "
+            f"'{', '.join(content_items)}' that have incompatible from_version."
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def uses_with_invalid_toversions(
+        content_name: str, toversion: str, content_items: list
+    ):
+        return (
+            f"Content item '{content_name}' with to_version: '{toversion}' is using content items: "
+            f"'{', '.join(content_items)}' that have incompatible to_version."
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def using_unknown_content(content_name, unknown_content_names):
+        return f"Content item '{content_name}' is using an unknown content items: {', '.join(unknown_content_names)} "
+
+    @staticmethod
+    @error_code_decorator
+    def duplicate_display_name(content_name, unknown_content_names):
+        return f"Content item '{content_name}' has a duplicate display_name as: {', '.join(unknown_content_names)} "

@@ -99,9 +99,5 @@ class ContentGraphInterface(ABC):
         ...
 
     @abstractmethod
-    def find_uses_paths_with_bad_marketplaces(self) -> List[str]:
-        pass
-
-    @abstractmethod
     def run_single_query(self, query: str, **kwargs) -> Any:
         pass

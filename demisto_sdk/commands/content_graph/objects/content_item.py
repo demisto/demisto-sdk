@@ -86,6 +86,13 @@ class ContentItem(BaseContent):
             if r.content_item == r.target
         ]
 
+    def used_by(self):
+        return [
+            r
+            for r in self.relationships_data[RelationshipType.USES]
+            if r.content_item == r.source
+        ]
+
     @property
     def tested_by(self) -> List["TestPlaybook"]:
         """

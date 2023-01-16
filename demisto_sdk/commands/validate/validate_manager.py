@@ -139,6 +139,7 @@ from demisto_sdk.commands.common.hook_validations.xsoar_config_json import (
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
+    get_all_content_items_files_in_dir,
     get_api_module_ids,
     get_api_module_integrations_set,
     get_content_path,
@@ -417,8 +418,17 @@ class ValidateManager:
     def run_validation_on_specific_files(self):
         """Run validations only on specific files"""
         files_validation_result = set()
+        files_to_validate = self.file_path.split(",")
+        if self.validate_graph:
+            click.secho(
+                f"\n================= Validating graph =================",
+                fg="bright_cyan",
+            )
+            all_files_set = get_all_content_items_files_in_dir(files_to_validate)
+            with GraphValidator(self.specific_validations) as graph_validator:
+                is_valid = graph_validator.is_valid_files(all_files_set)
 
-        for path in self.file_path.split(","):
+        for path in files_to_validate:
             error_ignore_list = self.get_error_ignore_list(get_pack_name(path))
             file_level = self.detect_file_level(path)
 
@@ -499,8 +509,12 @@ class ValidateManager:
         all_packs_valid = set()
 
         if self.validate_graph:
+            click.secho(
+                f"\n================= Validating graph =================",
+                fg="bright_cyan",
+            )
             with GraphValidator(self.specific_validations) as graph_validator:
-                is_valid = graph_validator.is_valid_graph()
+                all_packs_valid.add(graph_validator.is_valid_files())
 
         if not self.skip_conf_json:
             all_packs_valid.add(self.conf_json_validator.is_valid_conf_json())
@@ -812,15 +826,6 @@ class ValidateManager:
         # if only schema validation is required - stop check here
         if self.check_only_schema:
             return True
-
-        # id_set validation
-        if (
-            self.id_set_validations
-            and not self.id_set_validations.is_file_valid_in_set(
-                file_path, file_type, pack_error_ignore_list
-            )
-        ):
-            return False
 
         # conf.json validation
         valid_in_conf = True
@@ -1214,6 +1219,17 @@ class ValidateManager:
         )
 
         validation_results = {valid_git_setup, valid_types}
+
+        if self.validate_graph:
+            click.secho(
+                f"\n================= Validating graph =================",
+                fg="bright_cyan",
+            )
+            all_files_set = []
+            for file_set in (modified_files, added_files, old_format_files):
+                all_files_set.extend(get_all_content_items_files_in_dir(file_set))
+            with GraphValidator(self.specific_validations) as graph_validator:
+                validation_results.add(graph_validator.is_valid_files(all_files_set))
 
         validation_results.add(self.validate_modified_files(modified_files))
         validation_results.add(self.validate_added_files(added_files, modified_files))
@@ -1890,7 +1906,7 @@ class ValidateManager:
             valid_files.add(
                 self.run_validations_on_file(
                     file_path,
-                    self.get_error_ignore_list(pack_name),
+                    ValidateManager.get_error_ignore_list(pack_name),
                     is_modified=True,
                     old_file_path=old_file_path,
                 )
@@ -2568,7 +2584,8 @@ class ValidateManager:
 
         return ignored_error_list
 
-    def add_ignored_errors_to_list(self, config, section, key, ignored_errors_list):
+    @staticmethod
+    def add_ignored_errors_to_list(config, section, key, ignored_errors_list):
         if key == "ignore":
             ignored_errors_list.extend(str(config[section][key]).split(","))
 
@@ -2577,10 +2594,13 @@ class ValidateManager:
 
         if key in PRESET_ERROR_TO_CHECK:
             ignored_errors_list.extend(
-                self.create_ignored_errors_list(PRESET_ERROR_TO_CHECK.get(key))
+                ValidateManager.create_ignored_errors_list(
+                    PRESET_ERROR_TO_CHECK.get(key)
+                )
             )
 
-    def get_error_ignore_list(self, pack_name):
+    @staticmethod
+    def get_error_ignore_list(pack_name):
         ignored_errors_list: dict = {}
         if pack_name:
             pack_ignore_path = get_pack_ignore_file_path(pack_name)
@@ -2596,7 +2616,7 @@ class ValidateManager:
                             file_name = section[5:]
                             ignored_errors_list[file_name] = []
                             for key in config[section]:
-                                self.add_ignored_errors_to_list(
+                                ValidateManager.add_ignored_errors_to_list(
                                     config, section, key, ignored_errors_list[file_name]
                                 )
 

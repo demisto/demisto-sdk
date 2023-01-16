@@ -227,11 +227,13 @@ def _match_relationships(
     MATCH (node_from) - [relationship] - (node_to)
     WHERE id(node_from) = id
     {marketplace_where}
-    RETURN id(node_from) AS node_from_id, collect(relationship) AS relationships, collect(node_to) AS nodes_to
+    RETURN node_from, collect(relationship) AS relationships, collect(node_to) AS nodes_to
     """
     return {
-        int(item["node_from_id"]): Neo4jRelationshipResult(
-            relationships=item.get("relationships"), nodes_to=item.get("nodes_to")
+        int(item["node_from"].id): Neo4jRelationshipResult(
+            node_from=item.get("node_from"),
+            relationships=item.get("relationships"),
+            nodes_to=item.get("nodes_to"),
         )
         for item in run_query(tx, query, ids_list=list(ids_list) if ids_list else None)
     }

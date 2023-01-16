@@ -52,6 +52,13 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
     _match_relationships,
     create_relationships,
 )
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
+    validate_duplicate_display_name,
+    validate_fromversion,
+    validate_marketplaces,
+    validate_toversion,
+    validate_unknown_content,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
     UnknownContent,
@@ -127,7 +134,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self,
         session: Session,
         result: Dict[int, Neo4jRelationshipResult],
-        marketplace: Optional[MarketplaceVersions],
+        marketplace: Optional[MarketplaceVersions] = None,
     ):
         """This adds relationships to given object
 
@@ -237,7 +244,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                     ),
                 )
 
-    def _add_nodes_to_mapping(self, nodes: List[graph.Node]) -> None:
+    def _add_nodes_to_mapping(self, nodes: Iterable[graph.Node]) -> None:
         """Add nodes to the content models mapping
 
         Args:
@@ -312,6 +319,47 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             if session.read_transaction(duplicates_exist):
                 raise Exception("Duplicates found in graph.")
+
+    def get_unknown_content_uses(self, file_paths):
+        with self.driver.session() as session:
+            results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
+                validate_unknown_content, file_paths
+            )
+            self._add_nodes_to_mapping(result.node_from for result in results.values())
+            self._add_relationships_to_objects(session, results)
+            return [self._id_to_obj[result] for result in results]
+
+    def get_duplicate_pack_display_name(self, packs):
+        with self.driver.session() as session:
+            results = session.read_transaction(validate_duplicate_display_name, packs)
+            return results
+
+    def find_uses_paths_with_invalid_fromversion(self, file_paths, from_version=False):
+        with self.driver.session() as session:
+            results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
+                validate_fromversion, file_paths, from_version
+            )
+            self._add_nodes_to_mapping(result.node_from for result in results.values())
+            self._add_relationships_to_objects(session, results)
+            return [self._id_to_obj[result] for result in results]
+
+    def find_uses_paths_with_invalid_toversion(self, file_paths, to_version=False):
+        with self.driver.session() as session:
+            results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
+                validate_toversion, file_paths, to_version
+            )
+            self._add_nodes_to_mapping(result.node_from for result in results.values())
+            self._add_relationships_to_objects(session, results)
+            return [self._id_to_obj[result] for result in results]
+
+    def find_uses_paths_with_invalid_marketplaces(self, file_paths):
+        with self.driver.session() as session:
+            results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
+                validate_marketplaces, file_paths
+            )
+            self._add_nodes_to_mapping(result.node_from for result in results.values())
+            self._add_relationships_to_objects(session, results)
+            return [self._id_to_obj[result] for result in results]
 
     def create_relationships(
         self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]

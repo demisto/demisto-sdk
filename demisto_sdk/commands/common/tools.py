@@ -17,7 +17,7 @@ from functools import lru_cache
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
-from typing import Callable, Dict, List, Match, Optional, Set, Tuple, Union
+from typing import Callable, Dict, Iterable, List, Match, Optional, Set, Tuple, Union
 
 import click
 import colorama
@@ -103,6 +103,9 @@ yaml = YAML_Handler()
 urllib3.disable_warnings()
 
 colorama.init()  # initialize color palette
+
+
+FILE_SUFFIX_TO_EXTRACT = ["yml", "py", "json"]
 
 
 class LOG_COLORS:
@@ -302,6 +305,26 @@ def get_files_in_dir(
                 excludes.extend([str(f) for f in glob_function(exclude_pattern)])
         files.extend([str(f) for f in glob_function(pattern)])
     return list(set(files) - set(excludes))
+
+
+def get_all_content_items_files_in_dir(project_dir_list: Iterable):
+    """
+    Gets the project directory and returns the path of all yml, json and py files in it
+    Args:
+        project_dir_list: List or set with str paths
+    :return: list of content files in the current dir with str relative paths
+    """
+    files = []
+    output = []
+    for file_path in project_dir_list:
+        files.extend(
+            get_files_in_dir(file_path, FILE_SUFFIX_TO_EXTRACT, ignore_test_files=True)
+        )
+
+    for file in files:
+        output.append(get_path_in_content_repo(file))
+
+    return output
 
 
 def src_root() -> Path:
@@ -3331,3 +3354,31 @@ def field_to_cli_name(field_name: str) -> str:
         field_name (str): the incident/indicator field name.
     """
     return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, "", field_name).lower()
+
+
+def get_path_in_content_repo(file_path):
+    """Returns the relative file path in the Content repo.
+
+    Args:
+        file_path (str): the absolute file path
+    """
+
+    path = str(file_path)
+    if path.startswith("Packs"):
+        return file_path
+    file_parts = path.split("Packs")
+    return f"Packs{file_parts[1]}"
+
+
+def get_pack_display_name_from_file_in_pack(file_paths: list):
+    """
+
+    Args:
+        file_path (_type_): _description_
+    """
+    display_names = set()
+    for file_path in file_paths:
+        metadata = get_pack_metadata(file_path)
+        display_names.add(metadata.get("name"))
+
+    return list(display_names)

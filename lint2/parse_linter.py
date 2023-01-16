@@ -106,3 +106,21 @@ class MypyParser(BaseParser):
             error_type=error_type,
             error_message=match_dict["error_message"],
         )
+
+class BanditParser(BaseParser):
+    _regex = re.compile(r"^(?P<path>[^:]+):(?P<row_start>\d+):\s?(?P<code>[^:]+):\s?(?P<level>[^:]+):\s?(?P<error_message>.+)")
+    @staticmethod
+    def parse_line(raw: Union[str, dict]) -> ParseResult:
+        if not isinstance(raw, str):
+            raise ValueError(f"must be a str, got {raw}")
+        if not (match := BanditParser._regex.match(raw)):
+            raise ValueError(f"did not match on {raw}")
+        match_dict = match.groupdict()
+
+        return ParseResult(
+            error_code=match_dict["code"],
+            row_start=match_dict["row_start"],
+            path=Path(match_dict["path"]),
+            error_message=match_dict["error_message"]
+        )
+    

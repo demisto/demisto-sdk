@@ -650,7 +650,9 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize("file_path", INVALID_FILES_PATHS_FOR_ALL_VALIDATIONS)
-    def test_run_all_validations_on_file_failed(self, set_git_test_env, mocker, file_path):
+    def test_run_all_validations_on_file_failed(
+        self, set_git_test_env, mocker, file_path
+    ):
         """
         Given
         - An invalid file inside a pack
@@ -677,7 +679,9 @@ class TestValidators:
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert not validate_manager.run_validation_on_specific_files()
 
-    def test_run_all_validations_on_file_with_modified_id(self, set_git_test_env, mocker, integration):
+    def test_run_all_validations_on_file_with_modified_id(
+        self, set_git_test_env, mocker, integration
+    ):
         """
         Given
         - Integration with a modified ID.

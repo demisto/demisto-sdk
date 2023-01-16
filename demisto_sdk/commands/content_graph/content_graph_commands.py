@@ -63,7 +63,7 @@ def update_content_graph(
     if packs_to_update is None:
         packs_to_update = []
     builder = ContentGraphBuilder(content_graph_interface)
-    
+
     if use_git:
         get_or_create_graph(content_graph_interface, builder)
 

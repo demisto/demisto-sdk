@@ -22,7 +22,7 @@ class ContentGraphInterface(ABC):
     @abstractmethod
     def import_path(self) -> Path:
         pass
-    
+
     @abstractmethod
     def clean_import_dir(self) -> None:
         pass
@@ -38,7 +38,7 @@ class ContentGraphInterface(ABC):
                 return json.load(f)
         except FileNotFoundError:
             return None
-    
+
     @property
     def commit(self) -> Optional[str]:
         if self.metadata:

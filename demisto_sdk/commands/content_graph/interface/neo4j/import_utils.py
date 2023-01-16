@@ -29,7 +29,7 @@ class Neo4jImportHandler:
         self.import_path.mkdir(parents=True, exist_ok=True)
         logger.debug(f"Import path: {self.import_path}")
 
-    def from_path(self, imported_path: Optional[Path] = None) -> None:
+    def extract_files_from_path(self, imported_path: Optional[Path] = None) -> None:
         if not imported_path:
             return None
         logger.info(f"Importing from {imported_path}")

@@ -229,16 +229,17 @@ def create_depends_on_relationships(tx: Transaction) -> None:
         AND NOT pack_b.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
         WITH pack_a, a, r, b, pack_b
         MERGE (pack_a)-[dep:{RelationshipType.DEPENDS_ON}]->(pack_b)
+        ON CREATE
+            SET dep.is_test = a.is_test
+        ON MATCH
+            SET dep.is_test = dep.is_test AND a.is_test
+
         WITH dep, pack_a, a, r, b, pack_b, REDUCE(
             marketplaces = [], mp IN pack_a.marketplaces |
             CASE WHEN mp IN pack_b.marketplaces THEN marketplaces + mp ELSE marketplaces END
         ) AS common_marketplaces
         SET dep.marketplaces = common_marketplaces,
             dep.mandatorily = r.mandatorily OR dep.mandatorily,
-        ON CREATE
-            SET dep.is_test = a.is_test
-        ON MATCH
-            SET dep.is_test = dep.is_test AND a.is_test
         WITH
             pack_a.object_id AS pack_a,
             pack_b.object_id AS pack_b,

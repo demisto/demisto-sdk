@@ -67,10 +67,8 @@ def update_content_graph(
         content_graph_interface.clean_import_dir()
         extract_remote_import_files(content_graph_interface, builder)
 
-    if use_git:
-        # we will update the graph according to our git changes
-        if commit := content_graph_interface.commit:
-            packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
+    if use_git and (commit := content_graph_interface.commit):
+        packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
 
     content_graph_interface.import_graph(imported_path)
 

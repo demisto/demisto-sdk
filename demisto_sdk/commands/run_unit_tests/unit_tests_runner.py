@@ -44,6 +44,10 @@ def unit_test_runner(file_paths: List[Path]) -> int:
                 Path(__file__).parent / ".pytest.ini",
                 integration_script.path.parent / ".pytest.ini",
             )
+            shutil.copy(
+                CONTENT_PATH / 'Tests' / 'scripts' / 'dev_envs' / 'pytest' / 'conftest.py',
+                integration_script.path.parent / 'conftest.py'
+            )
             container = docker_client.containers.run(
                 image=docker_image,
                 environment={
@@ -52,7 +56,6 @@ def unit_test_runner(file_paths: List[Path]) -> int:
                 },
                 volumes=[
                     f"{CONTENT_PATH}:/content",
-                    f"{CONTENT_PATH / 'Tests' / 'scripts' / 'dev_envs' / 'pytest' / 'conftest.py'}:conftest.py",
                     f"{(Path(__file__).parent / 'pytest_runner.sh')}:/runner.sh",
                     "/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt",
                     "/etc/pip.conf:/etc/pip.conf",

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
@@ -6,6 +7,7 @@ from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     DASHBOARD,
     GENERIC_MODULE,
@@ -283,3 +285,53 @@ class TestIntegrationScriptUnifier:
             ) as unified_yml:
                 unified_yml_data = yaml.load(unified_yml)
                 assert "nativeimage" not in unified_yml_data
+
+
+class TestLayoutUnifer:
+    def test_layout_unify(self, repo):
+        """
+        Given:
+            - layout that has 'fromVersion' field and 'toVersion' filed.
+
+        When:
+            - running the Unify command along with -ini flag on the layout.
+
+        Then:
+            - make sure the 'fromServerVersion' was added
+            - make sure the 'toServerVersion' was added
+            - make sure the 'fromVersion' was not deleted.
+            - make sure the 'toVersion' was not deleted.
+            - make sure the 'fromServerVersion' and 'fromVersion' are the same.
+            - make sure the 'toVersion' and 'toServerVersion' are the same.
+        """
+
+        pack = repo.create_pack("test")
+        layout = pack.create_layoutcontainer(
+            name="test",
+            content=json.load(
+                open(
+                    f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Layouts/layoutscontainer-test.json"
+                )
+            ),
+        )
+
+        output = "test.json"
+
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(
+                main, [UNIFY_CMD, "-i", f"{layout.path}", "-o", output]
+            )
+
+            assert not result.exception
+            assert not result.stderr
+
+            with open(Path(output).name) as updated_layout:
+                layout_data = json.load(updated_layout)
+            assert "fromVersion" in layout_data
+            assert "fromServerVersion" in layout_data
+            assert "toVersion" in layout_data
+            assert "toServerVersion" in layout_data
+
+            assert layout_data["fromVersion"] == layout_data["fromServerVersion"]
+            assert layout_data["toVersion"] == layout_data["toServerVersion"]

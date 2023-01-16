@@ -1,16 +1,52 @@
+import shutil
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import get_content_path
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
+json = JSON_Handler()
+METADATA_FILE_NAME = "metadata.json"
+
 
 class ContentGraphInterface(ABC):
     repo_path = Path(get_content_path())  # type: ignore
+
+    @property
+    @abstractmethod
+    def import_path(self) -> Path:
+        pass
+
+    @property
+    def metadata(self) -> Optional[dict]:
+        try:
+            with (self.import_path / METADATA_FILE_NAME).open() as f:
+                return json.load(f)
+        except FileNotFoundError:
+            return None
+
+    @property
+    def commit(self) -> Optional[str]:
+        if self.metadata:
+            return self.metadata.get("commit")
+        return None
+
+    def dump_metadata(self) -> None:
+        """Adds metadata to the graph."""
+        metadata = {
+            "commit": GitUtil().get_current_commit_hash(),
+        }
+        with open(self.import_path / METADATA_FILE_NAME, "w") as f:
+            json.dump(metadata, f)
+
+    def zip_import_dir(self, output_file: Path) -> None:
+        shutil.make_archive(str(output_file), "zip", self.import_path)
 
     @abstractmethod
     def create_indexes_and_constraints(self) -> None:

@@ -6,12 +6,11 @@
 * Added a logger warning to **get_demisto_version**, the task will now fail with a more informative message.
 * Fixed an issue where the **upload** and **prepare-content** commands didn't add `fromServerVersion` and `toServerVersion` to layouts.
 * Updated **lint** to use graph instead of id_set when running with `--check-dependent-api-module` flag.
-
+* Added the flag `--xsoar-only` to the **doc-review** command which enables reviewing documents that belong to XSOAR-supported Packs.
 
 ## 1.8.3
 * Changed **validate** to allow hiding parameters of type 0, 4, 12 and 14 when replacing with type 9 (credentials) with the same name.
 * Fixed an issue where **update-release-notes** fails to update *MicrosoftApiModule* dependent integrations.
-* Added the flag `--xsoar-only` to the **doc-review** command which enables reviewing documents that belong to XSOAR-supported Packs.
 * Fixed an issue where the **upload** command failed because `docker_native_image_config.json` file could not be found.
 * Added a metadata file to the content graph zip, to be used in the **update-content-graph** command.
 * Updated the **validate** and **update-release-notes** commands to unskip the *Triggers Recommendations* content type.

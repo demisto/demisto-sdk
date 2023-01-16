@@ -144,7 +144,7 @@ class MyRepo:
         return "remote_path"
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=False)
 def set_git_test_env(mocker):
     mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
     mocker.patch.object(Content, "git", return_value=MyRepo())
@@ -650,7 +650,7 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize("file_path", INVALID_FILES_PATHS_FOR_ALL_VALIDATIONS)
-    def test_run_all_validations_on_file_failed(self, mocker, file_path):
+    def test_run_all_validations_on_file_failed(self, set_git_test_env, mocker, file_path):
         """
         Given
         - An invalid file inside a pack
@@ -677,7 +677,7 @@ class TestValidators:
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert not validate_manager.run_validation_on_specific_files()
 
-    def test_run_all_validations_on_file_with_modified_id(self, mocker, integration):
+    def test_run_all_validations_on_file_with_modified_id(self, set_git_test_env, mocker, integration):
         """
         Given
         - Integration with a modified ID.
@@ -1016,7 +1016,7 @@ class TestValidators:
             INVALID_IGNORED_UNIFIED_INTEGRATION, None
         )
 
-    def test_non_integration_png_files_ignored(self):
+    def test_non_integration_png_files_ignored(self, set_git_test_env):
         """
         Given
         - A png file
@@ -1124,7 +1124,7 @@ class TestValidators:
             "BC104",
         }.issubset(error_list)
 
-    def test_added_files_type_using_function(self, repo, mocker):
+    def test_added_files_type_using_function(self, set_git_test_env, repo, mocker):
         """
         Given:
             - A list of errors that should be checked
@@ -2675,7 +2675,7 @@ def test_validate_pack_name(repo):
     )
 
 
-def test_image_error(capsys):
+def test_image_error(set_git_test_env, capsys):
     """
     Given
             a image that isn't located in the right folder.

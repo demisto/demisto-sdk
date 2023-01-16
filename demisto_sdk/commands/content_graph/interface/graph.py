@@ -30,7 +30,7 @@ class ContentGraphInterface(ABC):
                 return json.load(f)
         except FileNotFoundError:
             return None
-    
+
     @property
     def commit(self) -> Optional[str]:
         if self.metadata:

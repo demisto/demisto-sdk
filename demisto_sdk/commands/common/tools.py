@@ -1613,9 +1613,6 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.name == "LICENSE":
         return FileType.LICENSE
 
-    elif path.name.endswith("_unified.yml"):
-        return FileType.UNIFIED_YML
-
     return None
 
 
@@ -1663,6 +1660,9 @@ def find_type(
         raise err
 
     if file_type == "yml" or path.lower().endswith(".yml"):
+        if path.lower().endswith("_unified.yml"):
+            return FileType.UNIFIED_YML
+
         if "category" in _dict:
             if _dict.get("beta") and not ignore_sub_categories:
                 return FileType.BETA_INTEGRATION

@@ -54,15 +54,10 @@ def update_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
-    download_from_remote = False
-    if not imported_path:
-        # If no imported path is given, we will download the graph from the bucket
-        download_from_remote = True
-
     if packs_to_update is None:
         packs_to_update = []
     builder = ContentGraphBuilder(content_graph_interface)
-    if download_from_remote:
+    if not imported_path:
         # getting the graph from remote, so we need to clean the import dir
         content_graph_interface.clean_import_dir()
         extract_remote_import_files(content_graph_interface, builder)

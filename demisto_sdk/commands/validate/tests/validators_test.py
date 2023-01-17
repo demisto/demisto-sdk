@@ -2652,10 +2652,10 @@ def test_validate_pack_name(repo):
     validator_obj = ValidateManager()
     assert validator_obj.is_valid_pack_name("Packs/original_pack/file", None)
     assert validator_obj.is_valid_pack_name(
-        "Packs/original_pack/file", "Packs/original_pack/file"
+        "Packs/original_pack/file", "Packs/original_pack/file", None
     )
     assert not validator_obj.is_valid_pack_name(
-        "Packs/original_pack/file", "Packs/original_pack_v2/file"
+        "Packs/original_pack/file", "Packs/original_pack_v2/file", None
     )
 
 

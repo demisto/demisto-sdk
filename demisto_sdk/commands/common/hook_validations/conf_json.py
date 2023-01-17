@@ -101,10 +101,11 @@ class ConfJsonValidator(BaseValidator):
         return True
 
     def is_valid_file_in_conf_json(
-        self, current_file, file_type, file_path, ignored_errors
+        self, current_file, file_type, file_path, ignored_errors=None
     ):
         """Check if the file is valid in the conf.json"""
-        self.ignored_errors = ignored_errors
+        if ignored_errors:
+            self.ignored_errors = ignored_errors
         entity_id = _get_file_id(file_type.value, current_file)
         if file_type in {FileType.INTEGRATION, FileType.BETA_INTEGRATION}:
             return self.integration_has_unskipped_test_playbook(

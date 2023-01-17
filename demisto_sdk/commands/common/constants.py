@@ -169,6 +169,8 @@ class FileType(str, Enum):
     PYLINTRC = "pylintrc"
     LICENSE = "license"
     UNIFIED_YML = "unified_yml"
+    INI = "ini"
+    PEM = "pem"
 
 
 RN_HEADER_BY_FILE_TYPE = {

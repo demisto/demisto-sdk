@@ -155,7 +155,6 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 SKIPPED_FILES = [
-    "CommonServerPython.py",
     "CommonServerUserPython.py",
     "demistomock.py",
     "DemistoClassApiModule.py",
@@ -300,6 +299,9 @@ class ValidateManager:
             FileType.LICENSE,
             FileType.UNIFIED_YML,
             FileType.PACK_IGNORE,
+            FileType.INI,
+            FileType.PEM,  
+            FileType.METADATA          
         )
 
         self.is_external_repo = is_external_repo
@@ -722,7 +724,10 @@ class ValidateManager:
         Returns:
             bool. true if file is in SKIPPED_FILES list, false otherwise.
         """
-        return Path(file_path).name in SKIPPED_FILES
+        path = Path(file_path)
+        if path.name in SKIPPED_FILES or (path.name == "CommonServerPython.py" and path.parent.parent.name != "Base"):
+            return True
+        return False
 
     # flake8: noqa: C901
     def run_validations_on_file(

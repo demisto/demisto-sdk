@@ -1606,6 +1606,12 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.name.lower() == "pipfile.lock":
         return FileType.PIPFILE_LOCK
 
+    elif path.name.lower().endswith(".ini"):
+        return FileType.INI
+
+    elif path.name.lower().endswith(".ini"):
+        return FileType.PEM
+
     elif (
         path.name in ("commands_example", "commands_examples", "command_examples")
         or path.suffix == ".txt"

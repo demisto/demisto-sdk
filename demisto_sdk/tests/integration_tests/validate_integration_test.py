@@ -4716,14 +4716,15 @@ class TestBasicValidation:
     def test_modified_pack_files_with_ignored_validations(self, mocker, repo):
         """
         Given
-        - .pack-ignore which ignores BA114
+        - .pack-ignore which ignores BA114, IN122 and RM110
+        - integration yml which validations above fail.
         - detected modified files that the pack name was changed.
 
         When
         - running validations with -g flag
 
         Then
-        - make sure the files are valid and that the error can be ignored successfully.
+        - make sure the files are valid and that the errors can be ignored successfully.
         """
         import demisto_sdk.commands.common.errors as errors
 
@@ -4740,15 +4741,19 @@ class TestBasicValidation:
         )
 
         pack = repo.create_pack("PackName")
+
+        integration = pack.create_integration(
+            "IntegrationTest",
+            yml=get_yaml(
+                join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+            ),
+        )
         # add pack ignore
-        integration = pack.create_integration("IntegrationTest")
         pack.pack_ignore.write_list(
             [
-                "[file:README.md]\nignore=RM112",
-                "[file:IntegrationTest.yml]\nignore=BA114",
+                "[file:IntegrationTest.yml]\nignore=BA114,IN122,RM110",
             ]
         )
-
         file_paths = (
             integration.yml.rel_path.replace("PackName", "PackName1"),  # new pack name
             integration.yml.rel_path,  # old pack name
@@ -4770,8 +4775,14 @@ class TestBasicValidation:
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 main,
-                [VALIDATE_CMD, "-g", "--post-commit", "--skip-pack-release-notes"],
+                [
+                    VALIDATE_CMD,
+                    "-g",
+                    "--post-commit",
+                    "--skip-pack-release-notes",
+                    "--no-docker-checks",
+                    "--no-conf-json",
+                ],
             )
-        print()
         assert "The files are valid" in result.stdout
         assert result.exit_code == 0

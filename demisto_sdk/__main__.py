@@ -3000,6 +3000,11 @@ def create_content_graph(
     help="Path to content graph zip file to import",
 )
 @click.option(
+    "--use-current",
+    help="Whether to use the current content graph to update",
+    default=False,
+)
+@click.option(
     "-p",
     "--packs",
     help="A comma-separated list of packs to update",
@@ -3041,6 +3046,7 @@ def create_content_graph(
 def update_content_graph(
     use_git: bool = False,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+    use_current: bool = False,
     imported_path: Path = None,
     packs: list = None,
     no_dependencies: bool = False,
@@ -3069,6 +3075,7 @@ def update_content_graph(
             marketplace=MarketplaceVersions(marketplace),
             use_git=use_git,
             imported_path=imported_path,
+            use_current=use_current,
             packs_to_update=packs or [],
             dependencies=not no_dependencies,
             output_path=output_path,

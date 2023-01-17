@@ -300,8 +300,8 @@ class ValidateManager:
             FileType.UNIFIED_YML,
             FileType.PACK_IGNORE,
             FileType.INI,
-            FileType.PEM,  
-            FileType.METADATA          
+            FileType.PEM,
+            FileType.METADATA,
         )
 
         self.is_external_repo = is_external_repo
@@ -725,7 +725,9 @@ class ValidateManager:
             bool. true if file is in SKIPPED_FILES list, false otherwise.
         """
         path = Path(file_path)
-        if path.name in SKIPPED_FILES or (path.name == "CommonServerPython.py" and path.parent.parent.name != "Base"):
+        if path.name in SKIPPED_FILES or (
+            path.name == "CommonServerPython.py" and path.parent.parent.name != "Base"
+        ):
             return True
         return False
 

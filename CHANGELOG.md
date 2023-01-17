@@ -6,7 +6,7 @@
 * Added a logger warning to **get_demisto_version**, the task will now fail with a more informative message.
 * Fixed an issue where the **upload** and **prepare-content** commands didn't add `fromServerVersion` and `toServerVersion` to layouts.
 * Updated **lint** to use graph instead of id_set when running with `--check-dependent-api-module` flag.
-* Added marketplace tag to layoutscontainer and dashboard schema.
+* Added the marketplaces field to all schemas.
 * Added the flag `--xsoar-only` to the **doc-review** command which enables reviewing documents that belong to XSOAR-supported Packs.
 
 ## 1.8.3

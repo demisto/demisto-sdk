@@ -6,17 +6,15 @@ from neo4j import Transaction, graph
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import SERVER_CONTENT_ITEMS, ContentType
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
-    intersects,
     run_query,
     to_neo4j_map,
-    versioned,
 )
 
 logger = logging.getLogger("demisto-sdk")
 
 NESTING_LEVEL = 5
 
-CREATE_CONTENT_ITEM_NODES_BY_TYPE_TEMPLATE = """
+CREATE_CONTENT_ITEM_NODES_BY_TYPE_TEMPLATE = """// Creates/overrides existing content items with labels {labels}
 UNWIND $data AS node_data
 MERGE (n:{labels}{{
     object_id: node_data.object_id,
@@ -28,35 +26,18 @@ SET n = node_data,  // override existing data
 WITH n
     OPTIONAL MATCH (n)-[r]->()
     DELETE r
-RETURN count(n) AS nodes_created
-"""
+RETURN count(n) AS nodes_created"""
 
 
-CREATE_NODES_BY_TYPE_TEMPLATE = """
+CREATE_NODES_BY_TYPE_TEMPLATE = """// Creates/overrides existing nodes with labels {labels}
 UNWIND $data AS node_data
 MERGE (n:{labels}{{object_id: node_data.object_id}})
 SET n = node_data,  // override existing data
     n.not_in_repository = false
-RETURN count(n) AS nodes_created
-"""
+RETURN count(n) AS nodes_created"""
 
 
-FIND_DUPLICATES = f"""
-MATCH (a:{ContentType.BASE_CONTENT})
-MATCH (b:{ContentType.BASE_CONTENT}{'{node_id: a.node_id}'})
-WHERE
-    id(a) <> id(b)
-AND
-    {intersects('a.marketplaces', 'b.marketplaces')}
-AND
-    {versioned('a.toversion')} >= {versioned('b.fromversion')}
-AND
-    {versioned('b.toversion')} >= {versioned('a.fromversion')}
-RETURN count(b) > 0 AS found_duplicates
-"""
-
-
-REMOVE_SERVER_NODES_BY_TYPE = """
+REMOVE_SERVER_NODES_BY_TYPE = """// Removes parsed server nodes of type {content_type} (according to constants)
 MATCH (a)
 WHERE (a:{label} OR a.content_type = "{content_type}")
 AND a.not_in_repository = true
@@ -64,19 +45,18 @@ AND any(
     identifier IN [a.object_id, a.name]
     WHERE toLower(identifier) IN {server_content_items}
 )
-DETACH DELETE a
-"""
+DETACH DELETE a"""
 
 
-REMOVE_EMPTY_PROPERTIES = """CALL apoc.periodic.iterate(
+REMOVE_EMPTY_PROPERTIES = """// Removes string properties with empty values ("") from nodes
+CALL apoc.periodic.iterate(
     "MATCH (n) RETURN n",
     "WITH n, [key in keys(n) WHERE n[key] = '' | [key, null]] as nullifiers
     WHERE size(nullifiers) <> 0
     WITH n, apoc.map.fromPairs(nullifiers) as nullifyMap
     SET n += nullifyMap",
     {batchSize:30000, parallel:true, iterateList:true}
-);
-"""
+);"""
 
 
 def create_nodes(
@@ -102,11 +82,6 @@ def remove_server_nodes(tx: Transaction) -> None:
         run_query(tx, query)
 
 
-def duplicates_exist(tx) -> bool:
-    result = run_query(tx, FIND_DUPLICATES).single()
-    return result["found_duplicates"]
-
-
 def create_nodes_by_type(
     tx: Transaction,
     content_type: ContentType,
@@ -119,7 +94,7 @@ def create_nodes_by_type(
         query = CREATE_NODES_BY_TYPE_TEMPLATE.format(labels=labels)
     result = run_query(tx, query, data=data).single()
     nodes_count: int = result["nodes_created"]
-    logger.info(f"Created {nodes_count} nodes of type {content_type}.")
+    logger.debug(f"Created {nodes_count} nodes of type {content_type}.")
 
 
 def _match(
@@ -152,11 +127,10 @@ def _match(
             where.append("AND")
         if marketplace:
             where.append(f"'{marketplace}' IN node.marketplaces")
-    query = f"""
-    MATCH (node{content_type_str}{params_str})
+    query = f"""// Retrieves nodes according to given parameters.
+MATCH (node{content_type_str}{params_str})
     {" ".join(where)}
-    RETURN node
-    """
+RETURN node"""
     if ids_list:
         query = "UNWIND $filter_list AS node_id\n" + query
 
@@ -169,10 +143,9 @@ def _match(
 
 
 def delete_all_graph_nodes(tx: Transaction) -> None:
-    query = """
-    MATCH (n)
-    DETACH DELETE n
-    """
+    query = """// Deletes all graph nodes and relationships
+MATCH (n)
+DETACH DELETE n"""
     run_query(tx, query)
 
 

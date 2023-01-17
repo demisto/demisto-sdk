@@ -70,7 +70,8 @@ def update_content_graph(
             packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
     else:
         content_graph_interface.import_graph(imported_path)
-    logger.info(f"Updating the following packs: {packs_to_update}")
+    packs_str = "\n".join([f"- {p}" for p in packs_to_update])
+    logger.info(f"Updating the following packs:\n{packs_str}")
     builder.update_graph(packs_to_update)
     if dependencies:
         content_graph_interface.create_pack_dependencies()

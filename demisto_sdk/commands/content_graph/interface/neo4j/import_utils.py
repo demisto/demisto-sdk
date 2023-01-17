@@ -32,7 +32,7 @@ class Neo4jImportHandler:
         if not imported_path:
             return None
         self.clean_import_dir()
-        logger.info(f"Importing from {imported_path}")
+        logger.debug(f"Importing from {imported_path}")
         with ZipFile(imported_path, "r") as zip_obj:
             zip_obj.extractall(self.import_path)
 

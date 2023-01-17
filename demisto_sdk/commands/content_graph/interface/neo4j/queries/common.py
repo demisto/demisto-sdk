@@ -51,9 +51,9 @@ def to_neo4j_map(properties: dict) -> str:
 def run_query(tx: Transaction, query: str, **kwargs: Dict[str, Any]) -> Result:
     try:
         start_time: datetime = datetime.now()
-        logger.info(f"Running query:\n{query}")
+        logger.debug(f"Running query:\n{query}")
         result = tx.run(query, **kwargs)
-        logger.info(f"Took {(datetime.now() - start_time).total_seconds()} seconds")
+        logger.debug(f"Took {(datetime.now() - start_time).total_seconds()} seconds")
         return result
     except Exception as e:
         logger.error(traceback.format_exc())

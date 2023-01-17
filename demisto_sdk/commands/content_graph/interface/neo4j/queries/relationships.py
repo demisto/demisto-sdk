@@ -38,7 +38,8 @@ def build_target_properties(
 
 
 def build_has_command_relationships_query() -> str:
-    return f"""
+    return f"""// Creates relationships between integrations and their commands.
+// Note: according to a constraint, two command nodes cannot have the same name.
 UNWIND $data AS rel_data
 
 MATCH (integration:{ContentType.INTEGRATION}{build_source_properties()})
@@ -65,8 +66,7 @@ MERGE (integration)-[r:{RelationshipType.HAS_COMMAND}{{
     description: rel_data.description
 }}]->(cmd)
 
-RETURN count(r) AS relationships_merged
-"""
+RETURN count(r) AS relationships_merged"""
 
 
 def build_uses_relationships_query(
@@ -74,34 +74,34 @@ def build_uses_relationships_query(
     target_identifier: str = "object_id",
     with_target_type: bool = True,
 ) -> str:
-    return f"""
+    return f"""// Creates USES relationships between parsed nodes.
+// Note: if a target node is created, it means the node does not exist in the repository.
 UNWIND $data AS rel_data
 
 // Get all content items with the specified properties
-MATCH (content_item:{ContentType.BASE_CONTENT}{build_source_properties()})
+MATCH (source:{ContentType.BASE_CONTENT}{build_source_properties()})
 
-// Get or create all command or script dependencies with the given properties
-MERGE (dependency:{target_type}{
+// Get or create the targets with the given properties
+MERGE (target:{target_type}{
     build_target_properties(identifier=target_identifier, with_content_type=with_target_type)
 })
 
 // If created, mark "not in repository" (all repository nodes were created already)
 ON CREATE
-    SET dependency.not_in_repository = true
+    SET target.not_in_repository = true
 
 // Get or create the relationship and set its "mandatorily" field based on relationship data
-MERGE (content_item)-[r:{RelationshipType.USES}]->(dependency)
+MERGE (source)-[r:{RelationshipType.USES}]->(target)
 ON CREATE
     SET r.mandatorily = rel_data.mandatorily
 ON MATCH
     SET r.mandatorily = r.mandatorily OR rel_data.mandatorily
 
-RETURN count(r) AS relationships_merged
-"""
+RETURN count(r) AS relationships_merged"""
 
 
 def build_in_pack_relationships_query() -> str:
-    return f"""
+    return f"""// Creates IN_PACK relationships between content items and their packs.
 UNWIND $data AS rel_data
 
 // Get the pack and the content item with the specified properties
@@ -110,12 +110,11 @@ MATCH (pack:{ContentType.PACK}{build_target_properties()})
 
 // Get/create the relationship
 MERGE (content_item)-[r:{RelationshipType.IN_PACK}]->(pack)
-RETURN count(r) AS relationships_merged
-"""
+RETURN count(r) AS relationships_merged"""
 
 
 def build_tested_by_relationships_query() -> str:
-    return f"""
+    return f"""// Creates TESTED_BY relationships between content items and their tests.
 UNWIND $data AS rel_data
 
 // Get the content item with the specified properties
@@ -130,20 +129,18 @@ ON CREATE
 
 // Get/create the relationship
 MERGE (content_item)-[r:{RelationshipType.TESTED_BY}]->(tpb)
-RETURN count(r) AS relationships_merged
-"""
+RETURN count(r) AS relationships_merged"""
 
 
 def build_default_relationships_query(relationship: RelationshipType) -> str:
-    return f"""
-    UNWIND $data AS rel_data
-    MATCH (source:{ContentType.BASE_CONTENT}{build_source_properties()})
-    MERGE (target:{ContentType.BASE_CONTENT}{build_target_properties()})
-    ON CREATE
-        SET target.not_in_repository = true
-    MERGE (source)-[r:{relationship}]->(target)
-    RETURN count(r) AS relationships_merged
-"""
+    return f"""// A default method for creating relationships
+UNWIND $data AS rel_data
+MATCH (source:{ContentType.BASE_CONTENT}{build_source_properties()})
+MERGE (target:{ContentType.BASE_CONTENT}{build_target_properties()})
+ON CREATE
+    SET target.not_in_repository = true
+MERGE (source)-[r:{relationship}]->(target)
+RETURN count(r) AS relationships_merged"""
 
 
 logger = logging.getLogger("demisto-sdk")
@@ -197,7 +194,7 @@ def create_relationships_by_type(
 
     result = run_query(tx, query, data=data).single()
     merged_relationships_count: int = result["relationships_merged"]
-    logger.info(
+    logger.debug(
         f"Merged {merged_relationships_count} relationships of type {relationship}."
     )
 
@@ -222,13 +219,11 @@ def _match_relationships(
         if marketplace
         else ""
     )
-    query = f"""
-    UNWIND $ids_list AS id
-    MATCH (node_from) - [relationship] - (node_to)
-    WHERE id(node_from) = id
-    {marketplace_where}
-    RETURN id(node_from) AS node_from_id, collect(relationship) AS relationships, collect(node_to) AS nodes_to
-    """
+    query = f"""UNWIND $ids_list AS id
+MATCH (node_from) - [relationship] - (node_to)
+WHERE id(node_from) = id
+{marketplace_where}
+RETURN id(node_from) AS node_from_id, collect(relationship) AS relationships, collect(node_to) AS nodes_to"""
     return {
         int(item["node_from_id"]): Neo4jRelationshipResult(
             relationships=item.get("relationships"), nodes_to=item.get("nodes_to")

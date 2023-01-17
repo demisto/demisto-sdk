@@ -44,7 +44,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     _match,
     create_nodes,
     delete_all_graph_nodes,
-    duplicates_exist,
     remove_empty_properties,
     remove_server_nodes,
 )
@@ -304,11 +303,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.write_transaction(create_nodes, nodes)
             session.write_transaction(remove_empty_properties)
-
-    def validate_graph(self) -> None:
-        with self.driver.session() as session:
-            if session.read_transaction(duplicates_exist):
-                raise Exception("Duplicates found in graph.")
 
     def create_relationships(
         self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]

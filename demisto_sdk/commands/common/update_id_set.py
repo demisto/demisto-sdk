@@ -368,9 +368,6 @@ def build_tasks_graph(playbook_data):
 
             # In this case the playbook is invalid, starttaskid contains invalid task id.
             if not leaf_task:
-                print_warning(
-                    f'{playbook_data.get("id")}: No such task {leaf} in playbook'
-                )
                 continue
 
             leaf_next_tasks = sum(leaf_task.get("nexttasks", {}).values(), [])  # type: ignore
@@ -378,9 +375,6 @@ def build_tasks_graph(playbook_data):
             for task_id in leaf_next_tasks:
                 task = tasks.get(task_id)
                 if not task:
-                    print_warning(
-                        f'{playbook_data.get("id")}: No such task {leaf} in playbook'
-                    )
                     continue
 
                 # If task can't be skipped and predecessor task is mandatory - set as mandatory.

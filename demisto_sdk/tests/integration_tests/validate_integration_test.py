@@ -4710,3 +4710,68 @@ class TestSpecificValidations:
         assert "RP102" in result.stdout
         assert "id and details fields are not equal." in result.stdout
         assert result.exit_code == 1
+
+
+class TestBasicValidation:
+    def test_modified_pack_files_with_ignored_validations(self, mocker, repo):
+        """
+        Given
+        - .pack-ignore which ignores BA114
+        - detected modified files that the pack name was changed.
+
+        When
+        - running validations with -g flag
+
+        Then
+        - make sure the files are valid and that the error
+        """
+        import demisto_sdk.commands.common.errors as errors
+
+        errors.ALLOWED_IGNORE_ERRORS = ["BA114"]
+
+        mocker.patch.object(tools, "is_external_repository", return_value=True)
+        mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
+        mocker.patch.object(
+            PackUniqueFilesValidator, "are_valid_files", return_value=""
+        )
+        mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+        mocker.patch.object(
+            ValidateManager, "setup_prev_ver", return_value="origin/master"
+        )
+
+        pack = repo.create_pack("PackName")
+        # add pack ignore
+        integration = pack.create_integration("IntegrationTest")
+        pack.pack_ignore.write_list(
+            [
+                "[file:README.md]\nignore=RM112",
+                "[file:IntegrationTest.yml]\nignore=BA114",
+            ]
+        )
+
+        file_paths = (
+            integration.yml.rel_path.replace("PackName", "PackName1"),  # new pack name
+            integration.yml.rel_path,  # old pack name
+        )
+        modified_files = {file_paths}
+        mocker.patch.object(
+            ValidateManager,
+            "get_changed_files_from_git",
+            return_value=(modified_files, set(), set(), set(), True),
+        )
+        mocker.patch.object(GitUtil, "__init__", return_value=None)
+        mocker.patch.object(
+            GitUtil, "get_current_working_branch", return_value="MyBranch"
+        )
+
+        mocker.patch.object(GitUtil, "deleted_files", return_value={})
+
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(
+                main,
+                [VALIDATE_CMD, "-g", "--post-commit", "--skip-pack-release-notes"],
+            )
+        print()
+        assert "The files are valid" in result.stdout
+        assert result.exit_code == 0

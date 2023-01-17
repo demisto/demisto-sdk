@@ -40,6 +40,7 @@ def update_content_graph(
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
     use_git: bool = False,
     imported_path: Optional[Path] = None,
+    use_current: bool = False,
     packs_to_update: Optional[List[str]] = None,
     dependencies: bool = True,
     output_path: Optional[Path] = None,
@@ -50,6 +51,7 @@ def update_content_graph(
         marketplace (MarketplaceVersions): The marketplace to update.
         use_git (bool): Whether to use git to get the packs to update.
         imported_path (Path): The path to the imported graph.
+        use_current (bool): Whether to use the current graph.
         packs_to_update (List[str]): The packs to update.
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
@@ -57,7 +59,7 @@ def update_content_graph(
     if packs_to_update is None:
         packs_to_update = []
     builder = ContentGraphBuilder(content_graph_interface)
-    if not imported_path:
+    if not imported_path and not use_current:
         # getting the graph from remote, so we need to clean the import dir
         content_graph_interface.clean_import_dir()
         extract_remote_import_files(content_graph_interface, builder)

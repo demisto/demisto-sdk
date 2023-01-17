@@ -1,5 +1,3 @@
-import shutil
-from distutils.dir_util import copy_tree
 from pathlib import Path
 from typing import Any, Callable, Dict, List
 from zipfile import ZipFile
@@ -207,13 +205,6 @@ def _get_pack_by_id(repository: ContentDTO, pack_id: str) -> Pack:
     raise ValueError(f"Pack {pack_id} does not exist in the repository.")
 
 
-def dump_csv_import_files(csv_files_dir: Path) -> None:
-    import_path = neo4j_service.get_neo4j_import_path().as_posix()
-    if Path(import_path).is_dir():
-        shutil.rmtree(import_path)
-        copy_tree(csv_files_dir.as_posix(), import_path)
-
-
 # COMPARISON HELPER FUNCTIONS
 
 
@@ -388,10 +379,7 @@ class TestUpdateContentGraph:
             )
 
         with ContentGraphInterface() as interface:
-            dump_csv_import_files(
-                TEST_DATA_PATH / "mock_import_files_multiple_repos__valid"
-            )
-            update_content_graph(interface, packs_to_update=[])
+            update_content_graph(interface, packs_to_update=[], imported_path=TEST_DATA_PATH / "mock_import_files_multiple_repos__valid" / "valid_graph.zip")
             assert get_nodes_count_by_type(interface, ContentType.PACK) == 2
             assert get_nodes_count_by_type(interface, ContentType.INTEGRATION) == 2
             assert get_nodes_count_by_type(interface, ContentType.COMMAND) == 1

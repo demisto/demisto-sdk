@@ -4723,7 +4723,7 @@ class TestBasicValidation:
         - running validations with -g flag
 
         Then
-        - make sure the files are valid and that the error
+        - make sure the files are valid and that the error can be ignored successfully.
         """
         import demisto_sdk.commands.common.errors as errors
 

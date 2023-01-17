@@ -7,6 +7,7 @@
 * Fixed an issue where the **upload** and **prepare-content** commands didn't add `fromServerVersion` and `toServerVersion` to layouts.
 * Updated **lint** to use graph instead of id_set when running with `--check-dependent-api-module` flag.
 * Added the flag `--xsoar-only` to the **doc-review** command which enables reviewing documents that belong to XSOAR-supported Packs.
+* Fixed an issue where the **validate** command didn't ignore several errors even when those errors are in the `.pack-ignore` file.
 
 ## 1.8.3
 * Changed **validate** to allow hiding parameters of type 0, 4, 12 and 14 when replacing with type 9 (credentials) with the same name.

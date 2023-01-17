@@ -581,11 +581,12 @@ def zip_packs(**kwargs) -> int:
 )
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @pass_config
-def validate(config, file_paths, **kwargs):
+def validate(config, file_paths: str, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
     if file_paths:
+        # If file_paths is given as an argument, use it as the file_paths input (instead of the -i flag)
         kwargs["input"] = ",".join(file_paths)
     run_with_mp = not kwargs.pop("no_multiprocessing")
     check_configuration_file("validate", kwargs)
@@ -3109,7 +3110,7 @@ def update_content_graph(
 @click.option(
     "-a",
     "--all-files",
-    help="Whether to run precommit on all files",
+    help="Whether to run on all files",
     is_flag=True,
     default=False,
 )
@@ -3121,7 +3122,7 @@ def update_content_graph(
 @click.option(
     "-t",
     "--test",
-    help="Whether to run tests",
+    help="Whether to run unit tests",
     is_flag=True,
     default=False,
 )

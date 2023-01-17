@@ -19,8 +19,6 @@ PYTHONPATH = [
     Path(CONTENT_PATH / "Tests" / "demistomock"),
 ]
 try:
-    PYTHONPATH.extend(
-        dir for dir in Path(CONTENT_PATH / "Packs" / "ApiModules" / "Scripts").iterdir()
-    )
+    PYTHONPATH.extend(Path(CONTENT_PATH / "Packs" / "ApiModules" / "Scripts").iterdir())
 except FileNotFoundError:
     pass

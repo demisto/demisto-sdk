@@ -14,14 +14,14 @@
 
 - id: format
   name: format
-  description: format content
+  description: Format non-code files, to comply with XSOAR standards.
   entry: demisto-sdk format
   language: python
   files: .*Packs/.*/(?:Integrations|Scripts)/.*.yml$
 
 - id: update-docker-image
   name: update docker image
-  description: update docker image
+  description: Update the Docker image used by an integration or script.
   entry: demisto-sdk format -ud --no-validate
   language: python
   files: .*Packs/.*/(?:Integrations|Scripts)/.*.yml$

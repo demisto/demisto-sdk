@@ -27,7 +27,7 @@ class GitUtil:
             self.repo = repo
 
     def get_all_files(self) -> Set[Path]:
-        return {Path(path) for path in self.repo.git.ls_files().split("\n")}
+        return set(map(Path, self.repo.git.ls_files().split("\n")))
 
     def modified_files(
         self,

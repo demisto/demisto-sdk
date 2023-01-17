@@ -4,10 +4,10 @@
 * Fixed an issue in **prepare-content** command where large code lines were broken.
 * Added a logger warning to **get_demisto_version**, the task will now fail with a more informative message.
 * Fixed an issue where the **upload** and **prepare-content** commands didn't add `fromServerVersion` and `toServerVersion` to layouts.
-* Added **pre-commit** command to run pre-commit hooks on the content repo.
-* Added **run-unit-tests** command to run unit tests on the content repo.
-* Added support for filepath arguments in **validate** and **format** commands.
-* Added pre-commit hooks for `validate`, `format`, `run-unit-tests` and `update-docker-image`.
+* Added the **pre-commit** command, to run pre-commit hooks on XSOAR content.
+* Added the **run-unit-tests** command, to run unit tests of given content items inside their respective docker images.
+* Added support for filepath arguments in the **validate** and **format** commands.
+* Added pre-commit hooks for `validate`, `format`, `run-unit-tests` and `update-docker-image` commands.
 
 ## 1.8.3
 * Changed **validate** to allow hiding parameters of type 0, 4, 12 and 14 when replacing with type 9 (credentials) with the same name.

@@ -348,7 +348,7 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
             f"{log_prompt} - Failed detecting Python version for image {image}"
         )
     logger.info(f"{log_prompt} - End. Python version is {py_num}")
-    return py_num if py_num else "3.10"
+    return py_num or "3.10"
 
 
 def get_file_from_container(

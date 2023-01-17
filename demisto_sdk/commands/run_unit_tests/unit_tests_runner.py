@@ -4,6 +4,8 @@ import shutil
 from pathlib import Path
 from typing import List
 
+from junitparser import JUnitXml
+
 import demisto_sdk.commands.common.docker_helper as docker_helper
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -11,7 +13,6 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.lint.helpers import stream_docker_container_output
-from junitparser import JUnitXml
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -26,7 +27,7 @@ DEFAULT_DOCKER_IMAGE = "demisto/python:1.3-alpine"
 def unit_test_runner(file_paths: List[Path]) -> int:
     docker_client = docker_helper.init_global_docker_client()
 
-    ret_val = 0
+    exit_code = 0
     for filename in file_paths:
         integration_script = BaseContent.from_path(Path(filename))
         if not isinstance(integration_script, IntegrationScript):
@@ -46,8 +47,13 @@ def unit_test_runner(file_paths: List[Path]) -> int:
                 integration_script.path.parent / ".pytest.ini",
             )
             shutil.copy(
-                CONTENT_PATH / 'Tests' / 'scripts' / 'dev_envs' / 'pytest' / 'conftest.py',
-                integration_script.path.parent / 'conftest.py'
+                CONTENT_PATH
+                / "Tests"
+                / "scripts"
+                / "dev_envs"
+                / "pytest"
+                / "conftest.py",
+                integration_script.path.parent / "conftest.py",
             )
             container = docker_client.containers.run(
                 image=docker_image,
@@ -69,21 +75,24 @@ def unit_test_runner(file_paths: List[Path]) -> int:
             # wait for container to finish
             container_exit_code = container.wait()["StatusCode"]
             if container_exit_code:
-                for suite in JUnitXml.fromfile(integration_script.path.parent / ".report_pytest.xml"):
+                for suite in JUnitXml.fromfile(
+                    integration_script.path.parent / ".report_pytest.xml"
+                ):
                     for case in suite:
                         if not case.is_passed:
-                            logger.error(f"Test for {integration_script.object_id} failed in {case.name} with error {case.result[0].message}: {case.result[0].text}")
-                ret_val = 1
+                            logger.error(
+                                f"Test for {integration_script.object_id} failed in {case.name} with error {case.result[0].message}: {case.result[0].text}"
+                            )
+                exit_code = 1
             else:
                 logger.info(f"All tests passed for {filename}")
-            # remove file
             container.remove(force=True)
         except Exception as e:
             logger.error(f"Failed to run test for {filename}: {e}")
-            ret_val = 1
+            exit_code = 1
         finally:
             # remove pytest.ini no matter the results
             shutil.rmtree(
                 integration_script.path.parent / ".pytest.ini", ignore_errors=True
             )
-    return ret_val
+    return exit_code

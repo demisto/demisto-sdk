@@ -106,7 +106,7 @@ class PreCommitRunner:
                         env=precommit_env,
                         cwd=CONTENT_PATH,
                     )
-                    if response.returncode != 0:
+                    if response.returncode:
                         ret_val = response.returncode
                 continue
             RuffHook(self.hooks["ruff"]).prepare_hook(
@@ -181,10 +181,10 @@ def categorize_files(files: Set[Path]) -> PreCommitRunner:
         integration_script_path = integration_script.path.parent.relative_to(
             CONTENT_PATH
         )
-        if python_version := integration_script.python_version:
-            version = Version(python_version)
-            python_version = f"{version.major}.{version.minor}"
-        python_versions_to_files[python_version or EMPTY_PYTHON_VERSION].update(
+        if python_version_string := integration_script.python_version:
+            version = Version(python_version_string)
+            python_version_string = f"{version.major}.{version.minor}"
+        python_versions_to_files[python_version_string or EMPTY_PYTHON_VERSION].update(
             integrations_scripts_mapping[integration_script_path]
             | {integration_script.path.relative_to(CONTENT_PATH)}
         )
@@ -226,6 +226,7 @@ def pre_commit_manager(
     (CONTENT_PATH / "CommonServerUserPython.py").touch()
 
     if not any((input_files, staged_only, use_git, all_files)):
+        logger.debug("No arguments were given, running on git changed files")
         use_git = True
     git_util = GitUtil()
     staged_files = git_util._get_staged_files()

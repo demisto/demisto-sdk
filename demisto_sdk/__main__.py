@@ -3002,7 +3002,7 @@ def create_content_graph(
 )
 @click.option(
     "--use-current",
-    help="Whether to use the current content graph state",
+    help="Whether to use the current content graph to update",
     default=False,
 )
 @click.option(

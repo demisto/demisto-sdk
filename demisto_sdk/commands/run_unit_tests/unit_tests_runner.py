@@ -11,6 +11,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.lint.helpers import stream_docker_container_output
+from junitparser import JUnitXml
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -68,9 +69,10 @@ def unit_test_runner(file_paths: List[Path]) -> int:
             # wait for container to finish
             container_exit_code = container.wait()["StatusCode"]
             if container_exit_code:
-                logger.error(
-                    f"Some tests failed. Run with -v to see full results. Exit code: {container_exit_code}"
-                )
+                for suite in JUnitXml.fromfile(integration_script.path.parent / ".report_pytest.xml"):
+                    for case in suite:
+                        if not case.is_passed:
+                            logger.error(f"Test for {integration_script.object_id} failed in {case.name} with error {case.result[0].message}: {case.result[0].text}")
                 ret_val = 1
             else:
                 logger.info(f"All tests passed for {filename}")

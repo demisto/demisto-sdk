@@ -54,7 +54,7 @@ repos:
         language: script
   
       - id: is-gitlab-changed
-        name: is-circle-changed
+        name: is-gitlab-changed
         description: Checks if gitlab files are changed, and checkout to current if it is.
         entry: ./Tests/scripts/is_file_up_to_date.sh .gitlab "" true
         language: script

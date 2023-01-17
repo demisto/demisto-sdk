@@ -47,6 +47,7 @@ class GraphValidator(BaseValidator):
 
         is_valid = []
 
+        # validating content items with minimal from_version: 5.0.0
         paths_with_invalid_versions = (
             self.graph.find_uses_paths_with_invalid_fromversion(file_paths)
         )
@@ -54,6 +55,7 @@ class GraphValidator(BaseValidator):
         for query_result in paths_with_invalid_versions:
             is_valid.append(self.handle_invalid_fromversion(query_result, warning=True))
 
+        # validating content items with at least from_version: 6.5.0
         paths_with_invalid_versions = (
             self.graph.find_uses_paths_with_invalid_fromversion(
                 file_paths, from_version=True
@@ -94,7 +96,7 @@ class GraphValidator(BaseValidator):
     def are_toversion_relationships_paths_valid(self, file_paths=None):
         """Validate that source's toversion <= target's toversion."""
         is_valid = []
-
+        # validating content items with minimal from_version: 5.0.0
         paths_with_invalid_versions = self.graph.find_uses_paths_with_invalid_toversion(
             file_paths
         )
@@ -102,6 +104,7 @@ class GraphValidator(BaseValidator):
         for query_result in paths_with_invalid_versions:
             is_valid.append(self.handle_invalid_toversion(query_result, warning=True))
 
+        # validating content items with at least from_version: 6.5.0
         paths_with_invalid_versions = self.graph.find_uses_paths_with_invalid_toversion(
             file_paths, to_version=True
         )

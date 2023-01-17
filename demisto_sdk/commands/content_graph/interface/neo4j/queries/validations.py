@@ -66,7 +66,7 @@ def validate_toversion(tx: Transaction, file_paths, to_version):
     )
     query = f"""
         MATCH (content_item_from)-[r:{RelationshipType.USES}{{mandatorily: true}}]->(n)
-        WHERE toIntegerList(split(content_item_from.toversion, ".")) < toIntegerList(split(n.toversion, "."))
+        WHERE toIntegerList(split(content_item_from.toversion, ".")) > toIntegerList(split(n.toversion, "."))
         {from_version_filter}
         {file_paths_filter}
         RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to

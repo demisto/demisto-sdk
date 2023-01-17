@@ -107,14 +107,15 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def __init__(
         self,
     ) -> None:
+        if not neo4j_service.is_alive():
+            neo4j_service.start()
+
         self.driver: Neo4jDriver = GraphDatabase.driver(
             NEO4J_DATABASE_URL,
             auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
         )
 
     def __enter__(self) -> "Neo4jContentGraphInterface":
-        if not neo4j_service.is_alive():
-            neo4j_service.start()
         return self
 
     def __exit__(self, *args) -> None:

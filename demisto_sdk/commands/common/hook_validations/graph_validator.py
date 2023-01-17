@@ -43,37 +43,16 @@ class GraphValidator(BaseValidator):
 
     @error_codes("GR101")
     def are_fromversion_relationships_paths_valid(self, file_paths=None):
-        """Validate that all USES relationship paths are valid, i.e.:
-        1. Source's marketplaces field is a subset of the target's marketplaces field
-        2. Source's fromvesion-toversion range intersects with target's fromvesion-toversion range.
-        """
-        from demisto_sdk.commands.validate.validate_manager import ValidateManager
+        """Validate that source's fromvesion >= target's fromvesion."""
 
-        is_valid = True
+        is_valid = []
 
         paths_with_invalid_versions = (
             self.graph.find_uses_paths_with_invalid_fromversion(file_paths)
         )
-        # source_path, target_id, source_fromversion, source_toversion, target_fromversion, target_toversion, path_ids:
+
         for query_result in paths_with_invalid_versions:
-            content_name = query_result.name
-            relationship_data = query_result.uses
-            fromversion = query_result.fromversion
-            content_items = [
-                relationship.target.name
-                if relationship.target.name
-                else relationship.target.normalize_name
-                for relationship in relationship_data
-            ]
-            file_path = query_result.path
-            self.ignored_errors = ValidateManager.get_error_ignore_list(
-                get_pack_name(file_path)
-            )
-            error_message, error_code = Errors.uses_with_invalid_fromversions(
-                content_name, fromversion, content_items
-            )
-            if self.handle_error(error_message, error_code, file_path, warning=True):
-                is_valid = False
+            is_valid.append(self.handle_invalid_fromversion(query_result, warning=True))
 
         paths_with_invalid_versions = (
             self.graph.find_uses_paths_with_invalid_fromversion(
@@ -81,88 +60,87 @@ class GraphValidator(BaseValidator):
             )
         )
         for query_result in paths_with_invalid_versions:
-            content_name = query_result.name
-            relationship_data = query_result.uses
-            fromversion = query_result.fromversion
-            content_items = [
-                relationship.target.name
-                if relationship.target.name
-                else relationship.target.normalize_name
-                for relationship in relationship_data
-            ]
-            file_path = query_result.path
-            self.ignored_errors = ValidateManager.get_error_ignore_list(
-                get_pack_name(file_path)
-            )
-            error_message, error_code = Errors.uses_with_invalid_fromversions(
-                content_name, fromversion, content_items
-            )
-            if self.handle_error(error_message, error_code, file_path):
-                is_valid = False
+            is_valid.append(self.handle_invalid_fromversion(query_result))
+
+        return all(is_valid)
+
+    def handle_invalid_fromversion(self, query_result, warning=False):
+        """Handle the invalid from_version query results"""
+        from demisto_sdk.commands.validate.validate_manager import ValidateManager
+
+        is_valid = True
+        content_name = query_result.name
+        relationship_data = query_result.uses
+        fromversion = query_result.fromversion
+        content_items = [
+            relationship.target.name
+            if relationship.target.name
+            else relationship.target.object_id
+            for relationship in relationship_data
+        ]
+        file_path = query_result.path
+        self.ignored_errors = ValidateManager.get_error_ignore_list(
+            get_pack_name(file_path)
+        )
+        error_message, error_code = Errors.uses_with_invalid_fromversions(
+            content_name, fromversion, content_items
+        )
+        if self.handle_error(error_message, error_code, file_path, warning=warning):
+            is_valid = False
 
         return is_valid
 
     @error_codes("GR104")
     def are_toversion_relationships_paths_valid(self, file_paths=None):
-        """Validate that all USES relationship paths are valid, i.e.:
-        1. Source's marketplaces field is a subset of the target's marketplaces field
-        2. Source's fromvesion-toversion range intersects with target's fromvesion-toversion range.
-        """
-        from demisto_sdk.commands.validate.validate_manager import ValidateManager
-
-        is_valid = True
+        """Validate that source's toversion <= target's toversion."""
+        is_valid = []
 
         paths_with_invalid_versions = self.graph.find_uses_paths_with_invalid_toversion(
             file_paths
         )
-        # source_path, target_id, source_fromversion, source_toversion, target_fromversion, target_toversion, path_ids:
+
         for query_result in paths_with_invalid_versions:
-            content_name = query_result.name
-            relationship_data = query_result.uses
-            fromversion = query_result.fromversion
-            content_items = [
-                relationship.target.name
-                if relationship.target.name
-                else relationship.target.normalize_name
-                for relationship in relationship_data
-            ]
-            file_path = query_result.path
-            self.ignored_errors = ValidateManager.get_error_ignore_list(
-                get_pack_name(file_path)
-            )
-            error_message, error_code = Errors.uses_with_invalid_toversions(
-                content_name, fromversion, content_items
-            )
-            if self.handle_error(error_message, error_code, file_path, warning=True):
-                is_valid = False
+            is_valid.append(self.handle_invalid_toversion(query_result, warning=True))
 
         paths_with_invalid_versions = self.graph.find_uses_paths_with_invalid_toversion(
             file_paths, to_version=True
         )
         for query_result in paths_with_invalid_versions:
-            content_name = query_result.name
-            relationship_data = query_result.uses
-            fromversion = query_result.fromversion
-            content_items = [
-                relationship.target.name
-                if relationship.target.name
-                else relationship.target.normalize_name
-                for relationship in relationship_data
-            ]
-            file_path = query_result.path
-            self.ignored_errors = ValidateManager.get_error_ignore_list(
-                get_pack_name(file_path)
-            )
-            error_message, error_code = Errors.uses_with_invalid_toversions(
-                content_name, fromversion, content_items
-            )
-            if self.handle_error(error_message, error_code, file_path):
-                is_valid = False
+            is_valid.append(self.handle_invalid_toversion(query_result))
+
+        return all(is_valid)
+
+    def handle_invalid_toversion(self, query_result, warning=False):
+        """Handle the invalid to_version query results"""
+        from demisto_sdk.commands.validate.validate_manager import ValidateManager
+
+        is_valid = True
+        content_name = query_result.name
+        relationship_data = query_result.uses
+        toversion = query_result.toversion
+        content_items = [
+            relationship.target.name
+            if relationship.target.name
+            else relationship.target.object_id
+            for relationship in relationship_data
+        ]
+        file_path = query_result.path
+        self.ignored_errors = ValidateManager.get_error_ignore_list(
+            get_pack_name(file_path)
+        )
+        error_message, error_code = Errors.uses_with_invalid_toversions(
+            content_name, toversion, content_items
+        )
+        if self.handle_error(error_message, error_code, file_path, warning=warning):
+            is_valid = False
 
         return is_valid
 
     @error_codes("GR100")
     def are_marketplaces_relationships_paths_valid(self, file_paths=None):
+        """
+        Source's marketplaces field is a subset of the target's marketplaces field
+        """
         from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
         is_valid = True
@@ -170,7 +148,6 @@ class GraphValidator(BaseValidator):
             self.graph.find_uses_paths_with_invalid_marketplaces(file_paths)
         )
 
-        # source_path, target_id, source_marketplaces, target_marketplaces, path_ids:
         for query_result in paths_with_invalid_marketplaces:
             content_name = query_result.name
             relationship_data = query_result.uses
@@ -178,7 +155,7 @@ class GraphValidator(BaseValidator):
             content_items = [
                 relationship.target.name
                 if relationship.target.name
-                else relationship.target.normalize_name
+                else relationship.target.object_id
                 for relationship in relationship_data
             ]
             file_path = query_result.path
@@ -196,7 +173,7 @@ class GraphValidator(BaseValidator):
     @error_codes("GR102")
     def is_file_using_unknown_content(self, file_paths=[]):
         """
-        Validate that there are no using unknown content items
+        Validate that there are no usage of unknown content items
         """
         from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
@@ -217,7 +194,9 @@ class GraphValidator(BaseValidator):
                 error_message, error_code = Errors.using_unknown_content(
                     content_name, unknown_content_names
                 )
-                if self.handle_error(error_message, error_code, file_path):
+                if self.handle_error(
+                    error_message, error_code, file_path, warning=True
+                ):
                     is_valid = False
 
         return is_valid

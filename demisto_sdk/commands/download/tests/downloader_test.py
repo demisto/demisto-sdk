@@ -9,7 +9,6 @@ from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
     CONNECTIONS_DIR,
     CONTENT_ENTITIES_DIRS,
-    CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
     DELETED_JSON_FIELDS_BY_DEMISTO,
     DELETED_YML_FIELDS_BY_DEMISTO,
@@ -26,18 +25,14 @@ from demisto_sdk.commands.common.constants import (
     LAYOUTS_DIR,
     LISTS_DIR,
     MODELING_RULES_DIR,
-    PARSING_RULES_DIR,
     PLAYBOOKS_DIR,
     PRE_PROCESS_RULES_DIR,
     REPORTS_DIR,
     SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR,
-    TRIGGER_DIR,
     WIDGETS_DIR,
     WIZARDS_DIR,
     XDRC_TEMPLATE_DIR,
-    XSIAM_DASHBOARDS_DIR,
-    XSIAM_REPORTS_DIR,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import get_child_files, get_json, get_yaml
@@ -292,11 +287,6 @@ class Environment:
             GENERIC_DEFINITIONS_DIR: [],
             MODELING_RULES_DIR: [],
             XDRC_TEMPLATE_DIR: [],
-            PARSING_RULES_DIR: [],
-            CORRELATION_RULES_DIR: [],
-            XSIAM_DASHBOARDS_DIR: [],
-            XSIAM_REPORTS_DIR: [],
-            TRIGGER_DIR: [],
         }
 
         self.INTEGRATION_CUSTOM_CONTENT_OBJECT = {

@@ -1,6 +1,4 @@
 import os
-import shutil
-from glob import glob
 from os.path import isfile
 from shutil import copyfile
 from typing import List, Tuple
@@ -49,7 +47,6 @@ from demisto_sdk.commands.common.hook_validations.structure import (
 from demisto_sdk.tests.constants_test import (
     DASHBOARD_TARGET,
     DIR_LIST,
-    DUMMY_XSIAM_PACK_PATH,
     INCIDENT_FIELD_TARGET,
     INDICATORFIELD_EXACT_SCHEME,
     INDICATORFIELD_EXTRA_FIELDS,
@@ -69,7 +66,6 @@ from demisto_sdk.tests.constants_test import (
     INVALID_WIDGET_PATH,
     LAYOUT_TARGET,
     LAYOUTS_CONTAINER_TARGET,
-    PACK_TARGET,
     PLAYBOOK_PACK_TARGET,
     PLAYBOOK_TARGET,
     VALID_DASHBOARD_PATH,
@@ -125,7 +121,7 @@ class TestStructureValidator:
                 os.remove(target)
         for directory in cls.CREATED_DIRS:
             if os.path.exists(directory):
-                shutil.rmtree(directory)
+                os.rmdir(directory)
 
     SCHEME_VALIDATION_INPUTS = [
         (
@@ -708,49 +704,147 @@ class TestGetMatchingRegex:
         assert validator.is_valid_scheme() is expected
 
 
-def _get_dummy_xsiam_pack_items(valid: bool = True) -> List[str]:
-    """Prepares a path list of the DummyXSIAMPack content item files.
-    The files' schemas are valid iff valid is True.
-
-    Args:
-        valid (bool, optional): Whether to collect valid or invalid files. Defaults to True.
-
-    Returns:
-        List[str]: The list of file paths.
-    """
-    files = glob(
-        f"{DUMMY_XSIAM_PACK_PATH}/**/{'valid' if valid else 'invalid'}_*",
-        recursive=True,
-    )
-    paths = [f for f in files if not os.path.isdir(f)]
-    assert paths  # make sure files exist
-    return paths
-
-
 class TestXSIAMStructureValidator(TestStructureValidator):
-    IS_VALID_XSIAM_FILE_INPUTS: List[Tuple[str, bool]] = [
-        (f, True) for f in _get_dummy_xsiam_pack_items(valid=True)
-    ] + [(f, False) for f in _get_dummy_xsiam_pack_items(valid=False)]
+    def test_valid_modeling_rule_yml(self, pack: Pack):
+        """Given a valid modeling rule yml, make sure its schema is valid."""
+        modeling_rule_yml = pack.create_modeling_rule("modeling_rule").yml
+        validator = StructureValidator(modeling_rule_yml.path)
+        assert validator.is_valid_scheme()
 
-    @pytest.mark.parametrize("file_path, expected_answer", IS_VALID_XSIAM_FILE_INPUTS)
-    def test_is_xsiam_file_valid(self, file_path, expected_answer, mocker):
+    def test_invalid_modeling_rule_yml_missing_fromversion(self, pack: Pack):
         """
         Given:
-            An XSIAM content item under `file_path` path.
+            An invalid modeling rule yml with a missing fromversion field
         When:
-            Running StructureValidator.is_valid_file()
+            Running schema validation.
         Then:
-            Verify whether the file schema is valid or not, according to `expected_answer` value.
+            Make sure the schema is invalid.
         """
-        mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
-        try:
-            # make a temporary copy of the file in a valid location
-            temp_filepath = file_path.replace(DUMMY_XSIAM_PACK_PATH, PACK_TARGET)
-            copyfile(file_path, temp_filepath)
+        modeling_rule_yml = pack.create_modeling_rule("modeling_rule").yml
+        modeling_rule_yml.delete_key("fromversion")
+        validator = StructureValidator(modeling_rule_yml.path)
+        assert not validator.is_valid_scheme()
 
-            # validate the temporary file
-            structure = StructureValidator(temp_filepath)
-            assert structure.is_valid_file() is expected_answer
-        finally:
-            # delete the temporary file
-            os.remove(temp_filepath)
+    def test_valid_modeling_rule_schema(self, pack: Pack):
+        """Given a valid modeling rule schema, make sure its schema is valid."""
+        modeling_rule_schema = pack.create_modeling_rule("modeling_rule").schema
+        validator = StructureValidator(modeling_rule_schema.path)
+        assert validator.is_valid_scheme()
+
+    def test_invalid_modeling_rule_schema_bad_type(self, pack: Pack):
+        """
+        Given:
+            An invalid modeling rule schema with a bad type for the "name" field
+        When:
+            Running schema validation.
+        Then:
+            Make sure the schema is invalid.
+        """
+        modeling_rule_schema = pack.create_modeling_rule("modeling_rule").schema
+        modeling_rule_schema.add_or_update_field_by_path(
+            "test_audit_raw.name.type", "invalid_type"
+        )
+        validator = StructureValidator(modeling_rule_schema.path)
+        assert not validator.is_valid_scheme()
+
+    def test_valid_parsing_rule_yml(self, pack: Pack):
+        """Given a valid parsing rule, make sure its schema is valid."""
+        parsing_rule_yml = pack.create_parsing_rule("parsing_rule").yml
+        validator = StructureValidator(parsing_rule_yml.path)
+        assert validator.is_valid_scheme()
+
+    def test_invalid_parsing_rule_yml_missing_fromversion(self, pack: Pack):
+        """
+        Given:
+            An invalid parsing rule with a missing fromversion field
+        When:
+            Running schema validation.
+        Then:
+            Make sure the schema is invalid.
+        """
+        parsing_rule_yml = pack.create_parsing_rule("parsing_rule").yml
+        parsing_rule_yml.delete_key("fromversion")
+        validator = StructureValidator(parsing_rule_yml.path)
+        assert not validator.is_valid_scheme()
+
+    def test_valid_xdrc_template(self, pack: Pack):
+        """Given a valid XDRC template, make sure its schema is valid."""
+        xdrc_template = pack.create_xdrc_template("xdrc_template")
+        validator = StructureValidator(str(xdrc_template.xdrc_template_tmp_path))
+        assert validator.is_valid_scheme()
+
+    def test_invalid_xdrc_template_missing_ostype(self, pack: Pack):
+        """
+        Given:
+            An invalid XDRC template with a missing ostype field
+        When:
+            Running schema validation.
+        Then:
+            Make sure the schema is invalid.
+        """
+        xdrc_template = pack.create_xdrc_template("xdrc_template")
+        xdrc_template.remove("os_type")
+        validator = StructureValidator(str(xdrc_template.xdrc_template_tmp_path))
+        assert not validator.is_valid_scheme()
+
+    def test_valid_trigger(self, pack: Pack):
+        """Given a valid trigger, make sure its schema is valid."""
+        trigger = pack.create_trigger("trigger")
+        validator = StructureValidator(trigger.path)
+        assert validator.is_valid_scheme()
+
+    def test_invalid_trigger_missing_search_field(self, pack: Pack):
+        """
+        Given:
+            An invalid trigger with a missing SEARCH_FIELD field
+        When:
+            Running schema validation.
+        Then:
+            Make sure the schema is invalid.
+        """
+        trigger = pack.create_trigger("trigger")
+        trigger.remove_field_by_path("alerts_filter.filter.AND.[0].SEARCH_FIELD")
+        validator = StructureValidator(trigger.path)
+        assert not validator.is_valid_scheme()
+
+    def test_valid_xsiam_dashboard(self, pack: Pack):
+        """Given a valid XSIAM dashboard, make sure its schema is valid."""
+        xsiam_dashboard = pack.create_xsiam_dashboard("xsiam_dashboard")
+        validator = StructureValidator(xsiam_dashboard.path)
+        assert validator.is_valid_scheme()
+
+    def test_invalid_xsiam_dashboard_has_creator_mail(self, pack: Pack):
+        """
+        Given:
+            An invalid XSIAM dashboard with a creator_mail field (should not have one)
+        When:
+            Running schema validation.
+        Then:
+            Make sure the schema is invalid.
+        """
+        xsiam_dashboard = pack.create_xsiam_dashboard("xsiam_dashboard")
+        xsiam_dashboard.add_or_update_field_by_path(
+            "widgets_data.[0].creator_mail", "test@paloaltonetworks.com"
+        )
+        validator = StructureValidator(xsiam_dashboard.path)
+        assert not validator.is_valid_scheme()
+
+    def test_valid_xsiam_report(self, pack: Pack):
+        """Given a valid XSIAM report, make sure its schema is valid."""
+        xsiam_report = pack.create_xsiam_report("xsiam_report")
+        validator = StructureValidator(xsiam_report.path)
+        assert validator.is_valid_scheme()
+
+    def test_invalid_xsiam_report_missing_global_id(self, pack: Pack):
+        """
+        Given:
+            An invalid XSIAM report with a missing global_id field
+        When:
+            Running schema validation.
+        Then:
+            Make sure the schema is invalid.
+        """
+        xsiam_report = pack.create_xsiam_report("xsiam_report")
+        xsiam_report.remove_field_by_path("templates_data.[0].global_id")
+        validator = StructureValidator(xsiam_report.path)
+        assert not validator.is_valid_scheme()

@@ -648,8 +648,10 @@ class Pack:
     def create_xdrc_template(
         self, name, json_content: dict = None, yaml_content: dict = None
     ) -> XDRCTemplate:
+        xdrc_template_dir: Path = self._xdrc_templates_path / name
+        xdrc_template_dir.mkdir()
         xdrc_template = XDRCTemplate(
-            name, self._xdrc_templates_path, json_content, yaml_content
+            name, xdrc_template_dir, json_content, yaml_content
         )
         self.xdrc_templates.append(xdrc_template)
         return xdrc_template

@@ -512,20 +512,5 @@ DIR_LIST = [
     f"{PACK_TARGET}/{constants.INDICATOR_TYPES_DIR}",
     f"{PACK_TARGET}/{constants.CONNECTIONS_DIR}",
     f"{PACK_TARGET}/{constants.INDICATOR_FIELDS_DIR}",
-    f"{PACK_TARGET}/{constants.CORRELATION_RULES_DIR}",
-    f"{PACK_TARGET}/{constants.MODELING_RULES_DIR}",
-    f"{PACK_TARGET}/{constants.MODELING_RULES_DIR}/modelingrule-invalid",
-    f"{PACK_TARGET}/{constants.MODELING_RULES_DIR}/modelingrule-valid",
-    f"{PACK_TARGET}/{constants.PARSING_RULES_DIR}",
-    f"{PACK_TARGET}/{constants.PARSING_RULES_DIR}/parsingrule-invalid",
-    f"{PACK_TARGET}/{constants.PARSING_RULES_DIR}/parsingrule-valid",
-    f"{PACK_TARGET}/{constants.XSIAM_DASHBOARDS_DIR}",
-    f"{PACK_TARGET}/{constants.XSIAM_REPORTS_DIR}",
-    f"{PACK_TARGET}/{constants.TRIGGER_DIR}",
-    f"{PACK_TARGET}/{constants.XDRC_TEMPLATE_DIR}",
-    f"{PACK_TARGET}/{constants.XDRC_TEMPLATE_DIR}/xdrctemplate-invalid",
-    f"{PACK_TARGET}/{constants.XDRC_TEMPLATE_DIR}/xdrctemplate-valid",
     constants.TESTS_DIR,
 ]
-
-DUMMY_XSIAM_PACK_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/DummyXSIAMPack"

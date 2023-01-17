@@ -26,7 +26,11 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
     YAMLContentObject,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.tools import add_default_pack_known_words, find_type
+from demisto_sdk.commands.common.tools import (
+    add_default_pack_known_words,
+    find_type,
+    is_xsoar_supported_pack,
+)
 from demisto_sdk.commands.doc_reviewer.known_words import KNOWN_WORDS
 from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
 
@@ -57,6 +61,7 @@ class DocReviewer:
         use_git: bool = False,
         prev_ver: str = None,
         release_notes_only: bool = False,
+        xsoar_only: bool = False,
         load_known_words_from_pack: bool = False,
     ):
         if templates:
@@ -89,8 +94,9 @@ class DocReviewer:
         self.load_known_words_from_pack = load_known_words_from_pack
         self.known_pack_words_file_path = ""
 
+        self.is_xsoar_supported_rn_only: bool = xsoar_only
         self.current_pack = None
-        self.files: list = []
+        self.files: List[str] = []
         self.spellchecker = SpellChecker()
         self.unknown_words: dict = {}
         self.no_camel_case = no_camel_case
@@ -295,6 +301,15 @@ class DocReviewer:
 
         for file in self.files:
             click.echo(f"\nChecking file {file}")
+
+            # --xsoar-only flag is specified.
+            if self.is_xsoar_supported_rn_only and not is_xsoar_supported_pack(file):
+                click.secho(
+                    f"File '{file}' was skipped because it does not belong to an XSOAR-supported Pack",
+                    fg="yellow",
+                )
+                continue
+
             restarted_spellchecker = self.update_known_words_from_pack(file)
             if restarted_spellchecker:
                 self.add_known_words()

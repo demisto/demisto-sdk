@@ -42,14 +42,41 @@ def test_docker_images_to_supported_native_images(native_image_config):
     - make sure each docker image is getting mapped correctly
     """
     assert native_image_config.docker_images_to_native_images_mapping == {
-        "python3": ["native:8.1", "native:8.2"],
-        "py3-tools": ["native:8.1", "native:8.2"],
-        "unzip": ["native:8.1", "native:8.2"],
-        "chromium": ["native:8.1", "native:8.2"],
-        "tesseract": ["native:8.1", "native:8.2"],
+        "python3": ["native:8.1", "native:8.2", "native:dev"],
+        "py3-tools": ["native:8.1", "native:8.2", "native:dev"],
+        "unzip": ["native:8.1", "native:8.2", "native:dev"],
+        "chromium": ["native:8.1", "native:8.2", "native:dev"],
+        "tesseract": ["native:8.1", "native:8.2", "native:dev"],
         "pan-os-python": ["native:8.2"],
-        "tld": ["native:8.1"],
+        "tld": ["native:8.1", "native:dev"],
     }
+
+
+@pytest.mark.parametrize(
+    "native_image, expected_image_reference",
+    [("native:8.1", "demisto/py3-native:8.1.0.12345"), ("native:8.4", None)],
+)
+def test_get_native_image_reference(
+    native_image_config, native_image, expected_image_reference
+):
+    """
+    Given
+    - native image configuration file, native image name:
+        1. A native image that exists in the configuration file
+        2. A native image that doesn't exist in the configuration file
+
+    When
+    - running the get_native_image_reference() function
+
+    Then
+    - make sure the right docker references is extracted
+        1. The matched reference from the configuration file
+        2. None
+    """
+    assert (
+        native_image_config.get_native_image_reference(native_image)
+        == expected_image_reference
+    )
 
 
 class TestScriptIntegrationSupportedNativeImages:

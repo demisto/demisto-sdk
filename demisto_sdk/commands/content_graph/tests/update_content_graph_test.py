@@ -379,7 +379,13 @@ class TestUpdateContentGraph:
             )
 
         with ContentGraphInterface() as interface:
-            update_content_graph(interface, packs_to_update=[], imported_path=TEST_DATA_PATH / "mock_import_files_multiple_repos__valid" / "valid_graph.zip")
+            update_content_graph(
+                interface,
+                packs_to_update=[],
+                imported_path=TEST_DATA_PATH
+                / "mock_import_files_multiple_repos__valid"
+                / "valid_graph.zip",
+            )
             assert get_nodes_count_by_type(interface, ContentType.PACK) == 2
             assert get_nodes_count_by_type(interface, ContentType.INTEGRATION) == 2
             assert get_nodes_count_by_type(interface, ContentType.COMMAND) == 1
@@ -453,7 +459,7 @@ class TestUpdateContentGraph:
                 packs_to_update=pack_ids_to_update,
                 dependencies=True,
                 output_path=tmp_path,
-                use_current=True
+                use_current=True,
             )
             packs_from_graph = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,

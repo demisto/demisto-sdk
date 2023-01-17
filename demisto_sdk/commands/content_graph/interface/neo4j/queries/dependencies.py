@@ -43,13 +43,15 @@ def get_all_level_packs_dependencies(
         WHERE id(p1) = pack_id AND id(p1) <> id(p2)
         AND all(n IN nodes(path) WHERE "{marketplace}" IN n.marketplaces)
         {"AND all(r IN relationships(path) WHERE r.mandatorily = true)" if mandatorily else ""}
-        RETURN pack_id, collect(r) as relationships, collect(p2) AS dependencies
+        RETURN p1 as node_from, pack_id, collect(r) as relationships, collect(p2) AS dependencies
     """
     result = run_query(tx, query, ids_list=list(ids_list))
     logger.info("Found dependencies.")
     return {
         int(item.get("pack_id")): Neo4jRelationshipResult(
-            nodes_to=item.get("dependencies"), relationships=item.get("relationships")
+            node_from=item.get("node_from"),
+            nodes_to=item.get("dependencies"),
+            relationships=item.get("relationships"),
         )
         for item in result
     }

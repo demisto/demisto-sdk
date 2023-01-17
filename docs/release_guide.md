@@ -10,7 +10,8 @@ The scope of the upgrade is decided by the SDK owner on each release, based on t
 3) Run `poetry update` (in the SDK folder).
 4) Run `poetry version X.Y.Z`.
 5) Run `poetry lock --no-update`.
-6) Make sure that all the following passed:
+6) Push branch to remote.
+7) Make sure that all the following passed:
   - [content nightly](https://code.pan.run/xsoar/content/-/pipeline_schedules)
   - [SDK nightly](https://code.pan.run/xsoar/content/-/pipeline_schedules)
   - [SDK master](https://github.com/demisto/demisto-sdk) (last post-merge build passed)
@@ -27,10 +28,12 @@ The scope of the upgrade is decided by the SDK owner on each release, based on t
 4) In the **Describe the release** text box, paste the `CHANGELOG` contents for this release.
 5) Click **Publish release**. Your release will go through a deploy build (follow it on the [CI website](https://app.circleci.com/pipelines/github/demisto/demisto-sdk).
 6) If the build is successful, and `vX.Y.Z` shows in [PyPi](https://pypi.org/project/demisto-sdk/), your release is public! 🎉
-7) Under the **Content** repo, run `poetry add demisto-sdk==X.Y.Z && poetry update`. Should any dependency conflicts occur, consult with the SDK owner.
+7) Merge the X.Y.Z SDK branch to master.
+8) Under the **Content** repo, git checkout to a new X.Y.Z branch.
+Run `poetry add demisto-sdk==X.Y.Z`. Should any dependency conflicts occur, consult with the SDK owner.
   **NOTE**: it may take up to an hour for the Gitlab's PyPi mirror to sync with PyPi ang have X.Y.Z available, so the build _may_ fail. Should this happen, wait ~1h and retry.
-9) Wait for the build to finish, and merge it.
-10) Announce regarding the SDK release [here](https://panw-global.slack.com/archives/G011E63JXPB):
+1) Wait for the build to finish, and merge it.
+2)  Announce regarding the SDK release [here](https://panw-global.slack.com/archives/G011E63JXPB):
   a) Mention the release version,
   b) Paste the `CHANGELOG` contents for this release
   c) Add a link to demisto-sdk in pypi

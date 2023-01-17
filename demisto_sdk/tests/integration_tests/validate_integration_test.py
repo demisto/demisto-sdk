@@ -4726,10 +4726,6 @@ class TestBasicValidation:
         Then
         - make sure the files are valid and that the errors can be ignored successfully.
         """
-        import demisto_sdk.commands.common.errors as errors
-
-        errors.ALLOWED_IGNORE_ERRORS = ["BA114"]
-
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         mocker.patch.object(

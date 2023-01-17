@@ -1,6 +1,10 @@
 from pathlib import Path
 
 from demisto_sdk.commands.common.tools import get_content_path
+import logging
+
+logger = logging.getLogger("demisto-sdk")
+
 
 CONTENT_PATH = Path(get_content_path())  # type: ignore
 
@@ -21,4 +25,5 @@ PYTHONPATH = [
 try:
     PYTHONPATH.extend(Path(CONTENT_PATH / "Packs" / "ApiModules" / "Scripts").iterdir())
 except FileNotFoundError:
+    logger.debug("ApiModules not found, skipping adding to PYTHONPATH")
     pass

@@ -339,7 +339,7 @@ class Downloader:
 
         Parameters:
         - string_to_write (str): The string to search for UUIDs in.
-        - uuid_dict (dict): A dictionary mapping UUIDs to their corresponding values.
+        - uuid_dict (dict): A dictionary mapping UUIDs to content item IDs.
 
         Returns:
         - str: The modified string with all UUIDs replaced.

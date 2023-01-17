@@ -4716,7 +4716,7 @@ class TestBasicValidation:
     def test_modified_pack_files_with_ignored_validations(self, mocker, repo):
         """
         Given
-        - .pack-ignore which ignores BA114, IN122 and RM110
+        - .pack-ignore which ignores IN122 and RM110
         - integration yml which validations above fail.
         - detected modified files that the pack name was changed.
 
@@ -4747,14 +4747,11 @@ class TestBasicValidation:
         # add pack ignore
         pack.pack_ignore.write_list(
             [
-                "[file:IntegrationTest.yml]\nignore=BA114,IN122,RM110",
+                "[file:IntegrationTest.yml]\nignore=IN122,RM110",
             ]
         )
-        file_paths = (
-            integration.yml.rel_path.replace("PackName", "PackName1"),  # new pack name
-            integration.yml.rel_path,  # old pack name
-        )
-        modified_files = {file_paths}
+
+        modified_files = {integration.yml.rel_path}
         mocker.patch.object(
             ValidateManager,
             "get_changed_files_from_git",

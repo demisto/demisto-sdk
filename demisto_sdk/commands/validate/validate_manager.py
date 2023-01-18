@@ -155,7 +155,6 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 SKIPPED_FILES = [
-    "CommonServerPython.py",
     "CommonServerUserPython.py",
     "demistomock.py",
     "DemistoClassApiModule.py",
@@ -290,6 +289,19 @@ class ValidateManager:
             FileType.DOC_IMAGE,
             FileType.MODELING_RULE_SCHEMA,
             FileType.XSIAM_REPORT_IMAGE,
+            FileType.PIPFILE,
+            FileType.PIPFILE_LOCK,
+            FileType.TXT,
+            FileType.JAVASCRIPT_FILE,
+            FileType.POWERSHELL_FILE,
+            FileType.PYLINTRC,
+            FileType.SECRET_IGNORE,
+            FileType.LICENSE,
+            FileType.UNIFIED_YML,
+            FileType.PACK_IGNORE,
+            FileType.INI,
+            FileType.PEM,
+            FileType.METADATA,
         )
 
         self.is_external_repo = is_external_repo
@@ -411,6 +423,7 @@ class ValidateManager:
     def run_validation_on_specific_files(self):
         """Run validations only on specific files"""
         files_validation_result = set()
+        self.setup_git_params()
 
         for path in self.file_path.split(","):
             error_ignore_list = self.get_error_ignore_list(get_pack_name(path))
@@ -631,27 +644,11 @@ class ValidateManager:
 
     def run_validation_on_package(self, package_path, pack_error_ignore_list):
         package_entities_validation_results = set()
-
         for file_name in os.listdir(package_path):
             file_path = os.path.join(package_path, file_name)
-            should_validate_xsiam_item = self.should_validate_xsiam_content(
-                package_path
+            package_entities_validation_results.add(
+                self.run_validations_on_file(file_path, pack_error_ignore_list)
             )
-            should_validate_py_file = (
-                file_path.endswith(".py") and file_name not in SKIPPED_FILES
-            )
-            if (
-                file_path.endswith(".yml")
-                or file_path.endswith(".md")
-                or should_validate_py_file
-                or should_validate_xsiam_item
-            ):
-                package_entities_validation_results.add(
-                    self.run_validations_on_file(file_path, pack_error_ignore_list)
-                )
-
-            else:
-                self.ignored_files.add(file_path)
 
         return all(package_entities_validation_results)
 
@@ -718,6 +715,20 @@ class ValidateManager:
 
         return True
 
+    def is_skipped_file(self, file_path: str) -> bool:
+        """check wether the file in the given file_path is in the SKIPPED_FILES list.
+
+        Args:
+            file_path: the file on which to run.
+
+        Returns:
+            bool. true if file is in SKIPPED_FILES list, false otherwise.
+        """
+        path = Path(file_path)
+        return path.name in SKIPPED_FILES or (
+            path.name == "CommonServerPython.py" and path.parent.parent.name != "Base"
+        )
+
     # flake8: noqa: C901
     def run_validations_on_file(
         self,
@@ -746,8 +757,17 @@ class ValidateManager:
         file_type = find_type(file_path)
 
         is_added_file = file_path in added_files if added_files else False
-
-        if file_type in self.skipped_file_types or file_path.endswith("_unified.yml"):
+        if file_type == FileType.MODELING_RULE_TEST_DATA:
+            file_path = file_path.replace("_testdata.json", ".yml")
+        if file_path.endswith(".xif"):
+            file_path = file_path.replace(".xif", ".yml")
+        if (
+            file_type in self.skipped_file_types
+            or self.is_skipped_file(file_path)
+            or self.git_util._is_file_git_ignored(file_path)
+            or self.detect_file_level(file_path)
+            in (PathLevel.PACKAGE, PathLevel.CONTENT_ENTITY_DIR)
+        ):
             self.ignored_files.add(file_path)
             return True
         elif not self.is_valid_file_type(file_type, file_path):

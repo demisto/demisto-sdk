@@ -163,6 +163,14 @@ class FileType(str, Enum):
     INDICATOR_TYPE = "indicatortype"
     TOOL = "tools"
     PACK_METADATA = "packmetadata"
+    PIPFILE = "pipfile"
+    TXT = "txt"
+    PIPFILE_LOCK = "pipfilelock"
+    PYLINTRC = "pylintrc"
+    LICENSE = "license"
+    UNIFIED_YML = "unified_yml"
+    INI = "ini"
+    PEM = "pem"
 
 
 RN_HEADER_BY_FILE_TYPE = {

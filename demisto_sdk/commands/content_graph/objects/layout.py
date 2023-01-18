@@ -47,6 +47,9 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
 
 
 def fix_widget_incident_to_alert(data: dict) -> dict:
+    """
+    Changes internal {name: 'Related Incidents', ... }, into {name: 'Related Alerts', ... }
+    """
     if not isinstance(data, dict):
         raise TypeError(f"expected dictionary, got {type(data)}")
 
@@ -61,7 +64,7 @@ def fix_widget_incident_to_alert(data: dict) -> dict:
             ):  # the kind of dictionary we want to fix
                 datum["name"] = "Related Alerts"
                 return datum
-            else:  # not the kind we want to fix, use recursion instead.
+            else:  # not the atomic dictionary that we fix, use recursion instead.
                 return {key: _fix_recursively(value) for key, value in datum.items()}
 
         else:

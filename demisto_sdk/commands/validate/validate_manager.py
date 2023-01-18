@@ -852,7 +852,6 @@ class ValidateManager:
                     added_files,
                     modified_files,
                     pack_error_ignore_list,
-                    is_modified,
                 )
             else:
                 click.secho("Skipping release notes validation", fg="yellow")
@@ -1315,7 +1314,6 @@ class ValidateManager:
         added_files,
         modified_files,
         pack_error_ignore_list,
-        is_modified,
     ):
         pack_name = get_pack_name(file_path)
 

@@ -8,7 +8,7 @@
 * Updated **lint** to use graph instead of id_set when running with `--check-dependent-api-module` flag.
 * Added the marketplaces field to all schemas.
 * Added the flag `--xsoar-only` to the **doc-review** command which enables reviewing documents that belong to XSOAR-supported Packs.
-* Fixed an issue in **update-release-notes** command where an error occurred during the double execution of the command.
+* Fixed an issue in **update-release-notes** command where an error occurred when executing the command a second time.
 
 ## 1.8.3
 * Changed **validate** to allow hiding parameters of type 0, 4, 12 and 14 when replacing with type 9 (credentials) with the same name.

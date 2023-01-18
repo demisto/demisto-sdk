@@ -725,11 +725,9 @@ class ValidateManager:
             bool. true if file is in SKIPPED_FILES list, false otherwise.
         """
         path = Path(file_path)
-        if path.name in SKIPPED_FILES or (
+        return path.name in SKIPPED_FILES or (
             path.name == "CommonServerPython.py" and path.parent.parent.name != "Base"
-        ):
-            return True
-        return False
+        )
 
     # flake8: noqa: C901
     def run_validations_on_file(

@@ -1596,7 +1596,7 @@ class TestValidators:
         mocker.patch.object(ReleaseNotesValidator, "is_file_valid", return_value=True)
         validate_manager = ValidateManager(skip_conf_json=True)
         assert validate_manager.validate_release_notes(
-            file_path, {}, modified_files, None, False
+            file_path, {}, modified_files, None
         )
 
     def test_validate_release_notes__invalid_rn_for_new_pack(self, mocker):
@@ -1624,7 +1624,7 @@ class TestValidators:
         validate_manager.new_packs = {"CortexXDR"}
         assert (
             validate_manager.validate_release_notes(
-                file_path, {file_path}, modified_files, None, False
+                file_path, {file_path}, modified_files, None
             )
             is False
         )

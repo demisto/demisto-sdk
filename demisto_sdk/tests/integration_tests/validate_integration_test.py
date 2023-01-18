@@ -8,6 +8,7 @@ from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
+from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.hook_validations.classifier import ClassifierValidator
@@ -101,6 +102,21 @@ VALID_SCRIPT_PATH = join(
 CONF_JSON_MOCK = {
     "tests": [{"integrations": "AzureFeed", "playbookID": "AzureFeed - Test"}]
 }
+
+
+class MyRepo:
+    active_branch = "not-master"
+
+    def remote(self):
+        return "remote_path"
+
+
+@pytest.fixture(autouse=True)
+def set_git_test_env(mocker):
+    mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+    mocker.patch.object(Content, "git", return_value=MyRepo())
+    mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
+    mocker.patch.object(GitUtil, "_is_file_git_ignored", return_value=False)
 
 
 class TestGenericFieldValidation:
@@ -3882,6 +3898,7 @@ class TestAllFilesValidator:
             PackUniqueFilesValidator, "are_valid_files", return_value=""
         )
         mocker.patch.object(ValidateManager, "validate_readme", return_value=True)
+        mocker.patch.object(ImageValidator, "validate_size", return_value=True)
         mocker.patch.object(ValidateManager, "is_node_exist", return_value=True)
         mocker.patch(
             "demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories",

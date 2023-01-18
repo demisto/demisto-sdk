@@ -10,6 +10,7 @@
 * Added the flag `--xsoar-only` to the **doc-review** command which enables reviewing documents that belong to XSOAR-supported Packs.
 * Fixed an issue in **update-release-notes** command where an error occurred when executing the same command a second time.
 * Fixed an issue where **validate** would not always ignore errors listed under `.pack-ignore`.
+* Fixed an issue where running **validate** on a specific pack didn't test all the relevant entities.
 
 ## 1.8.3
 * Changed **validate** to allow hiding parameters of type 0, 4, 12 and 14 when replacing with type 9 (credentials) with the same name.
@@ -39,7 +40,6 @@
 * Enhanced the **update-content-graph** command to support `--use-git`, `--imported_path` and `--output-path` arguments.
 * Fixed an issue where **doc-review** failed when reviewing command name in some cases.
 * Fixed an issue where **download** didn't identify playbooks properly, and downloaded files with UUIDs instead of file/script names.
-
 
 ## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.

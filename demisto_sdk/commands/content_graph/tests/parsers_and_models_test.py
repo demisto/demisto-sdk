@@ -877,7 +877,7 @@ class TestParsersAndModels:
         When:
             - Preparing for upload.
         Then:
-            - Verify a `Related Incidents` field's name is changed to `Related Alerts` 
+            - Verify a `Related Incidents` field's name is changed to `Related Alerts`
                 if and only if MPV2 is in `marketplaces`
         """
         from demisto_sdk.commands.content_graph.objects.layout import Layout
@@ -900,7 +900,6 @@ class TestParsersAndModels:
             else "Related Incidents"
         )
         assert checked_dict["name"] == expected_name
-        
 
     def test_list_parser(self, pack: Pack):
         """

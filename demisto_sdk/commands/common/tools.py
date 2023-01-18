@@ -1613,7 +1613,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         return FileType.PEM
 
     elif (
-        path.name.lower() in ("commands_example", "commands_examples", "command_examples")
+        path.name.lower()
+        in ("commands_example", "commands_examples", "command_examples")
         or path.suffix.lower() == ".txt"
     ):
         return FileType.TXT

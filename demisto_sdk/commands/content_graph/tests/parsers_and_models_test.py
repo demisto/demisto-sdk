@@ -857,6 +857,51 @@ class TestParsersAndModels:
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
 
+    @pytest.mark.parametrize(
+        "marketplaces",
+        (
+            [MarketplaceVersions.XSOAR],
+            [MarketplaceVersions.MarketplaceV2],
+            list(
+                MarketplaceVersions
+            ),  # all marketplace values, including MarketplaceV2
+        ),
+    )
+    def test_layoutscontainer_parser_fixes(
+        self, pack: Pack, marketplaces: List[MarketplaceVersions]
+    ):
+        """
+        Given:
+            - A pack with a layout.
+            - A list of marketplace versions this layout belongs in.
+        When:
+            - Preparing for upload.
+        Then:
+            - Verify a `Related Incidents` field's name is changed to `Related Alerts` 
+                if and only if MPV2 is in `marketplaces`
+        """
+        from demisto_sdk.commands.content_graph.objects.layout import Layout
+        from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
+
+        layout = pack.create_layoutcontainer(
+            "TestLayoutscontainer", load_json("layoutscontainer.json")
+        )
+        model = Layout.from_orm(LayoutParser(Path(layout.path), marketplaces))
+        ready_for_upload = model.prepare_for_upload()
+        checked_dict = ready_for_upload["detailsV2"]["tabs"][5]
+
+        # these two are for sanity, to make sure we're checking the right value (and the test file hasn't been changed)
+        assert checked_dict["id"] == "relatedIncidents"
+        assert checked_dict["type"] == "relatedIncidents"
+
+        expected_name = (
+            "Related Alerts"
+            if MarketplaceVersions.MarketplaceV2 in marketplaces
+            else "Related Incidents"
+        )
+        assert checked_dict["name"] == expected_name
+        
+
     def test_list_parser(self, pack: Pack):
         """
         Given:

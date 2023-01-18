@@ -1,4 +1,3 @@
-import re
 from logging import getLogger
 from typing import List, Optional, Set, Union
 

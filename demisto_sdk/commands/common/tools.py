@@ -1609,7 +1609,7 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.name.lower().endswith(".ini"):
         return FileType.INI
 
-    elif path.name.lower().endswith(".ini"):
+    elif path.name.lower().endswith(".pem"):
         return FileType.PEM
 
     elif (

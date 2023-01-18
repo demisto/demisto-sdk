@@ -116,6 +116,12 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def import_path(self) -> Path:
         return self._import_handler.import_path
 
+    def clean_import_dir(self) -> None:
+        return self._import_handler.clean_import_dir()
+
+    def move_to_import_dir(self, imported_path: Path) -> None:
+        return self._import_handler.extract_files_from_path(imported_path)
+
     def close(self) -> None:
         self.driver.close()
 
@@ -330,7 +336,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             imported_path (Path): The path to import the graph from.
         """
         logger.info("Importing graph from CSV files...")
-        self._import_handler.from_path(imported_path)
+        self._import_handler.extract_files_from_path(imported_path)
         self._import_handler.ensure_data_uniqueness()
         node_files = self._import_handler.get_nodes_files()
         relationship_files = self._import_handler.get_relationships_files()
@@ -344,8 +350,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.write_transaction(remove_empty_properties)
 
     def export_graph(self, output_path: Optional[Path] = None) -> None:
-        logger.info("Exporting graph to CSV files...")
-        self._import_handler.clean_import_dir()
+        self.clean_import_dir()
         with self.driver.session() as session:
             session.write_transaction(pre_export_write_queries)
             session.write_transaction(export_to_csv, self.repo_path.name)

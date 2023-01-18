@@ -44,6 +44,7 @@ def update_content_graph(
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
     use_git: bool = False,
     imported_path: Optional[Path] = None,
+    use_current: bool = False,
     packs_to_update: Optional[List[str]] = None,
     dependencies: bool = True,
     output_path: Optional[Path] = None,
@@ -54,26 +55,24 @@ def update_content_graph(
         marketplace (MarketplaceVersions): The marketplace to update.
         use_git (bool): Whether to use git to get the packs to update.
         imported_path (Path): The path to the imported graph.
+        use_current (bool): Whether to use the current graph.
         packs_to_update (List[str]): The packs to update.
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
-    if use_git and imported_path:
-        raise ValueError("Cannot use both git and imported path")
-    if packs_to_update is None and not imported_path:
-        # If no arguments were given, we will use the git diff to get the packs to update
-        use_git = True
-
     if packs_to_update is None:
         packs_to_update = []
     builder = ContentGraphBuilder(content_graph_interface)
+    if not imported_path and not use_current:
+        # getting the graph from remote, so we need to clean the import dir
+        content_graph_interface.clean_import_dir()
+        extract_remote_import_files(content_graph_interface, builder)
 
-    if use_git:
-        get_or_create_graph(content_graph_interface, builder)
-        if commit := content_graph_interface.commit:
-            packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
-    else:
-        content_graph_interface.import_graph(imported_path)
+    if use_git and (commit := content_graph_interface.commit):
+        packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
+
+    content_graph_interface.import_graph(imported_path)
+
     packs_str = "\n".join([f"- {p}" for p in packs_to_update])
     logger.info(f"Updating the following packs:\n{packs_str}")
     builder.update_graph(packs_to_update)
@@ -87,7 +86,7 @@ def update_content_graph(
     )
 
 
-def get_or_create_graph(
+def extract_remote_import_files(
     content_graph_interface: ContentGraphInterface, builder: ContentGraphBuilder
 ) -> None:
     """Get or create a content graph.
@@ -101,7 +100,7 @@ def get_or_create_graph(
     try:
         with NamedTemporaryFile() as temp_file:
             official_content_graph = download_content_graph(Path(temp_file.name))
-            content_graph_interface.import_graph(official_content_graph)
+            content_graph_interface.move_to_import_dir(official_content_graph)
     except Exception as e:
         logger.warning("Failed to download from bucket. Will create a new graph")
         logger.debug(f"Error: {e}")

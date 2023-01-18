@@ -24,6 +24,11 @@ mapping:
     type: str
   system:
     type: bool
+  marketplaces:
+    type: seq
+    sequence:
+      - type: str
+        enum: [ 'xsoar', 'marketplacev2', 'xpanse' ]
   edit:
     type: map
     mapping:

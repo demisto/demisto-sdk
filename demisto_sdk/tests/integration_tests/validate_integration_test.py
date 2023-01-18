@@ -4744,8 +4744,7 @@ class TestBasicValidation:
                 join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
             ),
         )
-        # add pack ignore
-
+        # add ignored validations to .pack-ignore
         pack.pack_ignore.write_validations({"IntegrationTest.yml": ["IN122", "RM110"]})
 
         modified_files = {integration.yml.rel_path}

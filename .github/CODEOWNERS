@@ -1,4 +1,4 @@
-# validations
+# Validations
 demisto-sdk/demisto_sdk/commands/validate/validate_manager.py @idovandijk
 demisto_sdk/commands/common/hook_validations/ @idovandijk
 
@@ -12,10 +12,12 @@ demisto_sdk/commands/common/hook_validations/ @idovandijk
 # Dependencies
 Pipfile* @dorschw
 pyproject.toml @dorschw
-poetry.lock @dorschw
 
 # Pytest.ini
 pytest.ini @dorschw
 
 # Content graph
 demisto_sdk/commands/content_graph/** @dantavori @ilaner
+
+# Misc
+demisto_sdk/__main__.py @dorschw

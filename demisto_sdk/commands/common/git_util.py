@@ -803,4 +803,4 @@ class GitUtil:
         Returns:
             bool: True if the file is ignored. Otherwise, return False.
         """
-        return True if self.repo.ignored(file_path) else False
+        return bool(self.repo.ignored(file_path))

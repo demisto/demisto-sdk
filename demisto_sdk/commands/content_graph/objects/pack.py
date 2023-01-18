@@ -271,7 +271,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             if self.object_id == BASE_PACK:
                 self.handle_base_pack(path)
 
-            pack_files = "\n".join(list(path.iterdir()))  # type: ignore
+            pack_files = "\n".join([str(f) for f in path.iterdir()])
             logger.info(f"Dumped pack {self.name}.")
             logger.debug(f"Pack {self.name} files:\n{pack_files}")
         except Exception as e:

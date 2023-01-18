@@ -4745,11 +4745,8 @@ class TestBasicValidation:
             ),
         )
         # add pack ignore
-        pack.pack_ignore.write_list(
-            [
-                "[file:IntegrationTest.yml]\nignore=IN122,RM110",
-            ]
-        )
+
+        pack.pack_ignore.write_validations({"IntegrationTest.yml": ["IN122", "RM110"]})
 
         modified_files = {integration.yml.rel_path}
         mocker.patch.object(

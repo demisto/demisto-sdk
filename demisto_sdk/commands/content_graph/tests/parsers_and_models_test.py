@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Union
 
 import pytest
 
@@ -1504,3 +1504,64 @@ class TestParsersAndModels:
         model = ContentDTO.from_orm(parser)
         pack_ids = {pack.object_id for pack in model.packs}
         assert pack_ids == {"sample1", "sample2"}
+
+
+@pytest.mark.parametrize(
+    "input,output",
+    [
+        ({}, {}),
+        (
+            {  # classic case - Related Incidents should be changed to Related alerts
+                "id": "relatedIncidents",
+                "name": "Related Incidents",
+                "type": "relatedIncidents",
+            },
+            {
+                "id": "relatedIncidents",
+                "name": "Related Alerts",
+                "type": "relatedIncidents",
+            },
+        ),
+        (
+            {
+                "id": "not the id we expect, should not be changed",
+                "name": "Related Incidents",
+                "type": "relatedIncidents",
+            },
+            {
+                "id": "not the id we expect, should not be changed",
+                "name": "Related Incidents",
+                "type": "relatedIncidents",
+            },
+        ),
+        (
+            {
+                "id": "relatedIncidents",
+                "name": "not the name we expect, should not be changed",
+                "type": "relatedIncidents",
+            },
+            {
+                "id": "relatedIncidents",
+                "name": "not the name we expect, should not be changed",
+                "type": "relatedIncidents",
+            },
+        ),
+    ],
+)
+def test_fix_layout_widget_incident_to_alert(
+    input: dict,
+    output: dict,
+):
+    """
+    Given:
+        - A layout body
+    When:
+        - fix_widget_incident_to_alert is called
+    Then:
+        - Make sure it replaces values as expected
+    """
+    from demisto_sdk.commands.content_graph.objects.layout import (
+        fix_widget_incident_to_alert,
+    )
+
+    assert fix_widget_incident_to_alert(input) == output

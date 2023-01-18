@@ -149,7 +149,6 @@ from demisto_sdk.commands.common.tools import (
     get_remote_file,
     get_yaml,
     open_id_set_file,
-    print_warning,
     run_command_os,
 )
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -869,6 +868,7 @@ class ValidateManager:
                     error_message=error_message,
                     error_code=error_code,
                     file_path=file_path,
+                    ignored_errors=pack_error_ignore_list,
                 ):
                     return False
             if not self.validate_all:
@@ -1992,11 +1992,14 @@ class ValidateManager:
         is_valid = True
         for file_path in deleted_files:
             file_path = Path(file_path)
+            ignored_errors = self.get_error_ignore_list(get_pack_name(str(file_path)))
             if "Packs" not in file_path.absolute().parts:
                 # not allowed to delete non-content files
                 file_path = str(file_path)
                 error_message, error_code = Errors.file_cannot_be_deleted(file_path)
-                if self.handle_error(error_message, error_code, file_path):
+                if self.handle_error(
+                    error_message, error_code, file_path, ignored_errors=ignored_errors
+                ):
                     is_valid = False
 
             else:
@@ -2008,7 +2011,12 @@ class ValidateManager:
                         error_message, error_code = Errors.file_cannot_be_deleted(
                             file_path
                         )
-                        if self.handle_error(error_message, error_code, file_path):
+                        if self.handle_error(
+                            error_message,
+                            error_code,
+                            file_path,
+                            ignored_errors=ignored_errors,
+                        ):
                             is_valid = False
 
         return is_valid
@@ -2066,7 +2074,13 @@ class ValidateManager:
             # we only fail on old format if no toversion (meaning it is latest) or if the ynl is not deprecated.
             if "toversion" not in yaml_data and not yaml_data.get("deprecated"):
                 error_message, error_code = Errors.invalid_package_structure()
-                if self.handle_error(error_message, error_code, file_path=file_path):
+                ignored_errors = self.get_error_ignore_list(get_pack_name(file_path))
+                if self.handle_error(
+                    error_message,
+                    error_code,
+                    file_path=file_path,
+                    ignored_errors=ignored_errors,
+                ):
                     handle_error = False
         return handle_error
 
@@ -2092,8 +2106,12 @@ class ValidateManager:
                     added_rn.add(pack_name)
                 else:
                     error_message, error_code = Errors.multiple_release_notes_files()
+                    ignored_errors = self.get_error_ignore_list(pack_name)
                     if self.handle_error(
-                        error_message, error_code, file_path=pack_name
+                        error_message,
+                        error_code,
+                        file_path=pack_name,
+                        ignored_errors=ignored_errors,
                     ):
                         return False
 

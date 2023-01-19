@@ -858,17 +858,17 @@ class TestParsersAndModels:
         )
 
     @pytest.mark.parametrize(
-        "marketplaces",
+        "marketplace,expected_name",
         (
-            [MarketplaceVersions.XSOAR],
-            [MarketplaceVersions.MarketplaceV2],
-            list(
-                MarketplaceVersions
-            ),  # all marketplace values, including MarketplaceV2
+            (MarketplaceVersions.XSOAR, "Related Incidents"),
+            (MarketplaceVersions.MarketplaceV2, "Related Alerts"),
         ),
     )
     def test_layoutscontainer_parser_fixes(
-        self, pack: Pack, marketplaces: List[MarketplaceVersions]
+        self,
+        pack: Pack,
+        marketplace: MarketplaceVersions,
+        expected_name: str,
     ):
         """
         Given:
@@ -886,19 +886,15 @@ class TestParsersAndModels:
         layout = pack.create_layoutcontainer(
             "TestLayoutscontainer", load_json("layoutscontainer.json")
         )
-        model = Layout.from_orm(LayoutParser(Path(layout.path), marketplaces))
-        ready_for_upload = model.prepare_for_upload()
+        model = Layout.from_orm(
+            LayoutParser(Path(layout.path), list(MarketplaceVersions))
+        )
+        ready_for_upload = model.prepare_for_upload(marketplace=marketplace)
         checked_dict = ready_for_upload["detailsV2"]["tabs"][5]
 
         # these two are for sanity, to make sure we're checking the right value (and the test file hasn't been changed)
         assert checked_dict["id"] == "relatedIncidents"
         assert checked_dict["type"] == "relatedIncidents"
-
-        expected_name = (
-            "Related Alerts"
-            if MarketplaceVersions.MarketplaceV2 in marketplaces
-            else "Related Incidents"
-        )
         assert checked_dict["name"] == expected_name
 
     def test_list_parser(self, pack: Pack):

@@ -27,10 +27,11 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
     def prepare_for_upload(
         self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
     ) -> dict:
+        # marketplace is the marketplace for which the content is prepared.
         data = super().prepare_for_upload(marketplace, **kwargs)
         data = self._fix_from_and_to_server_version(data)
 
-        if MarketplaceVersions.MarketplaceV2 in self.marketplaces:
+        if marketplace == MarketplaceVersions.MarketplaceV2:
             data = fix_widget_incident_to_alert(data)
 
         return data
@@ -44,7 +45,7 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
 
 def fix_widget_incident_to_alert(data: dict) -> dict:
     """
-    Changes internal {name: 'Related Incidents', ... }, into {name: 'Related Alerts', ... }
+    Changes internal {name: 'Related Incidents', ... }, into {name: 'Related Alerts', ... }, see the condition below.
     """
     if not isinstance(data, dict):
         raise TypeError(f"expected dictionary, got {type(data)}")

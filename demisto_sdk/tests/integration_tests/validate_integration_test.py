@@ -8,6 +8,7 @@ from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
+from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.hook_validations.classifier import ClassifierValidator
@@ -101,6 +102,21 @@ VALID_SCRIPT_PATH = join(
 CONF_JSON_MOCK = {
     "tests": [{"integrations": "AzureFeed", "playbookID": "AzureFeed - Test"}]
 }
+
+
+class MyRepo:
+    active_branch = "not-master"
+
+    def remote(self):
+        return "remote_path"
+
+
+@pytest.fixture(autouse=True)
+def set_git_test_env(mocker):
+    mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+    mocker.patch.object(Content, "git", return_value=MyRepo())
+    mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
+    mocker.patch.object(GitUtil, "_is_file_git_ignored", return_value=False)
 
 
 class TestGenericFieldValidation:
@@ -3882,6 +3898,7 @@ class TestAllFilesValidator:
             PackUniqueFilesValidator, "are_valid_files", return_value=""
         )
         mocker.patch.object(ValidateManager, "validate_readme", return_value=True)
+        mocker.patch.object(ImageValidator, "validate_size", return_value=True)
         mocker.patch.object(ValidateManager, "is_node_exist", return_value=True)
         mocker.patch(
             "demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories",
@@ -4710,3 +4727,72 @@ class TestSpecificValidations:
         assert "RP102" in result.stdout
         assert "id and details fields are not equal." in result.stdout
         assert result.exit_code == 1
+
+
+class TestBasicValidation:
+    def test_modified_pack_files_with_ignored_validations(self, mocker, repo):
+        """
+        Given
+        - .pack-ignore which ignores IN122 and RM110
+        - integration yml which validations above fail.
+        - detected modified files that the pack name was changed.
+
+        When
+        - running validations with -g flag
+
+        Then
+        - make sure the files are valid and that the errors can be ignored successfully.
+        """
+        mocker.patch.object(tools, "is_external_repository", return_value=True)
+        mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
+        mocker.patch.object(
+            PackUniqueFilesValidator, "are_valid_files", return_value=""
+        )
+        mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+        mocker.patch.object(
+            ValidateManager, "setup_prev_ver", return_value="origin/master"
+        )
+
+        pack = repo.create_pack("PackName")
+
+        integration = pack.create_integration(
+            "IntegrationTest",
+            yml=get_yaml(
+                join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+            ),
+        )
+        # add ignored validations to .pack-ignore
+        pack.pack_ignore.write_list(
+            [
+                "[file:IntegrationTest.yml]\nignore=IN122,RM110",
+            ]
+        )
+
+        modified_files = {integration.yml.rel_path}
+        mocker.patch.object(
+            ValidateManager,
+            "get_changed_files_from_git",
+            return_value=(modified_files, set(), set(), set(), True),
+        )
+        mocker.patch.object(GitUtil, "__init__", return_value=None)
+        mocker.patch.object(
+            GitUtil, "get_current_working_branch", return_value="MyBranch"
+        )
+
+        mocker.patch.object(GitUtil, "deleted_files", return_value={})
+
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(
+                main,
+                [
+                    VALIDATE_CMD,
+                    "-g",
+                    "--post-commit",
+                    "--skip-pack-release-notes",
+                    "--no-docker-checks",
+                    "--no-conf-json",
+                ],
+            )
+        assert "The files are valid" in result.stdout
+        assert result.exit_code == 0

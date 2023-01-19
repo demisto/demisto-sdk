@@ -862,6 +862,7 @@ class TestParsersAndModels:
         (
             (MarketplaceVersions.XSOAR, "Related Incidents"),
             (MarketplaceVersions.MarketplaceV2, "Related Alerts"),
+            (MarketplaceVersions.XPANSE, "Related Incidents"),
         ),
     )
     def test_layoutscontainer_parser_fixes(

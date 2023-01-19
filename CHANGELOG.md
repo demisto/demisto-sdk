@@ -11,7 +11,7 @@
 * Fixed an issue in **update-release-notes** command where an error occurred when executing the same command a second time.
 * Fixed an issue where **validate** would not always ignore errors listed under `.pack-ignore`.
 * Fixed an issue where running **validate** on a specific pack didn't test all the relevant entities.
-* When uploading Layout objects to `Marketplacev2`, the `Related Incidents` lablel is now automatically `Related Alerts`, unless a `name_x2` field exists.
+* Added a modification for layout objects in **prepare-content**, where ``Related Incident
 
 ## 1.8.3
 * Changed **validate** to allow hiding parameters of type 0, 4, 12 and 14 when replacing with type 9 (credentials) with the same name.

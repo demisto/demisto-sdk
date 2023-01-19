@@ -873,12 +873,12 @@ class TestParsersAndModels:
         """
         Given:
             - A pack with a layout.
-            - A list of marketplace versions this layout belongs in.
+            - The marketplace for which the item is prepared.
         When:
             - Preparing for upload.
         Then:
             - Verify a `Related Incidents` field's name is changed to `Related Alerts`
-                if and only if MPV2 is in `marketplaces`
+                if and only if marpetpalce == marketplacev2
         """
         from demisto_sdk.commands.content_graph.objects.layout import Layout
         from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser

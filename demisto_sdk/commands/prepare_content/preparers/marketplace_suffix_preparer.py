@@ -1,16 +1,16 @@
 import logging
-from typing import Dict, Union
+from typing import Any, Dict
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 logger = logging.getLogger("demisto-sdk")
 
-MARKETPLACE_TO_SUFFIX: Dict[MarketplaceVersions, str] = {
-    MarketplaceVersions.MarketplaceV2: "_x2",
-}
-
 
 class MarketplaceSuffixPreparer:
+    MARKETPLACE_TO_SUFFIX: Dict[MarketplaceVersions, str] = {
+        MarketplaceVersions.MarketplaceV2: "_x2",
+    }
+
     @staticmethod
     def prepare(
         data: dict,
@@ -26,15 +26,14 @@ class MarketplaceSuffixPreparer:
         Returns: A (possibliy) modified content item data
 
         """
-        if not (suffix := MARKETPLACE_TO_SUFFIX.get(marketplace)):
+        if not (
+            suffix := MarketplaceSuffixPreparer.MARKETPLACE_TO_SUFFIX.get(marketplace)
+        ):
             return data
         suffix_len = len(suffix)
 
-        def fix_recursively(datum: Union[dict, str, list]) -> Union[dict, str, list]:
-            if isinstance(datum, str):
-                return datum
-
-            elif isinstance(datum, list):
+        def fix_recursively(datum: Any) -> Any:
+            if isinstance(datum, list):
                 return [fix_recursively(item) for item in datum]
 
             elif isinstance(datum, dict):
@@ -51,6 +50,9 @@ class MarketplaceSuffixPreparer:
                         )
                         datum[clean_key] = value
                         datum.pop(key, None)
+
+                    else:
+                        datum[key] = fix_recursively(value)
 
             return datum
 

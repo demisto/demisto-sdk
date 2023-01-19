@@ -75,6 +75,10 @@ This commands downloads the official content graph, imports it locally, and upda
 
     Path to content graph zip file to import.
 
+* **--use-current**
+
+    Whether to use the current content graph to update.
+
 * **-nd, --no-dependencies**
 
     Whether skip dependencies should be included in the graph.

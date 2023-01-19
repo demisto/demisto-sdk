@@ -49,11 +49,8 @@ def fix_widget_incident_to_alert(data: dict) -> dict:
     if not isinstance(data, dict):
         raise TypeError(f"expected dictionary, got {type(data)}")
 
-    def _fix_recursively(datum: Union[list, dict]) -> Union[list, dict]:
-        if isinstance(datum, list):
-            return [_fix_recursively(item) for item in datum]
-
-        elif isinstance(datum, dict):
+    def fix_recursively(datum: Union[list, dict]) -> Union[list, dict]:
+        if isinstance(datum, dict):
             if (
                 datum.get("id") == "relatedIncidents"
                 and datum.get("name") == "Related Incidents"
@@ -62,14 +59,15 @@ def fix_widget_incident_to_alert(data: dict) -> dict:
                 datum["name"] = "Related Alerts"
                 return datum
             else:  # not the atomic dictionary that we fix, use recursion instead.
-                return {key: _fix_recursively(value) for key, value in datum.items()}
+                return {key: fix_recursively(value) for key, value in datum.items()}
+
+        elif isinstance(datum, list):
+            return [fix_recursively(item) for item in datum]
 
         else:
             return datum  # nothing to change
 
-    result = _fix_recursively(data)
-
-    if not isinstance(result, dict):
+    if not isinstance(result := fix_recursively(data), dict):
         """
         the inner function returns a value of the same type as its input,
         so a dict input should never return a non-dict. this part is just for safety (mypy).

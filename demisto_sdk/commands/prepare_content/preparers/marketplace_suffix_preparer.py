@@ -31,6 +31,9 @@ class MarketplaceSuffixPreparer:
         suffix_len = len(suffix)
 
         def fix_recursively(datum: dict) -> dict:
+            if isinstance(datum, str):
+                return datum
+
             # performs the actual fix, without accessing the MARKETPLACE_TO_SUFFIX dictionary.
             for key in tuple(
                 datum.keys()

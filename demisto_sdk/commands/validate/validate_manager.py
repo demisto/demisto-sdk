@@ -149,7 +149,6 @@ from demisto_sdk.commands.common.tools import (
     get_remote_file,
     get_yaml,
     open_id_set_file,
-    print_warning,
     run_command_os,
 )
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -674,7 +673,7 @@ class ValidateManager:
         return all(package_entities_validation_results)
 
     @error_codes("BA114")
-    def is_valid_pack_name(self, file_path, old_file_path):
+    def is_valid_pack_name(self, file_path, old_file_path, ignored_errors):
         """
         Valid pack name is currently considered to be a new pack name or an existing pack.
         If pack name is changed, will return `False`.
@@ -690,12 +689,15 @@ class ValidateManager:
                 error_code=error_code,
                 file_path=file_path,
                 drop_line=True,
+                ignored_errors=ignored_errors,
             ):
                 return False
         return True
 
     @error_codes("BA102,IM110")
-    def is_valid_file_type(self, file_type: FileType, file_path: str):
+    def is_valid_file_type(
+        self, file_type: FileType, file_path: str, ignored_errors: dict
+    ):
         """
         If a file_type is unsupported, will return `False`.
         """
@@ -710,6 +712,7 @@ class ValidateManager:
                 error_code=error_code,
                 file_path=file_path,
                 drop_line=True,
+                ignored_errors=ignored_errors,
             ):
                 return False
 
@@ -752,7 +755,9 @@ class ValidateManager:
         Returns:
             bool. true if file is valid, false otherwise.
         """
-        if not self.is_valid_pack_name(file_path, old_file_path):
+        if not self.is_valid_pack_name(
+            file_path, old_file_path, pack_error_ignore_list
+        ):
             return False
         file_type = find_type(file_path)
 
@@ -770,12 +775,14 @@ class ValidateManager:
         ):
             self.ignored_files.add(file_path)
             return True
-        elif not self.is_valid_file_type(file_type, file_path):
+        elif not self.is_valid_file_type(file_type, file_path, pack_error_ignore_list):
             return False
 
         if file_type == FileType.XSOAR_CONFIG:
             xsoar_config_validator = XSOARConfigJsonValidator(
-                file_path, specific_validations=self.specific_validations
+                file_path,
+                specific_validations=self.specific_validations,
+                ignored_errors=pack_error_ignore_list,
             )
             return xsoar_config_validator.is_valid_xsoar_config_file()
 
@@ -840,7 +847,10 @@ class ValidateManager:
             FileType.BETA_INTEGRATION,
         }:
             if not self.conf_json_validator.is_valid_file_in_conf_json(
-                structure_validator.current_file, file_type, file_path
+                structure_validator.current_file,
+                file_type,
+                file_path,
+                pack_error_ignore_list,
             ):
                 valid_in_conf = False
 
@@ -861,7 +871,6 @@ class ValidateManager:
                     added_files,
                     modified_files,
                     pack_error_ignore_list,
-                    is_modified,
                 )
             else:
                 click.secho("Skipping release notes validation", fg="yellow")
@@ -879,6 +888,7 @@ class ValidateManager:
                     error_message=error_message,
                     error_code=error_code,
                     file_path=file_path,
+                    ignored_errors=pack_error_ignore_list,
                 ):
                     return False
             if not self.validate_all:
@@ -1068,14 +1078,21 @@ class ValidateManager:
             return True
 
         else:
-            return self.file_type_not_supported(file_type, file_path)
+            return self.file_type_not_supported(
+                file_type, file_path, pack_error_ignore_list
+            )
         return True
 
     @error_codes("BA102")
-    def file_type_not_supported(self, file_type: FileType, file_path: str):
+    def file_type_not_supported(
+        self, file_type: FileType, file_path: str, ignored_errors: dict
+    ):
         error_message, error_code = Errors.file_type_not_supported(file_type, file_path)
         if self.handle_error(
-            error_message=error_message, error_code=error_code, file_path=file_path
+            error_message=error_message,
+            error_code=error_code,
+            file_path=file_path,
+            ignored_errors=ignored_errors,
         ):
             return False
         return True
@@ -1295,13 +1312,18 @@ class ValidateManager:
         return test_playbook_validator.is_valid_test_playbook(validate_rn=False)
 
     @error_codes("RN108")
-    def validate_no_release_notes_for_new_pack(self, pack_name, file_path):
+    def validate_no_release_notes_for_new_pack(
+        self, pack_name, file_path, ignored_errors
+    ):
         if pack_name in self.new_packs:
             error_message, error_code = Errors.added_release_notes_for_new_pack(
                 pack_name
             )
             if self.handle_error(
-                error_message=error_message, error_code=error_code, file_path=file_path
+                error_message=error_message,
+                error_code=error_code,
+                file_path=file_path,
+                ignored_errors=ignored_errors,
             ):
                 return False
         return True
@@ -1312,12 +1334,13 @@ class ValidateManager:
         added_files,
         modified_files,
         pack_error_ignore_list,
-        is_modified,
     ):
         pack_name = get_pack_name(file_path)
 
         # added new RN to a new pack
-        if not self.validate_no_release_notes_for_new_pack(pack_name, file_path):
+        if not self.validate_no_release_notes_for_new_pack(
+            pack_name, file_path, pack_error_ignore_list
+        ):
             return False
 
         if pack_name != "NonSupported":
@@ -1989,11 +2012,14 @@ class ValidateManager:
         is_valid = True
         for file_path in deleted_files:
             file_path = Path(file_path)
+            ignored_errors = self.get_error_ignore_list(get_pack_name(str(file_path)))
             if "Packs" not in file_path.absolute().parts:
                 # not allowed to delete non-content files
                 file_path = str(file_path)
                 error_message, error_code = Errors.file_cannot_be_deleted(file_path)
-                if self.handle_error(error_message, error_code, file_path):
+                if self.handle_error(
+                    error_message, error_code, file_path, ignored_errors=ignored_errors
+                ):
                     is_valid = False
 
             else:
@@ -2005,7 +2031,12 @@ class ValidateManager:
                         error_message, error_code = Errors.file_cannot_be_deleted(
                             file_path
                         )
-                        if self.handle_error(error_message, error_code, file_path):
+                        if self.handle_error(
+                            error_message,
+                            error_code,
+                            file_path,
+                            ignored_errors=ignored_errors,
+                        ):
                             is_valid = False
 
         return is_valid
@@ -2063,7 +2094,13 @@ class ValidateManager:
             # we only fail on old format if no toversion (meaning it is latest) or if the ynl is not deprecated.
             if "toversion" not in yaml_data and not yaml_data.get("deprecated"):
                 error_message, error_code = Errors.invalid_package_structure()
-                if self.handle_error(error_message, error_code, file_path=file_path):
+                ignored_errors = self.get_error_ignore_list(get_pack_name(file_path))
+                if self.handle_error(
+                    error_message,
+                    error_code,
+                    file_path=file_path,
+                    ignored_errors=ignored_errors,
+                ):
                     handle_error = False
         return handle_error
 
@@ -2089,8 +2126,12 @@ class ValidateManager:
                     added_rn.add(pack_name)
                 else:
                     error_message, error_code = Errors.multiple_release_notes_files()
+                    ignored_errors = self.get_error_ignore_list(pack_name)
                     if self.handle_error(
-                        error_message, error_code, file_path=pack_name
+                        error_message,
+                        error_code,
+                        file_path=pack_name,
+                        ignored_errors=ignored_errors,
                     ):
                         return False
 

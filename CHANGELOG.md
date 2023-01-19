@@ -9,6 +9,7 @@
 * Added the marketplaces field to all schemas.
 * Added the flag `--xsoar-only` to the **doc-review** command which enables reviewing documents that belong to XSOAR-supported Packs.
 * Fixed an issue in **update-release-notes** command where an error occurred when executing the same command a second time.
+* Fixed an issue where **validate** would not always ignore errors listed under `.pack-ignore`.
 * Fixed an issue where running **validate** on a specific pack didn't test all the relevant entities.
 
 ## 1.8.3

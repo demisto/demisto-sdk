@@ -28,6 +28,9 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
         self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
     ) -> dict:
         data = super().prepare_for_upload(marketplace, **kwargs)
+        if marketplace == MarketplaceVersions.MarketplaceV2:
+            if "Related Incidents" in data.get("name", ""):
+                data["name"] = "Related Alerts"
         data["fromServerVersion"] = self.fromversion
         data["toServerVersion"] = self.toversion
         return data

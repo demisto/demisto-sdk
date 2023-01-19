@@ -1,8 +1,13 @@
 import logging
+from typing import Dict
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 logger = logging.getLogger("demisto-sdk")
+
+MARKETPLACE_TO_SUFFIX: Dict[MarketplaceVersions, str] = {
+    MarketplaceVersions.MarketplaceV2: "_x2",
+}
 
 
 class MarketplaceSuffixPreparer:
@@ -21,35 +26,31 @@ class MarketplaceSuffixPreparer:
         Returns: A (possibliy) modified content item data
 
         """
+        if not (suffix := MARKETPLACE_TO_SUFFIX.get(marketplace)):
+            return data
+        suffix_len = len(suffix)
 
-        replacement_configuration = {
-            MarketplaceVersions.MarketplaceV2: "_x2",
-        }
+        def fix_recursively(datum: dict) -> dict:
+            # performs the actual fix, without accessing the MARKETPLACE_TO_SUFFIX dictionary.
+            for key in tuple(
+                datum.keys()
+            ):  # deliberately not iterating over .items(), as the dict changes during iteration
+                value = datum[key]
 
-        suffix = replacement_configuration.get(marketplace)
-        if suffix:
-            suffix_len = len(suffix)
-            data_keys = list(data.keys())
-            for current_key in data_keys:
-                if current_key.casefold().endswith(suffix):
-                    current_key_no_suffix = current_key[:-suffix_len]
+                if key.casefold().endswith(suffix):
+                    clean_key = key[:-suffix_len]  # without suffix
                     logger.debug(
-                        f"Replacing {current_key_no_suffix} value from {data[current_key_no_suffix]} to {data[current_key]}."
+                        f"Replacing {clean_key}={datum[clean_key]} to {value}."
                     )
-                    data[current_key_no_suffix] = data[current_key]
-                    data.pop(current_key, None)
+                    datum[clean_key] = value
+                    datum.pop(key, None)
 
-                elif isinstance(data[current_key], dict):
-                    data[current_key] = MarketplaceSuffixPreparer.prepare(
-                        data[current_key], marketplace
-                    )
-                elif isinstance(data[current_key], list):
-                    updated_list = []
-                    for current_item in data[current_key]:
-                        if isinstance(current_item, dict):
-                            current_item = MarketplaceSuffixPreparer.prepare(
-                                current_item, marketplace
-                            )
-                        updated_list.append(current_item)
+                elif isinstance(value, dict):
+                    datum[key] = fix_recursively(value)
 
-        return data
+                elif isinstance(value, list):
+                    datum[key] = [fix_recursively(list_item) for list_item in value]
+
+            return datum
+
+        return fix_recursively(data)

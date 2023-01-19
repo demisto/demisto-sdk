@@ -57,6 +57,7 @@ def fix_widget_incident_to_alert(data: dict) -> dict:
             if (
                 datum.get("id") == "relatedIncidents"
                 and datum.get("name") == "Related Incidents"
+                and datum.get("name_x2") is None
             ):  # the kind of dictionary we want to fix
                 datum["name"] = "Related Alerts"
                 return datum

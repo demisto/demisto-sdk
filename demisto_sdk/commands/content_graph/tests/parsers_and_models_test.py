@@ -1507,7 +1507,7 @@ class TestParsersAndModels:
 
 
 @pytest.mark.parametrize(
-    "input,output",
+    "incident_data,expected_output",
     [
         ({}, {}),
         (
@@ -1523,6 +1523,20 @@ class TestParsersAndModels:
             },
         ),
         (
+            {  # classic case with name_x2 = None (equivalent to missing name_x2)
+                "id": "relatedIncidents",
+                "name": "Related Incidents",
+                "name_x2": None,
+                "type": "relatedIncidents",
+            },
+            {
+                "id": "relatedIncidents",
+                "name": "Related Alerts",
+                "name_x2": None,
+                "type": "relatedIncidents",
+            },
+        ),
+        (
             {
                 "id": "not the id we expect, should not be changed",
                 "name": "Related Incidents",
@@ -1546,11 +1560,25 @@ class TestParsersAndModels:
                 "type": "relatedIncidents",
             },
         ),
+        (
+            {
+                "id": "relatedIncidents",
+                "name": "Related Incidents",
+                "name_x2": "Some other name - should be fixed in the parent function, not here",
+                "type": "relatedIncidents",
+            },
+            {
+                "id": "relatedIncidents",
+                "name": "Related Incidents",
+                "name_x2": "Some other name - should be fixed in the parent function, not here",
+                "type": "relatedIncidents",
+            },
+        ),
     ],
 )
 def test_fix_layout_widget_incident_to_alert(
-    input: dict,
-    output: dict,
+    incident_data: dict,
+    expected_output: dict,
 ):
     """
     Given:
@@ -1564,4 +1592,4 @@ def test_fix_layout_widget_incident_to_alert(
         fix_widget_incident_to_alert,
     )
 
-    assert fix_widget_incident_to_alert(input) == output
+    assert fix_widget_incident_to_alert(incident_data) == expected_output

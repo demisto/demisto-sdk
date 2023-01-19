@@ -1,5 +1,5 @@
 import logging
-from typing import Dict
+from typing import Dict, Union
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
@@ -30,30 +30,32 @@ class MarketplaceSuffixPreparer:
             return data
         suffix_len = len(suffix)
 
-        def fix_recursively(datum: dict) -> dict:
+        def fix_recursively(datum: Union[dict, str, list]) -> Union[dict, str, list]:
             if isinstance(datum, str):
                 return datum
 
-            # performs the actual fix, without accessing the MARKETPLACE_TO_SUFFIX dictionary.
-            for key in tuple(
-                datum.keys()
-            ):  # deliberately not iterating over .items(), as the dict changes during iteration
-                value = datum[key]
+            elif isinstance(datum, list):
+                return [fix_recursively(item) for item in datum]
 
-                if key.casefold().endswith(suffix):
-                    clean_key = key[:-suffix_len]  # without suffix
-                    logger.debug(
-                        f"Replacing {clean_key}={datum[clean_key]} to {value}."
-                    )
-                    datum[clean_key] = value
-                    datum.pop(key, None)
+            elif isinstance(datum, dict):
+                # performs the actual fix, without accessing the MARKETPLACE_TO_SUFFIX dictionary.
+                for key in tuple(
+                    datum.keys()
+                ):  # deliberately not iterating over .items(), as the dict changes during iteration
+                    value = datum[key]
 
-                elif isinstance(value, dict):
-                    datum[key] = fix_recursively(value)
-
-                elif isinstance(value, list):
-                    datum[key] = [fix_recursively(list_item) for list_item in value]
+                    if key.casefold().endswith(suffix):
+                        clean_key = key[:-suffix_len]  # without suffix
+                        logger.debug(
+                            f"Replacing {clean_key}={datum[clean_key]} to {value}."
+                        )
+                        datum[clean_key] = value
+                        datum.pop(key, None)
 
             return datum
 
-        return fix_recursively(data)
+        if not isinstance(result := fix_recursively(data), dict):  # to calm mypy
+            raise ValueError(
+                f"unexpected result type {type(result)}, expected dictionary"
+            )
+        return result

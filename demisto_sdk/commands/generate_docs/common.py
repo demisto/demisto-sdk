@@ -275,8 +275,8 @@ def execute_command(command_example, insecure: bool):
                         f"```\n{json.dumps(content, sort_keys=True, indent=4)}\n```"
                     )
 
-    except RuntimeError:
-        errors.append(f"The provided example for cmd {cmd} has failed...")
+    except RuntimeError as e:
+        errors.append(f"The provided example for cmd {cmd} has failed. error was: {str(e)}")
 
     except Exception as e:
         errors.append(

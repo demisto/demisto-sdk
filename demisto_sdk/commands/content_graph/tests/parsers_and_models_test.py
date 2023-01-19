@@ -878,7 +878,7 @@ class TestParsersAndModels:
             - Preparing for upload.
         Then:
             - Verify a `Related Incidents` field's name is changed to `Related Alerts`
-                if and only if marpetpalce == marketplacev2
+                if and only if marketpalce == marketplacev2
         """
         from demisto_sdk.commands.content_graph.objects.layout import Layout
         from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser

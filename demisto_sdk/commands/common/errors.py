@@ -1774,6 +1774,11 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "Invalid_marketplaces": {
+        "code": "GR105",
+        "ui_applicable": False,
+        "related_field": "",
+    },
 }
 
 
@@ -4411,3 +4416,8 @@ class Errors:
     @error_code_decorator
     def duplicate_display_name(content_name, unknown_content_names):
         return f"Content item '{content_name}' has a duplicate display_name as: {', '.join(unknown_content_names)} "
+
+    @staticmethod
+    @error_code_decorator
+    def Invalid_marketplaces(content_name, invalid_marketplaces):
+        return f"Content item '{content_name}' has invalid marketplaces: {', '.join(invalid_marketplaces)} "

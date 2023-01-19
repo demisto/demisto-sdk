@@ -134,6 +134,18 @@ def repository(mocker) -> ContentDTO:
                 ],
             ),
         ],
+        RelationshipType.DEPENDS_ON: [
+            mock_relationship(
+                "SamplePack",
+                ContentType.PACK,
+                "SamplePack2",
+                ContentType.PACK,
+                source_marketplaces=[
+                    MarketplaceVersions.XSOAR,
+                    MarketplaceVersions.MarketplaceV2,
+                ],
+            ),
+        ],
     }
     relationship_pack2 = {
         RelationshipType.IN_PACK: [
@@ -150,7 +162,11 @@ def repository(mocker) -> ContentDTO:
                 ContentType.PACK,
             ),
             mock_relationship(
-                "TestApiModule", ContentType.SCRIPT, "SamplePack2", ContentType.PACK
+                "TestApiModule",
+                ContentType.SCRIPT,
+                "SamplePack2",
+                ContentType.PACK,
+                source_marketplaces=[MarketplaceVersions.XSOAR, "invalid marketplace"],
             ),
             mock_relationship(
                 "SampleClassifier2",
@@ -166,6 +182,7 @@ def repository(mocker) -> ContentDTO:
                 "SampleScript2",
                 ContentType.SCRIPT,
                 mandatorily=True,
+                source_marketplaces=[MarketplaceVersions.XSOAR, "invalid marketplace"],
             ),
         ],
     }
@@ -494,3 +511,25 @@ def test_are_marketplaces_relationships_paths_valid(
         "Content item 'SamplePlaybook' with marketplaces: 'xsoar, xpanse' is using content items:"
         " 'SamplePlaybook2' that have incompatible marketplaces." in captured
     )
+
+
+def test_validate_dependencies(repository: ContentDTO, capsys, mocker):
+    """
+    Given
+    - A content repo
+    When
+    - running the vaidation "validate_dependencies"
+    Then
+    - Validate the existance invalid core pack dependency
+    """
+    mocker.patch(
+        "demisto_sdk.commands.common.hook_validations.graph_validator.get_core_pack_list",
+        return_value=["SamplePack"],
+    )
+    with GraphValidator() as graph_validator:
+        create_content_graph(graph_validator.graph)
+        is_valid = graph_validator.validate_dependencies("SamplePack")
+
+    captured = capsys.readouterr().out
+    assert not is_valid
+    assert "The core pack SamplePack cannot depend on non-core packs: " in captured

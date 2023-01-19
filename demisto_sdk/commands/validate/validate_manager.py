@@ -426,7 +426,9 @@ class ValidateManager:
             )
             all_files_set = get_all_content_items_files_in_dir(files_to_validate)
             with GraphValidator(self.specific_validations) as graph_validator:
-                is_valid = graph_validator.is_valid_files(all_files_set)
+                files_validation_result.add(
+                    graph_validator.is_valid_files(all_files_set)
+                )
 
         for path in files_to_validate:
             error_ignore_list = self.get_error_ignore_list(get_pack_name(path))
@@ -1234,11 +1236,14 @@ class ValidateManager:
                 f"\n================= Validating graph =================",
                 fg="bright_cyan",
             )
-            all_files_set = []
-            for file_set in (modified_files, added_files, old_format_files):
-                all_files_set.extend(get_all_content_items_files_in_dir(file_set))
-            with GraphValidator(self.specific_validations) as graph_validator:
-                validation_results.add(graph_validator.is_valid_files(all_files_set))
+            all_files_set = list(
+                set().union(modified_files, added_files, old_format_files)
+            )
+            if all_files_set:
+                with GraphValidator(self.specific_validations) as graph_validator:
+                    validation_results.add(
+                        graph_validator.is_valid_files(all_files_set)
+                    )
 
         validation_results.add(self.validate_modified_files(modified_files))
         validation_results.add(self.validate_added_files(added_files, modified_files))
@@ -1865,6 +1870,7 @@ class ValidateManager:
             prev_ver=self.prev_ver,
             json_file_path=self.json_file_path,
             specific_validations=self.specific_validations,
+            validate_graph=self.validate_graph,
         )
         pack_errors = pack_unique_files_validator.are_valid_files(
             self.id_set_validations

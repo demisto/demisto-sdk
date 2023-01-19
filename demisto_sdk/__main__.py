@@ -467,22 +467,6 @@ def zip_packs(**kwargs) -> int:
     help="Perform validations on content graph.",
 )
 @click.option(
-    "-s",
-    "--id-set",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Perform validations using the id_set file.",
-)
-@click.option(
-    "-vg",
-    "--validate-graph",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Perform validations on content graph.",
-)
-@click.option(
     "--prev-ver", help="Previous branch or SHA1 commit to run checks against."
 )
 @click.option(

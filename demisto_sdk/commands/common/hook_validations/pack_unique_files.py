@@ -49,6 +49,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
+from demisto_sdk.commands.common.hook_validations.graph_validator import GraphValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.tools import (
     get_core_pack_list,
@@ -112,6 +113,7 @@ class PackUniqueFilesValidator(BaseValidator):
         json_file_path=None,
         support=None,
         specific_validations=None,
+        validate_graph=False,
     ):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file
@@ -138,6 +140,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self.skip_id_set_creation = skip_id_set_creation
         self.support = support
         self.metadata_content: Dict = dict()
+        self.validate_graph = validate_graph
 
         if not prev_ver:
             git_util = GitUtil(repo=Content.git())
@@ -1024,6 +1027,7 @@ class PackUniqueFilesValidator(BaseValidator):
                 is_valid, error = id_set_validations.is_unique_file_valid_in_set(
                     self.pack_path, self.ignored_errors
                 )
+
                 if not is_valid:
                     self._add_error(error, self.pack_path)
         except BlockingValidationFailureException:
@@ -1035,6 +1039,15 @@ class PackUniqueFilesValidator(BaseValidator):
 
     # pack dependencies validation
     def validate_pack_dependencies(self):
+
+        if self.validate_graph:
+            click.secho(
+                f"\nRunning pack dependencies validation on {self.pack} with the graph\n",
+                fg="bright_cyan",
+            )
+            with GraphValidator(self.specific_validations) as graph_validator:
+                graph_validator.validate_dependencies(self.pack)
+
         try:
             click.secho(
                 f"\nRunning pack dependencies validation on {self.pack}\n",

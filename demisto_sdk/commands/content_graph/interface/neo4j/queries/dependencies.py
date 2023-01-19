@@ -59,7 +59,6 @@ def get_all_level_packs_dependencies(
 
 def create_pack_dependencies(tx: Transaction) -> None:
     remove_existing_depends_on_relationships(tx)
-    fix_marketplaces_properties(tx)
     update_uses_for_integration_commands(tx)
     delete_deprecatedcontent_relationship(tx)  # TODO decide what to do with this
     create_depends_on_relationships(tx)
@@ -94,18 +93,6 @@ def remove_existing_depends_on_relationships(tx: Transaction) -> None:
     run_query(tx, query)
 
 
-def fix_marketplaces_properties(tx: Transaction) -> None:
-    """
-    Currently the content repo does not hold valid marketplaces attributes, so we fix it with the graph.
-
-    Args:
-        tx (Transaction): neo4j transaction
-    """
-    inherit_content_items_marketplaces_property_from_packs(tx)
-    for marketplace in MarketplaceVersions:
-        update_marketplaces_property(tx, marketplace.value)
-
-
 def inherit_content_items_marketplaces_property_from_packs(tx: Transaction) -> None:
     query = f"""
         MATCH (content_item:{ContentType.BASE_CONTENT})-[:{RelationshipType.IN_PACK}]->(pack)
@@ -117,53 +104,6 @@ def inherit_content_items_marketplaces_property_from_packs(tx: Transaction) -> N
     result = run_query(tx, query).single()
     updated_count: int = result["updated"]
     logger.info(f"Updated marketplaces properties of {updated_count} content items.")
-
-
-def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
-    """
-    In this query, we find all content items that are currently considered in a given marketplace,
-    but uses a dependency that is not in this marketplace.
-    To make sure the dependency is not in this marketplace, we make sure there is no alternative with
-    the same content type and id as the dependency which is in the marketplace.
-
-    In addition, we will not handle cases which the dependency is a generic command, as we assume it exists.
-
-    If such dependencies were found, we drop the content item from the marketplace.
-    """
-    query = f"""
-        MATCH (content_item:{ContentType.BASE_CONTENT})
-                -[r:{RelationshipType.USES}*..{MAX_DEPTH}{{mandatorily: true}}]->
-                    (dependency:{ContentType.BASE_CONTENT})
-        WHERE
-            "{marketplace}" IN content_item.marketplaces
-        AND
-            NOT "{marketplace}" IN dependency.marketplaces
-        AND
-            NOT dependency.object_id IN {list(GENERIC_COMMANDS_NAMES)}
-        OPTIONAL MATCH (alternative_dependency:{ContentType.BASE_CONTENT}{{node_id: dependency.node_id}})
-        WHERE
-            "{marketplace}" IN alternative_dependency.marketplaces
-        WITH content_item, dependency, alternative_dependency
-        WHERE alternative_dependency IS NULL
-        SET content_item.marketplaces = REDUCE(
-            marketplaces = [], mp IN content_item.marketplaces |
-            CASE WHEN mp <> "{marketplace}" THEN marketplaces + mp ELSE marketplaces END
-        )
-        RETURN content_item.node_id AS excluded_content_item, dependency.content_type + ":" + dependency.object_id AS reason
-    """
-    result = run_query(tx, query)
-    outputs: Dict[str, List[str]] = {}
-    for row in result:
-        outputs.setdefault(row["excluded_content_item"], list()).append(row["reason"])
-    logger.info(
-        f"Removed {marketplace} from marketplaces for {len(outputs.keys())} content items."
-    )
-    logger.debug(f"Excluded content items: {dict(sorted(outputs.items()))}")
-    if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
-        with open(
-            f"{artifacts_folder}/removed_from_marketplace-{marketplace}.json", "w"
-        ) as fp:
-            json.dump(dict(sorted(outputs.items())), fp, indent=4)
 
 
 def update_uses_for_integration_commands(tx: Transaction) -> None:

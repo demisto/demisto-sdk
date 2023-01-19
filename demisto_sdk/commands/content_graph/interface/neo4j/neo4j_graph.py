@@ -55,6 +55,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
     validate_duplicate_display_name,
     validate_fromversion,
+    validate_item_marketplaces,
     validate_marketplaces,
     validate_toversion,
     validate_unknown_content,
@@ -358,6 +359,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
+
+    def get_item_marketplaces(self, file_paths):
+        with self.driver.session() as session:
+            results = session.read_transaction(validate_item_marketplaces, file_paths)
+            return results
 
     def create_relationships(
         self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]

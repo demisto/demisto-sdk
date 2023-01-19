@@ -1,9 +1,11 @@
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
 from demisto_sdk.commands.common.tools import (
+    get_core_pack_list,
     get_pack_display_name_from_file_in_pack,
     get_pack_name,
 )
@@ -38,8 +40,41 @@ class GraphValidator(BaseValidator):
             self.are_toversion_relationships_paths_valid(file_paths),
             self.is_file_using_unknown_content(file_paths),
             self.is_file_display_name_already_exists(file_paths),
+            # self.is_valid_pack_metadata_marketplaces(file_paths),
         )
         return all(is_valid)
+
+    def validate_dependencies(self, pack_name):
+        """Validating the pack dependencies"""
+        is_valid = []
+
+        core_pack_list = get_core_pack_list()
+        if pack_name in core_pack_list:
+            is_valid.append(
+                self.is_core_pack_dependencis_valid(pack_name, core_pack_list)
+            )
+
+        return all(is_valid)
+
+    @error_codes("PA124")
+    def is_core_pack_dependencis_valid(self, pack_name, core_pack_list):
+        """Validating that the core pack does not have dependencieis on non-core packs"""
+        is_valid = True
+        pack_node = self.graph.search(object_id=pack_name)[0]
+
+        invalid_core_pack_dependencies = [
+            dependency.target.object_id
+            for dependency in pack_node.depends_on
+            if dependency.target.object_id not in core_pack_list
+        ]
+
+        if invalid_core_pack_dependencies:
+            error_message, error_code = Errors.invalid_core_pack_dependencies(
+                pack_name, str(invalid_core_pack_dependencies)
+            )
+            if self.handle_error(error_message, error_code, file_path=pack_node.path):
+                is_valid = False
+        return is_valid
 
     @error_codes("GR101")
     def are_fromversion_relationships_paths_valid(self, file_paths=None):
@@ -224,5 +259,23 @@ class GraphValidator(BaseValidator):
                 )
                 if self.handle_error(error_message, error_code, ""):
                     is_valid = False
+
+        return is_valid
+
+    @error_codes("GR105")
+    def is_valid_pack_metadata_marketplaces(self, file_paths):
+        is_valid = True
+
+        query_results = self.graph.get_item_marketplaces(file_paths)
+
+        for query_result in query_results:
+            content_id = query_result[0]
+            marketplaces = query_result[1]
+            invalid_marketplaces = set(marketplaces) - set(MarketplaceVersions)
+            error_message, error_code = Errors.Invalid_marketplaces(
+                content_id, invalid_marketplaces
+            )
+            if self.handle_error(error_message, error_code, ""):
+                is_valid = False
 
         return is_valid

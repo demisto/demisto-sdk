@@ -23,6 +23,14 @@ class ContentGraphInterface(ABC):
     def import_path(self) -> Path:
         pass
 
+    @abstractmethod
+    def clean_import_dir(self) -> None:
+        pass
+
+    @abstractmethod
+    def move_to_import_dir(self, imported_path: Path) -> None:
+        pass
+
     @property
     def metadata(self) -> Optional[dict]:
         try:

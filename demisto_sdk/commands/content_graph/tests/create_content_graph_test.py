@@ -294,6 +294,12 @@ def create_mini_content(repository: ContentDTO):
                 ContentType.SCRIPT,
                 mandatorily=True,
             ),
+            mock_relationship(
+                "SampleTestPlaybook",
+                ContentType.TEST_PLAYBOOK,
+                "SampleIntegration",
+                ContentType.INTEGRATION,
+            ),
         ],
     }
     relationship_pack3 = {
@@ -469,8 +475,20 @@ class TestCreateContentGraph:
                                 content_item_source.tested_by[0].object_id
                                 == content_item_target.object_id
                             )
+
             assert packs[0].depends_on[0].content_item == packs[1]
-            assert packs[1].depends_on[0].content_item == packs[2]
+            assert not packs[0].depends_on[0].is_test  # this is not a test dependency
+
+            for p in packs[1].depends_on:
+                if p.content_item == packs[2]:
+                    # regular dependency
+                    assert not p.is_test
+                elif p.content_item == packs[0]:
+                    # test dependency
+                    assert p.is_test
+                else:
+
+                    assert False
 
             # now with all levels
             packs = interface.search(

@@ -1623,6 +1623,30 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.parent.name == DOC_FILES_DIR:
         return FileType.DOC_FILE
 
+    elif path.name.lower() == "pipfile":
+        return FileType.PIPFILE
+
+    elif path.name.lower() == "pipfile.lock":
+        return FileType.PIPFILE_LOCK
+
+    elif path.suffix.lower() == ".ini":
+        return FileType.INI
+
+    elif path.suffix.lower() == ".pem":
+        return FileType.PEM
+
+    elif (
+        path.name.lower()
+        in ("commands_example", "commands_examples", "command_examples")
+        or path.suffix.lower() == ".txt"
+    ):
+        return FileType.TXT
+    elif path.name == ".pylintrc":
+        return FileType.PYLINTRC
+
+    elif path.name == "LICENSE":
+        return FileType.LICENSE
+
     return None
 
 
@@ -1670,6 +1694,9 @@ def find_type(
         raise err
 
     if file_type == "yml" or path.lower().endswith(".yml"):
+        if path.lower().endswith("_unified.yml"):
+            return FileType.UNIFIED_YML
+
         if "category" in _dict:
             if _dict.get("beta") and not ignore_sub_categories:
                 return FileType.BETA_INTEGRATION

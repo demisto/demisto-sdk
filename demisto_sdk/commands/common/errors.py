@@ -1749,12 +1749,12 @@ ERROR_CODE = {
         "related_field": "",
     },
     # GR - Graph validations
-    "uses_with_invalid_marketplaces": {
+    "uses_items_not_in_marketplaces": {
         "code": "GR100",
         "ui_applicable": False,
         "related_field": "",
     },
-    "uses_with_invalid_fromversions": {
+    "uses_items_with_invalid_fromversions": {
         "code": "GR101",
         "ui_applicable": False,
         "related_field": "",
@@ -1764,18 +1764,13 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
-    "duplicate_display_name": {
+    "multiple_packs_with_same_display_name": {
         "code": "GR103",
         "ui_applicable": False,
         "related_field": "",
     },
-    "uses_with_invalid_toversions": {
+    "uses_items_with_invalid_toversions": {
         "code": "GR104",
-        "ui_applicable": False,
-        "related_field": "",
-    },
-    "Invalid_marketplaces": {
-        "code": "GR105",
         "ui_applicable": False,
         "related_field": "",
     },
@@ -4379,7 +4374,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def uses_with_invalid_marketplaces(
+    def uses_items_not_in_marketplaces(
         content_name: str, marketplaces: list, content_items: list
     ):
         return (
@@ -4389,7 +4384,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def uses_with_invalid_fromversions(
+    def uses_items_with_invalid_fromversions(
         content_name: str, fromversion: str, content_items: list
     ):
         return (
@@ -4399,7 +4394,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def uses_with_invalid_toversions(
+    def uses_items_with_invalid_toversions(
         content_name: str, toversion: str, content_items: list
     ):
         return (
@@ -4410,14 +4405,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def using_unknown_content(content_name, unknown_content_names):
-        return f"Content item '{content_name}' is using an unknown content items: {', '.join(unknown_content_names)} "
+        return f"Content item '{content_name}' is using unknown content items: {', '.join(unknown_content_names)} "
 
     @staticmethod
     @error_code_decorator
-    def duplicate_display_name(content_name, unknown_content_names):
-        return f"Content item '{content_name}' has a duplicate display_name as: {', '.join(unknown_content_names)} "
-
-    @staticmethod
-    @error_code_decorator
-    def Invalid_marketplaces(content_name, invalid_marketplaces):
-        return f"Content item '{content_name}' has invalid marketplaces: {', '.join(invalid_marketplaces)} "
+    def multiple_packs_with_same_display_name(content_name, pack_display_names):
+        return f"Pack '{content_name}' has a duplicate display_name as: {', '.join(pack_display_names)} "

@@ -6,6 +6,7 @@
 * Added a logger warning to **get_demisto_version**, the task will now fail with a more informative message.
 * Fixed an issue where the **upload** and **prepare-content** commands didn't add `fromServerVersion` and `toServerVersion` to layouts.
 * Updated **lint** to use graph instead of id_set when running with `--check-dependent-api-module` flag.
+* Updated **validate** to use the graph when running with `--validate-graph` flag.
 
 
 ## 1.8.3

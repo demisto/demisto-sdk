@@ -139,7 +139,7 @@ from demisto_sdk.commands.common.hook_validations.xsoar_config_json import (
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
-    get_all_content_items_files_in_dir,
+    get_all_content_objects_paths_in_dir,
     get_api_module_ids,
     get_api_module_integrations_set,
     get_content_path,
@@ -379,9 +379,6 @@ class ValidateManager:
             self.use_git = True
             self.is_circle = True
             is_valid = self.run_validation_using_git()
-
-        # TODO: impl graph validations for each of the above cases
-
         return self.print_final_report(is_valid)
 
     @staticmethod
@@ -424,10 +421,10 @@ class ValidateManager:
                 f"\n================= Validating graph =================",
                 fg="bright_cyan",
             )
-            all_files_set = get_all_content_items_files_in_dir(files_to_validate)
+            all_files_set = get_all_content_objects_paths_in_dir(files_to_validate)
             with GraphValidator(self.specific_validations) as graph_validator:
                 files_validation_result.add(
-                    graph_validator.is_valid_files(all_files_set)
+                    graph_validator.is_valid_content_graph(all_files_set)
                 )
 
         for path in files_to_validate:
@@ -516,7 +513,7 @@ class ValidateManager:
                 fg="bright_cyan",
             )
             with GraphValidator(self.specific_validations) as graph_validator:
-                all_packs_valid.add(graph_validator.is_valid_files())
+                all_packs_valid.add(graph_validator.is_valid_content_graph())
 
         if not self.skip_conf_json:
             all_packs_valid.add(self.conf_json_validator.is_valid_conf_json())
@@ -1242,7 +1239,7 @@ class ValidateManager:
             if all_files_set:
                 with GraphValidator(self.specific_validations) as graph_validator:
                     validation_results.add(
-                        graph_validator.is_valid_files(all_files_set)
+                        graph_validator.is_valid_content_graph(all_files_set)
                     )
 
         validation_results.add(self.validate_modified_files(modified_files))
@@ -1921,7 +1918,7 @@ class ValidateManager:
             valid_files.add(
                 self.run_validations_on_file(
                     file_path,
-                    ValidateManager.get_error_ignore_list(pack_name),
+                    self.get_error_ignore_list(pack_name),
                     is_modified=True,
                     old_file_path=old_file_path,
                 )
@@ -2614,8 +2611,7 @@ class ValidateManager:
                 )
             )
 
-    @staticmethod
-    def get_error_ignore_list(pack_name):
+    def get_error_ignore_list(self, pack_name):
         ignored_errors_list: dict = {}
         if pack_name:
             pack_ignore_path = get_pack_ignore_file_path(pack_name)

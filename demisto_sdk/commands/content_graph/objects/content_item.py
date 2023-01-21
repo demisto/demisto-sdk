@@ -87,7 +87,7 @@ class ContentItem(BaseContent):
             if r.content_item == r.target
         ]
 
-    def used_by(self):
+    def used_by(self) -> List["RelationshipData"]:
         return [
             r
             for r in self.relationships_data[RelationshipType.USES]

@@ -1,14 +1,9 @@
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
-from demisto_sdk.commands.common.tools import (
-    get_core_pack_list,
-    get_pack_display_name_from_file_in_pack,
-    get_pack_name,
-)
+from demisto_sdk.commands.common.tools import get_core_pack_list
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface as ContentGraphInterface,
 )
@@ -33,14 +28,13 @@ class GraphValidator(BaseValidator):
     def __exit__(self, *args):
         return self.graph.__exit__()
 
-    def is_valid_files(self, file_paths=[]) -> bool:
+    def is_valid_content_graph(self, file_paths=None) -> bool:
         is_valid = (
             self.are_marketplaces_relationships_paths_valid(file_paths),
             self.are_fromversion_relationships_paths_valid(file_paths),
             self.are_toversion_relationships_paths_valid(file_paths),
             self.is_file_using_unknown_content(file_paths),
             self.is_file_display_name_already_exists(file_paths),
-            # self.is_valid_pack_metadata_marketplaces(file_paths),
         )
         return all(is_valid)
 
@@ -103,23 +97,16 @@ class GraphValidator(BaseValidator):
 
     def handle_invalid_fromversion(self, query_result, warning=False):
         """Handle the invalid from_version query results"""
-        from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
         is_valid = True
         content_name = query_result.name
         relationship_data = query_result.uses
         fromversion = query_result.fromversion
         content_items = [
-            relationship.target.name
-            if relationship.target.name
-            else relationship.target.object_id
-            for relationship in relationship_data
+            relationship.target.object_id for relationship in relationship_data
         ]
         file_path = query_result.path
-        self.ignored_errors = ValidateManager.get_error_ignore_list(
-            get_pack_name(file_path)
-        )
-        error_message, error_code = Errors.uses_with_invalid_fromversions(
+        error_message, error_code = Errors.uses_items_with_invalid_fromversions(
             content_name, fromversion, content_items
         )
         if self.handle_error(error_message, error_code, file_path, warning=warning):
@@ -150,23 +137,16 @@ class GraphValidator(BaseValidator):
 
     def handle_invalid_toversion(self, query_result, warning=False):
         """Handle the invalid to_version query results"""
-        from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
         is_valid = True
         content_name = query_result.name
         relationship_data = query_result.uses
         toversion = query_result.toversion
         content_items = [
-            relationship.target.name
-            if relationship.target.name
-            else relationship.target.object_id
-            for relationship in relationship_data
+            relationship.target.object_id for relationship in relationship_data
         ]
         file_path = query_result.path
-        self.ignored_errors = ValidateManager.get_error_ignore_list(
-            get_pack_name(file_path)
-        )
-        error_message, error_code = Errors.uses_with_invalid_toversions(
+        error_message, error_code = Errors.uses_items_with_invalid_toversions(
             content_name, toversion, content_items
         )
         if self.handle_error(error_message, error_code, file_path, warning=warning):
@@ -179,7 +159,6 @@ class GraphValidator(BaseValidator):
         """
         Source's marketplaces field is a subset of the target's marketplaces field
         """
-        from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
         is_valid = True
         paths_with_invalid_marketplaces = (
@@ -197,10 +176,7 @@ class GraphValidator(BaseValidator):
                 for relationship in relationship_data
             ]
             file_path = query_result.path
-            self.ignored_errors = ValidateManager.get_error_ignore_list(
-                get_pack_name(file_path)
-            )
-            error_message, error_code = Errors.uses_with_invalid_marketplaces(
+            error_message, error_code = Errors.uses_items_not_in_marketplaces(
                 content_name, marketplaces, content_items
             )
             if self.handle_error(error_message, error_code, file_path, warning=True):
@@ -213,7 +189,6 @@ class GraphValidator(BaseValidator):
         """
         Validate that there are no usage of unknown content items
         """
-        from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
         is_valid = True
         query_results = self.graph.get_unknown_content_uses(file_paths)
@@ -226,9 +201,6 @@ class GraphValidator(BaseValidator):
                     relationship.target.identifier for relationship in relationship_data
                 ]
                 file_path = query_result.path
-                self.ignored_errors = ValidateManager.get_error_ignore_list(
-                    get_pack_name(file_path)
-                )
                 error_message, error_code = Errors.using_unknown_content(
                     content_name, unknown_content_names
                 )
@@ -245,37 +217,22 @@ class GraphValidator(BaseValidator):
         Validate that there are no duplicate display names in the repo
         """
         is_valid = True
-        pack_names = []
-        if file_paths:
-            pack_names = get_pack_display_name_from_file_in_pack(file_paths)
-        query_results = self.graph.get_duplicate_pack_display_name(pack_names)
+        file_paths = [
+            file_path.replace("/pack_metadata.json", "") for file_path in file_paths
+        ]
+        query_results = self.graph.get_duplicate_pack_display_name(file_paths)
 
         if query_results:
             for query_result in query_results:
                 content_id = query_result[0]
                 duplicate_names_id = query_result[1]
-                error_message, error_code = Errors.duplicate_display_name(
+                (
+                    error_message,
+                    error_code,
+                ) = Errors.multiple_packs_with_same_display_name(
                     content_id, duplicate_names_id
                 )
                 if self.handle_error(error_message, error_code, ""):
                     is_valid = False
-
-        return is_valid
-
-    @error_codes("GR105")
-    def is_valid_pack_metadata_marketplaces(self, file_paths):
-        is_valid = True
-
-        query_results = self.graph.get_item_marketplaces(file_paths)
-
-        for query_result in query_results:
-            content_id = query_result[0]
-            marketplaces = query_result[1]
-            invalid_marketplaces = set(marketplaces) - set(MarketplaceVersions)
-            error_message, error_code = Errors.Invalid_marketplaces(
-                content_id, invalid_marketplaces
-            )
-            if self.handle_error(error_message, error_code, ""):
-                is_valid = False
 
         return is_valid

@@ -109,7 +109,7 @@ urllib3.disable_warnings()
 colorama.init()  # initialize color palette
 
 
-FILE_SUFFIX_TO_EXTRACT = ["yml", "py", "json"]
+FILE_SUFFIX_TO_EXTRACT = ["yml", "json"]
 
 
 class LOG_COLORS:
@@ -311,7 +311,7 @@ def get_files_in_dir(
     return list(set(files) - set(excludes))
 
 
-def get_all_content_items_files_in_dir(project_dir_list: Iterable):
+def get_all_content_objects_paths_in_dir(project_dir_list: Iterable):
     """
     Gets the project directory and returns the path of all yml, json and py files in it
     Args:
@@ -3422,17 +3422,3 @@ def get_path_in_content_repo(file_path):
         return file_path
     file_parts = path.split("Packs")
     return f"Packs{file_parts[1]}"
-
-
-def get_pack_display_name_from_file_in_pack(file_paths: list):
-    """
-
-    Args:
-        file_path (_type_): _description_
-    """
-    display_names = set()
-    for file_path in file_paths:
-        metadata = get_pack_metadata(file_path)
-        display_names.add(metadata.get("name"))
-
-    return list(display_names)

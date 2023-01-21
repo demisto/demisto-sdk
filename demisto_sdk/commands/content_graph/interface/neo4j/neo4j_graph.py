@@ -53,10 +53,9 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
     create_relationships,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
-    validate_duplicate_display_name,
     validate_fromversion,
-    validate_item_marketplaces,
     validate_marketplaces,
+    validate_multiple_packs_with_same_display_name,
     validate_toversion,
     validate_unknown_content,
 )
@@ -328,9 +327,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
-    def get_duplicate_pack_display_name(self, packs):
+    def get_duplicate_pack_display_name(self, file_paths):
         with self.driver.session() as session:
-            results = session.read_transaction(validate_duplicate_display_name, packs)
+            results = session.read_transaction(
+                validate_multiple_packs_with_same_display_name, file_paths
+            )
             return results
 
     def find_uses_paths_with_invalid_fromversion(self, file_paths, from_version=False):
@@ -359,11 +360,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
-
-    def get_item_marketplaces(self, file_paths):
-        with self.driver.session() as session:
-            results = session.read_transaction(validate_item_marketplaces, file_paths)
-            return results
 
     def create_relationships(
         self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]

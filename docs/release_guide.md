@@ -6,11 +6,11 @@ The scope of the upgrade is decided by the SDK owner on each release, based on t
 ## Pre-release validations
 
 1) Branch out from the latest SDK PR used for a nightly test, name the branch `X.Y.Z`.
-2) Make sure the **CHANGELOG.md** file is in order. Add a subtitle `## X.Y.Z` under the `## Unreleased`, leaving the unreleased list empty.
-3) Run `poetry update` (in the SDK folder).
-4) Run `poetry version X.Y.Z`.
-5) Run `poetry lock --no-update`.
-6) Push branch to remote.
+2) Make sure the **CHANGELOG.md** file is in order (nobody merged notes into an older version). Add the `## X.Y.Z` section under the `## Unreleased`, leaving the unreleased part empty.
+3) Run `poetry version X.Y.Z`.
+4) Run `poetry lock --no-update`.
+5) Push this branch.
+6) Wait for approval from the SDK owner.
 7) Make sure that all the following passed:
   - [content nightly](https://code.pan.run/xsoar/content/-/pipeline_schedules)
   - [SDK nightly](https://code.pan.run/xsoar/content/-/pipeline_schedules)
@@ -32,12 +32,12 @@ The scope of the upgrade is decided by the SDK owner on each release, based on t
 8) Under the **Content** repo, git checkout to a new X.Y.Z branch.
 Run `poetry add demisto-sdk==X.Y.Z`. Should any dependency conflicts occur, consult with the SDK owner.
   **NOTE**: it may take up to an hour for the Gitlab's PyPi mirror to sync with PyPi ang have X.Y.Z available, so the build _may_ fail. Should this happen, wait ~1h and retry.
-1) Wait for the build to finish, and merge it.
-2)  Announce regarding the SDK release [here](https://panw-global.slack.com/archives/G011E63JXPB):
+9) Wait for the build to finish, and merge it.
+10)  Announce regarding the SDK release [here](https://panw-global.slack.com/archives/G011E63JXPB):
   a) Mention the release version,
   b) Paste the `CHANGELOG` contents for this release
   c) Add a link to demisto-sdk in pypi
-  d) Remind everyone to pull master (on both content & SDK) and `poetry install` content.
+  d) Remind everyone to pull from master (on both content & SDK) and `poetry install`.
 
 
 ## Triggering nightlies manually

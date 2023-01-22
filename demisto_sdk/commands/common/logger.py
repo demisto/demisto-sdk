@@ -46,21 +46,21 @@ def logging_setup(
             },
         },
         "loggers": {
-            "": {  # root logger
-                "handlers": ["default"],
-                "level": "WARNING",
-                "propagate": False,
-            },
-            "demisto-sdk": {
+            # '': {  # root logger
+            #     'handlers': ['default'],
+            #     'level': 'WARNING',
+            #     'propagate': False
+            # },
+            "demisto-sdk": {  # demisto-sdk logger
                 "handlers": ["default"],
                 "level": "INFO",
                 "propagate": False,
             },
-            "__main__": {  # if __name__ == '__main__'
-                "handlers": ["default"],
-                "level": "DEBUG",
-                "propagate": False,
-            },
+            # '__main__': {  # if __name__ == '__main__'
+            #     'handlers': ['default'],
+            #     'level': 'DEBUG',
+            #     'propagate': False
+            # },
         },
     }
 

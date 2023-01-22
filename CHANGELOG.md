@@ -14,6 +14,7 @@
 * Fixed an issue in **update-release-notes** command where an error occurred when executing the same command a second time.
 * Fixed an issue where **validate** would not always ignore errors listed under `.pack-ignore`.
 * Fixed an issue where running **validate** on a specific pack didn't test all the relevant entities.
+* Fixed an issue where fields ending with `_x2` where not replaced in the appropriate Marketplace.
 
 ## 1.8.3
 * Changed **validate** to allow hiding parameters of type 0, 4, 12 and 14 when replacing with type 9 (credentials) with the same name.
@@ -51,7 +52,6 @@
 * Fixed an issue where **validate** failed in private repos when attempting to read from a nonexisting `approved_categories.json`.
 * Fixed an issue where **validate** used absolute paths when getting remote `pack_metadata.json` files in private repos.
 * Fixed an issue in **download**, where names of custom scripts were replaced with UUIDs in IncidentFields and Layouts.
-* Fixed an issue where fields ending with `_x2` where not replaced in the appropriate Marketplace.
 
 ## 1.8.0
 * Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.

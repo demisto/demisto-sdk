@@ -23,7 +23,7 @@ class GraphValidator(BaseValidator):
 
     def __init__(self, specific_validations=None, file_paths=None):
         super().__init__(self, specific_validations=specific_validations)
-        self.graph = ContentGraphInterface()
+        self.graph = ContentGraphInterface(should_update=True)
         self.ignored_errors = {}
         self.file_paths = self.handle_file_paths(file_paths)
 

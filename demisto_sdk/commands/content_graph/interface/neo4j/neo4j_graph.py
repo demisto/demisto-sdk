@@ -16,6 +16,9 @@ from demisto_sdk.commands.content_graph.common import (
     Neo4jRelationshipResult,
     RelationshipType,
 )
+from demisto_sdk.commands.content_graph.content_graph_commands import (
+    update_content_graph,
+)
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import (
     Neo4jImportHandler,
@@ -106,6 +109,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def __init__(
         self,
+        should_update: bool = False,
     ) -> None:
         if not neo4j_service.is_alive():
             neo4j_service.start()
@@ -114,6 +118,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             NEO4J_DATABASE_URL,
             auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
         )
+        if should_update:
+            update_content_graph(self)
 
     def __enter__(self) -> "Neo4jContentGraphInterface":
         return self

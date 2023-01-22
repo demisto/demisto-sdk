@@ -460,7 +460,7 @@ def test_is_file_using_unknown_content(repository: ContentDTO, capsys):
     captured = capsys.readouterr().out
     assert is_valid
     assert (
-        "Content item 'SampleIntegration' is using an unknown content items: SampleClassifier"
+        "Content item 'SampleIntegration' is using unknown content items: SampleClassifier"
         in captured
     )
 
@@ -481,7 +481,7 @@ def test_is_file_display_name_already_exists(repository: ContentDTO, capsys):
     captured = capsys.readouterr().out
     assert not is_valid
     assert (
-        "Content item 'SamplePack' has a duplicate display_name as: SamplePack2, SamplePack3"
+        "Pack 'SamplePack2' has a duplicate display_name as: SamplePack, SamplePack3"
         in captured
     )
 

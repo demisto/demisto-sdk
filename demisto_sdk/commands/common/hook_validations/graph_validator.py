@@ -233,9 +233,7 @@ class GraphValidator(BaseValidator):
         query_results = self.graph.get_duplicate_pack_display_name(self.file_paths)
 
         if query_results:
-            for query_result in query_results:
-                content_id = query_result[0]
-                duplicate_names_id = query_result[1]
+            for content_id, duplicate_names_id in query_results:
                 (
                     error_message,
                     error_code,

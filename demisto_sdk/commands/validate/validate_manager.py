@@ -433,11 +433,10 @@ class ValidateManager:
                 f"\n================= Validating graph =================",
                 fg="bright_cyan",
             )
-            all_files_set = get_all_content_objects_paths_in_dir(files_to_validate)
-            with GraphValidator(self.specific_validations) as graph_validator:
-                files_validation_result.add(
-                    graph_validator.is_valid_content_graph(all_files_set)
-                )
+            with GraphValidator(
+                self.specific_validations, file_paths=files_to_validate
+            ) as graph_validator:
+                files_validation_result.add(graph_validator.is_valid_content_graph())
         for path in files_to_validate:
             error_ignore_list = self.get_error_ignore_list(get_pack_name(path))
             file_level = self.detect_file_level(path)
@@ -1273,10 +1272,10 @@ class ValidateManager:
                 set().union(modified_files, added_files, old_format_files)
             )
             if all_files_set:
-                with GraphValidator(self.specific_validations) as graph_validator:
-                    validation_results.add(
-                        graph_validator.is_valid_content_graph(all_files_set)
-                    )
+                with GraphValidator(
+                    self.specific_validations, file_paths=all_files_set
+                ) as graph_validator:
+                    validation_results.add(graph_validator.is_valid_content_graph())
 
         validation_results.add(self.validate_modified_files(modified_files))
         validation_results.add(self.validate_added_files(added_files, modified_files))

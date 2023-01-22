@@ -109,7 +109,7 @@ urllib3.disable_warnings()
 colorama.init()  # initialize color palette
 
 
-FILE_SUFFIX_TO_EXTRACT = ["yml", "json"]
+GRAPH_SUPPORTED_FILE_TYPES = ["yml", "json"]
 
 
 class LOG_COLORS:
@@ -319,14 +319,14 @@ def get_all_content_objects_paths_in_dir(project_dir_list: Iterable):
     :return: list of content files in the current dir with str relative paths
     """
     files = []
-    output = []
     for file_path in project_dir_list:
         files.extend(
-            get_files_in_dir(file_path, FILE_SUFFIX_TO_EXTRACT, ignore_test_files=True)
+            get_files_in_dir(
+                file_path, GRAPH_SUPPORTED_FILE_TYPES, ignore_test_files=True
+            )
         )
 
-    for file in files:
-        output.append(get_path_in_content_repo(file))
+    output = [get_relative_path_from_packs_dir(file) for file in files]
 
     return output
 
@@ -3437,15 +3437,7 @@ def field_to_cli_name(field_name: str) -> str:
     return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, "", field_name).lower()
 
 
-def get_path_in_content_repo(file_path):
-    """Returns the relative file path in the Content repo.
-
-    Args:
-        file_path (str): the absolute file path
-    """
-
-    path = str(file_path)
-    if path.startswith("Packs"):
-        return file_path
-    file_parts = path.split("Packs")
-    return f"Packs{file_parts[1]}"
+def get_pack_paths_from_files(file_paths: Iterable) -> list:
+    """Returns the pack paths from a list/set of files"""
+    pack_paths = {f"Packs/{get_pack_name(file_path)}" for file_path in file_paths}
+    return list(pack_paths)

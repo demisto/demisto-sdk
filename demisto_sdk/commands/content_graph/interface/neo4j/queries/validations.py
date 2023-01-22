@@ -38,7 +38,7 @@ def validate_fromversion(tx: Transaction, file_paths, from_version):
         f"AND content_item_from.path in {file_paths}" if file_paths else ""
     )
     from_version_filter = (
-        f"AND {versioned('content_item_from.fromversion')} >= {versioned([6,5,0])}"
+        f"AND {versioned('content_item_from.fromversion')} >= toIntegerList([6,5,0])"
         if from_version
         else ""
     )
@@ -66,7 +66,7 @@ def validate_toversion(tx: Transaction, file_paths, to_version):
         f"AND content_item_from.path in {file_paths}" if file_paths else ""
     )
     from_version_filter = (
-        f"AND {versioned('content_item_from.toversion')} >= {versioned([6,5,0])}"
+        f"AND {versioned('content_item_from.toversion')} >= toIntegerList([6,5,0])"
         if to_version
         else ""
     )

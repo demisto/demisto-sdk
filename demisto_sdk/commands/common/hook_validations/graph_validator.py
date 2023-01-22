@@ -3,7 +3,11 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
-from demisto_sdk.commands.common.tools import get_core_pack_list
+from demisto_sdk.commands.common.tools import (
+    get_all_content_objects_paths_in_dir,
+    get_core_pack_list,
+    get_pack_paths_from_files,
+)
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface as ContentGraphInterface,
 )
@@ -17,10 +21,11 @@ class GraphValidator(BaseValidator):
         conf_data (dict): The data from the conf.json file in our repo.
     """
 
-    def __init__(self, specific_validations=None):
+    def __init__(self, specific_validations=None, file_paths=None):
         super().__init__(self, specific_validations=specific_validations)
         self.graph = ContentGraphInterface()
         self.ignored_errors = {}
+        self.file_paths = self.handle_file_paths(file_paths)
 
     def __enter__(self):
         return self
@@ -28,13 +33,21 @@ class GraphValidator(BaseValidator):
     def __exit__(self, *args):
         return self.graph.__exit__()
 
-    def is_valid_content_graph(self, file_paths=None) -> bool:
+    def handle_file_paths(self, file_paths):
+        """Transform all of the relevant files to graph format"""
+        all_files = []
+        if file_paths:
+            all_files = get_all_content_objects_paths_in_dir(file_paths)
+            all_files.extend(get_pack_paths_from_files(all_files))
+        return all_files
+
+    def is_valid_content_graph(self) -> bool:
         is_valid = (
-            self.are_marketplaces_relationships_paths_valid(file_paths),
-            self.are_fromversion_relationships_paths_valid(file_paths),
-            self.are_toversion_relationships_paths_valid(file_paths),
-            self.is_file_using_unknown_content(file_paths),
-            self.is_file_display_name_already_exists(file_paths),
+            self.are_marketplaces_relationships_paths_valid(),
+            self.are_fromversion_relationships_paths_valid(),
+            self.are_toversion_relationships_paths_valid(),
+            self.is_file_using_unknown_content(),
+            self.is_file_display_name_already_exists(),
         )
         return all(is_valid)
 
@@ -155,14 +168,14 @@ class GraphValidator(BaseValidator):
         return is_valid
 
     @error_codes("GR100")
-    def are_marketplaces_relationships_paths_valid(self, file_paths=None):
+    def are_marketplaces_relationships_paths_valid(self):
         """
         Source's marketplaces field is a subset of the target's marketplaces field
         """
 
         is_valid = True
         paths_with_invalid_marketplaces = (
-            self.graph.find_uses_paths_with_invalid_marketplaces(file_paths)
+            self.graph.find_uses_paths_with_invalid_marketplaces(self.file_paths)
         )
 
         for query_result in paths_with_invalid_marketplaces:
@@ -185,13 +198,13 @@ class GraphValidator(BaseValidator):
         return is_valid
 
     @error_codes("GR102")
-    def is_file_using_unknown_content(self, file_paths=[]):
+    def is_file_using_unknown_content(self):
         """
         Validate that there are no usage of unknown content items
         """
 
         is_valid = True
-        query_results = self.graph.get_unknown_content_uses(file_paths)
+        query_results = self.graph.get_unknown_content_uses(self.file_paths)
 
         if query_results:
             for query_result in query_results:
@@ -212,15 +225,12 @@ class GraphValidator(BaseValidator):
         return is_valid
 
     @error_codes("GR103")
-    def is_file_display_name_already_exists(self, file_paths=[]):
+    def is_file_display_name_already_exists(self):
         """
         Validate that there are no duplicate display names in the repo
         """
         is_valid = True
-        file_paths = [
-            file_path.replace("/pack_metadata.json", "") for file_path in file_paths
-        ]
-        query_results = self.graph.get_duplicate_pack_display_name(file_paths)
+        query_results = self.graph.get_duplicate_pack_display_name(self.file_paths)
 
         if query_results:
             for query_result in query_results:

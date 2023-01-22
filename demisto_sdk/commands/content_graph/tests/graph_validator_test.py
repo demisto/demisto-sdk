@@ -166,7 +166,7 @@ def repository(mocker) -> ContentDTO:
                 ContentType.SCRIPT,
                 "SamplePack2",
                 ContentType.PACK,
-                source_marketplaces=[MarketplaceVersions.XSOAR, "invalid marketplace"],
+                source_marketplaces=[MarketplaceVersions.XSOAR],
             ),
             mock_relationship(
                 "SampleClassifier2",
@@ -182,7 +182,7 @@ def repository(mocker) -> ContentDTO:
                 "SampleScript2",
                 ContentType.SCRIPT,
                 mandatorily=True,
-                source_marketplaces=[MarketplaceVersions.XSOAR, "invalid marketplace"],
+                source_marketplaces=[MarketplaceVersions.XSOAR],
             ),
         ],
     }
@@ -497,10 +497,6 @@ def test_are_marketplaces_relationships_paths_valid(
     Then
     - Validate the existance invalid marketplaces uses (Warning)
     """
-    mocker.patch(
-        "demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies.update_marketplaces_property",
-        return_value=None,
-    )
     with GraphValidator() as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.are_marketplaces_relationships_paths_valid()

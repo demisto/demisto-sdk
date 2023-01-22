@@ -61,9 +61,9 @@ def update_content_graph(
     builder = ContentGraphBuilder(content_graph_interface)
     if not use_current:
         content_graph_interface.clean_import_dir()
-    if not imported_path:
-        # getting the graph from remote, so we need to clean the import dir
-        extract_remote_import_files(content_graph_interface, builder)
+        if not imported_path:
+            # getting the graph from remote, so we need to clean the import dir
+            extract_remote_import_files(content_graph_interface, builder)
 
     if use_git and (commit := content_graph_interface.commit):
         packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))

@@ -58,21 +58,11 @@ def logging_setup(
             # },
         },
         "loggers": {
-            # '': {  # root logger
-            #     'handlers': ['console-handler'],
-            #     'level': 'WARNING',
-            #     'propagate': False
-            # },
             "demisto-sdk": {  # demisto-sdk logger
                 "handlers": ["console-handler"],
                 "level": "INFO",
                 "propagate": False,
             },
-            # '__main__': {  # if __name__ == '__main__'
-            #     'handlers': ['console-handler'],
-            #     'level': 'DEBUG',
-            #     'propagate': False
-            # },
         },
     }
 

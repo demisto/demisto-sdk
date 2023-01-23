@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.hook_validations.pack_unique_files import (
     PackUniqueFilesValidator,
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
@@ -182,6 +183,7 @@ class TestPackUniqueFilesValidator:
         - Ensure validate found errors.
         """
         pack_metadata_no_email_and_url = PACK_METADATA_PARTNER.copy()
+        mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
         pack_metadata_no_email_and_url["email"] = ""
         pack_metadata_no_email_and_url["url"] = ""
         mocker.patch.object(tools, "is_external_repository", return_value=True)
@@ -235,7 +237,6 @@ class TestPackUniqueFilesValidator:
         """
         pack_metadata_changed_url = PACK_METADATA_PARTNER.copy()
         pack_metadata_changed_url["url"] = url
-
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(
             PackUniqueFilesValidator, "_is_pack_file_exists", return_value=True
@@ -243,6 +244,7 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(
             PackUniqueFilesValidator, "validate_pack_name", return_value=True
         )
+        mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
         mocker.patch.object(
             PackUniqueFilesValidator,
             "get_master_private_repo_meta_file",
@@ -307,6 +309,7 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(
             tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json")
         )
+        mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
         pack = repo.create_pack("PackName")
         pack.pack_metadata.write_json(pack_metadata_price_changed)
         with ChangeCWD(repo.path):

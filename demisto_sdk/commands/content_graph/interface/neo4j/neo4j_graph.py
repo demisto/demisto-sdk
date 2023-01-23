@@ -330,7 +330,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             if session.read_transaction(duplicates_exist):
                 raise Exception("Duplicates found in graph.")
 
-    def get_unknown_content_uses(self, file_paths):
+    def get_unknown_content_uses(self, file_paths: List[str]):
         with self.driver.session() as session:
             results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
                 validate_unknown_content, file_paths
@@ -339,14 +339,16 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
-    def get_duplicate_pack_display_name(self, file_paths):
+    def get_duplicate_pack_display_name(self, file_paths: List[str]):
         with self.driver.session() as session:
             results = session.read_transaction(
                 validate_multiple_packs_with_same_display_name, file_paths
             )
             return results
 
-    def find_uses_paths_with_invalid_fromversion(self, file_paths, from_version=False):
+    def find_uses_paths_with_invalid_fromversion(
+        self, file_paths: List[str], from_version=False
+    ):
         with self.driver.session() as session:
             results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
                 validate_fromversion, file_paths, from_version
@@ -355,7 +357,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
-    def find_uses_paths_with_invalid_toversion(self, file_paths, to_version=False):
+    def find_uses_paths_with_invalid_toversion(
+        self, file_paths: List[str], to_version=False
+    ):
         with self.driver.session() as session:
             results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
                 validate_toversion, file_paths, to_version
@@ -364,7 +368,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
-    def find_uses_paths_with_invalid_marketplaces(self, file_paths):
+    def find_uses_paths_with_invalid_marketplaces(self, file_paths: List[str]):
         with self.driver.session() as session:
             results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
                 validate_marketplaces, file_paths

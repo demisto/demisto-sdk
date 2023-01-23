@@ -1,3 +1,5 @@
+from typing import List
+
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
@@ -21,11 +23,13 @@ class GraphValidator(BaseValidator):
         conf_data (dict): The data from the conf.json file in our repo.
     """
 
-    def __init__(self, specific_validations=None, file_paths=None):
+    def __init__(
+        self, specific_validations=None, file_paths=None, validate_specific_files=False
+    ):
         super().__init__(self, specific_validations=specific_validations)
         self.graph = ContentGraphInterface(should_update=True)
         self.ignored_errors = {}
-        self.file_paths = self.handle_file_paths(file_paths)
+        self.file_paths = self.handle_file_paths(file_paths, validate_specific_files)
 
     def __enter__(self):
         return self
@@ -33,13 +37,16 @@ class GraphValidator(BaseValidator):
     def __exit__(self, *args):
         return self.graph.__exit__()
 
-    def handle_file_paths(self, file_paths):
+    def handle_file_paths(self, file_paths: List[str], validate_specific_files: bool):
         """Transform all of the relevant files to graph format"""
-        all_files = []
-        if file_paths:
+        if file_paths and validate_specific_files:
             all_files = get_all_content_objects_paths_in_dir(file_paths)
             all_files.extend(get_pack_paths_from_files(all_files))
-        return all_files
+            return all_files
+        elif file_paths:
+            return file_paths
+        else:
+            return []
 
     def is_valid_content_graph(self) -> bool:
         is_valid = (
@@ -58,13 +65,13 @@ class GraphValidator(BaseValidator):
         core_pack_list = get_core_pack_list()
         if pack_name in core_pack_list:
             is_valid.append(
-                self.is_core_pack_dependencis_valid(pack_name, core_pack_list)
+                self.are_core_pack_dependencies_valid(pack_name, core_pack_list)
             )
 
         return all(is_valid)
 
     @error_codes("PA124")
-    def is_core_pack_dependencis_valid(self, pack_name, core_pack_list):
+    def are_core_pack_dependencies_valid(self, pack_name, core_pack_list):
         """Validating that the core pack does not have dependencieis on non-core packs"""
         is_valid = True
         pack_node = self.graph.search(object_id=pack_name)[0]
@@ -89,7 +96,7 @@ class GraphValidator(BaseValidator):
 
         is_valid = []
 
-        # validating content items with minimal from_version: 5.0.0
+        # validating content items with minimal from_version: 5.0.0 and maximal from_version 6.4.0
         paths_with_invalid_versions = (
             self.graph.find_uses_paths_with_invalid_fromversion(file_paths)
         )
@@ -131,7 +138,7 @@ class GraphValidator(BaseValidator):
     def are_toversion_relationships_paths_valid(self, file_paths=None):
         """Validate that source's toversion <= target's toversion."""
         is_valid = []
-        # validating content items with minimal from_version: 5.0.0
+        # validating content items with minimal to_version: 5.0.0 and maximal to_version 6.4.0
         paths_with_invalid_versions = self.graph.find_uses_paths_with_invalid_toversion(
             file_paths
         )
@@ -139,7 +146,7 @@ class GraphValidator(BaseValidator):
         for query_result in paths_with_invalid_versions:
             is_valid.append(self.handle_invalid_toversion(query_result, warning=True))
 
-        # validating content items with at least from_version: 6.5.0
+        # validating content items with at least to_version: 6.5.0
         paths_with_invalid_versions = self.graph.find_uses_paths_with_invalid_toversion(
             file_paths, to_version=True
         )
@@ -205,7 +212,6 @@ class GraphValidator(BaseValidator):
 
         is_valid = True
         query_results = self.graph.get_unknown_content_uses(self.file_paths)
-
         if query_results:
             for query_result in query_results:
                 content_name = query_result.name

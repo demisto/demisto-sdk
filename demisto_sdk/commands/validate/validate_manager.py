@@ -434,7 +434,9 @@ class ValidateManager:
                 fg="bright_cyan",
             )
             with GraphValidator(
-                self.specific_validations, file_paths=files_to_validate
+                self.specific_validations,
+                file_paths=files_to_validate,
+                validate_specific_files=True,
             ) as graph_validator:
                 files_validation_result.add(graph_validator.is_valid_content_graph())
         for path in files_to_validate:
@@ -2392,6 +2394,7 @@ class ValidateManager:
             staged_only=self.staged,
             debug=self.debug_git,
             include_untracked=self.include_untracked,
+            get_only_current_file_names=True,
         )
 
         return modified_files, added_files, renamed_files

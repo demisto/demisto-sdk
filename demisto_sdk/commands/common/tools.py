@@ -3437,7 +3437,7 @@ def field_to_cli_name(field_name: str) -> str:
     return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, "", field_name).lower()
 
 
-def get_pack_paths_from_files(file_paths: Iterable) -> list:
+def get_pack_paths_from_files(file_paths: Iterable[str]) -> list:
     """Returns the pack paths from a list/set of files"""
     pack_paths = {f"Packs/{get_pack_name(file_path)}" for file_path in file_paths}
     return list(pack_paths)

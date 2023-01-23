@@ -13,7 +13,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
 )
 
 
-def validate_unknown_content(tx: Transaction, file_paths):
+def validate_unknown_content(tx: Transaction, file_paths: List[str]):
     file_paths_filter = (
         f"WHERE content_item_from.path in {file_paths}" if file_paths else ""
     )
@@ -33,14 +33,14 @@ def validate_unknown_content(tx: Transaction, file_paths):
     }
 
 
-def validate_fromversion(tx: Transaction, file_paths, from_version):
+def validate_fromversion(tx: Transaction, file_paths: List[str], from_version: bool):
     file_paths_filter = (
         f"AND content_item_from.path in {file_paths}" if file_paths else ""
     )
     from_version_filter = (
         f"AND {versioned('content_item_from.fromversion')} >= toIntegerList([6,5,0])"
         if from_version
-        else ""
+        else f"AND toIntegerList([6,5,0]) > {versioned('content_item_from.fromversion')}"
     )
 
     query = f"""
@@ -61,14 +61,14 @@ def validate_fromversion(tx: Transaction, file_paths, from_version):
     }
 
 
-def validate_toversion(tx: Transaction, file_paths, to_version):
+def validate_toversion(tx: Transaction, file_paths: List[str], to_version: bool):
     file_paths_filter = (
         f"AND content_item_from.path in {file_paths}" if file_paths else ""
     )
     from_version_filter = (
         f"AND {versioned('content_item_from.toversion')} >= toIntegerList([6,5,0])"
         if to_version
-        else ""
+        else f"AND toIntegerList([6,5,0]) > {versioned('content_item_from.toversion')}"
     )
     query = f"""
         // Returning all the USES relationships with where the target's to_version is smaller than the source's
@@ -88,7 +88,7 @@ def validate_toversion(tx: Transaction, file_paths, to_version):
     }
 
 
-def validate_marketplaces(tx: Transaction, file_paths):
+def validate_marketplaces(tx: Transaction, file_paths: List[str]):
     file_paths_filter = (
         f"AND content_item_from.path in {file_paths}" if file_paths else ""
     )
@@ -110,7 +110,7 @@ def validate_marketplaces(tx: Transaction, file_paths):
 
 
 def validate_multiple_packs_with_same_display_name(
-    tx: Transaction, file_paths: list
+    tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[graph.Node, List[graph.Node]]]:
     file_paths_filter = f"AND a.path in {file_paths}" if file_paths else ""
 

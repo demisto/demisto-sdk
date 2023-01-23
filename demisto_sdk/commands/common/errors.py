@@ -4375,21 +4375,21 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def uses_items_not_in_marketplaces(
-        content_name: str, marketplaces: list, content_items: list
+        content_name: str, marketplaces: list, content_items: List[str]
     ):
         return (
-            f"Content item '{content_name}' with marketplaces: '{', '.join(marketplaces)}' is using content items: "
-            f"'{', '.join(content_items)}' that have incompatible marketplaces."
+            f"Content item '{content_name}' can be used in the '{', '.join(marketplaces)}' marketplaces, however it uses content items: "
+            f"'{', '.join(content_items)}' which are not supported in all of the marketplaces of '{content_name}'."
         )
 
     @staticmethod
     @error_code_decorator
     def uses_items_with_invalid_fromversions(
-        content_name: str, fromversion: str, content_items: list
+        content_name: str, fromversion: str, content_items: List[str]
     ):
         return (
-            f"Content item '{content_name}' with from_version: '{fromversion}' is using content items: "
-            f"'{', '.join(content_items)}' that have incompatible from_version."
+            f"Content item '{content_name}' whose from_version is '{fromversion}' uses the content items: "
+            f"'{', '.join(content_items)}' whose from_version is higher (must be equal to, or less than ..)"
         )
 
     @staticmethod
@@ -4398,16 +4398,18 @@ class Errors:
         content_name: str, toversion: str, content_items: list
     ):
         return (
-            f"Content item '{content_name}' with to_version: '{toversion}' is using content items: "
-            f"'{', '.join(content_items)}' that have incompatible to_version."
+            f"Content item '{content_name}' whose to_version is '{toversion}' uses the content items: "
+            f"'{', '.join(content_items)}' whose to_version is lower (must be equal to, or more than ..)"
         )
 
     @staticmethod
     @error_code_decorator
-    def using_unknown_content(content_name, unknown_content_names):
-        return f"Content item '{content_name}' is using unknown content items: {', '.join(unknown_content_names)} "
+    def using_unknown_content(content_name: str, unknown_content_names: List[str]):
+        return f"Content item '{content_name}' using content items: {', '.join(unknown_content_names)} which cannot be found in the repository."
 
     @staticmethod
     @error_code_decorator
-    def multiple_packs_with_same_display_name(content_name, pack_display_names):
+    def multiple_packs_with_same_display_name(
+        content_name: str, pack_display_names: List[str]
+    ):
         return f"Pack '{content_name}' has a duplicate display_name as: {', '.join(pack_display_names)} "

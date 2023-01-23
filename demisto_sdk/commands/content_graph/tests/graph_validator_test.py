@@ -439,8 +439,8 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, capsy
     captured = capsys.readouterr().out
     assert not is_valid
     assert (
-        "Content item 'SamplePlaybook' with from_version: '6.5.0' is using content items:"
-        " 'SamplePlaybook2' that have incompatible from_version" in captured
+        "Content item 'SamplePlaybook' whose from_version is '6.5.0' uses the content"
+        " items: 'SamplePlaybook2' whose from_version is higher" in captured
     )
 
 
@@ -460,8 +460,8 @@ def test_is_file_using_unknown_content(repository: ContentDTO, capsys):
     captured = capsys.readouterr().out
     assert is_valid
     assert (
-        "Content item 'SampleIntegration' is using unknown content items: SampleClassifier"
-        in captured
+        "Content item 'SampleIntegration' using content items: SampleClassifier which"
+        " cannot be found in the repository" in captured
     )
 
 
@@ -481,7 +481,7 @@ def test_is_file_display_name_already_exists(repository: ContentDTO, capsys):
     captured = capsys.readouterr().out
     assert not is_valid
     assert (
-        "Pack 'SamplePack2' has a duplicate display_name as: SamplePack, SamplePack3"
+        "Pack 'SamplePack' has a duplicate display_name as: SamplePack2, SamplePack3"
         in captured
     )
 
@@ -504,8 +504,9 @@ def test_are_marketplaces_relationships_paths_valid(
     captured = capsys.readouterr().out
     assert is_valid
     assert (
-        "Content item 'SamplePlaybook' with marketplaces: 'xsoar, xpanse' is using content items:"
-        " 'SamplePlaybook2' that have incompatible marketplaces." in captured
+        "Content item 'SamplePlaybook' can be used in the 'xsoar, xpanse' marketplaces"
+        ", however it uses content items: 'SamplePlaybook2' which are not supported in"
+        " all of the marketplaces of 'SamplePlaybook'" in captured
     )
 
 

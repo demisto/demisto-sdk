@@ -15,7 +15,7 @@ repos:
         files: .+_test.py$
 
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.0.220"
+    rev: "v0.0.231"
     hooks:
       - id: ruff
 

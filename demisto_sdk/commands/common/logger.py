@@ -35,29 +35,41 @@ def logging_setup(
         "version": 1,
         "disable_existing_loggers": True,
         "formatters": {
-            "standard": {"format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"},
+            "console-formatter": {
+                "format": "%(asctime)s [%(levelname)s]: %(message)s",
+                "datefmt": DATE_FORMAT,
+            },
+            "file-formatter": {
+                "format": "[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(message)s"
+            },
         },
         "handlers": {
-            "default": {
-                "level": "INFO",
-                "formatter": "standard",
+            "console-handler": {
+                "level": "DEBUG",
+                "formatter": "console-formatter",
                 "class": "logging.StreamHandler",
                 "stream": "ext://sys.stdout",  # Default is stderr
             },
+            # "file-handler": {
+            #     "level": "DEBUG",
+            #     "formatter": "file-formatter",
+            #     "class": "logging.FileHandler",
+            #     "filename": os.path.join(log_path, log_file_name),
+            # },
         },
         "loggers": {
             # '': {  # root logger
-            #     'handlers': ['default'],
+            #     'handlers': ['console-handler'],
             #     'level': 'WARNING',
             #     'propagate': False
             # },
             "demisto-sdk": {  # demisto-sdk logger
-                "handlers": ["default"],
+                "handlers": ["console-handler"],
                 "level": "INFO",
                 "propagate": False,
             },
             # '__main__': {  # if __name__ == '__main__'
-            #     'handlers': ['default'],
+            #     'handlers': ['console-handler'],
             #     'level': 'DEBUG',
             #     'propagate': False
             # },

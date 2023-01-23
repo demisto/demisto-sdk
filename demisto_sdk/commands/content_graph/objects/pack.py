@@ -2,15 +2,18 @@ import logging
 import shutil
 from collections import defaultdict
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Generator, List, Optional
+from typing import TYPE_CHECKING, Any, Generator, List, Optional, Dict
+from datetime import datetime
 
 from packaging.version import parse
 from pydantic import BaseModel, Field, validator
 
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
     MarketplaceVersions,
+    MARKETPLACE_MIN_VERSION,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import MarketplaceTagParser, get_content_path
@@ -20,6 +23,7 @@ from demisto_sdk.commands.content_graph.common import (
     Nodes,
     Relationships,
     RelationshipType,
+    PackTags,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
@@ -123,29 +127,47 @@ class PackContentItems(BaseModel):
 
 class PackMetadata(BaseModel):
     name: str
+    id: Optional[str]
     description: Optional[str]
     created: Optional[str]
     updated: Optional[str]
+    legacy: Optional[bool]
     support: Optional[str]
-    email: Optional[str]
     url: Optional[str]
+    email: Optional[str]
+    support_details: Optional[dict] = Field(alias="supportDetails")
+    eulaLink: Optional[str]
     author: Optional[str]
+    authorImage: Optional[str]
     certification: Optional[str]
+    price: Optional[int]
     hidden: Optional[bool]
     server_min_version: Optional[str] = Field(alias="serverMinVersion")
     current_version: Optional[str] = Field(alias="currentVersion")
+    version_info: Optional[str] = Field("", alias="versionInfo")
+    commit: Optional[str]
+    downloads: Optional[int]
     tags: Optional[List[str]]
     categories: Optional[List[str]]
     use_cases: Optional[List[str]] = Field(alias="useCases")
     keywords: Optional[List[str]]
-    price: Optional[int] = None
-    premium: Optional[bool] = None
+    content_displays: Optional[Dict[str, str]] = Field({}, alias="contentDisplays")
+    search_rank: Optional[int] = Field(alias="searchRank")
+    integrations: Optional[List[Dict[str, str]]]
+    dependencies: Optional[Dict[str, dict]]
+    excluded_dependencies: Optional[Dict[str, dict]] = Field(alias="excludedDependencies")
+    videos: Optional[List[str]]
+
+    # For private packs
+    premium: bool
     vendor_id: Optional[str] = Field(None, alias="vendorId")
-    vendor_name: Optional[str] = Field(None, alias="vendorName")
+    partner_id: Optional[str] = Field(None, alias="partnerId")
+    partner_name: Optional[str] = Field(None, alias="partnerName")
     preview_only: Optional[bool] = Field(None, alias="previewOnly")
+    disable_monthly: Optional[bool] = Field(None, alias="disableMonthly")
 
 
-class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: ignore[call-arg]
+class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     path: Path
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
@@ -159,6 +181,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         if v.is_absolute():
             return v
         return Path(get_content_path()) / v  # type: ignore
+
+    @property
+    def is_private(self) -> bool:
+        return self.premium
 
     @property
     def depends_on(self) -> List["RelationshipData"]:
@@ -189,6 +215,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             if r.content_item == r.target
         ]
 
+    @property
+    def dependent_packs(self):
+        return [r for r in self.depends_on if r.content_item.content_type == ContentType.PACK]
+
     def set_content_items(self):
         content_items: List[ContentItem] = [
             r.content_item  # type: ignore[misc]
@@ -202,21 +232,45 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         # If there is no server_min_version, set it to the maximum of its content items fromversion
         self.server_min_version = self.server_min_version or str(
             max(parse(content_item.fromversion) for content_item in content_items)
-        )
+        ) or MARKETPLACE_MIN_VERSION
         self.content_items = PackContentItems(**content_item_dct)
 
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
-        metadata = self.dict(exclude={"path", "node_id", "content_type"})
-        metadata["contentItems"] = {}
+        content_items: dict = {}
         for content_item in self.content_items:
             try:
-                metadata["contentItems"].setdefault(
-                    content_item.content_type.server_name, []
+                content_items.setdefault(
+                    content_item.content_type.metadata_name, []
                 ).append(content_item.summary(marketplace))
+                self.content_displays[content_item.content_type.metadata_name] = content_item.content_type.metadata_display_name  # type: ignore[index]
             except NotImplementedError as e:
                 logger.debug(f"Could not add {content_item.name} to pack metadata: {e}")
+            except TypeError as e:
+                raise Exception(f"Could not set metadata_name of type {content_item.content_type} - {content_item.content_type.metadata_name} - {content_item.content_type.metadata_display_name} in {self.content_displays}\n{e}")
+
+        self.content_displays = {content_type: content_type_display if len(content_items[content_type]) == 1 else f"{content_type_display}s"
+                                 for content_type, content_type_display in self.content_displays.items()}  # type: ignore[union-attr]
+        self.tags = self.get_pack_tags(marketplace)
+        self.server_min_version = self.server_min_version or str(
+            max((parse(content_item.fromversion) for content_item in self.content_items), default=MARKETPLACE_MIN_VERSION)
+        ) or MARKETPLACE_MIN_VERSION
+
+        # self.dependencies = self.enhance_dependencies()
+
+        excluded_fields_from_metadata = {"path", "node_id", "content_type", "url", "email"}
+        if not self.is_private:
+            excluded_fields_from_metadata |= {"premium", "vendor_id", "partner_id", "partner_name", "preview_only", "disable_monthly"}
+        metadata = self.dict(exclude=excluded_fields_from_metadata, by_alias=True)
+
+        metadata["contentItems"] = content_items
+        metadata["commit"] = self.get_last_commit()
+        metadata["dependencies"] = self.enhance_dependencies()
+        metadata["support_details"] = {"url": self.url}
+        if self.email:
+            metadata["support_details"]["email"] = self.email
+
         with open(path, "w") as f:
-            json.dump(metadata, f, indent=4)
+            json.dump(metadata, f, indent=4, sort_keys=True)
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:
         shutil.copyfile(self.path / "README.md", path)
@@ -292,3 +346,56 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             self.to_dict(),
             *[content_item.to_dict() for content_item in self.content_items],
         )
+
+    def enhance_dependencies(self):
+        return {r.content_item.object_id: {
+            "mandatory": r.mandatorily,
+            "minVersion": r.content_item.server_min_version,
+            "author": r.content_item.author,
+            "name": r.content_item.name,
+            "certification": r.content_item.certification
+        } for r in self.dependent_packs}
+
+    @staticmethod
+    def get_last_commit():
+        return GitUtil().get_current_commit_hash()
+
+    def get_pack_tags(self, marketplace):
+        tags = self.get_tags_by_marketplace(marketplace)
+        tags |= {PackTags.TIM} if any([integration.is_feed for integration in self.content_items.integration]) or \
+            any([playbook.name.startswith('TIM ') for playbook in self.content_items.playbook]) else set()
+        tags |= {PackTags.USE_CASE} if self.use_cases else set()
+        tags |= {PackTags.TRANSFORMER} if any(['transformer' in script.tags for script in self.content_items.script]) else set()
+        tags |= {PackTags.FILTER} if any(['filter' in script.tags for script in self.content_items.script]) else set()
+        tags |= {PackTags.COLLECTION} if any([integration.is_fetch_events for integration in self.content_items.integration]) or \
+            any([self.content_items.parsing_rule, self.content_items.modeling_rule, self.content_items.correlation_rule,
+                 self.content_items.xdrc_template]) else set()
+        tags |= {PackTags.DATA_SOURCE} if self.is_data_source() and marketplace == MarketplaceVersions.MarketplaceV2 else set()
+
+        if self.created:
+            days_since_creation = (datetime.utcnow() - datetime.strptime(self.created, '%Y-%m-%dT%H:%M:%SZ')).days
+            if days_since_creation <= 30:
+                tags |= {PackTags.NEW}
+            else:
+                tags -= {PackTags.NEW}
+
+        return list(tags)
+
+    def get_tags_by_marketplace(self, marketplace: str):
+        """ Returns tags in according to the current marketplace"""
+        tags: set = set()
+        for tag in self.tags:
+            if ':' in tag:
+                tag_data = tag.split(':')
+                if marketplace in tag_data[0].split(','):
+                    tags.update({tag_data[1]})
+            else:
+                tags.update({tag})
+
+        return tags
+
+    def is_data_source(self):
+        return len([MarketplaceVersions.MarketplaceV2 in integration.marketplaces and
+                    not integration.deprecated and
+                    (integration.is_fetch or integration.is_fetch_events)
+                    for integration in self.content_items.integration]) == 1

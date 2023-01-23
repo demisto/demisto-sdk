@@ -31,6 +31,7 @@ class ContentGraphInterface(ABC):
         except FileNotFoundError:
             return None
 
+    @property
     def commit(self) -> Optional[str]:
         if self.metadata:
             return self.metadata.get("commit")

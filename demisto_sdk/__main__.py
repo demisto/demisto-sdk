@@ -139,6 +139,7 @@ pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 )
 @pass_config
 def main(config, version, release_notes):
+    print_warning("by by")
     config.configuration = Configuration()
     import dotenv
 

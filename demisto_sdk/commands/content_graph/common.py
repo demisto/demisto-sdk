@@ -106,6 +106,60 @@ class ContentType(str, enum.Enum):
             return "classifier-mapper"
         return self.lower()
 
+    @property
+    def metadata_name(self) -> str:
+        if self == ContentType.SCRIPT:
+            return "automation"
+        elif self == ContentType.INDICATOR_TYPE:
+            return "reputation"
+        elif self == ContentType.LAYOUT:
+            return "layoutscontainer"
+        elif self == ContentType.TEST_PLAYBOOK:
+            return ContentType.PLAYBOOK.server_name
+        elif self == ContentType.MAPPER:
+            return "classifier"
+        return self.lower()
+
+    @property
+    def metadata_display_name(self) -> str:
+        if self == ContentType.SCRIPT:
+            return "Automation"
+        elif self == ContentType.INCIDENT_FIELD:
+            return "Incident Field"
+        elif self == ContentType.INCIDENT_TYPE:
+            return "Incident Type"
+        elif self == ContentType.INDICATOR_FIELD:
+            return "Indicator Field"
+        elif self == ContentType.INDICATOR_TYPE:
+            return "Reputation"
+        elif self == ContentType.LAYOUT:
+            return "Layouts Container"
+        elif self == ContentType.MAPPER:
+            return "Classifier"
+        elif self == ContentType.GENERIC_DEFINITION:
+            return "Generic Definition"
+        elif self == ContentType.GENERIC_FIELD:
+            return "Generic Field"
+        elif self == ContentType.GENERIC_MODULE:
+            return "Generic Module"
+        elif self == ContentType.GENERIC_TYPE:
+            return "Generic Type"
+        elif self == ContentType.PREPROCESS_RULE:
+            return "Pre Process Rule"
+        elif self == ContentType.PARSING_RULE:
+            return "Parsing Rule"
+        elif self == ContentType.MODELING_RULE:
+            return "Modeling Rule"
+        elif self == ContentType.CORRELATION_RULE:
+            return "Correlation Rule"
+        elif self == ContentType.XSIAM_DASHBOARD:
+            return "XSIAM Dashboard"
+        elif self == ContentType.XSIAM_REPORT:
+            return "XSIAM Report"
+        elif self == ContentType.XDRC_TEMPLATE:
+            return "XDRC Template"
+        return self
+
     @staticmethod
     def server_names() -> List[str]:
         return [c.server_name for c in ContentType] + ["indicatorfield", "mapper"]
@@ -230,6 +284,18 @@ class Nodes(dict):
             if content_type not in ContentType or not isinstance(data, list):
                 raise TypeError
             self.add_batch(data)
+
+
+class PackTags(object):
+    """ Pack tag constants """
+    TRENDING = "Trending"
+    NEW = "New"
+    TIM = "TIM"
+    USE_CASE = "Use Case"
+    TRANSFORMER = "Transformer"
+    FILTER = "Filter"
+    COLLECTION = "Collection"
+    DATA_SOURCE = "Data Source"
 
 
 SERVER_CONTENT_ITEMS = {

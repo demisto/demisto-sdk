@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
@@ -89,33 +90,64 @@ class PackContentItems:
 class PackMetadataParser:
     """A pack metadata parser."""
 
-    def __init__(self, metadata: Dict[str, Any]) -> None:
+    def __init__(self, path: Path, metadata: Dict[str, Any]) -> None:
         self.name: str = metadata["name"]
+        self.id: str = path.name
         self.description: str = metadata["description"]
         self.created: str = metadata.get("created", "")
         self.updated: str = metadata.get("updated", "")
+        self.legacy: bool = metadata.get("legacy", metadata.get("partnerId") is None)  # default: True, private default: False
         self.support: str = metadata["support"]
+        self.url: str = metadata.get("url", "https://www.paloaltonetworks.com/cortex" if self.support == "xsoar" else "")
         self.email: str = metadata.get("email", "")
-        self.url: str = metadata["url"]
+        self.support_details: dict = {}
+        self.eulaLink: str = metadata.get("eulaLink", "https://github.com/demisto/content/blob/master/LICENSE")
         self.author: str = metadata["author"]
-        self.certification: str = (
-            "certified" if self.support.lower() in ["xsoar", "partner"] else ""
-        )
+        self.authorImage: str = self.get_author_image(path=path)
+        self.certification: str = self.get_certification(certification=metadata.get('certification'))
+        self.price: int = int(metadata.get("price", 0))
         self.hidden: bool = metadata.get("hidden", False)
         self.server_min_version: str = metadata.get("serverMinVersion", "")
         self.current_version: str = metadata["currentVersion"]
-        self.tags: List[str] = metadata["tags"]
-        self.categories: List[str] = metadata["categories"]
-        self.use_cases: List[str] = metadata["useCases"]
-        self.keywords: List[str] = metadata["keywords"]
-        self.price: Optional[int] = metadata.get("price")
-        self.premium: Optional[bool] = metadata.get("premium")
-        self.vendor_id: Optional[str] = metadata.get("vendorId")
-        self.vendor_name: Optional[str] = metadata.get("vendorName")
-        self.preview_only: Optional[bool] = metadata.get("previewOnly")
+        self.version_info: str = ""
+        self.commit: str = ""
+        self.downloads: int = 0
+        self.tags: List[str] = metadata["tags"] or []
+        self.categories: List[str] = [c.title() for c in metadata["categories"]]
+        self.useCases: List[str] = metadata["useCases"] or []
+        self.keywords: List[str] = metadata["keywords"] or []
+        self.content_displays: Dict[str, Any] = {}
+        self.search_rank: int = 0
+        self.integrations: list = []
+        self.dependencies: dict = {}
+        self.excluded_dependencies: list = []
+        self.videos: List[str] = metadata.get("videos", [])
         self.marketplaces: List[MarketplaceVersions] = metadata.get(
             "marketplaces", list(MarketplaceVersions)
         )
+
+        # For private packs
+        self.premium: Optional[bool] = "partnerId" in metadata
+        self.vendor_id: Optional[str] = metadata.get("vendorId")
+        self.partner_id: Optional[str] = metadata.get("partnerId")
+        self.partner_name: Optional[str] = metadata.get("partnerName")
+        self.preview_only: Optional[bool] = metadata.get("previewOnly")
+        self.disable_monthly: Optional[bool] = metadata.get("disableMonthly")
+
+    def get_author_image(self, path: Path):
+        if os.path.exists(path / "Author_image.png"):
+            return f"content/packs/{path.name}/Author_image.png"
+        elif self.support == "xsoar":
+            return "content/packs/Base/Author_image.png"
+        return ""
+
+    def get_certification(self, certification=None):
+        if self.support in ["xsoar", "partner"]:
+            return "certified"
+        elif certification:
+            return certification
+        else:
+            return ""
 
 
 class PackParser(BaseContentParser, PackMetadataParser):
@@ -137,7 +169,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         """
         BaseContentParser.__init__(self, path)
         PackMetadataParser.__init__(
-            self, metadata=get_json(path / PACK_METADATA_FILENAME)
+            self, path=path, metadata=get_json(path / PACK_METADATA_FILENAME)
         )
         self.content_items: PackContentItems = PackContentItems()
         self.relationships: Relationships = Relationships()

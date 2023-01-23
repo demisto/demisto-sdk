@@ -201,6 +201,7 @@ class Pack:
         description: Optional[str] = None,
         changelog: Optional[str] = None,
         image: Optional[bytes] = None,
+        docker_image: Optional[str] = None,
         create_unified=False,
     ) -> Integration:
         if name is None:
@@ -217,6 +218,7 @@ class Pack:
                     "subtype": "python3",
                     "script": "",
                     "commands": [],
+                    "dockerimage": docker_image
                 },
             }
         if image is None:
@@ -240,6 +242,7 @@ class Pack:
         description: str = "",
         changelog: str = "",
         image: bytes = b"",
+        docker_image: Optional[str] = None,
         create_unified=False,
     ) -> Script:
         if name is None:
@@ -251,6 +254,7 @@ class Pack:
                 "comment": f"this is script {name}",
                 "type": "python",
                 "subtype": "python3",
+                "dockerimage": docker_image,
                 "script": "-",
             }
         script = Script(

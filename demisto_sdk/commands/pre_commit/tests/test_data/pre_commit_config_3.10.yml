@@ -1,0 +1,78 @@
+exclude: .devcontainer/|.vscode|Pipfile.lock|.gitlab/ci/|.circleci/
+
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.4.0
+  hooks:
+  - id: trailing-whitespace
+  - id: end-of-file-fixer
+  - id: check-json
+  - id: check-yaml
+  - id: check-ast
+  - id: debug-statements
+    language_version: python3
+  - id: name-tests-test
+    files: .+_test.py$
+
+- repo: https://github.com/charliermarsh/ruff-pre-commit
+  rev: "v0.0.220"
+  hooks:
+  - id: ruff
+
+    args:
+    - --target-version=py310
+    - --fix
+- repo: https://github.com/pre-commit/mirrors-autopep8
+  rev: "v2.0.1"
+  hooks:
+  - id: autopep8
+
+- repo: https://github.com/hadialqattan/pycln
+  rev: v2.1.2
+  hooks:
+  - id: pycln
+
+    args:
+    - --skip-imports=,CommonServerPython,demistomock,demisto,CommonServerUserPython
+- repo: local
+  hooks:
+  - id: mypy
+    name: mypy
+    entry: mypy
+    language: system
+    types: [python]
+    args: [--ignore-missing-imports, --check-untyped-defs, --show-error-codes, --follow-imports=silent,
+      --allow-redefinition, --python-version=3.10]
+    exclude: .*_test.py$
+
+  - id: is-circle-changed
+    name: is-circle-changed
+    description: Checks if circle files are changed, and checkout to current if it
+      is.
+    entry: ./Tests/scripts/is_file_up_to_date.sh .circleci/config.yml "" true
+    language: script
+
+  - id: is-gitlab-changed
+    name: is-gitlab-changed
+    description: Checks if gitlab files are changed, and checkout to current if it
+      is.
+    entry: ./Tests/scripts/is_file_up_to_date.sh .gitlab "" true
+    language: script
+
+- repo: https://github.com/PyCQA/flake8
+  rev: "6.0.0"
+  hooks:
+  - id: flake8
+
+- repo: https://github.com/demisto/demisto-sdk
+    # Replace with the latest release version or master
+  rev: 6790560fc50d110e316e6d4cf83d511c8b6ae404
+  hooks:
+  - id: update-docker-image
+
+      # enable with --test
+  - id: run-unit-tests
+
+      # those will be skipped by default, to run them use --force-run-hooks=validate,format
+  - id: format
+  - id: validate

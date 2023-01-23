@@ -8,7 +8,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set
-
+from copy import deepcopy
 import more_itertools
 from packaging.version import Version
 
@@ -53,13 +53,22 @@ class PreCommitRunner:
         """
         We initialize the hooks and all files for later use.
         """
-        self.hooks = {}
-        for repo in PRECOMMIT_TEMPLATE["repos"]:
-            for hook in repo["hooks"]:
-                self.hooks[hook["id"]] = hook
         self.all_files: Set[Path] = set()
         for _, files in self.python_version_to_files.items():
             self.all_files |= files
+
+    def hooks(self, pre_commit_config: dict) -> dict:
+        hooks = {}
+        for repo in pre_commit_config["repos"]:
+            for hook in repo["hooks"]:
+                hooks[hook["id"]] = hook
+        return hooks
+
+    def prepare_hooks(self, pre_commit_config: dict, python_version: str, no_fix: bool) -> dict:
+        hooks = self.hooks(pre_commit_config)
+        PyclnHook(hooks["pycln"]).prepare_hook(PYTHONPATH)
+        RuffHook(hooks["ruff"]).prepare_hook(python_version, no_fix, GITHUB_ACTIONS)
+        MypyHook(hooks["mypy"]).prepare_hook(python_version)
 
     def run(
         self,
@@ -80,17 +89,14 @@ class PreCommitRunner:
         if no_fix:
             skipped_hooks.append("autopep8")
         if force_run_hooks:
-            skipped_hooks = [
-                hook for hook in skipped_hooks if hook not in force_run_hooks
-            ]
+            skipped_hooks = [hook for hook in skipped_hooks if hook not in force_run_hooks]
         precommit_env["SKIP"] = ",".join(skipped_hooks)
         precommit_env["PYTHONPATH"] = ":".join(str(path) for path in PYTHONPATH)
         precommit_env["MYPYPATH"] = ":".join(str(path) for path in PYTHONPATH)
-        PyclnHook(self.hooks["pycln"]).prepare_hook(PYTHONPATH)
+
         for python_version, changed_files in self.python_version_to_files.items():
-            logger.info(
-                f"Running pre-commit for {changed_files} with python version {python_version}"
-            )
+            precommit_config = deepcopy(PRECOMMIT_TEMPLATE)
+            logger.info(f"Running pre-commit for {changed_files} with python version {python_version}")
             if python_version.startswith("2"):
                 # python2 supports only unit-tests?
                 if test:
@@ -109,13 +115,9 @@ class PreCommitRunner:
                     if response.returncode:
                         ret_val = response.returncode
                 continue
-            RuffHook(self.hooks["ruff"]).prepare_hook(
-                python_version, no_fix, GITHUB_ACTIONS
-            )
-            if python_version != DEFAULT_PYTHON_VERSION:
-                MypyHook(self.hooks["mypy"]).prepare_hook(python_version)
+            self.prepare_hooks(precommit_config, python_version, no_fix)
             with open(CONTENT_PATH / ".pre-commit-config.yaml", "w") as f:
-                yaml.dump(PRECOMMIT_TEMPLATE, f)
+                yaml.dump(precommit_config, f)
             # use chunks because OS does not support such large comments
             for chunk in more_itertools.chunked_even(changed_files, 10_000):
                 response = subprocess.run(
@@ -155,11 +157,7 @@ def categorize_files(files: Set[Path]) -> PreCommitRunner:
         if file.is_dir():
             continue
         if set(file.parts) & {INTEGRATIONS_DIR, SCRIPTS_DIR}:
-            find_path_index = (
-                i + 1
-                for i, part in enumerate(file.parts)
-                if part in {INTEGRATIONS_DIR, SCRIPTS_DIR}
-            )
+            find_path_index = (i + 1 for i, part in enumerate(file.parts) if part in {INTEGRATIONS_DIR, SCRIPTS_DIR})
             if not find_path_index:
                 raise Exception(f"Could not find integration/script path for {file}")
             integration_script_path = Path(*file.parts[: next(find_path_index) + 1])
@@ -169,25 +167,19 @@ def categorize_files(files: Set[Path]) -> PreCommitRunner:
 
     python_versions_to_files = defaultdict(set)
     with multiprocessing.Pool() as pool:
-        integrations_scripts = pool.map(
-            BaseContent.from_path, integrations_scripts_mapping.keys()
-        )
+        integrations_scripts = pool.map(BaseContent.from_path, integrations_scripts_mapping.keys())
 
     for integration_script in integrations_scripts:
-        if not integration_script or not isinstance(
-            integration_script, IntegrationScript
-        ):
+        if not integration_script or not isinstance(integration_script, IntegrationScript):
             continue
-        integration_script_path = integration_script.path.parent.relative_to(
-            CONTENT_PATH
-        )
+        integration_script_path = integration_script.path.parent
         if python_version_string := integration_script.python_version:
             version = Version(python_version_string)
             python_version_string = f"{version.major}.{version.minor}"
         python_versions_to_files[python_version_string or EMPTY_PYTHON_VERSION].update(
-            integrations_scripts_mapping[integration_script_path]
-            | {integration_script.path.relative_to(CONTENT_PATH)}
+            integrations_scripts_mapping[integration_script_path] | {integration_script.path}
         )
+
     python_versions_to_files[DEFAULT_PYTHON_VERSION].update(files_to_run)
 
     return PreCommitRunner(python_versions_to_files)
@@ -228,21 +220,35 @@ def pre_commit_manager(
     if not any((input_files, staged_only, use_git, all_files)):
         logger.debug("No arguments were given, running on git changed files")
         use_git = True
+
+    files_to_run = preprocess_files(input_files, use_git, staged_only, all_files)
+    pre_commit_runner = categorize_files(files_to_run)
+    return pre_commit_runner.run(test, skip_hooks, force_run_hooks, verbose, show_diff_on_failure, no_fix)
+
+
+def preprocess_files(
+    input_files: Optional[List[Path]], use_git: bool = False, staged_only: bool = False, all_files: bool = False
+) -> Set[Path]:
     git_util = GitUtil()
     staged_files = git_util._get_staged_files()
-    files_to_run: Set[Path] = set()
     if input_files:
-        # convert all paths to relative paths
-        files_to_run = {
-            file.relative_to(CONTENT_PATH) if file.is_absolute() else file
-            for file in input_files
-        }
+        raw_files = set(input_files)
     elif staged_only:
-        files_to_run = staged_files
+        raw_files = staged_files
     elif use_git:
-        files_to_run = staged_files | git_util._get_all_changed_files()
+        raw_files = staged_files | git_util._get_all_changed_files()
     elif all_files:
-        files_to_run = git_util.get_all_files()
-    return categorize_files(files_to_run).run(
-        test, skip_hooks, force_run_hooks, verbose, show_diff_on_failure, no_fix
-    )
+        raw_files = git_util.get_all_files()
+    else:
+        raw_files = set()
+
+    files_to_run: Set[Path] = set()
+    for file in raw_files:
+        if file.is_dir():
+            files_to_run |= set(file.rglob("*"))
+        else:
+            files_to_run.add(file)
+
+    # Convert to absolute paths
+    files_to_run = {file.absolute() for file in files_to_run}
+    return files_to_run

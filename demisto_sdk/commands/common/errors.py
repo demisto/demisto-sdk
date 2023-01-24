@@ -32,6 +32,7 @@ ALLOWED_IGNORE_ERRORS = [
     "BA113",
     "BA116",
     "BA119",
+    "BA120",  # mostly for editing old (unified) content
     "DS107",
     "GF102",
     "IF100",

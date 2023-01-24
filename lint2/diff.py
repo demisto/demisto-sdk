@@ -21,7 +21,7 @@ def _parse_changed_files(raw_diff: str) -> Dict[Path, Set[int]]:
             current_changed_lines.update({int(row)})
         elif match := MULTI_LINE_REGEX.fullmatch(row):
             current_changed_lines.update(
-                range(int(match.group(1)), int(match.group(2) + 1))
+                range(int(match.group(1)), int(match.group(2)) + 1)
             )
         else:
             new_path = Path(row)

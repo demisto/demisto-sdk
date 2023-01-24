@@ -1,6 +1,6 @@
 # Changelog
 ## Unreleased
-
+* Fixed an issue in **prepare-content** command where large code lines were broken.
 
 ## 1.9.0
 * Fixed an issue where the Slack notifier was using a deprecated argument.

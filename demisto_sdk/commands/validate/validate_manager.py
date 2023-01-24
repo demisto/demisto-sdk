@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
     CONTENT_ENTITIES_DIRS,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    FOLDERS_ALLOWED_TO_CONTAIN_FILES,
     GENERIC_FIELDS_DIR,
     GENERIC_TYPES_DIR,
     IGNORED_PACK_NAMES,
@@ -761,7 +762,7 @@ class ValidateManager:
             return False
         file_type = find_type(file_path)
 
-        is_added_file = file_path in added_files if added_files else False
+        is_added_file = file_path in (added_files or ())
         if file_type == FileType.MODELING_RULE_TEST_DATA:
             file_path = file_path.replace("_testdata.json", ".yml")
         if file_path.endswith(".xif"):
@@ -776,6 +777,9 @@ class ValidateManager:
             self.ignored_files.add(file_path)
             return True
         elif not self.is_valid_file_type(file_type, file_path, pack_error_ignore_list):
+            return False
+
+        if not self.is_file_allowed_directly_under_folder(file_path):
             return False
 
         if file_type == FileType.XSOAR_CONFIG:
@@ -2840,3 +2844,49 @@ class ValidateManager:
 
             return is_valid_as_deprecated
         return None
+
+    @error_codes("BA120")
+    def is_file_allowed_directly_under_folder(self, path: Path) -> bool:
+        """
+        Args:
+            path (Path): path to the file
+        Returns:
+            bool: whether the file is allowed to be directly under its parent folder
+        """
+
+        def _handle_error() -> bool:
+            # returns True if the validation should fail
+            (
+                error_message,
+                error_code,
+            ) = Errors.file_not_allowed_directly_under_this_folder(path)
+            return bool(
+                self.handle_error(
+                    error_message=error_message,
+                    error_code=error_code,
+                    file_path=str(path),
+                    drop_line=True,
+                )
+            )
+
+        if path.is_dir():
+            return True  # dirs are allowed anywhere
+
+        if PACKS_DIR not in path.parts:
+            return True  # non-content files are allowed anywhere
+
+        depth = len(path.parts) - path.parts.index(PACKS_DIR) - 1
+
+        if depth == 1:  # Packs/<here>
+            if _handle_error():
+                return False
+
+        elif depth == 2:  # Packs/MyPack/<here>
+            return True
+
+        elif depth == 3:  # Packs/MyPack/SomeFolder/<here>
+            if path.parent.name not in FOLDERS_ALLOWED_TO_CONTAIN_FILES:
+                if _handle_error():
+                    return False
+
+        return True  # all other depths are allowed

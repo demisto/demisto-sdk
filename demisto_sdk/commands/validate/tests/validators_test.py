@@ -12,7 +12,9 @@ import pytest
 import demisto_sdk.commands.validate.validate_manager
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
+    CONTENT_ENTITIES_DIRS,
     FILETYPE_TO_DEFAULT_FROMVERSION,
+    FOLDERS_ALLOWED_TO_CONTAIN_FILES,
     PACKS_PACK_META_FILE_NAME,
     TEST_PLAYBOOK,
     FileType,
@@ -2786,3 +2788,91 @@ def test_run_validation_using_git_on_metadata_with_invalid_tags(
     captured_stdout = std_output.getvalue()
     assert "[PA123]" in captured_stdout, captured_stdout
     assert not res
+
+
+def test_content_entities_dir_length():
+    """
+    This test is here so we don't forget to update FOLDERS_ALLOWED_TO_CONTAIN_FILES when adding/removing content types.
+    If this test failed, it's likely you modified either CONTENT_ENTITIES_DIRS or FOLDERS_ALLOWED_TO_CONTAIN_FILES.
+    Update the test values accordingly.
+    """
+    assert len(set(FOLDERS_ALLOWED_TO_CONTAIN_FILES)) == 25
+    assert len(set(CONTENT_ENTITIES_DIRS)) == 24
+
+    # change this one if you added a content item folder that can't have files directly under it
+    assert (
+        len(FOLDERS_ALLOWED_TO_CONTAIN_FILES.intersection(CONTENT_ENTITIES_DIRS)) == 18
+    )
+
+
+folders_not_allowed_to_contain_files = tuple(
+    frozenset(CONTENT_ENTITIES_DIRS).difference(FOLDERS_ALLOWED_TO_CONTAIN_FILES)
+)
+
+
+@pytest.mark.parametrize("folder", folders_not_allowed_to_contain_files)
+def test_is_file_allowed_in_path__fail(mocker, repo, folder: str):
+    """
+    Given
+            A name of a folder, which may not contain files directly
+    When
+            Running validate on a file created directly under the folder
+    Then
+            Make sure the validation fails, and a proper message is shown
+    """
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+
+    pack = repo.create_pack()
+    file = Path(pack.path, folder, "file")
+
+    std_output = StringIO()
+    with contextlib.redirect_stdout(std_output):
+        with ChangeCWD(pack.path):
+            assert not validate_manager.is_file_allowed_directly_under_folder(file)
+
+    captured_stdout = std_output.getvalue()
+    assert (
+        f"{file.name} is not allowed directly under the {file.parent.name} folder"
+        in captured_stdout
+    )
+
+
+@pytest.mark.parametrize("folder", FOLDERS_ALLOWED_TO_CONTAIN_FILES)
+def test_is_file_allowed_in_path__pass(repo, folder: str):
+    """
+    Given
+            A name of a folder, which may contain files directly
+    When
+            Running validate on a file created directly under the folder
+    Then
+            Make sure the validation fails, and a proper message is shown
+    """
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+
+    pack = repo.create_pack()
+    file = Path(pack.path, folder, "file")
+
+    with ChangeCWD(pack.path):
+        assert validate_manager.is_file_allowed_directly_under_folder(file)
+
+
+@pytest.mark.parametrize(
+    "folder",
+    [
+        (folders_not_allowed_to_contain_files[0]),
+        tuple(FOLDERS_ALLOWED_TO_CONTAIN_FILES)[0],
+    ],
+)
+def test_is_file_allowed_in_path__second_level(repo, folder: str):
+    """
+    Given
+            A name of a folder, which may OR NOT may contain files directly
+    When
+            Running validate on a file created in a folder under that folder second-level
+    Then
+            Make sure the validation passes
+    """
+    file = Path(f"content/Packs/myPack/{folder}/subfolder/file")
+    assert ValidateManager(
+        check_is_unskipped=False, skip_conf_json=True
+    ).is_file_allowed_directly_under_folder(file)

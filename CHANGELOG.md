@@ -2,6 +2,7 @@
 ## Unreleased
 * Fixed an issue in **prepare-content** command where large code lines were broken.
 * Fixed an issue where git-*renamed_files* were not retrieved properly.
+* Added a **validate** step checking for misplaced files (i.e. directly under `Integrations`)
 
 ## 1.9.0
 * Fixed an issue where the Slack notifier was using a deprecated argument.

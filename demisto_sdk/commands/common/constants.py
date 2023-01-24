@@ -28,9 +28,10 @@ LAYOUTS_DIR = "Layouts"
 CLASSIFIERS_DIR = "Classifiers"
 MAPPERS_DIR = "Classifiers"
 CONNECTIONS_DIR = "Connections"
+RELEASE_NOTES_DIR = "ReleaseNotes"
+
 PACKS_DIR = "Packs"
 TOOLS_DIR = "Tools"
-RELEASE_NOTES_DIR = "ReleaseNotes"
 TESTS_DIR = "Tests"
 DOC_FILES_DIR = "doc_files"
 DOCUMENTATION_DIR = "Documentation"
@@ -46,6 +47,37 @@ XSIAM_REPORTS_DIR = "XSIAMReports"
 TRIGGER_DIR = "Triggers"
 WIZARDS_DIR = "Wizards"
 XDRC_TEMPLATE_DIR = "XDRCTemplates"
+
+FOLDERS_ALLOWED_TO_CONTAIN_FILES = frozenset(
+    (
+        PLAYBOOKS_DIR,
+        TEST_PLAYBOOKS_DIR,
+        REPORTS_DIR,
+        DASHBOARDS_DIR,
+        INCIDENT_FIELDS_DIR,
+        INCIDENT_TYPES_DIR,
+        INDICATOR_FIELDS_DIR,
+        INDICATOR_TYPES_DIR,
+        GENERIC_MODULES_DIR,
+        GENERIC_DEFINITIONS_DIR,
+        LAYOUTS_DIR,
+        CLASSIFIERS_DIR,
+        MAPPERS_DIR,
+        CONNECTIONS_DIR,
+        RELEASE_NOTES_DIR,
+        DOC_FILES_DIR,
+        JOBS_DIR,
+        PRE_PROCESS_RULES_DIR,
+        LISTS_DIR,
+        PARSING_RULES_DIR,
+        MODELING_RULES_DIR,
+        CORRELATION_RULES_DIR,
+        XSIAM_DASHBOARDS_DIR,
+        XSIAM_REPORTS_DIR,
+        TRIGGER_DIR,
+        WIZARDS_DIR,
+    )
+)
 
 # NAMES OF ENTITIES
 

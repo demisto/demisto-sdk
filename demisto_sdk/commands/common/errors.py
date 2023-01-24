@@ -214,6 +214,11 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "file_not_allowed_directly_under_this_folder": {
+        "code": "BA120",
+        "ui_applicable": False,
+        "related_field": "",
+    },
     # BC - Backward Compatible
     "breaking_backwards_subtype": {
         "code": "BC100",
@@ -3500,6 +3505,14 @@ class Errors:
         return (
             f"Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found "
             f"in lines: {line_nums}. Copyright section cannot be part of script."
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def file_not_allowed_directly_under_this_folder(path: Path):
+        return (
+            f"{path.name} is not allowed directly under the {path.parent.name} folder. "
+            f"Please match the structure to other {path.parent.name} folders in the repo, or see https://github.com/demisto/content as reference."
         )
 
     @staticmethod

@@ -8,6 +8,7 @@ class LinterType(str, enum.Enum):
     RUFF = "Ruff"
     FLAKE8 = "Flake8"
     MYPY = "Mypy"
+    VULTURE = "Vulture"
 
 
 class ErrorType(enum.Enum):
@@ -105,6 +106,29 @@ class MypyParser(BaseParser):
             path=Path(match_dict["path"]),
             error_type=error_type,
             error_message=match_dict["error_message"],
+        )
+
+
+class VultureParser(BaseParser):
+    linter_type = LinterType.VULTURE
+    _line_regex = re.compile(
+        r"^(?P<path>[^:]+):(?P<row_start>\d*): (?P<error_message>[\w* ]*)(?P<unused_value>'\w*') (\([\w\d]*% [\w]*\))$"
+    )
+
+    @staticmethod
+    def parse_line(raw: Union[str, dict]) -> ParseResult:
+        if not isinstance(raw, str):
+            raise ValueError(f"must be a string, got {raw}")
+        if not (match := VultureParser._line_regex.match(raw)):
+            raise ValueError(f"did not match on {raw}")
+
+        match_dict = match.groupdict()
+
+        return ParseResult(
+            error_code=match_dict["error_message"].strip(),
+            path=Path(match_dict['path']),
+            row_start=int(match_dict['row_start']),
+            error_message=match_dict['error_message'] + match_dict['unused_value']
         )
 
 

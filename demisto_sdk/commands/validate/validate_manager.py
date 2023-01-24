@@ -2356,6 +2356,7 @@ class ValidateManager:
             staged_only=self.staged,
             debug=self.debug_git,
             include_untracked=self.include_untracked,
+            get_only_current_file_names=True,
         )
 
         return modified_files, added_files, renamed_files

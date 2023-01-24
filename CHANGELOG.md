@@ -1,6 +1,6 @@
 # Changelog
 ## Unreleased
-
+* Fixed an issue where the *renamed_files* function returned files as a tuple instead of a set.
 
 ## 1.9.0
 * Fixed an issue where the Slack notifier was using a deprecated argument.

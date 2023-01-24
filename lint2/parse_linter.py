@@ -16,7 +16,7 @@ class ErrorType(enum.Enum):
     WARNING = enum.auto()
 
 
-class ParseResult(NamedTuple):
+class LinterError(NamedTuple):
     error_code: str
     path: Path
     row_start: int
@@ -31,7 +31,7 @@ class BaseParser:
     linter_type: LinterType
 
     @staticmethod
-    def parse_line(raw: Union[str, dict]) -> ParseResult:
+    def parse_line(raw: Union[str, dict]) -> LinterError:
         ...
 
 
@@ -39,11 +39,11 @@ class RuffParser(BaseParser):
     linter_type = LinterType.RUFF
 
     @staticmethod
-    def parse_line(raw: Union[str, dict]) -> ParseResult:
+    def parse_line(raw: Union[str, dict]) -> LinterError:
         if not isinstance(raw, dict):
             raise ValueError(f"must be a dictionary, got {raw}")
 
-        return ParseResult(
+        return LinterError(
             error_code=raw["code"],
             row_start=raw["location"]["row"],
             col_start=raw["location"]["column"],
@@ -58,10 +58,10 @@ class Flake8Parser(BaseParser):
     linter_type = LinterType.FLAKE8
 
     @staticmethod
-    def parse_line(raw: Union[str, dict]) -> ParseResult:
+    def parse_line(raw: Union[str, dict]) -> LinterError:
         if not isinstance(raw, dict):
             raise ValueError(f"must be a dictionary, got {raw}")
-        return ParseResult(
+        return LinterError(
             error_code=raw["code"],
             row_start=raw["line_number"],
             error_message=raw["text"],
@@ -80,7 +80,7 @@ class MypyParser(BaseParser):
     )
 
     @staticmethod
-    def parse_line(raw: Union[str, dict]) -> ParseResult:
+    def parse_line(raw: Union[str, dict]) -> LinterError:
         if not isinstance(raw, str):
             raise ValueError(f"must be a string, got {raw}")
 
@@ -97,7 +97,7 @@ class MypyParser(BaseParser):
         else:
             error_type = None
 
-        return ParseResult(
+        return LinterError(
             error_code=match_dict["error_code"],
             row_start=int(match_dict["row_start"]),
             row_end=int(match_dict["row_end"]),
@@ -116,7 +116,7 @@ class VultureParser(BaseParser):
     )
 
     @staticmethod
-    def parse_line(raw: Union[str, dict]) -> ParseResult:
+    def parse_line(raw: Union[str, dict]) -> LinterError:
         if not isinstance(raw, str):
             raise ValueError(f"must be a string, got {raw}")
         if not (match := VultureParser._line_regex.match(raw)):
@@ -124,7 +124,7 @@ class VultureParser(BaseParser):
 
         match_dict = match.groupdict()
 
-        return ParseResult(
+        return LinterError(
             error_code=match_dict["error_message"].strip(),
             path=Path(match_dict["path"]),
             row_start=int(match_dict["row_start"]),
@@ -138,14 +138,14 @@ class BanditParser(BaseParser):
     )
 
     @staticmethod
-    def parse_line(raw: Union[str, dict]) -> ParseResult:
+    def parse_line(raw: Union[str, dict]) -> LinterError:
         if not isinstance(raw, str):
             raise ValueError(f"must be a str, got {raw}")
         if not (match := BanditParser._regex.match(raw)):
             raise ValueError(f"did not match on {raw}")
         match_dict = match.groupdict()
 
-        return ParseResult(
+        return LinterError(
             error_code=match_dict["code"],
             row_start=match_dict["row_start"],
             path=Path(match_dict["path"]),

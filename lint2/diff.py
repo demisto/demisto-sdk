@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 from typing import Dict, Optional, Set, Tuple
 
-from parse_linter import ParseResult
+from parse_linter import LinterError
 
 SINGLE_LINE_REGEX = re.compile(r"\d+")
 MULTI_LINE_REGEX = re.compile(r"(?P<start>\d+),(?P<end>\d+)")
@@ -47,12 +47,11 @@ def _parse_changed_files(raw_diff: str) -> Dict[Path, Set[int]]:
 
 def get_diff() -> Dict[Path, Set[int]]:
     raw: str = os.popen(
-        "git diff master...HEAD --unified=0 | grep -Po '^\+\+\+ ./\K.*|^@@ -[0-9]+(,[0-9]+)? \+\K[0-9]+(,[0-9]+)?(?= @@)'"
+        r"git diff master...HEAD --unified=0 | grep -Po '^\+\+\+ ./\K.*|^@@ -[0-9]+(,[0-9]+)? \+\K[0-9]+(,[0-9]+)?(?= @@)'"
     )
     return _parse_changed_files(raw)
 
-
-def filter_errors(errors: Tuple[ParseResult, ...]):
+def filter_errors(errors: Tuple[LinterError, ...]):
     # return errors that occur in lines showing in the diff
     diff = get_diff()
     return tuple(

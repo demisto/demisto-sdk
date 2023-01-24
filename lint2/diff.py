@@ -1,23 +1,20 @@
 from pathlib import Path
 import os
-from typing import NamedTuple, Optional
+from typing import Optional, TypeAlias, Dict, Set
+
+FileLineDiff: TypeAlias = Dict[str, Set[int]]
 
 
-class ChangedFile(NamedTuple):
-    file_name: str
-    changed_lines: set[int]
-
-
-def _parse_changed_files(raw_diff: str) -> tuple[ChangedFile, ...]:
-    result: list[ChangedFile] = []
+def _parse_changed_files(raw_diff: str) -> FileLineDiff:
+    result: FileLineDiff = {}
 
     current_file_name: Optional[str] = None
-    current_changed_lines: set[int] = set()
+    current_changed_lines: Set[int] = set()
 
     for row in raw_diff.splitlines():
         if Path(row).exists():  # reached a file name line
             if current_file_name:  # append temp to result and restart
-                result.append(ChangedFile(current_file_name, current_changed_lines))
+                result[current_file_name] = current_changed_lines
 
             current_file_name = row
             current_changed_lines = set()
@@ -36,14 +33,14 @@ def _parse_changed_files(raw_diff: str) -> tuple[ChangedFile, ...]:
                 raise ValueError(f"unexpected format: {row}")
 
     if current_file_name and (
-        not result or result[-1].file_name != current_file_name
+        (not result) or (current_file_name in result)
     ):  # last line
-        result.append(ChangedFile(current_file_name, current_changed_lines))
+        result[current_file_name] = current_changed_lines
 
-    return tuple(result)
+    return result
 
 
-def get_diff() -> tuple[ChangedFile, ...]:
+def get_diff() -> FileLineDiff:
     raw = os.popen(
         "git diff master...HEAD --unified=0 | grep -Po '^\+\+\+ ./\K.*|^@@ -[0-9]+(,[0-9]+)? \+\K[0-9]+(,[0-9]+)?(?= @@)'"
     )

@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Fixed an issue in **prepare-content** command where large code lines were broken.
+* Fixed an issue where git-*renamed_files* were not retrieved properly.
 
 ## 1.9.0
 * Fixed an issue where the Slack notifier was using a deprecated argument.

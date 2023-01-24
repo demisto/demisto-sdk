@@ -9,9 +9,6 @@ mapping:
   layout_id:
     type: str
     required: true
-  fromVersion:
-    type: str
-    required: true
   description:
     type: str
     required: false

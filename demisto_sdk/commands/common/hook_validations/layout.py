@@ -170,6 +170,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
             [
                 super().is_valid_layout(),
                 self.is_id_equals_name(),
+                self.is_valid_mpv2_layout()
             ]
         )
 
@@ -277,6 +278,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         """
         return super()._is_id_equals_name("layoutscontainer")
 
+    @error_codes("LO107")
     def is_valid_mpv2_layout(self):
         invalid_sections = [
             "evidence",

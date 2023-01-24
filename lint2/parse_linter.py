@@ -1,6 +1,6 @@
 import enum
-from pathlib import Path
 import re
+from pathlib import Path
 from typing import NamedTuple, Optional, Union
 
 
@@ -126,9 +126,9 @@ class VultureParser(BaseParser):
 
         return ParseResult(
             error_code=match_dict["error_message"].strip(),
-            path=Path(match_dict['path']),
-            row_start=int(match_dict['row_start']),
-            error_message=match_dict['error_message'] + match_dict['unused_value']
+            path=Path(match_dict["path"]),
+            row_start=int(match_dict["row_start"]),
+            error_message=match_dict["error_message"] + match_dict["unused_value"],
         )
 
 

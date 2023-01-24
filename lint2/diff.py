@@ -1,12 +1,10 @@
 from pathlib import Path
 import os
-from typing import Optional, TypeAlias, Dict, Set
-
-FileLineDiff: TypeAlias = Dict[str, Set[int]]
+from typing import Optional, Dict, Set
 
 
-def _parse_changed_files(raw_diff: str) -> FileLineDiff:
-    result: FileLineDiff = {}
+def _parse_changed_files(raw_diff: str) -> Dict[str, Set[int]]:
+    result: Dict[str, Set[int]] = {}
 
     current_file_name: Optional[str] = None
     current_changed_lines: Set[int] = set()
@@ -40,7 +38,7 @@ def _parse_changed_files(raw_diff: str) -> FileLineDiff:
     return result
 
 
-def get_diff() -> FileLineDiff:
+def get_diff() -> Dict[str, Set[int]]:
     raw = os.popen(
         "git diff master...HEAD --unified=0 | grep -Po '^\+\+\+ ./\K.*|^@@ -[0-9]+(,[0-9]+)? \+\K[0-9]+(,[0-9]+)?(?= @@)'"
     )

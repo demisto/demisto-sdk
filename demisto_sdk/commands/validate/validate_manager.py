@@ -736,7 +736,7 @@ class ValidateManager:
     # flake8: noqa: C901
     def run_validations_on_file(
         self,
-        file_path,
+        file_path: str,
         pack_error_ignore_list,
         is_modified=False,
         old_file_path=None,
@@ -779,7 +779,7 @@ class ValidateManager:
         elif not self.is_valid_file_type(file_type, file_path, pack_error_ignore_list):
             return False
 
-        if not self.is_file_allowed_directly_under_folder(file_path):
+        if not self.is_file_allowed_directly_under_folder(Path(file_path)):
             return False
 
         if file_type == FileType.XSOAR_CONFIG:

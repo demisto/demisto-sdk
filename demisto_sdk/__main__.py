@@ -42,6 +42,7 @@ from demisto_sdk.commands.test_content.test_modeling_rule import (
     init_test_data,
     test_modeling_rule,
 )
+from demisto_sdk.commands.generate_modeling_rules import generate_modeling_rules
 from demisto_sdk.commands.upload.upload import upload_content_entity
 from demisto_sdk.utils.utils import check_configuration_file
 
@@ -3095,6 +3096,13 @@ app.command("init-test-data", no_args_is_help=True)(init_test_data.init_test_dat
 typer_click_object = typer.main.get_command(app)
 main.add_command(typer_click_object, "modeling-rules")
 
+
+app = typer.Typer(name="generate-modeling-rules", no_args_is_help=True)
+app.command("test", no_args_is_help=True)(generate_modeling_rules.generate_modeling_rules)
+
+
+typer_click_object = typer.main.get_command(app)
+main.add_command(typer_click_object, "generate-modeling-rules")
 
 if __name__ == "__main__":
     main()

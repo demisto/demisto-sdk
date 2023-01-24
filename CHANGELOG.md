@@ -1,6 +1,6 @@
 # Changelog
 ## Unreleased
-
+* Fixed an issue where git-*renamed_files* were not retrieved properly.
 
 ## 1.9.0
 * Fixed an issue where the Slack notifier was using a deprecated argument.

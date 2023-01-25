@@ -2,6 +2,7 @@
 ## Unreleased
 * Fixed an issue in **prepare-content** command where large code lines were broken.
 * Fixed an issue where git-*renamed_files* were not retrieved properly.
+* Fixed an issue where **download** didn't identify playbooks properly, and downloaded files with UUIDs instead of file/script names.
 
 ## 1.9.0
 * Fixed an issue where the Slack notifier was using a deprecated argument.
@@ -44,7 +45,6 @@
 * Added to the **format** command the ability to remove `nativeimage` key in case defined in script/integration yml.
 * Enhanced the **update-content-graph** command to support `--use-git`, `--imported_path` and `--output-path` arguments.
 * Fixed an issue where **doc-review** failed when reviewing command name in some cases.
-* Fixed an issue where **download** didn't identify playbooks properly, and downloaded files with UUIDs instead of file/script names.
 
 ## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.

@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Fixed an issue where git-*renamed_files* were not retrieved properly.
+* Fixed an issue where test dependencies were calculated in all level dependencies calculation.
 
 ## 1.9.0
 * Fixed an issue where the Slack notifier was using a deprecated argument.

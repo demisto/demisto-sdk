@@ -84,7 +84,7 @@ class ContentItem(BaseContent):
         return [
             r
             for r in self.relationships_data[RelationshipType.USES]
-            if r.content_item == r.target
+            if r.content_item.database_id == r.target_id
         ]
 
     @property
@@ -98,7 +98,7 @@ class ContentItem(BaseContent):
         return [
             r.content_item  # type: ignore[misc]
             for r in self.relationships_data[RelationshipType.TESTED_BY]
-            if r.content_item == r.target
+            if r.content_item.database_id == r.target_id
         ]
 
     @property

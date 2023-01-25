@@ -34,7 +34,7 @@ class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[ca
         return [
             r.content_item  # type: ignore[misc]
             for r in self.relationships_data[RelationshipType.HAS_COMMAND]
-            if r.content_item == r.source
+            if r.content_item.database_id == r.source_id
         ]
 
     def dump(self, *args) -> None:
@@ -53,7 +53,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         return [
             r.content_item  # type: ignore[misc]
             for r in self.relationships_data[RelationshipType.IMPORTS]
-            if r.content_item == r.target
+            if r.content_item.database_id == r.target_id
         ]
 
     def set_commands(self):

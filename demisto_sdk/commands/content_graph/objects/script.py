@@ -38,5 +38,5 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
         return [
             r.content_item
             for r in self.relationships_data[RelationshipType.IMPORTS]
-            if r.content_item == r.source
+            if r.content_item.database_id == r.source_id
         ]

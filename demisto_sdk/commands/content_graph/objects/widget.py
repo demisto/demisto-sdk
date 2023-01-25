@@ -5,8 +5,8 @@ from pydantic import Field
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-from demisto_sdk.commands.content_graph.objects.layout import (
-    fix_widget_incident_to_alert,
+from demisto_sdk.commands.prepare_content.preparers.replace_incident_alert import (
+    change_incident_to_alert,
 )
 
 
@@ -22,5 +22,5 @@ class Widget(ContentItem, content_type=ContentType.WIDGET):  # type: ignore[call
     ) -> dict:
         data = super().prepare_for_upload(marketplace, **kwargs)
         if marketplace == MarketplaceVersions.MarketplaceV2:
-            data = fix_widget_incident_to_alert(data)
+            data = change_incident_to_alert(data)
         return data

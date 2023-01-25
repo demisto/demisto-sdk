@@ -1581,12 +1581,12 @@ def test_fix_layout_widget_incident_to_alert(
     Given:
         - A layout body
     When:
-        - fix_widget_incident_to_alert is called
+        - change_incident_to_alert is called
     Then:
         - Make sure it replaces values as expected
     """
     from demisto_sdk.commands.content_graph.objects.layout import (
-        fix_widget_incident_to_alert,
+        change_incident_to_alert,
     )
 
-    assert fix_widget_incident_to_alert(incident_data) == expected_output
+    assert change_incident_to_alert(incident_data) == expected_output

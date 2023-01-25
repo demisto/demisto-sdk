@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.constants import (
     TEST_PLAYBOOK,
     FileType,
 )
+from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -134,6 +135,21 @@ from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
+
+
+class MyRepo:
+    active_branch = "not-master"
+
+    def remote(self):
+        return "remote_path"
+
+
+@pytest.fixture(autouse=False)
+def set_git_test_env(mocker):
+    mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+    mocker.patch.object(Content, "git", return_value=MyRepo())
+    mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
+    mocker.patch.object(GitUtil, "_is_file_git_ignored", return_value=False)
 
 
 class TestValidators:
@@ -634,7 +650,9 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize("file_path", INVALID_FILES_PATHS_FOR_ALL_VALIDATIONS)
-    def test_run_all_validations_on_file_failed(self, mocker, file_path):
+    def test_run_all_validations_on_file_failed(
+        self, set_git_test_env, mocker, file_path
+    ):
         """
         Given
         - An invalid file inside a pack
@@ -661,7 +679,9 @@ class TestValidators:
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert not validate_manager.run_validation_on_specific_files()
 
-    def test_run_all_validations_on_file_with_modified_id(self, mocker, integration):
+    def test_run_all_validations_on_file_with_modified_id(
+        self, set_git_test_env, mocker, integration
+    ):
         """
         Given
         - Integration with a modified ID.
@@ -1000,7 +1020,7 @@ class TestValidators:
             INVALID_IGNORED_UNIFIED_INTEGRATION, None
         )
 
-    def test_non_integration_png_files_ignored(self):
+    def test_non_integration_png_files_ignored(self, set_git_test_env):
         """
         Given
         - A png file
@@ -1108,7 +1128,7 @@ class TestValidators:
             "BC104",
         }.issubset(error_list)
 
-    def test_added_files_type_using_function(self, repo, mocker):
+    def test_added_files_type_using_function(self, set_git_test_env, repo, mocker):
         """
         Given:
             - A list of errors that should be checked
@@ -1596,7 +1616,7 @@ class TestValidators:
         mocker.patch.object(ReleaseNotesValidator, "is_file_valid", return_value=True)
         validate_manager = ValidateManager(skip_conf_json=True)
         assert validate_manager.validate_release_notes(
-            file_path, {}, modified_files, None, False
+            file_path, {}, modified_files, None
         )
 
     def test_validate_release_notes__invalid_rn_for_new_pack(self, mocker):
@@ -1624,7 +1644,7 @@ class TestValidators:
         validate_manager.new_packs = {"CortexXDR"}
         assert (
             validate_manager.validate_release_notes(
-                file_path, {file_path}, modified_files, None, False
+                file_path, {file_path}, modified_files, None
             )
             is False
         )
@@ -2650,16 +2670,16 @@ def test_validate_pack_name(repo):
 
     """
     validator_obj = ValidateManager()
-    assert validator_obj.is_valid_pack_name("Packs/original_pack/file", None)
+    assert validator_obj.is_valid_pack_name("Packs/original_pack/file", None, None)
     assert validator_obj.is_valid_pack_name(
-        "Packs/original_pack/file", "Packs/original_pack/file"
+        "Packs/original_pack/file", "Packs/original_pack/file", None
     )
     assert not validator_obj.is_valid_pack_name(
-        "Packs/original_pack/file", "Packs/original_pack_v2/file"
+        "Packs/original_pack/file", "Packs/original_pack_v2/file", None
     )
 
 
-def test_image_error(capsys):
+def test_image_error(set_git_test_env, capsys):
     """
     Given
             a image that isn't located in the right folder.

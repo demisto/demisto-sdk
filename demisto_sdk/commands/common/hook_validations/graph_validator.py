@@ -217,7 +217,10 @@ class GraphValidator(BaseValidator):
                 content_name = query_result.name
                 relationship_data = query_result.uses
                 unknown_content_names = [
-                    relationship.target.identifier for relationship in relationship_data
+                    relationship.target.object_id
+                    if relationship.target.object_id
+                    else relationship.target.name
+                    for relationship in relationship_data
                 ]
                 file_path = query_result.path
                 error_message, error_code = Errors.using_unknown_content(

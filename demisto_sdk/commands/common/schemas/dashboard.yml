@@ -32,6 +32,11 @@ mapping:
     type: seq
     sequence:
       - include: layout_schema
+  marketplaces:
+    type: seq
+    sequence:
+      - type: str
+        enum: [ 'xsoar', 'marketplacev2', 'xpanse' ]
 
 
 

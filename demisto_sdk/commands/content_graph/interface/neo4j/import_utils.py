@@ -26,12 +26,12 @@ class Neo4jImportHandler:
                                                       If not given, the graph will use the content in the `import_path` directory.
         """
         self.import_path: Path = get_neo4j_import_path()
+        self.import_path.mkdir(parents=True, exist_ok=True)
         logger.debug(f"Import path: {self.import_path}")
 
-    def from_path(self, imported_path: Optional[Path] = None) -> None:
+    def extract_files_from_path(self, imported_path: Optional[Path] = None) -> None:
         if not imported_path:
             return None
-        self.clean_import_dir()
         logger.info(f"Importing from {imported_path}")
         with ZipFile(imported_path, "r") as zip_obj:
             zip_obj.extractall(self.import_path)

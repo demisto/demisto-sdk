@@ -9,6 +9,8 @@ from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
+from demisto_sdk.commands.common.content.content import Content
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
@@ -24,6 +26,7 @@ from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
 from demisto_sdk.commands.lint.commands_builder import excluded_files
+from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (
     DESTINATION_FORMAT_INTEGRATION_COPY,
     DESTINATION_FORMAT_PLAYBOOK_COPY,
@@ -95,6 +98,21 @@ CONF_JSON_ORIGINAL_CONTENT = {
         {"integrations": "TestCreateDuplicates", "playbookID": "PagerDuty Test"},
     ]
 }
+
+
+class MyRepo:
+    active_branch = "not-master"
+
+    def remote(self):
+        return "remote_path"
+
+
+@pytest.fixture(autouse=True)
+def set_git_test_env(mocker):
+    mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
+    mocker.patch.object(Content, "git", return_value=MyRepo())
+    mocker.patch.object(ValidateManager, "setup_prev_ver", return_value="origin/master")
+    mocker.patch.object(GitUtil, "_is_file_git_ignored", return_value=False)
 
 
 @pytest.mark.parametrize("source_yml", BASIC_YML_CONTENTS)

@@ -297,7 +297,6 @@ def main():
         slack_client = WebClient(token=slack_token)
         slack_client.chat_postMessage(
             channel=slack_channel,
-            as_user=False,
             attachments=slack_message,
             username="Demisto-SDK CircleCI",
         )

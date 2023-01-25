@@ -892,12 +892,12 @@ def secrets(config, **kwargs):
     type=int,
 )
 @click.option(
-    "-idp",
-    "--id-set-path",
-    help="Path to id_set.json, relevant for when using the "
-    "--check-dependent-api-module flag.",
-    type=click.Path(resolve_path=True),
-    default="Tests/id_set.json",
+    "-di",
+    "--docker-image",
+    default="from-yml",
+    help="The docker image to check package on. Possible values: 'native:maintenance', 'native:ga', 'native:dev',"
+    " 'all', a specific docker image from Docker Hub (e.g devdemisto/python3:3.10.9.12345) or the default"
+    " 'from-yml'.",
 )
 @click.option(
     "-cdam",
@@ -919,7 +919,7 @@ def lint(**kwargs):
     2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.
     Meant to be used with integrations/scripts that use the folder (package) structure.
     Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
-    If no additional flags specifying the packs are given,will lint only changed files.
+    If no additional flags specifying the packs are given, will lint only changed files.
     """
     from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.lint.lint_manager import LintManager
@@ -939,7 +939,6 @@ def lint(**kwargs):
         quiet=kwargs.get("quiet"),  # type: ignore[arg-type]
         prev_ver=kwargs.get("prev_ver"),  # type: ignore[arg-type]
         json_file_path=kwargs.get("json_file"),  # type: ignore[arg-type]
-        id_set_path=kwargs.get("id_set_path"),  # type: ignore[arg-type]
         check_dependent_api_module=kwargs.get("check_dependent_api_module"),  # type: ignore[arg-type]
     )
     return lint_manager.run(
@@ -959,6 +958,7 @@ def lint(**kwargs):
         no_coverage=kwargs.get("no_coverage"),  # type: ignore[arg-type]
         coverage_report=kwargs.get("coverage_report"),  # type: ignore[arg-type]
         docker_timeout=kwargs.get("docker_timeout"),  # type: ignore[arg-type]
+        docker_image_flag=kwargs.get("docker_image"),  # type: ignore[arg-type]
         time_measurements_dir=kwargs.get("time_measurements_dir"),  # type: ignore[arg-type]
     )
 
@@ -2619,6 +2619,13 @@ def test_content(**kwargs):
     "-rn", "--release-notes", is_flag=True, help="Will run only on release notes files"
 )
 @click.option(
+    "-xs",
+    "--xsoar-only",
+    is_flag=True,
+    help="Run only on files from XSOAR-supported Packs.",
+    default=False,
+)
+@click.option(
     "-pkw",
     "--use-packs-known-words",
     is_flag=True,
@@ -2641,6 +2648,7 @@ def doc_review(**kwargs):
         use_git=kwargs.get("use_git"),
         prev_ver=kwargs.get("prev_ver"),
         release_notes_only=kwargs.get("release_notes"),
+        xsoar_only=kwargs.get("xsoar_only"),
         load_known_words_from_pack=kwargs.get("use_packs_known_words"),
     )
     result = doc_reviewer.run_doc_review()
@@ -2992,6 +3000,11 @@ def create_content_graph(
     help="Path to content graph zip file to import",
 )
 @click.option(
+    "--use-current",
+    help="Whether to use the current content graph to update",
+    default=False,
+)
+@click.option(
     "-p",
     "--packs",
     help="A comma-separated list of packs to update",
@@ -3033,6 +3046,7 @@ def create_content_graph(
 def update_content_graph(
     use_git: bool = False,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+    use_current: bool = False,
     imported_path: Path = None,
     packs: list = None,
     no_dependencies: bool = False,
@@ -3061,6 +3075,7 @@ def update_content_graph(
             marketplace=MarketplaceVersions(marketplace),
             use_git=use_git,
             imported_path=imported_path,
+            use_current=use_current,
             packs_to_update=packs or [],
             dependencies=not no_dependencies,
             output_path=output_path,

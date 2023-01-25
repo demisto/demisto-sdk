@@ -277,12 +277,12 @@ def _verify_dependencies_existence(
             if pack.object_id == dependency["source_id"]:
                 if should_exist:
                     assert any(
-                        r.target.object_id == dependency["target"]
+                        r.content_item.object_id == dependency["target"]
                         for r in pack.depends_on
                     )
                 else:
                     assert all(
-                        r.target.object_id != dependency["target"]
+                        r.content_item.object_id != dependency["target"]
                         for r in pack.depends_on
                     )
                 break

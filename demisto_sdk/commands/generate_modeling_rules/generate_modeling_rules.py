@@ -57,13 +57,11 @@ def generate_modeling_rules(
         help=(
             "The vendor name of the product"
         ),
-
     ),
     verbosity: int = typer.Option(
         0,
         "-v",
         "--verbose",
-        count=True,
         clamp=True,
         max=3,
         show_default=True,
@@ -86,19 +84,18 @@ def generate_modeling_rules(
         rich_help_panel="Logging Configuration",
     ),
     log_file_name: str = typer.Option(
-        "test-modeling-rule.log",
+        "generate_modeling_rules.log",
         "-ln",
         "--log-name",
         resolve_path=True,
         help="The file name (including extension) where log output should be saved to.",
         rich_help_panel="Logging Configuration",
     ),
-):  
+):
     errors = False
     try:
         setup_rich_logging(verbosity, quiet, log_path, log_file_name)
 
-        output_path = build_folder_hirarcy(output_path, vendor=vendor, product=product)
         outputfile_schema = output_path.joinpath(f'{vendor}_{product}_modeling_rules.json')
         outputfile_xif = output_path.joinpath(f'{vendor}_{product}_modeling_rules.xif')
         outputfile_yml = output_path.joinpath(f'{vendor}_{product}_modeling_rules.yml')
@@ -113,7 +110,7 @@ def generate_modeling_rules(
         with open(raw_event_path, 'r') as f:
             raw_event = json.load(f)
 
-        schema_path = "/Users/okarkkatz/dev/demisto/content/Utils/Moddeling_rule_creator/Schema.csv"    # @TODO: handle taking this from the Yaron noiman
+        schema_path = "/Users/okarkkatz/dev/demisto/test_folder/Schema.csv"    # @TODO: handle taking this from the Yaron noiman
         xdm_rule_to_dtype, xdm_rule_to_dclass = extract_data_from_all_xdm_schema(schema_path)
 
         mapping_list = init_mapping_field_list(modeling_rules_df, raw_event, xdm_rule_to_dtype, xdm_rule_to_dclass)
@@ -121,7 +118,7 @@ def generate_modeling_rules(
         create_scheme_file(mapping_list, data_set_name, outputfile_schema)
         create_xif_file(mapping_list, outputfile_xif, data_set_name)
         create_yml_file(outputfile_yml, vendor, product, sdk_from_version)
-        
+
     except Exception:
         with StringIO() as sio:
             traceback.print_exc(file=sio)
@@ -184,15 +181,6 @@ def create_xif_header(dataset_name: str) -> str:
     return xif_rule
 
 
-def build_folder_hirarcy(output_path : Path, product: str, vendor: str) -> Path:
-    if ('ModelingRules') not in output_path.parts:
-        output_path = output_path.joinpath('ModelingRules', f'{product.capitalize}{vendor.capitalize}ModelingRules')
-    else: 
-        output_path = output_path.joinpath(f'{product.capitalize}{vendor.capitalize}ModelingRules')
-
-    return output_path
-
-
 def init_mapping_field_list(modeling_rules_df: pd.DataFrame, raw_event: dict, xdm_rule_to_dtype: dict, xdm_rule_to_dclass: dict) -> List[MappingField]:
     """
     This function takes all the data gathered and generates the list of MappingFields
@@ -244,10 +232,10 @@ def create_xif_file(mapping_list: List[MappingField], outputfile_xif: Path, data
     """
     Created the xif file for the modeling rules
     """
-    logging.info('Generating xif file\n')
+    logger.info('Generating xif file\n')
     xif_rule = create_xif_header(dataset_name)
     for mapping_rule in mapping_list:
-        logging.info(f'xdm type: {mapping_rule.xdm_field_type} - raw type {mapping_rule.type_raw}')
+        logger.info(f'field name: "{mapping_rule.field_path_raw}" - xdm type: {mapping_rule.xdm_field_type} - raw type {mapping_rule.type_raw}')
         name = mapping_rule.field_path_raw
 
         if '.' in mapping_rule.field_path_raw:
@@ -290,7 +278,7 @@ def create_scheme_file(mapping_list: List[MappingField], dataset_name, outputfil
     """
     Creates the .json schema file
     """
-    logging.info('creating modeling rules schema\n')
+    logger.info('creating modeling rules schema\n')
     name_type_dict = {}
     for mapping_rule in mapping_list:
         keys_list = mapping_rule.field_path_raw.split('.')
@@ -321,7 +309,7 @@ def create_yml_file(outputfile_yml: Path, vendor: str, product: str, sdk_from_ve
     """
     Creates the yml file of the modeling rules 
     """
-    logging.info('creating modeing rules yml file\n')
+    logger.info('creating modeing rules yml file\n')
     yml_file = (f"fromversion: {sdk_from_version}\n"
                 f"id: {product}_{vendor}_modeling_rule\n"
                 f"name: {process_yml_name(product, vendor)}\n"
@@ -367,13 +355,13 @@ def extract_raw_type_data(event: dict, path_to_dict_field: str) -> tuple:
             temp = temp.get(key)        # type: ignore
         else:
             # for example when we have an array inside of a dict
-            logging.info(f'{key=} is not of type dict, or was not found in the event you provided')
+            logger.info(f'{key=} is not of type dict, or was not found in the event you provided')
 
     discovered = discoverType(temp)
     if discovered == 'array':
         # The value is array and we want to check what is the type in the array
         return 'string', True
-        # Security team said in the schema if its array we put type string. 
+        # Security team said in the schema if its array we put type string.
         # if temp:
         #     inner_array_type = discoverType(temp[0])
         #     return inner_array_type, True

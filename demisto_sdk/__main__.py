@@ -3091,18 +3091,15 @@ def exit_from_program(result=0, **kwargs):
 app = typer.Typer(name="modeling-rules", hidden=True, no_args_is_help=True)
 app.command("test", no_args_is_help=True)(test_modeling_rule.test_modeling_rule)
 app.command("init-test-data", no_args_is_help=True)(init_test_data.init_test_data)
-
-
 typer_click_object = typer.main.get_command(app)
 main.add_command(typer_click_object, "modeling-rules")
 
 
-app = typer.Typer(name="generate-modeling-rules", no_args_is_help=True)
-app.command("test", no_args_is_help=True)(generate_modeling_rules.generate_modeling_rules)
+app_generate_modeling_rules = typer.Typer(name="generate-modeling-rules", no_args_is_help=True)
+app_generate_modeling_rules.command("generate-modeling-rules", no_args_is_help=True)(generate_modeling_rules.generate_modeling_rules)
 
-
-typer_click_object = typer.main.get_command(app)
-main.add_command(typer_click_object, "generate-modeling-rules")
+typer_click_object2 = typer.main.get_command(app_generate_modeling_rules)
+main.add_command(typer_click_object2, "generate-modeling-rules")
 
 if __name__ == "__main__":
     main()

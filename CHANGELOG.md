@@ -2,6 +2,7 @@
 ## Unreleased
 * Fixed an issue in **prepare-content** command where large code lines were broken.
 * Fixed an issue where git-*renamed_files* were not retrieved properly.
+* Fixed an issue where test dependencies were calculated in all level dependencies calculation.
 * Added a UUID to name mapper for **download** it replaces UUIDs with names on all downloaded files.
 
 ## 1.9.0

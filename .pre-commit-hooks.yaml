@@ -1,7 +1,7 @@
 - id: run-unit-tests
   name: Run unit tests
   description: Run content test using docker
-  entry: demisto-sdk run-unit-tests
+  entry: demisto-sdk run-unit-tests --native-images
   language: python
   files: .*Packs/.*/(?:Integrations|Scripts)/.*.yml$
 - id: validate

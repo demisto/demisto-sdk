@@ -3189,15 +3189,16 @@ def pre_commit(
 
 @main.command(short_help="Run unit tests in a docker for integrations and scripts")
 @click.help_option("-h", "--help")
+@click.option("--native-images", is_flag=True, help="Run unit tests in native images")
 @click.option("-v", "--verbose", is_flag=True, help="Verbose output")
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
-def run_unit_tests(file_paths: Tuple[str, ...], verbose: bool):
+def run_unit_tests(file_paths: Tuple[str, ...], native_images: bool, verbose: bool):
     from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.run_unit_tests.unit_tests_runner import unit_test_runner
 
     if verbose:
         logging_setup(3)
-    sys.exit(unit_test_runner(file_paths))
+    sys.exit(unit_test_runner(file_paths, native_images))
 
 
 @main.result_callback()

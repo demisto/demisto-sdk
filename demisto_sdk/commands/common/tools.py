@@ -62,6 +62,7 @@ from demisto_sdk.commands.common.constants import (
     OFFICIAL_CONTENT_ID_SET_PATH,
     OFFICIAL_INDEX_JSON_PATH,
     PACK_METADATA_IRON_BANK_TAG,
+    PACK_METADATA_SUPPORT,
     PACKAGE_SUPPORTING_DIRECTORIES,
     PACKAGE_YML_FILE_REGEX,
     PACKS_DIR,
@@ -88,6 +89,7 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     XSOAR_CONFIG_FILE,
+    XSOAR_SUPPORT,
     FileType,
     IdSetKeys,
     MarketplaceVersions,
@@ -1598,6 +1600,30 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.parent.name == DOC_FILES_DIR:
         return FileType.DOC_FILE
 
+    elif path.name.lower() == "pipfile":
+        return FileType.PIPFILE
+
+    elif path.name.lower() == "pipfile.lock":
+        return FileType.PIPFILE_LOCK
+
+    elif path.suffix.lower() == ".ini":
+        return FileType.INI
+
+    elif path.suffix.lower() == ".pem":
+        return FileType.PEM
+
+    elif (
+        path.name.lower()
+        in ("commands_example", "commands_examples", "command_examples")
+        or path.suffix.lower() == ".txt"
+    ):
+        return FileType.TXT
+    elif path.name == ".pylintrc":
+        return FileType.PYLINTRC
+
+    elif path.name == "LICENSE":
+        return FileType.LICENSE
+
     return None
 
 
@@ -1645,6 +1671,9 @@ def find_type(
         raise err
 
     if file_type == "yml" or path.lower().endswith(".yml"):
+        if path.lower().endswith("_unified.yml"):
+            return FileType.UNIFIED_YML
+
         if "category" in _dict:
             if _dict.get("beta") and not ignore_sub_categories:
                 return FileType.BETA_INTEGRATION
@@ -2631,6 +2660,22 @@ def is_pack_path(input_path: str) -> bool:
         - False if the input path is not for a given pack.
     """
     return os.path.basename(os.path.dirname(input_path)) == PACKS_DIR
+
+
+def is_xsoar_supported_pack(file_path: str) -> bool:
+
+    """
+    Takes a path to a file and returns a boolean indicating
+    whether this file belongs to an XSOAR-supported Pack.
+
+    Args:
+        - `file_path` (`str`): The path of the file.
+
+    Returns:
+        - `bool`
+    """
+
+    return get_pack_metadata(file_path).get(PACK_METADATA_SUPPORT) == XSOAR_SUPPORT
 
 
 def get_relative_path_from_packs_dir(file_path: str) -> str:

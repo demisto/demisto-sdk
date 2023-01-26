@@ -42,7 +42,7 @@ def get_all_level_packs_dependencies(
         MATCH path = (shortestPath((p1:{ContentType.PACK}{params_str})-[r:{RelationshipType.DEPENDS_ON}*..{MAX_DEPTH}]->(p2:{ContentType.PACK})))
         WHERE id(p1) = pack_id AND id(p1) <> id(p2)
         AND all(n IN nodes(path) WHERE "{marketplace}" IN n.marketplaces)
-        {"AND all(r IN relationships(path) WHERE r.mandatorily = true)" if mandatorily else ""}
+        AND all(r IN relationships(path) WHERE NOT r.is_test {"AND r.mandatorily = true)" if mandatorily else ""}
         RETURN pack_id, collect(r) as relationships, collect(p2) AS dependencies
     """
     result = run_query(tx, query, ids_list=list(ids_list))
@@ -227,10 +227,13 @@ def create_depends_on_relationships(tx: Transaction) -> None:
         AND id(pack_a) <> id(pack_b)
         AND NOT pack_a.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
         AND NOT pack_b.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
-        AND a.is_test <> true
-        AND b.is_test <> true
         WITH pack_a, a, r, b, pack_b
-        MERGE (pack_a)-[dep:DEPENDS_ON]->(pack_b)
+        MERGE (pack_a)-[dep:{RelationshipType.DEPENDS_ON}]->(pack_b)
+        ON CREATE
+            SET dep.is_test = a.is_test
+        ON MATCH
+            SET dep.is_test = dep.is_test AND a.is_test
+
         WITH dep, pack_a, a, r, b, pack_b, REDUCE(
             marketplaces = [], mp IN pack_a.marketplaces |
             CASE WHEN mp IN pack_b.marketplaces THEN marketplaces + mp ELSE marketplaces END

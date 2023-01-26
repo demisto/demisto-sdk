@@ -84,6 +84,9 @@ class PreCommitRunner:
         precommit_env = os.environ.copy()
         skipped_hooks = list(SKIPPED_HOOKS)
         skipped_hooks.extend(skip_hooks or [])
+        if os.getenv("CI"):
+            # No reason to update the docker-image on CI?
+            skipped_hooks.append("update-docker-image")
         if not test:
             skipped_hooks.append("run-unit-tests")
         if no_fix:

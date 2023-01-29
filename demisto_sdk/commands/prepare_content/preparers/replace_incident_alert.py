@@ -11,7 +11,14 @@ def change_incident_to_alert(data: dict) -> dict:
     def fix_recursively(datum: Union[list, dict]) -> Union[list, dict]:
         if isinstance(datum, dict):
             if (
-                datum.get("id") == "relatedIncidents"
+                (
+                    ("id" in datum and datum["id"] == "relatedIncidents")  # layout
+                    or (
+                        {"i", "x", "y", "h", "w"}.issubset(
+                            datum.keys()
+                        )  # layout container
+                    )
+                )
                 and datum.get("name") == "Related Incidents"
                 and datum.get("name_x2") is None
             ):  # the kind of dictionary we want to fix

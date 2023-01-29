@@ -63,6 +63,7 @@ from demisto_sdk.commands.common.constants import (
     OFFICIAL_CONTENT_ID_SET_PATH,
     OFFICIAL_INDEX_JSON_PATH,
     PACK_METADATA_IRON_BANK_TAG,
+    PACK_METADATA_SUPPORT,
     PACKAGE_SUPPORTING_DIRECTORIES,
     PACKAGE_YML_FILE_REGEX,
     PACKS_DIR,
@@ -89,6 +90,7 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     XSOAR_CONFIG_FILE,
+    XSOAR_SUPPORT,
     FileType,
     IdSetKeys,
     MarketplaceVersions,
@@ -1350,14 +1352,16 @@ def get_ignore_pack_skipped_tests(
     return ignored_tests_set
 
 
-def get_all_docker_images(script_obj) -> List[str]:
-    """Gets a yml as dict and returns a list of all 'dockerimage' values in the yml.
+def get_docker_images_from_yml(script_obj) -> List[str]:
+    """
+    Gets a yml as dict of the script/integration that lint runs on, and returns a list of all 'dockerimage' values
+    in the yml (including 'alt_dockerimages' if the key exist).
 
     Args:
-        script_obj (dict): A yml dict.
+        script_obj (dict): A yml as dict of the integration/script that lint runs on.
 
     Returns:
-        List. A list of all docker images.
+        (List): A list including all the docker images of the integration/script.
     """
     # this makes sure the first docker in the list is the main docker image.
     def_docker_image = DEF_DOCKER
@@ -1603,6 +1607,30 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.parent.name == DOC_FILES_DIR:
         return FileType.DOC_FILE
 
+    elif path.name.lower() == "pipfile":
+        return FileType.PIPFILE
+
+    elif path.name.lower() == "pipfile.lock":
+        return FileType.PIPFILE_LOCK
+
+    elif path.suffix.lower() == ".ini":
+        return FileType.INI
+
+    elif path.suffix.lower() == ".pem":
+        return FileType.PEM
+
+    elif (
+        path.name.lower()
+        in ("commands_example", "commands_examples", "command_examples")
+        or path.suffix.lower() == ".txt"
+    ):
+        return FileType.TXT
+    elif path.name == ".pylintrc":
+        return FileType.PYLINTRC
+
+    elif path.name == "LICENSE":
+        return FileType.LICENSE
+
     return None
 
 
@@ -1650,6 +1678,9 @@ def find_type(
         raise err
 
     if file_type == "yml" or path.lower().endswith(".yml"):
+        if path.lower().endswith("_unified.yml"):
+            return FileType.UNIFIED_YML
+
         if "category" in _dict:
             if _dict.get("beta") and not ignore_sub_categories:
                 return FileType.BETA_INTEGRATION
@@ -2260,6 +2291,9 @@ def get_demisto_version(client: demisto_client) -> Union[Version, LegacyVersion]
         about_data = json.loads(resp[0].replace("'", '"'))
         return parse(about_data.get("demistoVersion"))  # type: ignore
     except Exception:
+        logger.warning(
+            "Could not parse Xsoar version, please make sure the environment is properly configured."
+        )
         return parse("0")
 
 
@@ -2633,6 +2667,22 @@ def is_pack_path(input_path: str) -> bool:
         - False if the input path is not for a given pack.
     """
     return os.path.basename(os.path.dirname(input_path)) == PACKS_DIR
+
+
+def is_xsoar_supported_pack(file_path: str) -> bool:
+
+    """
+    Takes a path to a file and returns a boolean indicating
+    whether this file belongs to an XSOAR-supported Pack.
+
+    Args:
+        - `file_path` (`str`): The path of the file.
+
+    Returns:
+        - `bool`
+    """
+
+    return get_pack_metadata(file_path).get(PACK_METADATA_SUPPORT) == XSOAR_SUPPORT
 
 
 def get_relative_path_from_packs_dir(file_path: str) -> str:

@@ -2,7 +2,8 @@ import logging
 from typing import List, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
@@ -31,3 +32,11 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
             data["nativeimage"] = supported_native_images
 
         return data
+
+    @property
+    def imported_by(self) -> List[BaseContent]:
+        return [
+            r.content_item
+            for r in self.relationships_data[RelationshipType.IMPORTS]
+            if r.content_item == r.source
+        ]

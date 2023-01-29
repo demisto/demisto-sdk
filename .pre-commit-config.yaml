@@ -28,8 +28,8 @@ repos:
       rev: "6.0.0"
       hooks:
           - id: flake8
-    - repo: https://github.com/timothycrosley/isort
-      rev: v5.11.3
+    - repo: https://github.com/PyCQA/isort
+      rev: "5.12.0"
       hooks:
           - id: isort
             exclude: demisto_sdk/commands/init/templates/.*
@@ -53,3 +53,7 @@ repos:
       rev: "v2.6"
       hooks:
           - id: vulture
+    - repo: https://github.com/abravalheri/validate-pyproject
+      rev: v0.10.1
+      hooks:
+          - id: validate-pyproject

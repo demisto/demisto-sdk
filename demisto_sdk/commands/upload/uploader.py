@@ -406,9 +406,10 @@ class Uploader:
             common_packs = installed_packs & set(self.pack_names)  # type: ignore
             if common_packs:
                 pack_names = "\n".join(common_packs)
+                marketplace = os.environ.get('DEMISTO_SDK_MARKETPLACE', 'XSOAR').upper().replace('MARKETPLACEV2', 'XSIAM')
                 click.secho(
                     f"This command will overwrite the following packs:\n{pack_names}.\n"
-                    "Any changes made on XSOAR will be lost.",
+                    f"Any changes made on {marketplace} will be lost.",
                     fg="bright_red",
                 )
                 if not self.override_existing:

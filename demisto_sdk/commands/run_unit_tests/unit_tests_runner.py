@@ -40,7 +40,7 @@ def unit_test_runner(file_paths: List[Path], native_images: bool = False) -> int
         runner = f"{(Path(__file__).parent / 'pytest_runner.sh')}"
         if integration_script.type == "powershell":
             runner = f"{(Path(__file__).parent / 'pwsh_test_runner.sh')}"
-
+        shutil.copy(runner, integration_script.path.parent / "test_runner.sh")
         docker_images = [integration_script.docker_image or DEFAULT_DOCKER_IMAGE]
         if native_images:
             docker_images.extend(integration_script.get_supported_native_images(MarketplaceVersions.XSOAR, get_image_reference=True, only_production_image=False))
@@ -72,11 +72,10 @@ def unit_test_runner(file_paths: List[Path], native_images: bool = False) -> int
                     },
                     volumes=[
                         f"{CONTENT_PATH}:/content",
-                        f"{runner}:/devwork/runner.sh",
                         "/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt",
                         "/etc/pip.conf:/etc/pip.conf",
                     ],
-                    command="sh /devwork/runner.sh",
+                    command="sh test_runner.sh",
                     working_dir=working_dir,
                     detach=True,
                 )

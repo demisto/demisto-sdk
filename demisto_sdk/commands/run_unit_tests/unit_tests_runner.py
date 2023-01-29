@@ -72,11 +72,11 @@ def unit_test_runner(file_paths: List[Path], native_images: bool = False) -> int
                     },
                     volumes=[
                         f"{CONTENT_PATH}:/content",
-                        f"{runner}:/runner.sh",
+                        f"{runner}:/devwork/runner.sh",
                         "/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt",
                         "/etc/pip.conf:/etc/pip.conf",
                     ],
-                    command="sh /runner.sh",
+                    command="sh /devwork/runner.sh",
                     working_dir=working_dir,
                     detach=True,
                 )

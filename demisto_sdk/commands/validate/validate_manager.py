@@ -301,8 +301,6 @@ class ValidateManager:
             FileType.INI,
             FileType.PEM,
             FileType.METADATA,
-            FileType.PARSING_RULE_XIF,
-            FileType.MODELING_RULE_XIF,
         )
 
         self.is_external_repo = is_external_repo
@@ -766,6 +764,8 @@ class ValidateManager:
         is_added_file = file_path in added_files if added_files else False
         if file_type == FileType.MODELING_RULE_TEST_DATA:
             file_path = file_path.replace("_testdata.json", ".yml")
+        if file_path.endswith(".xif"):
+            file_path = file_path.replace(".xif", ".yml")
         if (
             file_type in self.skipped_file_types
             or self.is_skipped_file(file_path)
@@ -1005,13 +1005,17 @@ class ValidateManager:
         elif file_type == FileType.TRIGGER:
             return self.validate_triggers(structure_validator, pack_error_ignore_list)
 
-        elif file_type == FileType.PARSING_RULE:
+        elif file_type in (
+            FileType.PARSING_RULE,
+            FileType.PARSING_RULE_XIF,
+        ):
             return self.validate_parsing_rule(
                 structure_validator, pack_error_ignore_list
             )
 
         elif file_type in (
             FileType.MODELING_RULE,
+            FileType.MODELING_RULE_XIF,
             FileType.MODELING_RULE_TEST_DATA,
         ):
             print(f"Validating {file_type.value} file: {file_path}")

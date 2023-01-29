@@ -1,0 +1,17 @@
+type: map
+mapping:
+  templates_data:
+    type: seq
+    sequence:
+      - include: templates_data_schema
+
+
+schema;templates_data_schema:
+  type: map
+  mapping:
+    global_id:
+      type: str
+      required: true
+    report_name:
+      type: str
+      required: true

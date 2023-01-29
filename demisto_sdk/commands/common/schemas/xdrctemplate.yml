@@ -1,0 +1,20 @@
+type: map
+mapping:
+  os_type:
+    type: str
+    required: true
+  profile_type:
+    type: str
+    required: true
+  name:
+    type: str
+    required: true
+  content_global_id:
+    type: str
+    required: true
+  from_xdr_version:
+    type: str
+    required: true
+  yaml_template:
+    type: str
+    required: true

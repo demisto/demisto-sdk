@@ -154,6 +154,7 @@ class BaseValidator:
         suggested_fix=None,
         warning=False,
         drop_line=False,
+        ignored_errors=None,
     ):
         """
         Handle an error that occurred during validation.
@@ -166,10 +167,14 @@ class BaseValidator:
             file_path (str): The file from which the error occurred
             error_code (str): The error code
             should_print (bool): whether the command should be printed
+            ignored_errors (dict): if there are any ignored_errors, will override the ignored_errors attribute.
 
         Returns:
             str: formatted error message, None in case validation should be skipped or can be ignored.
         """
+        if ignored_errors:
+            self.ignored_errors = ignored_errors
+
         if self.specific_validations:
             if not self.should_run_validation(error_code):
                 # if the error code is not specified in the

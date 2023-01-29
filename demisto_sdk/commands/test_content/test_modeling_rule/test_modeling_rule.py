@@ -154,8 +154,8 @@ def generate_xql_query(rule: SingleModelingRule, test_data_event_ids: List[str])
         [f'"{td_event_id}"' for td_event_id in test_data_event_ids]
     )
     query = (
-        f"datamodel dataset in({rule.dataset}) | filter {rule.dataset}.test_data_event_id in({td_event_ids}) "
-        f"| dedup {rule.dataset}.test_data_event_id by desc _insert_time | fields "
+        f"config timeframe = 10y | datamodel dataset in({rule.dataset}) | filter {rule.dataset}.test_data_event_id "
+        f"in({td_event_ids}) | dedup {rule.dataset}.test_data_event_id by desc _insert_time | fields "
         f"{rule.dataset}.test_data_event_id, {fields}"
     )
     return query
@@ -218,7 +218,7 @@ def check_dataset_exists(
         f'[cyan]Checking if dataset "{dataset}" exists on the tenant...[/cyan]',
         extra={"markup": True},
     )
-    query = f"dataset = {dataset}"
+    query = f"config timeframe = 10y | dataset = {dataset}"
     for i in range(timeout // interval):
         logger.debug(f"Check #{i+1}...")
         try:
@@ -229,6 +229,15 @@ def check_dataset_exists(
                     f"[green]Dataset {dataset} exists[/green]", extra={"markup": True}
                 )
                 return
+            else:
+                err = (
+                    f"[red]Dataset {dataset} exists but no results were returned. This could mean that your testdata "
+                    "does not meet the criteria for an associated Parsing Rule and is therefore being dropped from "
+                    "the dataset. Check to see if a Parsing Rule exists for your dataset and that your testdata "
+                    "meets the criteria for that rule.[/red]"
+                )
+                logger.error(err, extra={"markup": True})
+                raise typer.Exit(1)
         except requests.exceptions.HTTPError:
             pass
         sleep(interval)
@@ -335,6 +344,8 @@ def verify_pack_exists_on_tenant(
                         f"[red]Failed to upload pack {containing_pack_id} to tenant[/red]",
                         extra={"markup": True},
                     )
+                # wait for pack to finish installing
+                sleep(1)
             else:
                 upload_result = 1
         if not interactive or not upload_result == 0:

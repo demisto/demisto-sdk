@@ -819,6 +819,7 @@ class UpdateRN:
             desc = data.get("description", "")
             docker_image = data.get("dockerimage")
             rn_desc = ""
+            path = data.get("path")
             if _type is None:
                 continue
 
@@ -829,6 +830,7 @@ class UpdateRN:
                 desc=desc,
                 is_new_file=is_new_file,
                 docker_image=docker_image,
+                path=path,
             )
             if _header_by_type and _header_by_type in current_rn_without_docker_images:
                 if self.does_content_item_header_exist_in_rns(

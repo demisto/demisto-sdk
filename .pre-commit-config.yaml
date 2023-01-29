@@ -29,7 +29,7 @@ repos:
       hooks:
           - id: flake8
     - repo: https://github.com/timothycrosley/isort
-      rev: v5.11.3
+      rev: v5.12.0
       hooks:
           - id: isort
             exclude: demisto_sdk/commands/init/templates/.*

@@ -5,6 +5,7 @@
 * Fixed an issue where test dependencies were calculated in all level dependencies calculation.
 * Added a UUID to name mapper for **download** it replaces UUIDs with names on all downloaded files.
 * Updated the demisto-py to v3.2.6 which now supports basic proxy authentication.
+* Improved the message shown when using **upload** and overwriting packs.
 
 ## 1.9.0
 * Fixed an issue where the Slack notifier was using a deprecated argument.

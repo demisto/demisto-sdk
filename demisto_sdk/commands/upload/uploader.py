@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
     CONTENT_ENTITIES_DIRS,
     DASHBOARDS_DIR,
+    ENV_DEMISTO_SDK_MARKETPLACE,
     INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR,
     INDICATOR_FIELDS_DIR,
@@ -29,7 +30,6 @@ from demisto_sdk.commands.common.constants import (
     WIDGETS_DIR,
     FileType,
     MarketplaceVersions,
-    ENV_DEMISTO_SDK_MARKETPLACE,
 )
 from demisto_sdk.commands.common.content.errors import ContentFactoryError
 from demisto_sdk.commands.common.content.objects.abstract_objects import (

@@ -4,6 +4,7 @@
 * Fixed an issue where git-*renamed_files* were not retrieved properly.
 * Fixed an issue where test dependencies were calculated in all level dependencies calculation.
 * Added a UUID to name mapper for **download** it replaces UUIDs with names on all downloaded files.
+* Added a modification for layout and widget objects in **prepare-content**, where `Related Incident` is replaced with `Related Alerts` when uploading to `marketplacev2` (XSIAM).
 
 ## 1.9.0
 * Fixed an issue where the Slack notifier was using a deprecated argument.
@@ -17,7 +18,6 @@
 * Fixed an issue in **update-release-notes** command where an error occurred when executing the same command a second time.
 * Fixed an issue where **validate** would not always ignore errors listed under `.pack-ignore`.
 * Fixed an issue where running **validate** on a specific pack didn't test all the relevant entities.
-* Added a modification for layout and widget objects in **prepare-content**, where `Related Incident` is replaced with `Related Alerts` when uploading to `marketplacev2` (XSIAM).
 * Fixed an issue where fields ending with `_x2` where not replaced in the appropriate Marketplace.
 
 ## 1.8.3

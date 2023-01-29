@@ -145,6 +145,7 @@ class FileType(str, Enum):
     JOB = "job"
     BUILD_CONFIG_FILE = "build-config-file"
     PARSING_RULE = "parsingrule"
+    PARSING_RULE_XIF = "parsingrulexif"
     MODELING_RULE = "modelingrule"
     MODELING_RULE_TEST_DATA = "modelingruletestdata"
     MODELING_RULE_XIF = "modelingrulexif"

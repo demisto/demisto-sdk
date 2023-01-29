@@ -5,8 +5,7 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
-import autopep8
-import isort
+
 from ruamel.yaml.scalarstring import PlainScalarString, SingleQuotedScalarString
 
 from demisto_sdk.commands.common.configuration import Configuration
@@ -44,7 +43,6 @@ class YmlSplitter:
         no_auto_create_dir (bool): whether to create a dir
         base_name (str): the base name of all extracted files
         no_readme (bool): whether to extract readme
-        no_code_formatting (bool): whether to avoid basic formatting on the code, i.e. autopep8 and isort
         file_type (str): yml file type (integration/script/modeling or parsing rule)
         configuration (Configuration): Configuration object
         lines_inserted_at_code_start (int): the amount of lines inserted at the beginning of the code file
@@ -62,7 +60,6 @@ class YmlSplitter:
         base_name: str = "",
         no_readme: bool = False,
         no_logging: bool = False,
-        no_code_formatting: bool = False,
         **_,  # ignoring unexpected kwargs
     ):
         self.input = Path(input).resolve()
@@ -73,7 +70,6 @@ class YmlSplitter:
         self.base_name = base_name
         self.readme = not no_readme
         self.logging = not no_logging
-        self.run_code_formatting: bool = not no_code_formatting
         self.lines_inserted_at_code_start = 0
         self.config = configuration or Configuration()
         self.auto_create_dir = not no_auto_create_dir
@@ -181,39 +177,6 @@ class YmlSplitter:
                     # open an empty file
                     with open(readme, "w"):
                         pass
-
-            # Python code formatting and dev env setup
-            if code_type == TYPE_PYTHON:
-                if self.run_code_formatting:
-                    self.print_logs(
-                        f"Running autopep8 on file: {code_file} ...",
-                        log_color=LOG_COLORS.NATIVE,
-                    )
-                    try:
-                        autopep8.fix_code(
-                            code_file, options={"max_line_length": 130, "in_place": 1}
-                        )
-                    except FileNotFoundError:
-                        self.print_logs(
-                            "autopep8 skipped! It doesn't seem you have autopep8 installed.\n"
-                            "Make sure to install it with: pip install autopep8.\n"
-                            "Then run: autopep8 -i {}".format(code_file),
-                            LOG_COLORS.YELLOW,
-                        )
-
-                    self.print_logs(
-                        f"Running isort on file: {code_file} ...", LOG_COLORS.NATIVE
-                    )
-                    try:
-                        isort.file(code_file)
-                    except FileNotFoundError:
-                        self.print_logs(
-                            "isort skipped! It doesn't seem you have isort installed.\n"
-                            "Make sure to install it with: pip install isort.\n"
-                            "Then run: isort {}".format(code_file),
-                            LOG_COLORS.YELLOW,
-                        )
-
         self.print_logs(
             f"Finished splitting the yml file - you can find the split results here: {output_path}",
             log_color=LOG_COLORS.GREEN,

@@ -766,7 +766,6 @@ class TestMergeExistingFile:
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
             downloader.log_verbose = False
-            downloader.no_code_formatting = False
             downloader.merge_and_extract_existing_file(
                 env.INTEGRATION_CUSTOM_CONTENT_OBJECT
             )
@@ -808,7 +807,6 @@ class TestMergeExistingFile:
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
             downloader.log_verbose = False
-            downloader.no_code_formatting = False
             downloader.merge_and_extract_existing_file(
                 env.INTEGRATION_CUSTOM_CONTENT_OBJECT
             )

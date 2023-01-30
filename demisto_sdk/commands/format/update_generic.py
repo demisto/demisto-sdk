@@ -27,6 +27,7 @@ from demisto_sdk.commands.format.format_constants import (
     OLD_FILE_TYPES,
     SKIP_RETURN_CODE,
     SUCCESS_RETURN_CODE,
+    VERSION_KEY,
 )
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
@@ -79,6 +80,8 @@ class BaseUpdate:
             self.verbose,
         )
         self.schema_path = path
+        self.schema = self.get_schema()
+        self.extended_schema: dict = self.recursive_extend_schema(self.schema, self.schema)  # type: ignore
         self.from_version = from_version
         self.no_validate = no_validate
         self.assume_yes = assume_yes
@@ -127,8 +130,16 @@ class BaseUpdate:
         else:
             return output_file_path
 
+    def is_key_in_schema_root(self, key: str) -> bool:
+        """Returns true iff a key exists at the root of the file schema mapping."""
+        if not isinstance(self.extended_schema, dict):
+            raise Exception("Cannot run this method before getting the schema.")
+        return key in self.extended_schema.get("mapping", {}).keys()
+
     def set_version_to_default(self, location=None):
-        self.set_default_value("version", DEFAULT_VERSION, location)
+        if location is None and not self.is_key_in_schema_root(VERSION_KEY):
+            return  # nothing to set
+        self.set_default_value(VERSION_KEY, DEFAULT_VERSION, location)
 
     def set_default_value(self, key: str, value: Any, location=None):
         """Replaces the version to default."""
@@ -145,14 +156,18 @@ class BaseUpdate:
 
     def remove_unnecessary_keys(self):
         """Removes keys that are in file but not in schema of file type"""
-        schema = get_yaml(self.schema_path)
-        extended_schema = self.recursive_extend_schema(schema, schema)
         if self.verbose:
             print("Removing Unnecessary fields from file")
-        if isinstance(extended_schema, dict):
+        if isinstance(self.extended_schema, dict):
             self.recursive_remove_unnecessary_keys(
-                extended_schema.get("mapping", {}), self.data
+                self.extended_schema.get("mapping", {}), self.data
             )
+
+    def get_schema(self) -> dict:
+        try:
+            return get_yaml(self.schema_path)
+        except FileNotFoundError:
+            return {}
 
     @staticmethod
     def recursive_extend_schema(
@@ -325,6 +340,10 @@ class BaseUpdate:
             default_from_version: default fromVersion specific to the content type.
             file_type: the file type.
         """
+        if self.from_version_key and not self.is_key_in_schema_root(
+            self.from_version_key
+        ):
+            return  # nothing to set
         current_fromversion_value = self.data.get(self.from_version_key, "")
         if self.verbose:
             click.echo("Setting fromVersion field")
@@ -348,8 +367,7 @@ class BaseUpdate:
         Returns:
             List of keys that should be deleted in file
         """
-        yaml_content = get_yaml(self.schema_path)
-        schema_fields = yaml_content.get("mapping").keys()
+        schema_fields = self.schema.get("mapping", {}).keys()
         arguments_to_remove = set(self.data.keys()) - set(schema_fields)
         return arguments_to_remove
 

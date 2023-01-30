@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.tools import get_yaml, is_uuid, print_error
+from demisto_sdk.commands.common.tools import is_uuid, print_error
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES,
     ERROR_RETURN_CODE,
@@ -85,10 +85,11 @@ class BaseUpdateJSON(BaseUpdate):
         self, default_from_version: Optional[str] = "", file_type: str = ""
     ):
         """Manager function for the generic JSON updates."""
-        self.set_version_to_default()
         self.remove_null_fields()
         self.check_server_version()
         self.remove_spaces_end_of_id_and_name()
+        self.remove_unnecessary_keys()
+        self.set_version_to_default()
         self.set_fromVersion(
             default_from_version=default_from_version, file_type=file_type
         )
@@ -118,14 +119,13 @@ class BaseUpdateJSON(BaseUpdate):
 
     def remove_null_fields(self):
         """Remove empty fields from file root."""
-        schema_data = get_yaml(self.schema_path)
-        schema_fields = schema_data.get("mapping").keys()
+        schema_fields = self.schema.get("mapping", {}).keys()
         for field in schema_fields:
             # We want to keep 'false' and 0 values, and avoid removing fields that are required in the schema.
             if (
                 field in self.data
                 and self.data[field] in (None, "", [], {})
-                and not schema_data.get("mapping", {}).get(field, {}).get("required")
+                and not self.schema.get("mapping", {}).get(field, {}).get("required")
             ):
                 # We don't want to remove the defaultRows key in grid, even if it is empty
                 if not (field == "defaultRows" and self.data.get("type", "") == "grid"):

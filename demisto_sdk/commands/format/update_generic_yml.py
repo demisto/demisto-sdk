@@ -150,12 +150,12 @@ class BaseUpdateYML(BaseUpdate):
     ) -> None:
         """Manager function for the generic YML updates."""
 
-        self.set_fromVersion(
-            default_from_version=default_from_version, file_type=file_type
-        )
         self.remove_copy_and_dev_suffixes_from_name()
         self.remove_unnecessary_keys()
         self.remove_spaces_end_of_id_and_name()
+        self.set_fromVersion(
+            default_from_version=default_from_version, file_type=file_type
+        )
         if self.id_and_version_location:
             self.update_id_to_equal_name()
             self.set_version_to_default(self.id_and_version_location)

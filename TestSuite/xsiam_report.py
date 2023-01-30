@@ -19,5 +19,5 @@ class XSIAMReport(JSONBased):
 
     def create_default_xsiam_report(self):
         self.write_json(
-            {"templates_data": [{"global_id": self.name, "name": self.name}]}
+            {"templates_data": [{"global_id": self.name, "report_name": self.name}]}
         )

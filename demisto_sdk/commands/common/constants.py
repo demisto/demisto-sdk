@@ -147,6 +147,7 @@ class FileType(str, Enum):
     JOB = "job"
     BUILD_CONFIG_FILE = "build-config-file"
     PARSING_RULE = "parsingrule"
+    PARSING_RULE_XIF = "parsingrulexif"
     MODELING_RULE = "modelingrule"
     MODELING_RULE_TEST_DATA = "modelingruletestdata"
     MODELING_RULE_XIF = "modelingrulexif"
@@ -302,8 +303,8 @@ CONTENT_ENTITIES_DIRS = [
     WIZARDS_DIR,
     MODELING_RULES_DIR,
     XDRC_TEMPLATE_DIR,
-    LAYOUT_RULES_DIR,
     PARSING_RULES_DIR,
+    LAYOUT_RULES_DIR,
     CORRELATION_RULES_DIR,
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
@@ -1230,6 +1231,7 @@ SCHEMA_TO_REGEX = {
     ],
     "report": [PACKS_REPORT_JSON_REGEX],
     "modelingrule": [MODELING_RULE_YML_REGEX],
+    "modelingruleschema": [MODELING_RULE_SCHEMA_REGEX],
     "release-notes": [PACKS_RELEASE_NOTES_REGEX],
     "genericfield": JSON_ALL_GENERIC_FIELDS_REGEXES,
     "generictype": JSON_ALL_GENERIC_TYPES_REGEXES,
@@ -1237,13 +1239,13 @@ SCHEMA_TO_REGEX = {
     "genericdefinition": JSON_ALL_GENERIC_DEFINITIONS_REGEXES,
     JOB: JSON_ALL_JOB_REGEXES,
     WIZARD: JSON_ALL_WIZARD_REGEXES,
-    LAYOUT_RULE: JSON_ALL_LAYOUT_RULES_REGEXES,
     "correlationrule": [CORRELATION_RULES_YML_REGEX],
     "parsingrule": [PARSING_RULES_YML_REGEX],
     "xsiamdashboard": [XSIAM_DASHBOARD_JSON_REGEX],
     "xsiamreport": [XSIAM_REPORT_JSON_REGEX],
     "trigger": [TRIGGER_JSON_REGEX],
     "xdrctemplate": [XDRC_TEMPLATE_JSON_REGEX],
+    LAYOUT_RULE: JSON_ALL_LAYOUT_RULES_REGEXES,
 }
 
 EXTERNAL_PR_REGEX = r"^pull/(\d+)$"

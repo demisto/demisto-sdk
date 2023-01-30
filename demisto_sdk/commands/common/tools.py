@@ -1572,6 +1572,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.suffix == ".xif":
         if MODELING_RULES_DIR in path.parts:
             return FileType.MODELING_RULE_XIF
+        elif PARSING_RULES_DIR in path.parts:
+            return FileType.PARSING_RULE_XIF
         return FileType.XIF_FILE
 
     elif path.suffix == ".yml":

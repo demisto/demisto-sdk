@@ -199,9 +199,12 @@ class ScriptIntegrationSupportedNativeImages:
 
             if get_image_reference:
                 return list(
-                    map(
-                        self.native_image_config.get_native_image_reference,
-                        native_images,
+                    filter(
+                        None,
+                        map(
+                            self.native_image_config.get_native_image_reference,
+                            native_images,
+                        ),
                     )
                 )
 

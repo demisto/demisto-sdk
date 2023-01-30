@@ -19,5 +19,73 @@ class XSIAMDashboard(JSONBased):
 
     def create_default_xsiam_dashboard(self):
         self.write_json(
-            {"dashboards_data": [{"global_id": self.name, "name": self.name}]}
+            {
+                "dashboards_data": [
+                    {
+                        "name": self.name,
+                        "description": "mock dashboard desc",
+                        "status": "ENABLED",
+                        "layout": [
+                            {
+                                "id": "row-1768",
+                                "data": [
+                                    {
+                                        "key": "xql_1668676732415",
+                                        "data": {
+                                            "type": "Custom XQL",
+                                            "width": 50,
+                                            "height": 434,
+                                            "phrase": 'datamodel \r\n|filter xdm.observer.vendor="mock vendor"',
+                                            "time_frame": {"relativeTime": 2592000000},
+                                            "viewOptions": {
+                                                "type": "map",
+                                                "commands": [
+                                                    {
+                                                        "command": {
+                                                            "op": "=",
+                                                            "name": "header",
+                                                            "value": '"Cloud Regions"',
+                                                        }
+                                                    }
+                                                ],
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        ],
+                        "default_dashboard_id": 1,
+                        "global_id": "f9c52470483a41e4a6afa65c93f70a4b",
+                    }
+                ],
+                "widgets_data": [
+                    {
+                        "widget_key": "xql_1668676732415",
+                        "title": "mock widget",
+                        "creation_time": 1668676732415,
+                        "description": "mock widget desc",
+                        "data": {
+                            "phrase": 'datamodel \r\n|filter xdm.observer.vendor="mock vendor"',
+                            "time_frame": {"relativeTime": 2592000000},
+                            "viewOptions": {
+                                "type": "map",
+                                "commands": [
+                                    {
+                                        "command": {
+                                            "op": "=",
+                                            "name": "header",
+                                            "value": '"Cloud Regions"',
+                                        }
+                                    }
+                                ],
+                            },
+                        },
+                        "support_time_range": True,
+                        "additional_info": {
+                            "query_tables": [],
+                            "query_uses_library": False,
+                        },
+                    },
+                ],
+            }
         )

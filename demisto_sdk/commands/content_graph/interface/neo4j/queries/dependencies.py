@@ -242,7 +242,7 @@ RETURN
             msg = f"Created a DEPENDS_ON relationship between {pack_a} and {pack_b}. Reasons:\n"
             for idx, reason in enumerate(reasons, 1):
                 msg += f"{idx}. [{reason.get('source')}] -> [{reason.get('target')}] (mandatorily: {reason.get('mandatorily')})\n"
-            logger.debug(f"{msg}\n")
+            logger.debug(msg)
 
     if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
         with open(f"{artifacts_folder}/depends_on.json", "w") as fp:

@@ -22,5 +22,19 @@ class LayoutRule(JSONBased):
             {
                 "rule_id": self.name,
                 "rule_name": self.name,
+                "layout_id": "test_layout",
+                "description": "",
+                "alerts_filter": {
+                    "filter": {
+                        "AND": [
+                            {
+                                "SEARCH_FIELD": "alert_type",
+                                "SEARCH_TYPE": "EQ",
+                                "SEARCH_VALUE": "test"
+                            }
+                        ]
+                    }
+                },
+                "fromVersion": "6.10.0",
             }
         )

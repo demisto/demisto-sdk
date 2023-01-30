@@ -1353,6 +1353,7 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.CORRELATION_RULE: "6.10.0",
     FileType.PARSING_RULE: "6.10.0",
     FileType.MODELING_RULE: "6.10.0",
+    FileType.LAYOUT_RULE: "6.10.0"
 }
 # This constant below should always be two versions before the latest server version
 GENERAL_DEFAULT_FROMVERSION = "6.5.0"

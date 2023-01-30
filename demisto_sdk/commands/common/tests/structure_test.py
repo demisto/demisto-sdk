@@ -817,6 +817,26 @@ class TestXSIAMStructureValidator(TestStructureValidator):
         validator = StructureValidator(trigger.path)
         assert not validator.is_valid_scheme()
 
+    def test_valid_layout_rule(self, pack: Pack):
+        """Given a valid trigger, make sure its schema is valid."""
+        layout_rule = pack.create_layout_rule("layout_rule")
+        validator = StructureValidator(layout_rule.path)
+        assert validator.is_valid_scheme()
+
+    def test_invalid_layout_rule_missing_layout_id_field(self, pack: Pack):
+        """
+        Given:
+            An invalid layout rule with a missing layout_id field
+        When:
+            Running schema validation.
+        Then:
+            Make sure the schema is invalid.
+        """
+        layout_rule = pack.create_layout_rule("layout_rule")
+        layout_rule.remove("layout_id")
+        validator = StructureValidator(layout_rule.path)
+        assert not validator.is_valid_scheme()
+
     def test_valid_xsiam_dashboard(self, pack: Pack):
         """Given a valid XSIAM dashboard, make sure its schema is valid."""
         xsiam_dashboard = pack.create_xsiam_dashboard("xsiam_dashboard")

@@ -1,7 +1,7 @@
+import logging
 from pathlib import Path
 
 from demisto_sdk.commands.common.tools import get_content_path
-import logging
 
 logger = logging.getLogger("demisto-sdk")
 

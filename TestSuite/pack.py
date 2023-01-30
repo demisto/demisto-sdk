@@ -218,7 +218,7 @@ class Pack:
                     "subtype": "python3",
                     "script": "",
                     "commands": [],
-                    "dockerimage": docker_image
+                    "dockerimage": docker_image,
                 },
             }
         if image is None:

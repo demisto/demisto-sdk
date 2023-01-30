@@ -3137,8 +3137,22 @@ def update_content_graph(
     help="A comma separated list of hooks of precommit hooks to skip",
 )
 @click.option(
-    "--force-run-hooks",
-    help="A comma separated hooks list of precommit hooks to force run",
+    "--validate",
+    help="Whether to run demisto-sdk validate",
+    is_flag=True,
+    default=False,
+)
+@click.option(
+    "--format",
+    help="Whether to run demisto-sdk format",
+    is_flag=True,
+    default=False,
+)
+@click.option(
+    "--native-images",
+    help="Whether to run demisto-sdk test on native images",
+    is_flag=True,
+    default=False,
 )
 @click.option(
     "-v",
@@ -3160,7 +3174,9 @@ def pre_commit(
     all_files: bool,
     test: bool,
     skip: str,
-    force_run_hooks: str,
+    validate: bool,
+    format: bool,
+    native_images: bool,
     verbose: bool,
     show_diff_on_failure: bool,
     no_fix: bool,
@@ -3169,8 +3185,6 @@ def pre_commit(
 
     if skip:
         skip = skip.split(",")  # type: ignore[assignment]
-    if force_run_hooks:
-        force_run_hooks = force_run_hooks.split(",")  # type: ignore[assignment]
     sys.exit(
         pre_commit_manager(
             input,
@@ -3179,7 +3193,9 @@ def pre_commit(
             all_files,
             test,
             skip,
-            force_run_hooks,
+            validate,
+            format,
+            native_images,
             verbose,
             show_diff_on_failure,
             no_fix,

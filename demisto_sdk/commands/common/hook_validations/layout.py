@@ -170,7 +170,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
             [
                 super().is_valid_layout(),
                 self.is_id_equals_name(),
-                self.is_valid_mpv2_layout()
+                self.is_valid_mpv2_layout(),
             ]
         )
 

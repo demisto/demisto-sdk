@@ -1,6 +1,5 @@
 import os
 import shutil
-from glob import glob
 from os.path import isfile
 from shutil import copyfile
 from typing import List, Tuple
@@ -50,7 +49,6 @@ from demisto_sdk.commands.common.hook_validations.structure import (
 from demisto_sdk.tests.constants_test import (
     DASHBOARD_TARGET,
     DIR_LIST,
-    DUMMY_XSIAM_PACK_PATH,
     INCIDENT_FIELD_TARGET,
     INDICATORFIELD_EXACT_SCHEME,
     INDICATORFIELD_EXTRA_FIELDS,
@@ -70,7 +68,6 @@ from demisto_sdk.tests.constants_test import (
     INVALID_WIDGET_PATH,
     LAYOUT_TARGET,
     LAYOUTS_CONTAINER_TARGET,
-    PACK_TARGET,
     PLAYBOOK_PACK_TARGET,
     PLAYBOOK_TARGET,
     VALID_DASHBOARD_PATH,

@@ -30,7 +30,7 @@ class LayoutRule(JSONBased):
                             {
                                 "SEARCH_FIELD": "alert_type",
                                 "SEARCH_TYPE": "EQ",
-                                "SEARCH_VALUE": "test"
+                                "SEARCH_VALUE": "test",
                             }
                         ]
                     }

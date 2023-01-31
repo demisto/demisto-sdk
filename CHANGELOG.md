@@ -3,7 +3,10 @@
 * Fixed an issue in **prepare-content** command where large code lines were broken.
 * Fixed an issue where git-*renamed_files* were not retrieved properly.
 * Fixed an issue where test dependencies were calculated in all level dependencies calculation.
+* Added formatting and validation to XSIAM content types.
+* Fixed an issue where several XSIAM content types were not validated when passing the `-a` flag.
 * Added a UUID to name mapper for **download** it replaces UUIDs with names on all downloaded files.
+* Updated the demisto-py to v3.2.6 which now supports basic proxy authentication.
 * Improved the message shown when using **upload** and overwriting packs.
 * Removed usgae of pipenv, isort and autopep9 from the **split** command.
 

@@ -9,7 +9,7 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 class RelationshipData(BaseModel):
     relationship_type: RelationshipType
         
-    # This are the database ids of the relationships
+    # These are the database ids of the relationships
     source_id: int
     target_id: int
 

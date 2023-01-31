@@ -1,0 +1,24 @@
+type: map
+mapping:
+  id:
+    type: str
+    required: true
+  name:
+    type: str
+    required: true
+  fromversion:
+    type: str
+    required: true
+  toversion:
+    type: str
+    required: false
+  tags:
+    type: seq
+    required: true
+    allowempty: true
+    sequence:
+      - type: str
+  rules:
+    type: str
+  samples:
+    type: str

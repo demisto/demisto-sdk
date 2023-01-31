@@ -3,7 +3,11 @@
 * Fixed an issue in **prepare-content** command where large code lines were broken.
 * Fixed an issue where git-*renamed_files* were not retrieved properly.
 * Fixed an issue where test dependencies were calculated in all level dependencies calculation.
+* Added formatting and validation to XSIAM content types.
+* Fixed an issue where several XSIAM content types were not validated when passing the `-a` flag.
 * Added a UUID to name mapper for **download** it replaces UUIDs with names on all downloaded files.
+* Updated the demisto-py to v3.2.6 which now supports basic proxy authentication.
+* Improved the message shown when using **upload** and overwriting packs.
 * Added the **pre-commit** command, to run pre-commit hooks on XSOAR content.
 * Added the **run-unit-tests** command, to run unit tests of given content items inside their respective docker images.
 * Added support for filepath arguments in the **validate** and **format** commands.

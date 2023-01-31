@@ -345,13 +345,10 @@ class TestCreateContentGraph:
             - Make sure the service remains available by querying for all content items in the graph.
             - Make sure there is a single integration in the query response.
         """
-        import demisto_sdk.commands.content_graph.objects.repository as repo_module
-
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
 
-        repo_module.USE_FUTURE = False
         pack = repo.create_pack("TestPack")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
         integration = pack.create_integration()

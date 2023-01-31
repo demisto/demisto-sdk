@@ -676,7 +676,7 @@ class UpdateRN:
         rn_string = ""
 
         if self.pack_metadata_only:
-            rn_string += f"\n#### Integrations\n##### {self.pack}\n- Documentation and metadata improvements.\n"
+            rn_string += f"\n#### Integrations\n\n##### {self.pack}\n\n- Documentation and metadata improvements.\n"
             return rn_string
         rn_template_as_dict: dict = {}
         if self.is_force:
@@ -707,8 +707,8 @@ class UpdateRN:
                 path=path,
             )
 
-            header = f"\n#### {RN_HEADER_BY_FILE_TYPE[_type]}\n"
-            rn_template_as_dict[header] = rn_template_as_dict.get(header, "") + rn_desc
+            header = f'\n#### {RN_HEADER_BY_FILE_TYPE[_type]}\n\n'
+            rn_template_as_dict[header] = rn_template_as_dict.get(header, '') + rn_desc
 
         for key, val in rn_template_as_dict.items():
             rn_string = f"{rn_string}{key}{val}"
@@ -747,14 +747,16 @@ class UpdateRN:
                 rn_desc = f"- **{content_name}**\n"
         else:
             if is_new_file:
-                rn_desc = f"##### New: {content_name}\n- {desc}"
+                rn_desc = f"##### New: {content_name}\n\n'
+                if desc:
+                    rn_desc += f'- {desc}"
                 if from_version:
                     rn_desc += f" (Available from Cortex XSOAR {from_version})."
                 rn_desc += "\n"
             else:
-                rn_desc = f"##### {content_name}\n"
-                if self.update_type == "documentation":
-                    rn_desc += "- Documentation and metadata improvements.\n"
+                rn_desc = f'##### {content_name}\n\n'
+                if self.update_type == 'documentation':
+                    rn_desc += '- Documentation and metadata improvements.\n'
                 else:
                     deprecate_rn = ""
                     if _type in (

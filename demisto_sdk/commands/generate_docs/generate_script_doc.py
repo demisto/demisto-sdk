@@ -296,22 +296,16 @@ def generate_script_example(script_name, example=None):
     else:
         examples = example.get(script_name, None)
         if not examples:
-            return "", [
-                f"did not get any example for {script_name}. please add it manually."
-            ]
-        results.extend(["", "## Script Examples"])
+            return '', [f'did not get any example for {script_name}. please add it manually.']
+        results.extend(['## Script Examples', ''])
         for script_example, md_example, context_example in examples:
-            results.extend(["### Example command", f"```{script_example}```"])
+            results.extend(["### Example command", '', f"```{script_example}```"])
             if context_example:
-                results.extend(
-                    [
-                        "### Context Example",
-                        "```json",
-                        f"{context_example}",
-                        "```",
-                        "",
-                    ]
-                )
+                results.extend(['', '### Context Example', '',
+                                '```json',
+                                '{}'.format(context_example),
+                                '```',
+                                '', ])
             if md_example:
                 results.extend(
                     [

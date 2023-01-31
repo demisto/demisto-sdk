@@ -401,6 +401,15 @@ class ReleaseNotesValidator(BaseValidator):
                     is_valid = False
         return is_valid
 
+    @error_codes('RN113')
+    def has_no_markdown_lint_errors(self):
+        # if has_markdown_lint_errors(self.release_notes_file_path):
+        #     error_message, error_code = Errors.release_notes_lint_errors(self.release_notes_file_path)
+        #     if self.handle_error(error_message, error_code, file_path=self.release_notes_file_path):
+        #         return False
+
+        return True
+
     def validate_release_notes_headers(self):
         """
             Validate that the release notes 1st headers are a valid content entity,
@@ -492,6 +501,7 @@ class ReleaseNotesValidator(BaseValidator):
             self.are_release_notes_complete(),
             self.is_docker_image_same_as_yml(),
             self.validate_json_when_breaking_changes(),
+            self.has_no_markdown_lint_errors(),
             self.validate_release_notes_headers(),
         ]
         return all(validations)

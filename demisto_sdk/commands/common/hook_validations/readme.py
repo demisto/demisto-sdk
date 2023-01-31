@@ -155,6 +155,7 @@ class ReadMeValidator(BaseValidator):
             specific_validations=specific_validations,
         )
         self.content_path = get_content_path()
+        self.file_path_str = file_path
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
         self.node_modules_path = self.content_path / Path("node_modules")  # type: ignore
@@ -180,8 +181,8 @@ class ReadMeValidator(BaseValidator):
                 self.verify_demisto_in_readme_content(),
                 self.verify_template_not_in_readme(),
                 self.verify_copyright_section_in_readme_content(),
-            ]
-        )
+                self.has_no_markdown_lint_errors()
+        ])
 
     def mdx_verify(self) -> bool:
         mdx_parse = Path(__file__).parent.parent / "mdx-parse.js"
@@ -785,6 +786,15 @@ class ReadMeValidator(BaseValidator):
                 is_valid = False
 
         return is_valid
+
+    @error_codes('RM114')
+    def has_no_markdown_lint_errors(self):
+        return True
+        # if has_markdown_lint_errors(self.file_path_str):
+        #     error_message, error_code = Errors.readme_lint_errors(self.file_path_str)
+        #     if self.handle_error(error_message, error_code, file_path=self.file_path):
+        #         return False
+        # return True
 
     @error_codes("RM107")
     def verify_template_not_in_readme(self):

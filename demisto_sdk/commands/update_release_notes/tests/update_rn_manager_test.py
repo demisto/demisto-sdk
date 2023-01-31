@@ -164,7 +164,7 @@ class TestUpdateRNManager:
         err = mocker.patch(
             "demisto_sdk.commands.update_release_notes.update_rn_manager.print_warning"
         )
-        mng.create_pack_release_notes(
+        rn = mng.create_pack_release_notes(
             "test1", {"Packs/test2", "Packs/test3"}, set(), set()
         )
         assert "Either no changes were found in test1" in err.call_args[0][0]

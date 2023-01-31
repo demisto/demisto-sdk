@@ -34,7 +34,7 @@ def generate_playbook_doc(
         doc = [
             description,
             "",
-            "## Dependencies",
+            "## Dependencies", '',
             "This playbook uses the following sub-playbooks, integrations, and scripts.",
             "",
         ]
@@ -104,7 +104,7 @@ def generate_playbook_doc(
         if limitations:
             doc.extend(generate_numbered_section("Known Limitations", limitations))
 
-        doc.append("## Playbook Image\n---")
+        doc.extend(['## Playbook Image', '', '---', ''])
         doc.append(generate_image_path(_name, custom_image_path))
 
         doc_text = "\n".join(doc)

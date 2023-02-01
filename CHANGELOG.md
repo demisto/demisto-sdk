@@ -6,6 +6,7 @@
 * Added formatting and validation to XSIAM content types.
 * Fixed an issue where several XSIAM content types were not validated when passing the `-a` flag.
 * Added a UUID to name mapper for **download** it replaces UUIDs with names on all downloaded files.
+* Updated the demisto-py to v3.2.6 which now supports basic proxy authentication.
 * Improved the message shown when using **upload** and overwriting packs.
 
 ## 1.9.0

@@ -51,7 +51,7 @@ class PrepareUploadManager:
                 input = input.parent
             output = input / content_item.normalize_name
         else:
-            if output.is_dir() or not output.exists():
+            if output.is_dir():
                 output = output / content_item.normalize_name
         output: Path  # Output is not optional anymore
         if isinstance(content_item, Pack):

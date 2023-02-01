@@ -307,6 +307,13 @@ def extract_code(config, **kwargs):
     type=click.Path(dir_okay=True),
 )
 @click.option(
+    "-g",
+    "--graph",
+    help="Whether use the content graph",
+    is_flag=True,
+    default=False,
+)
+@click.option(
     "-o", "--output", help="The output dir to write the unified yml to", required=False
 )
 @click.option(

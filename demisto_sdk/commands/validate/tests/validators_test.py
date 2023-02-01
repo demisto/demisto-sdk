@@ -1,6 +1,5 @@
 import contextlib
 import os
-import shutil
 import sys
 from io import StringIO
 from pathlib import Path
@@ -169,7 +168,7 @@ class TestValidators:
         os.remove(CONF_PATH)
         for dir_to_delete in cls.CREATED_DIRS:
             if os.path.exists(dir_to_delete):
-                shutil.rmtree(dir_to_delete)
+                os.rmdir(dir_to_delete)
 
     INPUTS_IS_VALID_VERSION = [
         (VALID_LAYOUT_PATH, LAYOUT_TARGET, True, LayoutValidator),

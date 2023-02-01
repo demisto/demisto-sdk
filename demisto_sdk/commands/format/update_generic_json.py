@@ -93,7 +93,6 @@ class BaseUpdateJSON(BaseUpdate):
         self.set_fromVersion(
             default_from_version=default_from_version, file_type=file_type
         )
-        self.remove_unnecessary_keys()
         self.sync_data_to_master()
 
     def set_toVersion(self):

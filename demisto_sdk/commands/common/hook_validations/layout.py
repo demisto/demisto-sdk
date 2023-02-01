@@ -298,30 +298,27 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         if MarketplaceVersions.MarketplaceV2.value not in marketplace_versions:
             return True
 
-        for key in self.current_file.keys():
-            val = self.current_file.get(key)
+        for key, val in self.current_file.items():
             if isinstance(val, dict):
-                tabs = val.get("tabs", [])
-                if tabs:
-                    for tab in tabs:
-                        if "type" in tab.keys() and tab.get("type") in invalid_tabs:
-                            invalid_types_contained.append(tab.get("type"))
-                        sections = tab.get("sections", [])
-                        for section in sections:
+                for tab in val.get("tabs", []):
+                    if "type" in tab.keys() and tab.get("type") in invalid_tabs:
+                        invalid_types_contained.append(tab.get("type"))
+                    sections = tab.get("sections", [])
+                    for section in sections:
+                        if (
+                            "queryType" in section.keys()
+                            and "type" in section.keys()
+                        ):
                             if (
-                                "queryType" in section.keys()
-                                and "type" in section.keys()
-                            ):
-                                if (
-                                    section.get("queryType") == "script"
-                                    and section.get("type") == "dynamic"
-                                ):
-                                    invalid_types_contained.append(section.get("type"))
-                            if (
-                                "type" in section.keys()
-                                and section.get("type") in invalid_sections
+                                section.get("queryType") == "script"
+                                and section.get("type") == "dynamic"
                             ):
                                 invalid_types_contained.append(section.get("type"))
+                        if (
+                            "type" in section.keys()
+                            and section.get("type") in invalid_sections
+                        ):
+                            invalid_types_contained.append(section.get("type"))
 
         if invalid_types_contained:
             error_message, error_code = Errors.layout_container_contains_invalid_types(

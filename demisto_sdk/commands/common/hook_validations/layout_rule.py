@@ -30,14 +30,7 @@ class LayoutRuleValidator(ContentEntityValidator):
     def is_valid_file(self, validate_rn=True, is_new_file=False, use_git=False):
         """
         Check whether the triggers file is valid or not
-        Note: For now we return True regardless of the item content. More info:
-        https://github.com/demisto/etc/issues/48151#issuecomment-1109660727
+        Note: For now we return True regardless of the item content.
         """
 
         return True
-
-    def is_valid_version(self):
-        """
-        May deleted or be edited in the future by the use of XSIAM new content
-        """
-        pass

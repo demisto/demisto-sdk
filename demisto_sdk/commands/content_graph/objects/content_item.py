@@ -114,7 +114,7 @@ class ContentItem(BaseContent):
         return (
             JSON_Handler()
             if self.path.suffix.lower() == ".json"
-            else YAML_Handler(50_000)
+            else YAML_Handler(width=50_000)
         )
 
     @property

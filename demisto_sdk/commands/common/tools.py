@@ -37,6 +37,7 @@ from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
     API_MODULES_PACK,
     CLASSIFIERS_DIR,
+    CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
     DEF_DOCKER,
     DEF_DOCKER_PWSH,
@@ -1591,6 +1592,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.suffix == ".xif":
         if MODELING_RULES_DIR in path.parts:
             return FileType.MODELING_RULE_XIF
+        elif PARSING_RULES_DIR in path.parts:
+            return FileType.PARSING_RULE_XIF
         return FileType.XIF_FILE
 
     elif path.suffix == ".yml":
@@ -1613,6 +1616,12 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
 
         elif PARSING_RULES_DIR in path.parts:
             return FileType.PARSING_RULE
+
+        elif MODELING_RULES_DIR in path.parts:
+            return FileType.MODELING_RULE
+
+        elif CORRELATION_RULES_DIR in path.parts:
+            return FileType.CORRELATION_RULE
 
     elif path.name == FileType.PACK_IGNORE:
         return FileType.PACK_IGNORE

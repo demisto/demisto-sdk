@@ -14,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
     CONTENT_ENTITIES_DIRS,
     DASHBOARDS_DIR,
+    ENV_DEMISTO_SDK_MARKETPLACE,
     INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR,
     INDICATOR_FIELDS_DIR,
@@ -28,6 +29,7 @@ from demisto_sdk.commands.common.constants import (
     TEST_PLAYBOOKS_DIR,
     WIDGETS_DIR,
     FileType,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content.errors import ContentFactoryError
 from demisto_sdk.commands.common.content.objects.abstract_objects import (
@@ -406,9 +408,17 @@ class Uploader:
             common_packs = installed_packs & set(self.pack_names)  # type: ignore
             if common_packs:
                 pack_names = "\n".join(common_packs)
+                marketplace = (
+                    os.environ.get(
+                        ENV_DEMISTO_SDK_MARKETPLACE, MarketplaceVersions.XSOAR
+                    )
+                    .lower()
+                    .replace(MarketplaceVersions.MarketplaceV2, "XSIAM")
+                    .upper()
+                )
                 click.secho(
                     f"This command will overwrite the following packs:\n{pack_names}.\n"
-                    "Any changes made on XSOAR will be lost.",
+                    f"Any changes made on {marketplace} will be lost.",
                     fg="bright_red",
                 )
                 if not self.override_existing:

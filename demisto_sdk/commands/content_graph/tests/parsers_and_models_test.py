@@ -1239,7 +1239,7 @@ class TestParsersAndModels:
             LayoutRuleParser,
         )
 
-        rule = pack.create_layout_rule("TestLayoutRule", load_json("layoutrule.json"))
+        rule = pack.create_layout_rule("TestLayoutRule")
         rule_path = Path(rule.path)
         parser = LayoutRuleParser(rule_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(

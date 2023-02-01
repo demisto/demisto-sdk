@@ -13,11 +13,11 @@ class LayoutRuleValidator(ContentEntityValidator):
     """
 
     def __init__(
-        self,
-        structure_validator,
-        ignored_errors=None,
-        print_as_warnings=False,
-        json_file_path=None,
+            self,
+            structure_validator,
+            ignored_errors=None,
+            print_as_warnings=False,
+            json_file_path=None,
     ):
         super().__init__(
             structure_validator,
@@ -33,4 +33,7 @@ class LayoutRuleValidator(ContentEntityValidator):
         Note: For now we return True regardless of the item content.
         """
 
+        return True
+
+    def is_valid_version(self) -> bool:
         return True

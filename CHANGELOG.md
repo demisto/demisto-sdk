@@ -10,7 +10,6 @@
 * Improved the message shown when using **upload** and overwriting packs.
 * Added support for the **Layout Rule** content type in the id-set and the content graph.
 
-
 ## 1.9.0
 * Fixed an issue where the Slack notifier was using a deprecated argument.
 * Added the `--docker-image` argument to the **lint** command, which allows determining the docker image to run lint on. Possible options are: `'native:ga'`, `'native:maintenance'`, `'native:dev'`, `'all'`, a specific docker image (from Docker Hub) or, the default `'from-yml'`.

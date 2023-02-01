@@ -322,6 +322,9 @@ class BaseUpdate:
             current_fromversion_value: current from_version if exists in the file.
             file_type: the file type.
         """
+        print(
+            default_from_version, GENERAL_DEFAULT_FROMVERSION, current_fromversion_value
+        )
         max_version = get_max_version(
             [
                 GENERAL_DEFAULT_FROMVERSION,

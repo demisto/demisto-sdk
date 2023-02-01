@@ -8,8 +8,8 @@
 * Added a UUID to name mapper for **download** it replaces UUIDs with names on all downloaded files.
 * Updated the demisto-py to v3.2.6 which now supports basic proxy authentication.
 * Improved the message shown when using **upload** and overwriting packs.
-* Removed usgae of pipenv, isort and autopep9 from the **split** command.
-
+* **Breaking change**: Removed usgae of `pipenv`, `isort` and `autopep8` in the **split** command. Removed the `--no-pipenv` flag. Please see https://xsoar.pan.dev/docs/tutorials/tut-setup-dev-remote for the recommended environment setup.
+* **Breaking change**: Removed usgae of `code formatting` in the **download** command. Removed the `--no-code-formatting` flag. Please see https://xsoar.pan.dev/docs/tutorials/tut-setup-dev-remote for the recommended environment setup.
 ## 1.9.0
 * Fixed an issue where the Slack notifier was using a deprecated argument.
 * Added the `--docker-image` argument to the **lint** command, which allows determining the docker image to run lint on. Possible options are: `'native:ga'`, `'native:maintenance'`, `'native:dev'`, `'all'`, a specific docker image (from Docker Hub) or, the default `'from-yml'`.

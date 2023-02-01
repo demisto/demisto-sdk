@@ -8,6 +8,8 @@
 * Added a UUID to name mapper for **download** it replaces UUIDs with names on all downloaded files.
 * Updated the demisto-py to v3.2.6 which now supports basic proxy authentication.
 * Improved the message shown when using **upload** and overwriting packs.
+* Added support for the **Layout Rule** content type in the id-set and the content graph.
+
 
 ## 1.9.0
 * Fixed an issue where the Slack notifier was using a deprecated argument.
@@ -40,7 +42,6 @@
 * Changed the **validate** command to fail on the IN145 error code only when the parameter with type 4 is not hidden.
 * Fixed an issue where downloading content layouts with `detailsV2=None` resulted in an error.
 * Fixed an issue where **xdrctemplate** was missing 'external' prefix.
-* Added support for the **Layout Rule** content type in the id-set and the content graph.
 * Fixed an issue in **prepare-content** command providing output path.
 * Updated the **validate** and **update-release-notes** commands to skip the *Triggers Recommendations* content type.
 * Added a new validation to the **validate** command to verify that the release notes headers are in the correct format.

@@ -490,16 +490,16 @@ class PlaybookValidator(ContentEntityValidator):
     def is_valid_as_deprecated(self) -> bool:
         answers = [
             self.is_valid_deprecated_playbook_description(),
-            self.is_playbook_deprecated_and_used()
+            self.is_playbook_deprecated_and_used(),
         ]
         return all(answers)
 
-    @error_codes('PB104')
+    @error_codes("PB104")
     def is_valid_deprecated_playbook_description(self) -> bool:
         is_deprecated = self.current_file.get("deprecated", False)
         description = self.current_file.get("description", "")
 
-        if not any(
+        if is_deprecated and not any(
             (
                 re.search(DEPRECATED_DESC_REGEX, description),
                 re.search(DEPRECATED_NO_REPLACE_DESC_REGEX, description),

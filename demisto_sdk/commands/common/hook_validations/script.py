@@ -339,7 +339,7 @@ class ScriptValidator(ContentEntityValidator):
         """Check if the integration is valid as a deprecated integration."""
         answers = [
             self.is_valid_deprecated_script_comment(),
-            self.is_script_deprecated_and_used()
+            self.is_script_deprecated_and_used(),
         ]
         return all(answers)
 

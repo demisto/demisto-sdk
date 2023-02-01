@@ -207,7 +207,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_description(beta_integration=False),
             self.is_context_correct_in_readme(),
             self.verify_yml_commands_match_readme(is_modified),
-            self.verify_reputation_commands_has_reliability(is_modified)
+            self.verify_reputation_commands_has_reliability(is_modified),
         ]
 
         if check_is_unskipped:
@@ -245,7 +245,7 @@ class IntegrationValidator(ContentEntityValidator):
         answers = [
             self._is_valid_deprecated_integration_display_name(),
             self._is_valid_deprecated_integration_description(),
-            self.is_integration_deprecated_and_used()
+            self.is_integration_deprecated_and_used(),
         ]
         return all(answers)
 

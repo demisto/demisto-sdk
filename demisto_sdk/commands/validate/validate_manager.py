@@ -1501,7 +1501,7 @@ class ValidateManager:
             skip_docker_check=self.skip_docker_checks,
             json_file_path=self.json_file_path,
             validate_all=self.validate_all,
-            deprecation_validator=self.deprecation_validator
+            deprecation_validator=self.deprecation_validator,
         )
         return integration_validator.is_valid_beta_integration()
 

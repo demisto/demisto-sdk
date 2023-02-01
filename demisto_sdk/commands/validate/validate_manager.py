@@ -2,7 +2,7 @@ import os
 from concurrent.futures._base import Future, as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
-from typing import Callable, List, Optional, Set, Tuple
+from typing import Callable, List, Literal, Optional, Set, Tuple
 
 import click
 import pebble
@@ -17,11 +17,13 @@ from demisto_sdk.commands.common.constants import (
     AUTHOR_IMAGE_FILE_NAME,
     CONTENT_ENTITIES_DIRS,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
-    FOLDERS_ALLOWED_TO_CONTAIN_FILES,
+    FIRST_LEVEL_FOLDERS,
+    FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES,
     GENERIC_FIELDS_DIR,
     GENERIC_TYPES_DIR,
     IGNORED_PACK_NAMES,
     OLDEST_SUPPORTED_VERSION,
+    PACK_ROOT_FILE_NAMES,
     PACKS_DIR,
     PACKS_PACK_META_FILE_NAME,
     SKIP_RELEASE_NOTES_FOR_TYPES,
@@ -779,7 +781,7 @@ class ValidateManager:
         elif not self.is_valid_file_type(file_type, file_path, pack_error_ignore_list):
             return False
 
-        if not self.is_file_allowed_directly_under_folder(Path(file_path)):
+        if not self.is_valid_path(Path(file_path)):
             return False
 
         if file_type == FileType.XSOAR_CONFIG:
@@ -2845,21 +2847,29 @@ class ValidateManager:
             return is_valid_as_deprecated
         return None
 
-    @error_codes("BA120")
-    def is_file_allowed_directly_under_folder(self, path: Path) -> bool:
+    @error_codes("BA120,BA121,BA122,BA123")
+    def is_valid_path(self, path: Path) -> bool:
         """
         Args:
             path (Path): path to the file
         Returns:
-            bool: whether the file is allowed to be directly under its parent folder
+            bool: whether the file may be saved in this path:
+                - BA120: Under a folder that accepts first-level files (e.g. Widgets, but not Integrations)
+                - BA121: Under an allowed first-level folder (e.g. Integrations, not `integration` or `INTEGRATIONS`)
+                - BA122: Allowed file name under a pack root folder.
+                - BA123: Files are not allowed outside of a pack.
         """
+        if path.is_dir():
+            raise ValueError(
+                "is_allowed_modified_file_path should not be run on folders"
+            )
 
-        def _handle_error() -> bool:
+        def _handle_outside_pack() -> bool:
             # returns True if the validation should fail
             (
                 error_message,
                 error_code,
-            ) = Errors.file_not_allowed_directly_under_this_folder(path)
+            ) = Errors.file_not_allowed_outside_pack(path)
             return bool(
                 self.handle_error(
                     error_message=error_message,
@@ -2869,24 +2879,83 @@ class ValidateManager:
                 )
             )
 
-        if path.is_dir():
-            return True  # dirs are allowed anywhere
+        def _handle_first_level_folder_does_not_allow_files() -> bool:
+            # returns True if the validation should fail
+            (
+                error_message,
+                error_code,
+            ) = Errors.files_not_allowed_directly_under_this_folder(path)
+            return bool(
+                self.handle_error(
+                    error_message=error_message,
+                    error_code=error_code,
+                    file_path=str(path),
+                    drop_line=True,
+                )
+            )
+
+        def _handle_directly_under_pack() -> bool:
+            # returns True if the validation should fail
+            (
+                error_message,
+                error_code,
+            ) = Errors.file_not_allowed_at_pack_root(path)
+            return bool(
+                self.handle_error(
+                    error_message=error_message,
+                    error_code=error_code,
+                    file_path=str(path),
+                    drop_line=True,
+                )
+            )
+
+        def _handle_invalid_first_level_folder() -> bool:
+            (
+                error_message,
+                error_code,
+            ) = Errors.invalid_first_level_folder(path)
+            return bool(
+                self.handle_error(
+                    error_message=error_message,
+                    error_code=error_code,
+                    file_path=str(path),
+                    drop_line=True,
+                )
+            )
 
         if PACKS_DIR not in path.parts:
-            return True  # non-content files are allowed anywhere
+            return True  # non-content files are allowed anywhere, at least as much as this validation is concerned
 
-        depth = len(path.parts) - path.parts.index(PACKS_DIR) - 1
+        depth = depth_from_packs(path)
 
-        if depth == 1:  # Packs/<here>
-            if _handle_error():
+        if depth == 1:  # Packs/<modified file>
+            if _handle_outside_pack():
                 return False
 
-        elif depth == 2:  # Packs/MyPack/<here>
-            return True
+        elif depth == 2:  # Packs/MyPack/<modified file>
+            if (
+                path.name not in PACK_ROOT_FILE_NAMES
+            ) and _handle_directly_under_pack():
+                return False
 
-        elif depth == 3:  # Packs/MyPack/SomeFolder/<here>
-            if path.parent.name not in FOLDERS_ALLOWED_TO_CONTAIN_FILES:
-                if _handle_error():
-                    return False
+        else:  # Packs/MyPack/SomeFolder/<modified file> OR DEEPER
+            first_level_folder = path.parts[-depth + 1]  # TODO test
+            if (
+                first_level_folder not in FIRST_LEVEL_FOLDERS
+                and _handle_invalid_first_level_folder()
+            ):
+                return False
 
-        return True  # all other depths are allowed
+            if (
+                first_level_folder not in FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES
+                and _handle_first_level_folder_does_not_allow_files()
+            ):
+                return False
+
+        return True  # this part is reached when a _hanlde method returns False
+
+
+def depth_from_packs(path: Path) -> int:
+    if PACKS_DIR not in path.parts:
+        raise ValueError(f"Called depth_from_packs on a path not including {PACKS_DIR}")
+    return len(path.parts) - path.parts.index(PACKS_DIR) - 1

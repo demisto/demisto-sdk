@@ -14,7 +14,7 @@ from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     CONTENT_ENTITIES_DIRS,
     FILETYPE_TO_DEFAULT_FROMVERSION,
-    FOLDERS_ALLOWED_TO_CONTAIN_FILES,
+    FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES,
     PACKS_PACK_META_FILE_NAME,
     TEST_PLAYBOOK,
     FileType,
@@ -2796,17 +2796,17 @@ def test_content_entities_dir_length():
     If this test failed, it's likely you modified either CONTENT_ENTITIES_DIRS or FOLDERS_ALLOWED_TO_CONTAIN_FILES.
     Update the test values accordingly.
     """
-    assert len(set(FOLDERS_ALLOWED_TO_CONTAIN_FILES)) == 25
+    assert len(set(FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES)) == 25
     assert len(set(CONTENT_ENTITIES_DIRS)) == 24
 
     # change this one if you added a content item folder that can't have files directly under it
     assert (
-        len(FOLDERS_ALLOWED_TO_CONTAIN_FILES.intersection(CONTENT_ENTITIES_DIRS)) == 18
+        len(FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES.intersection(CONTENT_ENTITIES_DIRS)) == 18
     )
 
 
 folders_not_allowed_to_contain_files = tuple(
-    frozenset(CONTENT_ENTITIES_DIRS).difference(FOLDERS_ALLOWED_TO_CONTAIN_FILES)
+    frozenset(CONTENT_ENTITIES_DIRS).difference(FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES)
 )
 
 
@@ -2828,7 +2828,7 @@ def test_is_file_allowed_in_path__fail(mocker, repo, folder: str):
     std_output = StringIO()
     with contextlib.redirect_stdout(std_output):
         with ChangeCWD(pack.path):
-            assert not validate_manager.is_file_allowed_directly_under_folder(file)
+            assert not validate_manager.is_valid_path(file)
 
     captured_stdout = std_output.getvalue()
     assert (
@@ -2837,7 +2837,7 @@ def test_is_file_allowed_in_path__fail(mocker, repo, folder: str):
     )
 
 
-@pytest.mark.parametrize("folder", FOLDERS_ALLOWED_TO_CONTAIN_FILES)
+@pytest.mark.parametrize("folder", FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES)
 def test_is_file_allowed_in_path__pass(repo, folder: str):
     """
     Given
@@ -2853,14 +2853,14 @@ def test_is_file_allowed_in_path__pass(repo, folder: str):
     file = Path(pack.path, folder, "file")
 
     with ChangeCWD(pack.path):
-        assert validate_manager.is_file_allowed_directly_under_folder(file)
+        assert validate_manager.is_valid_path(file)
 
 
 @pytest.mark.parametrize(
     "folder",
     [
         (folders_not_allowed_to_contain_files[0]),
-        tuple(FOLDERS_ALLOWED_TO_CONTAIN_FILES)[0],
+        tuple(FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES)[0],
     ],
 )
 def test_is_file_allowed_in_path__second_level(repo, folder: str):
@@ -2875,4 +2875,4 @@ def test_is_file_allowed_in_path__second_level(repo, folder: str):
     file = Path(f"content/Packs/myPack/{folder}/subfolder/file")
     assert ValidateManager(
         check_is_unskipped=False, skip_conf_json=True
-    ).is_file_allowed_directly_under_folder(file)
+    ).is_valid_path(file)

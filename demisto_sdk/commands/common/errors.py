@@ -11,6 +11,7 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATION_CATEGORIES,
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
+    PACK_ROOT_FILE_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
     FileType,
@@ -33,6 +34,7 @@ ALLOWED_IGNORE_ERRORS = [
     "BA116",
     "BA119",
     "BA120",  # mostly for editing old (unified) content
+    "BA121",  # mostly for editing old (unified) content
     "DS107",
     "GF102",
     "IF100",
@@ -215,8 +217,23 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
-    "file_not_allowed_directly_under_this_folder": {
+    "files_not_allowed_directly_under_this_folder": {
         "code": "BA120",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "invalid_first_level_folder": {
+        "code": "BA121",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "file_not_allowed_at_pack_root": {
+        "code": "BA122",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "file_not_allowed_outside_pack": {
+        "code": "BA123",
         "ui_applicable": False,
         "related_field": "",
     },
@@ -3510,10 +3527,36 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def file_not_allowed_directly_under_this_folder(path: Path):
+    def files_not_allowed_directly_under_this_folder(file_path: Path):
         return (
-            f"{path.name} is not allowed directly under the {path.parent.name} folder. "
-            f"Please match the structure to other {path.parent.name} folders in the repo, or see https://github.com/demisto/content as reference."
+            f"Files are not allowed directly under the {file_path.parent.name} folder."
+            f"Please move {file_path.name} to a suitable folder.\n"
+            "See https://github.com/demisto/content for reference."
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_first_level_folder(file_path: Path):
+        return (
+            f"The {file_path.parent.name} folder is not allowed directly under the pack's folder ({file_path.parent.parent.name})."
+            f"Please match the structure to other folders in the repo, or see https://github.com/demisto/content as reference."
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def file_not_allowed_at_pack_root(file_path: Path):
+        allowed_files_string = ", ".join(sorted(PACK_ROOT_FILE_NAMES))
+        return (
+            f"The {file_path.name} file is saved directly under the {file_path.parent.name} pack folder.\n"
+            f"Only the following file names are allowed at the pack root: {allowed_files_string}.\n"
+            f"Please match the structure to other folders in the repo, or see https://github.com/demisto/content as reference."
+        )
+        
+    @staticmethod
+    @error_code_decorator
+    def file_not_allowed_outside_pack(file_path: Path):
+        return (
+            f"The {file_path.name} file is saved directly under the Packs folder, Please move it into a pack. See https://github.com/demisto/content as reference."
         )
 
     @staticmethod

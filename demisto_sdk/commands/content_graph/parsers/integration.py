@@ -1,10 +1,22 @@
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.parsers.integration_script import IntegrationScriptParser
-from demisto_sdk.commands.prepare_content.integration_script_unifier import IntegrationScriptUnifier
+from demisto_sdk.commands.content_graph.parsers.integration_script import (
+    IntegrationScriptParser,
+)
+from demisto_sdk.commands.prepare_content.integration_script_unifier import (
+    IntegrationScriptUnifier,
+)
+
+
+@dataclass
+class CommandParser:
+    name: str
+    deprecated: bool
+    description: str
 
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
@@ -21,7 +33,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.type = self.script_info.get("subtype") or self.script_info.get("type")
         if self.type == "python":
             self.type += "2"
-
+        self.commands: List[CommandParser] = []
         self.connect_to_commands()
         self.connect_to_dependencies()
         self.connect_to_api_modules()
@@ -37,13 +49,19 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         since there will be a single node for all commands with the same name.
         """
         for command_data in self.script_info.get("commands", []):
+            name = command_data.get("name")
+            deprecated = command_data.get("deprecated", False) or self.deprecated
+            description = command_data.get("description")
             self.add_relationship(
                 RelationshipType.HAS_COMMAND,
-                target=command_data.get("name"),
+                target=name,
                 target_type=ContentType.COMMAND,
-                name=command_data.get("name"),
-                deprecated=command_data.get("deprecated", False) or self.deprecated,
-                description=command_data.get("description"),
+                name=name,
+                deprecated=deprecated,
+                description=description,
+            )
+            self.commands.append(
+                CommandParser(name=name, description=description, deprecated=deprecated)
             )
 
     def connect_to_dependencies(self) -> None:
@@ -80,9 +98,11 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         Returns:
             str: The integration code.
         """
-        if self.is_unified or self.script_info.get("script") not in ["-", ""]:
+        if self.is_unified or self.script_info.get("script") not in ("-", "", None):
             return self.script_info.get("script")
-        return IntegrationScriptUnifier.get_script_or_integration_package_data(self.path.parent)[1]
+        return IntegrationScriptUnifier.get_script_or_integration_package_data(
+            self.path.parent
+        )[1]
 
     def connect_to_api_modules(self) -> None:
         """Creates IMPORTS relationships with the API modules used in the integration."""

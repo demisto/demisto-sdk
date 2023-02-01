@@ -1,0 +1,87 @@
+type: map
+mapping:
+  dashboards_data:
+    type: seq
+    sequence:
+      - include: dashboards_data_schema
+  widgets_data:
+    type: seq
+    sequence:
+      - include: widgets_data_schema
+
+
+schema;dashboards_data_schema:
+  type: map
+  mapping:
+    global_id:
+      type: str
+      required: true
+    status:
+      type: str
+      required: true
+    name:
+      type: str
+      required: true
+    description:
+      type: str
+    default_dashboard_id:
+      type: number
+      required: true
+    layout:
+      type: seq
+      required: true
+      sequence:
+        - include: layout_schema
+
+
+schema;layout_schema:
+  type: map
+  mapping:
+    id:
+      type: str
+      required: true
+    data:
+      type: seq
+      required: true
+      sequence:
+        - include: layout_data_schema
+
+
+schema;layout_data_schema:
+  type: map
+  mapping:
+    key:
+      type: str
+      required: true
+    data:
+      type: map
+      required: true
+      allowempty: True
+
+
+schema;widgets_data_schema:
+  type: map
+  mapping:
+    widget_key:
+      type: str
+      required: true
+    title:
+      type: str
+      required: true
+    creation_time:
+      type: number
+      required: true
+    description:
+      type: str
+      required: true
+    data:
+      type: map
+      required: true
+      allowempty: True
+    support_time_range:
+      type: bool
+      required: true
+    additional_info:
+      type: map
+      required: true
+      allowempty: true

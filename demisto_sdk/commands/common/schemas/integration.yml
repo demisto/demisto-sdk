@@ -76,6 +76,10 @@ mapping:
         type: seq
         sequence:
         - type: str
+      nativeImage:
+        type: seq
+        sequence:
+        - type: str
       isfetch:
         type: bool
       isfetchevents:
@@ -241,6 +245,8 @@ schema;argument_schema:
       type: bool
     type:
       type: str
+    hidden:
+      type: bool
 
 
 # integration->script->command->outputs

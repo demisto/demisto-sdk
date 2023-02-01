@@ -2,7 +2,11 @@ from abc import abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, List, Optional, Set
 
-from demisto_sdk.commands.common.handlers import JSON_Handler, XSOAR_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import (
+    JSON_Handler,
+    XSOAR_Handler,
+    YAML_Handler,
+)
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -11,12 +15,15 @@ if TYPE_CHECKING:
 
 import logging
 
-from pydantic import DirectoryPath
+from pydantic import DirectoryPath, validator
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import alternate_item_fields
+from demisto_sdk.commands.common.tools import get_content_path
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
+    MarketplaceSuffixPreparer,
+)
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -31,6 +38,12 @@ class ContentItem(BaseContent):
     deprecated: bool
     description: Optional[str]
     is_test: bool = False
+
+    @validator("path", always=True)
+    def validate_path(cls, v: Path) -> Path:
+        if v.is_absolute():
+            return v
+        return Path(get_content_path()) / v  # type: ignore
 
     @property
     def in_pack(self) -> Optional["Pack"]:
@@ -90,24 +103,42 @@ class ContentItem(BaseContent):
 
     @property
     def handler(self) -> XSOAR_Handler:
-        return JSON_Handler() if self.path.suffix.lower() == ".json" else YAML_Handler()
+        # we use a high value so the code lines will not break
+        return (
+            JSON_Handler()
+            if self.path.suffix.lower() == ".json"
+            else YAML_Handler(width=50_000)
+        )
 
     @property
     def data(self) -> dict:
         with self.path.open() as f:
             return self.handler.load(f)
 
-    def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
+    def prepare_for_upload(
+        self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
+    ) -> dict:
         data = self.data
-        if marketplace != MarketplaceVersions.XSOAR:
-            alternate_item_fields(data)
-            # TODO: should be in the Parser once we create a database for each marketplace
-            self.object_id = data.get("commonfields", {}).get("id") or self.object_id
-            self.name = data.get("name") or self.name
-        return data
+        return MarketplaceSuffixPreparer.prepare(data, marketplace)
 
-    def summary(self) -> dict:
-        return self.dict(include=self.metadata_fields(), by_alias=True)
+    def summary(self, marketplace: Optional[MarketplaceVersions] = None) -> dict:
+        """Summary of a content item (the most important metadata fields)
+
+        Args:
+            marketplace: The marketplace to get the summary for.
+        Returns:
+            dict: Dictionary representation of the summary content item.
+        """
+        summary_res = self.dict(include=self.metadata_fields(), by_alias=True)
+        if marketplace and marketplace != MarketplaceVersions.XSOAR:
+            data = self.data
+            if "id" in summary_res:
+                summary_res["id"] = (
+                    data.get("commonfields", {}).get("id_x2") or self.object_id
+                )
+            if "name" in summary_res:
+                summary_res["name"] = data.get("name_x2") or self.name
+        return summary_res
 
     @abstractmethod
     def metadata_fields(self) -> Set[str]:
@@ -125,8 +156,19 @@ class ContentItem(BaseContent):
             str: The normalized name.
         """
         name = self.path.name
-        for prefix in ContentType.server_names():
-            name = name.replace(f"{prefix}-", "")
+        server_names = ContentType.server_names()
+        for _ in range(2):
+            # we iterate twice to handle cases of doubled prefixes like `classifier-mapper-`
+            for prefix in server_names:
+                try:
+                    name = name.removeprefix(f"{prefix}-")  # type: ignore[attr-defined]
+                except AttributeError:
+                    # not supported in python 3.8
+                    name = (
+                        name[: len(prefix) + 1]
+                        if name.startswith(f"{prefix}-")
+                        else name
+                    )
         normalized = f"{self.content_type.server_name}-{name}"
         logger.info(f"Normalized file name from {name} to {normalized}")
         return normalized

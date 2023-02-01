@@ -3,7 +3,9 @@ from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
+from demisto_sdk.commands.content_graph.parsers.json_content_item import (
+    JSONContentItemParser,
+)
 
 
 class IndicatorTypeParser(
@@ -53,4 +55,4 @@ class IndicatorTypeParser(
             )
 
         if layout := self.json_data.get("layout"):
-            self.add_dependency_by_id(layout, ContentType.LAYOUT)
+            self.add_dependency_by_id(layout, ContentType.LAYOUT, is_mandatory=False)

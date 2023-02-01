@@ -5,9 +5,16 @@ from typing import Dict, List, Optional, Set, Type, cast
 
 from packaging.version import Version
 
-from demisto_sdk.commands.common.constants import MARKETPLACE_MIN_VERSION, MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import (UNIFIED_FILES_SUFFIXES, ContentType, Relationships,
-                                                       RelationshipType)
+from demisto_sdk.commands.common.constants import (
+    MARKETPLACE_MIN_VERSION,
+    MarketplaceVersions,
+)
+from demisto_sdk.commands.content_graph.common import (
+    UNIFIED_FILES_SUFFIXES,
+    ContentType,
+    Relationships,
+    RelationshipType,
+)
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 
 logger = logging.getLogger("demisto-sdk")
@@ -67,7 +74,9 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     content_type_to_parser: Dict[ContentType, Type["ContentItemParser"]] = {}
 
     def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions),
     ) -> None:
         self.pack_marketplaces: List[MarketplaceVersions] = pack_marketplaces
         super().__init__(path)
@@ -75,7 +84,8 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     @staticmethod
     def from_path(
-        path: Path, pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions),
     ) -> Optional["ContentItemParser"]:
         """Tries to parse a content item by its path.
         If during the attempt we detected the file is not a content item, `None` is returned.
@@ -83,13 +93,13 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         Returns:
             Optional[ContentItemParser]: The parsed content item.
         """
-        logger.info(f'Parsing content item {path}')
+        logger.info(f"Parsing content item {path}")
         if not ContentItemParser.is_content_item(path):
             if ContentItemParser.is_content_item(path.parent):
                 path = path.parent
             else:
                 return None
-        content_type: ContentType = ContentType.by_folder(path.parts[-2])
+        content_type: ContentType = ContentType.by_path(path)
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:
                 return ContentItemParser.parse(
@@ -164,7 +174,14 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     @staticmethod
     def is_unified_file(path: Path) -> bool:
-        return path.suffix in UNIFIED_FILES_SUFFIXES and path.parent.name in ContentType.folders() and path.parent.parent.name not in ContentType.folders()
+        if path.suffix in UNIFIED_FILES_SUFFIXES:
+            if path.parent.name in ContentType.folders():
+                return path.parent.parent.name not in ContentType.folders()
+            if path.parent.parent.name in ContentType.folders():
+                return (
+                    ContentType.by_path(path) in ContentType.threat_intel_report_types()
+                )
+        return False
 
     @staticmethod
     def is_content_item(path: Path) -> bool:

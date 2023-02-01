@@ -3,7 +3,9 @@ from typing import List, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
+from demisto_sdk.commands.content_graph.parsers.json_content_item import (
+    JSONContentItemParser,
+)
 
 
 class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDENT_TYPE):
@@ -21,7 +23,11 @@ class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDEN
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
-        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XPANSE}
+        return {
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XPANSE,
+        }
 
     def connect_to_dependencies(self) -> None:
         """Collects the script, playbook and layout used by the incident type as mandatory dependencies."""
@@ -32,4 +38,4 @@ class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDEN
             self.add_dependency_by_id(playbook, ContentType.PLAYBOOK)
 
         if layout := self.json_data.get("layout"):
-            self.add_dependency_by_id(layout, ContentType.LAYOUT)
+            self.add_dependency_by_id(layout, ContentType.LAYOUT, is_mandatory=False)

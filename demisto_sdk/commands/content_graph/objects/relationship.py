@@ -19,15 +19,24 @@ class RelationshipData(BaseModel):
     # USES, DEPENDS_ON relationship properties
     mandatorily: bool = False
 
+    # DEPENDS_ON relationship properties
+    is_test: bool = False
+
     # HAS_COMMAND relationship properties
     description: Optional[str] = None
     deprecated: bool = False
 
     def __hash__(self):
         """This is the unique identifier of the relationship"""
+
         return hash(
-            (self.source.object_id, self.target.object_id, self.relationship_type,
-             self.source.content_type, self.target.content_type)
+            (
+                self.source.database_id,
+                self.target.database_id,
+                self.relationship_type,
+                self.source.content_type,
+                self.target.content_type,
+            )
         )
 
     def __eq__(self, __o: object) -> bool:

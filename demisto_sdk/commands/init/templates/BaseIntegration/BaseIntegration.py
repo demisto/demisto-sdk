@@ -24,11 +24,11 @@ from CommonServerUserPython import *  # noqa
 # Disable insecure warnings
 urllib3.disable_warnings()
 
-''' CONSTANTS '''
+""" CONSTANTS """
 
-DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'  # ISO8601 format with UTC, default in XSOAR
+DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"  # ISO8601 format with UTC, default in XSOAR
 
-''' CLIENT CLASS '''
+""" CLIENT CLASS """
 
 
 class Client(BaseClient):
@@ -42,7 +42,9 @@ class Client(BaseClient):
     """
 
     # TODO: REMOVE the following dummy function:
-    def baseintegration_dummy(self, dummy: str, dummy2: Optional[int]) -> Dict[str, str]:
+    def baseintegration_dummy(
+        self, dummy: str, dummy2: Optional[int]
+    ) -> Dict[str, str]:
         """Returns a simple python dict with the information provided
         in the input (dummy).
 
@@ -53,15 +55,16 @@ class Client(BaseClient):
         Returns:
             The dict with the arguments
         """
-        return {'dummy': dummy, 'dummy2': dummy2}
+        return {"dummy": dummy, "dummy2": dummy2}
+
     # TODO: ADD HERE THE FUNCTIONS TO INTERACT WITH YOUR PRODUCT API
 
 
-''' HELPER FUNCTIONS '''
+""" HELPER FUNCTIONS """
 
 # TODO: ADD HERE ANY HELPER FUNCTION YOU MIGHT NEED (if any)
 
-''' COMMAND FUNCTIONS '''
+""" COMMAND FUNCTIONS """
 
 
 def test_module(client: Client) -> str:
@@ -82,21 +85,23 @@ def test_module(client: Client) -> str:
     # TODO: ADD HERE some code to test connectivity and authentication to your service.
     # This  should validate all the inputs given in the integration configuration panel,
     # either manually or by using an API that uses them.
-    client.baseintegration_dummy('dummy', 10)  # No errors, the api is working
-    return 'ok'
+    client.baseintegration_dummy("dummy", 10)  # No errors, the api is working
+    return "ok"
 
 
 # TODO: REMOVE the following dummy command function
-def baseintegration_dummy_command(client: Client, args: Dict[str, Any]) -> CommandResults:
-    dummy = args.get('dummy')  # dummy is a required argument, no default
-    dummy2 = args.get('dummy2')  # dummy2 is not a required argument
+def baseintegration_dummy_command(
+    client: Client, args: Dict[str, Any]
+) -> CommandResults:
+    dummy = args.get("dummy")  # dummy is a required argument, no default
+    dummy2 = args.get("dummy2")  # dummy2 is not a required argument
 
     # Call the Client function and get the raw response
     result = client.baseintegration_dummy(dummy, dummy2)
 
     return CommandResults(
-        outputs_prefix='BaseIntegration',
-        outputs_key_field='',
+        outputs_prefix="BaseIntegration",
+        outputs_key_field="",
         outputs=result,
     )
 
@@ -112,19 +117,19 @@ def main():
 
     params = demisto.params()
     # get the service API url
-    base_url = urljoin(params.get('url'), '/api/v1')
+    base_url = urljoin(params.get("url"), "/api/v1")
 
     # if your Client class inherits from BaseClient, SSL verification is
     # handled out of the box by it, just pass ``verify_certificate`` to
     # the Client constructor
-    verify_certificate = not argToBoolean(params('insecure', False))
+    verify_certificate = not argToBoolean(params("insecure", False))
 
     # if your Client class inherits from BaseClient, system proxy is handled
     # out of the box by it, just pass ``proxy`` to the Client constructor
-    proxy = argToBoolean(params.get('proxy', False))
+    proxy = argToBoolean(params.get("proxy", False))
 
     command = demisto.command()
-    demisto.debug(f'Command being called is {command}')
+    demisto.debug(f"Command being called is {command}")
     try:
 
         # TODO: Make sure you add the proper headers for authentication
@@ -132,25 +137,24 @@ def main():
         headers = {}
 
         client = Client(
-            base_url=base_url,
-            verify=verify_certificate,
-            headers=headers,
-            proxy=proxy
+            base_url=base_url, verify=verify_certificate, headers=headers, proxy=proxy
         )
         args = demisto.args()
-        if command == 'test-module':
+        if command == "test-module":
             # This is the call made when pressing the integration Test button.
             result = test_module(client)
         # TODO: REMOVE the following dummy command case:
-        elif command == 'baseintegration-dummy':
+        elif command == "baseintegration-dummy":
             result = baseintegration_dummy_command(client, args)
         else:
-            raise NotImplementedError(f'Command {command} is not implemented')
-        return_results(result)  # Returns either str, CommandResults and a list of CommandResults
+            raise NotImplementedError(f"Command {command} is not implemented")
+        return_results(
+            result
+        )  # Returns either str, CommandResults and a list of CommandResults
     # Log exceptions and return errors
     except Exception as e:
-        return_error(f'Failed to execute {command} command.\nError:\n{str(e)}')
+        return_error(f"Failed to execute {command} command.\nError:\n{str(e)}")
 
 
-if __name__ in ('__main__', '__builtin__', 'builtins'):  # pragma: no cover
+if __name__ in ("__main__", "__builtin__", "builtins"):  # pragma: no cover
     main()

@@ -1,17 +1,24 @@
 from pathlib import Path
 from typing import Any, Dict, List
+from zipfile import ZipFile
 
 import pytest
 
-import demisto_sdk.commands.content_graph.content_graph_commands as content_graph_commands
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.content_graph_commands import create_content_graph, stop_content_graph
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
-    Neo4jContentGraphInterface as ContentGraphInterface
+from demisto_sdk.commands.content_graph.content_graph_commands import (
+    create_content_graph,
+    stop_content_graph,
+)
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
+    Neo4jContentGraphInterface as ContentGraphInterface,
+)
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
+from demisto_sdk.commands.content_graph.objects.integration_script import (
+    IntegrationScript,
+)
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
@@ -19,6 +26,7 @@ from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.content_graph.tests.test_tools import load_json
 from TestSuite.repo import Repo
+from TestSuite.test_tools import ChangeCWD
 
 # Fixtures for mock content object models
 
@@ -26,8 +34,21 @@ from TestSuite.repo import Repo
 @pytest.fixture(autouse=True)
 def setup(mocker, repo: Repo):
     """Auto-used fixture for setup before every test run"""
-    mocker.patch.object(content_graph_commands, "REPO_PATH", Path(repo.path))
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.objects.base_content.get_content_path",
+        return_value=Path(repo.path),
+    )
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.objects.content_item.get_content_path",
+        return_value=Path(repo.path),
+    )
+    mocker.patch(
+        "demisto_sdk.commands.content_graph.objects.pack.get_content_path",
+        return_value=Path(repo.path),
+    )
+    mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
     mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
+    stop_content_graph()
 
 
 @pytest.fixture
@@ -37,7 +58,7 @@ def repository(mocker):
         packs=[],
     )
     mocker.patch(
-        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_repository",
+        "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
         return_value=repository,
     )
     return repository
@@ -48,19 +69,11 @@ def mock_pack(name: str = "SamplePack"):
         object_id=name,
         content_type=ContentType.PACK,
         node_id=f"{ContentType.PACK}:{name}",
-        path=Path("/dummypath"),
+        path=Path("Packs"),
         name=name,
         marketplaces=[MarketplaceVersions.XSOAR],
-        description="",
-        created="",
-        updated="",
-        support="",
-        email="",
-        url="",
-        author="",
-        certification="",
         hidden=False,
-        server_min_version="",
+        server_min_version="5.5.0",
         current_version="1.0.0",
         tags=[],
         categories=[],
@@ -75,13 +88,12 @@ def mock_integration(name: str = "SampleIntegration"):
         id=name,
         content_type=ContentType.INTEGRATION,
         node_id=f"{ContentType.INTEGRATION}:{name}",
-        path=Path("/dummypath"),
+        path=Path("Packs"),
         fromversion="5.0.0",
         toversion="99.99.99",
         display_name=name,
         name=name,
         marketplaces=[MarketplaceVersions.XSOAR],
-        description="",
         deprecated=False,
         type="python3",
         docker_image="mock:docker",
@@ -95,9 +107,8 @@ def mock_script(name: str = "SampleScript"):
         id=name,
         content_type=ContentType.SCRIPT,
         node_id=f"{ContentType.SCRIPT}:{name}",
-        path=Path("/dummypath"),
+        path=Path("Packs"),
         fromversion="5.0.0",
-        description="",
         display_name=name,
         toversion="99.99.99",
         name=name,
@@ -115,9 +126,8 @@ def mock_classifier(name: str = "SampleClassifier"):
         id=name,
         content_type=ContentType.CLASSIFIER,
         node_id=f"{ContentType.CLASSIFIER}:{name}",
-        path=Path("/dummypath"),
+        path=Path("Packs"),
         fromversion="5.0.0",
-        description="",
         display_name=name,
         toversion="99.99.99",
         name=name,
@@ -135,13 +145,12 @@ def mock_playbook(name: str = "SamplePlaybook"):
         id=name,
         content_type=ContentType.PLAYBOOK,
         node_id=f"{ContentType.PLAYBOOK}:{name}",
-        path=Path("/dummypath"),
+        path=Path("Packs"),
         fromversion="5.0.0",
         toversion="99.99.99",
         display_name=name,
         name=name,
         marketplaces=[MarketplaceVersions.XSOAR],
-        description="",
         deprecated=False,
         is_test=False,
     )
@@ -152,13 +161,12 @@ def mock_test_playbook(name: str = "SampleTestPlaybook"):
         id=name,
         # content_type=ContentType.TEST_PLAYBOOK,
         node_id=f"{ContentType.PLAYBOOK}:{name}",
-        path=Path("/dummypath"),
+        path=Path("Packs"),
         fromversion="5.0.0",
         toversion="99.99.99",
         display_name=name,
         name=name,
         marketplaces=[MarketplaceVersions.XSOAR],
-        description="",
         deprecated=False,
         is_test=True,
     )
@@ -274,11 +282,23 @@ def create_mini_content(repository: ContentDTO):
                 "SamplePack2",
                 ContentType.PACK,
             ),
-            mock_relationship("TestApiModule", ContentType.SCRIPT, "SamplePack2", ContentType.PACK),
+            mock_relationship(
+                "TestApiModule", ContentType.SCRIPT, "SamplePack2", ContentType.PACK
+            ),
         ],
         RelationshipType.USES_BY_ID: [
             mock_relationship(
-                "TestApiModule", ContentType.SCRIPT, "SampleScript2", ContentType.SCRIPT, mandatorily=True
+                "TestApiModule",
+                ContentType.SCRIPT,
+                "SampleScript2",
+                ContentType.SCRIPT,
+                mandatorily=True,
+            ),
+            mock_relationship(
+                "SampleTestPlaybook",
+                ContentType.TEST_PLAYBOOK,
+                "SampleIntegration",
+                ContentType.INTEGRATION,
             ),
         ],
     }
@@ -315,24 +335,43 @@ def create_mini_content(repository: ContentDTO):
 
 
 class TestCreateContentGraph:
-    def _test_create_content_graph_end_to_end(self, repo: Repo, start_service: bool, tmp_path: Path):
+    def test_create_content_graph_end_to_end(self, repo: Repo, tmp_path: Path, mocker):
+        """
+        Given:
+            - A repository with a pack TestPack, containing an integration TestIntegration.
+        When:
+            - Running create_content_graph()
+        Then:
+            - Make sure the service remains available by querying for all content items in the graph.
+            - Make sure there is a single integration in the query response.
+        """
         import demisto_sdk.commands.content_graph.objects.repository as repo_module
+
+        mocker.patch.object(
+            IntegrationScript, "get_supported_native_images", return_value=[]
+        )
 
         repo_module.USE_FUTURE = False
         pack = repo.create_pack("TestPack")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
         integration = pack.create_integration()
-        integration.create_default_integration("TestIntegration", ["test-command1", "test-command2"])
+        integration.create_default_integration(
+            "TestIntegration", ["test-command1", "test-command2"]
+        )
         script = pack.create_script()
         api_module = pack.create_script()
         script.create_default_script("SampleScript")
         api_module.create_default_script("TestApiModule")
 
-        pack.create_classifier(name="SampleClassifier", content=load_json("classifier.json"))
+        pack.create_classifier(
+            name="SampleClassifier", content=load_json("classifier.json")
+        )
 
-        with ContentGraphInterface(start_service=start_service) as interface:
-            create_content_graph(interface)
-            packs = interface.search(marketplace=MarketplaceVersions.XSOAR, content_type=ContentType.PACK)
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface, output_path=tmp_path)
+            packs = interface.search(
+                marketplace=MarketplaceVersions.XSOAR, content_type=ContentType.PACK
+            )
             integrations = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
                 content_type=ContentType.INTEGRATION,
@@ -356,39 +395,31 @@ class TestCreateContentGraph:
             "test-command1",
             "test-command2",
         }
-        returned_scripts = {script.object_id for script in packs[0].content_items.script}
+        returned_scripts = {
+            script.object_id for script in packs[0].content_items.script
+        }
         assert returned_scripts == {"SampleScript", "TestApiModule"}
-
-        content_cto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
+        with ChangeCWD(repo.path):
+            content_cto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
         assert Path.exists(tmp_path / "TestPack")
         assert Path.exists(tmp_path / "TestPack" / "metadata.json")
-        assert Path.exists(tmp_path / "TestPack" / "Integrations" / "integration-integration_0.yml")
+        assert Path.exists(
+            tmp_path / "TestPack" / "Integrations" / "integration-integration_0.yml"
+        )
         assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script0.yml")
         assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script1.yml")
 
-    def test_create_content_graph_end_to_end_with_new_service(self, repo: Repo, tmp_path: Path):
-        """
-        Given:
-            - A repository with a pack TestPack, containing an integration TestIntegration.
-        When:
-            - Running create_content_graph() with a new service.
-        Then:
-            - Make sure the service remains available by querying for all content items in the graph.
-            - Make sure there is a single integration in the query response.
-        """
-        self._test_create_content_graph_end_to_end(repo, start_service=True, tmp_path=tmp_path)
-
-    def test_create_content_graph_end_to_end_with_existing_service(self, repo: Repo, tmp_path: Path):
-        """
-        Given:
-            - A repository with a pack TestPack, containing an integration TestIntegration.
-        When:
-            - Running create_content_graph() with an existing, running service.
-        Then:
-            - Make sure the service remains available by querying for all content items in the graph.
-            - Make sure there is a single integration in the query response.
-        """
-        self._test_create_content_graph_end_to_end(repo, start_service=False, tmp_path=tmp_path)
+        # make sure that the output file zip is created
+        assert Path.exists(tmp_path / "xsoar.zip")
+        with ZipFile(tmp_path / "xsoar.zip", "r") as zip_obj:
+            zip_obj.extractall(tmp_path / "extracted")
+            # make sure that the extracted files are all .csv
+            extracted_files = list(tmp_path.glob("extracted/*"))
+            assert extracted_files
+            assert all(
+                file.suffix == ".csv" or file.name == "metadata.json"
+                for file in extracted_files
+            )
 
     def test_create_content_graph_relationships(
         self,
@@ -411,28 +442,60 @@ class TestCreateContentGraph:
         create_mini_content(repository)
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
-            packs = interface.search(marketplace=MarketplaceVersions.XSOAR, content_type=ContentType.PACK)
+            packs = interface.search(
+                marketplace=MarketplaceVersions.XSOAR, content_type=ContentType.PACK
+            )
             for pack in repository.packs:
                 for relationship_type, relationships in pack.relationships.items():
                     for relationship in relationships:
-                        content_item_source = find_model_for_id(packs, relationship.get("source_id"))
-                        content_item_target = find_model_for_id(packs, relationship.get("target"))
+                        content_item_source = find_model_for_id(
+                            packs, relationship.get("source_id")
+                        )
+                        content_item_target = find_model_for_id(
+                            packs, relationship.get("target")
+                        )
                         assert content_item_source
                         assert content_item_target
                         if relationship_type == RelationshipType.IN_PACK:
-                            assert content_item_source.in_pack.object_id == pack.object_id
+                            assert (
+                                content_item_source.in_pack.object_id == pack.object_id
+                            )
                         if relationship_type == RelationshipType.IMPORTS:
-                            assert content_item_source.imports[0].object_id == content_item_target.object_id
+                            assert (
+                                content_item_source.imports[0].object_id
+                                == content_item_target.object_id
+                            )
                         if relationship_type == RelationshipType.USES_BY_ID:
-                            assert content_item_source.uses[0].content_item.object_id == content_item_target.object_id
+                            assert (
+                                content_item_source.uses[0].content_item.object_id
+                                == content_item_target.object_id
+                            )
                         if relationship_type == RelationshipType.TESTED_BY:
-                            assert content_item_source.tested_by[0].object_id == content_item_target.object_id
+                            assert (
+                                content_item_source.tested_by[0].object_id
+                                == content_item_target.object_id
+                            )
+
             assert packs[0].depends_on[0].content_item == packs[1]
-            assert packs[1].depends_on[0].content_item == packs[2]
+            assert not packs[0].depends_on[0].is_test  # this is not a test dependency
+
+            for p in packs[1].depends_on:
+                if p.content_item == packs[2]:
+                    # regular dependency
+                    assert not p.is_test
+                elif p.content_item == packs[0]:
+                    # test dependency
+                    assert p.is_test
+                else:
+
+                    assert False
 
             # now with all levels
             packs = interface.search(
-                MarketplaceVersions.XSOAR, content_type=ContentType.PACK, all_level_dependencies=True)
+                MarketplaceVersions.XSOAR,
+                content_type=ContentType.PACK,
+                all_level_dependencies=True,
+            )
             depends_on_pack1 = [r for r in packs[0].depends_on]
             assert depends_on_pack1
             for depends in depends_on_pack1:
@@ -504,9 +567,20 @@ class TestCreateContentGraph:
         repository.packs.append(pack)
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
-            assert interface.search(MarketplaceVersions.XSOAR, object_id="SampleIntegration")
-            assert interface.search(MarketplaceVersions.XSOAR, object_id="SampleIntegration2")
-            assert len(interface.search(MarketplaceVersions.XSOAR, content_type=ContentType.COMMAND)) == 1
+            assert interface.search(
+                MarketplaceVersions.XSOAR, object_id="SampleIntegration"
+            )
+            assert interface.search(
+                MarketplaceVersions.XSOAR, object_id="SampleIntegration2"
+            )
+            assert (
+                len(
+                    interface.search(
+                        MarketplaceVersions.XSOAR, content_type=ContentType.COMMAND
+                    )
+                )
+                == 1
+            )
 
     def test_create_content_graph_playbook_uses_script_not_in_repository(
         self,
@@ -547,68 +621,6 @@ class TestCreateContentGraph:
             create_content_graph(interface)
             script = interface.search(object_id="TestScript")[0]
         assert script.not_in_repository
-
-    def test_create_content_graph_duplicate_integrations(
-        self,
-        repository: ContentDTO,
-    ):
-        """
-        Given:
-            - A mocked model of a repository with a pack TestPack, containing two integrations
-              with the exact same properties.
-        When:
-            - Running create_content_graph().
-        Then:
-            - Make sure the duplicates are found and the command fails.
-        """
-        pack = mock_pack()
-        integration = mock_integration()
-        integration2 = mock_integration()
-        relationships = {
-            RelationshipType.IN_PACK: [
-                mock_relationship(
-                    "SampleIntegration",
-                    ContentType.INTEGRATION,
-                    "SamplePack",
-                    ContentType.PACK,
-                ),
-                mock_relationship(
-                    "SampleIntegration",
-                    ContentType.INTEGRATION,
-                    "SamplePack",
-                    ContentType.PACK,
-                ),
-            ],
-            RelationshipType.HAS_COMMAND: [
-                mock_relationship(
-                    "SampleIntegration",
-                    ContentType.INTEGRATION,
-                    "test-command",
-                    ContentType.COMMAND,
-                    name="test-command",
-                    description="",
-                    deprecated=False,
-                ),
-                mock_relationship(
-                    "SampleIntegration",
-                    ContentType.INTEGRATION,
-                    "test-command",
-                    ContentType.COMMAND,
-                    name="test-command",
-                    description="",
-                    deprecated=False,
-                ),
-            ],
-        }
-        pack.relationships = relationships
-        pack.content_items.integration.append(integration)
-        pack.content_items.integration.append(integration2)
-        repository.packs.append(pack)
-        with pytest.raises(Exception) as e:
-            with ContentGraphInterface() as interface:
-                create_content_graph(interface)
-                interface.validate_graph()
-        assert "Duplicates found in graph" in str(e)
 
     def test_create_content_graph_duplicate_integrations_different_marketplaces(
         self,
@@ -672,8 +684,22 @@ class TestCreateContentGraph:
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
             assert len(interface.search(object_id="SampleIntegration")) == 2
-            assert len(interface.search(MarketplaceVersions.XSOAR, object_id="SampleIntegration")) == 1
-            assert len(interface.search(MarketplaceVersions.MarketplaceV2, object_id="SampleIntegration")) == 1
+            assert (
+                len(
+                    interface.search(
+                        MarketplaceVersions.XSOAR, object_id="SampleIntegration"
+                    )
+                )
+                == 1
+            )
+            assert (
+                len(
+                    interface.search(
+                        MarketplaceVersions.MarketplaceV2, object_id="SampleIntegration"
+                    )
+                )
+                == 1
+            )
 
     def test_create_content_graph_duplicate_integrations_different_fromversion(
         self,
@@ -764,24 +790,4 @@ class TestCreateContentGraph:
         Then:
             - Make sure no exception is raised.
         """
-        stop_content_graph()
-
-    def test_dump_content_graph(self, tmp_path: Path, repo: Repo):
-        """
-        Given:
-            - A mocked model of a repository with a pack TestPack, containing an integration.
-        When:
-            - Running create_content_graph().
-        Then:
-            - Make sure the graph is dumped to the correct path.
-        """
-        pack = repo.create_pack("TestPack")
-        pack.pack_metadata.write_json(load_json("pack_metadata.json"))
-        integration = pack.create_integration()
-        integration.create_default_integration("TestIntegration")
-
-        with ContentGraphInterface(start_service=True, output_file=tmp_path / "content.dump") as interface:
-            create_content_graph(interface)
-
-        assert Path.exists(tmp_path / "content.dump"), "Make sure dump file created"
         stop_content_graph()

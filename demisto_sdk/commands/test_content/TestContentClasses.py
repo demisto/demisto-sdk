@@ -1288,18 +1288,23 @@ class Integration:
             else:
                 self.configuration = integration_params[0]
 
-        elif self.name == "Demisto REST API":
+        elif self.name == "Core REST API":
             if IS_XSIAM:
-                self.build_context.logging_module.warning(
-                    'Trying to configure "Demisto REST API" for XSIAM server, '
-                    "this integration will not work on XSIAM, "
-                    "consider using CoreRestAPI."
-                )
-            self.configuration.params = {  # type: ignore
-                "url": "https://localhost",
-                "apikey": self.build_context.api_key,
-                "insecure": True,
-            }
+                self.configuration.params = {  # type: ignore
+                    "url": server_url,
+                    "creds_apikey": {
+                        "identifier": self.build_context.auth_id,
+                        "password": self.build_context.api_key,
+                    },
+                    "auth_method": "Standard",
+                    "insecure": True,
+                }
+            else:
+                self.configuration.params = {  # type: ignore
+                    "url": "https://localhost",
+                    "apikey": self.build_context.api_key,
+                    "insecure": True,
+                }
         if is_mockable:
             self.build_context.logging_module.debug(
                 f"configuring {self} with proxy params"

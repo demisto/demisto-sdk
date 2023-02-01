@@ -1,3 +1,4 @@
+import itertools
 import logging
 import multiprocessing
 import os
@@ -32,9 +33,10 @@ json = JSON_Handler()
 
 GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS")
 DEFAULT_PYTHON_VERSION = "3.10"
-EMPTY_PYTHON_VERSION = "2.7"
+DEFAULT_PYTHON2_VERSION = "2.7"
 
 PRECOMMIT_TEMPLATE_PATH = Path(__file__).parent / ".pre-commit-config_template.yaml"
+PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config.yaml"
 
 SKIPPED_HOOKS = {"format", "validate"}
 
@@ -55,10 +57,8 @@ class PreCommitRunner:
         """
         We initialize the hooks and all files for later use.
         """
-        self.all_files: Set[Path] = set()
-        for _, files in self.python_version_to_files.items():
-            self.all_files |= files
-
+        self.all_files = set(itertools.chain.from_iterable(self.python_version_to_files.values()))
+        
     def hooks(self, pre_commit_config: dict) -> dict:
         hooks = {}
         for repo in pre_commit_config["repos"]:
@@ -70,12 +70,12 @@ class PreCommitRunner:
         self,
         pre_commit_config: dict,
         python_version: str,
-        no_fix: bool,
+        fix: bool,
         native_images: bool,
     ) -> None:
         hooks = self.hooks(pre_commit_config)
         PyclnHook(hooks["pycln"]).prepare_hook(PYTHONPATH)
-        RuffHook(hooks["ruff"]).prepare_hook(python_version, no_fix, GITHUB_ACTIONS)
+        RuffHook(hooks["ruff"]).prepare_hook(python_version, fix, GITHUB_ACTIONS)
         MypyHook(hooks["mypy"]).prepare_hook(python_version)
         RunUnitTestHook(hooks["run-unit-tests"]).prepare_hook(native_images)
 
@@ -88,7 +88,7 @@ class PreCommitRunner:
         native_images: bool = False,
         verbose: bool = False,
         show_diff_on_failure: bool = False,
-        no_fix: bool = False,
+        fix: bool = False,
     ) -> int:
         # handle skipped hooks
         ret_val = 0
@@ -100,8 +100,6 @@ class PreCommitRunner:
             skipped_hooks.add("update-docker-image")
         if not test and not native_images:
             skipped_hooks.add("run-unit-tests")
-        if no_fix:
-            skipped_hooks.add("autopep8")
         if validate:
             skipped_hooks.remove("validate")
         if format:
@@ -117,7 +115,7 @@ class PreCommitRunner:
                 f"Running pre-commit for {changed_files} with python version {python_version}"
             )
             if python_version.startswith("2"):
-                with open(CONTENT_PATH / ".pre-commit-config.yaml", "w") as f:
+                with open(PRECOMMIT_PATH, "w") as f:
                     yaml.dump(precommit_config, f)
                 if test:
                     response = subprocess.run(
@@ -135,8 +133,8 @@ class PreCommitRunner:
                     if response.returncode:
                         ret_val = response.returncode
                 continue
-            self.prepare_hooks(precommit_config, python_version, no_fix, native_images)
-            with open(CONTENT_PATH / ".pre-commit-config.yaml", "w") as f:
+            self.prepare_hooks(precommit_config, python_version, fix, native_images)
+            with open(PRECOMMIT_PATH, "w") as f:
                 yaml.dump(precommit_config, f)
             # use chunks because OS does not support such large comments
             for chunk in more_itertools.chunked_even(changed_files, 10_000):
@@ -204,7 +202,7 @@ def categorize_files(files: Set[Path]) -> PreCommitRunner:
         if python_version_string := integration_script.python_version:
             version = Version(python_version_string)
             python_version_string = f"{version.major}.{version.minor}"
-        python_versions_to_files[python_version_string or EMPTY_PYTHON_VERSION].update(
+        python_versions_to_files[python_version_string or DEFAULT_PYTHON2_VERSION].update(
             integrations_scripts_mapping[integration_script_path]
             | {integration_script.path}
         )
@@ -226,7 +224,7 @@ def pre_commit_manager(
     native_images: bool = False,
     verbose: bool = False,
     show_diff_on_failure: bool = False,
-    no_fix: bool = False,
+    fix: bool = False,
 ) -> int:
     """Run pre-commit hooks .
 
@@ -240,7 +238,7 @@ def pre_commit_manager(
         force_run_hooks (Optional[List[str]], optional): List for hooks to force run. Defaults to None.
         verbose (bool, optional): Whether run pre-commit in verbose mode. Defaults to False.
         show_diff_on_failure (bool, optional): Whether show git diff after pre-commit failure. Defaults to False.
-        no_fix (bool, optional): Whether skip fixing code file. Defaults to False.
+        fix (bool, optional): Whether fixing code file. Defaults to False.
 
     Returns:
         int: Return code of pre-commit.
@@ -262,7 +260,7 @@ def pre_commit_manager(
         native_images,
         verbose,
         show_diff_on_failure,
-        no_fix,
+        fix,
     )
 
 

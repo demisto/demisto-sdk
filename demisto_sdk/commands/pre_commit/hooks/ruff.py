@@ -9,14 +9,14 @@ class RuffHook(Hook):
     def prepare_hook(
         self,
         python_version: str,
-        no_fix: bool = False,
+        fix: bool = False,
         github_actions: bool = False,
         **kwargs,
     ):
         self.hook["args"] = [
             f"--target-version={self._python_version_to_ruff(python_version)}"
         ]
-        if not no_fix:
+        if fix:
             self.hook["args"].append("--fix")
         if github_actions:
             self.hook["args"].append("--format=github")

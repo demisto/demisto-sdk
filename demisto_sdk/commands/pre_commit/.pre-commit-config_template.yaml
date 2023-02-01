@@ -68,11 +68,12 @@ repos:
     # Replace with the latest release version or master
     rev: 64fdbe62f68dde2c8baced0fa9bfdaa3feeff20b
     hooks:
-      - id: update-docker-image
-
       # enable with --test
       - id: run-unit-tests
 
       # those will be skipped by default, to run them use --force-run-hooks=validate,format
       - id: format
+        # update docker image to latest version
+        args: ["-ud"]
+        
       - id: validate

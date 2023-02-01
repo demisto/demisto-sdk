@@ -358,6 +358,7 @@ def prepare_content(**kwargs):
 
     """
     from demisto_sdk.commands.common.logger import logging_setup
+
     if kwargs.get("verbose"):
         logging_setup(3)
     if click.get_current_context().info_name == "unify":

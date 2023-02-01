@@ -3551,13 +3551,11 @@ class Errors:
             f"Only the following file names are allowed at the pack root: {allowed_files_string}.\n"
             f"Please match the structure to other folders in the repo, or see https://github.com/demisto/content as reference."
         )
-        
+
     @staticmethod
     @error_code_decorator
     def file_not_allowed_outside_pack(file_path: Path):
-        return (
-            f"The {file_path.name} file is saved directly under the Packs folder, Please move it into a pack. See https://github.com/demisto/content as reference."
-        )
+        return f"The {file_path.name} file is saved directly under the Packs folder, Please move it into a pack. See https://github.com/demisto/content as reference."
 
     @staticmethod
     def pack_readme_image_relative_path_error(path):

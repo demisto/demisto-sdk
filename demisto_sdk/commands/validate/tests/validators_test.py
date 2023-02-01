@@ -2801,12 +2801,19 @@ def test_content_entities_dir_length():
 
     # change this one if you added a content item folder that can't have files directly under it
     assert (
-        len(FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES.intersection(CONTENT_ENTITIES_DIRS)) == 18
+        len(
+            FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES.intersection(
+                CONTENT_ENTITIES_DIRS
+            )
+        )
+        == 18
     )
 
 
 folders_not_allowed_to_contain_files = tuple(
-    frozenset(CONTENT_ENTITIES_DIRS).difference(FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES)
+    frozenset(CONTENT_ENTITIES_DIRS).difference(
+        FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES
+    )
 )
 
 
@@ -2873,6 +2880,6 @@ def test_is_file_allowed_in_path__second_level(repo, folder: str):
             Make sure the validation passes
     """
     file = Path(f"content/Packs/myPack/{folder}/subfolder/file")
-    assert ValidateManager(
-        check_is_unskipped=False, skip_conf_json=True
-    ).is_valid_path(file)
+    assert ValidateManager(check_is_unskipped=False, skip_conf_json=True).is_valid_path(
+        file
+    )

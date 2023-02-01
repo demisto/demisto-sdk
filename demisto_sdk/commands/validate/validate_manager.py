@@ -1005,7 +1005,10 @@ class ValidateManager:
         elif file_type == FileType.TRIGGER:
             return self.validate_triggers(structure_validator, pack_error_ignore_list)
 
-        elif file_type == FileType.PARSING_RULE:
+        elif file_type in (
+            FileType.PARSING_RULE,
+            FileType.PARSING_RULE_XIF,
+        ):
             return self.validate_parsing_rule(
                 structure_validator, pack_error_ignore_list
             )
@@ -2356,6 +2359,7 @@ class ValidateManager:
             staged_only=self.staged,
             debug=self.debug_git,
             include_untracked=self.include_untracked,
+            get_only_current_file_names=True,
         )
 
         return modified_files, added_files, renamed_files

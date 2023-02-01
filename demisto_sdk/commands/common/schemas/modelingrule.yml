@@ -1,0 +1,19 @@
+type: map
+mapping:
+  id:
+    type: str
+    required: true
+  name:
+    type: str
+    required: true
+  fromversion:
+    type: str
+    required: true
+  toversion:
+    type: str
+  tags:
+    type: str
+  rules:
+    type: str
+  schema:
+    type: str

@@ -39,6 +39,7 @@ class XDRCTemplate(JSONBased):
                 "name": self.name,
                 "os_type": "os_type_test",
                 "profile_type": "profile_type_test",
+                "from_xdr_version": "3.5.0",
                 "yaml_template": "",
             }
         )

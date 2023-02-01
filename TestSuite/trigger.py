@@ -19,6 +19,20 @@ class Trigger(JSONBased):
         self.write_json(
             {
                 "trigger_id": self.name,
+                "playbook_id": "mock playbook",
+                "suggestion_reason": "mock reason",
+                "description": "desc",
                 "trigger_name": self.name,
+                "alerts_filter": {
+                    "filter": {
+                        "AND": [
+                            {
+                                "SEARCH_FIELD": "alert_name",
+                                "SEARCH_TYPE": "EQ",
+                                "SEARCH_VALUE": "multiple unauthorized action attempts detected by a user",
+                            }
+                        ]
+                    }
+                },
             }
         )

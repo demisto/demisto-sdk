@@ -42,6 +42,7 @@ class TestFormattingFromVersionKey:
         """
 
         mocker.patch.object(BaseUpdate, "__init__", return_value=None)
+        mocker.patch.object(BaseUpdate, "is_key_in_schema_root", return_value=True)
         base_update = BaseUpdate()
         self.init_BaseUpdate(base_update, VERSION_6_0_0)
         base_update.set_fromVersion()
@@ -58,6 +59,7 @@ class TestFormattingFromVersionKey:
         """
 
         mocker.patch.object(BaseUpdate, "__init__", return_value=None)
+        mocker.patch.object(BaseUpdate, "is_key_in_schema_root", return_value=True)
         base_update = BaseUpdate()
         self.init_BaseUpdate(base_update, oldfile_version=VERSION_6_0_0)
         base_update.set_fromVersion()
@@ -75,6 +77,7 @@ class TestFormattingFromVersionKey:
         """
 
         mocker.patch.object(BaseUpdate, "__init__", return_value=None)
+        mocker.patch.object(BaseUpdate, "is_key_in_schema_root", return_value=True)
         base_update = BaseUpdate()
         self.init_BaseUpdate(
             base_update, oldfile_version="6.1.0", current_fromVersion=VERSION_6_0_0
@@ -100,6 +103,7 @@ class TestFormattingFromVersionKey:
             - Ensure that fromVersion key in the file data was set to the specific default content item version.
         """
         mocker.patch.object(BaseUpdate, "__init__", return_value=None)
+        mocker.patch.object(BaseUpdate, "is_key_in_schema_root", return_value=True)
         mocker.patch(
             "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
             "6.2.0",
@@ -123,6 +127,7 @@ class TestFormattingFromVersionKey:
              item version if the user answers Y.
         """
         mocker.patch.object(BaseUpdate, "__init__", return_value=None)
+        mocker.patch.object(BaseUpdate, "is_key_in_schema_root", return_value=True)
         base_update = BaseUpdate()
         self.init_BaseUpdate(base_update, assume_yes=False)
         mocker.patch.object(BaseUpdate, "get_answer", return_value="Y")
@@ -142,6 +147,7 @@ class TestFormattingFromVersionKey:
             - Ensure that fromVersion key in the file data hasn't been generated.
         """
         mocker.patch.object(BaseUpdate, "__init__", return_value=None)
+        mocker.patch.object(BaseUpdate, "is_key_in_schema_root", return_value=True)
         base_update = BaseUpdate()
         self.init_BaseUpdate(base_update, assume_yes=False)
         mocker.patch.object(BaseUpdate, "get_answer", return_value="F")
@@ -158,6 +164,7 @@ class TestFormattingFromVersionKey:
             - Ensure that fromVersion key in the file data was set to the general fromVersion.
         """
         mocker.patch.object(BaseUpdate, "__init__", return_value=None)
+        mocker.patch.object(BaseUpdate, "is_key_in_schema_root", return_value=True)
         base_update = BaseUpdate()
         self.init_BaseUpdate(base_update)
         base_update.set_fromVersion("5.5.0")

@@ -1,7 +1,6 @@
-import shutil
-from distutils.dir_util import copy_tree
 from pathlib import Path
 from typing import Any, Callable, Dict, List
+from zipfile import ZipFile
 
 import pytest
 
@@ -47,6 +46,7 @@ def setup(mocker):
     )
     mocker.patch.object(neo4j_service, "REPO_PATH", GIT_PATH)
     mocker.patch.object(ContentGraphInterface, "repo_path", GIT_PATH)
+    stop_content_graph()
 
 
 @pytest.fixture
@@ -205,14 +205,6 @@ def _get_pack_by_id(repository: ContentDTO, pack_id: str) -> Pack:
     raise ValueError(f"Pack {pack_id} does not exist in the repository.")
 
 
-def dump_csv_import_files(csv_files_dir: Path) -> None:
-    for is_docker in [True, False]:
-        import_path = neo4j_service.get_neo4j_import_path(is_docker).as_posix()
-        if Path(import_path).is_dir():
-            shutil.rmtree(import_path)
-            copy_tree(csv_files_dir.as_posix(), import_path)
-
-
 # COMPARISON HELPER FUNCTIONS
 
 
@@ -355,11 +347,6 @@ def _testcase2__pack3__remove_relationship(repository: ContentDTO) -> List[Pack]
 
 
 class TestUpdateContentGraph:
-    @classmethod
-    def teardown_class(cls):
-        """Stops the graph interface service. Runs once, after all tests."""
-        stop_content_graph()
-
     def test_merge_graphs(self):
         """
         Given:
@@ -391,11 +378,14 @@ class TestUpdateContentGraph:
                 )
             )
 
-        with ContentGraphInterface(start_service=True) as interface:
-            dump_csv_import_files(
-                TEST_DATA_PATH / "mock_import_files_multiple_repos__valid"
+        with ContentGraphInterface() as interface:
+            update_content_graph(
+                interface,
+                packs_to_update=[],
+                imported_path=TEST_DATA_PATH
+                / "mock_import_files_multiple_repos__valid"
+                / "valid_graph.zip",
             )
-            update_content_graph(interface, packs_to_update=[])
             assert get_nodes_count_by_type(interface, ContentType.PACK) == 2
             assert get_nodes_count_by_type(interface, ContentType.INTEGRATION) == 2
             assert get_nodes_count_by_type(interface, ContentType.COMMAND) == 1
@@ -420,6 +410,7 @@ class TestUpdateContentGraph:
     )
     def test_update_content_graph(
         self,
+        tmp_path,
         repository: ContentDTO,
         commit_func: Callable[[ContentDTO], List[Pack]],
         expected_added_dependencies: List[Dict[str, Any]],
@@ -444,7 +435,7 @@ class TestUpdateContentGraph:
         """
         with ContentGraphInterface() as interface:
             # create the graph with dependencies
-            create_content_graph(interface, export=True, dependencies=True)
+            create_content_graph(interface, dependencies=True, output_path=tmp_path)
             packs_from_graph = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
                 content_type=ContentType.PACK,
@@ -464,7 +455,11 @@ class TestUpdateContentGraph:
 
             # update the graph accordingly
             update_content_graph(
-                interface, packs_to_update=pack_ids_to_update, dependencies=True
+                interface,
+                packs_to_update=pack_ids_to_update,
+                dependencies=True,
+                output_path=tmp_path,
+                use_current=True,
             )
             packs_from_graph = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,
@@ -477,4 +472,15 @@ class TestUpdateContentGraph:
                 expected_added_dependencies,
                 expected_removed_dependencies,
                 after_update=True,
+            )
+        # make sure that the output file zip is created
+        assert Path.exists(tmp_path / "xsoar.zip")
+        with ZipFile(tmp_path / "xsoar.zip", "r") as zip_obj:
+            zip_obj.extractall(tmp_path / "extracted")
+            # make sure that the extracted files are all .csv
+            extracted_files = list(tmp_path.glob("extracted/*"))
+            assert extracted_files
+            assert all(
+                file.suffix == ".csv" or file.name == "metadata.json"
+                for file in extracted_files
             )

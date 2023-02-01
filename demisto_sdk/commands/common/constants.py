@@ -89,7 +89,6 @@ XSIAM_REPORT = "xsiamreport"
 TRIGGER = "trigger"
 WIZARD = "wizard"
 XDRC_TEMPLATE = "xdrctemplate"
-
 MARKETPLACE_KEY_PACK_METADATA = "marketplaces"
 
 # ENV VARIABLES
@@ -146,6 +145,7 @@ class FileType(str, Enum):
     JOB = "job"
     BUILD_CONFIG_FILE = "build-config-file"
     PARSING_RULE = "parsingrule"
+    PARSING_RULE_XIF = "parsingrulexif"
     MODELING_RULE = "modelingrule"
     MODELING_RULE_TEST_DATA = "modelingruletestdata"
     MODELING_RULE_XIF = "modelingrulexif"
@@ -164,6 +164,14 @@ class FileType(str, Enum):
     INDICATOR_TYPE = "indicatortype"
     TOOL = "tools"
     PACK_METADATA = "packmetadata"
+    PIPFILE = "pipfile"
+    TXT = "txt"
+    PIPFILE_LOCK = "pipfilelock"
+    PYLINTRC = "pylintrc"
+    LICENSE = "license"
+    UNIFIED_YML = "unified_yml"
+    INI = "ini"
+    PEM = "pem"
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -202,6 +210,10 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.XDRC_TEMPLATE: "XDRC Templates",
 }
 
+FILE_TYPE_BY_RN_HEADER = {
+    header: file_type for file_type, header in RN_HEADER_BY_FILE_TYPE.items()
+}
+
 ENTITY_TYPE_TO_DIR = {
     FileType.INTEGRATION.value: INTEGRATIONS_DIR,
     FileType.PLAYBOOK.value: PLAYBOOKS_DIR,
@@ -234,6 +246,8 @@ ENTITY_TYPE_TO_DIR = {
     FileType.XDRC_TEMPLATE.value: XDRC_TEMPLATE_DIR,
     FileType.CORRELATION_RULE.value: CORRELATION_RULES_DIR,
     FileType.XSIAM_DASHBOARD.value: XSIAM_DASHBOARDS_DIR,
+    FileType.TRIGGER.value: TRIGGER_DIR,
+    FileType.OLD_CLASSIFIER.value: CLASSIFIERS_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -283,6 +297,11 @@ CONTENT_ENTITIES_DIRS = [
     WIZARDS_DIR,
     MODELING_RULES_DIR,
     XDRC_TEMPLATE_DIR,
+    PARSING_RULES_DIR,
+    CORRELATION_RULES_DIR,
+    XSIAM_DASHBOARDS_DIR,
+    XSIAM_REPORTS_DIR,
+    TRIGGER_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -311,6 +330,11 @@ RN_CONTENT_ENTITY_WITH_STARS = [
     FileType.LAYOUT,
     FileType.INCIDENT_FIELD,
     FileType.INDICATOR_FIELD,
+    FileType.TRIGGER,
+    FileType.GENERIC_DEFINITION,
+    FileType.GENERIC_MODULE,
+    FileType.GENERIC_TYPE,
+    FileType.GENERIC_FIELD,
 ]
 
 DEFAULT_IMAGE_PREFIX = "data:image/png;base64,"
@@ -586,12 +610,38 @@ JOB_JSON_REGEX = rf"{JOBS_DIR_REGEX}\/job-([^/]+)\.json"
 WIZARD_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{WIZARDS_DIR}"
 WIZARD_JSON_REGEX = rf"{WIZARD_DIR_REGEX}\/wizard-([^/]+)\.json"
 
+XSIAM_DASHBOARD_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{XSIAM_DASHBOARDS_DIR}"
+XSIAM_DASHBOARD_JSON_REGEX = rf"{XSIAM_DASHBOARD_DIR_REGEX}\/([^/]+)\.json"
+
+XSIAM_REPORT_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{XSIAM_REPORTS_DIR}"
+XSIAM_REPORT_JSON_REGEX = rf"{XSIAM_REPORT_DIR_REGEX}\/([^/]+)\.json"
+
+TRIGGER_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{TRIGGER_DIR}"
+TRIGGER_JSON_REGEX = rf"{TRIGGER_DIR_REGEX}\/([^/]+)\.json"
+
+XDRC_TEMPLATE_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{XDRC_TEMPLATE_DIR}"
+XDRC_TEMPLATE_PACKAGE_REGEX = rf"{XDRC_TEMPLATE_DIR_REGEX}\/([^\\/]+)"
+XDRC_TEMPLATE_JSON_REGEX = rf"{XDRC_TEMPLATE_PACKAGE_REGEX}\/([^/]+)\.json"
+XDRC_TEMPLATE_YML_REGEX = rf"{XDRC_TEMPLATE_PACKAGE_REGEX}\/([^/]+)\.yml"
+
+CORRELATION_RULES_DIR_REGEX = rf"{PACK_DIR_REGEX}/{CORRELATION_RULES_DIR}"
+CORRELATION_RULES_YML_REGEX = (
+    rf"{CORRELATION_RULES_DIR_REGEX}/(?:correlationrule-)?([^/]+)\.yml"
+)
+
+PARSING_RULES_DIR_REGEX = rf"{PACK_DIR_REGEX}/{PARSING_RULES_DIR}"
+PARSING_RULES_PACKAGE_REGEX = rf"{PARSING_RULES_DIR_REGEX}\/([^\\/]+)"
+PARSING_RULES_YML_REGEX = (
+    rf"{PARSING_RULES_PACKAGE_REGEX}/(?:parsingrule-)?([^/]+)\.yml"
+)
+
+
 # Modeling Rules
 MODELING_RULE_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{MODELING_RULES_DIR}"
 MODELING_RULE_PACKAGE_REGEX = rf"{MODELING_RULE_DIR_REGEX}\/([^\\/]+)"
-MODELING_RULE_YML_REGEX = rf"{MODELING_RULE_PACKAGE_REGEX}\/\2\.yml"
-MODELING_RULE_RULES_REGEX = rf"{MODELING_RULE_PACKAGE_REGEX}\/\2\.xif"
-MODELING_RULE_SCHEMA_REGEX = rf"{MODELING_RULE_PACKAGE_REGEX}\/\2\.json"
+MODELING_RULE_YML_REGEX = rf"{MODELING_RULE_PACKAGE_REGEX}\/([^/]+)\.yml"
+MODELING_RULE_RULES_REGEX = rf"{MODELING_RULE_PACKAGE_REGEX}\/([^/]+)\.xif"
+MODELING_RULE_SCHEMA_REGEX = rf"{MODELING_RULE_PACKAGE_REGEX}\/([^/]+)\.json"
 
 RELATIVE_HREF_URL_REGEX = r'(<.*?href\s*=\s*"((?!(?:https?:\/\/)|#|(?:mailto:)).*?)")'
 RELATIVE_MARKDOWN_URL_REGEX = (
@@ -634,7 +684,11 @@ PACKS_TOOLS_REGEX = (
     rf"{CAN_START_WITH_DOT_SLASH}{PACKS_DIR}/([^/]+)/{TOOLS_DIR}/([^.]+)\.zip"
 )
 
-PLAYBOOK_REGEX = rf"{CAN_START_WITH_DOT_SLASH}(?!Test){PLAYBOOKS_DIR}/playbook-.*\.yml$"
+PLAYBOOK_REGEX = r"playbook-.*\.yml$"
+
+PLAYBOOK_REGEX_PATH = (
+    rf"{CAN_START_WITH_DOT_SLASH}(?!Test){PLAYBOOKS_DIR}/{PLAYBOOK_REGEX}"
+)
 
 TEST_PLAYBOOK_REGEX = (
     rf"{CAN_START_WITH_DOT_SLASH}{TEST_PLAYBOOKS_DIR}/(?!script-).*\.yml$"
@@ -743,7 +797,7 @@ PYTHON_TEST_REGEXES = [PACKS_SCRIPT_TEST_PY_REGEX, PACKS_INTEGRATION_TEST_PY_REG
 
 PYTHON_INTEGRATION_REGEXES = [PACKS_INTEGRATION_PY_REGEX]
 
-PLAYBOOKS_REGEXES_LIST = [PLAYBOOK_REGEX, TEST_PLAYBOOK_REGEX]
+PLAYBOOKS_REGEXES_LIST = [PLAYBOOK_REGEX_PATH, TEST_PLAYBOOK_REGEX]
 
 PYTHON_SCRIPT_REGEXES = [PACKS_SCRIPT_PY_REGEX]
 
@@ -1068,6 +1122,14 @@ OFFICIAL_CONTENT_ID_SET_PATH = (
     "https://storage.googleapis.com/marketplace-dist/content/id_set.json"
 )
 
+OFFICIAL_CONTENT_GRAPH_PATH = (
+    "https://storage.googleapis.com/marketplace-dist-dev/content_graph"
+)
+
+OFFICIAL_INDEX_JSON_PATH = (
+    "https://storage.googleapis.com/marketplace-dist/content/packs/index.json"
+)
+
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = "Run all tests"
 FILTER_CONF = "./artifacts/filter_file.txt"
@@ -1156,6 +1218,7 @@ SCHEMA_TO_REGEX = {
     ],
     "report": [PACKS_REPORT_JSON_REGEX],
     "modelingrule": [MODELING_RULE_YML_REGEX],
+    "modelingruleschema": [MODELING_RULE_SCHEMA_REGEX],
     "release-notes": [PACKS_RELEASE_NOTES_REGEX],
     "genericfield": JSON_ALL_GENERIC_FIELDS_REGEXES,
     "generictype": JSON_ALL_GENERIC_TYPES_REGEXES,
@@ -1163,6 +1226,12 @@ SCHEMA_TO_REGEX = {
     "genericdefinition": JSON_ALL_GENERIC_DEFINITIONS_REGEXES,
     JOB: JSON_ALL_JOB_REGEXES,
     WIZARD: JSON_ALL_WIZARD_REGEXES,
+    "correlationrule": [CORRELATION_RULES_YML_REGEX],
+    "parsingrule": [PARSING_RULES_YML_REGEX],
+    "xsiamdashboard": [XSIAM_DASHBOARD_JSON_REGEX],
+    "xsiamreport": [XSIAM_REPORT_JSON_REGEX],
+    "trigger": [TRIGGER_JSON_REGEX],
+    "xdrctemplate": [XDRC_TEMPLATE_JSON_REGEX],
 }
 
 EXTERNAL_PR_REGEX = r"^pull/(\d+)$"
@@ -1267,6 +1336,9 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.GENERIC_FIELD: "6.5.0",
     FileType.GENERIC_MODULE: "6.5.0",
     FileType.GENERIC_DEFINITION: "6.5.0",
+    FileType.CORRELATION_RULE: "6.10.0",
+    FileType.PARSING_RULE: "6.10.0",
+    FileType.MODELING_RULE: "6.10.0",
 }
 # This constant below should always be two versions before the latest server version
 GENERAL_DEFAULT_FROMVERSION = "6.8.0"

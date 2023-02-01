@@ -17,6 +17,7 @@ from packaging.version import Version
 from wcmatch.pathlib import Path, PosixPath
 
 from demisto_sdk.commands.common.constants import (
+    API_MODULES_PACK,
     PACKS_PACK_META_FILE_NAME,
     TYPE_PWSH,
     TYPE_PYTHON,
@@ -29,7 +30,6 @@ from demisto_sdk.commands.common.timers import report_time_measurements
 from demisto_sdk.commands.common.tools import (
     find_file,
     find_type,
-    get_api_module_dependencies,
     get_content_path,
     get_file_displayed_name,
     get_json,
@@ -38,6 +38,12 @@ from demisto_sdk.commands.common.tools import (
     print_v,
     print_warning,
     retrieve_file_ending,
+)
+from demisto_sdk.commands.content_graph.content_graph_commands import (
+    update_content_graph,
+)
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
+    Neo4jContentGraphInterface,
 )
 from demisto_sdk.commands.lint.helpers import (
     EXIT_CODES,
@@ -87,7 +93,6 @@ class LintManager:
         verbose: int,
         prev_ver: str,
         json_file_path: str = "",
-        id_set_path: str = None,
         check_dependent_api_module: bool = False,
     ):
 
@@ -109,30 +114,56 @@ class LintManager:
             base_branch=self._prev_ver,
         )
 
-        self._id_set_path = id_set_path
         if check_dependent_api_module:
-            print(
-                "Checking for packages dependent on the modified API module", end="... "
-            )
-            dependent_on_api_module = get_api_module_dependencies(
-                self._pkgs, self._id_set_path, self._verbose
-            )
-            dependent_on_api_module = self._get_packages(
-                content_repo=self._facts["content_repo"], input=dependent_on_api_module
-            )
+            dependent_on_api_module = self._get_api_module_dependent_items()
             self._pkgs = list(set(self._pkgs + dependent_on_api_module))
-            if dependent_on_api_module:
-                print(
-                    f"Found {Colors.Fg.cyan}{len(dependent_on_api_module)}{Colors.reset} dependent packages. "
-                    f"Executing lint and test on those as well."
-                )
-            else:
-                print("No dependent packages found.")
+
         if json_file_path:
             if os.path.isdir(json_file_path):
                 json_file_path = os.path.join(json_file_path, "lint_outputs.json")
         self.json_file_path = json_file_path
         self.linters_error_list: list = []
+
+    def _get_api_module_dependent_items(self) -> list:
+        changed_api_modules = {
+            pkg.name for pkg in self._pkgs if API_MODULES_PACK in pkg.parts
+        }
+        if changed_api_modules:
+            dependent_items = []
+            for changed_api_module in changed_api_modules:
+                print(
+                    f"Checking for packages dependent on the modified API module {changed_api_module}..."
+                )
+
+                with Neo4jContentGraphInterface() as graph:
+                    print("Updating graph...")
+                    update_content_graph(graph, use_git=True, dependencies=True)
+
+                    api_module_nodes = graph.search(object_id=changed_api_module)
+                    api_module_node = api_module_nodes[0] if api_module_nodes else None
+                    if not api_module_node:
+                        raise ValueError(
+                            f"The modified API module `{changed_api_module}` was not found in the "
+                            f"content graph. Please check that it is up to date, and run"
+                            f" `demisto-sdk update-content-graph` if necessary."
+                        )
+
+                    dependent_items += [
+                        dependency.path for dependency in api_module_node.imported_by
+                    ]
+
+            dependent_on_api_module = self._get_packages(
+                content_repo=self._facts["content_repo"], input=dependent_items
+            )
+
+            if dependent_on_api_module:
+                print(
+                    f"Found {Colors.Fg.cyan}{len(dependent_on_api_module)}{Colors.reset} dependent packages. "
+                    f"Executing lint and test on those as well."
+                )
+                return dependent_on_api_module
+            print("No dependent packages found.")
+        return []
 
     @staticmethod
     def _gather_facts() -> Dict[str, Any]:
@@ -419,6 +450,7 @@ class LintManager:
         keep_container: bool,
         test_xml: str,
         docker_timeout: int,
+        docker_image_flag: str,
         lint_status: dict,
         pkgs_status: dict,
         pkgs_type: list,
@@ -440,6 +472,7 @@ class LintManager:
             keep_container(bool): Whether to keep the test container
             test_xml(str): Path for saving pytest xml results
             docker_timeout(int): timeout for docker requests
+            docker_image_flag(str): indicates the desirable docker image to run lint on
             pkgs_type: List of the pack types
             pkgs_status: Dictionary for pack status (keys are packs, the values are their status)
             lint_status: Dictionary for the lint status  (the keys are the linters, the values are a list of packs)
@@ -467,6 +500,7 @@ class LintManager:
                         req_3=self._facts["requirements_3"],
                         docker_engine=self._facts["docker_engine"],
                         docker_timeout=docker_timeout,
+                        docker_image_flag=docker_image_flag,
                     )
                     results.append(
                         executor.submit(
@@ -556,6 +590,7 @@ class LintManager:
         test_xml: str,
         failure_report: str,
         docker_timeout: int,
+        docker_image_flag: str,
         time_measurements_dir: str = None,
     ) -> int:
         """Runs the Lint command on all given packages.
@@ -577,6 +612,7 @@ class LintManager:
             test_xml(str): Path for saving pytest xml results
             failure_report(str): Path for store failed packs report
             docker_timeout(int): timeout for docker requests
+            docker_image_flag(str): indicates the desirable docker image to run lint on
             time_measurements_dir(str): the directory fo exporting the time measurements info
             total_timeout (int): amount of seconds for the task
 
@@ -612,7 +648,7 @@ class LintManager:
         # Detailed packages status
         pkgs_status: dict = {}
 
-        # Skiped lint and test codes
+        # Skipped lint and test codes
         skipped_code = build_skipped_exit_code(
             no_flake8=no_flake8,
             no_bandit=no_bandit,
@@ -640,6 +676,7 @@ class LintManager:
             keep_container=keep_container,
             test_xml=test_xml,
             docker_timeout=docker_timeout,
+            docker_image_flag=docker_image_flag,
             no_pwsh_analyze=no_pwsh_analyze,
             lint_status=lint_status,
             pkgs_status=pkgs_status,

@@ -1,16 +1,40 @@
 import csv
+import logging
 import os
 import shutil
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import List, Set
+from typing import List, Optional, Set
+from zipfile import ZipFile
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.neo4j_service import get_neo4j_import_path
+
+json = JSON_Handler()
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class Neo4jImportHandler:
-    def __init__(self, is_running_on_docker: bool) -> None:
-        self.import_path: Path = get_neo4j_import_path(is_running_on_docker)
+    def __init__(self) -> None:
+        """This class handles the import of data to neo4j.
+        import_path is the path to the directory where the data is located.
+
+
+        Args:
+            imported_path (Optional[Path], optional): A zip file path to import the graph from. Defaults to None.
+                                                      If not given, the graph will use the content in the `import_path` directory.
+        """
+        self.import_path: Path = get_neo4j_import_path()
+        self.import_path.mkdir(parents=True, exist_ok=True)
+        logger.debug(f"Import path: {self.import_path}")
+
+    def extract_files_from_path(self, imported_path: Optional[Path] = None) -> None:
+        if not imported_path:
+            return None
+        logger.info(f"Importing from {imported_path}")
+        with ZipFile(imported_path, "r") as zip_obj:
+            zip_obj.extractall(self.import_path)
 
     def clean_import_dir(self) -> None:
         for file in self.import_path.iterdir():

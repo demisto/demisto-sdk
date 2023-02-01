@@ -9,6 +9,8 @@ from git import InvalidGitRepositoryError, Repo
 from git.diff import Lit_change_type
 from git.remote import Remote
 
+from demisto_sdk.commands.content_graph.common import PACKS_FOLDER
+
 
 class GitUtil:
     repo: Repo
@@ -457,6 +459,13 @@ class GitUtil:
 
         return all_renamed_files
 
+    def get_all_changed_pack_ids(self, prev_ver: str) -> Set[str]:
+        return {
+            file.parts[1]
+            for file in self.get_all_changed_files(prev_ver)
+            if file.parts[0] == PACKS_FOLDER
+        }
+
     def _get_untracked_files(self, requested_status: str) -> set:
         """return all untracked files of the given requested status.
         Args:
@@ -786,3 +795,12 @@ class GitUtil:
             get_only_current_file_names=True,
         )
         return modified_files.union(added_files).union(renamed_files)
+
+    def _is_file_git_ignored(self, file_path: str) -> bool:
+        """return wether the file is in .gitignore file or not.
+        Args:
+            file_path (str): the file to check.
+        Returns:
+            bool: True if the file is ignored. Otherwise, return False.
+        """
+        return bool(self.repo.ignored(file_path))

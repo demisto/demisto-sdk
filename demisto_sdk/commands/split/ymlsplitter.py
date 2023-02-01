@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS,
-    get_all_docker_images,
+    get_docker_images_from_yml,
     get_pipenv_dir,
     get_python_version,
     get_yaml,
@@ -243,7 +243,7 @@ class YmlSplitter:
                             "Detecting python version and setting up pipenv files ...",
                             log_color=LOG_COLORS.NATIVE,
                         )
-                        docker = get_all_docker_images(script_obj)[0]
+                        docker = get_docker_images_from_yml(script_obj)[0]
                         py_ver = get_python_version(docker, self.config.log_verbose)
                         pip_env_dir = get_pipenv_dir(py_ver, self.config.envs_dirs_base)
                         self.print_logs(

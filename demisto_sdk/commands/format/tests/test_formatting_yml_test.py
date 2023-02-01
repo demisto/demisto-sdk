@@ -45,8 +45,11 @@ from demisto_sdk.tests.constants_test import (
     FEED_INTEGRATION_VALID,
     GIT_ROOT,
     INTEGRATION_PATH,
+    INTEGRATION_SCHEMA_PATH,
     PLAYBOOK_PATH,
+    PLAYBOOK_SCHEMA_PATH,
     PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS,
+    SCRIPT_SCHEMA_PATH,
     SOURCE_BETA_INTEGRATION_FILE,
     SOURCE_FORMAT_INTEGRATION_COPY,
     SOURCE_FORMAT_INTEGRATION_DEFAULT_VALUE,
@@ -1413,7 +1416,9 @@ class TestFormatting:
 
         pack.pack_metadata.update({"support": "partner", "currentVersion": "1.0.0"})
         integration = pack.create_integration()
-        bs = BaseUpdate(input=integration.yml.path, assume_yes=True)
+        bs = BaseUpdate(
+            input=integration.yml.path, assume_yes=True, path=INTEGRATION_SCHEMA_PATH
+        )
         bs.set_fromVersion()
         assert bs.data["fromversion"] == GENERAL_DEFAULT_FROMVERSION
 
@@ -1432,8 +1437,11 @@ class TestFormatting:
         script = pack.create_script()
         playbook = pack.create_playbook()
         integration = pack.create_integration()
-        for path in [script.yml.path, playbook.yml.path, integration.yml.path]:
-            bs = BaseUpdate(input=path, assume_yes=True)
+        for path, schema_path in zip(
+            [script.yml.path, playbook.yml.path, integration.yml.path],
+            [SCRIPT_SCHEMA_PATH, PLAYBOOK_SCHEMA_PATH, INTEGRATION_SCHEMA_PATH],
+        ):
+            bs = BaseUpdate(input=path, assume_yes=True, path=schema_path)
             bs.set_fromVersion()
             assert bs.data["fromversion"] == GENERAL_DEFAULT_FROMVERSION, path
 

@@ -4,8 +4,8 @@ from pathlib import Path
 
 import docker
 import requests
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_HTTP,
     NEO4J_FOLDER,

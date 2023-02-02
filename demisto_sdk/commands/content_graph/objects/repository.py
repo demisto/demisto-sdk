@@ -28,7 +28,6 @@ class ContentDTO(BaseModel):
         logger.info("starting repo dump")
         start_time = time.time()
         if USE_FUTURE:
-            # TODO: change to use process pool once upgraded to Pydantic v2
             with Pool(processes=cpu_count()) as pool:
                 pool.starmap(
                     Pack.dump,

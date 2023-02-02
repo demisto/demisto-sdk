@@ -81,7 +81,9 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
         # This avoids circular references when pickling. Remove when updating to pydantic 2
         depends_on = dict_copy["relationships_data"][RelationshipType.DEPENDS_ON]
-        dict_copy["relationships_data"] = {RelationshipType.DEPENDS_ON: depends_on}
+        in_pack = dict_copy["relationships_data"][RelationshipType.IN_PACK]
+        dict_copy["relationships_data"] = {RelationshipType.DEPENDS_ON: depends_on,
+                                           RelationshipType.IN_PACK: in_pack}
         return {
             "__dict__": dict_copy,
             "__fields_set__": self.__fields_set__,

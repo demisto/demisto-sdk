@@ -75,6 +75,17 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         orm_mode = True  # allows using from_orm() method
         allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
 
+    def __getstate__(self):
+        """Needed to for the object to be pickled correctly (to use multiprocessing)"""
+        dict_copy = self.__dict__.copy()
+
+        depends_on = dict_copy["relationships_data"][RelationshipType.DEPENDS_ON]
+        dict_copy["relationships_data"] = {RelationshipType.DEPENDS_ON: depends_on}
+        return {
+            "__dict__": dict_copy,
+            "__fields_set__": self.__fields_set__,
+        }
+
     @property
     def normalize_name(self) -> str:
         # if has name attribute, return it, otherwise return the object id

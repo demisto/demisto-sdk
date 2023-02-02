@@ -1758,17 +1758,17 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
-    "using_unknown_content": {
+    "uses_items_with_invalid_toversions": {
         "code": "GR102",
         "ui_applicable": False,
         "related_field": "",
     },
-    "multiple_packs_with_same_display_name": {
+    "using_unknown_content": {
         "code": "GR103",
         "ui_applicable": False,
         "related_field": "",
     },
-    "uses_items_with_invalid_toversions": {
+    "multiple_packs_with_same_display_name": {
         "code": "GR104",
         "ui_applicable": False,
         "related_field": "",
@@ -4374,21 +4374,21 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def uses_items_not_in_marketplaces(
-        content_name: str, marketplaces: list, content_items: List[str]
+        content_name: str, marketplaces: list, used_content_items: List[str]
     ):
         return (
             f"Content item '{content_name}' can be used in the '{', '.join(marketplaces)}' marketplaces, however it uses content items: "
-            f"'{', '.join(content_items)}' which are not supported in all of the marketplaces of '{content_name}'."
+            f"'{', '.join(used_content_items)}' which are not supported in all of the marketplaces of '{content_name}'."
         )
 
     @staticmethod
     @error_code_decorator
     def uses_items_with_invalid_fromversions(
-        content_name: str, fromversion: str, content_items: List[str]
+        content_name: str, fromversion: str, used_content_items: List[str]
     ):
         return (
             f"Content item '{content_name}' whose from_version is '{fromversion}' uses the content items: "
-            f"'{', '.join(content_items)}' whose from_version is higher (must be equal to, or less than ..)"
+            f"'{', '.join(used_content_items)}' whose from_version is higher (must be equal to, or less than ..)"
         )
 
     @staticmethod

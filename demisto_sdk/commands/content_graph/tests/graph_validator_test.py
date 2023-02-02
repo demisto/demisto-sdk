@@ -418,7 +418,7 @@ def test_are_toversion_relationships_paths_valid(repository: ContentDTO):
 
     with GraphValidator() as graph_validator:
         create_content_graph(graph_validator.graph)
-        is_valid = graph_validator.are_toversion_relationships_paths_valid()
+        is_valid = graph_validator.validate_toversion_fields()
 
     assert not is_valid
 
@@ -434,7 +434,7 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, capsy
     """
     with GraphValidator() as graph_validator:
         create_content_graph(graph_validator.graph)
-        is_valid = graph_validator.are_fromversion_relationships_paths_valid()
+        is_valid = graph_validator.validate_fromversion_fields()
 
     captured = capsys.readouterr().out
     assert not is_valid
@@ -499,7 +499,7 @@ def test_are_marketplaces_relationships_paths_valid(
     """
     with GraphValidator() as graph_validator:
         create_content_graph(graph_validator.graph)
-        is_valid = graph_validator.are_marketplaces_relationships_paths_valid()
+        is_valid = graph_validator.validate_marketplaces_fields()
 
     captured = capsys.readouterr().out
     assert is_valid
@@ -525,7 +525,7 @@ def test_validate_dependencies(repository: ContentDTO, capsys, mocker):
     )
     with GraphValidator() as graph_validator:
         create_content_graph(graph_validator.graph)
-        is_valid = graph_validator.validate_dependencies("SamplePack")
+        is_valid = graph_validator.validate_core_packs_dependencies("SamplePack")
 
     captured = capsys.readouterr().out
     assert not is_valid

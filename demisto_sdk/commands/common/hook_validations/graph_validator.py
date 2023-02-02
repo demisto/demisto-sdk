@@ -8,28 +8,39 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
 from demisto_sdk.commands.common.tools import (
     get_all_content_objects_paths_in_dir,
     get_core_pack_list,
-    get_pack_paths_from_files,
+    get_pack_name,
 )
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface as ContentGraphInterface,
 )
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.pack import Pack
 
 
 class GraphValidator(BaseValidator):
     """GraphValidator makes validations on the content graph.
 
     Attributes:
-        _is_valid (bool): Whether the conf.json file current state is valid or not.
-        conf_data (dict): The data from the conf.json file in our repo.
+        graph (ContentGraphInterface): The content graph interface.
+        file_paths (Optional[List]): The list of files to check.
+            If none, runs validations on all graph nodes.
     """
 
     def __init__(
-        self, specific_validations=None, file_paths=None, validate_specific_files=False
+        self,
+        specific_validations: list = None,
+        git_files: list = None,
+        input_files: list = None,
     ):
-        super().__init__(self, specific_validations=specific_validations)
-        self.graph = ContentGraphInterface(should_update=True)
-        self.ignored_errors = {}
-        self.file_paths = self.handle_file_paths(file_paths, validate_specific_files)
+        super().__init__(specific_validations=specific_validations)
+        self.graph = ContentGraphInterface()  # (should_update=True)
+        self.file_paths: List[str] = git_files or get_all_content_objects_paths_in_dir(
+            input_files
+        )
+        self.pack_ids: List[str] = list(
+            {get_pack_name(file_path) for file_path in self.file_paths}
+        )
 
     def __enter__(self):
         return self
@@ -37,203 +48,173 @@ class GraphValidator(BaseValidator):
     def __exit__(self, *args):
         return self.graph.__exit__()
 
-    def handle_file_paths(self, file_paths: List[str], validate_specific_files: bool):
-        """Transform all of the relevant files to graph format"""
-        if file_paths and validate_specific_files:
-            all_files = get_all_content_objects_paths_in_dir(file_paths)
-            all_files.extend(get_pack_paths_from_files(all_files))
-            return all_files
-        elif file_paths:
-            return file_paths
-        else:
-            return []
-
     def is_valid_content_graph(self) -> bool:
         is_valid = (
-            self.are_marketplaces_relationships_paths_valid(),
-            self.are_fromversion_relationships_paths_valid(),
-            self.are_toversion_relationships_paths_valid(),
+            self.validate_core_packs_dependencies(),
+            self.validate_marketplaces_fields(),
+            self.validate_fromversion_fields(),
+            self.validate_toversion_fields(),
             self.is_file_using_unknown_content(),
             self.is_file_display_name_already_exists(),
         )
         return all(is_valid)
 
-    def validate_dependencies(self, pack_name):
-        """Validating the pack dependencies"""
-        is_valid = []
-
-        core_pack_list = get_core_pack_list()
-        if pack_name in core_pack_list:
-            is_valid.append(
-                self.are_core_pack_dependencies_valid(pack_name, core_pack_list)
-            )
-
-        return all(is_valid)
-
     @error_codes("PA124")
-    def are_core_pack_dependencies_valid(self, pack_name, core_pack_list):
-        """Validating that the core pack does not have dependencieis on non-core packs"""
+    def validate_core_packs_dependencies(self):
+        """Validates that core packs don't depend on non-core packs.
+        On `validate -a`, all core packs are checked.
+        """
         is_valid = True
-        pack_node = self.graph.search(object_id=pack_name)[0]
-
-        invalid_core_pack_dependencies = [
-            dependency.target.object_id
-            for dependency in pack_node.depends_on
-            if dependency.target.object_id not in core_pack_list
-        ]
-
-        if invalid_core_pack_dependencies:
-            error_message, error_code = Errors.invalid_core_pack_dependencies(
-                pack_name, str(invalid_core_pack_dependencies)
-            )
-            if self.handle_error(error_message, error_code, file_path=pack_node.path):
-                is_valid = False
-        return is_valid
-
-    @error_codes("GR101")
-    def are_fromversion_relationships_paths_valid(self, file_paths=None):
-        """Validate that source's fromvesion >= target's fromvesion."""
-
-        is_valid = []
-
-        # validating content items with minimal from_version: 5.0.0 and maximal from_version 6.4.0
-        paths_with_invalid_versions = (
-            self.graph.find_uses_paths_with_invalid_fromversion(file_paths)
-        )
-
-        for query_result in paths_with_invalid_versions:
-            is_valid.append(self.handle_invalid_fromversion(query_result, warning=True))
-
-        # validating content items with at least from_version: 6.5.0
-        paths_with_invalid_versions = (
-            self.graph.find_uses_paths_with_invalid_fromversion(
-                file_paths, from_version=True
-            )
-        )
-        for query_result in paths_with_invalid_versions:
-            is_valid.append(self.handle_invalid_fromversion(query_result))
-
-        return all(is_valid)
-
-    def handle_invalid_fromversion(self, query_result, warning=False):
-        """Handle the invalid from_version query results"""
-
-        is_valid = True
-        content_name = query_result.name
-        relationship_data = query_result.uses
-        fromversion = query_result.fromversion
-        content_items = [
-            relationship.target.object_id for relationship in relationship_data
-        ]
-        file_path = query_result.path
-        error_message, error_code = Errors.uses_items_with_invalid_fromversions(
-            content_name, fromversion, content_items
-        )
-        if self.handle_error(error_message, error_code, file_path, warning=warning):
-            is_valid = False
-
-        return is_valid
-
-    @error_codes("GR104")
-    def are_toversion_relationships_paths_valid(self, file_paths=None):
-        """Validate that source's toversion <= target's toversion."""
-        is_valid = []
-        # validating content items with minimal to_version: 5.0.0 and maximal to_version 6.4.0
-        paths_with_invalid_versions = self.graph.find_uses_paths_with_invalid_toversion(
-            file_paths
-        )
-
-        for query_result in paths_with_invalid_versions:
-            is_valid.append(self.handle_invalid_toversion(query_result, warning=True))
-
-        # validating content items with at least to_version: 6.5.0
-        paths_with_invalid_versions = self.graph.find_uses_paths_with_invalid_toversion(
-            file_paths, to_version=True
-        )
-        for query_result in paths_with_invalid_versions:
-            is_valid.append(self.handle_invalid_toversion(query_result))
-
-        return all(is_valid)
-
-    def handle_invalid_toversion(self, query_result, warning=False):
-        """Handle the invalid to_version query results"""
-
-        is_valid = True
-        content_name = query_result.name
-        relationship_data = query_result.uses
-        toversion = query_result.toversion
-        content_items = [
-            relationship.target.object_id for relationship in relationship_data
-        ]
-        file_path = query_result.path
-        error_message, error_code = Errors.uses_items_with_invalid_toversions(
-            content_name, toversion, content_items
-        )
-        if self.handle_error(error_message, error_code, file_path, warning=warning):
-            is_valid = False
+        for core_pack in (core_pack_list := get_core_pack_list()):
+            if not self.pack_ids or core_pack in self.pack_ids:
+                core_pack_node: Pack = self.graph.search(
+                    content_type=ContentType.PACK,
+                    object_id=core_pack,
+                )[0]
+                non_core_pack_dependencies = [
+                    dependency.content_item.object_id
+                    for dependency in core_pack_node.depends_on
+                    if dependency.content_item.object_id not in core_pack_list
+                    and dependency.mandatorily is True
+                ]
+                if non_core_pack_dependencies:
+                    error_message, error_code = Errors.invalid_core_pack_dependencies(
+                        core_pack, non_core_pack_dependencies
+                    )
+                    if self.handle_error(
+                        error_message, error_code, file_path=core_pack_node.path
+                    ):
+                        is_valid = False
 
         return is_valid
 
     @error_codes("GR100")
-    def are_marketplaces_relationships_paths_valid(self):
+    def validate_marketplaces_fields(self):
         """
         Source's marketplaces field is a subset of the target's marketplaces field
         """
-
         is_valid = True
-        paths_with_invalid_marketplaces = (
-            self.graph.find_uses_paths_with_invalid_marketplaces(self.file_paths)
-        )
-
-        for query_result in paths_with_invalid_marketplaces:
-            content_name = query_result.name
-            relationship_data = query_result.uses
-            marketplaces = query_result.marketplaces
-            content_items = [
-                relationship.target.name
-                if relationship.target.name
-                else relationship.target.object_id
-                for relationship in relationship_data
+        content_item: ContentItem
+        for content_item in self.graph.find_uses_paths_with_invalid_marketplaces(
+            self.file_paths
+        ):
+            used_content_items = [
+                relationship.content_item.object_id
+                for relationship in content_item.uses
             ]
-            file_path = query_result.path
             error_message, error_code = Errors.uses_items_not_in_marketplaces(
-                content_name, marketplaces, content_items
+                content_item.name, content_item.marketplaces, used_content_items
             )
-            if self.handle_error(error_message, error_code, file_path, warning=True):
+            if self.handle_error(error_message, error_code, content_item.path):
                 is_valid = False
 
         return is_valid
 
-    @error_codes("GR102")
-    def is_file_using_unknown_content(self):
-        """
-        Validate that there are no usage of unknown content items
-        """
-
+    @error_codes("GR101")
+    def validate_fromversion_fields(self):
+        """Validates that source's fromvesion >= target's fromvesion."""
         is_valid = True
-        query_results = self.graph.get_unknown_content_uses(self.file_paths)
-        if query_results:
-            for query_result in query_results:
-                content_name = query_result.name
-                relationship_data = query_result.uses
-                unknown_content_names = [
-                    relationship.target.object_id
-                    if relationship.target.object_id
-                    else relationship.target.name
-                    for relationship in relationship_data
-                ]
-                file_path = query_result.path
-                error_message, error_code = Errors.using_unknown_content(
-                    content_name, unknown_content_names
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path, warning=True
-                ):
-                    is_valid = False
+
+        # Returns warnings - for non supported versions
+        content_items_with_invalid_fromversion: List[
+            ContentItem
+        ] = self.graph.find_uses_paths_with_invalid_fromversion(
+            self.file_paths, for_supported_versions=False
+        )
+        for content_item in content_items_with_invalid_fromversion:
+            is_valid = is_valid and self.handle_invalid_fromversion(
+                content_item, warning=True
+            )
+
+        # Returns errors - for supported versions
+        content_items_with_invalid_fromversion = (
+            self.graph.find_uses_paths_with_invalid_fromversion(
+                self.file_paths, for_supported_versions=True
+            )
+        )
+        for content_item in content_items_with_invalid_fromversion:
+            is_valid = is_valid and self.handle_invalid_fromversion(content_item)
 
         return is_valid
 
+    def handle_invalid_fromversion(
+        self, content_item: ContentItem, warning: bool = False
+    ):
+        """Handles a single invalid fromversion query result"""
+        used_content_items = [
+            relationship.content_item.object_id for relationship in content_item.uses
+        ]
+        error_message, error_code = Errors.uses_items_with_invalid_fromversions(
+            content_item.name, content_item.fromversion, used_content_items
+        )
+        return self.handle_error(
+            error_message, error_code, content_item.path, warning=warning
+        )
+
+    @error_codes("GR102")
+    def validate_toversion_fields(self):
+        """Validate that source's toversion <= target's toversion."""
+        is_valid = True
+
+        # Returns warnings - for non supported versions
+        content_items_with_invalid_versions: List[
+            ContentItem
+        ] = self.graph.find_uses_paths_with_invalid_toversion(
+            self.file_paths, for_supported_versions=False
+        )
+
+        for content_item in content_items_with_invalid_versions:
+            is_valid = is_valid and self.handle_invalid_toversion(
+                content_item, warning=True
+            )
+
+        # Returns errors - for supported versions
+        content_items_with_invalid_versions = (
+            self.graph.find_uses_paths_with_invalid_toversion(
+                self.file_paths, for_supported_versions=True
+            )
+        )
+        for content_item in content_items_with_invalid_versions:
+            is_valid = is_valid and self.handle_invalid_toversion(content_item)
+
+        return is_valid
+
+    def handle_invalid_toversion(
+        self, content_item: ContentItem, warning: bool = False
+    ):
+        """Handles a single invalid toversion query result"""
+        used_content_items = [
+            relationship.content_item.object_id for relationship in content_item.uses
+        ]
+        error_message, error_code = Errors.uses_items_with_invalid_toversions(
+            content_item.name, content_item.toversion, used_content_items
+        )
+        return self.handle_error(
+            error_message, error_code, content_item.path, warning=warning
+        )
+
     @error_codes("GR103")
+    def is_file_using_unknown_content(self):
+        """Validates that there is no usage of unknown content items."""
+
+        is_valid = True
+        content_item: ContentItem
+        for content_item in self.graph.get_unknown_content_uses(self.file_paths):
+            unknown_content_names = [
+                relationship.content_item.object_id or relationship.content_item.name  # type: ignore
+                for relationship in content_item.uses
+            ]
+            error_message, error_code = Errors.using_unknown_content(
+                content_item.name, unknown_content_names
+            )
+            if self.handle_error(
+                error_message, error_code, content_item.path, warning=True
+            ):
+                is_valid = False
+
+        return is_valid
+
+    @error_codes("GR104")
     def is_file_display_name_already_exists(self):
         """
         Validate that there are no duplicate display names in the repo

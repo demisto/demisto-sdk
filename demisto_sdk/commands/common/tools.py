@@ -312,14 +312,17 @@ def get_files_in_dir(
     return list(set(files) - set(excludes))
 
 
-def get_all_content_objects_paths_in_dir(project_dir_list: Iterable):
+def get_all_content_objects_paths_in_dir(project_dir_list: Optional[Iterable]):
     """
     Gets the project directory and returns the path of all yml, json and py files in it
     Args:
         project_dir_list: List or set with str paths
     :return: list of content files in the current dir with str relative paths
     """
-    files = []
+    files: list = []
+    if not project_dir_list:
+        return files
+
     for file_path in project_dir_list:
         files.extend(
             get_files_in_dir(

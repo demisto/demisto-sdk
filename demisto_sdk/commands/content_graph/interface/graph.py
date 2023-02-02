@@ -1,7 +1,7 @@
 import shutil
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -83,7 +83,31 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def validate_graph(self) -> None:
+    def get_unknown_content_uses(self, file_paths: List[str]) -> List[BaseContent]:
+        pass
+
+    @abstractmethod
+    def get_duplicate_pack_display_name(
+        self, file_paths: List[str]
+    ) -> List[Tuple[str, List[str]]]:
+        pass
+
+    @abstractmethod
+    def find_uses_paths_with_invalid_fromversion(
+        self, file_paths: List[str], for_supported_versions=False
+    ) -> List[BaseContent]:
+        pass
+
+    @abstractmethod
+    def find_uses_paths_with_invalid_toversion(
+        self, file_paths: List[str], for_supported_versions=False
+    ) -> List[BaseContent]:
+        pass
+
+    @abstractmethod
+    def find_uses_paths_with_invalid_marketplaces(
+        self, file_paths: List[str]
+    ) -> List[BaseContent]:
         pass
 
     @abstractmethod

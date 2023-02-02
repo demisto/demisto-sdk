@@ -1,7 +1,7 @@
 import logging
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from neo4j import GraphDatabase, Neo4jDriver, Session, graph
 
@@ -47,7 +47,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     _match,
     create_nodes,
     delete_all_graph_nodes,
-    duplicates_exist,
     remove_empty_properties,
     remove_server_nodes,
 )
@@ -325,12 +324,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.write_transaction(create_nodes, nodes)
             session.write_transaction(remove_empty_properties)
 
-    def validate_graph(self) -> None:
-        with self.driver.session() as session:
-            if session.read_transaction(duplicates_exist):
-                raise Exception("Duplicates found in graph.")
-
-    def get_unknown_content_uses(self, file_paths: List[str]):
+    def get_unknown_content_uses(self, file_paths: List[str]) -> List[BaseContent]:
         with self.driver.session() as session:
             results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
                 validate_unknown_content, file_paths
@@ -339,7 +333,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
-    def get_duplicate_pack_display_name(self, file_paths: List[str]):
+    def get_duplicate_pack_display_name(
+        self, file_paths: List[str]
+    ) -> List[Tuple[str, List[str]]]:
         with self.driver.session() as session:
             results = session.read_transaction(
                 validate_multiple_packs_with_same_display_name, file_paths
@@ -347,28 +343,57 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return results
 
     def find_uses_paths_with_invalid_fromversion(
-        self, file_paths: List[str], from_version=False
-    ):
+        self, file_paths: List[str], for_supported_versions=False
+    ) -> List[BaseContent]:
+        """Searches and retrievs content items who use content items with a lower fromvesion.
+
+        Args:
+            file_paths (List[str]): A list of content items' paths to check.
+                If not given, runs the query over all content items.
+
+        Returns:
+            List[BaseContent]: The content items who use content items with a lower fromvesion.
+        """
         with self.driver.session() as session:
             results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
-                validate_fromversion, file_paths, from_version
+                validate_fromversion, file_paths, for_supported_versions
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
     def find_uses_paths_with_invalid_toversion(
-        self, file_paths: List[str], to_version=False
-    ):
+        self, file_paths: List[str], for_supported_versions=False
+    ) -> List[BaseContent]:
+        """Searches and retrievs content items who use content items with a higher toversion.
+
+        Args:
+            file_paths (List[str]): A list of content items' paths to check.
+                If not given, runs the query over all content items.
+
+        Returns:
+            List[BaseContent]: The content items who use content items with a higher toversion.
+        """
         with self.driver.session() as session:
             results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
-                validate_toversion, file_paths, to_version
+                validate_toversion, file_paths, for_supported_versions
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
-    def find_uses_paths_with_invalid_marketplaces(self, file_paths: List[str]):
+    def find_uses_paths_with_invalid_marketplaces(
+        self, file_paths: List[str]
+    ) -> List[BaseContent]:
+        """Searches and retrievs content items who use content items with invalid marketplaces.
+
+        Args:
+            file_paths (List[str]): A list of content items' paths to check.
+                If not given, runs the query over all content items.
+
+        Returns:
+            List[BaseContent]: The content items who use content items with invalid marketplaces.
+        """
         with self.driver.session() as session:
             results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
                 validate_marketplaces, file_paths

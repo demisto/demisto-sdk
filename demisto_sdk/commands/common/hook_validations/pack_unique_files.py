@@ -49,7 +49,6 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
-from demisto_sdk.commands.common.hook_validations.graph_validator import GraphValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.tools import (
     get_core_pack_list,
@@ -1039,15 +1038,6 @@ class PackUniqueFilesValidator(BaseValidator):
 
     # pack dependencies validation
     def validate_pack_dependencies(self):
-
-        if self.validate_graph:
-            click.secho(
-                f"\nRunning pack dependencies validation on {self.pack} with the graph\n",
-                fg="bright_cyan",
-            )
-            with GraphValidator(self.specific_validations) as graph_validator:
-                graph_validator.validate_dependencies(self.pack)
-
         try:
             click.secho(
                 f"\nRunning pack dependencies validation on {self.pack}\n",

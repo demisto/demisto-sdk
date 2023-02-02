@@ -102,11 +102,6 @@ def remove_server_nodes(tx: Transaction) -> None:
         run_query(tx, query)
 
 
-def duplicates_exist(tx) -> bool:
-    result = run_query(tx, FIND_DUPLICATES).single()
-    return result["found_duplicates"]
-
-
 def create_nodes_by_type(
     tx: Transaction,
     content_type: ContentType,

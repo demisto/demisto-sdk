@@ -43,7 +43,7 @@ class ContentItem(BaseContent):
     def validate_path(cls, v: Path) -> Path:
         if v.is_absolute():
             return v
-        return Path(CONTENT_PATH) / v
+        return Path(CONTENT_PATH, v)
 
     @property
     def in_pack(self) -> Optional["Pack"]:

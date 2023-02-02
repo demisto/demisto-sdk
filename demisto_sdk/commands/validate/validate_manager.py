@@ -91,6 +91,7 @@ from demisto_sdk.commands.common.hook_validations.layout import (
     LayoutsContainerValidator,
     LayoutValidator,
 )
+from demisto_sdk.commands.common.hook_validations.layout_rule import LayoutRuleValidator
 from demisto_sdk.commands.common.hook_validations.lists import ListsValidator
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.modeling_rule import (
@@ -139,7 +140,6 @@ from demisto_sdk.commands.common.hook_validations.xsoar_config_json import (
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
-    get_all_content_objects_paths_in_dir,
     get_api_module_ids,
     get_api_module_integrations_set,
     get_content_path,
@@ -427,18 +427,8 @@ class ValidateManager:
         """Run validations only on specific files"""
         files_validation_result = set()
         self.setup_git_params()
-        files_to_validate = self.file_path.split(",")
-        if self.validate_graph:
-            click.secho(
-                f"\n================= Validating graph =================",
-                fg="bright_cyan",
-            )
-            with GraphValidator(
-                specific_validations=self.specific_validations,
-                input_files=files_to_validate,
-            ) as graph_validator:
-                files_validation_result.add(graph_validator.is_valid_content_graph())
-        for path in files_to_validate:
+
+        for path in self.file_path.split(","):
             error_ignore_list = self.get_error_ignore_list(get_pack_name(path))
             file_level = self.detect_file_level(path)
 
@@ -1099,6 +1089,11 @@ class ValidateManager:
 
         elif file_type == FileType.JOB:
             return self.validate_job(structure_validator, pack_error_ignore_list)
+
+        elif file_type == FileType.LAYOUT_RULE:
+            return self.validate_layout_rules(
+                structure_validator, pack_error_ignore_list
+            )
 
         elif file_type == FileType.CONTRIBUTORS:
             # This is temporarily - need to add a proper contributors validations
@@ -1772,6 +1767,15 @@ class ValidateManager:
             json_file_path=self.json_file_path,
         )
         return triggers_validator.is_valid_file(validate_rn=False)
+
+    def validate_layout_rules(self, structure_validator, pack_error_ignore_list):
+        layout_rules_validator = LayoutRuleValidator(
+            structure_validator,
+            ignored_errors=pack_error_ignore_list,
+            print_as_warnings=self.print_ignored_errors,
+            json_file_path=self.json_file_path,
+        )
+        return layout_rules_validator.is_valid_file(validate_rn=False)
 
     def validate_xsiam_report(self, structure_validator, pack_error_ignore_list):
         xsiam_report_validator = XSIAMReportValidator(
@@ -2663,8 +2667,7 @@ class ValidateManager:
 
         return ignored_error_list
 
-    @staticmethod
-    def add_ignored_errors_to_list(config, section, key, ignored_errors_list):
+    def add_ignored_errors_to_list(self, config, section, key, ignored_errors_list):
         if key == "ignore":
             ignored_errors_list.extend(str(config[section][key]).split(","))
 
@@ -2673,9 +2676,7 @@ class ValidateManager:
 
         if key in PRESET_ERROR_TO_CHECK:
             ignored_errors_list.extend(
-                ValidateManager.create_ignored_errors_list(
-                    PRESET_ERROR_TO_CHECK.get(key)
-                )
+                self.create_ignored_errors_list(PRESET_ERROR_TO_CHECK.get(key))
             )
 
     def get_error_ignore_list(self, pack_name):
@@ -2694,7 +2695,7 @@ class ValidateManager:
                             file_name = section[5:]
                             ignored_errors_list[file_name] = []
                             for key in config[section]:
-                                ValidateManager.add_ignored_errors_to_list(
+                                self.add_ignored_errors_to_list(
                                     config, section, key, ignored_errors_list[file_name]
                                 )
 

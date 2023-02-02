@@ -810,6 +810,9 @@ class BuildContext:
         """
         with open(FILTER_CONF) as filter_file:
             filtered_tests = [line.strip("\n") for line in filter_file.readlines()]
+            filtered_tests.append(
+                "Phishing v3 - DomainSquatting+EML+MaliciousIndicators - Test"
+            )
 
         return filtered_tests
 

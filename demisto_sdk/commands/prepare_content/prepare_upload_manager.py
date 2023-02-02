@@ -3,6 +3,10 @@ from pathlib import Path
 from typing import Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
+    Neo4jContentGraphInterface,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -15,6 +19,7 @@ class PrepareUploadManager:
         output: Optional[Path] = None,
         marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
         force: bool = False,
+        graph: bool = False,
         **kwargs,
     ) -> Path:
         if isinstance(input, str):
@@ -25,10 +30,22 @@ class PrepareUploadManager:
         if force:
             kwargs["force"] = True
         content_item = BaseContent.from_path(input)
-        if not content_item:
+        if not isinstance(content_item, (ContentItem, Pack)):
             raise ValueError(
                 f"Unsupported input for {input}. Please provide a path to a content item or a pack."
             )
+
+        if graph:
+            # enrich the content item with the graph
+            with Neo4jContentGraphInterface(should_update=True) as interface:
+                results = interface.search(
+                    marketplace=marketplace,
+                    path=content_item.path.relative_to(CONTENT_PATH),
+                )
+                if not results:
+                    raise ValueError(f"Could not find {input} in the graph.")
+                if not (content_item := results[0]):
+                    raise ValueError(f"Could not find {input} in the graph.")
         if not output:
             if not input.is_dir():
                 input = input.parent
@@ -36,7 +53,7 @@ class PrepareUploadManager:
         else:
             if output.is_dir():
                 output = output / content_item.normalize_name
-
+        output: Path  # Output is not optional anymore
         if isinstance(content_item, Pack):
             Pack.dump(content_item, output, marketplace)
             shutil.make_archive(str(output), "zip", output)

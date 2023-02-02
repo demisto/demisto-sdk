@@ -308,6 +308,13 @@ def extract_code(config, **kwargs):
     type=click.Path(dir_okay=True),
 )
 @click.option(
+    "-g",
+    "--graph",
+    help="Whether use the content graph",
+    is_flag=True,
+    default=False,
+)
+@click.option(
     "-o", "--output", help="The output dir to write the unified yml to", required=False
 )
 @click.option(
@@ -339,12 +346,22 @@ def extract_code(config, **kwargs):
     default="xsoar",
     type=click.Choice(["xsoar", "marketplacev2", "v2"]),
 )
+@click.option(
+    "-v",
+    "--verbose",
+    help="Verbose output - mainly for debugging purposes",
+    is_flag=True,
+)
 def prepare_content(**kwargs):
     """
     This command is used to prepare the content to be used in the platform.
 
 
     """
+    from demisto_sdk.commands.common.logger import logging_setup
+
+    if kwargs.get("verbose"):
+        logging_setup(3)
     if click.get_current_context().info_name == "unify":
         kwargs["unify_only"] = True
 

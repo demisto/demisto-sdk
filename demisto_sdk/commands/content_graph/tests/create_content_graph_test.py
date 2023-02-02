@@ -465,14 +465,14 @@ class TestCreateContentGraph:
                                 == content_item_target.object_id
                             )
 
-            assert packs[0].depends_on[0].content_item == packs[1]
+            assert packs[0].depends_on[0].content_item_to == packs[1]
             assert not packs[0].depends_on[0].is_test  # this is not a test dependency
 
             for p in packs[1].depends_on:
-                if p.content_item == packs[2]:
+                if p.content_item_to == packs[2]:
                     # regular dependency
                     assert not p.is_test
-                elif p.content_item == packs[0]:
+                elif p.content_item_to == packs[0]:
                     # test dependency
                     assert p.is_test
                 else:
@@ -488,9 +488,9 @@ class TestCreateContentGraph:
             depends_on_pack1 = [r for r in packs[0].depends_on]
             assert depends_on_pack1
             for depends in depends_on_pack1:
-                if depends.content_item == packs[1]:
+                if depends.content_item_to == packs[1]:
                     assert depends.is_direct
-                elif depends.content_item == packs[2]:
+                elif depends.content_item_to == packs[2]:
                     assert not depends.is_direct
                 else:
                     assert False

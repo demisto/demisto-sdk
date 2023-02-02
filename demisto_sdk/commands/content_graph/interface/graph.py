@@ -123,7 +123,7 @@ class ContentGraphInterface(ABC):
     def from_path(
         self, path: Path, marketplace: Optional[MarketplaceVersions] = None
     ) -> Union[Pack, ContentItem]:
-        """This will return a pack or content item from a path with the local changes
+        """This will return a pack or content item from a path with the local changes, enriched with relationships from the graph
 
         Args:
             path (Path): The path from a content item
@@ -139,6 +139,7 @@ class ContentGraphInterface(ABC):
         content_item = BaseContent.from_path(path)
         if not isinstance(content_item, (ContentItem, Pack)):
             raise ValueError(f"Could parse content_item from {path}")
+        # enrich the content_item with the graph
         result = self.search(
             path=content_item.path.relative_to(self.repo_path), marketplace=marketplace
         )

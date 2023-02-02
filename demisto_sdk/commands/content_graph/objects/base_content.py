@@ -79,9 +79,11 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
         dict_copy = self.__dict__.copy()
 
-        # This avoids circular references when pickling. Remove when updating to pydantic 2
+        # This avoids circular references when pickling store only the first level relationships.
+        # Remove when updating to pydantic 2
         for _, relationship_data in dict_copy["relationships_data"].items():
-            del relationship_data["content_item_to"]["relationships_data"]
+            for r in relationship_data:
+                r.content_item_to.relationships_data = defaultdict(set)
                 
         return {
             "__dict__": dict_copy,

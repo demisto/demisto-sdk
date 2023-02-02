@@ -1239,23 +1239,23 @@ class TestParsersAndModels:
             LayoutRuleParser,
         )
 
-        rule = pack.create_layout_rule("TestLayoutRule")
+        rule = pack.create_layout_rule("rule_test")
         rule_path = Path(rule.path)
         parser = LayoutRuleParser(rule_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
             dependency_ids={
-                "test_layout_id": ContentType.LAYOUT,
+                "test_layout": ContentType.LAYOUT,
             },
         )
         model = LayoutRule.from_orm(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="rule_test",
-            expected_name="test rule name",
+            expected_name="rule_test.json",
             expected_path=rule_path,
             expected_content_type=ContentType.LAYOUT_RULE,
-            expected_fromversion="6.0.0",
+            expected_fromversion="6.10.0",
         )
 
     def test_widget_parser(self, pack: Pack):

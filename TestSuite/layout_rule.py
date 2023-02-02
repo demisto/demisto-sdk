@@ -9,8 +9,9 @@ class LayoutRule(JSONBased):
     ):
         self.layout_rule_tmp_path = layout_rule_dir_path / f"{name}.json"
         self.name = name
+        self.rule_id = name
 
-        super().__init__(layout_rule_dir_path, name, "")
+        super().__init__(dir_path=layout_rule_dir_path, name=name, prefix="")
 
         if json_content:
             self.write_json(json_content)
@@ -20,7 +21,7 @@ class LayoutRule(JSONBased):
     def create_default_layout_rule(self):
         self.write_json(
             {
-                "rule_id": self.name,
+                "rule_id": self.rule_id,
                 "rule_name": self.name,
                 "layout_id": "test_layout",
                 "description": "",

@@ -86,7 +86,6 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
                 RelationshipType.DEPENDS_ON: relationship_data[
                     RelationshipType.DEPENDS_ON
                 ],
-                RelationshipType.IN_PACK: relationship_data[RelationshipType.IN_PACK],
             }
         return {
             "__dict__": dict_copy,

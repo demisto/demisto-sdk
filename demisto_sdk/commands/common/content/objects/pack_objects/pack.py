@@ -25,6 +25,7 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR,
     JOBS_DIR,
+    LAYOUT_RULES_DIR,
     LAYOUTS_DIR,
     LISTS_DIR,
     MODELING_RULES_DIR,
@@ -67,6 +68,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     Integration,
     Job,
     LayoutObject,
+    LayoutRule,
     Lists,
     ModelingRule,
     OldClassifier,
@@ -375,6 +377,12 @@ class Pack:
     def xdrc_templates(self) -> Iterator[XDRCTemplate]:
         return self._content_files_list_generator_factory(
             dir_name=XDRC_TEMPLATE_DIR, suffix="json"
+        )
+
+    @property
+    def layout_rules(self) -> Iterator[LayoutRule]:
+        return self._content_files_list_generator_factory(
+            dir_name=LAYOUT_RULES_DIR, suffix="json"
         )
 
     @property

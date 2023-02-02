@@ -7,6 +7,10 @@ import pytest
 
 from demisto_sdk.commands.common.constants import (
     CODE_FILES_REGEX,
+    CORRELATION_RULES_YML_REGEX,
+    MODELING_RULE_SCHEMA_REGEX,
+    MODELING_RULE_YML_REGEX,
+    PACK_LAYOUT_RULE_JSON_REGEX,
     PACKAGE_YML_FILE_REGEX,
     PACKS_CLASSIFIER_JSON_5_9_9_REGEX,
     PACKS_CLASSIFIER_JSON_REGEX,
@@ -25,9 +29,15 @@ from demisto_sdk.commands.common.constants import (
     PACKS_SCRIPT_TEST_PY_REGEX,
     PACKS_SCRIPT_YML_REGEX,
     PACKS_WIDGET_JSON_REGEX,
+    PARSING_RULES_YML_REGEX,
     PLAYBOOK_README_REGEX,
     PLAYBOOK_YML_REGEX,
     TEST_PLAYBOOK_YML_REGEX,
+    TRIGGER_JSON_REGEX,
+    XDRC_TEMPLATE_JSON_REGEX,
+    XDRC_TEMPLATE_YML_REGEX,
+    XSIAM_DASHBOARD_JSON_REGEX,
+    XSIAM_REPORT_JSON_REGEX,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
@@ -594,6 +604,53 @@ class TestGetMatchingRegex:
             [TEST_PLAYBOOK_YML_REGEX],
         ),
         (
+            ["Packs/CyberArkIdentity/XSIAMDashboards/CyberArkDashboard.json"],
+            [],
+            [XSIAM_DASHBOARD_JSON_REGEX],
+        ),
+        (
+            ["Packs/DeveloperTools/XSIAMReports/MockReport.json"],
+            [],
+            [XSIAM_REPORT_JSON_REGEX],
+        ),
+        (
+            ["Packs/Core/Triggers/Trigger_-_NGFW_Scan.json"],
+            [],
+            [TRIGGER_JSON_REGEX],
+        ),
+        (
+            ["Packs/Tableau/XDRCTemplates/Tableau/Tableau.json"],
+            [],
+            [XDRC_TEMPLATE_JSON_REGEX],
+        ),
+        (
+            ["Packs/Tableau/XDRCTemplates/Tableau/Tableau.yml"],
+            [],
+            [XDRC_TEMPLATE_YML_REGEX],
+        ),
+        (
+            ["Packs/AlibabaActionTrail/CorrelationRules/Alibaba_Correlation.yml"],
+            [],
+            [CORRELATION_RULES_YML_REGEX],
+        ),
+        (
+            ["Packs/Jira/ParsingRules/JiraParsingRules/JiraParsingRules.yml"],
+            [],
+            [PARSING_RULES_YML_REGEX],
+        ),
+        (
+            [
+                "Packs/Okta/ModelingRules/OktaModelingRules/OktaModelingRules_schema.json"
+            ],
+            [],
+            [MODELING_RULE_SCHEMA_REGEX],
+        ),
+        (
+            ["Packs/Okta/ModelingRules/OktaModelingRules/OktaModelingRules.yml"],
+            [],
+            [MODELING_RULE_YML_REGEX],
+        ),
+        (
             [
                 "Packs/SomeScript/Scripts/ScriptName/ScriptName.ps1",
                 "Packs/SomeIntegration/Integrations/IntegrationName/IntegrationName.ps1",
@@ -612,6 +669,11 @@ class TestGetMatchingRegex:
                 "Packs/SomeIntegration/Integrations/IntegrationName/NotTheSameIntegrationName.py",
             ],
             CODE_FILES_REGEX,
+        ),
+        (
+            ["Packs/PackName/LayoutRules/test_layout_rule.json"],
+            ["Packs/PackName/test_layout_rule.json"],
+            [PACK_LAYOUT_RULE_JSON_REGEX],
         ),
     ]
 
@@ -646,3 +708,169 @@ class TestGetMatchingRegex:
             file_path=file_path, predefined_scheme="releasenotesconfig"
         )
         assert validator.is_valid_scheme() is expected
+
+
+class TestXSIAMStructureValidator(TestStructureValidator):
+    def test_valid_modeling_rule_yml(self, pack: Pack):
+        """Given a valid modeling rule yml, make sure its schema is valid."""
+        modeling_rule_yml = pack.create_modeling_rule("modeling_rule").yml
+        validator = StructureValidator(modeling_rule_yml.path)
+        assert validator.is_valid_scheme()
+
+    def test_invalid_modeling_rule_yml_missing_fromversion(self, pack: Pack):
+        """
+        Given:
+            An invalid modeling rule yml with a missing fromversion field
+        When:
+            Running schema validation.
+        Then:
+            Make sure the schema is invalid.
+        """
+        modeling_rule_yml = pack.create_modeling_rule("modeling_rule").yml
+        modeling_rule_yml.delete_key("fromversion")
+        validator = StructureValidator(modeling_rule_yml.path)
+        assert not validator.is_valid_scheme()
+
+    def test_valid_modeling_rule_schema(self, pack: Pack):
+        """Given a valid modeling rule schema, make sure its schema is valid."""
+        modeling_rule_schema = pack.create_modeling_rule("modeling_rule").schema
+        validator = StructureValidator(modeling_rule_schema.path)
+        assert validator.is_valid_scheme()
+
+    def test_invalid_modeling_rule_schema_bad_type(self, pack: Pack):
+        """
+        Given:
+            An invalid modeling rule schema with a bad type for the "name" field
+        When:
+            Running schema validation.
+        Then:
+            Make sure the schema is invalid.
+        """
+        modeling_rule_schema = pack.create_modeling_rule("modeling_rule").schema
+        modeling_rule_schema.add_or_update_field_by_path(
+            "test_audit_raw.name.type", "invalid_type"
+        )
+        validator = StructureValidator(modeling_rule_schema.path)
+        assert not validator.is_valid_scheme()
+
+    def test_valid_parsing_rule_yml(self, pack: Pack):
+        """Given a valid parsing rule, make sure its schema is valid."""
+        parsing_rule_yml = pack.create_parsing_rule("parsing_rule").yml
+        validator = StructureValidator(parsing_rule_yml.path)
+        assert validator.is_valid_scheme()
+
+    def test_invalid_parsing_rule_yml_missing_fromversion(self, pack: Pack):
+        """
+        Given:
+            An invalid parsing rule with a missing fromversion field
+        When:
+            Running schema validation.
+        Then:
+            Make sure the schema is invalid.
+        """
+        parsing_rule_yml = pack.create_parsing_rule("parsing_rule").yml
+        parsing_rule_yml.delete_key("fromversion")
+        validator = StructureValidator(parsing_rule_yml.path)
+        assert not validator.is_valid_scheme()
+
+    def test_valid_xdrc_template(self, pack: Pack):
+        """Given a valid XDRC template, make sure its schema is valid."""
+        xdrc_template = pack.create_xdrc_template("xdrc_template")
+        validator = StructureValidator(str(xdrc_template.xdrc_template_tmp_path))
+        assert validator.is_valid_scheme()
+
+    def test_invalid_xdrc_template_missing_ostype(self, pack: Pack):
+        """
+        Given:
+            An invalid XDRC template with a missing ostype field
+        When:
+            Running schema validation.
+        Then:
+            Make sure the schema is invalid.
+        """
+        xdrc_template = pack.create_xdrc_template("xdrc_template")
+        xdrc_template.remove("os_type")
+        validator = StructureValidator(str(xdrc_template.xdrc_template_tmp_path))
+        assert not validator.is_valid_scheme()
+
+    def test_valid_trigger(self, pack: Pack):
+        """Given a valid trigger, make sure its schema is valid."""
+        trigger = pack.create_trigger("trigger")
+        validator = StructureValidator(trigger.path)
+        assert validator.is_valid_scheme()
+
+    def test_invalid_trigger_missing_search_field(self, pack: Pack):
+        """
+        Given:
+            An invalid trigger with a missing SEARCH_FIELD field
+        When:
+            Running schema validation.
+        Then:
+            Make sure the schema is invalid.
+        """
+        trigger = pack.create_trigger("trigger")
+        trigger.remove_field_by_path("alerts_filter.filter.AND.[0].SEARCH_FIELD")
+        validator = StructureValidator(trigger.path)
+        assert not validator.is_valid_scheme()
+
+    def test_valid_layout_rule(self, pack: Pack):
+        """Given a valid trigger, make sure its schema is valid."""
+        layout_rule = pack.create_layout_rule("layout_rule")
+        validator = StructureValidator(layout_rule.path)
+        assert validator.is_valid_scheme()
+
+    def test_invalid_layout_rule_missing_layout_id_field(self, pack: Pack):
+        """
+        Given:
+            An invalid layout rule with a missing layout_id field
+        When:
+            Running schema validation.
+        Then:
+            Make sure the schema is invalid.
+        """
+        layout_rule = pack.create_layout_rule("layout_rule")
+        layout_rule.remove("layout_id")
+        validator = StructureValidator(layout_rule.path)
+        assert not validator.is_valid_scheme()
+
+    def test_valid_xsiam_dashboard(self, pack: Pack):
+        """Given a valid XSIAM dashboard, make sure its schema is valid."""
+        xsiam_dashboard = pack.create_xsiam_dashboard("xsiam_dashboard")
+        validator = StructureValidator(xsiam_dashboard.path)
+        assert validator.is_valid_scheme()
+
+    def test_invalid_xsiam_dashboard_has_creator_mail(self, pack: Pack):
+        """
+        Given:
+            An invalid XSIAM dashboard with a creator_mail field (should not have one)
+        When:
+            Running schema validation.
+        Then:
+            Make sure the schema is invalid.
+        """
+        xsiam_dashboard = pack.create_xsiam_dashboard("xsiam_dashboard")
+        xsiam_dashboard.add_or_update_field_by_path(
+            "widgets_data.[0].creator_mail", "test@paloaltonetworks.com"
+        )
+        validator = StructureValidator(xsiam_dashboard.path)
+        assert not validator.is_valid_scheme()
+
+    def test_valid_xsiam_report(self, pack: Pack):
+        """Given a valid XSIAM report, make sure its schema is valid."""
+        xsiam_report = pack.create_xsiam_report("xsiam_report")
+        validator = StructureValidator(xsiam_report.path)
+        assert validator.is_valid_scheme()
+
+    def test_invalid_xsiam_report_missing_global_id(self, pack: Pack):
+        """
+        Given:
+            An invalid XSIAM report with a missing global_id field
+        When:
+            Running schema validation.
+        Then:
+            Make sure the schema is invalid.
+        """
+        xsiam_report = pack.create_xsiam_report("xsiam_report")
+        xsiam_report.remove_field_by_path("templates_data.[0].global_id")
+        validator = StructureValidator(xsiam_report.path)
+        assert not validator.is_valid_scheme()

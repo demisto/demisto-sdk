@@ -90,6 +90,7 @@ from demisto_sdk.commands.common.hook_validations.layout import (
     LayoutsContainerValidator,
     LayoutValidator,
 )
+from demisto_sdk.commands.common.hook_validations.layout_rule import LayoutRuleValidator
 from demisto_sdk.commands.common.hook_validations.lists import ListsValidator
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.modeling_rule import (
@@ -1005,7 +1006,10 @@ class ValidateManager:
         elif file_type == FileType.TRIGGER:
             return self.validate_triggers(structure_validator, pack_error_ignore_list)
 
-        elif file_type == FileType.PARSING_RULE:
+        elif file_type in (
+            FileType.PARSING_RULE,
+            FileType.PARSING_RULE_XIF,
+        ):
             return self.validate_parsing_rule(
                 structure_validator, pack_error_ignore_list
             )
@@ -1072,6 +1076,11 @@ class ValidateManager:
 
         elif file_type == FileType.JOB:
             return self.validate_job(structure_validator, pack_error_ignore_list)
+
+        elif file_type == FileType.LAYOUT_RULE:
+            return self.validate_layout_rules(
+                structure_validator, pack_error_ignore_list
+            )
 
         elif file_type == FileType.CONTRIBUTORS:
             # This is temporarily - need to add a proper contributors validations
@@ -1730,6 +1739,15 @@ class ValidateManager:
             json_file_path=self.json_file_path,
         )
         return triggers_validator.is_valid_file(validate_rn=False)
+
+    def validate_layout_rules(self, structure_validator, pack_error_ignore_list):
+        layout_rules_validator = LayoutRuleValidator(
+            structure_validator,
+            ignored_errors=pack_error_ignore_list,
+            print_as_warnings=self.print_ignored_errors,
+            json_file_path=self.json_file_path,
+        )
+        return layout_rules_validator.is_valid_file(validate_rn=False)
 
     def validate_xsiam_report(self, structure_validator, pack_error_ignore_list):
         xsiam_report_validator = XSIAMReportValidator(

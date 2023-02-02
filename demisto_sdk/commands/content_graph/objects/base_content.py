@@ -84,7 +84,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         for _, relationship_data in dict_copy["relationships_data"].items():
             for r in relationship_data:
                 r.content_item_to.relationships_data = defaultdict(set)
-                
+
         return {
             "__dict__": dict_copy,
             "__fields_set__": self.__fields_set__,

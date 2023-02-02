@@ -10,6 +10,7 @@
 * Updated the demisto-py to v3.2.6 which now supports basic proxy authentication.
 * Improved the message shown when using **upload** and overwriting packs.
 * Added support for the **Layout Rule** content type in the id-set and the content graph.
+* Updated the default general `fromVersion` value on **format** to `6.8.0`
 * Updated **validate** to use the graph when running with `--graph` flag.
 
 ## 1.9.0
@@ -36,6 +37,7 @@
 
 ## 1.8.2
 * Fixed an issue where demisto-py failed to upload content to XSIAM when `DEMISTO_USERNAME` environment variable is set.
+>>>>>>> e3c80b6fed8a54f397d91c8dcdb81058a3a9a864
 * Fixed an issue where the **prepare-content** command output invalid automation name when used with the --*custom* argument.
 * Fixed an issue where modeling rules with arbitrary whitespace characters were not parsed correctly.
 * Added support for the **nativeImage** key for an integration/script in the **prepare-content** command.

@@ -434,9 +434,8 @@ class ValidateManager:
                 fg="bright_cyan",
             )
             with GraphValidator(
-                self.specific_validations,
-                file_paths=files_to_validate,
-                validate_specific_files=True,
+                specific_validations=self.specific_validations,
+                input_files=files_to_validate
             ) as graph_validator:
                 files_validation_result.add(graph_validator.is_valid_content_graph())
         for path in files_to_validate:
@@ -524,7 +523,7 @@ class ValidateManager:
                 f"\n================= Validating graph =================",
                 fg="bright_cyan",
             )
-            with GraphValidator(self.specific_validations) as graph_validator:
+            with GraphValidator(specific_validations=self.specific_validations) as graph_validator:
                 all_packs_valid.add(graph_validator.is_valid_content_graph())
 
         if not self.skip_conf_json:
@@ -1278,7 +1277,7 @@ class ValidateManager:
             )
             if all_files_set:
                 with GraphValidator(
-                    self.specific_validations, file_paths=all_files_set
+                    specific_validations=self.specific_validations, git_files=all_files_set
                 ) as graph_validator:
                     validation_results.add(graph_validator.is_valid_content_graph())
 

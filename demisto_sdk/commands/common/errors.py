@@ -1753,12 +1753,12 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
-    "uses_items_with_invalid_fromversions": {
+    "uses_items_with_invalid_fromversion": {
         "code": "GR101",
         "ui_applicable": False,
         "related_field": "",
     },
-    "uses_items_with_invalid_toversions": {
+    "uses_items_with_invalid_toversion": {
         "code": "GR102",
         "ui_applicable": False,
         "related_field": "",
@@ -4383,7 +4383,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def uses_items_with_invalid_fromversions(
+    def uses_items_with_invalid_fromversion(
         content_name: str, fromversion: str, used_content_items: List[str]
     ):
         return (
@@ -4393,7 +4393,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def uses_items_with_invalid_toversions(
+    def uses_items_with_invalid_toversion(
         content_name: str, toversion: str, content_items: list
     ):
         return (

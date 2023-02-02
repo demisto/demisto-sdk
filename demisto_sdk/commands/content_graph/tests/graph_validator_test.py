@@ -411,7 +411,7 @@ def test_are_toversion_relationships_paths_valid(repository: ContentDTO):
     Given
     - A content repo
     When
-    - running the vaidation "are_toversion_relationships_paths_valid"
+    - running the validation "are_toversion_relationships_paths_valid"
     Then
     - Validate the existance of invalid to_version relationships
     """
@@ -493,16 +493,16 @@ def test_are_marketplaces_relationships_paths_valid(
     Given
     - A content repo
     When
-    - running the vaidation "is_file_display_name_already_exists"
+    - running the validation "is_file_display_name_already_exists"
     Then
-    - Validate the existance invalid marketplaces uses (Warning)
+    - Validate the existence invalid marketplaces uses
     """
     with GraphValidator() as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_marketplaces_fields()
 
     captured = capsys.readouterr().out
-    assert is_valid
+    assert not is_valid
     assert (
         "Content item 'SamplePlaybook' can be used in the 'xsoar, xpanse' marketplaces"
         ", however it uses content items: 'SamplePlaybook2' which are not supported in"
@@ -525,7 +525,7 @@ def test_validate_dependencies(repository: ContentDTO, capsys, mocker):
     )
     with GraphValidator() as graph_validator:
         create_content_graph(graph_validator.graph)
-        is_valid = graph_validator.validate_core_packs_dependencies("SamplePack")
+        is_valid = graph_validator.validate_dependencies()
 
     captured = capsys.readouterr().out
     assert not is_valid

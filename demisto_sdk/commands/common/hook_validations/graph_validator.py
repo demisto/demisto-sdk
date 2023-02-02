@@ -20,11 +20,6 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 
 class GraphValidator(BaseValidator):
     """GraphValidator makes validations on the content graph.
-
-    Attributes:
-        graph (ContentGraphInterface): The content graph interface.
-        file_paths (Optional[List]): The list of files to check.
-            If none, runs validations on all graph nodes.
     """
 
     def __init__(
@@ -34,7 +29,7 @@ class GraphValidator(BaseValidator):
         input_files: list = None,
     ):
         super().__init__(specific_validations=specific_validations)
-        self.graph = ContentGraphInterface()  # (should_update=True)
+        self.graph = ContentGraphInterface(should_update=True)
         self.file_paths: List[str] = git_files or get_all_content_objects_paths_in_dir(
             input_files
         )
@@ -50,7 +45,7 @@ class GraphValidator(BaseValidator):
 
     def is_valid_content_graph(self) -> bool:
         is_valid = (
-            self.validate_core_packs_dependencies(),
+            self.validate_dependencies(),
             self.validate_marketplaces_fields(),
             self.validate_fromversion_fields(),
             self.validate_toversion_fields(),
@@ -59,8 +54,16 @@ class GraphValidator(BaseValidator):
         )
         return all(is_valid)
 
+    def validate_dependencies(self):
+        """Validating the pack dependencies"""
+        is_valid = []
+        is_valid.append(
+            self.are_core_pack_dependencies_valid()
+        )
+        return all(is_valid)
+
     @error_codes("PA124")
-    def validate_core_packs_dependencies(self):
+    def are_core_pack_dependencies_valid(self):
         """Validates that core packs don't depend on non-core packs.
         On `validate -a`, all core packs are checked.
         """
@@ -112,8 +115,8 @@ class GraphValidator(BaseValidator):
 
     @error_codes("GR101")
     def validate_fromversion_fields(self):
-        """Validates that source's fromvesion >= target's fromvesion."""
-        is_valid = True
+        """Validates that source's fromversion >= target's fromversion."""
+        is_valid = []
 
         # Returns warnings - for non supported versions
         content_items_with_invalid_fromversion: List[
@@ -122,9 +125,9 @@ class GraphValidator(BaseValidator):
             self.file_paths, for_supported_versions=False
         )
         for content_item in content_items_with_invalid_fromversion:
-            is_valid = is_valid and self.handle_invalid_fromversion(
+            is_valid.append(self.handle_invalid_fromversion(
                 content_item, warning=True
-            )
+            ))
 
         # Returns errors - for supported versions
         content_items_with_invalid_fromversion = (
@@ -133,40 +136,37 @@ class GraphValidator(BaseValidator):
             )
         )
         for content_item in content_items_with_invalid_fromversion:
-            is_valid = is_valid and self.handle_invalid_fromversion(content_item)
+            is_valid.append(self.handle_invalid_fromversion(content_item))
 
-        return is_valid
+        return all(is_valid)
 
     def handle_invalid_fromversion(
         self, content_item: ContentItem, warning: bool = False
     ):
+        is_valid = True
         """Handles a single invalid fromversion query result"""
         used_content_items = [
             relationship.content_item.object_id for relationship in content_item.uses
         ]
-        error_message, error_code = Errors.uses_items_with_invalid_fromversions(
+        error_message, error_code = Errors.uses_items_with_invalid_fromversion(
             content_item.name, content_item.fromversion, used_content_items
         )
-        return self.handle_error(
-            error_message, error_code, content_item.path, warning=warning
-        )
+        if self.handle_error(error_message, error_code, content_item.path, warning=warning):
+            is_valid = False
+        
+        return is_valid
 
     @error_codes("GR102")
     def validate_toversion_fields(self):
         """Validate that source's toversion <= target's toversion."""
-        is_valid = True
+        is_valid = []
 
         # Returns warnings - for non supported versions
-        content_items_with_invalid_versions: List[
-            ContentItem
-        ] = self.graph.find_uses_paths_with_invalid_toversion(
-            self.file_paths, for_supported_versions=False
-        )
+        content_items_with_invalid_versions: List[ContentItem] = self.graph.find_uses_paths_with_invalid_toversion(
+            self.file_paths, for_supported_versions=False)
 
         for content_item in content_items_with_invalid_versions:
-            is_valid = is_valid and self.handle_invalid_toversion(
-                content_item, warning=True
-            )
+            is_valid.append(self.handle_invalid_toversion(content_item, warning=True))
 
         # Returns errors - for supported versions
         content_items_with_invalid_versions = (
@@ -175,9 +175,9 @@ class GraphValidator(BaseValidator):
             )
         )
         for content_item in content_items_with_invalid_versions:
-            is_valid = is_valid and self.handle_invalid_toversion(content_item)
+            is_valid.append(self.handle_invalid_toversion(content_item))
 
-        return is_valid
+        return all(is_valid)
 
     def handle_invalid_toversion(
         self, content_item: ContentItem, warning: bool = False
@@ -186,12 +186,13 @@ class GraphValidator(BaseValidator):
         used_content_items = [
             relationship.content_item.object_id for relationship in content_item.uses
         ]
-        error_message, error_code = Errors.uses_items_with_invalid_toversions(
+        error_message, error_code = Errors.uses_items_with_invalid_toversion(
             content_item.name, content_item.toversion, used_content_items
         )
-        return self.handle_error(
-            error_message, error_code, content_item.path, warning=warning
-        )
+        if self.handle_error(error_message, error_code, content_item.path, warning=warning):
+            is_valid = False
+
+        return is_valid
 
     @error_codes("GR103")
     def is_file_using_unknown_content(self):

@@ -314,6 +314,12 @@ def extract_code(config, **kwargs):
     default=False,
 )
 @click.option(
+    "--skip-update",
+    help="Whether to skip updating the content graph (used only when graph is true)",
+    is_flag=True,
+    default=False,
+)
+@click.option(
     "-o", "--output", help="The output dir to write the unified yml to", required=False
 )
 @click.option(

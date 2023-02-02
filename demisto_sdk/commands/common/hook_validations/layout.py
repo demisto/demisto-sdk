@@ -305,10 +305,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
                         invalid_types_contained.append(tab.get("type"))
                     sections = tab.get("sections", [])
                     for section in sections:
-                        if (
-                            "queryType" in section.keys()
-                            and "type" in section.keys()
-                        ):
+                        if "queryType" in section.keys() and "type" in section.keys():
                             if (
                                 section.get("queryType") == "script"
                                 and section.get("type") == "dynamic"

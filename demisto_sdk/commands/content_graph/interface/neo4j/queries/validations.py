@@ -2,7 +2,10 @@ from typing import List, Tuple
 
 from neo4j import Transaction
 
-from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    GENERAL_DEFAULT_FROMVERSION,
+)
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     Neo4jRelationshipResult,
@@ -36,11 +39,12 @@ RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
 def validate_fromversion(
     tx: Transaction, file_paths: List[str], for_supported_versions: bool
 ):
-    op = ">" if for_supported_versions else "<="
+    op = ">=" if for_supported_versions else "<"
     query = f"""// Returning all the USES relationships with where the target's fromversion is higher than the source's
 MATCH (content_item_from)-[r:{RelationshipType.USES}{{mandatorily:true}}]->(n)
 WHERE {versioned('content_item_from.fromversion')} < {versioned('n.fromversion')}
 AND {versioned('n.fromversion')} {op} {versioned(GENERAL_DEFAULT_FROMVERSION)}
+AND n.fromversion <> "{DEFAULT_CONTENT_ITEM_FROM_VERSION}"  // skips types with no "fromversion"
 """
     if file_paths:
         query += f"AND content_item_from.path in {file_paths}"

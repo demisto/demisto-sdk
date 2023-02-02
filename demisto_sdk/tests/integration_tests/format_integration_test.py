@@ -1143,6 +1143,10 @@ def test_format_generic_type_missing_from_version_key(mocker, repo):
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
+    mocker.patch(
+        "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
+        "6.2.0",
+    )
     pack = repo.create_pack("PackName")
     generic_type = GENERIC_TYPE.copy()
     if generic_type["fromVersion"]:
@@ -1182,6 +1186,10 @@ def test_format_generic_module_wrong_from_version(mocker, repo):
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
+    mocker.patch(
+        "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
+        "6.2.0",
+    )
     pack = repo.create_pack("PackName")
     generic_module = GENERIC_MODULE.copy()
     generic_module["fromVersion"] = "6.0.0"
@@ -1219,6 +1227,10 @@ def test_format_generic_module_missing_from_version_key(mocker, repo):
     """
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
+    )
+    mocker.patch(
+        "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
+        "6.2.0",
     )
     pack = repo.create_pack("PackName")
     generic_module = GENERIC_MODULE.copy()
@@ -1258,6 +1270,10 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
     """
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
+    )
+    mocker.patch(
+        "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
+        "6.2.0",
     )
     pack = repo.create_pack("PackName")
     generic_definition = GENERIC_DEFINITION.copy()
@@ -1299,6 +1315,10 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
     """
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
+    )
+    mocker.patch(
+        "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
+        "6.2.0",
     )
     pack = repo.create_pack("PackName")
     generic_definition = GENERIC_DEFINITION.copy()

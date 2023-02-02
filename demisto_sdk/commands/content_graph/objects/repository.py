@@ -1,7 +1,7 @@
 import logging
 import shutil
 import time
-from multiprocessing import Pool
+from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from typing import List
 
@@ -14,7 +14,7 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 
 logger = logging.getLogger("demisto-sdk")
 
-USE_FUTURE = True  # toggle this for better debugging
+USE_FUTURE = False  # toggle this for better debugging
 
 
 class ContentDTO(BaseModel):
@@ -28,7 +28,8 @@ class ContentDTO(BaseModel):
         logger.info("starting repo dump")
         start_time = time.time()
         if USE_FUTURE:
-            with Pool(processes=cpu_count()) as pool:
+            # TODO: change to use process pool once upgraded to Pydantic v2
+            with ThreadPool(processes=cpu_count()) as pool:
                 pool.starmap(
                     Pack.dump,
                     ((pack, dir / pack.path.name, marketplace) for pack in self.packs),

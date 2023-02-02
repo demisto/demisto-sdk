@@ -80,13 +80,11 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         dict_copy = self.__dict__.copy()
 
         # This avoids circular references when pickling. Remove when updating to pydantic 2
-        if dict_copy["relationships_data"]:
+        if relationship_data := dict_copy["relationships_data"]:
             # modify only if relationship_data is not empty so we can check if relationships exist in model
-            depends_on = dict_copy["relationships_data"][RelationshipType.DEPENDS_ON]
-            in_pack = dict_copy["relationships_data"][RelationshipType.IN_PACK]
             dict_copy["relationships_data"] = {
-                RelationshipType.DEPENDS_ON: depends_on,
-                RelationshipType.IN_PACK: in_pack,
+                RelationshipType.DEPENDS_ON: relationship_data[RelationshipType.DEPENDS_ON],
+                RelationshipType.IN_PACK: relationship_data[RelationshipType.IN_PACK],
             }
         return {
             "__dict__": dict_copy,

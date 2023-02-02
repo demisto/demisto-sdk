@@ -1015,6 +1015,10 @@ def test_format_generic_field_wrong_values(
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
+    mocker.patch(
+        "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
+        "6.5.0",
+    )
     pack = repo.create_pack("PackName")
     generic_field = GENERIC_FIELD.copy()
     generic_field[field_to_test] = invalid_value
@@ -1054,8 +1058,8 @@ def test_format_generic_field_missing_from_version_key(mocker, repo):
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
     mocker.patch(
-        "demisto_sdk.commands.common.constants.GENERAL_DEFAULT_FROMVERSION",
-        return_value="6.2.0",
+        "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
+        "6.5.0",
     )
     pack = repo.create_pack("PackName")
     generic_field = GENERIC_FIELD.copy()
@@ -1096,6 +1100,11 @@ def test_format_generic_type_wrong_from_version(mocker, repo):
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
+    mocker.patch(
+        "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
+        "6.5.0",
+    )
+
     pack = repo.create_pack("PackName")
     generic_type = GENERIC_TYPE.copy()
     generic_type["fromVersion"] = "6.0.0"
@@ -1133,6 +1142,10 @@ def test_format_generic_type_missing_from_version_key(mocker, repo):
     """
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
+    )
+    mocker.patch(
+        "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
+        "6.2.0",
     )
     pack = repo.create_pack("PackName")
     generic_type = GENERIC_TYPE.copy()
@@ -1173,6 +1186,10 @@ def test_format_generic_module_wrong_from_version(mocker, repo):
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
+    mocker.patch(
+        "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
+        "6.2.0",
+    )
     pack = repo.create_pack("PackName")
     generic_module = GENERIC_MODULE.copy()
     generic_module["fromVersion"] = "6.0.0"
@@ -1210,6 +1227,10 @@ def test_format_generic_module_missing_from_version_key(mocker, repo):
     """
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
+    )
+    mocker.patch(
+        "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
+        "6.2.0",
     )
     pack = repo.create_pack("PackName")
     generic_module = GENERIC_MODULE.copy()
@@ -1249,6 +1270,10 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
     """
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
+    )
+    mocker.patch(
+        "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
+        "6.2.0",
     )
     pack = repo.create_pack("PackName")
     generic_definition = GENERIC_DEFINITION.copy()
@@ -1290,6 +1315,10 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
     """
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
+    )
+    mocker.patch(
+        "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
+        "6.2.0",
     )
     pack = repo.create_pack("PackName")
     generic_definition = GENERIC_DEFINITION.copy()

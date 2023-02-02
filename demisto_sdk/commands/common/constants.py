@@ -1356,7 +1356,7 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.LAYOUT_RULE: "6.10.0",
 }
 # This constant below should always be two versions before the latest server version
-GENERAL_DEFAULT_FROMVERSION = "6.5.0"
+GENERAL_DEFAULT_FROMVERSION = "6.8.0"
 VERSION_5_5_0 = "5.5.0"
 DEFAULT_CONTENT_ITEM_FROM_VERSION = "0.0.0"
 DEFAULT_CONTENT_ITEM_TO_VERSION = "99.99.99"

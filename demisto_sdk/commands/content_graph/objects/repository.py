@@ -14,7 +14,7 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 
 logger = logging.getLogger("demisto-sdk")
 
-USE_FUTURE = False  # toggle this for better debugging
+USE_FUTURE = True  # toggle this for better debugging
 
 
 class ContentDTO(BaseModel):

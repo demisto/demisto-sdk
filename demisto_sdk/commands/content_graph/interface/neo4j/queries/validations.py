@@ -22,7 +22,7 @@ def validate_unknown_content(tx: Transaction, file_paths: List[str]):
         f"WHERE content_item_from.path in {file_paths}" if file_paths else ""
     )
     query = f"""// Returns USES relationships to content items not in the repository
-MATCH (content_item_from)-[r:{RelationshipType.USES}]->(n{{not_in_repository:true}})
+MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}]->(n{{not_in_repository:true}})
 {file_paths_filter}
 RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
 """
@@ -41,7 +41,7 @@ def validate_fromversion(
 ):
     op = ">=" if for_supported_versions else "<"
     query = f"""// Returning all the USES relationships with where the target's fromversion is higher than the source's
-MATCH (content_item_from)-[r:{RelationshipType.USES}{{mandatorily:true}}]->(n)
+MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}{{mandatorily:true}}]->(n)
 WHERE {versioned('content_item_from.fromversion')} < {versioned('n.fromversion')}
 AND {versioned('n.fromversion')} {op} {versioned(GENERAL_DEFAULT_FROMVERSION)}
 AND n.fromversion <> "{DEFAULT_CONTENT_ITEM_FROM_VERSION}"  // skips types with no "fromversion"
@@ -71,7 +71,7 @@ def validate_toversion(
 ):
     op = ">=" if for_supported_versions else "<"
     query = f"""// Returning all the USES relationships with where the target's toversion is lower than the source's
-MATCH (content_item_from)-[r:{RelationshipType.USES}{{mandatorily:true}}]->(n)
+MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}{{mandatorily:true}}]->(n)
 WHERE {versioned('content_item_from.toversion')} > {versioned('n.toversion')}
 AND {versioned('content_item_from.toversion')} {op} {versioned(GENERAL_DEFAULT_FROMVERSION)}
 """
@@ -97,7 +97,7 @@ RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
 
 def validate_marketplaces(tx: Transaction, file_paths: List[str]):
     query = f"""// Returns all the USES relationships with where the target's marketplaces doesn't include all of the source's marketplaces
-MATCH (content_item_from)-[r:{RelationshipType.USES}{{mandatorily:true}}]->(n)
+MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}{{mandatorily:true}}]->(n)
 WHERE not all(elem IN content_item_from.marketplaces WHERE elem IN n.marketplaces)
 """
     if file_paths:

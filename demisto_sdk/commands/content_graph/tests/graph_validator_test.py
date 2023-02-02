@@ -430,7 +430,7 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, capsy
     When
     - running the vaidation "are_fromversion_relationships_paths_valid"
     Then
-    - Validate the existance of invalid from_version relationships (Warning)
+    - Validate the existance of invalid from_version relationships
     """
     with GraphValidator() as graph_validator:
         create_content_graph(graph_validator.graph)

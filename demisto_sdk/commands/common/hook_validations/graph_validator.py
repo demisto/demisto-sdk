@@ -75,7 +75,8 @@ class GraphValidator(BaseValidator):
                     dependency.content_item.object_id
                     for dependency in core_pack_node.depends_on
                     if dependency.content_item.object_id not in core_pack_list
-                    and dependency.mandatorily is True and not dependency.is_test
+                    and dependency.mandatorily is True
+                    and not dependency.is_test
                 ]
                 if non_core_pack_dependencies:
                     error_message, error_code = Errors.invalid_core_pack_dependencies(

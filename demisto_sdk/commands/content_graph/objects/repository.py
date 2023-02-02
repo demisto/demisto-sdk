@@ -1,7 +1,7 @@
 import logging
 import shutil
 import time
-from multiprocessing.pool import ThreadPool
+from multiprocessing.pool import Pool
 from pathlib import Path
 from typing import List
 
@@ -29,7 +29,7 @@ class ContentDTO(BaseModel):
         start_time = time.time()
         if USE_FUTURE:
             # TODO: change to use process pool once upgraded to Pydantic v2
-            with ThreadPool(processes=cpu_count()) as pool:
+            with Pool(processes=cpu_count()) as pool:
                 pool.starmap(
                     Pack.dump,
                     ((pack, dir / pack.path.name, marketplace) for pack in self.packs),

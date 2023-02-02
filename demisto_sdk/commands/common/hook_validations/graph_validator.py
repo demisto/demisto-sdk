@@ -19,8 +19,7 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 
 
 class GraphValidator(BaseValidator):
-    """GraphValidator makes validations on the content graph.
-    """
+    """GraphValidator makes validations on the content graph."""
 
     def __init__(
         self,
@@ -57,9 +56,7 @@ class GraphValidator(BaseValidator):
     def validate_dependencies(self):
         """Validating the pack dependencies"""
         is_valid = []
-        is_valid.append(
-            self.are_core_pack_dependencies_valid()
-        )
+        is_valid.append(self.are_core_pack_dependencies_valid())
         return all(is_valid)
 
     @error_codes("PA124")
@@ -125,9 +122,7 @@ class GraphValidator(BaseValidator):
             self.file_paths, for_supported_versions=False
         )
         for content_item in content_items_with_invalid_fromversion:
-            is_valid.append(self.handle_invalid_fromversion(
-                content_item, warning=True
-            ))
+            is_valid.append(self.handle_invalid_fromversion(content_item, warning=True))
 
         # Returns errors - for supported versions
         content_items_with_invalid_fromversion = (
@@ -151,9 +146,11 @@ class GraphValidator(BaseValidator):
         error_message, error_code = Errors.uses_items_with_invalid_fromversion(
             content_item.name, content_item.fromversion, used_content_items
         )
-        if self.handle_error(error_message, error_code, content_item.path, warning=warning):
+        if self.handle_error(
+            error_message, error_code, content_item.path, warning=warning
+        ):
             is_valid = False
-        
+
         return is_valid
 
     @error_codes("GR102")
@@ -162,8 +159,11 @@ class GraphValidator(BaseValidator):
         is_valid = []
 
         # Returns warnings - for non supported versions
-        content_items_with_invalid_versions: List[ContentItem] = self.graph.find_uses_paths_with_invalid_toversion(
-            self.file_paths, for_supported_versions=False)
+        content_items_with_invalid_versions: List[
+            ContentItem
+        ] = self.graph.find_uses_paths_with_invalid_toversion(
+            self.file_paths, for_supported_versions=False
+        )
 
         for content_item in content_items_with_invalid_versions:
             is_valid.append(self.handle_invalid_toversion(content_item, warning=True))
@@ -189,7 +189,9 @@ class GraphValidator(BaseValidator):
         error_message, error_code = Errors.uses_items_with_invalid_toversion(
             content_item.name, content_item.toversion, used_content_items
         )
-        if self.handle_error(error_message, error_code, content_item.path, warning=warning):
+        if self.handle_error(
+            error_message, error_code, content_item.path, warning=warning
+        ):
             is_valid = False
 
         return is_valid

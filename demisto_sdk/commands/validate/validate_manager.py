@@ -91,7 +91,6 @@ from demisto_sdk.commands.common.hook_validations.layout import (
     LayoutsContainerValidator,
     LayoutValidator,
 )
-from demisto_sdk.commands.common.hook_validations.layout_rule import LayoutRuleValidator
 from demisto_sdk.commands.common.hook_validations.lists import ListsValidator
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.modeling_rule import (
@@ -436,7 +435,7 @@ class ValidateManager:
             )
             with GraphValidator(
                 specific_validations=self.specific_validations,
-                input_files=files_to_validate
+                input_files=files_to_validate,
             ) as graph_validator:
                 files_validation_result.add(graph_validator.is_valid_content_graph())
         for path in files_to_validate:
@@ -524,7 +523,9 @@ class ValidateManager:
                 f"\n================= Validating graph =================",
                 fg="bright_cyan",
             )
-            with GraphValidator(specific_validations=self.specific_validations) as graph_validator:
+            with GraphValidator(
+                specific_validations=self.specific_validations
+            ) as graph_validator:
                 all_packs_valid.add(graph_validator.is_valid_content_graph())
 
         if not self.skip_conf_json:
@@ -1099,11 +1100,6 @@ class ValidateManager:
         elif file_type == FileType.JOB:
             return self.validate_job(structure_validator, pack_error_ignore_list)
 
-        elif file_type == FileType.LAYOUT_RULE:
-            return self.validate_layout_rules(
-                structure_validator, pack_error_ignore_list
-            )
-
         elif file_type == FileType.CONTRIBUTORS:
             # This is temporarily - need to add a proper contributors validations
             return True
@@ -1283,7 +1279,8 @@ class ValidateManager:
             )
             if all_files_set:
                 with GraphValidator(
-                    specific_validations=self.specific_validations, git_files=all_files_set
+                    specific_validations=self.specific_validations,
+                    git_files=all_files_set,
                 ) as graph_validator:
                     validation_results.add(graph_validator.is_valid_content_graph())
 
@@ -1775,15 +1772,6 @@ class ValidateManager:
             json_file_path=self.json_file_path,
         )
         return triggers_validator.is_valid_file(validate_rn=False)
-
-    def validate_layout_rules(self, structure_validator, pack_error_ignore_list):
-        layout_rules_validator = LayoutRuleValidator(
-            structure_validator,
-            ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
-            json_file_path=self.json_file_path,
-        )
-        return layout_rules_validator.is_valid_file(validate_rn=False)
 
     def validate_xsiam_report(self, structure_validator, pack_error_ignore_list):
         xsiam_report_validator = XSIAMReportValidator(

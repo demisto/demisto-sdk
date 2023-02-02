@@ -14,7 +14,7 @@ class RelationshipData(BaseModel):
     target_id: int
 
     # this is the attribute we're interested in when querying
-    content_item: BaseContent
+    content_item_to: BaseContent
 
     is_direct: bool = True
 

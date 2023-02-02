@@ -456,7 +456,7 @@ class TestCreateContentGraph:
                             )
                         if relationship_type == RelationshipType.USES_BY_ID:
                             assert (
-                                content_item_source.uses[0].content_item.object_id
+                                content_item_source.uses[0].content_item_to.object_id
                                 == content_item_target.object_id
                             )
                         if relationship_type == RelationshipType.TESTED_BY:

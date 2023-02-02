@@ -36,7 +36,7 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
     @property
     def imported_by(self) -> List[BaseContent]:
         return [
-            r.content_item
+            r.content_item_to
             for r in self.relationships_data[RelationshipType.IMPORTS]
-            if r.content_item.database_id == r.source_id
+            if r.content_item_to.database_id == r.source_id
         ]

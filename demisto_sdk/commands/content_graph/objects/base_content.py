@@ -136,7 +136,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     def add_relationship(
         self, relationship_type: RelationshipType, relationship: "RelationshipData"
     ) -> None:
-        if relationship.content_item == self:
+        if relationship.content_item_to == self:
             # skip adding circular dependency
             return
         self.relationships_data[relationship_type].add(relationship)

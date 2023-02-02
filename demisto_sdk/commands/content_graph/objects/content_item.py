@@ -56,7 +56,7 @@ class ContentItem(BaseContent):
         in_pack = self.relationships_data[RelationshipType.IN_PACK]
         if not in_pack:
             return None
-        return next(iter(in_pack)).content_item  # type: ignore[return-value]
+        return next(iter(in_pack)).content_item_to  # type: ignore[return-value]
 
     @property
     def uses(self) -> List["RelationshipData"]:
@@ -84,7 +84,7 @@ class ContentItem(BaseContent):
         return [
             r
             for r in self.relationships_data[RelationshipType.USES]
-            if r.content_item.database_id == r.target_id
+            if r.content_item_to.database_id == r.target_id
         ]
 
     @property
@@ -96,9 +96,9 @@ class ContentItem(BaseContent):
             List[TestPlaybook]: List of TestPlaybook models.
         """
         return [
-            r.content_item  # type: ignore[misc]
+            r.content_item_to  # type: ignore[misc]
             for r in self.relationships_data[RelationshipType.TESTED_BY]
-            if r.content_item.database_id == r.target_id
+            if r.content_item_to.database_id == r.target_id
         ]
 
     @property

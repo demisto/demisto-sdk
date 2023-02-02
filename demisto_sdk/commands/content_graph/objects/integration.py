@@ -32,9 +32,9 @@ class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[ca
     @property
     def integrations(self) -> List["Integration"]:
         return [
-            r.content_item  # type: ignore[misc]
+            r.content_item_to  # type: ignore[misc]
             for r in self.relationships_data[RelationshipType.HAS_COMMAND]
-            if r.content_item.database_id == r.source_id
+            if r.content_item_to.database_id == r.source_id
         ]
 
     def dump(self, *args) -> None:
@@ -51,16 +51,16 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     @property
     def imports(self) -> List["Script"]:
         return [
-            r.content_item  # type: ignore[misc]
+            r.content_item_to  # type: ignore[misc]
             for r in self.relationships_data[RelationshipType.IMPORTS]
-            if r.content_item.database_id == r.target_id
+            if r.content_item_to.database_id == r.target_id
         ]
 
     def set_commands(self):
         commands = [
             Command(
                 # the related to has to be a command
-                name=r.content_item.name,  # type: ignore[union-attr,attr-defined]
+                name=r.content_item_to.name,  # type: ignore[union-attr,attr-defined]
                 marketplaces=self.marketplaces,
                 deprecated=r.deprecated,
                 description=r.description,

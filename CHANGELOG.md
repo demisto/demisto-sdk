@@ -9,6 +9,7 @@
 * Added a UUID to name mapper for **download** it replaces UUIDs with names on all downloaded files.
 * Updated the demisto-py to v3.2.6 which now supports basic proxy authentication.
 * Improved the message shown when using **upload** and overwriting packs.
+* Added support for the **Layout Rule** content type in the id-set and the content graph.
 * Updated **validate** to use the graph when running with `--graph` flag.
 
 ## 1.9.0

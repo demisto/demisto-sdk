@@ -78,6 +78,7 @@ class ContentType(str, enum.Enum):
     XSIAM_REPORT = "XSIAMReport"
     WIZARD = "Wizard"
     XDRC_TEMPLATE = "XDRCTemplate"
+    LAYOUT_RULE = "LayoutRule"
 
     @property
     def labels(self) -> List[str]:

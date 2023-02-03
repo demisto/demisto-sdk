@@ -45,8 +45,11 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     create_nodes,
     delete_all_graph_nodes,
     duplicates_exist,
+    get_relationships_to_preserve,
     remove_empty_properties,
+    remove_packs_before_creation,
     remove_server_nodes,
+    return_preserved_relationships,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
     _match_relationships,
@@ -307,8 +310,14 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.write_transaction(create_constraints)
 
     def create_nodes(self, nodes: Dict[ContentType, List[Dict[str, Any]]]) -> None:
+        pack_ids = [p.get("object_id") for p in nodes.get(ContentType.PACK, [])]
         with self.driver.session() as session:
+            rels_to_preserve: List[Dict[str, Any]] = session.read_transaction(
+                get_relationships_to_preserve, pack_ids
+            )
+            session.write_transaction(remove_packs_before_creation, pack_ids)
             session.write_transaction(create_nodes, nodes)
+            session.write_transaction(return_preserved_relationships, rels_to_preserve)
             session.write_transaction(remove_empty_properties)
 
     def validate_graph(self) -> None:

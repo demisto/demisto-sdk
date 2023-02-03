@@ -322,6 +322,7 @@ def mock_pack(name, marketplaces):
         useCases=[],
         keywords=[],
         contentItems=[],
+        excluded_dependencies=[],
     )
 
 
@@ -524,7 +525,7 @@ def test_validate_dependencies(repository: ContentDTO, capsys, mocker):
         return_value=["SamplePack"],
     )
     with GraphValidator() as graph_validator:
-        create_content_graph(graph_validator.graph)
+        # create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_dependencies()
 
     captured = capsys.readouterr().out

@@ -134,6 +134,23 @@ RETURN count(r) AS relationships_merged
 """
 
 
+def build_depends_on_relationships_query() -> str:
+    return f"""
+UNWIND $data AS rel_data
+
+// Get the source and target packs
+MATCH (p1:{ContentType.PACK}{{object_id: rel_data.source}}),
+    (p2:{ContentType.PACK}{{object_id: rel_data.target}})
+
+// Create the relationship, and mark as "from_metadata"
+CREATE (p1)-[r:{RelationshipType.DEPENDS_ON}{{
+    mandatorily: rel_data.mandatorily,
+    from_metadata: true
+}}]->(p2)
+RETURN count(r) AS relationships_merged
+"""
+
+
 def build_default_relationships_query(relationship: RelationshipType) -> str:
     return f"""
     UNWIND $data AS rel_data
@@ -192,6 +209,8 @@ def create_relationships_by_type(
         query = build_in_pack_relationships_query()
     elif relationship == RelationshipType.TESTED_BY:
         query = build_tested_by_relationships_query()
+    elif relationship == RelationshipType.DEPENDS_ON:
+        query = build_depends_on_relationships_query()
     else:
         query = build_default_relationships_query(relationship)
 

@@ -63,6 +63,10 @@ class GraphValidator(BaseValidator):
     def are_core_pack_dependencies_valid(self):
         """Validates that core packs don't depend on non-core packs.
         On `validate -a`, all core packs are checked.
+
+        Note: if at the first-level dependency of core packs there are only core packs, for every
+            core pack, then it is true for all levels. Thus, checking only the first level of
+            DEPENDS_ON relationships suffices for this validation.
         """
         is_valid = True
         for core_pack in (core_pack_list := get_core_pack_list()):

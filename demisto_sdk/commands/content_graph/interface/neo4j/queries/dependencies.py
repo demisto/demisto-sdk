@@ -88,6 +88,7 @@ def delete_deprecatedcontent_relationship(tx: Transaction) -> None:
 def remove_existing_depends_on_relationships(tx: Transaction) -> None:
     query = f"""
         MATCH ()-[r:{RelationshipType.DEPENDS_ON}]->()
+        WHERE r.from_metadata IS NULL
         DELETE r
     """
     run_query(tx, query)
@@ -167,6 +168,7 @@ def create_depends_on_relationships(tx: Transaction) -> None:
             -[r:{RelationshipType.USES}]->(b)-[:{RelationshipType.IN_PACK}]->(pack_b:{ContentType.BASE_CONTENT})
         WHERE ANY(marketplace IN pack_a.marketplaces WHERE marketplace IN pack_b.marketplaces)
         AND id(pack_a) <> id(pack_b)
+        AND NOT pack_b.object_id IN pack_a.excluded_dependencies
         AND NOT pack_a.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
         AND NOT pack_b.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
         WITH pack_a, a, r, b, pack_b
@@ -181,7 +183,8 @@ def create_depends_on_relationships(tx: Transaction) -> None:
             CASE WHEN mp IN pack_b.marketplaces THEN marketplaces + mp ELSE marketplaces END
         ) AS common_marketplaces
         SET dep.marketplaces = common_marketplaces,
-            dep.mandatorily = r.mandatorily OR dep.mandatorily
+            dep.mandatorily = CASE WHEN dep.from_metadata THEN dep.mandatorily
+                ELSE r.mandatorily OR dep.mandatorily END
         WITH
             pack_a.object_id AS pack_a,
             pack_b.object_id AS pack_b,

@@ -91,21 +91,21 @@ def get_relationships_to_preserve(
 MATCH (s)-[r]->(t)-[:{RelationshipType.IN_PACK}]->(p)
 WHERE NOT (s)-[:{RelationshipType.IN_PACK}]->(p)
 AND p.object_id in {pack_ids}
-RETURN source, r, target
+RETURN s as source, r, t as target
 
 UNION
 
 MATCH (s)-[r]->(t)<-[:{RelationshipType.HAS_COMMAND}]-()-[:{RelationshipType.IN_PACK}]->(p)
 WHERE NOT (s)-[:{RelationshipType.IN_PACK}]->(p)
 AND p.object_id in {pack_ids}
-RETURN source, r, target
+RETURN s as source, r, t as target
 
 UNION
 
 MATCH (s)-[r]->(t)
 WHERE NOT (s)-[:{RelationshipType.IN_PACK}]->(t)
 AND t.object_id in {pack_ids}
-RETURN source, r, target"""
+RETURN s as source, r, t as target"""
     return run_query(tx, query).data()
 
 

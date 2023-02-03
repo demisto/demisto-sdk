@@ -142,7 +142,7 @@ WHERE NOT t IS NULL
 CALL apoc.create.relationship(s, rel_data.r.type, rel_data.r.properties, t)
 YIELD rel
 RETURN rel"""
-    run_query(tx, query, rel_data=rels_to_preserve)
+    run_query(tx, query, rels_data=rels_to_preserve)
 
 
 def create_nodes(

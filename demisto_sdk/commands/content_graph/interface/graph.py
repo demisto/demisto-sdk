@@ -111,6 +111,12 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
+    def find_core_packs_depend_on_non_core_packs(
+        self, pack_ids: List[str], core_pack_list
+    ) -> List[BaseContent]:
+        pass
+
+    @abstractmethod
     def clean_graph(self):
         ...
 

@@ -70,27 +70,26 @@ class GraphValidator(BaseValidator):
             DEPENDS_ON relationships suffices for this validation.
         """
         is_valid = True
-        for core_pack in (core_pack_list := get_core_pack_list()):
-            if not self.pack_ids or core_pack in self.pack_ids:
-                core_pack_node: Pack = self.graph.search(
-                    content_type=ContentType.PACK,
-                    object_id=core_pack,
-                )[0]
-                non_core_pack_dependencies = [
-                    dependency.content_item.object_id
-                    for dependency in core_pack_node.depends_on
-                    if dependency.content_item.object_id not in core_pack_list
-                    and dependency.mandatorily is True
-                    and not dependency.is_test
-                ]
-                if non_core_pack_dependencies:
-                    error_message, error_code = Errors.invalid_core_pack_dependencies(
-                        core_pack, non_core_pack_dependencies
-                    )
-                    if self.handle_error(
-                        error_message, error_code, file_path=core_pack_node.path
-                    ):
-                        is_valid = False
+
+        core_pack_list = get_core_pack_list()
+        if not self.pack_ids:
+            pack_ids_to_check = core_pack_list
+        else:
+            pack_ids_to_check = [pack_id for pack_id in self.pack_ids if pack_id in core_pack_list]
+
+        for core_pack_node in self.graph.find_core_packs_depend_on_non_core_packs(
+            pack_ids_to_check, core_pack_list
+        ):
+            non_core_pack_dependencies = [
+                relationship.content_item.object_id for relationship in core_pack_node.depends_on
+            ]
+            error_message, error_code = Errors.invalid_core_pack_dependencies(
+                core_pack_node.object_id, non_core_pack_dependencies
+            )
+            if self.handle_error(
+                error_message, error_code, file_path=core_pack_node.path
+            ):
+                is_valid = False
 
         return is_valid
 

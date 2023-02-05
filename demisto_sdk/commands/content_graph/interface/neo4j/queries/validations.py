@@ -138,3 +138,22 @@ RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
         (item.get("a_object_id"), item.get("b_object_ids"))
         for item in run_query(tx, query)
     ]
+
+
+def validate_dependencies(tx: Transaction, pack_ids: List[str], core_pack_list: List[str]):
+
+    query = f"""// Returns DEPENDS_ON relationships to content items who are not core packs
+    MATCH (content_item_from)-[r:DEPENDS_ON{{mandatorily:true}}]->(n)
+    WHERE content_item_from.object_id in {pack_ids}
+    AND NOT r.is_test
+    AND NOT n.object_id IN {core_pack_list}
+    RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
+    """
+    return {
+        int(item.get("content_item_from").id): Neo4jRelationshipResult(
+            node_from=item.get("content_item_from"),
+            relationships=item.get("relationships"),
+            nodes_to=item.get("nodes_to"),
+        )
+        for item in run_query(tx, query)
+    }

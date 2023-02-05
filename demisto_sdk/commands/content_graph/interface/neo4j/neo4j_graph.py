@@ -60,6 +60,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     validate_multiple_packs_with_same_display_name,
     validate_toversion,
     validate_unknown_content,
+    validate_dependencies,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
@@ -399,6 +400,26 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
                 validate_marketplaces, file_paths
+            )
+            self._add_nodes_to_mapping(result.node_from for result in results.values())
+            self._add_relationships_to_objects(session, results)
+            return [self._id_to_obj[result] for result in results]
+
+    def find_core_packs_depend_on_non_core_packs(
+        self, pack_ids: List[str], core_pack_list
+    ) -> List[BaseContent]:
+        """Searches and retrieves core packs who depends on content items who are not core packs.
+
+        Args:
+            pack_ids (List[str]): A list of content items pack_ids to check.
+            core_pack_list: A list of core packs
+
+        Returns:
+            List[BaseContent]: The core packs who depends on content items who are not core packs.
+        """
+        with self.driver.session() as session:
+            results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
+                validate_dependencies, pack_ids, core_pack_list
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)

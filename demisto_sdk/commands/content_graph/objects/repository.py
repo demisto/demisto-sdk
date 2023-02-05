@@ -1,7 +1,7 @@
 import logging
 import shutil
 import time
-from multiprocessing import Pool
+from multiprocessing.pool import Pool
 from pathlib import Path
 from typing import List
 

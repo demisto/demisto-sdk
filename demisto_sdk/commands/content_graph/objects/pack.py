@@ -13,8 +13,9 @@ from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import MarketplaceTagParser, get_content_path
+from demisto_sdk.commands.common.tools import MarketplaceTagParser
 from demisto_sdk.commands.content_graph.common import (
     PACK_METADATA_FILENAME,
     ContentType,
@@ -162,7 +163,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     def validate_path(cls, v: Path) -> Path:
         if v.is_absolute():
             return v
-        return Path(get_content_path()) / v  # type: ignore
+        return CONTENT_PATH / v
 
     @property
     def depends_on(self) -> List["RelationshipData"]:
@@ -190,14 +191,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         return [
             r
             for r in self.relationships_data[RelationshipType.DEPENDS_ON]
-            if r.content_item == r.target
+            if r.content_item_to.database_id == r.target_id
         ]
 
     def set_content_items(self):
         content_items: List[ContentItem] = [
-            r.content_item  # type: ignore[misc]
+            r.content_item_to  # type: ignore[misc]
             for r in self.relationships_data[RelationshipType.IN_PACK]
-            if r.content_item == r.source
+            if r.content_item_to.database_id == r.source_id
         ]
         content_item_dct = defaultdict(list)
         for c in content_items:
@@ -282,8 +283,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             raise
 
     def handle_base_pack(self, path: Path):
-        content_path = Path(get_content_path())  # type: ignore
-        documentation_path = content_path / "Documentation"
+        documentation_path = CONTENT_PATH / "Documentation"
         documentation_output = path / "Documentation"
         documentation_output.mkdir(exist_ok=True, parents=True)
         shutil.copy(

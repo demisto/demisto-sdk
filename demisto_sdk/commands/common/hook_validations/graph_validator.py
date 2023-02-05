@@ -81,7 +81,7 @@ class GraphValidator(BaseValidator):
             pack_ids_to_check, core_pack_list
         ):
             non_core_pack_dependencies = [
-                relationship.content_item.object_id for relationship in core_pack_node.depends_on
+                relationship.content_item_to.object_id for relationship in core_pack_node.depends_on
             ]
             error_message, error_code = Errors.invalid_core_pack_dependencies(
                 core_pack_node.object_id, non_core_pack_dependencies
@@ -104,7 +104,7 @@ class GraphValidator(BaseValidator):
             self.file_paths
         ):
             used_content_items = [
-                relationship.content_item.object_id
+                relationship.content_item_to.object_id
                 for relationship in content_item.uses
             ]
             error_message, error_code = Errors.uses_items_not_in_marketplaces(
@@ -146,7 +146,7 @@ class GraphValidator(BaseValidator):
         is_valid = True
         """Handles a single invalid fromversion query result"""
         used_content_items = [
-            relationship.content_item.object_id for relationship in content_item.uses
+            relationship.content_item_to.object_id for relationship in content_item.uses
         ]
         error_message, error_code = Errors.uses_items_with_invalid_fromversion(
             content_item.name, content_item.fromversion, used_content_items
@@ -189,7 +189,7 @@ class GraphValidator(BaseValidator):
     ):
         """Handles a single invalid toversion query result"""
         used_content_items = [
-            relationship.content_item.object_id for relationship in content_item.uses
+            relationship.content_item_to.object_id for relationship in content_item.uses
         ]
         error_message, error_code = Errors.uses_items_with_invalid_toversion(
             content_item.name, content_item.toversion, used_content_items
@@ -209,7 +209,7 @@ class GraphValidator(BaseValidator):
         content_item: ContentItem
         for content_item in self.graph.get_unknown_content_uses(self.file_paths):
             unknown_content_names = [
-                relationship.content_item.object_id or relationship.content_item.name  # type: ignore
+                relationship.content_item_to.object_id or relationship.content_item_to.name  # type: ignore
                 for relationship in content_item.uses
             ]
             error_message, error_code = Errors.using_unknown_content(

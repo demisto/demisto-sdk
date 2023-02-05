@@ -1,6 +1,7 @@
 import logging
 import traceback
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Dict
 
 from neo4j import Result, Transaction
@@ -47,7 +48,7 @@ def node_map(properties: Dict[str, Any]) -> str:
 
 def to_neo4j_map(properties: dict) -> str:
     properties = {
-        k: f'"{v}"' if isinstance(v, str) else v for k, v in properties.items()
+        k: f'"{v}"' if isinstance(v, (str, Path)) else v for k, v in properties.items()
     }
     params_str = ", ".join(f"{k}: {v}" for k, v in properties.items())
     params_str = f"{{{params_str}}}" if params_str else ""

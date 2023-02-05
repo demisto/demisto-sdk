@@ -258,7 +258,7 @@ def _compare_relationships(pack_a: Pack, pack_b: Pack) -> None:
                 )
             if relationship_type == RelationshipType.USES_BY_ID:
                 assert (
-                    content_item_source.uses[0].content_item.object_id
+                    content_item_source.uses[0].content_item_to.object_id
                     == content_item_target_id
                 )
             if relationship_type == RelationshipType.TESTED_BY:
@@ -277,12 +277,12 @@ def _verify_dependencies_existence(
             if pack.object_id == dependency["source_id"]:
                 if should_exist:
                     assert any(
-                        r.target.object_id == dependency["target"]
+                        r.content_item_to.object_id == dependency["target"]
                         for r in pack.depends_on
                     )
                 else:
                     assert all(
-                        r.target.object_id != dependency["target"]
+                        r.content_item_to.object_id != dependency["target"]
                         for r in pack.depends_on
                     )
                 break

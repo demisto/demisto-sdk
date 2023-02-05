@@ -1,7 +1,7 @@
 import shutil
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Union, Tuple
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -9,6 +9,8 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import get_content_path
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
 json = JSON_Handler()
@@ -147,6 +149,33 @@ class ContentGraphInterface(ABC):
                 "Cannot search for all level dependencies without a marketplace"
             )
         return []
+
+    def from_path(
+        self, path: Path, marketplace: Optional[MarketplaceVersions] = None
+    ) -> Union[Pack, ContentItem]:
+        """This will return a pack or content item from a path with the local changes, enriched with relationships from the graph
+
+        Args:
+            path (Path): The path from a content item
+            marketplace (Optional[MarketplaceVersions], optional): The marketplace to use. Defaults to None.
+
+        Raises:
+            ValueError: If the path cannot be parsed locally
+            ValueError: If the path cannot be found in the graph
+
+        Returns:
+            Union[Pack, ContentItem]: The content item found
+        """
+        content_item = BaseContent.from_path(path)
+        if not isinstance(content_item, (ContentItem, Pack)):
+            raise ValueError(f"Could not parse content_item from {path}")
+        # enrich the content_item with the graph
+        result = self.search(
+            path=content_item.path.relative_to(self.repo_path), marketplace=marketplace
+        )
+        if not result or not isinstance(result[0], (Pack, ContentItem)):
+            raise ValueError(f"Could not find content item in graph from {path}")
+        return result[0]
 
     def marshal_graph(
         self, marketplace: MarketplaceVersions, all_level_dependencies: bool = False

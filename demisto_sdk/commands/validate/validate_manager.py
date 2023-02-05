@@ -1919,7 +1919,6 @@ class ValidateManager:
             prev_ver=self.prev_ver,
             json_file_path=self.json_file_path,
             specific_validations=self.specific_validations,
-            validate_graph=self.validate_graph,
         )
         pack_errors = pack_unique_files_validator.are_valid_files(
             self.id_set_validations

@@ -26,9 +26,10 @@ class GraphValidator(BaseValidator):
         specific_validations: list = None,
         git_files: list = None,
         input_files: list = None,
+        should_update: bool = True,
     ):
         super().__init__(specific_validations=specific_validations)
-        self.graph = ContentGraphInterface(should_update=True)
+        self.graph = ContentGraphInterface(should_update=should_update)
         self.file_paths: List[str] = git_files or get_all_content_objects_paths_in_dir(
             input_files
         )

@@ -112,7 +112,6 @@ class PackUniqueFilesValidator(BaseValidator):
         json_file_path=None,
         support=None,
         specific_validations=None,
-        validate_graph=False,
     ):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file
@@ -139,7 +138,6 @@ class PackUniqueFilesValidator(BaseValidator):
         self.skip_id_set_creation = skip_id_set_creation
         self.support = support
         self.metadata_content: Dict = dict()
-        self.validate_graph = validate_graph
 
         if not prev_ver:
             git_util = GitUtil(repo=Content.git())
@@ -1026,7 +1024,6 @@ class PackUniqueFilesValidator(BaseValidator):
                 is_valid, error = id_set_validations.is_unique_file_valid_in_set(
                     self.pack_path, self.ignored_errors
                 )
-
                 if not is_valid:
                     self._add_error(error, self.pack_path)
         except BlockingValidationFailureException:

@@ -417,7 +417,7 @@ def test_are_toversion_relationships_paths_valid(repository: ContentDTO):
     - Validate the existance of invalid to_version relationships
     """
 
-    with GraphValidator() as graph_validator:
+    with GraphValidator(should_update=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_toversion_fields()
 
@@ -433,7 +433,7 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, capsy
     Then
     - Validate the existance of invalid from_version relationships
     """
-    with GraphValidator() as graph_validator:
+    with GraphValidator(should_update=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_fromversion_fields()
 
@@ -454,7 +454,7 @@ def test_is_file_using_unknown_content(repository: ContentDTO, capsys):
     Then
     - Validate the use of unknown content (Warning)
     """
-    with GraphValidator() as graph_validator:
+    with GraphValidator(should_update=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.is_file_using_unknown_content()
 
@@ -475,7 +475,7 @@ def test_is_file_display_name_already_exists(repository: ContentDTO, capsys):
     Then
     - Validate the existance of duplicate display names
     """
-    with GraphValidator() as graph_validator:
+    with GraphValidator(should_update=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.is_file_display_name_already_exists()
 
@@ -498,7 +498,7 @@ def test_are_marketplaces_relationships_paths_valid(
     Then
     - Validate the existence invalid marketplaces uses
     """
-    with GraphValidator() as graph_validator:
+    with GraphValidator(should_update=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_marketplaces_fields()
 
@@ -524,8 +524,8 @@ def test_validate_dependencies(repository: ContentDTO, capsys, mocker):
         "demisto_sdk.commands.common.hook_validations.graph_validator.get_core_pack_list",
         return_value=["SamplePack"],
     )
-    with GraphValidator() as graph_validator:
-        # create_content_graph(graph_validator.graph)
+    with GraphValidator(should_update=False) as graph_validator:
+        create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_dependencies()
 
     captured = capsys.readouterr().out

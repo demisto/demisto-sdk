@@ -28,6 +28,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     Integration,
     Job,
     Layout,
+    LayoutRule,
     LayoutsContainer,
     Lists,
     ModelingRule,
@@ -101,6 +102,7 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.TRIGGER: Trigger,
     FileType.WIZARD: Wizard,
     FileType.XDRC_TEMPLATE: XDRCTemplate,
+    FileType.LAYOUT_RULE: LayoutRule,
 }
 
 TYPE_CONVERSION_BY_FILE_NAME = {

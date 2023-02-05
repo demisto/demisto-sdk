@@ -1293,6 +1293,9 @@ class Integration:
 
         elif self.name == "Core REST API":
             if IS_XSIAM:
+                self.build_context.logging_module.info("**** IN XSIAM")
+                self.build_context.logging_module.info(f"**** server_url: {server_url}")
+
                 self.configuration.params = {  # type: ignore
                     "url": server_url,
                     "creds_apikey": {

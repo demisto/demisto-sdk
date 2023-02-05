@@ -140,7 +140,9 @@ RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
     ]
 
 
-def validate_dependencies(tx: Transaction, pack_ids: List[str], core_pack_list: List[str]):
+def validate_dependencies(
+    tx: Transaction, pack_ids: List[str], core_pack_list: List[str]
+):
 
     query = f"""// Returns DEPENDS_ON relationships to content items who are not core packs
     MATCH (content_item_from)-[r:DEPENDS_ON{{mandatorily:true}}]->(n)

@@ -10,12 +10,10 @@ from demisto_sdk.commands.common.tools import (
     get_core_pack_list,
     get_pack_name,
 )
-from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface as ContentGraphInterface,
 )
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-from demisto_sdk.commands.content_graph.objects.pack import Pack
 
 
 class GraphValidator(BaseValidator):
@@ -75,13 +73,16 @@ class GraphValidator(BaseValidator):
         if not self.pack_ids:
             pack_ids_to_check = core_pack_list
         else:
-            pack_ids_to_check = [pack_id for pack_id in self.pack_ids if pack_id in core_pack_list]
+            pack_ids_to_check = [
+                pack_id for pack_id in self.pack_ids if pack_id in core_pack_list
+            ]
 
         for core_pack_node in self.graph.find_core_packs_depend_on_non_core_packs(
             pack_ids_to_check, core_pack_list
         ):
             non_core_pack_dependencies = [
-                relationship.content_item_to.object_id for relationship in core_pack_node.depends_on
+                relationship.content_item_to.object_id
+                for relationship in core_pack_node.depends_on
             ]
             error_message, error_code = Errors.invalid_core_pack_dependencies(
                 core_pack_node.object_id, non_core_pack_dependencies

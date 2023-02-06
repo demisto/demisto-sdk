@@ -1266,9 +1266,6 @@ class Integration:
             self._change_placeholders_to_values(server_url, conf)
             for conf in integration_params
         ]
-        self.build_context.logging_module.debug(
-            f"integration_params {integration_params}"
-        )
         if integration_params:
             # If we have more then one configuration for this integration - we will try to filter by instance name
             if len(integration_params) != 1:
@@ -1299,7 +1296,9 @@ class Integration:
             if IS_XSIAM:
                 self.build_context.logging_module.info("**** IN XSIAM")
                 self.build_context.logging_module.info(f"**** server_url: {server_url}")
-
+                self.build_context.logging_module.debug(
+                    f"auth_id {self.build_context.auth_id}"
+                )
                 self.configuration.params = {  # type: ignore
                     "url": server_url,
                     "creds_apikey": {

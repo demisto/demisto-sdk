@@ -1252,6 +1252,8 @@ class Integration:
         self.build_context.logging_module.debug(
             f"Searching integration configuration for {self}"
         )
+        self.build_context.logging_module.debug(f"**** {self.name}")
+        self.build_context.logging_module.debug(f"is XSIAM {IS_XSIAM}")
 
         # Finding possible configuration matches
         integration_params: List[IntegrationConfiguration] = [
@@ -1264,7 +1266,9 @@ class Integration:
             self._change_placeholders_to_values(server_url, conf)
             for conf in integration_params
         ]
-
+        self.build_context.logging_module.debug(
+            f"integration_params {integration_params}"
+        )
         if integration_params:
             # If we have more then one configuration for this integration - we will try to filter by instance name
             if len(integration_params) != 1:

@@ -206,12 +206,6 @@ def main(config, version, release_notes):
     show_default=True,
 )
 @click.option(
-    "--no-pipenv",
-    help="Don't auto create pipenv for requirements installation. (only for yml files)",
-    is_flag=True,
-    show_default=True,
-)
-@click.option(
     "--new-module-file",
     help="Create a new module file instead of editing the existing file. (only for json files)",
     is_flag=True,
@@ -1313,12 +1307,6 @@ def upload(**kwargs):
         ],
         case_sensitive=False,
     ),
-)
-@click.option(
-    "--no-code-formatting",
-    help="Use this flag to avoid running Autopep8 and isort on Python files.",
-    is_flag=True,
-    default=False,
 )
 def download(**kwargs):
     """Download custom content from Demisto instance.

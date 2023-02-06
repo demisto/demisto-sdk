@@ -414,47 +414,6 @@ def test_extract_to_package_format_pwsh(tmpdir):
         assert not yaml_obj["script"]["script"]
 
 
-def test_extract_to_package_format_py(pack, mocker, tmp_path):
-    mocker.patch.object(YmlSplitter, "extract_image", return_value="12312321")
-    mocker.patch(
-        "demisto_sdk.commands.split.ymlsplitter.get_python_version", return_value="2.7"
-    )
-    mocker.patch(
-        "demisto_sdk.commands.split.ymlsplitter.get_pipenv_dir",
-        return_value=os.path.join(
-            git_path(), "demisto_sdk/tests/test_files/default_python2"
-        ),
-    )
-    mocker.patch(
-        "demisto_sdk.commands.split.ymlsplitter.get_pip_requirements",
-        return_value="""certifi==2017.11.5
-chardet==3.0.4
-idna==2.6
-olefile==0.44
-PyYAML==3.12
-requests==2.18.4
-urllib3==1.22
-""",
-    )
-    integration = pack.create_integration("Sample")
-    integration.create_default_integration()
-    out = tmp_path / "TestIntegration"
-    non_sorted_imports = (
-        "from CommonServerPython import *\nimport datetime\nimport json"
-    )
-    integration.yml.update(
-        {"image": "", "script": {"type": "python", "script": non_sorted_imports}}
-    )
-    extractor = YmlSplitter(
-        input=integration.yml.path, output=str(out), file_type="integration"
-    )
-    extractor.extract_to_package_format()
-    with open(out / "TestIntegration.py", encoding="utf-8") as f:
-        file_data = f.read()
-        # check imports are sorted
-        assert non_sorted_imports not in file_data
-
-
 def get_dummy_module(name="MicrosoftApiModule", path=None):
     class_name = {
         "MicrosoftApiModule": "MicrosoftClient",

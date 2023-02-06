@@ -93,7 +93,6 @@ class ContributionConverter:
         release_notes: str = "",
         detected_content_items: list = None,
         base_dir: Union[str] = None,
-        no_pipenv: bool = False,
     ):
         """Initializes a ContributionConverter instance
 
@@ -126,7 +125,6 @@ class ContributionConverter:
         self.gh_user = gh_user
         self.contrib_conversion_errs: List[str] = []
         self.create_new = create_new
-        self.no_pipenv = no_pipenv
         base_dir = base_dir or get_content_path()  # type: ignore
         self.packs_dir_path = os.path.join(base_dir, "Packs")  # type: ignore
         if not os.path.isdir(self.packs_dir_path):
@@ -516,7 +514,6 @@ class ContributionConverter:
                             no_readme=True,
                             base_name=base_name,
                             no_auto_create_dir=(not autocreate_dir),
-                            no_pipenv=self.no_pipenv,
                         )
 
                     else:
@@ -524,7 +521,6 @@ class ContributionConverter:
                             input=content_item_file_path,
                             file_type=file_type,
                             output=content_item_dir,
-                            no_pipenv=self.no_pipenv,
                         )
                     extractor.extract_to_package_format(
                         executed_from_contrib_converter=True

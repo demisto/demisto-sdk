@@ -5,14 +5,14 @@ from pathlib import Path
 import docker
 import requests
 
-from demisto_sdk.commands.common.tools import get_content_path
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_HTTP,
     NEO4J_FOLDER,
     NEO4J_PASSWORD,
 )
 
-REPO_PATH = Path(get_content_path())  # type: ignore
+REPO_PATH = CONTENT_PATH
 
 NEO4J_VERSION = "4.4.12"
 

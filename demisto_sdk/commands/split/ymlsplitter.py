@@ -2,8 +2,6 @@ import base64
 import os
 import re
 import shutil
-import subprocess
-import tempfile
 from pathlib import Path
 from typing import Optional
 
@@ -18,9 +16,6 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS,
-    get_docker_images_from_yml,
-    get_pipenv_dir,
-    get_python_version,
     get_yaml,
     pascal_case,
     print_color,
@@ -36,22 +31,6 @@ REGEX_MODULE = r"### GENERATED CODE ###((.|\s)+?)### END GENERATED CODE ###"
 INTEGRATIONS_DOCS_REFERENCE = "https://xsoar.pan.dev/docs/reference/integrations/"
 
 
-def get_pip_requirements(docker_image: str):
-    return subprocess.check_output(
-        [
-            "docker",
-            "run",
-            "--rm",
-            docker_image,
-            "pip",
-            "freeze",
-            "--disable-pip-version-check",
-        ],
-        text=True,
-        stderr=subprocess.DEVNULL,
-    ).strip()
-
-
 class YmlSplitter:
     """YmlSplitter is a class that's designed to split a yml file to it's components.
 
@@ -63,8 +42,6 @@ class YmlSplitter:
         no_auto_create_dir (bool): whether to create a dir
         base_name (str): the base name of all extracted files
         no_readme (bool): whether to extract readme
-        no_pipenv (boo): whether to create pipenv
-        no_code_formatting (bool): whether to avoid basic formatting on the code, i.e. autopep8 and isort
         file_type (str): yml file type (integration/script/modeling or parsing rule)
         configuration (Configuration): Configuration object
         lines_inserted_at_code_start (int): the amount of lines inserted at the beginning of the code file
@@ -81,9 +58,7 @@ class YmlSplitter:
         configuration: Configuration = None,
         base_name: str = "",
         no_readme: bool = False,
-        no_pipenv: bool = False,
         no_logging: bool = False,
-        no_code_formatting: bool = False,
         **_,  # ignoring unexpected kwargs
     ):
         self.input = Path(input).resolve()
@@ -93,9 +68,7 @@ class YmlSplitter:
         self.file_type = file_type
         self.base_name = base_name
         self.readme = not no_readme
-        self.pipenv = not no_pipenv
         self.logging = not no_logging
-        self.run_code_formatting: bool = not no_code_formatting
         self.lines_inserted_at_code_start = 0
         self.config = configuration or Configuration()
         self.auto_create_dir = not no_auto_create_dir
@@ -191,12 +164,10 @@ class YmlSplitter:
             with open(yaml_out, "w") as yf:
                 yaml.dump(yaml_obj, yf)
             # check if there is a README and if found, set found_readme to True
-            found_readme = False
             if self.readme:
                 yml_readme = self.input.parent / f"{self.input.stem}_README.md"
                 readme = output_path / "README.md"
                 if yml_readme.exists():
-                    found_readme = True
                     self.print_logs(
                         f"Copying {readme} to {readme}", log_color=LOG_COLORS.NATIVE
                     )
@@ -205,142 +176,6 @@ class YmlSplitter:
                     # open an empty file
                     with open(readme, "w"):
                         pass
-
-            # Python code formatting and dev env setup
-            if code_type == TYPE_PYTHON:
-                if self.run_code_formatting:
-                    self.print_logs(
-                        f"Running autopep8 on file: {code_file} ...",
-                        log_color=LOG_COLORS.NATIVE,
-                    )
-                    try:
-                        subprocess.call(
-                            ["autopep8", "-i", "--max-line-length", "130", code_file]
-                        )
-                    except FileNotFoundError:
-                        self.print_logs(
-                            "autopep8 skipped! It doesn't seem you have autopep8 installed.\n"
-                            "Make sure to install it with: pip install autopep8.\n"
-                            "Then run: autopep8 -i {}".format(code_file),
-                            LOG_COLORS.YELLOW,
-                        )
-
-                    self.print_logs(
-                        f"Running isort on file: {code_file} ...", LOG_COLORS.NATIVE
-                    )
-                    try:
-                        subprocess.call(["isort", code_file])
-                    except FileNotFoundError:
-                        self.print_logs(
-                            "isort skipped! It doesn't seem you have isort installed.\n"
-                            "Make sure to install it with: pip install isort.\n"
-                            "Then run: isort {}".format(code_file),
-                            LOG_COLORS.YELLOW,
-                        )
-                if self.pipenv:
-                    try:
-                        self.print_logs(
-                            "Detecting python version and setting up pipenv files ...",
-                            log_color=LOG_COLORS.NATIVE,
-                        )
-                        docker = get_docker_images_from_yml(script_obj)[0]
-                        py_ver = get_python_version(docker, self.config.log_verbose)
-                        pip_env_dir = get_pipenv_dir(py_ver, self.config.envs_dirs_base)
-                        self.print_logs(
-                            f"Copying pipenv files from: {pip_env_dir}",
-                            log_color=LOG_COLORS.NATIVE,
-                        )
-                        shutil.copy(f"{pip_env_dir}/Pipfile", output_path)
-                        shutil.copy(f"{pip_env_dir}/Pipfile.lock", output_path)
-                        env = os.environ.copy()
-                        env["PIPENV_IGNORE_VIRTUALENVS"] = "1"
-                        try:
-                            subprocess.call(
-                                ["pipenv", "install", "--dev"], cwd=output_path, env=env
-                            )
-                            self.print_logs(
-                                f"Installing all py requirements from docker: [{docker}] into pipenv",
-                                LOG_COLORS.NATIVE,
-                            )
-                            requirements = get_pip_requirements(docker)
-                            fp = tempfile.NamedTemporaryFile(delete=False)
-                            fp.write(requirements.encode("utf-8"))
-                            fp.close()
-
-                            try:
-                                subprocess.check_call(
-                                    ["pipenv", "install", "-r", fp.name],
-                                    cwd=output_path,
-                                    env=env,
-                                )
-
-                            except Exception:
-                                self.print_logs(
-                                    "Failed installing requirements in pipenv.\n "
-                                    "Please try installing manually after extract ends\n",
-                                    LOG_COLORS.RED,
-                                )
-
-                            os.unlink(fp.name)
-                            self.print_logs(
-                                "Installing flake8 for linting",
-                                log_color=LOG_COLORS.NATIVE,
-                            )
-                            subprocess.call(
-                                ["pipenv", "install", "--dev", "flake8"],
-                                cwd=output_path,
-                                env=env,
-                            )
-                        except FileNotFoundError as err:
-                            self.print_logs(
-                                "pipenv install skipped! It doesn't seem you have pipenv installed.\n"
-                                "Make sure to install it with: pip3 install pipenv.\n"
-                                f"Then run in the package dir: pipenv install --dev\n.Err: {err}",
-                                LOG_COLORS.YELLOW,
-                            )
-                        arg_path = output_path.relative_to()
-                        self.print_logs(
-                            f"\nCompleted: setting up package: {arg_path}\n",
-                            LOG_COLORS.GREEN,
-                        )
-                        next_steps: str = (
-                            "Next steps: \n"
-                            "* Install additional py packages for unit testing (if needed): cd {};"
-                            " pipenv install <package>\n".format(arg_path)
-                            if code_type == TYPE_PYTHON
-                            else ""
-                        )
-                        next_steps += (
-                            "* Create unit tests\n"
-                            "* Check linting and unit tests by running: demisto-sdk lint -i {}\n".format(
-                                arg_path
-                            )
-                        )
-                        next_steps += (
-                            "* When ready, remove from git the old yml and/or README and add the new package:\n"
-                            "    git rm {}\n".format(self.input)
-                        )
-                        if found_readme:
-                            next_steps += "    git rm {}\n".format(
-                                self.input.parent / f"{self.input.stem}_README.md"
-                            )
-                        next_steps += f"    git add {arg_path}\n"
-                        self.print_logs(next_steps, log_color=LOG_COLORS.NATIVE)
-
-                    except Exception:
-                        self.print_logs(
-                            "An unexpected error has occurred while trying to install "
-                            "the requirements in pipenv.\n"
-                            "Please try installing manually after extract ends.\n",
-                            LOG_COLORS.RED,
-                        )
-
-                else:
-                    self.print_logs(
-                        "Skipping pipenv and requirements installation - Note: no Pipfile will be created",
-                        log_color=LOG_COLORS.YELLOW,
-                    )
-
         self.print_logs(
             f"Finished splitting the yml file - you can find the split results here: {output_path}",
             log_color=LOG_COLORS.GREEN,

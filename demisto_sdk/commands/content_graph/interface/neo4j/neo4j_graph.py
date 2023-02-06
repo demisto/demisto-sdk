@@ -16,6 +16,9 @@ from demisto_sdk.commands.content_graph.common import (
     Neo4jRelationshipResult,
     RelationshipType,
 )
+from demisto_sdk.commands.content_graph.content_graph_commands import (
+    update_content_graph,
+)
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import (
     Neo4jImportHandler,
@@ -102,15 +105,19 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def __init__(
         self,
+        should_update: bool = False,
     ) -> None:
+        if not neo4j_service.is_alive():
+            neo4j_service.start()
+
         self.driver: Neo4jDriver = GraphDatabase.driver(
             NEO4J_DATABASE_URL,
             auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
         )
+        if should_update:
+            update_content_graph(self)
 
     def __enter__(self) -> "Neo4jContentGraphInterface":
-        if not neo4j_service.is_alive():
-            neo4j_service.start()
         return self
 
     def __exit__(self, *args) -> None:
@@ -196,9 +203,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 rel.type,
                 RelationshipData(
                     relationship_type=rel.type,
-                    source=Neo4jContentGraphInterface._id_to_obj[rel.start_node.id],
-                    target=Neo4jContentGraphInterface._id_to_obj[rel.end_node.id],
-                    content_item=Neo4jContentGraphInterface._id_to_obj[node_to.id],
+                    source_id=rel.start_node.id,
+                    target_id=rel.end_node.id,
+                    content_item_to=Neo4jContentGraphInterface._id_to_obj[node_to.id],
                     is_direct=True,
                     **rel,
                 ),
@@ -235,9 +242,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                     RelationshipType.DEPENDS_ON,
                     RelationshipData(
                         relationship_type=RelationshipType.DEPENDS_ON,
-                        source=obj,
-                        content_item=target,
-                        target=target,
+                        source_id=pack_id,
+                        target_id=node.id,
+                        content_item_to=target,
                         mandatorily=True,
                         is_direct=False,
                     ),

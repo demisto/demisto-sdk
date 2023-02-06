@@ -206,12 +206,6 @@ def main(config, version, release_notes):
     show_default=True,
 )
 @click.option(
-    "--no-pipenv",
-    help="Don't auto create pipenv for requirements installation. (only for yml files)",
-    is_flag=True,
-    show_default=True,
-)
-@click.option(
     "--new-module-file",
     help="Create a new module file instead of editing the existing file. (only for json files)",
     is_flag=True,
@@ -307,6 +301,19 @@ def extract_code(config, **kwargs):
     type=click.Path(dir_okay=True),
 )
 @click.option(
+    "-g",
+    "--graph",
+    help="Whether use the content graph",
+    is_flag=True,
+    default=False,
+)
+@click.option(
+    "--skip-update",
+    help="Whether to skip updating the content graph (used only when graph is true)",
+    is_flag=True,
+    default=False,
+)
+@click.option(
     "-o", "--output", help="The output dir to write the unified yml to", required=False
 )
 @click.option(
@@ -338,12 +345,22 @@ def extract_code(config, **kwargs):
     default="xsoar",
     type=click.Choice(["xsoar", "marketplacev2", "v2"]),
 )
+@click.option(
+    "-v",
+    "--verbose",
+    help="Verbose output - mainly for debugging purposes",
+    is_flag=True,
+)
 def prepare_content(**kwargs):
     """
     This command is used to prepare the content to be used in the platform.
 
 
     """
+    from demisto_sdk.commands.common.logger import logging_setup
+
+    if kwargs.get("verbose"):
+        logging_setup(3)
     if click.get_current_context().info_name == "unify":
         kwargs["unify_only"] = True
 
@@ -1290,12 +1307,6 @@ def upload(**kwargs):
         ],
         case_sensitive=False,
     ),
-)
-@click.option(
-    "--no-code-formatting",
-    help="Use this flag to avoid running Autopep8 and isort on Python files.",
-    is_flag=True,
-    default=False,
 )
 def download(**kwargs):
     """Download custom content from Demisto instance.

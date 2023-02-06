@@ -1292,8 +1292,6 @@ class Integration:
             else:
                 self.configuration = integration_params[0]
 
-        self.build_context.logging_module.info("**** NEW")
-        self.build_context.logging_module.debug(self.configuration)
 
         if self.name == "Core REST API":
             if IS_XSIAM:
@@ -1302,15 +1300,11 @@ class Integration:
                 self.build_context.logging_module.debug(
                     f"auth_id {self.build_context.auth_id}"
                 )
-                self.configuration.params = {  # type: ignore
-                    "url": server_url,
-                    "creds_apikey": {
-                        "identifier": self.build_context.auth_id,
-                        "password": self.build_context.api_key,
-                    },
-                    "auth_method": "Standard",
-                    "insecure": True,
-                }
+                self.configuration.params['url'] = server_url
+                self.configuration.params['creds_apikey']['identifier'] = self.build_context.auth_id
+                self.configuration.params['creds_apikey']['password'] = self.build_context.api_key
+                self.configuration.params['auth_method'] = 'Standard'
+                self.configuration.params['insecure'] = True
                 self.build_context.logging_module.info(self.configuration)
 
             else:

@@ -17,6 +17,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface as ContentGraphInterface,
 )
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
@@ -149,7 +150,15 @@ def repository(mocker) -> ContentDTO:
                 "SamplePack3",
                 ContentType.PACK,
             ),
-        ]
+        ],
+        RelationshipType.USES_BY_ID: [
+            mock_relationship(
+                "SamplePlaybook",
+                ContentType.PLAYBOOK,
+                "test-command",
+                ContentType.COMMAND,
+            ),
+        ],
     }
     pack1 = mock_pack()
     pack2 = mock_pack("SamplePack2")
@@ -165,10 +174,19 @@ def repository(mocker) -> ContentDTO:
     pack3.content_items.playbook.append(mock_playbook())
     pack3.content_items.script.append(mock_script("SampleScript2"))
     repository.packs.extend([pack1, pack2, pack3])
+
+    def mock__create_content_dto(packs_to_update: List[str]) -> ContentDTO:
+        if not packs_to_update:
+            return repository
+        repo_copy = repository.copy()
+        repo_copy.packs = [p for p in repo_copy.packs if p.object_id in packs_to_update]
+        return repo_copy
+
     mocker.patch(
         "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
-        return_value=repository,
+        side_effect=mock__create_content_dto,
     )
+
     return repository
 
 
@@ -234,6 +252,8 @@ def _compare_content_items(
     content_items_list_a: List[ContentItem], content_items_list_b: List[ContentItem]
 ) -> None:
     assert len(content_items_list_a) == len(content_items_list_b)
+    content_items_list_a = sorted(content_items_list_a, key=lambda obj: obj.node_id)
+    content_items_list_b = sorted(content_items_list_b, key=lambda obj: obj.node_id)
     for ci_a, ci_b in zip(content_items_list_a, content_items_list_b):
         assert ci_a.to_dict() == ci_b.to_dict()
 
@@ -260,6 +280,13 @@ def _compare_relationships(pack_a: Pack, pack_b: Pack) -> None:
                 assert (
                     content_item_source.uses[0].content_item_to.object_id
                     == content_item_target_id
+                ) or any(
+                    [
+                        isinstance(uses_rel.content_item_to, Integration)
+                        and uses_rel.content_item_to.commands[0].name
+                        == content_item_target_id
+                        for uses_rel in content_item_source.uses
+                    ]
                 )
             if relationship_type == RelationshipType.TESTED_BY:
                 assert (
@@ -343,6 +370,117 @@ def _testcase2__pack3__remove_relationship(repository: ContentDTO) -> List[Pack]
     return [pack2]
 
 
+def _testcase3__no_change(_: ContentDTO) -> List[Pack]:
+    """Test case for a commit diff without update."""
+    return []
+
+
+def _testcase4__new_integration_with_existing_command(
+    repository: ContentDTO,
+) -> List[Pack]:
+    """Test case for the following update:
+    * New integration: SampleIntegration2 in SamplePack
+    * New command: test-command (node already exists for SampleIntegration2)
+
+    Returns:
+        A list of the updated pack: pack.
+    """
+    pack = _get_pack_by_id(repository, "SamplePack")
+    pack.content_items.integration.append(mock_integration("SampleIntegration2"))
+    pack.relationships.setdefault(RelationshipType.IN_PACK, []).append(
+        mock_relationship(
+            "SampleIntegration2",
+            ContentType.INTEGRATION,
+            "SamplePack",
+            ContentType.PACK,
+        )
+    )
+    pack.relationships.setdefault(RelationshipType.HAS_COMMAND, []).append(
+        mock_relationship(
+            "SampleIntegration2",
+            ContentType.INTEGRATION,
+            "test-command",
+            ContentType.COMMAND,
+            name="test-command",
+            description="",
+            deprecated=False,
+        )
+    )
+    return [pack]
+
+
+def _testcase5__move_script_from_pack3_to_pack1(repository: ContentDTO) -> List[Pack]:
+    """Test case for the following update:
+    * Moved SampleScript2 from SamplePack3 to SamplePack.
+
+    Returns:
+        A list of the updated packs: pack2 and pack3.
+    """
+    pack1 = _get_pack_by_id(repository, "SamplePack")
+    pack3 = _get_pack_by_id(repository, "SamplePack3")
+    pack1.content_items.script.append(pack3.content_items.script[0])
+    pack3.content_items.script = []
+    in_pack_relationships = pack3.relationships.get(RelationshipType.IN_PACK, [])
+    for rel in in_pack_relationships:
+        if rel["source_id"] == "SampleScript2" and rel["target"] == "SamplePack3":
+            in_pack_relationships.remove(rel)
+            break
+    pack1.relationships.setdefault(RelationshipType.IN_PACK, []).append(
+        mock_relationship(
+            "SampleScript2",
+            ContentType.SCRIPT,
+            "SamplePack",
+            ContentType.PACK,
+        )
+    )
+    return [pack1, pack3]
+
+
+def _testcase6__move_script_from_pack3_to_pack2(repository: ContentDTO) -> List[Pack]:
+    """Test case for the following update:
+    * Moved SampleScript2 from SamplePack3 to SamplePack2.
+
+    Returns:
+        A list of the updated packs: pack2 and pack3.
+    """
+    pack2 = _get_pack_by_id(repository, "SamplePack2")
+    pack3 = _get_pack_by_id(repository, "SamplePack3")
+    pack2.content_items.script.append(pack3.content_items.script[0])
+    pack3.content_items.script = []
+    pack2.relationships.setdefault(RelationshipType.IN_PACK, []).append(
+        mock_relationship(
+            "SampleScript2",
+            ContentType.SCRIPT,
+            "SamplePack2",
+            ContentType.PACK,
+        )
+    )
+    in_pack_relationships = pack3.relationships.get(RelationshipType.IN_PACK, [])
+    for rel in in_pack_relationships:
+        if rel["source_id"] == "SampleScript2" and rel["target"] == "SamplePack3":
+            in_pack_relationships.remove(rel)
+            break
+    return [pack2, pack3]
+
+
+def _testcase7__changed_script2_fromversion(repository: ContentDTO) -> List[Pack]:
+    """Test case for the following update:
+    * SampleScript2 - changed fromversion
+
+    Returns:
+        A list of the updated pack: pack3.
+    """
+    new_fromversion = "7.0.0"
+    pack3 = _get_pack_by_id(repository, "SamplePack3")
+    pack3.content_items.script[0].fromversion = new_fromversion
+    in_pack_relationships = pack3.relationships.get(RelationshipType.IN_PACK, [])
+    for rel in in_pack_relationships:
+        if rel["source_id"] == "SampleScript2" and rel["target"] == "SamplePack3":
+            rel["source_fromversion"] = new_fromversion
+            break
+    return [pack3]
+
+
 # Test class
 
 
@@ -405,6 +543,36 @@ class TestUpdateContentGraph:
                 [],
                 [mock_dependency("SamplePack2", "SamplePack3")],
                 id="Remove USES relationship, causing removing a dependency",
+            ),
+            pytest.param(
+                _testcase3__no_change,
+                [],
+                [],
+                id="No change in repository",
+            ),
+            pytest.param(
+                _testcase4__new_integration_with_existing_command,
+                [],
+                [],
+                id="New integration with existing command test-command",
+            ),
+            pytest.param(
+                _testcase5__move_script_from_pack3_to_pack1,
+                [mock_dependency("SamplePack2", "SamplePack")],
+                [mock_dependency("SamplePack2", "SamplePack3")],
+                id="Moved script - dependency pack2 -> pack3 changed to pack2 -> pack1",
+            ),
+            pytest.param(
+                _testcase6__move_script_from_pack3_to_pack2,
+                [],
+                [mock_dependency("SamplePack2", "SamplePack3")],
+                id="Moved script - removed dependency between pack2 and pack3",
+            ),
+            pytest.param(
+                _testcase7__changed_script2_fromversion,
+                [],
+                [],
+                id="Changed fromversion of script",
             ),
         ],
     )

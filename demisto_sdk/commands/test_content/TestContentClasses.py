@@ -1295,7 +1295,7 @@ class Integration:
             else:
                 self.configuration = integration_params[0]
 
-        elif self.name == "Core REST API":
+        if self.name == "Core REST API":
             if IS_XSIAM:
                 self.build_context.logging_module.info("**** IN XSIAM")
                 self.build_context.logging_module.info(f"**** server_url: {server_url}")

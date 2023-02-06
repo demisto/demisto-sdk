@@ -10,6 +10,7 @@
 * Improved the message shown when using **upload** and overwriting packs.
 * Added support for the **Layout Rule** content type in the id-set and the content graph.
 * Updated the default general `fromVersion` value on **format** to `6.8.0`
+* Fixed an issue where **lint** sometimes failed when using the `-cdam` flag due to wrong file duplications filtering.
 
 ## 1.9.0
 * Fixed an issue where the Slack notifier was using a deprecated argument.

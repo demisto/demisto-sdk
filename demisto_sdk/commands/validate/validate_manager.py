@@ -2015,9 +2015,13 @@ class ValidateManager:
                     for file in added_files:
                         file = str(file)
                         file_type = find_type(file)
-                        file_dict = get_file(file, file_type.value)
-                        if deleted_file_id == _get_file_id(file_type.value, file_dict):
-                            return True
+                        if file_type == deleted_file_type:
+                            file_suffix = Path(deleted_file_path).suffix
+                            file_dict = get_file(file, file_suffix)
+                            if deleted_file_id == _get_file_id(
+                                file_type.value, file_dict
+                            ):
+                                return True
         return False
 
     @error_codes("BA115")

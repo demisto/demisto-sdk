@@ -17,7 +17,7 @@ from functools import lru_cache
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
-from typing import Callable, Dict, List, Match, Optional, Set, Tuple, Union
+from typing import Callable, Dict, Iterable, List, Match, Optional, Set, Tuple, Union
 
 import click
 import colorama
@@ -109,6 +109,9 @@ yaml = YAML_Handler()
 urllib3.disable_warnings()
 
 colorama.init()  # initialize color palette
+
+
+GRAPH_SUPPORTED_FILE_TYPES = ["yml", "json"]
 
 
 class LOG_COLORS:
@@ -308,6 +311,29 @@ def get_files_in_dir(
                 excludes.extend([str(f) for f in glob_function(exclude_pattern)])
         files.extend([str(f) for f in glob_function(pattern)])
     return list(set(files) - set(excludes))
+
+
+def get_all_content_objects_paths_in_dir(project_dir_list: Optional[Iterable]):
+    """
+    Gets the project directory and returns the path of all yml, json and py files in it
+    Args:
+        project_dir_list: List or set with str paths
+    :return: list of content files in the current dir with str relative paths
+    """
+    files: list = []
+    if not project_dir_list:
+        return files
+
+    for file_path in project_dir_list:
+        files.extend(
+            get_files_in_dir(
+                file_path, GRAPH_SUPPORTED_FILE_TYPES, ignore_test_files=True
+            )
+        )
+
+    output = [get_relative_path_from_packs_dir(file) for file in files]
+
+    return output
 
 
 def src_root() -> Path:
@@ -3432,3 +3458,9 @@ def field_to_cli_name(field_name: str) -> str:
         field_name (str): the incident/indicator field name.
     """
     return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, "", field_name).lower()
+
+
+def get_pack_paths_from_files(file_paths: Iterable[str]) -> list:
+    """Returns the pack paths from a list/set of files"""
+    pack_paths = {f"Packs/{get_pack_name(file_path)}" for file_path in file_paths}
+    return list(pack_paths)

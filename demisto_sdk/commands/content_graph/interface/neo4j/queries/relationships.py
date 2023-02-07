@@ -134,6 +134,23 @@ RETURN count(r) AS relationships_merged
 """
 
 
+def build_depends_on_relationships_query() -> str:
+    return f"""
+UNWIND $data AS rel_data
+
+// Get the source and target packs
+MATCH (p1:{ContentType.PACK}{{object_id: rel_data.source}}),
+    (p2:{ContentType.PACK}{{object_id: rel_data.target}})
+
+// Create the relationship, and mark as "from_metadata"
+CREATE (p1)-[r:{RelationshipType.DEPENDS_ON}{{
+    mandatorily: rel_data.mandatorily,
+    from_metadata: true
+}}]->(p2)
+RETURN count(r) AS relationships_merged
+"""
+
+
 def build_default_relationships_query(relationship: RelationshipType) -> str:
     return f"""
     UNWIND $data AS rel_data
@@ -192,6 +209,8 @@ def create_relationships_by_type(
         query = build_in_pack_relationships_query()
     elif relationship == RelationshipType.TESTED_BY:
         query = build_tested_by_relationships_query()
+    elif relationship == RelationshipType.DEPENDS_ON:
+        query = build_depends_on_relationships_query()
     else:
         query = build_default_relationships_query(relationship)
 
@@ -227,11 +246,13 @@ def _match_relationships(
     MATCH (node_from) - [relationship] - (node_to)
     WHERE id(node_from) = id
     {marketplace_where}
-    RETURN id(node_from) AS node_from_id, collect(relationship) AS relationships, collect(node_to) AS nodes_to
+    RETURN node_from, collect(relationship) AS relationships, collect(node_to) AS nodes_to
     """
     return {
-        int(item["node_from_id"]): Neo4jRelationshipResult(
-            relationships=item.get("relationships"), nodes_to=item.get("nodes_to")
+        int(item["node_from"].id): Neo4jRelationshipResult(
+            node_from=item.get("node_from"),
+            relationships=item.get("relationships"),
+            nodes_to=item.get("nodes_to"),
         )
         for item in run_query(tx, query, ids_list=list(ids_list) if ids_list else None)
     }

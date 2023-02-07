@@ -147,6 +147,7 @@ class PackMetadata(BaseModel):
     vendor_id: Optional[str] = Field(None, alias="vendorId")
     vendor_name: Optional[str] = Field(None, alias="vendorName")
     preview_only: Optional[bool] = Field(None, alias="previewOnly")
+    excluded_dependencies: Optional[List[str]]
 
 
 class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: ignore[call-arg]
@@ -213,7 +214,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         self.content_items = PackContentItems(**content_item_dct)
 
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
-        metadata = self.dict(exclude={"path", "node_id", "content_type"})
+        metadata = self.dict(
+            exclude={"path", "node_id", "content_type", "excluded_dependencies"}
+        )
         metadata["contentItems"] = {}
         for content_item in self.content_items:
             try:

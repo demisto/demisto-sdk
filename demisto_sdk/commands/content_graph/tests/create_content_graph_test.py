@@ -72,6 +72,7 @@ def mock_pack(name: str = "SamplePack"):
         useCases=[],
         keywords=[],
         contentItems=[],
+        excluded_dependencies=[],
     )
 
 

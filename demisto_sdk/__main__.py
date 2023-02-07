@@ -476,6 +476,14 @@ def zip_packs(**kwargs) -> int:
     type=click.Path(resolve_path=True),
 )
 @click.option(
+    "-gr",
+    "--graph",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Perform validations on content graph.",
+)
+@click.option(
     "--prev-ver", help="Previous branch or SHA1 commit to run checks against."
 )
 @click.option(
@@ -625,6 +633,7 @@ def validate(config, **kwargs):
             file_path=file_path,
             validate_all=kwargs.get("validate_all"),
             validate_id_set=kwargs["id_set"],
+            validate_graph=kwargs.get("graph"),
             skip_pack_rn_validation=kwargs["skip_pack_release_notes"],
             print_ignored_errors=kwargs["print_ignored_errors"],
             is_external_repo=is_external_repo,

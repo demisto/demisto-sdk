@@ -25,6 +25,7 @@ UNIFIED_FILES_SUFFIXES = [".yml", ".json"]
 
 
 class Neo4jRelationshipResult(NamedTuple):
+    node_from: graph.Node
     relationships: List[graph.Relationship]
     nodes_to: List[graph.Node]
 

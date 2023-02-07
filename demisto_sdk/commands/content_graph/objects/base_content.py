@@ -163,6 +163,11 @@ class UnknownContent(BaseContent):
     not_in_repository: bool = True
     node_id: str = ""  # just because it's missing from the db
     object_id: str = ""
+    name: str = ""
 
     def dump(self, _, __):
         ...
+
+    @property
+    def identifier(self):
+        return self.object_id or self.name

@@ -21,6 +21,7 @@ LIST_PROPERTIES = [
     "enhancement_script_names",
     "definition_ids",
     "tabs",
+    "excluded_dependencies",
 ]
 
 CONVERT_FIELD_TO_STRING = """MATCH (n) WHERE NOT n.{prop} IS NULL

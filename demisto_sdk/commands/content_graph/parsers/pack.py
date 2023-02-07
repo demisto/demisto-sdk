@@ -9,6 +9,7 @@ from demisto_sdk.commands.content_graph.common import (
     PACK_METADATA_FILENAME,
     ContentType,
     Relationships,
+    RelationshipType,
 )
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 from demisto_sdk.commands.content_graph.parsers.content_item import (
@@ -62,6 +63,7 @@ class PackContentItems:
         )
         self.xsiam_report = ContentItemsList(content_type=ContentType.XSIAM_REPORT)
         self.xdrc_template = ContentItemsList(content_type=ContentType.XDRC_TEMPLATE)
+        self.layout_rule = ContentItemsList(content_type=ContentType.LAYOUT_RULE)
 
     def iter_lists(self) -> Iterator[ContentItemsList]:
         yield from vars(self).values()
@@ -116,6 +118,7 @@ class PackMetadataParser:
         self.marketplaces: List[MarketplaceVersions] = metadata.get(
             "marketplaces", list(MarketplaceVersions)
         )
+        self.excluded_dependencies: List[str] = metadata.get("excludedDependencies", [])
 
 
 class PackParser(BaseContentParser, PackMetadataParser):
@@ -136,11 +139,11 @@ class PackParser(BaseContentParser, PackMetadataParser):
             path (Path): The pack path.
         """
         BaseContentParser.__init__(self, path)
-        PackMetadataParser.__init__(
-            self, metadata=get_json(path / PACK_METADATA_FILENAME)
-        )
+        metadata = get_json(path / PACK_METADATA_FILENAME)
+        PackMetadataParser.__init__(self, metadata)
         self.content_items: PackContentItems = PackContentItems()
         self.relationships: Relationships = Relationships()
+        self.connect_pack_dependencies(metadata)
         try:
             self.contributors: List[str] = get_json(path / PACK_CONTRIBUTORS_FILENAME)
         except FileNotFoundError:
@@ -152,6 +155,16 @@ class PackParser(BaseContentParser, PackMetadataParser):
     @property
     def object_id(self) -> Optional[str]:
         return self.path.name
+
+    def connect_pack_dependencies(self, metadata: Dict[str, Any]) -> None:
+        dependency: Dict[str, Dict[str, Any]]
+        for pack_id, dependency in metadata.get("dependencies", {}).items():
+            self.relationships.add(
+                RelationshipType.DEPENDS_ON,
+                source=self.object_id,
+                target=pack_id,
+                mandatorily=dependency.get("mandatory"),
+            )
 
     def parse_pack_folders(self) -> None:
         """Parses all pack content items by iterating its folders."""

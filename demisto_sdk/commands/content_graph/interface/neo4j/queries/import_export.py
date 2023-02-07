@@ -21,6 +21,7 @@ LIST_PROPERTIES = [
     "enhancement_script_names",
     "definition_ids",
     "tabs",
+    "excluded_dependencies",
 ]
 
 CONVERT_FIELD_TO_STRING = """// (Workaround) Before import: casts `{prop}` field from array to string

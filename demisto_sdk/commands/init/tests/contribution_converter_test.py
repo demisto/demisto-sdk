@@ -114,11 +114,8 @@ def rename_file_in_zip(
     os.replace(modded_zip_file, path_to_zip)
 
 
-@patch("demisto_sdk.commands.split.ymlsplitter.get_python_version")
 @patch("demisto_sdk.commands.init.contribution_converter.get_content_path")
-def test_convert_contribution_zip_updated_pack(
-    get_content_path_mock, get_python_version_mock, tmp_path, mocker
-):
+def test_convert_contribution_zip_updated_pack(get_content_path_mock, tmp_path, mocker):
     """
     Create a fake contribution zip file and test that it is converted to a Pack correctly.
     The pack already exists, checking the update flow.
@@ -126,7 +123,6 @@ def test_convert_contribution_zip_updated_pack(
     Args:
         get_content_path_mock (MagicMock): Patch of the 'get_content_path' function to return the fake repo directory
             used in the test
-        get_python_version_mock (MagicMock): Patch of the 'get_python_version' function to return the "3.7"
         tmp_path (fixture): Temporary Path used for the unit test and cleaned up afterwards
 
     Scenario: Simulate converting a contribution zip file.
@@ -150,7 +146,6 @@ def test_convert_contribution_zip_updated_pack(
     repo_dir = tmp_path / "content_repo"
     repo_dir.mkdir()
     get_content_path_mock.return_value = repo_dir
-    get_python_version_mock.return_value = 3.7
     # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
     # that will be deleted after
     target_dir = repo_dir / "target_dir"
@@ -177,7 +172,6 @@ def test_convert_contribution_zip_updated_pack(
         description=description,
         author=author,
         create_new=False,
-        no_pipenv=True,
     )
     contrib_converter_inst.convert_contribution_to_pack()
     converted_pack_path = repo_dir / "Packs" / "TestPack"
@@ -206,17 +200,15 @@ def test_convert_contribution_zip_updated_pack(
     assert not unified_yml_in_sample.exists()
 
 
-@patch("demisto_sdk.commands.split.ymlsplitter.get_python_version")
 @patch("demisto_sdk.commands.init.contribution_converter.get_content_path")
 def test_convert_contribution_zip_outputs_structure(
-    get_content_path_mock, get_python_version_mock, tmp_path, mocker
+    get_content_path_mock, tmp_path, mocker
 ):
     """Create a fake contribution zip file and test that it is converted to a Pack correctly
 
     Args:
         get_content_path_mock (MagicMock): Patch of the 'get_content_path' function to return the fake repo directory
             used in the test
-        get_python_version_mock (MagicMock): Patch of the 'get_python_version' function to return the "3.7"
         tmp_path (fixture): Temporary Path used for the unit test and cleaned up afterwards
 
     Scenario: Simulate converting a contribution zip file
@@ -240,7 +232,6 @@ def test_convert_contribution_zip_outputs_structure(
     repo_dir = tmp_path / "content_repo"
     repo_dir.mkdir()
     get_content_path_mock.return_value = repo_dir
-    get_python_version_mock.return_value = 3.7
     # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
     # that will be deleted after
     target_dir = repo_dir / "target_dir"
@@ -270,7 +261,6 @@ def test_convert_contribution_zip_outputs_structure(
         contribution=contribution_path,
         description=description,
         author=author,
-        no_pipenv=True,
     )
     contrib_converter_inst.convert_contribution_to_pack()
 
@@ -330,17 +320,13 @@ def test_convert_contribution_zip_outputs_structure(
     assert not unified_yml_in_sample.exists()
 
 
-@patch("demisto_sdk.commands.split.ymlsplitter.get_python_version")
 @patch("demisto_sdk.commands.init.contribution_converter.get_content_path")
-def test_convert_contribution_zip(
-    get_content_path_mock, get_python_version_mock, tmp_path, mocker
-):
+def test_convert_contribution_zip(get_content_path_mock, tmp_path, mocker):
     """Create a fake contribution zip file and test that it is converted to a Pack correctly
 
     Args:
         get_content_path_mock (MagicMock): Patch of the 'get_content_path' function to return the fake repo directory
             used in the test
-        get_python_version_mock (MagicMock): Patch of the 'get_python_version' function to return the "3.7"
         tmp_path (fixture): Temporary Path used for the unit test and cleaned up afterwards
 
     Scenario: Simulate converting a contribution zip file
@@ -363,7 +349,6 @@ def test_convert_contribution_zip(
     repo_dir = tmp_path / "content_repo"
     repo_dir.mkdir()
     get_content_path_mock.return_value = repo_dir
-    get_python_version_mock.return_value = 3.7
     # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
     # that will be deleted after
     target_dir = repo_dir / "target_dir"
@@ -395,7 +380,6 @@ def test_convert_contribution_zip(
         contribution=contribution_path,
         description=description,
         author=author,
-        no_pipenv=True,
     )
     contrib_converter_inst.convert_contribution_to_pack()
 
@@ -464,17 +448,13 @@ def test_convert_contribution_zip(
     }
 
 
-@patch("demisto_sdk.commands.split.ymlsplitter.get_python_version")
 @patch("demisto_sdk.commands.init.contribution_converter.get_content_path")
-def test_convert_contribution_zip_with_args(
-    get_content_path_mock, get_python_version_mock, tmp_path, mocker
-):
+def test_convert_contribution_zip_with_args(get_content_path_mock, tmp_path, mocker):
     """Convert a contribution zip to a pack and test that the converted pack's 'pack_metadata.json' is correct
 
     Args:
         get_content_path_mock (MagicMock): Patch of the 'get_content_path' function to return the fake repo directory
             used in the test
-        get_python_version_mock (MagicMock): Patch of the 'get_python_version' function to return the "3.7"
         tmp_path (fixture): Temporary Path used for the unit test and cleaned up afterwards
 
     Scenario: Simulate converting a contribution zip file
@@ -504,7 +484,6 @@ def test_convert_contribution_zip_with_args(
     repo_dir = tmp_path / "content_repo"
     repo_dir.mkdir()
     get_content_path_mock.return_value = repo_dir
-    get_python_version_mock.return_value = 3.7
     # create temp target dir in which we will create all the TestSuite content items to use in the contribution zip and
     # that will be deleted after
     target_dir = repo_dir / "target_dir"
@@ -532,7 +511,6 @@ def test_convert_contribution_zip_with_args(
         description=description,
         author=author,
         gh_user=gh_user,
-        no_pipenv=True,
     )
     contrib_converter_inst.convert_contribution_to_pack()
 

@@ -16,8 +16,8 @@ from demisto_sdk.commands.content_graph.common import (
     Neo4jRelationshipResult,
     RelationshipType,
 )
-from demisto_sdk.commands.content_graph.content_graph_commands import (  # update_content_graph,
-    create_content_graph,
+from demisto_sdk.commands.content_graph.content_graph_commands import (
+    update_content_graph,
 )
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import (
@@ -55,12 +55,12 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
     create_relationships,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
+    validate_dependencies,
     validate_fromversion,
     validate_marketplaces,
     validate_multiple_packs_with_same_display_name,
     validate_toversion,
     validate_unknown_content,
-    validate_dependencies,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
@@ -119,9 +119,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
         )
         if should_update:
-            # update_content_graph(self, use_git=True)
-            # workaround - creating the graph until update can be used
-            create_content_graph(self)
+            update_content_graph(self, use_git=True)
 
     def __enter__(self) -> "Neo4jContentGraphInterface":
         return self

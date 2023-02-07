@@ -481,10 +481,11 @@ def test_is_file_display_name_already_exists(repository: ContentDTO, capsys):
 
     captured = capsys.readouterr().out
     assert not is_valid
-    assert (
-        "Pack 'SamplePack' has a duplicate display_name as: SamplePack2, SamplePack3"
-        in captured
-    )
+    for i in range(1, 4):
+        assert (
+            f"Pack 'SamplePack{i if i != 1 else ''}' has a duplicate display_name"
+            in captured
+        )
 
 
 def test_are_marketplaces_relationships_paths_valid(

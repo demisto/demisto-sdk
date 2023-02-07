@@ -21,3 +21,4 @@ demisto_sdk/commands/content_graph/** @dantavori @ilaner
 
 # Misc
 demisto_sdk/__main__.py @dorschw
+.github/ @dorschw

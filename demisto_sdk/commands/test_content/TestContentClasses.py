@@ -1299,20 +1299,17 @@ class Integration:
                 self.build_context.logging_module.debug(
                     f"auth_id {self.build_context.auth_id}"
                 )
-                self.configuration.params["url"] = server_url
-                self.configuration.params["credentials"][
-                    "identifier"
-                ] = self.build_context.auth_id
-                self.configuration.params["credentials"][
-                    "password"
-                ] = self.build_context.api_key
-                self.configuration.params["auth_method"] = "Standard"
-                self.configuration.params["insecure"] = True
+                self.configuration.params = {  # type: ignore
+                    "url": server_url,
+                    "credentials": {"identifier": self.build_context.auth_id, "password": self.build_context.api_key},
+                    "auth_method": "Standard",
+                    "insecure": True,
+                }
                 self.build_context.logging_module.info("*****")
                 self.build_context.logging_module.info(
                     self.configuration.params["credentials"]["identifier"]
                 )
-                self.build_context.logging_module.info(self.configuration.params["url"])
+                self.build_context.logging_module.info(self.configuration.params)
                 self.build_context.logging_module.info(self.configuration)
                 self.build_context.logging_module.info("*****")
 

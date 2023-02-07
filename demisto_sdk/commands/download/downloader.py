@@ -5,8 +5,9 @@ import os
 import re
 import shutil
 import tarfile
+from pathlib import Path
 from tempfile import mkdtemp
-from typing import Dict, List, Union
+from typing import Dict, List, Tuple, Union
 
 import demisto_client.demisto_api
 from demisto_client.demisto_api.rest import ApiException
@@ -113,7 +114,6 @@ class Downloader:
         pack_content (dict): The pack content that maps the pack
         system (bool): whether to download system items
         item_type (str): The items type to download, use just when downloading system items.
-        no_code_formatting (bool): whether to NOT format code files, using isort and autopep8. Use it to preserve order of imports.
     """
 
     def __init__(
@@ -129,7 +129,6 @@ class Downloader:
         run_format: bool = False,
         system: bool = False,
         item_type: str = "",
-        no_code_formatting: bool = False,
     ):
         logging.disable(logging.CRITICAL)
         self.output_pack_path = output
@@ -154,7 +153,6 @@ class Downloader:
         }
         self.num_merged_files = 0
         self.num_added_files = 0
-        self.no_code_formatting = no_code_formatting
 
     def download(self) -> int:
         """
@@ -332,10 +330,26 @@ class Downloader:
             scripts_mapper[script_id] = script_yml.get("name")
         return scripts_mapper
 
-    def handle_file(self, string_to_write, member_name, scripts_id_name):
+    def replace_uuids(self, string_to_write: str, uuid_dict: dict) -> str:
+        """
+        Replace all occurrences of UUIDs in a string with their corresponding values from a dictionary.
 
-        if "automation-" in member_name:
-            scripts_id_name = self.map_script(string_to_write, scripts_id_name)
+        Parameters:
+        - string_to_write (str): The string to search for UUIDs in.
+        - uuid_dict (dict): A dictionary mapping UUIDs to content item IDs.
+
+        Returns:
+        - str: The modified string with all UUIDs replaced.
+        """
+        uuids = re.findall(UUID_REGEX, string_to_write)
+
+        for uuid in set(uuids).intersection(uuid_dict):
+            string_to_write = string_to_write.replace(uuid, uuid_dict[uuid])
+        return string_to_write
+
+    def handle_file(
+        self, string_to_write: str, member_name: str, scripts_id_name: dict
+    ):
 
         if not self.list_files and re.search(
             INCIDENT_FIELD_FILE_NAME_REGEX, member_name
@@ -354,7 +368,7 @@ class Downloader:
         if not self.list_files and re.search(LAYOUT_FILE_NAME__REGEX, member_name):
             string_to_write = self.handle_layout(string_to_write, scripts_id_name)
 
-        return string_to_write, scripts_id_name
+        return string_to_write
 
     def fetch_custom_content(self) -> bool:
         """
@@ -376,32 +390,43 @@ class Downloader:
             tar = tarfile.open(fileobj=io_bytes, mode="r")
 
             scripts_id_name: dict = {}
+            strings_to_write: List[Tuple[str, str]] = []
             for member in tar.getmembers():
                 file_name: str = self.update_file_prefix(member.name.strip("/"))
                 file_path: str = os.path.join(self.custom_content_temp_dir, file_name)
 
                 extracted_file = tar.extractfile(member)
-                # File might empty
                 if extracted_file:
                     string_to_write = extracted_file.read().decode("utf-8")
-                    string_to_write, scripts_id_name = self.handle_file(
-                        string_to_write, member.name, scripts_id_name
-                    )
-
-                    try:
-                        with open(file_path, "w") as file:
-                            file.write(string_to_write)
-
-                    except Exception as e:
-                        print(f"encountered exception {type(e)}: {e}")
-                        print("trying to write with encoding=utf8")
-                        with open(file_path, "w", encoding="utf8") as file:
-                            file.write(string_to_write)
+                    if (
+                        "automation-" in member.name.lower()
+                        or "integration-" in member.name.lower()
+                    ):
+                        scripts_id_name = self.map_script(
+                            string_to_write, scripts_id_name
+                        )
+                    strings_to_write.append((string_to_write, member.name))
                 else:
                     raise FileNotFoundError(
                         f"Could not extract files from tar file: {file_path}"
                     )
 
+            for string_to_write, file_name in strings_to_write:
+                string_to_write = self.handle_file(
+                    string_to_write=string_to_write,
+                    member_name=file_name,
+                    scripts_id_name=scripts_id_name,
+                )
+                string_to_write = self.replace_uuids(string_to_write, scripts_id_name)
+                file_name = self.update_file_prefix(file_name.strip("/"))
+                path = Path(self.custom_content_temp_dir, file_name)
+                try:
+                    path.write_text(string_to_write)
+
+                except Exception as e:
+                    print(f"encountered exception {type(e)}: {e}")
+                    print("trying to write with encoding=utf8")
+                    path.write_text(string_to_write, encoding="utf8")
             return True
 
         except ApiException as e:
@@ -976,10 +1001,8 @@ class Downloader:
             file_type=file_type,
             base_name=base_name,
             no_logging=not self.log_verbose,
-            no_pipenv=True,
             no_readme=True,
             no_auto_create_dir=True,
-            no_code_formatting=self.no_code_formatting,
         )
         extractor.extract_to_package_format()
 
@@ -1094,8 +1117,6 @@ class Downloader:
             base_name=dir_name,
             no_auto_create_dir=True,
             no_logging=not self.log_verbose,
-            no_pipenv=True,
-            no_code_formatting=self.no_code_formatting,
         )
         extractor.extract_to_package_format()
 

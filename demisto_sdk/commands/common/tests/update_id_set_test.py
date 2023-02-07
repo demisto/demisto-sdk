@@ -36,6 +36,7 @@ from demisto_sdk.commands.common.update_id_set import (
     get_incident_type_data,
     get_indicator_type_data,
     get_layout_data,
+    get_layout_rule_data,
     get_mapper_data,
     get_modeling_rule_data,
     get_pack_metadata_data,
@@ -1553,7 +1554,7 @@ class TestLayouts:
         ("indicator", MarketplaceVersions.XSOAR.value, False),
         ("indicator", MarketplaceVersions.MarketplaceV2.value, False),
         ("incident", MarketplaceVersions.XSOAR.value, False),
-        ("incident", MarketplaceVersions.MarketplaceV2.value, True),
+        ("incident", MarketplaceVersions.MarketplaceV2.value, False),
     ]
 
     @staticmethod
@@ -3721,6 +3722,49 @@ class TestXDRCTemplates:
         assert xdrc_template_result["pack"] == pack.name
 
         assert f"adding {xdrc_template._file_path} to id_set" in captured.out
+
+
+class TestLayoutRules:
+    @staticmethod
+    def test_process_layout_rules(mocker, capsys, pack):
+        """
+        Given
+            - A repo with a LayoutRule object.
+        When
+            - Parsing the LayoutRule files.
+        Then
+            - Verify result as expeted.
+        """
+        mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
+        layout_rule = pack.create_layout_rule(
+            "rule_name", {"rule_id": "rule_id", "rule_name": "rule_name"}
+        )
+        res = process_general_items(
+            layout_rule.path,
+            {pack.name: {}},
+            MarketplaceVersions.MarketplaceV2.value,
+            True,
+            (FileType.LAYOUT_RULE,),
+            get_layout_rule_data,
+            "json",
+        )
+
+        captured = capsys.readouterr()
+        layout_rule_result = res[0][0]["rule_id"]
+
+        assert len(res) == 2
+        assert "name" in layout_rule_result.keys()
+        assert "display_name" in layout_rule_result.keys()
+        assert "file_path" in layout_rule_result.keys()
+        assert "pack" in layout_rule_result.keys()
+
+        assert (
+            layout_rule_result["name"] == layout_rule._file_path.parts[-1].split(".")[0]
+        )
+        assert layout_rule_result["file_path"] == layout_rule.path
+        assert layout_rule_result["pack"] == pack.name
+
+        assert f"adding {layout_rule._file_path} to id_set" in captured.out
 
 
 def test_merge_id_sets(tmp_path):

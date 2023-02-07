@@ -59,9 +59,11 @@ from demisto_sdk.tests.constants_test import (
     INCIDENTFIELD_PATH,
     INCIDENTFIELD_SCHEMA_PATH,
     INCIDENTTYPE_PATH,
+    INCIDENTTYPE_SCHEMA_PATH,
     INDICATORFIELD_PATH,
     INDICATORFIELD_SCHEMA_PATH,
     INDICATORTYPE_PATH,
+    INDICATORTYPE_SCHEMA_PATH,
     INVALID_OUTPUT_PATH,
     LAYOUT_PATH,
     LAYOUT_SCHEMA_PATH,
@@ -74,6 +76,7 @@ from demisto_sdk.tests.constants_test import (
     PRE_PROCESS_RULES_PATH,
     PRE_PROCESS_RULES_SCHEMA_PATH,
     REPORT_PATH,
+    REPORT_SCHEMA_PATH,
     SOURCE_FORMAT_CLASSIFIER,
     SOURCE_FORMAT_CLASSIFIER_5_9_9,
     SOURCE_FORMAT_DASHBOARD_COPY,
@@ -90,6 +93,7 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_REPORT,
     SOURCE_FORMAT_WIDGET,
     WIDGET_PATH,
+    WIDGET_SCHEMA_PATH,
 )
 from TestSuite.json_based import JSONBased
 
@@ -705,8 +709,8 @@ class TestFormattingLayoutscontainer:
             input=layoutscontainer_copy,
             output=DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY,
             clear_cache=True,
+            path=LAYOUTS_CONTAINER_SCHEMA_PATH,
         )
-        layoutscontainer_formatter.schema_path = LAYOUTS_CONTAINER_SCHEMA_PATH
         yield layoutscontainer_formatter
 
     @pytest.mark.parametrize(
@@ -875,8 +879,7 @@ class TestFormattingLayoutscontainer:
         Then
             - Ensure defaultRows key updated successfully
         """
-        incident_formater = BaseUpdateJSON(input="test", output="")
-        incident_formater.schema_path = schema
+        incident_formater = BaseUpdateJSON(input="test", output="", path=schema)
         incident_formater.data = {"defaultRows": [], "type": "shortText"}
         incident_formater.remove_null_fields()
         assert "defaultRows" not in incident_formater.data
@@ -978,13 +981,17 @@ class TestFormattingLayout:
     @pytest.fixture()
     def layouts_formatter(self, layouts_copy):
         yield LayoutBaseFormat(
-            input=layouts_copy, output=DESTINATION_FORMAT_LAYOUT_COPY
+            input=layouts_copy,
+            output=DESTINATION_FORMAT_LAYOUT_COPY,
+            path=LAYOUT_SCHEMA_PATH,
         )
 
     @pytest.fixture()
     def invalid_path_layouts_formatter(self, layouts_copy):
         yield LayoutBaseFormat(
-            input=layouts_copy, output=DESTINATION_FORMAT_LAYOUT_INVALID_NAME_COPY
+            input=layouts_copy,
+            output=DESTINATION_FORMAT_LAYOUT_INVALID_NAME_COPY,
+            path=LAYOUT_SCHEMA_PATH,
         )
 
     def test_remove_unnecessary_keys(self, layouts_formatter):
@@ -1127,6 +1134,7 @@ class TestFormattingPreProcessRule:
         yield PreProcessRulesFormat(
             input=pre_process_rules_copy,
             output=DESTINATION_FORMAT_PRE_PROCESS_RULES_COPY,
+            path=PRE_PROCESS_RULES_SCHEMA_PATH,
         )
 
     @pytest.fixture(autouse=True)
@@ -1134,6 +1142,7 @@ class TestFormattingPreProcessRule:
         yield PreProcessRulesFormat(
             input=pre_process_rules_copy,
             output=DESTINATION_FORMAT_PRE_PROCESS_RULES_INVALID_NAME_COPY,
+            path=PRE_PROCESS_RULES_SCHEMA_PATH,
         )
 
     def test_remove_unnecessary_keys(self, pre_process_rules_formatter):
@@ -1173,7 +1182,11 @@ class TestFormattingList:
 
     @pytest.fixture(autouse=True)
     def lists_formatter(self, lists_copy):
-        yield ListsFormat(input=lists_copy, output=DESTINATION_FORMAT_LISTS_COPY)
+        yield ListsFormat(
+            input=lists_copy,
+            output=DESTINATION_FORMAT_LISTS_COPY,
+            path=LISTS_SCHEMA_PATH,
+        )
 
     def test_remove_unnecessary_keys(self, lists_formatter):
         """
@@ -1216,6 +1229,7 @@ class TestFormattingClassifier:
             input=classifier_copy,
             output=DESTINATION_FORMAT_CLASSIFIER,
             clear_cache=True,
+            path=CLASSIFIER_SCHEMA_PATH,
         )
 
     def test_arguments_to_remove(self, classifier_formatter):
@@ -1324,7 +1338,9 @@ class TestFormattingOldClassifier:
     @pytest.fixture(autouse=True)
     def classifier_formatter(self, classifier_5_9_9_copy):
         yield OldClassifierJSONFormat(
-            input=classifier_5_9_9_copy, output=DESTINATION_FORMAT_CLASSIFIER_5_9_9
+            input=classifier_5_9_9_copy,
+            output=DESTINATION_FORMAT_CLASSIFIER_5_9_9,
+            path=CLASSIFIER_5_9_9_SCHEMA_PATH,
         )
 
     def test_remove_unnecessary_keys(self, classifier_formatter):
@@ -1448,7 +1464,9 @@ class TestFormattingMapper:
 
     @pytest.fixture()
     def mapper_formatter(self, mapper_copy):
-        yield MapperJSONFormat(input=mapper_copy, output=DESTINATION_FORMAT_MAPPER)
+        yield MapperJSONFormat(
+            input=mapper_copy, output=DESTINATION_FORMAT_MAPPER, path=MAPPER_SCHEMA_PATH
+        )
 
     @pytest.mark.parametrize("mapper_type", ["mapping-outgoing", "mapping-incoming"])
     def test_remove_non_existent_fields(self, mapper_type, id_set_file_mock, pack):
@@ -1543,7 +1561,9 @@ class TestFormattingWidget:
 
     @pytest.fixture(autouse=True)
     def widget_formatter(self, widget_copy):
-        yield WidgetJSONFormat(input=widget_copy, output=DESTINATION_FORMAT_WIDGET)
+        yield WidgetJSONFormat(
+            input=widget_copy, output=DESTINATION_FORMAT_WIDGET, path=WIDGET_SCHEMA_PATH
+        )
 
     def test_set_description(self, widget_formatter):
         """
@@ -1613,7 +1633,9 @@ class TestFormattingReport:
 
     @pytest.fixture(autouse=True)
     def report_formatter(self, report_copy):
-        yield ReportJSONFormat(input=report_copy, output=DESTINATION_FORMAT_REPORT)
+        yield ReportJSONFormat(
+            input=report_copy, output=DESTINATION_FORMAT_REPORT, path=REPORT_SCHEMA_PATH
+        )
 
     def test_set_description(self, report_formatter):
         """
@@ -1729,7 +1751,9 @@ class TestFormattingReport:
 
         pack.pack_metadata.update({"support": "partner", "currentVersion": "1.0.0"})
         incident_type = pack.create_incident_type(name="TestType", content={})
-        bs = BaseUpdate(input=incident_type.path, assume_yes=True)
+        bs = BaseUpdate(
+            input=incident_type.path, assume_yes=True, path=INCIDENTTYPE_SCHEMA_PATH
+        )
         bs.set_fromVersion()
         assert bs.data["fromVersion"] == GENERAL_DEFAULT_FROMVERSION
 
@@ -1752,15 +1776,25 @@ class TestFormattingReport:
         indicator_type = pack.create_indicator_type(name="TestType")
         classifier = pack.create_classifier(name="TestClassifier")
         layout = pack.create_layout(name="TestLayout")
-        for path in [
-            incident_type.path,
-            incident_field.path,
-            indicator_field.path,
-            indicator_type.path,
-            classifier.path,
-            layout.path,
-        ]:
-            bs = BaseUpdate(input=path, assume_yes=True)
+        for path, schema_path in zip(
+            [
+                incident_type.path,
+                incident_field.path,
+                indicator_field.path,
+                indicator_type.path,
+                classifier.path,
+                layout.path,
+            ],
+            [
+                INCIDENTTYPE_SCHEMA_PATH,
+                INCIDENTFIELD_SCHEMA_PATH,
+                INDICATORFIELD_SCHEMA_PATH,
+                INDICATORTYPE_SCHEMA_PATH,
+                CLASSIFIER_SCHEMA_PATH,
+                LAYOUTS_CONTAINER_SCHEMA_PATH,
+            ],
+        ):
+            bs = BaseUpdate(input=path, assume_yes=True, path=schema_path)
             bs.set_fromVersion()
             assert bs.data["fromVersion"] == GENERAL_DEFAULT_FROMVERSION
 
@@ -1780,7 +1814,9 @@ class TestFormattingReport:
         mocker.patch.object(BaseUpdate, "sync_data_to_master")
 
         layout = pack.create_layout(name="TestType", content={})
-        bs = LayoutBaseFormat(input=layout.path, assume_yes=True)
+        bs = LayoutBaseFormat(
+            input=layout.path, assume_yes=True, path=LAYOUTS_CONTAINER_SCHEMA_PATH
+        )
         bs.run_format()
         assert bs.data["fromVersion"] == VERSION_5_5_0
 
@@ -1833,7 +1869,9 @@ class TestFormattingReport:
         mocker.patch.object(BaseUpdate, "sync_data_to_master")
 
         classifier = pack.create_classifier(name="TestType", content={})
-        bs = OldClassifierJSONFormat(input=classifier.path, assume_yes=True)
+        bs = OldClassifierJSONFormat(
+            input=classifier.path, assume_yes=True, path=CLASSIFIER_5_9_9_SCHEMA_PATH
+        )
         bs.run_format()
         assert bs.data["fromVersion"] == VERSION_5_5_0
 

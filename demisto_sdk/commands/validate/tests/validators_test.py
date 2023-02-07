@@ -2640,6 +2640,36 @@ def test_validate_deleted_files(
     assert expected_result is result
 
 
+def test_was_file_renamed_but_labeled_as_deleted(mocker):
+    """
+    Given
+            - `deleted_file_path` - A unified script "ShowCampaignUniqueRecipients" file path
+            - The yml path of the splitted script in `added_files`.
+    When
+            Validating deleted files.
+    Then
+            Make sure the file is considered as renamed.
+    """
+    deleted_file_path = "Packs/Campaign/Scripts/script-ShowCampaignUniqueRecipients.yml"
+    added_files = [
+        "Packs/Campaign/Scripts/ShowCampaignUniqueRecipients/ShowCampaignUniqueRecipients.yml"
+    ]
+    mocker.patch(
+        "demisto_sdk.commands.validate.validate_manager.get_remote_file",
+        return_value={"commonfields": {"id": "ShowCampaignUniqueRecipients"}},
+    )
+    mocker.patch(
+        "demisto_sdk.commands.validate.validate_manager.get_file",
+        return_value={"commonfields": {"id": "ShowCampaignUniqueRecipients"}},
+    )
+
+    result = ValidateManager.was_file_renamed_but_labeled_as_deleted(
+        deleted_file_path,
+        added_files,
+    )
+    assert result
+
+
 def test_validate_contributors_file(repo):
     """
     Given:

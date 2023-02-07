@@ -1313,6 +1313,7 @@ class Integration:
                     self.configuration.params["creds_apikey"]["identifier"]
                 )
                 self.build_context.logging_module.info(self.configuration.params["url"])
+                self.build_context.logging_module.info(self.configuration)
                 self.build_context.logging_module.info("*****")
 
             else:
@@ -1575,6 +1576,9 @@ class Integration:
                 param_conf["value"] = param_conf["defaultValue"]
             module_instance["data"].append(param_conf)
         try:
+            self.build_context.logging_module.info(
+                f"Sending Api request PUT /settings/integratio: {module_instance=}"
+            )
             res = demisto_client.generic_request_func(
                 self=client,
                 method="PUT",

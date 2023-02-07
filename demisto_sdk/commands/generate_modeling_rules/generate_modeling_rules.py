@@ -131,6 +131,14 @@ def generate_modeling_rules(
 class MappingField():
 
     def __init__(self, xdm_rule, field_path_raw, xdm_field_type, xdm_class_type, is_array_raw, type_raw):
+        '''
+        xdm_rule - The xdm rule
+        field_path_raw - the path to the field in the raw event
+        field_type - the field type in the schema.
+        xdm_class_type - xdm rule type
+        is_array_raw - is the raw event of type array.
+        type_raw - the type of the raw event field.
+        '''
         self.xdm_rule = xdm_rule
         self.field_path_raw = field_path_raw
         self.xdm_field_type = xdm_field_type
@@ -339,7 +347,7 @@ def extract_raw_type_data(event: dict, path_to_dict_field: str) -> tuple:
     Extract the type of the field in the dict event
     Args:
         event (dict): A single raw event
-        path_to_dict_field (str): The path to the field in the raw event. 
+        path_to_dict_field (str): The path to the field in the raw event.
     Returns:
         (tuple): (type of the value - (str): is field of array type - (boolean))
     """

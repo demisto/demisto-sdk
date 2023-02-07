@@ -320,11 +320,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return [self._id_to_obj[result.id] for result in results]
 
     def create_indexes_and_constraints(self) -> None:
+        logger.info("Creating graph indexes and constraints...")
         with self.driver.session() as session:
             session.write_transaction(create_indexes)
             session.write_transaction(create_constraints)
 
     def create_nodes(self, nodes: Dict[ContentType, List[Dict[str, Any]]]) -> None:
+        logger.info("Creating graph nodes...")
         pack_ids = [p.get("object_id") for p in nodes.get(ContentType.PACK, [])]
         with self.driver.session() as session:
             self._rels_to_preserve = session.read_transaction(
@@ -435,6 +437,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def create_relationships(
         self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]
     ) -> None:
+        logger.info("Creating graph relationships...")
         with self.driver.session() as session:
             session.write_transaction(create_relationships, relationships)
             if self._rels_to_preserve:
@@ -458,6 +461,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             external_import_paths (List[Path]): A list of external repositories' import paths.
             imported_path (Path): The path to import the graph from.
         """
+        logger.info("Importing graph from CSV files...")
         self._import_handler.extract_files_from_path(imported_path)
         self._import_handler.ensure_data_uniqueness()
         node_files = self._import_handler.get_nodes_files()
@@ -514,6 +518,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         )
 
     def create_pack_dependencies(self):
+        logger.info("Creating pack dependencies...")
         with self.driver.session() as session:
             session.write_transaction(create_pack_dependencies)
 

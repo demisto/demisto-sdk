@@ -170,7 +170,7 @@ class ContentItem(BaseContent):
                         else name
                     )
         normalized = f"{self.content_type.server_name}-{name}"
-        logger.info(f"Normalized file name from {name} to {normalized}")
+        logger.debug(f"Normalized file name from {name} to {normalized}")
         return normalized
 
     def dump(self, dir: DirectoryPath, _: MarketplaceVersions) -> None:

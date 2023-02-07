@@ -49,7 +49,7 @@ def _stop_neo4j_service_docker(docker_client: docker.DockerClient):
         neo4j_docker.stop()
         neo4j_docker.remove(force=True)
     except Exception as e:
-        logger.info(f"Could not remove neo4j container: {e}")
+        logger.debug(f"Could not remove neo4j container: {e}")
 
 
 def _is_apoc_available(plugins_path: Path, sha1: str) -> bool:
@@ -133,7 +133,7 @@ def stop():
     if not is_alive():
         return
     if not is_running_on_docker():
-        logger.info("Neo4j is running locally. Stop with `neo4j stop`")
+        logger.debug("Neo4j is running locally. Stop with `neo4j stop`")
         return
     docker_client = init_global_docker_client()
     _stop_neo4j_service_docker(docker_client)

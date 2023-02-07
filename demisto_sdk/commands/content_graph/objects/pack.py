@@ -269,15 +269,17 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             try:
                 shutil.copytree(self.path / "ReleaseNotes", path / "ReleaseNotes")
             except FileNotFoundError:
-                logger.info(f'No such file {self.path / "ReleaseNotes"}')
+                logger.debug(f'No such file {self.path / "ReleaseNotes"}')
             try:
                 shutil.copy(self.path / "Author_image.png", path / "Author_image.png")
             except FileNotFoundError:
-                logger.info(f'No such file {self.path / "Author_image.png"}')
+                logger.debug(f'No such file {self.path / "Author_image.png"}')
             if self.object_id == BASE_PACK:
                 self.handle_base_pack(path)
 
-            logger.info(f"Dumped pack {self.name}. Files: {list(path.iterdir())}")
+            pack_files = "\n".join([str(f) for f in path.iterdir()])
+            logger.info(f"Dumped pack {self.name}.")
+            logger.debug(f"Pack {self.name} files:\n{pack_files}")
         except Exception as e:
             logger.error(f"Failed dumping pack {self.name}: {e}")
             raise

@@ -2,7 +2,7 @@ import logging
 import shutil
 from collections import defaultdict
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Generator, List, Optional, Dict
+from typing import TYPE_CHECKING, Any, Generator, List, Optional
 from datetime import datetime
 
 from packaging.version import parse
@@ -14,7 +14,6 @@ from demisto_sdk.commands.common.constants import (
     CONTRIBUTORS_README_TEMPLATE,
     MARKETPLACE_MIN_VERSION,
     MarketplaceVersions,
-    MARKETPLACE_MIN_VERSION,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -137,7 +136,6 @@ class PackMetadata(BaseModel):
     support: Optional[str]
     url: Optional[str]
     email: Optional[str]
-    support_details: Optional[dict] = Field(alias="supportDetails")
     eulaLink: Optional[str]
     author: Optional[str]
     authorImage: Optional[str]
@@ -149,15 +147,12 @@ class PackMetadata(BaseModel):
     version_info: Optional[str] = Field("", alias="versionInfo")
     commit: Optional[str]
     downloads: Optional[int]
-    tags: Optional[List[str]]
+    tags: Optional[List[str]] = Field([])
     categories: Optional[List[str]]
     use_cases: Optional[List[str]] = Field(alias="useCases")
     keywords: Optional[List[str]]
-    content_displays: Optional[Dict[str, str]] = Field({}, alias="contentDisplays")
     search_rank: Optional[int] = Field(alias="searchRank")
-    integrations: Optional[List[Dict[str, str]]]
-    dependencies: Optional[Dict[str, dict]]
-    excluded_dependencies: Optional[Dict[str, dict]] = Field(alias="excludedDependencies")
+    excluded_dependencies: Optional[List[str]] = Field(alias="excludedDependencies")
     videos: Optional[List[str]]
 
     # For private packs
@@ -219,7 +214,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
     @property
     def dependent_packs(self):
-        return [r for r in self.depends_on if r.content_item.content_type == ContentType.PACK]
+        return [r for r in self.depends_on if r.content_item_to.content_type == ContentType.PACK]
 
     def set_content_items(self):
         content_items: List[ContentItem] = [
@@ -242,19 +237,20 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
         content_items: dict = {}
+        content_displays: dict = {}
         for content_item in self.content_items:
             try:
                 content_items.setdefault(
                     content_item.content_type.metadata_name, []
                 ).append(content_item.summary(marketplace))
-                self.content_displays[content_item.content_type.metadata_name] = content_item.content_type.metadata_display_name  # type: ignore[index]
+                content_displays[content_item.content_type.metadata_name] = content_item.content_type.metadata_display_name  # type: ignore[index]
             except NotImplementedError as e:
                 logger.debug(f"Could not add {content_item.name} to pack metadata: {e}")
             except TypeError as e:
-                raise Exception(f"Could not set metadata_name of type {content_item.content_type} - {content_item.content_type.metadata_name} - {content_item.content_type.metadata_display_name} in {self.content_displays}\n{e}")
+                raise Exception(f"Could not set metadata_name of type {content_item.content_type} - {content_item.content_type.metadata_name} - {content_item.content_type.metadata_display_name} in {content_displays}\n{e}")
 
-        self.content_displays = {content_type: content_type_display if len(content_items[content_type]) == 1 else f"{content_type_display}s"
-                                 for content_type, content_type_display in self.content_displays.items()}  # type: ignore[union-attr]
+        content_displays = {content_type: content_type_display if len(content_items[content_type]) == 1 else f"{content_type_display}s"
+                            for content_type, content_type_display in content_displays.items()}  # type: ignore[union-attr]
         self.tags = self.get_pack_tags(marketplace)
         self.server_min_version = self.server_min_version or str(
             max((parse(content_item.fromversion) for content_item in self.content_items), default=MARKETPLACE_MIN_VERSION)
@@ -270,6 +266,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         metadata["contentItems"] = content_items
         metadata["commit"] = self.get_last_commit()
         metadata["dependencies"] = self.enhance_dependencies()
+        metadata["contentDisplay"] = content_displays
         metadata["support_details"] = {"url": self.url}
         if self.email:
             metadata["support_details"]["email"] = self.email
@@ -352,12 +349,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         )
 
     def enhance_dependencies(self):
-        return {r.content_item.object_id: {
+        return {r.content_item_to.object_id: {
             "mandatory": r.mandatorily,
-            "minVersion": r.content_item.server_min_version,
-            "author": r.content_item.author,
-            "name": r.content_item.name,
-            "certification": r.content_item.certification
+            "minVersion": r.content_item_to.current_version,
+            "author": r.content_item_to.author,
+            "name": r.content_item_to.name,
+            "certification": r.content_item_to.certification
         } for r in self.dependent_packs}
 
     @staticmethod

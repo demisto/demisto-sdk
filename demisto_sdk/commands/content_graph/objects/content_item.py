@@ -36,7 +36,7 @@ class ContentItem(BaseContent):
     toversion: str
     display_name: str
     deprecated: bool
-    description: Optional[str]
+    description: Optional[str] = ""
     is_test: bool = False
 
     @validator("path", always=True)

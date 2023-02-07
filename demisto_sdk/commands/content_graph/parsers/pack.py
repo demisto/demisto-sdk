@@ -100,7 +100,6 @@ class PackMetadataParser:
         self.support: str = metadata["support"]
         self.url: str = metadata.get("url", "https://www.paloaltonetworks.com/cortex" if self.support == "xsoar" else "")
         self.email: str = metadata.get("email", "")
-        self.support_details: dict = {}
         self.eulaLink: str = metadata.get("eulaLink", "https://github.com/demisto/content/blob/master/LICENSE")
         self.author: str = metadata["author"]
         self.authorImage: str = self.get_author_image(path=path)
@@ -116,10 +115,7 @@ class PackMetadataParser:
         self.categories: List[str] = [c.title() for c in metadata["categories"]]
         self.useCases: List[str] = metadata["useCases"] or []
         self.keywords: List[str] = metadata["keywords"] or []
-        self.content_displays: Dict[str, Any] = {}
         self.search_rank: int = 0
-        self.integrations: list = []
-        self.dependencies: dict = {}
         self.excluded_dependencies: list = []
         self.videos: List[str] = metadata.get("videos", [])
         self.marketplaces: List[MarketplaceVersions] = metadata.get(

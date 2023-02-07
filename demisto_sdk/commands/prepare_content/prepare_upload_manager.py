@@ -1,9 +1,8 @@
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface,
 )
@@ -20,6 +19,7 @@ class PrepareUploadManager:
         marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
         force: bool = False,
         graph: bool = False,
+        skip_update: bool = False,
         **kwargs,
     ) -> Path:
         if isinstance(input, str):
@@ -37,15 +37,12 @@ class PrepareUploadManager:
 
         if graph:
             # enrich the content item with the graph
-            with Neo4jContentGraphInterface(should_update=True) as interface:
-                results = interface.search(
+            with Neo4jContentGraphInterface(should_update=not skip_update) as interface:
+                content_item = interface.from_path(
+                    path=content_item.path,
                     marketplace=marketplace,
-                    path=content_item.path.relative_to(CONTENT_PATH),
                 )
-                if not results:
-                    raise ValueError(f"Could not find {input} in the graph.")
-                if not (content_item := results[0]):
-                    raise ValueError(f"Could not find {input} in the graph.")
+        content_item: Union[Pack, ContentItem]  # (for mypy)
         if not output:
             if not input.is_dir():
                 input = input.parent
@@ -53,7 +50,7 @@ class PrepareUploadManager:
         else:
             if output.is_dir():
                 output = output / content_item.normalize_name
-        output: Path  # Output is not optional anymore
+        output: Path  # Output is not optional anymore (for mypy)
         if isinstance(content_item, Pack):
             Pack.dump(content_item, output, marketplace)
             shutil.make_archive(str(output), "zip", output)

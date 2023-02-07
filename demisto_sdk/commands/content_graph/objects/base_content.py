@@ -75,6 +75,21 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         orm_mode = True  # allows using from_orm() method
         allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
 
+    def __getstate__(self):
+        """Needed to for the object to be pickled correctly (to use multiprocessing)"""
+        dict_copy = self.__dict__.copy()
+
+        # This avoids circular references when pickling store only the first level relationships.
+        # Remove when updating to pydantic 2
+        for _, relationship_data in dict_copy["relationships_data"].items():
+            for r in relationship_data:
+                r.content_item_to.relationships_data = defaultdict(set)
+
+        return {
+            "__dict__": dict_copy,
+            "__fields_set__": self.__fields_set__,
+        }
+
     @property
     def normalize_name(self) -> str:
         # if has name attribute, return it, otherwise return the object id
@@ -97,7 +112,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
     @staticmethod
     def from_path(path: Path) -> Optional["BaseContent"]:
-        logger.info(f"Loading content item from path: {path}")
+        logger.debug(f"Loading content item from path: {path}")
         if path.is_dir() and path.parent.name == "Packs":  # if the path given is a pack
             return content_type_to_model[ContentType.PACK].from_orm(PackParser(path))
         content_item_parser = ContentItemParser.from_path(path)
@@ -117,7 +132,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             return None
 
         model = content_type_to_model.get(content_item_parser.content_type)
-        logger.info(f"Loading content item from path: {path} as {model}")
+        logger.debug(f"Loading content item from path: {path} as {model}")
         if not model:
             logger.error(f"Could not parse content item from path: {path}")
             return None
@@ -148,6 +163,11 @@ class UnknownContent(BaseContent):
     not_in_repository: bool = True
     node_id: str = ""  # just because it's missing from the db
     object_id: str = ""
+    name: str = ""
 
     def dump(self, _, __):
         ...
+
+    @property
+    def identifier(self):
+        return self.object_id or self.name

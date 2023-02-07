@@ -33,6 +33,7 @@ class RepositoryParser:
 
         self.packs_to_parse: Optional[List[str]] = packs_to_parse
         try:
+            logger.info("Parsing packs...")
             with multiprocessing.Pool(processes=cpu_count()) as pool:
                 self.packs: List[PackParser] = list(
                     pool.map(PackParser, self.iter_packs())

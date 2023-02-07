@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     CORRELATION_RULES_YML_REGEX,
     MODELING_RULE_SCHEMA_REGEX,
     MODELING_RULE_YML_REGEX,
+    PACK_LAYOUT_RULE_JSON_REGEX,
     PACKAGE_YML_FILE_REGEX,
     PACKS_CLASSIFIER_JSON_5_9_9_REGEX,
     PACKS_CLASSIFIER_JSON_REGEX,
@@ -669,6 +670,11 @@ class TestGetMatchingRegex:
             ],
             CODE_FILES_REGEX,
         ),
+        (
+            ["Packs/PackName/LayoutRules/test_layout_rule.json"],
+            ["Packs/PackName/test_layout_rule.json"],
+            [PACK_LAYOUT_RULE_JSON_REGEX],
+        ),
     ]
 
     @pytest.mark.parametrize("acceptable,non_acceptable,regex", test_packs_regex_params)
@@ -805,6 +811,26 @@ class TestXSIAMStructureValidator(TestStructureValidator):
         trigger = pack.create_trigger("trigger")
         trigger.remove_field_by_path("alerts_filter.filter.AND.[0].SEARCH_FIELD")
         validator = StructureValidator(trigger.path)
+        assert not validator.is_valid_scheme()
+
+    def test_valid_layout_rule(self, pack: Pack):
+        """Given a valid trigger, make sure its schema is valid."""
+        layout_rule = pack.create_layout_rule("layout_rule")
+        validator = StructureValidator(layout_rule.path)
+        assert validator.is_valid_scheme()
+
+    def test_invalid_layout_rule_missing_layout_id_field(self, pack: Pack):
+        """
+        Given:
+            An invalid layout rule with a missing layout_id field
+        When:
+            Running schema validation.
+        Then:
+            Make sure the schema is invalid.
+        """
+        layout_rule = pack.create_layout_rule("layout_rule")
+        layout_rule.remove("layout_id")
+        validator = StructureValidator(layout_rule.path)
         assert not validator.is_valid_scheme()
 
     def test_valid_xsiam_dashboard(self, pack: Pack):

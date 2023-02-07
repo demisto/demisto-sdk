@@ -43,7 +43,7 @@ class ContentItem(BaseContent):
     def validate_path(cls, v: Path) -> Path:
         if v.is_absolute():
             return v
-        return Path(CONTENT_PATH) / v
+        return CONTENT_PATH / v
 
     @property
     def in_pack(self) -> Optional["Pack"]:
@@ -170,7 +170,7 @@ class ContentItem(BaseContent):
                         else name
                     )
         normalized = f"{self.content_type.server_name}-{name}"
-        logger.info(f"Normalized file name from {name} to {normalized}")
+        logger.debug(f"Normalized file name from {name} to {normalized}")
         return normalized
 
     def dump(self, dir: DirectoryPath, _: MarketplaceVersions) -> None:

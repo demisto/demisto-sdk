@@ -207,12 +207,6 @@ def main(config, version, release_notes):
     show_default=True,
 )
 @click.option(
-    "--no-pipenv",
-    help="Don't auto create pipenv for requirements installation. (only for yml files)",
-    is_flag=True,
-    show_default=True,
-)
-@click.option(
     "--new-module-file",
     help="Create a new module file instead of editing the existing file. (only for json files)",
     is_flag=True,
@@ -311,6 +305,12 @@ def extract_code(config, **kwargs):
     "-g",
     "--graph",
     help="Whether use the content graph",
+    is_flag=True,
+    default=False,
+)
+@click.option(
+    "--skip-update",
+    help="Whether to skip updating the content graph (used only when graph is true)",
     is_flag=True,
     default=False,
 )
@@ -477,6 +477,14 @@ def zip_packs(**kwargs) -> int:
     type=click.Path(resolve_path=True),
 )
 @click.option(
+    "-gr",
+    "--graph",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Perform validations on content graph.",
+)
+@click.option(
     "--prev-ver", help="Previous branch or SHA1 commit to run checks against."
 )
 @click.option(
@@ -626,6 +634,7 @@ def validate(config, **kwargs):
             file_path=file_path,
             validate_all=kwargs.get("validate_all"),
             validate_id_set=kwargs["id_set"],
+            validate_graph=kwargs.get("graph"),
             skip_pack_rn_validation=kwargs["skip_pack_release_notes"],
             print_ignored_errors=kwargs["print_ignored_errors"],
             is_external_repo=is_external_repo,
@@ -1308,12 +1317,6 @@ def upload(**kwargs):
         ],
         case_sensitive=False,
     ),
-)
-@click.option(
-    "--no-code-formatting",
-    help="Use this flag to avoid running Autopep8 and isort on Python files.",
-    is_flag=True,
-    default=False,
 )
 def download(**kwargs):
     """Download custom content from Demisto instance.

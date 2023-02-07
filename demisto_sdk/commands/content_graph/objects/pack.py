@@ -44,6 +44,7 @@ from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorT
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.job import Job
 from demisto_sdk.commands.content_graph.objects.layout import Layout
+from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
 from demisto_sdk.commands.content_graph.objects.list import List as ListObject
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
@@ -110,6 +111,7 @@ class PackContentItems(BaseModel):
     )
     xsiam_report: List[XSIAMReport] = Field([], alias=ContentType.XSIAM_REPORT.value)
     xdrc_template: List[XDRCTemplate] = Field([], alias=ContentType.XDRC_TEMPLATE.value)
+    layout_rule: List[LayoutRule] = Field([], alias=ContentType.LAYOUT_RULE.value)
 
     def __iter__(self) -> Generator[ContentItem, Any, Any]:  # type: ignore
         """Defines the iteration of the object. Each iteration yields a single content item."""
@@ -177,7 +179,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     def validate_path(cls, v: Path) -> Path:
         if v.is_absolute():
             return v
-        return Path(CONTENT_PATH) / v
+        return CONTENT_PATH / v
 
     @property
     def is_private(self) -> bool:
@@ -258,7 +260,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
 
         # self.dependencies = self.enhance_dependencies()
 
-        excluded_fields_from_metadata = {"path", "node_id", "content_type", "url", "email"}
+        excluded_fields_from_metadata = {"path", "node_id", "content_type", "url", "email", "excluded_dependencies"}
         if not self.is_private:
             excluded_fields_from_metadata |= {"premium", "vendor_id", "partner_id", "partner_name", "preview_only", "disable_monthly"}
         metadata = self.dict(exclude=excluded_fields_from_metadata, by_alias=True)
@@ -315,15 +317,17 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             try:
                 shutil.copytree(self.path / "ReleaseNotes", path / "ReleaseNotes")
             except FileNotFoundError:
-                logger.info(f'No such file {self.path / "ReleaseNotes"}')
+                logger.debug(f'No such file {self.path / "ReleaseNotes"}')
             try:
                 shutil.copy(self.path / "Author_image.png", path / "Author_image.png")
             except FileNotFoundError:
-                logger.info(f'No such file {self.path / "Author_image.png"}')
+                logger.debug(f'No such file {self.path / "Author_image.png"}')
             if self.object_id == BASE_PACK:
                 self.handle_base_pack(path)
 
-            logger.info(f"Dumped pack {self.name}. Files: {list(path.iterdir())}")
+            pack_files = "\n".join([str(f) for f in path.iterdir()])
+            logger.info(f"Dumped pack {self.name}.")
+            logger.debug(f"Pack {self.name} files:\n{pack_files}")
         except Exception as e:
             logger.error(f"Failed dumping pack {self.name}: {e}")
             raise

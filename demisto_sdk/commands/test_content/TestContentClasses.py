@@ -1266,7 +1266,37 @@ class Integration:
             self._change_placeholders_to_values(server_url, conf)
             for conf in integration_params
         ]
-        if integration_params:
+        if self.name == "Core REST API":
+            if IS_XSIAM:
+                self.build_context.logging_module.info("**** IN XSIAM")
+                self.build_context.logging_module.info(f"**** server_url: {server_url}")
+                self.build_context.logging_module.debug(
+                    f"auth_id {self.build_context.auth_id}"
+                )
+                self.configuration.params = {  # type: ignore
+                    "url": server_url,
+                    "credentials": {
+                        "identifier": self.build_context.auth_id,
+                        "password": self.build_context.api_key,
+                    },
+                    "auth_method": "Standard",
+                    "insecure": True,
+                }
+                self.build_context.logging_module.info("*****")
+                self.build_context.logging_module.info(
+                    self.configuration.params["credentials"]["identifier"]
+                )
+                self.build_context.logging_module.info(self.configuration.params)
+                self.build_context.logging_module.info(self.configuration)
+                self.build_context.logging_module.info("*****")
+
+            else:
+                self.configuration.params = {  # type: ignore
+                    "url": "https://localhost",
+                    "apikey": self.build_context.api_key,
+                    "insecure": True,
+                }
+        elif integration_params:
             # If we have more then one configuration for this integration - we will try to filter by instance name
             if len(integration_params) != 1:
                 found_matching_instance = False
@@ -1292,33 +1322,6 @@ class Integration:
             else:
                 self.configuration = integration_params[0]
 
-        if self.name == "Core REST API":
-            if IS_XSIAM:
-                self.build_context.logging_module.info("**** IN XSIAM")
-                self.build_context.logging_module.info(f"**** server_url: {server_url}")
-                self.build_context.logging_module.debug(
-                    f"auth_id {self.build_context.auth_id}"
-                )
-                self.configuration.params = {  # type: ignore
-                    "url": server_url,
-                    "credentials": {"identifier": self.build_context.auth_id, "password": self.build_context.api_key},
-                    "auth_method": "Standard",
-                    "insecure": True,
-                }
-                self.build_context.logging_module.info("*****")
-                self.build_context.logging_module.info(
-                    self.configuration.params["credentials"]["identifier"]
-                )
-                self.build_context.logging_module.info(self.configuration.params)
-                self.build_context.logging_module.info(self.configuration)
-                self.build_context.logging_module.info("*****")
-
-            else:
-                self.configuration.params = {  # type: ignore
-                    "url": "https://localhost",
-                    "apikey": self.build_context.api_key,
-                    "insecure": True,
-                }
         if is_mockable:
             self.build_context.logging_module.debug(
                 f"configuring {self} with proxy params"

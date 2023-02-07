@@ -1,7 +1,10 @@
 # Changelog
 
 ## Unreleased
-* **Breaking change**: Removed usage of `pipenv`, `isort` and `autopep8` in the **split** and **download** commands. Removed the `--no-pipenv` flag. Please see https://xsoar.pan.dev/docs/tutorials/tut-setup-dev-remote for the recommended environment setup.
+
+
+## 1.10.0
+* **Breaking change**: Removed usage of `pipenv`, `isort` and `autopep8` in the **split** and **download** commands. Removed the `--no-pipenv` and `--no-code-formatting` flags. Please see https://xsoar.pan.dev/docs/tutorials/tut-setup-dev-remote for the recommended environment setup.
 * Fixed an issue in **prepare-content** command where large code lines were broken.
 * Fixed an issue where git-*renamed_files* were not retrieved properly.
 * Fixed an issue where test dependencies were calculated in all level dependencies calculation.
@@ -13,7 +16,7 @@
 * Added support for the **Layout Rule** content type in the id-set and the content graph.
 * Updated the default general `fromVersion` value on **format** to `6.8.0`
 * Fixed an issue where **lint** sometimes failed when using the `-cdam` flag due to wrong file duplications filtering.
-* Updated **validate** to use the graph when running with `--graph` flag.
+* Added the content graph to **validate**, use with the `--graph` flag.
 
 
 ## 1.9.0

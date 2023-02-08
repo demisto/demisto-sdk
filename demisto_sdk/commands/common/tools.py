@@ -57,6 +57,7 @@ from demisto_sdk.commands.common.constants import (
     LAYOUTS_DIR,
     LISTS_DIR,
     MARKETPLACE_KEY_PACK_METADATA,
+    MARKETPLACE_TO_CORE_PACKS_FILE,
     METADATA_FILE_NAME,
     MODELING_RULES_DIR,
     NON_LETTERS_OR_NUMBERS_PATTERN,
@@ -397,7 +398,7 @@ core_pack_list: Optional[
 
 
 @lru_cache(maxsize=128)
-def get_core_pack_list() -> list:
+def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
     """Getting the core pack list from Github content
 
     Returns:
@@ -407,26 +408,18 @@ def get_core_pack_list() -> list:
     if isinstance(core_pack_list, list):
         return core_pack_list
     if not is_external_repository():
-        core_pack_list = (
-            get_remote_file(
-                "Tests/Marketplace/core_packs_list.json",
-                git_content_config=GitContentConfig(
-                    repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
-                    git_provider=GitProvider.GitHub,
-                ),
+        core_pack_list = []
+        for mp in marketplaces or MarketplaceVersions:
+            core_pack_list.extend(
+                get_remote_file(
+                    MARKETPLACE_TO_CORE_PACKS_FILE[mp],
+                    git_content_config=GitContentConfig(
+                        repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
+                        git_provider=GitProvider.GitHub,
+                    ),
+                )
+                or []
             )
-            or []
-        )
-        core_pack_list.extend(
-            get_remote_file(
-                "Tests/Marketplace/core_packs_mpv2_list.json",
-                git_content_config=GitContentConfig(
-                    repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
-                    git_provider=GitProvider.GitHub,
-                ),
-            )
-            or []
-        )
         core_pack_list = list(set(core_pack_list))
     else:
         # no core packs in external repos.

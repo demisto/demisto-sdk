@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-* Fixed an issue in the command **validate** where stating the flag *-i* with the flag *-gr* did not validate the content graph.
+* Fixed an issue in **validate**, where using the `-gr` and `-i` flags did not run properly.
 
 
 ## 1.10.0

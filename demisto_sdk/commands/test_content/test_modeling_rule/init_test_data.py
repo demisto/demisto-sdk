@@ -9,7 +9,6 @@ import typer
 from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
     ModelingRule,
 )
-from demisto_sdk.commands.common.logger import setup_rich_logging
 from demisto_sdk.commands.test_content.xsiam_tools.test_data import EventLog, TestData
 
 app = typer.Typer()
@@ -37,6 +36,7 @@ def init_test_data(
         show_default=True,
         help="The number of events to initialize the test data file for.",
     ),
+    # TODO Remove
     verbosity: int = typer.Option(
         0,
         "-v",
@@ -75,7 +75,6 @@ def init_test_data(
     """
     Initialize or update a test data file for a modeling rule
     """
-    setup_rich_logging(verbosity, quiet, log_path, log_file_name)
 
     errors = False
     for fp in input:

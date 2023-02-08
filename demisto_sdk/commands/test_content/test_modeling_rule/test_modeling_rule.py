@@ -17,12 +17,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.mode
     ModelingRule,
     SingleModelingRule,
 )
-from demisto_sdk.commands.common.logger import (
-    set_console_stream_handler,
-    setup_rich_logging,
-)
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
-from demisto_sdk.commands.test_content.xsiam_tools import xsiam_client
 from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
     XsiamApiClient,
     XsiamApiClientConfig,
@@ -628,6 +623,7 @@ def test_modeling_rule(
         show_default=False,
         callback=logs_token_cb,
     ),
+    # TODO Remove
     verbosity: int = typer.Option(
         0,
         "-v",
@@ -687,12 +683,6 @@ def test_modeling_rule(
     """
     Test a modeling rule against an XSIAM tenant
     """
-    setup_rich_logging(verbosity, quiet, log_path, log_file_name)
-
-    # override XsiamApiClient logger
-    xsiam_logger = logging.getLogger(xsiam_client.__name__)
-    set_console_stream_handler(xsiam_logger)
-    xsiam_logger.propagate = False
 
     logger.info(
         f"[cyan]modeling rules directories to test: {input}[/cyan]",

@@ -1,10 +1,13 @@
 from demisto_sdk.commands.generate_modeling_rules.generate_modeling_rules import (
-    replace_last_char, create_xif_header, convert_raw_type_to_xdm_type, extract_raw_type_data, json_extract_array, to_number, to_string, json_extract_scalar,array_create )
+    replace_last_char, create_xif_header, convert_raw_type_to_xdm_type, extract_raw_type_data, json_extract_array, to_number, to_string,
+    json_extract_scalar, array_create, convert_to_xdm_type)
 import pytest
 
 
-def test_replace_last_char():
-    assert replace_last_char('hello,\n') == 'hello;\n'
+@pytest.mark.parametrize('s, res', (['hello,\n', 'hello;\n'],
+                                    ['', '']))
+def test_replace_last_char(s, res):
+    assert replace_last_char(s) == res
 
 
 def test_create_xif_header(mocker):
@@ -40,7 +43,7 @@ def test_extract_raw_type_data(path, res):
 
 
 def test_extract_raw_type_data_empty_event():
-    event : dict = {}
+    event: dict = {}
     with pytest.raises(ValueError):
         extract_raw_type_data(event, 'bla')
 
@@ -56,7 +59,7 @@ def test_json_extract_array():
 
 
 def test_json_extract_scalar():
-    assert json_extract_scalar('prefix' , 'suffix') == 'json_extract_scalar(prefix, "$.suffix")'
+    assert json_extract_scalar('prefix', 'suffix') == 'json_extract_scalar(prefix, "$.suffix")'
 
 
 def test_array_create():
@@ -70,3 +73,8 @@ def test_to_string():
 def test_to_number():
     assert to_number('6') == 'to_number(6)'
 
+
+@pytest.mark.parametrize('name, xdm_type, res', (['test', 'String', 'to_string(test)'],
+                                                 ['6', 'Number', 'to_number(6)']))
+def test_convert_to_xdm_type(name, xdm_type, res):
+    assert convert_to_xdm_type(name, xdm_type) == res

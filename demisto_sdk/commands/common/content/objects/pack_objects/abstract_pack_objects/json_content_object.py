@@ -119,8 +119,15 @@ class JSONContentObject(JSONObject):
         TODO:
             1. Handling case where object changed and need to be serialized.
         """
+        dest_dir = self._create_target_dump_dir(dest_dir=dest_dir)
+
         created_files: List[Path] = []
-        created_files.extend(super().dump(dest_dir=dest_dir))
+        if self.modified:
+            created_files.extend(self._serialize(dest_dir))
+        else:
+            created_files.extend(self._unify(dest_dir=dest_dir, output=self.normalize_file_name()))
+
+        # created_files.extend(super().dump(dest_dir=dest_dir))
         # Dump changelog if requested and available
         if change_log and self.changelog:
             created_files.extend(self.changelog.dump(dest_dir))

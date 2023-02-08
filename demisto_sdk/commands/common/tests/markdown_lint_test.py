@@ -78,3 +78,10 @@ def test_disabled_rule():
         assert not run_markdownlint(
             "## Hello\n\n## Hello"
         ).has_errors, run_markdownlint("## Hello\n\n## Hello").validations
+
+
+def test_filename_returned_in_validations():
+    # Tests no h1 header and duplicate headers rule not active. Just to ensure config working properly
+    with ReadMeValidator.start_mdx_server():
+        filename = "helloworld124"
+        assert filename in run_markdownlint("##Hello", file_path=filename).validations

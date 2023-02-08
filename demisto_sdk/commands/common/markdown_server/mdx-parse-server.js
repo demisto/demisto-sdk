@@ -1,12 +1,13 @@
-const http = require('http')
-const markdownlint = require('markdownlint')
-const markdownlintRuleHelpers = require('markdownlint-rule-helpers')
-const url = require('url')
-const mdx = require('@mdx-js/mdx');
+import http from 'http'
+import markdownlint from 'markdownlint'
+import markdownlintRuleHelpers from 'markdownlint-rule-helpers'
+import url from 'url'
+
+import { compileSync } from '@mdx-js/mdx';
 
 // explanation of the config can be found at
 // https://github.com/DavidAnson/markdownlint/blob/main/schema/markdownlint-config-schema.json
-const config = require("./markdownlintconfig.json")
+import config from "./markdownlintconfig.js"
 
 function markdownLint(req, res, body, query) {
 
@@ -63,7 +64,7 @@ function requestHandler(req, res) {
         }
         else {
             try {
-                parsed = await mdx(body)
+                let parsed = compileSync(body)
                 res.end('Successfully parsed mdx')
             } catch (error) {
                 res.statusCode = 500

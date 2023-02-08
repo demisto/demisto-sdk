@@ -56,12 +56,13 @@ def start_docker_MDX_server(
         A context manager
 
     """
-    config_file = "markdownlintconfig.json"
+    config_file = "markdownlintconfig.js"
     logging.info("Starting docker mdx server")
     get_docker().pull_image(DEPENDENCIES_DOCKER)
     if running_container := init_global_docker_client().containers.list(
         filters={"name": DEMISTO_DEPS_DOCKER_NAME}
     ):
+        click.secho("Closing the preexisting container")
         running_container[0].stop()
     location_in_docker = f"/content/{_SERVER_SCRIPT_NAME}"
     container: docker.models.containers.Container = get_docker().create_container(

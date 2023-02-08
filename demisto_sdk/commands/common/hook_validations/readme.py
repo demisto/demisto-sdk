@@ -2,7 +2,6 @@ import logging
 import os
 import re
 import socket
-import tempfile
 from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import lru_cache
@@ -210,22 +209,6 @@ class ReadMeValidator(BaseValidator):
             ]
         )
 
-    def mdx_verify(self) -> bool:
-        mdx_parse = Path(__file__).parent.parent / "mdx-parse.js"
-        readme_content = self.fix_mdx()
-        with tempfile.NamedTemporaryFile("w+t") as fp:
-            fp.write(readme_content)
-            fp.flush()
-            # run the javascript mdx parse validator
-            _, stderr, is_not_valid = run_command_os(
-                f"node {mdx_parse} -f {fp.name}", cwd=self.content_path, env=os.environ  # type: ignore
-            )
-        if is_not_valid:
-            error_message, error_code = Errors.readme_error(stderr)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                return False
-        return True
-
     def mdx_verify_server(self) -> bool:
         server_started = ReadMeValidator.start_mdx_server(
             handle_error=self.handle_error, file_path=str(self.file_path)
@@ -257,10 +240,7 @@ class ReadMeValidator(BaseValidator):
             os.environ["NODE_PATH"] = (
                 str(self.node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
             )
-            if os.getenv("DEMISTO_MDX_CMD_VERIFY"):
-                return self.mdx_verify()
-            else:
-                return self.mdx_verify_server()
+            return self.mdx_verify_server()
         return True
 
     def should_run_mdx_validation(self):

@@ -1,4 +1,4 @@
-{
+export default {
   "default": true,
   "whitespace" : false,
   "single-trailing-newline" : false,

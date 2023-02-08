@@ -34,6 +34,7 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface,
 )
+from demisto_sdk.commands.generate_modeling_rules import generate_modeling_rules
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
@@ -42,7 +43,6 @@ from demisto_sdk.commands.test_content.test_modeling_rule import (
     init_test_data,
     test_modeling_rule,
 )
-from demisto_sdk.commands.generate_modeling_rules import generate_modeling_rules
 from demisto_sdk.commands.upload.upload import upload_content_entity
 from demisto_sdk.utils.utils import check_configuration_file
 
@@ -3115,8 +3115,12 @@ typer_click_object = typer.main.get_command(app)
 main.add_command(typer_click_object, "modeling-rules")
 
 
-app_generate_modeling_rules = typer.Typer(name="generate-modeling-rules", no_args_is_help=True)
-app_generate_modeling_rules.command("generate-modeling-rules", no_args_is_help=True)(generate_modeling_rules.generate_modeling_rules)
+app_generate_modeling_rules = typer.Typer(
+    name="generate-modeling-rules", no_args_is_help=True
+)
+app_generate_modeling_rules.command("generate-modeling-rules", no_args_is_help=True)(
+    generate_modeling_rules.generate_modeling_rules
+)
 
 typer_click_object2 = typer.main.get_command(app_generate_modeling_rules)
 main.add_command(typer_click_object2, "generate-modeling-rules")

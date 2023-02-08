@@ -8,7 +8,13 @@ from typing import List
 import pandas as pd
 import typer
 
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION,
+    GENERAL_DEFAULT_FROMVERSION,
+    FileType,
+)
 from demisto_sdk.commands.common.logger import setup_rich_logging
+from demisto_sdk.commands.common.tools import get_max_version
 
 app = typer.Typer()
 logger = logging.getLogger("demisto-sdk")
@@ -338,8 +344,14 @@ def create_yml_file(outputfile_yml: Path, vendor: str, product: str, sdk_from_ve
     Creates the yml file of the modeling rules
     """
     logger.info("creating modeing rules yml file\n")
+    max_version = get_max_version(
+        [
+            GENERAL_DEFAULT_FROMVERSION,
+            FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.MODELING_RULE, "6.10.0"),
+        ]
+    )
     yml_file = (
-        f"fromversion: {sdk_from_version}\n"
+        f"fromversion: {max_version}\n"
         f"id: {product}_{vendor}_modeling_rule\n"
         f"name: {process_yml_name(product, vendor)}\n"
         "rules: ''\n"

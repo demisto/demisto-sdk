@@ -14,6 +14,7 @@ class UJSON_Handler(XSOAR_Handler):
     XSOAR wrapper to UJSON
     Use only this wrapper for json handling.
     """
+
     JSONDecodeError = JSONDecodeError
 
     def __init__(self):
@@ -38,9 +39,9 @@ class UJSON_Handler(XSOAR_Handler):
                 fp,
                 indent=indent,
                 sort_keys=sort_keys,
-                escape_forward_slashes=kwargs.get('escape_forward_slashes', False),
-                encode_html_chars=kwargs.get('encode_html_chars', False),
-                ensure_ascii=kwargs.get('ensure_ascii', True)
+                escape_forward_slashes=kwargs.get("escape_forward_slashes", False),
+                encode_html_chars=kwargs.get("encode_html_chars", False),
+                ensure_ascii=kwargs.get("ensure_ascii", True),
             )
         except ValueError as e:
             raise JSONDecodeError(e)
@@ -51,7 +52,7 @@ class UJSON_Handler(XSOAR_Handler):
                 obj,
                 indent=indent,
                 sort_keys=sort_keys,
-                escape_forward_slashes=kwargs.get('escape_forward_slashes', False)
+                escape_forward_slashes=kwargs.get("escape_forward_slashes", False),
             )
         except ValueError as e:
             raise JSONDecodeError(e)

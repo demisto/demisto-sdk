@@ -3,10 +3,17 @@ import glob
 
 import imagesize
 
-from demisto_sdk.commands.common.constants import (DEFAULT_DBOT_IMAGE_BASE64, DEFAULT_IMAGE_BASE64, IMAGE_REGEX,
-                                                   PACKS_INTEGRATION_NON_SPLIT_YML_REGEX)
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_DBOT_IMAGE_BASE64,
+    DEFAULT_IMAGE_BASE64,
+    IMAGE_REGEX,
+    PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
+)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator,
+    error_codes,
+)
 from demisto_sdk.commands.common.tools import get_yaml, os, re
 
 
@@ -17,17 +24,30 @@ class ImageValidator(BaseValidator):
         file_path (string): Path to the checked file.
         _is_valid (bool): the attribute which saves the valid/in-valid status of the current file.
     """
+
     IMAGE_MAX_SIZE = 10 * 1024  # 10kB
     IMAGE_WIDTH = 120
     IMAGE_HEIGHT = 50
 
-    def __init__(self, file_path, ignored_errors=None, print_as_warnings=False, suppress_print=False,
-                 json_file_path=None, specific_validations=None):
-        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
+    def __init__(
+        self,
+        file_path,
+        ignored_errors=None,
+        print_as_warnings=False,
+        suppress_print=False,
+        json_file_path=None,
+        specific_validations=None,
+    ):
+        super().__init__(
+            ignored_errors=ignored_errors,
+            print_as_warnings=print_as_warnings,
+            suppress_print=suppress_print,
+            json_file_path=json_file_path,
+            specific_validations=specific_validations,
+        )
         self._is_valid = True
-        self.file_path = ''
-        if file_path.endswith('.png'):
+        self.file_path = ""
+        if file_path.endswith(".png"):
             self.file_path = file_path
         # For integrations that are not in a package format, the image is within the yml
         else:
@@ -35,42 +55,50 @@ class ImageValidator(BaseValidator):
             if not data_dictionary:
                 return
             # For old integration in which image is inside the yml.
-            elif data_dictionary.get('image', ''):
+            elif data_dictionary.get("image", ""):
                 self.file_path = file_path
             # For new integrations -  Get the image from the folder.
             else:
                 try:
-                    self.file_path = glob.glob(os.path.join(os.path.dirname(file_path), '*.png'))[0]
+                    self.file_path = glob.glob(
+                        os.path.join(os.path.dirname(file_path), "*.png")
+                    )[0]
                 except IndexError:
                     error_message, error_code = Errors.no_image_given()
-                    self.file_path = file_path.replace('.yml', '_image.png')
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self.file_path = file_path.replace(".yml", "_image.png")
+                    if self.handle_error(
+                        error_message, error_code, file_path=self.file_path
+                    ):
                         self._is_valid = False
 
     def is_valid(self):
         """Validate that the image exists and that it is in the permitted size limits."""
-        if self._is_valid is False:  # In case we encountered an IndexError in the init - we don't have an image
+        if (
+            self._is_valid is False
+        ):  # In case we encountered an IndexError in the init - we don't have an image
             return self._is_valid
 
         is_existing_image = False
         # validating dimensions as well because validating integration image
         self.validate_size(allow_empty_image_file=True, should_validate_dimensions=True)
-        if '.png' not in self.file_path:
+        if ".png" not in self.file_path:
             is_existing_image = self.is_existing_image()
-        if is_existing_image or '.png' in self.file_path:
+        if is_existing_image or ".png" in self.file_path:
             self.is_not_default_image()
-        if '.png' in self.file_path:
+        if ".png" in self.file_path:
             self.is_valid_image_name()
 
         return self._is_valid
 
-    @error_codes('IM101,IM111,IM108')
-    def validate_size(self,
-                      allow_empty_image_file: bool,
-                      maximum_size: int = IMAGE_MAX_SIZE,
-                      should_validate_dimensions: bool = False,
-                      allowed_width: int = IMAGE_WIDTH,
-                      allowed_height: int = IMAGE_HEIGHT) -> None:
+    @error_codes("IM101,IM111,IM108")
+    def validate_size(
+        self,
+        allow_empty_image_file: bool,
+        maximum_size: int = IMAGE_MAX_SIZE,
+        should_validate_dimensions: bool = False,
+        allowed_width: int = IMAGE_WIDTH,
+        allowed_height: int = IMAGE_HEIGHT,
+    ) -> None:
         """
         Checks if image has a valid size.
         if 'allow_empty_image_file' is true, checks that the image file is not empty.
@@ -85,13 +113,19 @@ class ImageValidator(BaseValidator):
             image_size = os.path.getsize(self.file_path)
             if image_size > maximum_size:  # disable-secrets-detection
                 error_message, error_code = Errors.image_too_large()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(
+                    error_message, error_code, file_path=self.file_path
+                ):
                     self._is_valid = False
             if should_validate_dimensions:
                 width, height = imagesize.get(self.file_path)
                 if (width, height) != (allowed_width, allowed_height):
-                    error_message, error_code = Errors.invalid_image_dimensions(width, height)
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    error_message, error_code = Errors.invalid_image_dimensions(
+                        width, height
+                    )
+                    if self.handle_error(
+                        error_message, error_code, file_path=self.file_path
+                    ):
                         self._is_valid = False
         else:
             data_dictionary = get_yaml(self.file_path)
@@ -99,11 +133,13 @@ class ImageValidator(BaseValidator):
             if not data_dictionary:
                 return
 
-            image = data_dictionary.get('image', '')
+            image = data_dictionary.get("image", "")
             image_size = int(((len(image) - 22) / 4) * 3)
             if image_size > self.IMAGE_MAX_SIZE:  # disable-secrets-detection
                 error_message, error_code = Errors.image_too_large()
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                if self.handle_error(
+                    error_message, error_code, file_path=self.file_path
+                ):
                     self._is_valid = False
 
         if not allow_empty_image_file and image_size == 0:
@@ -111,7 +147,7 @@ class ImageValidator(BaseValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
 
-    @error_codes('IM102,IM100')
+    @error_codes("IM102,IM100")
     def is_existing_image(self):
         """Check if the integration has an image."""
         is_image_in_yml = False
@@ -122,11 +158,13 @@ class ImageValidator(BaseValidator):
         if not data_dictionary:
             return False
 
-        if data_dictionary.get('image'):
+        if data_dictionary.get("image"):
             is_image_in_yml = True
-        if not re.match(PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, self.file_path, re.IGNORECASE):
+        if not re.match(
+            PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, self.file_path, re.IGNORECASE
+        ):
             package_path = os.path.dirname(self.file_path)
-            image_path = glob.glob(package_path + '/*.png')
+            image_path = glob.glob(package_path + "/*.png")
             if image_path:
                 is_image_in_package = True
         if is_image_in_package and is_image_in_yml:
@@ -143,7 +181,7 @@ class ImageValidator(BaseValidator):
 
         return True
 
-    @error_codes('IM103,IM104,IM105')
+    @error_codes("IM103,IM104,IM105")
     def load_image_from_yml(self):
         data_dictionary = get_yaml(self.file_path)
 
@@ -152,14 +190,14 @@ class ImageValidator(BaseValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
 
-        image = data_dictionary.get('image', '')
+        image = data_dictionary.get("image", "")
 
         if not image:
             error_message, error_code = Errors.no_image_field_in_yml()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
 
-        image_data = image.split('base64,')
+        image_data = image.split("base64,")
         if image_data and len(image_data) == 2:
             return image_data[1]
 
@@ -181,19 +219,22 @@ class ImageValidator(BaseValidator):
 
         return image
 
-    @error_codes('IM106')
+    @error_codes("IM106")
     def is_not_default_image(self):
         """Check if the image is the default one"""
         image = self.load_image()
 
-        if image in [DEFAULT_IMAGE_BASE64, DEFAULT_DBOT_IMAGE_BASE64]:  # disable-secrets-detection
+        if image in [
+            DEFAULT_IMAGE_BASE64,
+            DEFAULT_DBOT_IMAGE_BASE64,
+        ]:  # disable-secrets-detection
             error_message, error_code = Errors.default_image_error()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False
         return True
 
-    @error_codes('IM107')
+    @error_codes("IM107")
     def is_valid_image_name(self):
         """Check if the image name is valid"""
         image_path = self.file_path
@@ -201,9 +242,12 @@ class ImageValidator(BaseValidator):
         image_file = os.path.basename(image_path)
 
         # drop '_image' suffix and file extension
-        image_file_base_name = image_file.rsplit('_', 1)[0]
+        image_file_base_name = image_file.rsplit("_", 1)[0]
 
-        if not image_path.endswith("_image.png") or integrations_folder != image_file_base_name:
+        if (
+            not image_path.endswith("_image.png")
+            or integrations_folder != image_file_base_name
+        ):
             error_message, error_code = Errors.invalid_image_name()
 
             if self.handle_error(error_message, error_code, file_path=image_path):

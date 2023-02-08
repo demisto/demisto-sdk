@@ -1,0 +1,61 @@
+type: map
+mapping:
+  global_rule_id:
+    type: str
+    required: true
+  name:
+    type: str
+    required: true
+  alert_name:
+    type: str
+    required: true
+  description:
+    type: str
+    required: true
+  alert_description:
+    type: str
+    required: true
+  alert_category:
+    type: str
+    required: true
+  alert_fields:
+    type: map
+    allowempty: true
+  crontab:
+    type: str
+  dataset:
+    type: str
+    required: true
+  drilldown_query_timeframe:
+    type: str
+    required: true
+  execution_mode:
+    type: str
+    required: true
+  mitre_defs:
+    type: map
+    allowempty: true
+  search_window:
+    type: str
+    required: true
+  severity:
+    type: str
+    required: true
+  suppression_enabled:
+    type: bool
+    required: true
+  suppression_duration:
+    type: str
+  suppression_fields:
+    type: str
+  user_defined_category:
+    type: str
+  user_defined_severity:
+    type: str
+  xql_query:
+    type: str
+    required: true
+  investigation_query_link:
+    type: str
+  mapping_strategy:
+    type: str

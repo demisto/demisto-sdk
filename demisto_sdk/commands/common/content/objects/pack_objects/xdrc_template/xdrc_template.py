@@ -5,10 +5,10 @@ from wcmatch.pathlib import Path
 
 import demisto_sdk.commands.common.content.errors as exc
 from demisto_sdk.commands.common.constants import XDRC_TEMPLATE, FileType
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
-    JSONContentObject
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
+    JSONContentObject,
+)
 from demisto_sdk.commands.common.tools import generate_xsiam_normalized_name
-from demisto_sdk.commands.prepare_content.prepare_upload_manager import PrepareUploadManager
 
 
 class XDRCTemplate(JSONContentObject):
@@ -33,7 +33,7 @@ class XDRCTemplate(JSONContentObject):
     def type(self):
         return FileType.XDRC_TEMPLATE
 
-    def _unify(self, dest_dir: Path = None) -> List[Path]:
+    def _unify(self, dest_dir: Path = None, output: str = "") -> List[Path]:
         """Unify XDRCTemplate in destination dir.
 
         Args:
@@ -42,12 +42,13 @@ class XDRCTemplate(JSONContentObject):
         Returns:
             List[Path]: List of new created files.
         """
-        if isinstance(dest_dir, str):
-            dest_dir = Path(dest_dir)
-        # Unify step
-        return [Path(str(PrepareUploadManager.prepare_for_upload(input=self.path, output=dest_dir)))]
+        return super()._unify(
+            dest_dir=dest_dir, output=output or self.normalize_file_name()
+        )
 
-    def _create_target_dump_dir(self, dest_dir: Optional[Union[Path, str]] = None) -> Path:
+    def _create_target_dump_dir(
+        self, dest_dir: Optional[Union[Path, str]] = None
+    ) -> Path:
         """Create destination directory, Destination must be valid directory, If not specified dump in
          path of origin object.
 
@@ -63,7 +64,9 @@ class XDRCTemplate(JSONContentObject):
         if dest_dir:
             dest_dir = Path(dest_dir)  # type: ignore
             if dest_dir.exists() and not Path(dest_dir).is_dir():  # type: ignore
-                raise exc.ContentDumpError(self, self._path, "Destiantion is not valid directory path")
+                raise exc.ContentDumpError(
+                    self, self._path, "Destiantion is not valid directory path"
+                )
             else:
                 dest_dir.mkdir(parents=True, exist_ok=True)
         else:
@@ -71,7 +74,9 @@ class XDRCTemplate(JSONContentObject):
 
         return dest_dir  # type: ignore
 
-    def dump(self, dest_dir: Optional[Union[Path, str]] = None, unify: bool = True) -> List[Path]:
+    def dump(
+        self, dest_dir: Optional[Union[Path, str]] = None, unify: bool = True
+    ) -> List[Path]:
         """
         Dump XDRCTemplate.
 

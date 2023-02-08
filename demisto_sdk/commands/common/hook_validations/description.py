@@ -66,7 +66,7 @@ class DescriptionValidator(BaseValidator):
             not self.data_dictionary.get("detaileddescription")
             and ".md" in self.file_path
         ):
-            self.has_markdown_lint_errors()
+            # self.has_markdown_lint_errors()
             self.is_valid_description_name()
             self.contains_contrib_details()
 
@@ -309,15 +309,19 @@ class DescriptionValidator(BaseValidator):
 
         return True
 
-    @error_codes('DS108')
+    # @error_codes("DS108")
     def has_markdown_lint_errors(self):
         with open(self.file_path) as f:
             description_content = f.read()
-        markdown_response = run_markdownlint(description_content)
         if ReadMeValidator.start_mdx_server():
+            markdown_response = run_markdownlint(description_content)
             if markdown_response.has_errors:
-                error_message, error_code = Errors.description_lint_errors(self.file_path, markdown_response.validations)
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                error_message, error_code = Errors.description_lint_errors(
+                    self.file_path, markdown_response.validations
+                )
+                if self.handle_error(
+                    error_message, error_code, file_path=self.file_path
+                ):
                     self._is_valid = False
                     return False
         return True

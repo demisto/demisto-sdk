@@ -20,8 +20,9 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     generate_single_command_section,
     get_command_examples,
 )
-from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
-    generate_playbook_doc
+from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
+    generate_playbook_doc,
+)
 from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
 from TestSuite.pack import Pack
 
@@ -32,7 +33,7 @@ FILES_PATH = os.path.normpath(
 )
 FAKE_ID_SET = get_json(os.path.join(FILES_PATH, "fake_id_set.json"))
 TEST_PLAYBOOK_PATH = os.path.join(FILES_PATH, "playbook-Test_playbook.yml")
-PLAYBOOK_PATH = os.path.join(FILES_PATH, 'beta-playbook-valid.yml')
+PLAYBOOK_PATH = os.path.join(FILES_PATH, "beta-playbook-valid.yml")
 TEST_SCRIPT_PATH = os.path.join(FILES_PATH, "script-test_script.yml")
 TEST_INTEGRATION_PATH = os.path.join(
     FILES_PATH, "fake_integration/fake_integration.yml"
@@ -133,8 +134,7 @@ def test_generate_list_section_empty():
 
     section = generate_list_section("Inputs", [], empty_message="No inputs found.")
 
-    expected_section = [
-        '## Inputs', '', 'No inputs found.', '']
+    expected_section = ["## Inputs", "", "No inputs found.", ""]
 
     assert section == expected_section
 
@@ -144,8 +144,7 @@ def test_generate_numbered_section():
 
     section = generate_numbered_section("Use Cases", "* Drink coffee. * Write code.")
 
-    expected_section = [
-        '## Use Cases', '', '1. Drink coffee.', '2. Write code.', '']
+    expected_section = ["## Use Cases", "", "1. Drink coffee.", "2. Write code.", ""]
 
     assert section == expected_section
 
@@ -157,8 +156,7 @@ def test_generate_list_section():
         "Inputs", ["item1", "item2"], False, "No inputs found."
     )
 
-    expected_section = [
-        '## Inputs', '', '* item1', '* item2', '']
+    expected_section = ["## Inputs", "", "* item1", "* item2", ""]
 
     assert section == expected_section
 
@@ -171,16 +169,29 @@ def test_generate_list_with_text_section():
     )
 
     expected_section = [
-        '## Inputs', '', '---', 'some text', '', '* item1', '* item2', '']
+        "## Inputs",
+        "",
+        "---",
+        "some text",
+        "",
+        "* item1",
+        "* item2",
+        "",
+    ]
 
     assert section == expected_section
 
 
 TEST_TABLE_SECTION_EMPTY = [
-    ([], 'Script Data', 'No data found.', 'This is the metadata of the script.',
-     ['## Script Data', '', '---', 'No data found.', '']),
-    ([], 'Script Data', '', '', ['']),
-    ([], 'Script Data', '', 'This is the metadata of the script.', [''])
+    (
+        [],
+        "Script Data",
+        "No data found.",
+        "This is the metadata of the script.",
+        ["## Script Data", "", "---", "No data found.", ""],
+    ),
+    ([], "Script Data", "", "", [""]),
+    ([], "Script Data", "", "This is the metadata of the script.", [""]),
 ]
 
 
@@ -232,8 +243,15 @@ def test_generate_table_section():
     )
 
     expected_section = [
-        '## Script Data', '', '---', 'This is the metadata of the script.',
-        '| **Type** | **Docker Image** |', '| --- | --- |', '| python2 | demisto/python2 |', '']
+        "## Script Data",
+        "",
+        "---",
+        "This is the metadata of the script.",
+        "| **Type** | **Docker Image** |",
+        "| --- | --- |",
+        "| python2 | demisto/python2 |",
+        "",
+    ]
 
     assert section == expected_section
 
@@ -297,26 +315,26 @@ def test_generate_table_section_with_newlines():
     )
 
     expected_section = [
-        '## Playbook Inputs',
-        '',
-        '---',
-        '',
-        '| **Name** | **Description** | **Default Value** | **Required** |',
-        '| --- | --- | --- | --- |',
-        '| RsaDecryptKeyEntryID | This input specifies the file entry id for the RSA decrypt key if the user provided'
-        ' the key in the incident. | File.EntryID | Optional |',
-        '| PcapFileEntryID | This input specifies the file entry id for the PCAP file if the user provided the file in'
-        ' the incident. One PCAP file can run per incident. | File.EntryID | Optional |',
-        '| WpaPassword | This input value is used to provide a WPA \\(Wi\\-Fi Protected Access\\) password'
-        ' to decrypt encrypted 802.11 Wi\\-FI traffic. |  | Optional |',
-        '| PcapFilter | This input specifies a search filter to be used on the PCAP file. Filters can be used to'
-        ' search only for a specific IP, protocols and other examples. The syntax is the same as in Wireshark which'
-        ' can be found here: https://www.wireshark.org/docs/man-pages/wireshark-filter.html <br/>For this'
-        ' playbook, using a PCAP filter will generate a new smaller PCAP file based on the provided filter therefor'
-        ' thus reducing the extraction of non relevant files. |  | Optional |',
-        '| ExtractedFilesLimit | This input limits the number of files to be extracted from the PCAP file. '
-        'Default value is 5. | 5 | Optional |',
-        ''
+        "## Playbook Inputs",
+        "",
+        "---",
+        "",
+        "| **Name** | **Description** | **Default Value** | **Required** |",
+        "| --- | --- | --- | --- |",
+        "| RsaDecryptKeyEntryID | This input specifies the file entry id for the RSA decrypt key if the user provided"
+        " the key in the incident. | File.EntryID | Optional |",
+        "| PcapFileEntryID | This input specifies the file entry id for the PCAP file if the user provided the file in"
+        " the incident. One PCAP file can run per incident. | File.EntryID | Optional |",
+        "| WpaPassword | This input value is used to provide a WPA \\(Wi\\-Fi Protected Access\\) password"
+        " to decrypt encrypted 802.11 Wi\\-FI traffic. |  | Optional |",
+        "| PcapFilter | This input specifies a search filter to be used on the PCAP file. Filters can be used to"
+        " search only for a specific IP, protocols and other examples. The syntax is the same as in Wireshark which"
+        " can be found here: https://www.wireshark.org/docs/man-pages/wireshark-filter.html <br/>For this"
+        " playbook, using a PCAP filter will generate a new smaller PCAP file based on the provided filter therefor"
+        " thus reducing the extraction of non relevant files. |  | Optional |",
+        "| ExtractedFilesLimit | This input limits the number of files to be extracted from the PCAP file. "
+        "Default value is 5. | 5 | Optional |",
+        "",
     ]
 
     assert section == expected_section
@@ -527,15 +545,32 @@ def test_generate_commands_section():
         yml_data, example_dict={}, command_permissions_dict={}
     )
 
-    expected_section = \
-        ['## Commands', '',
-         'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
-         'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
-         '',
-         '### non-deprecated-cmd', '', '***', '', '#### Required Permissions', '',
-         '**FILL IN REQUIRED PERMISSIONS HERE**', '', '#### Base Command', '', '`non-deprecated-cmd`', '',
-         '#### Input', '', 'There are no input arguments for this command.', '', '#### Context Output', '',
-         'There is no context output for this command.']
+    expected_section = [
+        "## Commands",
+        "",
+        "You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.",
+        "After you successfully execute a command, a DBot message appears in the War Room with the command details.",
+        "",
+        "### non-deprecated-cmd",
+        "",
+        "***",
+        "",
+        "#### Required Permissions",
+        "",
+        "**FILL IN REQUIRED PERMISSIONS HERE**",
+        "",
+        "#### Base Command",
+        "",
+        "`non-deprecated-cmd`",
+        "",
+        "#### Input",
+        "",
+        "There are no input arguments for this command.",
+        "",
+        "#### Context Output",
+        "",
+        "There is no context output for this command.",
+    ]
 
     assert "\n".join(section) == "\n".join(expected_section)
 
@@ -622,13 +657,37 @@ def test_generate_command_section_with_empty_cotext_example():
         command, example_dict=example_dict, command_permissions_dict={}
     )
 
-    expected_section = ['### test1', '', '***', '', '#### Required Permissions',
-                        '', '**FILL IN REQUIRED PERMISSIONS HERE**', '',
-                        '#### Base Command', '', '`test1`', '', '#### Input', '',
-                        'There are no input arguments for this command.', '', '#### Context Output', '',
-                        'There is no context output for this command.', '#### Command example', '```!test1```',
-                        '#### Human Readable Output', '\n>test without args', '', '#### Command example',
-                        '```!test1 value=val```', '#### Human Readable Output', '\n>test with args', '']
+    expected_section = [
+        "### test1",
+        "",
+        "***",
+        "",
+        "#### Required Permissions",
+        "",
+        "**FILL IN REQUIRED PERMISSIONS HERE**",
+        "",
+        "#### Base Command",
+        "",
+        "`test1`",
+        "",
+        "#### Input",
+        "",
+        "There are no input arguments for this command.",
+        "",
+        "#### Context Output",
+        "",
+        "There is no context output for this command.",
+        "#### Command example",
+        "```!test1```",
+        "#### Human Readable Output",
+        "\n>test without args",
+        "",
+        "#### Command example",
+        "```!test1 value=val```",
+        "#### Human Readable Output",
+        "\n>test with args",
+        "",
+    ]
 
     assert "\n".join(section) == "\n".join(expected_section)
 
@@ -653,11 +712,27 @@ def test_generate_command_section_with_empty_cotext_list():
         command, example_dict={}, command_permissions_dict={}
     )
 
-    expected_section = ['### test1', '', '***', '', '#### Required Permissions', '',
-                        '**FILL IN REQUIRED PERMISSIONS HERE**',
-                        '', '#### Base Command', '', '`test1`', '', '#### Input', '',
-                        'There are no input arguments for this command.', '', '#### Context Output', '',
-                        'There is no context output for this command.']
+    expected_section = [
+        "### test1",
+        "",
+        "***",
+        "",
+        "#### Required Permissions",
+        "",
+        "**FILL IN REQUIRED PERMISSIONS HERE**",
+        "",
+        "#### Base Command",
+        "",
+        "`test1`",
+        "",
+        "#### Input",
+        "",
+        "There are no input arguments for this command.",
+        "",
+        "#### Context Output",
+        "",
+        "There is no context output for this command.",
+    ]
 
     assert "\n".join(section) == "\n".join(expected_section)
 
@@ -711,15 +786,33 @@ def test_generate_commands_with_permissions_section():
         command_permissions_dict={"non-deprecated-cmd": "SUPERUSER"},
     )
 
-    expected_section = \
-        ['## Commands', '',
-         'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
-         'After you successfully execute a command'
-         ', a DBot message appears in the War Room with the command details.',
-         '', '### non-deprecated-cmd', '', '***', '', '#### Required Permissions', '', 'SUPERUSER', '',
-         '#### Base Command', '', '`non-deprecated-cmd`', '', '#### Input', '',
-         'There are no input arguments for this command.', '', '#### Context Output', '',
-         'There is no context output for this command.']
+    expected_section = [
+        "## Commands",
+        "",
+        "You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.",
+        "After you successfully execute a command"
+        ", a DBot message appears in the War Room with the command details.",
+        "",
+        "### non-deprecated-cmd",
+        "",
+        "***",
+        "",
+        "#### Required Permissions",
+        "",
+        "SUPERUSER",
+        "",
+        "#### Base Command",
+        "",
+        "`non-deprecated-cmd`",
+        "",
+        "#### Input",
+        "",
+        "There are no input arguments for this command.",
+        "",
+        "#### Context Output",
+        "",
+        "There is no context output for this command.",
+    ]
 
     assert "\n".join(section) == "\n".join(expected_section)
 
@@ -749,13 +842,30 @@ def test_generate_commands_with_permissions_section_command_doesnt_exist():
         command_permissions_dict={"!non-deprecated-cmd": "SUPERUSER"},
     )
 
-    expected_section = \
-        ['## Commands', '',
-         'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
-         'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
-         '', '### non-deprecated-cmd', '', '***', '', '#### Required Permissions', '', '#### Base Command', '',
-         '`non-deprecated-cmd`', '', '#### Input', '', 'There are no input arguments for this command.', '',
-         '#### Context Output', '', 'There is no context output for this command.']
+    expected_section = [
+        "## Commands",
+        "",
+        "You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.",
+        "After you successfully execute a command, a DBot message appears in the War Room with the command details.",
+        "",
+        "### non-deprecated-cmd",
+        "",
+        "***",
+        "",
+        "#### Required Permissions",
+        "",
+        "#### Base Command",
+        "",
+        "`non-deprecated-cmd`",
+        "",
+        "#### Input",
+        "",
+        "There are no input arguments for this command.",
+        "",
+        "#### Context Output",
+        "",
+        "There is no context output for this command.",
+    ]
 
     assert (
         "Error! Command Permissions were not found for command non-deprecated-cmd"
@@ -780,26 +890,47 @@ def handle_example(example, insecure):
 
 
 def test_generate_playbook_doc_passes_markdownlint(tmp_path):
+    """
+    Given: A playbook
+    When: Generating a readme for the playbook
+    Then: The generated readme will have no markdown errors
+
+    """
     generate_playbook_doc(PLAYBOOK_PATH, str(tmp_path), "admin", "a limitation", False)
     with ReadMeValidator.start_mdx_server():
-        with open(tmp_path / 'beta-playbook-valid_README.md') as file:
+        with open(tmp_path / "beta-playbook-valid_README.md") as file:
             content = file.read()
             markdownlint = run_markdownlint(content)
             assert not markdownlint.has_errors, markdownlint.validations
 
 
 def test_generate_script_doc_passes_markdownlint(tmp_path, mocker):
+    """
+    Given: A script
+    When: Generating a readme for the script
+    Then: The generated readme will have no markdown errors
+
+    """
     import demisto_sdk.commands.generate_docs.common as common
+
     d = tmp_path / "script_doc_out"
     d.mkdir()
-    in_script = os.path.join(FILES_PATH, 'docs_test', 'script-Set.yml')
-    id_set_file = os.path.join(FILES_PATH, 'docs_test', 'id_set.json')
-    with open(id_set_file, 'r') as f:
+    in_script = os.path.join(FILES_PATH, "docs_test", "script-Set.yml")
+    id_set_file = os.path.join(FILES_PATH, "docs_test", "id_set.json")
+    with open(id_set_file) as f:
         id_set = json.load(f)
-    mocker.patch.object(IDSetCreator, 'create_id_set', return_value=[id_set, {}, {}])
-    mocker.patch.object(common, 'execute_command', side_effect=handle_example)
-    mocker.patch('demisto_sdk.commands.generate_docs.generate_script_doc.get_used_in', return_value=[])
-    generate_script_doc(in_script, '!Set key=k1 value=v1,!Set key=k2 value=v2 append=true', str(d), verbose=True)
+    mocker.patch.object(IDSetCreator, "create_id_set", return_value=[id_set, {}, {}])
+    mocker.patch.object(common, "execute_command", side_effect=handle_example)
+    mocker.patch(
+        "demisto_sdk.commands.generate_docs.generate_script_doc.get_used_in",
+        return_value=[],
+    )
+    generate_script_doc(
+        in_script,
+        "!Set key=k1 value=v1,!Set key=k2 value=v2 append=true",
+        str(d),
+        verbose=True,
+    )
     readme = d / "README.md"
     with ReadMeValidator.start_mdx_server():
         with open(readme) as file:
@@ -808,6 +939,7 @@ def test_generate_script_doc_passes_markdownlint(tmp_path, mocker):
 
 def test_generate_script_doc(tmp_path, mocker):
     import demisto_sdk.commands.generate_docs.common as common
+
     d = tmp_path / "script_doc_out"
     d.mkdir()
     in_script = os.path.join(FILES_PATH, "docs_test", "script-Set.yml")
@@ -956,10 +1088,18 @@ class TestGenerateIntegrationDoc:
                 )
 
     def test_generate_integration_doc_passes_markdownlint(self):
+        """
+        Given: An integrations
+        When: Generating a readme for the integration
+        Then: The generated readme will have no markdown errors
+
+        """
         generate_integration_doc(TEST_INTEGRATION_PATH, is_contribution=False)
         # Generate doc
         with ReadMeValidator.start_mdx_server():
-            with open(os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), 'README.md')) as real_readme_file:
+            with open(
+                os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), "README.md")
+            ) as real_readme_file:
                 markdownlint = run_markdownlint(real_readme_file.read())
                 assert not markdownlint.has_errors, markdownlint.validations
 
@@ -1112,77 +1252,204 @@ def test_generate_table_section_numbered_section():
 
 yml_data_cases = [
     (
-        {'name': 'test', 'display': 'test', 'configuration': [
-            {'defaultvalue': '', 'display': 'test1', 'name': 'test1', 'required': True, 'type': 8},
-            {'defaultvalue': '', 'display': 'test2', 'name': 'test2', 'required': True, 'type': 8}
-        ]},  # case no param with additional info field
-        ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
-         '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
-         '', '    | **Parameter** | **Required** |', '    | --- | --- |', '    | test1 | True |',
-         '    | test2 | True |',
-         '', '4. Click **Test** to validate the URLs, token, and connection.', '']  # expected
+        {
+            "name": "test",
+            "display": "test",
+            "configuration": [
+                {
+                    "defaultvalue": "",
+                    "display": "test1",
+                    "name": "test1",
+                    "required": True,
+                    "type": 8,
+                },
+                {
+                    "defaultvalue": "",
+                    "display": "test2",
+                    "name": "test2",
+                    "required": True,
+                    "type": 8,
+                },
+            ],
+        },  # case no param with additional info field
+        [
+            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
+            "2. Search for test.",
+            "3. Click **Add instance** to create and configure a new integration instance.",
+            "",
+            "    | **Parameter** | **Required** |",
+            "    | --- | --- |",
+            "    | test1 | True |",
+            "    | test2 | True |",
+            "",
+            "4. Click **Test** to validate the URLs, token, and connection.",
+            "",
+        ],  # expected
     ),
     (
-        {'name': 'test', 'display': 'test', 'configuration': [
-            {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
-            {'display': 'test2', 'name': 'test2', 'required': True, 'type': 8}
-        ]},  # case some params with additional info field
-        ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
-         '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
-         '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
-         '    | test1 | More info | True |', '    | test2 |  | True |', '',
-         '4. Click **Test** to validate the URLs, token, and connection.', '']  # expected
+        {
+            "name": "test",
+            "display": "test",
+            "configuration": [
+                {
+                    "display": "test1",
+                    "name": "test1",
+                    "additionalinfo": "More info",
+                    "required": True,
+                    "type": 8,
+                },
+                {"display": "test2", "name": "test2", "required": True, "type": 8},
+            ],
+        },  # case some params with additional info field
+        [
+            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
+            "2. Search for test.",
+            "3. Click **Add instance** to create and configure a new integration instance.",
+            "",
+            "    | **Parameter** | **Description** | **Required** |",
+            "    | --- | --- | --- |",
+            "    | test1 | More info | True |",
+            "    | test2 |  | True |",
+            "",
+            "4. Click **Test** to validate the URLs, token, and connection.",
+            "",
+        ],  # expected
     ),
     (
-        {'name': 'test', 'display': 'test', 'configuration': [
-            {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
-            {'display': 'test2', 'name': 'test2', 'additionalinfo': 'Some more data', 'required': True, 'type': 8}
-        ]},  # case all params with additional info field
-        ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
-         '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
-         '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
-         '    | test1 | More info | True |', '    | test2 | Some more data | True |', '',
-         '4. Click **Test** to validate the URLs, token, and connection.', '']  # expected
+        {
+            "name": "test",
+            "display": "test",
+            "configuration": [
+                {
+                    "display": "test1",
+                    "name": "test1",
+                    "additionalinfo": "More info",
+                    "required": True,
+                    "type": 8,
+                },
+                {
+                    "display": "test2",
+                    "name": "test2",
+                    "additionalinfo": "Some more data",
+                    "required": True,
+                    "type": 8,
+                },
+            ],
+        },  # case all params with additional info field
+        [
+            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
+            "2. Search for test.",
+            "3. Click **Add instance** to create and configure a new integration instance.",
+            "",
+            "    | **Parameter** | **Description** | **Required** |",
+            "    | --- | --- | --- |",
+            "    | test1 | More info | True |",
+            "    | test2 | Some more data | True |",
+            "",
+            "4. Click **Test** to validate the URLs, token, and connection.",
+            "",
+        ],  # expected
     ),
     (
-        {'name': 'test', 'display': 'test', 'configuration': [
-            {'display': 'userName', 'displaypassword': 'password', 'name': 'userName', 'additionalinfo': 'Credentials',
-             'required': True, 'type': 9},
-        ]},  # case credentials parameter have displaypassword
-        ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
-         '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
-         '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
-         '    | userName | Credentials | True |', '    | password |  | True |', '',
-         '4. Click **Test** to validate the URLs, token, and connection.', '']  # expected
+        {
+            "name": "test",
+            "display": "test",
+            "configuration": [
+                {
+                    "display": "userName",
+                    "displaypassword": "password",
+                    "name": "userName",
+                    "additionalinfo": "Credentials",
+                    "required": True,
+                    "type": 9,
+                },
+            ],
+        },  # case credentials parameter have displaypassword
+        [
+            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
+            "2. Search for test.",
+            "3. Click **Add instance** to create and configure a new integration instance.",
+            "",
+            "    | **Parameter** | **Description** | **Required** |",
+            "    | --- | --- | --- |",
+            "    | userName | Credentials | True |",
+            "    | password |  | True |",
+            "",
+            "4. Click **Test** to validate the URLs, token, and connection.",
+            "",
+        ],  # expected
     ),
     (
-        {'name': 'test', 'display': 'test', 'configuration': [
-            {'display': 'userName', 'name': 'userName', 'additionalinfo': 'Credentials',
-             'required': True, 'type': 9},
-        ]},  # case credentials parameter have no displaypassword
-        ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
-         '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
-         '', '    | **Parameter** | **Description** | **Required** |', '    | --- | --- | --- |',
-         '    | userName | Credentials | True |', '    | Password |  | True |', '',
-         '4. Click **Test** to validate the URLs, token, and connection.', '']  # expected
+        {
+            "name": "test",
+            "display": "test",
+            "configuration": [
+                {
+                    "display": "userName",
+                    "name": "userName",
+                    "additionalinfo": "Credentials",
+                    "required": True,
+                    "type": 9,
+                },
+            ],
+        },  # case credentials parameter have no displaypassword
+        [
+            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
+            "2. Search for test.",
+            "3. Click **Add instance** to create and configure a new integration instance.",
+            "",
+            "    | **Parameter** | **Description** | **Required** |",
+            "    | --- | --- | --- |",
+            "    | userName | Credentials | True |",
+            "    | Password |  | True |",
+            "",
+            "4. Click **Test** to validate the URLs, token, and connection.",
+            "",
+        ],  # expected
     ),
     (
-        {'name': 'test', 'display': 'test', 'configuration': [
-            {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
-            {'display': 'API key', 'name': 'API key', 'additionalinfo': '', 'required': True, 'type': 8},
-            {'display': 'Proxy', 'name': 'Proxy', 'additionalinfo': 'non-default info.', 'required': True, 'type': 8}
-        ]},  # case some param with additional information, one that should take default, and one overriding default
-        ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
-         '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
-         '',
-         '    | **Parameter** | **Description** | **Required** |',
-         '    | --- | --- | --- |',
-         '    | test1 | More info | True |',
-         '    | API key | The API Key to use for the connection. | True |',
-         '    | Proxy | non-default info. | True |',
-         '',
-         '4. Click **Test** to validate the URLs, token, and connection.', '']  # expected
-    )
+        {
+            "name": "test",
+            "display": "test",
+            "configuration": [
+                {
+                    "display": "test1",
+                    "name": "test1",
+                    "additionalinfo": "More info",
+                    "required": True,
+                    "type": 8,
+                },
+                {
+                    "display": "API key",
+                    "name": "API key",
+                    "additionalinfo": "",
+                    "required": True,
+                    "type": 8,
+                },
+                {
+                    "display": "Proxy",
+                    "name": "Proxy",
+                    "additionalinfo": "non-default info.",
+                    "required": True,
+                    "type": 8,
+                },
+            ],
+        },  # case some param with additional information, one that should take default, and one overriding default
+        [
+            "1. Navigate to **Settings** > **Integrations** > **Servers & Services**.",
+            "2. Search for test.",
+            "3. Click **Add instance** to create and configure a new integration instance.",
+            "",
+            "    | **Parameter** | **Description** | **Required** |",
+            "    | --- | --- | --- |",
+            "    | test1 | More info | True |",
+            "    | API key | The API Key to use for the connection. | True |",
+            "    | Proxy | non-default info. | True |",
+            "",
+            "4. Click **Test** to validate the URLs, token, and connection.",
+            "",
+        ],  # expected
+    ),
 ]
 
 
@@ -1441,12 +1708,34 @@ def test_disable_md_autolinks():
 
 
 TEST_EMPTY_SCRIPTDATA_SECTION = [
-    ({'script': 'some info'}, ['']),
-    ({'subtype': 'python2', 'tags': []},
-     ['## Script data', '', '---', '', '| **Name** | **Description** |', '| --- | --- |', '| Script Type | python2 |', '']),
-    ({'tags': []}, ['']),
-    ({'fromversion': '0.0.0'}, ['## Script data', '', '---', '', '| **Name** | **Description** |', '| --- | --- |',
-                                '| Cortex XSOAR Version | 0.0.0 |', ''])
+    ({"script": "some info"}, [""]),
+    (
+        {"subtype": "python2", "tags": []},
+        [
+            "## Script data",
+            "",
+            "---",
+            "",
+            "| **Name** | **Description** |",
+            "| --- | --- |",
+            "| Script Type | python2 |",
+            "",
+        ],
+    ),
+    ({"tags": []}, [""]),
+    (
+        {"fromversion": "0.0.0"},
+        [
+            "## Script data",
+            "",
+            "---",
+            "",
+            "| **Name** | **Description** |",
+            "| --- | --- |",
+            "| Cortex XSOAR Version | 0.0.0 |",
+            "",
+        ],
+    ),
 ]
 
 

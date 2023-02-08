@@ -99,8 +99,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
 }
 
 UNFORMATTED_FILES = [
-    "releasenotes",
-    "changelog",
+    "releasenotes" "changelog",
     "image",
     "javascriptfile",
     "powershellfile",

@@ -4,8 +4,9 @@ import os
 import pytest
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.hook_validations.description import \
-    DescriptionValidator
+from demisto_sdk.commands.common.hook_validations.description import (
+    DescriptionValidator,
+)
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from TestSuite.test_tools import ChangeCWD
 
@@ -66,12 +67,16 @@ def test_is_duplicate_description_given(pack, mocker):
     assert not DescriptionValidator.handle_error.called
 
 
-@pytest.mark.parametrize("file_input, result",
-                         [("### Community Contributed Integration\n### OtherSection", False),
-                          ("### partner Contributed Integration", False),
-                          ("\n### Other section\n- No space", False),
-                          ("\n### Other section\n", True),
-                          ("\n###Other section\n", False)])
+@pytest.mark.parametrize(
+    "file_input, result",
+    [
+        ("### Community Contributed Integration\n### OtherSection", False),
+        ("### partner Contributed Integration", False),
+        # ("\n### Other section\n- No space", False), TODO reenable after validations enabled
+        ("\n### Other section\n", True),
+        # ("\n###Other section\n", False),TODO reenable after validations enabled
+    ],
+)
 def test_is_valid_file(integration, file_input, result):
     """
     Given

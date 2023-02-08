@@ -277,7 +277,7 @@ def generate_setup_section(yaml_data: dict):
         )
     )
     section.append("4. Click **Test** to validate the URLs, token, and connection.")
-    section.append('')
+    section.append("")
 
     return section
 
@@ -428,11 +428,11 @@ def generate_commands_section(
     """
     errors: list = []
     section = [
-        '## Commands',
-        '',
-        'You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.',
-        'After you successfully execute a command, a DBot message appears in the War Room with the command details.',
-        ''
+        "## Commands",
+        "",
+        "You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.",
+        "After you successfully execute a command, a DBot message appears in the War Room with the command details.",
+        "",
     ]
     commands = filter(
         lambda cmd: not cmd.get("deprecated", False), yaml_data["script"]["commands"]
@@ -466,34 +466,47 @@ def generate_single_command_section(
     errors = []
     cmd_example = example_dict.get(cmd["name"])
     if command_permissions_dict:
-        if command_permissions_dict.get(cmd['name']):
-            cmd_permission_example = ['#### Required Permissions', '', command_permissions_dict.get(cmd['name']), '']
+        if command_permissions_dict.get(cmd["name"]):
+            cmd_permission_example = [
+                "#### Required Permissions",
+                "",
+                command_permissions_dict.get(cmd["name"]),
+                "",
+            ]
         else:
             errors.append(
                 f"Error! Command Permissions were not found for command {cmd['name']}"
             )
             cmd_permission_example = ["#### Required Permissions", ""]
     elif isinstance(command_permissions_dict, dict) and not command_permissions_dict:
-        cmd_permission_example = ['#### Required Permissions', '', '**FILL IN REQUIRED PERMISSIONS HERE**', '']
+        cmd_permission_example = [
+            "#### Required Permissions",
+            "",
+            "**FILL IN REQUIRED PERMISSIONS HERE**",
+            "",
+        ]
     else:  # no permissions for this command
         cmd_permission_example = []
 
     section = [
-        '### {}'.format(cmd['name']),
-        '',
-        '***',
+        "### {}".format(cmd["name"]),
+        "",
+        "***",
     ]
-    if desc := cmd.get('description'):
+    if desc := cmd.get("description"):
         section.append(desc)
-    section.extend([
-        '',
-        *cmd_permission_example,
-        '#### Base Command',
-        '', '`{}`'.format(cmd['name']),
-        '',
-        '#### Input',
-        ''
-    ])
+    section.extend(
+        [
+            "",
+            *cmd_permission_example,
+            "#### Base Command",
+            "",
+            "`{}`".format(cmd["name"]),
+            "",
+            "#### Input",
+            "",
+        ]
+    )
 
     # Inputs
     arguments = cmd.get("arguments")
@@ -538,11 +551,13 @@ def generate_single_command_section(
     section.append("")
 
     # Context output
-    section.extend([
-        '#### Context Output',
-        '',
-    ])
-    outputs = cmd.get('outputs')
+    section.extend(
+        [
+            "#### Context Output",
+            "",
+        ]
+    )
+    outputs = cmd.get("outputs")
     if outputs is None or len(outputs) == 0:
         section.append("There is no context output for this command.")
     else:

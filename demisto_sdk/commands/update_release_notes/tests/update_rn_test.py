@@ -2,7 +2,6 @@ import glob
 import os
 import pathlib
 import shutil
-import tempfile
 from collections import Counter
 from copy import deepcopy
 from pathlib import Path
@@ -11,7 +10,6 @@ from unittest import mock
 
 import pytest
 
-import demisto_sdk
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     FileType,
@@ -75,30 +73,38 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = \
-            "\n#### Classifiers\n\n##### Hello World Classifier\n\n- %%UPDATE_RN%%\n" \
-            "\n#### Connections\n\n- **Hello World Connection**\n" \
-            "\n#### Dashboards\n\n##### Hello World Dashboard\n\n- %%UPDATE_RN%%\n" \
-            "\n#### Incident Fields\n\n- **Hello World IncidentField**\n" \
-            "\n#### Incident Types\n\n- **Hello World Incident Type**\n" \
-            "\n#### Indicator Fields\n\n- **Hello World Indicator Field**\n" \
-            "\n#### Indicator Types\n\n- **Hello World Indicator Type**\n" \
-            "\n#### Integrations\n\n##### Hello World Integration\n\n- %%UPDATE_RN%%\n" \
-            "\n#### Jobs\n\n##### Hello World Job #1\n\n- %%UPDATE_RN%%\n" \
-            "##### Hello World Job #2\n\n- %%UPDATE_RN%%\n" \
-            "\n#### Layouts\n\n- **Hello World Layout**\n" \
-            "- **Second Hello World Layout**\n" \
-            "\n#### Modules\n\n##### Hello World Generic Module\n\n- %%UPDATE_RN%%\n" \
-            "\n#### Objects\n\n##### Hello World Generic Definition\n\n- %%UPDATE_RN%%\n" \
-            "\n#### Playbooks\n\n##### Hello World Playbook\n\n- %%UPDATE_RN%%\n" \
-            "\n#### Reports\n\n##### Hello World Report\n\n- %%UPDATE_RN%%\n" \
-            "\n#### Scripts\n\n##### Hello World Script\n\n- %%UPDATE_RN%%\n" \
-            "\n#### Widgets\n\n##### Hello World Widget\n\n- %%UPDATE_RN%%\n" \
+        expected_result = (
+            "\n#### Classifiers\n\n##### Hello World Classifier\n\n- %%UPDATE_RN%%\n"
+            "\n#### Connections\n\n- **Hello World Connection**\n"
+            "\n#### Dashboards\n\n##### Hello World Dashboard\n\n- %%UPDATE_RN%%\n"
+            "\n#### Incident Fields\n\n- **Hello World IncidentField**\n"
+            "\n#### Incident Types\n\n- **Hello World Incident Type**\n"
+            "\n#### Indicator Fields\n\n- **Hello World Indicator Field**\n"
+            "\n#### Indicator Types\n\n- **Hello World Indicator Type**\n"
+            "\n#### Integrations\n\n##### Hello World Integration\n\n- %%UPDATE_RN%%\n"
+            "\n#### Jobs\n\n##### Hello World Job #1\n\n- %%UPDATE_RN%%\n"
+            "##### Hello World Job #2\n\n- %%UPDATE_RN%%\n"
+            "\n#### Layouts\n\n- **Hello World Layout**\n"
+            "- **Second Hello World Layout**\n"
+            "\n#### Modules\n\n- **Hello World Generic Module**\n"
+            "\n#### Objects\n\n- **Hello World Generic Definition**\n"
+            "\n#### Playbooks\n\n##### Hello World Playbook\n\n- %%UPDATE_RN%%\n"
+            "\n#### Reports\n\n##### Hello World Report\n\n- %%UPDATE_RN%%\n"
+            "\n#### Scripts\n\n##### Hello World Script\n\n- %%UPDATE_RN%%\n"
+            "\n#### Widgets\n\n##### Hello World Widget\n\n- %%UPDATE_RN%%\n"
             "\n#### Wizards\n\n##### Hello World Wizard\n\n- %%UPDATE_RN%%\n"
-        mocker.patch.object(UpdateRN, 'get_master_version', return_value='1.0.0')
-        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn', return_value='')
-        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
-                             added_files=set())
+        )
+        mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
+        mocker.patch(
+            "demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn",
+            return_value="",
+        )
+        update_rn = UpdateRN(
+            pack_path="Packs/HelloWorld",
+            update_type="minor",
+            modified_files_in_pack={"HelloWorld"},
+            added_files=set(),
+        )
         changed_items = {
             ("Hello World Integration", FileType.INTEGRATION): {
                 "description": "",
@@ -249,34 +255,49 @@ class TestRNUpdate:
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
 
-    @mock.patch.object(UpdateRN, 'get_master_version')
+    @mock.patch.object(UpdateRN, "get_master_version")
     def test_build_rn_template_markdown_valid(self, mock_master):
         """
-            Given:
-                - a dict of changed items
-            When:
-                - we want to produce a release notes template for new file
-            Then:
-                - return a markdown string
+        Given:
+            - a dict of changed items
+        When:
+            - we want to produce a release notes template for new file
+        Then:
+            - return a markdown string
         """
-        from demisto_sdk.commands.update_release_notes.update_rn import \
-            UpdateRN
-        mock_master.return_value = '1.0.0'
-        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor',
-                             modified_files_in_pack={'HelloWorld'},
-                             added_files=set())
+        from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+        mock_master.return_value = "1.0.0"
+        update_rn = UpdateRN(
+            pack_path="Packs/HelloWorld",
+            update_type="minor",
+            modified_files_in_pack={"HelloWorld"},
+            added_files=set(),
+        )
         changed_items = {
-            ('Hello World Integration', FileType.INTEGRATION): {'description': "", 'is_new_file': True,
-                                                                'fromversion': '5.0.0'},
-            ('Hello World Playbook', FileType.PLAYBOOK): {'description': '', 'is_new_file': True,
-                                                          'fromversion': '5.5.0'},
-            ("Hello World Script", FileType.SCRIPT): {'description': '', 'is_new_file': True, 'fromversion': '6.0.0'},
+            ("Hello World Integration", FileType.INTEGRATION): {
+                "description": "",
+                "is_new_file": True,
+                "fromversion": "5.0.0",
+            },
+            ("Hello World Playbook", FileType.PLAYBOOK): {
+                "description": "",
+                "is_new_file": True,
+                "fromversion": "5.5.0",
+            },
+            ("Hello World Script", FileType.SCRIPT): {
+                "description": "",
+                "is_new_file": True,
+                "fromversion": "6.0.0",
+            },
         }
         release_notes = update_rn.build_rn_template(changed_items)
 
         with ReadMeValidator.start_mdx_server():
             markdownlint = run_markdownlint(release_notes)
-            assert not markdownlint.has_errors, release_notes + f"\nValidations: {markdownlint.validations}"
+            assert not markdownlint.has_errors, (
+                release_notes + f"\nValidations: {markdownlint.validations}"
+            )
 
     def test_build_rn_template_playbook_modified_file(self, mocker):
         """
@@ -1383,22 +1404,31 @@ class TestRNUpdateUnit:
     }
     EXPECTED_RN_RES = """
 #### Incident Types
+
 - **Cortex XDR Incident**
 
 #### Incident Fields
+
 - **Sample IncidentField**
+
 - **XDR Alerts**
 
 #### Object Types
+
 - **Sample GenericType**
 
 #### Object Fields
+
 - **Sample GenericField**
 
 #### Integrations
+
 ##### Cortex XDR - IR
+
 - %%UPDATE_RN%%
+
 ##### Sample
+
 - %%UPDATE_RN%%
 
 """

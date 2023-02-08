@@ -826,7 +826,7 @@ class UpdateRN:
                 continue
 
             _header_by_type = RN_HEADER_BY_FILE_TYPE.get(_type)
-            rn_desc += "\n" + self.build_rn_desc(
+            rn_desc += "\n\n" + self.build_rn_desc(
                 _type=_type,
                 content_name=content_name,
                 desc=desc,

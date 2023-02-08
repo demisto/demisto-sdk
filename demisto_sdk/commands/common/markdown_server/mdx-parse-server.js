@@ -1,51 +1,44 @@
-const mdx = require('@mdx-js/mdx');
 const http = require('http')
 const markdownlint = require('markdownlint')
 const markdownlintRuleHelpers = require('markdownlint-rule-helpers')
+const url = require('url')
+const mdx = require('@mdx-js/mdx');
 
 // explanation of the config can be found at
 // https://github.com/DavidAnson/markdownlint/blob/main/schema/markdownlint-config-schema.json
 const config = require("./markdownlintconfig.json")
 
-function getParamsFromReq(req) {
-    let split = req.url.split('?')
-    if (split.length < 2)
-        return {}
-    let params = {}
-    for (let param of split[1].split('&')) {
-        let vals = param.split('=')
-        params[vals[0]] = !vals[1] || 'false' == vals[1].toLowerCase() ? false : vals[1]
-    }
-    return params
-}
-function markdownLint(req, res, body) {
+function markdownLint(req, res, body, query) {
 
-    res.statusCode = 200
-    params = getParamsFromReq(req)
-    let fileName = params.filename || 'readme'
+    let fileName = query.filename || 'readme'
     const fixOptions = {
       "config" : config,
       "strings": {
         [fileName] : body
       }
     };
+
     let validationResults = markdownlint.sync(fixOptions);
+
     let fixedText = null;
-    if(params.fix) {
+
+    if(query.fix && query.fix.toLowerCase() == 'true') {
+        fixedText = body;
         const fixes = validationResults[fileName].filter(error => error.fixInfo);
         if (fixes.length > 0) {
             fixedText = markdownlintRuleHelpers.applyFixes(body, fixes);
+            const fixOptions = {
+                "config" : config,
+                "strings": {
+                    [fileName] : fixedText
+                }
+            };
+            validationResults = markdownlint.sync(fixOptions)
         }
-        const fixOptions = {
-            "config" : config,
-            "strings": {
-            [fileName] : fixedText
-            }
-        };
-        validationResults = markdownlint.sync(fixOptions)
     }
     res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ "validations" : validationResults.toString(),
+    res.statusCode = 200
+    res.end(JSON.stringify({ validations : validationResults.toString(),
         fixedText : fixedText, errorNum : validationResults[fileName].length}))
 
 }
@@ -62,9 +55,11 @@ function requestHandler(req, res) {
     })
     req.on('end', async function () {
         //   console.log('Body length: ' + body.length)
-        if(req.url.includes('/markdownlint'))
+
+        let urlObj = url.parse(req.url, true)
+        if(urlObj.pathname == '/markdownlint')
         {
-            markdownLint(req, res, body)
+            markdownLint(req, res, body, urlObj.query)
         }
         else {
             try {

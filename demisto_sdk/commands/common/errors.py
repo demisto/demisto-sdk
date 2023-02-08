@@ -32,7 +32,7 @@ ALLOWED_IGNORE_ERRORS = [
     "BA113",
     "BA116",
     "BA119",
-    "DS107", "DS108",
+    "DS107",
     "GF102",
     "IF100",
     "IF106",
@@ -78,7 +78,7 @@ ALLOWED_IGNORE_ERRORS = [
     "RM108",
     "RM110",
     "RM112",
-    "RM113", 'RM114',
+    "RM113",
     "RP102",
     "RP104",
     "SC100",
@@ -91,7 +91,7 @@ ALLOWED_IGNORE_ERRORS = [
     "RN114",
     "RN115",
     "MR104",
-    "MR105", 'RN113',
+    "MR105",
 ]
 
 # predefined errors to be ignored in partner/community supported packs even if they do not appear in .pack-ignore
@@ -433,19 +433,6 @@ ERROR_CODE = {
         "ui_applicable": True,
         "related_field": "detaileddescription",
     },
-    "description_missing_in_beta_integration": {'code': "DS100", 'ui_applicable': False, 'related_field': ''},
-    "no_beta_disclaimer_in_description": {'code': "DS101", 'ui_applicable': False, 'related_field': ''},
-    "no_beta_disclaimer_in_yml": {'code': "DS102", 'ui_applicable': False, 'related_field': ''},
-    "description_in_package_and_yml": {'code': "DS103", 'ui_applicable': False, 'related_field': ''},
-    "no_description_file_warning": {'code': "DS104", 'ui_applicable': False, 'related_field': ''},
-    "description_contains_contrib_details": {'code': "DS105", 'ui_applicable': False,
-                                             'related_field': 'detaileddescription'},
-    "invalid_description_name": {'code': "DS106", 'ui_applicable': False, 'related_field': ''},
-    "description_contains_demisto_word": {'code': "DS107", 'ui_applicable': True,
-                                          'related_field': 'detaileddescription'},
-    "description_lint_errors": {'code': "DS108", 'ui_applicable': True,
-                                'related_field': ''},
-
     # GF - Generic Fields
     "invalid_generic_field_group_value": {
         "code": "GF100",
@@ -1356,38 +1343,149 @@ ERROR_CODE = {
         "related_field": "",
     },
     # RM - READMEs
-    "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
-    "image_path_error": {'code': "RM101", 'ui_applicable': False, 'related_field': ''},
-    "readme_missing_output_context": {'code': "RM102", 'ui_applicable': False, 'related_field': ''},
-    "error_starting_mdx_server": {'code': "RM103", 'ui_applicable': False, 'related_field': ''},
-    "empty_readme_error": {'code': "RM104", 'ui_applicable': False, 'related_field': ''},
-    "readme_equal_description_error": {'code': "RM105", 'ui_applicable': False, 'related_field': ''},
-    "readme_contains_demisto_word": {'code': "RM106", 'ui_applicable': False, 'related_field': ''},
-    "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
-    "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
-    "missing_readme_file": {'code': "RM109", 'ui_applicable': False, 'related_field': ''},
-    "missing_commands_from_readme": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
-    "error_uninstall_node": {'code': "RM111", 'ui_applicable': False, 'related_field': ''},
-    "invalid_readme_relative_url_error": {'code': "RM112", 'ui_applicable': False, 'related_field': ''},
-    "copyright_section_in_readme_error": {'code': "RM113", 'ui_applicable': False, 'related_field': ''},
-    "readme_lint_errors": {'code': "RM114", 'ui_applicable': False, 'related_field': ''},
-
+    "readme_error": {"code": "RM100", "ui_applicable": False, "related_field": ""},
+    "image_path_error": {"code": "RM101", "ui_applicable": False, "related_field": ""},
+    "readme_missing_output_context": {
+        "code": "RM102",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "error_starting_mdx_server": {
+        "code": "RM103",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "empty_readme_error": {
+        "code": "RM104",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "readme_equal_description_error": {
+        "code": "RM105",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "readme_contains_demisto_word": {
+        "code": "RM106",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "template_sentence_in_readme": {
+        "code": "RM107",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "invalid_readme_image_error": {
+        "code": "RM108",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "missing_readme_file": {
+        "code": "RM109",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "missing_commands_from_readme": {
+        "code": "RM110",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "error_uninstall_node": {
+        "code": "RM111",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "invalid_readme_relative_url_error": {
+        "code": "RM112",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "copyright_section_in_readme_error": {
+        "code": "RM113",
+        "ui_applicable": False,
+        "related_field": "",
+    },
     # RN - Release Notes
-    "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
-    "no_new_release_notes": {'code': "RN101", 'ui_applicable': False, 'related_field': ''},
-    "release_notes_not_formatted_correctly": {'code': "RN102", 'ui_applicable': False, 'related_field': ''},
-    "release_notes_not_finished": {'code': "RN103", 'ui_applicable': False, 'related_field': ''},
-    "release_notes_file_empty": {'code': "RN104", 'ui_applicable': False, 'related_field': ''},
-    "multiple_release_notes_files": {'code': "RN105", 'ui_applicable': False, 'related_field': ''},
-    "missing_release_notes_for_pack": {'code': "RN106", 'ui_applicable': False, 'related_field': ''},
-    "missing_release_notes_entry": {'code': "RN107", 'ui_applicable': False, 'related_field': ''},
-    "added_release_notes_for_new_pack": {'code': "RN108", 'ui_applicable': False, 'related_field': ''},
-    "modified_existing_release_notes": {'code': "RN109", 'ui_applicable': False, 'related_field': ''},
-    "release_notes_config_file_missing_release_notes": {'code': "RN110", 'ui_applicable': False, 'related_field': ''},
-    "release_notes_docker_image_not_match_yaml": {'code': "RN111", 'ui_applicable': False, 'related_field': ''},
-    "release_notes_bc_json_file_missing": {'code': "RN112", 'ui_applicable': False, 'related_field': ''},
-    "release_notes_lint_errors": {'code': "RN113", 'ui_applicable': False, 'related_field': ''},
-
+    "missing_release_notes": {
+        "code": "RN100",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "no_new_release_notes": {
+        "code": "RN101",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "release_notes_not_formatted_correctly": {
+        "code": "RN102",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "release_notes_not_finished": {
+        "code": "RN103",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "release_notes_file_empty": {
+        "code": "RN104",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "multiple_release_notes_files": {
+        "code": "RN105",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "missing_release_notes_for_pack": {
+        "code": "RN106",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "missing_release_notes_entry": {
+        "code": "RN107",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "added_release_notes_for_new_pack": {
+        "code": "RN108",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "modified_existing_release_notes": {
+        "code": "RN109",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "release_notes_config_file_missing_release_notes": {
+        "code": "RN110",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "release_notes_docker_image_not_match_yaml": {
+        "code": "RN111",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "release_notes_bc_json_file_missing": {
+        "code": "RN112",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "release_notes_invalid_content_type_header": {
+        "code": "RN113",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "release_notes_invalid_content_name_header": {
+        "code": "RN114",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "release_notes_invalid_header_format": {
+        "code": "RN115",
+        "ui_applicable": False,
+        "related_field": "",
+    },
     # RP - Reputations (Indicator Types)
     "wrong_version_reputations": {
         "code": "RP100",
@@ -2804,20 +2902,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def release_notes_lint_errors(rn_file_name):
-        message_to_return = f'The {rn_file_name} release notes file is not linted properly'
-        return message_to_return\
-
-
-    @staticmethod
-    @error_code_decorator
-    def description_lint_errors(rn_file_name, validations):
-        message_to_return = f'The {rn_file_name} description file is not linted properly. See the validations below' \
-                            f' \n{validations}'
-        return message_to_return
-
-    @staticmethod
-    @error_code_decorator
     def playbook_cant_have_rolename():
         return "Playbook can not have a rolename."
 
@@ -2921,7 +3005,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def content_entity_version_not_match_playbook_version(
-            main_playbook: str,
+        main_playbook: str,
         entities_names_and_version: str,
         main_playbook_version: str,
         content_sub_type: str,
@@ -3451,12 +3535,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def readme_lint_errors(arg):
-        message_to_return = f'The {arg} readme file is not linted properly'
-        return message_to_return
-
-    @staticmethod
-    @error_code_decorator
     def copyright_section_in_python_error(line_nums):
         return (
             f"Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found "
@@ -3519,6 +3597,34 @@ class Errors:
     @error_code_decorator
     def wrong_version_reputations(object_id, version):
         return f"Reputation object with id {object_id} must have version {version}"
+
+    @staticmethod
+    @error_code_decorator
+    def readme_lint_errors(file, validations):
+        message_to_return = (
+            f"The {file} readme file is not linted properly. See the validations below"
+            f"\n{validations}"
+        )
+        return message_to_return
+
+    @staticmethod
+    @error_code_decorator
+    def description_lint_errors(rn_file_name, validations):
+        message_to_return = (
+            f"The {rn_file_name} description file is not linted properly. See the validations below"
+            f"\n{validations}"
+        )
+
+        return message_to_return
+
+    @staticmethod
+    @error_code_decorator
+    def release_notes_lint_errors(file_name, validations):
+        message_to_return = (
+            f"The {file_name} release notes file is not linted properly See the validations below"
+            f"\n{validations}"
+        )
+        return message_to_return
 
     @staticmethod
     @error_code_decorator

@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Callable, Optional
 
+import click
 import docker
 import docker.errors
 import docker.models.containers
@@ -30,7 +31,12 @@ def server_script_path():
     Returns: Path to the script
 
     """
-    return Path(__file__).parent.parent / "common" / _SERVER_SCRIPT_NAME
+    return (
+        Path(__file__).parent.parent
+        / "common"
+        / "markdown_server"
+        / _SERVER_SCRIPT_NAME
+    )
 
 
 @contextmanager
@@ -50,6 +56,7 @@ def start_docker_MDX_server(
         A context manager
 
     """
+    config_file = "markdownlintconfig.json"
     logging.info("Starting docker mdx server")
     get_docker().pull_image(DEPENDENCIES_DOCKER)
     if running_container := init_global_docker_client().containers.list(
@@ -62,7 +69,13 @@ def start_docker_MDX_server(
         image=DEPENDENCIES_DOCKER,
         command=["node", location_in_docker],
         user=f"{os.getuid()}:4000",
-        files_to_push=[(server_script_path(), location_in_docker)],
+        files_to_push=[
+            (server_script_path(), location_in_docker),
+            (
+                Path(__file__).parent / "markdown_server" / config_file,
+                f"/content/{config_file}",
+            ),
+        ],
         auto_remove=True,
         ports={"6161/tcp": 6161},
     )
@@ -79,6 +92,8 @@ def start_docker_MDX_server(
                 return False
         else:
             raise Exception(error_message)
+    else:
+        click.secho("Successfully started node server in docker")
 
     try:
         yield True
@@ -88,7 +103,7 @@ def start_docker_MDX_server(
 
 def stop_docker_container(container):
     if container:
-        logging.info("Stopping mdx docker server")
+        click.secho("Stopping mdx docker server")
         container.stop()  # type: ignore
 
 
@@ -106,6 +121,8 @@ def start_local_MDX_server(
         A context manager
 
     """
+    click.secho("Starting local mdx server")
+
     process = subprocess.Popen(
         ["node", str(server_script_path())], stdout=subprocess.PIPE, text=True
     )
@@ -128,4 +145,5 @@ def start_local_MDX_server(
 
 def terminate_process(process):
     if process:
+        click.secho("Stopping local mdx server")
         process.terminate()

@@ -1,5 +1,4 @@
 import logging
-import logging.config
 import os
 import sys
 from pathlib import Path
@@ -30,44 +29,7 @@ def logging_setup(
     """
     if quiet:
         verbose = 0
-
-    LOGGING_CONFIG = {
-        "version": 1,
-        "disable_existing_loggers": True,
-        "formatters": {
-            "console-formatter": {
-                "format": "%(asctime)s [%(levelname)s]: %(message)s",
-                "datefmt": DATE_FORMAT,
-            },
-            "file-formatter": {
-                "format": "[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(message)s"
-            },
-        },
-        "handlers": {
-            "console-handler": {
-                "level": "DEBUG",
-                "formatter": "console-formatter",
-                "class": "logging.StreamHandler",
-                "stream": "ext://sys.stdout",  # Default is stderr
-            },
-            # "file-handler": {
-            #     "level": "DEBUG",
-            #     "formatter": "file-formatter",
-            #     "class": "logging.FileHandler",
-            #     "filename": os.path.join(log_path, log_file_name),
-            # },
-        },
-        "loggers": {
-            "demisto-sdk": {  # demisto-sdk logger
-                "handlers": ["console-handler"],
-                "level": "INFO",
-                "propagate": False,
-            },
-        },
-    }
-
-    logging.config.dictConfig(LOGGING_CONFIG)
-
+    logging.basicConfig()
     l: logging.Logger = logging.getLogger("demisto-sdk")
 
     levels = {0: logging.INFO, 1: logging.WARNING, 2: logging.DEBUG}

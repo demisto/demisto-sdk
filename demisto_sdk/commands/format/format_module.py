@@ -23,8 +23,11 @@ from demisto_sdk.commands.format.update_classifier import (
     OldClassifierJSONFormat,
 )
 from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
+from demisto_sdk.commands.format.update_correlation_rule import CorrelationRuleYMLFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_description import DescriptionFormat
+from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
+from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_genericdefinition import (
     GenericDefinitionJSONFormat,
 )
@@ -83,6 +86,16 @@ FILE_TYPE_AND_LINKED_CLASS = {
     JOB: JobJSONFormat,
     "readme": ReadmeFormat,
     "metadata": PackMetadataJsonFormat,
+    "correlationrule": CorrelationRuleYMLFormat,
+    "xsiamdashboard": BaseUpdateJSON,
+    "xsiamreport": BaseUpdateJSON,
+    "modelingrule": BaseUpdateYML,
+    "modelingruleschema": BaseUpdateJSON,
+    "parsingrule": BaseUpdateYML,
+    "trigger": BaseUpdateJSON,
+    "xdrctemplate": BaseUpdateJSON,
+    "xdrctemplateyml": BaseUpdateYML,
+    "layoutrule": BaseUpdateJSON,
 }
 
 UNFORMATTED_FILES = [

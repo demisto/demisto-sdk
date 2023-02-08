@@ -17,7 +17,7 @@ from functools import lru_cache
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
-from typing import Callable, Dict, List, Match, Optional, Set, Tuple, Union
+from typing import Callable, Dict, Iterable, List, Match, Optional, Set, Tuple, Union
 
 import click
 import colorama
@@ -37,6 +37,7 @@ from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
     API_MODULES_PACK,
     CLASSIFIERS_DIR,
+    CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
     DEF_DOCKER,
     DEF_DOCKER_PWSH,
@@ -52,6 +53,7 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR,
     JOBS_DIR,
+    LAYOUT_RULES_DIR,
     LAYOUTS_DIR,
     LISTS_DIR,
     MARKETPLACE_KEY_PACK_METADATA,
@@ -107,6 +109,9 @@ yaml = YAML_Handler()
 urllib3.disable_warnings()
 
 colorama.init()  # initialize color palette
+
+
+GRAPH_SUPPORTED_FILE_TYPES = ["yml", "json"]
 
 
 class LOG_COLORS:
@@ -306,6 +311,29 @@ def get_files_in_dir(
                 excludes.extend([str(f) for f in glob_function(exclude_pattern)])
         files.extend([str(f) for f in glob_function(pattern)])
     return list(set(files) - set(excludes))
+
+
+def get_all_content_objects_paths_in_dir(project_dir_list: Optional[Iterable]):
+    """
+    Gets the project directory and returns the path of all yml, json and py files in it
+    Args:
+        project_dir_list: List or set with str paths
+    :return: list of content files in the current dir with str relative paths
+    """
+    files: list = []
+    if not project_dir_list:
+        return files
+
+    for file_path in project_dir_list:
+        files.extend(
+            get_files_in_dir(
+                file_path, GRAPH_SUPPORTED_FILE_TYPES, ignore_test_files=True
+            )
+        )
+
+    output = [get_relative_path_from_packs_dir(file) for file in files]
+
+    return output
 
 
 def src_root() -> Path:
@@ -1543,6 +1571,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             "_schema"
         ):
             return FileType.MODELING_RULE_SCHEMA
+        elif LAYOUT_RULES_DIR in path.parts:
+            return FileType.LAYOUT_RULE
 
     elif path.name.endswith("_image.png"):
         if path.name.endswith("Author_image.png"):
@@ -1568,6 +1598,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.suffix == ".xif":
         if MODELING_RULES_DIR in path.parts:
             return FileType.MODELING_RULE_XIF
+        elif PARSING_RULES_DIR in path.parts:
+            return FileType.PARSING_RULE_XIF
         return FileType.XIF_FILE
 
     elif path.suffix == ".yml":
@@ -1590,6 +1622,12 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
 
         elif PARSING_RULES_DIR in path.parts:
             return FileType.PARSING_RULE
+
+        elif MODELING_RULES_DIR in path.parts:
+            return FileType.MODELING_RULE
+
+        elif CORRELATION_RULES_DIR in path.parts:
+            return FileType.CORRELATION_RULE
 
     elif path.name == FileType.PACK_IGNORE:
         return FileType.PACK_IGNORE
@@ -1794,6 +1832,9 @@ def find_type(
 
         if "profile_type" in _dict and "yaml_template" in _dict:
             return FileType.XDRC_TEMPLATE
+
+        if "rule_id" in _dict:
+            return FileType.LAYOUT_RULE
 
         # When using it for all files validation- sometimes 'id' can be integer
         if "id" in _dict:
@@ -2146,6 +2187,8 @@ def _get_file_id(file_type: str, file_content: Dict):
         return file_content.get("id", "")
     elif file_type in ID_IN_COMMONFIELDS:
         return file_content.get("commonfields", {}).get("id")
+    elif file_type == FileType.LAYOUT_RULE:
+        return file_content.get("rule_id", "")
     return file_content.get("trigger_id", "")
 
 
@@ -2369,6 +2412,7 @@ def item_type_to_content_items_header(item_type):
         "modelingrule": "modelingRule",
         "parsingrule": "parsingRule",
         "xdrctemplate": "XDRCTemplate",
+        "layoutrule": "layoutRule",
     }
 
     return f"{converter.get(item_type, item_type)}s"
@@ -3233,6 +3277,8 @@ def get_display_name(file_path, file_data={}) -> str:
         name = file_data.get("id", None)
     elif "trigger_name" in file_data:
         name = file_data.get("trigger_name")
+    elif "rule_name" in file_data:
+        name = file_data.get("rule_name")
 
     elif (
         "dashboards_data" in file_data
@@ -3412,3 +3458,9 @@ def field_to_cli_name(field_name: str) -> str:
         field_name (str): the incident/indicator field name.
     """
     return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, "", field_name).lower()
+
+
+def get_pack_paths_from_files(file_paths: Iterable[str]) -> list:
+    """Returns the pack paths from a list/set of files"""
+    pack_paths = {f"Packs/{get_pack_name(file_path)}" for file_path in file_paths}
+    return list(pack_paths)

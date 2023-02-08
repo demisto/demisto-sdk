@@ -395,14 +395,17 @@ DASHBOARD_PATH = "Dashboards"
 SOURCE_FORMAT_WIDGET = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_widget.json"
 DESTINATION_FORMAT_WIDGET = "Widgets/formatted-widget.json"
 WIDGET_PATH = "Widgets"
+WIDGET_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/widget.yml"
 
 SOURCE_FORMAT_REPORT = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_report.json"
 DESTINATION_FORMAT_REPORT = "Reports/formatted-Reports.json"
 REPORT_PATH = "Reports"
+REPORT_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/report.yml"
 
 SOURCE_FORMAT_PLAYBOOK = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_playbook.yml"
 DESTINATION_FORMAT_PLAYBOOK = "Playbook/playbook.yml"
 PLAYBOOK_PATH = "Playbook"
+PLAYBOOK_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/playbook.yml"
 
 SOURCE_FORMAT_TEST_PLAYBOOK = (
     f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_test_playbook.yml"
@@ -458,6 +461,9 @@ XSOAR_LINTER_PY3_INVALID_WARNINGS_PARTNER = f"{GIT_ROOT}/demisto_sdk/tests/test_
 
 DESTINATION_FORMAT_INTEGRATION = "Integrations/integration.yml"
 INTEGRATION_PATH = "Integrations"
+INTEGRATION_SCHEMA_PATH = (
+    f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/integration.yml"
+)
 CONNECTION_SCHEMA_PATH = (
     f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/canvas-context-connections.yml"
 )
@@ -481,9 +487,16 @@ GENERICFIELD_SCHEMA_PATH = (
 INCIDENTFIELD_SCHEMA_PATH = (
     f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/incidentfield.yml"
 )
+INCIDENTTYPE_SCHEMA_PATH = (
+    f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/incidenttype.yml"
+)
 INDICATORFIELD_SCHEMA_PATH = (
     f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/indicatorfield.yml"
 )
+INDICATORTYPE_SCHEMA_PATH = (
+    f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/reputation.yml"
+)
+SCRIPT_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/script.yml"
 
 DIR_LIST = [
     f"{PACK_TARGET}/{constants.INTEGRATIONS_DIR}",
@@ -501,3 +514,5 @@ DIR_LIST = [
     f"{PACK_TARGET}/{constants.INDICATOR_FIELDS_DIR}",
     constants.TESTS_DIR,
 ]
+
+DUMMY_XSIAM_PACK_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/DummyXSIAMPack"

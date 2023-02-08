@@ -1,0 +1,47 @@
+type: map
+mapping:
+  trigger_id:
+    type: str
+    required: true
+  trigger_name:
+    type: str
+    required: true
+  playbook_id:
+    type: str
+    required: true
+  description:
+    type: str
+    required: true
+  suggestion_reason:
+    type: str
+    required: true
+  alerts_filter:
+    type: map
+    mapping:
+      filter:
+        type: map
+        mapping:
+          OR:
+            type: seq
+            required: false
+            sequence:
+              - include: filter_schema
+          AND:
+            type: seq
+            required: false
+            sequence:
+              - include: filter_schema
+
+
+schema;filter_schema:
+  type: map
+  mapping:
+    SEARCH_FIELD:
+      type: str
+      required: true
+    SEARCH_TYPE:
+      type: str
+      required: true
+    SEARCH_VALUE:
+      type: str
+      required: true

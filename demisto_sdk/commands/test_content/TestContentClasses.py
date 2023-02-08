@@ -1511,10 +1511,13 @@ class Integration:
         server_url = self.build_context.get_public_ip_from_server_url(
             client.api_client.configuration.host
         )
+        self.build_context.logging_module.info("%%%%% ENTERING _set_integration_params")
         self._set_integration_params(server_url, playbook_id, is_mockable)
+        self.build_context.logging_module.info("%%%%% ENTERING _get_integration_config")
         configuration = self._get_integration_config(
             client.api_client.configuration.host
         )
+        self.build_context.logging_module.info(f"%%%%% configuration: {configuration}")
         if not configuration:
             self.build_context.logging_module.error(
                 f"Could not find configuration for integration {self}"
@@ -1522,6 +1525,9 @@ class Integration:
             return False
 
         module_configuration = configuration["configuration"]
+        self.build_context.logging_module.info(
+            f"%%%%% module_configuration: {module_configuration}"
+        )
         if not module_configuration:
             module_configuration = []
 
@@ -1544,13 +1550,17 @@ class Integration:
         module_instance = self.create_module(
             instance_name, configuration, instance_configuration
         )
-
+        self.build_context.logging_module.info(f"%%%%% params: {params}")
+        self.build_context.logging_module.info(
+            f"%%%%% module_instance: {module_instance}"
+        )
         # set server keys
         if not IS_XSIAM:
             self._set_server_keys(client, server_context)
 
         # set module params
         for param_conf in module_configuration:
+            self.build_context.logging_module.info(f"%%%%% param_conf: {param_conf}")
             if param_conf["display"] in params or param_conf["name"] in params:
                 # param defined in conf
                 key = (
@@ -1558,8 +1568,18 @@ class Integration:
                     if param_conf["display"] in params
                     else param_conf["name"]
                 )
+                self.build_context.logging_module.info(f"%%%%% key: {key}")
                 if key == "credentials":
                     credentials = params[key]
+                    self.build_context.logging_module.info(
+                        f"%%%%% credentials: {credentials}"
+                    )
+                    self.build_context.logging_module.info(
+                        f'%%%%% identifier: {credentials.get("identifier", "")}'
+                    )
+                    self.build_context.logging_module.info(
+                        f'%%%%% identifier: {credentials["identifier"]}'
+                    )
                     param_value = {
                         "credential": "",
                         "identifier": credentials.get("identifier", ""),
@@ -1568,6 +1588,9 @@ class Integration:
                     }
                 else:
                     param_value = params[key]
+                self.build_context.logging_module.info(
+                    f"%%%%% param_value: {param_value}"
+                )
 
                 param_conf["value"] = param_value
                 param_conf["hasvalue"] = True

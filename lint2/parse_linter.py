@@ -41,7 +41,7 @@ class RuffParser(BaseParser):
     @staticmethod
     def parse_line(raw: Union[str, dict]) -> LinterError:
         if not isinstance(raw, dict):
-            raise ValueError(f"must be a dictionary, got {raw}")
+            raise ValueError(f"input must be a dictionary, got {raw}")
 
         return LinterError(
             error_code=raw["code"],
@@ -60,7 +60,7 @@ class Flake8Parser(BaseParser):
     @staticmethod
     def parse_line(raw: Union[str, dict]) -> LinterError:
         if not isinstance(raw, dict):
-            raise ValueError(f"must be a dictionary, got {raw}")
+            raise ValueError(f"input must be a dictionary, got {raw}")
         return LinterError(
             error_code=raw["code"],
             row_start=raw["line_number"],
@@ -82,7 +82,7 @@ class MypyParser(BaseParser):
     @staticmethod
     def parse_line(raw: Union[str, dict]) -> LinterError:
         if not isinstance(raw, str):
-            raise ValueError(f"must be a string, got {raw}")
+            raise ValueError(f"input must be a string, got {raw}")
 
         if not (match := MypyParser._line_regex.match(raw)):
             raise ValueError(f"did not match on {raw}")
@@ -118,7 +118,7 @@ class VultureParser(BaseParser):
     @staticmethod
     def parse_line(raw: Union[str, dict]) -> LinterError:
         if not isinstance(raw, str):
-            raise ValueError(f"must be a string, got {raw}")
+            raise ValueError(f"input must be a string, got {raw}")
         if not (match := VultureParser._line_regex.match(raw)):
             raise ValueError(f"did not match on {raw}")
 
@@ -140,7 +140,7 @@ class BanditParser(BaseParser):
     @staticmethod
     def parse_line(raw: Union[str, dict]) -> LinterError:
         if not isinstance(raw, str):
-            raise ValueError(f"must be a str, got {raw}")
+            raise ValueError(f"input must be a str, got {raw}")
         if not (match := BanditParser._regex.match(raw)):
             raise ValueError(f"did not match on {raw}")
         match_dict = match.groupdict()
@@ -150,4 +150,23 @@ class BanditParser(BaseParser):
             row_start=match_dict["row_start"],
             path=Path(match_dict["path"]),
             error_message=match_dict["error_message"],
+        )
+
+
+class PylintParser(BaseParser):
+    @staticmethod
+    def parse_line(raw: Union[str, dict]) -> LinterError:
+        # NOTE: pylint returns a json with a list of dictionaries (one per error), we should call it on each.
+        if not isinstance(raw, dict):
+            raise ValueError(f"input must be a dict, got {raw}")
+
+        return LinterError(
+            error_code=raw["message-id"],
+            path=Path(raw["path"]),
+            row_start=raw["line"],
+            row_end=raw["endLine"],
+            error_message=raw["message"],
+            col_start=raw["column"],
+            col_end=raw["endColumn"],
+
         )

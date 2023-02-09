@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
-from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
+from demisto_sdk.commands.common.hook_validations.readme import mdx_server_is_up
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.mardown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import find_type, get_yaml, os, re
@@ -313,7 +313,7 @@ class DescriptionValidator(BaseValidator):
     def has_markdown_lint_errors(self):
         with open(self.file_path) as f:
             description_content = f.read()
-        if ReadMeValidator.start_mdx_server():
+        if mdx_server_is_up():
             markdown_response = run_markdownlint(description_content)
             if markdown_response.has_errors:
                 error_message, error_code = Errors.description_lint_errors(

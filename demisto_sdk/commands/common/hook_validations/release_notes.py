@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
-from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
+from demisto_sdk.commands.common.hook_validations.readme import mdx_server_is_up
 from demisto_sdk.commands.common.mardown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import (
     extract_docker_image_from_text,
@@ -410,7 +410,7 @@ class ReleaseNotesValidator(BaseValidator):
         Returns: a boolean to fail the validations according to markdownlint
 
         """
-        if ReadMeValidator.start_mdx_server():
+        if mdx_server_is_up():
             markdown_response = run_markdownlint(self.latest_release_notes)
             if markdown_response.has_errors:
                 error_message, error_code = Errors.release_notes_lint_errors(

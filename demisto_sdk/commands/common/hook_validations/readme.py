@@ -210,9 +210,7 @@ class ReadMeValidator(BaseValidator):
         )
 
     def mdx_verify_server(self) -> bool:
-        server_started = ReadMeValidator.start_mdx_server(
-            handle_error=self.handle_error, file_path=str(self.file_path)
-        )
+        server_started = mdx_server_is_up()
         if not server_started:
             return False
         readme_content = self.fix_mdx()
@@ -800,7 +798,7 @@ class ReadMeValidator(BaseValidator):
         Returns: a boolean to fail the validations according to markdownlint
 
         """
-        if ReadMeValidator.start_mdx_server():
+        if mdx_server_is_up():
             markdown_response = run_markdownlint(self.readme_content)
             if markdown_response.has_errors:
                 error_message, error_code = Errors.readme_lint_errors(
@@ -810,6 +808,8 @@ class ReadMeValidator(BaseValidator):
                     error_message, error_code, file_path=self.file_path
                 ):
                     return False
+        else:
+            return self.should_run_mdx_validation()
         return True
 
     @error_codes("RM107")

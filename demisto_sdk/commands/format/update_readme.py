@@ -4,8 +4,8 @@ import click
 
 from demisto_sdk.commands.common.hook_validations.readme import (
     ReadmeUrl,
-    ReadMeValidator,
     get_relative_urls,
+    mdx_server_is_up,
 )
 from demisto_sdk.commands.common.mardown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import print_error, print_warning
@@ -143,7 +143,7 @@ class ReadmeFormat(BaseUpdate):
             return format_res, self.initiate_file_validator()
 
     def fix_lint_markdown(self):
-        if ReadMeValidator.start_mdx_server():
+        if mdx_server_is_up():
             if self.readme_content:
                 response = run_markdownlint(
                     file_path=self.source_file,

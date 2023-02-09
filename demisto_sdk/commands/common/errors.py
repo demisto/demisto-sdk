@@ -2216,7 +2216,6 @@ class Errors:
         )
 
     @staticmethod
-    @error_code_decorator
     def error_starting_docker_mdx_server(line):
         return (
             f"Failed starting docker mdx server. stdout: {line}.\n"

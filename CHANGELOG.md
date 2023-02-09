@@ -1,6 +1,7 @@
 # Changelog
 
-## Unreleased
+## 1.10.1
+* Infrastructure changes and stability enhancements.
 
 
 ## 1.10.0

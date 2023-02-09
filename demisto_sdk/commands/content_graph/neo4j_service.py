@@ -5,14 +5,15 @@ from pathlib import Path
 import docker
 import requests
 
-from demisto_sdk.commands.common.tools import get_content_path
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_HTTP,
     NEO4J_FOLDER,
     NEO4J_PASSWORD,
 )
 
-REPO_PATH = Path(get_content_path())  # type: ignore
+REPO_PATH = CONTENT_PATH
 
 NEO4J_VERSION = "4.4.12"
 
@@ -35,23 +36,6 @@ class Neo4jServiceException(Exception):
     pass
 
 
-def _get_docker_client() -> docker.DockerClient:
-    """Helper function to get the docker client
-
-    Raises:
-        Neo4jServiceException: If docker is not available in the system.
-
-    Returns:
-        docker.DockerClient: The docker client to use
-    """
-    try:
-        docker_client = docker.from_env()
-    except docker.errors.DockerException:
-        msg = "Could not connect to docker daemon. Please make sure docker is running."
-        raise Neo4jServiceException(msg)
-    return docker_client
-
-
 def _stop_neo4j_service_docker(docker_client: docker.DockerClient):
     """Helper function to stop the neo4j service docker container
 
@@ -65,7 +49,7 @@ def _stop_neo4j_service_docker(docker_client: docker.DockerClient):
         neo4j_docker.stop()
         neo4j_docker.remove(force=True)
     except Exception as e:
-        logger.info(f"Could not remove neo4j container: {e}")
+        logger.debug(f"Could not remove neo4j container: {e}")
 
 
 def _is_apoc_available(plugins_path: Path, sha1: str) -> bool:
@@ -115,7 +99,7 @@ def start():
     # we download apoc only if we are running on docker
     # if the user is running locally he needs to setup apoc manually
     _download_apoc()
-    docker_client = _get_docker_client()
+    docker_client = init_global_docker_client()
     _stop_neo4j_service_docker(docker_client)
     docker_client.containers.run(
         image=NEO4J_SERVICE_IMAGE,
@@ -149,9 +133,9 @@ def stop():
     if not is_alive():
         return
     if not is_running_on_docker():
-        logger.info("Neo4j is running locally. Stop with `neo4j stop`")
+        logger.debug("Neo4j is running locally. Stop with `neo4j stop`")
         return
-    docker_client = _get_docker_client()
+    docker_client = init_global_docker_client()
     _stop_neo4j_service_docker(docker_client)
 
 

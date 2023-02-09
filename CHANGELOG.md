@@ -1,17 +1,44 @@
 # Changelog
+
 ## Unreleased
+* Fixed an issue where **lint** failed when using the `-cdam` flag with changed dependant api modules due to partial file duplications filtering.
+
+## 1.10.1
+* Fixed an issue where **update-content-graph** failed to execute.
+
+## 1.10.0
+* **Breaking change**: Removed usage of `pipenv`, `isort` and `autopep8` in the **split** and **download** commands. Removed the `--no-pipenv` and `--no-code-formatting` flags. Please see https://xsoar.pan.dev/docs/tutorials/tut-setup-dev-remote for the recommended environment setup.
+* Fixed an issue in **prepare-content** command where large code lines were broken.
+* Fixed an issue where git-*renamed_files* were not retrieved properly.
+* Fixed an issue where test dependencies were calculated in all level dependencies calculation.
+* Added formatting and validation to XSIAM content types.
+* Fixed an issue where several XSIAM content types were not validated when passing the `-a` flag.
+* Added a UUID to name mapper for **download** it replaces UUIDs with names on all downloaded files.
+* Updated the demisto-py to v3.2.6 which now supports basic proxy authentication.
+* Improved the message shown when using **upload** and overwriting packs.
+* Added support for the **Layout Rule** content type in the id-set and the content graph.
+* Updated the default general `fromVersion` value on **format** to `6.8.0`
+* Fixed an issue where **lint** sometimes failed when using the `-cdam` flag due to wrong file duplications filtering.
+* Added the content graph to **validate**, use with the `--graph` flag.
+
+
+## 1.9.0
 * Fixed an issue where the Slack notifier was using a deprecated argument.
 * Added the `--docker-image` argument to the **lint** command, which allows determining the docker image to run lint on. Possible options are: `'native:ga'`, `'native:maintenance'`, `'native:dev'`, `'all'`, a specific docker image (from Docker Hub) or, the default `'from-yml'`.
 * Fixed an issue in **prepare-content** command where large code lines were broken.
 * Added a logger warning to **get_demisto_version**, the task will now fail with a more informative message.
 * Fixed an issue where the **upload** and **prepare-content** commands didn't add `fromServerVersion` and `toServerVersion` to layouts.
 * Updated **lint** to use graph instead of id_set when running with `--check-dependent-api-module` flag.
-
+* Added the marketplaces field to all schemas.
+* Added the flag `--xsoar-only` to the **doc-review** command which enables reviewing documents that belong to XSOAR-supported Packs.
+* Fixed an issue in **update-release-notes** command where an error occurred when executing the same command a second time.
+* Fixed an issue where **validate** would not always ignore errors listed under `.pack-ignore`.
+* Fixed an issue where running **validate** on a specific pack didn't test all the relevant entities.
+* Fixed an issue where fields ending with `_x2` where not replaced in the appropriate Marketplace.
 
 ## 1.8.3
 * Changed **validate** to allow hiding parameters of type 0, 4, 12 and 14 when replacing with type 9 (credentials) with the same name.
 * Fixed an issue where **update-release-notes** fails to update *MicrosoftApiModule* dependent integrations.
-* Added the flag `--xsoar-only` to the **doc-review** command which enables reviewing documents that belong to XSOAR-supported Packs.
 * Fixed an issue where the **upload** command failed because `docker_native_image_config.json` file could not be found.
 * Added a metadata file to the content graph zip, to be used in the **update-content-graph** command.
 * Updated the **validate** and **update-release-notes** commands to unskip the *Triggers Recommendations* content type.
@@ -38,7 +65,6 @@
 * Fixed an issue where **doc-review** failed when reviewing command name in some cases.
 * Fixed an issue where **download** didn't identify playbooks properly, and downloaded files with UUIDs instead of file/script names.
 
-
 ## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.
 * Added hidden properties to integration command argument and script argument.
@@ -46,7 +72,6 @@
 * Fixed an issue where **validate** failed in private repos when attempting to read from a nonexisting `approved_categories.json`.
 * Fixed an issue where **validate** used absolute paths when getting remote `pack_metadata.json` files in private repos.
 * Fixed an issue in **download**, where names of custom scripts were replaced with UUIDs in IncidentFields and Layouts.
-* Fixed an issue where fields ending with `_x2` where not replaced in the appropriate Marketplace.
 
 ## 1.8.0
 * Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.

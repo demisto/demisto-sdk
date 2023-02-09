@@ -161,12 +161,8 @@ ON CREATE
 ON MATCH
     SET dep.is_test = dep.is_test AND a.is_test
 
-WITH dep, pack_a, a, r, b, pack_b, REDUCE(
-    marketplaces = [], mp IN pack_a.marketplaces |
-    CASE WHEN mp IN pack_b.marketplaces THEN marketplaces + mp ELSE marketplaces END
-) AS common_marketplaces
-SET dep.marketplaces = common_marketplaces,
-    dep.mandatorily = CASE WHEN dep.from_metadata THEN dep.mandatorily
+WITH dep, pack_a, a, r, b, pack_b
+SET dep.mandatorily = CASE WHEN dep.from_metadata THEN dep.mandatorily
                 ELSE r.mandatorily OR dep.mandatorily END
 WITH
     pack_a.object_id AS pack_a,

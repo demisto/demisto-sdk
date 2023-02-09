@@ -1,5 +1,7 @@
 # Changelog
+
 ## Unreleased
+* Fixed an issue where **lint** failed when using the `-cdam` flag with changed dependant api modules due to partial file duplications filtering.
 * Added integration configuration for *Cortex REST API* integration.
 
 ## 1.10.1
@@ -19,6 +21,7 @@
 * Updated the default general `fromVersion` value on **format** to `6.8.0`
 * Fixed an issue where **lint** sometimes failed when using the `-cdam` flag due to wrong file duplications filtering.
 * Added the content graph to **validate**, use with the `--graph` flag.
+
 
 ## 1.9.0
 * Fixed an issue where the Slack notifier was using a deprecated argument.

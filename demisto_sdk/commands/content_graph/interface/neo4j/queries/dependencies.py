@@ -1,8 +1,9 @@
 import json
 import logging
 import os
-from typing import Dict, List
 from pathlib import Path
+from typing import Dict, List
+
 from neo4j import Transaction
 
 from demisto_sdk.commands.common.constants import (
@@ -187,6 +188,8 @@ RETURN
                 msg += f"{idx}. [{reason.get('source')}] -> [{reason.get('target')}] (mandatorily: {reason.get('mandatorily')})\n"
             logger.debug(msg)
 
-    if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(artifacts_folder).exists():
+    if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
+        artifacts_folder
+    ).exists():
         with open(f"{artifacts_folder}/depends_on.json", "w") as fp:
             json.dump(outputs, fp, indent=4)

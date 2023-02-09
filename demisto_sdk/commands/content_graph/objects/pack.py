@@ -158,7 +158,7 @@ class PackMetadata(BaseModel):
     videos: Optional[List[str]]
 
     # For private packs
-    premium: bool
+    premium: Optional[bool]
     vendor_id: Optional[str] = Field(None, alias="vendorId")
     partner_id: Optional[str] = Field(None, alias="partnerId")
     partner_name: Optional[str] = Field(None, alias="partnerName")
@@ -182,8 +182,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         return CONTENT_PATH / v
 
     @property
-    def is_private(self) -> bool:
-        return self.premium
+    def is_private(self) -> Optional[bool]:
+        return self.premium or False
 
     @property
     def depends_on(self) -> List["RelationshipData"]:

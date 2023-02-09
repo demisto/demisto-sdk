@@ -23,7 +23,7 @@ class IncidentFieldParser(
 
     @property
     def object_id(self) -> Optional[str]:
-        return self.json_data.get("id")
+        return self.json_data.get("cliName")
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

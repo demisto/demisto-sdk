@@ -288,8 +288,9 @@ class Nodes(dict):
             self.add_batch(data)
 
 
-class PackTags(object):
-    """ Pack tag constants """
+class PackTags:
+    """Pack tag constants"""
+
     TRENDING = "Trending"
     NEW = "New"
     TIM = "TIM"

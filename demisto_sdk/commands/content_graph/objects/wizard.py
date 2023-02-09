@@ -10,4 +10,11 @@ class Wizard(ContentItem, content_type=ContentType.WIZARD):  # type: ignore[call
     playbooks: List[str]
 
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "name", "description", "dependency_packs", "fromVersion", "toVersion"}
+        return {
+            "object_id",
+            "name",
+            "description",
+            "dependency_packs",
+            "fromVersion",
+            "toVersion",
+        }

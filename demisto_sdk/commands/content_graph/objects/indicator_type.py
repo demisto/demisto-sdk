@@ -15,4 +15,9 @@ class IndicatorType(ContentItem, content_type=ContentType.INDICATOR_TYPE):  # ty
     )
 
     def metadata_fields(self) -> Set[str]:
-        return {"object_id", "details", "reputation_script_name", "enhancement_script_names"}
+        return {
+            "object_id",
+            "details",
+            "reputation_script_name",
+            "enhancement_script_names",
+        }

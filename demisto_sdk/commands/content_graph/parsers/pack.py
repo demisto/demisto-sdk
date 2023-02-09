@@ -98,14 +98,25 @@ class PackMetadataParser:
         self.description: str = metadata["description"]
         self.created: str = metadata.get("created", "")
         self.updated: str = metadata.get("updated", "")
-        self.legacy: bool = metadata.get("legacy", metadata.get("partnerId") is None)  # default: True, private default: False
+        self.legacy: bool = metadata.get(
+            "legacy", metadata.get("partnerId") is None
+        )  # default: True, private default: False
         self.support: str = metadata["support"]
-        self.url: str = metadata.get("url", "https://www.paloaltonetworks.com/cortex" if self.support == "xsoar" else "")
+        self.url: str = metadata.get(
+            "url",
+            "https://www.paloaltonetworks.com/cortex"
+            if self.support == "xsoar"
+            else "",
+        )
         self.email: str = metadata.get("email", "")
-        self.eulaLink: str = metadata.get("eulaLink", "https://github.com/demisto/content/blob/master/LICENSE")
+        self.eulaLink: str = metadata.get(
+            "eulaLink", "https://github.com/demisto/content/blob/master/LICENSE"
+        )
         self.author: str = metadata["author"]
         self.authorImage: str = self.get_author_image(path=path)
-        self.certification: str = self.get_certification(certification=metadata.get('certification'))
+        self.certification: str = self.get_certification(
+            certification=metadata.get("certification")
+        )
         self.price: int = int(metadata.get("price", 0))
         self.hidden: bool = metadata.get("hidden", False)
         self.server_min_version: str = metadata.get("serverMinVersion", "")

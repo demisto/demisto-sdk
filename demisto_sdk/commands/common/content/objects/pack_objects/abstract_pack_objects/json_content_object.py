@@ -7,6 +7,7 @@ from wcmatch.pathlib import Path
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
+    ContentItems,
 )
 from demisto_sdk.commands.common.content.objects.abstract_objects import JSONObject
 from demisto_sdk.commands.common.content.objects.pack_objects.change_log.change_log import (
@@ -119,15 +120,18 @@ class JSONContentObject(JSONObject):
         TODO:
             1. Handling case where object changed and need to be serialized.
         """
-        dest_dir = self._create_target_dump_dir(dest_dir=dest_dir)
-
         created_files: List[Path] = []
-        if self.modified:
-            created_files.extend(self._serialize(dest_dir))
-        else:
-            created_files.extend(self._unify(dest_dir=dest_dir, output=self.normalize_file_name()))
 
-        # created_files.extend(super().dump(dest_dir=dest_dir))
+        if ContentItems.LAYOUTS.value in self.path.name:
+            dest_dir = self._create_target_dump_dir(dest_dir=dest_dir)
+            if self.modified:
+                created_files.extend(self._serialize(dest_dir))
+            else:
+                created_files.extend(
+                    self._unify(dest_dir=dest_dir, output=self.normalize_file_name())
+                )
+        else:
+            created_files.extend(super().dump(dest_dir=dest_dir))
         # Dump changelog if requested and available
         if change_log and self.changelog:
             created_files.extend(self.changelog.dump(dest_dir))

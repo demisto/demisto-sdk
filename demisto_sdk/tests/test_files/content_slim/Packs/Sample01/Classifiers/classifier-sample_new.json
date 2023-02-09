@@ -1,6 +1,6 @@
 {
   "toVersion": "4.0.0",
-  "transformer": "test",
-  "keyTypeMap": "test",
+  "transformer": {},
+  "keyTypeMap": {},
   "type": "classification"
 }

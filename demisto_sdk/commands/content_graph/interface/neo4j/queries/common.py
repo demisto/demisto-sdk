@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 from neo4j import Result, Transaction
+from packaging.version import Version
 
 from demisto_sdk.commands.content_graph.common import ContentType
 
@@ -16,6 +17,11 @@ def labels_of(content_type: ContentType) -> str:
 
 
 def versioned(property: str) -> str:
+    try:
+        Version(property)
+        property = f'"{property}"'
+    except Exception:
+        pass
     return f'toIntegerList(split({property}, "."))'
 
 
@@ -52,9 +58,9 @@ def to_neo4j_map(properties: dict) -> str:
 def run_query(tx: Transaction, query: str, **kwargs: Dict[str, Any]) -> Result:
     try:
         start_time: datetime = datetime.now()
-        logger.info(f"Running query:\n{query}")
+        logger.debug(f"Running query:\n{query}")
         result = tx.run(query, **kwargs)
-        logger.info(f"Took {(datetime.now() - start_time).total_seconds()} seconds")
+        logger.debug(f"Took {(datetime.now() - start_time).total_seconds()} seconds")
         return result
     except Exception as e:
         logger.error(traceback.format_exc())

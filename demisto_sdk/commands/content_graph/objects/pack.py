@@ -147,6 +147,7 @@ class PackMetadata(BaseModel):
     vendor_id: Optional[str] = Field(None, alias="vendorId")
     vendor_name: Optional[str] = Field(None, alias="vendorName")
     preview_only: Optional[bool] = Field(None, alias="previewOnly")
+    excluded_dependencies: Optional[List[str]]
 
 
 class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: ignore[call-arg]
@@ -213,7 +214,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         self.content_items = PackContentItems(**content_item_dct)
 
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
-        metadata = self.dict(exclude={"path", "node_id", "content_type"})
+        metadata = self.dict(
+            exclude={"path", "node_id", "content_type", "excluded_dependencies"}
+        )
         metadata["contentItems"] = {}
         for content_item in self.content_items:
             try:
@@ -266,15 +269,17 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             try:
                 shutil.copytree(self.path / "ReleaseNotes", path / "ReleaseNotes")
             except FileNotFoundError:
-                logger.info(f'No such file {self.path / "ReleaseNotes"}')
+                logger.debug(f'No such file {self.path / "ReleaseNotes"}')
             try:
                 shutil.copy(self.path / "Author_image.png", path / "Author_image.png")
             except FileNotFoundError:
-                logger.info(f'No such file {self.path / "Author_image.png"}')
+                logger.debug(f'No such file {self.path / "Author_image.png"}')
             if self.object_id == BASE_PACK:
                 self.handle_base_pack(path)
 
-            logger.info(f"Dumped pack {self.name}. Files: {list(path.iterdir())}")
+            pack_files = "\n".join([str(f) for f in path.iterdir()])
+            logger.info(f"Dumped pack {self.name}.")
+            logger.debug(f"Pack {self.name} files:\n{pack_files}")
         except Exception as e:
             logger.error(f"Failed dumping pack {self.name}: {e}")
             raise

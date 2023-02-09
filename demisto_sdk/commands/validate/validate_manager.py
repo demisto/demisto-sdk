@@ -71,6 +71,7 @@ from demisto_sdk.commands.common.hook_validations.generic_module import (
 from demisto_sdk.commands.common.hook_validations.generic_type import (
     GenericTypeValidator,
 )
+from demisto_sdk.commands.common.hook_validations.graph_validator import GraphValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.incident_field import (
@@ -170,6 +171,7 @@ class ValidateManager:
         only_committed_files=False,
         print_ignored_files=False,
         skip_conf_json=True,
+        validate_graph=False,
         validate_id_set=False,
         file_path=None,
         validate_all=False,
@@ -205,6 +207,7 @@ class ValidateManager:
         self.print_ignored_errors = print_ignored_errors
         self.skip_dependencies = skip_dependencies or not use_git
         self.skip_id_set_creation = not create_id_set or skip_dependencies
+        self.validate_graph = validate_graph
         self.compare_type = "..."
         self.staged = staged
         self.skip_schema_check = skip_schema_check
@@ -504,6 +507,16 @@ class ValidateManager:
             fg="bright_cyan",
         )
         all_packs_valid = set()
+
+        if self.validate_graph:
+            click.secho(
+                f"\n================= Validating graph =================",
+                fg="bright_cyan",
+            )
+            with GraphValidator(
+                specific_validations=self.specific_validations
+            ) as graph_validator:
+                all_packs_valid.add(graph_validator.is_valid_content_graph())
 
         if not self.skip_conf_json:
             all_packs_valid.add(self.conf_json_validator.is_valid_conf_json())
@@ -1250,6 +1263,21 @@ class ValidateManager:
         )
 
         validation_results = {valid_git_setup, valid_types}
+
+        if self.validate_graph:
+            click.secho(
+                f"\n================= Validating graph =================",
+                fg="bright_cyan",
+            )
+            all_files_set = list(
+                set().union(modified_files, added_files, old_format_files)
+            )
+            if all_files_set:
+                with GraphValidator(
+                    specific_validations=self.specific_validations,
+                    git_files=all_files_set,
+                ) as graph_validator:
+                    validation_results.add(graph_validator.is_valid_content_graph())
 
         validation_results.add(self.validate_modified_files(modified_files))
         validation_results.add(self.validate_added_files(added_files, modified_files))

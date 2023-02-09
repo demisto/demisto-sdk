@@ -25,7 +25,7 @@ class ContentDTO(BaseModel):
         self, dir: DirectoryPath, marketplace: MarketplaceVersions, zip: bool = True
     ):
         dir.mkdir(parents=True, exist_ok=True)
-        logger.info("starting repo dump")
+        logger.debug("Starting repository dump")
         start_time = time.time()
         if USE_FUTURE:
             with Pool(processes=cpu_count()) as pool:
@@ -39,7 +39,7 @@ class ContentDTO(BaseModel):
                 pack.dump(dir / pack.path.name, marketplace)
 
         time_taken = time.time() - start_time
-        logger.info(f"ending repo dump. Took {time_taken} seconds")
+        logger.debug(f"Repository dump ended. Took {time_taken} seconds")
 
         if zip:
             shutil.make_archive(str(dir.parent / "content_packs"), "zip", dir)

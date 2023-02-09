@@ -112,7 +112,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
     @staticmethod
     def from_path(path: Path) -> Optional["BaseContent"]:
-        logger.info(f"Loading content item from path: {path}")
+        logger.debug(f"Loading content item from path: {path}")
         if path.is_dir() and path.parent.name == "Packs":  # if the path given is a pack
             return content_type_to_model[ContentType.PACK].from_orm(PackParser(path))
         content_item_parser = ContentItemParser.from_path(path)
@@ -132,7 +132,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             return None
 
         model = content_type_to_model.get(content_item_parser.content_type)
-        logger.info(f"Loading content item from path: {path} as {model}")
+        logger.debug(f"Loading content item from path: {path} as {model}")
         if not model:
             logger.error(f"Could not parse content item from path: {path}")
             return None
@@ -163,6 +163,11 @@ class UnknownContent(BaseContent):
     not_in_repository: bool = True
     node_id: str = ""  # just because it's missing from the db
     object_id: str = ""
+    name: str = ""
 
     def dump(self, _, __):
         ...
+
+    @property
+    def identifier(self):
+        return self.object_id or self.name

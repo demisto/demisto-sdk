@@ -123,6 +123,11 @@ class Repo:
         classifier.update({"keyTypeMap": {}})
         classifier.update({"type": "classification"})
 
+        layout = pack.create_layout(f"{name}_layout")
+        layout.write_json({"id": f"{name} - layout"})
+        layout.update({"name": f"{name} - layout"})
+        layout.update({"kind": ""})
+
         layoutcontainer = pack.create_layoutcontainer(f"{name}_layoutcontainer")
         layoutcontainer.write_json({"id": f"{name} - layoutcontainer"})
         layoutcontainer.update({"name": f"{name} - layoutscontainer"})

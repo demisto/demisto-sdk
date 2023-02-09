@@ -466,14 +466,15 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self._import_handler.ensure_data_uniqueness()
         node_files = self._import_handler.get_nodes_files()
         relationship_files = self._import_handler.get_relationships_files()
-        with self.driver.session() as session:
-            session.write_transaction(drop_constraints)
-            session.write_transaction(import_csv, node_files, relationship_files)
-            session.write_transaction(post_import_write_queries)
-            session.write_transaction(merge_duplicate_commands)
-            session.write_transaction(merge_duplicate_content_items)
-            session.write_transaction(create_constraints)
-            session.write_transaction(remove_empty_properties)
+        if node_files and relationship_files:
+            with self.driver.session() as session:
+                session.write_transaction(drop_constraints)
+                session.write_transaction(import_csv, node_files, relationship_files)
+                session.write_transaction(post_import_write_queries)
+                session.write_transaction(merge_duplicate_commands)
+                session.write_transaction(merge_duplicate_content_items)
+                session.write_transaction(create_constraints)
+                session.write_transaction(remove_empty_properties)
 
     def export_graph(self, output_path: Optional[Path] = None) -> None:
         self.clean_import_dir()

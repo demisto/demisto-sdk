@@ -2,7 +2,7 @@ import logging
 import shutil
 from collections import defaultdict
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Generator, List, Optional
+from typing import TYPE_CHECKING, Any, Generator, List, Dict, Optional, Tuple
 from datetime import datetime
 
 from packaging.version import parse
@@ -238,40 +238,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         self.content_items = PackContentItems(**content_item_dct)
 
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
-        content_items: dict = {}
-        content_displays: dict = {}
-        for content_item in self.content_items:
-            try:
-                content_items.setdefault(
-                    content_item.content_type.metadata_name, []
-                ).append(content_item.summary(marketplace))
-                content_displays[content_item.content_type.metadata_name] = content_item.content_type.metadata_display_name  # type: ignore[index]
-            except NotImplementedError as e:
-                logger.debug(f"Could not add {content_item.name} to pack metadata: {e}")
-            except TypeError as e:
-                raise Exception(f"Could not set metadata_name of type {content_item.content_type} - {content_item.content_type.metadata_name} - {content_item.content_type.metadata_display_name} in {content_displays}\n{e}")
+        self.enhance_pack_properties(marketplace)
 
-        content_displays = {content_type: content_type_display if len(content_items[content_type]) == 1 else f"{content_type_display}s"
-                            for content_type, content_type_display in content_displays.items()}  # type: ignore[union-attr]
-        self.tags = self.get_pack_tags(marketplace)
-        self.server_min_version = self.server_min_version or str(
-            max((parse(content_item.fromversion) for content_item in self.content_items), default=MARKETPLACE_MIN_VERSION)
-        ) or MARKETPLACE_MIN_VERSION
-
-        # self.dependencies = self.enhance_dependencies()
-
-        excluded_fields_from_metadata = {"path", "node_id", "content_type", "url", "email", "excluded_dependencies"}
+        excluded_fields_from_metadata = {"path", "node_id", "content_type", "url", "email"}
         if not self.is_private:
             excluded_fields_from_metadata |= {"premium", "vendor_id", "partner_id", "partner_name", "preview_only", "disable_monthly"}
-        metadata = self.dict(exclude=excluded_fields_from_metadata, by_alias=True)
 
-        metadata["contentItems"] = content_items
-        metadata["commit"] = self.get_last_commit()
-        metadata["dependencies"] = self.enhance_dependencies()
-        metadata["contentDisplay"] = content_displays
-        metadata["support_details"] = {"url": self.url}
-        if self.email:
-            metadata["support_details"]["email"] = self.email
+        metadata = self.dict(exclude=excluded_fields_from_metadata, by_alias=True)
+        metadata.update(self.enhance_metadata(marketplace))
 
         with open(path, "w") as f:
             json.dump(metadata, f, indent=4, sort_keys=True)
@@ -352,6 +326,57 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             *[content_item.to_dict() for content_item in self.content_items],
         )
 
+    def enhance_pack_properties(self, marketplace: MarketplaceVersions):
+        self.tags = self.get_pack_tags(marketplace)
+        self.server_min_version = self.server_min_version or str(
+            max((parse(content_item.fromversion) for content_item in self.content_items), default=MARKETPLACE_MIN_VERSION)
+        ) or MARKETPLACE_MIN_VERSION
+
+    def enhance_metadata(self, marketplace: MarketplaceVersions) -> dict:
+        _metadata: dict = {}
+
+        content_items, content_displays = self.get_content_items_and_displays_metadata(marketplace)
+        support_details = {"url": self.url}
+        if self.email:
+            support_details["email"] = self.email
+
+        _metadata.update({
+            "contentItems": content_items,
+            "contentDisplays": content_displays,
+            "commit": self.get_last_commit(),
+            "dependencies": self.enhance_dependencies(),
+            "supportDetails": support_details
+        })
+
+        return _metadata
+
+    def get_content_items_and_displays_metadata(self, marketplace: MarketplaceVersions) -> Tuple[Dict, Dict]:
+        content_items: dict = {}
+        content_displays: dict = {}
+        for content_item in self.content_items:
+            try:
+                content_item_summary = content_item.summary(marketplace)
+
+                if content_item.content_type == ContentType.INCIDENT_FIELD:
+                    incident_field_cliname = content_item.object_id
+                    content_item_summary["id"] = f"incident_{incident_field_cliname}"
+
+                content_items.setdefault(
+                    content_item.content_type.metadata_name, []
+                ).append(content_item_summary)
+
+                content_displays[content_item.content_type.metadata_name] = content_item.content_type.metadata_display_name  # type: ignore[index]
+            except NotImplementedError as e:
+                logger.debug(f"Could not add {content_item.name} to pack metadata: {e}")
+            except TypeError as e:
+                raise Exception(f"Could not set metadata_name of type {content_item.content_type.metadata_name} - "
+                                f"{content_item.content_type.metadata_display_name} in {content_displays}\n{e}")
+
+        content_displays = {content_type: content_type_display if len(content_items[content_type]) == 1 else f"{content_type_display}s"
+                            for content_type, content_type_display in content_displays.items()}  # type: ignore[union-attr]
+
+        return content_items, content_displays
+
     def enhance_dependencies(self):
         return {r.content_item_to.object_id: {
             "mandatory": r.mandatorily,
@@ -389,6 +414,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     def get_tags_by_marketplace(self, marketplace: str):
         """ Returns tags in according to the current marketplace"""
         tags: set = set()
+
+        if not self.tags:
+            return tags
+
         for tag in self.tags:
             if ':' in tag:
                 tag_data = tag.split(':')

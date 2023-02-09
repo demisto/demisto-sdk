@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from pathlib import Path
 from typing import Dict, List
 
 from neo4j import Transaction
@@ -161,12 +162,8 @@ ON CREATE
 ON MATCH
     SET dep.is_test = dep.is_test AND a.is_test
 
-WITH dep, pack_a, a, r, b, pack_b, REDUCE(
-    marketplaces = [], mp IN pack_a.marketplaces |
-    CASE WHEN mp IN pack_b.marketplaces THEN marketplaces + mp ELSE marketplaces END
-) AS common_marketplaces
-SET dep.marketplaces = common_marketplaces,
-    dep.mandatorily = CASE WHEN dep.from_metadata THEN dep.mandatorily
+WITH dep, pack_a, a, r, b, pack_b
+SET dep.mandatorily = CASE WHEN dep.from_metadata THEN dep.mandatorily
                 ELSE r.mandatorily OR dep.mandatorily END
 WITH
     pack_a.object_id AS pack_a,
@@ -191,6 +188,8 @@ RETURN
                 msg += f"{idx}. [{reason.get('source')}] -> [{reason.get('target')}] (mandatorily: {reason.get('mandatorily')})\n"
             logger.debug(msg)
 
-    if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
+    if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
+        artifacts_folder
+    ).exists():
         with open(f"{artifacts_folder}/depends_on.json", "w") as fp:
             json.dump(outputs, fp, indent=4)

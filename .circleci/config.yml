@@ -265,6 +265,7 @@ jobs:
   validate-files:
       docker:
         - image: << pipeline.parameters.global-docker-image >>
+      resource_class: large
       steps:
         - checkout
         - <<: *install_poetry

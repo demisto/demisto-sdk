@@ -283,13 +283,13 @@ jobs:
             command: |
               source $(poetry env info --path)/bin/activate
 
-              neo4j start
-              # poll for neo4j status until available
-              while ! neo4j status; do sleep 1; done
-
               cd content
               demisto-sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
+              
+              neo4j start
+              # poll for neo4j status until available
+              while ! neo4j status; do sleep 1; done
 
               ./Tests/scripts/validate.sh
   test-lint:

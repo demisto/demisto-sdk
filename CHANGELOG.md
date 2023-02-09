@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where **lint** failed when using the `-cdam` flag with changed dependant api modules due to partial file duplications filtering.
 
 ## 1.10.1
 * Fixed an issue where **update-content-graph** failed to execute.

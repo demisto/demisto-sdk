@@ -72,8 +72,7 @@ def update_content_graph(
     if use_git and (commit := content_graph_interface.commit):
         packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
 
-    if imported_path or use_current:
-        content_graph_interface.import_graph(imported_path)
+    content_graph_interface.import_graph(imported_path)
 
     packs_str = "\n".join([f"- {p}" for p in packs_to_update])
     logger.info(f"Updating the following packs:\n{packs_str}")

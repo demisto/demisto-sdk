@@ -410,16 +410,14 @@ def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
     if not is_external_repository():
         core_pack_list = []
         for mp in marketplaces or MarketplaceVersions:
-            core_pack_list.extend(
-                get_remote_file(
-                    MARKETPLACE_TO_CORE_PACKS_FILE[mp],
-                    git_content_config=GitContentConfig(
-                        repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
-                        git_provider=GitProvider.GitHub,
-                    ),
-                )
-                or []
+            core_packs_definition = get_remote_file(
+                MARKETPLACE_TO_CORE_PACKS_FILE[mp],
+                git_content_config=GitContentConfig(
+                    repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
+                    git_provider=GitProvider.GitHub,
+                ),
             )
+            core_pack_list.extend(core_packs_definition.get('core_packs_list') or [])
         core_pack_list = list(set(core_pack_list))
     else:
         # no core packs in external repos.

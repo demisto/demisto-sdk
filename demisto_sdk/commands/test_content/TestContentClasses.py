@@ -1276,7 +1276,7 @@ class Integration:
                 self.configuration.params = {  # type: ignore
                     "url": server_url,
                     "credentials": {
-                        "identifier": self.build_context.auth_id,
+                        "identifier": str(self.build_context.auth_id),
                         "password": self.build_context.api_key,
                     },
                     "auth_method": "Standard",

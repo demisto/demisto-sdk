@@ -128,8 +128,9 @@ class JSONContentObject(JSONObject):
             or self.modified
             or self.to_version <= parse("6.0.0")
         ):
-            # layouts (not layoutscontainers), connections and pre-process rules
-            # are not supported in content graph objects.
+            # 1. layouts (not layoutscontainer), connection and pre-processing rules are not supported in graph objects.
+            # 2. any json object that its toversion is less than 6.0.0 is an old object that graph objects might
+            # not be able to parse it.
             created_files.extend(super().dump(dest_dir=dest_dir))
         else:
             created_files.extend(

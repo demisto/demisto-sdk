@@ -7,7 +7,7 @@ from wcmatch.pathlib import Path
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
-    ContentItems,
+    FileType,
 )
 from demisto_sdk.commands.common.content.objects.abstract_objects import JSONObject
 from demisto_sdk.commands.common.content.objects.pack_objects.change_log.change_log import (
@@ -122,16 +122,20 @@ class JSONContentObject(JSONObject):
         """
         created_files: List[Path] = []
 
-        if ContentItems.LAYOUTS.value in self.path.name:
-            dest_dir = self._create_target_dump_dir(dest_dir=dest_dir)
-            if self.modified:
-                created_files.extend(self._serialize(dest_dir))
-            else:
-                created_files.extend(
-                    self._unify(dest_dir=dest_dir, output=self.normalize_file_name())
-                )
-        else:
+        if (
+            self.type()
+            in (FileType.LAYOUT, FileType.CONNECTION, FileType.PRE_PROCESS_RULES)
+            or self.modified
+        ):
+            # use the old dump method, cause those content items are not supported in graph objects
             created_files.extend(super().dump(dest_dir=dest_dir))
+        else:
+            created_files.extend(
+                self._unify(
+                    dest_dir=self._create_target_dump_dir(dest_dir=dest_dir),
+                    output=self.normalize_file_name(),
+                )
+            )
         # Dump changelog if requested and available
         if change_log and self.changelog:
             created_files.extend(self.changelog.dump(dest_dir))

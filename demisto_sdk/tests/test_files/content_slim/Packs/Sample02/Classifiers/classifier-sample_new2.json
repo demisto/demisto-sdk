@@ -2,5 +2,7 @@
   "toVersion": "4.0.0",
   "transformer": {},
   "keyTypeMap": {},
-  "type": "classification"
+  "type": "classification",
+  "id": "test",
+  "name": "test"
 }

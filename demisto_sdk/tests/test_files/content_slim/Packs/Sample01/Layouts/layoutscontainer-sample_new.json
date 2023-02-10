@@ -4,7 +4,8 @@
 	"name": "Access Incident",
 	"description": "",
 	"version": -1,
-	"fromVersion": "6.0.0",
+	"fromVersion": "3.5.1",
+  	"toVersion": "4.0.0",
     "details": {
         "sections": [
 			{

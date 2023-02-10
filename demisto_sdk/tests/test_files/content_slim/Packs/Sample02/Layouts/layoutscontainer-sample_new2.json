@@ -317,6 +317,7 @@
 	"name": "ACTI Intelligence Report",
 	"system": false,
 	"version": -1,
-    "fromVersion": "6.0.0",
+    "fromVersion": "3.5.1",
+  	"toVersion": "4.0.0",
     "description": "Layout for ACTI Intelligence Report indicator type."
 }

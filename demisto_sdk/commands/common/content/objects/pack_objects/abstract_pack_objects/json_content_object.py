@@ -126,7 +126,7 @@ class JSONContentObject(JSONObject):
             self.type()
             in (FileType.LAYOUT, FileType.CONNECTION, FileType.PRE_PROCESS_RULES)
             or self.modified
-            or self.to_version < parse("6.0.0")
+            or self.to_version <= parse("6.0.0")
         ):
             # layouts (not layoutscontainers), connections and pre-process rules
             # are not supported in content graph objects.

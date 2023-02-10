@@ -97,7 +97,7 @@ def test_zipped_pack_upload_positive(repo, mocker, demisto_client):
     - content pack name
 
     When
-    - Uploading the pack zipped.
+    - Uploading the zipped pack.
 
     Then
     - Ensure upload runs successfully.

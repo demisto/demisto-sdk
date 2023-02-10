@@ -133,7 +133,7 @@ class JSONContentObject(JSONObject):
             )
         except Exception as e:
             logger.debug(
-                f"Got error {e} when trying to unify with graph object, falling back to old implementation"
+                f"Got error {e} when trying to unify {self.path}, dumping without unifying"
             )
             created_files.extend(super().dump(dest_dir=dest_dir))
 

@@ -1,3 +1,4 @@
+import logging
 import re
 from typing import List, Optional, Union
 
@@ -7,7 +8,6 @@ from wcmatch.pathlib import Path
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
-    FileType,
 )
 from demisto_sdk.commands.common.content.objects.abstract_objects import JSONObject
 from demisto_sdk.commands.common.content.objects.pack_objects.change_log.change_log import (
@@ -20,6 +20,8 @@ from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class JSONContentObject(JSONObject):
@@ -122,23 +124,19 @@ class JSONContentObject(JSONObject):
         """
         created_files: List[Path] = []
 
-        if (
-            self.type()
-            in (FileType.LAYOUT, FileType.CONNECTION, FileType.PRE_PROCESS_RULES)
-            or self.modified
-            or self.to_version <= parse("6.0.0")
-        ):
-            # 1. layouts (not layoutscontainer), connection and pre-processing rules are not supported in graph objects.
-            # 2. any json object that its toversion is less than 6.0.0 is an old object that graph objects might
-            # not be able to parse it.
-            created_files.extend(super().dump(dest_dir=dest_dir))
-        else:
+        try:
             created_files.extend(
                 self._unify(
                     dest_dir=self._create_target_dump_dir(dest_dir=dest_dir),
                     output=self.normalize_file_name(),
                 )
             )
+        except Exception as e:
+            logger.debug(
+                f"Got error {e} when trying to unify with graph object, falling back to old implementation"
+            )
+            created_files.extend(super().dump(dest_dir=dest_dir))
+
         # Dump changelog if requested and available
         if change_log and self.changelog:
             created_files.extend(self.changelog.dump(dest_dir))

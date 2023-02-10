@@ -126,8 +126,10 @@ class JSONContentObject(JSONObject):
             self.type()
             in (FileType.LAYOUT, FileType.CONNECTION, FileType.PRE_PROCESS_RULES)
             or self.modified
+            or self.to_version < parse("6.0.0")
         ):
-            # use the old dump method, cause those content items are not supported in graph objects
+            # layouts (not layoutscontainers), connections and pre-process rules
+            # are not supported in content graph objects.
             created_files.extend(super().dump(dest_dir=dest_dir))
         else:
             created_files.extend(

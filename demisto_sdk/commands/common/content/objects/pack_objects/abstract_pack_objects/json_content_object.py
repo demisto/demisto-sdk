@@ -131,9 +131,10 @@ class JSONContentObject(JSONObject):
                     output=self.normalize_file_name(),
                 )
             )
+            logger.debug(f"Successfully unified {self.path} {self.type()}")
         except Exception as e:
             logger.debug(
-                f"Got error {e} when trying to unify {self.path}, dumping without unifying"
+                f"Could not unify {self.path} {self.type()} because of error {e}, dumping without unifying"
             )
             created_files.extend(super().dump(dest_dir=dest_dir))
 

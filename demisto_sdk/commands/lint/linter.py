@@ -1077,6 +1077,7 @@ class Linter:
                     user=f"{uid}:4000",
                     files_to_push=[(self._pack_abs_dir, "/devwork")],
                     environment=self._facts["env_vars"],
+                    network_disabled=True,
                 )
             )
             container.start()

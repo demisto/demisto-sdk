@@ -195,7 +195,7 @@ jobs:
               mkdir graph-test-results
               neo4j start
               # poll for neo4j status until available
-              while ! neo4j status; do sleep 1; done
+              while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
               poetry run pytest -v --junitxml=graph-test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: graph-test-results
@@ -356,6 +356,35 @@ jobs:
               demisto-sdk create-content-artifacts -a ./tmp
         - store_artifacts:
             path: content/tmp
+      update-graph:
+        docker:
+          - image: << pipeline.parameters.global-docker-image >>
+        steps:
+          - checkout
+          - <<: *install_poetry
+          - <<: *install_neo4j
+          - attach_workspace:
+              at: ~/project
+          - <<: *install_demisto_sdk
+          - run:
+              name: Test Update graph
+              when: always
+              command: |
+                source $(poetry env info --path)/bin/activate
+                cd content
+                demisto-sdk -v
+                mkdir ./tmp
+                neo4j start
+                # poll for neo4j status until available
+                while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
+
+                # we run the update graph command twice to make sure the graph is updated correctly
+                demisto-sdk update-content-graph -g -o ./tmp/content_graph
+
+                demisto-sdk update-content-graph -i ./tmp/content_graph/xsoar.zip -o ./tmp/content_graph
+          - store_artifacts:
+              path: content/tmp
+
   build:
       docker:
         - image: << pipeline.parameters.global-docker-image >>

@@ -8,6 +8,7 @@ from click.testing import CliRunner
 from packaging.version import parse
 
 from demisto_sdk.__main__ import main
+from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.test_tools import ChangeCWD
@@ -102,7 +103,7 @@ def test_zipped_pack_upload_positive(repo, mocker, demisto_client):
     Then
     - Ensure upload runs successfully.
     - Ensure success upload message is printed.
-    - ensure yml / json content entities are getting unified.
+    - ensure yml / json content items inside the pack are getting unified.
     """
     pack = repo.setup_one_pack(name="test-pack")
 
@@ -113,7 +114,7 @@ def test_zipped_pack_upload_positive(repo, mocker, demisto_client):
 
     mocker.patch(
         "demisto_sdk.commands.common.content.objects.pack_objects.pack.get_demisto_version",
-        return_value=parse("6.5.0"),
+        return_value=parse(GENERAL_DEFAULT_FROMVERSION),
     )
 
     runner = CliRunner(mix_stderr=False)

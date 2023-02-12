@@ -52,11 +52,14 @@ def start_docker_MDX_server(
     """
     logging.info("Starting docker mdx server")
     get_docker().pull_image(DEPENDENCIES_DOCKER)
-    if running_container := init_global_docker_client().containers.list(
-        filters={"name": DEMISTO_DEPS_DOCKER_NAME}
-    ):
-        running_container[0].stop()
+
+    docker_client = init_global_docker_client()
+
     location_in_docker = f"/content/{_SERVER_SCRIPT_NAME}"
+    while running_container := docker_client.containers.list(
+        filters={"name": DEMISTO_DEPS_DOCKER_NAME}, all=True
+    ):
+        running_container[0].remove(force=True)
     container: docker.models.containers.Container = get_docker().create_container(
         name=DEMISTO_DEPS_DOCKER_NAME,
         image=DEPENDENCIES_DOCKER,

@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
 )
 from demisto_sdk.commands.common.hook_validations.readme import mdx_server_is_up
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
-from demisto_sdk.commands.common.mardown_lint import run_markdownlint
+from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import find_type, get_yaml, os, re
 
 CONTRIBUTOR_DETAILED_DESC = "Contributed Integration"

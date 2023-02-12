@@ -1,7 +1,7 @@
 import pytest
 
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.mardown_lint import run_markdownlint
+from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 
 
 @pytest.mark.parametrize(

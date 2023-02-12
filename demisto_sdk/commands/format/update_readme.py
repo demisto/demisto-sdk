@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.hook_validations.readme import (
     get_relative_urls,
     mdx_server_is_up,
 )
-from demisto_sdk.commands.common.mardown_lint import run_markdownlint
+from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import print_error, print_warning
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,

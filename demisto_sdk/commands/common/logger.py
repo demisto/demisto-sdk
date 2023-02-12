@@ -67,6 +67,7 @@ def _logging_setup(
             "console-handler": {
                 "level": console_log_threshold,
                 "formatter": "console-formatter",
+                # "class": "logging.StreamHandler",
                 "class": "rich.logging.RichHandler",
                 "rich_tracebacks": True,
             },
@@ -81,7 +82,7 @@ def _logging_setup(
             },
         },
         "loggers": {
-            "": {  # root logger
+            "demisto-sdk": {
                 "handlers": ["console-handler", "file-handler"],
                 "level": "DEBUG",
                 "propagate": False,
@@ -97,7 +98,6 @@ def _logging_setup(
 
 
 logger: logging.Logger = logging_setup(verbose=1, quiet=False)
-logger.info("Hello World!")
 
 
 # Python program to print

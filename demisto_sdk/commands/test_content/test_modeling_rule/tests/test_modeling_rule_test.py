@@ -357,7 +357,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         # so the logged output when running the command will be printed with a width of 120 characters
-        # monkeypatch.setenv("COLUMNS", "120")
+        monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
 
@@ -443,7 +443,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         # so the logged output when running the command will be printed with a width of 120 characters
-        # monkeypatch.setenv("COLUMNS", "120")
+        monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
 
@@ -540,7 +540,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         # so the logged output when running the command will be printed with a width of 120 characters
-        # monkeypatch.setenv("COLUMNS", "120")
+        monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
 
@@ -643,7 +643,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         # so the logged output when running the command will be printed with a width of 120 characters
-        # monkeypatch.setenv("COLUMNS", "120")
+        monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
 
@@ -768,7 +768,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         # so the logged output when running the command will be printed with a width of 120 characters
-        # monkeypatch.setenv("COLUMNS", "120")
+        monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
 
@@ -877,7 +877,7 @@ class TestTheTestModelingRuleCommandMultipleRules:
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         # so the logged output when running the command will be printed with a width of 120 characters
-        # monkeypatch.setenv("COLUMNS", "120")
+        monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
 
@@ -1016,7 +1016,7 @@ class TestTheTestModelingRuleCommandInteractive:
         test_modeling_rule_cmd.registered_commands[0].name = "test"
 
         # so the logged output when running the command will be printed with a width of 120 characters
-        # monkeypatch.setenv("COLUMNS", "120")
+        monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
 

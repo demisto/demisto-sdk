@@ -132,11 +132,6 @@ jobs:
             cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_node_ci
         - run:
-            name: print node versions
-            command: |
-              node --version
-              npm list --json
-        - run:
             name: pytest
             no_output_timeout: 15m
             command: |
@@ -157,12 +152,17 @@ jobs:
               
               # Due to race conditions in the tests bringing up and down the node server, have the server available 
               # For all the tests. 
+              echo $(echo '{"node_version":'$(node --version)',"npm_list":'$(npm list --json)'}') > node_versions_info.json
+              
+              
               node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
               node_pid=$!
               poetry run pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
               kill $node_pid
         - store_test_results:
-            path: test-results
+            path: test-results.
+        - store_artifacts:
+            path: node_versions_info.json
         - store_artifacts:
             path: coverage_html_report
         - store_artifacts:

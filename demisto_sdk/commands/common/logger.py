@@ -4,7 +4,7 @@ import logging.config
 # from logging import Handler
 from typing import Optional
 
-from rich.logging import RichHandler
+# from rich.logging import RichHandler
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
@@ -67,7 +67,7 @@ def _logging_setup(
             "console-handler": {
                 "level": console_log_threshold,
                 "formatter": "console-formatter",
-                "class": RichHandler.__class__,
+                "class": "rich.logging.RichHandler",
                 "rich_tracebacks": True,
             },
             "file-handler": {
@@ -97,6 +97,7 @@ def _logging_setup(
 
 
 logger: logging.Logger = logging_setup(verbose=1, quiet=False)
+logger.info("Hello World!")
 
 
 # Python program to print

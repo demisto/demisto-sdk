@@ -1872,8 +1872,6 @@ class TestContext:
         """
         timeout = time.time() + self.playbook.configuration.timeout
         number_of_attempts = 1
-
-        should_re_authenticate = True
         # wait for playbook to finish run
         while True:
             # give playbook time to run

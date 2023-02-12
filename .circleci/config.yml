@@ -356,7 +356,7 @@ jobs:
               demisto-sdk create-content-artifacts -a ./tmp
         - store_artifacts:
             path: content/tmp
-  update-graph:
+  test-update-graph:
     docker:
       - image: << pipeline.parameters.global-docker-image >>
     resource_class: large
@@ -368,7 +368,7 @@ jobs:
           at: ~/project
       - <<: *install_demisto_sdk
       - run:
-          name: Test Update graph
+          name: Run Update Graph Twice
           when: always
           command: |
             source $(poetry env info --path)/bin/activate
@@ -468,7 +468,7 @@ workflows:
       - create-content-artifacts:
           <<: *tag_filter
           <<: *reqs_content_checkout
-      - update-graph:
+      - test-update-graph:
           <<: *tag_filter
           <<: *reqs_content_checkout
 

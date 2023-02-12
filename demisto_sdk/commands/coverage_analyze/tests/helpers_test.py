@@ -428,24 +428,24 @@ class TestGetCoverageObj:
         )
 
 @pytest.mark.parametrize(
-    "console_log_threshold",
-    [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL, logging.FATAL],
+    "console_log_threshold, threshold_value",
+    [(logging.DEBUG, 10), (logging.INFO, 20), (logging.WARNING, 30), (logging.ERROR, 40), (logging.CRITICAL, 50)],
 )
-def test_console_log_threshold(console_log_threshold: int):
+def test_console_log_threshold(console_log_threshold: int, threshold_value: int):
     logger = logging_setup(console_log_threshold=console_log_threshold)
     console_handler = _get_logger_handler(logger, 'console-handler')
     assert console_handler
-    assert console_handler.level == console_log_threshold
+    assert console_handler.level == threshold_value
 
 @pytest.mark.parametrize(
-    "file_log_threshold",
-    [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL, logging.FATAL],
+    "file_log_threshold, threshold_value",
+    [(logging.DEBUG, 10), (logging.INFO, 20), (logging.WARNING, 30), (logging.ERROR, 40), (logging.CRITICAL, 50)],
 )
-def test_file_log_threshold(file_log_threshold: int):
+def test_file_log_threshold(file_log_threshold: int, threshold_value: int):
     logger = logging_setup(file_log_threshold=file_log_threshold)
     file_handler = _get_logger_handler(logger, 'file-handler')
     assert file_handler
-    assert file_handler.level == file_log_threshold
+    assert file_handler.level == threshold_value
 
 def _get_logger_handler(logger, handler_name):
     for current_handler in logger.handlers:

@@ -1882,12 +1882,12 @@ class TestContext:
             except demisto_client.demisto_api.rest.ApiException as e:
                 if e.status == 401 and should_re_authenticate:
                     self.server_context._configure_new_client()
-                    should_re_authenticate = False
-                else:
-                    playbook_state = "Pending"
-                    self.build_context.logging_module.exception(
-                        "Error when trying to get investigation playbook state"
-                    )
+                    self.build_context.logging_module.debug('new demisto_client created')
+                    continue
+                playbook_state = "Pending"
+                self.build_context.logging_module.exception(
+                    "Error when trying to get investigation playbook state"
+                )
 
             if playbook_state in (PB_Status.COMPLETED, PB_Status.NOT_SUPPORTED_VERSION):
                 break

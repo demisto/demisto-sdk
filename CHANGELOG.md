@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Added markdown lint formatting for README files in the **format** command.
 * Fixed an issue where **lint** failed when using the `-cdam` flag with changed dependant api modules due to partial file duplications filtering.
 
 ## 1.10.1

@@ -427,11 +427,28 @@ class TestGetCoverageObj:
             "/Users/username/dev/demisto/content/Packs/VirusTotal/Integrations/VirusTotalV3/VirusTotalV3.py",
         )
 
+@pytest.mark.parametrize(
+    "console_log_threshold",
+    [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL, logging.FATAL],
+)
+def test_console_log_threshold(console_log_threshold: int):
+    logger = logging_setup(console_log_threshold=console_log_threshold)
+    console_handler = _get_logger_handler(logger, 'console-handler')
+    assert console_handler
+    assert console_handler.level == console_log_threshold
 
 @pytest.mark.parametrize(
-    "verbose, logging_level",
-    [(0, logging.INFO), (1, logging.WARNING), (2, logging.DEBUG), (10, logging.DEBUG)],
+    "file_log_threshold",
+    [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL, logging.FATAL],
 )
-def test_verbose(verbose: int, logging_level: int):
-    logger = logging_setup(verbose=verbose)
-    assert logger.level == logging_level
+def test_file_log_threshold(file_log_threshold: int):
+    logger = logging_setup(file_log_threshold=file_log_threshold)
+    file_handler = _get_logger_handler(logger, 'file-handler')
+    assert file_handler
+    assert file_handler.level == file_log_threshold
+
+def _get_logger_handler(logger, handler_name):
+    for current_handler in logger.handlers:
+        if current_handler.name == handler_name:
+            return current_handler
+    return None

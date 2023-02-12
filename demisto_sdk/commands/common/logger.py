@@ -11,7 +11,9 @@ DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 # TODO Remove this method and expose _logging_setup as logging_setup
 def logging_setup(
-    verbose: int,
+    verbose: int = 0,
+    console_log_threshold: int = logging.INFO,
+    file_log_threshold: int = logging.DEBUG,
     quiet: Optional[bool] = False,
     log_path: str = ".",
     log_file_name: str = "demisto_sdk_debug_log.log",
@@ -29,7 +31,7 @@ def logging_setup(
         logging.Logger: logger object
     """
     # TODO Translate to the input params of _logging_setup
-    return _logging_setup()
+    return _logging_setup(console_log_threshold=console_log_threshold, file_log_threshold=file_log_threshold)
 
 
 def _logging_setup(

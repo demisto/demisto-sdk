@@ -1872,6 +1872,8 @@ class TestContext:
         """
         timeout = time.time() + self.playbook.configuration.timeout
         number_of_attempts = 1
+
+        should_re_authenticate = True
         # wait for playbook to finish run
         while True:
             # give playbook time to run
@@ -1879,11 +1881,15 @@ class TestContext:
             try:
                 # fetch status
                 playbook_state = self._get_investigation_playbook_state()
-            except demisto_client.demisto_api.rest.ApiException:
-                playbook_state = "Pending"
-                self.build_context.logging_module.exception(
-                    "Error when trying to get investigation playbook state"
-                )
+            except demisto_client.demisto_api.rest.ApiException as e:
+                if e.status == 401 and should_re_authenticate:
+                    self.server_context._configure_new_client()
+                    should_re_authenticate = False
+                else:
+                    playbook_state = "Pending"
+                    self.build_context.logging_module.exception(
+                        "Error when trying to get investigation playbook state"
+                    )
 
             if playbook_state in (PB_Status.COMPLETED, PB_Status.NOT_SUPPORTED_VERSION):
                 break

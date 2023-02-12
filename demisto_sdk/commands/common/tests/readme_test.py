@@ -62,11 +62,9 @@ def test_is_file_valid(mocker, current, answer):
             status_code=200,
             text="Test3",
         )
-        mocker.patch.dict(
-            os.environ,
-            {"DEMISTO_README_VALIDATION": "yes", "DEMISTO_MDX_CMD_VERIFY": "yes"},
-        )
-        assert readme_validator.is_valid_file() is answer
+        m.post("http://localhost:6161/", real_http=True)
+        with ReadMeValidator.start_mdx_server():
+            assert readme_validator.is_valid_file() is answer
         assert not demisto_sdk.commands.common.MDXServer._MDX_SERVER_PROCESS
 
 

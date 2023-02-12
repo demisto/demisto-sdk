@@ -467,6 +467,10 @@ workflows:
       - create-content-artifacts:
           <<: *tag_filter
           <<: *reqs_content_checkout
+      - update-graph:
+          <<: *tag_filter
+          <<: *reqs_content_checkout
+
       - build:
           <<: *tag_filter
       - deploy:

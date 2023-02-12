@@ -236,10 +236,12 @@ def check_dataset_exists(
         except requests.exceptions.HTTPError:
             pass
         sleep(interval)
+    print('*** Before log Dataset {dataset} does not exist after')
     logger.error(
         f"[red]Dataset {dataset} does not exist after {timeout} seconds[/red]",
         extra={"markup": True},
     )
+    print('*** After log Dataset {dataset} does not exist after')
     raise typer.Exit(1)
 
 

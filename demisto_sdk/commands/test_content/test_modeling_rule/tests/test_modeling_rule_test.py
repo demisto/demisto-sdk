@@ -397,6 +397,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                     )
                     # Assert
                     assert result.exit_code == 1
+                    print(f'*** {result.stdout=}')
                     assert (
                         f"Dataset {fake_test_data.data[0].dataset} does not exist"
                         in result.stdout

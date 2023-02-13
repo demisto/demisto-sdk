@@ -353,7 +353,7 @@ def test_duplicate_file_failure(mock_git):
 
 
 @pytest.mark.parametrize("key, tool", [("some_key", False), ("", True)])
-def test_sign_packs_failure(repo, capsys, key, tool):
+def test_sign_packs_failure(repo, capsys, key, tool, monkeypatch):
     """
     When:
         - Signing a pack.
@@ -373,6 +373,7 @@ def test_sign_packs_failure(repo, capsys, key, tool):
     )
 
     cca.logger = logging_setup(2)
+    monkeypatch.setenv("COLUMNS", "1000")
 
     with ChangeCWD(repo.path):
         with temp_dir() as temp:

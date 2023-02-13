@@ -101,8 +101,7 @@ def _logging_setup(
 
     return l
 
-
-logger: logging.Logger = logging_setup(verbose=1, quiet=False)
+logger: logging.Logger = logging_setup()
 
 
 # Python program to print

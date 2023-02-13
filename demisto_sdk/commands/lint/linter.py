@@ -83,6 +83,7 @@ class DockerImageFlagOption(Enum):
     NATIVE_GA = "native:ga"
     NATIVE_MAINTENANCE = "native:maintenance"
     ALL_IMAGES = "all"
+    NATIVE_TARGET = "native:target"
 
 
 class Linter:
@@ -107,6 +108,7 @@ class Linter:
         docker_engine: bool,
         docker_timeout: int,
         docker_image_flag: str = DockerImageFlagOption.FROM_YML.value,
+        docker_image_target: str = "",
     ):
         self._req_3 = req_3
         self._req_2 = req_2
@@ -118,6 +120,7 @@ class Linter:
         self._pack_name = None
         self.docker_timeout = docker_timeout
         self.docker_image_flag = docker_image_flag
+        self.docker_image_target = docker_image_target
         # Docker client init
         if docker_engine:
             self._docker_client: docker.DockerClient = init_global_docker_client(
@@ -317,6 +320,7 @@ class Linter:
                 script_obj=script_obj,
                 script_id=yml_obj_id,
                 docker_image_flag=self.docker_image_flag,
+                docker_image_target=self.docker_image_target,
             )
             if not images:
                 # If no docker images to run on - skip checks in both docker and host
@@ -1389,6 +1393,7 @@ class Linter:
             DockerImageFlagOption.NATIVE_DEV.value,
             DockerImageFlagOption.NATIVE_GA.value,
             DockerImageFlagOption.NATIVE_MAINTENANCE.value,
+            DockerImageFlagOption.NATIVE_TARGET.value,
         ):
             err_msg = (
                 f"The requested native image: '{docker_image_flag}' is not supported. The possible options are: "
@@ -1530,7 +1535,11 @@ class Linter:
         return imgs
 
     def _get_docker_images_for_lint(
-        self, script_obj: Dict, script_id: str, docker_image_flag: str
+        self,
+        script_obj: Dict,
+        script_id: str,
+        docker_image_flag: str,
+        docker_image_target: Union[str, None],
     ) -> List[str]:
         """Gets a yml as dict of the current integration/script that lint runs on, and a flag indicates on which docker
          images lint should run.
@@ -1560,6 +1569,8 @@ class Linter:
             script_obj (dict): A yml dict of the integration/script that lint runs on.
             script_id (str): The ID of the integration/script that lint runs on.
             docker_image_flag (str): A flag indicates on which docker images lint should run.
+            docker_image_target (Optional[str]): The docker image to test native supported content on.
+                                       Must be used with docker_image_flag native-target
         Returns:
             List. A list of all desirable docker images references.
         """
@@ -1601,15 +1612,28 @@ class Linter:
 
             self._check_native_image_flag(docker_image_flag)
 
-            if native_image := self._get_native_image_name_from_config_file(
-                docker_image_flag
-            ):
+            supported_section = docker_image_flag
+            if docker_image_flag == DockerImageFlagOption.NATIVE_TARGET.value:
+                supported_section = DockerImageFlagOption.NATIVE_DEV.value
+
+            native_image = self._get_native_image_name_from_config_file(
+                supported_section
+            )
+            if native_image:
 
                 if self._is_native_image_support_script(
                     native_image, supported_native_images, script_id
                 ):  # Integration/Script is supported by the requested native image
+                    native_image_ref: Union[str, None] = ""
 
-                    if docker_image_flag == DockerImageFlagOption.NATIVE_DEV.value:
+                    if (
+                        docker_image_flag == DockerImageFlagOption.NATIVE_TARGET.value
+                        and docker_image_target
+                    ):
+                        # Desirable docker image to run is the target image only on native supported content.
+                        native_image_ref = docker_image_target
+
+                    elif docker_image_flag == DockerImageFlagOption.NATIVE_DEV.value:
                         # Desirable docker image to run on is the dev native image - get the latest tag from Docker Hub
                         native_image_ref = self._get_dev_native_image(script_id)
 

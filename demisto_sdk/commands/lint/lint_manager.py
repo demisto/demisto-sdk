@@ -460,6 +460,7 @@ class LintManager:
         test_xml: str,
         docker_timeout: int,
         docker_image_flag: str,
+        docker_image_target: str,
         lint_status: dict,
         pkgs_status: dict,
         pkgs_type: list,
@@ -510,6 +511,7 @@ class LintManager:
                         docker_engine=self._facts["docker_engine"],
                         docker_timeout=docker_timeout,
                         docker_image_flag=docker_image_flag,
+                        docker_image_target=docker_image_target,
                     )
                     results.append(
                         executor.submit(
@@ -600,6 +602,7 @@ class LintManager:
         failure_report: str,
         docker_timeout: int,
         docker_image_flag: str,
+        docker_image_target: str,
         time_measurements_dir: str = None,
     ) -> int:
         """Runs the Lint command on all given packages.
@@ -686,6 +689,7 @@ class LintManager:
             test_xml=test_xml,
             docker_timeout=docker_timeout,
             docker_image_flag=docker_image_flag,
+            docker_image_target=docker_image_target,
             no_pwsh_analyze=no_pwsh_analyze,
             lint_status=lint_status,
             pkgs_status=pkgs_status,

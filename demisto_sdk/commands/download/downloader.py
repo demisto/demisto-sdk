@@ -1227,7 +1227,7 @@ class Downloader:
             logging.warning(f"trying to merge an non-supported file {output_path}")
             return
 
-        file_data = get_file(output_path, type_of_file=file_ending, reset_cache=True)
+        file_data = get_file(output_path, type_of_file=file_ending, clear_cache=True)
         if pack_obj_data:
             merge(file_data, preserved_data)
 

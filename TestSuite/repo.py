@@ -119,7 +119,7 @@ class Repo:
         classifier = pack.create_classifier(f"{name}_classifier")
         classifier.write_json({"id": f"{name} - classifier"})
         classifier.update({"name": f"{name} - classifier"})
-        classifier.update({"transformer": ""})
+        classifier.update({"transformer": {}})
         classifier.update({"keyTypeMap": {}})
         classifier.update({"type": "classification"})
 
@@ -130,7 +130,8 @@ class Repo:
 
         layoutcontainer = pack.create_layoutcontainer(f"{name}_layoutcontainer")
         layoutcontainer.write_json({"id": f"{name} - layoutcontainer"})
-        layoutcontainer.update({"group": f"{name} - layoutcontainer"})
+        layoutcontainer.update({"name": f"{name} - layoutscontainer"})
+        layoutcontainer.update({"group": "incident"})
         layoutcontainer.update({"detailsV2": {}})
 
         mapper = pack.create_mapper(f"{name}_mapper")
@@ -146,10 +147,16 @@ class Repo:
         incident_type.update({"name": f"{name} - incident_type"})
         incident_type.update({"preProcessingScript": ""})
         incident_type.update({"color": "test"})
+        incident_type.update({"hours": 0})
+        incident_type.update({"days": 3})
+        incident_type.update({"weeks": 1})
 
         incident_field = pack.create_incident_field(f"{name}_incident-field")
         incident_field.write_json({"id": f"incident_{name} - incident_field"})
         incident_field.update({"name": f"incident_{name} - incident_field"})
+        incident_field.update({"cliName": f"cliName-{name}"})
+        incident_field.update({"type": "multiSelect"})
+        incident_field.update({"associatedToAll": True})
 
         indicator_type = pack.create_indicator_type(f"{name}_indicator-type")
         indicator_type.write_json({"id": f"{name} - indicator_type"})
@@ -159,6 +166,9 @@ class Repo:
         indicator_field = pack.create_indicator_field(f"{name}_indicator-field")
         indicator_field.write_json({"id": f"indicator_{name} - indicator_field"})
         indicator_field.update({"name": f"indicator_{name} - indicator_field"})
+        indicator_field.update({"cliName": f"cliName-{name}"})
+        indicator_field.update({"type": "multiSelect"})
+        indicator_field.update({"associatedToAll": True})
 
         dashboard = pack.create_dashboard(f"{name}_dashboard")
         dashboard.write_json({"id": f"{name} - dashboard"})
@@ -182,6 +192,7 @@ class Repo:
         list_item.update({"name": f"{name} - list"})
         list_item.update({"allRead": "True"})
         list_item.update({"truncated": "True"})
+        list_item.update({"type": "plain_text"})
 
         playbook = pack.create_playbook(f"{name}_playbook")
         playbook.create_default_playbook()

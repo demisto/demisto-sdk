@@ -1251,7 +1251,7 @@ SCHEMA_TO_REGEX = {
 EXTERNAL_PR_REGEX = r"^pull/(\d+)$"
 
 FILE_TYPES_PATHS_TO_VALIDATE = {"reports": JSON_ALL_REPORTS_REGEXES}
-MDX_SERVER_DOCKER_IMAGE = "devdemisto/mdx_node_server:1.0.0.47681"
+MDX_SERVER_DOCKER_IMAGE = "devdemisto/mdx_node_server:1.0.0.48260"
 DEF_DOCKER = "demisto/python:1.3-alpine"
 DEF_DOCKER_PWSH = "demisto/powershell:6.2.3.5563"
 

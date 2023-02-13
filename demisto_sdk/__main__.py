@@ -206,12 +206,6 @@ def main(config, version, release_notes):
     show_default=True,
 )
 @click.option(
-    "--no-pipenv",
-    help="Don't auto create pipenv for requirements installation. (only for yml files)",
-    is_flag=True,
-    show_default=True,
-)
-@click.option(
     "--new-module-file",
     help="Create a new module file instead of editing the existing file. (only for json files)",
     is_flag=True,
@@ -307,6 +301,19 @@ def extract_code(config, **kwargs):
     type=click.Path(dir_okay=True),
 )
 @click.option(
+    "-g",
+    "--graph",
+    help="Whether use the content graph",
+    is_flag=True,
+    default=False,
+)
+@click.option(
+    "--skip-update",
+    help="Whether to skip updating the content graph (used only when graph is true)",
+    is_flag=True,
+    default=False,
+)
+@click.option(
     "-o", "--output", help="The output dir to write the unified yml to", required=False
 )
 @click.option(
@@ -338,12 +345,22 @@ def extract_code(config, **kwargs):
     default="xsoar",
     type=click.Choice(["xsoar", "marketplacev2", "v2"]),
 )
+@click.option(
+    "-v",
+    "--verbose",
+    help="Verbose output - mainly for debugging purposes",
+    is_flag=True,
+)
 def prepare_content(**kwargs):
     """
     This command is used to prepare the content to be used in the platform.
 
 
     """
+    from demisto_sdk.commands.common.logger import logging_setup
+
+    if kwargs.get("verbose"):
+        logging_setup(3)
     if click.get_current_context().info_name == "unify":
         kwargs["unify_only"] = True
 
@@ -457,6 +474,14 @@ def zip_packs(**kwargs) -> int:
     "--id-set-path",
     help="The path of the id-set.json used for validations.",
     type=click.Path(resolve_path=True),
+)
+@click.option(
+    "-gr",
+    "--graph",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Perform validations on content graph.",
 )
 @click.option(
     "--prev-ver", help="Previous branch or SHA1 commit to run checks against."
@@ -608,6 +633,7 @@ def validate(config, **kwargs):
             file_path=file_path,
             validate_all=kwargs.get("validate_all"),
             validate_id_set=kwargs["id_set"],
+            validate_graph=kwargs.get("graph"),
             skip_pack_rn_validation=kwargs["skip_pack_release_notes"],
             print_ignored_errors=kwargs["print_ignored_errors"],
             is_external_repo=is_external_repo,
@@ -892,12 +918,12 @@ def secrets(config, **kwargs):
     type=int,
 )
 @click.option(
-    "-idp",
-    "--id-set-path",
-    help="Path to id_set.json, relevant for when using the "
-    "--check-dependent-api-module flag.",
-    type=click.Path(resolve_path=True),
-    default="Tests/id_set.json",
+    "-di",
+    "--docker-image",
+    default="from-yml",
+    help="The docker image to check package on. Possible values: 'native:maintenance', 'native:ga', 'native:dev',"
+    " 'all', a specific docker image from Docker Hub (e.g devdemisto/python3:3.10.9.12345) or the default"
+    " 'from-yml'.",
 )
 @click.option(
     "-cdam",
@@ -919,7 +945,7 @@ def lint(**kwargs):
     2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.
     Meant to be used with integrations/scripts that use the folder (package) structure.
     Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
-    If no additional flags specifying the packs are given,will lint only changed files.
+    If no additional flags specifying the packs are given, will lint only changed files.
     """
     from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.lint.lint_manager import LintManager
@@ -939,7 +965,6 @@ def lint(**kwargs):
         quiet=kwargs.get("quiet"),  # type: ignore[arg-type]
         prev_ver=kwargs.get("prev_ver"),  # type: ignore[arg-type]
         json_file_path=kwargs.get("json_file"),  # type: ignore[arg-type]
-        id_set_path=kwargs.get("id_set_path"),  # type: ignore[arg-type]
         check_dependent_api_module=kwargs.get("check_dependent_api_module"),  # type: ignore[arg-type]
     )
     return lint_manager.run(
@@ -959,6 +984,7 @@ def lint(**kwargs):
         no_coverage=kwargs.get("no_coverage"),  # type: ignore[arg-type]
         coverage_report=kwargs.get("coverage_report"),  # type: ignore[arg-type]
         docker_timeout=kwargs.get("docker_timeout"),  # type: ignore[arg-type]
+        docker_image_flag=kwargs.get("docker_image"),  # type: ignore[arg-type]
         time_measurements_dir=kwargs.get("time_measurements_dir"),  # type: ignore[arg-type]
     )
 
@@ -1290,12 +1316,6 @@ def upload(**kwargs):
         ],
         case_sensitive=False,
     ),
-)
-@click.option(
-    "--no-code-formatting",
-    help="Use this flag to avoid running Autopep8 and isort on Python files.",
-    is_flag=True,
-    default=False,
 )
 def download(**kwargs):
     """Download custom content from Demisto instance.
@@ -2619,6 +2639,13 @@ def test_content(**kwargs):
     "-rn", "--release-notes", is_flag=True, help="Will run only on release notes files"
 )
 @click.option(
+    "-xs",
+    "--xsoar-only",
+    is_flag=True,
+    help="Run only on files from XSOAR-supported Packs.",
+    default=False,
+)
+@click.option(
     "-pkw",
     "--use-packs-known-words",
     is_flag=True,
@@ -2641,6 +2668,7 @@ def doc_review(**kwargs):
         use_git=kwargs.get("use_git"),
         prev_ver=kwargs.get("prev_ver"),
         release_notes_only=kwargs.get("release_notes"),
+        xsoar_only=kwargs.get("xsoar_only"),
         load_known_words_from_pack=kwargs.get("use_packs_known_words"),
     )
     result = doc_reviewer.run_doc_review()
@@ -2992,6 +3020,11 @@ def create_content_graph(
     help="Path to content graph zip file to import",
 )
 @click.option(
+    "--use-current",
+    help="Whether to use the current content graph to update",
+    default=False,
+)
+@click.option(
     "-p",
     "--packs",
     help="A comma-separated list of packs to update",
@@ -3033,6 +3066,7 @@ def create_content_graph(
 def update_content_graph(
     use_git: bool = False,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+    use_current: bool = False,
     imported_path: Path = None,
     packs: list = None,
     no_dependencies: bool = False,
@@ -3052,13 +3086,16 @@ def update_content_graph(
         quiet=kwargs.get("quiet"),  # type: ignore[arg-type]
         log_path=kwargs.get("log_path"),
     )  # type: ignore[arg-type]
-
+    if packs and not isinstance(packs, list):
+        # for some reason packs provided as tuple from click interface
+        packs = list(packs)
     with Neo4jContentGraphInterface() as content_graph_interface:
         update_content_graph_command(
             content_graph_interface,
             marketplace=MarketplaceVersions(marketplace),
             use_git=use_git,
             imported_path=imported_path,
+            use_current=use_current,
             packs_to_update=packs or [],
             dependencies=not no_dependencies,
             output_path=output_path,

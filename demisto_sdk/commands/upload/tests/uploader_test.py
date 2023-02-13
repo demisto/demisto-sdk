@@ -206,16 +206,57 @@ def test_upload_layout_positive(demisto_client_configure, mocker):
     Then
         - Ensure layout is uploaded successfully
         - Ensure success upload message is printed as expected
+        - Ensure that _unify isn't called.
     """
+    from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import (
+        LayoutObject,
+    )
+
     mocker.patch.object(demisto_client, "configure", return_value="object")
+    unify_mocker = mocker.patch.object(LayoutObject, "_unify")
+
     layout_name = "layout-details-test_bla-V2.json"
     layout_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Layouts/{layout_name}"
+
     uploader = Uploader(input=layout_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, "client")
     uploader.upload()
 
+    assert not unify_mocker.called
     assert [
         (layout_name, FileType.LAYOUT.value)
+    ] == uploader.successfully_uploaded_files
+
+
+def test_upload_layout_container_positive(demisto_client_configure, mocker):
+    """
+    Given
+        - layout container
+
+    When
+        - Uploading a layout-container
+
+    Then
+        - Ensure layout-container is uploaded successfully
+        - Ensure that _unify is called.
+    """
+    from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import (
+        LayoutObject,
+    )
+
+    mocker.patch.object(demisto_client, "configure", return_value="object")
+    unify_mocker = mocker.patch.object(LayoutObject, "_unify")
+
+    layout_name = "layoutscontainer-test.json"
+    layout_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Layouts/{layout_name}"
+
+    uploader = Uploader(input=layout_path, insecure=False, verbose=False)
+    mocker.patch.object(uploader, "client")
+    uploader.upload()
+
+    assert unify_mocker.called
+    assert [
+        (layout_name, FileType.LAYOUTS_CONTAINER.value)
     ] == uploader.successfully_uploaded_files
 
 

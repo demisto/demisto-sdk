@@ -17,7 +17,7 @@ from functools import lru_cache
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
-from typing import Callable, Dict, List, Match, Optional, Set, Tuple, Union
+from typing import Callable, Dict, Iterable, List, Match, Optional, Set, Tuple, Union
 
 import click
 import colorama
@@ -37,6 +37,7 @@ from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
     API_MODULES_PACK,
     CLASSIFIERS_DIR,
+    CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
     DEF_DOCKER,
     DEF_DOCKER_PWSH,
@@ -52,6 +53,7 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR,
     JOBS_DIR,
+    LAYOUT_RULES_DIR,
     LAYOUTS_DIR,
     LISTS_DIR,
     MARKETPLACE_KEY_PACK_METADATA,
@@ -62,6 +64,7 @@ from demisto_sdk.commands.common.constants import (
     OFFICIAL_CONTENT_ID_SET_PATH,
     OFFICIAL_INDEX_JSON_PATH,
     PACK_METADATA_IRON_BANK_TAG,
+    PACK_METADATA_SUPPORT,
     PACKAGE_SUPPORTING_DIRECTORIES,
     PACKAGE_YML_FILE_REGEX,
     PACKS_DIR,
@@ -88,6 +91,7 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     XSOAR_CONFIG_FILE,
+    XSOAR_SUPPORT,
     FileType,
     IdSetKeys,
     MarketplaceVersions,
@@ -105,6 +109,9 @@ yaml = YAML_Handler()
 urllib3.disable_warnings()
 
 colorama.init()  # initialize color palette
+
+
+GRAPH_SUPPORTED_FILE_TYPES = ["yml", "json"]
 
 
 class LOG_COLORS:
@@ -304,6 +311,29 @@ def get_files_in_dir(
                 excludes.extend([str(f) for f in glob_function(exclude_pattern)])
         files.extend([str(f) for f in glob_function(pattern)])
     return list(set(files) - set(excludes))
+
+
+def get_all_content_objects_paths_in_dir(project_dir_list: Optional[Iterable]):
+    """
+    Gets the project directory and returns the path of all yml, json and py files in it
+    Args:
+        project_dir_list: List or set with str paths
+    :return: list of content files in the current dir with str relative paths
+    """
+    files: list = []
+    if not project_dir_list:
+        return files
+
+    for file_path in project_dir_list:
+        files.extend(
+            get_files_in_dir(
+                file_path, GRAPH_SUPPORTED_FILE_TYPES, ignore_test_files=True
+            )
+        )
+
+    output = [get_relative_path_from_packs_dir(file) for file in files]
+
+    return output
 
 
 def src_root() -> Path:
@@ -1349,14 +1379,16 @@ def get_ignore_pack_skipped_tests(
     return ignored_tests_set
 
 
-def get_all_docker_images(script_obj) -> List[str]:
-    """Gets a yml as dict and returns a list of all 'dockerimage' values in the yml.
+def get_docker_images_from_yml(script_obj) -> List[str]:
+    """
+    Gets a yml as dict of the script/integration that lint runs on, and returns a list of all 'dockerimage' values
+    in the yml (including 'alt_dockerimages' if the key exist).
 
     Args:
-        script_obj (dict): A yml dict.
+        script_obj (dict): A yml as dict of the integration/script that lint runs on.
 
     Returns:
-        List. A list of all docker images.
+        (List): A list including all the docker images of the integration/script.
     """
     # this makes sure the first docker in the list is the main docker image.
     def_docker_image = DEF_DOCKER
@@ -1539,6 +1571,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             "_schema"
         ):
             return FileType.MODELING_RULE_SCHEMA
+        elif LAYOUT_RULES_DIR in path.parts:
+            return FileType.LAYOUT_RULE
 
     elif path.name.endswith("_image.png"):
         if path.name.endswith("Author_image.png"):
@@ -1564,6 +1598,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.suffix == ".xif":
         if MODELING_RULES_DIR in path.parts:
             return FileType.MODELING_RULE_XIF
+        elif PARSING_RULES_DIR in path.parts:
+            return FileType.PARSING_RULE_XIF
         return FileType.XIF_FILE
 
     elif path.suffix == ".yml":
@@ -1587,6 +1623,12 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
         elif PARSING_RULES_DIR in path.parts:
             return FileType.PARSING_RULE
 
+        elif MODELING_RULES_DIR in path.parts:
+            return FileType.MODELING_RULE
+
+        elif CORRELATION_RULES_DIR in path.parts:
+            return FileType.CORRELATION_RULE
+
     elif path.name == FileType.PACK_IGNORE:
         return FileType.PACK_IGNORE
 
@@ -1595,6 +1637,30 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
 
     elif path.parent.name == DOC_FILES_DIR:
         return FileType.DOC_FILE
+
+    elif path.name.lower() == "pipfile":
+        return FileType.PIPFILE
+
+    elif path.name.lower() == "pipfile.lock":
+        return FileType.PIPFILE_LOCK
+
+    elif path.suffix.lower() == ".ini":
+        return FileType.INI
+
+    elif path.suffix.lower() == ".pem":
+        return FileType.PEM
+
+    elif (
+        path.name.lower()
+        in ("commands_example", "commands_examples", "command_examples")
+        or path.suffix.lower() == ".txt"
+    ):
+        return FileType.TXT
+    elif path.name == ".pylintrc":
+        return FileType.PYLINTRC
+
+    elif path.name == "LICENSE":
+        return FileType.LICENSE
 
     return None
 
@@ -1643,6 +1709,9 @@ def find_type(
         raise err
 
     if file_type == "yml" or path.lower().endswith(".yml"):
+        if path.lower().endswith("_unified.yml"):
+            return FileType.UNIFIED_YML
+
         if "category" in _dict:
             if _dict.get("beta") and not ignore_sub_categories:
                 return FileType.BETA_INTEGRATION
@@ -1763,6 +1832,9 @@ def find_type(
 
         if "profile_type" in _dict and "yaml_template" in _dict:
             return FileType.XDRC_TEMPLATE
+
+        if "rule_id" in _dict:
+            return FileType.LAYOUT_RULE
 
         # When using it for all files validation- sometimes 'id' can be integer
         if "id" in _dict:
@@ -2115,6 +2187,8 @@ def _get_file_id(file_type: str, file_content: Dict):
         return file_content.get("id", "")
     elif file_type in ID_IN_COMMONFIELDS:
         return file_content.get("commonfields", {}).get("id")
+    elif file_type == FileType.LAYOUT_RULE:
+        return file_content.get("rule_id", "")
     return file_content.get("trigger_id", "")
 
 
@@ -2253,6 +2327,9 @@ def get_demisto_version(client: demisto_client) -> Union[Version, LegacyVersion]
         about_data = json.loads(resp[0].replace("'", '"'))
         return parse(about_data.get("demistoVersion"))  # type: ignore
     except Exception:
+        logger.warning(
+            "Could not parse Xsoar version, please make sure the environment is properly configured."
+        )
         return parse("0")
 
 
@@ -2335,6 +2412,7 @@ def item_type_to_content_items_header(item_type):
         "modelingrule": "modelingRule",
         "parsingrule": "parsingRule",
         "xdrctemplate": "XDRCTemplate",
+        "layoutrule": "layoutRule",
     }
 
     return f"{converter.get(item_type, item_type)}s"
@@ -2626,6 +2704,22 @@ def is_pack_path(input_path: str) -> bool:
         - False if the input path is not for a given pack.
     """
     return os.path.basename(os.path.dirname(input_path)) == PACKS_DIR
+
+
+def is_xsoar_supported_pack(file_path: str) -> bool:
+
+    """
+    Takes a path to a file and returns a boolean indicating
+    whether this file belongs to an XSOAR-supported Pack.
+
+    Args:
+        - `file_path` (`str`): The path of the file.
+
+    Returns:
+        - `bool`
+    """
+
+    return get_pack_metadata(file_path).get(PACK_METADATA_SUPPORT) == XSOAR_SUPPORT
 
 
 def get_relative_path_from_packs_dir(file_path: str) -> str:
@@ -3183,6 +3277,8 @@ def get_display_name(file_path, file_data={}) -> str:
         name = file_data.get("id", None)
     elif "trigger_name" in file_data:
         name = file_data.get("trigger_name")
+    elif "rule_name" in file_data:
+        name = file_data.get("rule_name")
 
     elif (
         "dashboards_data" in file_data
@@ -3362,3 +3458,9 @@ def field_to_cli_name(field_name: str) -> str:
         field_name (str): the incident/indicator field name.
     """
     return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, "", field_name).lower()
+
+
+def get_pack_paths_from_files(file_paths: Iterable[str]) -> list:
+    """Returns the pack paths from a list/set of files"""
+    pack_paths = {f"Packs/{get_pack_name(file_path)}" for file_path in file_paths}
+    return list(pack_paths)

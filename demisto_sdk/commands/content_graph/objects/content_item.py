@@ -18,11 +18,12 @@ import logging
 from pydantic import DirectoryPath, validator
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import get_content_path
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-
-# from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import MarketplaceSuffixPreparer
+from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
+    MarketplaceSuffixPreparer,
+)
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -42,7 +43,7 @@ class ContentItem(BaseContent):
     def validate_path(cls, v: Path) -> Path:
         if v.is_absolute():
             return v
-        return Path(get_content_path()) / v  # type: ignore
+        return CONTENT_PATH / v
 
     @property
     def in_pack(self) -> Optional["Pack"]:
@@ -55,7 +56,7 @@ class ContentItem(BaseContent):
         in_pack = self.relationships_data[RelationshipType.IN_PACK]
         if not in_pack:
             return None
-        return next(iter(in_pack)).content_item  # type: ignore[return-value]
+        return next(iter(in_pack)).content_item_to  # type: ignore[return-value]
 
     @property
     def uses(self) -> List["RelationshipData"]:
@@ -83,7 +84,7 @@ class ContentItem(BaseContent):
         return [
             r
             for r in self.relationships_data[RelationshipType.USES]
-            if r.content_item == r.target
+            if r.content_item_to.database_id == r.target_id
         ]
 
     @property
@@ -95,14 +96,19 @@ class ContentItem(BaseContent):
             List[TestPlaybook]: List of TestPlaybook models.
         """
         return [
-            r.content_item  # type: ignore[misc]
+            r.content_item_to  # type: ignore[misc]
             for r in self.relationships_data[RelationshipType.TESTED_BY]
-            if r.content_item == r.target
+            if r.content_item_to.database_id == r.target_id
         ]
 
     @property
     def handler(self) -> XSOAR_Handler:
-        return JSON_Handler() if self.path.suffix.lower() == ".json" else YAML_Handler()
+        # we use a high value so the code lines will not break
+        return (
+            JSON_Handler()
+            if self.path.suffix.lower() == ".json"
+            else YAML_Handler(width=50_000)
+        )
 
     @property
     def data(self) -> dict:
@@ -113,8 +119,7 @@ class ContentItem(BaseContent):
         self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
     ) -> dict:
         data = self.data
-        # data = MarketplaceSuffixPreparer.prepare(data, marketplace)
-        return data
+        return MarketplaceSuffixPreparer.prepare(data, marketplace)
 
     def summary(self, marketplace: Optional[MarketplaceVersions] = None) -> dict:
         """Summary of a content item (the most important metadata fields)
@@ -165,7 +170,7 @@ class ContentItem(BaseContent):
                         else name
                     )
         normalized = f"{self.content_type.server_name}-{name}"
-        logger.info(f"Normalized file name from {name} to {normalized}")
+        logger.debug(f"Normalized file name from {name} to {normalized}")
         return normalized
 
     def dump(self, dir: DirectoryPath, _: MarketplaceVersions) -> None:

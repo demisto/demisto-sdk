@@ -30,7 +30,6 @@ ALLOWED_IGNORE_ERRORS = [
     "BA111",
     "BA112",
     "BA113",
-    "BA114",  # TODO remove in the next release (week 3, 2023).
     "BA116",
     "BA119",
     "DS107",
@@ -974,6 +973,11 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "layout_container_contains_invalid_types": {
+        "code": "LO107",
+        "ui_applicable": False,
+        "related_field": "",
+    },
     # MP - Mappers
     "invalid_from_version_in_mapper": {
         "code": "MP100",
@@ -1745,6 +1749,32 @@ ERROR_CODE = {
     # XD - XSIAM Dashboards
     "xsiam_dashboards_files_naming_error": {
         "code": "XD100",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    # GR - Graph validations
+    "uses_items_not_in_marketplaces": {
+        "code": "GR100",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "uses_items_with_invalid_fromversion": {
+        "code": "GR101",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "uses_items_with_invalid_toversion": {
+        "code": "GR102",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "using_unknown_content": {
+        "code": "GR103",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "multiple_packs_with_same_display_name": {
+        "code": "GR104",
         "ui_applicable": False,
         "related_field": "",
     },
@@ -3222,6 +3252,14 @@ class Errors:
         return f"In layout {layout} the following scripts were not found in the id_set.json file: {scripts}"
 
     @staticmethod
+    @error_code_decorator
+    def layout_container_contains_invalid_types(invalid_types):
+        return (
+            f"The following invalid types were found in the layout: {str(invalid_types)}. Those types are not"
+            f" supported in XSIAM, remove them or change the layout to be XSOAR only"
+        )
+
+    @staticmethod
     def suggest_fix_non_existent_script_id() -> str:
         return (
             "Please make sure:\n"
@@ -4345,3 +4383,45 @@ class Errors:
             f"script {script_id} contains the nativeimage key in its yml, "
             f"this key is added only during the upload flow, please remove it."
         )
+
+    @staticmethod
+    @error_code_decorator
+    def uses_items_not_in_marketplaces(
+        content_name: str, marketplaces: list, used_content_items: List[str]
+    ):
+        return (
+            f"Content item '{content_name}' can be used in the '{', '.join(marketplaces)}' marketplaces, however it uses content items: "
+            f"'{', '.join(used_content_items)}' which are not supported in all of the marketplaces of '{content_name}'."
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def uses_items_with_invalid_fromversion(
+        content_name: str, fromversion: str, used_content_items: List[str]
+    ):
+        return (
+            f"Content item '{content_name}' whose from_version is '{fromversion}' uses the content items: "
+            f"'{', '.join(used_content_items)}' whose from_version is higher (must be equal to, or less than ..)"
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def uses_items_with_invalid_toversion(
+        content_name: str, toversion: str, content_items: list
+    ):
+        return (
+            f"Content item '{content_name}' whose to_version is '{toversion}' uses the content items: "
+            f"'{', '.join(content_items)}' whose to_version is lower (must be equal to, or more than ..)"
+        )
+
+    @staticmethod
+    @error_code_decorator
+    def using_unknown_content(content_name: str, unknown_content_names: List[str]):
+        return f"Content item '{content_name}' using content items: {', '.join(unknown_content_names)} which cannot be found in the repository."
+
+    @staticmethod
+    @error_code_decorator
+    def multiple_packs_with_same_display_name(
+        content_name: str, pack_display_names: List[str]
+    ):
+        return f"Pack '{content_name}' has a duplicate display_name as: {', '.join(pack_display_names)} "

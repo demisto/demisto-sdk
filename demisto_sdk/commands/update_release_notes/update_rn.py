@@ -16,7 +16,6 @@ from demisto_sdk.commands.common.constants import (
     IGNORED_PACK_NAMES,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
-    SKIP_RELEASE_NOTES_FOR_TYPES,
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
     FileType,
@@ -254,8 +253,6 @@ class UpdateRN:
         changed_files = {}
         for packfile in self.modified_files_in_pack:
             file_name, file_type = self.get_changed_file_name_and_type(packfile)
-            if file_type in SKIP_RELEASE_NOTES_FOR_TYPES:
-                continue
             if (
                 "yml" in packfile
                 and file_type
@@ -822,6 +819,7 @@ class UpdateRN:
             desc = data.get("description", "")
             docker_image = data.get("dockerimage")
             rn_desc = ""
+            path = data.get("path")
             if _type is None:
                 continue
 
@@ -832,6 +830,7 @@ class UpdateRN:
                 desc=desc,
                 is_new_file=is_new_file,
                 docker_image=docker_image,
+                path=path,
             )
             if _header_by_type and _header_by_type in current_rn_without_docker_images:
                 if self.does_content_item_header_exist_in_rns(

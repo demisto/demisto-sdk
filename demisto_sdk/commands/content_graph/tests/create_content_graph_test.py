@@ -38,14 +38,6 @@ def setup(mocker, repo: Repo):
         "demisto_sdk.commands.content_graph.objects.base_content.get_content_path",
         return_value=Path(repo.path),
     )
-    mocker.patch(
-        "demisto_sdk.commands.content_graph.objects.content_item.get_content_path",
-        return_value=Path(repo.path),
-    )
-    mocker.patch(
-        "demisto_sdk.commands.content_graph.objects.pack.get_content_path",
-        return_value=Path(repo.path),
-    )
     mocker.patch.object(ContentGraphInterface, "repo_path", Path(repo.path))
     mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
     stop_content_graph()
@@ -80,6 +72,7 @@ def mock_pack(name: str = "SamplePack"):
         useCases=[],
         keywords=[],
         contentItems=[],
+        excluded_dependencies=[],
     )
 
 
@@ -294,6 +287,12 @@ def create_mini_content(repository: ContentDTO):
                 ContentType.SCRIPT,
                 mandatorily=True,
             ),
+            mock_relationship(
+                "SampleTestPlaybook",
+                ContentType.TEST_PLAYBOOK,
+                "SampleIntegration",
+                ContentType.INTEGRATION,
+            ),
         ],
     }
     relationship_pack3 = {
@@ -339,13 +338,10 @@ class TestCreateContentGraph:
             - Make sure the service remains available by querying for all content items in the graph.
             - Make sure there is a single integration in the query response.
         """
-        import demisto_sdk.commands.content_graph.objects.repository as repo_module
-
         mocker.patch.object(
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
 
-        repo_module.USE_FUTURE = False
         pack = repo.create_pack("TestPack")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
         integration = pack.create_integration()
@@ -461,7 +457,7 @@ class TestCreateContentGraph:
                             )
                         if relationship_type == RelationshipType.USES_BY_ID:
                             assert (
-                                content_item_source.uses[0].content_item.object_id
+                                content_item_source.uses[0].content_item_to.object_id
                                 == content_item_target.object_id
                             )
                         if relationship_type == RelationshipType.TESTED_BY:
@@ -469,8 +465,20 @@ class TestCreateContentGraph:
                                 content_item_source.tested_by[0].object_id
                                 == content_item_target.object_id
                             )
-            assert packs[0].depends_on[0].content_item == packs[1]
-            assert packs[1].depends_on[0].content_item == packs[2]
+
+            assert packs[0].depends_on[0].content_item_to == packs[1]
+            assert not packs[0].depends_on[0].is_test  # this is not a test dependency
+
+            for p in packs[1].depends_on:
+                if p.content_item_to == packs[2]:
+                    # regular dependency
+                    assert not p.is_test
+                elif p.content_item_to == packs[0]:
+                    # test dependency
+                    assert p.is_test
+                else:
+
+                    assert False
 
             # now with all levels
             packs = interface.search(
@@ -481,9 +489,9 @@ class TestCreateContentGraph:
             depends_on_pack1 = [r for r in packs[0].depends_on]
             assert depends_on_pack1
             for depends in depends_on_pack1:
-                if depends.content_item == packs[1]:
+                if depends.content_item_to == packs[1]:
                     assert depends.is_direct
-                elif depends.content_item == packs[2]:
+                elif depends.content_item_to == packs[2]:
                     assert not depends.is_direct
                 else:
                     assert False

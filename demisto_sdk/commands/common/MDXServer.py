@@ -59,7 +59,11 @@ def start_docker_MDX_server(
     while mdx_container := docker_client.containers.list(
         filters={"name": DEMISTO_DEPS_DOCKER_NAME}, all=True
     ):
+        iteration_num = 1
+        print(f"Found the following container(s): {mdx_container}")
+        print(f"{iteration_num=} when trying to remove {mdx_container}")
         remove_container(mdx_container[0])
+        iteration_num += 1
 
     try:
         container: docker.models.containers.Container = get_docker().create_container(
@@ -101,6 +105,7 @@ def start_docker_MDX_server(
 
 def remove_container(container):
     if container:
+        print("stopping and removing mdx server")
         print(f"Removing container {container.name}")
         container.remove(force=True)
         print(f"Successfully removed container {container.name}")

@@ -1797,11 +1797,23 @@ class TestContext:
                 self=self.client, method="GET", path=f"/inv-playbook/{self.incident_id}"
             )
             investigation_playbook = ast.literal_eval(investigation_playbook_raw[0])
-        except ApiException:
-            self.build_context.logging_module.exception(
-                "Failed to get investigation playbook state, error trying to communicate with demisto server"
-            )
-            return PB_Status.FAILED
+
+        except ApiException as err:
+            if err.status == 401:
+                # resetting client due to possible session timeouts
+                self.server_context._configure_new_client()
+                self.build_context.logging_module.debug(
+                    f"new demisto_client created because of err: {err}"
+                )
+                # after resetting client, playbook's state should still be in progress
+                return PB_Status.IN_PROGRESS
+            # if a different error other than 401 was returned, we log the exception and fail the test playbook.
+            else:
+                self.build_context.logging_module.exception(
+                    f"Failed to get investigation playbook state, "
+                    f"error trying to communicate with demisto server: {err}"
+                )
+                return PB_Status.FAILED
 
         try:
             state = investigation_playbook["state"]
@@ -1879,13 +1891,7 @@ class TestContext:
             try:
                 # fetch status
                 playbook_state = self._get_investigation_playbook_state()
-            except demisto_client.demisto_api.rest.ApiException as e:
-                if e.status == 401:
-                    self.server_context._configure_new_client()
-                    self.build_context.logging_module.debug(
-                        "new demisto_client created"
-                    )
-                    continue
+            except demisto_client.demisto_api.rest.ApiException:
                 playbook_state = "Pending"
                 self.build_context.logging_module.exception(
                     "Error when trying to get investigation playbook state"

@@ -104,7 +104,7 @@ def test_detection(attribute: str, content_type: type):
     assert isinstance(pack.__getattribute__(attribute), content_type)
 
 
-def test_sign_pack_exception_thrown(repo, capsys, mocker):
+def test_sign_pack_exception_thrown(repo, capsys, mocker, monkeypatch):
     """
     When:
         - Signing a pack.
@@ -125,6 +125,7 @@ def test_sign_pack_exception_thrown(repo, capsys, mocker):
     mocker.patch.object(subprocess, "Popen", autospec=True)
 
     pack_class.logger = logging_setup(3)
+    monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("Pack1")
     content_object_pack = Pack(pack.path)
@@ -137,7 +138,7 @@ def test_sign_pack_exception_thrown(repo, capsys, mocker):
     assert "Error while trying to sign pack Pack1" in captured.out
 
 
-def test_sign_pack_error_from_subprocess(repo, capsys, fake_process):
+def test_sign_pack_error_from_subprocess(repo, capsys, fake_process, monkeypatch):
     """
     When:
         - Signing a pack.
@@ -154,6 +155,7 @@ def test_sign_pack_error_from_subprocess(repo, capsys, fake_process):
     from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 
     pack_class.logger = logging_setup(3)
+    monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("Pack1")
     content_object_pack = Pack(pack.path)
@@ -171,7 +173,7 @@ def test_sign_pack_error_from_subprocess(repo, capsys, fake_process):
     assert "Failed to sign pack for Pack1 -" in captured.out
 
 
-def test_sign_pack_success(repo, capsys, fake_process):
+def test_sign_pack_success(repo, capsys, fake_process, monkeypatch):
     """
     When:
         - Signing a pack.
@@ -187,6 +189,7 @@ def test_sign_pack_success(repo, capsys, fake_process):
     from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 
     pack_class.logger = logging_setup(3)
+    monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("Pack1")
     content_object_pack = Pack(pack.path)

@@ -124,6 +124,9 @@ class LintManager:
                 ]
             )
 
+            # Remove duplicates
+            self._pkgs = list(set(self._pkgs))
+
         if json_file_path:
             if os.path.isdir(json_file_path):
                 json_file_path = os.path.join(json_file_path, "lint_outputs.json")

@@ -1,7 +1,10 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where **lint** failed when using the `-cdam` flag with changed dependant api modules due to partial file duplications filtering.
 
+## 1.10.1
+* Fixed an issue where **update-content-graph** failed to execute.
 
 ## 1.10.0
 * **Breaking change**: Removed usage of `pipenv`, `isort` and `autopep8` in the **split** and **download** commands. Removed the `--no-pipenv` and `--no-code-formatting` flags. Please see https://xsoar.pan.dev/docs/tutorials/tut-setup-dev-remote for the recommended environment setup.

@@ -17,7 +17,19 @@ from functools import lru_cache
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
-from typing import Callable, Dict, Iterable, List, Match, Optional, Set, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Match,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    Union,
+)
 
 import click
 import colorama
@@ -759,14 +771,26 @@ def _read_file(file_path: Path) -> str:
             raise
 
 
-def safe_write_utf(write_method: Callable, path: Path, decode_errors: Tuple[Exception, ...]):
-    # write unicode content into a possibly-not-unicode file
-    try:
-        write_method()
-        return
+def safe_write_unicode(
+    write_method: Callable[[io.TextIOWrapper], Any],
+    path: Path,
+    decode_error_type: Type[BaseException],
+):
+    def _write():
+        with open(path, "w") as f:
+            write_method(f)
 
-    except *decode_errors as e:
-        ...
+    # write unicode content into a file which may not be unicode-encoded
+
+    try:
+        _write()
+
+    except decode_error_type:
+        if UnicodeDammit(path.read_bytes()).original_encoding == "utf-8":
+            raise  # already a unicode file, the following code cannot fix it.
+
+        path.unlink()  # deletes the file
+        _write()  # recreates the file
 
 
 @lru_cache
@@ -782,7 +806,7 @@ def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool =
     if type_of_file in file_path.suffix:  # e.g. 'yml' in '.yml'
         file_content = _read_file(file_path)
         try:
-            if type_of_file in ("yml", ".yml"):
+            if type_of_file in {"yml", ".yml"}:
                 replaced = re.sub(
                     r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content
                 )

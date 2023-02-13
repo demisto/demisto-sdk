@@ -1,4 +1,4 @@
-from typing import IO, Optional, Type
+from typing import IO, Optional
 
 import orjson
 
@@ -37,5 +37,5 @@ class OrJSON_Handler(XSOAR_Handler):
     def _sort_keys(sort_keys: bool):
         return orjson.OPT_SORT_KEYS if sort_keys else None
 
-    def decode_error(self) -> Optional[Type[Exception]]:
-        return orjson.JSONDecodeError,
+    def decode_error(self) -> Exception:
+        return orjson.JSONDecodeError

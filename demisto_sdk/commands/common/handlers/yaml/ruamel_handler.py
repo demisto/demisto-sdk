@@ -1,5 +1,4 @@
 from io import StringIO
-from typing import Optional, Type
 
 from ruamel.yaml import YAML
 from ruamel.yaml.reader import ReaderError
@@ -54,5 +53,5 @@ class RUAMEL_Handler(XSOAR_Handler):
         string_stream.close()
         return output_str
 
-    def decode_error(self) -> Optional[Type[Exception]]:
+    def decode_error(self) -> Exception:
         return ReaderError

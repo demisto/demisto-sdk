@@ -3,7 +3,7 @@ abstract class for xsoar handlers (yaml, json, etc...)
 """
 
 from abc import ABC, abstractmethod
-from typing import IO, Any, Optional, Type
+from typing import IO, Any
 
 
 class XSOAR_Handler(ABC):
@@ -20,8 +20,8 @@ class XSOAR_Handler(ABC):
         pass
 
     @abstractmethod
-    def decode_error(self) -> Optional[Type[Exception]]:
+    def decode_error(self) -> Exception:
         """
-        Returns the exception raised when failing to read the file, or None as default.
+        Returns the exception raised when failing to read the file.
         """
-        return None
+        pass

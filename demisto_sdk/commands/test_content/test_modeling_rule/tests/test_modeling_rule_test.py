@@ -217,7 +217,7 @@ class TestVerifyResults:
 
 
 class TestTheTestModelingRuleCommandSingleRule:
-    def test_the_test_modeling_rule_command_pack_not_on_tenant(self, pack):
+    def test_the_test_modeling_rule_command_pack_not_on_tenant(self, pack, monkeypatch):
         """
         Given:
             - A test data file.
@@ -234,6 +234,9 @@ class TestTheTestModelingRuleCommandSingleRule:
             app as test_modeling_rule_cmd,
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
+
+        # so the logged output when running the command will be printed with a width of 120 characters
+        monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
 
@@ -266,7 +269,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
-    def test_the_test_modeling_rule_command_fail_to_push_test_data(self, pack):
+    def test_the_test_modeling_rule_command_fail_to_push_test_data(self, pack, monkeypatch):
         """
         Given:
             - A test data file.
@@ -284,6 +287,9 @@ class TestTheTestModelingRuleCommandSingleRule:
             app as test_modeling_rule_cmd,
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
+
+        # so the logged output when running the command will be printed with a width of 120 characters
+        monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
 

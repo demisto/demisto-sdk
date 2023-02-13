@@ -35,9 +35,9 @@ def logging_setup(
 
 
 def _logging_setup(
-    console_log_threshold: int = logging.INFO,
-    file_log_threshold: int = logging.DEBUG,
-    log_file: str = "./demisto_sdk_debug_log.log",
+    console_log_threshold: Optional[int] = logging.INFO,
+    file_log_threshold: Optional[int] = logging.DEBUG,
+    log_file: Optional[str] = "./demisto_sdk_debug_log.log",
 ) -> logging.Logger:
     """Init logger object for logging in demisto-sdk
         For more info - https://docs.python.org/3/library/logging.html

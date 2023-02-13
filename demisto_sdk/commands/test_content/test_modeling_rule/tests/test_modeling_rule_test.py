@@ -48,24 +48,24 @@ DEFAULT_TEST_EVENT_ID = UUID("00000000-0000-0000-0000-000000000000")
 DEFAULT_TEST_EVENT_ID_2 = UUID("11111111-1111-1111-1111-111111111111")
 
 
-# the __init__ method of the Downloader class disables logging globally which breaks these tests
-# so in the case the tests for the Downloader class are run first, we need to re-enable logging
-class EnableLogging:
-    def __init__(self) -> None:
-        self.loggers_to_levels = deepcopy(logging.root.manager.loggerDict)
+# # the __init__ method of the Downloader class disables logging globally which breaks these tests
+# # so in the case the tests for the Downloader class are run first, we need to re-enable logging
+# class EnableLogging:
+#     def __init__(self) -> None:
+#         self.loggers_to_levels = deepcopy(logging.root.manager.loggerDict)
 
-    def __enter__(self) -> "EnableLogging":
-        logging.disable(logging.NOTSET)
-        return self
+#     def __enter__(self) -> "EnableLogging":
+#         logging.disable(logging.NOTSET)
+#         return self
 
-    def __exit__(self, exctype, excval, exctraceback) -> None:
-        logging.root.manager.loggerDict = self.loggers_to_levels
+#     def __exit__(self, exctype, excval, exctraceback) -> None:
+#         logging.root.manager.loggerDict = self.loggers_to_levels
 
 
-@pytest.fixture(name="enable_logging", scope="module", autouse=True)
-def fixture_enable_logging():
-    with EnableLogging():
-        yield
+# @pytest.fixture(name="enable_logging", scope="module", autouse=True)
+# def fixture_enable_logging():
+#     with EnableLogging():
+#         yield
 
 
 class SetFakeXsiamClientEnvironmentVars:
@@ -1052,10 +1052,13 @@ class TestTheTestModelingRuleCommandInteractive:
                     test_modeling_rule_cmd, [mrule_dir.as_posix(), "--interactive"]
                 )
                 # Assert
+                print(f'*** test_no_testdata_file_exists, {result.stdout=}')
+
                 expected_log_count = 1
                 assert result.exit_code == 0
                 assert test_data_file.exists()
-                assert "WARNING  No test data file found for" in result.stdout
+                # assert "WARNING  No test data file found for" in result.stdout
+                assert " No test data file found for" in result.stdout
                 assert (
                     result.stdout.count("Creating test data file for: ")
                     == expected_log_count

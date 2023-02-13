@@ -392,25 +392,25 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
-core_pack_list: Optional[
-    list
-] = None  # Initiated in get_core_pack_list function. Here to create a "cached" core_pack_list
+mp_to_core_packs: Dict[
+    MarketplaceVersions, Set[str]
+] = {}  # Initiated in get_core_packs(). Used for caching.
 
 
 @lru_cache(maxsize=128)
-def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
-    """Getting the core pack list from Github content
+def get_core_packs() -> Dict[MarketplaceVersions, Set[str]]:
+    """Getting the core pack from Github content
 
     Returns:
-        Core pack list
+        A mapping from marketplace versions to their core packs.
     """
-    global core_pack_list
-    if isinstance(core_pack_list, list):
-        return core_pack_list
-    if not is_external_repository():
-        core_pack_list = []
-        for mp in marketplaces or MarketplaceVersions:
-            mp_core_packs = (
+    if is_external_repository():
+        return {}  # no core packs in external repos.
+
+    global mp_to_core_packs
+    for mp in MarketplaceVersions:
+        if mp not in mp_to_core_packs:
+            mp_core_packs: Union[list, dict] = (
                 get_remote_file(
                     MARKETPLACE_TO_CORE_PACKS_FILE[mp],
                     git_content_config=GitContentConfig(
@@ -420,15 +420,34 @@ def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
                 )
                 or {}
             )
-            if isinstance(mp_core_packs, list):
-                core_pack_list.extend(mp_core_packs)
-            else:
-                core_pack_list.extend(mp_core_packs.get("core_packs_list", []))
-        core_pack_list = list(set(core_pack_list))
-    else:
-        # no core packs in external repos.
-        core_pack_list = []
-    return core_pack_list
+        if isinstance(mp_core_packs, list):
+            mp_to_core_packs[mp] = set(mp_core_packs)
+        else:
+            mp_to_core_packs[mp] = set(mp_core_packs.get("core_packs_list", []))
+    return mp_to_core_packs
+
+
+def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
+    """Getting the core pack list from Github content
+
+    Arguments:
+        marketplaces: A list of the marketplaces to return core packs for.
+
+    Returns:
+        The core packs list.
+    """
+    result: Set[str] = set()
+    if is_external_repository():
+        return []  # no core packs in external repos.
+
+    if not marketplaces:
+        marketplaces = list(MarketplaceVersions)
+
+    mp_to_core_packs = get_core_packs()
+    for mp, core_packs in mp_to_core_packs.items():
+        if mp in marketplaces:
+            result.update(core_packs)
+    return list(result)
 
 
 def get_local_remote_file(

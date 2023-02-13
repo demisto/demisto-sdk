@@ -3,7 +3,7 @@ import markdownlint from 'markdownlint'
 import markdownlintRuleHelpers from 'markdownlint-rule-helpers'
 import url from 'url'
 
-import compileSync from '@mdx-js/mdx';
+import mdx from '@mdx-js/mdx';
 
 // explanation of the config can be found at
 // https://github.com/DavidAnson/markdownlint/blob/main/schema/markdownlint-config-schema.json
@@ -64,7 +64,7 @@ function requestHandler(req, res) {
         }
         else {
             try {
-                let parsed = compileSync(body)
+                let parsed = await mdx(body)
                 res.end('Successfully parsed mdx')
             } catch (error) {
                 res.statusCode = 500

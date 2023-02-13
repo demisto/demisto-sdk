@@ -294,7 +294,7 @@ def test_load_user_metadata_advanced(repo):
     assert pack_1_metadata.tags == ["tag1", "Use Case"]
 
 
-def test_load_user_metadata_no_metadata_file(repo, capsys):
+def test_load_user_metadata_no_metadata_file(repo, capsys, monkeypatch):
     """
     When:
         - Dumping a pack with no pack_metadata file.
@@ -309,6 +309,7 @@ def test_load_user_metadata_no_metadata_file(repo, capsys):
     import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata.pack_metadata as metadata_class
 
     metadata_class.logger = logging_setup(3)
+    monkeypatch.setenv("COLUMNS", "1000")
 
     pack_1 = repo.setup_one_pack("Pack1")
     pack_1.pack_metadata.write_json(
@@ -333,7 +334,7 @@ def test_load_user_metadata_no_metadata_file(repo, capsys):
     assert "Pack Number 1 pack is missing pack_metadata.json file." in captured.out
 
 
-def test_load_user_metadata_invalid_price(repo, capsys):
+def test_load_user_metadata_invalid_price(repo, capsys, monkeypatch):
     """
     When:
         - Dumping a pack with invalid price in pack_metadata file.
@@ -348,6 +349,7 @@ def test_load_user_metadata_invalid_price(repo, capsys):
     import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata.pack_metadata as metadata_class
 
     metadata_class.logger = logging_setup(3)
+    monkeypatch.setenv("COLUMNS", "1000")
 
     pack_1 = repo.setup_one_pack("Pack1")
     pack_1.pack_metadata.write_json(
@@ -373,7 +375,7 @@ def test_load_user_metadata_invalid_price(repo, capsys):
     )
 
 
-def test_load_user_metadata_bad_pack_metadata_file(repo, capsys):
+def test_load_user_metadata_bad_pack_metadata_file(repo, capsys, monkeypatch):
     """
     When:
         - Dumping a pack with invalid pack_metadata file.
@@ -388,6 +390,7 @@ def test_load_user_metadata_bad_pack_metadata_file(repo, capsys):
     import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata.pack_metadata as metadata_class
 
     metadata_class.logger = logging_setup(3)
+    monkeypatch.setenv("COLUMNS", "1000")
 
     pack_1 = repo.setup_one_pack("Pack1")
     pack_1.pack_metadata.write_as_text("Invalid of course {")

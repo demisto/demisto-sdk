@@ -236,12 +236,10 @@ def check_dataset_exists(
         except requests.exceptions.HTTPError:
             pass
         sleep(interval)
-    print('*** Before log Dataset {dataset} does not exist after')
     logger.error(
         f"[red]Dataset {dataset} does not exist after {timeout} seconds[/red]",
         extra={"markup": True},
     )
-    print('*** After log Dataset {dataset} does not exist after')
     raise typer.Exit(1)
 
 
@@ -403,18 +401,11 @@ def validate_modeling_rule(
         interactive (bool): Whether command is being run in interactive mode.
         ctx (typer.Context): Typer context.
     """
-    print(f'*** validate_modeling_rule, before console.rule')
-    # console.rule("[info]Test Modeling Rule[/info]")
-    logger.info("[info]Test Modeling Rule[/info]")
-    print(f'*** validate_modeling_rule, after console.rule, {mrule_dir=}')
+    console.rule("[info]Test Modeling Rule[/info]")
     logger.info(f"[cyan]<<<< {mrule_dir} >>>>[/cyan]", extra={"markup": True})
-    print(f'*** validate_modeling_rule, before mr_entity')
     mr_entity = ModelingRule(mrule_dir.as_posix())
-    print(f'*** validate_modeling_rule, before execd_cmd')
     execd_cmd = Panel(Syntax(f"{ctx.command_path} {mrule_dir}", "bash"))
-    print(f'*** validate_modeling_rule, before if, {ctx.command_path=} {mrule_dir=}')
     if not mr_entity.testdata_path:
-        print(f'*** validate_modeling_rule, in if not mr_entity.testdata_path, {mr_entity.testdata_path=}')
         logger.warning(
             f"[yellow]No test data file found for {mrule_dir}[/yellow]",
             extra={"markup": True},
@@ -700,7 +691,6 @@ def test_modeling_rule(
     errors = False
     for mrule_dir in input:
         try:
-            print(f'*** test_modeling_rule, validating {mrule_dir=}')
             validate_modeling_rule(
                 mrule_dir,
                 # can ignore the types since if they are not set to str values an error occurs
@@ -713,7 +703,6 @@ def test_modeling_rule(
                 interactive,
                 ctx,
             )
-            print(f'*** test_modeling_rule, validated {mrule_dir=}')
         except typer.Exit as e:
             if e.exit_code != 0:
                 errors = True

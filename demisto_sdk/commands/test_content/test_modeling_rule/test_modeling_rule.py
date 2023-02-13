@@ -403,7 +403,8 @@ def validate_modeling_rule(
         interactive (bool): Whether command is being run in interactive mode.
         ctx (typer.Context): Typer context.
     """
-    console.rule("[info]Test Modeling Rule[/info]")
+    # console.rule("[info]Test Modeling Rule[/info]")
+    logger.info("[info]Test Modeling Rule[/info]")
     logger.info(f"[cyan]<<<< {mrule_dir} >>>>[/cyan]", extra={"markup": True})
     mr_entity = ModelingRule(mrule_dir.as_posix())
     execd_cmd = Panel(Syntax(f"{ctx.command_path} {mrule_dir}", "bash"))
@@ -693,6 +694,7 @@ def test_modeling_rule(
     errors = False
     for mrule_dir in input:
         try:
+            print(f'*** test_modeling_rule, validating {mrule_dir=}')
             validate_modeling_rule(
                 mrule_dir,
                 # can ignore the types since if they are not set to str values an error occurs
@@ -705,6 +707,7 @@ def test_modeling_rule(
                 interactive,
                 ctx,
             )
+            print(f'*** test_modeling_rule, validated {mrule_dir=}')
         except typer.Exit as e:
             if e.exit_code != 0:
                 errors = True

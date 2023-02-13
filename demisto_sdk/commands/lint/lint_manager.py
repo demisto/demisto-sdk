@@ -124,8 +124,8 @@ class LintManager:
                 ]
             )
 
-        # Remove duplicates
-        self._pkgs = list(set(self._pkgs))
+            # Remove duplicates
+            self._pkgs = list(set(self._pkgs))
 
         if json_file_path:
             if os.path.isdir(json_file_path):

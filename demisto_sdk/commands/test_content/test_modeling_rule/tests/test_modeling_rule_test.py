@@ -1,6 +1,4 @@
-import logging
 import os
-from copy import deepcopy
 from pathlib import Path
 from uuid import UUID
 
@@ -249,7 +247,9 @@ class TestTheTestModelingRuleCommandSingleRule:
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
-    def test_the_test_modeling_rule_command_fail_to_push_test_data(self, pack, monkeypatch):
+    def test_the_test_modeling_rule_command_fail_to_push_test_data(
+        self, pack, monkeypatch
+    ):
         """
         Given:
             - A test data file.

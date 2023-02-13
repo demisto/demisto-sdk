@@ -31,7 +31,10 @@ def logging_setup(
         logging.Logger: logger object
     """
     # TODO Translate to the input params of _logging_setup
-    return _logging_setup(console_log_threshold=console_log_threshold, file_log_threshold=file_log_threshold)
+    return _logging_setup(
+        console_log_threshold=console_log_threshold,
+        file_log_threshold=file_log_threshold,
+    )
 
 
 def _logging_setup(

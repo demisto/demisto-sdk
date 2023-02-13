@@ -1012,6 +1012,12 @@ class TestTheTestModelingRuleCommandInteractive:
             - Ensure the test data file was created.
             - Ensure that the log output from creating the testdata file is not duplicated.
         """
+        from functools import partial
+
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            check_dataset_exists,
+        )
+
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )
@@ -1020,6 +1026,20 @@ class TestTheTestModelingRuleCommandInteractive:
         # module name from which it is imported) but the logic in 'init-test-data' command looks to see if the parent
         # command is 'test' to determine if it should execute setup_rich_logging logic
         test_modeling_rule_cmd.registered_commands[0].name = "test"
+
+        func_path = (
+            "demisto_sdk.commands.test_content.test_modeling_rule."
+            "test_modeling_rule.check_dataset_exists"
+        )
+
+        # override the default timeout to 1 second so only one iteration of the loop will be executed
+        check_dataset_exists_with_timeout = partial(check_dataset_exists, timeout=5)
+        monkeypatch.setattr(func_path, check_dataset_exists_with_timeout)
+
+        from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
+            app as test_modeling_rule_cmd,
+        )
+        from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         # so the logged output when running the command will be printed with a width of 120 characters
         monkeypatch.setenv("COLUMNS", "1000")

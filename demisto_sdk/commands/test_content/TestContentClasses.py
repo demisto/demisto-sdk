@@ -1887,10 +1887,7 @@ class TestContext:
         # wait for playbook to finish run
         while True:
             # give playbook time to run
-            self.build_context.logging_module.debug(
-                "sleeping for 1 hour for testing..."
-            )
-            time.sleep(3700)
+            time.sleep(5)
             try:
                 # fetch status
                 playbook_state = self._get_investigation_playbook_state()

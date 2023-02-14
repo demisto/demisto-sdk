@@ -9,7 +9,6 @@ const url = require('url')
 // explanation of the config can be found at
 // https://github.com/DavidAnson/markdownlint/blob/main/schema/markdownlint-config-schema.json
 const config = require( "./markdownlintconfig.js")
-console.log(config)
 
 // explanation of the config can be found at
 // https://github.com/DavidAnson/markdownlint/blob/main/schema/markdownlint-config-schema.json

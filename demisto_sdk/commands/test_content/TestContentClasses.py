@@ -1887,12 +1887,12 @@ class TestContext:
         # wait for playbook to finish run
         while True:
             # give playbook time to run
+            self.build_context.logging_module.debug(
+                "sleeping for 1 hour for testing..."
+            )
             time.sleep(3600)
             try:
                 # fetch status
-                self.build_context.logging_module.debug(
-                    "sleeping for 1 hour for testing..."
-                )
                 playbook_state = self._get_investigation_playbook_state()
             except demisto_client.demisto_api.rest.ApiException:
                 playbook_state = "Pending"

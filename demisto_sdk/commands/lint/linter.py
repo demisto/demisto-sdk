@@ -587,9 +587,10 @@ class Linter:
                 if self._facts["commands"]
                 else ""
             )
+            lint_files.sort(key=lambda f: "ApiModule" in f.name)
             stdout, stderr, exit_code = run_command_os(
                 command=build_xsoar_linter_command(
-                    lint_files, self._facts.get("support_level", "base")  # type: ignore
+                    sorted(lint_files, key=lambda f: "ApiModule" in f.name), self._facts.get("support_level", "base")  # type: ignore
                 ),
                 cwd=self._pack_abs_dir,
                 env=myenv,

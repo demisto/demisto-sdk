@@ -193,13 +193,14 @@ jobs:
         - python/install-packages:
             pkg-manager: "poetry"
             cache-version: << pipeline.parameters.cache-version >>
-        - node/install-packages:
-            cache-version: << pipeline.parameters.cache-version >>
-            app-dir: content
+
+        - <<: *install_node_ci
         - run:
             name: pytest - graph
             no_output_timeout: 15m
             command: |
+              pwd
+              npm list --json
               shopt -u globstar
               TEST_FILES=$(circleci tests glob "demisto_sdk/commands/content_graph/tests/*_test.py")
 

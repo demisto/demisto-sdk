@@ -8,6 +8,25 @@ from typing import Optional
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
+DEPRECATED_PARAMETERS = {
+    "-v": "--console-log-threshold or --file-log-threshold",
+    "--verbose": "--console-log-threshold or --file-log-threshold",
+    "--quiet": "--console-log-threshold or --file-log-threshold",
+    "-lp": "--log-file",
+    "--log-path": "--log-file",
+    "-ln": "--log-file",
+    "--log-name": "--log-file",
+}
+
+
+def handle_deprecated_args(input_args):
+    for current_arg in input_args:
+        if current_arg in DEPRECATED_PARAMETERS:
+            substitute = ""
+            logger.info(
+                f"Argument {current_arg} is deprecated. Please use {substitute} instead."
+            )
+
 
 # TODO Remove this method and expose _logging_setup as logging_setup
 def logging_setup(
@@ -17,6 +36,7 @@ def logging_setup(
     quiet: Optional[bool] = False,
     log_path: Optional[str] = ".",
     log_file_name: Optional[str] = "demisto_sdk_debug_log.log",
+    log_file: Optional[str] = "./demisto_sdk_debug_log.log",
 ) -> logging.Logger:
     """Init logger object for logging in demisto-sdk
         For more info - https://docs.python.org/3/library/logging.html
@@ -34,6 +54,7 @@ def logging_setup(
     return _logging_setup(
         console_log_threshold=console_log_threshold,
         file_log_threshold=file_log_threshold,
+        log_file=log_file,
     )
 
 
@@ -100,6 +121,7 @@ def _logging_setup(
     l: logging.Logger = logging.getLogger("demisto-sdk")
 
     return l
+
 
 logger: logging.Logger = logging_setup()
 

@@ -17,6 +17,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.mode
     ModelingRule,
     SingleModelingRule,
 )
+from demisto_sdk.commands.common.logger import handle_deprecated_args
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
 from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
     XsiamApiClient,
@@ -573,7 +574,10 @@ def logs_token_cb(ctx: typer.Context, param: typer.CallbackParam, value: Optiona
     return value
 
 
-@app.command(no_args_is_help=True)
+@app.command(
+    no_args_is_help=True,
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
 def test_modeling_rule(
     ctx: typer.Context,
     input: List[Path] = typer.Argument(
@@ -623,41 +627,6 @@ def test_modeling_rule(
         show_default=False,
         callback=logs_token_cb,
     ),
-    # TODO Remove
-    verbosity: int = typer.Option(
-        0,
-        "-v",
-        "--verbose",
-        count=True,
-        clamp=True,
-        max=3,
-        show_default=True,
-        help="Verbosity level -v / -vv / .. / -vvv",
-        rich_help_panel="Logging Configuration",
-    ),
-    quiet: bool = typer.Option(
-        False,
-        help="Quiet output - sets verbosity to default.",
-        rich_help_panel="Logging Configuration",
-    ),
-    log_path: Path = typer.Option(
-        None,
-        "-lp",
-        "--log-path",
-        resolve_path=True,
-        show_default=False,
-        help="Path of directory in which you would like to store all levels of logs. If not given, then the "
-        '"log_file_name" command line option will be disregarded, and the log output will be to stdout.',
-        rich_help_panel="Logging Configuration",
-    ),
-    log_file_name: str = typer.Option(
-        "test-modeling-rule.log",
-        "-ln",
-        "--log-name",
-        resolve_path=True,
-        help="The file name (including extension) where log output should be saved to.",
-        rich_help_panel="Logging Configuration",
-    ),
     push: bool = typer.Option(
         True,
         "--push/--no-push",
@@ -683,6 +652,7 @@ def test_modeling_rule(
     """
     Test a modeling rule against an XSIAM tenant
     """
+    handle_deprecated_args(ctx.args)
 
     logger.info(
         f"[cyan]modeling rules directories to test: {input}[/cyan]",

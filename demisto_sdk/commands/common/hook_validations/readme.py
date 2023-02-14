@@ -414,6 +414,7 @@ class ReadMeValidator(BaseValidator):
                 f"The npm modules: {missing_module} are not installed. Use "
                 f"'npm install' to install all required node dependencies"
             )
+        assert not missing_module, missing_module
         return valid
 
     def check_readme_relative_image_paths(self, is_pack_readme: bool = False) -> list:

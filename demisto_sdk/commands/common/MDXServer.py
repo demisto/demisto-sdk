@@ -31,16 +31,16 @@ def server_script_path():
 
     """
     return (
-            Path(__file__).parent.parent
-            / "common"
-            / "markdown_server"
-            / _SERVER_SCRIPT_NAME
+        Path(__file__).parent.parent
+        / "common"
+        / "markdown_server"
+        / _SERVER_SCRIPT_NAME
     )
 
 
 @contextmanager
 def start_docker_MDX_server(
-        handle_error: Optional[Callable] = None, file_path: Optional[str] = None
+    handle_error: Optional[Callable] = None, file_path: Optional[str] = None
 ):
     """
         This function will start a docker container running a node server listening on port 6161.
@@ -59,7 +59,7 @@ def start_docker_MDX_server(
     get_docker().pull_image(MDX_SERVER_DOCKER_IMAGE)
     iteration_num = 1
     while mdx_container := init_global_docker_client().containers.list(
-            filters={"name": DEMISTO_DEPS_DOCKER_NAME}
+        filters={"name": DEMISTO_DEPS_DOCKER_NAME}
     ):
         print(f"Found the following container(s): {mdx_container}")
         print(f"{iteration_num=} when trying to remove {mdx_container}")
@@ -124,7 +124,7 @@ def remove_container(container):
 
 @contextmanager
 def start_local_MDX_server(
-        handle_error: Optional[Callable] = None, file_path: Optional[str] = None
+    handle_error: Optional[Callable] = None, file_path: Optional[str] = None
 ):
     """
         This function will start a node server on the local machine and listen on port 6161

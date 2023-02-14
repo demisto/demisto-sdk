@@ -17,8 +17,6 @@
   "bugs": {
     "url": "https://github.com/demisto/content/issues"
   },
-  "type" : "module",
-
   "homepage": "https://github.com/demisto/content#readme",
   "dependencies": {
     "@mdx-js/mdx": "^1.6.22",

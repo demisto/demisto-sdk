@@ -1,13 +1,18 @@
-import http from 'http'
-import mdx from '@mdx-js/mdx';
-import markdownlint from 'markdownlint'
-import markdownlintRuleHelpers from 'markdownlint-rule-helpers'
-import url from 'url'
+
+const http = require( 'http')
+const mdx = require('@mdx-js/mdx');
+const markdownlint = require( 'markdownlint')
+const markdownlintRuleHelpers = require( 'markdownlint-rule-helpers' )
+const url = require('url')
 
 
 // explanation of the config can be found at
 // https://github.com/DavidAnson/markdownlint/blob/main/schema/markdownlint-config-schema.json
-import config from "./markdownlintconfig.js"
+const config = require( "./markdownlintconfig.js")
+
+
+// explanation of the config can be found at
+// https://github.com/DavidAnson/markdownlint/blob/main/schema/markdownlint-config-schema.json
 
 function markdownLint(req, res, body, query) {
 

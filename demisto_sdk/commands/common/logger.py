@@ -21,10 +21,10 @@ DEPRECATED_PARAMETERS = {
 
 def handle_deprecated_args(input_args):
     for current_arg in input_args:
-        if current_arg in DEPRECATED_PARAMETERS:
-            substitute = ""
-            logger.info(
-                f"Argument {current_arg} is deprecated. Please use {substitute} instead."
+        if current_arg in DEPRECATED_PARAMETERS.keys():
+            substitute = DEPRECATED_PARAMETERS[current_arg]
+            logger.error(
+                f"[red]Argument {current_arg} is deprecated. Please use {substitute} instead.[/red]"
             )
 
 

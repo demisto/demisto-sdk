@@ -160,7 +160,7 @@ jobs:
               poetry run pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
               kill $node_pid
         - store_test_results:
-            path: test-results.
+            path: test-results
         - store_artifacts:
             path: node_versions_info.json
         - store_artifacts:

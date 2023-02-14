@@ -5,7 +5,6 @@ import orjson
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 
 
-
 class OrJSON_Handler(XSOAR_Handler):
     """
     XSOAR wrapper to orjson

@@ -1222,7 +1222,7 @@ class Downloader:
             },
             splitter="dot",
         )
-
+a
         if file_ending not in {"yml", "json"}:
             logging.warning(f"trying to merge an non-supported file {output_path}")
             return

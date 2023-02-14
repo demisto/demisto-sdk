@@ -160,9 +160,8 @@ class TestGenericFunctions:
         """Tests reading a non-unicode file"""
         path = (tmp_path / "non_unicode").with_suffix(suffix)
 
-        path.write_text(
-            dumps_method({"text": SENTENCE_WITH_UMLAUTS}, ensure_ascii=False),
-            encoding="latin-1",
+        path.write_bytes(
+            dumps_method({"text": SENTENCE_WITH_UMLAUTS}, ensure_ascii=False).encode('latin-1')
         )
         assert get_file(path, suffix) == {"text": SENTENCE_WITH_UMLAUTS}
 
@@ -174,9 +173,9 @@ class TestGenericFunctions:
                 ".json",
                 json.dumps,
                 lambda f, data: json.dump(data, f),
-                json.decode_error,
+                json.decode_error(),
             ),
-            (".yml", yaml.dumps, lambda f, data: yaml.dump(data, f), yaml.decode_error),
+            (".yml", yaml.dumps, lambda f, data: yaml.dump(data, f), yaml.decode_error()),
         ),
     )
     def test_safe_write_unicode_to_non_unicode(
@@ -186,26 +185,21 @@ class TestGenericFunctions:
         write_method: Callable[[TextIOWrapper, dict], None],
         decode_error: Type[BaseException],
     ):
-        path = (tmp_path / "non_unicode").with_suffix(suffix)
-        path.write_text(
-            dumps_method({"latin-1-text": SENTENCE_WITH_UMLAUTS}, ensure_ascii=False),
-            encoding="latin-1",
-        )
+        from demisto_sdk.commands.download.downloader import Downloader
+        
+        non_unicode_path = (tmp_path / "non_unicode").with_suffix(suffix)
+        with non_unicode_path.open('wb') as f:
+            f.write(dumps_method({"non-unicode-text": SENTENCE_WITH_UMLAUTS}, ensure_ascii=False).encode('latin-1'))
+        
+        unicode_path = (tmp_path / "unicode").with_suffix(suffix)
+        with open(unicode_path, 'w') as f:
+            write_method(f, {"unicode-text": SENTENCE_WITH_UMLAUTS})
 
-        unicode_dict = {"unicode-text": SENTENCE_WITH_UMLAUTS}
-        # ensure an exception is raised
-        with pytest.raises(decode_error):  #type:ignore[call-overload]
-            with path.open("w") as f:
-                write_method(f, unicode_dict)
+        Downloader.update_data(output_path=str(unicode_path),
+                               file_path_to_read=str(non_unicode_path),
+                               file_ending=suffix[1:])  # without the "."
 
-        # ensure safe_write_unicode writes properly
-        with path.open("w") as f:
-            safe_write_unicode(
-                write_method=lambda f: write_method(f, unicode_dict),
-                path=path,
-                decode_error=decode_error,
-            )  # TODO type
-        assert get_file(path, suffix) == unicode_dict
+        assert set(get_file(unicode_path, suffix).keys()) == {"non-unicode-text", "unicode-text"}
 
     @pytest.mark.parametrize(
         "file_name, prefix, result",

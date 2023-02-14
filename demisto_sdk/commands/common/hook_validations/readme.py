@@ -393,6 +393,7 @@ class ReadMeValidator(BaseValidator):
         valid = True
         # Check node exist
         stdout, stderr, exit_code = run_command_os("node -v", cwd=content_path)
+
         if exit_code:
             print_warning(
                 f"There is no node installed on the machine, error - {stderr}, {stdout}"
@@ -416,6 +417,8 @@ class ReadMeValidator(BaseValidator):
                 f"The npm modules: {missing_module} are not installed. Use "
                 f"'npm install' to install all required node dependencies"
             )
+        assert False, f"{missing_module=} {stdout=} {stderr=} {exit_code=}"
+
         return valid
 
     def check_readme_relative_image_paths(self, is_pack_readme: bool = False) -> list:

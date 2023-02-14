@@ -19,13 +19,7 @@ from demisto_sdk.commands.common.hook_validations.integration import (
     IntegrationValidator,
 )
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
-from demisto_sdk.commands.common.hook_validations.readme import REQUIRED_MDX_PACKS
-from demisto_sdk.commands.common.tools import (
-    get_content_path,
-    get_dict_from_file,
-    is_test_config_match,
-    run_command_os,
-)
+from demisto_sdk.commands.common.tools import get_dict_from_file, is_test_config_match
 from demisto_sdk.commands.format import format_module, update_generic
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
@@ -686,10 +680,6 @@ def test_format_integration_skipped_files(repo):
         - Ensure format runs successfully
         - Ensure format does not run files to be skipped
     """
-    stdout, stderr, exit_code = run_command_os(
-        f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}', cwd=get_content_path()
-    )
-    assert False, f"{get_content_path()=} {stderr=} {stdout=} {exit_code=}"
     pack = repo.create_pack("PackName")
     pack.create_integration("integration")
     pack.create_doc_file()

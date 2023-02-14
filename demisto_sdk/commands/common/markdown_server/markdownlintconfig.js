@@ -1,4 +1,4 @@
-exports.default = {
+module.exports =  {
   "default": true,
   "whitespace" : false,
   "single-trailing-newline" : false,

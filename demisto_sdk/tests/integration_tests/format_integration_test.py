@@ -697,7 +697,7 @@ def test_format_integration_skipped_files(repo, mocker):
         assert excluded_file not in format_result.stdout
 
 
-def test_format_commonserver_skipped_files(repo):
+def test_format_commonserver_skipped_files(repo, mocker):
     """
     Given:
         - Base content pack with CommonServerPython script
@@ -711,6 +711,7 @@ def test_format_commonserver_skipped_files(repo):
     """
     pack = repo.create_pack("Base")
     pack.create_script("CommonServerPython")
+    mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
 
     runner = CliRunner(mix_stderr=False)
     format_result = runner.invoke(
@@ -922,7 +923,7 @@ def test_format_playbook_no_input_specified(mocker, repo):
     assert playbook.yml.read_dict().get("name") == playbook_name
 
 
-def test_format_incident_type_layout_id(repo):
+def test_format_incident_type_layout_id(repo, mocker):
     """
     Given:
         - Content pack with incident type and layout
@@ -936,6 +937,8 @@ def test_format_incident_type_layout_id(repo):
         - Verify layout ID is updated
         - Verify the updated layout ID is also updated in the incident type
     """
+    mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
+
     pack = repo.create_pack("PackName")
     layout = pack.create_layoutcontainer(
         name="layout",

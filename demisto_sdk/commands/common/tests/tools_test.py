@@ -10,7 +10,7 @@ import pytest
 import requests
 
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import 
+from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     DOC_FILES_DIR,
     INDICATOR_TYPES_DIR,
@@ -150,7 +150,7 @@ class TestGenericFunctions:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "suffix,dump_function", ((".json", json.dumps), (".yml", yaml.dumps))
+        "suffix,dumps_method", ((".json", json.dumps), (".yml", yaml.dumps))
     )
     def test_get_file_non_unicode(
         tmp_path,
@@ -168,7 +168,7 @@ class TestGenericFunctions:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "suffix,dumps_function,write_function,decode_error",
+        "suffix,dumps_method,write_method,decode_error",
         (
             (
                 ".json",
@@ -184,7 +184,7 @@ class TestGenericFunctions:
         suffix: str,
         dumps_method: Callable,
         write_method: Callable[[TextIOWrapper, dict], None],
-        decode_error,
+        decode_error: Type[BaseException],
     ):
         path = (tmp_path / "non_unicode").with_suffix(suffix)
         path.write_text(

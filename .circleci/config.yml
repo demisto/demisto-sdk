@@ -193,8 +193,9 @@ jobs:
         - python/install-packages:
             pkg-manager: "poetry"
             cache-version: << pipeline.parameters.cache-version >>
-
-        - <<: *install_node_ci
+        - node/install-packages:
+            cache-version: << pipeline.parameters.cache-version >>
+            app-dir: content
         - run:
             name: pytest - graph
             no_output_timeout: 15m

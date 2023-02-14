@@ -1,16 +1,16 @@
 import glob
-import json
 import os
 import shutil
+from io import TextIOWrapper
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Callable, List, Optional, Union, Type
 
 import git
 import pytest
 import requests
 
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (
+from demisto_sdk.commands.common.constants import 
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     DOC_FILES_DIR,
     INDICATOR_TYPES_DIR,
@@ -38,7 +38,7 @@ from demisto_sdk.commands.common.git_content_config import (
     GitCredentials,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS,
@@ -83,6 +83,7 @@ from demisto_sdk.commands.common.tools import (
     is_uuid,
     retrieve_file_ending,
     run_command_os,
+    safe_write_unicode,
     server_version_compare,
     string_to_bool,
     to_kebab_case,
@@ -125,6 +126,9 @@ from TestSuite.test_tools import ChangeCWD
 
 GIT_ROOT = git_path()
 yaml = YAML_Handler()
+json = JSON_Handler()
+
+SENTENCE_WITH_UMLAUTS = "Nett hier. Aber waren Sie schon mal in Baden-Württemberg?"
 
 
 class TestGenericFunctions:
@@ -149,16 +153,59 @@ class TestGenericFunctions:
         "suffix,dump_function", ((".json", json.dumps), (".yml", yaml.dumps))
     )
     def test_get_file_non_unicode(
-        tmp_path, suffix: str, dump_function: Callable[[Dict], Any]
+        tmp_path,
+        suffix: str,
+        dumps_method: Callable,
     ):
         """Tests reading a non-unicode file"""
-        text = "Nett hier. Aber waren Sie schon mal in Baden-Württemberg?"  # the umlaut is important
         path = (tmp_path / "non_unicode").with_suffix(suffix)
 
         path.write_text(
-            dump_function({"text": text}, ensure_ascii=False), encoding="latin-1"
+            dumps_method({"text": SENTENCE_WITH_UMLAUTS}, ensure_ascii=False),
+            encoding="latin-1",
         )
-        assert get_file(path, suffix) == {"text": text}
+        assert get_file(path, suffix) == {"text": SENTENCE_WITH_UMLAUTS}
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "suffix,dumps_function,write_function,decode_error",
+        (
+            (
+                ".json",
+                json.dumps,
+                lambda f, data: json.dump(data, f),
+                json.decode_error,
+            ),
+            (".yml", yaml.dumps, lambda f, data: yaml.dump(data, f), yaml.decode_error),
+        ),
+    )
+    def test_safe_write_unicode_to_non_unicode(
+        tmp_path,
+        suffix: str,
+        dumps_method: Callable,
+        write_method: Callable[[TextIOWrapper, dict], None],
+        decode_error,
+    ):
+        path = (tmp_path / "non_unicode").with_suffix(suffix)
+        path.write_text(
+            dumps_method({"latin-1-text": SENTENCE_WITH_UMLAUTS}, ensure_ascii=False),
+            encoding="latin-1",
+        )
+
+        unicode_dict = {"unicode-text": SENTENCE_WITH_UMLAUTS}
+        # ensure an exception is raised
+        with pytest.raises(decode_error):  #type:ignore[call-overload]
+            with path.open("w") as f:
+                write_method(f, unicode_dict)
+
+        # ensure safe_write_unicode writes properly
+        with path.open("w") as f:
+            safe_write_unicode(
+                write_method=lambda f: write_method(f, unicode_dict),
+                path=path,
+                decode_error=decode_error,
+            )  # TODO type
+        assert get_file(path, suffix) == unicode_dict
 
     @pytest.mark.parametrize(
         "file_name, prefix, result",

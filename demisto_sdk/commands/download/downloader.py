@@ -1238,9 +1238,9 @@ class Downloader:
                 json.decode_error,
             ),
         }[file_ending]
-        
+
         safe_write_unicode(
-            write_method, path=Path(output_path), decode_error_type=decode_error_type
+            write_method, path=Path(output_path), decode_error=decode_error_type
         )
 
     @staticmethod

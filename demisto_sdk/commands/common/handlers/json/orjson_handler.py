@@ -1,8 +1,9 @@
-from typing import IO, Optional
+from typing import IO, Optional, Type
 
 import orjson
 
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
+
 
 
 class OrJSON_Handler(XSOAR_Handler):
@@ -37,5 +38,5 @@ class OrJSON_Handler(XSOAR_Handler):
     def _sort_keys(sort_keys: bool):
         return orjson.OPT_SORT_KEYS if sort_keys else None
 
-    def decode_error(self) -> Exception:
+    def decode_error(self) -> Type[BaseException]:
         return orjson.JSONDecodeError

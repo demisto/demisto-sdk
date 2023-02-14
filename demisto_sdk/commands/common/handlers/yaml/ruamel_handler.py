@@ -5,6 +5,7 @@ from ruamel.yaml.reader import ReaderError
 
 from demisto_sdk.commands.common.handlers.handlers_utils import order_dict
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
+from typing import Type
 
 
 class RUAMEL_Handler(XSOAR_Handler):
@@ -53,5 +54,5 @@ class RUAMEL_Handler(XSOAR_Handler):
         string_stream.close()
         return output_str
 
-    def decode_error(self) -> Exception:
+    def decode_error(self) -> Type[BaseException]:
         return ReaderError

@@ -233,23 +233,12 @@ class ReadMeValidator(BaseValidator):
     def is_mdx_file(self) -> bool:
         html = self.is_html_doc()
         valid = self.should_run_mdx_validation()
-        stdout, stderr, exit_code = run_command_os(
-            f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}', cwd=self.content_path  # type: ignore
-        )
-        printer = f"after {stdout=} {stderr=} {exit_code=}"
 
         if valid and not html:
             # add to env var the directory of node modules
 
             os.environ["NODE_PATH"] = (
                 str(self.node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
-            )
-            stdout, stderr, exit_code = run_command_os(
-                f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}', cwd=self.content_path  # type: ignore
-            )
-
-            assert not printer + f"after {stdout=} {stderr=} {exit_code=}", (
-                printer + f"after {stdout=} {stderr=} {exit_code=}"
             )
             return self.mdx_verify_server()
         return True
@@ -427,7 +416,6 @@ class ReadMeValidator(BaseValidator):
                 f"The npm modules: {missing_module} are not installed. Use "
                 f"'npm install' to install all required node dependencies"
             )
-        assert not missing_module, missing_module
         return valid
 
     def check_readme_relative_image_paths(self, is_pack_readme: bool = False) -> list:

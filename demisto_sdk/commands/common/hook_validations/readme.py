@@ -248,7 +248,9 @@ class ReadMeValidator(BaseValidator):
                 f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}', cwd=self.content_path  # type: ignore
             )
 
-            assert not printer + f"after {stdout=} {stderr=} {exit_code=}"
+            assert not printer + f"after {stdout=} {stderr=} {exit_code=}", (
+                printer + f"after {stdout=} {stderr=} {exit_code=}"
+            )
             return self.mdx_verify_server()
         return True
 

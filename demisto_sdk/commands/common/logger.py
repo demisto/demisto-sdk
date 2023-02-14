@@ -11,6 +11,7 @@ DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 DEPRECATED_PARAMETERS = {
     "-v": "--console-log-threshold or --file-log-threshold",
     "--verbose": "--console-log-threshold or --file-log-threshold",
+    "-q": "--console-log-threshold or --file-log-threshold",
     "--quiet": "--console-log-threshold or --file-log-threshold",
     "-lp": "--log-file",
     "--log-path": "--log-file",
@@ -34,7 +35,6 @@ def logging_setup(
     console_log_threshold: Optional[int] = logging.INFO,
     file_log_threshold: Optional[int] = logging.DEBUG,
     quiet: Optional[bool] = False,
-    log_path: Optional[str] = ".",
     log_file_name: Optional[str] = "demisto_sdk_debug_log.log",
     log_file: Optional[str] = "./demisto_sdk_debug_log.log",
 ) -> logging.Logger:

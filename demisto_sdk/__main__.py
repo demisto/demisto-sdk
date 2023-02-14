@@ -22,6 +22,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_last_remote_release_version,
@@ -44,6 +45,8 @@ from demisto_sdk.commands.test_content.test_modeling_rule import (
 )
 from demisto_sdk.commands.upload.upload import upload_content_entity
 from demisto_sdk.utils.utils import check_configuration_file
+
+logger = logging_setup()
 
 json = JSON_Handler()
 
@@ -345,22 +348,12 @@ def extract_code(config, **kwargs):
     default="xsoar",
     type=click.Choice(["xsoar", "marketplacev2", "v2"]),
 )
-@click.option(
-    "-v",
-    "--verbose",
-    help="Verbose output - mainly for debugging purposes",
-    is_flag=True,
-)
 def prepare_content(**kwargs):
     """
     This command is used to prepare the content to be used in the platform.
 
 
     """
-    from demisto_sdk.commands.common.logger import logging_setup
-
-    if kwargs.get("verbose"):
-        logging_setup(3)
     if click.get_current_context().info_name == "unify":
         kwargs["unify_only"] = True
 
@@ -422,7 +415,6 @@ main.add_command(prepare_content, name="unify")
 )
 def zip_packs(**kwargs) -> int:
     """Generating zipped packs that are ready to be uploaded to Cortex XSOAR machine."""
-    from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.upload.uploader import Uploader
     from demisto_sdk.commands.zip_packs.packs_zipper import (
         EX_FAIL,
@@ -430,7 +422,6 @@ def zip_packs(**kwargs) -> int:
         PacksZipper,
     )
 
-    logging_setup(3)
     check_configuration_file("zip-packs", kwargs)
 
     # if upload is true - all zip packs will be compressed to one zip file
@@ -772,12 +763,10 @@ def create_content_artifacts(**kwargs) -> int:
     4. content_all - Contains all from content_new and content_test.
     5. uploadable_packs - Contains zipped packs that are ready to be uploaded to Cortex XSOAR machine.
     """
-    from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
         ArtifactsManager,
     )
 
-    logging_setup(3)
     check_configuration_file("create-content-artifacts", kwargs)
     if marketplace := kwargs.get("marketplace"):
         os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
@@ -857,9 +846,6 @@ def secrets(config, **kwargs):
     show_default=True,
 )
 @click.option(
-    "-q", "--quiet", is_flag=True, help="Quiet output, only output results in the end"
-)
-@click.option(
     "-p",
     "--parallel",
     default=1,
@@ -891,12 +877,6 @@ def secrets(config, **kwargs):
     "--failure-report",
     help="Path to store failed packs report",
     type=click.Path(exists=True, resolve_path=True),
-)
-@click.option(
-    "-lp",
-    "--log-path",
-    help="Path to store all levels of logs",
-    type=click.Path(resolve_path=True),
 )
 @click.option(
     "-j",
@@ -947,14 +927,7 @@ def lint(**kwargs):
     Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
     If no additional flags specifying the packs are given, will lint only changed files.
     """
-    from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.lint.lint_manager import LintManager
-
-    logging_setup(
-        verbose=kwargs.get("verbose"),  # type: ignore[arg-type]
-        quiet=kwargs.get("quiet"),  # type: ignore[arg-type]
-        log_path=kwargs.get("log_path"),
-    )  # type: ignore[arg-type]
 
     check_configuration_file("lint", kwargs)
     lint_manager = LintManager(
@@ -1225,7 +1198,6 @@ def format(
     help="Only for upload zipped packs, "
     "if true will skip upload packs validation, use just when migrate existing custom content to packs.",
 )
-@click.option("-v", "--verbose", help="Verbose output", is_flag=True)
 @click.option(
     "--reattach",
     help="Reattach the detached files in the XSOAR instance"
@@ -1274,7 +1246,6 @@ def upload(**kwargs):
     required=False,
 )
 @click.option("--insecure", help="Skip certificate validation", is_flag=True)
-@click.option("-v", "--verbose", help="Verbose output", is_flag=True)
 @click.option(
     "-f", "--force", help="Whether to override existing files or not", is_flag=True
 )
@@ -1390,7 +1361,6 @@ def xsoar_config_file_update(**kwargs):
 @click.help_option("-h", "--help")
 @click.option("-q", "--query", help="The query to run", required=True)
 @click.option("--insecure", help="Skip certificate validation", is_flag=True)
-@click.option("-v", "--verbose", help="Verbose output", is_flag=True)
 @click.option(
     "-D",
     "--debug",
@@ -1540,12 +1510,6 @@ def run_test_playbook(**kwargs):
     required=False,
 )
 @click.option(
-    "-v",
-    "--verbose",
-    is_flag=True,
-    help="Verbose output - mainly for debugging purposes",
-)
-@click.option(
     "--ai",
     is_flag=True,
     help="**Experimental** - Help generate context descriptions via AI transformers (must have a valid AI21 key at ai21.com)",
@@ -1620,12 +1584,6 @@ def generate_outputs(**kwargs):
     is_flag=True,
     help="Skip generating verification conditions for each output contextPath. Use when you want to decide which "
     "outputs to verify and which not",
-)
-@click.option(
-    "-v",
-    "--verbose",
-    help="Verbose output for debug purposes - shows full exception stack trace",
-    is_flag=True,
 )
 @click.option(
     "-ab",
@@ -2287,16 +2245,10 @@ def postman_codegen(
     package: bool,
 ):
     """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
-    from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.postman_codegen.postman_codegen import (
         postman_to_autogen_configuration,
     )
     from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
-
-    if verbose:
-        logger = logging_setup(verbose=3)
-    else:
-        logger = logging.getLogger("demisto-sdk")
 
     postman_config = postman_to_autogen_configuration(
         collection=json.load(input),
@@ -2346,18 +2298,13 @@ def postman_codegen(
     type=click.Path(dir_okay=True, exists=True),
     default=Path("."),
 )
-@click.option("--verbose", help="Print debug level logs", is_flag=True)
-def generate_integration(input: IO, output: Path, verbose: bool):
+def generate_integration(input: IO, output: Path):
     """Generates a Cortex XSOAR integration from a config json file,
     which is generated by commands like postman-codegen
     """
-    from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.generate_integration.code_generator import (
         IntegrationGeneratorConfig,
     )
-
-    if verbose:
-        logging_setup(verbose=3)
 
     config_dict = json.load(input)
     config = IntegrationGeneratorConfig(**config_dict)
@@ -2824,25 +2771,7 @@ def convert(config, **kwargs):
     help="Directory to store the output in (default is the input integration directory)",
     required=False,
 )
-@click.option(
-    "-v",
-    "--verbose",
-    count=True,
-    help="Verbosity level -v / -vv / .. / -vvv",
-    type=click.IntRange(0, 3, clamp=True),
-    default=1,
-    show_default=True,
-)
 @click.option("-i", "--input_path", help="Valid integration file path.", required=True)
-@click.option(
-    "-q", "--quiet", is_flag=True, help="Quiet output, only output results in the end"
-)
-@click.option(
-    "-lp",
-    "--log-path",
-    help="Path to store all levels of logs",
-    type=click.Path(resolve_path=True),
-)
 @click.option(
     "-d", "--use_demisto", help="Run commands at Demisto automatically.", is_flag=True
 )
@@ -2867,9 +2796,6 @@ def generate_unit_tests(
     insecure: bool = False,
     use_demisto: bool = False,
     append: bool = False,
-    verbose: int = 1,
-    quiet: bool = False,
-    log_path: str = "",
 ):
     """
     This command is used to generate unit tests automatically from an  integration python code.
@@ -2878,16 +2804,10 @@ def generate_unit_tests(
 
     klara_logger = logging.getLogger("PYSCA")
     klara_logger.propagate = False
-    from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import (
         run_generate_unit_tests,
     )
 
-    logging_setup(
-        verbose=verbose,  # type: ignore[arg-type]
-        quiet=quiet,  # type: ignore[arg-type]
-        log_path=log_path,
-    )  # type: ignore[arg-type]
     return run_generate_unit_tests(
         input_path, commands, output_dir, examples, insecure, use_demisto, append
     )
@@ -2944,40 +2864,16 @@ def error_code(config, **kwargs):
     help="Whether or not to include dependencies.",
     default=False,
 )
-@click.option(
-    "-v",
-    "--verbose",
-    count=True,
-    help="Verbosity level -v / -vv / .. / -vvv",
-    type=click.IntRange(0, 3, clamp=True),
-    default=2,
-    show_default=True,
-)
-@click.option(
-    "-q", "--quiet", is_flag=True, help="Quiet output, only output results in the end"
-)
-@click.option(
-    "-lp",
-    "--log-path",
-    help="Path to store all levels of logs",
-    type=click.Path(resolve_path=True),
-)
 def create_content_graph(
     marketplace: str = MarketplaceVersions.XSOAR,
     no_dependencies: bool = False,
     output_path: Path = None,
     **kwargs,
 ):
-    from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.content_graph.content_graph_commands import (
         create_content_graph as create_content_graph_command,
     )
 
-    logging_setup(
-        verbose=kwargs.get("verbose"),  # type: ignore[arg-type]
-        quiet=kwargs.get("quiet"),  # type: ignore[arg-type]
-        log_path=kwargs.get("log_path"),
-    )  # type: ignore[arg-type]
     with Neo4jContentGraphInterface() as content_graph_interface:
         create_content_graph_command(
             content_graph_interface,
@@ -3045,24 +2941,6 @@ def create_content_graph(
     default=None,
     help="Output folder to place the zip file of the graph exported CSVs files",
 )
-@click.option(
-    "-v",
-    "--verbose",
-    count=True,
-    help="Verbosity level -v / -vv / .. / -vvv",
-    type=click.IntRange(0, 3, clamp=True),
-    default=2,
-    show_default=True,
-)
-@click.option(
-    "-q", "--quiet", is_flag=True, help="Quiet output, only output results in the end"
-)
-@click.option(
-    "-lp",
-    "--log-path",
-    help="Path to store all levels of logs",
-    type=click.Path(resolve_path=True),
-)
 def update_content_graph(
     use_git: bool = False,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
@@ -3073,7 +2951,6 @@ def update_content_graph(
     output_path: Path = None,
     **kwargs,
 ):
-    from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.content_graph.content_graph_commands import (
         update_content_graph as update_content_graph_command,
     )
@@ -3081,11 +2958,6 @@ def update_content_graph(
         Neo4jContentGraphInterface,
     )
 
-    logging_setup(
-        verbose=kwargs.get("verbose"),  # type: ignore[arg-type]
-        quiet=kwargs.get("quiet"),  # type: ignore[arg-type]
-        log_path=kwargs.get("log_path"),
-    )  # type: ignore[arg-type]
     if packs and not isinstance(packs, list):
         # for some reason packs provided as tuple from click interface
         packs = list(packs)

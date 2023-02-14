@@ -302,12 +302,16 @@ jobs:
               cd content
               demisto-sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
-              
+              echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
+              echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') 
+
               neo4j start
               # poll for neo4j status until available
               while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
 
               ./Tests/scripts/validate.sh
+        - store_artifacts:
+            path: node_versions_info.json
   test-lint:
       docker:
         - image: << pipeline.parameters.global-docker-image >>

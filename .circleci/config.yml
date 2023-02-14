@@ -287,7 +287,6 @@ jobs:
         - attach_workspace:
             at: ~/project
         - <<: *install_build_dependencies
-        - <<: *install_node_ci
         - node/install-packages:
             cache-version: << pipeline.parameters.cache-version >>
             app-dir: content

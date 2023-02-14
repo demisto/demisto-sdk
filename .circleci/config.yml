@@ -303,7 +303,6 @@ jobs:
               demisto-sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
               echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
-              echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') 
 
               neo4j start
               # poll for neo4j status until available

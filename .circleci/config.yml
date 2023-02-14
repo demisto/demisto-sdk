@@ -206,15 +206,10 @@ jobs:
               neo4j start
               # poll for neo4j status until available
               while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
-              
-              echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
-              echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}')
 
               poetry run pytest -v --junitxml=graph-test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: graph-test-results
-        - store_artifacts:
-            path: node_versions_info.json
         - run:
             name: pytest - integrations
             no_output_timeout: 15m
@@ -223,10 +218,14 @@ jobs:
               TEST_FILES=$(circleci tests glob "demisto_sdk/tests/integration_tests/**/*_test.py")
 
               mkdir integration-test-results
+              
+              echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
+              echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}')
               poetry run pytest -v --junitxml=integration-test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: integration-test-results
-
+        - store_artifacts:
+            path: node_versions_info.json
 
 
   precommit-checks:

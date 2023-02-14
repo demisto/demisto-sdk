@@ -399,11 +399,15 @@ class ReadMeValidator(BaseValidator):
                 f"There is no node installed on the machine, error - {stderr}, {stdout}"
             )
             valid = False
+            assert False, f"in node check {content_path=} {missing_module=} {stdout=} {stderr=} {exit_code=}"
+
         else:
             # Check npm modules exsits
             stdout, stderr, exit_code = run_command_os(
                 f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}', cwd=content_path
             )
+            assert False, f"{content_path=} {missing_module=} {stdout=} {stderr=} {exit_code=}"
+
             if exit_code:  # all are missinig
                 missing_module.extend(REQUIRED_MDX_PACKS)
             else:
@@ -417,7 +421,6 @@ class ReadMeValidator(BaseValidator):
                 f"The npm modules: {missing_module} are not installed. Use "
                 f"'npm install' to install all required node dependencies"
             )
-        assert False, f"{missing_module=} {stdout=} {stderr=} {exit_code=}"
 
         return valid
 

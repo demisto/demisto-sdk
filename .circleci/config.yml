@@ -199,8 +199,6 @@ jobs:
             name: pytest - graph
             no_output_timeout: 15m
             command: |
-              pwd
-              npm list --json
               shopt -u globstar
               TEST_FILES=$(circleci tests glob "demisto_sdk/commands/content_graph/tests/*_test.py")
 

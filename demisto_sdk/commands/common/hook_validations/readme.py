@@ -235,9 +235,6 @@ class ReadMeValidator(BaseValidator):
         valid = self.should_run_mdx_validation()
         if valid and not html:
             # add to env var the directory of node modules
-            os.environ["NODE_PATH"] = (
-                str(self.node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
-            )
             return self.mdx_verify_server()
         return True
 

@@ -1,4 +1,6 @@
 {
-  "fromVersion": "4.0.0",
-  "orientation": "test"
+   "fromVersion": "4.0.0",
+   "orientation": "test",
+   "id": "test",
+   "name": "test"
 }

@@ -31,21 +31,21 @@ def server_script_path():
 
     """
     return (
-        Path(__file__).parent.parent
-        / "common"
-        / "markdown_server"
-        / _SERVER_SCRIPT_NAME
+            Path(__file__).parent.parent
+            / "common"
+            / "markdown_server"
+            / _SERVER_SCRIPT_NAME
     )
 
 
 @contextmanager
 def start_docker_MDX_server(
-    handle_error: Optional[Callable] = None, file_path: Optional[str] = None
+        handle_error: Optional[Callable] = None, file_path: Optional[str] = None
 ):
     """
         This function will start a docker container running a node server listening on port 6161.
         The container will erase itself after exit.
-        If there's a running server already with the same name it will be stopped before starting a new one.
+        If there's a running server already with the same name it will be removed before starting a new one.
 
     Args:
         handle_error: handle_error function
@@ -57,17 +57,30 @@ def start_docker_MDX_server(
     """
     logging.info("Starting docker mdx server")
     get_docker().pull_image(MDX_SERVER_DOCKER_IMAGE)
-    if running_container := init_global_docker_client().containers.list(
-        filters={"name": DEMISTO_DEPS_DOCKER_NAME}
+    iteration_num = 1
+    while mdx_container := init_global_docker_client().containers.list(
+            filters={"name": DEMISTO_DEPS_DOCKER_NAME}
     ):
-        click.secho("Closing the preexisting container")
-        running_container[0].stop()
-    container: docker.models.containers.Container = get_docker().create_container(
-        name=DEMISTO_DEPS_DOCKER_NAME,
-        image=MDX_SERVER_DOCKER_IMAGE,
-        auto_remove=True,
-        ports={"6161/tcp": 6161},
-    )
+        print(f"Found the following container(s): {mdx_container}")
+        print(f"{iteration_num=} when trying to remove {mdx_container}")
+        remove_container(mdx_container[0])
+        iteration_num += 1
+    try:
+        container: docker.models.containers.Container = get_docker().create_container(
+            name=DEMISTO_DEPS_DOCKER_NAME,
+            image=MDX_SERVER_DOCKER_IMAGE,
+            auto_remove=True,
+            ports={"6161/tcp": 6161},
+        )
+    except Exception as error:
+        print(
+            f"Error occurred when trying to create {DEMISTO_DEPS_DOCKER_NAME} container, {error=}"
+        )
+        print(
+            f"all available containers: {[container.name for container in init_global_docker_client().containers.list(all=True)]}"
+        )
+        raise error
+
     container.start()
     try:
         line = str(next(container.logs(stream=True)).decode("utf-8"))
@@ -79,7 +92,7 @@ def start_docker_MDX_server(
 
     if not raised_successfully:
         try:
-            stop_docker_container(container)
+            remove_container(container)
             logging.error("Docker for MDX server was not started correctly")
             logging.error(f'docker logs:\n{container.logs().decode("utf-8")}')
         except docker.errors.NotFound:
@@ -98,18 +111,20 @@ def start_docker_MDX_server(
     try:
         yield True
     finally:
-        stop_docker_container(container)
+        remove_container(container)
 
 
-def stop_docker_container(container):
+def remove_container(container):
     if container:
-        click.secho("Stopping mdx docker server")
-        container.stop()  # type: ignore
+        print("stopping and removing mdx server")
+        print(f"Removing container {container.name}")
+        container.remove(force=True)
+        print(f"Successfully removed container {container.name}")
 
 
 @contextmanager
 def start_local_MDX_server(
-    handle_error: Optional[Callable] = None, file_path: Optional[str] = None
+        handle_error: Optional[Callable] = None, file_path: Optional[str] = None
 ):
     """
         This function will start a node server on the local machine and listen on port 6161

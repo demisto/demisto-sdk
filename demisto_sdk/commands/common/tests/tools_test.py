@@ -54,7 +54,6 @@ from demisto_sdk.commands.common.tools import (
     find_type_by_path,
     generate_xsiam_normalized_name,
     get_code_lang,
-    get_core_packs,
     get_current_repo,
     get_dict_from_file,
     get_display_name,
@@ -69,6 +68,7 @@ from demisto_sdk.commands.common.tools import (
     get_last_release_version,
     get_last_remote_release_version,
     get_latest_release_notes_text,
+    get_marketplace_to_core_packs,
     get_pack_metadata,
     get_relative_path_from_packs_dir,
     get_release_note_entries,
@@ -2492,7 +2492,7 @@ def test_field_to_cliname(value: str, expected: str):
 
 
 def test_get_core_packs():
-    mp_to_core_packs = get_core_packs()
+    mp_to_core_packs = get_marketplace_to_core_packs()
     assert len(mp_to_core_packs) == len(MarketplaceVersions)
     for mp_core_packs in mp_to_core_packs.values():
         assert "Base" in mp_core_packs

@@ -398,7 +398,7 @@ mp_to_core_packs: Dict[
 
 
 @lru_cache(maxsize=128)
-def get_core_packs() -> Dict[MarketplaceVersions, Set[str]]:
+def get_marketplace_to_core_packs() -> Dict[MarketplaceVersions, Set[str]]:
     """Getting the core pack from Github content
 
     Returns:
@@ -410,15 +410,13 @@ def get_core_packs() -> Dict[MarketplaceVersions, Set[str]]:
     global mp_to_core_packs
     for mp in MarketplaceVersions:
         if mp not in mp_to_core_packs:
-            mp_core_packs: Union[list, dict] = (
-                get_remote_file(
-                    MARKETPLACE_TO_CORE_PACKS_FILE[mp],
-                    git_content_config=GitContentConfig(
-                        repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
-                        git_provider=GitProvider.GitHub,
-                    ),
-                )
-                or {}
+            # for backwards compatibility mp_core_packs can be a list, but we expect a dict.
+            mp_core_packs: Union[list, dict] = get_remote_file(
+                MARKETPLACE_TO_CORE_PACKS_FILE[mp],
+                git_content_config=GitContentConfig(
+                    repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
+                    git_provider=GitProvider.GitHub,
+                ),
             )
         if isinstance(mp_core_packs, list):
             mp_to_core_packs[mp] = set(mp_core_packs)
@@ -440,11 +438,10 @@ def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
     if is_external_repository():
         return []  # no core packs in external repos.
 
-    if not marketplaces:
+    if marketplaces is None:
         marketplaces = list(MarketplaceVersions)
 
-    mp_to_core_packs = get_core_packs()
-    for mp, core_packs in mp_to_core_packs.items():
+    for mp, core_packs in get_marketplace_to_core_packs().items():
         if mp in marketplaces:
             result.update(core_packs)
     return list(result)

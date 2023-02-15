@@ -49,9 +49,17 @@ def test_integration_run_non_existing_command(mocker, set_environment_variables)
     """
     mocker.patch.object(DefaultApi, "investigation_add_entries_sync", return_value=None)
     mocker.patch.object(Runner, "_get_playground_id", return_value="pg_id")
-    result = CliRunner(
-        mix_stderr=False,
-    ).invoke(main, ["run", "-q", "!non-existing-command", "-D", "-v"])
+    result = CliRunner(mix_stderr=False,).invoke(
+        main,
+        [
+            "run",
+            "-q",
+            "!non-existing-command",
+            "-D",
+            "--console_log_threshold",
+            "DEBUG",
+        ],
+    )
     assert 0 == result.exit_code
     assert not result.exception
     assert "Command did not run, make sure it was written correctly." in result.output

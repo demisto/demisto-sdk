@@ -1,5 +1,3 @@
-# TODO Remove quiet
-
 # Site packages
 import copy
 import logging

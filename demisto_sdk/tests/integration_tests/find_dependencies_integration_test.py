@@ -82,7 +82,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                     FIND_DEPENDENCIES_CMD,
                     "-i",
                     str(Path("Packs") / pack._pack_path.name),
-                    "-console_log_threshold",
+                    "--console_log_threshold",
                     "DEBUG",
                 ],
                 catch_exceptions=False,
@@ -268,7 +268,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                     "Packs/" + os.path.basename(pack2.path),
                     "-idp",
                     repo.id_set.path,
-                    "-console_log_threshold",
+                    "--console_log_threshold",
                     "DEBUG",
                 ],
             )

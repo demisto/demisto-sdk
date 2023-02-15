@@ -466,7 +466,14 @@ def test_format_on_valid_py(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             main,
-            [FORMAT_CMD, "-nv", "-i", integration.code.path, "-v"],
+            [
+                FORMAT_CMD,
+                "-nv",
+                "-i",
+                integration.code.path,
+                "--console_log_threshold",
+                "DEBUG",
+            ],
             catch_exceptions=True,
         )
     assert "======= Updating file" in result.stdout
@@ -497,7 +504,14 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             main,
-            [FORMAT_CMD, "-nv", "-i", integration.code.path, "-v"],
+            [
+                FORMAT_CMD,
+                "-nv",
+                "-i",
+                integration.code.path,
+                "--console_log_threshold",
+                "DEBUG",
+            ],
             catch_exceptions=False,
         )
 
@@ -529,7 +543,14 @@ def test_format_on_invalid_py_dict(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             main,
-            [FORMAT_CMD, "-nv", "-i", integration.code.path, "-v"],
+            [
+                FORMAT_CMD,
+                "-nv",
+                "-i",
+                integration.code.path,
+                "--console_log_threshold",
+                "DEBUG",
+            ],
             catch_exceptions=False,
         )
 
@@ -564,7 +585,14 @@ def test_format_on_invalid_py_long_dict(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             main,
-            [FORMAT_CMD, "-nv", "-i", integration.code.path, "-v"],
+            [
+                FORMAT_CMD,
+                "-nv",
+                "-i",
+                integration.code.path,
+                "--console_log_threshold",
+                "DEBUG",
+            ],
             catch_exceptions=False,
         )
 
@@ -645,7 +673,16 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
     with ChangeCWD(playbook.path):
         runner = CliRunner(mix_stderr=False)
         result_format = runner.invoke(
-            main, [FORMAT_CMD, "-i", "playbook.yml", "-v", "-y"], catch_exceptions=False
+            main,
+            [
+                FORMAT_CMD,
+                "-i",
+                "playbook.yml",
+                "--console_log_threshold",
+                "DEBUG",
+                "-y",
+            ],
+            catch_exceptions=False,
         )
 
         with ChangeCWD(repo.path):
@@ -712,7 +749,15 @@ def test_format_commonserver_skipped_files(repo):
 
     runner = CliRunner(mix_stderr=False)
     format_result = runner.invoke(
-        main, [FORMAT_CMD, "-i", str(pack.path), "-v"], catch_exceptions=False
+        main,
+        [
+            FORMAT_CMD,
+            "-i",
+            str(pack.path),
+            "--console_log_threshold",
+            "DEBUG",
+        ],
+        catch_exceptions=False,
     )
 
     assert "Success" in format_result.stdout
@@ -747,7 +792,15 @@ def test_format_playbook_without_fromversion_no_preset_flag(repo):
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
     format_result = runner.invoke(
-        main, [FORMAT_CMD, "-i", str(playbook.yml.path), "--assume-yes", "-v"]
+        main,
+        [
+            FORMAT_CMD,
+            "-i",
+            str(playbook.yml.path),
+            "--assume-yes",
+            "--console_log_threshold",
+            "DEBUG",
+        ],
     )
     assert "Success" in format_result.stdout
     assert playbook.yml.read_dict().get("fromversion") == GENERAL_DEFAULT_FROMVERSION
@@ -785,7 +838,8 @@ def test_format_playbook_without_fromversion_with_preset_flag(repo):
             "--assume-yes",
             "--from-version",
             "6.0.0",
-            "-v",
+            "--console_log_threshold",
+            "DEBUG",
         ],
     )
     assert "Success" in format_result.stdout
@@ -817,7 +871,15 @@ def test_format_playbook_without_fromversion_with_preset_flag_manual(repo):
     runner = CliRunner(mix_stderr=False)
     format_result = runner.invoke(
         main,
-        [FORMAT_CMD, "-i", str(playbook.yml.path), "--from-version", "6.0.0", "-v"],
+        [
+            FORMAT_CMD,
+            "-i",
+            str(playbook.yml.path),
+            "--from-version",
+            "6.0.0",
+            "--console_log_threshold",
+            "DEBUG",
+        ],
         input="y",
     )
     assert "Success" in format_result.stdout
@@ -847,7 +909,15 @@ def test_format_playbook_without_fromversion_without_preset_flag_manual(repo):
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
     format_result = runner.invoke(
-        main, [FORMAT_CMD, "-i", str(playbook.yml.path), "-v"], input="y"
+        main,
+        [
+            FORMAT_CMD,
+            "-i",
+            str(playbook.yml.path),
+            "--console_log_threshold",
+            "DEBUG",
+        ],
+        input="y",
     )
     assert "Success" in format_result.stdout
     assert playbook.yml.read_dict().get("fromversion") == GENERAL_DEFAULT_FROMVERSION
@@ -877,7 +947,15 @@ def test_format_playbook_copy_removed_from_name_and_id(repo):
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
     format_result = runner.invoke(
-        main, [FORMAT_CMD, "-i", str(playbook.yml.path), "-v"], input="y\n5.5.0"
+        main,
+        [
+            FORMAT_CMD,
+            "-i",
+            str(playbook.yml.path),
+            "--console_log_threshold",
+            "DEBUG",
+        ],
+        input="y\n5.5.0",
     )
     assert "Success" in format_result.stdout
     assert playbook.yml.read_dict().get("id") == playbook_id
@@ -913,7 +991,15 @@ def test_format_playbook_no_input_specified(mocker, repo):
         return_value=[str(playbook.yml.path)],
     )
     runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(main, [FORMAT_CMD, "-v"], input="y\n5.5.0")
+    format_result = runner.invoke(
+        main,
+        [
+            FORMAT_CMD,
+            "--console_log_threshold",
+            "DEBUG",
+        ],
+        input="y\n5.5.0",
+    )
     print(format_result.stdout)
     assert "Success" in format_result.stdout
     assert playbook.yml.read_dict().get("id") == playbook_id
@@ -966,7 +1052,16 @@ def test_format_incident_type_layout_id(repo):
     runner = CliRunner(mix_stderr=False)
     with ChangeCWD(repo.path):
         format_result = runner.invoke(
-            main, [FORMAT_CMD, "-i", str(pack.path), "-v", "-y"], catch_exceptions=False
+            main,
+            [
+                FORMAT_CMD,
+                "-i",
+                str(pack.path),
+                "--console_log_threshold",
+                "DEBUG",
+                "-y",
+            ],
+            catch_exceptions=False,
         )
 
     assert format_result.exit_code == 0
@@ -1028,7 +1123,14 @@ def test_format_generic_field_wrong_values(
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             main,
-            [FORMAT_CMD, "-i", generic_field_path, "-v", "-y"],
+            [
+                FORMAT_CMD,
+                "-i",
+                generic_field_path,
+                "--console_log_threshold",
+                "DEBUG",
+                "-y",
+            ],
             catch_exceptions=False,
         )
         assert "Setting fromVersion field" in result.stdout
@@ -1071,7 +1173,14 @@ def test_format_generic_field_missing_from_version_key(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             main,
-            [FORMAT_CMD, "-i", generic_field_path, "-v", "-y"],
+            [
+                FORMAT_CMD,
+                "-i",
+                generic_field_path,
+                "--console_log_threshold",
+                "DEBUG",
+                "-y",
+            ],
             catch_exceptions=False,
         )
         assert "Setting fromVersion field" in result.stdout
@@ -1114,7 +1223,14 @@ def test_format_generic_type_wrong_from_version(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             main,
-            [FORMAT_CMD, "-i", generic_type_path, "-v", "-y"],
+            [
+                FORMAT_CMD,
+                "-i",
+                generic_type_path,
+                "--console_log_threshold",
+                "DEBUG",
+                "-y",
+            ],
             catch_exceptions=False,
         )
         assert "Setting fromVersion field" in result.stdout
@@ -1157,7 +1273,14 @@ def test_format_generic_type_missing_from_version_key(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             main,
-            [FORMAT_CMD, "-i", generic_type_path, "-v", "-y"],
+            [
+                FORMAT_CMD,
+                "-i",
+                generic_type_path,
+                "--console_log_threshold",
+                "DEBUG",
+                "-y",
+            ],
             catch_exceptions=False,
         )
         assert "Setting fromVersion field" in result.stdout
@@ -1199,7 +1322,14 @@ def test_format_generic_module_wrong_from_version(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             main,
-            [FORMAT_CMD, "-i", generic_module_path, "-v", "-y"],
+            [
+                FORMAT_CMD,
+                "-i",
+                generic_module_path,
+                "--console_log_threshold",
+                "DEBUG",
+                "-y",
+            ],
             catch_exceptions=False,
         )
         assert "Setting fromVersion field" in result.stdout
@@ -1242,7 +1372,14 @@ def test_format_generic_module_missing_from_version_key(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             main,
-            [FORMAT_CMD, "-i", generic_module_path, "-v", "-y"],
+            [
+                FORMAT_CMD,
+                "-i",
+                generic_module_path,
+                "--console_log_threshold",
+                "DEBUG",
+                "-y",
+            ],
             catch_exceptions=False,
         )
         assert "Setting fromVersion field" in result.stdout
@@ -1284,7 +1421,14 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             main,
-            [FORMAT_CMD, "-i", generic_definition_path, "-v", "-y"],
+            [
+                FORMAT_CMD,
+                "-i",
+                generic_definition_path,
+                "--console_log_threshold",
+                "DEBUG",
+                "-y",
+            ],
             catch_exceptions=False,
         )
         assert "Setting fromVersion field" in result.stdout
@@ -1330,7 +1474,14 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             main,
-            [FORMAT_CMD, "-i", generic_definition_path, "-v", "-y"],
+            [
+                FORMAT_CMD,
+                "-i",
+                generic_definition_path,
+                "--console_log_threshold",
+                "DEBUG",
+                "-y",
+            ],
             catch_exceptions=False,
         )
         assert "Setting fromVersion field" in result.stdout

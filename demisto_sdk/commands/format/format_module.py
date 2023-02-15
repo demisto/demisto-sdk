@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -113,13 +114,14 @@ VALIDATE_RES_FAILED_CODE = 3
 
 CONTENT_ENTITY_IDS_TO_UPDATE: Dict = {}
 
+logger = logging.getLogger("demisto-sdk")
+
 
 def format_manager(
     input: str = None,
     output: str = None,
     from_version: str = "",
     no_validate: bool = False,
-    verbose: bool = False,
     update_docker: bool = False,
     assume_yes: bool = False,
     deprecate: bool = False,
@@ -138,7 +140,6 @@ def format_manager(
         from_version: (str) in case of specific value for from_version that needs to be updated.
         output: (str) The path to save the formatted file to.
         no_validate (flag): Whether the user specifies not to run validate after format.
-        verbose (bool): Whether to print verbose logs or not
         update_docker (flag): Whether to update the docker image.
         assume_yes (bool): Whether to assume "yes" as answer to all prompts and run non-interactively
         deprecate (bool): Whether to deprecate the entity
@@ -196,7 +197,6 @@ def format_manager(
                     interactive=interactive,
                     output=output,
                     no_validate=no_validate,
-                    verbose=verbose,
                     update_docker=update_docker,
                     assume_yes=assume_yes,
                     deprecate=deprecate,
@@ -229,7 +229,7 @@ def format_manager(
                     )
                 )
 
-        update_content_entity_ids(files, verbose)
+        update_content_entity_ids(files)
 
     else:
         if not use_git:
@@ -290,27 +290,24 @@ def get_files_to_format_from_git(
     return filtered_files
 
 
-def update_content_entity_ids(files: List[str], verbose: bool):
+def update_content_entity_ids(files: List[str]):
     """Update the changed content entity ids in the files.
     Args:
         files (list): a list of files in which to update the content ids.
-        verbose (bool): whether to print
 
     """
     if not CONTENT_ENTITY_IDS_TO_UPDATE:
         return
 
-    if verbose:
-        click.echo(
-            f"Collected content entities IDs to update:\n{CONTENT_ENTITY_IDS_TO_UPDATE}\n"
-            f"Going over files to update these IDs in other files..."
-        )
+    logger.debug(
+        f"Collected content entities IDs to update:\n{CONTENT_ENTITY_IDS_TO_UPDATE}\n"
+        f"Going over files to update these IDs in other files..."
+    )
     for file in files:
         file_path = str(Path(file))
-        if verbose:
-            click.echo(
-                f"Processing file {file_path} to check for content entities IDs to update"
-            )
+        logger.debug(
+            f"Processing file {file_path} to check for content entities IDs to update"
+        )
         with open(file_path, "r+") as f:
             file_content = f.read()
             for id_to_replace, updated_id in CONTENT_ENTITY_IDS_TO_UPDATE.items():
@@ -359,7 +356,7 @@ def run_format_on_file(
     updater_class = FILE_TYPE_AND_LINKED_CLASS.get(file_type)
     if not updater_class:  # fail format so long as xsiam entities dont have formatters
         print_warning(f"No  updater_class was found for file type {file_type}")
-        return logger(input, 1, VALIDATE_RES_SKIPPED_CODE)
+        return format_output(input, 1, VALIDATE_RES_SKIPPED_CODE)
 
     update_object = updater_class(
         input=input,
@@ -370,10 +367,10 @@ def run_format_on_file(
     )
     format_res, validate_res = update_object.format_file()  # type: ignore
     CONTENT_ENTITY_IDS_TO_UPDATE.update(update_object.updated_ids)
-    return logger(input, format_res, validate_res)
+    return format_output(input, format_res, validate_res)
 
 
-def logger(
+def format_output(
     input: str,
     format_res: int,
     validate_res: int,

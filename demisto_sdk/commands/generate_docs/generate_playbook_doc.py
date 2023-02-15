@@ -18,7 +18,6 @@ def generate_playbook_doc(
     output: str = None,
     permissions: str = None,
     limitations: str = None,
-    verbose: bool = False,
     custom_image_path: str = "",
 ):
     try:
@@ -117,11 +116,8 @@ def generate_playbook_doc(
                 print_warning(error)
 
     except Exception as ex:
-        if verbose:
-            raise
-        else:
-            print_error(f"Error: {str(ex)}")
-            return
+        print_error(f"Error: {str(ex)}")
+        raise
 
 
 def get_playbook_dependencies(

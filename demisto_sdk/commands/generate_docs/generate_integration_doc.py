@@ -85,7 +85,6 @@ def generate_integration_doc(
     command_permissions: Optional[str] = None,
     limitations: Optional[str] = None,
     insecure: bool = False,
-    verbose: bool = False,
     command: Optional[str] = None,
     old_version: str = "",
     skip_breaking_changes: bool = False,
@@ -102,7 +101,6 @@ def generate_integration_doc(
         command_permissions: permissions per command
         limitations: limitations description
         insecure: should use insecure
-        verbose: verbose (debug mode)
         command: specific command to generate docs for
         is_contribution: Check if the content item is a new integration contribution or not.
 
@@ -222,11 +220,8 @@ def generate_integration_doc(
                 print_warning(error)
 
     except Exception as ex:
-        if verbose:
-            raise
-        else:
-            print_error(f"Error: {str(ex)}")
-            return
+        print_error(f"Error: {str(ex)}")
+        raise
 
 
 # Setup integration on Demisto

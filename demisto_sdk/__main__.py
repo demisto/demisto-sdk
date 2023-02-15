@@ -1073,7 +1073,6 @@ def coverage_analyze(**kwargs):
     help="Set if you want to update the docker image of the integration/script",
     is_flag=True,
 )
-@click.option("-v", "--verbose", help="Verbose output", is_flag=True)
 @click.option(
     "-y",
     "--assume-yes",
@@ -1119,7 +1118,6 @@ def format(
     from_version: str,
     no_validate: bool,
     update_docker: bool,
-    verbose: bool,
     assume_yes: bool,
     deprecate: bool,
     use_git: bool,
@@ -1141,7 +1139,6 @@ def format(
         no_validate=no_validate,
         update_docker=update_docker,
         assume_yes=assume_yes,
-        verbose=verbose,
         deprecate=deprecate,
         use_git=use_git,
         prev_ver=prev_ver,
@@ -1758,12 +1755,6 @@ def init(**kwargs):
     help="Skip certificate validation to run the commands in order to generate the docs.",
     is_flag=True,
 )
-@click.option(
-    "-v",
-    "--verbose",
-    is_flag=True,
-    help="Verbose output - mainly for debugging purposes.",
-)
 @click.option("--old-version", help="Path of the old integration version yml file.")
 @click.option(
     "--skip-breaking-changes",
@@ -1830,7 +1821,6 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
     permissions = kwargs.get("permissions")
     limitations = kwargs.get("limitations")
     insecure: bool = kwargs.get("insecure", False)
-    verbose: bool = kwargs.get("verbose", False)
     old_version: str = kwargs.get("old_version", "")
     skip_breaking_changes: bool = kwargs.get("skip_breaking_changes", False)
     custom_image_path: str = kwargs.get("custom_image_path", "")
@@ -1879,7 +1869,6 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
             command_permissions=command_permissions,
             limitations=limitations,
             insecure=insecure,
-            verbose=verbose,
             command=command,
             old_version=old_version,
             skip_breaking_changes=skip_breaking_changes,
@@ -1893,7 +1882,6 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
             permissions=permissions,
             limitations=limitations,
             insecure=insecure,
-            verbose=verbose,
         )
     elif file_type == FileType.PLAYBOOK:
         print(f"Generating {file_type.value.lower()} documentation")
@@ -1902,7 +1890,6 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
             output=output_path,
             permissions=permissions,
             limitations=limitations,
-            verbose=verbose,
             custom_image_path=custom_image_path,
         )
     else:
@@ -2166,7 +2153,6 @@ def find_dependencies(**kwargs):
     check_configuration_file("find-dependencies", kwargs)
     update_pack_metadata = not kwargs.get("no_update")
     input_paths = kwargs.get("input")  # since it can be multiple, received as a tuple
-    verbose = kwargs.get("verbose", False)
     id_set_path = kwargs.get("id_set_path", "")
     use_pack_metadata = kwargs.get("use_pack_metadata", False)
     all_packs_dependencies = kwargs.get("all_packs_dependencies", False)
@@ -2177,7 +2163,6 @@ def find_dependencies(**kwargs):
 
         PackDependencies.find_dependencies_manager(
             id_set_path=str(id_set_path),
-            verbose=verbose,
             update_pack_metadata=update_pack_metadata,
             use_pack_metadata=use_pack_metadata,
             input_paths=input_paths,

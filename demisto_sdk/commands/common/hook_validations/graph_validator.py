@@ -103,7 +103,7 @@ class GraphValidator(BaseValidator):
         is_valid = True
         content_item: ContentItem
         for content_item in self.graph.find_uses_paths_with_invalid_marketplaces(
-            self.file_paths
+            self.pack_ids
         ):
             used_content_items = [
                 relationship.content_item_to.object_id

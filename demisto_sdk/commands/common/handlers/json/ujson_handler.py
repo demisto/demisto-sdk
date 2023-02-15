@@ -57,5 +57,6 @@ class UJSON_Handler(XSOAR_Handler):
         except ValueError as e:
             raise JSONDecodeError(e)
 
+    @staticmethod
     def decode_error(self) -> Type[BaseException]:
         return JSONDecodeError

@@ -54,5 +54,6 @@ class RUAMEL_Handler(XSOAR_Handler):
         string_stream.close()
         return output_str
 
+    @staticmethod
     def decode_error(self) -> Type[BaseException]:
         return ReaderError

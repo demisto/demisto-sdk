@@ -11,7 +11,9 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
+from demisto_sdk.commands.common.hook_validations.readme import mdx_server_is_up
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import find_type, get_yaml, os, re
 
 CONTRIBUTOR_DETAILED_DESC = "Contributed Integration"
@@ -64,6 +66,7 @@ class DescriptionValidator(BaseValidator):
             not self.data_dictionary.get("detaileddescription")
             and ".md" in self.file_path
         ):
+            # self.has_markdown_lint_errors()
             self.is_valid_description_name()
             self.contains_contrib_details()
 
@@ -304,4 +307,21 @@ class DescriptionValidator(BaseValidator):
                 self._is_valid = False
                 return False
 
+        return True
+
+    # @error_codes("DS108")
+    def has_markdown_lint_errors(self):
+        with open(self.file_path) as f:
+            description_content = f.read()
+        if mdx_server_is_up():
+            markdown_response = run_markdownlint(description_content)
+            if markdown_response.has_errors:
+                error_message, error_code = Errors.description_lint_errors(
+                    self.file_path, markdown_response.validations
+                )
+                if self.handle_error(
+                    error_message, error_code, file_path=self.file_path
+                ):
+                    self._is_valid = False
+                    return False
         return True

@@ -176,8 +176,11 @@ class ContentItem(BaseContent):
     def dump(self, dir: DirectoryPath, _: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)
         data = self.prepare_for_upload()
-        with (dir / self.normalize_name).open("w") as f:
-            self.handler.dump(data, f)
+        try:
+            with (dir / self.normalize_name).open("w") as f:
+                self.handler.dump(data, f)
+        except FileNotFoundError as e:
+            logger.warning(f"Failed to dump {self.path} to {dir}: {e}")
 
     def to_id_set_entity(self) -> dict:
         """

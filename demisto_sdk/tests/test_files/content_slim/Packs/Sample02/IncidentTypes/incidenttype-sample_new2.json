@@ -1,6 +1,11 @@
 {
-  "fromVersion": "3.5.1",
-  "toVersion": "4.0.0",
-  "preProcessingScript": "test",
-  "color": "test"
+    "fromVersion": "3.5.1",
+    "toVersion": "4.0.0",
+    "preProcessingScript": "test",
+    "color": "test",
+    "id": "test",
+    "name": "test",
+    "hours": 0,
+    "days": 3,
+    "weeks": 1
 }

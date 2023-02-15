@@ -31,6 +31,10 @@ mapping:
     type: seq
     sequence:
     - type: str
+  sectionorder:
+    type: seq
+    sequence:
+    - type: str
   fromversion:
     type: str
   toversion:

@@ -5,6 +5,7 @@ import logging
 import os
 import platform
 import traceback
+from configparser import ConfigParser
 from enum import Enum
 from typing import Any, Dict, List, Set, Tuple, Union
 
@@ -20,6 +21,7 @@ from wcmatch.pathlib import NEGATE, Path
 from demisto_sdk.commands.common.constants import (
     INTEGRATIONS_DIR,
     NATIVE_IMAGE_FILE_NAME,
+    PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
     TYPE_PWSH,
     TYPE_PYTHON,
@@ -35,7 +37,11 @@ from demisto_sdk.commands.common.native_image import (
     ScriptIntegrationSupportedNativeImages,
 )
 from demisto_sdk.commands.common.timers import timer
-from demisto_sdk.commands.common.tools import get_docker_images_from_yml, run_command_os
+from demisto_sdk.commands.common.tools import (
+    get_docker_images_from_yml,
+    get_pack_name,
+    run_command_os,
+)
 from demisto_sdk.commands.lint.commands_builder import (
     build_bandit_command,
     build_flake8_command,
@@ -180,6 +186,20 @@ class Linter:
                     "Unable to find yml file in package"
                 )
 
+    def should_disable_network(self):
+        pack_name = get_pack_name(str(self._pack_abs_dir))
+        _pack_ignore_file_path = Path(
+            f"Packs/{pack_name}/{PACKS_PACK_IGNORE_FILE_NAME}"
+        )
+        if _pack_ignore_file_path.exists():
+            config = ConfigParser(allow_no_value=True)
+            config.read(_pack_ignore_file_path)
+            if "tests_require_network" in config.sections():
+                ignored_integrations_scripts = config["tests_require_network"]
+                if self._facts["object_id"] in ignored_integrations_scripts:
+                    return False
+        return True
+
     @timer(group_name="lint")
     def run_pack(
         self,
@@ -256,6 +276,7 @@ class Linter:
                         no_coverage=no_coverage,
                         no_vulture=no_vulture,
                         no_flake8=no_flake8,
+                        should_disable_network=self.should_disable_network(),
                     )
         except Exception as ex:
             err = f"{self._pack_abs_dir}: Unexpected fatal exception: {str(ex)}"
@@ -313,6 +334,7 @@ class Linter:
                 if isinstance(yml_obj, dict)
                 else ""
             )
+            self._facts["object_id"] = yml_obj_id
             images = self._get_docker_images_for_lint(
                 script_obj=script_obj,
                 script_id=yml_obj_id,
@@ -705,6 +727,7 @@ class Linter:
         no_coverage: bool,
         no_flake8: bool,
         no_vulture: bool,
+        should_disable_network: bool,
     ):
         """Run lint check on docker image
 
@@ -716,6 +739,7 @@ class Linter:
             keep_container(bool): Whether to keep the test container
             test_xml(str): Path for saving pytest xml results
             no_coverage(bool): Run pytest without coverage report
+            should_disable_network(bool): whether network is required when running pytest
 
         """
         log_prompt = f"{self._pack_name} - Run Lint On Docker Image"
@@ -804,6 +828,7 @@ class Linter:
                                     keep_container=keep_container,
                                     test_xml=test_xml,
                                     no_coverage=no_coverage,
+                                    should_disable_network=should_disable_network,
                                 )
                                 status["pytest_json"] = test_json
                         elif self._pkg_lint_status["pack_type"] == TYPE_PWSH:
@@ -1038,6 +1063,7 @@ class Linter:
         keep_container: bool,
         test_xml: str,
         no_coverage: bool = False,
+        should_disable_network: bool = False,
     ) -> Tuple[int, str, dict]:
         """Run Pytest in created test image
 
@@ -1077,7 +1103,7 @@ class Linter:
                     user=f"{uid}:4000",
                     files_to_push=[(self._pack_abs_dir, "/devwork")],
                     environment=self._facts["env_vars"],
-                    network_disabled=True,
+                    network_disabled=should_disable_network,
                 )
             )
             container.start()

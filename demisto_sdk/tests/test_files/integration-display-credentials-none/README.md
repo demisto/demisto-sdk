@@ -16,23 +16,26 @@ This integration was integrated and tested with version xx of ipinfo_v2
     | Use system proxy settings |  | False |
 
 4. Click **Test** to validate the URLs, token, and connection.
+
 ## Commands
+
 You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.
 After you successfully execute a command, a DBot message appears in the War Room with the command details.
+
 ### ip
+
 ***
 Check IP reputation (when information is available, returns a JSON with details). Uses all configured Threat Intelligence feeds.
-
 
 #### Base Command
 
 `ip`
+
 #### Input
 
 | **Argument Name** | **Description** | **Required** |
 | --- | --- | --- |
 | ip | IP address to query, e.g., 1.1.1.1. | Required | 
-
 
 #### Context Output
 

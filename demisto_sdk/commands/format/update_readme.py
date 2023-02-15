@@ -5,8 +5,10 @@ import click
 from demisto_sdk.commands.common.hook_validations.readme import (
     ReadmeUrl,
     get_relative_urls,
+    mdx_server_is_up,
 )
-from demisto_sdk.commands.common.tools import print_error
+from demisto_sdk.commands.common.markdown_lint import run_markdownlint
+from demisto_sdk.commands.common.tools import print_error, print_warning
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
@@ -124,6 +126,7 @@ class ReadmeFormat(BaseUpdate):
                 fg="bright_blue",
             )
             self.relative_url_format()
+            self.fix_lint_markdown()
             self.save_md_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
@@ -138,3 +141,24 @@ class ReadmeFormat(BaseUpdate):
             return format_res, SKIP_RETURN_CODE
         else:
             return format_res, self.initiate_file_validator()
+
+    def fix_lint_markdown(self):
+        if mdx_server_is_up():
+            if self.readme_content:
+                response = run_markdownlint(
+                    file_path=self.source_file,
+                    file_content=self.readme_content,
+                    fix=True,
+                )
+                if response.validations:
+                    print_warning(
+                        f"Markdown lint was not able to fix the following "
+                        f"markdown validations for file {self.source_file}.\n{response.validations}"
+                    )
+                if response.fixed_text and response.fixed_text != self.readme_content:
+                    click.secho(f"Received markdown fixes for file {self.source_file}")
+                    self.readme_content = response.fixed_text
+            else:
+                click.secho(f"Markdownlint skipping {self.source_file} with no content")
+        else:
+            click.secho("Skipping markdownlint as node server is not up")

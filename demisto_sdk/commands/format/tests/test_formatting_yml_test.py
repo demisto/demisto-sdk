@@ -344,7 +344,7 @@ class TestFormatting:
                 __file__, "..", "..", "..", "common", "schemas", f"{file_type}.yml"
             )
         )
-        base_yml = IntegrationYMLFormat(source_path, path=schema_path, verbose=True)
+        base_yml = IntegrationYMLFormat(source_path, path=schema_path)
         base_yml.set_reputation_commands_basic_argument_as_needed()
 
         for command in base_yml.data["script"]["commands"]:

@@ -115,6 +115,7 @@ class Uploader:
         detached_files: bool = False,
         reattach: bool = False,
         override_existing: bool = False,
+        **kwargs,
     ):
         self.path = input
         verify = (

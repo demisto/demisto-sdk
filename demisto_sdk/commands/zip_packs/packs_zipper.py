@@ -33,6 +33,7 @@ class PacksZipper:
         zip_all: bool,
         marketplace: str = MarketplaceVersions.XSOAR.value,
         quiet_mode: bool = False,
+        **kwargs,
     ):
         self.artifacts_manager = PacksManager(
             pack_paths=pack_paths,

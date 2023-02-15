@@ -38,6 +38,7 @@ class XSOARConfigFileUpdater:
         add_all_marketplace_packs: bool = False,
         insecure: bool = False,
         file_path: str = XSOAR_CONFIG_FILE_JSON,
+        **kwargs,
     ):
         logging.disable(logging.CRITICAL)
         self.pack_id = pack_id

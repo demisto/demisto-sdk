@@ -177,7 +177,7 @@ class TestFormattingJson:
     def test_format_file(self, source, target, path, answer):
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(input=target, output=target, verbose=True)
+        res = format_manager(input=target, output=target)
         shutil.rmtree(target, ignore_errors=True)
         shutil.rmtree(path, ignore_errors=True)
 
@@ -202,7 +202,7 @@ class TestFormattingJson:
 
         monkeypatch.setattr("builtins.input", lambda _: "N")
 
-        res = format_manager(input=target, output=target, verbose=True)
+        res = format_manager(input=target, output=target)
         shutil.rmtree(target, ignore_errors=True)
         shutil.rmtree(path, ignore_errors=True)
 
@@ -211,9 +211,7 @@ class TestFormattingJson:
     @pytest.mark.parametrize("invalid_output", [INVALID_OUTPUT_PATH])
     def test_output_file(self, invalid_output):
         try:
-            res_invalid = format_manager(
-                input=invalid_output, output=invalid_output, verbose=True
-            )
+            res_invalid = format_manager(input=invalid_output, output=invalid_output)
             assert res_invalid
         except Exception as e:
             assert (
@@ -1720,7 +1718,7 @@ class TestFormattingReport:
         Then
             - Ensure the error is printed.
         """
-        formatter = format_object(verbose=True, input="my_file_path")
+        formatter = format_object(input="my_file_path")
         mocker.patch.object(
             BaseUpdateJSON, "update_json", side_effect=self.exception_raise
         )

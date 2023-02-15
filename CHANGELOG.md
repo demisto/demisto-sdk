@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## 1.10.2
 * Added markdown lint formatting for README files in the **format** command.
 * Fixed an issue where **lint** failed when using the `-cdam` flag with changed dependant api modules due to partial file duplications filtering.
 * Fixed an issue in **upload** command where `json` based content items were not unified correctly when using the `--zip` argument.

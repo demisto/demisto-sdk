@@ -219,7 +219,7 @@ class TestGenericFunctions:
         )  
 
         # make sure the two files were merged correctly
-        assert get_file(dest, suffix) == {"fromVersion": SENTENCE_WITH_UMLAUTS, "toVersion":SENTENCE_WITH_UMLAUTS}
+        assert get_file(dest, suffix) == {"fromVersion": SENTENCE_WITH_UMLAUTS, "toVersion": SENTENCE_WITH_UMLAUTS}
 
     @pytest.mark.parametrize(
         "file_name, prefix, result",

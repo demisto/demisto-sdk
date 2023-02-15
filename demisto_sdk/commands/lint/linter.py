@@ -306,6 +306,7 @@ class Linter:
             return True
 
         # Docker images
+        yml_obj_id = ""
         if self._facts["docker_engine"]:
             logger.info(f"{log_prompt} - Collecting all docker images to pull")
             yml_obj_id = (

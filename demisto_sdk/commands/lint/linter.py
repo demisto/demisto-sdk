@@ -18,6 +18,7 @@ from packaging.version import parse
 from wcmatch.pathlib import NEGATE, Path
 
 from demisto_sdk.commands.common.constants import (
+    API_MODULE_FILE_SUFFIX,
     INTEGRATIONS_DIR,
     NATIVE_IMAGE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
@@ -440,12 +441,12 @@ class Linter:
         else:
             logger.info(f"{log_prompt} - Lint files not found")
 
-        # remove api module from lint files
-        if "ApiModule" not in yml_obj_id:
+        if not yml_obj_id.endswith(API_MODULE_FILE_SUFFIX):
+            # remove api module from lint files if the integration/script that we use is not an api module.
             self._facts["lint_files"] = [
                 file
                 for file in self._facts["lint_files"]
-                if "ApiModule" not in file.name
+                if API_MODULE_FILE_SUFFIX not in file.name
             ]
 
         self._split_lint_files()

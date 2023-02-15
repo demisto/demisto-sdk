@@ -7,6 +7,7 @@
 * Added XPANSE core packs validations.
 * Added the `sectionorder` field to integration scheme.
 * Fixed an issue where in some occasions running of test-playbooks could receive session timeouts.
+* Fixed an issue where **validate** command failed on core pack dependencies validation because of test dependencies.
 
 ## 1.10.1
 * Fixed an issue where **update-content-graph** failed to execute.

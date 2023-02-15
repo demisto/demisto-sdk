@@ -1,11 +1,12 @@
-from io import TextIOWrapper
 import os
 import shutil
+from io import TextIOWrapper
 from pathlib import Path
 from typing import Callable, Tuple
 from unittest.mock import patch
 
 import pytest
+
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
     CONNECTIONS_DIR,
@@ -41,13 +42,19 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
 )
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.tests.tools_test import SENTENCE_WITH_UMLAUTS
-from demisto_sdk.commands.common.handlers import YAML_Handler, JSON_Handler
-from demisto_sdk.commands.common.tools import get_child_files, get_file, get_json, get_yaml
+from demisto_sdk.commands.common.tools import (
+    get_child_files,
+    get_file,
+    get_json,
+    get_yaml,
+)
 from demisto_sdk.commands.download.downloader import Downloader
 
 yaml = YAML_Handler()
 json = JSON_Handler()
+
 
 def ordered(obj):
     if isinstance(obj, dict):
@@ -1293,7 +1300,7 @@ def test_replace_uuids(original_string, uuids_to_name_map, expected_string):
             ".json",
             json.dumps,
             lambda f, data: json.dump(data, f),
-            ("fromVersion", "toVersion")
+            ("fromVersion", "toVersion"),
         ),
         (
             ".yml",
@@ -1309,7 +1316,9 @@ def test_safe_write_unicode_to_non_unicode(
     dumps_method: Callable,
     write_method: Callable[[TextIOWrapper, dict], None],
     source_is_unicode: bool,
-    fields: Tuple[str, str]
+    fields: Tuple[
+        str, str
+    ],  # not all field names are merged, and they depend on the file type
 ):
     """
     Given: A format to check (yaml/json), with its writing method
@@ -1323,9 +1332,9 @@ def test_safe_write_unicode_to_non_unicode(
     non_unicode_path = (tmp_path / "non_unicode").with_suffix(suffix)
     with non_unicode_path.open("wb") as f:
         f.write(
-            dumps_method(
-                {fields[0]: SENTENCE_WITH_UMLAUTS}, ensure_ascii=False
-            ).encode("latin-1")
+            dumps_method({fields[0]: SENTENCE_WITH_UMLAUTS}, ensure_ascii=False).encode(
+                "latin-1"
+            )
         )
 
     unicode_path = (tmp_path / "unicode").with_suffix(suffix)

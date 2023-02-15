@@ -1,7 +1,6 @@
 import glob
 import os
 import shutil
-from io import TextIOWrapper
 from pathlib import Path
 from typing import Callable, List, Optional, Union
 
@@ -165,7 +164,6 @@ class TestGenericFunctions:
             )
         )
         assert get_file(path, suffix) == {"text": SENTENCE_WITH_UMLAUTS}
-
 
     @pytest.mark.parametrize(
         "file_name, prefix, result",

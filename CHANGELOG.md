@@ -1,13 +1,15 @@
 # Changelog
 
 ## Unreleased
-* Fixed an issue where downloading non-unicode content into existing files caused an error.
-* Added markdown lint formatting for README files in the **format** command.
-* Fixed an issue where **lint** failed when using the `-cdam` flag with changed dependant api modules due to partial file duplications filtering.
-* Fixed an issue in **upload** command where `json` based content items were not unified correctly when using the `--zip` argument.
-* Added XPANSE core packs validations.
-* Added the `sectionorder` field to integration scheme.
 * Fixed an issue where in some occasions running of test-playbooks could receive session timeouts.
+* Fixed an issue where downloading non-unicode content into existing files caused an error.
+
+## 1.10.2
+* Added markdown lint formatting for README files in the **format** command.
+* Fixed an issue where **lint** failed when using the `-cdam` flag with changed dependant api modules.
+* Fixed an issue in the **upload** command, where `json`-based content items were not unified correctly when using the `--zip` argument.
+* Added XPANSE core packs validations.
+* Added the `sectionorder` field to the integration scheme.
 
 ## 1.10.1
 * Fixed an issue where **update-content-graph** failed to execute.

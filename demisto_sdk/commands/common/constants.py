@@ -1676,6 +1676,13 @@ class MarketplaceVersions(str, Enum):
     XPANSE = "xpanse"
 
 
+MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
+    MarketplaceVersions.XSOAR: "Tests/Marketplace/core_packs_list.json",
+    MarketplaceVersions.MarketplaceV2: "Tests/Marketplace/core_packs_mpv2_list.json",
+    MarketplaceVersions.XPANSE: "Tests/Marketplace/core_packs_xpanse_list.json",
+}
+
+
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {
     "html": LooseVersion("6.1.0"),
     "grid": LooseVersion("5.5.0"),

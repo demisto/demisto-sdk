@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Improved the graph validations in **validate** command.
 * Fixed an issue where in some occasions running of test-playbooks could receive session timeouts.
 
 ## 1.10.2

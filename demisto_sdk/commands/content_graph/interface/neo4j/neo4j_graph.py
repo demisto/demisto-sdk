@@ -1,7 +1,7 @@
 import logging
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from neo4j import GraphDatabase, Neo4jDriver, Session, graph
 
@@ -15,6 +15,9 @@ from demisto_sdk.commands.content_graph.common import (
     ContentType,
     Neo4jRelationshipResult,
     RelationshipType,
+)
+from demisto_sdk.commands.content_graph.content_graph_commands import (
+    update_content_graph,
 )
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import (
@@ -44,13 +47,23 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     _match,
     create_nodes,
     delete_all_graph_nodes,
-    duplicates_exist,
+    get_relationships_to_preserve,
     remove_empty_properties,
+    remove_packs_before_creation,
     remove_server_nodes,
+    return_preserved_relationships,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
     _match_relationships,
     create_relationships,
+)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
+    validate_core_packs_dependencies,
+    validate_fromversion,
+    validate_marketplaces,
+    validate_multiple_packs_with_same_display_name,
+    validate_toversion,
+    validate_unknown_content,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
@@ -99,15 +112,20 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def __init__(
         self,
+        should_update: bool = False,
     ) -> None:
+        if not neo4j_service.is_alive():
+            neo4j_service.start()
+        self._rels_to_preserve: List[Dict[str, Any]] = []  # used for graph updates
+
         self.driver: Neo4jDriver = GraphDatabase.driver(
             NEO4J_DATABASE_URL,
             auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
         )
+        if should_update:
+            update_content_graph(self, use_git=True)
 
     def __enter__(self) -> "Neo4jContentGraphInterface":
-        if not neo4j_service.is_alive():
-            neo4j_service.start()
         return self
 
     def __exit__(self, *args) -> None:
@@ -130,7 +148,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self,
         session: Session,
         result: Dict[int, Neo4jRelationshipResult],
-        marketplace: Optional[MarketplaceVersions],
+        marketplace: Optional[MarketplaceVersions] = None,
     ):
         """This adds relationships to given object
 
@@ -193,9 +211,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 rel.type,
                 RelationshipData(
                     relationship_type=rel.type,
-                    source=Neo4jContentGraphInterface._id_to_obj[rel.start_node.id],
-                    target=Neo4jContentGraphInterface._id_to_obj[rel.end_node.id],
-                    content_item=Neo4jContentGraphInterface._id_to_obj[node_to.id],
+                    source_id=rel.start_node.id,
+                    target_id=rel.end_node.id,
+                    content_item_to=Neo4jContentGraphInterface._id_to_obj[node_to.id],
                     is_direct=True,
                     **rel,
                 ),
@@ -232,15 +250,15 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                     RelationshipType.DEPENDS_ON,
                     RelationshipData(
                         relationship_type=RelationshipType.DEPENDS_ON,
-                        source=obj,
-                        content_item=target,
-                        target=target,
+                        source_id=pack_id,
+                        target_id=node.id,
+                        content_item_to=target,
                         mandatorily=True,
                         is_direct=False,
                     ),
                 )
 
-    def _add_nodes_to_mapping(self, nodes: List[graph.Node]) -> None:
+    def _add_nodes_to_mapping(self, nodes: Iterable[graph.Node]) -> None:
         """Add nodes to the content models mapping
 
         Args:
@@ -302,25 +320,133 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return [self._id_to_obj[result.id] for result in results]
 
     def create_indexes_and_constraints(self) -> None:
+        logger.info("Creating graph indexes and constraints...")
         with self.driver.session() as session:
             session.write_transaction(create_indexes)
             session.write_transaction(create_constraints)
 
     def create_nodes(self, nodes: Dict[ContentType, List[Dict[str, Any]]]) -> None:
+        logger.info("Creating graph nodes...")
+        pack_ids = [p.get("object_id") for p in nodes.get(ContentType.PACK, [])]
         with self.driver.session() as session:
+            self._rels_to_preserve = session.read_transaction(
+                get_relationships_to_preserve, pack_ids
+            )
+            session.write_transaction(remove_packs_before_creation, pack_ids)
             session.write_transaction(create_nodes, nodes)
             session.write_transaction(remove_empty_properties)
 
-    def validate_graph(self) -> None:
+    def get_unknown_content_uses(self, file_paths: List[str]) -> List[BaseContent]:
         with self.driver.session() as session:
-            if session.read_transaction(duplicates_exist):
-                raise Exception("Duplicates found in graph.")
+            results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
+                validate_unknown_content, file_paths
+            )
+            self._add_nodes_to_mapping(result.node_from for result in results.values())
+            self._add_relationships_to_objects(session, results)
+            return [self._id_to_obj[result] for result in results]
+
+    def get_duplicate_pack_display_name(
+        self, file_paths: List[str]
+    ) -> List[Tuple[str, List[str]]]:
+        with self.driver.session() as session:
+            results = session.read_transaction(
+                validate_multiple_packs_with_same_display_name, file_paths
+            )
+            return results
+
+    def find_uses_paths_with_invalid_fromversion(
+        self, file_paths: List[str], for_supported_versions=False
+    ) -> List[BaseContent]:
+        """Searches and retrievs content items who use content items with a lower fromvesion.
+
+        Args:
+            file_paths (List[str]): A list of content items' paths to check.
+                If not given, runs the query over all content items.
+
+        Returns:
+            List[BaseContent]: The content items who use content items with a lower fromvesion.
+        """
+        with self.driver.session() as session:
+            results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
+                validate_fromversion, file_paths, for_supported_versions
+            )
+            self._add_nodes_to_mapping(result.node_from for result in results.values())
+            self._add_relationships_to_objects(session, results)
+            return [self._id_to_obj[result] for result in results]
+
+    def find_uses_paths_with_invalid_toversion(
+        self, file_paths: List[str], for_supported_versions=False
+    ) -> List[BaseContent]:
+        """Searches and retrievs content items who use content items with a higher toversion.
+
+        Args:
+            file_paths (List[str]): A list of content items' paths to check.
+                If not given, runs the query over all content items.
+
+        Returns:
+            List[BaseContent]: The content items who use content items with a higher toversion.
+        """
+        with self.driver.session() as session:
+            results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
+                validate_toversion, file_paths, for_supported_versions
+            )
+            self._add_nodes_to_mapping(result.node_from for result in results.values())
+            self._add_relationships_to_objects(session, results)
+            return [self._id_to_obj[result] for result in results]
+
+    def find_uses_paths_with_invalid_marketplaces(
+        self, file_paths: List[str]
+    ) -> List[BaseContent]:
+        """Searches and retrievs content items who use content items with invalid marketplaces.
+
+        Args:
+            file_paths (List[str]): A list of content items' paths to check.
+                If not given, runs the query over all content items.
+
+        Returns:
+            List[BaseContent]: The content items who use content items with invalid marketplaces.
+        """
+        with self.driver.session() as session:
+            results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
+                validate_marketplaces, file_paths
+            )
+            self._add_nodes_to_mapping(result.node_from for result in results.values())
+            self._add_relationships_to_objects(session, results)
+            return [self._id_to_obj[result] for result in results]
+
+    def find_core_packs_depend_on_non_core_packs(
+        self,
+        pack_ids: List[str],
+        marketplace: MarketplaceVersions,
+        core_pack_list: List[str],
+    ) -> List[BaseContent]:
+        """Searches and retrieves core packs who depends on content items who are not core packs.
+
+        Args:
+            pack_ids (List[str]): A list of content items pack_ids to check.
+            core_pack_list: A list of core packs
+
+        Returns:
+            List[BaseContent]: The core packs who depends on content items who are not core packs.
+        """
+        with self.driver.session() as session:
+            results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
+                validate_core_packs_dependencies, pack_ids, marketplace, core_pack_list
+            )
+            self._add_nodes_to_mapping(result.node_from for result in results.values())
+            self._add_relationships_to_objects(session, results)
+            return [self._id_to_obj[result] for result in results]
 
     def create_relationships(
         self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]
     ) -> None:
+        logger.info("Creating graph relationships...")
         with self.driver.session() as session:
             session.write_transaction(create_relationships, relationships)
+            if self._rels_to_preserve:
+                session.write_transaction(
+                    return_preserved_relationships, self._rels_to_preserve
+                )
 
     def remove_server_items(self) -> None:
         with self.driver.session() as session:
@@ -338,18 +464,20 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             external_import_paths (List[Path]): A list of external repositories' import paths.
             imported_path (Path): The path to import the graph from.
         """
+        logger.info("Importing graph from CSV files...")
         self._import_handler.extract_files_from_path(imported_path)
         self._import_handler.ensure_data_uniqueness()
         node_files = self._import_handler.get_nodes_files()
         relationship_files = self._import_handler.get_relationships_files()
-        with self.driver.session() as session:
-            session.write_transaction(drop_constraints)
-            session.write_transaction(import_csv, node_files, relationship_files)
-            session.write_transaction(post_import_write_queries)
-            session.write_transaction(merge_duplicate_commands)
-            session.write_transaction(merge_duplicate_content_items)
-            session.write_transaction(create_constraints)
-            session.write_transaction(remove_empty_properties)
+        if node_files and relationship_files:
+            with self.driver.session() as session:
+                session.write_transaction(drop_constraints)
+                session.write_transaction(import_csv, node_files, relationship_files)
+                session.write_transaction(post_import_write_queries)
+                session.write_transaction(merge_duplicate_commands)
+                session.write_transaction(merge_duplicate_content_items)
+                session.write_transaction(create_constraints)
+                session.write_transaction(remove_empty_properties)
 
     def export_graph(self, output_path: Optional[Path] = None) -> None:
         self.clean_import_dir()
@@ -394,6 +522,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         )
 
     def create_pack_dependencies(self):
+        logger.info("Creating pack dependencies...")
         with self.driver.session() as session:
             session.write_transaction(create_pack_dependencies)
 

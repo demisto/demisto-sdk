@@ -93,7 +93,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         Returns:
             Optional[ContentItemParser]: The parsed content item.
         """
-        logger.info(f"Parsing content item {path}")
+        logger.debug(f"Parsing content item {path}")
         if not ContentItemParser.is_content_item(path):
             if ContentItemParser.is_content_item(path.parent):
                 path = path.parent
@@ -122,7 +122,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     ) -> Optional["ContentItemParser"]:
         try:
             parser = parser_cls(path, pack_marketplaces, **kwargs)
-            logger.info(f"Parsed {parser.node_id}")
+            logger.debug(f"Parsed {parser.node_id}")
             return parser
         except NotAContentItemException:
             logger.debug(f"Skipping {path}")

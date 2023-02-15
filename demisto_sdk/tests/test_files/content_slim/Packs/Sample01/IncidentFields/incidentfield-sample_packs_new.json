@@ -1,4 +1,8 @@
 {
-  "fromVersion": "4.0.0",
-  "id": "incident"
+    "fromVersion": "4.0.0",
+    "id": "incident",
+    "name": "test",
+    "cliName": "actor",
+    "type": "multiSelect",
+    "associatedToAll": true
 }

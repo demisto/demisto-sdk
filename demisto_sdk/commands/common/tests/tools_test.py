@@ -168,7 +168,7 @@ class TestGenericFunctions:
         assert get_file(path, suffix) == {"text": SENTENCE_WITH_UMLAUTS}
 
     @staticmethod
-    # @pytest.mark.parametrize("reverse_order", (True, False))
+    @pytest.mark.parametrize("source_is_unicode", (True, False))
     @pytest.mark.parametrize(
         "suffix,dumps_method,write_method",
         (
@@ -177,11 +177,11 @@ class TestGenericFunctions:
                 json.dumps,
                 lambda f, data: json.dump(data, f),
             ),
-            # (
-            #     ".yml",
-            #     yaml.dumps,
-            #     lambda f, data: yaml.dump(data, f),
-            # ),
+            (
+                ".yml",
+                yaml.dumps,
+                lambda f, data: yaml.dump(data, f),
+            ),
         ),
     )
     def test_safe_write_unicode_to_non_unicode(
@@ -189,7 +189,7 @@ class TestGenericFunctions:
         suffix: str,
         dumps_method: Callable,
         write_method: Callable[[TextIOWrapper, dict], None],
-        reverse_order: bool = False,
+        source_is_unicode: bool = False,
     ):
         from demisto_sdk.commands.download.downloader import Downloader
 
@@ -207,7 +207,7 @@ class TestGenericFunctions:
 
         source, dest = (
             (unicode_path, non_unicode_path)
-            if reverse_order
+            if source_is_unicode
             else (
                 non_unicode_path,
                 unicode_path,
@@ -219,10 +219,7 @@ class TestGenericFunctions:
         )  
 
         # make sure the two files were merged correctly
-        assert set(get_file(dest, suffix).keys()) == {
-            "fromVersion",
-            "toVersion",
-        }
+        assert get_file(dest, suffix) == {"fromVersion": SENTENCE_WITH_UMLAUTS, "toVersion":SENTENCE_WITH_UMLAUTS}
 
     @pytest.mark.parametrize(
         "file_name, prefix, result",

@@ -31,10 +31,8 @@ def handle_deprecated_args(input_args):
 
 # TODO Remove this method and expose _logging_setup as logging_setup
 def logging_setup(
-    verbose: Optional[int] = 0,
     console_log_threshold: Optional[int] = logging.INFO,
     file_log_threshold: Optional[int] = logging.DEBUG,
-    quiet: Optional[bool] = False,
     log_file_name: Optional[str] = "demisto_sdk_debug_log.log",
     log_file: Optional[str] = "./demisto_sdk_debug_log.log",
 ) -> logging.Logger:

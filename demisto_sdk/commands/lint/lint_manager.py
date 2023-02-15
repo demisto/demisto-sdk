@@ -35,7 +35,6 @@ from demisto_sdk.commands.common.tools import (
     get_json,
     is_external_repository,
     print_error,
-    print_v,
     print_warning,
     retrieve_file_ending,
 )
@@ -74,8 +73,6 @@ class LintManager:
         input(str): Directories to run lint on.
         git(bool): Perform lint and test only on chaged packs.
         all_packs(bool): Whether to run on all packages.
-        verbose(int): Whether to output a detailed response.
-        quiet(bool): Whether to output a quiet response.
         log_path(str): Path to all levels of logs.
         prev_ver(str): Previous branch or SHA1 commit to run checks against.
         json_file_path(str): Path to a json file to write the run resutls to.
@@ -89,15 +86,11 @@ class LintManager:
         input: str,
         git: bool,
         all_packs: bool,
-        quiet: bool,
-        verbose: int,
         prev_ver: str,
         json_file_path: str = "",
         check_dependent_api_module: bool = False,
     ):
 
-        # Verbosity level
-        self._verbose = not quiet if quiet else verbose
         # Gather facts for manager
         self._facts: dict = self._gather_facts()
         self._prev_ver = prev_ver
@@ -330,9 +323,8 @@ class LintManager:
                 content_repo=content_repo, pkgs=pkgs, base_branch=base_branch
             )
             for pkg in pkgs:
-                print_v(
-                    f"Found changed package {Colors.Fg.cyan}{pkg}{Colors.reset}",
-                    log_verbose=self._verbose,
+                logger.debug(
+                    f"Found changed package {Colors.Fg.cyan}{pkg}{Colors.reset}"
                 )
         if pkgs:
             pkgs_str = ", ".join(map(str, pkgs))
@@ -959,24 +951,22 @@ class LintManager:
                     .get("report", {})
                     .get("tests")
                 ):
-                    if (not headline_printed and self._verbose) and (
+                    if (not headline_printed) and (
                         EXIT_CODES["pytest"] & return_exit_code
                     ):
                         # Log unit-tests
                         sentence = " Unit Tests "
-                        print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
-                        print(f"{sentence}")
-                        print(f"{'#' * len(sentence)}{Colors.reset}")
+                        logger.debug(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
+                        logger.debug(f"{sentence}")
+                        logger.debug(f"{'#' * len(sentence)}{Colors.reset}")
                         headline_printed = True
                     if not passed_printed:
-                        print_v(
-                            f"\n{Colors.Fg.green}Passed Unit-tests:{Colors.reset}",
-                            log_verbose=self._verbose,
+                        logger.debug(
+                            f"\n{Colors.Fg.green}Passed Unit-tests:{Colors.reset}"
                         )
                         passed_printed = True
-                    print_v(
-                        wrapper_pack.fill(f"{Colors.Fg.green}{pkg}{Colors.reset}"),
-                        log_verbose=self._verbose,
+                    logger.debug(
+                        wrapper_pack.fill(f"{Colors.Fg.green}{pkg}{Colors.reset}")
                     )
                     for image in status["images"]:
                         if not image.get("image_errors"):
@@ -986,10 +976,7 @@ class LintManager:
                                 .get("tests")
                             )
                             if tests:
-                                print_v(
-                                    wrapper_docker_image.fill(image["image"]),
-                                    log_verbose=self._verbose,
-                                )
+                                logger.debug(wrapper_docker_image.fill(image["image"]))
                                 for test_case in tests:
                                     outcome = test_case.get("call", {}).get("outcome")
                                     if outcome != "failed":
@@ -1000,10 +987,7 @@ class LintManager:
                                         )
                                         if outcome and outcome != "passed":
                                             name = f"{name} ({outcome.upper()})"
-                                        print_v(
-                                            wrapper_test.fill(name),
-                                            log_verbose=self._verbose,
-                                        )
+                                        logger.debug(wrapper_test.fill(name))
 
         # Log failed unit-tests
         if EXIT_CODES["pytest"] & return_exit_code:

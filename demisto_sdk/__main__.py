@@ -1,3 +1,5 @@
+# TODO Remove quiet
+
 # Site packages
 import copy
 import logging
@@ -837,15 +839,6 @@ def secrets(config, **kwargs):
     help="Run lint on all directories in content repo",
 )
 @click.option(
-    "-v",
-    "--verbose",
-    count=True,
-    help="Verbosity level -v / -vv / .. / -vvv",
-    type=click.IntRange(0, 3, clamp=True),
-    default=2,
-    show_default=True,
-)
-@click.option(
     "-p",
     "--parallel",
     default=1,
@@ -934,8 +927,6 @@ def lint(**kwargs):
         input=kwargs.get("input"),  # type: ignore[arg-type]
         git=kwargs.get("git"),  # type: ignore[arg-type]
         all_packs=kwargs.get("all_packs"),  # type: ignore[arg-type]
-        verbose=kwargs.get("verbose"),  # type: ignore[arg-type]
-        quiet=kwargs.get("quiet"),  # type: ignore[arg-type]
         prev_ver=kwargs.get("prev_ver"),  # type: ignore[arg-type]
         json_file_path=kwargs.get("json_file"),  # type: ignore[arg-type]
         check_dependent_api_module=kwargs.get("check_dependent_api_module"),  # type: ignore[arg-type]
@@ -2103,13 +2094,6 @@ def update_release_notes(**kwargs):
     is_flag=True,
 )
 @click.option(
-    "-v",
-    "--verbose",
-    help="Whether to print the log to the console.",
-    required=False,
-    is_flag=True,
-)
-@click.option(
     "--use-pack-metadata",
     help="Whether to update the dependencies from the pack metadata.",
     required=False,
@@ -2210,7 +2194,6 @@ def find_dependencies(**kwargs):
     help="Used for advanced integration customisation. Generates a config json file instead of integration.",
     is_flag=True,
 )
-@click.option("--verbose", help="Print debug level logs", is_flag=True)
 @click.option(
     "-p",
     "--package",
@@ -2226,7 +2209,6 @@ def postman_codegen(
     output_prefix: str,
     command_prefix: str,
     config_out: bool,
-    verbose: bool,
     package: bool,
 ):
     """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
@@ -2342,7 +2324,6 @@ def generate_integration(input: IO, output: Path):
     help="Comma separated JSON root objects to use in command outputs (case sensitive)",
     required=False,
 )
-@click.option("-v", "--verbose", is_flag=True, help="Be verbose with the log output")
 @click.option(
     "-f", "--fix_code", is_flag=True, help="Fix the python code using autopep8"
 )
@@ -2352,6 +2333,10 @@ def generate_integration(input: IO, output: Path):
     is_flag=True,
     help="Use the automatically generated integration configuration"
     " (Skip the second run).",
+)
+@click.option(
+    "--file_log_threshold",
+    help="Minimum logging threshold for the console logger.",
 )
 def openapi_codegen(**kwargs):
     """Generates a Cortex XSOAR integration given an OpenAPI specification file.
@@ -2398,7 +2383,6 @@ def openapi_codegen(**kwargs):
     if root_objects is None:
         root_objects = ""
 
-    verbose = kwargs.get("verbose", False)
     fix_code = kwargs.get("fix_code", False)
 
     configuration = None
@@ -2417,7 +2401,6 @@ def openapi_codegen(**kwargs):
         context_path,
         unique_keys=unique_keys,
         root_objects=root_objects,
-        verbose=verbose,
         fix_code=fix_code,
         configuration=configuration,
     )
@@ -2436,7 +2419,10 @@ def openapi_codegen(**kwargs):
                 command_to_run = command_to_run + f' -u "{unique_keys}"'
             if root_objects:
                 command_to_run = command_to_run + f' -r "{root_objects}"'
-            if verbose:
+            if (
+                kwargs.get("console_log_threshold")
+                and int(kwargs.get("file_log_threshold", logging.INFO)) >= logging.DEBUG
+            ):
                 command_to_run = command_to_run + " -v"
             if fix_code:
                 command_to_run = command_to_run + " -f"
@@ -2674,14 +2660,6 @@ def integration_diff(**kwargs):
     required=True,
 )
 @click.option(
-    "-v",
-    "--verbose",
-    is_flag=True,
-    type=bool,
-    help="Indicate for extended prints.",
-    required=False,
-)
-@click.option(
     "-f",
     "--force",
     is_flag=True,
@@ -2697,7 +2675,6 @@ def generate_yml_from_python(**kwargs):
 
     yml_generator = YMLGenerator(
         filename=kwargs.get("input", ""),
-        verbose=kwargs.get("verbose", False),
         force=kwargs.get("force", False),
     )
     yml_generator.generate()

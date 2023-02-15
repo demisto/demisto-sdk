@@ -1459,13 +1459,6 @@ def get_pipenv_dir(py_version, envs_dirs_base):
     return f"{envs_dirs_base}{int(py_version)}"
 
 
-def print_v(msg, log_verbose=None):
-    if log_verbose is None:
-        log_verbose = LOG_VERBOSE
-    if log_verbose:
-        print(msg)
-
-
 def get_dev_requirements(py_version, envs_dirs_base):
     """
     Get the requirements for the specified py version.
@@ -1484,7 +1477,7 @@ def get_dev_requirements(py_version, envs_dirs_base):
     requirements = check_output(
         ["pipenv", "lock", "-r", "-d"], cwd=env_dir, text=True, stderr=stderr_out
     )
-    print_v(f"dev requirements:\n{requirements}")
+    logger.debug(f"dev requirements:\n{requirements}")
     return requirements
 
 

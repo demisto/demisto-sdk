@@ -1,4 +1,5 @@
 import glob
+import logging
 import os
 import shutil
 from distutils.dir_util import copy_tree
@@ -49,10 +50,11 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name,
     get_yaml,
     print_error,
-    print_v,
     print_warning,
 )
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -876,7 +878,7 @@ class Initiator:
                 common_server_path = get_common_server_path(self.configuration.env_dir)
                 shutil.copy(common_server_path, self.full_output_path)
             except Exception as err:
-                print_v(f"Could not copy CommonServerPython: {str(err)}")
+                logger.debug(f"Could not copy CommonServerPython: {str(err)}")
 
     def copy_demistotmock(self):
         """copy demistomock from content"""
@@ -887,7 +889,7 @@ class Initiator:
                     self.full_output_path,
                 )
             except Exception as err:
-                print_v(f"Could not copy demistomock: {str(err)}")
+                logger.debug(f"Could not copy demistomock: {str(err)}")
 
     def get_template_files(self):
         """

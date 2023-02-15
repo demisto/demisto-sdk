@@ -1797,13 +1797,14 @@ class TestContext:
                 self=self.client, method="GET", path=f"/inv-playbook/{self.incident_id}"
             )
             investigation_playbook = ast.literal_eval(investigation_playbook_raw[0])
-
         except ApiException as err:
+            self.build_context.logging_module.debug(f"{err=}", real_time=True)
+            self.build_context.logging_module.debug(f"{err.status=}", real_time=True)
             if err.status == 401:
                 # resetting client due to possible session timeouts
                 self.server_context._configure_new_client()
                 self.build_context.logging_module.debug(
-                    f"new demisto_client created because of err: {err}"
+                    f"new demisto_client created because of err: {err}", real_time=True
                 )
                 # after resetting client, playbook's state should still be in progress
                 return PB_Status.IN_PROGRESS
@@ -1811,7 +1812,8 @@ class TestContext:
             else:
                 self.build_context.logging_module.exception(
                     f"Failed to get investigation playbook state, "
-                    f"error trying to communicate with demisto server: {err}"
+                    f"error trying to communicate with demisto server: {err}",
+                    real_time=True,
                 )
                 return PB_Status.FAILED
 

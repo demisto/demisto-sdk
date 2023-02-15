@@ -209,7 +209,9 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         assert "does not exist" in result.stderr
         assert result.exit_code == 2
 
-    def test_integration_find_dependencies_with_dependency(self, repo, mocker):
+    def test_integration_find_dependencies_with_dependency(
+        self, repo, mocker, monkeypatch
+    ):
         """
         Given
         - Valid repo with 2 pack folders where pack2 (script) depends on pack1 (integration).
@@ -254,8 +256,9 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         )
 
         repo.id_set.write_json(id_set)
-        mocker.patch("click.secho")
-        from click import secho
+        # mocker.patch("click.secho")
+        # from click import secho
+        monkeypatch.setenv("COLUMNS", "1000")
 
         # Change working dir to repo
         with ChangeCWD(integration.repo_path):
@@ -273,8 +276,10 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 ],
             )
 
-        assert secho.call_args_list[0][0][0] == "\n# Pack ID: FindDependencyPack2"
-        assert "All level dependencies are:" in secho.call_args_list[-1][0][0]
+        # assert secho.call_args_list[0][0][0] == "\n# Pack ID: FindDependencyPack2"
+        assert "# Pack ID: FindDependencyPack2" in result.stdout
+        # assert "All level dependencies are:" in secho.call_args_list[-1][0][0]
+        assert "All level dependencies are:" in result.stdout
         assert (
             "Found dependencies result for FindDependencyPack2 pack:" in result.output
         )

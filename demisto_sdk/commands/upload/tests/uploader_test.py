@@ -1,4 +1,5 @@
 import inspect
+import logging
 import re
 import shutil
 import zipfile
@@ -771,7 +772,9 @@ def test_sort_directories_based_on_dependencies(demisto_client_configure):
     ]
 
 
-def test_print_summary_successfully_uploaded_files(demisto_client_configure, mocker):
+def test_print_summary_successfully_uploaded_files(
+    demisto_client_configure, caplog, monkeypatch
+):
     """
     Given
         - An empty (no given input path) Uploader object
@@ -783,25 +786,26 @@ def test_print_summary_successfully_uploaded_files(demisto_client_configure, moc
     Then
         - Ensure uploaded successfully message is printed as expected
     """
-    mocker.patch("click.secho")
-    from click import secho
+    monkeypatch.setenv("COLUMNS", "1000")
+    caplog.set_level(logging.DEBUG)
+    logging.getLogger("demisto-sdk").propagate = True
 
     successfully_uploaded_files = [("SomeIntegrationName", "Integration")]
 
     print_summary(successfully_uploaded_files, [], [])
     expected_upload_summary_title = "\n\nUPLOAD SUMMARY:"
-    expected_successfully_uploaded_files_title = "\nSUCCESSFUL UPLOADS:"
-    expected_successfully_uploaded_files = """╒═════════════════════╤═════════════╕
-│ NAME                │ TYPE        │
-╞═════════════════════╪═════════════╡
-│ SomeIntegrationName │ Integration │
-╘═════════════════════╧═════════════╛
-"""
-    # verify exactly 3 calls to print_color
-    assert secho.call_count == 3
-    assert secho.call_args_list[0][0][0] == expected_upload_summary_title
-    assert secho.call_args_list[1][0][0] == expected_successfully_uploaded_files_title
-    assert secho.call_args_list[2][0][0] == expected_successfully_uploaded_files
+    expected_successfully_uploaded_files_title = "SUCCESSFUL UPLOADS:"
+    expected_successfully_uploaded_files_array = [
+        "╒═════════════════════╤═════════════╕",
+        "│ NAME                │ TYPE        │",
+        "╞═════════════════════╪═════════════╡",
+        "│ SomeIntegrationName │ Integration │",
+        "╘═════════════════════╧═════════════╛",
+    ]
+    assert expected_upload_summary_title in caplog.text
+    assert expected_successfully_uploaded_files_title in caplog.text
+    for current_table_row in expected_successfully_uploaded_files_array:
+        assert current_table_row in caplog.text
 
 
 def test_print_summary_failed_uploaded_files(demisto_client_configure, mocker):

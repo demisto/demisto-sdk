@@ -432,13 +432,20 @@ class Linter:
             self._facts["lint_files"] = list(lint_files)
 
         if self._facts["lint_files"]:
+            # Remove files that are in gitignore
             self._remove_gitignore_files(log_prompt)
             for lint_file in self._facts["lint_files"]:
                 logger.info(f"{log_prompt} - Lint file {lint_file}")
         else:
             logger.info(f"{log_prompt} - Lint files not found")
 
-        # Remove files that are in gitignore
+        # remove api module from lint files
+        if "ApiModule" not in yml_obj_id:
+            self._facts["lint_files"] = [
+                file
+                for file in self._facts["lint_files"]
+                if "ApiModule" not in file.name
+            ]
 
         self._split_lint_files()
 
@@ -589,7 +596,7 @@ class Linter:
             )
             stdout, stderr, exit_code = run_command_os(
                 command=build_xsoar_linter_command(
-                    sorted(lint_files, key=lambda f: "ApiModule" in f.name), self._facts.get("support_level", "base")  # type: ignore
+                    lint_files, self._facts.get("support_level", "base")  # type: ignore
                 ),
                 cwd=self._pack_abs_dir,
                 env=myenv,

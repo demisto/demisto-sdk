@@ -210,6 +210,7 @@ class Initiator:
         author_image: str = "",
         demisto_mock: bool = False,
         common_server: bool = False,
+        **kwargs,
     ):
         self.output = output if output else ""
         self.id = id

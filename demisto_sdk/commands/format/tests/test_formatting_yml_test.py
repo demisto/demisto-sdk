@@ -301,7 +301,7 @@ class TestFormatting:
                 __file__, "..", "..", "..", "common", "schemas", f"{file_type}.yml"
             )
         )
-        base_yml = IntegrationYMLFormat(source_path, path=schema_path, verbose=True)
+        base_yml = IntegrationYMLFormat(source_path, path=schema_path)
         base_yml.update_proxy_insecure_param_to_default()
 
         argument_count = 0
@@ -397,7 +397,7 @@ class TestFormatting:
                 "{}.yml".format("playbook"),
             )
         )
-        base_yml = PlaybookYMLFormat(source_path, path=schema_path, verbose=True)
+        base_yml = PlaybookYMLFormat(source_path, path=schema_path)
         base_yml.add_description()
         base_yml.update_playbook_task_name()
 
@@ -439,7 +439,7 @@ class TestFormatting:
                 "{}.yml".format("playbook"),
             )
         )
-        base_yml = PlaybookYMLFormat(source_path, path=schema_path, verbose=True)
+        base_yml = PlaybookYMLFormat(source_path, path=schema_path)
         create_new_incident_script_task_args = (
             base_yml.data.get("tasks", {}).get("0").get("scriptarguments")
         )
@@ -515,13 +515,9 @@ class TestFormatting:
         dest = str(tmpdir.join("pwsh_format_res.yml"))
         src_file = f"{GIT_ROOT}/demisto_sdk/tests/test_files/{yml_file}"
         if yml_type == "script":
-            format_obj = ScriptYMLFormat(
-                src_file, output=dest, path=schema_path, verbose=True
-            )
+            format_obj = ScriptYMLFormat(src_file, output=dest, path=schema_path)
         else:
-            format_obj = IntegrationYMLFormat(
-                src_file, output=dest, path=schema_path, verbose=True
-            )
+            format_obj = IntegrationYMLFormat(src_file, output=dest, path=schema_path)
         assert format_obj.run_format() == 0
         with open(dest) as f:
             data = yaml.load(f)
@@ -581,7 +577,7 @@ class TestFormatting:
         user_input.side_effect = user_responses
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(input=target, output=target, verbose=True)
+        res = format_manager(input=target, output=target)
         os.remove(target)
         os.rmdir(path)
 
@@ -608,9 +604,7 @@ class TestFormatting:
                 "{}.yml".format("playbook"),
             )
         )
-        base_yml = PlaybookYMLFormat(
-            source_path, path=schema_path, verbose=True, clear_cache=True
-        )
+        base_yml = PlaybookYMLFormat(source_path, path=schema_path, clear_cache=True)
 
         # Assert the unnecessary keys are indeed in the playbook file
         assert "excessiveKey" in base_yml.data.keys()
@@ -662,9 +656,7 @@ class TestFormatting:
                 "{}.yml".format("playbook"),
             )
         )
-        base_yml = PlaybookYMLFormat(
-            SOURCE_FORMAT_PLAYBOOK_COPY, path=schema_path, verbose=True
-        )
+        base_yml = PlaybookYMLFormat(SOURCE_FORMAT_PLAYBOOK_COPY, path=schema_path)
         base_yml.data = {
             "tasks": {
                 "1": {"type": "playbook", "task": {}},
@@ -715,9 +707,7 @@ class TestFormatting:
                 "{}.yml".format("playbook"),
             )
         )
-        base_yml = PlaybookYMLFormat(
-            SOURCE_FORMAT_PLAYBOOK_COPY, path=schema_path, verbose=True
-        )
+        base_yml = PlaybookYMLFormat(SOURCE_FORMAT_PLAYBOOK_COPY, path=schema_path)
         base_yml.data = {
             "tasks": {
                 "1": {"type": "playbook", "task": {}},
@@ -777,7 +767,7 @@ class TestFormatting:
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
         monkeypatch.setattr("builtins.input", lambda _: "N")
-        res = format_manager(input=target, verbose=True, assume_yes=True)
+        res = format_manager(input=target, assume_yes=True)
         with open(target) as f:
             yaml_content = yaml.load(f)
             params = yaml_content["configuration"]
@@ -823,9 +813,7 @@ class TestFormatting:
         )
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(
-            input=target, verbose=True, clear_cache=True, assume_yes=True
-        )
+        res = format_manager(input=target, clear_cache=True, assume_yes=True)
         with open(target) as f:
             yaml_content = yaml.load(f)
             params = yaml_content["configuration"]
@@ -854,9 +842,7 @@ class TestFormatting:
         Then
         - Ensures the defaultvalue fields remain after the execution.
         """
-        base_yml = IntegrationYMLFormat(
-            FEED_INTEGRATION_VALID, path="schema_path", verbose=True
-        )
+        base_yml = IntegrationYMLFormat(FEED_INTEGRATION_VALID, path="schema_path")
         base_yml.set_feed_params_in_config()
         configuration_params = base_yml.data.get("configuration", [])
         assert "defaultvalue" in configuration_params[0]
@@ -873,7 +859,7 @@ class TestFormatting:
         - Ensures the feed parameters are added.
         """
         base_yml = IntegrationYMLFormat(
-            FEED_INTEGRATION_EMPTY_VALID, path="schema_path", verbose=True
+            FEED_INTEGRATION_EMPTY_VALID, path="schema_path"
         )
         base_yml.set_feed_params_in_config()
         configuration_params = base_yml.data.get("configuration", [])
@@ -896,7 +882,7 @@ class TestFormatting:
         - Ensure that the config param with the defaultvalue key is not getting duplicated without the defaultvalue key.
         """
         base_yml = IntegrationYMLFormat(
-            SOURCE_FORMAT_INTEGRATION_VALID, path="schema_path", verbose=True
+            SOURCE_FORMAT_INTEGRATION_VALID, path="schema_path"
         )
         base_yml.set_fetch_params_in_config()
         configuration_params = base_yml.data.get("configuration", [])
@@ -1303,9 +1289,7 @@ class TestFormatting:
                 "{}.yml".format("playbook"),
             )
         )
-        playbook_yml = format_object(
-            SOURCE_FORMAT_PLAYBOOK_COPY, path=schema_path, verbose=True
-        )
+        playbook_yml = format_object(SOURCE_FORMAT_PLAYBOOK_COPY, path=schema_path)
         playbook_yml.data = {
             "tasks": {
                 "1": {"taskid": "1", "task": {"id": "1"}},
@@ -1367,9 +1351,7 @@ class TestFormatting:
         playbook_data = playbook.yml.read_dict()
         playbook_data["tasks"]["1"] = test_task
         playbook.yml.write_dict(playbook_data)
-        playbook_yml = PlaybookYMLFormat(
-            SOURCE_FORMAT_PLAYBOOK_COPY, path="", verbose=True
-        )
+        playbook_yml = PlaybookYMLFormat(SOURCE_FORMAT_PLAYBOOK_COPY, path="")
 
         with ChangeCWD(repo.path):
             playbook_yml.check_for_subplaybook_usages(
@@ -1769,7 +1751,7 @@ class TestFormatting:
         - otherwise it will be the ALERT_FETCH_REQUIRED_PARAMS (with Alert type etc. ).
         """
         base_yml = IntegrationYMLFormat(
-            SOURCE_FORMAT_INTEGRATION_VALID, path="schema_path", verbose=True
+            SOURCE_FORMAT_INTEGRATION_VALID, path="schema_path"
         )
         base_yml.data["marketplaces"] = marketpalces
         base_yml.data["configuration"] = configs_to_be_removed.copy()

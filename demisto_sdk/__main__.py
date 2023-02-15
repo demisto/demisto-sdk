@@ -850,7 +850,7 @@ def create_content_artifacts(**kwargs) -> int:
     check_configuration_file("create-content-artifacts", kwargs)
     if marketplace := kwargs.get("marketplace"):
         os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
-    artifacts_conf = ArtifactsManager(kwargs)
+    artifacts_conf = ArtifactsManager(**kwargs)
     return artifacts_conf.create_content_artifacts()
 
 

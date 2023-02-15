@@ -32,6 +32,7 @@ class TestPlaybookRunner:
         wait: bool = True,
         timeout: int = 90,
         insecure: bool = False,
+        **kwargs,
     ):
         self.test_playbook_path = test_playbook_path
         self.all_test_playbooks = all

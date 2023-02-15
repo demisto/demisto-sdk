@@ -1,4 +1,5 @@
 import ast
+import logging
 import re
 import tempfile
 
@@ -9,13 +10,13 @@ from demisto_sdk.commands.common.tools import (
     LOG_COLORS,
     print_color,
     print_error,
-    print_v,
     print_warning,
 )
 from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import (
     json_to_outputs,
 )
 
+logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
 
 
@@ -29,7 +30,6 @@ class Runner:
     """Used to run a command on Demisto and print the results.
     Attributes:
         query (str): The query to execute.
-        log_verbose (bool): Whether to output a detailed response.
         debug (str): Holds the path of the debug log file (or '-' if the logs will be printed in stdout).
         debug_path (str): The path in which you will save the debug file.
         client (DefaultApi): Demisto-SDK client object.
@@ -51,13 +51,11 @@ class Runner:
         insecure: bool = False,
         debug: str = None,
         debug_path: str = None,
-        verbose: bool = False,
         json_to_outputs: bool = False,
         prefix: str = "",
         raw_response: bool = False,
     ):
         self.query = query if query.startswith("!") else f"!{query}"
-        self.log_verbose = verbose
         self.debug = debug
         self.debug_path = debug_path
         verify = (
@@ -140,7 +138,7 @@ class Runner:
 
         result = playgrounds[0].id
 
-        print_v(f"Playground ID: {result}", self.log_verbose)
+        logger.debug(f"Playground ID: {result}")
 
         return result
 

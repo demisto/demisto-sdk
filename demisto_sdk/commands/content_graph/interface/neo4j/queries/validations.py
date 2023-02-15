@@ -5,6 +5,7 @@ from neo4j import Transaction
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     GENERAL_DEFAULT_FROMVERSION,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
@@ -140,20 +141,25 @@ RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
     ]
 
 
-def validate_dependencies(
-    tx: Transaction, pack_ids: List[str], core_pack_list: List[str]
+def validate_core_packs_dependencies(
+    tx: Transaction,
+    pack_ids: List[str],
+    marketplace: MarketplaceVersions,
+    core_pack_list: List[str],
 ):
 
     query = f"""// Returns DEPENDS_ON relationships to content items who are not core packs
-    MATCH (content_item_from)-[r:DEPENDS_ON{{mandatorily:true}}]->(n)
-    WHERE content_item_from.object_id in {pack_ids}
+    MATCH (pack1)-[r:DEPENDS_ON{{mandatorily:true}}]->(pack2)
+    WHERE pack1.object_id in {pack_ids}
     AND NOT r.is_test
-    AND NOT n.object_id IN {core_pack_list}
-    RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
+    AND NOT pack2.object_id IN {core_pack_list}
+    AND "{marketplace}" IN pack1.marketplaces
+    AND "{marketplace}" IN pack2.marketplaces
+    RETURN pack1, collect(r) as relationships, collect(pack2) as nodes_to
     """
     return {
-        int(item.get("content_item_from").id): Neo4jRelationshipResult(
-            node_from=item.get("content_item_from"),
+        int(item.get("pack1").id): Neo4jRelationshipResult(
+            node_from=item.get("pack1"),
             relationships=item.get("relationships"),
             nodes_to=item.get("nodes_to"),
         )

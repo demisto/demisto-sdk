@@ -522,8 +522,8 @@ def test_validate_dependencies(repository: ContentDTO, capsys, mocker):
     - Validate the existance invalid core pack dependency
     """
     mocker.patch(
-        "demisto_sdk.commands.common.hook_validations.graph_validator.get_core_pack_list",
-        return_value=["SamplePack"],
+        "demisto_sdk.commands.common.hook_validations.graph_validator.get_marketplace_to_core_packs",
+        return_value={MarketplaceVersions.XSOAR: {"SamplePack"}},
     )
     with GraphValidator(should_update=False) as graph_validator:
         create_content_graph(graph_validator.graph)

@@ -1,11 +1,11 @@
 from io import StringIO
+from typing import Type
 
 from ruamel.yaml import YAML
 from ruamel.yaml.reader import ReaderError
 
 from demisto_sdk.commands.common.handlers.handlers_utils import order_dict
 from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
-from typing import Type
 
 
 class RUAMEL_Handler(XSOAR_Handler):

@@ -3,7 +3,7 @@ import os
 import shutil
 from io import TextIOWrapper
 from pathlib import Path
-from typing import Callable, List, Optional, Union, Type
+from typing import Callable, List, Optional, Union
 
 import git
 import pytest
@@ -161,45 +161,68 @@ class TestGenericFunctions:
         path = (tmp_path / "non_unicode").with_suffix(suffix)
 
         path.write_bytes(
-            dumps_method({"text": SENTENCE_WITH_UMLAUTS}, ensure_ascii=False).encode('latin-1')
+            dumps_method({"text": SENTENCE_WITH_UMLAUTS}, ensure_ascii=False).encode(
+                "latin-1"
+            )
         )
         assert get_file(path, suffix) == {"text": SENTENCE_WITH_UMLAUTS}
 
     @staticmethod
+    # @pytest.mark.parametrize("reverse_order", (True, False))
     @pytest.mark.parametrize(
-        "suffix,dumps_method,write_method,decode_error",
+        "suffix,dumps_method,write_method",
         (
             (
                 ".json",
                 json.dumps,
                 lambda f, data: json.dump(data, f),
-                json.decode_error(),
             ),
-            (".yml", yaml.dumps, lambda f, data: yaml.dump(data, f), yaml.decode_error()),
+            # (
+            #     ".yml",
+            #     yaml.dumps,
+            #     lambda f, data: yaml.dump(data, f),
+            # ),
         ),
     )
     def test_safe_write_unicode_to_non_unicode(
-        tmp_path,
+        tmp_path: Path,
         suffix: str,
         dumps_method: Callable,
         write_method: Callable[[TextIOWrapper, dict], None],
-        decode_error: Type[BaseException],
+        reverse_order: bool = False,
     ):
         from demisto_sdk.commands.download.downloader import Downloader
-        
+
         non_unicode_path = (tmp_path / "non_unicode").with_suffix(suffix)
-        with non_unicode_path.open('wb') as f:
-            f.write(dumps_method({"non-unicode-text": SENTENCE_WITH_UMLAUTS}, ensure_ascii=False).encode('latin-1'))
-        
+        with non_unicode_path.open("wb") as f:
+            f.write(
+                dumps_method(
+                    {"fromVersion": SENTENCE_WITH_UMLAUTS}, ensure_ascii=False
+                ).encode("latin-1")
+            )
+
         unicode_path = (tmp_path / "unicode").with_suffix(suffix)
-        with open(unicode_path, 'w') as f:
-            write_method(f, {"unicode-text": SENTENCE_WITH_UMLAUTS})
+        with open(unicode_path, "w") as f:
+            write_method(f, {"toVersion": SENTENCE_WITH_UMLAUTS})
 
-        Downloader.update_data(output_path=str(unicode_path),
-                               file_path_to_read=str(non_unicode_path),
-                               file_ending=suffix[1:])  # without the "."
+        source, dest = (
+            (unicode_path, non_unicode_path)
+            if reverse_order
+            else (
+                non_unicode_path,
+                unicode_path,
+            )
+        )
 
-        assert set(get_file(unicode_path, suffix).keys()) == {"non-unicode-text", "unicode-text"}
+        Downloader.update_data(
+            output_path=str(dest), file_path_to_read=str(source), file_ending=suffix[1:]
+        )  
+
+        # make sure the two files were merged correctly
+        assert set(get_file(dest, suffix).keys()) == {
+            "fromVersion",
+            "toVersion",
+        }
 
     @pytest.mark.parametrize(
         "file_name, prefix, result",

@@ -1,8 +1,8 @@
 # Changelog
 
 ## Unreleased
-* Fixed an issue where in some occasions running of test-playbooks could receive session timeouts.
 * Fixed an issue where downloading non-unicode content into existing files caused an error.
+* Fixed an issue where in some occasions running test-playbooks could time-out.
 
 ## 1.10.2
 * Added markdown lint formatting for README files in the **format** command.

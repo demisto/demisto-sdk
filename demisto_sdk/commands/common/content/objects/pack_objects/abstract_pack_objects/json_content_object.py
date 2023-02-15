@@ -1,3 +1,4 @@
+import logging
 import re
 from typing import List, Optional, Union
 
@@ -19,6 +20,8 @@ from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class JSONContentObject(JSONObject):
@@ -120,7 +123,21 @@ class JSONContentObject(JSONObject):
             1. Handling case where object changed and need to be serialized.
         """
         created_files: List[Path] = []
-        created_files.extend(super().dump(dest_dir=dest_dir))
+
+        try:
+            created_files.extend(
+                self._unify(
+                    dest_dir=self._create_target_dump_dir(dest_dir=dest_dir),
+                    output=self.normalize_file_name(),
+                )
+            )
+            logger.debug(f"Successfully unified {self.path} {self.type()}")
+        except Exception as e:
+            logger.debug(
+                f"Could not unify {self.path} {self.type()} because of error {e}, dumping without unifying"
+            )
+            created_files.extend(super().dump(dest_dir=dest_dir))
+
         # Dump changelog if requested and available
         if change_log and self.changelog:
             created_files.extend(self.changelog.dump(dest_dir))

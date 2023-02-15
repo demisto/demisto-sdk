@@ -120,7 +120,7 @@ class LintManager:
                 [
                     dependent_item
                     for dependent_item in dependent_on_api_module
-                    if Path(dependent_item).parent.name not in self._pkgs
+                    if Path(dependent_item).parent not in self._pkgs
                 ]
             )
 

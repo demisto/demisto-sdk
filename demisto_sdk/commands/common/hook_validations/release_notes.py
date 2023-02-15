@@ -16,6 +16,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
+from demisto_sdk.commands.common.hook_validations.readme import mdx_server_is_up
+from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import (
     extract_docker_image_from_text,
     find_type,
@@ -401,6 +403,26 @@ class ReleaseNotesValidator(BaseValidator):
                     is_valid = False
         return is_valid
 
+    @error_codes("RN113")
+    def has_no_markdown_lint_errors(self):
+        """
+        Will check if the readme has markdownlint.
+        Returns: a boolean to fail the validations according to markdownlint
+
+        """
+        if mdx_server_is_up():
+            markdown_response = run_markdownlint(self.latest_release_notes)
+            if markdown_response.has_errors:
+                error_message, error_code = Errors.release_notes_lint_errors(
+                    self.release_notes_file_path, markdown_response.validations
+                )
+                if self.handle_error(
+                    error_message, error_code, file_path=self.release_notes_file_path
+                ):
+                    return False
+
+        return True
+
     def validate_release_notes_headers(self):
         """
             Validate that the release notes 1st headers are a valid content entity,
@@ -492,6 +514,7 @@ class ReleaseNotesValidator(BaseValidator):
             self.are_release_notes_complete(),
             self.is_docker_image_same_as_yml(),
             self.validate_json_when_breaking_changes(),
+            # self.has_no_markdown_lint_errors(),
             self.validate_release_notes_headers(),
         ]
         return all(validations)

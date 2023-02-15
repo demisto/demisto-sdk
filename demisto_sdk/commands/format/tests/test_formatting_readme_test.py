@@ -2,15 +2,38 @@ from typing import Optional
 
 import pytest
 
-from demisto_sdk.commands.common.hook_validations.readme import ReadmeUrl
+from demisto_sdk.commands.common.hook_validations.readme import (
+    ReadmeUrl,
+    ReadMeValidator,
+)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.format.update_readme import ReadmeFormat
 
 INVALID_MD = f"{git_path()}/demisto_sdk/tests/test_files/README-invalid.md"
 INVALID_MD_IN_PACK = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack2"
 
 
-def test_format_wit_update_docker_flag(mocker):
+def test_readme_markdown_fixes():
+    """
+    Given: Some markdown file with lint errors
+    When: Calling format on the file
+    Then: The errors are fixed
+
+    """
+    with ReadMeValidator.start_mdx_server():
+        readme_formatter = ReadmeFormat(INVALID_MD, assume_yes=True)
+        old_content = readme_formatter.readme_content
+        readme_formatter.fix_lint_markdown()
+
+        assert old_content != readme_formatter.readme_content
+        assert (
+            run_markdownlint(open(INVALID_MD).read(), fix=True).fixed_text
+            == readme_formatter.readme_content
+        )
+
+
+def test_format_with_update_docker_flag(mocker):
     """
     Check when run demisto-sdk format execute with -ud (update docker) from repo which does not have a mdx server,
     (but has a node), that the run ends without any exception.

@@ -1,5 +1,7 @@
 {
-  "fromVersion": "3.5.1",
-  "toVersion": "4.0.0",
-  "orientation": "test"
+    "fromVersion": "3.5.1",
+    "toVersion": "4.0.0",
+    "orientation": "test",
+    "id": "test",
+    "name": "test"
 }

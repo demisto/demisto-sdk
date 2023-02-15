@@ -129,6 +129,7 @@ class Downloader:
         run_format: bool = False,
         system: bool = False,
         item_type: str = "",
+        **kwargs,
     ):
         logging.disable(logging.CRITICAL)
         self.output_pack_path = output

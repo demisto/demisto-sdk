@@ -38,6 +38,7 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
         add_tests: bool = False,
         interactive: bool = True,
         clear_cache: bool = False,
+        **kwargs,
     ):
         super().__init__(
             input=input,

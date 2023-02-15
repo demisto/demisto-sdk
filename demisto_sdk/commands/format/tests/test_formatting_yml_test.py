@@ -1252,7 +1252,7 @@ class TestFormatting:
         Then
             - Ensure the error is printed.
         """
-        formatter = format_object(verbose=True, input="my_file_path")
+        formatter = format_object(input="my_file_path")
         mocker.patch.object(
             BaseUpdateYML, "update_yml", side_effect=self.exception_raise
         )

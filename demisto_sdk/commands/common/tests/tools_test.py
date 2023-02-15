@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR,
     LAYOUTS_DIR,
+    MARKETPLACE_TO_CORE_PACKS_FILE,
     METADATA_FILE_NAME,
     PACKS_DIR,
     PACKS_PACK_IGNORE_FILE_NAME,
@@ -2491,7 +2492,22 @@ def test_field_to_cliname(value: str, expected: str):
     assert field_to_cli_name(value) == expected
 
 
-def test_get_core_packs():
+def test_get_core_packs(mocker):
+    def mock_get_remote_file(full_file_path, *_):
+        if MARKETPLACE_TO_CORE_PACKS_FILE[MarketplaceVersions.XSOAR] in full_file_path:
+            return {"Base", "CommonScripts", "Active_Directory_Query"}
+        elif (
+            MARKETPLACE_TO_CORE_PACKS_FILE[MarketplaceVersions.MarketplaceV2]
+            in full_file_path
+        ):
+            return {"Base", "CommonScripts", "Core"}
+        elif (
+            MARKETPLACE_TO_CORE_PACKS_FILE[MarketplaceVersions.XPANSE] in full_file_path
+        ):
+            return {"Base", "CommonScripts", "Core"}
+        return None
+
+    mocker.patch.object(tools, "get_remote_file", side_effect=mock_get_remote_file)
     mp_to_core_packs = get_marketplace_to_core_packs()
     assert len(mp_to_core_packs) == len(MarketplaceVersions)
     for mp_core_packs in mp_to_core_packs.values():

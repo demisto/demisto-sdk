@@ -307,14 +307,13 @@ class Linter:
             return True
 
         # Docker images
-        yml_obj_id = ""
+        yml_obj_id = (
+            yml_obj.get("commonfields", {}).get("id", "")
+            if isinstance(yml_obj, dict)
+            else ""
+        )
         if self._facts["docker_engine"]:
             logger.info(f"{log_prompt} - Collecting all docker images to pull")
-            yml_obj_id = (
-                yml_obj.get("commonfields", {}).get("id", "")
-                if isinstance(yml_obj, dict)
-                else ""
-            )
             images = self._get_docker_images_for_lint(
                 script_obj=script_obj,
                 script_id=yml_obj_id,

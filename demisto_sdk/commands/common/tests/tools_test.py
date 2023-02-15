@@ -83,7 +83,6 @@ from demisto_sdk.commands.common.tools import (
     is_uuid,
     retrieve_file_ending,
     run_command_os,
-    safe_write_unicode,
     server_version_compare,
     string_to_bool,
     to_kebab_case,
@@ -167,59 +166,6 @@ class TestGenericFunctions:
         )
         assert get_file(path, suffix) == {"text": SENTENCE_WITH_UMLAUTS}
 
-    @staticmethod
-    @pytest.mark.parametrize("source_is_unicode", (True, False))
-    @pytest.mark.parametrize(
-        "suffix,dumps_method,write_method",
-        (
-            (
-                ".json",
-                json.dumps,
-                lambda f, data: json.dump(data, f),
-            ),
-            (
-                ".yml",
-                yaml.dumps,
-                lambda f, data: yaml.dump(data, f),
-            ),
-        ),
-    )
-    def test_safe_write_unicode_to_non_unicode(
-        tmp_path: Path,
-        suffix: str,
-        dumps_method: Callable,
-        write_method: Callable[[TextIOWrapper, dict], None],
-        source_is_unicode: bool = False,
-    ):
-        from demisto_sdk.commands.download.downloader import Downloader
-
-        non_unicode_path = (tmp_path / "non_unicode").with_suffix(suffix)
-        with non_unicode_path.open("wb") as f:
-            f.write(
-                dumps_method(
-                    {"fromVersion": SENTENCE_WITH_UMLAUTS}, ensure_ascii=False
-                ).encode("latin-1")
-            )
-
-        unicode_path = (tmp_path / "unicode").with_suffix(suffix)
-        with open(unicode_path, "w") as f:
-            write_method(f, {"toVersion": SENTENCE_WITH_UMLAUTS})
-
-        source, dest = (
-            (unicode_path, non_unicode_path)
-            if source_is_unicode
-            else (
-                non_unicode_path,
-                unicode_path,
-            )
-        )
-
-        Downloader.update_data(
-            output_path=str(dest), file_path_to_read=str(source), file_ending=suffix[1:]
-        )  
-
-        # make sure the two files were merged correctly
-        assert get_file(dest, suffix) == {"fromVersion": SENTENCE_WITH_UMLAUTS, "toVersion": SENTENCE_WITH_UMLAUTS}
 
     @pytest.mark.parametrize(
         "file_name, prefix, result",

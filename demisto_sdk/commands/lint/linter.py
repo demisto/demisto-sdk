@@ -433,7 +433,7 @@ class Linter:
             self._facts["lint_files"] = list(lint_files)
 
         if self._facts["lint_files"]:
-            # Remove files that are in gitignore
+            # Remove files that are in gitignore.
             self._remove_gitignore_files(log_prompt)
             for lint_file in self._facts["lint_files"]:
                 logger.info(f"{log_prompt} - Lint file {lint_file}")

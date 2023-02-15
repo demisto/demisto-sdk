@@ -83,7 +83,7 @@ class GraphValidator(BaseValidator):
             ):
                 non_core_pack_dependencies = [
                     relationship.content_item_to.object_id
-                    for relationship in core_pack_node.depends_on
+                    for relationship in core_pack_node.depends_on if not relationship.is_test
                 ]
                 error_message, error_code = Errors.invalid_core_pack_dependencies(
                     core_pack_node.object_id, non_core_pack_dependencies

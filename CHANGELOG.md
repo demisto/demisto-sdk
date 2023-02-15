@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where in some occasions running of test-playbooks could receive session timeouts.
 
 ## 1.10.2
 * Added markdown lint formatting for README files in the **format** command.

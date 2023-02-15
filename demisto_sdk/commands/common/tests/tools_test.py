@@ -2493,18 +2493,20 @@ def test_field_to_cliname(value: str, expected: str):
 
 
 def test_get_core_packs(mocker):
-    def mock_get_remote_file(full_file_path, *_):
+    def mock_get_remote_file(full_file_path, git_content_config):
         if MARKETPLACE_TO_CORE_PACKS_FILE[MarketplaceVersions.XSOAR] in full_file_path:
-            return {"Base", "CommonScripts", "Active_Directory_Query"}
+            return {
+                "core_packs_list": ["Base", "CommonScripts", "Active_Directory_Query"]
+            }
         elif (
             MARKETPLACE_TO_CORE_PACKS_FILE[MarketplaceVersions.MarketplaceV2]
             in full_file_path
         ):
-            return {"Base", "CommonScripts", "Core"}
+            return {"core_packs_list": ["Base", "CommonScripts", "Core"]}
         elif (
             MARKETPLACE_TO_CORE_PACKS_FILE[MarketplaceVersions.XPANSE] in full_file_path
         ):
-            return {"Base", "CommonScripts", "Core"}
+            return ["Base", "CommonScripts", "Core"]
         return None
 
     mocker.patch.object(tools, "get_remote_file", side_effect=mock_get_remote_file)

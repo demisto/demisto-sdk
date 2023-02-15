@@ -392,12 +392,6 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
-mp_to_core_packs: Dict[
-    MarketplaceVersions, Set[str]
-] = {}  # Initiated in get_core_packs(). Used for caching.
-
-
-@lru_cache(maxsize=128)
 def get_marketplace_to_core_packs() -> Dict[MarketplaceVersions, Set[str]]:
     """Getting the core pack from Github content
 
@@ -407,17 +401,16 @@ def get_marketplace_to_core_packs() -> Dict[MarketplaceVersions, Set[str]]:
     if is_external_repository():
         return {}  # no core packs in external repos.
 
-    global mp_to_core_packs
+    mp_to_core_packs: Dict[MarketplaceVersions, Set[str]] = {}
     for mp in MarketplaceVersions:
-        if mp not in mp_to_core_packs:
-            # for backwards compatibility mp_core_packs can be a list, but we expect a dict.
-            mp_core_packs: Union[list, dict] = get_remote_file(
-                MARKETPLACE_TO_CORE_PACKS_FILE[mp],
-                git_content_config=GitContentConfig(
-                    repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
-                    git_provider=GitProvider.GitHub,
-                ),
-            )
+        # for backwards compatibility mp_core_packs can be a list, but we expect a dict.
+        mp_core_packs: Union[list, dict] = get_remote_file(
+            MARKETPLACE_TO_CORE_PACKS_FILE[mp],
+            git_content_config=GitContentConfig(
+                repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
+                git_provider=GitProvider.GitHub,
+            ),
+        )
         if isinstance(mp_core_packs, list):
             mp_to_core_packs[mp] = set(mp_core_packs)
         else:

@@ -1,3 +1,5 @@
+# TODO Replace tools.print_color with logger.info_color and logger.debug_color
+
 # Site packages
 import copy
 import logging

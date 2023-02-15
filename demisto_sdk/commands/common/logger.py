@@ -124,6 +124,14 @@ def _logging_setup(
 logger: logging.Logger = logging_setup()
 
 
+def debug_color(msg, color: str):
+    logger.debug(f"[{color}]{msg}[/{color}]")
+
+
+def info_color(msg, color: str):
+    logger.info(f"[{color}]{msg}[/{color}]")
+
+
 # Python program to print
 # colored text and background
 class Colors:

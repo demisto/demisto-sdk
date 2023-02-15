@@ -103,7 +103,6 @@ class Downloader:
         regex (str): Regex Pattern, download all the custom content files that match this regex pattern
         force (bool): Indicates whether to merge existing files or not
         insecure (bool): Indicates whether to use insecure connection or not
-        log_verbose (bool): Indicates whether to use verbose logs or not
         client (Demisto client): The Demisto client to make API calls
         list_files (bool): Indicates whether to print the list of available custom content files and exit or not
         all_custom_content (bool): Indicates whether to download all available custom content or not
@@ -123,7 +122,6 @@ class Downloader:
         regex: str = "",
         force: bool = False,
         insecure: bool = False,
-        verbose: bool = False,
         list_files: bool = False,
         all_custom_content: bool = False,
         run_format: bool = False,
@@ -139,7 +137,6 @@ class Downloader:
         self.download_system_item = system
         self.system_item_type = item_type
         self.insecure = insecure
-        self.log_verbose = verbose
         self.list_files = list_files
         self.all_custom_content = all_custom_content
         self.run_format = run_format
@@ -1001,7 +998,6 @@ class Downloader:
             output=temp_dir,
             file_type=file_type,
             base_name=base_name,
-            no_logging=not self.log_verbose,
             no_readme=True,
             no_auto_create_dir=True,
         )
@@ -1117,7 +1113,6 @@ class Downloader:
             file_type=file_type,
             base_name=dir_name,
             no_auto_create_dir=True,
-            no_logging=not self.log_verbose,
         )
         extractor.extract_to_package_format()
 

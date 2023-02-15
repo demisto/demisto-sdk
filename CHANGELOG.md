@@ -7,7 +7,7 @@
 * Added XPANSE core packs validations.
 * Added the `sectionorder` field to integration scheme.
 * Fixed an issue where in some occasions running of test-playbooks could receive session timeouts.
-* Fixed an issue where making a change in a module using an ApiModule would cause lint to run on the ApiModule unnecessarily. 
+* Fixed an issue where making a change in a module using an ApiModule would cause lint to run on the ApiModule unnecessarily.
 
 ## 1.10.1
 * Fixed an issue where **update-content-graph** failed to execute.

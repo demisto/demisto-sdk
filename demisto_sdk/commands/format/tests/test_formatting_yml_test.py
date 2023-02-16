@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import sys
@@ -6,8 +7,8 @@ from collections import OrderedDict
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-import click
 import pytest
+import requests_mock
 
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS,
@@ -23,7 +24,7 @@ from demisto_sdk.commands.common.hook_validations.integration import (
     IntegrationValidator,
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
+from demisto_sdk.commands.common.tools import is_string_uuid
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
@@ -355,7 +356,7 @@ class TestFormatting:
                         for verification in verifications:
                             assert argument[verification[0]] == verification[1]
 
-    def test_isarray_false(self, integration, capsys):
+    def test_isarray_false(self, integration, caplog):
         """
         Given:
         - An integration with IP command and ip argument when isArray is False
@@ -368,6 +369,7 @@ class TestFormatting:
         - Validate isArray hasn't changed.
 
         """
+        logging.getLogger("demisto-sdk").propagate = True
         yml_contents = integration.yml.read_dict()
         yml_contents["script"]["commands"] = [
             {"name": "ip", "arguments": [{"isArray": False, "name": "ip"}]}
@@ -375,8 +377,7 @@ class TestFormatting:
         integration.yml.write_dict(yml_contents)
         base_yml = IntegrationYMLFormat(integration.yml.path)
         base_yml.set_reputation_commands_basic_argument_as_needed()
-        captured = capsys.readouterr()
-        assert "Array field in ip command is set to False." in captured.out
+        assert "Array field in ip command is set to False." in caplog.text
         assert (
             integration.yml.read_dict()["script"]["commands"][0]["arguments"][0][
                 "isArray"
@@ -1131,15 +1132,16 @@ class TestFormatting:
         assert data["script"]["dockerimage"].endswith(f":{test_tag}")
         assert not data["script"].get("dockerimage45")
 
+    @requests_mock.Mocker(kw="mock")
     @pytest.mark.parametrize(
         argnames="docker_image", argvalues=["error:1.0.0.1", "demisto/error:1.0.0.1"]
     )
     def test_update_docker_format_with_invalid_dockerimage(
         self,
-        requests_mock,
         mocker,
         tmp_path,
         docker_image,
+        **kwargs,
     ):
         """
         Given
@@ -1156,22 +1158,22 @@ class TestFormatting:
             DockerImageValidator, "docker_auth", return_value=auth_token
         )
         mocker.patch.object(BaseUpdateYML, "is_old_file", return_value=False)
-        requests_mock.get(
+        kwargs["mock"].get(
             "https://hub.docker.com/v2/repositories/error/tags",
             json={"detail": "Object not found"},
             status_code=404,
         )
-        requests_mock.get(
+        kwargs["mock"].get(
             "https://registry-1.docker.io/v2/error/tags/list",
             json={"error": "not found"},
             status_code=401,
         )
-        requests_mock.get(
+        kwargs["mock"].get(
             "https://hub.docker.com/v2/repositories/demisto/error/tags",
             json={"count": 0, "next": "null", "previous": "null", "results": []},
             status_code=200,
         )
-        requests_mock.get("https://api.github.com/repos/demisto/demisto-sdk")
+        kwargs["mock"].get("https://api.github.com/repos/demisto/demisto-sdk")
         integration_yml_file_1 = tmp_path / "Integration1.yml"
         integration_obj = {"dockerimage": docker_image, "fromversion": "5.0.0"}
         yaml.dump(integration_obj, integration_yml_file_1.open("w"))
@@ -1211,7 +1213,7 @@ class TestFormatting:
         # Asserting some non related keys are not being deleted
         assert "some-other-key" in modified_schema
 
-    def test_recursive_extend_schema_prints_warning(self, mocker):
+    def test_recursive_extend_schema_prints_warning(self, mocker, caplog, monkeypatch):
         """
         Given
             - A dict that represents a schema with sub-schema reference that has no actual sub-schema
@@ -1220,6 +1222,11 @@ class TestFormatting:
         Then
             - Ensure a warning about the missing sub-schema is printed
         """
+        monkeypatch.setenv("COLUMNS", "1000")
+        logging.getLogger("demisto-sdk").propagate = True
+        mocker.patch("click.secho")
+        from click import secho
+
         schema = {
             "mapping": {
                 "inputs": {"sequence": [{"include": "input_schema"}], "type": "seq"}
@@ -1227,8 +1234,13 @@ class TestFormatting:
         }
         mocker.patch("click.echo")
         BaseUpdate.recursive_extend_schema(schema, schema)
-        click.echo.assert_called_once_with(
-            "Could not find sub-schema for input_schema", LOG_COLORS.YELLOW
+        assert secho.call_count == 1
+        assert (
+            "Could not find sub-schema for input_schema"
+            in secho.call_args_list[0][0][0]
+        )
+        assert (
+            "[yellow]Could not find sub-schema for input_schema[/yellow]" in caplog.text
         )
 
     @staticmethod
@@ -1243,7 +1255,7 @@ class TestFormatting:
     ]
 
     @pytest.mark.parametrize(argnames="format_object", argvalues=FORMAT_OBJECT)
-    def test_yml_run_format_exception_handling(self, format_object, mocker, capsys):
+    def test_yml_run_format_exception_handling(self, format_object, mocker, caplog):
         """
         Given
             - A YML object formatter
@@ -1252,6 +1264,8 @@ class TestFormatting:
         Then
             - Ensure the error is printed.
         """
+        logging.getLogger("demisto-sdk").propagate = True
+
         formatter = format_object(input="my_file_path")
         mocker.patch.object(
             BaseUpdateYML, "update_yml", side_effect=self.exception_raise
@@ -1261,8 +1275,7 @@ class TestFormatting:
         )
 
         formatter.run_format()
-        stdout, _ = capsys.readouterr()
-        assert "Failed to update file my_file_path. Error: MY ERROR" in stdout
+        assert "Failed to update file my_file_path. Error: MY ERROR" in caplog.text
 
     TEST_UUID_FORMAT_OBJECT = [PlaybookYMLFormat, TestPlaybookYMLFormat]
 

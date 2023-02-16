@@ -134,6 +134,11 @@ def info_color(msg, color: str):
     logger.info(f"[{color}]{msg}[/{color}]")
 
 
+def secho_and_debug(message, fg="white"):
+    click.secho(message, fg=fg)
+    logger.debug(f"[{fg}]{message}[/{fg}]")
+
+
 def secho_and_info(message, fg="white"):
     click.secho(message, fg=fg)
     logger.info(f"[{fg}]{message}[/{fg}]")

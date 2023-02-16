@@ -1,9 +1,9 @@
+import logging
 import os
 import re
 from copy import deepcopy
 from typing import Any, Dict, Set, Union
 
-import click
 import dictdiffer
 
 from demisto_sdk.commands.common.constants import (
@@ -11,8 +11,8 @@ from demisto_sdk.commands.common.constants import (
     VERSION_5_5_0,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.logger import secho_and_debug, secho_and_info
 from demisto_sdk.commands.common.tools import (
-    LOG_COLORS,
     find_type,
     get_dict_from_file,
     get_max_version,
@@ -30,6 +30,8 @@ from demisto_sdk.commands.format.format_constants import (
     VERSION_KEY,
 )
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
+
+logger = logging.getLogger("demisto-sdk")
 
 yaml = YAML_Handler(allow_duplicate_keys=True)
 
@@ -143,12 +145,11 @@ class BaseUpdate:
 
     def set_default_value(self, key: str, value: Any, location=None):
         """Replaces the version to default."""
-        if self.verbose:
-            click.echo(
-                f"Setting {key} to default={value}" + " in custom location"
-                if location
-                else ""
-            )
+        logger.debug(
+            f"Setting {key} to default={value}" + " in custom location"
+            if location
+            else ""
+        )
         if location:
             location[key] = value
         else:
@@ -206,8 +207,8 @@ class BaseUpdate:
                 if isinstance(value, str) and key == "include":
                     extended_schema: dict = full_schema.get(f"schema;{value}")  # type: ignore
                     if extended_schema is None:
-                        click.echo(
-                            f"Could not find sub-schema for {value}", LOG_COLORS.YELLOW
+                        secho_and_info(
+                            f"Could not find sub-schema for {value}", fg="yellow"
                         )
                     # sometimes the sub-schema can have it's own sub-schemas so we need to unify that too
                     return BaseUpdate.recursive_extend_schema(
@@ -286,7 +287,7 @@ class BaseUpdate:
 
     @staticmethod
     def get_answer(promote):
-        click.secho(promote, fg="red")
+        secho_and_info(promote, fg="red")
         return input()
 
     def ask_user(self, preserve_from_version_question=False):
@@ -305,7 +306,7 @@ class BaseUpdate:
         if not user_answer or user_answer.lower() in ["y", "yes"]:
             return True
         else:
-            click.secho("Skipping update of fromVersion", fg="yellow")
+            secho_and_info("Skipping update of fromVersion", fg="yellow")
             return False
 
     def set_default_from_version(
@@ -348,8 +349,7 @@ class BaseUpdate:
         ):
             return  # nothing to set
         current_fromversion_value = self.data.get(self.from_version_key, "")
-        if self.verbose:
-            click.echo("Setting fromVersion field")
+        logger.debug("Setting fromVersion field")
 
         if self.from_version:
             self.data[self.from_version_key] = self.from_version
@@ -397,10 +397,7 @@ class BaseUpdate:
         """Removes any _dev and _copy suffixes in the file.
         When developer clones playbook/integration/script it will automatically add _copy or _dev suffix.
         """
-        if self.verbose:
-            click.echo(
-                "Removing _dev and _copy suffixes from name, id and display tags"
-            )
+        logger.debug("Removing _dev and _copy suffixes from name, id and display tags")
         if self.data["name"]:
             self.data["name"] = (
                 self.data.get("name", "").replace("_copy", "").replace("_dev", "")
@@ -422,11 +419,10 @@ class BaseUpdate:
             int 2 in case of skip
         """
         if self.no_validate:
-            if self.verbose:
-                click.secho(
-                    f"Validator Skipped on file: {self.output_file} , no-validate flag was set.",
-                    fg="yellow",
-                )
+            secho_and_debug(
+                f"Validator Skipped on file: {self.output_file} , no-validate flag was set.",
+                fg="yellow",
+            )
             return SKIP_RETURN_CODE
         else:
             self.validate_manager.file_path = self.output_file

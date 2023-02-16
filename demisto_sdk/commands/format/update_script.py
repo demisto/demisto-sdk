@@ -4,6 +4,7 @@ import click
 
 from demisto_sdk.commands.common.constants import TYPE_JS, TYPE_PWSH
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+from demisto_sdk.commands.common.logger import secho_and_debug
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS,
     is_iron_bank_pack,
@@ -34,7 +35,6 @@ class ScriptYMLFormat(BaseUpdateYML):
         from_version: str = "",
         no_validate: bool = False,
         update_docker: bool = False,
-        verbose: bool = False,
         add_tests: bool = False,
         **kwargs,
     ):
@@ -44,7 +44,6 @@ class ScriptYMLFormat(BaseUpdateYML):
             path,
             from_version,
             no_validate,
-            verbose=verbose,
             add_tests=add_tests,
             **kwargs,
         )
@@ -129,11 +128,10 @@ class ScriptYMLFormat(BaseUpdateYML):
             self.save_yml_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            secho_and_debug(
+                f"\nFailed to update file {self.source_file}. Error: {err}",
+                fg="red",
+            )
             return ERROR_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:

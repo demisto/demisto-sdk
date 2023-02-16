@@ -19,6 +19,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import secho_and_debug, secho_and_info
 from demisto_sdk.commands.common.tools import (
     ProcessPoolHandler,
     get_content_id_set,
@@ -102,7 +103,7 @@ def parse_for_pack_metadata(
         n for n in dependency_graph.nodes if dependency_graph.in_degree(n) > 0
     ]
 
-    logger.debug(f"All level dependencies are: {all_level_dependencies}")
+    secho_and_debug(f"All level dependencies are: {all_level_dependencies}")
 
     return first_level_dependencies, all_level_dependencies
 
@@ -570,7 +571,7 @@ class PackDependencies:
         dependencies_packs: set = set()
         items_dependencies: dict = {}
         pack_dependencies_data = []
-        logger.debug("### Scripts")
+        secho_and_debug("### Scripts")
 
         for script_mapping in pack_scripts:
             script_id = list(script_mapping.keys())[0]
@@ -646,7 +647,7 @@ class PackDependencies:
                         packs_and_items_dict,
                     )
 
-            logger.debug(
+            secho_and_debug(
                 f'{os.path.basename(script.get("file_path", ""))} depends on: {script_dependencies}'
             )
             dependencies_packs.update(script_dependencies)
@@ -739,7 +740,7 @@ class PackDependencies:
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
         packs_and_items_dict: dict = dict()
-        logger.debug("### Playbooks")
+        secho_and_debug("### Playbooks")
 
         for playbook in pack_playbooks:
             playbook_id = list(playbook.keys())[0]
@@ -928,7 +929,7 @@ class PackDependencies:
                     )
             if playbook_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                logger.debug(
+                secho_and_debug(
                     f'{os.path.basename(playbook_data.get("file_path", ""))} depends on: {playbook_dependencies}',
                 )
             dependencies_packs.update(playbook_dependencies)
@@ -962,7 +963,7 @@ class PackDependencies:
         """
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
-        logger.debug("### Layouts")
+        secho_and_debug("### Layouts")
 
         for layout in pack_layouts:
             layout_id = list(layout.keys())[0]
@@ -1036,7 +1037,7 @@ class PackDependencies:
 
             if layout_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                logger.debug(
+                secho_and_debug(
                     f'{os.path.basename(layout_data.get("file_path", ""))} depends on: {layout_dependencies}'
                 )
             dependencies_packs.update(layout_dependencies)
@@ -1070,7 +1071,7 @@ class PackDependencies:
         """
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
-        logger.debug("### Incident Fields")
+        secho_and_debug("### Incident Fields")
 
         for incident_field in pack_incidents_fields:
             incident_field_id = list(incident_field.keys())[0]
@@ -1112,7 +1113,7 @@ class PackDependencies:
                     )
             if incident_field_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                logger.debug(
+                secho_and_debug(
                     f'{os.path.basename(incident_field_data.get("file_path", ""))} '
                     f"depends on: {incident_field_dependencies}"
                 )
@@ -1147,7 +1148,7 @@ class PackDependencies:
         """
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
-        logger.debug("### Indicator Types")
+        secho_and_debug("### Indicator Types")
 
         for indicator_type in pack_indicators_types:
             indicator_type_id = list(indicator_type.keys())[0]
@@ -1199,7 +1200,7 @@ class PackDependencies:
 
             if indicator_type_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                logger.debug(
+                secho_and_debug(
                     f'{os.path.basename(indicator_type_data.get("file_path", ""))} depends on:'
                     f" {indicator_type_dependencies}"
                 )
@@ -1233,7 +1234,7 @@ class PackDependencies:
         """
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
-        logger.debug("### Integrations")
+        secho_and_debug("### Integrations")
 
         for integration in pack_integrations:
             integration_id = list(integration.keys())[0]
@@ -1330,7 +1331,7 @@ class PackDependencies:
 
             if integration_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                logger.debug(
+                secho_and_debug(
                     f'{os.path.basename(integration_data.get("file_path", ""))} depends on: {integration_dependencies}'
                 )
             dependencies_packs.update(integration_dependencies)
@@ -1364,7 +1365,7 @@ class PackDependencies:
         """
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
-        logger.debug("### Incident Types")
+        secho_and_debug("### Incident Types")
 
         for incident_type in pack_incidents_types:
             incident_type_id = list(incident_type.keys())[0]
@@ -1425,7 +1426,7 @@ class PackDependencies:
 
             if incident_type_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                logger.debug(
+                secho_and_debug(
                     f'{os.path.basename(incident_type_data.get("file_path", ""))} depends on:'
                     f" {incident_type_dependencies}"
                 )
@@ -1460,7 +1461,7 @@ class PackDependencies:
         """
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
-        logger.debug("### Classifiers")
+        secho_and_debug("### Classifiers")
 
         for classifier in pack_classifiers:
             classifier_id = list(classifier.keys())[0]
@@ -1558,7 +1559,7 @@ class PackDependencies:
                     )
             if classifier_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                logger.debug(
+                secho_and_debug(
                     f'{os.path.basename(classifier_data.get("file_path", ""))} depends on: {classifier_dependencies}'
                 )
             dependencies_packs.update(classifier_dependencies)
@@ -1593,7 +1594,7 @@ class PackDependencies:
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
 
-        logger.debug("### Mappers")
+        secho_and_debug("### Mappers")
         for mapper in pack_mappers:
             mapper_id = list(mapper.keys())[0]
             mapper_data = next(iter(mapper.values()))
@@ -1745,7 +1746,7 @@ class PackDependencies:
                     )
             if mapper_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                logger.debug(
+                secho_and_debug(
                     f'{os.path.basename(mapper_data.get("file_path", ""))} depends on: {mapper_dependencies}'
                 )
             dependencies_packs.update(mapper_dependencies)
@@ -1781,7 +1782,7 @@ class PackDependencies:
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
 
-        logger.debug(f"### {header}")
+        secho_and_debug(f"### {header}")
 
         for widget in pack_widgets:
             widget_id = list(widget.keys())[0]
@@ -1815,7 +1816,7 @@ class PackDependencies:
                     )
             if widget_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                logger.debug(
+                secho_and_debug(
                     f'{os.path.basename(widget_data.get("file_path", ""))} depends on: {widget_dependencies}'
                 )
             dependencies_packs.update(widget_dependencies)
@@ -1850,7 +1851,7 @@ class PackDependencies:
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
 
-        logger.debug("### Generic Types")
+        secho_and_debug("### Generic Types")
 
         for generic_type in pack_generic_types:
             generic_type_id = list(generic_type.keys())[0]
@@ -1937,7 +1938,7 @@ class PackDependencies:
                     )
             if generic_type_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                logger.debug(
+                secho_and_debug(
                     f'{os.path.basename(generic_type_data.get("file_path", ""))} depends on: {generic_type_dependencies}'
                 )
             dependencies_packs.update(generic_type_dependencies)
@@ -1972,7 +1973,7 @@ class PackDependencies:
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
 
-        logger.debug("### Generic Fields")
+        secho_and_debug("### Generic Fields")
 
         for generic_field in pack_generic_fields:
             generic_field_id = list(generic_field.keys())[0]
@@ -2058,7 +2059,7 @@ class PackDependencies:
                     )
             if generic_field_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                logger.debug(
+                secho_and_debug(
                     f'{os.path.basename(generic_field_data.get("file_path", ""))} '
                     f"depends on: {generic_field_dependencies}"
                 )
@@ -2094,7 +2095,7 @@ class PackDependencies:
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
 
-        logger.debug("### Generic Modules")
+        secho_and_debug("### Generic Modules")
 
         for generic_module in pack_generic_modules:
             generic_module_id = list(generic_module.keys())[0]
@@ -2157,7 +2158,7 @@ class PackDependencies:
 
             if generic_module_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                logger.debug(
+                secho_and_debug(
                     f'{os.path.basename(generic_module_data.get("file_path", ""))} '
                     f"depends on: {generic_module_dependencies}"
                 )
@@ -2193,7 +2194,7 @@ class PackDependencies:
         all_job_dependencies: set = set()
         items_dependencies: dict = dict()
 
-        logger.debug("### Jobs")
+        secho_and_debug("### Jobs")
 
         for job in pack_jobs:
             job_id = list(job.keys())[0]
@@ -2250,7 +2251,7 @@ class PackDependencies:
                 )
             if job_dependencies:
                 # do not trim spaces from the end of the string, they are required for the MD structure.
-                logger.debug(
+                secho_and_debug(
                     f'{os.path.basename(job_data.get("file_path", ""))} depends on: {job_dependencies}'
                 )
             all_job_dependencies.update(job_dependencies)
@@ -2311,11 +2312,12 @@ class PackDependencies:
             )
 
         if not sum(pack_items.values(), []):
-            logger.info(
-                f"[yellow]Couldn't find any items for pack '{pack_id}'. Please make sure:\n"
+            secho_and_info(
+                f"Couldn't find any items for pack '{pack_id}'. Please make sure:\n"
                 f"1 - The spelling is correct.\n"
                 f"2 - The id_set.json file is up to date. Delete the file by running: `rm -rf "
-                f"Tests/id_set.json` and rerun the command.[/yellow]"
+                f"Tests/id_set.json` and rerun the command.",
+                fg="yellow",
             )
 
         return pack_items
@@ -2342,7 +2344,7 @@ class PackDependencies:
             dict: found {pack, (item_type, item_id)} ids of mandatory dependent items.
 
         """
-        logger.debug(f"\n# Pack ID: {pack_id}")
+        secho_and_debug(f"\n# Pack ID: {pack_id}")
         pack_items = PackDependencies._collect_pack_items(pack_id, id_set)
 
         (
@@ -2594,7 +2596,7 @@ class PackDependencies:
         Returns:
             DiGraph: all dependencies of given packs.
         """
-        logger.debug("Building the dependencies graph...")
+        secho_and_debug("Building the dependencies graph...")
         dependency_graph = nx.DiGraph()
         for pack in pack_ids:
             dependency_graph.add_node(
@@ -2605,7 +2607,7 @@ class PackDependencies:
                 depending_on_packs=[],
             )
         for pack in pack_ids:
-            logger.debug(f"Adding {pack} pack dependencies to the graph...")
+            secho_and_debug(f"Adding {pack} pack dependencies to the graph...")
             # ITEMS *THIS PACK* IS DEPENDENT *ON*:
             dependencies, dependencies_items = PackDependencies._find_pack_dependencies(
                 pack,
@@ -2616,7 +2618,7 @@ class PackDependencies:
             for dependency_name, is_mandatory in dependencies:
                 if dependency_name == pack:
                     continue
-                logger.debug(
+                secho_and_debug(
                     f"Collecting info about {pack} and {dependency_name} dependencies"
                 )
                 if dependency_name not in dependency_graph:
@@ -2629,7 +2631,7 @@ class PackDependencies:
                     )
                 dependency_graph.add_edge(pack, dependency_name)
                 if is_mandatory:
-                    logger.debug(
+                    secho_and_debug(
                         f"Found {dependency_name} pack is mandatory for {pack}"
                     )
                     dependency_graph.nodes()[dependency_name][
@@ -2652,7 +2654,7 @@ class PackDependencies:
                             depending_on_packs=[],
                         )
                     for item_dependent_on in items_dependent_on:
-                        logger.debug(
+                        secho_and_debug(
                             f"Adding the dependency between the items {dependent_item} and {item_dependent_on} "
                             f"to the dependency graph"
                         )
@@ -2675,7 +2677,7 @@ class PackDependencies:
                                 {pack: [dependent_item]}
                             )
 
-            logger.debug(
+            secho_and_debug(
                 f"\nPack {pack} and its dependencies were successfully added to the dependencies graph."
             )
             dependency_graph.nodes()[pack]["depending_on_packs"] = list(dependencies)
@@ -2844,7 +2846,7 @@ class PackDependencies:
             )
             print_success("Found the following dependent packs:")
             dependent_packs = json.dumps(dependent_packs, indent=4)
-            logger.info(f"[bold]{dependent_packs}[/bold]")
+            secho_and_info(f"[bold]{dependent_packs}[/bold]")
 
         elif dependency:
             input_pack_name = ""
@@ -2947,9 +2949,11 @@ class PackDependencies:
 
         if not silent_mode:
             # print the found pack dependency results
-            logger.info(f"[bold]Found dependencies result for {pack_name} pack:[/bold]")
+            secho_and_info(
+                f"[bold]Found dependencies result for {pack_name} pack:[/bold]"
+            )
             dependency_result = json.dumps(first_level_dependencies, indent=4)
-            logger.info(f"[bold]{dependency_result}[/bold]")
+            secho_and_info(f"[bold]{dependency_result}[/bold]")
 
         return first_level_dependencies
 
@@ -3008,7 +3012,7 @@ def calculate_single_pack_depends_on(
         first_level_dependencies = {}
 
         for man_pack in pack_graph_node.get("mandatory_for_packs"):
-            logger.debug(
+            secho_and_debug(
                 f"Parsing info of {man_pack} mandatory dependency of pack {pack} from graph"
             )
             first_level_dependencies[man_pack] = {"mandatory": True}
@@ -3017,7 +3021,7 @@ def calculate_single_pack_depends_on(
             ).items():
                 for dep_pack, dep_item in dependent_item_and_pack.items():
                     if dep_pack == man_pack:
-                        logger.debug(
+                        secho_and_debug(
                             f"Parsing info of dependent items {dep_item} from {dep_pack} on item {item} from "
                             f"{pack} from graph"
                         )
@@ -3059,7 +3063,7 @@ def calculate_single_pack_dependencies(
         all_level_dependencies: A list with all dependencies names
         pack: The pack name
     """
-    logger.debug(f"Calculating {pack} pack dependencies.")
+    secho_and_debug(f"Calculating {pack} pack dependencies.")
 
     try:
         subgraph = PackDependencies.get_dependencies_subgraph_by_dfs(
@@ -3067,7 +3071,7 @@ def calculate_single_pack_dependencies(
         )
 
         for dependency_pack, additional_data in subgraph.nodes(data=True):
-            logger.debug(f"Iterating dependency {dependency_pack} for pack {pack}")
+            secho_and_debug(f"Iterating dependency {dependency_pack} for pack {pack}")
             additional_data["mandatory"] = (
                 pack in additional_data["mandatory_for_packs"]
             )
@@ -3141,7 +3145,7 @@ def calculate_all_packs_dependencies(id_set_path: str, output_path: str) -> dict
         """
         try:
             first_level_dependencies, all_level_dependencies, pack_name = results
-            logger.debug(
+            secho_and_debug(
                 f"Got dependencies for pack {pack_name}\n: {pformat(all_level_dependencies)}"
             )
             pack_dependencies_result[pack_name] = {

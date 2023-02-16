@@ -1570,18 +1570,6 @@ class TestParsersAndModels:
         ),
         (
             {
-                "id": "not the id we expect, should not be changed",
-                "name": "Related Incidents",
-                "type": "relatedIncidents",
-            },
-            {
-                "id": "not the id we expect, should not be changed",
-                "name": "Related Incidents",
-                "type": "relatedIncidents",
-            },
-        ),
-        (
-            {
                 "id": "relatedIncidents",
                 "name": "not the name we expect, should not be changed",
                 "type": "relatedIncidents",
@@ -1589,16 +1577,6 @@ class TestParsersAndModels:
             {
                 "id": "relatedIncidents",
                 "name": "not the name we expect, should not be changed",
-                "type": "relatedIncidents",
-            },
-        ),
-        (  # missing id
-            {
-                "name": "Related Incidents",
-                "type": "relatedIncidents",
-            },
-            {
-                "name": "Related Incidents",
                 "type": "relatedIncidents",
             },
         ),

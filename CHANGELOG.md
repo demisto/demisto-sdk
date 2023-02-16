@@ -3,6 +3,7 @@
 ## Unreleased
 * Fixed an issue where downloading non-unicode content into existing files caused an error.
 * Fixed an issue where in some occasions running test-playbooks could time-out.
+* Fixed an issue where making a change in a module using an ApiModule would cause lint to run on the ApiModule unnecessarily.
 
 ## 1.10.2
 * Added markdown lint formatting for README files in the **format** command.

@@ -38,6 +38,7 @@ from demisto_sdk.commands.common.content.objects.abstract_objects import (
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_child_directories,
@@ -137,8 +138,9 @@ class Uploader:
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance."""
         if self.demisto_version == "0":
-            logger.debug(
-                "[red]Could not connect to XSOAR server. Try checking your connection configurations.[/red]"
+            secho_and_info(
+                "Could not connect to XSOAR server. Try checking your connection configurations.",
+                fg="red",
             )
             return ERROR_RETURN_CODE
 
@@ -159,11 +161,11 @@ class Uploader:
             if not self.path:
                 return SUCCESS_RETURN_CODE
         host = self.client.api_client.configuration.host
-        logger.debug(f"Using {host=}")
-        logger.debug(f"Uploading {self.path} ...")
+        secho_and_info(f"Using {host=}")
+        secho_and_info(f"Uploading {self.path} ...")
         if self.path is None or not os.path.exists(self.path):
-            logger.debug(
-                f"[red]Error: Given input path: {self.path} does not exist[red]"
+            secho_and_info(
+                f"Error: Given input path: {self.path} does not exist", fg="red"
             )
             return ERROR_RETURN_CODE
 
@@ -196,14 +198,15 @@ class Uploader:
             and not self.unuploaded_due_to_version
         ):
             # if not uploaded any file
-            logger.debug(
-                f"\n[red]Error: Given input path: {self.path} is not uploadable. "
+            secho_and_info(
+                f"\nError: Given input path: {self.path} is not uploadable. "
                 f"Input path should point to one of the following:\n"
                 f"  1. Pack\n"
                 f"  2. A content entity directory that is inside a pack. For example: an Integrations directory or "
                 f"a Layouts directory\n"
                 f"  3. Valid file that can be imported to Cortex XSOAR manually. "
-                f"For example a playbook: helloWorld.yml[/red]"
+                f"For example a playbook: helloWorld.yml",
+                fg="red",
             )
             return ERROR_RETURN_CODE
 
@@ -452,23 +455,22 @@ def print_summary(
     Successful uploads grid based on `successfully_uploaded_files` attribute in green color
     Failed uploads grid based on `failed_uploaded_files` attribute in red color
     """
-    logger.debug("\n\nUPLOAD SUMMARY:")
+    secho_and_info("\n\nUPLOAD SUMMARY:")
     if successfully_uploaded_files:
-        logger.debug("\n[green]SUCCESSFUL UPLOADS:[/green]")
-        logger.debug(
-            "[green]"
-            + tabulate(
+        secho_and_info("\nSUCCESSFUL UPLOADS:", fg="green")
+        secho_and_info(
+            tabulate(
                 successfully_uploaded_files,
                 headers=["NAME", "TYPE"],
                 tablefmt="fancy_grid",
             )
-            + "[/green]\n",
+            + "\n",
+            fg="green",
         )
     if unuploaded_due_to_version:
-        logger.debug("\n[yellow]NOT UPLOADED DUE TO VERSION MISMATCH:[/yellow]")
-        logger.debug(
-            "[yellow]"
-            + tabulate(
+        secho_and_info("\nNOT UPLOADED DUE TO VERSION MISMATCH:", fg="yellow")
+        secho_and_info(
+            tabulate(
                 unuploaded_due_to_version,
                 headers=[
                     "NAME",
@@ -479,18 +481,19 @@ def print_summary(
                 ],
                 tablefmt="fancy_grid",
             )
-            + "[/yellow]\n",
+            + "\n",
+            fg="yellow",
         )
     if failed_uploaded_files:
-        logger.debug("\n[red]FAILED UPLOADS:[/red]")
-        logger.debug(
-            "[red]"
-            + tabulate(
+        secho_and_info("\nFAILED UPLOADS:", fg="red")
+        secho_and_info(
+            tabulate(
                 failed_uploaded_files,
                 headers=["NAME", "TYPE", "ERROR"],
                 tablefmt="fancy_grid",
             )
-            + "[/red]\n",
+            + "\n",
+            fg="red",
         )
 
 
@@ -565,7 +568,7 @@ class ItemDetacher:
 
         try:
             self.client.generic_request(endpoint, "POST")
-            logger.debug(f"\n[green]File: {file_id} was detached[/green]")
+            secho_and_info(f"\nFile: {file_id} was detached", fg="green")
         except Exception as e:
             raise Exception(f"Exception raised when fetching custom content:\n{e}")
 

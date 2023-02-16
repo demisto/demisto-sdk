@@ -4,6 +4,8 @@ import logging.config
 # from logging import Handler
 from typing import Optional
 
+import click
+
 # from rich.logging import RichHandler
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
@@ -130,6 +132,16 @@ def debug_color(msg, color: str):
 
 def info_color(msg, color: str):
     logger.info(f"[{color}]{msg}[/{color}]")
+
+
+def secho_and_info(message, fg="white"):
+    click.secho(message, fg=fg)
+    logger.info(f"[{fg}]{message}[/{fg}]")
+
+
+def print_and_info(msg):
+    print(f"{msg}")
+    logger.info(f"{msg}")
 
 
 # Python program to print

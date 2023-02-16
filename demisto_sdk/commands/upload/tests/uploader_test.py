@@ -85,6 +85,7 @@ def demisto_client_configure(mocker):
 
 
 def test_upload_integration_positive(demisto_client_configure, mocker):
+    logging.getLogger("demisto-sdk").propagate = True
     mocker.patch.object(demisto_client, "configure", return_value="object")
     mocker.patch.object(
         IntegrationScript, "get_supported_native_images", return_value=[]
@@ -773,7 +774,7 @@ def test_sort_directories_based_on_dependencies(demisto_client_configure):
 
 
 def test_print_summary_successfully_uploaded_files(
-    demisto_client_configure, caplog, monkeypatch
+    demisto_client_configure, mocker, caplog, monkeypatch
 ):
     """
     Given
@@ -787,14 +788,16 @@ def test_print_summary_successfully_uploaded_files(
         - Ensure uploaded successfully message is printed as expected
     """
     monkeypatch.setenv("COLUMNS", "1000")
-    caplog.set_level(logging.DEBUG)
     logging.getLogger("demisto-sdk").propagate = True
+
+    mocker.patch("click.secho")
+    from click import secho
 
     successfully_uploaded_files = [("SomeIntegrationName", "Integration")]
 
     print_summary(successfully_uploaded_files, [], [])
     expected_upload_summary_title = "\n\nUPLOAD SUMMARY:"
-    expected_successfully_uploaded_files_title = "SUCCESSFUL UPLOADS:"
+    expected_successfully_uploaded_files_title = "\nSUCCESSFUL UPLOADS:"
     expected_successfully_uploaded_files_array = [
         "╒═════════════════════╤═════════════╕",
         "│ NAME                │ TYPE        │",
@@ -804,8 +807,18 @@ def test_print_summary_successfully_uploaded_files(
     ]
     assert expected_upload_summary_title in caplog.text
     assert expected_successfully_uploaded_files_title in caplog.text
-    for current_table_row in expected_successfully_uploaded_files_array:
-        assert current_table_row in caplog.text
+    for current_line in expected_successfully_uploaded_files_array:
+        assert current_line in caplog.text
+
+    expected_successfully_uploaded_files = "\n".join(
+        expected_successfully_uploaded_files_array
+    )
+    assert expected_successfully_uploaded_files in caplog.text
+    # verify exactly 3 calls to print_color
+    assert secho.call_count == 3
+    assert secho.call_args_list[0][0][0] == expected_upload_summary_title
+    assert secho.call_args_list[1][0][0] == expected_successfully_uploaded_files_title
+    assert expected_successfully_uploaded_files in secho.call_args_list[2][0][0]
 
 
 def test_print_summary_failed_uploaded_files(demisto_client_configure, mocker):
@@ -1035,9 +1048,7 @@ class TestZippedPackUpload:
 
         # validate
         status == 1
-        uploader.click.secho.call_args_list[1].args == INVALID_ZIP_ERROR.format(
-            path=input
-        )
+        click.secho.call_args_list[1].args == INVALID_ZIP_ERROR.format(path=input)
 
     def test_error_in_disable_pack_verification(self, mocker):
         """
@@ -1451,6 +1462,7 @@ class TestZippedPackUpload:
 
 class TestItemDetacher:
     def test_detach_item(self, mocker):
+        logging.getLogger("demisto-sdk").propagate = True
         mocker.patch("click.secho")
         from click import secho
 

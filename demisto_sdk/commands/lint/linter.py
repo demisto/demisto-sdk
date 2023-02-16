@@ -24,6 +24,7 @@ from demisto_sdk.commands.common.constants import (
     NATIVE_IMAGE_FILE_NAME,
     PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
+    TESTS_REQUIRE_NETWORK_PACK_IGNORE,
     TYPE_PWSH,
     TYPE_PYTHON,
 )
@@ -195,8 +196,8 @@ class Linter:
         if _pack_ignore_file_path.exists():
             config = ConfigParser(allow_no_value=True)
             config.read(_pack_ignore_file_path)
-            if "tests_require_network" in config.sections():
-                ignored_integrations_scripts = config["tests_require_network"]
+            if TESTS_REQUIRE_NETWORK_PACK_IGNORE in config.sections():
+                ignored_integrations_scripts = config[TESTS_REQUIRE_NETWORK_PACK_IGNORE]
                 if self._facts["object_id"] in ignored_integrations_scripts:
                     return False
         return True

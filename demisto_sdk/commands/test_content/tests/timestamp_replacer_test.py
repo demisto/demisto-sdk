@@ -86,10 +86,7 @@ class TestTimeStampReplacer:
             pytest.skip("The current mock syntax is supported only in python 3.8+")
         assert master_mock.add_option.call_count == 4
         for call in master_mock.add_option.mock_calls:
-            assert (
-                self.DEFAULT_OPTIONS_MAPPING[call.kwargs["name"]]
-                == call.kwargs["default"]
-            )
+            assert self.DEFAULT_OPTIONS_MAPPING[call.kwargs["name"]] == call.kwargs["default"]
 
     def test_running(self, mocker):
         """
@@ -198,9 +195,7 @@ class TestTimeStampReplacer:
         mitmproxy.ctx.options.detect_timestamps = True
         mitmproxy.ctx.options.script_mode = "record"
         flow.request.method = "POST"
-        flow.request.set_content(
-            str({"timestamp_key": "2021-01-11T13:18:12+00:00"}).encode()
-        )
+        flow.request.set_content(str({"timestamp_key": "2021-01-11T13:18:12+00:00"}).encode())
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.request(flow)
         assert "timestamp_key" in time_stamp_replacer.json_keys
@@ -321,9 +316,7 @@ class TestTimeStampReplacer:
             - Ensure that the boundary will be replaced to 'fixed_boundary'
         """
         original_boundary = "original_boundary"
-        flow.request.headers[
-            "Content-Type"
-        ] = f"multipart/form-data; boundary={original_boundary}"
+        flow.request.headers["Content-Type"] = f"multipart/form-data; boundary={original_boundary}"
         flow.request.content = (
             f"--{original_boundary}\nContent-Disposision: form-data; "
             f'name="test"\n\nsomething\n--{original_boundary}--'.encode()
@@ -331,7 +324,6 @@ class TestTimeStampReplacer:
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.request(flow)
         assert (
-            flow.request.content
-            == b"--fixed_boundary\nContent-Disposision: form-data; "
+            flow.request.content == b"--fixed_boundary\nContent-Disposision: form-data; "
             b'name="test"\n\nsomething\n--fixed_boundary--'
         )

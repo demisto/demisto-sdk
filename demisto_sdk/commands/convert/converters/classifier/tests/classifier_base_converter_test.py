@@ -48,12 +48,8 @@ class TestLayoutBaseConverter:
         ("classifier-Cymulate", None),
     ]
 
-    @pytest.mark.parametrize(
-        "classifier_name, expected", EXTRACT_CLASSIFIER_NAME_INPUTS
-    )
-    def test_extract_classifier_name(
-        self, classifier_name: str, expected: Optional[str]
-    ):
+    @pytest.mark.parametrize("classifier_name, expected", EXTRACT_CLASSIFIER_NAME_INPUTS)
+    def test_extract_classifier_name(self, classifier_name: str, expected: Optional[str]):
         """
         Given:
         - Old classifier object.

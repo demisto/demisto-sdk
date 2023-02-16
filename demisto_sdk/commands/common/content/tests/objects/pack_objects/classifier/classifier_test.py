@@ -9,13 +9,7 @@ from demisto_sdk.commands.common.tools import src_root
 
 TEST_DATA = src_root() / "tests" / "test_files"
 TEST_CONTENT_REPO = TEST_DATA / "content_slim"
-CLASSIFIER = (
-    TEST_CONTENT_REPO
-    / PACKS_DIR
-    / "Sample01"
-    / CLASSIFIERS_DIR
-    / "classifier-sample_new.json"
-)
+CLASSIFIER = TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / CLASSIFIERS_DIR / "classifier-sample_new.json"
 
 
 class TestClassifierType:

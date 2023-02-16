@@ -285,16 +285,10 @@ class TestIntegrationDiffDetector:
             - Ensure the integrations are backwards compatible.
         """
 
-        old_integration = pack.create_integration(
-            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
-        )
-        new_integration = pack.create_integration(
-            "newIntegration", yml=self.NEW_INTEGRATION_YAML
-        )
+        old_integration = pack.create_integration("oldIntegration", yml=self.OLD_INTEGRATION_YAML)
+        new_integration = pack.create_integration("newIntegration", yml=self.NEW_INTEGRATION_YAML)
 
-        integration_detector = IntegrationDiffDetector(
-            new=new_integration.yml.path, old=old_integration.yml.path
-        )
+        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
 
         assert integration_detector.check_different()
 
@@ -308,16 +302,10 @@ class TestIntegrationDiffDetector:
             - Ensure the integrations are not backwards compatible.
         """
 
-        old_integration = pack.create_integration(
-            "oldIntegration2", yml=self.NEW_INTEGRATION_YAML
-        )
-        new_integration = pack.create_integration(
-            "newIntegration2", yml=self.OLD_INTEGRATION_YAML
-        )
+        old_integration = pack.create_integration("oldIntegration2", yml=self.NEW_INTEGRATION_YAML)
+        new_integration = pack.create_integration("newIntegration2", yml=self.OLD_INTEGRATION_YAML)
 
-        integration_detector = IntegrationDiffDetector(
-            new=new_integration.yml.path, old=old_integration.yml.path
-        )
+        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
 
         assert not integration_detector.check_different()
 
@@ -333,28 +321,16 @@ class TestIntegrationDiffDetector:
         new_integration_yaml = copy.deepcopy(self.NEW_INTEGRATION_YAML)
 
         # Make some changes in the new integration
-        new_integration_yaml["configuration"].remove(
-            new_integration_yaml["configuration"][0]
-        )
+        new_integration_yaml["configuration"].remove(new_integration_yaml["configuration"][0])
         new_integration_yaml["configuration"][0]["required"] = "true"
-        new_integration_yaml["script"]["commands"].remove(
-            new_integration_yaml["script"]["commands"][0]
-        )
-        new_integration_yaml["script"]["commands"][0]["arguments"][1][
-            "isArray"
-        ] = "true"
+        new_integration_yaml["script"]["commands"].remove(new_integration_yaml["script"]["commands"][0])
+        new_integration_yaml["script"]["commands"][0]["arguments"][1]["isArray"] = "true"
         new_integration_yaml["script"]["commands"][0]["outputs"][1]["type"] = "String"
 
-        old_integration = pack.create_integration(
-            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
-        )
-        new_integration = pack.create_integration(
-            "newIntegration", yml=new_integration_yaml
-        )
+        old_integration = pack.create_integration("oldIntegration", yml=self.OLD_INTEGRATION_YAML)
+        new_integration = pack.create_integration("newIntegration", yml=new_integration_yaml)
 
-        integration_detector = IntegrationDiffDetector(
-            new=new_integration.yml.path, old=old_integration.yml.path
-        )
+        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
         differences = integration_detector.get_differences()
 
         assert self.DIFFERENCES_REPORT == differences
@@ -370,9 +346,7 @@ class TestIntegrationDiffDetector:
         """
 
         new_integration_yml = copy.deepcopy(self.NEW_INTEGRATION_YAML)
-        new_integration_yml["script"]["commands"].remove(
-            new_integration_yml["script"]["commands"][0]
-        )
+        new_integration_yml["script"]["commands"].remove(new_integration_yml["script"]["commands"][0])
 
         missing_command = {
             "description": "",
@@ -381,23 +355,15 @@ class TestIntegrationDiffDetector:
             "message": "Missing the command 'command_1'.",
         }
 
-        old_integration = pack.create_integration(
-            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
-        )
-        new_integration = pack.create_integration(
-            "newIntegration", yml=self.NEW_INTEGRATION_YAML
-        )
+        old_integration = pack.create_integration("oldIntegration", yml=self.OLD_INTEGRATION_YAML)
+        new_integration = pack.create_integration("newIntegration", yml=self.NEW_INTEGRATION_YAML)
 
-        integration_detector = IntegrationDiffDetector(
-            new=new_integration.yml.path, old=old_integration.yml.path
-        )
+        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
 
         old_commands = self.OLD_INTEGRATION_YAML["script"]["commands"]
         new_commands = new_integration_yml["script"]["commands"]
 
-        commands, _, _ = integration_detector.get_different_commands(
-            old_commands, new_commands
-        )
+        commands, _, _ = integration_detector.get_different_commands(old_commands, new_commands)
 
         assert missing_command in commands
 
@@ -433,23 +399,15 @@ class TestIntegrationDiffDetector:
             "changed_value": True,
         }
 
-        old_integration = pack.create_integration(
-            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
-        )
-        new_integration = pack.create_integration(
-            "newIntegration", yml=self.NEW_INTEGRATION_YAML
-        )
+        old_integration = pack.create_integration("oldIntegration", yml=self.OLD_INTEGRATION_YAML)
+        new_integration = pack.create_integration("newIntegration", yml=self.NEW_INTEGRATION_YAML)
 
-        integration_detector = IntegrationDiffDetector(
-            new=new_integration.yml.path, old=old_integration.yml.path
-        )
+        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
 
         old_command = self.OLD_INTEGRATION_YAML["script"]["commands"][1]
         new_command = new_integration_yml["script"]["commands"][1]
 
-        arguments = integration_detector.get_different_arguments(
-            new_command, old_command
-        )
+        arguments = integration_detector.get_different_arguments(new_command, old_command)
 
         assert missing_argument in arguments
         assert changed_argument in arguments
@@ -485,16 +443,10 @@ class TestIntegrationDiffDetector:
             "changed_field": "type",
         }
 
-        old_integration = pack.create_integration(
-            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
-        )
-        new_integration = pack.create_integration(
-            "newIntegration", yml=self.NEW_INTEGRATION_YAML
-        )
+        old_integration = pack.create_integration("oldIntegration", yml=self.OLD_INTEGRATION_YAML)
+        new_integration = pack.create_integration("newIntegration", yml=self.NEW_INTEGRATION_YAML)
 
-        integration_detector = IntegrationDiffDetector(
-            new=new_integration.yml.path, old=old_integration.yml.path
-        )
+        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
 
         old_command = self.OLD_INTEGRATION_YAML["script"]["commands"][1]
         new_commands = new_integration_yml["script"]["commands"][1]
@@ -514,9 +466,7 @@ class TestIntegrationDiffDetector:
         """
 
         new_integration_yml = copy.deepcopy(self.NEW_INTEGRATION_YAML)
-        new_integration_yml["configuration"].remove(
-            new_integration_yml["configuration"][0]
-        )
+        new_integration_yml["configuration"].remove(new_integration_yml["configuration"][0])
         new_integration_yml["configuration"][0]["required"] = "true"
 
         missing_param = {
@@ -533,16 +483,10 @@ class TestIntegrationDiffDetector:
             "changed_value": "true",
         }
 
-        old_integration = pack.create_integration(
-            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
-        )
-        new_integration = pack.create_integration(
-            "newIntegration", yml=new_integration_yml
-        )
+        old_integration = pack.create_integration("oldIntegration", yml=self.OLD_INTEGRATION_YAML)
+        new_integration = pack.create_integration("newIntegration", yml=new_integration_yml)
 
-        integration_detector = IntegrationDiffDetector(
-            new=new_integration.yml.path, old=old_integration.yml.path
-        )
+        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
 
         old_params = self.OLD_INTEGRATION_YAML["configuration"]
         new_params = new_integration_yml["configuration"]
@@ -561,16 +505,10 @@ class TestIntegrationDiffDetector:
             - Verify there are no items to print and that the printed output as excepted.
         """
 
-        old_integration = pack.create_integration(
-            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
-        )
-        new_integration = pack.create_integration(
-            "newIntegration", yml=self.NEW_INTEGRATION_YAML
-        )
+        old_integration = pack.create_integration("oldIntegration", yml=self.OLD_INTEGRATION_YAML)
+        new_integration = pack.create_integration("newIntegration", yml=self.NEW_INTEGRATION_YAML)
 
-        integration_detector = IntegrationDiffDetector(
-            new=new_integration.yml.path, old=old_integration.yml.path
-        )
+        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
 
         assert not integration_detector.print_items()
 
@@ -587,20 +525,12 @@ class TestIntegrationDiffDetector:
             - Verify that.
         """
 
-        old_integration = pack.create_integration(
-            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
-        )
-        new_integration = pack.create_integration(
-            "newIntegration", yml=self.NEW_INTEGRATION_YAML
-        )
+        old_integration = pack.create_integration("oldIntegration", yml=self.OLD_INTEGRATION_YAML)
+        new_integration = pack.create_integration("newIntegration", yml=self.NEW_INTEGRATION_YAML)
 
-        integration_detector = IntegrationDiffDetector(
-            new=new_integration.yml.path, old=old_integration.yml.path
-        )
+        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
 
-        integration_detector.missing_items_report = copy.deepcopy(
-            self.DIFFERENCES_REPORT
-        )
+        integration_detector.missing_items_report = copy.deepcopy(self.DIFFERENCES_REPORT)
 
         assert integration_detector.print_items()
 
@@ -614,20 +544,12 @@ class TestIntegrationDiffDetector:
             - Verify that all the items are printed.
         """
 
-        old_integration = pack.create_integration(
-            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
-        )
-        new_integration = pack.create_integration(
-            "newIntegration", yml=self.NEW_INTEGRATION_YAML
-        )
+        old_integration = pack.create_integration("oldIntegration", yml=self.OLD_INTEGRATION_YAML)
+        new_integration = pack.create_integration("newIntegration", yml=self.NEW_INTEGRATION_YAML)
 
-        integration_detector = IntegrationDiffDetector(
-            new=new_integration.yml.path, old=old_integration.yml.path
-        )
+        integration_detector = IntegrationDiffDetector(new=new_integration.yml.path, old=old_integration.yml.path)
 
-        integration_detector.missing_items_report = copy.deepcopy(
-            self.DIFFERENCES_REPORT
-        )
+        integration_detector.missing_items_report = copy.deepcopy(self.DIFFERENCES_REPORT)
 
         integration_detector.print_missing_items()
 
@@ -652,20 +574,14 @@ class TestIntegrationDiffDetector:
         Then
             - Verify that all the items are printed in docs format.
         """
-        old_integration = pack.create_integration(
-            "oldIntegration", yml=self.OLD_INTEGRATION_YAML
-        )
-        new_integration = pack.create_integration(
-            "newIntegration", yml=self.NEW_INTEGRATION_YAML
-        )
+        old_integration = pack.create_integration("oldIntegration", yml=self.OLD_INTEGRATION_YAML)
+        new_integration = pack.create_integration("newIntegration", yml=self.NEW_INTEGRATION_YAML)
 
         integration_detector = IntegrationDiffDetector(
             new=new_integration.yml.path, old=old_integration.yml.path, docs_format=True
         )
 
-        integration_detector.missing_items_report = copy.deepcopy(
-            self.DIFFERENCES_REPORT
-        )
+        integration_detector.missing_items_report = copy.deepcopy(self.DIFFERENCES_REPORT)
 
         integration_detector.print_items_in_docs_format()
 

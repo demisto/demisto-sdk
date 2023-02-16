@@ -31,9 +31,7 @@ class PrepareUploadManager:
             kwargs["force"] = True
         content_item = BaseContent.from_path(input)
         if not isinstance(content_item, (ContentItem, Pack)):
-            raise ValueError(
-                f"Unsupported input for {input}. Please provide a path to a content item or a pack."
-            )
+            raise ValueError(f"Unsupported input for {input}. Please provide a path to a content item or a pack.")
 
         if graph:
             # enrich the content item with the graph
@@ -62,9 +60,7 @@ class PrepareUploadManager:
             )
         data = content_item.prepare_for_upload(marketplace, **kwargs)
         if output.exists() and not force:
-            raise FileExistsError(
-                f"Output file {output} already exists. Use --force to overwrite."
-            )
+            raise FileExistsError(f"Output file {output} already exists. Use --force to overwrite.")
         with output.open("w") as f:
             content_item.handler.dump(data, f)
 

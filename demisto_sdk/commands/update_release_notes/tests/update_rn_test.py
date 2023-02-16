@@ -33,36 +33,16 @@ json = JSON_Handler()
 
 
 class TestRNUpdate:
-    FILES_PATH = os.path.normpath(
-        os.path.join(__file__, f"{git_path()}/demisto_sdk/tests", "test_files")
-    )
-    NOT_DEP_INTEGRATION_PATH = pathlib.Path(
-        FILES_PATH, "deprecated_rn_test", "not_deprecated_integration.yml"
-    )
-    DEP_INTEGRATION_PATH = pathlib.Path(
-        FILES_PATH, "deprecated_rn_test", "deprecated_integration.yml"
-    )
-    DEP_DESC_INTEGRATION_PATH = pathlib.Path(
-        FILES_PATH, "deprecated_rn_test", "deprecated_desc_integration.yml"
-    )
-    NOT_DEP_PLAYBOOK_PATH = pathlib.Path(
-        FILES_PATH, "deprecated_rn_test", "not_deprecated_playbook.yml"
-    )
-    DEP_PLAYBOOK_PATH = pathlib.Path(
-        FILES_PATH, "deprecated_rn_test", "deprecated_playbook.yml"
-    )
-    DEP_DESC_PLAYBOOK_PATH = pathlib.Path(
-        FILES_PATH, "deprecated_rn_test", "deprecated_desc_playbook.yml"
-    )
-    NOT_DEP_SCRIPT_PATH = pathlib.Path(
-        FILES_PATH, "deprecated_rn_test", "not_deprecated_script.yml"
-    )
-    DEP_SCRIPT_PATH = pathlib.Path(
-        FILES_PATH, "deprecated_rn_test", "deprecated_script.yml"
-    )
-    DEP_DESC_SCRIPT_PATH = pathlib.Path(
-        FILES_PATH, "deprecated_rn_test", "deprecated_desc_script.yml"
-    )
+    FILES_PATH = os.path.normpath(os.path.join(__file__, f"{git_path()}/demisto_sdk/tests", "test_files"))
+    NOT_DEP_INTEGRATION_PATH = pathlib.Path(FILES_PATH, "deprecated_rn_test", "not_deprecated_integration.yml")
+    DEP_INTEGRATION_PATH = pathlib.Path(FILES_PATH, "deprecated_rn_test", "deprecated_integration.yml")
+    DEP_DESC_INTEGRATION_PATH = pathlib.Path(FILES_PATH, "deprecated_rn_test", "deprecated_desc_integration.yml")
+    NOT_DEP_PLAYBOOK_PATH = pathlib.Path(FILES_PATH, "deprecated_rn_test", "not_deprecated_playbook.yml")
+    DEP_PLAYBOOK_PATH = pathlib.Path(FILES_PATH, "deprecated_rn_test", "deprecated_playbook.yml")
+    DEP_DESC_PLAYBOOK_PATH = pathlib.Path(FILES_PATH, "deprecated_rn_test", "deprecated_desc_playbook.yml")
+    NOT_DEP_SCRIPT_PATH = pathlib.Path(FILES_PATH, "deprecated_rn_test", "not_deprecated_script.yml")
+    DEP_SCRIPT_PATH = pathlib.Path(FILES_PATH, "deprecated_rn_test", "deprecated_script.yml")
+    DEP_DESC_SCRIPT_PATH = pathlib.Path(FILES_PATH, "deprecated_rn_test", "deprecated_desc_script.yml")
 
     def test_build_rn_template_integration(self, mocker):
         """
@@ -199,8 +179,7 @@ class TestRNUpdate:
             - return a markdown string
         """
         expected_result = (
-            "\n#### Object Fields\n\n- **Sample Generic Field**\n"
-            "\n#### Object Types\n\n- **Sample Generic Type**\n"
+            "\n#### Object Fields\n\n- **Sample Generic Field**\n" "\n#### Object Types\n\n- **Sample Generic Type**\n"
         )
 
         pack_path = TestRNUpdate.FILES_PATH + "/generic_testing"
@@ -295,9 +274,7 @@ class TestRNUpdate:
 
         with ReadMeValidator.start_mdx_server():
             markdownlint = run_markdownlint(release_notes)
-            assert not markdownlint.has_errors, (
-                release_notes + f"\nValidations: {markdownlint.validations}"
-            )
+            assert not markdownlint.has_errors, release_notes + f"\nValidations: {markdownlint.validations}"
 
     def test_build_rn_template_playbook_modified_file(self, mocker):
         """
@@ -308,9 +285,7 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = (
-            "\n#### Playbooks\n\n##### Hello World Playbook\n\n- %%UPDATE_RN%%\n"
-        )
+        expected_result = "\n#### Playbooks\n\n##### Hello World Playbook\n\n- %%UPDATE_RN%%\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
@@ -375,8 +350,7 @@ class TestRNUpdate:
             - return a markdown string
         """
         expected_result = (
-            "\n#### Integrations\n\n##### Hello World Integration\n\n"
-            "- Documentation and metadata improvements.\n"
+            "\n#### Integrations\n\n##### Hello World Integration\n\n" "- Documentation and metadata improvements.\n"
         )
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
@@ -590,12 +564,8 @@ class TestRNUpdate:
             modified_files_in_pack={"HelloWorld"},
             added_files=set(),
         )
-        update_rn.metadata_path = os.path.join(
-            TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"
-        )
-        version_number, _ = update_rn.bump_version_number(
-            pre_release=False, specific_version=None
-        )
+        update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json")
+        version_number, _ = update_rn.bump_version_number(pre_release=False, specific_version=None)
         assert version_number == expected_version
         os.remove(os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"))
         shutil.copy(
@@ -627,12 +597,8 @@ class TestRNUpdate:
             modified_files_in_pack={"HelloWorld"},
             added_files=set(),
         )
-        update_rn.metadata_path = os.path.join(
-            TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"
-        )
-        version_number, _ = update_rn.bump_version_number(
-            pre_release=False, specific_version=None
-        )
+        update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json")
+        version_number, _ = update_rn.bump_version_number(pre_release=False, specific_version=None)
         assert version_number == expected_version
         os.remove(os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"))
         shutil.copy(
@@ -664,12 +630,8 @@ class TestRNUpdate:
             modified_files_in_pack={"HelloWorld"},
             added_files=set(),
         )
-        update_rn.metadata_path = os.path.join(
-            TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"
-        )
-        version_number, _ = update_rn.bump_version_number(
-            pre_release=False, specific_version=None
-        )
+        update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json")
+        version_number, _ = update_rn.bump_version_number(pre_release=False, specific_version=None)
         assert version_number == expected_version
         os.remove(os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"))
         shutil.copy(
@@ -702,12 +664,8 @@ class TestRNUpdate:
             modified_files_in_pack={"HelloWorld"},
             added_files=set(),
         )
-        update_rn.metadata_path = os.path.join(
-            TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"
-        )
-        version_number, _ = update_rn.bump_version_number(
-            pre_release=False, specific_version="2.0.0"
-        )
+        update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json")
+        version_number, _ = update_rn.bump_version_number(pre_release=False, specific_version="2.0.0")
         assert version_number == expected_version
         os.remove(os.path.join(TestRNUpdate.FILES_PATH, "fake_pack/pack_metadata.json"))
         shutil.copy(
@@ -726,12 +684,8 @@ class TestRNUpdate:
             - return ValueError
         """
         shutil.copy(
-            src=os.path.join(
-                TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
-            ),
-            dst=os.path.join(
-                TestRNUpdate.FILES_PATH, "fake_pack_invalid/_pack_metadata.json"
-            ),
+            src=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"),
+            dst=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/_pack_metadata.json"),
         )
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
@@ -742,23 +696,13 @@ class TestRNUpdate:
             modified_files_in_pack={"HelloWorld"},
             added_files=set(),
         )
-        update_rn.metadata_path = os.path.join(
-            TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
-        )
+        update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json")
         with pytest.raises(ValueError):
             update_rn.bump_version_number()
-        os.remove(
-            os.path.join(
-                TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
-            )
-        )
+        os.remove(os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"))
         shutil.copy(
-            src=os.path.join(
-                TestRNUpdate.FILES_PATH, "fake_pack_invalid/_pack_metadata.json"
-            ),
-            dst=os.path.join(
-                TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
-            ),
+            src=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/_pack_metadata.json"),
+            dst=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"),
         )
 
     @mock.patch.object(UpdateRN, "get_master_version")
@@ -772,12 +716,8 @@ class TestRNUpdate:
             - return ValueError
         """
         shutil.copy(
-            src=os.path.join(
-                TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
-            ),
-            dst=os.path.join(
-                TestRNUpdate.FILES_PATH, "fake_pack_invalid/_pack_metadata.json"
-            ),
+            src=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"),
+            dst=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/_pack_metadata.json"),
         )
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
@@ -788,23 +728,13 @@ class TestRNUpdate:
             modified_files_in_pack={"HelloWorld"},
             added_files=set(),
         )
-        update_rn.metadata_path = os.path.join(
-            TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
-        )
+        update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json")
         with pytest.raises(ValueError):
             update_rn.bump_version_number()
-        os.remove(
-            os.path.join(
-                TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
-            )
-        )
+        os.remove(os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"))
         shutil.copy(
-            src=os.path.join(
-                TestRNUpdate.FILES_PATH, "fake_pack_invalid/_pack_metadata.json"
-            ),
-            dst=os.path.join(
-                TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
-            ),
+            src=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/_pack_metadata.json"),
+            dst=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"),
         )
 
     @mock.patch.object(UpdateRN, "get_master_version")
@@ -818,12 +748,8 @@ class TestRNUpdate:
             - return ValueError
         """
         shutil.copy(
-            src=os.path.join(
-                TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
-            ),
-            dst=os.path.join(
-                TestRNUpdate.FILES_PATH, "fake_pack_invalid/_pack_metadata.json"
-            ),
+            src=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"),
+            dst=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/_pack_metadata.json"),
         )
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
@@ -834,23 +760,13 @@ class TestRNUpdate:
             modified_files_in_pack={"HelloWorld"},
             added_files=set(),
         )
-        update_rn.metadata_path = os.path.join(
-            TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
-        )
+        update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json")
         with pytest.raises(ValueError):
             update_rn.bump_version_number()
-        os.remove(
-            os.path.join(
-                TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
-            )
-        )
+        os.remove(os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"))
         shutil.copy(
-            src=os.path.join(
-                TestRNUpdate.FILES_PATH, "fake_pack_invalid/_pack_metadata.json"
-            ),
-            dst=os.path.join(
-                TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
-            ),
+            src=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/_pack_metadata.json"),
+            dst=os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"),
         )
 
     @mock.patch.object(UpdateRN, "get_master_version")
@@ -872,15 +788,10 @@ class TestRNUpdate:
             modified_files_in_pack={"HelloWorld"},
             added_files=set(),
         )
-        update_rn.metadata_path = os.path.join(
-            TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata_.json"
-        )
+        update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata_.json")
         with pytest.raises(Exception) as execinfo:
             update_rn.bump_version_number()
-        assert (
-            "Pack HelloWorld was not found. Please verify the pack name is correct."
-            in execinfo.value.args[0]
-        )
+        assert "Pack HelloWorld was not found. Please verify the pack name is correct." in execinfo.value.args[0]
 
     @mock.patch.object(UpdateRN, "get_master_version")
     def test_bump_version_no_version(self, mock_master):
@@ -901,14 +812,10 @@ class TestRNUpdate:
             modified_files_in_pack={"HelloWorld"},
             added_files=set(),
         )
-        update_rn.metadata_path = os.path.join(
-            TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
-        )
+        update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json")
         with pytest.raises(ValueError) as execinfo:
             update_rn.bump_version_number()
-        assert (
-            "Received no update type when one was expected." in execinfo.value.args[0]
-        )
+        assert "Received no update type when one was expected." in execinfo.value.args[0]
 
     def test_build_rn_desc_new_file(self):
         """
@@ -1010,9 +917,7 @@ class TestRNUpdate:
 
     @mock.patch.object(UpdateRN, "bump_version_number")
     @mock.patch.object(UpdateRN, "is_bump_required")
-    def test_execute_with_bump_version_raises_error(
-        self, mock_bump_version_number, mock_is_bump_required
-    ):
+    def test_execute_with_bump_version_raises_error(self, mock_bump_version_number, mock_is_bump_required):
         """
         Given
             - Pack path for update release notes
@@ -1107,9 +1012,7 @@ class TestRNUpdate:
             from_version=new_dashboard.read_json_as_dict().get("fromversion"),
         )
 
-        assert (
-            "##### New:" in rn_desc
-        )  # check if release note contains New - when new file
+        assert "##### New:" in rn_desc  # check if release note contains New - when new file
         assert (
             "description for testing" in rn_desc
         )  # check if release note contains description when description not empty
@@ -1140,9 +1043,7 @@ class TestRNUpdate:
             from_version=new_mapper.read_json_as_dict().get("fromversion"),
         )
 
-        assert (
-            "##### New:" in rn_desc
-        )  # check if release note contains New - when new file
+        assert "##### New:" in rn_desc  # check if release note contains New - when new file
         assert (
             "description for testing" not in rn_desc
         )  # check if release note does not contain description when description is empty
@@ -1157,9 +1058,7 @@ class TestRNUpdate:
         Expected - release note should not contain new and version
         """
         pack = repo.create_pack("test_pack")
-        new_incident_field = pack.create_incident_field(
-            name="incident field", content={"fromversion": "6.5.0"}
-        )
+        new_incident_field = pack.create_incident_field(name="incident field", content={"fromversion": "6.5.0"})
         update_rn = UpdateRN(
             pack_path=pack.path,
             update_type="minor",
@@ -1191,12 +1090,8 @@ class TestRNUpdate:
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
-        FILES_PATH = os.path.normpath(
-            os.path.join(__file__, f"{git_path()}/demisto_sdk/tests", "test_files")
-        )
-        NOT_DEP_INTEGRATION_PATH = pathlib.Path(
-            FILES_PATH, "deprecated_rn_test", "not_deprecated_integration.yml"
-        )
+        FILES_PATH = os.path.normpath(os.path.join(__file__, f"{git_path()}/demisto_sdk/tests", "test_files"))
+        NOT_DEP_INTEGRATION_PATH = pathlib.Path(FILES_PATH, "deprecated_rn_test", "not_deprecated_integration.yml")
 
         update_rn = UpdateRN(
             pack_path="Packs/Test",
@@ -1204,9 +1099,7 @@ class TestRNUpdate:
             modified_files_in_pack={"Integration"},
             added_files=set(),
         )
-        old_yml_obj, new_yml_obj = get_mock_yml_obj(
-            NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION, False
-        )
+        old_yml_obj, new_yml_obj = get_mock_yml_obj(NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION, False)
         new_yml_obj.script["commands"][0]["deprecated"] = True
 
         mocker.patch(
@@ -1225,8 +1118,7 @@ class TestRNUpdate:
         )
 
         assert (
-            desc
-            == "##### Integration test\n\n- text for test\n- Command ***xdr-get-incidents*** is deprecated. Use "
+            desc == "##### Integration test\n\n- text for test\n- Command ***xdr-get-incidents*** is deprecated. Use "
             "%%% instead.\n"
         )
 
@@ -1239,16 +1131,10 @@ class TestRNUpdate:
         Then:
             Ensure the function returns a valid rn when the command is deprecated compared to last yml
         """
-        FILES_PATH = os.path.normpath(
-            os.path.join(__file__, f"{git_path()}/demisto_sdk/tests", "test_files")
-        )
-        NOT_DEP_INTEGRATION_PATH = pathlib.Path(
-            FILES_PATH, "deprecated_rn_test", "not_deprecated_integration.yml"
-        )
+        FILES_PATH = os.path.normpath(os.path.join(__file__, f"{git_path()}/demisto_sdk/tests", "test_files"))
+        NOT_DEP_INTEGRATION_PATH = pathlib.Path(FILES_PATH, "deprecated_rn_test", "not_deprecated_integration.yml")
 
-        old_yml_obj, new_yml_obj = get_mock_yml_obj(
-            NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION, False
-        )
+        old_yml_obj, new_yml_obj = get_mock_yml_obj(NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION, False)
         new_yml_obj.script["commands"][0]["deprecated"] = True
 
         mocker.patch(
@@ -1257,9 +1143,7 @@ class TestRNUpdate:
         )
         # When command is newly deprecated
         res = get_deprecated_rn(NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION)
-        assert (
-            res == "- Command ***xdr-get-incidents*** is deprecated. Use %%% instead.\n"
-        )
+        assert res == "- Command ***xdr-get-incidents*** is deprecated. Use %%% instead.\n"
 
         # When the command is already deprecated
         old_yml_obj["script"]["commands"][0]["deprecated"] = True
@@ -1352,9 +1236,7 @@ def get_mock_yml_obj(path, file_type, deprecated) -> dict:
 
 class TestRNUpdateUnit:
     META_BACKUP = ""
-    FILES_PATH = os.path.normpath(
-        os.path.join(__file__, f"{git_path()}/demisto_sdk/tests", "test_files")
-    )
+    FILES_PATH = os.path.normpath(os.path.join(__file__, f"{git_path()}/demisto_sdk/tests", "test_files"))
     CURRENT_RN = """
 #### Incident Types
 
@@ -1569,16 +1451,10 @@ class TestRNUpdateUnit:
                 "demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json",
             )
         else:
-            raise Exception(
-                "Expecting self.meta_backup to be set inorder to restore pack_metadata.json file"
-            )
+            raise Exception("Expecting self.meta_backup to be set inorder to restore pack_metadata.json file")
 
-    @pytest.mark.parametrize(
-        "pack_name, path, find_type_result, expected_result", diff_package
-    )
-    def test_get_changed_file_name_and_type(
-        self, pack_name, path, find_type_result, expected_result, mocker
-    ):
+    @pytest.mark.parametrize("pack_name, path, find_type_result, expected_result", diff_package)
+    def test_get_changed_file_name_and_type(self, pack_name, path, find_type_result, expected_result, mocker):
         """
         Given:
             - a filepath of a changed file
@@ -1654,9 +1530,7 @@ class TestRNUpdateUnit:
         )
         filepath = os.path.join(TestRNUpdate.FILES_PATH, "ReleaseNotes/1_1_1.md")
         md_string = "### Test"
-        update_rn.create_markdown(
-            release_notes_path=filepath, rn_string=md_string, changed_files={}
-        )
+        update_rn.create_markdown(release_notes_path=filepath, rn_string=md_string, changed_files={})
 
     def test_update_existing_rn(self, mocker):
         """
@@ -1693,12 +1567,8 @@ class TestRNUpdateUnit:
         Then:
             - update the metadata json by the version designated.
         """
-        ORIGINAL = os.path.join(
-            TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json"
-        )
-        TEMP_FILE = os.path.join(
-            TestRNUpdate.FILES_PATH, "fake_pack_invalid/_pack_metadata.json"
-        )
+        ORIGINAL = os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/pack_metadata.json")
+        TEMP_FILE = os.path.join(TestRNUpdate.FILES_PATH, "fake_pack_invalid/_pack_metadata.json")
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
@@ -1786,12 +1656,8 @@ class TestRNUpdateUnit:
         ("1.0.0", DEFAULT_CONTENT_ITEM_TO_VERSION, True),
     ]
 
-    @pytest.mark.parametrize(
-        "pack_current_version, git_current_version, expected_result", diff_package
-    )
-    def test_is_bump_required(
-        self, pack_current_version, git_current_version, expected_result, mocker
-    ):
+    @pytest.mark.parametrize("pack_current_version, git_current_version, expected_result", diff_package)
+    def test_is_bump_required(self, pack_current_version, git_current_version, expected_result, mocker):
         """
         Given:
             - Case 1: Version in origin/master is higher than the current version for the pack
@@ -1816,9 +1682,7 @@ class TestRNUpdateUnit:
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
-        mocker.patch.object(
-            UpdateRN, "get_master_version", return_value=git_current_version
-        )
+        mocker.patch.object(UpdateRN, "get_master_version", return_value=git_current_version)
         update_rn = UpdateRN(
             pack_path="Packs/Base",
             update_type="minor",
@@ -1880,27 +1744,15 @@ class TestRNUpdateUnit:
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
-        integration_image_file_path = (
-            "Packs/DNSDB/Integrations/DNSDB_v2/DNSDB_v2_image.png"
-        )
-        xsiam_image_file_path = (
-            "Packs/Dropbox/XSIAMDashboards/DropboxDashboard_image.png"
-        )
-        description_file_path = (
-            "Packs/DNSDB/Integrations/DNSDB_v2/DNSDB_v2_description.md"
-        )
+        integration_image_file_path = "Packs/DNSDB/Integrations/DNSDB_v2/DNSDB_v2_image.png"
+        xsiam_image_file_path = "Packs/Dropbox/XSIAMDashboards/DropboxDashboard_image.png"
+        description_file_path = "Packs/DNSDB/Integrations/DNSDB_v2/DNSDB_v2_description.md"
         yml_file_path = "Packs/DNSDB/Integrations/DNSDB_v2/DNSDB_v2.yml"
         json_file_path = "Packs/Dropbox/XSIAMDashboards/DropboxDashboard.json"
 
-        assert yml_file_path == UpdateRN.change_image_or_desc_file_path(
-            integration_image_file_path
-        )
-        assert yml_file_path == UpdateRN.change_image_or_desc_file_path(
-            description_file_path
-        )
-        assert json_file_path == UpdateRN.change_image_or_desc_file_path(
-            xsiam_image_file_path
-        )
+        assert yml_file_path == UpdateRN.change_image_or_desc_file_path(integration_image_file_path)
+        assert yml_file_path == UpdateRN.change_image_or_desc_file_path(description_file_path)
+        assert json_file_path == UpdateRN.change_image_or_desc_file_path(xsiam_image_file_path)
         assert yml_file_path == UpdateRN.change_image_or_desc_file_path(yml_file_path)
 
     def test_update_api_modules_dependents_rn__no_id_set(self, mocker):
@@ -1919,12 +1771,8 @@ class TestRNUpdateUnit:
 
         if os.path.exists(DEFAULT_ID_SET_PATH):
             os.remove(DEFAULT_ID_SET_PATH)
-        print_error_mock = mocker.patch.object(
-            demisto_sdk.commands.update_release_notes.update_rn, "print_error"
-        )
-        update_api_modules_dependents_rn(
-            pre_release="", update_type="", added="", modified="", id_set_path=None
-        )
+        print_error_mock = mocker.patch.object(demisto_sdk.commands.update_release_notes.update_rn, "print_error")
+        update_api_modules_dependents_rn(pre_release="", update_type="", added="", modified="", id_set_path=None)
         assert "no id_set.json is available" in print_error_mock.call_args[0][0]
 
     def test_update_api_modules_dependents_rn__happy_flow(self, mocker, tmpdir):
@@ -1974,9 +1822,7 @@ class TestRNUpdateUnit:
         )
         assert execute_update_mock.call_count == 1
 
-    def test_update_docker_image_when_yml_has_changed_but_not_docker_image_property(
-        self, mocker
-    ):
+    def test_update_docker_image_when_yml_has_changed_but_not_docker_image_property(self, mocker):
         """
         Given
             - Modified .yml file
@@ -2006,10 +1852,7 @@ class TestRNUpdateUnit:
             return_value=return_value,
         )
 
-        assert (
-            check_docker_image_changed(main_branch="origin/master", packfile="test.yml")
-            is None
-        )
+        assert check_docker_image_changed(main_branch="origin/master", packfile="test.yml") is None
 
     @pytest.mark.parametrize(
         "return_value_mock",
@@ -2079,9 +1922,7 @@ class TestRNUpdateUnit:
             "longRunning: false\n"
         )
 
-        with open(
-            "demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json"
-        ) as file:
+        with open("demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json") as file:
             pack_data = json.load(file)
         mocker.patch(
             "demisto_sdk.commands.update_release_notes.update_rn.run_command",
@@ -2097,8 +1938,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(
             UpdateRN,
             "get_release_notes_path",
-            return_value="demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes"
-            "/1_1_0.md",
+            return_value="demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes" "/1_1_0.md",
         )
         mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
         mocker.patch(
@@ -2113,13 +1953,9 @@ class TestRNUpdateUnit:
             added_files=set(),
         )
         client.execute_update()
-        with open(
-            "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
-        ) as file:
+        with open("demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md") as file:
             RN = file.read()
-        os.remove(
-            "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
-        )
+        os.remove("demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md")
         assert "Updated the Docker image to: *demisto/python3:3.9.6.22914*." in RN
 
     def test_update_docker_image_in_yml_when_RN_aleady_exists(self, mocker):
@@ -2134,9 +1970,7 @@ class TestRNUpdateUnit:
         """
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
-        with open(
-            "demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json"
-        ) as file:
+        with open("demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json") as file:
             pack_data = json.load(file)
         with open(
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md",
@@ -2149,15 +1983,12 @@ class TestRNUpdateUnit:
         )
         mocker.patch.object(UpdateRN, "is_bump_required", return_value=False)
         mocker.patch.object(UpdateRN, "get_pack_metadata", return_value=pack_data)
-        mocker.patch(
-            "demisto_sdk.commands.common.tools.get_display_name", return_value="Test"
-        )
+        mocker.patch("demisto_sdk.commands.common.tools.get_display_name", return_value="Test")
         mocker.patch.object(UpdateRN, "build_rn_template", return_value="##### Test\n")
         mocker.patch.object(
             UpdateRN,
             "get_release_notes_path",
-            return_value="demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes"
-            "/1_0_0.md",
+            return_value="demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes" "/1_0_0.md",
         )
         mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
         mocker.patch.object(
@@ -2178,14 +2009,9 @@ class TestRNUpdateUnit:
         )
         client.execute_update()
         client.execute_update()
-        with open(
-            "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md"
-        ) as file:
+        with open("demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md") as file:
             RN = file.read()
-        assert (
-            RN.count("Updated the Docker image to: *dockerimage:python/test:1243*.")
-            == 1
-        )
+        assert RN.count("Updated the Docker image to: *dockerimage:python/test:1243*.") == 1
 
         with open(
             "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_0_0.md",
@@ -2207,9 +2033,7 @@ class TestRNUpdateUnit:
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
-        with open(
-            "demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json"
-        ) as file:
+        with open("demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json") as file:
             pack_data = json.load(file)
         mocker.patch(
             "demisto_sdk.commands.update_release_notes.update_rn.run_command",
@@ -2217,16 +2041,12 @@ class TestRNUpdateUnit:
         )
         mocker.patch.object(UpdateRN, "is_bump_required", return_value=True)
         mocker.patch.object(UpdateRN, "get_pack_metadata", return_value=pack_data)
-        mocker.patch(
-            "demisto_sdk.commands.common.tools.get_display_name", return_value="Test"
-        )
+        mocker.patch("demisto_sdk.commands.common.tools.get_display_name", return_value="Test")
         mocker.patch.object(UpdateRN, "build_rn_template", return_value="##### Test\n")
         mocker.patch.object(
             UpdateRN,
             "get_release_notes_path",
-            return_value="demisto_sdk/commands"
-            "/update_release_notes/tests_data"
-            "/Packs/release_notes/1_1_0.md",
+            return_value="demisto_sdk/commands" "/update_release_notes/tests_data" "/Packs/release_notes/1_1_0.md",
         )
         mocker.patch.object(
             UpdateRN,
@@ -2241,13 +2061,9 @@ class TestRNUpdateUnit:
             added_files=set("Packs/Test/some_added_file.py"),
         )
         client.execute_update()
-        with open(
-            "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
-        ) as file:
+        with open("demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md") as file:
             RN = file.read()
-        os.remove(
-            "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
-        )
+        os.remove("demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md")
         assert "Updated the Docker image to: *dockerimage:python/test:1243*" not in RN
 
     def test_new_integration_docker_not_updated(self, mocker):
@@ -2264,9 +2080,7 @@ class TestRNUpdateUnit:
 
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
-        with open(
-            "demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json"
-        ) as file:
+        with open("demisto_sdk/commands/update_release_notes/tests_data/Packs/Test/pack_metadata.json") as file:
             pack_data = json.load(file)
         mocker.patch(
             "demisto_sdk.commands.update_release_notes.update_rn.run_command",
@@ -2283,8 +2097,7 @@ class TestRNUpdateUnit:
         mocker.patch.object(
             UpdateRN,
             "get_release_notes_path",
-            return_value="demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes"
-            "/1_1_0.md",
+            return_value="demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes" "/1_1_0.md",
         )
         mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
 
@@ -2295,13 +2108,9 @@ class TestRNUpdateUnit:
             added_files={"Packs/Test/Integrations/Test.yml"},
         )
         client.execute_update()
-        with open(
-            "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
-        ) as file:
+        with open("demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md") as file:
             RN = file.read()
-        os.remove(
-            "demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md"
-        )
+        os.remove("demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes/1_1_0.md")
         assert "Updated the Docker image to: *dockerimage:python/test:1243*" not in RN
 
     docker_image_test_rn = (
@@ -2351,9 +2160,7 @@ class TestRNUpdateUnit:
         ),
     ]
 
-    @pytest.mark.parametrize(
-        "is_bc, existing_conf_data, expected_conf_data", BUILD_RN_CONFIG_FILE_INPUTS
-    )
+    @pytest.mark.parametrize("is_bc, existing_conf_data, expected_conf_data", BUILD_RN_CONFIG_FILE_INPUTS)
     def test_build_rn_config_file(
         self,
         pack,
@@ -2471,9 +2278,7 @@ def test_docker_image_is_added_for_every_integration(mocker, repo):
     client.execute_update()
     with open(str(f"{pack.path}/ReleaseNotes/0_0_1.md")) as f:
         rn_text = f.read()
-    assert (
-        rn_text.count("Updated the Docker image to: *demisto/python3:3.9.5.124*.") == 2
-    )
+    assert rn_text.count("Updated the Docker image to: *demisto/python3:3.9.5.124*.") == 2
     mocker.patch(
         "demisto_sdk.commands.update_release_notes.update_rn.check_docker_image_changed",
         return_value="demisto/python3:3.9.5.125",
@@ -2490,12 +2295,8 @@ def test_docker_image_is_added_for_every_integration(mocker, repo):
     client.execute_update()
     with open(str(f"{pack.path}/ReleaseNotes/0_0_1.md")) as f:
         rn_text = f.read()
-    assert (
-        rn_text.count("Updated the Docker image to: *demisto/python3:3.9.5.124*.") == 0
-    )
-    assert (
-        rn_text.count("Updated the Docker image to: *demisto/python3:3.9.5.125*.") == 2
-    )
+    assert rn_text.count("Updated the Docker image to: *demisto/python3:3.9.5.124*.") == 0
+    assert rn_text.count("Updated the Docker image to: *demisto/python3:3.9.5.125*.") == 2
 
 
 HANDLE_EXISTING_RN_WITH_DOCKER_IMAGE_INPUTS = [
@@ -2547,12 +2348,7 @@ def test_handle_existing_rn_with_docker_image(
     Case b: Added to the integration as expected.
 
     """
-    assert (
-        UpdateRN.handle_existing_rn_with_docker_image(
-            new_rn, header_by_type, docker_image, content_name
-        )
-        == expected
-    )
+    assert UpdateRN.handle_existing_rn_with_docker_image(new_rn, header_by_type, docker_image, content_name) == expected
 
 
 @pytest.mark.parametrize(
@@ -2591,9 +2387,7 @@ CREATE_MD_IF_CURRENTVERSION_IS_HIGHER_TEST_BANK_ = [(["0_0_1"], ["0_0_1", "0_0_3
     "first_expected_results, second_expected_results",
     CREATE_MD_IF_CURRENTVERSION_IS_HIGHER_TEST_BANK_,
 )
-def test_create_md_if_currentversion_is_higher(
-    mocker, first_expected_results, second_expected_results, repo
-):
+def test_create_md_if_currentversion_is_higher(mocker, first_expected_results, second_expected_results, repo):
     """
     Given:
         - Case 1: the expected RN files.
@@ -2667,22 +2461,12 @@ def test_get_deprecated_comment_from_desc():
         "Cortex XDR is the world's first detection and response app that natively\n integrates network, "
         "endpoint and cloud data to stop sophisticated attacks. "
     )
-    deprecate_with_replacement = (
-        "Deprecated. Use Cortex XDR v2 instead." + original_desc
-    )
-    deprecate_without_replacement = (
-        "Deprecated. No available replacement." + original_desc
-    )
+    deprecate_with_replacement = "Deprecated. Use Cortex XDR v2 instead." + original_desc
+    deprecate_without_replacement = "Deprecated. No available replacement." + original_desc
 
     assert get_deprecated_comment_from_desc(original_desc) == ""
-    assert (
-        get_deprecated_comment_from_desc(deprecate_with_replacement)
-        == "Use Cortex XDR v2 instead"
-    )
-    assert (
-        get_deprecated_comment_from_desc(deprecate_without_replacement)
-        == "No available replacement"
-    )
+    assert get_deprecated_comment_from_desc(deprecate_with_replacement) == "Use Cortex XDR v2 instead"
+    assert get_deprecated_comment_from_desc(deprecate_without_replacement) == "No available replacement"
 
 
 def test_handle_existing_rn_version_path(mocker, repo):
@@ -2695,9 +2479,7 @@ def test_handle_existing_rn_version_path(mocker, repo):
         Ensure the function does not sets should delete existing rn property to True when paths are identical.
     """
     pack = repo.create_pack("test")
-    mocker.patch.object(
-        Path, "absolute", return_value=f"{str(pack.path)}/ReleaseNotes/1_0_1.md"
-    )
+    mocker.patch.object(Path, "absolute", return_value=f"{str(pack.path)}/ReleaseNotes/1_0_1.md")
     pack.create_release_notes(version="1_0_1")
     client = UpdateRN(
         pack_path=str(pack.path),

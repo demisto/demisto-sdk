@@ -19,9 +19,7 @@ class XDRCTemplate(ContentItemXSIAM, content_type=ContentType.XDRC_TEMPLATE):
         return {"name", "os_type", "profile_type"}
 
     def prepare_for_upload(
-        self,
-        marketplace: MarketplaceVersions = MarketplaceVersions.MarketplaceV2,
-        **kwargs
+        self, marketplace: MarketplaceVersions = MarketplaceVersions.MarketplaceV2, **kwargs
     ) -> dict:
         data = super().prepare_for_upload(marketplace)
         data = XDRCTemplateUnifier.unify(self.path, data, marketplace)

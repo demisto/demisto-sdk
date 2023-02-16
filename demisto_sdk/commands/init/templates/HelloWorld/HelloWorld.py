@@ -295,9 +295,7 @@ class Client(BaseClient):  # type: ignore
         :rtype: ``Dict[str, Any]``
         """
 
-        return self._http_request(
-            method="GET", url_suffix="/domain", params={"domain": domain}
-        )
+        return self._http_request(method="GET", url_suffix="/domain", params={"domain": domain})
 
     def search_alerts(
         self,
@@ -349,9 +347,7 @@ class Client(BaseClient):  # type: ignore
         if start_time:
             request_params["start_time"] = start_time
 
-        return self._http_request(
-            method="GET", url_suffix="/get_alerts", params=request_params
-        )
+        return self._http_request(method="GET", url_suffix="/get_alerts", params=request_params)
 
     def get_alert(self, alert_id: str) -> Dict[str, Any]:
         """Gets a specific HelloWorld alert by id
@@ -363,9 +359,7 @@ class Client(BaseClient):  # type: ignore
         :rtype: ``Dict[str, Any]``
         """
 
-        return self._http_request(
-            method="GET", url_suffix="/get_alert_details", params={"alert_id": alert_id}
-        )
+        return self._http_request(method="GET", url_suffix="/get_alert_details", params={"alert_id": alert_id})
 
     def update_alert_status(self, alert_id: str, alert_status: str) -> Dict[str, Any]:
         """Changes the status of a specific HelloWorld alert
@@ -396,9 +390,7 @@ class Client(BaseClient):  # type: ignore
         :rtype: ``Dict[str, Any]``
         """
 
-        return self._http_request(
-            method="GET", url_suffix="/start_scan", params={"hostname": hostname}
-        )
+        return self._http_request(method="GET", url_suffix="/start_scan", params={"hostname": hostname})
 
     def scan_status(self, scan_id: str) -> Dict[str, Any]:
         """Gets the status of a HelloWorld scan
@@ -410,9 +402,7 @@ class Client(BaseClient):  # type: ignore
         :rtype: ``Dict[str, Any]``
         """
 
-        return self._http_request(
-            method="GET", url_suffix="/check_scan", params={"scan_id": scan_id}
-        )
+        return self._http_request(method="GET", url_suffix="/check_scan", params={"scan_id": scan_id})
 
     def scan_results(self, scan_id: str) -> Dict[str, Any]:
         """Gets the results of a HelloWorld scan
@@ -424,9 +414,7 @@ class Client(BaseClient):  # type: ignore
         :rtype: ``Dict[str, Any]``
         """
 
-        return self._http_request(
-            method="GET", url_suffix="/get_scan_results", params={"scan_id": scan_id}
-        )
+        return self._http_request(method="GET", url_suffix="/get_scan_results", params={"scan_id": scan_id})
 
     def say_hello(self, name: str) -> str:
         """Returns 'Hello {name}'
@@ -441,9 +429,7 @@ class Client(BaseClient):  # type: ignore
         return f"Hello {name}"
 
 
-def parse_domain_date(
-    domain_date: Union[List[str], str], date_format: str = "%Y-%m-%dT%H:%M:%S.000Z"
-) -> Optional[str]:
+def parse_domain_date(domain_date: Union[List[str], str], date_format: str = "%Y-%m-%dT%H:%M:%S.000Z") -> Optional[str]:
     """Converts whois date format to an ISO8601 string
 
     Converts the HelloWorld domain WHOIS date (YYYY-mm-dd HH:MM:SS) format
@@ -461,11 +447,7 @@ def parse_domain_date(
     if isinstance(domain_date, str):
         # if str parse the value
         return dateparser.parse(domain_date).strftime(date_format)
-    elif (
-        isinstance(domain_date, list)
-        and len(domain_date) > 0
-        and isinstance(domain_date[0], str)
-    ):
+    elif isinstance(domain_date, list) and len(domain_date) > 0 and isinstance(domain_date[0], str):
         # if list with at least one element, parse the first element
         return dateparser.parse(domain_date[0]).strftime(date_format)
     # in any other case return nothing
@@ -753,9 +735,7 @@ def fetch_incidents(
     incidents: List[Dict[str, Any]] = []
 
     # Get the CSV list of severities from min_severity
-    severity = ",".join(
-        HELLOWORLD_SEVERITIES[HELLOWORLD_SEVERITIES.index(min_severity) :]
-    )
+    severity = ",".join(HELLOWORLD_SEVERITIES[HELLOWORLD_SEVERITIES.index(min_severity) :])
 
     alerts = client.search_alerts(
         alert_type=alert_type,
@@ -821,9 +801,7 @@ def fetch_incidents(
     return next_run, incidents
 
 
-def ip_reputation_command(
-    client: Client, args: Dict[str, Any], default_threshold: int
-) -> CommandResults:
+def ip_reputation_command(client: Client, args: Dict[str, Any], default_threshold: int) -> CommandResults:
     """ip command: Returns IP reputation for a list of IPs
 
     :type client: ``Client``
@@ -908,9 +886,7 @@ def ip_reputation_command(
 
         # Create the IP Standard Context structure using Common.IP and add
         # dbot_score to it.
-        ip_standard_context = Common.IP(
-            ip=ip, asn=ip_data.get("asn"), dbot_score=dbot_score
-        )
+        ip_standard_context = Common.IP(ip=ip, asn=ip_data.get("asn"), dbot_score=dbot_score)
 
         ip_standard_list.append(ip_standard_context)
 
@@ -930,9 +906,7 @@ def ip_reputation_command(
         # Define which fields we want to exclude from the context output as
         # they are too verbose.
         ip_context_excluded_fields = ["objects", "nir"]
-        ip_data_list.append(
-            {k: ip_data[k] for k in ip_data if k not in ip_context_excluded_fields}
-        )
+        ip_data_list.append({k: ip_data[k] for k in ip_data if k not in ip_context_excluded_fields})
 
     # In this case we want to use an custom markdown to specify the table title,
     # but otherwise ``CommandResults()`` will call ``tableToMarkdown()``
@@ -951,9 +925,7 @@ def ip_reputation_command(
     )
 
 
-def domain_reputation_command(
-    client: Client, args: Dict[str, Any], default_threshold: int
-) -> CommandResults:
+def domain_reputation_command(client: Client, args: Dict[str, Any], default_threshold: int) -> CommandResults:
     """domain command: Returns domain reputation for a list of domains
 
     :type client: ``Client``
@@ -1003,13 +975,9 @@ def domain_reputation_command(
         # We want to convert the dates to ISO8601 as
         # Cortex XSOAR customers and integrations use this format by default
         if "creation_date" in domain_data:
-            domain_data["creation_date"] = parse_domain_date(
-                domain_data["creation_date"]
-            )
+            domain_data["creation_date"] = parse_domain_date(domain_data["creation_date"])
         if "expiration_date" in domain_data:
-            domain_data["expiration_date"] = parse_domain_date(
-                domain_data["expiration_date"]
-            )
+            domain_data["expiration_date"] = parse_domain_date(domain_data["expiration_date"])
         if "updated_date" in domain_data:
             domain_data["updated_date"] = parse_domain_date(domain_data["updated_date"])
 
@@ -1121,14 +1089,10 @@ def search_alerts_command(client: Client, args: Dict[str, Any]) -> CommandResult
     alert_type = args.get("alert_type")
 
     # Convert the argument to a timestamp using helper function
-    start_time = arg_to_timestamp(
-        arg=args.get("start_time"), arg_name="start_time", required=False
-    )
+    start_time = arg_to_timestamp(arg=args.get("start_time"), arg_name="start_time", required=False)
 
     # Convert the argument to an int using helper function
-    max_results = arg_to_int(
-        arg=args.get("max_results"), arg_name="max_results", required=False
-    )
+    max_results = arg_to_int(arg=args.get("max_results"), arg_name="max_results", required=False)
 
     # Severity is passed to the API as a CSV
     alerts = client.search_alerts(
@@ -1150,9 +1114,7 @@ def search_alerts_command(client: Client, args: Dict[str, Any]) -> CommandResult
 
     # in this example we are not providing a custom markdown, we will
     # let ``CommandResults`` generate it by default.
-    return CommandResults(
-        outputs_prefix="HelloWorld.Alert", outputs_key_field="alert_id", outputs=alerts
-    )
+    return CommandResults(outputs_prefix="HelloWorld.Alert", outputs_key_field="alert_id", outputs=alerts)
 
 
 def get_alert_command(client: Client, args: Dict[str, Any]) -> CommandResults:
@@ -1328,9 +1290,7 @@ def scan_status_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     )
 
 
-def scan_results_command(
-    client: Client, args: Dict[str, Any]
-) -> Union[Dict[str, Any], CommandResults]:
+def scan_results_command(client: Client, args: Dict[str, Any]) -> Union[Dict[str, Any], CommandResults]:
     """helloworld-scan-results command: Returns results for a HelloWorld scan
 
     :type client: ``Client``
@@ -1446,9 +1406,7 @@ def main() -> None:
     demisto.debug(f"Command being called is {demisto.command()}")
     try:
         headers = {"Authorization": f"Bearer {api_key}"}
-        client = Client(
-            base_url=base_url, verify=verify_certificate, headers=headers, proxy=proxy
-        )
+        client = Client(base_url=base_url, verify=verify_certificate, headers=headers, proxy=proxy)
 
         if demisto.command() == "test-module":
             # This is the call made when pressing the integration Test button.
@@ -1488,19 +1446,11 @@ def main() -> None:
 
         elif demisto.command() == "ip":
             default_threshold_ip = int(demisto.params().get("threshold_ip", "65"))
-            return_results(
-                ip_reputation_command(client, demisto.args(), default_threshold_ip)
-            )
+            return_results(ip_reputation_command(client, demisto.args(), default_threshold_ip))
 
         elif demisto.command() == "domain":
-            default_threshold_domain = int(
-                demisto.params().get("threshold_domain", "65")
-            )
-            return_results(
-                domain_reputation_command(
-                    client, demisto.args(), default_threshold_domain
-                )
-            )
+            default_threshold_domain = int(demisto.params().get("threshold_domain", "65"))
+            return_results(domain_reputation_command(client, demisto.args(), default_threshold_domain))
 
         elif demisto.command() == "helloworld-say-hello":
             return_results(say_hello_command(client, demisto.args()))
@@ -1526,9 +1476,7 @@ def main() -> None:
     # Log exceptions and return errors
     except Exception as e:
         demisto.error(traceback.format_exc())  # print the traceback
-        return_error(
-            f"Failed to execute {demisto.command()} command.\nError:\n{str(e)}"
-        )
+        return_error(f"Failed to execute {demisto.command()} command.\nError:\n{str(e)}")
 
 
 if __name__ in ("__main__", "__builtin__", "builtins"):  # pragma: no cover

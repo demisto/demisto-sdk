@@ -15,9 +15,7 @@ def test_is_valid_version(version, is_valid):
     structure = StructureValidator("")
     structure.current_file = {"version": version}
     validator = ReputationValidator(structure)
-    assert (
-        validator.is_valid_version() == is_valid
-    ), f"is_valid_version({version}) returns {not is_valid}."
+    assert validator.is_valid_version() == is_valid, f"is_valid_version({version}) returns {not is_valid}."
 
 
 data_is_valid_expiration = [(0, True), (500, True), (-1, False), ("not_valid", False)]
@@ -28,9 +26,7 @@ def test_is_valid_expiration(expiration, is_valid):
     structure = StructureValidator("")
     structure.current_file = {"fromVersion": "5.5.0", "expiration": expiration}
     validator = ReputationValidator(structure)
-    assert validator.is_valid_expiration() == is_valid, (
-        f"is_valid_expiration({expiration})" f" returns {not is_valid}."
-    )
+    assert validator.is_valid_expiration() == is_valid, f"is_valid_expiration({expiration})" f" returns {not is_valid}."
 
 
 data_is_id_equals_details = [("CIDR", "CIDR", True), ("CIDR", "CIDR2", False)]

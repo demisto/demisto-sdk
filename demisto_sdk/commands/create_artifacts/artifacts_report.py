@@ -14,9 +14,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
 )
 from demisto_sdk.commands.common.logger import Colors
 
-ContentObject = Union[
-    YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject
-]
+ContentObject = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject]
 
 
 class ObjectReport:

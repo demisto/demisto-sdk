@@ -29,9 +29,7 @@ json = JSON_Handler()
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 JSON_MIN_DATA_FILE = os.path.join(TEST_DATA_DIR, "coverage-min.json")
 COVERAGE_FILES_DIR = os.path.join(TEST_DATA_DIR, "coverage_data_files")
-PYTHON_FILE_PATH = os.path.join(
-    TEST_DATA_DIR, "HealthCheckAnalyzeLargeInvestigations_py"
-)
+PYTHON_FILE_PATH = os.path.join(TEST_DATA_DIR, "HealthCheckAnalyzeLargeInvestigations_py")
 
 
 def read_file(file_path):
@@ -80,9 +78,7 @@ class TestParseReportType:
         assert parse_report_type("text,json") == ["text", "json"]
 
     def test_with_all(self):
-        assert sorted(parse_report_type("all")) == sorted(
-            ["text", "json", "json-min", "html", "xml"]
-        )
+        assert sorted(parse_report_type("all")) == sorted(["text", "json", "json-min", "html", "xml"])
 
     def test_all_report_types_explicit(self):
         assert parse_report_type("text,json,json-min,html,xml") == [
@@ -115,8 +111,7 @@ class TestParseReportType:
         with pytest.raises(InvalidReportType) as invalid_report_type:
             parse_report_type("xml,all")
             assert (
-                str(invalid_report_type)
-                == 'You may not use the "all" report type in addition to other report types.'
+                str(invalid_report_type) == 'You may not use the "all" report type in addition to other report types.'
             )
 
     class TestInvalidReportType:
@@ -150,9 +145,7 @@ class TestExportReport:
             export_report(self.foo, "the_format", "the_path")
         foo_mock.assert_called_once()
         assert len(caplog.records) == 1
-        assert (
-            caplog.records[0].msg == "exporting the_format coverage report to the_path"
-        )
+        assert caplog.records[0].msg == "exporting the_format coverage report to the_path"
 
     def test_export_report_with_error(self, caplog):
         with caplog.at_level(logging.WARNING, logger="demisto-sdk"):
@@ -172,9 +165,7 @@ class TestCoverageSummary:
                 previous_coverage_report_url=TestCoverageSummary.TestGetFilesSummary.default_url,
             ).get_files_summary()
             assert len(mock_min_cov_request.request_history) == request_count
-            assert read_file(JSON_MIN_DATA_FILE) == read_file(
-                cache_dir / "coverage-min.json"
-            )
+            assert read_file(JSON_MIN_DATA_FILE) == read_file(cache_dir / "coverage-min.json")
 
         @staticmethod
         def validate_min_format(summary):
@@ -196,22 +187,16 @@ class TestCoverageSummary:
             self.validate_min_format(read_file(JSON_MIN_DATA_FILE))
 
         def test_without_cached_data(self, tmpdir, requests_mock):
-            mock_min_cov_request = requests_mock.get(
-                self.default_url, json=read_file(JSON_MIN_DATA_FILE)
-            )
+            mock_min_cov_request = requests_mock.get(self.default_url, json=read_file(JSON_MIN_DATA_FILE))
             files_data = CoverageSummary(
                 cache_dir=tmpdir,
                 previous_coverage_report_url=TestCoverageSummary.TestGetFilesSummary.default_url,
             ).get_files_summary()
             assert len(mock_min_cov_request.request_history) == 1
-            assert read_file(JSON_MIN_DATA_FILE) == read_file(
-                tmpdir.join("coverage-min.json")
-            )
+            assert read_file(JSON_MIN_DATA_FILE) == read_file(tmpdir.join("coverage-min.json"))
             assert files_data == read_file(JSON_MIN_DATA_FILE)["files"]
 
-        def test_with_invalid_cached_data_that_will_raise_key_error(
-            self, tmpdir, requests_mock
-        ):
+        def test_with_invalid_cached_data_that_will_raise_key_error(self, tmpdir, requests_mock):
             json_data = read_file(JSON_MIN_DATA_FILE)
             mock_min_cov_request = requests_mock.get(self.default_url, json=json_data)
             obj_with_no_files = json_data.copy()
@@ -220,9 +205,7 @@ class TestCoverageSummary:
             write_file(cached_file, json_data)
             self.check_get_files(tmpdir, mock_min_cov_request, 1)
 
-        def test_with_invalid_cached_data_that_will_raise_value_error(
-            self, tmpdir, requests_mock
-        ):
+        def test_with_invalid_cached_data_that_will_raise_value_error(self, tmpdir, requests_mock):
             json_data = read_file(JSON_MIN_DATA_FILE)
             mock_min_cov_request = requests_mock.get(self.default_url, json=json_data)
             json_data_with_modified_last_updated = json_data.copy()
@@ -231,16 +214,12 @@ class TestCoverageSummary:
             write_file(cached_file, json_data_with_modified_last_updated)
             self.check_get_files(tmpdir, mock_min_cov_request, 1)
 
-        def test_with_invalid_cached_data_that_will_raise_json_parse_error(
-            self, tmpdir, requests_mock
-        ):
+        def test_with_invalid_cached_data_that_will_raise_json_parse_error(self, tmpdir, requests_mock):
             cached_file = tmpdir / "coverage-min.json"
             json_data = read_file(JSON_MIN_DATA_FILE)
             mock_min_cov_request = requests_mock.get(self.default_url, json=json_data)
             cached_file.write("}")
-            mock_min_cov_request = requests_mock.get(
-                self.default_url, json=read_file(JSON_MIN_DATA_FILE)
-            )
+            mock_min_cov_request = requests_mock.get(self.default_url, json=read_file(JSON_MIN_DATA_FILE))
             self.check_get_files(tmpdir, mock_min_cov_request, 1)
 
         def test_with_not_updated_file(self, tmpdir, requests_mock):
@@ -261,9 +240,7 @@ class TestCoverageSummary:
         def test_with_no_cache(self, mocker, requests_mock):
             import builtins
 
-            mock_min_cov_request = requests_mock.get(
-                self.default_url, json=read_file(JSON_MIN_DATA_FILE)
-            )
+            mock_min_cov_request = requests_mock.get(self.default_url, json=read_file(JSON_MIN_DATA_FILE))
             not_mocked_open = builtins.open
             open_file_mocker = mocker.patch("builtins.open")
             files_data = CoverageSummary(
@@ -278,9 +255,7 @@ class TestCoverageSummary:
     class TestCreateCoverageSummaryFile:
         def test_creation(self, tmpdir):
             min_cov_path = tmpdir.join("coverage-min.json")
-            CoverageSummary.create(
-                os.path.join(TEST_DATA_DIR, "coverage.json"), min_cov_path
-            )
+            CoverageSummary.create(os.path.join(TEST_DATA_DIR, "coverage.json"), min_cov_path)
             assert read_file(JSON_MIN_DATA_FILE) == read_file(min_cov_path)
 
 
@@ -346,9 +321,7 @@ class TestFixFilePath:
         cov_files_paths = []
         for cov_file_name in cov_file_names:
             named_coverage_path = tmpdir.join(cov_file_name)
-            copy_file(
-                os.path.join(COVERAGE_FILES_DIR, cov_file_name), named_coverage_path
-            )
+            copy_file(os.path.join(COVERAGE_FILES_DIR, cov_file_name), named_coverage_path)
             cov_files_paths.append(named_coverage_path)
         dot_cov_file_path = tmpdir.join(".covergae")
         cov_obj = coverage.Coverage(data_file=dot_cov_file_path)
@@ -400,18 +373,14 @@ class TestGetCoverageObj:
         for cov_file_name in cov_file_names:
             tmp_cov_file_name = tmpdir.join(cov_file_name)
             tmp_cov_file_names.append(tmp_cov_file_name)
-            copy_file(
-                os.path.join(COVERAGE_FILES_DIR, cov_file_name), tmp_cov_file_name
-            )
+            copy_file(os.path.join(COVERAGE_FILES_DIR, cov_file_name), tmp_cov_file_name)
         mocker.patch(
             "demisto_sdk.commands.coverage_analyze.helpers.coverage_files",
             return_value=map(lambda x: x, tmp_cov_file_names),
         )
 
         # will raise 'coverage.misc.CoverageException' if the file will not be loaded
-        coverage_obj = get_coverage_obj(
-            coverage_file=None, report_dir=None, combine_from_content_repo=True
-        )
+        coverage_obj = get_coverage_obj(coverage_file=None, report_dir=None, combine_from_content_repo=True)
         with sqlite3.connect(coverage_obj.config.data_file) as sql_connection:
             cursor = sql_connection.cursor()
             data = list(cursor.execute("SELECT * FROM file").fetchall())

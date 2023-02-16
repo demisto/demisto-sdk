@@ -36,9 +36,7 @@ def logging_setup(
 
     log_level: int = levels.get(verbose, levels[2])
     l.setLevel(log_level)
-    fmt = logging.Formatter(
-        "%(asctime)s [%(levelname)s]: %(message)s", datefmt=DATE_FORMAT
-    )
+    fmt = logging.Formatter("%(asctime)s [%(levelname)s]: %(message)s", datefmt=DATE_FORMAT)
     console_handler_index = -1
     file_handler_index = -1
 
@@ -62,14 +60,8 @@ def logging_setup(
 
     # Setting debug log file if in circleci
     if log_path:
-        file_handler = logging.FileHandler(
-            filename=os.path.join(log_path, log_file_name)
-        )
-        file_handler.setFormatter(
-            logging.Formatter(
-                "[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(message)s"
-            )
-        )
+        file_handler = logging.FileHandler(filename=os.path.join(log_path, log_file_name))
+        file_handler.setFormatter(logging.Formatter("[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(message)s"))
         file_handler.name = "file-handler"
         file_handler.setLevel(level=logging.DEBUG)
 
@@ -86,9 +78,7 @@ def logging_setup(
 logger: logging.Logger = logging_setup(verbose=1, quiet=False)
 
 
-def set_console_stream_handler(
-    logger: logging.Logger, handler: RichHandler = RichHandler(rich_tracebacks=True)
-):
+def set_console_stream_handler(logger: logging.Logger, handler: RichHandler = RichHandler(rich_tracebacks=True)):
     """Set the console stream handler.
 
     Args:

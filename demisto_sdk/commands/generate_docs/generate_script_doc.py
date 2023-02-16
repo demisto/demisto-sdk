@@ -51,9 +51,7 @@ def generate_script_doc(
 
             example_dict, build_errors = build_example_dict(examples, insecure)
             script_name = list(example_dict.keys())[0] if example_dict else None
-            example_section, example_errors = generate_script_example(
-                script_name, example_dict
-            )
+            example_section, example_errors = generate_script_example(script_name, example_dict)
             errors.extend(build_errors)
             errors.extend(example_errors)
         else:
@@ -138,17 +136,9 @@ def generate_script_doc(
                     f"<!--\nUsed In: list was truncated. Full list commented out for reference:\n\n{used_in_str}\n -->\n"
                 )
 
-        doc.extend(
-            generate_table_section(
-                inputs, "Inputs", "There are no inputs for this script."
-            )
-        )
+        doc.extend(generate_table_section(inputs, "Inputs", "There are no inputs for this script."))
 
-        doc.extend(
-            generate_table_section(
-                outputs, "Outputs", "There are no outputs for this script."
-            )
-        )
+        doc.extend(generate_table_section(outputs, "Outputs", "There are no outputs for this script."))
 
         if example_section:
             doc.extend(example_section)
@@ -214,11 +204,7 @@ def get_inputs(script):
 
     for arg in script.get("args"):
         if not arg.get("description"):
-            errors.append(
-                "Error! You are missing description in script input {}".format(
-                    arg.get("name")
-                )
-            )
+            errors.append("Error! You are missing description in script input {}".format(arg.get("name")))
 
         inputs.append(
             {
@@ -244,11 +230,7 @@ def get_outputs(script):
 
     for arg in script.get("outputs"):
         if not arg.get("description"):
-            errors.append(
-                "Error! You are missing description in script output {}".format(
-                    arg.get("contextPath")
-                )
-            )
+            errors.append("Error! You are missing description in script output {}".format(arg.get("contextPath")))
 
         outputs.append(
             {
@@ -290,15 +272,11 @@ def generate_script_example(script_name, example=None):
     results = []
     errors = []
     if not example:
-        errors.append(
-            f"did not get any example for {script_name}. please add it manually."
-        )
+        errors.append(f"did not get any example for {script_name}. please add it manually.")
     else:
         examples = example.get(script_name, None)
         if not examples:
-            return "", [
-                f"did not get any example for {script_name}. please add it manually."
-            ]
+            return "", [f"did not get any example for {script_name}. please add it manually."]
         results.extend(["## Script Examples", ""])
         for script_example, md_example, context_example in examples:
             results.extend(["### Example command", "", f"```{script_example}```"])

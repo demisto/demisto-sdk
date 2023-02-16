@@ -39,9 +39,7 @@ def test_is_valid_version(version, is_valid):
     structure = StructureValidator("")
     structure.current_file = {"version": version}
     validator = IncidentTypeValidator(structure)
-    assert (
-        validator.is_valid_version() == is_valid
-    ), f"is_valid_version({version}) returns {not is_valid}."
+    assert validator.is_valid_version() == is_valid, f"is_valid_version({version}) returns {not is_valid}."
 
 
 data_is_id_equal_name = [
@@ -59,9 +57,7 @@ def test_is_id_equal_name(id_, name, is_valid):
     structure = StructureValidator("")
     structure.current_file = {"id": id_, "name": name}
     validator = IncidentTypeValidator(structure)
-    assert (
-        validator.is_id_equals_name() == is_valid
-    ), f"is_id_equal_name returns {not is_valid}."
+    assert validator.is_id_equals_name() == is_valid, f"is_id_equal_name returns {not is_valid}."
 
 
 data_is_including_int_fields = [
@@ -107,9 +103,7 @@ data_is_including_int_fields = [
 def test_is_including_fields(current_file, is_valid):
     structure = mock_structure("", current_file)
     validator = IncidentTypeValidator(structure)
-    assert (
-        validator.is_including_int_fields() == is_valid
-    ), f"is_including_int_fields returns {not is_valid}."
+    assert validator.is_including_int_fields() == is_valid, f"is_including_int_fields returns {not is_valid}."
 
 
 IS_FROM_VERSION_CHANGED_NO_OLD: Dict[any, any] = {}
@@ -126,9 +120,7 @@ IS_CHANGED_FROM_VERSION_INPUTS = [
 ]
 
 
-@pytest.mark.parametrize(
-    "current_from_version, old_from_version, answer", IS_CHANGED_FROM_VERSION_INPUTS
-)
+@pytest.mark.parametrize("current_from_version, old_from_version, answer", IS_CHANGED_FROM_VERSION_INPUTS)
 def test_is_changed_from_version(current_from_version, old_from_version, answer):
     structure = StructureValidator("")
     structure.old_file = old_from_version

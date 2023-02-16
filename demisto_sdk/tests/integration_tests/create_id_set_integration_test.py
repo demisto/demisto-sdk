@@ -41,9 +41,7 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
             packs_dependencies_results,
         )
 
-        mock_id_set = self.open_json_file(
-            "demisto_sdk/tests/test_files/create_id_set/unfiltered_id_set.json"
-        )
+        mock_id_set = self.open_json_file("demisto_sdk/tests/test_files/create_id_set/unfiltered_id_set.json")
         id_set_after_manual_removal = self.open_json_file(
             "demisto_sdk/tests/test_files/create_id_set/id_set_after_manual_removal.json"
         )
@@ -126,9 +124,7 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
             packs_dependencies_results,
         )
 
-        mock_id_set = self.open_json_file(
-            "demisto_sdk/tests/test_files/create_id_set/unfiltered_id_set.json"
-        )
+        mock_id_set = self.open_json_file("demisto_sdk/tests/test_files/create_id_set/unfiltered_id_set.json")
         id_set_after_manual_removal = self.open_json_file(
             "demisto_sdk/tests/test_files/create_id_set/mini_id_set/id_set_after_manual_removal.json"
         )

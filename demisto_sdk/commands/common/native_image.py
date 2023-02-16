@@ -36,13 +36,9 @@ class NativeImageConfig(Singleton, BaseModel):
     flags_versions_mapping: Dict[str, str] = {}
     docker_images_to_native_images_mapping: Dict[str, List] = {}
 
-    def __init__(
-        self, native_image_config_file_path: str = f"Tests/{NATIVE_IMAGE_FILE_NAME}"
-    ):
+    def __init__(self, native_image_config_file_path: str = f"Tests/{NATIVE_IMAGE_FILE_NAME}"):
         super().__init__(**self.load(native_image_config_file_path))
-        self.docker_images_to_native_images_mapping = (
-            self.__docker_images_to_native_images_support()
-        )
+        self.docker_images_to_native_images_mapping = self.__docker_images_to_native_images_support()
 
     def __docker_images_to_native_images_support(self):
         """
@@ -63,9 +59,7 @@ class NativeImageConfig(Singleton, BaseModel):
             for supported_docker_image in native_image_obj.supported_docker_images:
                 if supported_docker_image not in docker_images_to_native_images_mapping:
                     docker_images_to_native_images_mapping[supported_docker_image] = []
-                docker_images_to_native_images_mapping[supported_docker_image].append(
-                    native_image_name
-                )
+                docker_images_to_native_images_mapping[supported_docker_image].append(native_image_name)
 
         return docker_images_to_native_images_mapping
 
@@ -76,9 +70,7 @@ class NativeImageConfig(Singleton, BaseModel):
         """
         Load the native image configuration file
         """
-        native_image_config_content, _ = get_dict_from_file(
-            native_image_config_file_path
-        )
+        native_image_config_content, _ = get_dict_from_file(native_image_config_file_path)
         return native_image_config_content
 
     def get_native_image_reference(self, native_image) -> Optional[str]:
@@ -119,9 +111,7 @@ class ScriptIntegrationSupportedNativeImages:
     ):
         self.id = _id
         self.docker_image = (
-            extract_docker_image_from_text(text=docker_image, with_no_tag=True)
-            if docker_image
-            else docker_image
+            extract_docker_image_from_text(text=docker_image, with_no_tag=True) if docker_image else docker_image
         )
         self.native_image_config = native_image_config
 
@@ -129,12 +119,7 @@ class ScriptIntegrationSupportedNativeImages:
         """
         Get the mapping the script/integration to the native-images which support it.
         """
-        return (
-            self.native_image_config.docker_images_to_native_images_mapping.get(
-                self.docker_image
-            )
-            or []
-        )
+        return self.native_image_config.docker_images_to_native_images_mapping.get(self.docker_image) or []
 
     def __get_ignored_native_images(self):
         """
@@ -168,18 +153,14 @@ class ScriptIntegrationSupportedNativeImages:
             # the native image(s) which doesn't support it will be removed.
             ignored_native_images = self.__get_ignored_native_images()
             native_images = [
-                native_image
-                for native_image in native_images
-                if native_image not in ignored_native_images
+                native_image for native_image in native_images if native_image not in ignored_native_images
             ]
 
             if only_production_tags and self.NATIVE_DEV in native_images:
                 native_images.remove(self.NATIVE_DEV)
 
             if get_raw_version:
-                return list(
-                    map(_extract_native_image_version_for_server, native_images)
-                )
+                return list(map(_extract_native_image_version_for_server, native_images))
             return native_images
         return []
 

@@ -63,16 +63,12 @@ class DescriptionFormat(BaseUpdate):
     def add_betaintegration_description(self):
         """update description file of a beta integration to contain beta integration's description"""
         if BETA_INTEGRATION_DISCLAIMER not in self.description_content:
-            self.description_content = (
-                BETA_INTEGRATION_DISCLAIMER + "\n" + self.description_content
-            )
+            self.description_content = BETA_INTEGRATION_DISCLAIMER + "\n" + self.description_content
 
     def save_md_to_destination_file(self):
         """Safely saves formatted YML data to destination file."""
         if self.source_file != self.output_file and self.verbose:
-            click.secho(
-                f"Saving output description file to {self.output_file} \n", fg="white"
-            )
+            click.secho(f"Saving output description file to {self.output_file} \n", fg="white")
         with open(self.output_file, "w") as f:
             f.write(self.description_content)
         f.close()

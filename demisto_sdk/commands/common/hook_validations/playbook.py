@@ -36,9 +36,7 @@ class PlaybookValidator(ContentEntityValidator):
         self.validate_all = validate_all
         self.deprecation_validator = deprecation_validator
 
-    def is_valid_playbook(
-        self, validate_rn: bool = True, id_set_file=None, is_modified: bool = False
-    ) -> bool:
+    def is_valid_playbook(self, validate_rn: bool = True, id_set_file=None, is_modified: bool = False) -> bool:
         """Check whether the playbook is valid or not.
 
          Args:
@@ -154,8 +152,8 @@ class PlaybookValidator(ContentEntityValidator):
         inputs_in_use: set = self.collect_all_inputs_in_use()
         inputs_in_section: set = self.collect_all_inputs_from_inputs_section()
         all_inputs_in_use = self.are_all_inputs_in_use(inputs_in_use, inputs_in_section)
-        are_all_used_inputs_in_inputs_section = (
-            self.are_all_used_inputs_in_inputs_section(inputs_in_use, inputs_in_section)
+        are_all_used_inputs_in_inputs_section = self.are_all_used_inputs_in_inputs_section(
+            inputs_in_use, inputs_in_section
         )
         return all_inputs_in_use and are_all_used_inputs_in_inputs_section
 
@@ -171,18 +169,14 @@ class PlaybookValidator(ContentEntityValidator):
 
         if inputs_not_in_use:
             playbook_name = self.current_file.get("name", "")
-            error_message, error_code = Errors.input_key_not_in_tasks(
-                playbook_name, sorted(inputs_not_in_use)
-            )
+            error_message, error_code = Errors.input_key_not_in_tasks(playbook_name, sorted(inputs_not_in_use))
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
         return True
 
     @error_codes("PB119")
-    def are_all_used_inputs_in_inputs_section(
-        self, inputs_in_use: set, inputs_in_section: set
-    ) -> bool:
+    def are_all_used_inputs_in_inputs_section(self, inputs_in_use: set, inputs_in_section: set) -> bool:
         """Check whether the playbook inputs that in use appear in the input section.
 
         Return:
@@ -230,20 +224,17 @@ class PlaybookValidator(ContentEntityValidator):
                 # builtin conditional task
                 if task.get("conditions"):
                     is_all_condition_branches_handled = (
-                        self.is_builtin_condition_task_branches_handled(task)
-                        and is_all_condition_branches_handled
+                        self.is_builtin_condition_task_branches_handled(task) and is_all_condition_branches_handled
                     )
                 # ask conditional task
                 elif task.get("message"):
                     is_all_condition_branches_handled = (
-                        self.is_ask_condition_branches_handled(task)
-                        and is_all_condition_branches_handled
+                        self.is_ask_condition_branches_handled(task) and is_all_condition_branches_handled
                     )
                 # script conditional task
                 elif task.get("scriptName"):
                     is_all_condition_branches_handled = (
-                        self.is_script_condition_branches_handled(task)
-                        and is_all_condition_branches_handled
+                        self.is_script_condition_branches_handled(task) and is_all_condition_branches_handled
                     )
         return is_all_condition_branches_handled
 
@@ -279,19 +270,13 @@ class PlaybookValidator(ContentEntityValidator):
                 # else doesn't have a path, skip error
                 if "#DEFAULT#" == e.args[0]:
                     continue
-                error_message, error_code = Errors.playbook_unhandled_task_branches(
-                    task.get("id"), next_task_branch
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.playbook_unhandled_task_branches(task.get("id"), next_task_branch)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = is_all_condition_branches_handled = False
 
         # if there are task_condition_labels left then not all branches are handled
         if task_condition_labels:
-            error_message, error_code = Errors.playbook_unhandled_task_branches(
-                task.get("id"), task_condition_labels
-            )
+            error_message, error_code = Errors.playbook_unhandled_task_branches(task.get("id"), task_condition_labels)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = is_all_condition_branches_handled = False
 
@@ -312,20 +297,14 @@ class PlaybookValidator(ContentEntityValidator):
         next_tasks: Dict = task.get("nexttasks", {})
 
         # ADD all replyOptions to unhandled_reply_options (UPPER)
-        unhandled_reply_options = set(
-            map(str.upper, task.get("message", {}).get("replyOptions", []))
-        )
+        unhandled_reply_options = set(map(str.upper, task.get("message", {}).get("replyOptions", [])))
 
         # Rename the keys in dictionary to upper case
         next_tasks_upper = {k.upper(): v for k, v in next_tasks.items()}
 
         # Rename the dictionary keys from 'True Positive\False Positive' to 'YES\NO'
-        next_tasks_upper["YES"] = next_tasks_upper.pop(
-            "TRUE POSITIVE", next_tasks_upper.get("YES")
-        )
-        next_tasks_upper["NO"] = next_tasks_upper.pop(
-            "FALSE POSITIVE", next_tasks_upper.get("NO")
-        )
+        next_tasks_upper["YES"] = next_tasks_upper.pop("TRUE POSITIVE", next_tasks_upper.get("YES"))
+        next_tasks_upper["NO"] = next_tasks_upper.pop("FALSE POSITIVE", next_tasks_upper.get("NO"))
 
         # Remove all nexttasks from unhandled_reply_options (UPPER)
         for next_task_branch, next_task_id in next_tasks_upper.items():
@@ -333,27 +312,19 @@ class PlaybookValidator(ContentEntityValidator):
                 if next_task_id and next_task_branch != "#DEFAULT#":
                     unhandled_reply_options.remove(next_task_branch)
             except KeyError:
-                error_message, error_code = Errors.playbook_unreachable_condition(
-                    task.get("id"), next_task_branch
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.playbook_unreachable_condition(task.get("id"), next_task_branch)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = is_all_condition_branches_handled = False
 
         if unhandled_reply_options:
             # if there's only one unhandled_reply_options and there's a #default#
             # then all good.
             # Otherwise - Error
-            if not (
-                len(unhandled_reply_options) == 1 and "#DEFAULT#" in next_tasks_upper
-            ):
+            if not (len(unhandled_reply_options) == 1 and "#DEFAULT#" in next_tasks_upper):
                 error_message, error_code = Errors.playbook_unhandled_reply_options(
                     task.get("id"), unhandled_reply_options
                 )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = is_all_condition_branches_handled = False
         return is_all_condition_branches_handled
 
@@ -393,16 +364,10 @@ class PlaybookValidator(ContentEntityValidator):
             if task.get("type") == "condition":
                 # builtin conditional task
                 if task.get("nexttasks"):
-                    default_conditions_valid = (
-                        self.is_default_not_only_condition(task)
-                        and default_conditions_valid
-                    )
+                    default_conditions_valid = self.is_default_not_only_condition(task) and default_conditions_valid
                 # ask conditional task
                 if task.get("message") and task.get("message").get("replyOptions"):
-                    default_conditions_valid = (
-                        self.is_default_not_only_reply_option(task)
-                        and default_conditions_valid
-                    )
+                    default_conditions_valid = self.is_default_not_only_reply_option(task) and default_conditions_valid
         return default_conditions_valid
 
     @error_codes("PB125")
@@ -427,9 +392,7 @@ class PlaybookValidator(ContentEntityValidator):
                 found_non_default_next_task = True
 
         if not found_non_default_next_task:
-            error_message, error_code = Errors.playbook_only_default_next(
-                task.get("id")
-            )
+            error_message, error_code = Errors.playbook_only_default_next(task.get("id"))
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = is_default_not_only_condition_res = False
 
@@ -447,14 +410,10 @@ class PlaybookValidator(ContentEntityValidator):
         """
         is_default_not_only_reply_option_res: bool = True
 
-        reply_options = set(
-            map(str.upper, task.get("message", {}).get("replyOptions", []))
-        )
+        reply_options = set(map(str.upper, task.get("message", {}).get("replyOptions", [])))
 
         if len(reply_options) == 1 and "#default#".upper() in reply_options:
-            error_message, error_code = Errors.playbook_only_default_reply_option(
-                task.get("id")
-            )
+            error_message, error_code = Errors.playbook_only_default_reply_option(task.get("id"))
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = is_default_not_only_reply_option_res = False
 
@@ -481,9 +440,7 @@ class PlaybookValidator(ContentEntityValidator):
         orphan_tasks = tasks_bucket.difference(next_tasks_bucket)
         if orphan_tasks:
             error_message, error_code = Errors.playbook_unconnected_tasks(orphan_tasks)
-            if not self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            if not self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 
         return tasks_bucket.issubset(next_tasks_bucket)
@@ -525,9 +482,7 @@ class PlaybookValidator(ContentEntityValidator):
                     error_message,
                     error_code,
                 ) = Errors.playbook_cant_have_deletecontext_all()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False
                     return False
         return True
@@ -544,9 +499,7 @@ class PlaybookValidator(ContentEntityValidator):
             scriptargs = task.get("scriptarguments", {})
             if scriptargs and scriptargs.get("using", {}):
                 error_message, error_code = Errors.using_instance_in_playbook()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False
                     return False
         return True
@@ -577,32 +530,20 @@ class PlaybookValidator(ContentEntityValidator):
             pb_task = task_dict.get("task", {})
             script_id_used_in_task = pb_task.get("script")
             task_script_name = pb_task.get("scriptName")
-            script_entry_to_check = (
-                script_id_used_in_task if script_id_used_in_task else task_script_name
-            )
+            script_entry_to_check = script_id_used_in_task if script_id_used_in_task else task_script_name
             integration_script_flag = "|||"
             if script_id_used_in_task:
-                if (
-                    integration_script_flag not in script_id_used_in_task
-                ):  # Checking script
-                    is_valid &= self.check_script_id(
-                        script_id_used_in_task, id_set_scripts
-                    )
+                if integration_script_flag not in script_id_used_in_task:  # Checking script
+                    is_valid &= self.check_script_id(script_id_used_in_task, id_set_scripts)
                 else:  # Checking integration command
-                    is_valid &= self.check_integration_command(
-                        script_id_used_in_task, id_set_integrations
-                    )
+                    is_valid &= self.check_integration_command(script_id_used_in_task, id_set_integrations)
             if task_script_name and integration_script_flag not in task_script_name:
                 # if there is 'scriptName' and it is not integration
                 is_valid &= self.check_script_name(task_script_name, id_set_scripts)
 
             if not is_valid:
-                error_message, error_code = Errors.invalid_script_id(
-                    script_entry_to_check, pb_task
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.invalid_script_id(script_entry_to_check, pb_task)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
         return True
@@ -616,9 +557,7 @@ class PlaybookValidator(ContentEntityValidator):
         Returns:
             True if script_used_in_task exists in id_set
         """
-        return any(
-            [script_id_used_in_task in id_set_dict for id_set_dict in id_set_scripts]
-        )
+        return any([script_id_used_in_task in id_set_dict for id_set_dict in id_set_scripts])
 
     def check_integration_command(
         self,
@@ -642,12 +581,8 @@ class PlaybookValidator(ContentEntityValidator):
             return True
         for id_integration_dict in id_set_integrations:
             id_integration_id = list(id_integration_dict.keys())[0]
-            if (
-                command_without_brand and not integration_id
-            ) or id_integration_id == integration_id:
-                commands = id_integration_dict.get(id_integration_id, {}).get(
-                    "commands", []
-                )
+            if (command_without_brand and not integration_id) or id_integration_id == integration_id:
+                commands = id_integration_dict.get(id_integration_id, {}).get("commands", [])
                 if integration_command in commands:
                     return True
         return False
@@ -662,11 +597,7 @@ class PlaybookValidator(ContentEntityValidator):
             True if pb_script_name exists in id_set
         """
         return any(
-            [
-                pb_script_name == id_set_dict[key].get("name")
-                for id_set_dict in id_set_scripts
-                for key in id_set_dict
-            ]
+            [pb_script_name == id_set_dict[key].get("name") for id_set_dict in id_set_scripts for key in id_set_dict]
         )
 
     def _is_else_path_in_condition_task(self, task):
@@ -688,12 +619,8 @@ class PlaybookValidator(ContentEntityValidator):
 
             if not is_valid_task:
                 is_valid = is_valid_task
-                error_message, error_code = Errors.invalid_uuid(
-                    task_key, taskid, inner_id
-                )
-                self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                )  # Does not break after one
+                error_message, error_code = Errors.invalid_uuid(task_key, taskid, inner_id)
+                self.handle_error(error_message, error_code, file_path=self.file_path)  # Does not break after one
                 # invalid task in order to raise error for all the invalid tasks at the file
 
         return is_valid
@@ -714,12 +641,8 @@ class PlaybookValidator(ContentEntityValidator):
 
             if not is_valid_task:
                 is_valid = is_valid_task
-                error_message, error_code = Errors.taskid_different_from_id(
-                    task_key, taskid, inner_id
-                )
-                self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                )  # Does not break after one
+                error_message, error_code = Errors.taskid_different_from_id(task_key, taskid, inner_id)
+                self.handle_error(error_message, error_code, file_path=self.file_path)  # Does not break after one
                 # invalid task in order to raise error for all the invalid tasks at the file
 
         return is_valid
@@ -755,11 +678,7 @@ class PlaybookValidator(ContentEntityValidator):
             for conditions in task.get("conditions", []):
                 for condition in conditions.get("condition"):
                     for condition_info in condition:
-                        if (
-                            value := condition_info.get("left", {})
-                            .get("value", {})
-                            .get("simple", "")
-                        ):
+                        if value := condition_info.get("left", {}).get("value", {}).get("simple", ""):
                             if not self.handle_incorrect_reference_value(
                                 task_id,
                                 value,
@@ -769,21 +688,11 @@ class PlaybookValidator(ContentEntityValidator):
                             ):
                                 is_valid = False
 
-                        elif (
-                            value := condition_info.get("left", {})
-                            .get("value", {})
-                            .get("complex", {})
-                        ):
-                            if not self.handle_transformers_and_filters(
-                                value, task_id, task_name, "condition"
-                            ):
+                        elif value := condition_info.get("left", {}).get("value", {}).get("complex", {}):
+                            if not self.handle_transformers_and_filters(value, task_id, task_name, "condition"):
                                 is_valid = False
 
-                        if (
-                            value := condition_info.get("right", {})
-                            .get("value", {})
-                            .get("simple", "")
-                        ):
+                        if value := condition_info.get("right", {}).get("value", {}).get("simple", ""):
                             if not self.handle_incorrect_reference_value(
                                 task_id,
                                 value,
@@ -793,26 +702,16 @@ class PlaybookValidator(ContentEntityValidator):
                             ):
                                 is_valid = False
 
-                        elif (
-                            value := condition_info.get("right", {})
-                            .get("value", {})
-                            .get("complex", {})
-                        ):
-                            if not self.handle_transformers_and_filters(
-                                value, task_id, task_name, "condition"
-                            ):
+                        elif value := condition_info.get("right", {}).get("value", {}).get("complex", {}):
+                            if not self.handle_transformers_and_filters(value, task_id, task_name, "condition"):
                                 is_valid = False
 
             for message_key, message_value in task.get("message", {}).items():
-                if not self.handle_message_value(
-                    message_key, message_value, task_id, task_name
-                ):
+                if not self.handle_message_value(message_key, message_value, task_id, task_name):
                     is_valid = False
 
             for script_argument in task.get("scriptarguments", {}).values():
-                if not self.handle_script_arguments(
-                    script_argument, task_id, task_name
-                ):
+                if not self.handle_script_arguments(script_argument, task_id, task_name):
                     is_valid = False
 
         return is_valid
@@ -825,33 +724,21 @@ class PlaybookValidator(ContentEntityValidator):
         """
         is_valid = True
         if task.get("type") == "regular":
-            if default_assignee := task.get("defaultassigneecomplex", {}).get(
-                "simple", ""
-            ):
-                if not self.handle_incorrect_reference_value(
-                    task_id, default_assignee, task_name, "default assignee"
-                ):
+            if default_assignee := task.get("defaultassigneecomplex", {}).get("simple", ""):
+                if not self.handle_incorrect_reference_value(task_id, default_assignee, task_name, "default assignee"):
                     is_valid = False
 
-            elif default_assignee := task.get("defaultassigneecomplex", {}).get(
-                "complex", {}
-            ):
-                if not self.handle_transformers_and_filters(
-                    default_assignee, task_id, task_name, "default assignee"
-                ):
+            elif default_assignee := task.get("defaultassigneecomplex", {}).get("complex", {}):
+                if not self.handle_transformers_and_filters(default_assignee, task_id, task_name, "default assignee"):
                     is_valid = False
 
             for script_argument in task.get("scriptarguments", {}).values():
-                if not self.handle_script_arguments(
-                    script_argument, task_id, task_name
-                ):
+                if not self.handle_script_arguments(script_argument, task_id, task_name):
                     is_valid = False
 
             for incident_field in task.get("fieldMapping", []):
                 field_output = incident_field.get("output", {}).get("complex", {})
-                if not self.handle_transformers_and_filters(
-                    field_output, task_id, task_name, "field mapping"
-                ):
+                if not self.handle_transformers_and_filters(field_output, task_id, task_name, "field mapping"):
                     is_valid = False
 
         return is_valid
@@ -865,15 +752,11 @@ class PlaybookValidator(ContentEntityValidator):
         is_valid = True
         if task.get("type") == "collection":
             for script_argument in task.get("scriptarguments", {}).values():
-                if not self.handle_script_arguments(
-                    script_argument, task_id, task_name
-                ):
+                if not self.handle_script_arguments(script_argument, task_id, task_name):
                     is_valid = False
 
         for message_key, message_value in task.get("message", {}).items():
-            if not self.handle_message_value(
-                message_key, message_value, task_id, task_name
-            ):
+            if not self.handle_message_value(message_key, message_value, task_id, task_name):
                 is_valid = False
 
         for form_question in task.get("form", {}).get("questions", []):
@@ -885,9 +768,7 @@ class PlaybookValidator(ContentEntityValidator):
                         is_valid = False
 
                 elif value := form_question.get("labelarg", {}).get("complex", {}):
-                    if not self.handle_transformers_and_filters(
-                        value, "inputs", task_name, "form question"
-                    ):
+                    if not self.handle_transformers_and_filters(value, "inputs", task_name, "form question"):
                         is_valid = False
 
         return is_valid
@@ -907,16 +788,12 @@ class PlaybookValidator(ContentEntityValidator):
                     is_valid = False
 
             elif complex_value := playbook_input.get("value", {}).get("complex", {}):
-                if not self.handle_transformers_and_filters(
-                    complex_value, "inputs", "inputs", "playbook inputs"
-                ):
+                if not self.handle_transformers_and_filters(complex_value, "inputs", "inputs", "playbook inputs"):
                     is_valid = False
 
         return is_valid
 
-    def handle_transformers_and_filters(
-        self, field_output: dict, task_id, task_name, section_name
-    ):
+    def handle_transformers_and_filters(self, field_output: dict, task_id, task_name, section_name):
         """
         Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>},
         in a transformers and filters section.
@@ -926,11 +803,7 @@ class PlaybookValidator(ContentEntityValidator):
         filters = field_output.get("filters", [])
         for incident_filter in filters:
             for filter_info in incident_filter:
-                if (
-                    value := filter_info.get("left", {})
-                    .get("value", {})
-                    .get("simple", "")
-                ):
+                if value := filter_info.get("left", {}).get("value", {}).get("simple", ""):
                     if not self.handle_incorrect_reference_value(
                         task_id,
                         value,
@@ -940,11 +813,7 @@ class PlaybookValidator(ContentEntityValidator):
                     ):
                         is_valid = False
 
-                if (
-                    value := filter_info.get("right", {})
-                    .get("value", {})
-                    .get("simple", "")
-                ):
+                if value := filter_info.get("right", {}).get("value", {}).get("simple", ""):
                     if not self.handle_incorrect_reference_value(
                         task_id,
                         value,
@@ -957,9 +826,7 @@ class PlaybookValidator(ContentEntityValidator):
         for transformer in field_output.get("transformers", []):
             for _, arg_info in transformer.get("args", {}).items():
                 if value := arg_info.get("value", {}).get("simple", ""):
-                    if not self.handle_incorrect_reference_value(
-                        task_id, value, task_name, section_name, arg_info
-                    ):
+                    if not self.handle_incorrect_reference_value(task_id, value, task_name, section_name, arg_info):
                         is_valid = False
 
         return is_valid
@@ -972,15 +839,11 @@ class PlaybookValidator(ContentEntityValidator):
         """
         is_valid = True
         if arg_value := script_argument.get("simple", ""):
-            if not self.handle_incorrect_reference_value(
-                task_id, arg_value, task_name, "script arguments"
-            ):
+            if not self.handle_incorrect_reference_value(task_id, arg_value, task_name, "script arguments"):
                 is_valid = False
 
         elif arg_value := script_argument.get("complex", {}):
-            if not self.handle_transformers_and_filters(
-                arg_value, task_id, task_name, "script arguments"
-            ):
+            if not self.handle_transformers_and_filters(arg_value, task_id, task_name, "script arguments"):
                 is_valid = False
 
         return is_valid
@@ -995,22 +858,16 @@ class PlaybookValidator(ContentEntityValidator):
         if message_key and message_value:
             if isinstance(message_value, dict):
                 if value := message_value.get("simple", ""):
-                    if not self.handle_incorrect_reference_value(
-                        task_id, value, task_name, "message"
-                    ):
+                    if not self.handle_incorrect_reference_value(task_id, value, task_name, "message"):
                         is_valid = False
 
                 elif value := message_value.get("complex", {}):
-                    if not self.handle_transformers_and_filters(
-                        value, task_id, task_name, "message"
-                    ):
+                    if not self.handle_transformers_and_filters(value, task_id, task_name, "message"):
                         is_valid = False
 
         return is_valid
 
-    def handle_incorrect_reference_value(
-        self, task_id, values, task_name, section_name, value_info: dict = {}
-    ):
+    def handle_incorrect_reference_value(self, task_id, values, task_name, section_name, value_info: dict = {}):
         """
         Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>},
         Returns: True if the references are correct
@@ -1023,9 +880,7 @@ class PlaybookValidator(ContentEntityValidator):
                     error_message, error_code = Errors.incorrect_value_references(
                         task_id, value, task_name, section_name
                     )
-                    if self.handle_error(
-                        error_message, error_code, file_path=self.file_path
-                    ):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
                         is_valid = False
 
@@ -1040,9 +895,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         name = self.current_file.get("name", "")
         if "playbook" in name.lower():
-            error_message, error_code = Errors.field_contain_forbidden_word(
-                field_names=["name"], word="playbook"
-            )
+            error_message, error_code = Errors.field_contain_forbidden_word(field_names=["name"], word="playbook")
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
@@ -1051,11 +904,7 @@ class PlaybookValidator(ContentEntityValidator):
     def is_valid_with_indicators_input(self):
         input_data = self.current_file.get("inputs", [])
         for item in input_data:
-            entity = (
-                item["playbookInputQuery"].get("queryEntity", "")
-                if item.get("playbookInputQuery", None)
-                else None
-            )
+            entity = item["playbookInputQuery"].get("queryEntity", "") if item.get("playbookInputQuery", None) else None
             if entity == "indicators":
                 answer = [
                     self.is_playbook_quiet_mode(),
@@ -1094,9 +943,7 @@ class PlaybookValidator(ContentEntityValidator):
             if task.get("continueonerror", False):
                 continue_tasks.append(task_key)
         if continue_tasks:
-            error_message, error_code = Errors.playbook_tasks_continue_on_error(
-                continue_tasks
-            )
+            error_message, error_code = Errors.playbook_tasks_continue_on_error(continue_tasks)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
@@ -1114,16 +961,12 @@ class PlaybookValidator(ContentEntityValidator):
         is_valid = True
 
         if self.current_file.get("deprecated"):
-            used_files_list = self.deprecation_validator.validate_playbook_deprecation(
-                self.current_file.get("name")
-            )
+            used_files_list = self.deprecation_validator.validate_playbook_deprecation(self.current_file.get("name"))
             if used_files_list:
                 error_message, error_code = Errors.playbook_is_deprecated_and_used(
                     self.current_file.get("name"), used_files_list
                 )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
 
         return is_valid

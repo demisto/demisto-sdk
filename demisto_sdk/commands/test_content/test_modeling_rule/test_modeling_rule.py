@@ -93,9 +93,7 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
         raise typer.Exit(1)
     errors = False
     for i, result in enumerate(results):
-        logger.info(
-            f"\n[cyan underline]Result {i + 1}[/cyan underline]", extra={"markup": True}
-        )
+        logger.info(f"\n[cyan underline]Result {i + 1}[/cyan underline]", extra={"markup": True})
 
         # get expected_values for the given query result
         td_event_id = result.pop(f"{test_data.data[0].dataset}.test_data_event_id")
@@ -150,9 +148,7 @@ def generate_xql_query(rule: SingleModelingRule, test_data_event_ids: List[str])
         str: The XQL query.
     """
     fields = ", ".join([field for field in rule.fields])
-    td_event_ids = ", ".join(
-        [f'"{td_event_id}"' for td_event_id in test_data_event_ids]
-    )
+    td_event_ids = ", ".join([f'"{td_event_id}"' for td_event_id in test_data_event_ids])
     query = (
         f"config timeframe = 10y | datamodel dataset in({rule.dataset}) | filter {rule.dataset}.test_data_event_id "
         f"in({td_event_ids}) | dedup {rule.dataset}.test_data_event_id by desc _insert_time | fields "
@@ -161,16 +157,12 @@ def generate_xql_query(rule: SingleModelingRule, test_data_event_ids: List[str])
     return query
 
 
-def validate_expected_values(
-    xsiam_client: XsiamApiClient, mr: ModelingRule, test_data: init_test_data.TestData
-):
+def validate_expected_values(xsiam_client: XsiamApiClient, mr: ModelingRule, test_data: init_test_data.TestData):
     """Validate the expected_values in the given test data file."""
     logger.info("[cyan]Validating expected_values...[/cyan]", extra={"markup": True})
     success = True
     for rule in mr.rules:
-        query = generate_xql_query(
-            rule, [str(d.test_data_event_id) for d in test_data.data]
-        )
+        query = generate_xql_query(rule, [str(d.test_data_event_id) for d in test_data.data])
         logger.debug(query)
         try:
             execution_id = xsiam_client.start_xql_query(query)
@@ -189,9 +181,7 @@ def validate_expected_values(
         else:
             verify_results(results, test_data)
     if success:
-        logger.info(
-            "[green]Mappings validated successfully[/green]", extra={"markup": True}
-        )
+        logger.info("[green]Mappings validated successfully[/green]", extra={"markup": True})
     else:
         raise typer.Exit(1)
 
@@ -225,9 +215,7 @@ def check_dataset_exists(
             execution_id = xsiam_client.start_xql_query(query)
             results = xsiam_client.get_xql_query_result(execution_id)
             if results:
-                logger.info(
-                    f"[green]Dataset {dataset} exists[/green]", extra={"markup": True}
-                )
+                logger.info(f"[green]Dataset {dataset} exists[/green]", extra={"markup": True})
                 return
             else:
                 err = (
@@ -248,9 +236,7 @@ def check_dataset_exists(
     raise typer.Exit(1)
 
 
-def push_test_data_to_tenant(
-    xsiam_client: XsiamApiClient, mr: ModelingRule, test_data: init_test_data.TestData
-):
+def push_test_data_to_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, test_data: init_test_data.TestData):
     """Push the test data to the tenant.
 
     Args:
@@ -268,9 +254,7 @@ def push_test_data_to_tenant(
     ]
     logger.info("[cyan]Pushing test data to tenant...[/cyan]", extra={"markup": True})
     try:
-        xsiam_client.push_to_dataset(
-            events_test_data, mr.rules[0].vendor, mr.rules[0].product
-        )
+        xsiam_client.push_to_dataset(events_test_data, mr.rules[0].vendor, mr.rules[0].product)
     except requests.exceptions.HTTPError:
         logger.error(
             (
@@ -285,9 +269,7 @@ def push_test_data_to_tenant(
     logger.info("[green]Test data pushed successfully[/green]", extra={"markup": True})
 
 
-def verify_pack_exists_on_tenant(
-    xsiam_client: XsiamApiClient, mr: ModelingRule, interactive: bool
-):
+def verify_pack_exists_on_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, interactive: bool):
     """Verify that the pack containing the modeling rule exists on the tenant.
 
     Args:
@@ -295,9 +277,7 @@ def verify_pack_exists_on_tenant(
         mr (ModelingRule): Modeling rule object parsed from the modeling rule file.
         interactive (bool): Whether command is being run in interactive mode.
     """
-    logger.info(
-        "[cyan]Verifying pack installed on tenant[/cyan]", extra={"markup": True}
-    )
+    logger.info("[cyan]Verifying pack installed on tenant[/cyan]", extra={"markup": True})
     containing_pack = get_containing_pack(mr)
     containing_pack_id = containing_pack.id
     installed_packs = xsiam_client.installed_packs
@@ -307,9 +287,7 @@ def verify_pack_exists_on_tenant(
             found_pack = pack
             break
     if found_pack:
-        logger.debug(
-            f"[cyan]Found pack on tenant:\n{found_pack}[/cyan]", extra={"markup": True}
-        )
+        logger.debug(f"[cyan]Found pack on tenant:\n{found_pack}[/cyan]", extra={"markup": True})
     else:
         logger.error(
             f"[red]Pack {containing_pack_id} was not found on tenant[/red]",
@@ -319,9 +297,7 @@ def verify_pack_exists_on_tenant(
         upload_result = 0
         if interactive:
             # interactively install pack
-            upload = typer.confirm(
-                f"Would you like to upload {containing_pack_id} to the tenant?"
-            )
+            upload = typer.confirm(f"Would you like to upload {containing_pack_id} to the tenant?")
             if upload:
                 logger.info(
                     f'[cyan underline]Upload "{containing_pack_id}"[/cyan underline]',
@@ -416,9 +392,7 @@ def validate_modeling_rule(
             extra={"markup": True},
         )
         if interactive:
-            generate = typer.confirm(
-                f"Would you like to generate a test data file for {mrule_dir}?"
-            )
+            generate = typer.confirm(f"Would you like to generate a test data file for {mrule_dir}?")
             if generate:
                 logger.info(
                     "[cyan underline]Generate Test Data File[/cyan underline]",
@@ -514,9 +488,7 @@ def validate_modeling_rule(
         )
         xsiam_client = XsiamApiClient(xsiam_client_cfg)
         verify_pack_exists_on_tenant(xsiam_client, mr_entity, interactive)
-        test_data = init_test_data.TestData.parse_file(
-            mr_entity.testdata_path.as_posix()
-        )
+        test_data = init_test_data.TestData.parse_file(mr_entity.testdata_path.as_posix())
 
         if push:
             if missing_event_data:
@@ -549,9 +521,7 @@ def validate_modeling_rule(
 # ====================== test-modeling-rule ====================== #
 
 
-def tenant_config_cb(
-    ctx: typer.Context, param: typer.CallbackParam, value: Optional[str]
-):
+def tenant_config_cb(ctx: typer.Context, param: typer.CallbackParam, value: Optional[str]):
     if ctx.resilient_parsing:
         return
     if param.value_is_missing(value):

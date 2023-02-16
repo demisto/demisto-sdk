@@ -147,9 +147,7 @@ class TestStructureValidator:
 
     @pytest.mark.parametrize("path, scheme, answer, error", SCHEME_VALIDATION_INPUTS)
     def test_scheme_validation_playbook(self, path, scheme, answer, error, mocker):
-        mocker.patch.object(
-            StructureValidator, "scheme_of_file_by_path", return_value=scheme
-        )
+        mocker.patch.object(StructureValidator, "scheme_of_file_by_path", return_value=scheme)
         validator = StructureValidator(file_path=path)
         assert validator.is_valid_scheme() is answer, error
 
@@ -162,9 +160,7 @@ class TestStructureValidator:
 
     @pytest.mark.parametrize("path, scheme, answer", SCHEME_VALIDATION_INDICATORFIELDS)
     def test_scheme_validation_indicatorfield(self, path, scheme, answer, mocker):
-        validator = StructureValidator(
-            file_path=path, predefined_scheme="incidentfield"
-        )
+        validator = StructureValidator(file_path=path, predefined_scheme="incidentfield")
         assert validator.is_valid_scheme() is answer
 
     SCHEME_VALIDATION_REPUTATION = [
@@ -198,9 +194,7 @@ class TestStructureValidator:
 
     @pytest.mark.parametrize("path, answer", INPUTS_IS_PATH_VALID)
     def test_is_valid_file_path(self, path, answer, mocker):
-        mocker.patch.object(
-            StructureValidator, "load_data_from_file", return_value=None
-        )
+        mocker.patch.object(StructureValidator, "load_data_from_file", return_value=None)
         structure = StructureValidator(path)
         structure.scheme_name = None
         assert structure.is_valid_file_path() is answer
@@ -231,21 +225,17 @@ class TestStructureValidator:
 
     pykwalify_error_1 = " - Cannot find required key 'category'. Path: ''.: Path: '/'>'"
     expected_error_1 = 'Missing the field "category" in root'
-    pykwalify_error_2 = (
-        " - Cannot find required key 'id'. Path: '/commonfields'.: Path: '/'>'"
-    )
+    pykwalify_error_2 = " - Cannot find required key 'id'. Path: '/commonfields'.: Path: '/'>'"
     expected_error_2 = "Missing the field \"id\" in Path: 'commonfields'"
     pykwalify_error_3 = (
-        " - Cannot find required key 'description'. Path: '/script/commands/0/arguments/0'.: "
-        "Path: '/'>'"
+        " - Cannot find required key 'description'. Path: '/script/commands/0/arguments/0'.: " "Path: '/'>'"
     )
     expected_error_3 = (
         "Missing the field \"description\" in Path: 'script'-> 'commands'-> "
         "'integrationTest-search-vulnerabilities'-> 'arguments'-> 'top-priority'"
     )
     pykwalify_error_4 = (
-        " - Cannot find required key 'description'. Path: '/script/commands/5/outputs/0'.: "
-        "Path: '/'>'"
+        " - Cannot find required key 'description'. Path: '/script/commands/5/outputs/0'.: " "Path: '/'>'"
     )
     expected_error_4 = (
         'Missing the field "description" in Path: '
@@ -253,9 +243,7 @@ class TestStructureValidator:
         "'outputs'-> 'integrationTest.ConnectorsList.ID'"
     )
     pykwalify_error_5 = " - Key 'ok' was not defined. Path: '/configuration/0'"
-    expected_error_5 = (
-        "The field \"ok\" in path 'configuration'-> 'url' was not defined in the scheme"
-    )
+    expected_error_5 = "The field \"ok\" in path 'configuration'-> 'url' was not defined in the scheme"
     pykwalify_error_6 = (
         "- Enum 'Network Securitys' does not exist. "
         "Path: '/category' Enum: ['Analytics & SIEM', 'Utilities', 'Messaging']."
@@ -276,17 +264,13 @@ class TestStructureValidator:
 
     @pytest.mark.parametrize("path, scheme , error, correct", TEST_ERRORS)
     def test_print_error_line(self, path, scheme, error, correct, mocker):
-        mocker.patch.object(
-            StructureValidator, "scheme_of_file_by_path", return_value=scheme
-        )
+        mocker.patch.object(StructureValidator, "scheme_of_file_by_path", return_value=scheme)
         structure = StructureValidator(file_path=path)
         err = structure.parse_error_line(error)
         assert correct in err[0]
 
     def test_check_for_spaces_in_file_name(self, mocker):
-        mocker.patch.object(
-            StructureValidator, "handle_error", return_value="Not-non-string"
-        )
+        mocker.patch.object(StructureValidator, "handle_error", return_value="Not-non-string")
         file_with_spaces = "Packs/pack/Classifiers/space in name"
         file_without_spaces = "Packs/pack/Classifiers/no-space-in-name"
         structure = StructureValidator(file_path=file_with_spaces)
@@ -296,9 +280,7 @@ class TestStructureValidator:
         assert structure.check_for_spaces_in_file_name() is True
 
     def test_is_valid_file_extension(self, mocker):
-        mocker.patch.object(
-            StructureValidator, "handle_error", return_value="Not-non-string"
-        )
+        mocker.patch.object(StructureValidator, "handle_error", return_value="Not-non-string")
         mocker.patch.object(StructureValidator, "load_data_from_file", return_value="")
         image = "image.png"
         yml_file = "yml_file.yml"
@@ -334,9 +316,7 @@ class TestStructureValidator:
             "type": "multiSelect",
             "openEnded": True,
         }
-        incident_field: JSONBased = pack.create_incident_field(
-            "incident-field-test", content=field_content
-        )
+        incident_field: JSONBased = pack.create_incident_field("incident-field-test", content=field_content)
         structure = StructureValidator(incident_field.path)
         assert structure.is_valid_scheme()
 
@@ -349,9 +329,7 @@ class TestStructureValidator:
             "type": "multiSelect",
             "openEnded": True,
         }
-        incident_field: JSONBased = pack.create_indicator_field(
-            "incident-field-test", content=field_content
-        )
+        incident_field: JSONBased = pack.create_indicator_field("incident-field-test", content=field_content)
         structure = StructureValidator(incident_field.path)
         assert structure.is_valid_scheme()
 
@@ -387,9 +365,7 @@ class TestStructureValidator:
         captured = capsys.readouterr().out
         assert f'Missing the field "{missing_field}" in root' in captured
 
-    @pytest.mark.parametrize(
-        "missing_field", ("dependency_packs", "wizard", "name", "id", "fromVersion")
-    )
+    @pytest.mark.parametrize("missing_field", ("dependency_packs", "wizard", "name", "id", "fromVersion"))
     def test_wizard_missing_field(self, repo, capsys, missing_field: str):
         """
         Given
@@ -456,9 +432,7 @@ class TestStructureValidator:
             "type": "longText",
             "Aliases": [{"cliName": "alias field", "type": "UNKNOWN"}],
         }
-        incident_field: JSONBased = pack.create_incident_field(
-            "incident-field-test", content=field_content
-        )
+        incident_field: JSONBased = pack.create_incident_field("incident-field-test", content=field_content)
         structure = StructureValidator(incident_field.path)
         assert not structure.is_valid_scheme()
 
@@ -639,9 +613,7 @@ class TestGetMatchingRegex:
             [PARSING_RULES_YML_REGEX],
         ),
         (
-            [
-                "Packs/Okta/ModelingRules/OktaModelingRules/OktaModelingRules_schema.json"
-            ],
+            ["Packs/Okta/ModelingRules/OktaModelingRules/OktaModelingRules_schema.json"],
             [],
             [MODELING_RULE_SCHEMA_REGEX],
         ),
@@ -695,18 +667,12 @@ class TestGetMatchingRegex:
         ({"breakingChanges": True, "breakingChangesNotes": True}, False),
     ]
 
-    @pytest.mark.parametrize(
-        "release_notes_config, expected", RELEASE_NOTES_CONFIG_SCHEME_INPUTS
-    )
-    def test_release_notes_config_scheme(
-        self, tmpdir, release_notes_config: dict, expected: bool
-    ):
+    @pytest.mark.parametrize("release_notes_config, expected", RELEASE_NOTES_CONFIG_SCHEME_INPUTS)
+    def test_release_notes_config_scheme(self, tmpdir, release_notes_config: dict, expected: bool):
         file_path: str = f"{tmpdir}/1_0_1.json"
         with open(file_path, "w") as f:
             f.write(json.dumps(release_notes_config))
-        validator = StructureValidator(
-            file_path=file_path, predefined_scheme="releasenotesconfig"
-        )
+        validator = StructureValidator(file_path=file_path, predefined_scheme="releasenotesconfig")
         assert validator.is_valid_scheme() is expected
 
 
@@ -747,9 +713,7 @@ class TestXSIAMStructureValidator(TestStructureValidator):
             Make sure the schema is invalid.
         """
         modeling_rule_schema = pack.create_modeling_rule("modeling_rule").schema
-        modeling_rule_schema.add_or_update_field_by_path(
-            "test_audit_raw.name.type", "invalid_type"
-        )
+        modeling_rule_schema.add_or_update_field_by_path("test_audit_raw.name.type", "invalid_type")
         validator = StructureValidator(modeling_rule_schema.path)
         assert not validator.is_valid_scheme()
 
@@ -849,9 +813,7 @@ class TestXSIAMStructureValidator(TestStructureValidator):
             Make sure the schema is invalid.
         """
         xsiam_dashboard = pack.create_xsiam_dashboard("xsiam_dashboard")
-        xsiam_dashboard.add_or_update_field_by_path(
-            "widgets_data.[0].creator_mail", "test@paloaltonetworks.com"
-        )
+        xsiam_dashboard.add_or_update_field_by_path("widgets_data.[0].creator_mail", "test@paloaltonetworks.com")
         validator = StructureValidator(xsiam_dashboard.path)
         assert not validator.is_valid_scheme()
 

@@ -10,37 +10,23 @@ def print_template_examples():
         " - The release notes need to be in simple language and informative. "
         "Think about what is the impact on the user and what they should know about this version."
     )
-    click.echo(
-        " - Command names - should be wrapped with three stars - ***command-name***"
-    )
+    click.echo(" - Command names - should be wrapped with three stars - ***command-name***")
     click.echo(
         " - Packs/Integrations/scripts/playbooks and other content "
         "entities (incident fields, dashboards...) - should be wrapped with two stars - **entity_name**"
     )
-    click.echo(
-        " - Parameters/arguments/functions/outputs names - "
-        "should be wrapped with one star - *entity_name*"
-    )
+    click.echo(" - Parameters/arguments/functions/outputs names - " "should be wrapped with one star - *entity_name*")
     click.secho("\nEnhancements examples:", fg="bright_cyan")
     click.echo("\n - You can now filter an event by attribute data fields.")
-    click.echo(
-        "\n - Added support for the *extend-context* argument in the ***ua-parse*** command."
-    )
+    click.echo("\n - Added support for the *extend-context* argument in the ***ua-parse*** command.")
     click.echo("\n - Added 2 commands:\n  - ***command-one***\n  - ***command-two***")
     click.echo(
-        "\n - Added the **reporter** and **reporter email** "
-        "labels to incidents that are created by direct messages."
+        "\n - Added the **reporter** and **reporter email** " "labels to incidents that are created by direct messages."
     )
-    click.echo(
-        "\n - Improved implementation of the default value for the *fetch_time* parameter."
-    )
+    click.echo("\n - Improved implementation of the default value for the *fetch_time* parameter.")
     click.secho("\n\nBug fixes examples:", fg="bright_cyan")
-    click.echo(
-        "\n - Fixed an issue where mirrored investigations contained mismatched user names."
-    )
-    click.echo(
-        "\n - Fixed an issue with ***fetch-incidents***, which caused incident duplication."
-    )
+    click.echo("\n - Fixed an issue where mirrored investigations contained mismatched user names.")
+    click.echo("\n - Fixed an issue with ***fetch-incidents***, which caused incident duplication.")
     click.echo(
         "\n - Fixed an issue in which the ***qradar-delete-reference-set-value*** command failed to "
         'delete reference sets with the "\\" character in their names.'
@@ -59,9 +45,7 @@ def print_template_examples():
         "\n - Deprecated. The playbook uses an unsupported scraping API. Use Proofpoint Protection Server "
         "v2 playbook instead."
     )
-    click.echo(
-        "\n - Deprecated the *ipname* argument from the ***checkpoint-block-ip*** command."
-    )
+    click.echo("\n - Deprecated the *ipname* argument from the ***checkpoint-block-ip*** command.")
     click.secho("\n\nOut of beta examples:", fg="bright_cyan")
     click.echo("\n - SaaS Security is now generally available.")
     click.secho("\n\nThe available template prefixes are:\n", fg="cyan")
@@ -84,9 +68,7 @@ def print_template_examples():
         f" {pprint.pformat(ReleaseNotesChecker.BANNED_TEMPLATES)[1:-1]}",
         fg="bright_red",
     )
-    click.echo(
-        "\n\nFor additional information see: https://xsoar.pan.dev/docs/documentation/release-notes"
-    )
+    click.echo("\n\nFor additional information see: https://xsoar.pan.dev/docs/documentation/release-notes")
 
 
 class ReleaseNotesChecker:
@@ -143,9 +125,7 @@ class ReleaseNotesChecker:
 
     def check_templates(self, line):
         """Check that the given line fits one of our templates"""
-        if line.lower().startswith("added") and (
-            line.lower().endswith("command:") or line.endswith("commands:")
-        ):
+        if line.lower().startswith("added") and (line.lower().endswith("command:") or line.endswith("commands:")):
             return True
 
         for template in self.RN_PREFIX_TEMPLATES:
@@ -203,8 +183,7 @@ class ReleaseNotesChecker:
                 show_template_message = True
                 self.add_note(
                     line,
-                    "Line is not using one of our templates, consider "
-                    "changing it to fit our standard.",
+                    "Line is not using one of our templates, consider " "changing it to fit our standard.",
                 )
 
             if self.check_if_using_banned_template(line):
@@ -221,9 +200,7 @@ class ReleaseNotesChecker:
                 self.add_note(line, "Line should end with a period (.)")
 
             if "bug" in line.lower():
-                self.add_note(
-                    line, 'Refrain from using the word "bug", use "issue" instead.'
-                )
+                self.add_note(line, 'Refrain from using the word "bug", use "issue" instead.')
 
         if self.notes:
             self.print_notes()
@@ -235,7 +212,5 @@ class ReleaseNotesChecker:
                 )
             return False
         else:
-            click.secho(
-                f" - Release notes {self.file_path} match a known template.", fg="green"
-            )
+            click.secho(f" - Release notes {self.file_path} match a known template.", fg="green")
             return True

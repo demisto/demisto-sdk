@@ -20,12 +20,8 @@ class Readme(TextObject):
 
     @staticmethod
     def prepare_contributors_text(contrib_list):
-        fixed_contributor_names = [
-            f" - {contrib_name}\n" for contrib_name in contrib_list
-        ]
-        return CONTRIBUTORS_README_TEMPLATE.format(
-            contributors_names="".join(fixed_contributor_names)
-        )
+        fixed_contributor_names = [f" - {contrib_name}\n" for contrib_name in contrib_list]
+        return CONTRIBUTORS_README_TEMPLATE.format(contributors_names="".join(fixed_contributor_names))
 
     def mention_contributors_in_readme(self):
         """Mention contributors in pack readme"""

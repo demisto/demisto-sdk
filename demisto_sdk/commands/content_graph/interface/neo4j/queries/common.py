@@ -47,9 +47,7 @@ def node_map(properties: Dict[str, Any]) -> str:
 
 
 def to_neo4j_map(properties: dict) -> str:
-    properties = {
-        k: f'"{v}"' if isinstance(v, (str, Path)) else v for k, v in properties.items()
-    }
+    properties = {k: f'"{v}"' if isinstance(v, (str, Path)) else v for k, v in properties.items()}
     params_str = ", ".join(f"{k}: {v}" for k, v in properties.items())
     params_str = f"{{{params_str}}}" if params_str else ""
     return params_str

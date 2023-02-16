@@ -94,9 +94,7 @@ class MapperJSONFormat(BaseUpdateJSON):
             return
 
         content_fields = (
-            get_all_incident_and_indicator_fields_from_id_set(
-                self.id_set_file, "mapper"
-            )
+            get_all_incident_and_indicator_fields_from_id_set(self.id_set_file, "mapper")
             + [field.lower() for field in BUILT_IN_FIELDS]
             + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
         )

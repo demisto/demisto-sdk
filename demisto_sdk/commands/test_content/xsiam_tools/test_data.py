@@ -29,9 +29,7 @@ class CompletedTestData(TestData):
     @validator("data")
     def validate_expected_values(cls, v):
         for test_data_event in v:
-            if not test_data_event.expected_values or not any(
-                test_data_event.expected_values.values()
-            ):
+            if not test_data_event.expected_values or not any(test_data_event.expected_values.values()):
                 err = "The expected values mapping is required for each test data event"
                 if not any(test_data_event.expected_values.values()):
                     err = (

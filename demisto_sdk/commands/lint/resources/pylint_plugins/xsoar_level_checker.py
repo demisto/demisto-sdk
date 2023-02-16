@@ -133,10 +133,7 @@ class XsoarChecker(BaseChecker):
                     for child in self._inner_search(node):
 
                         # In case the NotImplementedError appears as part of a raise node.
-                        if (
-                            isinstance(child, astroid.Raise)
-                            and child.exc.func.name == "NotImplementedError"
-                        ):
+                        if isinstance(child, astroid.Raise) and child.exc.func.name == "NotImplementedError":
                             not_implemented_error_exist = True
 
                         # In case the NotImplementedError appears inside of a If node.
@@ -147,10 +144,7 @@ class XsoarChecker(BaseChecker):
 
                             # Iterate over each clause of the if node and search for raise NotImplementedError.
                             for line in clauses:
-                                if (
-                                    isinstance(line, astroid.Raise)
-                                    and line.exc.func.name == "NotImplementedError"
-                                ):
+                                if isinstance(line, astroid.Raise) and line.exc.func.name == "NotImplementedError":
                                     not_implemented_error_exist = True
                                     break
 
@@ -158,9 +152,7 @@ class XsoarChecker(BaseChecker):
                             break
 
                     if not not_implemented_error_exist:
-                        self.add_message(
-                            "not-implemented-error-doesnt-exist", node=node
-                        )
+                        self.add_message("not-implemented-error-doesnt-exist", node=node)
 
         except Exception:
             pass
@@ -178,36 +170,22 @@ class XsoarChecker(BaseChecker):
         """
         try:
             # for demisto.args()[] implementation or for demisto.params()[]
-            if (
-                isinstance(node.parent, astroid.Assign)
-                and node not in node.parent.targets
-            ):
+            if isinstance(node.parent, astroid.Assign) and node not in node.parent.targets:
 
                 # Checks for demisto.args()[] implementation.
-                if (
-                    node.value.func.expr.name == "demisto"
-                    and node.value.func.attrname == "args"
-                ):
+                if node.value.func.expr.name == "demisto" and node.value.func.attrname == "args":
                     self.add_message("direct-access-args-params-dict-exist", node=node)
 
                 # Checks for demisto.params()[] implementation.
-                elif (
-                    node.value.func.expr.name == "demisto"
-                    and node.value.func.attrname == "params"
-                ):
+                elif node.value.func.expr.name == "demisto" and node.value.func.attrname == "params":
                     self.add_message("direct-access-args-params-dict-exist", node=node)
 
         except Exception:
             try:
                 # for args[]/params[] implementation which is not in the left (target) side of the assignment(=)
-                if (
-                    isinstance(node.parent, astroid.Assign)
-                    and node not in node.parent.targets
-                ):
+                if isinstance(node.parent, astroid.Assign) and node not in node.parent.targets:
                     if node.value.name in self.common_args_params:
-                        self.add_message(
-                            "direct-access-args-params-dict-exist", node=node
-                        )
+                        self.add_message("direct-access-args-params-dict-exist", node=node)
 
             except Exception:
                 pass

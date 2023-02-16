@@ -5,9 +5,7 @@ from demisto_sdk.commands.common.tools import src_root
 
 TEST_DATA = src_root() / "tests" / "test_files"
 TEST_CONTENT_REPO = TEST_DATA / "content_slim"
-RELEASE_NOTE = (
-    TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / RELEASE_NOTES_DIR / "1_1_1.md"
-)
+RELEASE_NOTE = TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / RELEASE_NOTES_DIR / "1_1_1.md"
 
 
 def test_objects_factory():

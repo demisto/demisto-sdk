@@ -5,13 +5,7 @@ from demisto_sdk.commands.common.tools import src_root
 
 TEST_DATA = src_root() / "tests" / "test_files"
 TEST_CONTENT_REPO = TEST_DATA / "content_slim"
-PLAYBOOK = (
-    TEST_CONTENT_REPO
-    / PACKS_DIR
-    / "Sample01"
-    / PLAYBOOKS_DIR
-    / "playbook-sample_new.yml"
-)
+PLAYBOOK = TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / PLAYBOOKS_DIR / "playbook-sample_new.yml"
 
 
 def test_objects_factory():

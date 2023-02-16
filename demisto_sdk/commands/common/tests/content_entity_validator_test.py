@@ -103,9 +103,7 @@ def test_find_test_match(
     Then
     -  Ensure the method 'find_test_match' return answer accordingly
     """
-    assert (
-        is_test_config_match(test_config, test_playbook_id, integration_id) == expected
-    )
+    assert is_test_config_match(test_config, test_playbook_id, integration_id) == expected
 
 
 NOT_REGISTERED_TESTS_INPUT = [
@@ -170,10 +168,7 @@ def test_get_not_registered_tests(
     """
     structure_validator = StructureValidator(file_path, predefined_scheme=schema)
     tests = structure_validator.current_file.get("tests")
-    assert (
-        get_not_registered_tests(conf_json_data, content_item_id, schema, tests)
-        == expected
-    )
+    assert get_not_registered_tests(conf_json_data, content_item_id, schema, tests) == expected
 
 
 def test_entity_valid_name_valid(repo, mocker):
@@ -192,9 +187,7 @@ def test_entity_valid_name_valid(repo, mocker):
     integration.create_default_integration(name="BitcoinAbuse")
     integration.yml.update({"display": "BitcoinAbuse"})
     integration_structure_validator = StructureValidator(integration.yml.path)
-    integration_content_entity_validator = ContentEntityValidator(
-        integration_structure_validator
-    )
+    integration_content_entity_validator = ContentEntityValidator(integration_structure_validator)
     assert integration_content_entity_validator.name_does_not_contain_excluded_word()
 
 
@@ -272,12 +265,8 @@ FROM_AND_TO_VERSION_FOR_TEST = [
 ]
 
 
-@pytest.mark.parametrize(
-    "current_file, file_path, expected_result", FROM_AND_TO_VERSION_FOR_TEST
-)
-def test_are_fromversion_and_toversion_in_correct_format(
-    mocker, current_file, file_path, expected_result
-):
+@pytest.mark.parametrize("current_file, file_path, expected_result", FROM_AND_TO_VERSION_FOR_TEST)
+def test_are_fromversion_and_toversion_in_correct_format(mocker, current_file, file_path, expected_result):
 
     mocker.patch.object(StructureValidator, "__init__", lambda a, b: None)
     structure = StructureValidator(file_path)
@@ -291,15 +280,10 @@ def test_are_fromversion_and_toversion_in_correct_format(
     structure.specific_validations = None
 
     content_entity_validator = ContentEntityValidator(structure)
-    mocker.patch.object(
-        ContentEntityValidator, "handle_error", return_value=current_file
-    )
+    mocker.patch.object(ContentEntityValidator, "handle_error", return_value=current_file)
 
     try:
-        assert (
-            content_entity_validator.are_fromversion_and_toversion_in_correct_format()
-            == expected_result
-        )
+        assert content_entity_validator.are_fromversion_and_toversion_in_correct_format() == expected_result
     except Exception as e:
         assert expected_result in str(e)
 
@@ -326,12 +310,8 @@ INPUTS_VALID_FROM_VERSION_MODIFIED = [
 ]
 
 
-@pytest.mark.parametrize(
-    "path, old_file_path, answer, error", INPUTS_VALID_FROM_VERSION_MODIFIED
-)
-def test_fromversion_update_validation_yml_structure(
-    path, old_file_path, answer, error
-):
+@pytest.mark.parametrize("path, old_file_path, answer, error", INPUTS_VALID_FROM_VERSION_MODIFIED)
+def test_fromversion_update_validation_yml_structure(path, old_file_path, answer, error):
     validator = ContentEntityValidator(StructureValidator(file_path=path))
     with open(old_file_path) as f:
         validator.old_file = yaml.load(f)

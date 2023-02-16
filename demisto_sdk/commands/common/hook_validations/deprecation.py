@@ -11,9 +11,7 @@ class DeprecationValidator:
         self.script_section = id_set_file.get("scripts", [])
         self.playbook_section = id_set_file.get("playbooks", [])
 
-    def validate_integartion_commands_deprecation(
-        self, deprecated_commands_list: List[str], integration_id: str
-    ):
+    def validate_integartion_commands_deprecation(self, deprecated_commands_list: List[str], integration_id: str):
         """
         Manages the deprecation usage for integration commands
         Checks if the given deprecated integration commands are used in a none-deprecated scripts / playbooks
@@ -28,15 +26,11 @@ class DeprecationValidator:
         """
         usage_dict: Dict[str, list] = {}
 
-        usage_dict = (
-            self.collect_non_deprecated_playbooks_implementing_the_acommand_list(
-                deprecated_commands_list, usage_dict, integration_id
-            )
+        usage_dict = self.collect_non_deprecated_playbooks_implementing_the_acommand_list(
+            deprecated_commands_list, usage_dict, integration_id
         )
-        usage_dict = (
-            self.collect_non_deprecated_scripts_implemeting_integration_commands(
-                deprecated_commands_list, usage_dict
-            )
+        usage_dict = self.collect_non_deprecated_scripts_implemeting_integration_commands(
+            deprecated_commands_list, usage_dict
         )
 
         return usage_dict
@@ -55,10 +49,8 @@ class DeprecationValidator:
         usage_list: List[str] = []
         key_to_check = "implementing_playbooks"
 
-        usage_list = (
-            self.collect_non_deprecated_playbooks_that_use_a_given_playbook_or_script(
-                playbook_name, usage_list, key_to_check
-            )
+        usage_list = self.collect_non_deprecated_playbooks_that_use_a_given_playbook_or_script(
+            playbook_name, usage_list, key_to_check
         )
 
         return usage_list
@@ -77,13 +69,9 @@ class DeprecationValidator:
         usage_list: List[str] = []
         key_to_check = "implementing_scripts"
 
-        usage_list = self.collect_non_deprecated_scripts_implemeting_another_script(
-            script_name, usage_list
-        )
-        usage_list = (
-            self.collect_non_deprecated_playbooks_that_use_a_given_playbook_or_script(
-                script_name, usage_list, key_to_check
-            )
+        usage_list = self.collect_non_deprecated_scripts_implemeting_another_script(script_name, usage_list)
+        usage_list = self.collect_non_deprecated_playbooks_that_use_a_given_playbook_or_script(
+            script_name, usage_list, key_to_check
         )
 
         return usage_list
@@ -143,9 +131,7 @@ class DeprecationValidator:
             if command in deprecated_commands_list:
                 if integration_name == integration_id or not integration_name:
                     playbook_path: Optional[str] = playbook.get("file_path", "")
-                    if command in usage_dict and playbook_path not in usage_dict.get(
-                        command, []
-                    ):
+                    if command in usage_dict and playbook_path not in usage_dict.get(command, []):
                         usage_dict.get(command, []).append(playbook_path)
                     if command not in usage_dict:
                         usage_dict[command] = [playbook_path]
@@ -173,18 +159,13 @@ class DeprecationValidator:
                     for command in depends_commads_list:
                         if command in deprecated_commands_list:
                             script_path = script_val.get("file_path", "")
-                            if (
-                                command in usage_dict
-                                and script_path not in usage_dict.get(command, [])
-                            ):
+                            if command in usage_dict and script_path not in usage_dict.get(command, []):
                                 usage_dict.get(command, []).append(script_path)
                             elif command not in usage_dict:
                                 usage_dict[command] = [script_path]
         return usage_dict
 
-    def collect_non_deprecated_scripts_implemeting_another_script(
-        self, script_name: str, usage_list: List[str]
-    ):
+    def collect_non_deprecated_scripts_implemeting_another_script(self, script_name: str, usage_list: List[str]):
         """
         List all the paths of scripts that are using the given script and are non-deprecated.
 

@@ -13,9 +13,7 @@ from demisto_sdk.commands.content_graph.parsers.mapper import MapperParser
 
 
 class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIER):
-    def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
-    ) -> None:
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         """Parses the classifier.
 
         Args:
@@ -37,9 +35,7 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
     def name(self) -> Optional[str]:
         return self.json_data.get("name") or self.json_data.get("brandName")
 
-    def get_filters_and_transformers_from_complex_value(
-        self, complex_value: dict
-    ) -> None:
+    def get_filters_and_transformers_from_complex_value(self, complex_value: dict) -> None:
         for filter in complex_value.get("filters", []):
             if filter:
                 filter_script = filter[0].get("operator").split(".")[-1]
@@ -58,21 +54,13 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
             content_type_to_map = ContentType.INCIDENT_TYPE
 
         if default_incident_type := self.json_data.get("defaultIncidentType"):
-            self.add_dependency_by_id(
-                default_incident_type, content_type_to_map, is_mandatory=False
-            )
+            self.add_dependency_by_id(default_incident_type, content_type_to_map, is_mandatory=False)
 
         for incident_type in self.json_data.get("keyTypeMap", {}).values():
-            self.add_dependency_by_id(
-                incident_type, content_type_to_map, is_mandatory=False
-            )
+            self.add_dependency_by_id(incident_type, content_type_to_map, is_mandatory=False)
 
-        if transformer_complex_value := self.json_data.get("transformer", {}).get(
-            "complex", {}
-        ):
-            self.get_filters_and_transformers_from_complex_value(
-                transformer_complex_value
-            )
+        if transformer_complex_value := self.json_data.get("transformer", {}).get("complex", {}):
+            self.get_filters_and_transformers_from_complex_value(transformer_complex_value)
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

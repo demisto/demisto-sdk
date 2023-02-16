@@ -45,9 +45,7 @@ class ModelingRuleValidator(ContentEntityValidator):
         self.set_files_info()
 
     def set_files_info(self):
-        files = get_files_in_dir(
-            os.path.dirname(self.file_path), ["json", "xif"], False
-        )
+        files = get_files_in_dir(os.path.dirname(self.file_path), ["json", "xif"], False)
         for file in files:
             if file.endswith("_schema.json"):
                 self.schema_path = file
@@ -79,16 +77,10 @@ class ModelingRuleValidator(ContentEntityValidator):
 
     def is_schema_file_exists(self):
         # Gets the schema.json file from the modeling rule folder
-        schema_files = list(
-            Path(self.file_path).parent.glob(
-                "*_[sS][cC][hH][eE][mM][aA].[jJ][sS][oO][nN]"
-            )
-        )
+        schema_files = list(Path(self.file_path).parent.glob("*_[sS][cC][hH][eE][mM][aA].[jJ][sS][oO][nN]"))
         has_schema = len(schema_files) > 0
         if not has_schema:
-            error_message, error_code = Errors.modeling_rule_missing_schema_file(
-                self.file_path
-            )
+            error_message, error_code = Errors.modeling_rule_missing_schema_file(self.file_path)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return has_schema
@@ -110,12 +102,8 @@ class ModelingRuleValidator(ContentEntityValidator):
                         invalid_types.append(type_to_validate)
 
             if invalid_types:
-                error_message, error_code = Errors.modeling_rule_schema_types_invalid(
-                    invalid_types
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.modeling_rule_schema_types_invalid(invalid_types)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
                     return False
         return True
@@ -134,9 +122,7 @@ class ModelingRuleValidator(ContentEntityValidator):
                 return [dataset_name.strip('"') for dataset_name in dataset]
             return []
 
-        xif_file_path = get_files_in_dir(
-            os.path.dirname(self.file_path), ["xif"], False
-        )
+        xif_file_path = get_files_in_dir(os.path.dirname(self.file_path), ["xif"], False)
         if xif_file_path and self.schema_content:
             xif_datasets = set(get_dataset_from_xif(xif_file_path[0]))
             schema_datasets = self.schema_content.keys()
@@ -164,9 +150,7 @@ class ModelingRuleValidator(ContentEntityValidator):
                 return True
             else:
                 error_message, error_code = Errors.modeling_rule_keys_not_empty()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
                     return False
 
@@ -180,9 +164,7 @@ class ModelingRuleValidator(ContentEntityValidator):
     def is_valid_rule_names(self):
         """Check if the rule file names is valid"""
         # Gets all the files in the modeling rule folder
-        files_to_check = get_files_in_dir(
-            os.path.dirname(self.file_path), ["json", "xif", "yml"], False
-        )
+        files_to_check = get_files_in_dir(os.path.dirname(self.file_path), ["json", "xif", "yml"], False)
         integrations_folder = os.path.basename(os.path.dirname(self.file_path))
         invalid_files = []
 
@@ -192,12 +174,7 @@ class ModelingRuleValidator(ContentEntityValidator):
             # The schema has _schema.json suffix and the testdata file has _testdata.json suffix
             # whereas the other content entity component files only has the .suffix
             splitter = (
-                "_"
-                if (
-                    file_name_std.endswith("_schema.json")
-                    or file_name_std.endswith("_testdata.json")
-                )
-                else "."
+                "_" if (file_name_std.endswith("_schema.json") or file_name_std.endswith("_testdata.json")) else "."
             )
             base_name = file_name.rsplit(splitter, 1)[0]
 

@@ -97,15 +97,11 @@ class LayoutsDirConvertManager(AbstractDirConvertManager):
 
 class ClassifiersDirConvertManager(AbstractDirConvertManager):
     def __init__(self, pack: Pack, input_path: str, server_version: Version):
-        super().__init__(
-            pack, input_path, server_version, entity_dir_name="Classifiers"
-        )
+        super().__init__(pack, input_path, server_version, entity_dir_name="Classifiers")
 
     def convert(self) -> int:
         if self.server_version >= self.VERSION_6_0_0:
-            classifier_converter: ClassifierBaseConverter = ClassifierSixConverter(
-                self.pack
-            )
+            classifier_converter: ClassifierBaseConverter = ClassifierSixConverter(self.pack)
             convert_result = classifier_converter.convert_dir()
             if not convert_result:
                 click.secho(

@@ -60,22 +60,16 @@ class ImageValidator(BaseValidator):
             # For new integrations -  Get the image from the folder.
             else:
                 try:
-                    self.file_path = glob.glob(
-                        os.path.join(os.path.dirname(file_path), "*.png")
-                    )[0]
+                    self.file_path = glob.glob(os.path.join(os.path.dirname(file_path), "*.png"))[0]
                 except IndexError:
                     error_message, error_code = Errors.no_image_given()
                     self.file_path = file_path.replace(".yml", "_image.png")
-                    if self.handle_error(
-                        error_message, error_code, file_path=self.file_path
-                    ):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self._is_valid = False
 
     def is_valid(self):
         """Validate that the image exists and that it is in the permitted size limits."""
-        if (
-            self._is_valid is False
-        ):  # In case we encountered an IndexError in the init - we don't have an image
+        if self._is_valid is False:  # In case we encountered an IndexError in the init - we don't have an image
             return self._is_valid
 
         is_existing_image = False
@@ -113,19 +107,13 @@ class ImageValidator(BaseValidator):
             image_size = os.path.getsize(self.file_path)
             if image_size > maximum_size:  # disable-secrets-detection
                 error_message, error_code = Errors.image_too_large()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
             if should_validate_dimensions:
                 width, height = imagesize.get(self.file_path)
                 if (width, height) != (allowed_width, allowed_height):
-                    error_message, error_code = Errors.invalid_image_dimensions(
-                        width, height
-                    )
-                    if self.handle_error(
-                        error_message, error_code, file_path=self.file_path
-                    ):
+                    error_message, error_code = Errors.invalid_image_dimensions(width, height)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self._is_valid = False
         else:
             data_dictionary = get_yaml(self.file_path)
@@ -137,9 +125,7 @@ class ImageValidator(BaseValidator):
             image_size = int(((len(image) - 22) / 4) * 3)
             if image_size > self.IMAGE_MAX_SIZE:  # disable-secrets-detection
                 error_message, error_code = Errors.image_too_large()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
 
         if not allow_empty_image_file and image_size == 0:
@@ -160,9 +146,7 @@ class ImageValidator(BaseValidator):
 
         if data_dictionary.get("image"):
             is_image_in_yml = True
-        if not re.match(
-            PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, self.file_path, re.IGNORECASE
-        ):
+        if not re.match(PACKS_INTEGRATION_NON_SPLIT_YML_REGEX, self.file_path, re.IGNORECASE):
             package_path = os.path.dirname(self.file_path)
             image_path = glob.glob(package_path + "/*.png")
             if image_path:
@@ -244,10 +228,7 @@ class ImageValidator(BaseValidator):
         # drop '_image' suffix and file extension
         image_file_base_name = image_file.rsplit("_", 1)[0]
 
-        if (
-            not image_path.endswith("_image.png")
-            or integrations_folder != image_file_base_name
-        ):
+        if not image_path.endswith("_image.png") or integrations_folder != image_file_base_name:
             error_message, error_code = Errors.invalid_image_name()
 
             if self.handle_error(error_message, error_code, file_path=image_path):

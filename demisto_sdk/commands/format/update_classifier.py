@@ -39,11 +39,7 @@ class BaseClassifierJSONFormat(BaseUpdateJSON, ABC):
         self.old_classifier_type = old_classifier_type
 
     def run_format(self) -> int:
-        super().update_json(
-            file_type=FileType.OLD_CLASSIFIER.value
-            if self.old_classifier_type
-            else VERSION_6_0_0
-        )
+        super().update_json(file_type=FileType.OLD_CLASSIFIER.value if self.old_classifier_type else VERSION_6_0_0)
         return SUCCESS_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:

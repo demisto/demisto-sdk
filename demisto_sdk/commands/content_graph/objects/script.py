@@ -17,18 +17,14 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
     def metadata_fields(self) -> Set[str]:
         return {"name", "description", "tags"}
 
-    def prepare_for_upload(
-        self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
-    ) -> dict:
+    def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
         data = super().prepare_for_upload(marketplace, **kwargs)
 
         if supported_native_images := self.get_supported_native_images(
             marketplace=marketplace,
             ignore_native_image=kwargs.get("ignore_native_image") or False,
         ):
-            logger.debug(
-                f"Adding the following native images {supported_native_images} to script {self.object_id}"
-            )
+            logger.debug(f"Adding the following native images {supported_native_images} to script {self.object_id}")
             data["nativeimage"] = supported_native_images
 
         return data

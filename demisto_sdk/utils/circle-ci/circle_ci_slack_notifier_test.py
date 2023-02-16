@@ -41,19 +41,11 @@ CIRCLE_CI_API_MOCKS = [
     ),
     (
         f"{API_BASE_URL}/{CircleCIClient.API_VERSION_V1}/project/{PROJECT_SLUG}/{UNIT_TEST_JOB_NUMBER}",
-        {
-            "steps": [
-                {"name": "pytest", "actions": [{"status": "failed", "exit_code": 1}]}
-            ]
-        },
+        {"steps": [{"name": "pytest", "actions": [{"status": "failed", "exit_code": 1}]}]},
     ),
     (
         f"{API_BASE_URL}/{CircleCIClient.API_VERSION_V1}/project/{PROJECT_SLUG}/{INTEGRATION_TEST_JOB_NUMBER}",
-        {
-            "steps": [
-                {"name": "pytest", "actions": [{"status": "failed", "exit_code": 1}]}
-            ]
-        },
+        {"steps": [{"name": "pytest", "actions": [{"status": "failed", "exit_code": 1}]}]},
     ),
     (
         f"{API_BASE_URL}/{CircleCIClient.API_VERSION_V1}/project/{PROJECT_SLUG}/{VALIDATION_JOB_NUMBER}",
@@ -149,9 +141,7 @@ def test_slack_notifier_on_failed_circle_ci_jobs():
         construct_failed_jobs_slack_message,
     )
 
-    parser = CircleCiFailedJobsParser(
-        circle_client=CircleCIClient(), workflow_id=WORKFLOW_ID
-    )
+    parser = CircleCiFailedJobsParser(circle_client=CircleCIClient(), workflow_id=WORKFLOW_ID)
     assert construct_failed_jobs_slack_message(parser) == [
         {
             "fallback": "Demisto SDK Master-Failure",

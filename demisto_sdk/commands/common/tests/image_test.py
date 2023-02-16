@@ -186,9 +186,7 @@ def test_json_outputs_where_no_image_in_integration(repo):
     with ChangeCWD(repo.path):
         # Run the image validator with a json file path
         json_file_path = os.path.join(integration.path, "json_outputs.json")
-        image_validator = image.ImageValidator(
-            integration.yml.path, json_file_path=json_file_path
-        )
+        image_validator = image.ImageValidator(integration.yml.path, json_file_path=json_file_path)
 
         # Check the outputs in the json file
         with open(image_validator.json_file_path) as r:
@@ -244,9 +242,7 @@ def test_is_valid_image_name_with_invalid_name(repo, file_name):
         os.remove(integration.image.path)
         integration.image = None
 
-    integration.image = File(
-        integration._tmpdir_integration_path / f"{file_name}", integration._repo.path
-    )
+    integration.image = File(integration._tmpdir_integration_path / f"{file_name}", integration._repo.path)
 
     with ChangeCWD(repo.path):
 

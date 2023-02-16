@@ -21,9 +21,7 @@ def get_validator(
     pack_path="Path/CortexXDR",
 ):
     release_notes_validator = ReleaseNotesValidator("")
-    release_notes_validator.release_notes_file_path = os.path.join(
-        FILES_PATH, "CortexXDR"
-    )
+    release_notes_validator.release_notes_file_path = os.path.join(FILES_PATH, "CortexXDR")
     release_notes_validator.release_notes_path = file_path
     release_notes_validator.latest_release_notes = file_path
     release_notes_validator.modified_files = modified_files
@@ -47,9 +45,7 @@ def get_validator(
     return release_notes_validator
 
 
-FILES_PATH = os.path.normpath(
-    os.path.join(__file__, f"{git_path()}/demisto_sdk/tests", "test_files", "Packs")
-)
+FILES_PATH = os.path.normpath(os.path.join(__file__, f"{git_path()}/demisto_sdk/tests", "test_files", "Packs"))
 nothing_in_rn = ""
 rn_not_filled_out = "%%UPDATE_RN%%"
 rn_filled_out = "This are sample release notes"
@@ -80,9 +76,7 @@ def test_rn_master_diff(release_notes, expected_result, mocker):
     - Case 3: Should print nothing and return True
     """
     mocker.patch.object(ReleaseNotesValidator, "__init__", lambda a, b: None)
-    mocker.patch.object(
-        ReleaseNotesValidator, "has_no_markdown_lint_errors", return_value=True
-    )
+    mocker.patch.object(ReleaseNotesValidator, "has_no_markdown_lint_errors", return_value=True)
     ReleaseNotesValidator.ignored_errors = []
     validator = get_validator(release_notes)
     assert validator.is_file_valid() == expected_result
@@ -192,9 +186,7 @@ MODIFIED_FILES = [
     os.path.join(FILES_PATH, "CortexXDR", "Playbooks/Cortex_XDR_Incident_Handling.yml"),
     os.path.join(FILES_PATH, "CortexXDR", "Layouts/details-Cortex_XDR_Incident.json"),
     os.path.join(FILES_PATH, "CortexXDR", "Classifiers/classifier-to-test.json"),
-    os.path.join(
-        FILES_PATH, "CortexXDR", "Dashboards/dashboard-sample_packs_new2.json"
-    ),
+    os.path.join(FILES_PATH, "CortexXDR", "Dashboards/dashboard-sample_packs_new2.json"),
 ]
 ADDED_FILES = [
     os.path.join(FILES_PATH, "CortexXDR", "Playbooks/Cortex_XDR_Incident_Handling.yml"),
@@ -208,9 +200,7 @@ ADDED_FILES = [
 ]
 
 
-@pytest.mark.parametrize(
-    "release_notes, complete_expected_result", TEST_RELEASE_NOTES_TEST_BANK_1
-)
+@pytest.mark.parametrize("release_notes, complete_expected_result", TEST_RELEASE_NOTES_TEST_BANK_1)
 def test_are_release_notes_complete(release_notes, complete_expected_result, mocker):
     """
     Given
@@ -230,9 +220,7 @@ def test_are_release_notes_complete(release_notes, complete_expected_result, moc
     - Case 3: Should print nothing and return True
     """
     mocker.patch.object(ReleaseNotesValidator, "__init__", lambda a, b: None)
-    mocker.patch.object(
-        StructureValidator, "scheme_of_file_by_path", return_value="integration"
-    )
+    mocker.patch.object(StructureValidator, "scheme_of_file_by_path", return_value="integration")
     mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
     validator = get_validator(release_notes, MODIFIED_FILES)
     assert validator.are_release_notes_complete() == complete_expected_result
@@ -256,18 +244,12 @@ MODIFIED_FILES_INVALID = [
     os.path.join(FILES_PATH, "CortexXDR", "Playbooks/Cortex_XDR_Incident_Handling.yml"),
     os.path.join(FILES_PATH, "CortexXDR", "Layouts/details-Cortex_XDR_Incident.json"),
     os.path.join(FILES_PATH, "CortexXDR", "Classifiers/classifier-to-test.json"),
-    os.path.join(
-        FILES_PATH, "CortexXDR", "Dashboards/dashboard-sample_packs_new2.json"
-    ),
+    os.path.join(FILES_PATH, "CortexXDR", "Dashboards/dashboard-sample_packs_new2.json"),
 ]
 
 
-@pytest.mark.parametrize(
-    "release_notes, complete_expected_result", TEST_RELEASE_NOTES_TEST_BANK_1
-)
-def test_are_release_notes_complete_invalid_file_type(
-    release_notes, complete_expected_result, mocker
-):
+@pytest.mark.parametrize("release_notes, complete_expected_result", TEST_RELEASE_NOTES_TEST_BANK_1)
+def test_are_release_notes_complete_invalid_file_type(release_notes, complete_expected_result, mocker):
     """
     Given
     - Case 1: Empty release notes.
@@ -286,9 +268,7 @@ def test_are_release_notes_complete_invalid_file_type(
     - Case 3: Should print nothing and return True
     """
     mocker.patch.object(ReleaseNotesValidator, "__init__", lambda a, b: None)
-    mocker.patch.object(
-        StructureValidator, "scheme_of_file_by_path", return_value="integration"
-    )
+    mocker.patch.object(StructureValidator, "scheme_of_file_by_path", return_value="integration")
     mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
     validator = get_validator(release_notes, MODIFIED_FILES_INVALID)
     assert validator.are_release_notes_complete() == complete_expected_result
@@ -307,12 +287,8 @@ TEST_RELEASE_NOTES_TEST_BANK_ADDED = [
 ]
 
 
-@pytest.mark.parametrize(
-    "release_notes, complete_expected_result", TEST_RELEASE_NOTES_TEST_BANK_ADDED
-)
-def test_are_release_notes_complete_added(
-    release_notes, complete_expected_result, mocker
-):
+@pytest.mark.parametrize("release_notes, complete_expected_result", TEST_RELEASE_NOTES_TEST_BANK_ADDED)
+def test_are_release_notes_complete_added(release_notes, complete_expected_result, mocker):
     """
     Given
     - Case 1: Empty release notes.
@@ -331,9 +307,7 @@ def test_are_release_notes_complete_added(
     - Case 3: Should print nothing and return True
     """
     mocker.patch.object(ReleaseNotesValidator, "__init__", lambda a, b: None)
-    mocker.patch.object(
-        StructureValidator, "scheme_of_file_by_path", return_value="integration"
-    )
+    mocker.patch.object(StructureValidator, "scheme_of_file_by_path", return_value="integration")
     mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
     validator = get_validator(release_notes, MODIFIED_FILES, ADDED_FILES)
     assert validator.are_release_notes_complete() == complete_expected_result
@@ -369,17 +343,13 @@ def test_are_release_notes_complete_renamed_file(mocker):
     - Test
     """
     mocker.patch.object(ReleaseNotesValidator, "__init__", lambda a, b: None)
-    mocker.patch.object(
-        StructureValidator, "scheme_of_file_by_path", return_value="integration"
-    )
+    mocker.patch.object(StructureValidator, "scheme_of_file_by_path", return_value="integration")
     mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
     validator = get_validator(release_notes, renamed_file)
     assert validator.are_release_notes_complete()
 
 
-def test_are_release_notes_complete_file_pack_contained_in_file_name_different_pack(
-    mocker, repo
-):
+def test_are_release_notes_complete_file_pack_contained_in_file_name_different_pack(mocker, repo):
     """
     Given:
     - Modified file whose name contains the checked pack name.
@@ -393,9 +363,7 @@ def test_are_release_notes_complete_file_pack_contained_in_file_name_different_p
     - Ensure validation returns true.
     """
     mocker.patch.object(ReleaseNotesValidator, "__init__", lambda a, b: None)
-    mocker.patch.object(
-        StructureValidator, "scheme_of_file_by_path", return_value="integration"
-    )
+    mocker.patch.object(StructureValidator, "scheme_of_file_by_path", return_value="integration")
     mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
     pack = repo.create_pack("FeedCortexXDR")
     integration_outside_pack = pack.create_integration(name="FeedCortexXDR")
@@ -436,9 +404,7 @@ def test_are_release_notes_with_author_image(mocker, repo):
     - Ensure File is skipped from check.
     """
     mocker.patch.object(ReleaseNotesValidator, "__init__", lambda a, b: None)
-    mocker.patch.object(
-        StructureValidator, "scheme_of_file_by_path", return_value="integration"
-    )
+    mocker.patch.object(StructureValidator, "scheme_of_file_by_path", return_value="integration")
     mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
     pack = repo.create_pack("CortexXDR")
     integration_outside_pack = pack.create_integration(name="CortexXDR")
@@ -462,12 +428,8 @@ TEST_RELEASE_NOTES_TEST_BANK_2 = [
 ]
 
 
-@pytest.mark.parametrize(
-    "release_notes, filled_expected_result", TEST_RELEASE_NOTES_TEST_BANK_2
-)
-def test_has_release_notes_been_filled_out(
-    release_notes, filled_expected_result, mocker
-):
+@pytest.mark.parametrize("release_notes, filled_expected_result", TEST_RELEASE_NOTES_TEST_BANK_2)
+def test_has_release_notes_been_filled_out(release_notes, filled_expected_result, mocker):
     """
     Given
     - Case 1: Empty release notes.
@@ -490,9 +452,7 @@ def test_has_release_notes_been_filled_out(
     - Case 5: Should print nothing and return True
     """
     mocker.patch.object(ReleaseNotesValidator, "__init__", lambda a, b: None)
-    mocker.patch.object(
-        StructureValidator, "scheme_of_file_by_path", return_value="integration"
-    )
+    mocker.patch.object(StructureValidator, "scheme_of_file_by_path", return_value="integration")
     mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
     validator = get_validator(release_notes, MODIFIED_FILES)
     assert validator.has_release_notes_been_filled_out() == filled_expected_result
@@ -536,9 +496,7 @@ TEST_RELEASE_NOTES_TEST_BANK_3 = [
     "category, release_notes_content, yml_content, filled_expected_result",
     TEST_RELEASE_NOTES_TEST_BANK_3,
 )
-def test_is_docker_image_same_as_yml(
-    category, release_notes_content, yml_content, filled_expected_result, pack: Pack
-):
+def test_is_docker_image_same_as_yml(category, release_notes_content, yml_content, filled_expected_result, pack: Pack):
     """
     Given
     - Case 1: RN containing a docker update, integration YML containing a docker update, where docker image equal in both.
@@ -606,9 +564,7 @@ TEST_RELEASE_NOTES_TEST_BANK_4 = [
     "method_to_check, release_notes_content, filled_expected_result",
     TEST_RELEASE_NOTES_TEST_BANK_4,
 )
-def test_get_categories_from_rn(
-    method_to_check, release_notes_content, filled_expected_result, pack: Pack
-):
+def test_get_categories_from_rn(method_to_check, release_notes_content, filled_expected_result, pack: Pack):
     """
     Given
     - Case 1: RN containing notes for one integration and one script where each one of them have one entity
@@ -624,10 +580,7 @@ def test_get_categories_from_rn(
     - Case 2: Should Create a dict with one value for integration key that holds 2 integrations.
     - Case 3: Should Create a dict with two keys of integraition 1 and integration 2.
     """
-    assert (
-        method_to_check(ReleaseNotesValidator, release_notes_content)
-        == filled_expected_result
-    )
+    assert method_to_check(ReleaseNotesValidator, release_notes_content) == filled_expected_result
 
 
 def update_json(path, key, value):
@@ -687,17 +640,11 @@ def test_validate_json_when_breaking_changes(
     validator = get_validator(release_notes_content, MODIFIED_FILES)
     pack = repo.create_pack("test_pack")
     if has_json:
-        release_note = pack.create_release_notes(
-            version="1.0.0", content=release_notes_content, is_bc=True
-        )
+        release_note = pack.create_release_notes(version="1.0.0", content=release_notes_content, is_bc=True)
     else:
-        release_note = pack.create_release_notes(
-            version="1.0.0", content=release_notes_content
-        )
+        release_note = pack.create_release_notes(version="1.0.0", content=release_notes_content)
     if change_json:
-        update_json(
-            path=release_note.path[:-2] + "json", key="breakingChanges", value=False
-        )
+        update_json(path=release_note.path[:-2] + "json", key="breakingChanges", value=False)
 
     validator.release_notes_file_path = release_note.path
     assert validator.validate_json_when_breaking_changes() == expected_result
@@ -716,9 +663,7 @@ def test_validate_headers(mocker, repo):
         content = f.read()
     pack = repo.create_pack("test_pack")
     mocker.patch.object(ReleaseNotesValidator, "__init__", lambda a, b: None)
-    validator = get_validator(
-        content, MODIFIED_FILES, pack_name=pack.name, pack_path=pack.path
-    )
+    validator = get_validator(content, MODIFIED_FILES, pack_name=pack.name, pack_path=pack.path)
 
     pack.create_integration("integration-test")
     pack.create_script("script-test")
@@ -818,20 +763,16 @@ def test_invalid_headers(mocker, repo, content, content_type, expected_result):
     """
     pack = repo.create_pack("test_pack")
     mocker.patch.object(ReleaseNotesValidator, "__init__", lambda a, b: None)
-    validator = get_validator(
-        content, MODIFIED_FILES, pack_name=pack.name, pack_path=pack.path
-    )
+    validator = get_validator(content, MODIFIED_FILES, pack_name=pack.name, pack_path=pack.path)
     headers = validator.extract_rn_headers()
     for content_type, content_items in headers.items():
-        assert expected_result[
-            "rn_valid_header_format"
-        ] == validator.rn_valid_header_format(content_type, content_items)
+        assert expected_result["rn_valid_header_format"] == validator.rn_valid_header_format(
+            content_type, content_items
+        )
         validator.filter_rn_headers(headers=headers)
-        assert expected_result[
-            "validate_content_type_header"
-        ] == validator.validate_content_type_header(content_type=content_type)
-        assert expected_result[
-            "validate_content_item_header"
-        ] == validator.validate_content_item_header(
+        assert expected_result["validate_content_type_header"] == validator.validate_content_type_header(
+            content_type=content_type
+        )
+        assert expected_result["validate_content_item_header"] == validator.validate_content_item_header(
             content_type=content_type, content_items=content_items
         )

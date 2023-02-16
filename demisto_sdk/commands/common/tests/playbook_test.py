@@ -366,9 +366,7 @@ class TestPlaybookValidator:
             "1": {"task": {"script": "scriptId2"}},
         }
     }
-    ID_SET_VALID_SCRIPT_ID = {
-        "scripts": [{"scriptId1": {"name": "name"}}, {"scriptId2": {"name": "name"}}]
-    }
+    ID_SET_VALID_SCRIPT_ID = {"scripts": [{"scriptId1": {"name": "name"}}, {"scriptId2": {"name": "name"}}]}
 
     PLAYBOOK_JSON_INVALID_SCRIPT_ID = {
         "tasks": {
@@ -506,8 +504,7 @@ class TestPlaybookValidator:
     }
     DEPRECATED_VALID2 = {
         "deprecated": True,
-        "description": "Deprecated. Feodo Tracker no longer supports this feed "
-        "No available replacement.",
+        "description": "Deprecated. Feodo Tracker no longer supports this feed " "No available replacement.",
     }
     DEPRECATED_VALID3 = {
         "deprecated": True,
@@ -566,9 +563,7 @@ class TestPlaybookValidator:
         }
     }
 
-    CONDITION_TASK_WITHOUT_ELSE = {
-        "1": {"type": "condition", "scriptName": "testScript", "nexttasks": {"1": []}}
-    }
+    CONDITION_TASK_WITHOUT_ELSE = {"1": {"type": "condition", "scriptName": "testScript", "nexttasks": {"1": []}}}
     IS_ELSE_IN_CONDITION_TASK = [
         (CONDITIONAL_SCRPT_WITH_NO_DFLT_NXT_TASK.get("tasks").get("1"), False),
         (CONDITIONAL_SCRPT_WITH_DFLT_NXT_TASK.get("tasks").get("1"), True),
@@ -580,12 +575,8 @@ class TestPlaybookValidator:
         (INVALID_PLAYBOOK_INPUTS_USE, False, True),
     ]
 
-    @pytest.mark.parametrize(
-        "playbook_path, is_modified, expected_result", INVALID_INPUTS
-    )
-    def test_playbook_inputs(
-        self, playbook_path: str, is_modified: bool, expected_result: bool
-    ):
+    @pytest.mark.parametrize("playbook_path, is_modified, expected_result", INVALID_INPUTS)
+    def test_playbook_inputs(self, playbook_path: str, is_modified: bool, expected_result: bool):
         """
 
         Given
@@ -601,12 +592,8 @@ class TestPlaybookValidator:
         validator = PlaybookValidator(structure)
         assert validator.inputs_in_use_check(is_modified) == expected_result
 
-    @pytest.mark.parametrize(
-        "playbook_json, id_set_json, expected_result", IS_SCRIPT_ID_VALID
-    )
-    def test_playbook_script_id(
-        self, mocker, playbook, repo, playbook_json, id_set_json, expected_result
-    ):
+    @pytest.mark.parametrize("playbook_json, id_set_json, expected_result", IS_SCRIPT_ID_VALID)
+    def test_playbook_script_id(self, mocker, playbook, repo, playbook_json, id_set_json, expected_result):
         """
 
         Given
@@ -740,9 +727,7 @@ class TestPlaybookValidator:
         validator = PlaybookValidator(structure)
         validator._is_taskid_equals_id() is expected_result
 
-    @pytest.mark.parametrize(
-        "playbook_path, expected_result", IS_CORRECT_VALUE_REFERENCE
-    )
+    @pytest.mark.parametrize("playbook_path, expected_result", IS_CORRECT_VALUE_REFERENCE)
     def test_is_correct_value_references(self, playbook_path, expected_result):
         """
         Given
@@ -788,9 +773,7 @@ class TestPlaybookValidator:
         validator.current_file = current
         assert validator.is_valid_as_deprecated() is answer
 
-    @pytest.mark.parametrize(
-        "playbook_task_json, expected_result", IS_ELSE_IN_CONDITION_TASK
-    )
+    @pytest.mark.parametrize("playbook_task_json, expected_result", IS_ELSE_IN_CONDITION_TASK)
     def test_verify_else_for_conditions_task(self, playbook_task_json, expected_result):
         """
         Given
@@ -805,10 +788,7 @@ class TestPlaybookValidator:
         """
         structure = mock_structure("", playbook_task_json)
         validator = PlaybookValidator(structure)
-        assert (
-            validator._is_else_path_in_condition_task(task=playbook_task_json)
-            is expected_result
-        )
+        assert validator._is_else_path_in_condition_task(task=playbook_task_json) is expected_result
 
     def test_name_contains_the_type(self, pack):
         """
@@ -844,9 +824,7 @@ class TestPlaybookValidator:
 
             assert validator.name_not_contain_the_type()
 
-    @pytest.mark.parametrize(
-        "playbook_json, expected_result", IS_VALID_INDICATORS_INPUT
-    )
+    @pytest.mark.parametrize("playbook_json, expected_result", IS_VALID_INDICATORS_INPUT)
     def test_is_valid_with_indicators_input(self, playbook_json, expected_result):
         """
         Given
@@ -874,12 +852,8 @@ class TestPlaybookValidator:
         (True, True, True),
     ]
 
-    @pytest.mark.parametrize(
-        "remove_readme, validate_all, expected_result", README_TEST_DATA
-    )
-    def test_validate_readme_exists(
-        self, repo, remove_readme, validate_all, expected_result
-    ):
+    @pytest.mark.parametrize("remove_readme, validate_all, expected_result", README_TEST_DATA)
+    def test_validate_readme_exists(self, repo, remove_readme, validate_all, expected_result):
         """
         Given:
             - An integration yml that was added or modified to validate
@@ -898,12 +872,7 @@ class TestPlaybookValidator:
         read_me_pack = repo.create_pack("README_test")
         playbook = read_me_pack.create_playbook("playbook1")
         structure_validator = StructureValidator(playbook.yml.path)
-        playbook_validator = PlaybookValidator(
-            structure_validator, validate_all=validate_all
-        )
+        playbook_validator = PlaybookValidator(structure_validator, validate_all=validate_all)
         if remove_readme:
             os.remove(playbook.readme.path)
-        assert (
-            playbook_validator.validate_readme_exists(playbook_validator.validate_all)
-            is expected_result
-        )
+        assert playbook_validator.validate_readme_exists(playbook_validator.validate_all) is expected_result

@@ -65,9 +65,7 @@ class IDSetCreator:
         Each playbook that has "command_to_integration" field will be modified :
         - command name value will be a list of all integrations that implements this command (instead of use "" ).
         """
-        command_name_to_implemented_integration_map = (
-            self.create_command_to_implemented_integration_map()
-        )
+        command_name_to_implemented_integration_map = self.create_command_to_implemented_integration_map()
 
         playbooks_list = self.id_set["playbooks"]
         for playbook_dict in playbooks_list:
@@ -78,16 +76,9 @@ class IDSetCreator:
                 if commands_to_integration[command]:
                     # only apply this logic when there is no specific brand
                     continue
-                is_command_implemented_in_integration = (
-                    command in command_name_to_implemented_integration_map
-                )
-                if (
-                    is_command_implemented_in_integration
-                    and command not in GENERIC_COMMANDS_NAMES
-                ):
-                    implemented_integration = (
-                        command_name_to_implemented_integration_map[command]
-                    )
+                is_command_implemented_in_integration = command in command_name_to_implemented_integration_map
+                if is_command_implemented_in_integration and command not in GENERIC_COMMANDS_NAMES:
+                    implemented_integration = command_name_to_implemented_integration_map[command]
                     commands_to_integration[command] = implemented_integration
 
     def create_command_to_implemented_integration_map(self):
@@ -99,13 +90,9 @@ class IDSetCreator:
             commands = integration_data.get("commands", {})
             for command in commands:
                 if command in command_name_to_implemented_integration_map:
-                    command_name_to_implemented_integration_map[command] += [
-                        integration_name
-                    ]
+                    command_name_to_implemented_integration_map[command] += [integration_name]
                 else:
-                    command_name_to_implemented_integration_map[command] = [
-                        integration_name
-                    ]
+                    command_name_to_implemented_integration_map[command] = [integration_name]
         return command_name_to_implemented_integration_map
 
     def save_id_set(self):

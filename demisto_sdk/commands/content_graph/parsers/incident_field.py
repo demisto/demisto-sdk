@@ -8,12 +8,8 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 )
 
 
-class IncidentFieldParser(
-    JSONContentItemParser, content_type=ContentType.INCIDENT_FIELD
-):
-    def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
-    ) -> None:
+class IncidentFieldParser(JSONContentItemParser, content_type=ContentType.INCIDENT_FIELD):
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         super().__init__(path, pack_marketplaces)
         self.cli_name = self.json_data.get("cliName")
         self.field_type = self.json_data.get("type")
@@ -36,16 +32,10 @@ class IncidentFieldParser(
     def connect_to_dependencies(self) -> None:
         """Collects incident types used as optional dependencies, and scripts as mandatory dependencies."""
         for associated_type in set(self.json_data.get("associatedTypes") or []):
-            self.add_dependency_by_name(
-                associated_type, ContentType.INCIDENT_TYPE, is_mandatory=False
-            )
+            self.add_dependency_by_name(associated_type, ContentType.INCIDENT_TYPE, is_mandatory=False)
 
-        for system_associated_type in set(
-            self.json_data.get("systemAssociatedTypes") or []
-        ):
-            self.add_dependency_by_name(
-                system_associated_type, ContentType.INCIDENT_TYPE, is_mandatory=False
-            )
+        for system_associated_type in set(self.json_data.get("systemAssociatedTypes") or []):
+            self.add_dependency_by_name(system_associated_type, ContentType.INCIDENT_TYPE, is_mandatory=False)
 
         if script := self.json_data.get("script"):
             self.add_dependency_by_id(script, ContentType.SCRIPT)

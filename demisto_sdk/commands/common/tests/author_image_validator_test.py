@@ -10,9 +10,7 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 class TestAuthorImageValidator:
     AUTHOR_IMAGE_FILES_PATH = os.path.normpath(
-        os.path.join(
-            f"{git_path()}/demisto_sdk/tests", "test_files", "AuthorImageValidator"
-        )
+        os.path.join(f"{git_path()}/demisto_sdk/tests", "test_files", "AuthorImageValidator")
     )
     VALID_AUTHOR_IMAGE = os.path.join(AUTHOR_IMAGE_FILES_PATH, "valid_author_image.png")
     EMPTY_AUTHOR_IMAGE = os.path.join(AUTHOR_IMAGE_FILES_PATH, "empty_author_image.png")
@@ -28,9 +26,7 @@ class TestAuthorImageValidator:
         (VALID_AUTHOR_IMAGE, "partner", 100, False),
     ]
 
-    @pytest.mark.parametrize(
-        "author_image_path, support_level, max_image_size, expected", IS_VALID_INPUTS
-    )
+    @pytest.mark.parametrize("author_image_path, support_level, max_image_size, expected", IS_VALID_INPUTS)
     def test_is_valid(
         self,
         mocker,
@@ -77,8 +73,6 @@ class TestAuthorImageValidator:
             pack.author_image.path, maximum_image_size=max_image_size
         )
         mocker.patch.object(author_image_validator, "handle_error")
-        mocker.patch.object(
-            author_image_validator, "get_support_level", return_value=support_level
-        )
+        mocker.patch.object(author_image_validator, "get_support_level", return_value=support_level)
         author_image_validator.file_path = author_image_path
         assert author_image_validator.is_valid() == expected

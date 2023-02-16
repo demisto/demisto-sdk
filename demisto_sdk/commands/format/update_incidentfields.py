@@ -85,9 +85,7 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
                 alias_field_file_path,
             ) in self._get_incident_fields_by_aliases(aliases):
 
-                marketplaces = get_item_marketplaces(
-                    item_path=alias_field_file_path, item_data=alias_field
-                )
+                marketplaces = get_item_marketplaces(item_path=alias_field_file_path, item_data=alias_field)
 
                 if len(marketplaces) != 1 or marketplaces[0] != "xsoar":
                     alias_field["marketplaces"] = ["xsoar"]
@@ -95,9 +93,7 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
                         f"\n================= Updating file {alias_field_file_path} =================",
                         fg="bright_blue",
                     )
-                    self._save_alias_field_file(
-                        dest_file_path=alias_field_file_path, field_data=alias_field
-                    )
+                    self._save_alias_field_file(dest_file_path=alias_field_file_path, field_data=alias_field)
 
     def _get_incident_fields_by_aliases(self, aliases: List[dict]):
         """Get from the id_set the actual fields for the given aliases

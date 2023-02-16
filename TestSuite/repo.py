@@ -83,9 +83,7 @@ class Repo:
     def __del__(self):
         shutil.rmtree(self.path, ignore_errors=True)
 
-    def setup_one_pack(
-        self, name, marketplaces: List[str] = DEFAULT_MARKETPLACES
-    ) -> Pack:
+    def setup_one_pack(self, name, marketplaces: List[str] = DEFAULT_MARKETPLACES) -> Pack:
         """Sets up a new pack in the repo, and includes one per each content entity.
 
         Args:
@@ -111,9 +109,7 @@ class Repo:
         integration.yml.update({"name": f"{name}_integration"})
         integration.yml.update({"display": f"{name}_integration"})
         integration_content = integration.yml.read_dict()
-        integration_content["script"]["commands"][0][
-            "name"
-        ] = f"command_{name}_integration"
+        integration_content["script"]["commands"][0]["name"] = f"command_{name}_integration"
         integration.yml.write_dict(integration_content)
 
         classifier = pack.create_classifier(f"{name}_classifier")
@@ -138,9 +134,7 @@ class Repo:
         mapper.write_json({"id": f"{name} - mapper"})
         mapper.update({"name": f"{name} - mapper"})
         mapper.update({"mapping": {}})
-        mapper.update(
-            {"type": "mapping-incoming"}
-        )  # can also be mapping-outgoing, but this is the more common usage
+        mapper.update({"type": "mapping-incoming"})  # can also be mapping-outgoing, but this is the more common usage
 
         incident_type = pack.create_incident_type(f"{name}_incident-type")
         incident_type.write_json({"id": f"{name} - incident_type"})
@@ -228,9 +222,7 @@ class Repo:
         generic_module.update({"views": [{"name": "name"}]})
         generic_module.update({"definitionIds": ["definitionId"]})
 
-        generic_definition = pack.create_generic_definition(
-            f"{name}_generic-definition"
-        )
+        generic_definition = pack.create_generic_definition(f"{name}_generic-definition")
         generic_definition.write_json({"id": f"generic_{name} - generic_definition"})
         generic_definition.update({"name": f"generic_{name} - generic_definition"})
         generic_definition.update({"auditable": False})
@@ -268,11 +260,7 @@ class Repo:
             )
             pack.create_xsiam_report(
                 f"{name}_xsiamreport",
-                {
-                    "templates_data": [
-                        {"global_id": "xsiam_report_id", "name": "xsiam_report_name"}
-                    ]
-                },
+                {"templates_data": [{"global_id": "xsiam_report_id", "name": "xsiam_report_name"}]},
             )
             pack.create_trigger(
                 f"{name}_trigger",
@@ -281,9 +269,7 @@ class Repo:
             print("parsing done")
         return pack
 
-    def setup_content_repo(
-        self, number_of_packs, marketplaces: List[str] = DEFAULT_MARKETPLACES
-    ):
+    def setup_content_repo(self, number_of_packs, marketplaces: List[str] = DEFAULT_MARKETPLACES):
         """Creates a fully constructed content repository, where packs names will pack_<index>.
 
         Args:

@@ -35,9 +35,7 @@ def test_set_prev_server_keys(mocker, tmp_path):
     prev_server_conf = {"prev": "conf"}
     mocked_demisto_client = DemistoClientMock()
     build_context = get_mocked_build_context(mocker, tmp_path)
-    server_context = generate_mocked_server_context(
-        build_context, mocked_demisto_client, mocker
-    )
+    server_context = generate_mocked_server_context(build_context, mocked_demisto_client, mocker)
     update_server_conf_func = mocker.patch(
         "demisto_sdk.commands.test_content.TestContentClasses.update_server_configuration",
         return_value=(None, None, prev_server_conf),
@@ -45,17 +43,9 @@ def test_set_prev_server_keys(mocker, tmp_path):
     test_playbook_configuration = TestConfiguration({}, 0)
 
     test_playbook = TestPlaybook(build_context, test_playbook_configuration)
-    integration = Integration(
-        build_context, "integration_with_server_keys", ["instance"]
-    )
+    integration = Integration(build_context, "integration_with_server_keys", ["instance"])
     integration.configuration = IntegrationConfiguration(
-        {
-            "params": {
-                "server_keys": {
-                    "python.pass.extra.keys": "--hostname=HOSTNAME##-v=test1234"
-                }
-            }
-        }
+        {"params": {"server_keys": {"python.pass.extra.keys": "--hostname=HOSTNAME##-v=test1234"}}}
     )
 
     integration._set_server_keys(mocked_demisto_client, server_context)
@@ -71,9 +61,7 @@ def test_set_prev_server_keys(mocker, tmp_path):
     )
 
 
-@pytest.mark.parametrize(
-    "expected_res,client_res", [(True, (None, 200, None)), (False, (None, 400, None))]
-)
+@pytest.mark.parametrize("expected_res,client_res", [(True, (None, 200, None)), (False, (None, 400, None))])
 def test_close_incident(mocker, tmp_path, expected_res, client_res):
     """
     Given:

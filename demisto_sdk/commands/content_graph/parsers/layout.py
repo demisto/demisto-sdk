@@ -12,9 +12,7 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 
 
 class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
-    def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
-    ) -> None:
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         if "layoutscontainer" not in path.name:
             raise NotAContentItemException
 
@@ -26,9 +24,7 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
 
         self.edit: bool = bool(self.json_data.get("edit"))
         self.indicators_details: bool = bool(self.json_data.get("indicatorsDetails"))
-        self.indicators_quick_view: bool = bool(
-            self.json_data.get("indicatorsQuickView")
-        )
+        self.indicators_quick_view: bool = bool(self.json_data.get("indicatorsQuickView"))
         self.quick_view: bool = bool(self.json_data.get("quickView"))
         self.close: bool = bool(self.json_data.get("close"))
         self.details: bool = bool(self.json_data.get("details"))
@@ -48,9 +44,7 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
         elif self.group == "indicator":
             dependency_field_type = ContentType.INDICATOR_FIELD
         else:
-            raise ValueError(
-                f'{self.node_id}: Unknown group "{self.group}" - Expected "incident" or "indicator".'
-            )
+            raise ValueError(f'{self.node_id}: Unknown group "{self.group}" - Expected "incident" or "indicator".')
 
         for field in self.get_field_ids_recursively():
             self.add_dependency_by_id(field, dependency_field_type, is_mandatory=False)

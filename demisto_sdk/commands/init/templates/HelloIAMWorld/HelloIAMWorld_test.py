@@ -17,9 +17,7 @@ APP_USER_OUTPUT = {
     "email": "testdemisto2@paloaltonetworks.com",
 }
 
-USER_APP_DATA = IAMUserAppData(
-    "mock_id", "mock_user_name", is_active=True, app_data=APP_USER_OUTPUT
-)
+USER_APP_DATA = IAMUserAppData("mock_id", "mock_user_name", is_active=True, app_data=APP_USER_OUTPUT)
 
 APP_DISABLED_USER_OUTPUT = {
     "user_id": "mock_id",
@@ -30,9 +28,7 @@ APP_DISABLED_USER_OUTPUT = {
     "email": "testdemisto2@paloaltonetworks.com",
 }
 
-DISABLED_USER_APP_DATA = IAMUserAppData(
-    "mock_id", "mock_user_name", is_active=False, app_data=APP_DISABLED_USER_OUTPUT
-)
+DISABLED_USER_APP_DATA = IAMUserAppData("mock_id", "mock_user_name", is_active=False, app_data=APP_DISABLED_USER_OUTPUT)
 
 
 def mock_client():
@@ -117,9 +113,7 @@ class TestGetUserCommand:
 
         bad_response = Response()
         bad_response.status_code = 500
-        bad_response._content = (
-            b'{"error": {"detail": "details", "message": "message"}}'
-        )
+        bad_response._content = b'{"error": {"detail": "details", "message": "message"}}'
 
         mocker.patch.object(demisto, "error")
         mocker.patch.object(Session, "request", return_value=bad_response)
@@ -339,9 +333,7 @@ def test_get_mapping_fields_command(mocker):
         - Ensure a GetMappingFieldsResponse object that contains the application fields is returned
     """
     client = mock_client()
-    mocker.patch.object(
-        client, "get_app_fields", return_value={"field1": "desc1", "field2": "desc2"}
-    )
+    mocker.patch.object(client, "get_app_fields", return_value={"field1": "desc1", "field2": "desc2"})
 
     mapping_response = get_mapping_fields(client)
     mapping = mapping_response.extract_mapping()[0]

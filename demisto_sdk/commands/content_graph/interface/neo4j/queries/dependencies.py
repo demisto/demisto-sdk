@@ -80,9 +80,7 @@ RETURN source.node_id AS source, target.node_id AS target, type(r) AS r"""
         source = row["source"]
         target = row["target"]
         relationship = row["r"]
-        logger.debug(
-            f"Deleted relationship {relationship} between {source} and {target}"
-        )
+        logger.debug(f"Deleted relationship {relationship} between {source} and {target}")
 
 
 def remove_existing_depends_on_relationships(tx: Transaction) -> None:
@@ -188,8 +186,6 @@ RETURN
                 msg += f"{idx}. [{reason.get('source')}] -> [{reason.get('target')}] (mandatorily: {reason.get('mandatorily')})\n"
             logger.debug(msg)
 
-    if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(
-        artifacts_folder
-    ).exists():
+    if (artifacts_folder := os.getenv("ARTIFACTS_FOLDER")) and Path(artifacts_folder).exists():
         with open(f"{artifacts_folder}/depends_on.json", "w") as fp:
             json.dump(outputs, fp, indent=4)

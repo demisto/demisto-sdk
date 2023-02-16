@@ -104,9 +104,7 @@ class FieldBaseValidator(ContentEntityValidator):
 
         return not is_bc_broke
 
-    def is_valid_file(
-        self, validate_rn=True, is_new_file=False, use_git=False, is_added_file=False
-    ):
+    def is_valid_file(self, validate_rn=True, is_new_file=False, use_git=False, is_added_file=False):
         """Check whether the Incident Field is valid or not"""
         answers = [
             super().is_valid_file(validate_rn),
@@ -222,9 +220,7 @@ class FieldBaseValidator(ContentEntityValidator):
             (bool): True if valid, false otherwise.
         """
         if self.current_file.get("type") not in self.field_types:
-            error_message, error_code = Errors.invalid_field_type(
-                self.current_file.get("type"), self.field_types
-            )
+            error_message, error_code = Errors.invalid_field_type(self.current_file.get("type"), self.field_types)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
@@ -252,11 +248,7 @@ class FieldBaseValidator(ContentEntityValidator):
         Returns:
             (bool): True if all tests passes, false otherwise.
         """
-        return (
-            self.is_cli_name_is_builtin_key()
-            and self.is_matching_cli_name_regex()
-            and self.does_cli_name_match_id()
-        )
+        return self.is_cli_name_is_builtin_key() and self.is_matching_cli_name_regex() and self.does_cli_name_match_id()
 
     def does_cli_name_match_id(self):
         """
@@ -288,9 +280,7 @@ class FieldBaseValidator(ContentEntityValidator):
         cliname = self.current_file.get("cliName")
         if re.fullmatch(FIELD_CLI_NAME_VALIDATION_REGEX, cliname):  # type: ignore
             return True
-        error_message, error_code = Errors.invalid_incident_field_cli_name_regex(
-            FIELD_CLI_NAME_VALIDATION_REGEX
-        )
+        error_message, error_code = Errors.invalid_incident_field_cli_name_regex(FIELD_CLI_NAME_VALIDATION_REGEX)
         if self.handle_error(error_message, error_code, file_path=self.file_path):
             return False
         return True
@@ -305,12 +295,8 @@ class FieldBaseValidator(ContentEntityValidator):
         cli_name = self.current_file.get("cliName")
         is_valid = cli_name not in self.prohibited_cli_names
         if not is_valid:
-            error_message, error_code = Errors.invalid_incident_field_cli_name_value(
-                cli_name
-            )
-            if not self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            error_message, error_code = Errors.invalid_incident_field_cli_name_value(cli_name)
+            if not self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = True
         return is_valid
 
@@ -382,11 +368,7 @@ class FieldBaseValidator(ContentEntityValidator):
         ignored_packs = ["Common Types", "Core Alert Fields"]
         pack_metadata = get_pack_metadata(self.file_path)
         pack_name = pack_metadata.get("name")
-        name_prefixes = (
-            pack_metadata.get("itemPrefix", [])
-            if pack_metadata.get("itemPrefix")
-            else [pack_name]
-        )
+        name_prefixes = pack_metadata.get("itemPrefix", []) if pack_metadata.get("itemPrefix") else [pack_name]
         field_name = self.current_file.get("name", "")
         if pack_name and pack_name not in ignored_packs:
             for prefix in name_prefixes:
@@ -398,9 +380,7 @@ class FieldBaseValidator(ContentEntityValidator):
                 error_message,
                 error_code,
                 file_path=self.file_path,
-                suggested_fix=Errors.suggest_fix_field_name(
-                    field_name, pack_prefix=name_prefixes[0]
-                ),
+                suggested_fix=Errors.suggest_fix_field_name(field_name, pack_prefix=name_prefixes[0]),
             ):
                 return False
 
@@ -428,9 +408,7 @@ class FieldBaseValidator(ContentEntityValidator):
         return True
 
     @error_codes("IF112")
-    def is_valid_from_version_field(
-        self, min_from_version: LooseVersion, reason_for_min_version: str
-    ):
+    def is_valid_from_version_field(self, min_from_version: LooseVersion, reason_for_min_version: str):
         """
         Validates that the from version field is set to the expected minimum.
         This function is used for cases when:
@@ -443,9 +421,7 @@ class FieldBaseValidator(ContentEntityValidator):
         Returns:
             (bool): True if from version is equal or greater than `min_from_version`, false otherwise.
         """
-        current_version = LooseVersion(
-            self.current_file.get("fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
-        )
+        current_version = LooseVersion(self.current_file.get("fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION))
         if current_version < min_from_version:
             error_message, error_code = Errors.field_version_is_not_correct(
                 current_version, min_from_version, reason_for_min_version
@@ -466,10 +442,7 @@ class FieldBaseValidator(ContentEntityValidator):
         Returns:
             (bool): True if selectValues does not have empty values, false if contains empty value.
         """
-        if any(
-            select_value == ""
-            for select_value in (self.current_file.get("selectValues") or [])
-        ):
+        if any(select_value == "" for select_value in (self.current_file.get("selectValues") or [])):
             (
                 error_message,
                 error_code,
@@ -513,9 +486,7 @@ class FieldBaseValidator(ContentEntityValidator):
         ]
         for validator, error_generator in validators_and_error_generators:
             invalid_aliases = [
-                alias.get("cliname")
-                for alias in self._get_incident_fields_by_aliases(aliases)
-                if validator(alias)
+                alias.get("cliname") for alias in self._get_incident_fields_by_aliases(aliases) if validator(alias)
             ]
             if invalid_aliases:
                 error_message, error_code = error_generator(invalid_aliases)
@@ -548,9 +519,7 @@ class FieldBaseValidator(ContentEntityValidator):
                 yield aliased_field
 
     def is_alias_has_invalid_marketplaces(self, aliased_field: dict) -> bool:
-        return aliased_field.get("marketplaces", [MarketplaceVersions.XSOAR.value]) != [
-            MarketplaceVersions.XSOAR.value
-        ]
+        return aliased_field.get("marketplaces", [MarketplaceVersions.XSOAR.value]) != [MarketplaceVersions.XSOAR.value]
 
     def is_alias_has_inner_alias(self, aliased_field: dict) -> bool:
         return aliased_field is not None and "aliases" in aliased_field

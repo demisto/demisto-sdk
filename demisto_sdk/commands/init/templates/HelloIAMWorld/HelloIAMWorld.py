@@ -35,9 +35,7 @@ class Client(BaseClient):
         :rtype: ``Optional[IAMUserAppData]``
         """
         uri = "/users"  # TODO: replace to the correct GET User API endpoint
-        query_params = {
-            "email": email
-        }  # TODO: make sure you pass the correct query parameters
+        query_params = {"email": email}  # TODO: make sure you pass the correct query parameters
 
         res = self._http_request(
             method="GET",
@@ -45,12 +43,8 @@ class Client(BaseClient):
             params=query_params,
         )
 
-        if (
-            res and len(res.get("result", [])) == 1
-        ):  # TODO: make sure you verify a single result was retrieved
-            user_app_data = res.get("result")[
-                0
-            ]  # TODO: get the user_id, username, is_active and user_app_data
+        if res and len(res.get("result", [])) == 1:  # TODO: make sure you verify a single result was retrieved
+            user_app_data = res.get("result")[0]  # TODO: get the user_id, username, is_active and user_app_data
 
             user_id = user_app_data.get("user_id")
             is_active = user_app_data.get("active")
@@ -74,9 +68,7 @@ class Client(BaseClient):
             url_suffix=uri,
             json_data=user_data,
         )
-        user_app_data = res.get(
-            "result"
-        )  # TODO: get the user_id, username, is_active and user_app_data
+        user_app_data = res.get("result")  # TODO: get the user_id, username, is_active and user_app_data
         user_id = user_app_data.get("user_id")
         is_active = user_app_data.get("active")
         username = user_app_data.get("user_name")
@@ -95,9 +87,7 @@ class Client(BaseClient):
         :return: An IAMUserAppData object that contains the data of the updated user in the application.
         :rtype: ``IAMUserAppData``
         """
-        uri = (
-            f"/users/{user_id}"  # TODO: replace to the correct UPDATE User API endpoint
-        )
+        uri = f"/users/{user_id}"  # TODO: replace to the correct UPDATE User API endpoint
         res = self._http_request(
             method="PATCH",
             url_suffix=uri,
@@ -124,9 +114,7 @@ class Client(BaseClient):
         # In this example, we use the same endpoint as in update_user() method,
         # But other APIs might have a unique endpoint for this request.
 
-        user_data = {
-            "active": True
-        }  # TODO: make sure you pass the correct query parameters
+        user_data = {"active": True}  # TODO: make sure you pass the correct query parameters
         return self.update_user(user_id, user_data)
 
     def disable_user(self, user_id: str) -> IAMUserAppData:
@@ -142,9 +130,7 @@ class Client(BaseClient):
         # In this example, we use the same endpoint as in update_user() method,
         # But other APIs might have a unique endpoint for this request.
 
-        user_data = {
-            "active": False
-        }  # TODO: make sure you pass the correct query parameters
+        user_data = {"active": False}  # TODO: make sure you pass the correct query parameters
         return self.update_user(user_id, user_data)
 
     def get_app_fields(self) -> Dict[str, Any]:
@@ -195,12 +181,8 @@ class Client(BaseClient):
             error_code = e.res.status_code
 
             if action == IAMActions.DISABLE_USER and error_code in ERROR_CODES_TO_SKIP:
-                skip_message = (
-                    "Users is already disabled or does not exist in the system."
-                )
-                user_profile.set_result(
-                    action=action, skip=True, skip_reason=skip_message
-                )
+                skip_message = "Users is already disabled or does not exist in the system."
+                user_profile.set_result(action=action, skip=True, skip_reason=skip_message)
 
             try:
                 resp = e.res.json()
@@ -233,9 +215,7 @@ def get_error_details(res: Dict[str, Any]) -> str:
     :return: The parsed error details.
     :rtype: ``str``
     """
-    message = res.get("error", {}).get(
-        "message"
-    )  # TODO: make sure you parse the error details correctly
+    message = res.get("error", {}).get("message")  # TODO: make sure you parse the error details correctly
     details = res.get("error", {}).get("detail")
     return f"{message}: {details}"
 

@@ -16,9 +16,7 @@ class GenericFieldValidator(ContentEntityValidator):
     GenericFieldValidator is designed to validate the correctness of the file structure we enter to content repo.
     """
 
-    def is_valid_file(
-        self, validate_rn=True, is_new_file=False, use_git=False, is_added_file=False
-    ):
+    def is_valid_file(self, validate_rn=True, is_new_file=False, use_git=False, is_added_file=False):
         """
         Check whether the generic field is valid or not
         """
@@ -42,9 +40,7 @@ class GenericFieldValidator(ContentEntityValidator):
         if group == GENERIC_FIELD_GROUP:
             return True
 
-        error_message, error_code = Errors.invalid_generic_field_group_value(
-            group, GENERIC_FIELD_GROUP
-        )
+        error_message, error_code = Errors.invalid_generic_field_group_value(group, GENERIC_FIELD_GROUP)
         if self.handle_error(error_message, error_code, file_path=self.file_path):
             return False
 
@@ -59,9 +55,7 @@ class GenericFieldValidator(ContentEntityValidator):
         if generic_field_id.startswith(GENERIC_FIELD_ID_PREFIX):
             return True
 
-        error_message, error_code = Errors.invalid_generic_field_id(
-            generic_field_id, GENERIC_FIELD_ID_PREFIX
-        )
+        error_message, error_code = Errors.invalid_generic_field_id(generic_field_id, GENERIC_FIELD_ID_PREFIX)
         if self.handle_error(error_message, error_code, file_path=self.file_path):
             return False
 

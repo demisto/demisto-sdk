@@ -48,9 +48,7 @@ class TestXSOARConfigFileUpdater:
             (False, "", {}),
         ],
     )
-    def test_add_all_marketplace_packs(
-        self, mocker, add_all_marketplace_packs, expected_path, expected_outputs
-    ):
+    def test_add_all_marketplace_packs(self, mocker, add_all_marketplace_packs, expected_path, expected_outputs):
         """
         Given:
             - add_all_marketplace_packs arg as True or False
@@ -155,9 +153,7 @@ class TestXSOARConfigFileUpdater:
                     config_file_info = json.load(config_file)
             except IsADirectoryError:
                 config_file_info = {}
-            assert config_file_info == {
-                "marketplace_packs": [{"id": "Pack1", "version": "1.0.1"}]
-            }
+            assert config_file_info == {"marketplace_packs": [{"id": "Pack1", "version": "1.0.1"}]}
 
     def test_add_custom_pack(self, capsys):
         """
@@ -185,9 +181,7 @@ class TestXSOARConfigFileUpdater:
                     config_file_info = json.load(config_file)
             except IsADirectoryError:
                 config_file_info = {}
-            assert config_file_info == {
-                "custom_packs": [{"id": "Pack1", "url": "Packs/Pack1"}]
-            }
+            assert config_file_info == {"custom_packs": [{"id": "Pack1", "url": "Packs/Pack1"}]}
 
     @pytest.mark.parametrize(
         argnames="add_marketplace_pack, pack_id, pack_data, expected_path, err, expected_outputs",
@@ -309,9 +303,7 @@ class TestXSOARConfigFileUpdater:
             (False, "Pack1", "", "", True),
         ],
     )
-    def test_verify_flags(
-        self, add_custom_pack, pack_id, pack_data, err, exit_code, capsys
-    ):
+    def test_verify_flags(self, add_custom_pack, pack_id, pack_data, err, exit_code, capsys):
         """
         Given:
             - arguments to the xsoar-configuration-file
@@ -324,9 +316,7 @@ class TestXSOARConfigFileUpdater:
         self.add_custom_pack = add_custom_pack
         self.pack_id = pack_id
         self.pack_data = pack_data
-        config_file = XSOARConfigFileUpdater(
-            pack_id, pack_data, add_custom_pack=add_custom_pack
-        )
+        config_file = XSOARConfigFileUpdater(pack_id, pack_data, add_custom_pack=add_custom_pack)
         error_code = config_file.verify_flags()
         assert error_code == exit_code
 

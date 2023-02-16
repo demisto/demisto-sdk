@@ -100,9 +100,7 @@ class TestIndicatorFieldValidator:
     ]
 
     @pytest.mark.parametrize("field_type, from_version, expected", TYPES_FROM_VERSION)
-    def test_is_valid_indicator_type_from_version(
-        self, pack, field_type, from_version, expected
-    ):
+    def test_is_valid_indicator_type_from_version(self, pack, field_type, from_version, expected):
         """
         Given
         - An indicator field, with its type

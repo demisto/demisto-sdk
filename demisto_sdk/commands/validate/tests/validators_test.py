@@ -220,25 +220,17 @@ class TestValidators:
         -  Ensure it accepts the 'beta' key as valid
         """
         try:
-            mocker.patch.object(
-                OldReleaseNotesValidator, "get_master_diff", return_value="Comment."
-            )
+            mocker.patch.object(OldReleaseNotesValidator, "get_master_diff", return_value="Comment.")
             copyfile(VALID_BETA_PLAYBOOK_PATH, PLAYBOOK_TARGET)
-            structure = StructureValidator(
-                VALID_BETA_PLAYBOOK_PATH, predefined_scheme="playbook"
-            )
+            structure = StructureValidator(VALID_BETA_PLAYBOOK_PATH, predefined_scheme="playbook")
             validator = PlaybookValidator(structure)
             mocker.patch.object(validator, "is_script_id_valid", return_value=True)
             assert validator.is_valid_playbook(validate_rn=False)
         finally:
             os.remove(PLAYBOOK_TARGET)
 
-    @pytest.mark.parametrize(
-        "source, target, answer, validator", INPUTS_IS_VALID_VERSION
-    )
-    def test_is_valid_version(
-        self, source: str, target: str, answer: Any, validator: ContentEntityValidator
-    ) -> None:
+    @pytest.mark.parametrize("source, target, answer, validator", INPUTS_IS_VALID_VERSION)
+    def test_is_valid_version(self, source: str, target: str, answer: Any, validator: ContentEntityValidator) -> None:
         """
         Given
         - A file with either a valid or invalid version
@@ -257,9 +249,7 @@ class TestValidators:
         finally:
             os.remove(target)
 
-    @pytest.mark.parametrize(
-        "source, target, answer, validator", INPUTS_IS_VALID_VERSION
-    )
+    @pytest.mark.parametrize("source, target, answer, validator", INPUTS_IS_VALID_VERSION)
     def test_is_valid_fromversion(
         self, source: str, target: str, answer: Any, validator: ContentEntityValidator
     ) -> None:
@@ -325,9 +315,7 @@ class TestValidators:
         validator = validator(structure)
         assert validator.is_valid_version() is answer
 
-    @pytest.mark.parametrize(
-        "source, target, answer, validator", INPUTS_IS_VALID_VERSION
-    )
+    @pytest.mark.parametrize("source, target, answer, validator", INPUTS_IS_VALID_VERSION)
     def test_is_file_valid(
         self,
         source: str,
@@ -340,15 +328,9 @@ class TestValidators:
             copyfile(source, target)
             structure = StructureValidator(source)
             res_validator = validator(structure)
-            mocker.patch.object(
-                ScriptValidator, "is_valid_script_file_path", return_value=True
-            )
-            mocker.patch.object(
-                ScriptValidator, "is_there_separators_in_names", return_value=True
-            )
-            mocker.patch.object(
-                ScriptValidator, "is_docker_image_valid", return_value=True
-            )
+            mocker.patch.object(ScriptValidator, "is_valid_script_file_path", return_value=True)
+            mocker.patch.object(ScriptValidator, "is_there_separators_in_names", return_value=True)
+            mocker.patch.object(ScriptValidator, "is_docker_image_valid", return_value=True)
             assert res_validator.is_valid_file(validate_rn=False) is answer
         finally:
             os.remove(target)
@@ -389,8 +371,7 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize(
-        "source_dummy, target_dummy, source_release_notes, target_release_notes, "
-        "validator, answer",
+        "source_dummy, target_dummy, source_release_notes, target_release_notes, " "validator, answer",
         INPUTS_RELEASE_NOTES_EXISTS_VALIDATION,
     )
     def test_is_release_notes_exists(
@@ -470,8 +451,7 @@ class TestValidators:
     test_package = create_release_notes_structure_test_package.__func__()
 
     @pytest.mark.parametrize(
-        "source_dummy, target_dummy, source_release_notes, target_release_notes, "
-        "validator, answer",
+        "source_dummy, target_dummy, source_release_notes, target_release_notes, " "validator, answer",
         test_package,
     )
     def test_valid_release_notes_structure(
@@ -512,9 +492,7 @@ class TestValidators:
         (INVALID_INTEGRATION_ID_PATH, INTEGRATION_TARGET, False, IntegrationValidator),
     ]
 
-    @pytest.mark.parametrize(
-        "source, target, answer, validator", INPUTS_IS_ID_EQUALS_NAME
-    )
+    @pytest.mark.parametrize("source, target, answer, validator", INPUTS_IS_ID_EQUALS_NAME)
     def test_is_id_equals_name(
         self,
         source: str,
@@ -560,9 +538,7 @@ class TestValidators:
     def test_is_file_structure(self, source: str, target: str, file_type: str) -> None:
         try:
             copyfile(source, target)
-            assert StructureValidator(
-                file_path=source, predefined_scheme=file_type
-            ).is_valid_file()
+            assert StructureValidator(file_path=source, predefined_scheme=file_type).is_valid_file()
         finally:
             os.remove(target)
 
@@ -594,39 +570,21 @@ class TestValidators:
         """
         mocker.patch.object(ImageValidator, "is_valid", return_value=True)
         mocker.patch.object(PlaybookValidator, "is_script_id_valid", return_value=True)
-        mocker.patch.object(
-            ScriptValidator, "is_valid_script_file_path", return_value=True
-        )
-        mocker.patch.object(
-            ScriptValidator, "is_there_separators_in_names", return_value=True
-        )
+        mocker.patch.object(ScriptValidator, "is_valid_script_file_path", return_value=True)
+        mocker.patch.object(ScriptValidator, "is_there_separators_in_names", return_value=True)
         mocker.patch.object(ScriptValidator, "is_docker_image_valid", return_value=True)
-        mocker.patch.object(
-            IntegrationValidator, "is_valid_integration_file_path", return_value=True
-        )
-        mocker.patch.object(
-            IntegrationValidator, "is_valid_py_file_names", return_value=True
-        )
-        mocker.patch.object(
-            IntegrationValidator, "is_there_separators_in_names", return_value=True
-        )
-        mocker.patch.object(
-            IntegrationValidator, "is_docker_image_valid", return_value=True
-        )
+        mocker.patch.object(IntegrationValidator, "is_valid_integration_file_path", return_value=True)
+        mocker.patch.object(IntegrationValidator, "is_valid_py_file_names", return_value=True)
+        mocker.patch.object(IntegrationValidator, "is_there_separators_in_names", return_value=True)
+        mocker.patch.object(IntegrationValidator, "is_docker_image_valid", return_value=True)
         mocker.patch.object(
             IntegrationValidator,
             "has_no_fromlicense_key_in_contributions_integration",
             return_value=True,
         )
-        mocker.patch.object(
-            IntegrationValidator, "is_valid_category", return_value=True
-        )
-        mocker.patch.object(
-            DescriptionValidator, "is_valid_description_name", return_value=True
-        )
-        mocker.patch.object(
-            IntegrationValidator, "is_api_token_in_credential_type", return_value=True
-        )
+        mocker.patch.object(IntegrationValidator, "is_valid_category", return_value=True)
+        mocker.patch.object(DescriptionValidator, "is_valid_description_name", return_value=True)
+        mocker.patch.object(IntegrationValidator, "is_api_token_in_credential_type", return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
 
@@ -650,9 +608,7 @@ class TestValidators:
     ]
 
     @pytest.mark.parametrize("file_path", INVALID_FILES_PATHS_FOR_ALL_VALIDATIONS)
-    def test_run_all_validations_on_file_failed(
-        self, set_git_test_env, mocker, file_path
-    ):
+    def test_run_all_validations_on_file_failed(self, set_git_test_env, mocker, file_path):
         """
         Given
         - An invalid file inside a pack
@@ -670,18 +626,12 @@ class TestValidators:
             return_value=True,
         )
 
-        mocker.patch.object(
-            IntegrationValidator, "is_api_token_in_credential_type", return_value=True
-        )
-        mocker.patch.object(
-            IntegrationValidator, "is_valid_category", return_value=True
-        )
+        mocker.patch.object(IntegrationValidator, "is_api_token_in_credential_type", return_value=True)
+        mocker.patch.object(IntegrationValidator, "is_valid_category", return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert not validate_manager.run_validation_on_specific_files()
 
-    def test_run_all_validations_on_file_with_modified_id(
-        self, set_git_test_env, mocker, integration
-    ):
+    def test_run_all_validations_on_file_with_modified_id(self, set_git_test_env, mocker, integration):
         """
         Given
         - Integration with a modified ID.
@@ -692,9 +642,7 @@ class TestValidators:
         Then
         -  The file will fail validation because its id changed.
         """
-        validator = StructureValidator(
-            file_path=integration.yml.path, predefined_scheme="integration"
-        )
+        validator = StructureValidator(file_path=integration.yml.path, predefined_scheme="integration")
         old = validator.load_data_from_file()
         old["commonfields"]["id"] = "old_id"
 
@@ -712,12 +660,8 @@ class TestValidators:
             "has_no_fromlicense_key_in_contributions_integration",
             return_value=True,
         )
-        mocker.patch.object(
-            IntegrationValidator, "is_api_token_in_credential_type", return_value=True
-        )
-        mocker.patch.object(
-            IntegrationValidator, "is_valid_category", return_value=True
-        )
+        mocker.patch.object(IntegrationValidator, "is_api_token_in_credential_type", return_value=True)
+        mocker.patch.object(IntegrationValidator, "is_valid_category", return_value=True)
         with ChangeCWD(integration.repo_path):
             validate_manager = ValidateManager(skip_conf_json=True)
             assert not validate_manager.run_validations_on_file(
@@ -729,9 +673,7 @@ class TestValidators:
     def test_files_validator_validate_pack_unique_files(self, mocker):
         from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 
-        mocker.patch.object(
-            tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json")
-        )
+        mocker.patch.object(tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json"))
         mocker.patch.object(Pack, "should_be_deprecated", return_value=False)
         mocker.patch(
             "demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories",
@@ -740,9 +682,7 @@ class TestValidators:
         # mocking should_be_deprecated must be done because the get_dict_from_file is being mocked.
         # should_be_deprecated relies on finding the correct file content from get_dict_from_file function.
         validate_manager = ValidateManager(skip_conf_json=True)
-        result = validate_manager.validate_pack_unique_files(
-            VALID_PACK, pack_error_ignore_list={}
-        )
+        result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
         assert result
 
     def test_files_validator_missing_meta_file(self, repo, capsys):
@@ -756,20 +696,14 @@ class TestValidators:
         """
         pack = repo.create_pack("pack")
         validate_manager = ValidateManager(skip_conf_json=True)
-        err_msg, err_code = Errors.required_pack_file_does_not_exist(
-            PACKS_PACK_META_FILE_NAME
-        )
+        err_msg, err_code = Errors.required_pack_file_does_not_exist(PACKS_PACK_META_FILE_NAME)
 
-        validate_manager.validate_pack_unique_files(
-            pack.path, pack_error_ignore_list={}
-        )
+        validate_manager.validate_pack_unique_files(pack.path, pack_error_ignore_list={})
         stdout = capsys.readouterr().out
         assert (err_msg not in stdout) and (err_code not in stdout)
 
         os.remove(pack.pack_metadata.path)
-        validate_manager.validate_pack_unique_files(
-            pack.path, pack_error_ignore_list={}
-        )
+        validate_manager.validate_pack_unique_files(pack.path, pack_error_ignore_list={})
         stdout = capsys.readouterr().out
         assert err_msg in stdout and err_code in stdout
 
@@ -799,17 +733,13 @@ class TestValidators:
             "demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories",
             return_value=["Analytics & SIEM"],
         )
-        mocker.patch.object(
-            tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json")
-        )
+        mocker.patch.object(tools, "get_dict_from_file", return_value=({"approved_list": {}}, "json"))
         mocker.patch.object(Pack, "should_be_deprecated", return_value=False)
         # mocking should_be_deprecated must be done because the get_dict_from_file is being mocked.
         # should_be_deprecated relies on finding the correct file type from get_dict_from_file function.
 
         validate_manager = ValidateManager(skip_conf_json=True, id_set_path=id_set_path)
-        result = validate_manager.validate_pack_unique_files(
-            VALID_PACK, pack_error_ignore_list={}
-        )
+        result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
         assert result
 
     def test_validate_pack_dependencies__invalid(self, mocker):
@@ -838,15 +768,9 @@ class TestValidators:
             "validate_pack_readme_and_pack_description",
             return_value=True,
         )
-        mocker.patch.object(
-            PackUniqueFilesValidator, "validate_pack_readme_images", return_value=True
-        )
-        mocker.patch.object(
-            PackUniqueFilesValidator, "_read_metadata_content", return_value=dict()
-        )
-        result = validate_manager.validate_pack_unique_files(
-            "QRadar", pack_error_ignore_list={}
-        )
+        mocker.patch.object(PackUniqueFilesValidator, "validate_pack_readme_images", return_value=True)
+        mocker.patch.object(PackUniqueFilesValidator, "_read_metadata_content", return_value=dict())
+        result = validate_manager.validate_pack_unique_files("QRadar", pack_error_ignore_list={})
         assert not result
 
     @staticmethod
@@ -870,12 +794,8 @@ class TestValidators:
             - return a True validation response
         """
         mocker.patch.object(ScriptValidator, "is_valid_name", return_value=True)
-        mocker.patch.object(
-            ScriptValidator, "is_valid_script_file_path", return_value=True
-        )
-        mocker.patch.object(
-            ScriptValidator, "is_there_separators_in_names", return_value=True
-        )
+        mocker.patch.object(ScriptValidator, "is_valid_script_file_path", return_value=True)
+        mocker.patch.object(ScriptValidator, "is_there_separators_in_names", return_value=True)
         mocker.patch.object(ScriptValidator, "is_docker_image_valid", return_value=True)
         self.mock_unifier()
         validate_manager = ValidateManager(skip_conf_json=True)
@@ -889,14 +809,12 @@ class TestValidators:
 
     VALID_ADDED_RELEASE_NOTES = {
         "Packs/HelloWorld/ReleaseNotes/1_2_0.md",
-        "Packs/ThreatIntelligenceManagement/ReleaseNotes/1_1_0.md"
-        "Packs/Tanium/ReleaseNotes/1_1_0.md",
+        "Packs/ThreatIntelligenceManagement/ReleaseNotes/1_1_0.md" "Packs/Tanium/ReleaseNotes/1_1_0.md",
     }
     INVALID_ADDED_RELEASE_NOTES = {
         "Packs/HelloWorld/ReleaseNotes/1_2_0.md",
         "Packs/HelloWorld/ReleaseNotes/1_3_0.md",
-        "Packs/ThreatIntelligenceManagement/ReleaseNotes/1_1_0.md"
-        "Packs/Tanium/ReleaseNotes/1_1_0.md",
+        "Packs/ThreatIntelligenceManagement/ReleaseNotes/1_1_0.md" "Packs/Tanium/ReleaseNotes/1_1_0.md",
     }
     VERIFY_NO_DUP_RN_INPUT = [
         (VALID_ADDED_RELEASE_NOTES, True),
@@ -919,12 +837,8 @@ class TestValidators:
         result = validate_manager.validate_no_duplicated_release_notes(added_files)
         assert result is expected
 
-    @pytest.mark.parametrize(
-        "file_path, file_type, expected", [(TEST_PLAYBOOK, "testplaybook", False)]
-    )
-    def test_are_tests_configured_testplaybook(
-        self, file_path: str, file_type: str, expected: bool
-    ):
+    @pytest.mark.parametrize("file_path, file_type, expected", [(TEST_PLAYBOOK, "testplaybook", False)])
+    def test_are_tests_configured_testplaybook(self, file_path: str, file_type: str, expected: bool):
         """
         Given
         - A content item
@@ -940,12 +854,8 @@ class TestValidators:
         assert validator.are_tests_configured() == expected
 
     ARE_TEST_CONFIGURED_TEST_INPUT = [
-        pytest.param(
-            {"tests": ["PagerDuty Test"]}, "PagerDuty v2", True, id="well configured"
-        ),
-        pytest.param(
-            {}, "PagerDuty v3", False, id="tests section missing from yml and conf.json"
-        ),
+        pytest.param({"tests": ["PagerDuty Test"]}, "PagerDuty v2", True, id="well configured"),
+        pytest.param({}, "PagerDuty v3", False, id="tests section missing from yml and conf.json"),
         pytest.param(
             {},
             "PagerDuty v2",
@@ -972,12 +882,8 @@ class TestValidators:
         ),
     ]
 
-    @pytest.mark.parametrize(
-        "configured_tests, integration_id, expected", ARE_TEST_CONFIGURED_TEST_INPUT
-    )
-    def test_are_tests_configured_integration(
-        self, repo, integration_id, configured_tests: str, expected: bool
-    ):
+    @pytest.mark.parametrize("configured_tests, integration_id, expected", ARE_TEST_CONFIGURED_TEST_INPUT)
+    def test_are_tests_configured_integration(self, repo, integration_id, configured_tests: str, expected: bool):
         """
         Given
         - A content item
@@ -994,15 +900,9 @@ class TestValidators:
             yml_dict = {"commonfields": {"id": integration_id}}
             yml_dict.update(configured_tests)
             integration = pack.create_integration(name=integration_id, yml=yml_dict)
-            repo.conf.write_json(
-                tests=[{"integrations": "PagerDuty v2", "playbookID": "PagerDuty Test"}]
-            )
-            integration_yml_path = os.path.join(
-                integration.path, integration.name + ".yml"
-            )
-            structure_validator = StructureValidator(
-                integration_yml_path, predefined_scheme="integration"
-            )
+            repo.conf.write_json(tests=[{"integrations": "PagerDuty v2", "playbookID": "PagerDuty Test"}])
+            integration_yml_path = os.path.join(integration.path, integration.name + ".yml")
+            structure_validator = StructureValidator(integration_yml_path, predefined_scheme="integration")
             validator = IntegrationValidator(structure_validator)
             assert validator.are_tests_configured() == expected
 
@@ -1016,9 +916,7 @@ class TestValidators:
         -  validator should ignore those files
         """
         validate_manager = ValidateManager()
-        assert validate_manager.run_validations_on_file(
-            INVALID_IGNORED_UNIFIED_INTEGRATION, None
-        )
+        assert validate_manager.run_validations_on_file(INVALID_IGNORED_UNIFIED_INTEGRATION, None)
 
     def test_non_integration_png_files_ignored(self, set_git_test_env):
         """
@@ -1042,9 +940,7 @@ class TestValidators:
             - verify that the created ignored_errors list is being created with all of the
             error codes that is in the .pack-ignore, also the error codes which cannot be ignored.
         """
-        files_path = os.path.normpath(
-            os.path.join(__file__, f"{git_path()}/demisto_sdk/tests", "test_files")
-        )
+        files_path = os.path.normpath(os.path.join(__file__, f"{git_path()}/demisto_sdk/tests", "test_files"))
         test_file = os.path.join(files_path, "fake_pack/.pack-ignore")
 
         mocker.patch.object(
@@ -1143,17 +1039,13 @@ class TestValidators:
         pack = repo.create_pack("pack")
         pack.create_test_script()
         with ChangeCWD(pack.repo_path):
-            os.system(
-                "mv Packs/pack/Scripts/sample_script/sample_script.yml Packs/pack/TestPlaybooks/"
-            )
+            os.system("mv Packs/pack/Scripts/sample_script/sample_script.yml Packs/pack/TestPlaybooks/")
             x = ValidateManager()
             try:
                 out = StringIO()
                 sys.stdout = out
 
-                x.validate_added_files(
-                    {"Packs/pack/TestPlaybooks/sample_script.yml"}, None
-                )
+                x.validate_added_files({"Packs/pack/TestPlaybooks/sample_script.yml"}, None)
                 assert "Missing id in root" not in out.getvalue()
             except Exception:
                 assert False
@@ -1169,11 +1061,7 @@ class TestValidators:
         Then:
             - return a False
         """
-        files_path = os.path.normpath(
-            os.path.join(
-                __file__, f"{git_path()}/demisto_sdk/tests", "test_files", "Packs"
-            )
-        )
+        files_path = os.path.normpath(os.path.join(__file__, f"{git_path()}/demisto_sdk/tests", "test_files", "Packs"))
         test_file = os.path.join(
             files_path,
             "CortexXDR",
@@ -1192,9 +1080,7 @@ class TestValidators:
         Then:
             - return a True
         """
-        files_path = os.path.normpath(
-            os.path.join(__file__, f"{git_path()}/demisto_sdk/tests", "test_files")
-        )
+        files_path = os.path.normpath(os.path.join(__file__, f"{git_path()}/demisto_sdk/tests", "test_files"))
         test_file = os.path.join(
             files_path,
             "UnifiedIntegrations/Integrations/integration-Symantec_Messaging_Gateway.yml",
@@ -1213,18 +1099,12 @@ class TestValidators:
             - return a True as no release notes are missing
         """
         pack1 = repo.create_pack("PackName1")
-        incident_field1 = pack1.create_incident_field(
-            "incident-field", content=INCIDENT_FIELD
-        )
+        incident_field1 = pack1.create_incident_field("incident-field", content=INCIDENT_FIELD)
         pack2 = repo.create_pack("PackName2")
-        incident_field2 = pack2.create_incident_field(
-            "incident-field", content=INCIDENT_FIELD
-        )
+        incident_field2 = pack2.create_incident_field("incident-field", content=INCIDENT_FIELD)
         validate_manager = ValidateManager()
         pack3 = repo.create_pack("PackName3")
-        incident_field3 = pack3.create_incident_field(
-            "incident-field", content=INCIDENT_FIELD
-        )
+        incident_field3 = pack3.create_incident_field("incident-field", content=INCIDENT_FIELD)
 
         modified_files = {
             incident_field1.get_path_from_pack(),
@@ -1247,9 +1127,7 @@ class TestValidators:
                 is True
             )
 
-    def test_validate_no_missing_release_notes__missing_rn_in_modified_files(
-        self, repo, mocker
-    ):
+    def test_validate_no_missing_release_notes__missing_rn_in_modified_files(self, repo, mocker):
         """
         Given:
             - 2 packs with modified files and release notes for only one and no old format files
@@ -1258,17 +1136,11 @@ class TestValidators:
         Then:
             - return a False as there are release notes missing
         """
-        mocker.patch.object(
-            BaseValidator, "update_checked_flags_by_support_level", return_value=""
-        )
+        mocker.patch.object(BaseValidator, "update_checked_flags_by_support_level", return_value="")
         pack1 = repo.create_pack("PackName1")
-        incident_field1 = pack1.create_incident_field(
-            "incident-field", content=INCIDENT_FIELD
-        )
+        incident_field1 = pack1.create_incident_field("incident-field", content=INCIDENT_FIELD)
         pack2 = repo.create_pack("PackName2")
-        incident_field2 = pack2.create_incident_field(
-            "incident-field", content=INCIDENT_FIELD
-        )
+        incident_field2 = pack2.create_incident_field("incident-field", content=INCIDENT_FIELD)
         validate_manager = ValidateManager()
         modified_files = {
             incident_field1.get_path_from_pack(),
@@ -1285,9 +1157,7 @@ class TestValidators:
                 is False
             )
 
-    def test_validate_no_missing_release_notes__missing_rn_dependent_on_api_module(
-        self, repo, mocker, tmpdir
-    ):
+    def test_validate_no_missing_release_notes__missing_rn_dependent_on_api_module(self, repo, mocker, tmpdir):
         """
         Given:
             - APIModule pack has a change relevant for another pack
@@ -1299,9 +1169,7 @@ class TestValidators:
         Then:
             - return a False as there are release notes missing
         """
-        mocker.patch.object(
-            BaseValidator, "update_checked_flags_by_support_level", return_value=""
-        )
+        mocker.patch.object(BaseValidator, "update_checked_flags_by_support_level", return_value="")
         pack1 = repo.create_pack("ApiModules")
         api_script1 = pack1.create_script("APIScript")
         api_script1.create_default_script(name="APIScript")
@@ -1335,9 +1203,7 @@ class TestValidators:
                 is False
             )
 
-    def test_validate_no_missing_release_notes__happy_rn_dependent_on_api_module(
-        self, repo, mocker, tmpdir
-    ):
+    def test_validate_no_missing_release_notes__happy_rn_dependent_on_api_module(self, repo, mocker, tmpdir):
         """
         Given:
             - APIModule pack has a change relevant for another pack
@@ -1349,9 +1215,7 @@ class TestValidators:
         Then:
             - return a True as there are no release notes missing
         """
-        mocker.patch.object(
-            BaseValidator, "update_checked_flags_by_support_level", return_value=""
-        )
+        mocker.patch.object(BaseValidator, "update_checked_flags_by_support_level", return_value="")
         pack1 = repo.create_pack("ApiModules")
         api_script1 = pack1.create_script("APIScript")
         pack2_name = "ApiDependent"
@@ -1387,9 +1251,7 @@ class TestValidators:
                 is True
             )
 
-    def test_validate_no_missing_release_notes__missing_rn_in_old_format_files(
-        self, repo, mocker
-    ):
+    def test_validate_no_missing_release_notes__missing_rn_in_old_format_files(self, repo, mocker):
         """
         Given:
             - 2 packs one modified files the other an old format file and release notes for only one
@@ -1398,17 +1260,11 @@ class TestValidators:
         Then:
             - return a False as there are release notes missing
         """
-        mocker.patch.object(
-            BaseValidator, "update_checked_flags_by_support_level", return_value=""
-        )
+        mocker.patch.object(BaseValidator, "update_checked_flags_by_support_level", return_value="")
         pack1 = repo.create_pack("PackName1")
-        incident_field1 = pack1.create_incident_field(
-            "incident-field", content=INCIDENT_FIELD
-        )
+        incident_field1 = pack1.create_incident_field("incident-field", content=INCIDENT_FIELD)
         pack2 = repo.create_pack("PackName2")
-        incident_field2 = pack2.create_incident_field(
-            "incident-field", content=INCIDENT_FIELD
-        )
+        incident_field2 = pack2.create_incident_field("incident-field", content=INCIDENT_FIELD)
         validate_manager = ValidateManager()
         modified_files = {incident_field1.get_path_from_pack()}
         added_files = {"Packs/PackName1/ReleaseNotes/1_0_0.md"}
@@ -1423,9 +1279,7 @@ class TestValidators:
                 is False
             )
 
-    def test_validate_no_missing_release_notes__missing_rn_for_added_file_in_existing_pack(
-        self, repo, mocker
-    ):
+    def test_validate_no_missing_release_notes__missing_rn_for_added_file_in_existing_pack(self, repo, mocker):
         """
         Given:
             - an existing pack with an added file which does not have release notes
@@ -1434,13 +1288,9 @@ class TestValidators:
         Then:
             - return a False as there are release notes missing
         """
-        mocker.patch.object(
-            BaseValidator, "update_checked_flags_by_support_level", return_value=""
-        )
+        mocker.patch.object(BaseValidator, "update_checked_flags_by_support_level", return_value="")
         pack1 = repo.create_pack("PackName1")
-        incident_field1 = pack1.create_incident_field(
-            "incident-field", content=INCIDENT_FIELD
-        )
+        incident_field1 = pack1.create_incident_field("incident-field", content=INCIDENT_FIELD)
         validate_manager = ValidateManager()
         added_files = {incident_field1.get_path_from_pack()}
         with ChangeCWD(repo.path):
@@ -1453,9 +1303,7 @@ class TestValidators:
                 is False
             )
 
-    def test_validate_no_missing_release_notes__no_missing_rn_new_pack(
-        self, repo, mocker
-    ):
+    def test_validate_no_missing_release_notes__no_missing_rn_new_pack(self, repo, mocker):
         """
         Given:
             - an added file in a new pack
@@ -1464,13 +1312,9 @@ class TestValidators:
         Then:
             - return a True as there are no release notes missing
         """
-        mocker.patch.object(
-            BaseValidator, "update_checked_flags_by_support_level", return_value=""
-        )
+        mocker.patch.object(BaseValidator, "update_checked_flags_by_support_level", return_value="")
         pack1 = repo.create_pack("PackName1")
-        incident_field1 = pack1.create_incident_field(
-            "incident-field", content=INCIDENT_FIELD
-        )
+        incident_field1 = pack1.create_incident_field("incident-field", content=INCIDENT_FIELD)
         validate_manager = ValidateManager()
         validate_manager.new_packs = {"PackName1"}
         added_files = {incident_field1.get_path_from_pack()}
@@ -1510,9 +1354,7 @@ class TestValidators:
             - return a False as the files are invalid
             - assert the handle_error function is called for each file (and 1 for not finding the id set file)
         """
-        handle_error_mock = mocker.patch.object(
-            BaseValidator, "handle_error", return_value="not-a-non-string"
-        )
+        handle_error_mock = mocker.patch.object(BaseValidator, "handle_error", return_value="not-a-non-string")
         validate_manager = ValidateManager()
         old_format_files = {
             f"{git_path()}/demisto_sdk/tests/test_files/script-valid.yml",
@@ -1565,9 +1407,7 @@ class TestValidators:
             assert not validate_manager.validate_no_old_format(deprecated_false_file)
 
     def test_setup_git_params_master_branch(self, mocker):
-        mocker.patch.object(
-            GitUtil, "get_current_working_branch", return_value="master"
-        )
+        mocker.patch.object(GitUtil, "get_current_working_branch", return_value="master")
         validate_manager = ValidateManager()
         validate_manager.setup_git_params()
 
@@ -1575,9 +1415,7 @@ class TestValidators:
         assert validate_manager.skip_pack_rn_validation
 
     def test_setup_git_params_non_master_branch(self, mocker):
-        mocker.patch.object(
-            GitUtil, "get_current_working_branch", return_value="not-master-branch"
-        )
+        mocker.patch.object(GitUtil, "get_current_working_branch", return_value="not-master-branch")
         validate_manager = ValidateManager()
         validate_manager.setup_git_params()
 
@@ -1593,9 +1431,7 @@ class TestValidators:
             "Packs/Claroty/Layouts/layoutscontainer-Claroty_Integrity_Incident.json",
         }
         packs = {"CortexXDR", "Claroty", "McAfee_ESM", "Malware"}
-        validate_manager = ValidateManager(
-            skip_conf_json=True, check_is_unskipped=False
-        )
+        validate_manager = ValidateManager(skip_conf_json=True, check_is_unskipped=False)
         packs_found = validate_manager.get_packs(modified_files)
         assert packs_found == packs
 
@@ -1609,15 +1445,11 @@ class TestValidators:
             - validate_release_notes returns True
         """
         file_path = "Packs/CortexXDR/ReleaseNotes/1_1_1.md"
-        modified_files = {
-            "Packs/CortexXDR/Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml"
-        }
+        modified_files = {"Packs/CortexXDR/Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml"}
         mocker.patch.object(ReleaseNotesValidator, "__init__", return_value=None)
         mocker.patch.object(ReleaseNotesValidator, "is_file_valid", return_value=True)
         validate_manager = ValidateManager(skip_conf_json=True)
-        assert validate_manager.validate_release_notes(
-            file_path, {}, modified_files, None
-        )
+        assert validate_manager.validate_release_notes(file_path, {}, modified_files, None)
 
     def test_validate_release_notes__invalid_rn_for_new_pack(self, mocker):
         """
@@ -1630,9 +1462,7 @@ class TestValidators:
         """
 
         file_path = "Packs/CortexXDR/ReleaseNotes/1_0_0.md"
-        modified_files = {
-            "Packs/CortexXDR/Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml"
-        }
+        modified_files = {"Packs/CortexXDR/Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml"}
         mocker.patch.object(ReleaseNotesValidator, "__init__", return_value=None)
         mocker.patch.object(ReleaseNotesValidator, "is_file_valid", return_value=True)
         mocker.patch.object(
@@ -1642,12 +1472,7 @@ class TestValidators:
         )
         validate_manager = ValidateManager(skip_conf_json=True)
         validate_manager.new_packs = {"CortexXDR"}
-        assert (
-            validate_manager.validate_release_notes(
-                file_path, {file_path}, modified_files, None
-            )
-            is False
-        )
+        assert validate_manager.validate_release_notes(file_path, {file_path}, modified_files, None) is False
 
     def test_run_validations_on_file_release_notes_config(self, pack):
         """
@@ -1667,12 +1492,8 @@ class TestValidators:
         validate_manager: ValidateManager = ValidateManager()
         assert validate_manager.run_validations_on_file(rn_config_path, list())
 
-    @pytest.mark.parametrize(
-        "answer, integration_id", [(True, "MyIntegration"), (False, "MyIntegration  ")]
-    )
-    def test_is_there_spaces_in_the_end_of_id_yml(
-        self, pack: Pack, answer, integration_id
-    ):
+    @pytest.mark.parametrize("answer, integration_id", [(True, "MyIntegration"), (False, "MyIntegration  ")])
+    def test_is_there_spaces_in_the_end_of_id_yml(self, pack: Pack, answer, integration_id):
         """
         Given
             - An integration which id doesn't ends with whitespaces
@@ -1688,12 +1509,8 @@ class TestValidators:
         res_validator = IntegrationValidator(structure)
         assert res_validator.is_there_spaces_in_the_end_of_id() is answer
 
-    @pytest.mark.parametrize(
-        "answer, dashboard_id", [(True, "MyDashboard"), (False, "MyDashboard  ")]
-    )
-    def test_is_there_spaces_in_the_end_of_id_json(
-        self, pack: Pack, answer, dashboard_id
-    ):
+    @pytest.mark.parametrize("answer, dashboard_id", [(True, "MyDashboard"), (False, "MyDashboard  ")])
+    def test_is_there_spaces_in_the_end_of_id_json(self, pack: Pack, answer, dashboard_id):
         """
         Given
             - A dashboard which id doesn't ends with whitespaces
@@ -1709,12 +1526,8 @@ class TestValidators:
         res_validator = DashboardValidator(structure)
         assert res_validator.is_there_spaces_in_the_end_of_id() is answer
 
-    @pytest.mark.parametrize(
-        "answer, dashboard_name", [(True, "MyDashboard"), (False, "MyDashboard  ")]
-    )
-    def test_is_there_spaces_in_the_end_of_name(
-        self, pack: Pack, answer, dashboard_name
-    ):
+    @pytest.mark.parametrize("answer, dashboard_name", [(True, "MyDashboard"), (False, "MyDashboard  ")])
+    def test_is_there_spaces_in_the_end_of_name(self, pack: Pack, answer, dashboard_name):
         """
         Given
             - A dashboard which name doesn't ends with whitespaces
@@ -1737,9 +1550,7 @@ class TestValidators:
             "Packs/pack_id/Integrations/integration_id/file.yml",
         ],
     )
-    def test_ignore_files_irrelevant_for_validation_should_not_ignore(
-        self, file_path: str
-    ):
+    def test_ignore_files_irrelevant_for_validation_should_not_ignore(self, file_path: str):
         """
         Given
             - File path
@@ -1797,12 +1608,8 @@ class TestValidators:
         validate_manager = ValidateManager(check_is_unskipped=False)
         assert validate_manager.ignore_files_irrelevant_for_validation(file_path)
 
-    @pytest.mark.parametrize(
-        "expected_result, unsearchable", [(True, True), (False, False)]
-    )
-    def test_is_valid_unsearchable_key_incident_field(
-        self, pack: Pack, expected_result, unsearchable
-    ):
+    @pytest.mark.parametrize("expected_result, unsearchable", [(True, True), (False, False)])
+    def test_is_valid_unsearchable_key_incident_field(self, pack: Pack, expected_result, unsearchable):
         """
         Given
             - An incident field which unsearchable is true
@@ -1818,12 +1625,8 @@ class TestValidators:
         res_validator = IncidentFieldValidator(structure)
         assert res_validator.is_valid_unsearchable_key() is expected_result
 
-    @pytest.mark.parametrize(
-        "expected_result, unsearchable", [(True, True), (False, False)]
-    )
-    def test_is_valid_unsearchable_key_generic_field(
-        self, pack: Pack, expected_result, unsearchable
-    ):
+    @pytest.mark.parametrize("expected_result, unsearchable", [(True, True), (False, False)])
+    def test_is_valid_unsearchable_key_generic_field(self, pack: Pack, expected_result, unsearchable):
         """
         Given
             - A generic field which unsearchable is true
@@ -1848,9 +1651,7 @@ class TestValidators:
             (True, False, False),
         ],
     )
-    def test_is_valid_file_generic_field(
-        self, mocker, pack: Pack, expected_result, unsearchable, is_added_file
-    ):
+    def test_is_valid_file_generic_field(self, mocker, pack: Pack, expected_result, unsearchable, is_added_file):
         """
         Given
             - A generic field which unsearchable is true, is_added_file is false
@@ -1866,17 +1667,10 @@ class TestValidators:
         incident_field.update({"unsearchable": unsearchable})
         structure = StructureValidator(incident_field.path)
         res_validator = GenericFieldValidator(structure)
-        mocker.patch.object(
-            ContentEntityValidator, "is_valid_generic_object_file", return_value=True
-        )
+        mocker.patch.object(ContentEntityValidator, "is_valid_generic_object_file", return_value=True)
         mocker.patch.object(GenericFieldValidator, "is_valid_group", return_value=True)
-        mocker.patch.object(
-            GenericFieldValidator, "is_valid_id_prefix", return_value=True
-        )
-        assert (
-            res_validator.is_valid_file(validate_rn=False, is_added_file=is_added_file)
-            is expected_result
-        )
+        mocker.patch.object(GenericFieldValidator, "is_valid_id_prefix", return_value=True)
+        assert res_validator.is_valid_file(validate_rn=False, is_added_file=is_added_file) is expected_result
 
     @pytest.mark.parametrize(
         "expected_result, unsearchable, is_added_file",
@@ -1887,9 +1681,7 @@ class TestValidators:
             (True, False, False),
         ],
     )
-    def test_is_valid_file_incident_field(
-        self, mocker, pack: Pack, expected_result, unsearchable, is_added_file
-    ):
+    def test_is_valid_file_incident_field(self, mocker, pack: Pack, expected_result, unsearchable, is_added_file):
         """
         Given
             - An incident field which unsearchable is true, is_added_file is false
@@ -1908,25 +1700,12 @@ class TestValidators:
         mocker.patch.object(ContentEntityValidator, "is_valid_file", return_value=True)
         mocker.patch.object(IncidentFieldValidator, "is_valid_type", return_value=True)
         mocker.patch.object(IncidentFieldValidator, "is_valid_group", return_value=True)
-        mocker.patch.object(
-            IncidentFieldValidator, "is_valid_content_flag", return_value=True
-        )
-        mocker.patch.object(
-            IncidentFieldValidator, "is_valid_system_flag", return_value=True
-        )
-        mocker.patch.object(
-            IncidentFieldValidator, "is_valid_cli_name", return_value=True
-        )
-        mocker.patch.object(
-            IncidentFieldValidator, "is_valid_version", return_value=True
-        )
-        mocker.patch.object(
-            IncidentFieldValidator, "is_valid_required", return_value=True
-        )
-        assert (
-            res_validator.is_valid_file(validate_rn=False, is_added_file=is_added_file)
-            is expected_result
-        )
+        mocker.patch.object(IncidentFieldValidator, "is_valid_content_flag", return_value=True)
+        mocker.patch.object(IncidentFieldValidator, "is_valid_system_flag", return_value=True)
+        mocker.patch.object(IncidentFieldValidator, "is_valid_cli_name", return_value=True)
+        mocker.patch.object(IncidentFieldValidator, "is_valid_version", return_value=True)
+        mocker.patch.object(IncidentFieldValidator, "is_valid_required", return_value=True)
+        assert res_validator.is_valid_file(validate_rn=False, is_added_file=is_added_file) is expected_result
 
 
 def test_skip_conf_json(mocker):
@@ -1951,9 +1730,7 @@ def test_skip_conf_json(mocker):
     conf_json_init.asssert_not_called()
 
 
-@pytest.mark.parametrize(
-    "pack_name, expected", [("NonSupported", False), ("PackName1", True)]
-)
+@pytest.mark.parametrize("pack_name, expected", [("NonSupported", False), ("PackName1", True)])
 def test_should_raise_pack_version(pack_name, expected):
     """
     Given
@@ -1985,9 +1762,7 @@ pack_metadata = {
 
 
 @pytest.mark.parametrize("pack_metadata", [(pack_metadata)])
-def test_run_validation_using_git_on_only_metadata_changed(
-    mocker, pack: Pack, pack_metadata
-):
+def test_run_validation_using_git_on_only_metadata_changed(mocker, pack: Pack, pack_metadata):
     """
     Given
         - metadata file that was changed.
@@ -2003,9 +1778,7 @@ def test_run_validation_using_git_on_only_metadata_changed(
         "get_changed_files_from_git",
         return_value=(set(), set(), {pack.pack_metadata.path}, set(), True),
     )
-    mocker.patch.object(
-        tools, "get_dict_from_file", return_value=({"approved_list": []}, "json")
-    )
+    mocker.patch.object(tools, "get_dict_from_file", return_value=({"approved_list": []}, "json"))
     mocker.patch.object(GitUtil, "deleted_files", return_value=set())
     mocker.patch(
         "demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories",
@@ -2028,12 +1801,8 @@ def test_is_mapping_fields_command_exist(integration):
     Then
     -  validator returns the True.
     """
-    integration.yml.write_dict(
-        {"script": {"commands": [{"name": "get-mapping-fields"}], "ismappable": True}}
-    )
-    structure_validator = StructureValidator(
-        integration.yml.path, predefined_scheme="integration"
-    )
+    integration.yml.write_dict({"script": {"commands": [{"name": "get-mapping-fields"}], "ismappable": True}})
+    structure_validator = StructureValidator(integration.yml.path, predefined_scheme="integration")
     validator = IntegrationValidator(structure_validator)
 
     assert validator.is_mapping_fields_command_exist()
@@ -2060,9 +1829,7 @@ def test_mapping_fields_command_dont_exist(integration):
     )
 
     with ChangeCWD(integration.repo_path):
-        structure_validator = StructureValidator(
-            integration.yml.path, predefined_scheme="integration"
-        )
+        structure_validator = StructureValidator(integration.yml.path, predefined_scheme="integration")
         validator = IntegrationValidator(structure_validator)
 
         assert not validator.is_mapping_fields_command_exist()
@@ -2118,20 +1885,16 @@ def test_get_packs_that_should_have_version_raised(repo):
     old_files = {modified_old_format_script.yml.rel_path}
 
     with ChangeCWD(repo.path):
-        packs_that_should_have_version_raised = (
-            validate_manager.get_packs_that_should_have_version_raised(
-                modified_files=modified_files,
-                added_files=added_files,
-                old_format_files=old_files,
-            )
+        packs_that_should_have_version_raised = validate_manager.get_packs_that_should_have_version_raised(
+            modified_files=modified_files,
+            added_files=added_files,
+            old_format_files=old_files,
         )
 
         assert "PackWithModifiedIntegration" in packs_that_should_have_version_raised
         assert "ExistingPackWithAddedScript" in packs_that_should_have_version_raised
         assert "PackWithModifiedOldFile" in packs_that_should_have_version_raised
-        assert (
-            "PackWithModifiedTestPlaybook" not in packs_that_should_have_version_raised
-        )
+        assert "PackWithModifiedTestPlaybook" not in packs_that_should_have_version_raised
         assert "NewPack" not in packs_that_should_have_version_raised
 
 
@@ -2159,9 +1922,11 @@ def test_check_file_relevance_and_format_path_non_formatted_relevant_file(mocker
     )
     mocker.patch.object(validator_obj, "is_old_file_format", return_value=False)
     input_file_path = "Packs/PackName/Integrations/IntegrationName/IntegrationName.yml"
-    assert validator_obj.check_file_relevance_and_format_path(
-        input_file_path, None, set()
-    ) == (input_file_path, "", True)
+    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) == (
+        input_file_path,
+        "",
+        True,
+    )
 
 
 @pytest.mark.parametrize(
@@ -2186,9 +1951,7 @@ def test_check_file_relevance_and_format_path_ignored_files(input_file_path):
     - return None, file is ignored
     """
     validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
-    assert validator_obj.check_file_relevance_and_format_path(
-        input_file_path, None, set()
-    ) == ("", "", True)
+    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) == ("", "", True)
 
 
 @pytest.mark.parametrize(
@@ -2212,9 +1975,7 @@ def test_check_file_relevance_and_format_path_ignored_non_pack_files(input_file_
     - return None, file is ignored
     """
     validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
-    assert validator_obj.check_file_relevance_and_format_path(
-        input_file_path, None, set()
-    ) == ("", "", True)
+    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) == ("", "", True)
 
 
 @pytest.mark.parametrize(
@@ -2235,9 +1996,7 @@ def test_check_file_relevance_and_format_path_ignored_git_and_circle_files(
     - return None, file is ignored
     """
     validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
-    assert validator_obj.check_file_relevance_and_format_path(
-        input_file_path, None, set()
-    ) == ("", "", True)
+    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) == ("", "", True)
 
 
 def test_check_file_relevance_and_format_path_type_missing_file(mocker):
@@ -2252,15 +2011,13 @@ def test_check_file_relevance_and_format_path_type_missing_file(mocker):
     - return None, call error handler
     """
     validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
-    mocked_handler = mocker.patch.object(
-        validator_obj, "handle_error", return_value=False
+    mocked_handler = mocker.patch.object(validator_obj, "handle_error", return_value=False)
+    mocker.patch("demisto_sdk.commands.validate.validate_manager.find_type", return_value=None)
+    assert validator_obj.check_file_relevance_and_format_path("Packs/type_missing_filename", None, set()) == (
+        "",
+        "",
+        False,
     )
-    mocker.patch(
-        "demisto_sdk.commands.validate.validate_manager.find_type", return_value=None
-    )
-    assert validator_obj.check_file_relevance_and_format_path(
-        "Packs/type_missing_filename", None, set()
-    ) == ("", "", False)
     mocked_handler.assert_called()
 
 
@@ -2272,9 +2029,7 @@ def test_check_file_relevance_and_format_path_type_missing_file(mocker):
         ("Packs/some_test.js", FileType.JAVASCRIPT_FILE),
     ],
 )
-def test_check_file_relevance_and_format_path_ignore_test_file(
-    mocker, input_file_path, file_type
-):
+def test_check_file_relevance_and_format_path_ignore_test_file(mocker, input_file_path, file_type):
     """
     Given
     - file path to validate
@@ -2290,9 +2045,7 @@ def test_check_file_relevance_and_format_path_ignore_test_file(
         "demisto_sdk.commands.validate.validate_manager.find_type",
         return_value=file_type,
     )
-    assert validator_obj.check_file_relevance_and_format_path(
-        input_file_path, None, set()
-    ) == ("", "", True)
+    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) == ("", "", True)
 
 
 @pytest.mark.parametrize(
@@ -2304,9 +2057,7 @@ def test_check_file_relevance_and_format_path_ignore_test_file(
         ("Packs/some_file.xif", FileType.XIF_FILE),
     ],
 )
-def test_check_file_relevance_and_format_path_file_to_format(
-    mocker, input_file_path, file_type
-):
+def test_check_file_relevance_and_format_path_file_to_format(mocker, input_file_path, file_type):
     """
     Given
     - file path to validate
@@ -2323,9 +2074,11 @@ def test_check_file_relevance_and_format_path_file_to_format(
         return_value=file_type,
     )
     mocker.patch.object(validator_obj, "is_old_file_format", return_value=False)
-    assert validator_obj.check_file_relevance_and_format_path(
-        input_file_path, None, set()
-    ) == ("Packs/some_file.yml", "", True)
+    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) == (
+        "Packs/some_file.yml",
+        "",
+        True,
+    )
 
 
 @pytest.mark.parametrize(
@@ -2355,9 +2108,11 @@ def test_check_file_relevance_and_format_path_file_to_format_with_old_path(
         return_value=file_type,
     )
     mocker.patch.object(validator_obj, "is_old_file_format", return_value=False)
-    assert validator_obj.check_file_relevance_and_format_path(
-        input_file_path, old_file_path, set()
-    ) == ("Packs/some_file.yml", "Packs/old_file_path.yml", True)
+    assert validator_obj.check_file_relevance_and_format_path(input_file_path, old_file_path, set()) == (
+        "Packs/some_file.yml",
+        "Packs/old_file_path.yml",
+        True,
+    )
 
 
 def test_check_file_relevance_and_format_path_old_format_file(mocker):
@@ -2378,9 +2133,11 @@ def test_check_file_relevance_and_format_path_old_format_file(mocker):
     )
     mocker.patch.object(validator_obj, "is_old_file_format", return_value=True)
     old_format_files: set = set()
-    assert validator_obj.check_file_relevance_and_format_path(
-        "Packs/some_test.yml", None, old_format_files
-    ) == ("", "", True)
+    assert validator_obj.check_file_relevance_and_format_path("Packs/some_test.yml", None, old_format_files) == (
+        "",
+        "",
+        True,
+    )
     assert old_format_files == {"Packs/some_test.yml"}
 
 
@@ -2396,9 +2153,7 @@ def test_job_sanity(repo, is_feed: bool):
     """
     pack = repo.create_pack()
     job = pack.create_job(is_feed=is_feed, name="job_name")
-    validate_manager = ValidateManager(
-        check_is_unskipped=False, file_path=job.path, skip_conf_json=True
-    )
+    validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.path, skip_conf_json=True)
 
     with ChangeCWD(repo.path):
         assert validate_manager.validate_job(
@@ -2421,9 +2176,7 @@ def test_job_from_version(repo, capsys, is_feed: bool, version: Optional[str]):
     pack = repo.create_pack()
     job = pack.create_job(is_feed, "job_name")
     job.update({"fromVersion": version})
-    validate_manager = ValidateManager(
-        check_is_unskipped=False, file_path=job.path, skip_conf_json=True
-    )
+    validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.path, skip_conf_json=True)
 
     with ChangeCWD(repo.path):
         assert not validate_manager.validate_job(
@@ -2448,9 +2201,7 @@ def test_job_non_feed_with_selected_feeds(repo, capsys):
     """
     pack = repo.create_pack()
     job = pack.create_job(is_feed=False, name="job_name", selected_feeds=["feed_name"])
-    validate_manager = ValidateManager(
-        check_is_unskipped=False, file_path=job.path, skip_conf_json=True
-    )
+    validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.path, skip_conf_json=True)
 
     with ChangeCWD(repo.path):
         assert not validate_manager.validate_job(
@@ -2458,10 +2209,7 @@ def test_job_non_feed_with_selected_feeds(repo, capsys):
             pack_error_ignore_list=list(),
         )
     stdout = capsys.readouterr().out
-    assert (
-        "Job objects cannot have non-empty selectedFeeds when isFeed is set to false"
-        in stdout
-    )
+    assert "Job objects cannot have non-empty selectedFeeds when isFeed is set to false" in stdout
 
 
 def test_job_both_selected_and_all_feeds_in_job(repo, capsys):
@@ -2476,9 +2224,7 @@ def test_job_both_selected_and_all_feeds_in_job(repo, capsys):
     pack = repo.create_pack()
     job = pack.create_job(is_feed=True, name="job_name", selected_feeds=["feed_name"])
     job.update({"isAllFeeds": True})
-    validate_manager = ValidateManager(
-        check_is_unskipped=False, file_path=job.path, skip_conf_json=True
-    )
+    validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.path, skip_conf_json=True)
 
     with ChangeCWD(repo.path):
         assert not validate_manager.validate_job(
@@ -2486,10 +2232,7 @@ def test_job_both_selected_and_all_feeds_in_job(repo, capsys):
             pack_error_ignore_list=list(),
         )
     stdout = capsys.readouterr().out
-    assert (
-        "Job cannot have non-empty selectedFeeds values when isAllFields is set to true"
-        in stdout
-    )
+    assert "Job cannot have non-empty selectedFeeds values when isAllFields is set to true" in stdout
 
 
 @pytest.mark.parametrize("is_feed", (True, False))
@@ -2505,13 +2248,9 @@ def test_job_blank_name(repo, capsys, name: str, is_feed: bool):
     """
     pack = repo.create_pack()
     job = pack.create_job(is_feed=is_feed, name=name)
-    job.update(
-        {"name": name}
-    )  # name is appended with number in create_job, so it must be explicitly set here
+    job.update({"name": name})  # name is appended with number in create_job, so it must be explicitly set here
 
-    validate_manager = ValidateManager(
-        check_is_unskipped=False, file_path=job.path, skip_conf_json=True
-    )
+    validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.path, skip_conf_json=True)
 
     with ChangeCWD(repo.path):
         assert not validate_manager.validate_job(
@@ -2536,13 +2275,9 @@ def test_job_missing_name(repo, capsys, is_feed: bool):
     """
     pack = repo.create_pack()
     job = pack.create_job(is_feed=is_feed)
-    job.remove(
-        "name"
-    )  # some name is appended with number in create_job, so it must be explicitly removed
+    job.remove("name")  # some name is appended with number in create_job, so it must be explicitly removed
 
-    validate_manager = ValidateManager(
-        check_is_unskipped=False, file_path=job.path, skip_conf_json=True
-    )
+    validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.path, skip_conf_json=True)
 
     with ChangeCWD(repo.path):
         assert not validate_manager.validate_job(
@@ -2573,9 +2308,7 @@ def test_job_unexpected_field_values_in_non_feed_job(
     pack = repo.create_pack()
     job = pack.create_job(is_feed=True, name="job_name")
     job.update({"isAllFeeds": False})
-    validate_manager = ValidateManager(
-        check_is_unskipped=False, file_path=job.path, skip_conf_json=True
-    )
+    validate_manager = ValidateManager(check_is_unskipped=False, file_path=job.path, skip_conf_json=True)
 
     with ChangeCWD(repo.path):
         assert not validate_manager.validate_job(
@@ -2610,9 +2343,7 @@ def test_job_unexpected_field_values_in_non_feed_job(
         (({"non_content_item.txt"}, "[BA115]", False, set())),
     ),
 )
-def test_validate_deleted_files(
-    capsys, file_set, expected_output, expected_result, added_files, mocker
-):
+def test_validate_deleted_files(capsys, file_set, expected_output, expected_result, added_files, mocker):
     """
     Given
             A file_path set to validate.
@@ -2651,9 +2382,7 @@ def test_was_file_renamed_but_labeled_as_deleted(mocker):
             Make sure the file is considered as renamed.
     """
     deleted_file_path = "Packs/Campaign/Scripts/script-ShowCampaignUniqueRecipients.yml"
-    added_files = [
-        "Packs/Campaign/Scripts/ShowCampaignUniqueRecipients/ShowCampaignUniqueRecipients.yml"
-    ]
+    added_files = ["Packs/Campaign/Scripts/ShowCampaignUniqueRecipients/ShowCampaignUniqueRecipients.yml"]
     mocker.patch(
         "demisto_sdk.commands.validate.validate_manager.get_remote_file",
         return_value={"commonfields": {"id": "ShowCampaignUniqueRecipients"}},
@@ -2683,9 +2412,7 @@ def test_validate_contributors_file(repo):
     pack = repo.create_pack()
     contributors_file = pack.create_contributors_file('["- Test UserName"]')
 
-    validate_manager = ValidateManager(
-        check_is_unskipped=False, file_path=contributors_file.path, skip_conf_json=True
-    )
+    validate_manager = ValidateManager(check_is_unskipped=False, file_path=contributors_file.path, skip_conf_json=True)
     assert validate_manager.run_validation_on_specific_files()
 
 
@@ -2701,12 +2428,8 @@ def test_validate_pack_name(repo):
     """
     validator_obj = ValidateManager()
     assert validator_obj.is_valid_pack_name("Packs/original_pack/file", None, None)
-    assert validator_obj.is_valid_pack_name(
-        "Packs/original_pack/file", "Packs/original_pack/file", None
-    )
-    assert not validator_obj.is_valid_pack_name(
-        "Packs/original_pack/file", "Packs/original_pack_v2/file", None
-    )
+    assert validator_obj.is_valid_pack_name("Packs/original_pack/file", "Packs/original_pack/file", None)
+    assert not validator_obj.is_valid_pack_name("Packs/original_pack/file", "Packs/original_pack_v2/file", None)
 
 
 def test_image_error(set_git_test_env, capsys):
@@ -2752,17 +2475,11 @@ def test_check_file_relevance_and_format_path(mocker, f_path, f_type, expected_r
     Then: Update the file path to point the modeling rules yml file.
 
     """
-    mocker.patch.object(
-        ValidateManager, "ignore_files_irrelevant_for_validation", return_value=False
-    )
+    mocker.patch.object(ValidateManager, "ignore_files_irrelevant_for_validation", return_value=False)
     mocker.patch.object(ValidateManager, "is_old_file_format", return_value=False)
-    mocker.patch(
-        "demisto_sdk.commands.validate.validate_manager.find_type", return_value=f_type
-    )
+    mocker.patch("demisto_sdk.commands.validate.validate_manager.find_type", return_value=f_type)
     validate_manager = ValidateManager()
-    file_path, old_path, _ = validate_manager.check_file_relevance_and_format_path(
-        f_path, f_path, set()
-    )
+    file_path, old_path, _ = validate_manager.check_file_relevance_and_format_path(f_path, f_path, set())
     assert file_path == old_path == expected_result
 
 
@@ -2782,9 +2499,7 @@ pack_metadata_invalid_tags = {
 
 
 @pytest.mark.parametrize("pack_metadata_info", [pack_metadata_invalid_tags])
-def test_run_validation_using_git_on_metadata_with_invalid_tags(
-    mocker, repo, pack_metadata_info
-):
+def test_run_validation_using_git_on_metadata_with_invalid_tags(mocker, repo, pack_metadata_info):
     """
     Given
         - A Pack with a Use Case tags but no PB, incidents Types or Layouts. Considered invalid.

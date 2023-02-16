@@ -50,9 +50,7 @@ class UnitTestsGenerator:
         self.insecure = insecure
         self.use_demisto = use_demisto
         self.example_dict = {}
-        self.command_examples = get_command_examples(
-            self.command_examples_input, self.commands
-        )
+        self.command_examples = get_command_examples(self.command_examples_input, self.commands)
         self.create_command_to_generate_dict()
         if self.use_demisto:
             self.run_commands()
@@ -84,9 +82,7 @@ class UnitTestsGenerator:
         examples: dict = {}
         errors: list = []
         for example in self.command_examples:
-            name, md_example, context_example, cmd_errors = execute_command(
-                example, self.insecure
-            )
+            name, md_example, context_example, cmd_errors = execute_command(example, self.insecure)
 
             context_example = json.dumps(context_example)
             errors.extend(cmd_errors)
@@ -118,14 +114,10 @@ class UnitTestsGenerator:
             if command_name in self.commands_to_generate:
                 self.commands_to_generate.get(command_name).append(command_dict)
             elif command_name_without_vendor in self.commands_to_generate:
-                self.commands_to_generate.get(command_name_without_vendor).append(
-                    command_dict
-                )
+                self.commands_to_generate.get(command_name_without_vendor).append(command_dict)
             else:
                 self.commands_to_generate.update({command_name: [command_dict]})
-                self.commands_to_generate.update(
-                    {command_name_without_vendor: [command_dict]}
-                )
+                self.commands_to_generate.update({command_name_without_vendor: [command_dict]})
 
         click.echo("Unit tests will be generated for the following commands:")
         click.echo("\n".join(display_commands))
@@ -238,16 +230,12 @@ class CustomContactSolver(ContractSolver):
             )
             try:
                 ast_func = self.solve_function(func, client_ast, generator)
-                logger.info(
-                    f"{Colors.Fg.cyan}Finished analyzing function: {func}\n{Colors.reset}"
-                )
+                logger.info(f"{Colors.Fg.cyan}Finished analyzing function: {func}\n{Colors.reset}")
                 test_module.functions.append(ast_func)
                 if ast_func.global_arg:
                     test_module.global_args.extend(ast_func.global_arg)
             except Exception as e:
-                logger.error(
-                    f"{Colors.Fg.red}Skipped function: {func}, error is {e}\n{Colors.reset}"
-                )
+                logger.error(f"{Colors.Fg.red}Skipped function: {func}, error is {e}\n{Colors.reset}")
                 raise e
             MANAGER.clear_z3_cache()
         test_module.imports.append(test_module.build_imports(names_to_import))
@@ -269,9 +257,7 @@ def run_generate_unit_tests(
     # validate inputs
     input_path_obj = Path(input_path)
     if not input_path:
-        print_error(
-            "To use the generate_unit_tests version of this command please include an `input` argument"
-        )
+        print_error("To use the generate_unit_tests version of this command please include an `input` argument")
         return 1
 
     if not input_path_obj.is_file():
@@ -349,9 +335,7 @@ def run_generate_unit_tests(
             with open(output_file, write_mode) as f:
                 f.write(output_test)
 
-            print_success(
-                f"Successfully finished generating integration code and saved it in {output_dir}"
-            )
+            print_success(f"Successfully finished generating integration code and saved it in {output_dir}")
         except Exception as e:
             print_error(f'An error occurred: {e.args if hasattr(e, "args") else e}')
             return 1
@@ -363,9 +347,7 @@ def run_generate_unit_tests(
 
 def run(source: str, generator: UnitTestsGenerator):
     global logger
-    logger.info(
-        f"\n{Colors.Fg.green}Running code parser and testing generator.{Colors.reset}"
-    )
+    logger.info(f"\n{Colors.Fg.green}Running code parser and testing generator.{Colors.reset}")
     logger.debug("Starting parsing input code into ast.")
     tree = MANAGER.build_tree(ast_str=source)
     logger.debug("Finished parsing code into ast.")

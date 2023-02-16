@@ -53,9 +53,7 @@ def test_add_default_fromversion(repo, is_feed: bool):
     pack = repo.create_pack()
     job = pack.create_job(is_feed)
     job_dict_before = job.read_json_as_dict()
-    assert job_dict_before["fromVersion"] == FILETYPE_TO_DEFAULT_FROMVERSION.get(
-        FileType.JOB
-    )
+    assert job_dict_before["fromVersion"] == FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)
 
     job.remove("fromVersion")
     assert "fromVersion" not in job.read_json_as_dict()
@@ -69,9 +67,7 @@ def test_add_default_fromversion(repo, is_feed: bool):
 
     job_dict_after = job.read_json_as_dict()
     assert "fromVersion" in job_dict_after
-    assert job_dict_after["fromVersion"] == FILETYPE_TO_DEFAULT_FROMVERSION.get(
-        FileType.JOB
-    )
+    assert job_dict_after["fromVersion"] == FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)
 
 
 @pytest.mark.parametrize("is_feed", (True, False))

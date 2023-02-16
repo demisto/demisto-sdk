@@ -42,12 +42,8 @@ class DemistoClientMock:
 
     @staticmethod
     def search_incidents(filter):
-        incident_id = DemistoClientMock.INCIDENT_QUERY_PATTERN.findall(
-            filter.filter.query
-        )[0]
-        return MagicMock(
-            total=1, data=[MagicMock(id=incident_id, investigation_id=incident_id)]
-        )
+        incident_id = DemistoClientMock.INCIDENT_QUERY_PATTERN.findall(filter.filter.query)[0]
+        return MagicMock(total=1, data=[MagicMock(id=incident_id, investigation_id=incident_id)])
         pass
 
     @classmethod

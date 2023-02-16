@@ -29,9 +29,7 @@ class WizardValidator(ContentEntityValidator):
             ignored_errors,
             print_as_warnings,
             json_file_path=json_file_path,
-            oldest_supported_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(
-                FileType.WIZARD
-            ),
+            oldest_supported_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.WIZARD),
             **kwargs,
         )
         self._errors = []
@@ -39,12 +37,8 @@ class WizardValidator(ContentEntityValidator):
         self._pack_deps = self.collect_packs_dependencies()
         # add self pointing pack in case of internal content usage
         self._pack_deps.add(get_pack_name(self.file_path))
-        self._fetching_integrations = self.collect_integrations(
-            integration_category="fetching_integrations"
-        )
-        self._supporting_integrations = self.collect_integrations(
-            integration_category="supporting_integrations"
-        )
+        self._fetching_integrations = self.collect_integrations(integration_category="fetching_integrations")
+        self._supporting_integrations = self.collect_integrations(integration_category="supporting_integrations")
         self._set_playbooks = self.collect_set_playbooks()
 
     def collect_packs_dependencies(self) -> set:
@@ -56,10 +50,7 @@ class WizardValidator(ContentEntityValidator):
 
     def collect_set_playbooks(self) -> dict:
         set_playbooks = self.current_file.get("wizard", {}).get("set_playbook", [])
-        return {
-            playbook.get("name", ""): playbook.get("link_to_integration")
-            for playbook in set_playbooks
-        }
+        return {playbook.get("name", ""): playbook.get("link_to_integration") for playbook in set_playbooks}
 
     def collect_integrations(self, integration_category: str) -> set:
         integrations = self.current_file.get("wizard", {}).get(integration_category, [])
@@ -78,12 +69,8 @@ class WizardValidator(ContentEntityValidator):
         packs = id_set_file.get("Packs", {})
         for dep in self._pack_deps:
             if dep not in packs:
-                error_message, error_code = Errors.invalid_dependency_pack_in_wizard(
-                    dep
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.invalid_dependency_pack_in_wizard(dep)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     deps_are_valid = False
         return deps_are_valid
 
@@ -100,23 +87,15 @@ class WizardValidator(ContentEntityValidator):
             integration_in_dependency_packs = True
             for integration in integrations:
                 if integration not in integrations_to_pack:
-                    error_message, error_code = Errors.invalid_integration_in_wizard(
-                        integration
-                    )
-                    if self.handle_error(
-                        error_message, error_code, file_path=self.file_path
-                    ):
+                    error_message, error_code = Errors.invalid_integration_in_wizard(integration)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         integration_in_dependency_packs = False
                 elif (pack := integrations_to_pack[integration]) not in self._pack_deps:
                     (
                         error_message,
                         error_code,
-                    ) = Errors.missing_dependency_pack_in_wizard(
-                        pack, f'integration "{integration}"'
-                    )
-                    if self.handle_error(
-                        error_message, error_code, file_path=self.file_path
-                    ):
+                    ) = Errors.missing_dependency_pack_in_wizard(pack, f'integration "{integration}"')
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         integration_in_dependency_packs = False
 
             return integration_in_dependency_packs
@@ -128,12 +107,8 @@ class WizardValidator(ContentEntityValidator):
 
         return all(
             (
-                are_integrations_mapped_to_dependency_packs(
-                    self._fetching_integrations
-                ),
-                are_integrations_mapped_to_dependency_packs(
-                    self._supporting_integrations
-                ),
+                are_integrations_mapped_to_dependency_packs(self._fetching_integrations),
+                are_integrations_mapped_to_dependency_packs(self._supporting_integrations),
             )
         )
 
@@ -147,25 +122,18 @@ class WizardValidator(ContentEntityValidator):
             return True
 
         playbooks_to_pack = {
-            list(playbook.keys())[0]: list(playbook.values())[0]["pack"]
-            for playbook in id_set_file["playbooks"]
+            list(playbook.keys())[0]: list(playbook.values())[0]["pack"] for playbook in id_set_file["playbooks"]
         }
 
         playbooks_in_dependency_packs = True
         for playbook in self._set_playbooks:
             if playbook not in playbooks_to_pack:
                 error_message, error_code = Errors.invalid_playbook_in_wizard(playbook)
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     playbooks_in_dependency_packs = False
             elif (pack := playbooks_to_pack[playbook]) not in self._pack_deps:
-                error_message, error_code = Errors.missing_dependency_pack_in_wizard(
-                    pack, f'playbook "{playbook}"'
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.missing_dependency_pack_in_wizard(pack, f'playbook "{playbook}"')
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     playbooks_in_dependency_packs = False
 
         return playbooks_in_dependency_packs
@@ -179,16 +147,12 @@ class WizardValidator(ContentEntityValidator):
                 return True
             if link not in integrations:
                 error_message, error_code = Errors.wrong_link_in_wizard(link)
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     all_fetch_integrations_have_playbook = False
             else:
                 integrations.remove(link)
         if len(integrations) != 0:
-            error_message, error_code = Errors.wizard_integrations_without_playbooks(
-                integrations
-            )
+            error_message, error_code = Errors.wizard_integrations_without_playbooks(integrations)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 all_fetch_integrations_have_playbook = False
         return all_fetch_integrations_have_playbook

@@ -62,9 +62,7 @@ class TestLayoutBaseConverter:
         Then:
         - Ensure dynamic fields are returned.
         """
-        dynamic_fields = set(
-            LayoutBaseConverter(Pack(tmpdir)).get_layout_dynamic_fields().keys()
-        )
+        dynamic_fields = set(LayoutBaseConverter(Pack(tmpdir)).get_layout_dynamic_fields().keys())
         assert dynamic_fields == {
             "close",
             "details",

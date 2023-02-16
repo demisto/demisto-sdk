@@ -52,19 +52,13 @@ class Playbook:
 
         """
         default_playbook_dir = "assets/default_playbook"
-        with open(
-            suite_join_path(default_playbook_dir, "playbook-sample.yml")
-        ) as yml_file:
+        with open(suite_join_path(default_playbook_dir, "playbook-sample.yml")) as yml_file:
             yml = yaml.load(yml_file)
             yml["id"] = yml["name"] = name
             self.build(yml=yml)
 
     def create_default_test_playbook(self, name: str = "SamplePlaybookTest"):
-        with open(
-            suite_join_path(
-                self.default_assets_dir, "default_playbook/playbook-sample.yml"
-            )
-        ) as yml_file:
+        with open(suite_join_path(self.default_assets_dir, "default_playbook/playbook-sample.yml")) as yml_file:
             yml = yaml.load(yml_file)
             yml["id"] = yml["name"] = name
             self.build(yml=yml)
@@ -72,16 +66,10 @@ class Playbook:
     def add_default_task(self):
         task = None
         task_filename = "default_playbook/tasks/task-sample.yml"
-        with open(
-            suite_join_path(self.default_assets_dir, task_filename)
-        ) as task_yml_file:
+        with open(suite_join_path(self.default_assets_dir, task_filename)) as task_yml_file:
             task = yaml.load(task_yml_file)
         if not task:
-            print(
-                "Cannot read task from "
-                + task_filename
-                + ", not adding task to playbook"
-            )
+            print("Cannot read task from " + task_filename + ", not adding task to playbook")
             return
 
         original_yml = self.yml.read_dict()

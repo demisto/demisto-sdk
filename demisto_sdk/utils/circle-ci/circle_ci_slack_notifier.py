@@ -9,9 +9,7 @@ DEFAULT_SLACK_CHANNEL = "dmst-build"
 
 
 def options_handler():
-    parser = argparse.ArgumentParser(
-        description="Parser for circle-ci_utils-slack-notifier args"
-    )
+    parser = argparse.ArgumentParser(description="Parser for circle-ci_utils-slack-notifier args")
     parser.add_argument(
         "-u",
         "--url",
@@ -24,12 +22,8 @@ def options_handler():
         help="The workflow id triggered by the PR",
         required=True,
     )
-    parser.add_argument(
-        "-st", "--slack_token", help="The token for slack", required=True
-    )
-    parser.add_argument(
-        "-ct", "--circle_token", help="The token for Circle-CI", default=None
-    )
+    parser.add_argument("-st", "--slack_token", help="The token for slack", required=True)
+    parser.add_argument("-ct", "--circle_token", help="The token for Circle-CI", default=None)
     parser.add_argument(
         "-ch",
         "--slack_channel",
@@ -92,14 +86,9 @@ class CircleCiFailedJobsParser:
             for job_step in job_details.steps:
                 for action in job_step.actions:
                     # if exit code is not None and > 0
-                    if (
-                        action.status.lower() == self.FAILED_STEP_STATUS
-                        and action.exit_code
-                    ):
+                    if action.status.lower() == self.FAILED_STEP_STATUS and action.exit_code:
                         failed_steps.append(job_step.name)
-                        if (
-                            job_step.name == "Test validate files and yaml"
-                        ):  # if the validation step failed
+                        if job_step.name == "Test validate files and yaml":  # if the validation step failed
                             self.validation_job_failure_details = {
                                 "job_number": job_number,
                                 "step_number": action.step,
@@ -109,9 +98,7 @@ class CircleCiFailedJobsParser:
 
             # if the step failed but the circle api does not return on which step it happened, it could happen in case
             # where we have timeouts for example
-            job_names_and_steps.append(
-                f'{job_name}[{",".join(failed_steps)}]' if failed_steps else job_name
-            )
+            job_names_and_steps.append(f'{job_name}[{",".join(failed_steps)}]' if failed_steps else job_name)
         return job_names_and_steps
 
     def get_failed_job_numbers_by_test_type(self, test_type: str) -> List[int]:
@@ -125,15 +112,9 @@ class CircleCiFailedJobsParser:
             list[str]: failed unit job numbers of a specific test type.
         """
         if test_type not in self.TEST_TYPES:
-            raise ValueError(
-                f'test-type {test_type} must be one of [{",".join(self.TEST_TYPES)}]'
-            )
+            raise ValueError(f'test-type {test_type} must be one of [{",".join(self.TEST_TYPES)}]')
 
-        return [
-            job_number
-            for job_number, job_name in self.get_failed_jobs()
-            if test_type in job_name
-        ]
+        return [job_number for job_number, job_name in self.get_failed_jobs() if test_type in job_name]
 
     def get_failed_test_names_by_type(self, test_type: str) -> Set[str]:
         """
@@ -170,9 +151,7 @@ class CircleCiFailedJobsParser:
         """
         return self.get_failed_test_names_by_type(test_type="integration-tests")
 
-    def get_all_failed_test_names_from_failed_job(
-        self, failed_job_number: int
-    ) -> List[str]:
+    def get_all_failed_test_names_from_failed_job(self, failed_job_number: int) -> List[str]:
         """
         Returns a list of all the failed tests names of a specific job number.
 
@@ -184,9 +163,7 @@ class CircleCiFailedJobsParser:
         """
         response = self.circle_client.get_job_test_metadata(failed_job_number)
         return [
-            f"{test.classname}.{test.name}"
-            for test in response.items
-            if test.result.lower() == self.FAILED_TEST_STATUS
+            f"{test.classname}.{test.name}" for test in response.items if test.result.lower() == self.FAILED_TEST_STATUS
         ]
 
     def get_failed_files_on_validations(self) -> List[str]:
@@ -197,9 +174,7 @@ class CircleCiFailedJobsParser:
             list[str]: files which failed on validations in case exist.
         """
         if self.validation_job_failure_details:
-            response = self.circle_client.get_job_output_file_by_step(
-                **self.validation_job_failure_details
-            )
+            response = self.circle_client.get_job_output_file_by_step(**self.validation_job_failure_details)
             return re.findall(
                 pattern=r"Packs\/[/\w-]+\.(?:yml|yaml|json|md|png|xif)\s-\s\[[A-Z]{2}[0-9]{3}\]",
                 string=response.text,
@@ -261,9 +236,7 @@ def construct_failed_jobs_slack_message(parser: CircleCiFailedJobsParser):
     for failed_entities, section_title in failed_entities_and_section_names:
         if failed_entities:
             slack_body_message.append(
-                construct_slack_section(
-                    _section_title=section_title, _failed_entities=failed_entities
-                )
+                construct_slack_section(_section_title=section_title, _failed_entities=failed_entities)
             )
 
     title = "Demisto SDK Master-Failure"
@@ -289,9 +262,7 @@ def main():
     slack_channel = options.slack_channel
 
     circle_ci_client = CircleCIClient(token=circle_ci_token, base_url=circle_api_url)
-    circle_ci_parser = CircleCiFailedJobsParser(
-        circle_client=circle_ci_client, workflow_id=circle_ci_workflow_id
-    )
+    circle_ci_parser = CircleCiFailedJobsParser(circle_client=circle_ci_client, workflow_id=circle_ci_workflow_id)
 
     if slack_message := construct_failed_jobs_slack_message(parser=circle_ci_parser):
         slack_client = WebClient(token=slack_token)

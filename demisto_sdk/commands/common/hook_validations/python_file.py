@@ -48,9 +48,7 @@ class PythonFileValidator(BaseValidator):
                     invalid_lines.append(line_num + 1)
 
         if invalid_lines:
-            error_message, error_code = Errors.copyright_section_in_python_error(
-                invalid_lines
-            )
+            error_message, error_code = Errors.copyright_section_in_python_error(invalid_lines)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 

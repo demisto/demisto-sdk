@@ -18,9 +18,7 @@ logger = logging.getLogger("demisto-sdk")
 
 
 class YAMLContentItemParser(ContentItemParser):
-    def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
-    ) -> None:
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         super().__init__(path, pack_marketplaces)
         self.yml_data: Dict[str, Any] = self.get_yaml()
 
@@ -44,9 +42,7 @@ class YAMLContentItemParser(ContentItemParser):
         description = self.yml_data.get("description", "")
         description = description.replace("\\ ", " ")  # removes unwanted backslashes
         description = description.replace("\\\n", " ")  # removes unwanted backslashes
-        description = " ".join(
-            description.split()
-        )  # substitutes multiple spaces into one
+        description = " ".join(description.split())  # substitutes multiple spaces into one
         return description
 
     @property
@@ -59,9 +55,7 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def marketplaces(self) -> List[MarketplaceVersions]:
-        if file_marketplaces := [
-            MarketplaceVersions(mp) for mp in self.yml_data.get("marketplaces", [])
-        ]:
+        if file_marketplaces := [MarketplaceVersions(mp) for mp in self.yml_data.get("marketplaces", [])]:
             return file_marketplaces
         return sorted(set(self.pack_marketplaces) & self.supported_marketplaces)
 

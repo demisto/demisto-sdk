@@ -79,9 +79,7 @@ FIRST_MARKETPLACE_VERSION = parse("6.0.0")
 IGNORED_PACKS = ["ApiModules"]
 IGNORED_TEST_PLAYBOOKS_DIR = "Deprecated"
 
-ContentObject = Union[
-    YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject
-]
+ContentObject = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject]
 logger = logging.getLogger("demisto-sdk")
 EX_SUCCESS = 0
 EX_FAIL = 1
@@ -245,11 +243,7 @@ class ArtifactsManager:
             if self.pack_names == ["all"]:
                 self.pack_names = list(self.packs_section_from_id_set.keys())
             else:
-                self.pack_names = list(
-                    set(self.packs_section_from_id_set.keys()).intersection(
-                        set(self.pack_names)
-                    )
-                )
+                self.pack_names = list(set(self.packs_section_from_id_set.keys()).intersection(set(self.pack_names)))
 
     def create_content_artifacts(self) -> int:
         with ArtifactsDirsHandler(self), ProcessPoolHandler(self) as pool:
@@ -393,9 +387,7 @@ class ContentItemsHandler:
         if content_object_directory not in CONTENT_ITEMS_DISPLAY_FOLDERS:
             return
 
-        self.server_min_version = max(
-            self.server_min_version, content_object.from_version
-        )
+        self.server_min_version = max(self.server_min_version, content_object.from_version)
 
         self.content_folder_name_to_func[content_object_directory](content_object)
 
@@ -454,9 +446,7 @@ class ContentItemsHandler:
         )
 
     def add_dashboard_as_content_item(self, content_object: ContentObject):
-        self.content_items[ContentItems.DASHBOARDS].append(
-            {"name": content_object.get("name", "")}
-        )
+        self.content_items[ContentItems.DASHBOARDS].append({"name": content_object.get("name", "")})
 
     def add_indicator_field_as_content_item(self, content_object: ContentObject):
         self.content_items[ContentItems.INDICATOR_FIELDS].append(
@@ -472,9 +462,7 @@ class ContentItemsHandler:
             {
                 "details": content_object.get("details", ""),
                 "reputationScriptName": content_object.get("reputationScriptName", ""),
-                "enhancementScriptNames": content_object.get(
-                    "enhancementScriptNames", []
-                ),
+                "enhancementScriptNames": content_object.get("enhancementScriptNames", []),
             }
         )
 
@@ -495,9 +483,7 @@ class ContentItemsHandler:
                 }
             )
         else:
-            self.content_items[ContentItems.LAYOUTS].append(
-                {"name": content_object.get("name", "")}
-            )
+            self.content_items[ContentItems.LAYOUTS].append({"name": content_object.get("name", "")})
 
     def add_pre_process_rules_as_content_item(self, content_object: ContentObject):
         self.content_items[ContentItems.PRE_PROCESS_RULES].append(
@@ -598,9 +584,7 @@ class ContentItemsHandler:
         self.content_items[ContentItems.XSIAM_DASHBOARDS].append(
             {
                 "name": content_object["dashboards_data"][0].get("name", ""),
-                "description": content_object["dashboards_data"][0].get(
-                    "description", ""
-                ),
+                "description": content_object["dashboards_data"][0].get("description", ""),
             }
         )
 
@@ -608,9 +592,7 @@ class ContentItemsHandler:
         self.content_items[ContentItems.XSIAM_REPORTS].append(
             {
                 "name": content_object["templates_data"][0].get("report_name", ""),
-                "description": content_object["templates_data"][0].get(
-                    "report_description", ""
-                ),
+                "description": content_object["templates_data"][0].get("report_description", ""),
             }
         )
 
@@ -648,9 +630,7 @@ class ContentItemsHandler:
                 }
             )
         else:
-            self.content_items[ContentItems.LAYOUT_RULES].append(
-                {"name": content_object.get("rule_name", "")}
-            )
+            self.content_items[ContentItems.LAYOUT_RULES].append({"name": content_object.get("rule_name", "")})
 
 
 @contextmanager
@@ -668,9 +648,7 @@ def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
         try:
             yield pool
         except KeyboardInterrupt:
-            logger.info(
-                "\nCTRL+C Pressed!\nGracefully release all resources due to keyboard interrupt..."
-            )
+            logger.info("\nCTRL+C Pressed!\nGracefully release all resources due to keyboard interrupt...")
             pool.stop()
             pool.join()
             raise
@@ -688,9 +666,7 @@ def ProcessPoolHandler(artifact_manager: ArtifactsManager) -> ProcessPool:
                 os.remove("keyfile")
 
 
-def wait_futures_complete(
-    futures: List[ProcessFuture], artifact_manager: ArtifactsManager
-):
+def wait_futures_complete(futures: List[ProcessFuture], artifact_manager: ArtifactsManager):
     """Wait for all futures to complete, Raise exception if occured.
 
     Args:
@@ -732,9 +708,7 @@ def is_in_content_packs(content_object: ContentObject) -> bool:
     return content_object.to_version >= FIRST_MARKETPLACE_VERSION
 
 
-def is_in_content_test(
-    artifact_manager: ArtifactsManager, content_object: ContentObject
-) -> bool:
+def is_in_content_test(artifact_manager: ArtifactsManager, content_object: ContentObject) -> bool:
     """Rules content_test:
         1. flag of only packs is off.
         2. Object located in TestPlaybooks directory (*/TestPlaybooks/*).
@@ -756,9 +730,7 @@ def is_in_content_test(
     )
 
 
-def is_in_content_new(
-    artifact_manager: ArtifactsManager, content_object: ContentObject
-) -> bool:
+def is_in_content_new(artifact_manager: ArtifactsManager, content_object: ContentObject) -> bool:
     """Rules content_new:
         1. flag of only packs is off.
         2. Object not located in TestPlaybooks directory (*/TestPlaybooks/*).
@@ -778,9 +750,7 @@ def is_in_content_new(
     )
 
 
-def is_in_content_all(
-    artifact_manager: ArtifactsManager, content_object: ContentObject
-) -> bool:
+def is_in_content_all(artifact_manager: ArtifactsManager, content_object: ContentObject) -> bool:
     """Rules content_all:
         1. If in content_new or content_test.
 
@@ -791,9 +761,7 @@ def is_in_content_all(
     Returns:
         bool: True if object should be included in content_all artifacts else False.
     """
-    return is_in_content_new(artifact_manager, content_object) or is_in_content_test(
-        artifact_manager, content_object
-    )
+    return is_in_content_new(artifact_manager, content_object) or is_in_content_test(artifact_manager, content_object)
 
 
 ############################
@@ -815,9 +783,7 @@ def dump_content_documentations(artifact_manager: ArtifactsManager) -> Artifacts
     report = ArtifactsReport("Documentations:")
     for documentation in artifact_manager.content.documentations:
         object_report = ObjectReport(documentation, content_packs=True)
-        created_files = documentation.dump(
-            artifact_manager.content_packs_path / BASE_PACK / DOCUMENTATION_DIR
-        )
+        created_files = documentation.dump(artifact_manager.content_packs_path / BASE_PACK / DOCUMENTATION_DIR)
         if not artifact_manager.only_content_packs:
             object_report.set_content_new()
             object_report.set_content_all()
@@ -825,9 +791,7 @@ def dump_content_documentations(artifact_manager: ArtifactsManager) -> Artifacts
                 artifact_manager.content_new_path,
                 artifact_manager.content_all_path,
             ]:
-                created_files = dump_link_files(
-                    artifact_manager, documentation, dest, created_files
-                )
+                created_files = dump_link_files(artifact_manager, documentation, dest, created_files)
         report.append(object_report)
 
     return report
@@ -854,23 +818,16 @@ def dump_content_descriptor(artifact_manager: ArtifactsManager) -> ArtifactsRepo
         1. content_descriptor.json created during build run time.
     """
     report = ArtifactsReport("Content descriptor:")
-    if (
-        not artifact_manager.only_content_packs
-        and artifact_manager.content.content_descriptor
-    ):
+    if not artifact_manager.only_content_packs and artifact_manager.content.content_descriptor:
         descriptor = artifact_manager.content.content_descriptor
-        object_report = ObjectReport(
-            descriptor, content_test=True, content_new=True, content_all=True
-        )
+        object_report = ObjectReport(descriptor, content_test=True, content_new=True, content_all=True)
         created_files: List[Path] = []
         for dest in [
             artifact_manager.content_test_path,
             artifact_manager.content_new_path,
             artifact_manager.content_all_path,
         ]:
-            created_files = dump_link_files(
-                artifact_manager, descriptor, dest, created_files
-            )
+            created_files = dump_link_files(artifact_manager, descriptor, dest, created_files)
         report.append(object_report)
 
     return report
@@ -897,9 +854,7 @@ def dump_tests_conditionally(artifact_manager: ArtifactsManager) -> ArtifactsRep
         object_report = ObjectReport(test)
         if is_in_content_test(artifact_manager, test):
             object_report.set_content_test()
-            test_created_files = dump_link_files(
-                artifact_manager, test, artifact_manager.content_test_path
-            )
+            test_created_files = dump_link_files(artifact_manager, test, artifact_manager.content_test_path)
             dump_link_files(
                 artifact_manager,
                 test,
@@ -916,9 +871,7 @@ def dump_tests_conditionally(artifact_manager: ArtifactsManager) -> ArtifactsRep
 ###########################
 
 
-def dump_packs(
-    artifact_manager: ArtifactsManager, pool: ProcessPool
-) -> List[ProcessFuture]:
+def dump_packs(artifact_manager: ArtifactsManager, pool: ProcessPool) -> List[ProcessFuture]:
     """Create futures which dumps conditionally content/Packs.
 
     Args:
@@ -947,26 +900,20 @@ def dump_packs(
     return futures
 
 
-def handle_incident_field(
-    content_items_handler, pack, pack_report, artifact_manager, **kwargs
-):
+def handle_incident_field(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
     for incident_field in pack.incident_fields:
         content_items_handler.handle_content_item(incident_field)
         pack_report += dump_pack_conditionally(artifact_manager, incident_field)
 
 
-def handle_integration(
-    content_items_handler, pack, pack_report, artifact_manager, is_feed_pack, **kwargs
-):
+def handle_integration(content_items_handler, pack, pack_report, artifact_manager, is_feed_pack, **kwargs):
     for integration in pack.integrations:
         content_items_handler.handle_content_item(integration)
         is_feed_pack = is_feed_pack or integration.is_feed
         pack_report += dump_pack_conditionally(artifact_manager, integration)
 
 
-def handle_playbook(
-    content_items_handler, pack, pack_report, artifact_manager, is_feed_pack, **kwargs
-):
+def handle_playbook(content_items_handler, pack, pack_report, artifact_manager, is_feed_pack, **kwargs):
     for playbook in pack.playbooks:
         content_items_handler.handle_content_item(playbook)
         is_feed_pack = is_feed_pack or playbook.get("name", "").startswith("TIM")
@@ -982,22 +929,16 @@ def handle_script(content_items_handler, pack, pack_report, artifact_manager, **
 def handle_release_notes(pack, pack_report, artifact_manager, **kwargs):
     for release_note in pack.release_notes:
         pack_report += ObjectReport(release_note, content_packs=True)
-        release_note.dump(
-            artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR
-        )
+        release_note.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
 
 
 def handle_release_note_config(pack, pack_report, artifact_manager, **kwargs):
     for release_note_config in pack.release_notes_config:
         pack_report += ObjectReport(release_note_config, content_packs=True)
-        release_note_config.dump(
-            artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR
-        )
+        release_note_config.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
 
 
-def handle_classifier(
-    content_items_handler, pack, pack_report, artifact_manager, **kwargs
-):
+def handle_classifier(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
     for classifier in pack.classifiers:
         content_items_handler.handle_content_item(classifier)
         pack_report += dump_pack_conditionally(artifact_manager, classifier)
@@ -1008,25 +949,19 @@ def handle_connection(pack, pack_report, artifact_manager, **kwargs):
         pack_report += dump_pack_conditionally(artifact_manager, connection)
 
 
-def handle_incident_type(
-    content_items_handler, pack, pack_report, artifact_manager, **kwargs
-):
+def handle_incident_type(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
     for incident_type in pack.incident_types:
         content_items_handler.handle_content_item(incident_type)
         pack_report += dump_pack_conditionally(artifact_manager, incident_type)
 
 
-def handle_indicator_field(
-    content_items_handler, pack, pack_report, artifact_manager, **kwargs
-):
+def handle_indicator_field(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
     for indicator_field in pack.indicator_fields:
         content_items_handler.handle_content_item(indicator_field)
         pack_report += dump_pack_conditionally(artifact_manager, indicator_field)
 
 
-def handle_indicator_type(
-    content_items_handler, pack, pack_report, artifact_manager, **kwargs
-):
+def handle_indicator_type(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
     for indicator_type in pack.indicator_types:
         # list of indicator types in one file (i.e. old format) instead of one per file aren't supported
         # from 6.0.0 server version
@@ -1051,9 +986,7 @@ def handle_layout(content_items_handler, pack, pack_report, artifact_manager, **
         pack_report += dump_pack_conditionally(artifact_manager, layout)
 
 
-def handle_list_item(
-    content_items_handler, pack, pack_report, artifact_manager, **kwargs
-):
+def handle_list_item(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
     for list_item in pack.lists:
         content_items_handler.handle_content_item(list_item)
         pack_report += dump_pack_conditionally(artifact_manager, list_item)
@@ -1070,49 +1003,37 @@ def handle_wizard(content_items_handler, pack, pack_report, artifact_manager, **
         pack_report += dump_pack_conditionally(artifact_manager, wizard)
 
 
-def handle_dashboard(
-    content_items_handler, pack, pack_report, artifact_manager, **kwargs
-):
+def handle_dashboard(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
     for dashboard in pack.dashboards:
         content_items_handler.handle_content_item(dashboard)
         pack_report += dump_pack_conditionally(artifact_manager, dashboard)
 
 
-def handle_generic_definition(
-    content_items_handler, pack, pack_report, artifact_manager, **kwargs
-):
+def handle_generic_definition(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
     for generic_definition in pack.generic_definitions:
         content_items_handler.handle_content_item(generic_definition)
         pack_report += dump_pack_conditionally(artifact_manager, generic_definition)
 
 
-def handle_generic_module(
-    content_items_handler, pack, pack_report, artifact_manager, **kwargs
-):
+def handle_generic_module(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
     for generic_module in pack.generic_modules:
         content_items_handler.handle_content_item(generic_module)
         pack_report += dump_pack_conditionally(artifact_manager, generic_module)
 
 
-def handle_generic_type(
-    content_items_handler, pack, pack_report, artifact_manager, **kwargs
-):
+def handle_generic_type(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
     for generic_type in pack.generic_types:
         content_items_handler.handle_content_item(generic_type)
         pack_report += dump_pack_conditionally(artifact_manager, generic_type)
 
 
-def handle_generic_field(
-    content_items_handler, pack, pack_report, artifact_manager, **kwargs
-):
+def handle_generic_field(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
     for generic_field in pack.generic_fields:
         content_items_handler.handle_content_item(generic_field)
         pack_report += dump_pack_conditionally(artifact_manager, generic_field)
 
 
-def handle_pre_process_rule(
-    content_items_handler, pack, pack_report, artifact_manager, **kwargs
-):
+def handle_pre_process_rule(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
     for pre_process_rule in pack.pre_process_rules:
         content_items_handler.handle_content_item(pre_process_rule)
         pack_report += dump_pack_conditionally(artifact_manager, pre_process_rule)
@@ -1130,65 +1051,49 @@ def handle_widget(content_items_handler, pack, pack_report, artifact_manager, **
         pack_report += dump_pack_conditionally(artifact_manager, widget)
 
 
-def handle_parsing_rule(
-    content_items_handler, pack, pack_report, artifact_manager, **kwargs
-):
+def handle_parsing_rule(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
     for parsing_rule in pack.parsing_rules:
         content_items_handler.handle_content_item(parsing_rule)
         pack_report += dump_pack_conditionally(artifact_manager, parsing_rule)
 
 
-def handle_modeling_rule(
-    content_items_handler, pack, pack_report, artifact_manager, **kwargs
-):
+def handle_modeling_rule(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
     for modeling_rule in pack.modeling_rules:
         content_items_handler.handle_content_item(modeling_rule)
         pack_report += dump_pack_conditionally(artifact_manager, modeling_rule)
 
 
-def handle_correlation_rule(
-    content_items_handler, pack, pack_report, artifact_manager, **kwargs
-):
+def handle_correlation_rule(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
     for correlation_rule in pack.correlation_rules:
         content_items_handler.handle_content_item(correlation_rule)
         pack_report += dump_pack_conditionally(artifact_manager, correlation_rule)
 
 
-def handle_xsiam_dashboard(
-    content_items_handler, pack, pack_report, artifact_manager, **kwargs
-):
+def handle_xsiam_dashboard(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
     for xsiam_dashboard in pack.xsiam_dashboards:
         content_items_handler.handle_content_item(xsiam_dashboard)
         pack_report += dump_pack_conditionally(artifact_manager, xsiam_dashboard)
 
 
-def handle_xsiam_report(
-    content_items_handler, pack, pack_report, artifact_manager, **kwargs
-):
+def handle_xsiam_report(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
     for xsiam_report in pack.xsiam_reports:
         content_items_handler.handle_content_item(xsiam_report)
         pack_report += dump_pack_conditionally(artifact_manager, xsiam_report)
 
 
-def handle_trigger(
-    content_items_handler, pack, pack_report, artifact_manager, **kwargs
-):
+def handle_trigger(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
     for trigger in pack.triggers:
         content_items_handler.handle_content_item(trigger)
         pack_report += dump_pack_conditionally(artifact_manager, trigger)
 
 
-def handle_xdrc_template(
-    content_items_handler, pack, pack_report, artifact_manager, **kwargs
-):
+def handle_xdrc_template(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
     for xdrc_template in pack.xdrc_templates:
         content_items_handler.handle_content_item(xdrc_template)
         pack_report += dump_pack_conditionally(artifact_manager, xdrc_template)
 
 
-def handle_layout_rule(
-    content_items_handler, pack, pack_report, artifact_manager, **kwargs
-):
+def handle_layout_rule(content_items_handler, pack, pack_report, artifact_manager, **kwargs):
     for layout_rule in pack.layout_rules:
         content_items_handler.handle_content_item(layout_rule)
         pack_report += dump_pack_conditionally(artifact_manager, layout_rule)
@@ -1197,18 +1102,12 @@ def handle_layout_rule(
 def handle_tools(pack, pack_report, artifact_manager, **kwargs):
     for tool in pack.tools:
         object_report = ObjectReport(tool, content_packs=True)
-        created_files = tool.dump(
-            artifact_manager.content_packs_path / pack.id / TOOLS_DIR
-        )
+        created_files = tool.dump(artifact_manager.content_packs_path / pack.id / TOOLS_DIR)
         if not artifact_manager.only_content_packs:
             object_report.set_content_new()
-            dump_link_files(
-                artifact_manager, tool, artifact_manager.content_new_path, created_files
-            )
+            dump_link_files(artifact_manager, tool, artifact_manager.content_new_path, created_files)
             object_report.set_content_all()
-            dump_link_files(
-                artifact_manager, tool, artifact_manager.content_all_path, created_files
-            )
+            dump_link_files(artifact_manager, tool, artifact_manager.content_all_path, created_files)
         pack_report += object_report
 
 
@@ -1218,24 +1117,16 @@ def handle_pack_metadata(pack, pack_report, artifact_manager, **kwargs):
         pack.pack_metadata.dump(artifact_manager.content_packs_path / pack.id)
 
 
-def handle_metadata(
-    content_items_handler, is_feed_pack, pack, pack_report, artifact_manager, **kwargs
-):
+def handle_metadata(content_items_handler, is_feed_pack, pack, pack_report, artifact_manager, **kwargs):
     if pack.metadata:
         pack_report += ObjectReport(pack.metadata, content_packs=True)
         pack.metadata.content_items = content_items_handler.content_items
-        pack.metadata.server_min_version = (
-            pack.metadata.server_min_version or content_items_handler.server_min_version
-        )
+        pack.metadata.server_min_version = pack.metadata.server_min_version or content_items_handler.server_min_version
         if artifact_manager.id_set_path and not artifact_manager.filter_by_id_set:
             # Dependencies can only be done when id_set file is given.
-            pack.metadata.handle_dependencies(
-                pack.path.name, artifact_manager.id_set_path, logger
-            )
+            pack.metadata.handle_dependencies(pack.path.name, artifact_manager.id_set_path, logger)
         else:
-            logger.warning(
-                "Skipping dependencies extraction since no id_set file was provided."
-            )
+            logger.warning("Skipping dependencies extraction since no id_set file was provided.")
         if is_feed_pack and "TIM" not in pack.metadata.tags:
             pack.metadata.tags.append("TIM")
         pack.metadata.dump_metadata_file(artifact_manager.content_packs_path / pack.id)
@@ -1258,9 +1149,7 @@ def handle_author_image(pack, pack_report, artifact_manager, **kwargs):
         pack.author_image.dump(artifact_manager.content_packs_path / pack.id)
 
 
-def dump_pack(
-    artifact_manager: ArtifactsManager, pack: Pack
-) -> ArtifactsReport:  # noqa: C901
+def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport:  # noqa: C901
     """Dumping content/Packs/<pack_id>/ into:
             1. content_test
             2. content_new
@@ -1288,9 +1177,7 @@ def dump_pack(
     pack.metadata.load_user_metadata(pack.id, pack.path.name, pack.path, logger)
     pack.filter_items_by_id_set = artifact_manager.filter_by_id_set
     pack.pack_info_from_id_set = artifact_manager.packs_section_from_id_set
-    content_items_handler = ContentItemsHandler(
-        artifact_manager.id_set, artifact_manager.alternate_fields
-    )
+    content_items_handler = ContentItemsHandler(artifact_manager.id_set, artifact_manager.alternate_fields)
     is_feed_pack = False
 
     content_items_to_handler = {
@@ -1333,9 +1220,7 @@ def dump_pack(
         FileType.LAYOUT_RULE: handle_layout_rule,
     }
 
-    items_to_dump = MARKETPLACE_TO_ITEMS_MAPPING.get(
-        artifact_manager.marketplace, XSOAR_MARKETPLACE_ITEMS_TO_DUMP
-    )
+    items_to_dump = MARKETPLACE_TO_ITEMS_MAPPING.get(artifact_manager.marketplace, XSOAR_MARKETPLACE_ITEMS_TO_DUMP)
     for item in items_to_dump:
         content_items_to_handler[item](
             content_items_handler=content_items_handler,
@@ -1348,9 +1233,7 @@ def dump_pack(
     return pack_report
 
 
-def dump_pack_conditionally(
-    artifact_manager: ArtifactsManager, content_object: ContentObject
-) -> ObjectReport:
+def dump_pack_conditionally(artifact_manager: ArtifactsManager, content_object: ContentObject) -> ObjectReport:
     """Dump pack object by the following logic
 
     Args:
@@ -1373,17 +1256,12 @@ def dump_pack_conditionally(
                 dump_link_files(
                     artifact_manager,
                     content_object,
-                    artifact_manager.content_packs_path
-                    / calc_relative_packs_dir(artifact_manager, content_object),
+                    artifact_manager.content_packs_path / calc_relative_packs_dir(artifact_manager, content_object),
                 )
             )
             # Collecting files *_45.yml which created and need to be removed after execution.
             files_to_remove.extend(
-                [
-                    created_file
-                    for created_file in pack_created_files
-                    if created_file.name.endswith("_45.yml")
-                ]
+                [created_file for created_file in pack_created_files if created_file.name.endswith("_45.yml")]
             )
 
         # Content test filter
@@ -1419,9 +1297,7 @@ def dump_pack_conditionally(
 
 
 @contextmanager
-def content_files_handler(
-    artifact_manager: ArtifactsManager, content_object: ContentObject
-):
+def content_files_handler(artifact_manager: ArtifactsManager, content_object: ContentObject):
     """Pre-processing pack, perform the following:
             1. Change content/Packs/Base/Scripts/CommonServerPython.py global variables:
                 a. CONTENT_RELEASE_VERSION to given content version flag.
@@ -1471,9 +1347,7 @@ def content_files_handler(
             file_path.unlink()
 
 
-def modify_common_server_constants(
-    code_path: Path, content_version: str, branch_name: Optional[str] = None
-):
+def modify_common_server_constants(code_path: Path, content_version: str, branch_name: Optional[str] = None):
     """Modify content/Packs/Base/Scripts/CommonServerPython.py global variables:
             a. CONTENT_RELEASE_VERSION to given content version flag.
             b. CONTENT_BRANCH_NAME to active branch
@@ -1516,8 +1390,7 @@ def suffix_handler(artifact_manager: ArtifactsManager):
         artifact_manager: Artifacts manager object.
     """
     files_pattern_to_add_suffix = (
-        "!reputations.json|!pack_metadata.json|"
-        "!doc-*.json|!content-descriptor.json|*.{json,yml,yaml}"
+        "!reputations.json|!pack_metadata.json|" "!doc-*.json|!content-descriptor.json|*.{json,yml,yaml}"
     )
     if artifact_manager.suffix:
         files_content_packs = artifact_manager.content_packs_path.rglob(
@@ -1542,11 +1415,7 @@ def suffix_handler(artifact_manager: ArtifactsManager):
                 file_name_split = file.name.split(".")
                 file_real_stem = ".".join(file_name_split[:-1])
                 suffix = file_name_split[-1]
-                file.rename(
-                    file.with_name(
-                        f"{file_real_stem}{artifact_manager.suffix}.{suffix}"
-                    )
-                )
+                file.rename(file.with_name(f"{file_real_stem}{artifact_manager.suffix}.{suffix}"))
 
 
 ###########
@@ -1594,10 +1463,7 @@ def dump_link_files(
     if created_files:
         for file in created_files:
             new_file = dest_dir / file.name
-            if (
-                new_file.exists()
-                and new_file.stat().st_mtime >= artifact_manager.execution_start
-            ):
+            if new_file.exists() and new_file.stat().st_mtime >= artifact_manager.execution_start:
                 raise DuplicateFiles(new_file, content_object.path)
             else:
                 os.link(file, new_file)
@@ -1605,10 +1471,7 @@ def dump_link_files(
     # Handle case where object first time dump.
     else:
         target = dest_dir / content_object.normalize_file_name()
-        if (
-            target.exists()
-            and target.stat().st_mtime >= artifact_manager.execution_start
-        ):
+        if target.exists() and target.stat().st_mtime >= artifact_manager.execution_start:
             raise DuplicateFiles(target, content_object.path)
         else:
             new_created_files.extend(content_object.dump(dest_dir=dest_dir))
@@ -1616,31 +1479,14 @@ def dump_link_files(
     return new_created_files
 
 
-def calc_relative_packs_dir(
-    artifact_manager: ArtifactsManager, content_object: ContentObject
-) -> Path:
+def calc_relative_packs_dir(artifact_manager: ArtifactsManager, content_object: ContentObject) -> Path:
     relative_pack_path = artifact_manager.get_relative_pack_path(content_object)
     if (
-        (
-            INTEGRATIONS_DIR in relative_pack_path.parts
-            and relative_pack_path.parts[-2] != INTEGRATIONS_DIR
-        )
-        or (
-            SCRIPTS_DIR in relative_pack_path.parts
-            and relative_pack_path.parts[-2] != SCRIPTS_DIR
-        )
-        or (
-            PARSING_RULES_DIR in relative_pack_path.parts
-            and relative_pack_path.parts[-2] != PARSING_RULES_DIR
-        )
-        or (
-            MODELING_RULES_DIR in relative_pack_path.parts
-            and relative_pack_path.parts[-2] != MODELING_RULES_DIR
-        )
-        or (
-            XDRC_TEMPLATE_DIR in relative_pack_path.parts
-            and relative_pack_path.parts[-2] != XDRC_TEMPLATE_DIR
-        )
+        (INTEGRATIONS_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != INTEGRATIONS_DIR)
+        or (SCRIPTS_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != SCRIPTS_DIR)
+        or (PARSING_RULES_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != PARSING_RULES_DIR)
+        or (MODELING_RULES_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != MODELING_RULES_DIR)
+        or (XDRC_TEMPLATE_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != XDRC_TEMPLATE_DIR)
     ):
         relative_pack_path = relative_pack_path.parent.parent
     else:
@@ -1738,15 +1584,10 @@ def zip_packs(artifact_manager: ArtifactsManager):
     """Zip packs directories"""
     with ProcessPoolHandler(artifact_manager) as pool:
         for pack_name, pack in artifact_manager.packs.items():
-            if (
-                artifact_manager.pack_names != ["all"]
-                and pack_name not in artifact_manager.pack_names
-            ):
+            if artifact_manager.pack_names != ["all"] and pack_name not in artifact_manager.pack_names:
                 continue
             dumped_pack_dir = os.path.join(artifact_manager.content_packs_path, pack.id)
-            zip_path = os.path.join(
-                artifact_manager.content_uploadable_zips_path, pack.id
-            )
+            zip_path = os.path.join(artifact_manager.content_uploadable_zips_path, pack.id)
 
             pool.schedule(make_archive, args=(zip_path, "zip", dumped_pack_dir))
 
@@ -1787,9 +1628,7 @@ def sign_packs(artifact_manager: ArtifactsManager):
             futures: List[ProcessFuture] = []
             if "all" in artifact_manager.pack_names:
                 for pack_name, pack in artifact_manager.packs.items():
-                    dumped_pack_dir = os.path.join(
-                        artifact_manager.content_packs_path, pack.id
-                    )
+                    dumped_pack_dir = os.path.join(artifact_manager.content_packs_path, pack.id)
                     futures.append(
                         pool.schedule(
                             pack.sign_pack,
@@ -1804,9 +1643,7 @@ def sign_packs(artifact_manager: ArtifactsManager):
                 for pack_name in artifact_manager.pack_names:
                     if pack_name in artifact_manager.packs:
                         pack = artifact_manager.packs[pack_name]
-                        dumped_pack_dir = os.path.join(
-                            artifact_manager.content_packs_path, pack.id
-                        )
+                        dumped_pack_dir = os.path.join(artifact_manager.content_packs_path, pack.id)
                         futures.append(
                             pool.schedule(
                                 pack.sign_pack,

@@ -43,9 +43,7 @@ class YAMLObject(DictionaryBasedObject):
                     "Can't find yaml or yml file in path (excluding unified).",
                 )
         elif not (path.is_file() and path.suffix in [".yaml", ".yml"]):
-            raise exc.ContentInitializeError(
-                path, path, "file suffix isn't yaml or yml."
-            )
+            raise exc.ContentInitializeError(path, path, "file suffix isn't yaml or yml.")
 
         return path
 

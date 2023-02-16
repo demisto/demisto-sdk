@@ -13,17 +13,13 @@ DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 
 def match_request_text(client, url, method, response_type="text"):
     if url == "/content/bundle":
-        with open(
-            "demisto_sdk/tests/test_files/download_command/demisto_api_response"
-        ) as f:
+        with open("demisto_sdk/tests/test_files/download_command/demisto_api_response") as f:
             api_response = f.read()
 
         return (api_response, 200, None)
     elif url.startswith("/playbook") and url.endswith("/yaml"):
         filename = url.replace("/playbook/", "").replace("/yaml", "")
-        with open(
-            f"demisto_sdk/tests/test_files/download_command/playbook-{filename}.yml"
-        ) as f2:
+        with open(f"demisto_sdk/tests/test_files/download_command/playbook-{filename}.yml") as f2:
             api_response = f2.read()
 
             return (api_response, 200, None)
@@ -124,10 +120,7 @@ def test_integration_download_list_files(demisto_client):
     """
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [DOWNLOAD_COMMAND, "-lf"])
-    assert (
-        "The following files are available to be downloaded from Demisto instance:"
-        in result.output
-    )
+    assert "The following files are available to be downloaded from Demisto instance:" in result.output
     assert "FILE NAME                          FILE TYPE" in result.output
     assert "---------------------------------  ------------" in result.output
     assert "Handle Hello World Alert Test      playbook" in result.output

@@ -11,9 +11,7 @@ IGNORED_INCIDENT_TYPES = ["dbot_classification_incident_type_all"]
 
 
 class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
-    def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
-    ) -> None:
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         super().__init__(path, pack_marketplaces)
         self.type = self.json_data.get("type")
         self.definition_id = self.json_data.get("definitionId")
@@ -27,9 +25,7 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
         return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2}
 
-    def get_filters_and_transformers_from_complex_value(
-        self, complex_value: dict
-    ) -> None:
+    def get_filters_and_transformers_from_complex_value(self, complex_value: dict) -> None:
         for filter in complex_value.get("filters", []):
             if filter:
                 filter_script = filter[0].get("operator").split(".")[-1]
@@ -54,15 +50,11 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
             add_dependency_func = self.add_dependency_by_name  # type: ignore
 
         if default_incident_type := self.json_data.get("defaultIncidentType"):
-            add_dependency_func(
-                default_incident_type, content_type_to_map, is_mandatory=False
-            )
+            add_dependency_func(default_incident_type, content_type_to_map, is_mandatory=False)
 
         for incident_type, mapping_data in self.json_data.get("mapping", {}).items():
             if incident_type not in IGNORED_INCIDENT_TYPES:
-                add_dependency_func(
-                    incident_type, content_type_to_map, is_mandatory=False
-                )
+                add_dependency_func(incident_type, content_type_to_map, is_mandatory=False)
             internal_mapping: Dict[str, Any] = mapping_data.get("internalMapping")
 
             if self.type == "mapping-outgoing":
@@ -75,9 +67,7 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
                                 fields_content_type,
                                 is_mandatory=False,
                             )
-                        elif incident_field_complex := fields_mapper.get(
-                            "complex", {}
-                        ).get("root"):
+                        elif incident_field_complex := fields_mapper.get("complex", {}).get("root"):
                             self.add_dependency_by_id(
                                 incident_field_complex,
                                 fields_content_type,
@@ -99,6 +89,4 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
 
             for internal_mapping in internal_mapping.values():
                 if incident_field_complex := internal_mapping.get("complex", {}):
-                    self.get_filters_and_transformers_from_complex_value(
-                        incident_field_complex
-                    )
+                    self.get_filters_and_transformers_from_complex_value(incident_field_complex)

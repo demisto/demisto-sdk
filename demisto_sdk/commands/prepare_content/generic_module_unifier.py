@@ -42,9 +42,7 @@ class GenericModuleUnifier:
 
         if output:
             if not os.path.isdir(output):
-                click.secho(
-                    "You have failed to provide a legal dir path", fg="bright_red"
-                )
+                click.secho("You have failed to provide a legal dir path", fg="bright_red")
                 sys.exit(1)
 
             self.dest_dir = output
@@ -53,9 +51,7 @@ class GenericModuleUnifier:
             # an output wasn't given, save the unified file in the input's file dir
             self.dest_dir = os.path.dirname(self.input_path)
 
-        self.dest_path = os.path.join(
-            self.dest_dir, f"{self.input_file_name}_unified.json"
-        )
+        self.dest_path = os.path.join(self.dest_dir, f"{self.input_file_name}_unified.json")
 
     def find_dashboard_by_id(self, dashboard_id: str) -> Optional[Dict]:
         """
@@ -93,9 +89,7 @@ class GenericModuleUnifier:
                 dashboard_id = tab.get("dashboard", {}).get("id")
                 if dashboard_id:
                     # search dashboard in the GenericModule's pack
-                    dashboard_content = self.find_dashboard_by_id(
-                        dashboard_id=dashboard_id
-                    )
+                    dashboard_content = self.find_dashboard_by_id(dashboard_id=dashboard_id)
                     if dashboard_content:
                         tab["dashboard"] = dashboard_content
 

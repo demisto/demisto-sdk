@@ -15,13 +15,7 @@ from demisto_sdk.commands.common.tools import src_root
 
 TEST_DATA = src_root() / "tests" / "test_files"
 TEST_CONTENT_REPO = TEST_DATA / "content_slim"
-TEST_JSON_NO_FROM_VERSION = (
-    TEST_CONTENT_REPO
-    / PACKS_DIR
-    / "Sample01"
-    / CLASSIFIERS_DIR
-    / "classifier-sample_new.json"
-)
+TEST_JSON_NO_FROM_VERSION = TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / CLASSIFIERS_DIR / "classifier-sample_new.json"
 
 
 def test_to_version_no_from_version(datadir):
@@ -38,9 +32,7 @@ IS_LIST = [(TEST_LIST_JSON, "", True), (TEST_NOT_LIST_JSON, "", False)]
 
 
 @pytest.mark.parametrize("path, file_name_prefix, is_list", IS_LIST)
-def test_is_file_structure_list(
-    path: Union[Path, str], file_name_prefix, is_list: bool
-):
+def test_is_file_structure_list(path: Union[Path, str], file_name_prefix, is_list: bool):
     """
     Given
         - A json file path

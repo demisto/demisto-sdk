@@ -38,9 +38,7 @@ def test_integration_create_content_artifacts_no_zip(repo):
     with ChangeCWD(repo.path):
         dir_path = repo.make_dir()
         runner = CliRunner()
-        result = runner.invoke(
-            main, [ARTIFACTS_CMD, "-a", dir_path, "--no-zip", "-mp", "marketplacev2"]
-        )
+        result = runner.invoke(main, [ARTIFACTS_CMD, "-a", dir_path, "--no-zip", "-mp", "marketplacev2"])
         os.rmdir(dir_path + "/content_packs")
         assert same_folders(dir_path, expected_artifacts_path)
         assert result.exit_code == 0

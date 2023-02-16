@@ -28,9 +28,7 @@ class TestPlaybooks:
         - Ensure README.md has an inputs section.
         - Ensure README.md has an outputs section.
         """
-        valid_playbook_with_io = join(
-            DEMISTO_SDK_PATH, "tests/test_files/playbook-Test_playbook.yml"
-        )
+        valid_playbook_with_io = join(DEMISTO_SDK_PATH, "tests/test_files/playbook-Test_playbook.yml")
         runner = CliRunner(mix_stderr=False)
         arguments = [GENERATE_DOCS_CMD, "-i", valid_playbook_with_io, "-o", tmpdir]
         result = runner.invoke(main, arguments)
@@ -43,10 +41,7 @@ class TestPlaybooks:
         assert Path(readme_path).exists()
         with open(readme_path) as readme_file:
             contents = readme_file.read()
-            assert (
-                "| **Name** | **Description** | **Default Value** | **Required** |"
-                in contents
-            )
+            assert "| **Name** | **Description** | **Default Value** | **Required** |" in contents
             assert "| **Path** | **Description** | **Type** |" in contents
 
     def test_integration_generate_docs_playbook_positive_no_io(self, tmpdir):
@@ -65,9 +60,7 @@ class TestPlaybooks:
         - Ensure README.md does not have an inputs section.
         - Ensure README.md does not have an outputs section.
         """
-        valid_playbook_no_io = join(
-            DEMISTO_SDK_PATH, "tests/test_files/Playbooks.playbook-test.yml"
-        )
+        valid_playbook_no_io = join(DEMISTO_SDK_PATH, "tests/test_files/Playbooks.playbook-test.yml")
         runner = CliRunner(mix_stderr=False)
         arguments = [GENERATE_DOCS_CMD, "-i", valid_playbook_no_io, "-o", tmpdir]
         result = runner.invoke(main, arguments)
@@ -82,9 +75,7 @@ class TestPlaybooks:
             assert "There are no inputs for this playbook." in contents
             assert "There are no outputs for this playbook." in contents
 
-    def test_integration_generate_docs_playbook_dependencies_old_integration(
-        self, tmpdir
-    ):
+    def test_integration_generate_docs_playbook_dependencies_old_integration(self, tmpdir):
         """
         Given
         - Path to valid playbook yml file to generate docs for.
@@ -194,10 +185,7 @@ class TestPlaybooks:
         assert Path(readme_path_1).exists()
         with open(readme_path_1) as readme_file:
             contents = readme_file.read()
-            assert (
-                "| **Name** | **Description** | **Default Value** | **Required** |"
-                in contents
-            )
+            assert "| **Name** | **Description** | **Default Value** | **Required** |" in contents
             assert "| **Path** | **Description** | **Type** |" in contents
 
         assert Path(readme_path_2).exists()

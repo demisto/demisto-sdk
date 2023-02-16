@@ -214,9 +214,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.LAYOUT_RULE: "Layout Rules",
 }
 
-FILE_TYPE_BY_RN_HEADER = {
-    header: file_type for file_type, header in RN_HEADER_BY_FILE_TYPE.items()
-}
+FILE_TYPE_BY_RN_HEADER = {header: file_type for file_type, header in RN_HEADER_BY_FILE_TYPE.items()}
 
 ENTITY_TYPE_TO_DIR = {
     FileType.INTEGRATION.value: INTEGRATIONS_DIR,
@@ -272,9 +270,7 @@ IGNORED_PACKS_IN_DEPENDENCY_CALC = [
     "NonSupported",
     "Base",
 ]  # Packs that are ignored when calculating dependencies
-ALLOWED_EMPTY_PACKS = [
-    "Cortex911"
-]  # Packs that are allowed to be without content items in the id_set
+ALLOWED_EMPTY_PACKS = ["Cortex911"]  # Packs that are allowed to be without content items in the id_set
 
 CUSTOM_CONTENT_FILE_ENDINGS = ["yml", "json"]
 
@@ -528,15 +524,9 @@ PACKS_INTEGRATION_PS_TEST_REGEX = rf"{INTEGRATION_PACKAGE_REGEX}/\2\.Tests\.ps1$
 PACKS_INTEGRATION_YML_REGEX = rf"{INTEGRATION_PACKAGE_REGEX}/\2\.yml"
 PACKS_INTEGRATION_README_REGEX = rf"{INTEGRATION_PACKAGE_REGEX}/README.md$"
 
-PACKS_INTEGRATION_NON_SPLIT_BASE_REGEX = (
-    rf"{INTEGRATIONS_DIR_REGEX}/integration-([^\\/]+)"
-)
-PACKS_INTEGRATION_NON_SPLIT_YML_REGEX = (
-    rf"{PACKS_INTEGRATION_NON_SPLIT_BASE_REGEX}\.yml$"
-)
-PACKS_INTEGRATION_NON_SPLIT_README_REGEX = (
-    rf"{PACKS_INTEGRATION_NON_SPLIT_BASE_REGEX}_README.md$"
-)
+PACKS_INTEGRATION_NON_SPLIT_BASE_REGEX = rf"{INTEGRATIONS_DIR_REGEX}/integration-([^\\/]+)"
+PACKS_INTEGRATION_NON_SPLIT_YML_REGEX = rf"{PACKS_INTEGRATION_NON_SPLIT_BASE_REGEX}\.yml$"
+PACKS_INTEGRATION_NON_SPLIT_README_REGEX = rf"{PACKS_INTEGRATION_NON_SPLIT_BASE_REGEX}_README.md$"
 
 SCRIPTS_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{SCRIPTS_DIR}"
 SCRIPT_DIR_REGEX = rf"{SCRIPTS_DIR_REGEX}\/([^\\/]+)"
@@ -549,28 +539,20 @@ PACKS_SCRIPT_YML_REGEX = rf"{SCRIPT_DIR_REGEX}\/\2\.yml"
 PACKS_SCRIPT_README_REGEX = rf"{SCRIPT_DIR_REGEX}/README.md$"
 
 PACKS_SCRIPT_NON_SPLIT_BASE_REGEX = rf"{SCRIPTS_DIR_REGEX}/script-([^\\/]+)"
-PACKS_SCRIPT_TEST_PLAYBOOK = (
-    rf"{PACK_DIR_REGEX}/{TEST_PLAYBOOKS_DIR}/script-([^\\/]+).yml$"
-)
+PACKS_SCRIPT_TEST_PLAYBOOK = rf"{PACK_DIR_REGEX}/{TEST_PLAYBOOKS_DIR}/script-([^\\/]+).yml$"
 PACKS_SCRIPT_NON_SPLIT_YML_REGEX = rf"{PACKS_SCRIPT_NON_SPLIT_BASE_REGEX}\.yml$"
 PACKS_SCRIPT_NON_SPLIT_README_REGEX = rf"{PACKS_SCRIPT_NON_SPLIT_BASE_REGEX}_README.md$"
 
 PACKS_LAYOUTS_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{LAYOUTS_DIR}"
-PACKS_LAYOUT_JSON_REGEX = (
-    rf"{PACKS_LAYOUTS_DIR_REGEX}\/(?!layoutscontainer)([^/]+)\.json"
-)
+PACKS_LAYOUT_JSON_REGEX = rf"{PACKS_LAYOUTS_DIR_REGEX}\/(?!layoutscontainer)([^/]+)\.json"
 
-PACKS_LAYOUTS_CONTAINER_JSON_REGEX = (
-    rf"{PACKS_LAYOUTS_DIR_REGEX}\/layoutscontainer([^/]+)\.json"
-)
+PACKS_LAYOUTS_CONTAINER_JSON_REGEX = rf"{PACKS_LAYOUTS_DIR_REGEX}\/layoutscontainer([^/]+)\.json"
 
 PACK_LAYOUT_RULES_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{LAYOUT_RULES_DIR}"
 PACK_LAYOUT_RULE_JSON_REGEX = rf"{PACK_LAYOUT_RULES_DIR_REGEX}\/([^/]+)\.json"
 
 PACKS_PRE_PROCESS_RULES_DIR_REGEX = rf"{PACK_DIR_REGEX}/{PRE_PROCESS_RULES_DIR}"
-PACKS_PRE_PROCESS_RULES_JSON_REGEX = (
-    rf"{PACKS_PRE_PROCESS_RULES_DIR_REGEX}/(?:preprocessrule-)?([^/]+)\.json"
-)
+PACKS_PRE_PROCESS_RULES_JSON_REGEX = rf"{PACKS_PRE_PROCESS_RULES_DIR_REGEX}/(?:preprocessrule-)?([^/]+)\.json"
 
 PACKS_WIDGETS_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{WIDGETS_DIR}"
 PACKS_WIDGET_JSON_REGEX = rf"{PACKS_WIDGETS_DIR_REGEX}\/([^/]+)\.json"
@@ -603,15 +585,11 @@ PACKS_GENERIC_MODULES_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{GENERIC_MODULES_DIR}"
 PACKS_GENERIC_MODULE_JSON_REGEX = rf"{PACKS_GENERIC_MODULES_DIR_REGEX}\/([^/]+)\.json"
 
 PACKS_GENERIC_DEFINITIONS_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{GENERIC_DEFINITIONS_DIR}"
-PACKS_GENERIC_DEFINITION_JSON_REGEX = (
-    rf"{PACKS_GENERIC_DEFINITIONS_DIR_REGEX}\/([^/]+)\.json"
-)
+PACKS_GENERIC_DEFINITION_JSON_REGEX = rf"{PACKS_GENERIC_DEFINITIONS_DIR_REGEX}\/([^/]+)\.json"
 
 PACKS_CLASSIFIERS_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{CLASSIFIERS_DIR}"
 
-_PACKS_CLASSIFIER_BASE_REGEX = (
-    rf"{PACKS_CLASSIFIERS_DIR_REGEX}\/*classifier-(?!mapper).*(?<!5_9_9)"
-)
+_PACKS_CLASSIFIER_BASE_REGEX = rf"{PACKS_CLASSIFIERS_DIR_REGEX}\/*classifier-(?!mapper).*(?<!5_9_9)"
 PACKS_CLASSIFIER_JSON_REGEX = rf"{_PACKS_CLASSIFIER_BASE_REGEX}\.json"
 
 JOBS_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{JOBS_DIR}"
@@ -635,15 +613,11 @@ XDRC_TEMPLATE_JSON_REGEX = rf"{XDRC_TEMPLATE_PACKAGE_REGEX}\/([^/]+)\.json"
 XDRC_TEMPLATE_YML_REGEX = rf"{XDRC_TEMPLATE_PACKAGE_REGEX}\/([^/]+)\.yml"
 
 CORRELATION_RULES_DIR_REGEX = rf"{PACK_DIR_REGEX}/{CORRELATION_RULES_DIR}"
-CORRELATION_RULES_YML_REGEX = (
-    rf"{CORRELATION_RULES_DIR_REGEX}/(?:correlationrule-)?([^/]+)\.yml"
-)
+CORRELATION_RULES_YML_REGEX = rf"{CORRELATION_RULES_DIR_REGEX}/(?:correlationrule-)?([^/]+)\.yml"
 
 PARSING_RULES_DIR_REGEX = rf"{PACK_DIR_REGEX}/{PARSING_RULES_DIR}"
 PARSING_RULES_PACKAGE_REGEX = rf"{PARSING_RULES_DIR_REGEX}\/([^\\/]+)"
-PARSING_RULES_YML_REGEX = (
-    rf"{PARSING_RULES_PACKAGE_REGEX}/(?:parsingrule-)?([^/]+)\.yml"
-)
+PARSING_RULES_YML_REGEX = rf"{PARSING_RULES_PACKAGE_REGEX}/(?:parsingrule-)?([^/]+)\.yml"
 
 
 # Modeling Rules
@@ -654,23 +628,17 @@ MODELING_RULE_RULES_REGEX = rf"{MODELING_RULE_PACKAGE_REGEX}\/([^/]+)\.xif"
 MODELING_RULE_SCHEMA_REGEX = rf"{MODELING_RULE_PACKAGE_REGEX}\/([^/]+)\.json"
 
 RELATIVE_HREF_URL_REGEX = r'(<.*?href\s*=\s*"((?!(?:https?:\/\/)|#|(?:mailto:)).*?)")'
-RELATIVE_MARKDOWN_URL_REGEX = (
-    r"(?<![!])(\[.*?\])\(((?!(?:https?:\/\/)|#|(?:mailto:)).*?)\)"
-)
+RELATIVE_MARKDOWN_URL_REGEX = r"(?<![!])(\[.*?\])\(((?!(?:https?:\/\/)|#|(?:mailto:)).*?)\)"
 
 # old classifier structure
-_PACKS_CLASSIFIER_BASE_5_9_9_REGEX = (
-    rf"{PACKS_CLASSIFIERS_DIR_REGEX}\/*classifier-(?!mapper).*_5_9_9"
-)
+_PACKS_CLASSIFIER_BASE_5_9_9_REGEX = rf"{PACKS_CLASSIFIERS_DIR_REGEX}\/*classifier-(?!mapper).*_5_9_9"
 PACKS_CLASSIFIER_JSON_5_9_9_REGEX = rf"{_PACKS_CLASSIFIER_BASE_5_9_9_REGEX}\.json"
 
 _PACKS_MAPPER_BASE_REGEX = rf"{PACKS_CLASSIFIERS_DIR_REGEX}\/classifier-(?=mapper).*"
 PACKS_MAPPER_JSON_REGEX = rf"{_PACKS_MAPPER_BASE_REGEX}\.json"
 
 PACKS_CONNECTIONS_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{CONNECTIONS_DIR}"
-PACKS_CONNECTION_JSON_REGEX = (
-    rf"{PACKS_CONNECTIONS_DIR_REGEX}\/canvas-context-connections.*\.json$"
-)
+PACKS_CONNECTION_JSON_REGEX = rf"{PACKS_CONNECTIONS_DIR_REGEX}\/canvas-context-connections.*\.json$"
 
 PACKS_RELEASE_NOTES_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{RELEASE_NOTES_DIR}"
 
@@ -680,9 +648,7 @@ PLAYBOOK_YML_REGEX = rf"{PLAYBOOK_BASE_REGEX}\.yml"
 PLAYBOOK_README_REGEX = rf"{PLAYBOOK_BASE_REGEX}_README\.md$"
 
 TEST_SCRIPT_REGEX = rf"{CAN_START_WITH_DOT_SLASH}{TEST_PLAYBOOKS_DIR}.*script-.*\.yml$"
-TEST_PLAYBOOK_YML_REGEX = (
-    rf"{PACK_DIR_REGEX}/{TEST_PLAYBOOKS_DIR}\/(?!script-)([^.]+)\.yml"
-)
+TEST_PLAYBOOK_YML_REGEX = rf"{PACK_DIR_REGEX}/{TEST_PLAYBOOKS_DIR}\/(?!script-)([^.]+)\.yml"
 
 PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX = r"{}{}/([^/]+)/{}/reputations.json".format(
     CAN_START_WITH_DOT_SLASH, PACKS_DIR, INDICATOR_TYPES_DIR
@@ -690,30 +656,18 @@ PACKS_INDICATOR_TYPES_REPUTATIONS_REGEX = r"{}{}/([^/]+)/{}/reputations.json".fo
 PACKS_RELEASE_NOTES_REGEX = r"{}{}/([^/]+)/{}/([^/]+)\.md$".format(
     CAN_START_WITH_DOT_SLASH, PACKS_DIR, RELEASE_NOTES_DIR
 )
-PACKS_TOOLS_REGEX = (
-    rf"{CAN_START_WITH_DOT_SLASH}{PACKS_DIR}/([^/]+)/{TOOLS_DIR}/([^.]+)\.zip"
-)
+PACKS_TOOLS_REGEX = rf"{CAN_START_WITH_DOT_SLASH}{PACKS_DIR}/([^/]+)/{TOOLS_DIR}/([^.]+)\.zip"
 
 PLAYBOOK_REGEX = r"playbook-.*\.yml$"
 
-PLAYBOOK_REGEX_PATH = (
-    rf"{CAN_START_WITH_DOT_SLASH}(?!Test){PLAYBOOKS_DIR}/{PLAYBOOK_REGEX}"
-)
+PLAYBOOK_REGEX_PATH = rf"{CAN_START_WITH_DOT_SLASH}(?!Test){PLAYBOOKS_DIR}/{PLAYBOOK_REGEX}"
 
-TEST_PLAYBOOK_REGEX = (
-    rf"{CAN_START_WITH_DOT_SLASH}{TEST_PLAYBOOKS_DIR}/(?!script-).*\.yml$"
-)
-TEST_NOT_PLAYBOOK_REGEX = (
-    rf"{CAN_START_WITH_DOT_SLASH}{TEST_PLAYBOOKS_DIR}/(?!playbook).*-.*\.yml$"
-)
+TEST_PLAYBOOK_REGEX = rf"{CAN_START_WITH_DOT_SLASH}{TEST_PLAYBOOKS_DIR}/(?!script-).*\.yml$"
+TEST_NOT_PLAYBOOK_REGEX = rf"{CAN_START_WITH_DOT_SLASH}{TEST_PLAYBOOKS_DIR}/(?!playbook).*-.*\.yml$"
 
-CONNECTIONS_REGEX = (
-    rf"{CAN_START_WITH_DOT_SLASH}{CONNECTIONS_DIR}.*canvas-context-connections.*\.json$"
-)
+CONNECTIONS_REGEX = rf"{CAN_START_WITH_DOT_SLASH}{CONNECTIONS_DIR}.*canvas-context-connections.*\.json$"
 
-INDICATOR_TYPES_REPUTATIONS_REGEX = (
-    rf"{CAN_START_WITH_DOT_SLASH}{INDICATOR_TYPES_DIR}.reputations\.json$"
-)
+INDICATOR_TYPES_REPUTATIONS_REGEX = rf"{CAN_START_WITH_DOT_SLASH}{INDICATOR_TYPES_DIR}.reputations\.json$"
 
 INCIDENT_FIELD_FILE_NAME_REGEX = r"incidentfield-.*\.json"
 
@@ -813,9 +767,7 @@ PLAYBOOKS_REGEXES_LIST = [PLAYBOOK_REGEX_PATH, TEST_PLAYBOOK_REGEX]
 
 PYTHON_SCRIPT_REGEXES = [PACKS_SCRIPT_PY_REGEX]
 
-PYTHON_ALL_REGEXES: List[str] = sum(
-    [PYTHON_SCRIPT_REGEXES, PYTHON_INTEGRATION_REGEXES, PYTHON_TEST_REGEXES], []
-)
+PYTHON_ALL_REGEXES: List[str] = sum([PYTHON_SCRIPT_REGEXES, PYTHON_INTEGRATION_REGEXES, PYTHON_TEST_REGEXES], [])
 
 INTEGRATION_REGXES: List[str] = [PACKS_INTEGRATION_NON_SPLIT_YML_REGEX]
 
@@ -988,8 +940,7 @@ CHECKED_TYPES_REGEXES = [
 ]
 
 CHECKED_TYPES_NO_REGEX = [
-    item.replace(CAN_START_WITH_DOT_SLASH, "").replace(NOT_TEST, "")
-    for item in CHECKED_TYPES_REGEXES
+    item.replace(CAN_START_WITH_DOT_SLASH, "").replace(NOT_TEST, "") for item in CHECKED_TYPES_REGEXES
 ]
 
 PATHS_TO_VALIDATE: List[str] = sum([PYTHON_ALL_REGEXES, JSON_ALL_REPORTS_REGEXES], [])
@@ -1004,9 +955,7 @@ IGNORED_PACK_NAMES = ["Legacy", "NonSupported", "ApiModules"]
 
 PACK_IGNORE_TEST_FLAG = "auto-test"
 
-PACKAGE_YML_FILE_REGEX = (
-    r"(?:\./)?(?:Packs/[^/]+\/)?(?:Integrations|Scripts)\/([^\\/]+)/([^\\/]+)\.yml"
-)
+PACKAGE_YML_FILE_REGEX = r"(?:\./)?(?:Packs/[^/]+\/)?(?:Integrations|Scripts)\/([^\\/]+)/([^\\/]+)\.yml"
 
 OLD_YML_FORMAT_FILE = [
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX,
@@ -1127,22 +1076,14 @@ def urljoin(*args: str):
         >>> urljoin('https://www.example.com', 'suffix/', '/suffix2', 'suffix', 'file.json')
         'https://www.example.com/suffix/suffix2/suffix/file.json'
     """
-    return reduce(
-        lambda a, b: str(a).rstrip("/") + "/" + str(b).lstrip("/"), args
-    ).rstrip("/")
+    return reduce(lambda a, b: str(a).rstrip("/") + "/" + str(b).lstrip("/"), args).rstrip("/")
 
 
-OFFICIAL_CONTENT_ID_SET_PATH = (
-    "https://storage.googleapis.com/marketplace-dist/content/id_set.json"
-)
+OFFICIAL_CONTENT_ID_SET_PATH = "https://storage.googleapis.com/marketplace-dist/content/id_set.json"
 
-OFFICIAL_CONTENT_GRAPH_PATH = (
-    "https://storage.googleapis.com/marketplace-dist-dev/content_graph"
-)
+OFFICIAL_CONTENT_GRAPH_PATH = "https://storage.googleapis.com/marketplace-dist-dev/content_graph"
 
-OFFICIAL_INDEX_JSON_PATH = (
-    "https://storage.googleapis.com/marketplace-dist/content/packs/index.json"
-)
+OFFICIAL_INDEX_JSON_PATH = "https://storage.googleapis.com/marketplace-dist/content/packs/index.json"
 
 # Run all test signal
 RUN_ALL_TESTS_FORMAT = "Run all tests"
@@ -1162,10 +1103,7 @@ class PB_Status:
 # change log regexes
 UNRELEASE_HEADER = "## [Unreleased]\n"  # lgtm[py/regex/duplicate-in-character-class]
 CONTENT_RELEASE_TAG_REGEX = r"^\d{2}\.\d{1,2}\.\d"
-RELEASE_NOTES_REGEX = (
-    re.escape(UNRELEASE_HEADER)
-    + r"([\s\S]+?)## \[\d{2}\.\d{1,2}\.\d\] - \d{4}-\d{2}-\d{2}"
-)
+RELEASE_NOTES_REGEX = re.escape(UNRELEASE_HEADER) + r"([\s\S]+?)## \[\d{2}\.\d{1,2}\.\d\] - \d{4}-\d{2}-\d{2}"
 
 # pack contributors template
 CONTRIBUTORS_README_TEMPLATE = (
@@ -1217,8 +1155,7 @@ SCHEMA_TO_REGEX = {
     "layoutscontainer": JSON_ALL_LAYOUTS_CONTAINER_REGEXES,
     "layout": JSON_ALL_LAYOUT_REGEXES,
     "pre-process-rules": JSON_ALL_PRE_PROCESS_RULES_REGEXES,
-    "incidentfield": JSON_ALL_INCIDENT_FIELD_REGEXES
-    + JSON_ALL_INDICATOR_FIELDS_REGEXES,
+    "incidentfield": JSON_ALL_INCIDENT_FIELD_REGEXES + JSON_ALL_INDICATOR_FIELDS_REGEXES,
     "incidenttype": JSON_ALL_INCIDENT_TYPES_REGEXES,
     "image": [IMAGE_REGEX],
     "reputation": JSON_ALL_INDICATOR_TYPES_REGEXES,
@@ -1313,9 +1250,7 @@ BANG_COMMAND_ARGS_MAPPING_DICT: Dict[str, dict] = {
 
 ENDPOINT_FLEXIBLE_REQUIRED_ARGS = ["ip", "id", "hostname"]
 
-GENERIC_COMMANDS_NAMES = BANG_COMMAND_NAMES.union(
-    {"send-mail", "send-notification", "cve-latest", "cve-search"}
-)
+GENERIC_COMMANDS_NAMES = BANG_COMMAND_NAMES.union({"send-mail", "send-notification", "cve-latest", "cve-search"})
 
 DBOT_SCORES_DICT = {
     "DBotScore.Indicator": "The indicator that was tested.",
@@ -1337,7 +1272,9 @@ PACK_INITIAL_VERSION = "1.0.0"
 PACK_SUPPORT_OPTIONS = ["xsoar", "partner", "developer", "community"]
 XSOAR_CONTEXT_STANDARD_URL = "https://xsoar.pan.dev/docs/integrations/context-standards"
 XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
-MARKETPLACE_LIVE_DISCUSSIONS = "https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions"
+MARKETPLACE_LIVE_DISCUSSIONS = (
+    "https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions"
+)
 EXCLUDED_DISPLAY_NAME_WORDS = ["partner", "community"]
 MARKETPLACES = ["xsoar", "marketplacev2"]
 
@@ -1418,9 +1355,7 @@ FEED_REQUIRED_PARAMS = [
                 "F - Reliability cannot be judged",
             ],
         },
-        "must_contain": {
-            "additionalinfo": "Reliability of the source providing the intelligence data"
-        },
+        "must_contain": {"additionalinfo": "Reliability of the source providing the intelligence data"},
     },
     {
         "name": "feedExpirationPolicy",

@@ -14,26 +14,15 @@ FROM_VERSION_PRE_PROCESS_RULES = "6.5.0"
 
 class PreProcessRuleValidator(ContentEntityValidator):
     def __init__(
-        self,
-        structure_validator=True,
-        ignored_errors=False,
-        print_as_warnings=False,
-        json_file_path=None,
-        **kwargs
+        self, structure_validator=True, ignored_errors=False, print_as_warnings=False, json_file_path=None, **kwargs
     ):
         super().__init__(
-            structure_validator,
-            ignored_errors,
-            print_as_warnings,
-            json_file_path=json_file_path,
-            **kwargs
+            structure_validator, ignored_errors, print_as_warnings, json_file_path=json_file_path, **kwargs
         )
         self.from_version = self.current_file.get("fromVersion")
         self.to_version = self.current_file.get("toVersion")
 
-    def is_valid_pre_process_rule(
-        self, validate_rn=True, id_set_file=None, is_ci=False
-    ) -> bool:
+    def is_valid_pre_process_rule(self, validate_rn=True, id_set_file=None, is_ci=False) -> bool:
         """Check whether the pre_process_rules is valid or not.
 
         Returns:
@@ -47,9 +36,7 @@ class PreProcessRuleValidator(ContentEntityValidator):
             validations.extend(
                 [
                     self.is_script_exists(id_set_file=id_set_file, is_ci=is_ci),
-                    self.are_incident_fields_exist(
-                        id_set_file=id_set_file, is_ci=is_ci
-                    ),
+                    self.are_incident_fields_exist(id_set_file=id_set_file, is_ci=is_ci),
                 ]
             )
         else:
@@ -76,16 +63,12 @@ class PreProcessRuleValidator(ContentEntityValidator):
             bool. True if from version field is valid, else False.
         """
         if self.from_version:
-            if LooseVersion(self.from_version) < LooseVersion(
-                FROM_VERSION_PRE_PROCESS_RULES
-            ):
+            if LooseVersion(self.from_version) < LooseVersion(FROM_VERSION_PRE_PROCESS_RULES):
                 (
                     error_message,
                     error_code,
                 ) = Errors.invalid_from_version_in_pre_process_rules()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
         return True
 
@@ -119,12 +102,8 @@ class PreProcessRuleValidator(ContentEntityValidator):
             if current_section_item["left"]["isContext"]:
                 ret_value.append(current_section_item["left"]["value"]["simple"])
             if current_section_item["right"]["isContext"]:
-                right_value_simple = str(
-                    current_section_item["right"]["value"]["simple"]
-                )
-                right_value_simple = PreProcessRuleValidator.get_field_name(
-                    right_value_simple
-                )
+                right_value_simple = str(current_section_item["right"]["value"]["simple"])
+                right_value_simple = PreProcessRuleValidator.get_field_name(right_value_simple)
                 ret_value.append(right_value_simple)
 
         return ret_value
@@ -176,9 +155,7 @@ class PreProcessRuleValidator(ContentEntityValidator):
 
         invalid_fields = set(pre_process_rule_fields) - id_set_fields
         if invalid_fields:
-            error_message, error_code = Errors.unknown_fields_in_pre_process_rules(
-                ", ".join(invalid_fields)
-            )
+            error_message, error_code = Errors.unknown_fields_in_pre_process_rules(", ".join(invalid_fields))
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 

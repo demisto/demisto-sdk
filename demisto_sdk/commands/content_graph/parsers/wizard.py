@@ -9,9 +9,7 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 
 
 class WizardParser(JSONContentItemParser, content_type=ContentType.WIZARD):
-    def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
-    ) -> None:
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         super().__init__(path, pack_marketplaces)
         self.packs: List[str] = self.get_packs()
         self.integrations: List[str] = self.get_integrations()
@@ -31,9 +29,7 @@ class WizardParser(JSONContentItemParser, content_type=ContentType.WIZARD):
     def get_integrations(self) -> List[str]:
         integrations: List[str] = []
         for integration_type in ["fetching_integrations", "supporting_integrations"]:
-            for integration in self.json_data.get("wizard", {}).get(
-                integration_type, []
-            ):
+            for integration in self.json_data.get("wizard", {}).get(integration_type, []):
                 integrations.append(integration.get("name"))
         return integrations
 

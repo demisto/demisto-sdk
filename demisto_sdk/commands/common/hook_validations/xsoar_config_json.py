@@ -45,9 +45,7 @@ class XSOARConfigJsonValidator(BaseValidator):
         )
         self._is_valid = True
         self.configuration_file_path = configuration_file_path
-        self.schema_path = os.path.normpath(
-            os.path.join(__file__, "..", "..", "schemas", "xsoar_config.json")
-        )
+        self.schema_path = os.path.normpath(os.path.join(__file__, "..", "..", "schemas", "xsoar_config.json"))
         self.configuration_json = self.load_xsoar_configuration_file()
         self.schema_json, _ = get_dict_from_file(self.schema_path)
 
@@ -61,12 +59,8 @@ class XSOARConfigJsonValidator(BaseValidator):
             with open(self.configuration_file_path) as f:
                 config_json = json.load(f)
         except Exception:
-            error_message, error_code = Errors.xsoar_config_file_is_not_json(
-                self.configuration_file_path
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=self.configuration_file_path
-            ):
+            error_message, error_code = Errors.xsoar_config_file_is_not_json(self.configuration_file_path)
+            if self.handle_error(error_message, error_code, file_path=self.configuration_file_path):
                 self._is_valid = False
             return None
 
@@ -112,9 +106,7 @@ class XSOARConfigJsonValidator(BaseValidator):
                 self.schema_path,
                 errors_table,
             )
-            if self.handle_error(
-                error_message, error_code, file_path=self.configuration_file_path
-            ):
+            if self.handle_error(error_message, error_code, file_path=self.configuration_file_path):
                 self._is_valid = False
 
         return self._is_valid

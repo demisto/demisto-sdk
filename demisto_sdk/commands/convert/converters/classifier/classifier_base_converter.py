@@ -53,18 +53,10 @@ class ClassifierBaseConverter(BaseConverter):
         Returns:
             (Set[str]): Set containing all intersecting fields inside mapping field value.
         """
-        first_schema_data: dict = get_yaml(self.CLASSIFIER_UP_TO_5_9_9_SCHEMA_PATH).get(
-            "mapping", dict()
-        )
-        second_schema_data: dict = get_yaml(self.CLASSIFIER_6_0_0_SCHEMA_PATH).get(
-            "mapping", dict()
-        )
+        first_schema_data: dict = get_yaml(self.CLASSIFIER_UP_TO_5_9_9_SCHEMA_PATH).get("mapping", dict())
+        second_schema_data: dict = get_yaml(self.CLASSIFIER_6_0_0_SCHEMA_PATH).get("mapping", dict())
         intersecting_fields = first_schema_data.keys() & second_schema_data.keys()
-        return {
-            field
-            for field in intersecting_fields
-            if field not in self.INTERSECTION_FIELDS_TO_EXCLUDE
-        }
+        return {field for field in intersecting_fields if field not in self.INTERSECTION_FIELDS_TO_EXCLUDE}
 
     @staticmethod
     def extract_classifier_name(classifier: Classifier) -> Optional[str]:
@@ -80,9 +72,7 @@ class ClassifierBaseConverter(BaseConverter):
             - (None): If file had unexpected naming.
         """
         file_name = os.path.basename(classifier.path)
-        if not file_name.startswith("classifier-") or not file_name.endswith(
-            "_5_9_9.json"
-        ):
+        if not file_name.startswith("classifier-") or not file_name.endswith("_5_9_9.json"):
             return None
         classifier_base_name = file_name.split("-")[1].split("_5_9_9")[0]
         return classifier_base_name

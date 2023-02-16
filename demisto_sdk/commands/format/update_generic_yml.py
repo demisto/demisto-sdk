@@ -116,9 +116,7 @@ class BaseUpdateYML(BaseUpdate):
             if self.verbose:
                 click.echo("Updating YML ID to be the same as YML name")
             if is_uuid(self.id_and_version_location["id"]):
-                updated_integration_id[self.id_and_version_location["id"]] = self.data[
-                    "name"
-                ]
+                updated_integration_id[self.id_and_version_location["id"]] = self.data["name"]
             self.id_and_version_location["id"] = self.data["name"]
         else:
             current_id = self.id_and_version_location.get("id")
@@ -145,17 +143,13 @@ class BaseUpdateYML(BaseUpdate):
             if not self.data.get("tests", "") and self.old_file.get("tests", ""):
                 self.data["tests"] = self.old_file["tests"]
 
-    def update_yml(
-        self, default_from_version: Optional[str] = "", file_type: str = ""
-    ) -> None:
+    def update_yml(self, default_from_version: Optional[str] = "", file_type: str = "") -> None:
         """Manager function for the generic YML updates."""
 
         self.remove_copy_and_dev_suffixes_from_name()
         self.remove_unnecessary_keys()
         self.remove_spaces_end_of_id_and_name()
-        self.set_fromVersion(
-            default_from_version=default_from_version, file_type=file_type
-        )
+        self.set_fromVersion(default_from_version=default_from_version, file_type=file_type)
         if self.id_and_version_location:
             self.update_id_to_equal_name()
             self.set_version_to_default(self.id_and_version_location)
@@ -172,20 +166,12 @@ class BaseUpdateYML(BaseUpdate):
         """
         if not self.data.get("tests", ""):
             # try to get the test playbook files from the TestPlaybooks dir in the pack
-            pack_path = os.path.dirname(
-                os.path.dirname(os.path.abspath(self.source_file))
-            )
+            pack_path = os.path.dirname(os.path.dirname(os.path.abspath(self.source_file)))
             test_playbook_dir_path = os.path.join(pack_path, TEST_PLAYBOOKS_DIR)
             test_playbook_ids = []
-            file_entity_type = find_type(
-                self.source_file, _dict=self.data, file_type="yml"
-            )
-            file_id = get_entity_id_by_entity_type(
-                self.data, ENTITY_TYPE_TO_DIR.get(file_entity_type.value, "")
-            )
-            commands, scripts = get_scripts_and_commands_from_yml_data(
-                self.data, file_entity_type
-            )
+            file_entity_type = find_type(self.source_file, _dict=self.data, file_type="yml")
+            file_id = get_entity_id_by_entity_type(self.data, ENTITY_TYPE_TO_DIR.get(file_entity_type.value, ""))
+            commands, scripts = get_scripts_and_commands_from_yml_data(self.data, file_entity_type)
             commands_names = [command.get("id") for command in commands]
             try:
                 # Collecting the test playbooks
@@ -194,13 +180,9 @@ class BaseUpdateYML(BaseUpdate):
                     for tpb_file in listdir_fullpath(test_playbook_dir_path)
                     if find_type(tpb_file) == FileType.TEST_PLAYBOOK
                 ]
-                for (
-                    tpb_file_path
-                ) in test_playbooks_files:  # iterate over the test playbooks in the dir
+                for tpb_file_path in test_playbooks_files:  # iterate over the test playbooks in the dir
                     test_playbook_data = get_yaml(tpb_file_path)
-                    test_playbook_id = get_entity_id_by_entity_type(
-                        test_playbook_data, content_entity=""
-                    )
+                    test_playbook_id = get_entity_id_by_entity_type(test_playbook_data, content_entity="")
                     if not scripts and not commands:  # Better safe than sorry
                         test_playbook_ids.append(test_playbook_id)
                     else:
@@ -208,28 +190,17 @@ class BaseUpdateYML(BaseUpdate):
                         (
                             tpb_commands,
                             tpb_scripts,
-                        ) = get_scripts_and_commands_from_yml_data(
-                            test_playbook_data, FileType.TEST_PLAYBOOK
-                        )
+                        ) = get_scripts_and_commands_from_yml_data(test_playbook_data, FileType.TEST_PLAYBOOK)
 
                         for tpb_command in tpb_commands:
                             tpb_command_name = tpb_command.get("id")
                             tpb_command_source = tpb_command.get("source", "")
-                            if (
-                                tpb_command_source
-                                and file_id
-                                and file_id != tpb_command_source
-                            ):
+                            if tpb_command_source and file_id and file_id != tpb_command_source:
                                 continue
 
                             if not added and tpb_command_name in commands_names:
-                                command_source = commands[
-                                    commands_names.index(tpb_command_name)
-                                ].get("source", "")
-                                if (
-                                    command_source == tpb_command_source
-                                    or command_source == ""
-                                ):
+                                command_source = commands[commands_names.index(tpb_command_name)].get("source", "")
+                                if command_source == tpb_command_source or command_source == "":
                                     test_playbook_ids.append(test_playbook_id)
                                     added = True
                                     break
@@ -267,18 +238,14 @@ class BaseUpdateYML(BaseUpdate):
         test_playbooks = self.data.get("tests", [])
         if not test_playbooks:
             return
-        no_test_playbooks_explicitly = any(
-            test for test in test_playbooks if "no test" in test.lower()
-        )
+        no_test_playbooks_explicitly = any(test for test in test_playbooks if "no test" in test.lower())
         if no_test_playbooks_explicitly:
             return
         try:
             conf_json_content = self._load_conf_file()
         except FileNotFoundError:
             if self.verbose:
-                click.secho(
-                    f"Unable to find {CONF_PATH} - skipping update.", fg="yellow"
-                )
+                click.secho(f"Unable to find {CONF_PATH} - skipping update.", fg="yellow")
             return
         conf_json_test_configuration = conf_json_content["tests"]
         content_item_id = _get_file_id(file_type, self.data)
@@ -297,9 +264,7 @@ class BaseUpdateYML(BaseUpdate):
                 )
             if should_edit_conf_json:
                 conf_json_content["tests"].extend(
-                    self.get_test_playbooks_configuration(
-                        not_registered_tests, content_item_id, file_type
-                    )
+                    self.get_test_playbooks_configuration(not_registered_tests, content_item_id, file_type)
                 )
                 self._save_to_conf_json(conf_json_content)
                 click.echo("Added test playbooks to conf.json successfully")
@@ -327,9 +292,7 @@ class BaseUpdateYML(BaseUpdate):
             description_field = "description"
 
             if file_type == INTEGRATION:
-                if "display" in self.data and not self.data["display"].endswith(
-                    "(Deprecated)"
-                ):
+                if "display" in self.data and not self.data["display"].endswith("(Deprecated)"):
                     self.data["display"] = f'{self.data["display"]} (Deprecated)'
 
                 for command in self.data.get("script", {}).get("commands", []):
@@ -338,9 +301,7 @@ class BaseUpdateYML(BaseUpdate):
         else:
             description_field = "comment"
 
-        user_response = input(
-            "\nPlease enter the replacement entity display name if any and press Enter if not.\n"
-        )
+        user_response = input("\nPlease enter the replacement entity display name if any and press Enter if not.\n")
 
         if user_response:
             self.data[description_field] = f"Deprecated. Use {user_response} instead."
@@ -349,9 +310,7 @@ class BaseUpdateYML(BaseUpdate):
             self.data[description_field] = "Deprecated. No available replacement."
 
     @staticmethod
-    def get_test_playbooks_configuration(
-        test_playbooks: List, content_item_id: str, file_type: str
-    ) -> List[Dict]:
+    def get_test_playbooks_configuration(test_playbooks: List, content_item_id: str, file_type: str) -> List[Dict]:
         """
         Gets the content item playbook's configuration in order to add it to conf.json
         Args:
@@ -364,13 +323,10 @@ class BaseUpdateYML(BaseUpdate):
         """
         if file_type == "integration":
             return [
-                {"integrations": content_item_id, "playbookID": test_playbook_id}
-                for test_playbook_id in test_playbooks
+                {"integrations": content_item_id, "playbookID": test_playbook_id} for test_playbook_id in test_playbooks
             ]
         elif file_type in {"playbook", "script"}:
-            return [
-                {"playbookID": test_playbook_id} for test_playbook_id in test_playbooks
-            ]
+            return [{"playbookID": test_playbook_id} for test_playbook_id in test_playbooks]
         return []
 
     def remove_spaces_end_of_id_and_name(self):
@@ -380,17 +336,13 @@ class BaseUpdateYML(BaseUpdate):
                 click.echo("Updating YML ID and name to be without spaces at the end")
             self.data["name"] = self.data["name"].strip()
             if self.id_and_version_location:
-                self.id_and_version_location["id"] = self.id_and_version_location[
-                    "id"
-                ].strip()
+                self.id_and_version_location["id"] = self.id_and_version_location["id"].strip()
 
     def remove_nativeimage_tag_if_exist(self):
         if self.data.get("nativeimage"):  # script
             self.data.pop("nativeimage")
         elif script_section := self.data.get("script"):
-            if isinstance(script_section, dict) and script_section.get(
-                "nativeimage"
-            ):  # integration
+            if isinstance(script_section, dict) and script_section.get("nativeimage"):  # integration
                 script_section.pop("nativeimage")
 
     def format_file(self) -> Tuple[int, int]:
@@ -403,24 +355,14 @@ class BaseUpdateYML(BaseUpdate):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n======= Updating file: {self.source_file} =======", fg="white"
-            )
+            click.secho(f"\n======= Updating file: {self.source_file} =======", fg="white")
             self.update_yml(
-                default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(
-                    self.source_file_type  # type: ignore
-                )
+                default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(self.source_file_type)  # type: ignore
             )
             self.save_yml_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            print(
-                "".join(
-                    traceback.format_exception(
-                        type(err), value=err, tb=err.__traceback__
-                    )
-                )
-            )
+            print("".join(traceback.format_exception(type(err), value=err, tb=err.__traceback__)))
             if self.verbose:
                 click.secho(
                     f"\nFailed to update file {self.source_file}. Error: {err}",

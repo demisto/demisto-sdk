@@ -34,9 +34,7 @@ def create_content_graph(
     if output_path:
         output_path = output_path / marketplace.value
     content_graph_interface.export_graph(output_path)
-    logger.info(
-        f"Successfully created the content graph. UI representation is available at {NEO4J_DATABASE_HTTP}"
-    )
+    logger.info(f"Successfully created the content graph. UI representation is available at {NEO4J_DATABASE_HTTP}")
 
 
 def update_content_graph(
@@ -82,14 +80,10 @@ def update_content_graph(
     if output_path:
         output_path = output_path / marketplace.value
     content_graph_interface.export_graph(output_path)
-    logger.info(
-        f"Successfully updated the content graph. UI representation is available at {NEO4J_DATABASE_HTTP}"
-    )
+    logger.info(f"Successfully updated the content graph. UI representation is available at {NEO4J_DATABASE_HTTP}")
 
 
-def extract_remote_import_files(
-    content_graph_interface: ContentGraphInterface, builder: ContentGraphBuilder
-) -> None:
+def extract_remote_import_files(content_graph_interface: ContentGraphInterface, builder: ContentGraphBuilder) -> None:
     """Get or create a content graph.
     If the graph is not in the bucket or there are network issues, it will create a new one.
 

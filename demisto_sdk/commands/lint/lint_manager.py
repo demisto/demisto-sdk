@@ -134,15 +134,11 @@ class LintManager:
         self.linters_error_list: list = []
 
     def _get_api_module_dependent_items(self) -> list:
-        changed_api_modules = {
-            pkg.name for pkg in self._pkgs if API_MODULES_PACK in pkg.parts
-        }
+        changed_api_modules = {pkg.name for pkg in self._pkgs if API_MODULES_PACK in pkg.parts}
         if changed_api_modules:
             dependent_items = []
             for changed_api_module in changed_api_modules:
-                print(
-                    f"Checking for packages dependent on the modified API module {changed_api_module}..."
-                )
+                print(f"Checking for packages dependent on the modified API module {changed_api_module}...")
 
                 with Neo4jContentGraphInterface() as graph:
                     print("Updating graph...")
@@ -157,9 +153,7 @@ class LintManager:
                             f" `demisto-sdk update-content-graph` if necessary."
                         )
 
-                    dependent_items += [
-                        dependency.path for dependency in api_module_node.imported_by
-                    ]
+                    dependent_items += [dependency.path for dependency in api_module_node.imported_by]
 
             dependent_on_api_module = self._get_packages(
                 content_repo=self._facts["content_repo"], input=dependent_items
@@ -215,14 +209,8 @@ class LintManager:
             pipfile_lock_path = pipfile_dir / "pipfile_python3/Pipfile.lock"
             with open(file=pipfile_lock_path) as f:
                 lock_file: dict = json.load(fp=f)["develop"]
-                facts["requirements_3"] = [
-                    key + value["version"]
-                    for key, value in lock_file.items()  # type: ignore
-                ]
-                logger.debug(
-                    "Test requirements successfully collected for python 3:\n"
-                    f" {facts[f'requirements_3']}"
-                )
+                facts["requirements_3"] = [key + value["version"] for key, value in lock_file.items()]  # type: ignore
+                logger.debug("Test requirements successfully collected for python 3:\n" f" {facts[f'requirements_3']}")
             python2_requirements = pipfile_dir / "pipfile_python2/dev-requirements.txt"
             facts["requirements_2"] = python2_requirements.read_text().strip().split("\n")  # type: ignore
         except (json.JSONDecodeError, OSError, FileNotFoundError, KeyError) as e:
@@ -247,9 +235,7 @@ class LintManager:
                 print_error(
                     "Unable to get test-modules demisto-mock.py etc - Aborting! corrupt repository or pull from master"
                 )
-            logger.error(
-                f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}"
-            )
+            logger.error(f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}")
             sys.exit(1)
         except (
             requests.exceptions.ConnectionError,
@@ -259,15 +245,11 @@ class LintManager:
                 "Unable to get mandatory test-modules demisto-mock.py etc - Aborting! (Check your internet "
                 "connection)"
             )
-            logger.error(
-                f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}"
-            )
+            logger.error(f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}")
             sys.exit(1)
         # Validating docker engine connection
         logger.debug("creating docker client from env")
-        docker_client: docker.DockerClient = init_global_docker_client(
-            log_prompt="LintManager"
-        )
+        docker_client: docker.DockerClient = init_global_docker_client(log_prompt="LintManager")
         try:
             logger.debug("pinging docker daemon")
             docker_client.ping()
@@ -278,9 +260,7 @@ class LintManager:
         ) as ex:
             if os.getenv("CI") and os.getenv("CIRCLE_PROJECT_REPONAME") == "content":
                 # when running lint in content we fail if docker isn't available for some reason
-                raise ValueError(
-                    "Docker engine not available and we are in content CI env. Can not run lint!!"
-                ) from ex
+                raise ValueError("Docker engine not available and we are in content CI env. Can not run lint!!") from ex
             facts["docker_engine"] = False
             print_warning(
                 "Can't communicate with Docker daemon - check your docker Engine is ON - Skipping lint, "
@@ -318,17 +298,13 @@ class LintManager:
             if isinstance(input, str):
                 input = input.split(",")
             for item in input:
-                is_pack = os.path.isdir(item) and os.path.exists(
-                    os.path.join(item, PACKS_PACK_META_FILE_NAME)
-                )
+                is_pack = os.path.isdir(item) and os.path.exists(os.path.join(item, PACKS_PACK_META_FILE_NAME))
                 if is_pack:
                     pkgs.extend(LintManager._get_all_packages(content_dir=item))
                 else:
                     pkgs.append(Path(item))
         if git:
-            pkgs = self._filter_changed_packages(
-                content_repo=content_repo, pkgs=pkgs, base_branch=base_branch
-            )
+            pkgs = self._filter_changed_packages(content_repo=content_repo, pkgs=pkgs, base_branch=base_branch)
             for pkg in pkgs:
                 print_v(
                     f"Found changed package {Colors.Fg.cyan}{pkg}{Colors.reset}",
@@ -336,9 +312,7 @@ class LintManager:
                 )
         if pkgs:
             pkgs_str = ", ".join(map(str, pkgs))
-            print(
-                f"Executing lint and test on integrations and scripts in {Colors.Fg.cyan}{pkgs_str}{Colors.reset}"
-            )
+            print(f"Executing lint and test on integrations and scripts in {Colors.Fg.cyan}{pkgs_str}{Colors.reset}")
 
         return pkgs
 
@@ -360,9 +334,7 @@ class LintManager:
         )
         # Get packages from packs path
         packs_dir: Path = Path(content_dir) / "Packs"
-        content_packs_pkgs: set = set(
-            packs_dir.glob(["*/Integrations/*/", "*/Scripts/*/"])
-        )
+        content_packs_pkgs: set = set(packs_dir.glob(["*/Integrations/*/", "*/Scripts/*/"]))
         all_pkgs = content_packs_pkgs.union(content_main_pkgs)
 
         return list(all_pkgs)
@@ -378,16 +350,10 @@ class LintManager:
         Returns:
             A list of paths of modified packages (scripts/integrations)
         """
-        return [
-            path
-            for path in modified_files
-            if "Scripts" in path.parts or "Intergations" in path.parts
-        ]
+        return [path for path in modified_files if "Scripts" in path.parts or "Intergations" in path.parts]
 
     @staticmethod
-    def _filter_changed_packages(
-        content_repo: git.Repo, pkgs: List[PosixPath], base_branch: str
-    ) -> List[PosixPath]:
+    def _filter_changed_packages(content_repo: git.Repo, pkgs: List[PosixPath], base_branch: str) -> List[PosixPath]:
         """Checks which packages had changes in them and should run on Lint.
         The diff is calculated using git, and is done by the following cases:
         - case 1: If the active branch is 'master', the diff is between master and the previous commit.
@@ -418,9 +384,7 @@ class LintManager:
 
         else:
             # cases 2+3: compare the active branch (master\not master) against the given base branch (master\not master)
-            if sha1Regex.match(
-                base_branch
-            ):  # if the base branch is given as a commit hash
+            if sha1Regex.match(base_branch):  # if the base branch is given as a commit hash
                 last_common_commit = base_branch
             else:
                 last_common_commit = content_repo.merge_base(
@@ -434,9 +398,7 @@ class LintManager:
 
         changed_from_base = {
             content_repo.working_dir / Path(item.b_path).parent  # type: ignore[operator]
-            for item in content_repo.active_branch.commit.tree.diff(
-                last_common_commit, paths=pkgs
-            )
+            for item in content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)
         }
         all_changed = staged_files.union(changed_from_base)
         pkgs_to_check = all_changed.intersection(pkgs)
@@ -490,9 +452,7 @@ class LintManager:
             Tuple[int, int]: exit code, warning code
         """
         try:
-            with concurrent.futures.ThreadPoolExecutor(
-                max_workers=parallel
-            ) as executor:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as executor:
                 return_exit_code: int = 0
                 return_warning_code: int = 0
                 results = []
@@ -502,9 +462,7 @@ class LintManager:
                         pack_dir=pack,
                         content_repo=""
                         if not self._facts["content_repo"]
-                        else Path(  # type: ignore
-                            self._facts["content_repo"].working_dir
-                        ),
+                        else Path(self._facts["content_repo"].working_dir),  # type: ignore
                         req_2=self._facts["requirements_2"],
                         req_3=self._facts["requirements_3"],
                         docker_engine=self._facts["docker_engine"],
@@ -539,18 +497,14 @@ class LintManager:
                     if pkg_status["exit_code"]:
                         for check, code in EXIT_CODES.items():
                             if pkg_status["exit_code"] & code:
-                                lint_status[f"fail_packs_{check}"].append(
-                                    pkg_status["pkg"]
-                                )
+                                lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
 
                         if not return_exit_code & pkg_status["exit_code"]:
                             return_exit_code += pkg_status["exit_code"]
                     if pkg_status["warning_code"]:
                         for check, code in EXIT_CODES.items():
                             if pkg_status["warning_code"] & code:
-                                lint_status[f"warning_packs_{check}"].append(
-                                    pkg_status["pkg"]
-                                )
+                                lint_status[f"warning_packs_{check}"].append(pkg_status["pkg"])
                         if not return_warning_code & pkg_status["warning_code"]:
                             return_warning_code += pkg_status["warning_code"]
                     if pkg_status["pack_type"] not in pkgs_type:
@@ -561,9 +515,7 @@ class LintManager:
             msg = "Stop demisto-sdk lint - Due to 'Ctrl C' signal"
             print_warning(msg)
             logger.warning(msg)
-            executor.shutdown(
-                wait=False
-            )  # If keyboard interrupt no need to wait to clean resources
+            executor.shutdown(wait=False)  # If keyboard interrupt no need to wait to clean resources
             return 1, 0
         except Exception as e:
             msg = f"Stop demisto-sdk lint - Due to Exception {e}"
@@ -574,9 +526,7 @@ class LintManager:
                 executor.shutdown(wait=True, cancel_futures=True)  # type: ignore[call-arg]
             else:
                 logger.info("Using Python under 3.8, we will cancel futures manually.")
-                executor.shutdown(
-                    wait=True
-                )  # Note that `cancel_futures` not supported in python 3.8
+                executor.shutdown(wait=True)  # Note that `cancel_futures` not supported in python 3.8
                 for res in results:
                     res.cancel()
             return 1, 0
@@ -693,9 +643,7 @@ class LintManager:
         )
 
         if time_measurements_dir:
-            report_time_measurements(
-                group_name="lint", time_measurements_dir=time_measurements_dir
-            )
+            report_time_measurements(group_name="lint", time_measurements_dir=time_measurements_dir)
 
         self._report_results(
             lint_status=lint_status,
@@ -786,9 +734,7 @@ class LintManager:
         self.create_json_output()
 
     @staticmethod
-    def report_pass_lint_checks(
-        return_exit_code: int, skipped_code: int, pkgs_type: list
-    ):
+    def report_pass_lint_checks(return_exit_code: int, skipped_code: int, pkgs_type: list):
         """Log PASS/FAIL on each lint/test
 
         Args:
@@ -803,29 +749,17 @@ class LintManager:
                 check_str = check.replace("_", " ")
             else:
                 check_str = check.capitalize().replace("_", " ")
-            if (check in PY_CHCEKS and TYPE_PYTHON in pkgs_type) or (
-                check in PWSH_CHECKS and TYPE_PWSH in pkgs_type
-            ):
+            if (check in PY_CHCEKS and TYPE_PYTHON in pkgs_type) or (check in PWSH_CHECKS and TYPE_PWSH in pkgs_type):
                 if code & skipped_code:
-                    print(
-                        f"{check_str} {' ' * spacing}- {Colors.Fg.cyan}[SKIPPED]{Colors.reset}"
-                    )
+                    print(f"{check_str} {' ' * spacing}- {Colors.Fg.cyan}[SKIPPED]{Colors.reset}")
                 elif code & return_exit_code:
-                    print(
-                        f"{check_str} {' ' * spacing}- {Colors.Fg.red}[FAIL]{Colors.reset}"
-                    )
+                    print(f"{check_str} {' ' * spacing}- {Colors.Fg.red}[FAIL]{Colors.reset}")
                 else:
-                    print(
-                        f"{check_str} {' ' * spacing}- {Colors.Fg.green}[PASS]{Colors.reset}"
-                    )
+                    print(f"{check_str} {' ' * spacing}- {Colors.Fg.green}[PASS]{Colors.reset}")
             elif check != "image":
-                print(
-                    f"{check_str} {' ' * spacing}- {Colors.Fg.cyan}[SKIPPED]{Colors.reset}"
-                )
+                print(f"{check_str} {' ' * spacing}- {Colors.Fg.cyan}[SKIPPED]{Colors.reset}")
 
-    def report_failed_lint_checks(
-        self, lint_status: dict, pkgs_status: dict, return_exit_code: int
-    ):
+    def report_failed_lint_checks(self, lint_status: dict, pkgs_status: dict, return_exit_code: int):
         """Log failed lint log if exsits
 
         Args:
@@ -840,9 +774,7 @@ class LintManager:
                 print(f"{Colors.Fg.red}{sentence}{Colors.reset}")
                 print(f"{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}\n")
                 for fail_pack in lint_status[f"fail_packs_{check}"]:
-                    print(
-                        f"{Colors.Fg.red}{pkgs_status[fail_pack]['pkg']}{Colors.reset}"
-                    )
+                    print(f"{Colors.Fg.red}{pkgs_status[fail_pack]['pkg']}{Colors.reset}")
                     print(pkgs_status[fail_pack][f"{check}_errors"])
                     self.linters_error_list.append(
                         {
@@ -888,9 +820,7 @@ class LintManager:
                     print(f"{Colors.Fg.orange}{sentence}{Colors.reset}")
                     print(f"{Colors.Fg.orange}{'#' * len(sentence)}{Colors.reset}\n")
                     for fail_pack in lint_status[f"warning_packs_{check}"]:
-                        print(
-                            f"{Colors.Fg.orange}{pkgs_status[fail_pack]['pkg']}{Colors.reset}"
-                        )
+                        print(f"{Colors.Fg.orange}{pkgs_status[fail_pack]['pkg']}{Colors.reset}")
                         print(pkgs_status[fail_pack][f"{check}_warnings"])
                         self.linters_error_list.append(
                             {
@@ -901,9 +831,7 @@ class LintManager:
                             }
                         )
 
-    def report_unit_tests(
-        self, lint_status: dict, pkgs_status: dict, return_exit_code: int
-    ):
+    def report_unit_tests(self, lint_status: dict, pkgs_status: dict, return_exit_code: int):
         """Log failed unit-tests , if verbosity specified will log also success unit-tests
 
         Args:
@@ -953,15 +881,8 @@ class LintManager:
         passed_printed = False
         for pkg, status in pkgs_status.items():
             if status.get("images"):
-                if (
-                    status.get("images")[0]
-                    .get("pytest_json", {})
-                    .get("report", {})
-                    .get("tests")
-                ):
-                    if (not headline_printed and self._verbose) and (
-                        EXIT_CODES["pytest"] & return_exit_code
-                    ):
+                if status.get("images")[0].get("pytest_json", {}).get("report", {}).get("tests"):
+                    if (not headline_printed and self._verbose) and (EXIT_CODES["pytest"] & return_exit_code):
                         # Log unit-tests
                         sentence = " Unit Tests "
                         print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
@@ -980,11 +901,7 @@ class LintManager:
                     )
                     for image in status["images"]:
                         if not image.get("image_errors"):
-                            tests = (
-                                image.get("pytest_json", {})
-                                .get("report", {})
-                                .get("tests")
-                            )
+                            tests = image.get("pytest_json", {}).get("report", {}).get("tests")
                             if tests:
                                 print_v(
                                     wrapper_docker_image.fill(image["image"]),
@@ -1029,25 +946,13 @@ class LintManager:
                                 print(wrapper_test.fill(name))
                                 if test_case.get("call", {}).get("longrepr"):
                                     print(wrapper_docker_image.fill(image["image"]))
-                                    for i in range(
-                                        len(test_case.get("call", {}).get("longrepr"))
-                                    ):
+                                    for i in range(len(test_case.get("call", {}).get("longrepr"))):
                                         if i == 0:
                                             print(
-                                                wrapper_first_error.fill(
-                                                    test_case.get("call", {}).get(
-                                                        "longrepr"
-                                                    )[i]
-                                                )
+                                                wrapper_first_error.fill(test_case.get("call", {}).get("longrepr")[i])
                                             )
                                         else:
-                                            print(
-                                                wrapper_sec_error.fill(
-                                                    test_case.get("call", {}).get(
-                                                        "longrepr"
-                                                    )[i]
-                                                )
-                                            )
+                                            print(wrapper_sec_error.fill(test_case.get("call", {}).get("longrepr")[i]))
                                     print("\n")
                     else:
                         print(wrapper_docker_image.fill(image["image"]))
@@ -1056,9 +961,7 @@ class LintManager:
                             print(wrapper_sec_error.fill(errors))
 
     @staticmethod
-    def report_failed_image_creation(
-        lint_status: dict, pkgs_status: dict, return_exit_code: int
-    ):
+    def report_failed_image_creation(lint_status: dict, pkgs_status: dict, return_exit_code: int):
         """Log failed image creation if occured
 
         Args:
@@ -1101,9 +1004,7 @@ class LintManager:
                     print(wrapper_error.fill(image["image_errors"]))
 
     @staticmethod
-    def report_summary(
-        pkg, pkgs_status: dict, lint_status: dict, all_packs: bool = False
-    ):
+    def report_summary(pkg, pkgs_status: dict, lint_status: dict, all_packs: bool = False):
         """Log failed image creation if occured
 
         Args:
@@ -1140,18 +1041,11 @@ class LintManager:
                 [
                     pack
                     for pack, result in pkgs_status.items()
-                    if result.get("exit_code") == 0
-                    or result.get("exit_code") == EXIT_CODES["mypy"]
+                    if result.get("exit_code") == 0 or result.get("exit_code") == EXIT_CODES["mypy"]
                 ]
             )
         else:
-            num_passed = len(
-                [
-                    pack
-                    for pack, result in pkgs_status.items()
-                    if result.get("exit_code") == 0
-                ]
-            )
+            num_passed = len([pack for pack, result in pkgs_status.items() if result.get("exit_code") == 0])
         # Log unit-tests summary
         sentence = " Summary "
         print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
@@ -1160,17 +1054,13 @@ class LintManager:
         print(f"Packages: {len(pkg)}")
         print(f"Packages PASS: {Colors.Fg.green}{num_passed}{Colors.reset}")
         print(f"Packages FAIL: {Colors.Fg.red}{len(failed)}{Colors.reset}")
-        print(
-            f"Packages WARNING (can either PASS or FAIL): {Colors.Fg.orange}{len(warnings)}{Colors.reset}\n"
-        )
+        print(f"Packages WARNING (can either PASS or FAIL): {Colors.Fg.orange}{len(warnings)}{Colors.reset}\n")
 
         if not all_packs:
             if warnings:
                 print("Warning packages:")
             for warning in warnings:
-                print(
-                    f"{Colors.Fg.orange}{wrapper_fail_pack.fill(warning)}{Colors.reset}"
-                )
+                print(f"{Colors.Fg.orange}{wrapper_fail_pack.fill(warning)}{Colors.reset}")
 
         if failed:
             print("Failed packages:")
@@ -1393,9 +1283,7 @@ class LintManager:
                     "linter": "xsoar_linter",
                     "severity": errors.get("type"),
                     "errorCode": code,
-                    "message": message.split(code)[-1].lstrip()
-                    if len(message.split(code)) >= 1
-                    else "",
+                    "message": message.split(code)[-1].lstrip() if len(message.split(code)) >= 1 else "",
                     "row": split_message[1] if len(split_message) >= 2 else "",
                     "col": split_message[2] if len(split_message) >= 3 else "",
                 }

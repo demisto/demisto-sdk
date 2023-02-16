@@ -56,21 +56,9 @@ def destroy_by_ext(suffix: str):
         - Modify content to the original state.
     """
     if suffix == "json":
-        file = (
-            TEST_CONTENT_REPO
-            / "Packs"
-            / "Sample01"
-            / "Classifiers"
-            / "classifier-sample_new.json"
-        )
+        file = TEST_CONTENT_REPO / "Packs" / "Sample01" / "Classifiers" / "classifier-sample_new.json"
     else:
-        file = (
-            TEST_CONTENT_REPO
-            / "Packs"
-            / "Sample01"
-            / "TestPlaybooks"
-            / "playbook-sample_test1.yml"
-        )
+        file = TEST_CONTENT_REPO / "Packs" / "Sample01" / "TestPlaybooks" / "playbook-sample_test1.yml"
     old_data = file.read_text()
     file.write_text("{123dfdsf,}\nfdsfdsf")
 
@@ -90,20 +78,8 @@ def duplicate_file():
     Close:
         - Delete copied file.
     """
-    file = (
-        TEST_CONTENT_REPO
-        / PACKS_DIR
-        / "Sample01"
-        / TEST_PLAYBOOKS_DIR
-        / "playbook-sample_test1.yml"
-    )
-    new_file = (
-        TEST_CONTENT_REPO
-        / PACKS_DIR
-        / "Sample02"
-        / TEST_PLAYBOOKS_DIR
-        / "playbook-sample_test1.yml"
-    )
+    file = TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / TEST_PLAYBOOKS_DIR / "playbook-sample_test1.yml"
+    new_file = TEST_CONTENT_REPO / PACKS_DIR / "Sample02" / TEST_PLAYBOOKS_DIR / "playbook-sample_test1.yml"
     try:
         copyfile(file, new_file)
         yield
@@ -217,15 +193,8 @@ def test_contains_indicator_type():
             zip_all=False,
         )
         packs_zipper.zip_packs()
-        assert (
-            packs_zipper.artifacts_manager.packs[
-                "TestIndicatorTypes"
-            ].metadata.content_items
-            != {}
-        )
-        assert packs_zipper.artifacts_manager.packs[
-            "TestIndicatorTypes"
-        ].metadata.content_items["reputation"] == [
+        assert packs_zipper.artifacts_manager.packs["TestIndicatorTypes"].metadata.content_items != {}
+        assert packs_zipper.artifacts_manager.packs["TestIndicatorTypes"].metadata.content_items["reputation"] == [
             {
                 "details": "Good Sample",
                 "reputationScriptName": "",
@@ -281,9 +250,7 @@ def test_create_content_artifacts_by_id_set(mock_git):
         exit_code = config.create_content_artifacts()
 
         assert exit_code == 0
-        assert same_folders(
-            temp, ARTIFACTS_EXPECTED_RESULTS / "content_filtered_by_id_set"
-        )
+        assert same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / "content_filtered_by_id_set")
 
 
 def test_create_private_content_artifacts(private_repo):
@@ -471,6 +438,6 @@ def test_use_alternative_fields(artifact: str, keys_paths: List[str]):
         original_data = load_file(artifact)
         modified_data = load_file(output_file)
         for current_key_path in keys_paths:
-            assert get_value_from_dict(
-                original_data, current_key_path + "_x2"
-            ) == get_value_from_dict(modified_data, current_key_path)
+            assert get_value_from_dict(original_data, current_key_path + "_x2") == get_value_from_dict(
+                modified_data, current_key_path
+            )

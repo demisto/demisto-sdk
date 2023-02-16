@@ -138,12 +138,8 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
     def layout__set_output_path(self):
         output_basename = os.path.basename(self.output_file)
         if not output_basename.startswith(LAYOUT_PREFIX):
-            new_output_basename = (
-                LAYOUT_PREFIX + output_basename.split(LAYOUTS_CONTAINER_PREFIX)[-1]
-            )
-            new_output_path = self.output_file.replace(
-                output_basename, new_output_basename
-            )
+            new_output_basename = LAYOUT_PREFIX + output_basename.split(LAYOUTS_CONTAINER_PREFIX)[-1]
+            new_output_path = self.output_file.replace(output_basename, new_output_basename)
 
             # rename file if source and output are the same
             if self.output_file == self.source_file:
@@ -164,12 +160,8 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
     def layoutscontainer__set_output_path(self):
         output_basename = os.path.basename(self.output_file)
         if not output_basename.startswith(LAYOUTS_CONTAINER_PREFIX):
-            new_output_basename = (
-                LAYOUTS_CONTAINER_PREFIX + output_basename.split(LAYOUT_PREFIX)[-1]
-            )
-            new_output_path = self.output_file.replace(
-                output_basename, new_output_basename
-            )
+            new_output_basename = LAYOUTS_CONTAINER_PREFIX + output_basename.split(LAYOUT_PREFIX)[-1]
+            new_output_path = self.output_file.replace(output_basename, new_output_basename)
 
             if self.verbose:
                 click.echo(f"Renaming output file: {new_output_path}")
@@ -245,9 +237,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
         second_level_args = {}
         kind_schema = self.schema["mapping"][LAYOUT_KIND]["mapping"].keys()
-        second_level_args[LAYOUT_KIND] = set(self.data[LAYOUT_KIND].keys()) - set(
-            kind_schema
-        )
+        second_level_args[LAYOUT_KIND] = set(self.data[LAYOUT_KIND].keys()) - set(kind_schema)
 
         return first_level_args, second_level_args
 
@@ -283,12 +273,8 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             for tab in container.get("tabs") or ():
                 for section in tab.get("sections") or ():
                     if section.get("queryType") == SCRIPT_QUERY_TYPE:
-                        section["query"] = remove_copy_and_dev_suffixes_from_str(
-                            section.get("query")
-                        )
-                        section["name"] = remove_copy_and_dev_suffixes_from_str(
-                            section.get("name")
-                        )
+                        section["query"] = remove_copy_and_dev_suffixes_from_str(section.get("query"))
+                        section["name"] = remove_copy_and_dev_suffixes_from_str(section.get("name"))
 
     def remove_copy_and_dev_suffixes_from_layout(self):
         if typename := self.data.get("TypeName"):
@@ -301,22 +287,14 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 for tab in layout_tabs:
                     for section in tab.get("sections", ()):
                         if section.get("queryType") == SCRIPT_QUERY_TYPE:
-                            section["query"] = remove_copy_and_dev_suffixes_from_str(
-                                section.get("query")
-                            )
-                            section["name"] = remove_copy_and_dev_suffixes_from_str(
-                                section.get("name")
-                            )
+                            section["query"] = remove_copy_and_dev_suffixes_from_str(section.get("query"))
+                            section["name"] = remove_copy_and_dev_suffixes_from_str(section.get("name"))
 
             elif layout_sections := layout_data.get("sections"):
                 for section in layout_sections:
                     if section.get("queryType") == SCRIPT_QUERY_TYPE:
-                        section["query"] = remove_copy_and_dev_suffixes_from_str(
-                            section.get("query")
-                        )
-                        section["name"] = remove_copy_and_dev_suffixes_from_str(
-                            section.get("name")
-                        )
+                        section["query"] = remove_copy_and_dev_suffixes_from_str(section.get("query"))
+                        section["name"] = remove_copy_and_dev_suffixes_from_str(section.get("name"))
 
     def remove_non_existent_fields_container_layout(self):
         """
@@ -339,9 +317,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         for layout_container_item in layout_container_items:
             layout = self.data.get(layout_container_item, {})
             layout_tabs = layout.get("tabs", [])
-            self.remove_non_existent_fields_from_tabs(
-                layout_tabs=layout_tabs, content_fields=content_fields
-            )
+            self.remove_non_existent_fields_from_tabs(layout_tabs=layout_tabs, content_fields=content_fields)
 
     def remove_non_existent_fields_layout(self):
         """
@@ -359,30 +335,22 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         layout_sections = layout.get("sections", [])
         for section in layout_sections:
             fields = section.get("fields", [])
-            section["fields"] = self.extract_content_fields(
-                fields=fields, content_fields=content_fields
-            )
+            section["fields"] = self.extract_content_fields(fields=fields, content_fields=content_fields)
 
-        self.remove_non_existent_fields_from_tabs(
-            layout_tabs=layout.get("tabs", []), content_fields=content_fields
-        )
+        self.remove_non_existent_fields_from_tabs(layout_tabs=layout.get("tabs", []), content_fields=content_fields)
 
     def get_available_content_fields(self):
         """
         Get all the available content indicator/incident fields available + all the built in fields.
         """
         return (
-            get_all_incident_and_indicator_fields_from_id_set(
-                self.id_set_file, "layout"
-            )
+            get_all_incident_and_indicator_fields_from_id_set(self.id_set_file, "layout")
             + [field.lower() for field in BUILT_IN_FIELDS]
             + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
         )
 
     @staticmethod
-    def extract_content_fields(
-        fields: List[Dict], content_fields: List[str]
-    ) -> List[str]:
+    def extract_content_fields(fields: List[Dict], content_fields: List[str]) -> List[str]:
         """
         Get only incident/indicator fields which are part of the id json file.
 
@@ -397,14 +365,10 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             field  # type: ignore[misc]
             for field in fields
             if normalize_field_name(field=field.get("fieldId", "")).lower()
-            not in get_invalid_incident_fields_from_layout(
-                layout_incident_fields=fields, content_fields=content_fields
-            )
+            not in get_invalid_incident_fields_from_layout(layout_incident_fields=fields, content_fields=content_fields)
         ]
 
-    def remove_non_existent_fields_from_tabs(
-        self, layout_tabs: list, content_fields: List[str]
-    ):
+    def remove_non_existent_fields_from_tabs(self, layout_tabs: list, content_fields: List[str]):
         """
         Remove non-existent fields which are not part of the id json from tabs.
 
@@ -416,6 +380,4 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             layout_sections = tab.get("sections", [])
             for section in layout_sections:
                 items = section.get("items", [])
-                section["items"] = self.extract_content_fields(
-                    fields=items, content_fields=content_fields
-                )
+                section["items"] = self.extract_content_fields(fields=items, content_fields=content_fields)

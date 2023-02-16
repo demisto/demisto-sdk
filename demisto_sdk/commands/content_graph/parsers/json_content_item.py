@@ -17,9 +17,7 @@ logger = logging.getLogger("demisto-sdk")
 
 
 class JSONContentItemParser(ContentItemParser):
-    def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
-    ) -> None:
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         super().__init__(path, pack_marketplaces)
         self.json_data: Dict[str, Any] = self.get_json()
 
@@ -56,9 +54,7 @@ class JSONContentItemParser(ContentItemParser):
 
     @property
     def marketplaces(self) -> List[MarketplaceVersions]:
-        if file_marketplaces := [
-            MarketplaceVersions(mp) for mp in self.json_data.get("marketplaces", [])
-        ]:
+        if file_marketplaces := [MarketplaceVersions(mp) for mp in self.json_data.get("marketplaces", [])]:
             return file_marketplaces
         return sorted(set(self.pack_marketplaces) & self.supported_marketplaces)
 
@@ -66,8 +62,6 @@ class JSONContentItemParser(ContentItemParser):
         if self.path.is_dir():
             json_files_in_dir = get_files_in_dir(self.path.as_posix(), ["json"], False)
             if len(json_files_in_dir) != 1:
-                raise NotAContentItemException(
-                    f"Directory {self.path} must have a single JSON file."
-                )
+                raise NotAContentItemException(f"Directory {self.path} must have a single JSON file.")
             self.path = Path(json_files_in_dir[0])
         return get_json(self.path.as_posix())

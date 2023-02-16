@@ -38,9 +38,7 @@ class CorrelationRuleValidator(ContentEntityValidator):
         Note: For now we return True regardless of the item content. More info:
         https://github.com/demisto/etc/issues/48151#issuecomment-1109660727
         """
-        logging.debug(
-            "Automatically considering XSIAM content item as valid, see issue #48151"
-        )
+        logging.debug("Automatically considering XSIAM content item as valid, see issue #48151")
 
         self.no_leading_hyphen()
         self.is_files_naming_correct()
@@ -72,9 +70,7 @@ class CorrelationRuleValidator(ContentEntityValidator):
         Validates all file naming is as convention.
         """
         if not self.validate_xsiam_content_item_title(self.file_path):
-            error_message, error_code = Errors.correlation_rules_files_naming_error(
-                [self.file_path]
-            )
+            error_message, error_code = Errors.correlation_rules_files_naming_error([self.file_path])
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False

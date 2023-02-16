@@ -38,9 +38,7 @@ class YMLGenerator:
         "CommandMetadata, ConfKey, InputArgument, YMLMetadataCollector, "
         "OutputArgument, ParameterTypes)"
     )
-    EXPLICIT_DECLARATION_IMPORTS_LINE = (
-        "from CommonServerPython import BaseClient, CommandResults, datetime"
-    )
+    EXPLICIT_DECLARATION_IMPORTS_LINE = "from CommonServerPython import BaseClient, CommandResults, datetime"
 
     def __init__(self, filename: str, verbose: bool = False, force: bool = False):
         self.functions: list = []
@@ -75,9 +73,7 @@ class YMLGenerator:
 
         with mock.patch("builtins.__import__", side_effect=import_mock):
             try:
-                spec = importlib.util.spec_from_file_location(
-                    "metadata_collector", self.filename
-                )
+                spec = importlib.util.spec_from_file_location("metadata_collector", self.filename)
                 # The self.file_import object will be used later to identify wrapped functions.
                 if spec:
                     self.file_import = importlib.util.module_from_spec(spec)
@@ -86,19 +82,14 @@ class YMLGenerator:
                         # Here we assume the details_collector object will be called 'metadata_collector'.
                         self.metadata_collector = self.file_import.metadata_collector
                         if self.verbose:
-                            click.secho(
-                                f"Found the metadata collector in file {self.filename}"
-                            )
+                            click.secho(f"Found the metadata collector in file {self.filename}")
                         return True
                 else:
                     click.secho(f"Problem importing {self.filename}", fg="red")
                     return False
             except Exception as err:
                 click.secho(f"No metadata collector found in {self.filename}", fg="red")
-                if (
-                    not str(err)
-                    == "module 'metadata_collector' has no attribute 'metadata_collector'"
-                ):
+                if not str(err) == "module 'metadata_collector' has no attribute 'metadata_collector'":
                     click.secho(traceback.format_exc())
                     click.secho(str(err), fg="red")
                 return False
@@ -137,13 +128,9 @@ class YMLGenerator:
             content = code_file.read()
             if not content.startswith(self.IMPORT_COLLECTOR_LINE):
                 if self.verbose:
-                    click.secho(
-                        "Adding import lines, please do not remove while generating yml."
-                    )
+                    click.secho("Adding import lines, please do not remove while generating yml.")
                 code_file.seek(0, 0)
-                code_file.write(
-                    f"{self.IMPORT_COLLECTOR_LINE}\n{self.EXPLICIT_DECLARATION_IMPORTS_LINE}\n\n{content}"
-                )
+                code_file.write(f"{self.IMPORT_COLLECTOR_LINE}\n{self.EXPLICIT_DECLARATION_IMPORTS_LINE}\n\n{content}")
 
     def remove_collector_imports(self):
         """Remove collector imports from provided file."""
@@ -250,20 +237,14 @@ class MetadataToDict:
 
     def build_integration_dict(self):
         """Build the integration dictionary from the metadata_collector provided."""
-        config_keys = [
-            self.config_metadata_from_key(config_key) for config_key in self.mc.conf
-        ]
-        commands = [
-            self.command_metadata_from_function(command) for command in self.mc.commands
-        ]
+        config_keys = [self.config_metadata_from_key(config_key) for config_key in self.mc.conf]
+        commands = [self.command_metadata_from_function(command) for command in self.mc.commands]
         integration_dict: dict = {
             "category": self.mc.category,
             "description": self.mc.description,
             "commonfields": {"id": self.mc.integration_name, "version": -1},
             "name": self.mc.integration_name,
-            "display": self.mc.display
-            if self.mc.display
-            else self.mc.integration_name.replace("_", " "),
+            "display": self.mc.display if self.mc.display else self.mc.integration_name.replace("_", " "),
             "configuration": config_keys,
             "script": {
                 "commands": commands,
@@ -282,9 +263,7 @@ class MetadataToDict:
         }
 
         if self.mc.detailed_description:
-            integration_dict.update(
-                {"detaileddescription": self.mc.detailed_description}
-            )
+            integration_dict.update({"detaileddescription": self.mc.detailed_description})
         if self.mc.deprecated is not None:
             integration_dict["deprecated"] = self.mc.deprecated
         if self.mc.system is not None:
@@ -325,9 +304,7 @@ class MetadataToDict:
             config_key_metadata["options"] = config_key.options
 
         if config_key.input_type:
-            config_key_metadata["options"] = MetadataToDict.handle_enum(
-                config_key.input_type
-            )
+            config_key_metadata["options"] = MetadataToDict.handle_enum(config_key.input_type)
 
         return config_key_metadata
 
@@ -356,11 +333,7 @@ class MetadataToDict:
                 command.function, in_args, self.mc.RESTORED_ARGS
             )
 
-        prefix = (
-            command.outputs_prefix
-            if command.outputs_prefix
-            else self.mc.integration_name
-        )
+        prefix = command.outputs_prefix if command.outputs_prefix else self.mc.integration_name
         if command.outputs:
             # Outputs dict overrides declarations
             command_dict["outputs"] = self.organize_outputs(
@@ -426,24 +399,15 @@ class MetadataToDict:
             if input_arg.name.lower() not in restored_args:
                 description = input_arg.description
                 declared_arg = args.get(input_arg.name)
-                arg_type = (
-                    declared_arg.annotation if declared_arg else arg_type_from_doc
-                )
+                arg_type = declared_arg.annotation if declared_arg else arg_type_from_doc
                 default = (
-                    declared_arg.default
-                    if declared_arg and declared_arg.default != inspect.Parameter.empty
-                    else None
+                    declared_arg.default if declared_arg and declared_arg.default != inspect.Parameter.empty else None
                 )
                 options = []
                 secret = False
                 execution = False
                 required = False
-                if (
-                    arg_type
-                    and inspect.isclass(arg_type)
-                    and issubclass(arg_type, Enum)
-                    or arg_type is EnumMeta
-                ):
+                if arg_type and inspect.isclass(arg_type) and issubclass(arg_type, Enum) or arg_type is EnumMeta:
                     options = MetadataToDict.handle_enum(arg_type)
                 elif description and "options=[" in description:
                     split_line = description.split("options=[")
@@ -481,8 +445,7 @@ class MetadataToDict:
                         arg_name=input_arg.name,
                         description=description.strip() if description else "",
                         default_value=default,
-                        is_array=type(arg_type) is list
-                        or arg_type in [list, Union[list, dict]],
+                        is_array=type(arg_type) is list or arg_type in [list, Union[list, dict]],
                         secret=secret,
                         options=options,
                         execution=execution,
@@ -602,9 +565,7 @@ class MetadataToDict:
                     {
                         "contextPath": context_path,
                         "description": output_key.description,
-                        "type": MetadataToDict.get_metadata_type(
-                            output_key.output_type
-                        ),
+                        "type": MetadataToDict.get_metadata_type(output_key.output_type),
                     }
                 )
 
@@ -625,9 +586,7 @@ class MetadataToDict:
         regex_titles = r"^(?: {4}|\t)(?P<name>\*{0,4}\w+|\w+\s\w+):"
         section_titles = re.findall(regex_titles, docstring, re.MULTILINE)
         regex_description_sections = r"(?P<desc>\A(\s|\S)*?)(\n\n|\Z)"
-        descrition_sections = re.findall(
-            regex_description_sections, docstring, re.MULTILINE
-        )
+        descrition_sections = re.findall(regex_description_sections, docstring, re.MULTILINE)
         description = descrition_sections[0][0] if descrition_sections else ""
         sections = re.findall(regex_sections, docstring, re.MULTILINE)
         if not sections and not description:
@@ -642,9 +601,7 @@ class MetadataToDict:
                     spaces_num = len(lines[0]) - len(lines[0].lstrip())
                     arg_lines = section[1].split(f'\n{spaces_num*" "}')
                     for arg_line in arg_lines:
-                        in_arg, in_arg_type = MetadataToDict.parse_in_argument_lines(
-                            arg_line, verbose, file_import
-                        )
+                        in_arg, in_arg_type = MetadataToDict.parse_in_argument_lines(arg_line, verbose, file_import)
                         if in_arg:
                             input_list.append((in_arg, in_arg_type))
 
@@ -653,9 +610,7 @@ class MetadataToDict:
                     spaces_num = len(lines[0]) - len(lines[0].lstrip())
                     out_lines = section[1].split(f'\n{spaces_num*" "}')
                     for out_line in out_lines:
-                        out_arg = MetadataToDict.parse_out_argument_lines(
-                            out_line, verbose
-                        )
+                        out_arg = MetadataToDict.parse_out_argument_lines(out_line, verbose)
                         if out_arg:
                             output_list.append(out_arg)
 
@@ -667,14 +622,10 @@ class MetadataToDict:
     ) -> Tuple[Optional[InputArgument], Any]:
         """Parse input argument line from docstring."""
         regex_args_with_type = r"^(?: *|\t)(?P<name>\*{0,4}(\w+|\w+\s|\w+\.\w+\s)\((?P<type>.*)\)):(?P<desc>(\s|\S)*)"
-        argument_sections = re.findall(
-            regex_args_with_type, argument_line, re.MULTILINE
-        )
+        argument_sections = re.findall(regex_args_with_type, argument_line, re.MULTILINE)
         if len(argument_sections) < 1:
             regex_args_no_type = r"^(?: *|\t)(?P<name>)(\w+|\w+\s|\w+\.\w+\s|\w+\.\w+):(?P<desc>(\s|\S)*)"
-            argument_sections = re.findall(
-                regex_args_no_type, argument_line, re.MULTILINE
-            )
+            argument_sections = re.findall(regex_args_no_type, argument_line, re.MULTILINE)
             if len(argument_sections) < 1:
                 return None, None
             else:
@@ -693,8 +644,7 @@ class MetadataToDict:
             except Exception as err:
                 if verbose:
                     click.secho(
-                        f"Problems parsing input type {input_type_str}, setting isArray=False."
-                        f"Error was: {err}",
+                        f"Problems parsing input type {input_type_str}, setting isArray=False." f"Error was: {err}",
                         fg="yellow",
                     )
                 input_type = None
@@ -702,9 +652,7 @@ class MetadataToDict:
             return InputArgument(name=name, description=description), input_type
 
     @staticmethod
-    def parse_out_argument_lines(
-        argument_line: str, verbose: bool = False
-    ) -> Optional[OutputArgument]:
+    def parse_out_argument_lines(argument_line: str, verbose: bool = False) -> Optional[OutputArgument]:
         """Parse output argument line from docstring."""
         regex_arguments = r"^(?: *|\t)(?P<name>\*{0,4}(\w+|\w+\s|\w+\.\w+\s)\((?P<type>.*)\)):(?P<desc>(\s|\S)*)"
         argument_sections = re.findall(regex_arguments, argument_line, re.MULTILINE)

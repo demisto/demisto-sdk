@@ -11,9 +11,7 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
 
-EXECUTE_CMD_PATTERN = re.compile(
-    r"execute_?command\(['\"]([a-zA-Z-_]+)['\"].*", re.IGNORECASE
-)
+EXECUTE_CMD_PATTERN = re.compile(r"execute_?command\(['\"]([a-zA-Z-_]+)['\"].*", re.IGNORECASE)
 
 
 class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
@@ -58,9 +56,7 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
         """
         if self.is_unified or self.yml_data.get("script") not in ["-", ""]:
             return self.yml_data.get("script")
-        return IntegrationScriptUnifier.get_script_or_integration_package_data(
-            self.path.parent
-        )[1]
+        return IntegrationScriptUnifier.get_script_or_integration_package_data(self.path.parent)[1]
 
     def get_depends_on(self) -> Set[str]:
         depends_on: List[str] = self.yml_data.get("dependson", {}).get("must", [])

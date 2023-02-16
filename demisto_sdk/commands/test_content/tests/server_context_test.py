@@ -57,8 +57,7 @@ def test_execute_tests(mocker, tmp_path):
     # Setting up the content-test-conf conf.json
     integration_names = ["mockable_integration", "unmockable_integration"]
     integrations_configurations = [
-        generate_integration_configuration(integration_name)
-        for integration_name in integration_names
+        generate_integration_configuration(integration_name) for integration_name in integration_names
     ]
     secret_test_conf = generate_secret_conf_json(integrations_configurations)
 
@@ -72,9 +71,7 @@ def test_execute_tests(mocker, tmp_path):
     )
     # Setting up the client
     mocked_demisto_client = DemistoClientMock(integrations=integration_names)
-    server_context = generate_mocked_server_context(
-        build_context, mocked_demisto_client, mocker
-    )
+    server_context = generate_mocked_server_context(build_context, mocked_demisto_client, mocker)
     server_context.execute_tests()
 
     # Validating all tests were executed
@@ -111,26 +108,18 @@ def generate_mocked_server_context(
         mocked_demisto_client,
     )
     # Mocking unnecessary calls
-    mocker.patch(
-        "demisto_sdk.commands.test_content.mock_server.run_with_mock"
-    ).return_value.__enter__.return_value = {}
+    mocker.patch("demisto_sdk.commands.test_content.mock_server.run_with_mock").return_value.__enter__.return_value = {}
     mocker.patch(
         "demisto_sdk.commands.test_content.IntegrationsLock.safe_lock_integrations",
         return_value=True,
     )
-    mocker.patch(
-        "demisto_sdk.commands.test_content.IntegrationsLock.safe_unlock_integrations"
-    )
-    mocker.patch(
-        "demisto_sdk.commands.test_content.TestContentClasses.TestContext._run_docker_threshold_test"
-    )
+    mocker.patch("demisto_sdk.commands.test_content.IntegrationsLock.safe_unlock_integrations")
+    mocker.patch("demisto_sdk.commands.test_content.TestContentClasses.TestContext._run_docker_threshold_test")
     mocker.patch(
         "demisto_sdk.commands.test_content.TestContentClasses.is_redhat_instance",
         return_value=False,
     )
-    mocker.patch(
-        "demisto_sdk.commands.test_content.TestContentClasses.TestContext._notify_failed_test"
-    )
+    mocker.patch("demisto_sdk.commands.test_content.TestContentClasses.TestContext._notify_failed_test")
     mocker.patch.object(MITMProxy, "__init__", lambda *args, **kwargs: None)
     mocker.patch("time.sleep")
     # Executing the test

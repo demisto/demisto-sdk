@@ -119,9 +119,7 @@ class PackMetaData(JSONObject):
 
         if isinstance(new_pack_created_date, str):
             try:
-                self._created = datetime.strptime(
-                    new_pack_created_date, DATETIME_FORMAT
-                )
+                self._created = datetime.strptime(new_pack_created_date, DATETIME_FORMAT)
             except ValueError:
                 return
         else:
@@ -141,9 +139,7 @@ class PackMetaData(JSONObject):
         """Setter for the updated attribute"""
         if isinstance(new_pack_updated_date, str):
             try:
-                self._updated = datetime.strptime(
-                    new_pack_updated_date, DATETIME_FORMAT
-                )
+                self._updated = datetime.strptime(new_pack_updated_date, DATETIME_FORMAT)
             except ValueError:
                 return
         else:
@@ -188,9 +184,7 @@ class PackMetaData(JSONObject):
 
         if self.url:  # set support url from user input
             support_details["url"] = self.url
-        elif (
-            self.support == XSOAR_SUPPORT
-        ):  # in case support type is xsoar, set default xsoar support url
+        elif self.support == XSOAR_SUPPORT:  # in case support type is xsoar, set default xsoar support url
             support_details["url"] = XSOAR_SUPPORT_URL
         # add support email if defined
         if self.email:
@@ -251,9 +245,7 @@ class PackMetaData(JSONObject):
             if not self._author:
                 return XSOAR_AUTHOR
             elif self._author != XSOAR_AUTHOR:
-                logging.warning(
-                    f"{self._author} author doest not match {XSOAR_AUTHOR} default value"
-                )
+                logging.warning(f"{self._author} author doest not match {XSOAR_AUTHOR} default value")
                 return self._author
         return self._author
 
@@ -441,10 +433,7 @@ class PackMetaData(JSONObject):
         Returns:
             Dict[str, List]: pack content_items.
         """
-        return {
-            content_entity.value: content_items
-            for content_entity, content_items in self._contentItems.items()
-        }
+        return {content_entity.value: content_items for content_entity, content_items in self._contentItems.items()}
 
     @content_items.setter
     def content_items(self, new_pack_content_items: Dict[ContentItems, List]):
@@ -530,9 +519,7 @@ class PackMetaData(JSONObject):
 
         return [Path(new_metadata_path)]
 
-    def load_user_metadata(
-        self, pack_id: str, pack_name: str, pack_path: Path, logger: logging.Logger
-    ) -> None:
+    def load_user_metadata(self, pack_id: str, pack_name: str, pack_path: Path, logger: logging.Logger) -> None:
         """Loads user defined metadata and stores part of it's data in defined properties fields.
 
         Args:
@@ -542,14 +529,10 @@ class PackMetaData(JSONObject):
             logger (logging.Logger): System logger already initialized.
 
         """
-        user_metadata_path = os.path.join(
-            pack_path, PACKS_PACK_META_FILE_NAME
-        )  # user metadata path before parsing
+        user_metadata_path = os.path.join(pack_path, PACKS_PACK_META_FILE_NAME)  # user metadata path before parsing
 
         if not os.path.exists(user_metadata_path):
-            logger.error(
-                f"{pack_name} pack is missing {PACKS_PACK_META_FILE_NAME} file."
-            )
+            logger.error(f"{pack_name} pack is missing {PACKS_PACK_META_FILE_NAME} file.")
             return None
 
         try:
@@ -566,9 +549,7 @@ class PackMetaData(JSONObject):
             try:
                 self.price = int(user_metadata.get("price", 0))
             except Exception:
-                logger.error(
-                    f"{self.name} pack price is not valid. The price was set to 0."
-                )
+                logger.error(f"{self.name} pack price is not valid. The price was set to 0.")
             self.support = user_metadata.get("support", "")
             self.url = user_metadata.get("url", "")
             self.email = user_metadata.get("email", "")
@@ -593,9 +574,7 @@ class PackMetaData(JSONObject):
         except Exception:
             logger.error(f"Failed loading {pack_name} user metadata.")
 
-    def handle_dependencies(
-        self, pack_name: str, id_set_path: str, logger: logging.Logger
-    ) -> None:
+    def handle_dependencies(self, pack_name: str, id_set_path: str, logger: logging.Logger) -> None:
         """Updates pack's dependencies using the find_dependencies command.
 
         Args:
@@ -617,14 +596,11 @@ class PackMetaData(JSONObject):
             mandatory_dependencies = [
                 k
                 for k, v in calculated_dependencies.items()
-                if v.get("mandatory", False) is True
-                and k not in CORE_PACKS_LIST
-                and k not in self.dependencies.keys()
+                if v.get("mandatory", False) is True and k not in CORE_PACKS_LIST and k not in self.dependencies.keys()
             ]
             if mandatory_dependencies:
                 logger.error(
-                    f"New mandatory dependencies {mandatory_dependencies} were "
-                    f"found in the core pack {pack_name}"
+                    f"New mandatory dependencies {mandatory_dependencies} were " f"found in the core pack {pack_name}"
                 )
 
         self.dependencies.update(calculated_dependencies)

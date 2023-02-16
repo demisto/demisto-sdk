@@ -110,9 +110,7 @@ class MapperValidator(ContentEntityValidator):
                     removed_incident_fields[inc] = removed_fields
 
             if removed_incident_fields:
-                error_message, error_code = Errors.changed_incident_field_in_mapper(
-                    removed_incident_fields
-                )
+                error_message, error_code = Errors.changed_incident_field_in_mapper(removed_incident_fields)
                 if self.handle_error(
                     error_message,
                     error_code,
@@ -131,9 +129,7 @@ class MapperValidator(ContentEntityValidator):
         Returns:
             bool. True if from version field is valid, else False.
         """
-        from_version = self.current_file.get(
-            "fromVersion", ""
-        ) or self.current_file.get("fromversion")
+        from_version = self.current_file.get("fromVersion", "") or self.current_file.get("fromversion")
         if from_version:
             self.from_version = from_version
             if LooseVersion(from_version) < LooseVersion(FROM_VERSION):
@@ -163,16 +159,12 @@ class MapperValidator(ContentEntityValidator):
         Returns:
             bool. True if to version field is valid, else False.
         """
-        to_version = self.current_file.get("toVersion", "") or self.current_file.get(
-            "toversion", ""
-        )
+        to_version = self.current_file.get("toVersion", "") or self.current_file.get("toversion", "")
         if to_version:
             self.to_version = to_version
             if LooseVersion(to_version) < LooseVersion(FROM_VERSION):
                 error_message, error_code = Errors.invalid_to_version_in_mapper()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
         return True
 
@@ -186,9 +178,7 @@ class MapperValidator(ContentEntityValidator):
         if self.to_version and self.from_version:
             if LooseVersion(self.to_version) <= LooseVersion(self.from_version):
                 error_message, error_code = Errors.from_version_higher_to_version()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
         return True
 
@@ -209,9 +199,7 @@ class MapperValidator(ContentEntityValidator):
         return True
 
     @error_codes("MP106")
-    def is_incident_field_exist(
-        self, id_set_file: Dict[str, List], is_circle: bool
-    ) -> bool:
+    def is_incident_field_exist(self, id_set_file: Dict[str, List], is_circle: bool) -> bool:
         """
         Check if the incident fields which are part of the mapper actually exist in the content items (id set).
 
@@ -254,9 +242,7 @@ class MapperValidator(ContentEntityValidator):
             )
 
         if invalid_incident_fields:
-            error_message, error_code = Errors.invalid_incident_field_in_mapper(
-                invalid_incident_fields
-            )
+            error_message, error_code = Errors.invalid_incident_field_in_mapper(invalid_incident_fields)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True

@@ -49,12 +49,8 @@ def invalid_spelled_content_pack(pack):
             },
         )
         misspelled_files.add(integration.yml.path)
-        pack.create_incident_field(
-            name=f"incident-field-{i}", content={"invalidd": "invalidd"}
-        )
-        script = pack.create_script(
-            name=f"script-{i}", yml={"comment": "invalidd", "script": "script"}
-        )
+        pack.create_incident_field(name=f"incident-field-{i}", content={"invalidd": "invalidd"})
+        script = pack.create_script(name=f"script-{i}", yml={"comment": "invalidd", "script": "script"})
         misspelled_files.add(script.yml.path)
         pack.create_layout(name=f"layout-{i}", content={"invalidd": "invalidd"})
 
@@ -209,9 +205,7 @@ def mix_misspelled_xsoar_supported_and_not_content_packs(
         version="release-note-CommunityPack",
         content="\n#### Sfhasbfkhabf\n##### Sfhasbfkhabf\n- someinvalidstring.",
     )
-    community_pack.pack_metadata.update(
-        {PACK_METADATA_SUPPORT: PACK_SUPPORT_OPTIONS[3]}
-    )
+    community_pack.pack_metadata.update({PACK_METADATA_SUPPORT: PACK_SUPPORT_OPTIONS[3]})
 
     # Create XSOAR Pack
     temp_repo = SimpleNamespace()

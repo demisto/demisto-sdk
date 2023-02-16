@@ -32,9 +32,7 @@ class IncorrectParserException(Exception):
 
 
 class ParserMetaclass(ABCMeta):
-    def __new__(
-        cls, name, bases, namespace, content_type: ContentType = None, **kwargs
-    ):
+    def __new__(cls, name, bases, namespace, content_type: ContentType = None, **kwargs):
         """This method is called before every creation of a ContentItemParser *class* (NOT class instances!).
         If `content_type` is passed as an argument of the class, we add a mapping between the content type
         and the parser class object.
@@ -52,9 +50,7 @@ class ParserMetaclass(ABCMeta):
         """
         super_cls: ParserMetaclass = super().__new__(cls, name, bases, namespace)
         # for type checking
-        parser_cls: Type["ContentItemParser"] = cast(
-            Type["ContentItemParser"], super_cls
-        )
+        parser_cls: Type["ContentItemParser"] = cast(Type["ContentItemParser"], super_cls)
         if content_type:
             ContentItemParser.content_type_to_parser[content_type] = parser_cls
             parser_cls.content_type = content_type
@@ -108,9 +104,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
                     pack_marketplaces,
                 )
             except IncorrectParserException as e:
-                return ContentItemParser.parse(
-                    e.correct_parser, path, pack_marketplaces, **e.kwargs
-                )
+                return ContentItemParser.parse(e.correct_parser, path, pack_marketplaces, **e.kwargs)
         return None
 
     @staticmethod
@@ -178,9 +172,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             if path.parent.name in ContentType.folders():
                 return path.parent.parent.name not in ContentType.folders()
             if path.parent.parent.name in ContentType.folders():
-                return (
-                    ContentType.by_path(path) in ContentType.threat_intel_report_types()
-                )
+                return ContentType.by_path(path) in ContentType.threat_intel_report_types()
         return False
 
     @staticmethod
@@ -195,9 +187,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         Returns:
             bool: True iff the file path is of a content item.
         """
-        return ContentItemParser.is_package(path) or ContentItemParser.is_unified_file(
-            path
-        )
+        return ContentItemParser.is_package(path) or ContentItemParser.is_unified_file(path)
 
     def should_skip_parsing(self) -> bool:
         """Returns true if any of the minimal conditions for parsing is not met.
@@ -289,9 +279,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             mandatorily=is_mandatory,
         )
 
-    def add_command_or_script_dependency(
-        self, dependency_id: str, is_mandatory: bool = True
-    ) -> None:
+    def add_command_or_script_dependency(self, dependency_id: str, is_mandatory: bool = True) -> None:
         """Creates a USES_COMMAND_OR_SCRIPT relationship between the content item and a given dependency.
 
         Args:

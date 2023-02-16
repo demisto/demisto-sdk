@@ -23,9 +23,7 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
 
 
 class TestClassifierValidator:
-    CLASSIFIER_WITH_VALID_INCIDENT_FIELD = {
-        "mapping": {"0": {"internalMapping": {"Incident Field": "incident field"}}}
-    }
+    CLASSIFIER_WITH_VALID_INCIDENT_FIELD = {"mapping": {"0": {"internalMapping": {"Incident Field": "incident field"}}}}
 
     ID_SET_WITH_INCIDENT_FIELD = {
         "IncidentFields": [{"name": {"name": "Incident Field"}}],
@@ -51,9 +49,7 @@ class TestClassifierValidator:
         "classifier_json, id_set_json, is_circle, expected_result",
         IS_INCIDENT_FIELD_EXIST,
     )
-    def test_is_incident_field_exist(
-        self, repo, classifier_json, id_set_json, is_circle, expected_result
-    ):
+    def test_is_incident_field_exist(self, repo, classifier_json, id_set_json, is_circle, expected_result):
         """
         Given
         - A mapper with incident fields
@@ -66,9 +62,7 @@ class TestClassifierValidator:
         repo.id_set.write_json(id_set_json)
         structure = mock_structure("", classifier_json)
         validator = ClassifierValidator(structure)
-        assert (
-            validator.is_incident_field_exist(id_set_json, is_circle) == expected_result
-        )
+        assert validator.is_incident_field_exist(id_set_json, is_circle) == expected_result
 
     OLD_MAPPER = {
         "mapping": {
@@ -76,11 +70,7 @@ class TestClassifierValidator:
             "2": {"internalMapping": {"field1": {"data1"}, "field2": {"data2"}}},
         }
     }
-    NEW_MAPPER_WITH_DELETED_TYPES = {
-        "mapping": {
-            "1": {"internalMapping": {"field1": {"data1"}, "field2": {"data2"}}}
-        }
-    }
+    NEW_MAPPER_WITH_DELETED_TYPES = {"mapping": {"1": {"internalMapping": {"field1": {"data1"}, "field2": {"data2"}}}}}
     NEW_MAPPER_WITH_DELETED_FIELDS = {
         "mapping": {
             "1": {"internalMapping": {"field1": {"data1"}, "field2": {"data2"}}},
@@ -100,9 +90,7 @@ class TestClassifierValidator:
         (OLD_MAPPER, NEW_VALID_MAPPER, False),
     ]
 
-    @pytest.mark.parametrize(
-        "old_file, current_file, answer", IS_CHANGED_INCIDENTS_FIELDS_INPUT
-    )
+    @pytest.mark.parametrize("old_file, current_file, answer", IS_CHANGED_INCIDENTS_FIELDS_INPUT)
     def test_is_changed_removed_yml_fields(self, old_file, current_file, answer):
         """
         Given

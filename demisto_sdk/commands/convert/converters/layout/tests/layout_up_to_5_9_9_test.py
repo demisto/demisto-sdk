@@ -51,9 +51,7 @@ class TestLayoutBelowSixConverter:
         "/layout-close-ExtraHop_Detection.json",
     )
 
-    CALCULATE_NEW_LAYOUT_RELATIVE_PATH_INPUTS = [
-        ("ExtraHop Detect", "close", "layout-close-ExtraHop_Detect.json")
-    ]
+    CALCULATE_NEW_LAYOUT_RELATIVE_PATH_INPUTS = [("ExtraHop Detect", "close", "layout-close-ExtraHop_Detect.json")]
 
     @pytest.mark.parametrize(
         "dynamic_field_key, type_id, expected_suffix",
@@ -77,12 +75,7 @@ class TestLayoutBelowSixConverter:
         """
         layout_converter = LayoutBelowSixConverter(Pack(tmpdir))
         expected = f"{layout_converter.pack.path}/Layouts/{expected_suffix}"
-        assert (
-            layout_converter.calculate_new_layout_relative_path(
-                type_id, dynamic_field_key
-            )
-            == expected
-        )
+        assert layout_converter.calculate_new_layout_relative_path(type_id, dynamic_field_key) == expected
 
     def test_layout_to_incidents_dict(self, tmpdir):
         """
@@ -101,20 +94,12 @@ class TestLayoutBelowSixConverter:
         repo = Repo(tmpdir)
         repo_path = Path(repo.path)
         fake_pack = MockPack(repo_path / "Packs", fake_pack_name, repo)
-        fake_pack.create_incident_type(
-            "ExtraHop_Detection", util_load_json(self.INCIDENT_TYPE_ONE)
-        )
-        fake_pack.create_incident_type(
-            "ExtraHop_Detection_2", util_load_json(self.INCIDENT_TYPE_TWO)
-        )
+        fake_pack.create_incident_type("ExtraHop_Detection", util_load_json(self.INCIDENT_TYPE_ONE))
+        fake_pack.create_incident_type("ExtraHop_Detection_2", util_load_json(self.INCIDENT_TYPE_TWO))
         fake_pack_path = fake_pack.path
         layout_converter = LayoutBelowSixConverter(Pack(fake_pack_path))
-        result = LayoutBelowSixConverter.layout_to_indicators_or_incidents_dict(
-            layout_converter.pack.incident_types
-        )
-        assert result == {
-            "ExtraHop Detection": ["ExtraHop Detection", "ExtraHop Detection 2"]
-        }
+        result = LayoutBelowSixConverter.layout_to_indicators_or_incidents_dict(layout_converter.pack.incident_types)
+        assert result == {"ExtraHop Detection": ["ExtraHop Detection", "ExtraHop Detection 2"]}
 
     def test_layout_to_indicators_dict(self, tmpdir):
         """
@@ -133,14 +118,10 @@ class TestLayoutBelowSixConverter:
         repo = Repo(tmpdir)
         repo_path = Path(repo.path)
         fake_pack = MockPack(repo_path / "Packs", fake_pack_name, repo)
-        fake_pack.create_indicator_type(
-            "Cryptocurrency Address", util_load_json(self.INDICATOR_TYPE_ONE)
-        )
+        fake_pack.create_indicator_type("Cryptocurrency Address", util_load_json(self.INDICATOR_TYPE_ONE))
         fake_pack_path = fake_pack.path
         layout_converter = LayoutBelowSixConverter(Pack(fake_pack_path))
-        res = layout_converter.layout_to_indicators_or_incidents_dict(
-            layout_converter.pack.indicator_types
-        )
+        res = layout_converter.layout_to_indicators_or_incidents_dict(layout_converter.pack.indicator_types)
         assert res == {"ExtraHop Detection": ["Cryptocurrency Address"]}
 
     BUILD_OLD_LAYOUT_INPUTS = [
@@ -260,12 +241,8 @@ class TestLayoutBelowSixConverter:
         repo = Repo(tmpdir)
         repo_path = Path(repo.path)
         fake_pack = MockPack(repo_path / "Packs", fake_pack_name, repo)
-        fake_pack.create_incident_type(
-            "ExtraHop_Detection", util_load_json(self.INCIDENT_TYPE_ONE)
-        )
-        fake_pack.create_layoutcontainer(
-            "ExtraHop Detection", util_load_json(self.LAYOUT_CONTAINER)
-        )
+        fake_pack.create_incident_type("ExtraHop_Detection", util_load_json(self.INCIDENT_TYPE_ONE))
+        fake_pack.create_layoutcontainer("ExtraHop Detection", util_load_json(self.LAYOUT_CONTAINER))
         fake_pack_path = fake_pack.path
         layout_converter = LayoutBelowSixConverter(Pack(fake_pack_path))
         layout_converter.convert_dir()
@@ -279,8 +256,7 @@ class TestLayoutBelowSixConverter:
         )
         for layout_field_name, layout_data in test_data_json.items():
             expected_new_layout_path = (
-                f"{str(layout_converter.pack.path)}/Layouts/layout-{layout_field_name}-"
-                "ExtraHop_Detection.json"
+                f"{str(layout_converter.pack.path)}/Layouts/layout-{layout_field_name}-" "ExtraHop_Detection.json"
             )
             assert os.path.exists(expected_new_layout_path)
             assert util_load_json(expected_new_layout_path) == layout_data
@@ -292,12 +268,8 @@ class TestLayoutBelowSixConverter:
         ("ExtraHop Detection", "mobile", "5.0.0"),
     ]
 
-    @pytest.mark.parametrize(
-        "layout_id, layout_kind, expected", CALCULATE_FROM_VERSION_INPUTS
-    )
-    def test_calculate_from_version(
-        self, tmpdir, layout_id: str, layout_kind: str, expected: str
-    ):
+    @pytest.mark.parametrize("layout_id, layout_kind, expected", CALCULATE_FROM_VERSION_INPUTS)
+    def test_calculate_from_version(self, tmpdir, layout_id: str, layout_kind: str, expected: str):
         """
         Given:
         - 'layout_id' Layout ID.

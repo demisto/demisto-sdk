@@ -36,13 +36,9 @@ class IndicatorType(JSONContentObject):
             indicator_type_unified_data = self._as_dict
 
         with NamedTemporaryFile(suffix=".json") as indicator_type_unified_file:
-            indicator_type_unified_file.write(
-                bytes(json.dumps(indicator_type_unified_data), "utf-8")
-            )
+            indicator_type_unified_file.write(bytes(json.dumps(indicator_type_unified_data), "utf-8"))
             indicator_type_unified_file.seek(0)
-            return client.import_reputation_handler(
-                file=indicator_type_unified_file.name
-            )
+            return client.import_reputation_handler(file=indicator_type_unified_file.name)
 
     def type(self):
         return FileType.REPUTATION

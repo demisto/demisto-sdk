@@ -1824,10 +1824,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def wrong_version(expected="-1"):
-        return (
-            "The version for our files should always "
-            "be {}, please update the file.".format(expected)
-        )
+        return "The version for our files should always " "be {}, please update the file.".format(expected)
 
     @staticmethod
     @error_code_decorator
@@ -1837,9 +1834,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def file_type_not_supported(
-        file_type: Optional[FileType], file_path: Union[str, Path]
-    ):
+    def file_type_not_supported(file_type: Optional[FileType], file_path: Union[str, Path]):
         joined_path = "/".join(Path(file_path).parts[-3:])
         file_type_str = f"File type {file_type}" if file_type else f"File {joined_path}"
         return (
@@ -1880,14 +1875,10 @@ class Errors:
     @error_code_decorator
     def no_minimal_fromversion_in_file(fromversion, oldest_supported_version):
         if fromversion == "fromversion":
-            return (
-                f"{fromversion} field is invalid.\nAdd `{fromversion}: "
-                f"{oldest_supported_version}` to the file."
-            )
+            return f"{fromversion} field is invalid.\nAdd `{fromversion}: " f"{oldest_supported_version}` to the file."
         else:
             return (
-                f'{fromversion} field is invalid.\nAdd `"{fromversion}": "{oldest_supported_version}"` '
-                f"to the file."
+                f'{fromversion} field is invalid.\nAdd `"{fromversion}": "{oldest_supported_version}"` ' f"to the file."
             )
 
     @staticmethod
@@ -1951,9 +1942,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def wrong_default_parameter_not_empty(param_name, default_value):
-        return (
-            f"The default value of the {param_name} parameter should be {default_value}"
-        )
+        return f"The default value of the {param_name} parameter should be {default_value}"
 
     @staticmethod
     @error_code_decorator
@@ -2001,43 +1990,30 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def wrong_default_argument(arg_name, command_name):
-        return (
-            "The argument '{}' of the command '{}' is not configured as default".format(
-                arg_name, command_name
-            )
-        )
+        return "The argument '{}' of the command '{}' is not configured as default".format(arg_name, command_name)
 
     @staticmethod
     @error_code_decorator
     def wrong_is_array_argument(arg_name, command_name):
-        return "The argument '{}' of the command '{}' is not configured as array input.".format(
-            arg_name, command_name
-        )
+        return "The argument '{}' of the command '{}' is not configured as array input.".format(arg_name, command_name)
 
     @staticmethod
     @error_code_decorator
     def no_default_arg(command_name):
-        return "Could not find default argument " "{} in command {}".format(
-            command_name, command_name
-        )
+        return "Could not find default argument " "{} in command {}".format(command_name, command_name)
 
     @staticmethod
     @error_code_decorator
     def missing_reputation(command_name, reputation_output, context_standard):
         return (
             "The outputs of the reputation command {} aren't valid. The {} outputs is missing. "
-            "Fix according to context standard {} ".format(
-                command_name, reputation_output, context_standard
-            )
+            "Fix according to context standard {} ".format(command_name, reputation_output, context_standard)
         )
 
     @staticmethod
     @error_code_decorator
     def wrong_subtype():
-        return (
-            "The subtype for our yml files should be either python2 or python3, "
-            "please update the file."
-        )
+        return "The subtype for our yml files should be either python2 or python3, " "please update the file."
 
     @classmethod
     @error_code_decorator
@@ -2052,10 +2028,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def beta_field_not_found():
-        return (
-            "Beta integration yml file should have "
-            'the field "beta: true", but was not found in the file.'
-        )
+        return "Beta integration yml file should have " 'the field "beta: true", but was not found in the file.'
 
     @staticmethod
     @error_code_decorator
@@ -2077,11 +2050,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def duplicate_param(param_name):
-        return (
-            "The parameter '{}' of the "
-            "file is duplicated, please remove one of its appearances.".format(
-                param_name
-            )
+        return "The parameter '{}' of the " "file is duplicated, please remove one of its appearances.".format(
+            param_name
         )
 
     @staticmethod
@@ -2129,10 +2099,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def not_used_display_name(field_name):
-        return (
-            "The display details for {} will not be used "
-            "due to the type of the parameter".format(field_name)
-        )
+        return "The display details for {} will not be used " "due to the type of the parameter".format(field_name)
 
     @staticmethod
     @error_code_decorator
@@ -2142,10 +2109,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def feed_wrong_from_version(given_fromversion, needed_from_version="5.5.0"):
-        return (
-            "This is a feed and has wrong fromversion. got `{}` expected `{}`".format(
-                given_fromversion, needed_from_version
-            )
+        return "This is a feed and has wrong fromversion. got `{}` expected `{}`".format(
+            given_fromversion, needed_from_version
         )
 
     @staticmethod
@@ -2211,8 +2176,7 @@ class Errors:
     @error_code_decorator
     def error_starting_mdx_server(line):
         return (
-            f"Failed starting local mdx server. stdout: {line}.\n"
-            f"Try running the following command: `npm install`"
+            f"Failed starting local mdx server. stdout: {line}.\n" f"Try running the following command: `npm install`"
         )
 
     @staticmethod
@@ -2248,9 +2212,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def integration_non_existent_mapper(integration_mapper):
-        return (
-            f"The integration has a mapper {integration_mapper} which does not exist."
-        )
+        return f"The integration has a mapper {integration_mapper} which does not exist."
 
     @staticmethod
     @error_code_decorator
@@ -2268,9 +2230,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def not_supported_integration_parameter_url_defaultvalue(
-        param, invalid_defaultvalue
-    ):
+    def not_supported_integration_parameter_url_defaultvalue(param, invalid_defaultvalue):
         return f"The integration parameter {param} has defaultvalue set to {invalid_defaultvalue}. If possible, replace the http prefix with https."
 
     @staticmethod
@@ -2328,7 +2288,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def integration_is_deprecated_and_used(integration_name: str, commands_dict: dict):
-        erorr_str = f"{integration_name} integration contains deprecated commands that are being used by other entities:\n"
+        erorr_str = (
+            f"{integration_name} integration contains deprecated commands that are being used by other entities:\n"
+        )
         for command_name, command_usage_list in commands_dict.items():
             current_command_usage = "\n".join(command_usage_list)
             erorr_str += f"{command_name} is being used in the following locations:\n{current_command_usage}\n"
@@ -2411,9 +2373,7 @@ class Errors:
     def dbot_invalid_output(command_name, missing_outputs, context_standard):
         return (
             "The DBotScore outputs of the reputation command {} aren't valid. Missing: {}. "
-            "Fix according to context standard {} ".format(
-                command_name, missing_outputs, context_standard
-            )
+            "Fix according to context standard {} ".format(command_name, missing_outputs, context_standard)
         )
 
     @staticmethod
@@ -2421,9 +2381,7 @@ class Errors:
     def dbot_invalid_description(command_name, missing_descriptions, context_standard):
         return (
             "The DBotScore description of the reputation command {} aren't valid. Missing: {}. "
-            "Fix according to context standard {} ".format(
-                command_name, missing_descriptions, context_standard
-            )
+            "Fix according to context standard {} ".format(command_name, missing_descriptions, context_standard)
         )
 
     @classmethod
@@ -2434,34 +2392,26 @@ class Errors:
     @classmethod
     @error_code_decorator
     def breaking_backwards_context(cls):
-        return "{}, You've changed the context in the file," " please undo.".format(
-            cls.BACKWARDS
-        )
+        return "{}, You've changed the context in the file," " please undo.".format(cls.BACKWARDS)
 
     @classmethod
     @error_code_decorator
     def breaking_backwards_command(cls, old_command):
-        return (
-            "{}, You've changed the context in the file,please "
-            "undo. the command is:\n{}".format(cls.BACKWARDS, old_command)
+        return "{}, You've changed the context in the file,please " "undo. the command is:\n{}".format(
+            cls.BACKWARDS, old_command
         )
 
     @classmethod
     @error_code_decorator
     def breaking_backwards_arg_changed(cls):
-        return (
-            "{}, You've changed the name of an arg in "
-            "the file, please undo.".format(cls.BACKWARDS)
-        )
+        return "{}, You've changed the name of an arg in " "the file, please undo.".format(cls.BACKWARDS)
 
     @classmethod
     @error_code_decorator
     def breaking_backwards_command_arg_changed(cls, commands_ls):
         error_msg = (
             "{}, Your updates to this file contains changes to a name or an argument of an existing "
-            "command(s).\nPlease undo you changes to the following command(s):\n".format(
-                cls.BACKWARDS
-            )
+            "command(s).\nPlease undo you changes to the following command(s):\n".format(cls.BACKWARDS)
         )
         error_msg += "\n".join(commands_ls)
         return error_msg
@@ -2487,9 +2437,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def deprecated_docker_error(docker_image_name, deprecated_reason):
-        return (
-            f"The docker image {docker_image_name} is deprecated - {deprecated_reason}"
-        )
+        return f"The docker image {docker_image_name} is deprecated - {deprecated_reason}"
 
     @staticmethod
     @error_code_decorator
@@ -2538,9 +2486,7 @@ class Errors:
         return f"The docker image: {docker_image} is not of format - demisto/image_name:X.X"
 
     @staticmethod
-    def suggest_docker_fix(
-        docker_image_name: str, file_path: str, is_iron_bank=False
-    ) -> str:
+    def suggest_docker_fix(docker_image_name: str, file_path: str, is_iron_bank=False) -> str:
         docker_hub_link = f"https://hub.docker.com/r/{docker_image_name}/tags"
         iron_bank_link = f"https://repo1.dso.mil/dsop/opensource/palo-alto-networks/{docker_image_name}/"
         return (
@@ -2551,9 +2497,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def docker_not_on_the_latest_tag(
-        docker_image_tag, docker_image_latest_tag, is_iron_bank=False
-    ) -> str:
+    def docker_not_on_the_latest_tag(docker_image_tag, docker_image_latest_tag, is_iron_bank=False) -> str:
         return (
             f"The docker image tag is not the latest numeric tag, please update it.\n"
             f"The docker image tag in the yml file is: {docker_image_tag}\n"
@@ -2605,9 +2549,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_fromversion_for_type_metrics():
-        return (
-            "The minimal fromVersion for widget with data type 'metrics' is '6.2.0'.\n"
-        )
+        return "The minimal fromVersion for widget with data type 'metrics' is '6.2.0'.\n"
 
     @staticmethod
     @error_code_decorator
@@ -2625,9 +2567,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def image_in_package_and_yml():
-        return (
-            "Image in both yml and package, remove the 'image' " "key from the yml file"
-        )
+        return "Image in both yml and package, remove the 'image' " "key from the yml file"
 
     @staticmethod
     @error_code_decorator
@@ -2661,10 +2601,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def image_is_empty(image_path: str):
-        return (
-            f"The author image in path {image_path} should not be empty. "
-            "Please provide a relevant image."
-        )
+        return f"The author image in path {image_path} should not be empty. " "Please provide a relevant image."
 
     @staticmethod
     @error_code_decorator
@@ -2687,16 +2624,12 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_image_dimensions(width: int, height: int):
-        return (
-            f"The image dimensions are {width}x{height}. The requirements are 120x50."
-        )
+        return f"The image dimensions are {width}x{height}. The requirements are 120x50."
 
     @staticmethod
     @error_code_decorator
     def description_missing_from_conf_json(problematic_instances):
-        return "Those instances don't have description:\n{}".format(
-            "\n".join(problematic_instances)
-        )
+        return "Those instances don't have description:\n{}".format("\n".join(problematic_instances))
 
     @staticmethod
     @error_code_decorator
@@ -2708,9 +2641,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def integration_not_registered(
-        file_path, missing_test_playbook_configurations, no_tests_key
-    ):
+    def integration_not_registered(file_path, missing_test_playbook_configurations, no_tests_key):
         return (
             f"The following integration is not registered in {CONF_PATH} file.\n"
             f"Please add:\n{missing_test_playbook_configurations}\nto {CONF_PATH} "
@@ -2758,10 +2689,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def release_notes_not_formatted_correctly(link_to_rn_standard):
-        return (
-            f"Not formatted according to "
-            f"release notes standards.\nFix according to {link_to_rn_standard}"
-        )
+        return f"Not formatted according to " f"release notes standards.\nFix according to {link_to_rn_standard}"
 
     @staticmethod
     @error_code_decorator
@@ -2856,9 +2784,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def release_notes_invalid_content_name_header(
-        content_name_header: str, pack_name: str, content_type: str
-    ):
+    def release_notes_invalid_content_name_header(content_name_header: str, pack_name: str, content_type: str):
         return (
             f'The {content_type} "{content_name_header}" does not exist in the "{pack_name}" pack.\n'
             f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n'
@@ -2868,9 +2794,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def release_notes_invalid_header_format(content_type: str, pack_name: str):
-        contents_with_stars = [
-            RN_HEADER_BY_FILE_TYPE[content] for content in RN_CONTENT_ENTITY_WITH_STARS
-        ]
+        contents_with_stars = [RN_HEADER_BY_FILE_TYPE[content] for content in RN_CONTENT_ENTITY_WITH_STARS]
         error = (
             f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n'
             "For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes"
@@ -2879,14 +2803,14 @@ class Errors:
         if content_type in contents_with_stars:
             error = f'Did not find content items headers under "{content_type}" - might be duo to missing "**" symbols in the header.\n{error}'
         else:
-            error = f'Did not find content items headers under "{content_type}" - might be duo to invalid format.\n{error}'
+            error = (
+                f'Did not find content items headers under "{content_type}" - might be duo to invalid format.\n{error}'
+            )
         return error
 
     @staticmethod
     @error_code_decorator
-    def release_notes_docker_image_not_match_yaml(
-        rn_file_name, un_matching_files_list: list, pack_path
-    ):
+    def release_notes_docker_image_not_match_yaml(rn_file_name, un_matching_files_list: list, pack_path):
         message_to_return = f"The {rn_file_name} release notes file contains incompatible Docker images:\n"
         for un_matching_file in un_matching_files_list:
             message_to_return += (
@@ -2894,9 +2818,7 @@ class Errors:
                 f"{un_matching_file.get('rn_version')} but the YML file has dockerimage: "
                 f"{un_matching_file.get('yml_version')}\n"
             )
-        message_to_return += (
-            f"To fix this please run: 'demisto-sdk update-release-notes -i {pack_path}'"
-        )
+        message_to_return += f"To fix this please run: 'demisto-sdk update-release-notes -i {pack_path}'"
         return message_to_return
 
     @staticmethod
@@ -3017,9 +2939,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def integration_version_not_match_playbook_version(
-        main_playbook, command, main_playbook_version
-    ):
+    def integration_version_not_match_playbook_version(main_playbook, command, main_playbook_version):
         return (
             f"Playbook {main_playbook} with version {main_playbook_version} uses the command {command} "
             f"that not implemented in integration that match the main playbook version. This command should be "
@@ -3106,10 +3026,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def description_in_package_and_yml():
-        return (
-            "A description was found both in the "
-            "package and in the yml, please update the package."
-        )
+        return "A description was found both in the " "package and in the yml, please update the package."
 
     @staticmethod
     @error_code_decorator
@@ -3134,10 +3051,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_field_type(file_type, type_fields):
-        return (
-            f"Type: `{file_type}` is not one of available types.\n"
-            f"available types: {type_fields}"
-        )
+        return f"Type: `{file_type}` is not one of available types.\n" f"available types: {type_fields}"
 
     @staticmethod
     @error_code_decorator
@@ -3147,10 +3061,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_incident_field_cli_name_regex(cli_regex):
-        return (
-            f"Field `cliName` contains non-alphanumeric letters. "
-            f"must match regex: {cli_regex}"
-        )
+        return f"Field `cliName` contains non-alphanumeric letters. " f"must match regex: {cli_regex}"
 
     @staticmethod
     @error_code_decorator
@@ -3170,9 +3081,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def from_version_modified_after_rename():
-        return (
-            "fromversion might have been modified, please make sure it hasn't changed."
-        )
+        return "fromversion might have been modified, please make sure it hasn't changed."
 
     @staticmethod
     @error_code_decorator
@@ -3187,9 +3096,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def incident_type_invalid_playbook_id_field():
-        return (
-            'The "playbookId" field is not valid - please enter a non-UUID playbook ID.'
-        )
+        return 'The "playbookId" field is not valid - please enter a non-UUID playbook ID.'
 
     @staticmethod
     @error_code_decorator
@@ -3328,9 +3235,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def missing_field_iin_pack_metadata(pack_meta_file, missing_fields):
-        return (
-            f"{pack_meta_file} - Missing fields in the pack metadata: {missing_fields}"
-        )
+        return f"{pack_meta_file} - Missing fields in the pack metadata: {missing_fields}"
 
     @staticmethod
     @error_code_decorator
@@ -3433,9 +3338,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pack_name_is_not_in_xsoar_standards(
-        reason, excluded_words: Optional[List[str]] = None
-    ):
+    def pack_name_is_not_in_xsoar_standards(reason, excluded_words: Optional[List[str]] = None):
         if reason == "short":
             return (
                 f"Pack metadata {PACK_METADATA_NAME} field is not valid. The pack name must be at least 3"
@@ -3574,9 +3477,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_readme_image_error(
-        path: str, error_type: str, response: Optional[Response] = None
-    ):
+    def invalid_readme_image_error(path: str, error_type: str, response: Optional[Response] = None):
         error = "Error in readme image: "
         if response is not None:
             error += f"got HTTP response code {response.status_code}"
@@ -3601,8 +3502,7 @@ class Errors:
     @error_code_decorator
     def readme_lint_errors(file, validations):
         message_to_return = (
-            f"The {file} readme file is not linted properly. See the validations below"
-            f"\n{validations}"
+            f"The {file} readme file is not linted properly. See the validations below" f"\n{validations}"
         )
         return message_to_return
 
@@ -3610,8 +3510,7 @@ class Errors:
     @error_code_decorator
     def description_lint_errors(rn_file_name, validations):
         message_to_return = (
-            f"The {rn_file_name} description file is not linted properly. See the validations below"
-            f"\n{validations}"
+            f"The {rn_file_name} description file is not linted properly. See the validations below" f"\n{validations}"
         )
 
         return message_to_return
@@ -3620,8 +3519,7 @@ class Errors:
     @error_code_decorator
     def release_notes_lint_errors(file_name, validations):
         message_to_return = (
-            f"The {file_name} release notes file is not linted properly See the validations below"
-            f"\n{validations}"
+            f"The {file_name} release notes file is not linted properly See the validations below" f"\n{validations}"
         )
         return message_to_return
 
@@ -3666,10 +3564,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def from_version_modified():
-        return (
-            "You've added fromversion to an existing "
-            "file in the system, this is not allowed, please undo."
-        )
+        return "You've added fromversion to an existing " "file in the system, this is not allowed, please undo."
 
     @staticmethod
     @error_code_decorator
@@ -3698,8 +3593,7 @@ class Errors:
     @error_code_decorator
     def invalid_core_pack_dependencies(core_pack, dependencies_packs):
         return (
-            f"The core pack {core_pack} cannot depend on non-core packs: {dependencies_packs} - "
-            f"revert this change."
+            f"The core pack {core_pack} cannot depend on non-core packs: {dependencies_packs} - " f"revert this change."
         )
 
     @staticmethod
@@ -3715,9 +3609,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pykwalify_field_undefined_with_path(key_from_error, path):
-        return (
-            f'The field "{key_from_error}" in path {path} was not defined in the scheme'
-        )
+        return f'The field "{key_from_error}" in path {path} was not defined in the scheme'
 
     @staticmethod
     @error_code_decorator
@@ -3769,9 +3661,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def unexpected_field_values_in_non_feed_job(
-        found_selected_fields: bool, found_is_all_fields: bool
-    ):
+    def unexpected_field_values_in_non_feed_job(found_selected_fields: bool, found_is_all_fields: bool):
         found: List[str] = []
         for key, value in {
             found_selected_fields: "selectedFeeds",
@@ -3849,9 +3739,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_from_version_in_new_classifiers():
-        return (
-            "fromVersion field in new classifiers needs to be higher or equal to 6.0.0"
-        )
+        return "fromVersion field in new classifiers needs to be higher or equal to 6.0.0"
 
     @staticmethod
     @error_code_decorator
@@ -3881,9 +3769,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def classifier_non_existent_incident_types(incident_types):
-        return (
-            f"The Classifiers related incident types: {incident_types} where not found."
-        )
+        return f"The Classifiers related incident types: {incident_types} where not found."
 
     @staticmethod
     @error_code_decorator
@@ -3980,10 +3866,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def mismatching_from_to_versions():
-        return (
-            "The `fromversion` and `toversion` are not synchronizied\n"
-            "It is must be fromversion <= toversion."
-        )
+        return "The `fromversion` and `toversion` are not synchronizied\n" "It is must be fromversion <= toversion."
 
     @staticmethod
     @error_code_decorator
@@ -4027,9 +3910,7 @@ class Errors:
 
     @staticmethod
     def id_might_changed():
-        return (
-            "ID may have changed, please make sure to check you have the correct one."
-        )
+        return "ID may have changed, please make sure to check you have the correct one."
 
     @staticmethod
     def id_changed():
@@ -4066,9 +3947,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def xsoar_config_file_malformed(
-        configuration_file_path, schema_file_path, errors_table
-    ):
+    def xsoar_config_file_malformed(configuration_file_path, schema_file_path, errors_table):
         return (
             f'Errors were found in the configuration file: "{configuration_file_path}" '
             f'with schema "{schema_file_path}":\n {errors_table}'
@@ -4196,9 +4075,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pack_metadata_version_diff_from_rn(
-        pack_path, rn_version, pack_metadata_version
-    ):
+    def pack_metadata_version_diff_from_rn(pack_path, rn_version, pack_metadata_version):
         return (
             f"There is a difference between the version in the pack metadata"
             f"file and the version of the latest release note.\nexpected latest release note to be {pack_metadata_version} "
@@ -4231,9 +4108,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def missing_commands_from_readme(yml_name, missing_commands_from_readme):
-        error_msg = (
-            f"The following commands appear in {yml_name} but not in the README file:\n"
-        )
+        error_msg = f"The following commands appear in {yml_name} but not in the README file:\n"
         for command in missing_commands_from_readme:
             error_msg += f"{command}\n"
         return error_msg
@@ -4241,9 +4116,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def empty_outputs_common_paths(paths: Dict[str, List[str]], yaml_path: str):
-        commands_str = "\n".join(
-            f"{command}:\t" + ", ".join(outputs) for command, outputs in paths.items()
-        )
+        commands_str = "\n".join(f"{command}:\t" + ", ".join(outputs) for command, outputs in paths.items())
 
         return (
             f"The following command outputs are missing: \n{commands_str}\n"
@@ -4413,9 +4286,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def uses_items_not_in_marketplaces(
-        content_name: str, marketplaces: list, used_content_items: List[str]
-    ):
+    def uses_items_not_in_marketplaces(content_name: str, marketplaces: list, used_content_items: List[str]):
         return (
             f"Content item '{content_name}' can be used in the '{', '.join(marketplaces)}' marketplaces, however it uses content items: "
             f"'{', '.join(used_content_items)}' which are not supported in all of the marketplaces of '{content_name}'."
@@ -4423,9 +4294,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def uses_items_with_invalid_fromversion(
-        content_name: str, fromversion: str, used_content_items: List[str]
-    ):
+    def uses_items_with_invalid_fromversion(content_name: str, fromversion: str, used_content_items: List[str]):
         return (
             f"Content item '{content_name}' whose from_version is '{fromversion}' uses the content items: "
             f"'{', '.join(used_content_items)}' whose from_version is higher (must be equal to, or less than ..)"
@@ -4433,9 +4302,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def uses_items_with_invalid_toversion(
-        content_name: str, toversion: str, content_items: list
-    ):
+    def uses_items_with_invalid_toversion(content_name: str, toversion: str, content_items: list):
         return (
             f"Content item '{content_name}' whose to_version is '{toversion}' uses the content items: "
             f"'{', '.join(content_items)}' whose to_version is lower (must be equal to, or more than ..)"
@@ -4448,7 +4315,5 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def multiple_packs_with_same_display_name(
-        content_name: str, pack_display_names: List[str]
-    ):
+    def multiple_packs_with_same_display_name(content_name: str, pack_display_names: List[str]):
         return f"Pack '{content_name}' has a duplicate display_name as: {', '.join(pack_display_names)} "

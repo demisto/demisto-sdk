@@ -30,18 +30,11 @@ def server_script_path():
     Returns: Path to the script
 
     """
-    return (
-        Path(__file__).parent.parent
-        / "common"
-        / "markdown_server"
-        / _SERVER_SCRIPT_NAME
-    )
+    return Path(__file__).parent.parent / "common" / "markdown_server" / _SERVER_SCRIPT_NAME
 
 
 @contextmanager
-def start_docker_MDX_server(
-    handle_error: Optional[Callable] = None, file_path: Optional[str] = None
-):
+def start_docker_MDX_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):
     """
         This function will start a docker container running a node server listening on port 6161.
         The container will erase itself after exit.
@@ -58,9 +51,7 @@ def start_docker_MDX_server(
     logging.info("Starting docker mdx server")
     get_docker().pull_image(MDX_SERVER_DOCKER_IMAGE)
     iteration_num = 1
-    while mdx_container := init_global_docker_client().containers.list(
-        filters={"name": DEMISTO_DEPS_DOCKER_NAME}
-    ):
+    while mdx_container := init_global_docker_client().containers.list(filters={"name": DEMISTO_DEPS_DOCKER_NAME}):
         print(f"Found the following container(s): {mdx_container}")
         print(f"{iteration_num=} when trying to remove {mdx_container}")
         remove_container(mdx_container[0])
@@ -73,9 +64,7 @@ def start_docker_MDX_server(
             ports={"6161/tcp": 6161},
         )
     except Exception as error:
-        print(
-            f"Error occurred when trying to create {DEMISTO_DEPS_DOCKER_NAME} container, {error=}"
-        )
+        print(f"Error occurred when trying to create {DEMISTO_DEPS_DOCKER_NAME} container, {error=}")
         print(
             f"all available containers: {[container.name for container in init_global_docker_client().containers.list(all=True)]}"
         )
@@ -123,9 +112,7 @@ def remove_container(container):
 
 
 @contextmanager
-def start_local_MDX_server(
-    handle_error: Optional[Callable] = None, file_path: Optional[str] = None
-):
+def start_local_MDX_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):
     """
         This function will start a node server on the local machine and listen on port 6161
     Args:
@@ -139,9 +126,7 @@ def start_local_MDX_server(
     click.secho("Starting local mdx server")
 
     click.secho(subprocess.check_output(["npm", "list", "--json"]))
-    process = subprocess.Popen(
-        ["node", str(server_script_path())], stdout=subprocess.PIPE, text=True
-    )
+    process = subprocess.Popen(["node", str(server_script_path())], stdout=subprocess.PIPE, text=True)
     line = process.stdout.readline()  # type: ignore
     if EXPECTED_SUCCESS_MESSAGE not in line:
         logging.error(f"MDX local server couldnt be started: {line}")

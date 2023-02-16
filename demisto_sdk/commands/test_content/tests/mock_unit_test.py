@@ -11,23 +11,15 @@ from demisto_sdk.commands.test_content.mock_server import (
 
 
 def test_clean_filename():
-    assert (
-        clean_filename("th)))i(s) is a (test8)8   8") == "th___i_s__is_a__test8_8___8"
-    )
+    assert clean_filename("th)))i(s) is a (test8)8   8") == "th___i_s__is_a__test8_8___8"
     assert clean_filename("n&%ew $r#eplac@es", replace="&%$#@") == "n__ew _r_eplac_es"
 
 
 def test_get_paths():
     test_playbook_id = "test_playbook"
     assert get_mock_file_path(test_playbook_id) == "test_playbook/test_playbook.mock"
-    assert (
-        get_log_file_path(test_playbook_id)
-        == "test_playbook/test_playbook_playback.log"
-    )
-    assert (
-        get_log_file_path(test_playbook_id, record=True)
-        == "test_playbook/test_playbook_record.log"
-    )
+    assert get_log_file_path(test_playbook_id) == "test_playbook/test_playbook_playback.log"
+    assert get_log_file_path(test_playbook_id, record=True) == "test_playbook/test_playbook_record.log"
     assert get_folder_path(test_playbook_id) == "test_playbook/"
 
 
@@ -55,9 +47,7 @@ def test_push_mock_files_thread_safety(mocker):
 
     # Mocking
     mocker.patch.object(MITMProxy, "__init__", lambda *args, **kwargs: None)
-    proxy_instance = MITMProxy(
-        "public_ip", "logging_module", "build_number", "branch_name"
-    )
+    proxy_instance = MITMProxy("public_ip", "logging_module", "build_number", "branch_name")
     # Replacing the ami instance with MagicMock instance so that the check_output command will be mocked as well
     proxy_instance.ami = mocker.MagicMock()
     proxy_instance.logging_module = mocker.MagicMock()

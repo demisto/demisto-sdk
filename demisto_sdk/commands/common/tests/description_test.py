@@ -20,9 +20,7 @@ yaml = YAML_Handler()
         ({"deprecated": True, "category": "ok"}),
     ],
 )
-def test_is_duplicate_description_unified_deprecated_integration(
-    mocker, tmp_path, integration_obj
-):
+def test_is_duplicate_description_unified_deprecated_integration(mocker, tmp_path, integration_obj):
     """
     Given:
         - Case A: Content pack with unified integration
@@ -36,9 +34,7 @@ def test_is_duplicate_description_unified_deprecated_integration(
         - Ensure no warning is printed
     """
     mocker.patch.object(DescriptionValidator, "handle_error")
-    integration_dir = (
-        tmp_path / "Packs" / "SomePack" / "Integrations" / "SomeIntegration"
-    )
+    integration_dir = tmp_path / "Packs" / "SomePack" / "Integrations" / "SomeIntegration"
     integration_dir.mkdir(parents=True)
     unified_integration_yml = integration_dir / "SomeIntegration.yml"
     yaml.dump(integration_obj, unified_integration_yml.open("w"))
@@ -134,9 +130,7 @@ def test_is_invalid_description_name(repo):
 
     integration = pack.create_integration("IntName")
 
-    description_path = glob.glob(
-        os.path.join(os.path.dirname(integration.yml.path), "*_description.md")
-    )
+    description_path = glob.glob(os.path.join(os.path.dirname(integration.yml.path), "*_description.md"))
     new_name = f'{description_path[0].rsplit("/", 1)[0]}/IntName_desc.md'
 
     os.rename(description_path[0], new_name)
@@ -159,9 +153,7 @@ def test_is_invalid_description_integration_name(repo):
     pack = repo.create_pack("PackName")
 
     integration = pack.create_integration("IntName")
-    new_name = (
-        f'{integration.description.path.rsplit("/", 1)[0]}/IntNameTest_description.md'
-    )
+    new_name = f'{integration.description.path.rsplit("/", 1)[0]}/IntNameTest_description.md'
 
     os.rename(integration.description.path, new_name)
     with ChangeCWD(repo.path):
@@ -185,9 +177,7 @@ def test_demisto_in_description(repo):
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("IntName")
     integration.create_default_integration()
-    integration.description.write(
-        "This checks if we have the word Demisto in the description."
-    )
+    integration.description.write("This checks if we have the word Demisto in the description.")
 
     with ChangeCWD(repo.path):
         description_validator = DescriptionValidator(integration.yml.path)
@@ -214,9 +204,7 @@ def test_demisto_not_in_description(repo):
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("IntName")
     integration.create_default_integration()
-    integration.description.write(
-        "This checks if we have the word XSOAR in the description."
-    )
+    integration.description.write("This checks if we have the word XSOAR in the description.")
 
     with ChangeCWD(repo.path):
         description_validator = DescriptionValidator(integration.yml.path)

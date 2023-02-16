@@ -85,9 +85,7 @@ class Contribution:
         self._layoutscontainer_path = self.target_dir / "layoutscontainer"
         self._layoutscontainer_path.mkdir()
 
-    def create_integration(
-        self, name: Optional[str] = None, unified: Optional[bool] = True
-    ):
+    def create_integration(self, name: Optional[str] = None, unified: Optional[bool] = True):
         if name is None:
             name = f"integration{len(self.integrations)}"
         integration = Integration(self._integrations_path, name, self._repo, unified)
@@ -116,9 +114,7 @@ class Contribution:
         script.create_default_script()
         return script
 
-    def _create_json_based(
-        self, name, prefix: str, content: dict = None, dir_path: Path = None
-    ):
+    def _create_json_based(self, name, prefix: str, content: dict = None, dir_path: Path = None):
         if content is None:
             content = {}
         if dir_path:
@@ -138,51 +134,37 @@ class Contribution:
 
     def create_classifier(self, name, content: dict = None):
         prefix = "classifier"
-        classifier = self._create_json_based(
-            name, prefix, content, dir_path=self._classifiers_path
-        )
+        classifier = self._create_json_based(name, prefix, content, dir_path=self._classifiers_path)
         self.classifiers.append(classifier)
         return classifier
 
     def create_mapper(self, name, content: dict = None):
         prefix = "classifier-mapper"
-        mapper = self._create_json_based(
-            name, prefix, content, dir_path=self._mappers_path
-        )
+        mapper = self._create_json_based(name, prefix, content, dir_path=self._mappers_path)
         self.mapper.append(mapper)
         return mapper
 
     def create_dashboard(self, name, content: dict = None):
         prefix = "dashboard"
-        dashboard = self._create_json_based(
-            name, prefix, content, dir_path=self._dashboards_path
-        )
+        dashboard = self._create_json_based(name, prefix, content, dir_path=self._dashboards_path)
         self.dashboards.append(dashboard)
         return dashboard
 
     def create_layout(self, name, content: dict = None):
         prefix = LAYOUT
-        layout = self._create_json_based(
-            name, prefix, content, dir_path=self._layouts_path
-        )
+        layout = self._create_json_based(name, prefix, content, dir_path=self._layouts_path)
         self.layouts.append(layout)
         return layout
 
     def create_layoutscontainer(self, name, content: dict = None):
         prefix = LAYOUTS_CONTAINER
-        layoutscontainer = self._create_json_based(
-            name, prefix, content, dir_path=self._layoutscontainer_path
-        )
+        layoutscontainer = self._create_json_based(name, prefix, content, dir_path=self._layoutscontainer_path)
         self.layouts_containers.append(layoutscontainer)
         return layoutscontainer
 
-    def create_incident_field(
-        self, name, content: dict = None, release_notes: bool = False
-    ):
+    def create_incident_field(self, name, content: dict = None, release_notes: bool = False):
         prefix = "incident-field"
-        incident_field = self._create_json_based(
-            name, prefix, content, dir_path=self._incident_fields_path
-        )
+        incident_field = self._create_json_based(name, prefix, content, dir_path=self._incident_fields_path)
         if release_notes:
             release_notes_file = self._create_text_based(
                 f"{incident_field}_CHANGELOG.md", dir_path=self._incident_fields_path
@@ -193,17 +175,13 @@ class Contribution:
 
     def create_incident_type(self, name, content: dict = None):
         prefix = "incident-type"
-        incident_type = self._create_json_based(
-            name, prefix, content, dir_path=self._incident_types_path
-        )
+        incident_type = self._create_json_based(name, prefix, content, dir_path=self._incident_types_path)
         self.incident_types.append(incident_type)
         return incident_type
 
     def create_indicator_field(self, name, content: dict = None):
         prefix = "incident-field"
-        indicator_field = self._create_json_based(
-            name, prefix, content, dir_path=self._indicator_fields_path
-        )
+        indicator_field = self._create_json_based(name, prefix, content, dir_path=self._indicator_fields_path)
         self.indicator_field.append(indicator_field)
 
     def create_metadata_for_zip(self):
@@ -233,9 +211,7 @@ class Contribution:
         self.create_playbook(name="playbook-SamplePlaybook")
         self.create_metadata_for_zip()
         if zip_dst:
-            self.created_zip_filepath = shutil.make_archive(
-                str(zip_dst / self.name), "zip", self.target_dir
-            )
+            self.created_zip_filepath = shutil.make_archive(str(zip_dst / self.name), "zip", self.target_dir)
         else:
             self.created_zip_filepath = shutil.make_archive(
                 str(self.target_dir.parent / self.name), "zip", self.target_dir

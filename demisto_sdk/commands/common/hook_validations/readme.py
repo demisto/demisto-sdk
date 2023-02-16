@@ -116,19 +116,13 @@ def get_relative_urls(content: str) -> Set[ReadmeUrl]:
     Find all relative urls (md link and href links_ in README.
     Returns: a set of ReadmeUrls objects.
     """
-    relative_urls = re.findall(
-        RELATIVE_MARKDOWN_URL_REGEX, content, re.IGNORECASE | re.MULTILINE
-    )
-    relative_html_urls = re.findall(
-        RELATIVE_HREF_URL_REGEX, content, re.IGNORECASE | re.MULTILINE
-    )
+    relative_urls = re.findall(RELATIVE_MARKDOWN_URL_REGEX, content, re.IGNORECASE | re.MULTILINE)
+    relative_html_urls = re.findall(RELATIVE_HREF_URL_REGEX, content, re.IGNORECASE | re.MULTILINE)
 
     def get_not_empty_urls(urls, is_markdown):
         return {ReadmeUrl(url[0], url[1], is_markdown) for url in urls if url[1]}
 
-    return get_not_empty_urls(relative_urls, True) | get_not_empty_urls(
-        relative_html_urls, False
-    )
+    return get_not_empty_urls(relative_urls, True) | get_not_empty_urls(relative_html_urls, False)
 
 
 def mdx_server_is_up() -> bool:
@@ -237,9 +231,7 @@ class ReadMeValidator(BaseValidator):
         if valid and not html:
             # add to env var the directory of node modules
 
-            os.environ["NODE_PATH"] = (
-                str(self.node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
-            )
+            os.environ["NODE_PATH"] = str(self.node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
             return self.mdx_verify_server()
         return True
 
@@ -247,9 +239,7 @@ class ReadMeValidator(BaseValidator):
         return (
             os.environ.get("DEMISTO_README_VALIDATION")
             or os.environ.get("CI")
-            or ReadMeValidator.are_modules_installed_for_verify(
-                self.content_path  # type: ignore
-            )
+            or ReadMeValidator.are_modules_installed_for_verify(self.content_path)  # type: ignore
             or ReadMeValidator.is_docker_available()
         )
 
@@ -297,9 +287,7 @@ class ReadMeValidator(BaseValidator):
             for path in invalid_paths:
                 path = path[2]
                 alternative_path = path.replace("blob", "raw")
-                error_message, error_code = Errors.image_path_error(
-                    path, alternative_path
-                )
+                error_message, error_code = Errors.image_path_error(path, alternative_path)
                 self.handle_error(error_message, error_code, file_path=self.file_path)
             return False
         return True
@@ -347,9 +335,7 @@ class ReadMeValidator(BaseValidator):
         relative_urls = get_relative_urls(self.readme_content)
         for url_link in relative_urls:
             # striping in case there are whitespaces at the beginning/ending of url.
-            error_message, error_code = Errors.invalid_readme_relative_url_error(
-                url_link.get_url()
-            )
+            error_message, error_code = Errors.invalid_readme_relative_url_error(url_link.get_url())
             if error_code and error_message:  # error was found
                 formatted_error = self.handle_error(
                     error_message,
@@ -372,9 +358,7 @@ class ReadMeValidator(BaseValidator):
             bool: True if the daemon is accessible
         """
         try:
-            docker_client: docker.DockerClient = init_global_docker_client(
-                log_prompt="DockerPing"
-            )
+            docker_client: docker.DockerClient = init_global_docker_client(log_prompt="DockerPing")
             docker_client.ping()
             return True
         except Exception:
@@ -394,9 +378,7 @@ class ReadMeValidator(BaseValidator):
         # Check node exist
         stdout, stderr, exit_code = run_command_os("node -v", cwd=content_path)
         if exit_code:
-            print_warning(
-                f"There is no node installed on the machine, error - {stderr}, {stdout}"
-            )
+            print_warning(f"There is no node installed on the machine, error - {stderr}, {stdout}")
             valid = False
         else:
             # Check npm modules exsits
@@ -464,9 +446,7 @@ class ReadMeValidator(BaseValidator):
                 )
             else:
                 # generates absolute path from relative and checks for the file existence.
-                if not os.path.isfile(
-                    os.path.join(self.file_path.parent, relative_path)
-                ):
+                if not os.path.isfile(os.path.join(self.file_path.parent, relative_path)):
                     error_message, error_code = Errors.invalid_readme_image_error(
                         prefix + f"({relative_path})",
                         error_type="general_readme_relative_error",
@@ -499,9 +479,7 @@ class ReadMeValidator(BaseValidator):
             working_branch_name = GitUtil().get_current_git_branch_or_hash()
         except InvalidGitRepositoryError:
             pass
-        should_print_error = (
-            not is_pack_readme
-        )  # pack readme errors are handled and printed during the pack unique
+        should_print_error = not is_pack_readme  # pack readme errors are handled and printed during the pack unique
         # files validation.
         absolute_links = re.findall(
             r"(!\[.*\])\((https://.*)\)$",
@@ -517,17 +495,14 @@ class ReadMeValidator(BaseValidator):
             error_message: str = ""
             error_code: str = ""
             prefix = "" if "src" in link[0] else link[0].strip()
-            img_url = link[
-                1
-            ].strip()  # striping in case there are whitespaces at the beginning/ending of url.
+            img_url = link[1].strip()  # striping in case there are whitespaces at the beginning/ending of url.
             try:
                 # a link that contains a branch name (other than master) is invalid since the branch will be deleted
                 # after merge to master. in the url path (after '.com'), the third element should be the branch name.
                 # example 'https://raw.githubusercontent.com/demisto/content/<branch-name>/Packs/.../image.png'
                 url_path_elem_list = urlparse(img_url).path.split("/")[1:]
                 if len(url_path_elem_list) >= 3 and (
-                    url_path_elem_list[2] == working_branch_name
-                    and working_branch_name != "master"
+                    url_path_elem_list[2] == working_branch_name and working_branch_name != "master"
                 ):
                     error_message, error_code = Errors.invalid_readme_image_error(
                         prefix + f"({img_url})",
@@ -535,9 +510,7 @@ class ReadMeValidator(BaseValidator):
                     )
                 else:
                     try:
-                        get_url_with_retries(
-                            img_url, retries=5, backoff_factor=1, timeout=10
-                        )
+                        get_url_with_retries(img_url, retries=5, backoff_factor=1, timeout=10)
                     except HTTPError as error:
                         error_message, error_code = Errors.invalid_readme_image_error(
                             prefix + f"({img_url})",
@@ -545,9 +518,7 @@ class ReadMeValidator(BaseValidator):
                             response=error.response,
                         )
             except Exception as ex:
-                click.secho(
-                    f"Could not validate the image link: {img_url}\n {ex}", fg="yellow"
-                )
+                click.secho(f"Could not validate the image link: {img_url}\n {ex}", fg="yellow")
                 continue
 
             if error_message and error_code:
@@ -595,9 +566,7 @@ class ReadMeValidator(BaseValidator):
 
         return is_valid
 
-    def _find_section_in_text(
-        self, sections_list: List[str], ignore_packs: Optional[List[str]] = None
-    ) -> str:
+    def _find_section_in_text(self, sections_list: List[str], ignore_packs: Optional[List[str]] = None) -> str:
         """
         Find if sections from the sections list appear in the readme content and returns an error message.
         Arguments:
@@ -617,9 +586,7 @@ class ReadMeValidator(BaseValidator):
             return errors  # returns empty string
 
         for section in sections_list:
-            required_section = re.findall(
-                rf"{section}", self.readme_content, re.IGNORECASE
-            )
+            required_section = re.findall(rf"{section}", self.readme_content, re.IGNORECASE)
             if required_section:
                 errors += f'Replace "{section}" with a suitable info.\n'
         return errors
@@ -684,18 +651,14 @@ class ReadMeValidator(BaseValidator):
         if not yml_file_paths[0]:
             return True
 
-        yml_file_path = yml_file_paths[
-            1
-        ]  # yml_file_paths[1] should contain the first yml file found in dir
+        yml_file_path = yml_file_paths[1]  # yml_file_paths[1] should contain the first yml file found in dir
 
         # If get_yml_paths_in_dir does not return full path, dir_path should be added to path.
         if dir_path not in yml_file_path:
             yml_file_path = os.path.join(dir_path, yml_file_path)
 
         # Getting the relevant error_code:
-        error, missing_from_readme_error_code = Errors.readme_missing_output_context(
-            "", ""
-        )
+        error, missing_from_readme_error_code = Errors.readme_missing_output_context("", "")
         error, missing_from_yml_error_code = Errors.missing_output_context("", "")
 
         # Only run validation if the validation has not run with is_context_change_in_readme on integration
@@ -712,18 +675,14 @@ class ReadMeValidator(BaseValidator):
         # get YML file's content:
         yml_as_dict = get_yaml(yml_file_path)
 
-        difference_context_paths = compare_context_path_in_yml_and_readme(
-            yml_as_dict, self.readme_content
-        )
+        difference_context_paths = compare_context_path_in_yml_and_readme(yml_as_dict, self.readme_content)
 
         # Add errors to error's list
         for command_name in difference_context_paths:
             if difference_context_paths[command_name].get("only in yml"):
                 error, code = Errors.readme_missing_output_context(
                     command_name,
-                    ", ".join(
-                        difference_context_paths[command_name].get("only in yml")
-                    ),
+                    ", ".join(difference_context_paths[command_name].get("only in yml")),
                 )
                 if self.handle_error(error, code, file_path=self.file_path):
                     valid = False
@@ -731,18 +690,14 @@ class ReadMeValidator(BaseValidator):
             if difference_context_paths[command_name].get("only in readme"):
                 error, code = Errors.missing_output_context(
                     command_name,
-                    ", ".join(
-                        difference_context_paths[command_name].get("only in readme")
-                    ),
+                    ", ".join(difference_context_paths[command_name].get("only in readme")),
                 )
                 if self.handle_error(error, code, file_path=yml_file_path):
                     valid = False
 
         return valid
 
-    def check_readme_content_contain_text(
-        self, text_list: list, is_lower: bool = False, to_split: bool = False
-    ):
+    def check_readme_content_contain_text(self, text_list: list, is_lower: bool = False, to_split: bool = False):
         """
         Args:
             text_list: list of words/sentences to search in line content.
@@ -780,14 +735,10 @@ class ReadMeValidator(BaseValidator):
             return True
 
         is_valid = True
-        invalid_lines = self.check_readme_content_contain_text(
-            text_list=["demisto ", " demisto"], is_lower=True
-        )
+        invalid_lines = self.check_readme_content_contain_text(text_list=["demisto ", " demisto"], is_lower=True)
 
         if invalid_lines:
-            error_message, error_code = Errors.readme_contains_demisto_word(
-                invalid_lines
-            )
+            error_message, error_code = Errors.readme_contains_demisto_word(invalid_lines)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False
 
@@ -803,12 +754,8 @@ class ReadMeValidator(BaseValidator):
         if mdx_server_is_up():
             markdown_response = run_markdownlint(self.readme_content)
             if markdown_response.has_errors:
-                error_message, error_code = Errors.readme_lint_errors(
-                    self.file_path_str
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.readme_lint_errors(self.file_path_str)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
         else:
             return self.should_run_mdx_validation()
@@ -823,14 +770,10 @@ class ReadMeValidator(BaseValidator):
             True if '%%FILL HERE%%' does not exist in the README content, and False if it does.
         """
         is_valid = True
-        invalid_lines = self.check_readme_content_contain_text(
-            text_list=["%%FILL HERE%%"]
-        )
+        invalid_lines = self.check_readme_content_contain_text(text_list=["%%FILL HERE%%"])
 
         if invalid_lines:
-            error_message, error_code = Errors.template_sentence_in_readme(
-                invalid_lines
-            )
+            error_message, error_code = Errors.template_sentence_in_readme(invalid_lines)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False
 
@@ -850,18 +793,14 @@ class ReadMeValidator(BaseValidator):
         )
 
         if invalid_lines:
-            error_message, error_code = Errors.copyright_section_in_readme_error(
-                invalid_lines
-            )
+            error_message, error_code = Errors.copyright_section_in_readme_error(invalid_lines)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False
 
         return is_valid
 
     @staticmethod
-    def start_mdx_server(
-        handle_error: Optional[Callable] = None, file_path: Optional[str] = None
-    ):
+    def start_mdx_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):
         """
         This function will either start a local server or a server in docker depending on the dependencies installed
         If the server is already up a contextmanager yieling true will be returned without restarting the server
@@ -892,9 +831,7 @@ class ReadMeValidator(BaseValidator):
     def add_node_env_vars():
         content_path = get_content_path()
         node_modules_path = content_path / Path("node_modules")  # type: ignore
-        os.environ["NODE_PATH"] = (
-            str(node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
-        )
+        os.environ["NODE_PATH"] = str(node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
 
     @staticmethod
     def _get_error_lists():

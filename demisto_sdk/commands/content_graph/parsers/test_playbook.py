@@ -14,9 +14,7 @@ NON_CIRCLE_TESTS_DIRECTORY = "NonCircleTests"
 
 
 class TestPlaybookParser(PlaybookParser, content_type=ContentType.TEST_PLAYBOOK):
-    def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
-    ) -> None:
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         """Parses the test playbook.
 
         Args:
@@ -32,9 +30,7 @@ class TestPlaybookParser(PlaybookParser, content_type=ContentType.TEST_PLAYBOOK)
         super().__init__(path, pack_marketplaces, is_test_playbook=True)
 
         if self.yml_data.get("script"):
-            raise IncorrectParserException(
-                correct_parser=ScriptParser, is_test_script=True
-            )
+            raise IncorrectParserException(correct_parser=ScriptParser, is_test_script=True)
 
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:

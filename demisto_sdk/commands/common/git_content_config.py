@@ -42,9 +42,7 @@ class GitContentConfig:
     """
 
     BASE_RAW_GITHUB_LINK = r"https://raw.{GITHUB_HOST}/"
-    SDK_API_GITHUB_RELEASES = (
-        r"https://api.github.com/repos/demisto/demisto-sdk/releases"
-    )
+    SDK_API_GITHUB_RELEASES = r"https://api.github.com/repos/demisto/demisto-sdk/releases"
     OFFICIAL_CONTENT_REPO_NAME = "demisto/content"
     OFFICIAL_CONTENT_PROJECT_ID = 2596
     CONTENT_GITHUB_UPSTREAM = r"upstream.*demisto/content"
@@ -55,9 +53,7 @@ class GitContentConfig:
     GITLAB = "gitlab.com"
     CODE_PAN_RUN = "code.pan.run"
 
-    BASE_RAW_GITLAB_LINK = (
-        "https://{GITLAB_HOST}/api/v4/projects/{GITLAB_ID}/repository"
-    )
+    BASE_RAW_GITLAB_LINK = "https://{GITLAB_HOST}/api/v4/projects/{GITLAB_ID}/repository"
 
     ENV_REPO_HOSTNAME_NAME = "DEMISTO_SDK_REPO_HOSTNAME"
 
@@ -71,9 +67,7 @@ class GitContentConfig:
     }
 
     CREDENTIALS = GitCredentials()
-    NOTIFIED_PRIVATE_REPO = (
-        False  # to avoid multiple prints, it's set to True when printing.
-    )
+    NOTIFIED_PRIVATE_REPO = False  # to avoid multiple prints, it's set to True when printing.
 
     def __init__(
         self,
@@ -95,17 +89,11 @@ class GitContentConfig:
             git_provider = GitProvider.GitLab
             self.project_id = int(project_id)
         hostname = urlparse(repo_hostname).hostname
-        self.repo_hostname = (
-            hostname
-            or repo_hostname
-            or os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME)
-        )
+        self.repo_hostname = hostname or repo_hostname or os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME)
         self.git_provider = git_provider
         if not self.repo_hostname:
             self.repo_hostname = (
-                GitContentConfig.GITHUB_USER_CONTENT
-                if git_provider == GitProvider.GitHub
-                else GitContentConfig.GITLAB
+                GitContentConfig.GITHUB_USER_CONTENT if git_provider == GitProvider.GitHub else GitContentConfig.GITLAB
             )
         self.repo_hostname = GitContentConfig.GITHUB_TO_USERCONTENT.get(self.repo_hostname, self.repo_hostname)  # type: ignore[arg-type]
 
@@ -119,16 +107,9 @@ class GitContentConfig:
             hostname = parsed_git.host
             organization = parsed_git.owner
             repo_name = parsed_git.repo
-            if (
-                "@" in parsed_git.host
-            ):  # the library sometimes returns hostname as <username>@<hostname>
-                hostname = parsed_git.host.split("@")[
-                    1
-                ]  # to get proper hostname, without the username or tokens
-        if (
-            self.repo_hostname,
-            self.current_repository,
-        ) not in GitContentConfig.ALLOWED_REPOS and (
+            if "@" in parsed_git.host:  # the library sometimes returns hostname as <username>@<hostname>
+                hostname = parsed_git.host.split("@")[1]  # to get proper hostname, without the username or tokens
+        if (self.repo_hostname, self.current_repository,) not in GitContentConfig.ALLOWED_REPOS and (
             self.repo_hostname,
             self.project_id,
         ) not in GitContentConfig.ALLOWED_REPOS:
@@ -137,9 +118,7 @@ class GitContentConfig:
         if self.git_provider == GitProvider.GitHub:
             # DO NOT USE os.path.join on URLs, it may cause errors
             self.base_api = urljoin(
-                GitContentConfig.BASE_RAW_GITHUB_LINK.format(
-                    GITHUB_HOST=self.repo_hostname
-                ),
+                GitContentConfig.BASE_RAW_GITHUB_LINK.format(GITHUB_HOST=self.repo_hostname),
                 self.current_repository,
             )
         else:  # gitlab
@@ -160,9 +139,7 @@ class GitContentConfig:
                     return parsed_git
             return None
         except Exception as e:
-            logger.warning(
-                f"Could not get repository properties: {e}, using provided configs, or default."
-            )
+            logger.warning(f"Could not get repository properties: {e}, using provided configs, or default.")
             return None
 
     def _set_repo_config(
@@ -203,11 +180,7 @@ class GitContentConfig:
             self.project_id = gitlab_id
             self.repo_hostname = str(gitlab_hostname)
         else:  # github
-            current_repo = (
-                f"{organization}/{repo_name}"
-                if organization and repo_name
-                else self.current_repository
-            )
+            current_repo = f"{organization}/{repo_name}" if organization and repo_name else self.current_repository
             github_hostname, github_repo = (
                 self._search_github_repo(hostname, self.current_repository)
                 or self._search_github_repo(self.repo_hostname, current_repo)
@@ -242,9 +215,7 @@ class GitContentConfig:
 
     @staticmethod
     @lru_cache
-    def _search_github_repo(
-        github_hostname: str, repo_name: str
-    ) -> Optional[Tuple[str, str]]:
+    def _search_github_repo(github_hostname: str, repo_name: str) -> Optional[Tuple[str, str]]:
         """
         Searches the github API for the repo
         Args:
@@ -257,12 +228,8 @@ class GitContentConfig:
         """
         if not github_hostname or not repo_name:
             return None
-        api_host = GitContentConfig.USERCONTENT_TO_GITHUB.get(
-            github_hostname, github_hostname
-        ).lower()
-        github_hostname = GitContentConfig.GITHUB_TO_USERCONTENT.get(
-            github_hostname, github_hostname
-        )
+        api_host = GitContentConfig.USERCONTENT_TO_GITHUB.get(github_hostname, github_hostname).lower()
+        github_hostname = GitContentConfig.GITHUB_TO_USERCONTENT.get(github_hostname, github_hostname)
         if (api_host, repo_name) in GitContentConfig.ALLOWED_REPOS:
             return github_hostname, repo_name
         github_hostname = GitContentConfig.GITHUB_TO_USERCONTENT.get(api_host, api_host)
@@ -325,19 +292,14 @@ class GitContentConfig:
             or gitlab_hostname == GitContentConfig.GITHUB
         ):
             return None
-        if (
-            project_id
-            and (gitlab_hostname, project_id) in GitContentConfig.ALLOWED_REPOS
-        ):
+        if project_id and (gitlab_hostname, project_id) in GitContentConfig.ALLOWED_REPOS:
             return gitlab_hostname, project_id
         try:
             res = None
             if project_id:
                 res = requests.get(
                     f"https://{gitlab_hostname}/api/v4/projects/{project_id}",
-                    headers={
-                        "PRIVATE-TOKEN": GitContentConfig.CREDENTIALS.gitlab_token
-                    },
+                    headers={"PRIVATE-TOKEN": GitContentConfig.CREDENTIALS.gitlab_token},
                     timeout=10,
                     verify=False,
                 )
@@ -348,20 +310,14 @@ class GitContentConfig:
                 res = requests.get(
                     f"https://{gitlab_hostname}/api/v4/projects",
                     params={"search": repo_name},
-                    headers={
-                        "PRIVATE-TOKEN": GitContentConfig.CREDENTIALS.gitlab_token
-                    },
+                    headers={"PRIVATE-TOKEN": GitContentConfig.CREDENTIALS.gitlab_token},
                     timeout=10,
                     verify=False,
                 )
                 if not res.ok:
                     return None
                 search_results = res.json()
-                assert (
-                    search_results
-                    and isinstance(search_results, list)
-                    and isinstance(search_results[0], dict)
-                )
+                assert search_results and isinstance(search_results, list) and isinstance(search_results[0], dict)
                 gitlab_id = search_results[0].get("id")
                 if gitlab_id is None:
                     return None

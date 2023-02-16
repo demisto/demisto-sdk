@@ -82,9 +82,7 @@ class ContentItem(BaseContent):
 
         """
         return [
-            r
-            for r in self.relationships_data[RelationshipType.USES]
-            if r.content_item_to.database_id == r.target_id
+            r for r in self.relationships_data[RelationshipType.USES] if r.content_item_to.database_id == r.target_id
         ]
 
     @property
@@ -104,20 +102,14 @@ class ContentItem(BaseContent):
     @property
     def handler(self) -> XSOAR_Handler:
         # we use a high value so the code lines will not break
-        return (
-            JSON_Handler()
-            if self.path.suffix.lower() == ".json"
-            else YAML_Handler(width=50_000)
-        )
+        return JSON_Handler() if self.path.suffix.lower() == ".json" else YAML_Handler(width=50_000)
 
     @property
     def data(self) -> dict:
         with self.path.open() as f:
             return self.handler.load(f)
 
-    def prepare_for_upload(
-        self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
-    ) -> dict:
+    def prepare_for_upload(self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
         data = self.data
         return MarketplaceSuffixPreparer.prepare(data, marketplace)
 
@@ -133,9 +125,7 @@ class ContentItem(BaseContent):
         if marketplace and marketplace != MarketplaceVersions.XSOAR:
             data = self.data
             if "id" in summary_res:
-                summary_res["id"] = (
-                    data.get("commonfields", {}).get("id_x2") or self.object_id
-                )
+                summary_res["id"] = data.get("commonfields", {}).get("id_x2") or self.object_id
             if "name" in summary_res:
                 summary_res["name"] = data.get("name_x2") or self.name
         return summary_res
@@ -164,11 +154,7 @@ class ContentItem(BaseContent):
                     name = name.removeprefix(f"{prefix}-")  # type: ignore[attr-defined]
                 except AttributeError:
                     # not supported in python 3.8
-                    name = (
-                        name[: len(prefix) + 1]
-                        if name.startswith(f"{prefix}-")
-                        else name
-                    )
+                    name = name[: len(prefix) + 1] if name.startswith(f"{prefix}-") else name
         normalized = f"{self.content_type.server_name}-{name}"
         logger.debug(f"Normalized file name from {name} to {normalized}")
         return normalized

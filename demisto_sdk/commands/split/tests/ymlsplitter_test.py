@@ -172,9 +172,7 @@ def test_extract_to_package_format_modeling_rule(tmpdir):
     )
     assert extractor.extract_to_package_format() == 0
     # check code
-    with open(
-        out.join("OktaModelingRule").join("OktaModelingRule.xif"), encoding="utf-8"
-    ) as f:
+    with open(out.join("OktaModelingRule").join("OktaModelingRule.xif"), encoding="utf-8") as f:
         file_data = f.read()
         assert "[MODEL: dataset=okta_okta_raw, model=Audit]" in file_data
 
@@ -300,10 +298,7 @@ def test_extract_code__with_apimodule(tmpdir):
         assert "### GENERATED CODE ###" not in file_data
         assert "### END GENERATED CODE ###" not in file_data
         assert "from NGINXApiModule import *" in file_data
-        assert (
-            "def create_nginx_server_conf(file_path: str, port: int, params: Dict):"
-            not in file_data
-        )
+        assert "def create_nginx_server_conf(file_path: str, port: int, params: Dict):" not in file_data
 
 
 def test_extract_code_modules_old_format(tmpdir):
@@ -363,9 +358,7 @@ def test_get_output_path_relative(repo):
 
     output_path = extractor.get_output_path()
     assert output_path.is_absolute()
-    assert output_path.relative_to(pack.path) == Path(integration.path).relative_to(
-        pack.path
-    )
+    assert output_path.relative_to(pack.path) == Path(integration.path).relative_to(pack.path)
 
 
 def test_get_output_path_empty_output():
@@ -392,23 +385,14 @@ def test_extract_to_package_format_pwsh(tmpdir):
         assert ". $PSScriptRoot\\CommonServerPowerShell.ps1\n" in file_data
         assert file_data[-1] == "\n"
     # check description
-    with open(
-        out.join("PowerShellRemotingOverSSH").join(
-            "PowerShellRemotingOverSSH_description.md"
-        )
-    ) as f:
+    with open(out.join("PowerShellRemotingOverSSH").join("PowerShellRemotingOverSSH_description.md")) as f:
         file_data = f.read()
-        assert (
-            "Username and password are both associated with the user in the target machine"
-            in file_data
-        )
+        assert "Username and password are both associated with the user in the target machine" in file_data
     # check readme
     with open(out.join("PowerShellRemotingOverSSH").join("README.md")) as f:
         file_data = f.read()
         assert "This is a sample test README" in file_data
-    with open(
-        out.join("PowerShellRemotingOverSSH").join("PowerShellRemotingOverSSH.yml")
-    ) as f:
+    with open(out.join("PowerShellRemotingOverSSH").join("PowerShellRemotingOverSSH.yml")) as f:
         yaml_obj = yaml.load(f)
         assert yaml_obj["fromversion"] == "5.5.0"
         assert not yaml_obj["script"]["script"]
@@ -432,9 +416,7 @@ def test_update_api_module_contribution(mocker):
     )
     import_name = "from MicrosoftApiModule import *  # noqa: E402"
     module_name = "MicrosoftApiModule"
-    code = IntegrationScriptUnifier.insert_module_code(
-        DUMMY_SCRIPT, {import_name: module_name}
-    )
+    code = IntegrationScriptUnifier.insert_module_code(DUMMY_SCRIPT, {import_name: module_name})
     yml_splitter = YmlSplitter(
         input=f"{git_path()}/demisto_sdk/tests/test_files/modelingrule-OktaModelingRules.yml",
         file_type="modelingrule",

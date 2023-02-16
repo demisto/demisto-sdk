@@ -10,9 +10,7 @@ SECRETS_CMD = "secrets"
 
 def mock_git(mocker, is_merge: bool = False):
     mocker.patch.object(SecretsValidator, "get_branch_name", return_value="branch name")
-    mocker.patch(
-        "demisto_sdk.commands.secrets.secrets.run_command", return_value=is_merge
-    )
+    mocker.patch("demisto_sdk.commands.secrets.secrets.run_command", return_value=is_merge)
 
 
 def test_integration_secrets_incident_field_positive(mocker, repo):
@@ -79,10 +77,7 @@ def test_integration_secrets_integration_negative(mocker, repo):
     assert f"In File: {integration.yml.rel_path}" in result.stdout
     assert "The following expressions were marked as secrets:" in result.stdout
     assert secret_string in result.stdout
-    assert (
-        "Remove or whitelist secrets in order to proceed, then re-commit"
-        in result.stdout
-    )
+    assert "Remove or whitelist secrets in order to proceed, then re-commit" in result.stdout
     assert result.stderr == ""
     assert result.exit_code == 1
 
@@ -113,17 +108,13 @@ def test_integration_secrets_integration_positive(mocker, repo):
     )
     with ChangeCWD(integration.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(
-            main, [SECRETS_CMD, "-wl", repo.secrets.path], catch_exceptions=False
-        )
+        result = runner.invoke(main, [SECRETS_CMD, "-wl", repo.secrets.path], catch_exceptions=False)
     assert 0 == result.exit_code
     assert not result.stderr
     assert "no secrets were found" in result.stdout
 
 
-def test_integration_secrets_integration_global_whitelist_positive_using_git(
-    mocker, repo
-):
+def test_integration_secrets_integration_global_whitelist_positive_using_git(mocker, repo):
     """
     Given
     - An integration yml with secrets.
@@ -212,9 +203,7 @@ def test_integration_secrets_integration_positive_with_input_option(mocker, repo
     integration.code.write("text that should not get caught")
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
-        result = CliRunner(mix_stderr=False).invoke(
-            main, [SECRETS_CMD, "--input", integration.code.rel_path]
-        )
+        result = CliRunner(mix_stderr=False).invoke(main, [SECRETS_CMD, "--input", integration.code.rel_path])
     assert "Finished validating secrets, no secrets were found" in result.stdout
 
 
@@ -237,15 +226,11 @@ def test_integration_secrets_integration_negative_with_input_option(mocker, repo
     integration.code.write("email@not.whitlisted\n")
     # Change working dir to repo
     with ChangeCWD(integration.repo_path):
-        result = CliRunner(mix_stderr=False).invoke(
-            main, [SECRETS_CMD, "--input", integration.code.rel_path]
-        )
+        result = CliRunner(mix_stderr=False).invoke(main, [SECRETS_CMD, "--input", integration.code.rel_path])
     assert "Secrets were found in the following files" in result.stdout
 
 
-def test_integration_secrets_integration_negative_with_input_option_and_whitelist(
-    mocker, repo
-):
+def test_integration_secrets_integration_negative_with_input_option_and_whitelist(mocker, repo):
     """
     Given
     - A file containing secret

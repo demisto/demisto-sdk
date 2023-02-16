@@ -23,9 +23,7 @@ yaml = YAML_Handler()
 
 @pytest.fixture
 def demisto_client(mocker):
-    mocker.patch(
-        "demisto_sdk.commands.upload.uploader.demisto_client", return_valure="object"
-    )
+    mocker.patch("demisto_sdk.commands.upload.uploader.demisto_client", return_valure="object")
     mocker.patch(
         "demisto_sdk.commands.upload.uploader.get_demisto_version",
         return_value=parse("6.0.0"),
@@ -53,41 +51,18 @@ def test_integration_upload_pack_positive(demisto_client, repo):
     - Ensure upload runs successfully.
     - Ensure success upload message is printed.
     """
-    pack_path = join(
-        DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure"
-    )
+    pack_path = join(DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure")
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
     assert result.exit_code == 0
     assert "\nSUCCESSFUL UPLOADS:" in click.secho.call_args_list[4][0][0]
-    assert (
-        "│ FeedAzure.yml                              │ integration   │"
-        in click.secho.call_args_list[5][0][0]
-    )
-    assert (
-        "│ FeedAzure_test.yml                         │ playbook      │"
-        in click.secho.call_args_list[5][0][0]
-    )
-    assert (
-        "│ just_a_test_script.yml                     │ testscript    │"
-        in click.secho.call_args_list[5][0][0]
-    )
-    assert (
-        "│ playbook-FeedAzure_test_copy_no_prefix.yml │ testplaybook  │"
-        in click.secho.call_args_list[5][0][0]
-    )
-    assert (
-        "│ script-prefixed_automation.yml             │ testscript    │"
-        in click.secho.call_args_list[5][0][0]
-    )
-    assert (
-        "│ FeedAzure_test.yml                         │ testplaybook  │"
-        in click.secho.call_args_list[5][0][0]
-    )
-    assert (
-        "│ incidentfield-city.json                    │ incidentfield │"
-        in click.secho.call_args_list[5][0][0]
-    )
+    assert "│ FeedAzure.yml                              │ integration   │" in click.secho.call_args_list[5][0][0]
+    assert "│ FeedAzure_test.yml                         │ playbook      │" in click.secho.call_args_list[5][0][0]
+    assert "│ just_a_test_script.yml                     │ testscript    │" in click.secho.call_args_list[5][0][0]
+    assert "│ playbook-FeedAzure_test_copy_no_prefix.yml │ testplaybook  │" in click.secho.call_args_list[5][0][0]
+    assert "│ script-prefixed_automation.yml             │ testscript    │" in click.secho.call_args_list[5][0][0]
+    assert "│ FeedAzure_test.yml                         │ testplaybook  │" in click.secho.call_args_list[5][0][0]
+    assert "│ incidentfield-city.json                    │ incidentfield │" in click.secho.call_args_list[5][0][0]
 
     assert not result.stderr
 
@@ -128,9 +103,7 @@ def test_zipped_pack_upload_positive(repo, mocker, demisto_client):
         shutil.unpack_archive(f"{dir}/uploadable_packs.zip", dir, "zip")
         shutil.unpack_archive(f"{dir}/test-pack.zip", dir, "zip")
 
-        with open(
-            f"{dir}/Layouts/layoutscontainer-test-pack_layoutcontainer.json"
-        ) as file:
+        with open(f"{dir}/Layouts/layoutscontainer-test-pack_layoutcontainer.json") as file:
             layout_content = json.load(file)
 
         # validate json based content entities are being unified before getting zipped
@@ -164,17 +137,12 @@ def test_integration_upload_path_does_not_exist(demisto_client):
     - Ensure upload fails.
     - Ensure failure upload message is printed to the stderr as the failure caused by click.Path.convert check.
     """
-    invalid_dir_path = join(
-        DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/DoesNotExist"
-    )
+    invalid_dir_path = join(DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/DoesNotExist")
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [UPLOAD_CMD, "-i", invalid_dir_path, "--insecure"])
     assert result.exit_code == 2
     assert isinstance(result.exception, SystemExit)
-    assert (
-        f"Invalid value for '-i' / '--input': Path '{invalid_dir_path}' does not exist"
-        in result.stderr
-    )
+    assert f"Invalid value for '-i' / '--input': Path '{invalid_dir_path}' does not exist" in result.stderr
 
 
 def test_integration_upload_script_invalid_path(demisto_client, tmp_path):
@@ -192,9 +160,7 @@ def test_integration_upload_script_invalid_path(demisto_client, tmp_path):
     invalid_scripts_dir = tmp_path / "Script" / "InvalidScript"
     invalid_scripts_dir.mkdir(parents=True)
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(
-        main, [UPLOAD_CMD, "-i", str(invalid_scripts_dir), "--insecure"]
-    )
+    result = runner.invoke(main, [UPLOAD_CMD, "-i", str(invalid_scripts_dir), "--insecure"])
     assert result.exit_code == 1
     assert (
         f"""
@@ -219,19 +185,10 @@ def test_integration_upload_pack_invalid_connection_params(mocker):
     - Ensure pack is not uploaded and correct error message is printed.
     """
 
-    pack_path = join(
-        DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure"
-    )
-    mocker.patch(
-        "demisto_sdk.commands.upload.uploader.demisto_client", return_valure="object"
-    )
-    mocker.patch(
-        "demisto_sdk.commands.upload.uploader.get_demisto_version", return_value="0"
-    )
+    pack_path = join(DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure")
+    mocker.patch("demisto_sdk.commands.upload.uploader.demisto_client", return_valure="object")
+    mocker.patch("demisto_sdk.commands.upload.uploader.get_demisto_version", return_value="0")
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
     assert result.exit_code == 1
-    assert (
-        "Could not connect to XSOAR server. Try checking your connection configurations."
-        in result.stdout
-    )
+    assert "Could not connect to XSOAR server. Try checking your connection configurations." in result.stdout

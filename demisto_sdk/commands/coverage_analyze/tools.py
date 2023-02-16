@@ -14,15 +14,15 @@ json = JSON_Handler()
 
 ONE_DAY = timedelta(days=1)
 LATEST_URL = "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json"
-HISTORY_URL = "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/history/coverage-min/{date}.json"
+HISTORY_URL = (
+    "https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/history/coverage-min/{date}.json"
+)
 
 
 logger = logging_setup(2)
 
 
-def get_total_coverage(
-    filename: Optional[str] = None, date: Optional[datetime] = None
-) -> float:
+def get_total_coverage(filename: Optional[str] = None, date: Optional[datetime] = None) -> float:
     """
     Args:
         filename:   The path to the coverage.json/coverage-min.json file.

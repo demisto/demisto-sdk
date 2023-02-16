@@ -47,9 +47,7 @@ def build_flake8_command(files: List[Path]) -> str:
     # This is the same config used in `tox.ini` file in content
     # We will probably want to use that in the future for this and all linters
     command += "--ignore=W605,F403,F405,W503 "
-    command += (
-        "--exclude=_script_template_docker.py,./CommonServerPython.py,./demistomock.py "
-    )
+    command += "--exclude=_script_template_docker.py,./CommonServerPython.py,./demistomock.py "
     command += "--max-line-length 130 "
     command += "--per-file-ignores=nudge_external_prs.py:E231,E251,E999 "
 
@@ -157,9 +155,7 @@ def build_xsoar_linter_command(files: List[Path], support_level: str = "base") -
     return command
 
 
-def build_mypy_command(
-    files: List[Path], version: str, content_repo: Path = None
-) -> str:
+def build_mypy_command(files: List[Path], version: str, content_repo: Path = None) -> str:
     """Build command to execute with mypy module
         https://mypy.readthedocs.io/en/stable/command_line.html
     Args:
@@ -194,9 +190,7 @@ def build_mypy_command(
     command += " --show-traceback"
 
     # Point cache to be .mypy_cache in the content repo
-    command += (
-        f" --cache-dir={content_repo/'.mypy_cache' if content_repo else '/dev/null'}"
-    )
+    command += f" --cache-dir={content_repo/'.mypy_cache' if content_repo else '/dev/null'}"
     # Generating path patterns - file1 file2 file3,..
     files_list = [str(item) for item in files]
     command += " " + " ".join(files_list)
@@ -217,9 +211,7 @@ def build_vulture_command(files: List[Path], pack_path: Path) -> str:
     """
     command = "vulture"
     # Excluded files
-    command += (
-        f" --min-confidence {os.environ.get('VULTURE_MIN_CONFIDENCE_LEVEL', '100')}"
-    )
+    command += f" --min-confidence {os.environ.get('VULTURE_MIN_CONFIDENCE_LEVEL', '100')}"
     # File to be excluded when performing lints check
     command += f" --exclude={','.join(excluded_files)}"
     # Whitelist vulture
@@ -231,9 +223,7 @@ def build_vulture_command(files: List[Path], pack_path: Path) -> str:
     return command
 
 
-def build_pylint_command(
-    files: List[Path], docker_version: Optional[str] = None
-) -> str:
+def build_pylint_command(files: List[Path], docker_version: Optional[str] = None) -> str:
     """Build command to execute with pylint module
         https://docs.pylint.org/en/1.6.0/run.html#invoking-pylint
     Args:
@@ -323,8 +313,6 @@ def build_pwsh_test_command() -> str:
     """
     command = "Invoke-Pester"
     # Return exit code when finished
-    command += (
-        " -Configuration '@{Run=@{Exit=$true}; Output=@{Verbosity=\"Detailed\"}}'"
-    )
+    command += " -Configuration '@{Run=@{Exit=$true}; Output=@{Verbosity=\"Detailed\"}}'"
 
     return f"pwsh -Command {command}"

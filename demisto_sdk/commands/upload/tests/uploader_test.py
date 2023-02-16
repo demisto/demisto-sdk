@@ -85,13 +85,9 @@ def demisto_client_configure(mocker):
 
 def test_upload_integration_positive(demisto_client_configure, mocker):
     mocker.patch.object(demisto_client, "configure", return_value="object")
-    mocker.patch.object(
-        IntegrationScript, "get_supported_native_images", return_value=[]
-    )
+    mocker.patch.object(IntegrationScript, "get_supported_native_images", return_value=[])
     integration_pckg_path = f"{git_path()}/demisto_sdk/tests/test_files/content_repo_example/Integrations/Securonix/"
-    integration_pckg_uploader = Uploader(
-        input=integration_pckg_path, insecure=False, verbose=False
-    )
+    integration_pckg_uploader = Uploader(input=integration_pckg_path, insecure=False, verbose=False)
     with patch.object(integration_pckg_uploader, "client", return_value="ok"):
         assert integration_pckg_uploader.upload() == 0
 
@@ -115,9 +111,7 @@ def test_upload_script_positive(demisto_client_configure, mocker):
     mocker.patch.object(uploader, "client")
     uploader.upload()
 
-    assert [
-        (script_name, FileType.SCRIPT.value)
-    ] == uploader.successfully_uploaded_files
+    assert [(script_name, FileType.SCRIPT.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_playbook_positive(demisto_client_configure, mocker):
@@ -140,9 +134,7 @@ def test_upload_playbook_positive(demisto_client_configure, mocker):
     mocker.patch.object(uploader, "client")
     uploader.upload()
 
-    assert [
-        (playbook_name, FileType.PLAYBOOK.value)
-    ] == uploader.successfully_uploaded_files
+    assert [(playbook_name, FileType.PLAYBOOK.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_widget_positive(demisto_client_configure, mocker):
@@ -165,9 +157,7 @@ def test_upload_widget_positive(demisto_client_configure, mocker):
     mocker.patch.object(uploader, "client")
     uploader.upload()
 
-    assert [
-        (widget_name, FileType.WIDGET.value)
-    ] == uploader.successfully_uploaded_files
+    assert [(widget_name, FileType.WIDGET.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_dashboard_positive(demisto_client_configure, mocker):
@@ -190,9 +180,7 @@ def test_upload_dashboard_positive(demisto_client_configure, mocker):
     mocker.patch.object(uploader, "client")
     uploader.upload()
 
-    assert [
-        ("upload_test_dashboard.json", FileType.DASHBOARD.value)
-    ] == uploader.successfully_uploaded_files
+    assert [("upload_test_dashboard.json", FileType.DASHBOARD.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_layout_positive(demisto_client_configure, mocker):
@@ -223,9 +211,7 @@ def test_upload_layout_positive(demisto_client_configure, mocker):
     uploader.upload()
 
     assert not unify_mocker.called
-    assert [
-        (layout_name, FileType.LAYOUT.value)
-    ] == uploader.successfully_uploaded_files
+    assert [(layout_name, FileType.LAYOUT.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_layout_container_positive(demisto_client_configure, mocker):
@@ -255,9 +241,7 @@ def test_upload_layout_container_positive(demisto_client_configure, mocker):
     uploader.upload()
 
     assert unify_mocker.called
-    assert [
-        (layout_name, FileType.LAYOUTS_CONTAINER.value)
-    ] == uploader.successfully_uploaded_files
+    assert [(layout_name, FileType.LAYOUTS_CONTAINER.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_incident_type_positive(demisto_client_configure, mocker):
@@ -279,9 +263,7 @@ def test_upload_incident_type_positive(demisto_client_configure, mocker):
     mocker.patch.object(uploader, "client")
     uploader.upload()
 
-    assert [
-        (incident_type_name, FileType.INCIDENT_TYPE.value)
-    ] == uploader.successfully_uploaded_files
+    assert [(incident_type_name, FileType.INCIDENT_TYPE.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_classifier_positive(demisto_client_configure, mocker):
@@ -303,9 +285,7 @@ def test_upload_classifier_positive(demisto_client_configure, mocker):
     mocker.patch.object(uploader, "client")
     uploader.upload()
 
-    assert [
-        (classifier_name, FileType.OLD_CLASSIFIER.value)
-    ] == uploader.successfully_uploaded_files
+    assert [(classifier_name, FileType.OLD_CLASSIFIER.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_incident_field_positive(demisto_client_configure, mocker):
@@ -322,14 +302,14 @@ def test_upload_incident_field_positive(demisto_client_configure, mocker):
     """
     mocker.patch.object(demisto_client, "configure", return_value="object")
     incident_field_name = "XDR_Alert_Count.json"
-    incident_field_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/IncidentFields/{incident_field_name}"
+    incident_field_path = (
+        f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/IncidentFields/{incident_field_name}"
+    )
     uploader = Uploader(input=incident_field_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, "client")
     uploader.upload()
 
-    assert [
-        (incident_field_name, FileType.INCIDENT_FIELD.value)
-    ] == uploader.successfully_uploaded_files
+    assert [(incident_field_name, FileType.INCIDENT_FIELD.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_indicator_field_positive(demisto_client_configure, mocker):
@@ -344,14 +324,14 @@ def test_upload_indicator_field_positive(demisto_client_configure, mocker):
     """
     mocker.patch.object(demisto_client, "configure", return_value="object")
     indicator_field_name = "dns.json"
-    indicator_field_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/IndicatorFields/{indicator_field_name}"
+    indicator_field_path = (
+        f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/IndicatorFields/{indicator_field_name}"
+    )
     uploader = Uploader(input=indicator_field_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, "client")
     uploader.upload()
 
-    assert [
-        (indicator_field_name, FileType.INDICATOR_FIELD.value)
-    ] == uploader.successfully_uploaded_files
+    assert [(indicator_field_name, FileType.INDICATOR_FIELD.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_reputation_positive(demisto_client_configure, mocker):
@@ -374,9 +354,7 @@ def test_upload_reputation_positive(demisto_client_configure, mocker):
     mocker.patch.object(uploader, "client")
     uploader.upload()
 
-    assert [
-        (reputation_name, FileType.REPUTATION.value)
-    ] == uploader.successfully_uploaded_files
+    assert [(reputation_name, FileType.REPUTATION.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_report_positive(demisto_client_configure, mocker, repo):
@@ -399,9 +377,7 @@ def test_upload_report_positive(demisto_client_configure, mocker, repo):
         uploader = Uploader(input=report.path, insecure=False, verbose=False)
         mocker.patch.object(uploader, "client")
         uploader.upload()
-    assert [
-        (report.name, FileType.REPORT.value)
-    ] == uploader.successfully_uploaded_files
+    assert [(report.name, FileType.REPORT.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_incident_type_correct_file_change(demisto_client_configure, mocker):
@@ -486,7 +462,9 @@ def test_upload_incident_field_correct_file_change(demisto_client_configure, moc
 
     mocker.patch.object(demisto_client, "configure", return_value=demisto_client_mocker)
     incident_field_name = "XDR_Alert_Count.json"
-    incident_field_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/IncidentFields/{incident_field_name}"
+    incident_field_path = (
+        f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/IncidentFields/{incident_field_name}"
+    )
     uploader = Uploader(input=incident_field_path, insecure=False, verbose=False)
     uploader.client.import_incident_fields = MagicMock(side_effect=save_file)
     uploader.upload()
@@ -510,9 +488,7 @@ def test_upload_an_integration_directory(demisto_client_configure, mocker):
         - Ensure success upload message is printed as expected
     """
     mocker.patch.object(demisto_client, "configure", return_value="object")
-    mocker.patch.object(
-        IntegrationScript, "get_supported_native_images", return_value=[]
-    )
+    mocker.patch.object(IntegrationScript, "get_supported_native_images", return_value=[])
     integration_dir_name = "UploadTest"
     integration_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Integrations/{integration_dir_name}"
     uploader = Uploader(input=integration_path, insecure=False, verbose=False)
@@ -521,9 +497,7 @@ def test_upload_an_integration_directory(demisto_client_configure, mocker):
     _, integration_yml_name = get_yml_paths_in_dir(integration_path)
     integration_yml_name = integration_yml_name.split("/")[-1]
 
-    assert [
-        (integration_yml_name, FileType.INTEGRATION.value)
-    ] == uploader.successfully_uploaded_files
+    assert [(integration_yml_name, FileType.INTEGRATION.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_a_script_directory(demisto_client_configure, mocker):
@@ -539,9 +513,7 @@ def test_upload_a_script_directory(demisto_client_configure, mocker):
         - Ensure success upload message is printed as expected
     """
     mocker.patch.object(demisto_client, "configure", return_value="object")
-    mocker.patch.object(
-        IntegrationScript, "get_supported_native_images", return_value=[]
-    )
+    mocker.patch.object(IntegrationScript, "get_supported_native_images", return_value=[])
     script_dir_name = "DummyScript"
     scripts_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/{script_dir_name}"
     uploader = Uploader(input=scripts_path, insecure=False, verbose=False)
@@ -550,9 +522,7 @@ def test_upload_a_script_directory(demisto_client_configure, mocker):
     _, script_yml_name = get_yml_paths_in_dir(scripts_path)
     uploaded_file_name = script_yml_name.split("/")[-1]
 
-    assert [
-        (uploaded_file_name, FileType.SCRIPT.value)
-    ] == uploader.successfully_uploaded_files
+    assert [(uploaded_file_name, FileType.SCRIPT.value)] == uploader.successfully_uploaded_files
 
 
 def test_upload_incident_fields_directory(demisto_client_configure, mocker):
@@ -571,9 +541,7 @@ def test_upload_incident_fields_directory(demisto_client_configure, mocker):
     mocker.patch.object(demisto_client, "configure", return_value="object")
     mocker.patch("click.secho")
     dir_name = "IncidentFields"
-    incident_fields_path = (
-        f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/{dir_name}/"
-    )
+    incident_fields_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/{dir_name}/"
     uploader = Uploader(input=incident_fields_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, "client")
     assert uploader.upload() == 0
@@ -594,9 +562,7 @@ def test_upload_pack(demisto_client_configure, mocker):
         - Check that all expected content entities that appear in the pack are reported as uploaded.
     """
     mocker.patch.object(demisto_client, "configure", return_value="object")
-    mocker.patch.object(
-        IntegrationScript, "get_supported_native_images", return_value=[]
-    )
+    mocker.patch.object(IntegrationScript, "get_supported_native_images", return_value=[])
     pack_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack"
     uploader = Uploader(input=pack_path, insecure=False, verbose=False)
     mocker.patch.object(uploader, "client")
@@ -618,9 +584,7 @@ def test_upload_pack(demisto_client_configure, mocker):
         "upload_test_dashboard.json",
     ]
     assert status_code == 0
-    uploaded_objects = [
-        obj_pair[0] for obj_pair in uploader.successfully_uploaded_files
-    ]
+    uploaded_objects = [obj_pair[0] for obj_pair in uploader.successfully_uploaded_files]
     for entity in expected_entities:
         assert entity in uploaded_objects
 
@@ -641,12 +605,8 @@ def test_upload_invalid_path(demisto_client_configure, mocker):
         def import_incident_fields(self, file):
             pass
 
-    mocker.patch.object(
-        demisto_client, "configure", return_value=demisto_client_mocker()
-    )
-    script_dir_path = (
-        f"{git_path()}/demisto_sdk/tests/test_files/content_repo_not_exists/Scripts/"
-    )
+    mocker.patch.object(demisto_client, "configure", return_value=demisto_client_mocker())
+    script_dir_path = f"{git_path()}/demisto_sdk/tests/test_files/content_repo_not_exists/Scripts/"
     script_dir_uploader = Uploader(input=script_dir_path, insecure=False, verbose=False)
     assert script_dir_uploader.upload() == 1
 
@@ -686,12 +646,9 @@ def test_parse_error_response_ssl(demisto_client_configure, mocker):
     file_type = "playbook"
     file_name = "SomePlaybookName.yml"
     api_exception = ApiException(reason="[SSL: CERTIFICATE_VERIFY_FAILED]")
-    message = parse_error_response(
-        error=api_exception, file_type=file_type, file_name=file_name
-    )
+    message = parse_error_response(error=api_exception, file_type=file_type, file_name=file_name)
     assert (
-        message
-        == "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self signed certificate.\n"
+        message == "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self signed certificate.\n"
         "Try running the command with --insecure flag."
     )
 
@@ -711,9 +668,7 @@ def test_parse_error_response_connection(demisto_client_configure, mocker):
     file_type = "widget"
     file_name = "SomeWidgetName.json"
     api_exception = ApiException(reason="Failed to establish a new connection:")
-    error_message = parse_error_response(
-        error=api_exception, file_type=file_type, file_name=file_name
-    )
+    error_message = parse_error_response(error=api_exception, file_type=file_type, file_name=file_name)
     assert (
         error_message == "Failed to establish a new connection: Connection refused.\n"
         "Try checking your BASE url configuration."
@@ -738,9 +693,7 @@ def test_parse_error_response_forbidden(demisto_client_configure, mocker):
         reason="Forbidden",
     )
     api_exception.body = json.dumps({"status": 403, "error": "Error message"})
-    message = parse_error_response(
-        error=api_exception, file_type=file_type, file_name=file_name
-    )
+    message = parse_error_response(error=api_exception, file_type=file_type, file_name=file_name)
     assert message == "Error message\nTry checking your API key configuration."
 
 
@@ -899,9 +852,7 @@ class TestZippedPackUpload:
 
     """
 
-    @pytest.mark.parametrize(
-        argnames="input", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
-    )
+    @pytest.mark.parametrize(argnames="input", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP])
     def test_upload_zipped_packs(self, mocker, input):
         """
         Given:
@@ -916,34 +867,18 @@ class TestZippedPackUpload:
         mock_api_client(mocker)
         mocker.patch.object(API_CLIENT, "upload_content_packs")
         mocker.patch.object(Pack, "is_server_version_ge", return_value=False)
-        mocker.patch.object(
-            tools, "update_server_configuration", return_value=(None, None, {})
-        )
-        mocker.patch.object(
-            Uploader, "notify_user_should_override_packs", return_value=True
-        )
+        mocker.patch.object(tools, "update_server_configuration", return_value=(None, None, {}))
+        mocker.patch.object(Uploader, "notify_user_should_override_packs", return_value=True)
 
         # run
         click.Context(command=upload).invoke(upload, input=input)
 
         # validate
-        disable_verification_call_args = (
-            tools.update_server_configuration.call_args_list[0][1]
-        )
-        enable_verification_call_args = (
-            tools.update_server_configuration.call_args_list[1][1]
-        )
+        disable_verification_call_args = tools.update_server_configuration.call_args_list[0][1]
+        enable_verification_call_args = tools.update_server_configuration.call_args_list[1][1]
 
-        assert (
-            disable_verification_call_args["server_configuration"][
-                constants.PACK_VERIFY_KEY
-            ]
-            == "false"
-        )
-        assert (
-            constants.PACK_VERIFY_KEY
-            in enable_verification_call_args["config_keys_to_delete"]
-        )
+        assert disable_verification_call_args["server_configuration"][constants.PACK_VERIFY_KEY] == "false"
+        assert constants.PACK_VERIFY_KEY in enable_verification_call_args["config_keys_to_delete"]
         uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]["file"]
         assert str(uploaded_file_path) == input
 
@@ -964,9 +899,7 @@ class TestZippedPackUpload:
         click.Context(command=upload).invoke(upload, input=TEST_PACK, zip=True)
 
         # validate
-        assert (
-            "uploadable_packs.zip" in Uploader.zipped_pack_uploader.call_args[1]["path"]
-        )
+        assert "uploadable_packs.zip" in Uploader.zipped_pack_uploader.call_args[1]["path"]
 
     def test_server_config_after_upload(self, mocker):
         """
@@ -986,33 +919,17 @@ class TestZippedPackUpload:
             "update_server_configuration",
             return_value=(None, None, {constants.PACK_VERIFY_KEY: "prev_val"}),
         )
-        mocker.patch.object(
-            Uploader, "notify_user_should_override_packs", return_value=True
-        )
+        mocker.patch.object(Uploader, "notify_user_should_override_packs", return_value=True)
 
         # run
         click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
 
         # validate
-        disable_verification_call_args = (
-            tools.update_server_configuration.call_args_list[0][1]
-        )
-        enable_verification_call_args = (
-            tools.update_server_configuration.call_args_list[1][1]
-        )
+        disable_verification_call_args = tools.update_server_configuration.call_args_list[0][1]
+        enable_verification_call_args = tools.update_server_configuration.call_args_list[1][1]
 
-        assert (
-            disable_verification_call_args["server_configuration"][
-                constants.PACK_VERIFY_KEY
-            ]
-            == "false"
-        )
-        assert (
-            enable_verification_call_args["server_configuration"][
-                constants.PACK_VERIFY_KEY
-            ]
-            == "prev_val"
-        )
+        assert disable_verification_call_args["server_configuration"][constants.PACK_VERIFY_KEY] == "false"
+        assert enable_verification_call_args["server_configuration"][constants.PACK_VERIFY_KEY] == "prev_val"
 
     @pytest.mark.parametrize(argnames="input", argvalues=[INVALID_ZIP, None])
     def test_upload_invalid_zip_path(self, mocker, input):
@@ -1033,9 +950,7 @@ class TestZippedPackUpload:
 
         # validate
         status == 1
-        uploader.click.secho.call_args_list[1].args == INVALID_ZIP_ERROR.format(
-            path=input
-        )
+        uploader.click.secho.call_args_list[1].args == INVALID_ZIP_ERROR.format(path=input)
 
     def test_error_in_disable_pack_verification(self, mocker):
         """
@@ -1080,12 +995,8 @@ class TestZippedPackUpload:
         mock_api_client(mocker)
         mocker.patch.object(uploader, "parse_error_response")
         mocker.patch.object(Pack, "is_server_version_ge", return_value=False)
-        mocker.patch.object(
-            tools, "update_server_configuration", new=conditional_exception_raiser
-        )
-        mocker.patch.object(
-            Uploader, "notify_user_should_override_packs", return_value=True
-        )
+        mocker.patch.object(tools, "update_server_configuration", new=conditional_exception_raiser)
+        mocker.patch.object(Uploader, "notify_user_should_override_packs", return_value=True)
         mocker.patch.object(API_CLIENT, "upload_content_packs")
 
         # run
@@ -1094,9 +1005,7 @@ class TestZippedPackUpload:
         # validate
         assert status == 1
         assert API_CLIENT.upload_content_packs.call_count == 1
-        exp_err_msg = TURN_VERIFICATION_ERROR_MSG.format(
-            action=DELETE_VERIFY_KEY_ACTION
-        )
+        exp_err_msg = TURN_VERIFICATION_ERROR_MSG.format(action=DELETE_VERIFY_KEY_ACTION)
         assert str(uploader.parse_error_response.call_args[0][0]) == exp_err_msg
 
     def test_error_in_upload_to_marketplace(self, mocker):
@@ -1109,44 +1018,24 @@ class TestZippedPackUpload:
             - validate the status result are 1 (error) and the pack verification was enabled again
         """
         mock_api_client(mocker)
-        mocker.patch.object(
-            tools, "update_server_configuration", return_value=(None, None, {})
-        )
+        mocker.patch.object(tools, "update_server_configuration", return_value=(None, None, {}))
         mocker.patch.object(Pack, "is_server_version_ge", return_value=False)
         mocker.patch.object(API_CLIENT, "upload_content_packs", new=exception_raiser)
-        mocker.patch.object(
-            Uploader, "notify_user_should_override_packs", return_value=True
-        )
+        mocker.patch.object(Uploader, "notify_user_should_override_packs", return_value=True)
 
         # run
         status = click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
 
         # validate
 
-        disable_verification_call_args = (
-            tools.update_server_configuration.call_args_list[0][1]
-        )
-        enable_verification_call_args = (
-            tools.update_server_configuration.call_args_list[1][1]
-        )
+        disable_verification_call_args = tools.update_server_configuration.call_args_list[0][1]
+        enable_verification_call_args = tools.update_server_configuration.call_args_list[1][1]
         assert status == 1
-        assert (
-            disable_verification_call_args["server_configuration"][
-                constants.PACK_VERIFY_KEY
-            ]
-            == "false"
-        )
-        assert (
-            constants.PACK_VERIFY_KEY
-            in enable_verification_call_args["config_keys_to_delete"]
-        )
+        assert disable_verification_call_args["server_configuration"][constants.PACK_VERIFY_KEY] == "false"
+        assert constants.PACK_VERIFY_KEY in enable_verification_call_args["config_keys_to_delete"]
 
-    @pytest.mark.parametrize(
-        argnames="user_answer, exp_call_count", argvalues=[("y", 1), ("n", 0)]
-    )
-    def test_notify_user_about_overwrite_pack(
-        self, mocker, user_answer, exp_call_count
-    ):
+    @pytest.mark.parametrize(argnames="user_answer, exp_call_count", argvalues=[("y", 1), ("n", 0)])
+    def test_notify_user_about_overwrite_pack(self, mocker, user_answer, exp_call_count):
         """
         Given:
             - Zip of pack to upload where this pack already installed
@@ -1157,9 +1046,7 @@ class TestZippedPackUpload:
         """
         mock_api_client(mocker)
         mocker.patch("builtins.input", return_value=user_answer)
-        mocker.patch.object(
-            tools, "update_server_configuration", return_value=(None, None, {})
-        )
+        mocker.patch.object(tools, "update_server_configuration", return_value=(None, None, {}))
         mocker.patch.object(
             API_CLIENT,
             "generic_request",
@@ -1190,10 +1077,7 @@ class TestZippedPackUpload:
         result = runner.invoke(main, ["upload", "-i", invalid_zip_path, "--insecure"])
         assert result.exit_code == 2
         assert isinstance(result.exception, SystemExit)
-        assert (
-            f"Invalid value for '-i' / '--input': Path '{invalid_zip_path}' does not exist"
-            in result.stderr
-        )
+        assert f"Invalid value for '-i' / '--input': Path '{invalid_zip_path}' does not exist" in result.stderr
 
     def test_upload_custom_packs_from_config_file(self, mocker):
         """
@@ -1210,12 +1094,8 @@ class TestZippedPackUpload:
         mock_api_client(mocker)
         mocker.patch.object(API_CLIENT, "upload_content_packs")
         mocker.patch.object(Pack, "is_server_version_ge", return_value=False)
-        mocker.patch.object(
-            tools, "update_server_configuration", return_value=(None, None, {})
-        )
-        mocker.patch.object(
-            Uploader, "notify_user_should_override_packs", return_value=True
-        )
+        mocker.patch.object(tools, "update_server_configuration", return_value=(None, None, {}))
+        mocker.patch.object(Uploader, "notify_user_should_override_packs", return_value=True)
 
         # run
         status_code = click.Context(command=upload).invoke(
@@ -1224,31 +1104,17 @@ class TestZippedPackUpload:
         )
 
         # validate
-        disable_verification_call_args = (
-            tools.update_server_configuration.call_args_list[0][1]
-        )
-        enable_verification_call_args = (
-            tools.update_server_configuration.call_args_list[1][1]
-        )
+        disable_verification_call_args = tools.update_server_configuration.call_args_list[0][1]
+        enable_verification_call_args = tools.update_server_configuration.call_args_list[1][1]
 
-        assert (
-            disable_verification_call_args["server_configuration"][
-                constants.PACK_VERIFY_KEY
-            ]
-            == "false"
-        )
-        assert (
-            constants.PACK_VERIFY_KEY
-            in enable_verification_call_args["config_keys_to_delete"]
-        )
+        assert disable_verification_call_args["server_configuration"][constants.PACK_VERIFY_KEY] == "false"
+        assert constants.PACK_VERIFY_KEY in enable_verification_call_args["config_keys_to_delete"]
         assert status_code == 0
 
         uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]["file"]
         assert "uploadable_packs.zip" in str(uploaded_file_path)
 
-    @pytest.mark.parametrize(
-        argnames="input", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
-    )
+    @pytest.mark.parametrize(argnames="input", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP])
     def test_upload_with_skip_verify(self, mocker, input):
         """
         Given:
@@ -1263,9 +1129,7 @@ class TestZippedPackUpload:
         mock_api_client(mocker)
         mocker.patch.object(API_CLIENT, "upload_content_packs")
         mocker.patch.object(Pack, "is_server_version_ge", return_value=True)
-        mocker.patch.object(
-            Uploader, "notify_user_should_override_packs", return_value=True
-        )
+        mocker.patch.object(Uploader, "notify_user_should_override_packs", return_value=True)
 
         # run
         click.Context(command=upload).invoke(upload, input=input)
@@ -1276,9 +1140,7 @@ class TestZippedPackUpload:
         assert str(uploaded_file_path) == input
         assert skip_value == "true"
 
-    @pytest.mark.parametrize(
-        argnames="input", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
-    )
+    @pytest.mark.parametrize(argnames="input", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP])
     def test_upload_without_skip_verify(self, mocker, input):
         """
         Given:
@@ -1292,13 +1154,9 @@ class TestZippedPackUpload:
         # prepare
         mock_api_client(mocker)
         mocker.patch.object(API_CLIENT, "upload_content_packs")
-        mocker.patch.object(
-            tools, "update_server_configuration", return_value=(None, None, {})
-        )
+        mocker.patch.object(tools, "update_server_configuration", return_value=(None, None, {}))
         mocker.patch.object(Pack, "is_server_version_ge", return_value=False)
-        mocker.patch.object(
-            Uploader, "notify_user_should_override_packs", return_value=True
-        )
+        mocker.patch.object(Uploader, "notify_user_should_override_packs", return_value=True)
 
         # run
         click.Context(command=upload).invoke(upload, input=input)
@@ -1312,9 +1170,7 @@ class TestZippedPackUpload:
             skip_value = None
         assert not skip_value
 
-    @pytest.mark.parametrize(
-        argnames="input", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
-    )
+    @pytest.mark.parametrize(argnames="input", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP])
     def test_upload_with_skip_validation(self, mocker, input):
         """
         Given:
@@ -1329,9 +1185,7 @@ class TestZippedPackUpload:
         mock_api_client(mocker)
         mocker.patch.object(API_CLIENT, "upload_content_packs")
         mocker.patch.object(Pack, "is_server_version_ge", return_value=True)
-        mocker.patch.object(
-            Uploader, "notify_user_should_override_packs", return_value=True
-        )
+        mocker.patch.object(Uploader, "notify_user_should_override_packs", return_value=True)
 
         # run
         click.Context(command=upload).invoke(upload, input=input, skip_validation=True)
@@ -1342,9 +1196,7 @@ class TestZippedPackUpload:
         assert str(uploaded_file_path) == input
         assert skip_value == "true"
 
-    @pytest.mark.parametrize(
-        argnames="input", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
-    )
+    @pytest.mark.parametrize(argnames="input", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP])
     def test_upload_without_skip_validate(self, mocker, input):
         """
         Given:
@@ -1358,13 +1210,9 @@ class TestZippedPackUpload:
         # prepare
         mock_api_client(mocker)
         mocker.patch.object(API_CLIENT, "upload_content_packs")
-        mocker.patch.object(
-            tools, "update_server_configuration", return_value=(None, None, {})
-        )
+        mocker.patch.object(tools, "update_server_configuration", return_value=(None, None, {}))
         mocker.patch.object(Pack, "is_server_version_ge", return_value=False)
-        mocker.patch.object(
-            Uploader, "notify_user_should_override_packs", return_value=True
-        )
+        mocker.patch.object(Uploader, "notify_user_should_override_packs", return_value=True)
 
         # run
         click.Context(command=upload).invoke(upload, input=input)
@@ -1425,9 +1273,7 @@ class TestZippedPackUpload:
         mocker.patch.object(Uploader, "zipped_pack_uploader")
 
         # run
-        click.Context(command=upload).invoke(
-            upload, input=TEST_XSIAM_PACK, xsiam=False, zip=True
-        )
+        click.Context(command=upload).invoke(upload, input=TEST_XSIAM_PACK, xsiam=False, zip=True)
 
         zip_file_path = Uploader.zipped_pack_uploader.call_args[1]["path"]
         assert "uploadable_packs.zip" in zip_file_path
@@ -1459,18 +1305,14 @@ class TestItemDetacher:
             return_value=[json.dumps([{"name": "TestPack"}])],
         )
 
-        ItemDetacher.detach_item(
-            ItemDetacher(API_CLIENT), file_id="file", file_path="Scripts/file_path"
-        )
+        ItemDetacher.detach_item(ItemDetacher(API_CLIENT), file_id="file", file_path="Scripts/file_path")
 
         assert secho.call_count == 1
         assert secho.call_args_list[0][0][0] == "\nFile: file was detached"
 
     def test_extract_items_from_dir(self, mocker, repo):
         repo = repo.setup_one_pack(name="Pack")
-        list_items = ItemDetacher(
-            client=API_CLIENT, file_path=repo.path
-        ).extract_items_from_dir()
+        list_items = ItemDetacher(client=API_CLIENT, file_path=repo.path).extract_items_from_dir()
         assert len(list_items) == 8
         for item in list_items:
             assert (
@@ -1490,12 +1332,7 @@ class TestItemDetacher:
         ],
     )
     def test_is_valid_file_for_detach(self, file_path, res):
-        assert (
-            ItemDetacher(client=API_CLIENT).is_valid_file_for_detach(
-                file_path=file_path
-            )
-            == res
-        )
+        assert ItemDetacher(client=API_CLIENT).is_valid_file_for_detach(file_path=file_path) == res
 
     @pytest.mark.parametrize(
         argnames="file_path, res",
@@ -1507,21 +1344,14 @@ class TestItemDetacher:
         ],
     )
     def test_find_item_type_to_detach(self, file_path, res):
-        assert (
-            ItemDetacher(client=API_CLIENT).find_item_type_to_detach(
-                file_path=file_path
-            )
-            == res
-        )
+        assert ItemDetacher(client=API_CLIENT).find_item_type_to_detach(file_path=file_path) == res
 
     def test_find_item_id_to_detach(self, repo):
         pack = repo.create_pack("Pack1")
         playbook1 = pack.create_playbook("MyPlay1")
         playbook1.create_default_playbook()
         assert (
-            ItemDetacher(
-                client=API_CLIENT, file_path=f"{playbook1.path}/MyPlay1.yml"
-            ).find_item_id_to_detach()
+            ItemDetacher(client=API_CLIENT, file_path=f"{playbook1.path}/MyPlay1.yml").find_item_id_to_detach()
             == "sample playbook"
         )
 
@@ -1534,9 +1364,7 @@ class TestItemDetacher:
         )
 
         repo = repo.setup_one_pack(name="Pack")
-        detached_items_ids = ItemDetacher(
-            client=API_CLIENT, file_path=repo.path
-        ).detach_item_manager()
+        detached_items_ids = ItemDetacher(client=API_CLIENT, file_path=repo.path).detach_item_manager()
         assert len(detached_items_ids) == 8
         for file_id in detached_items_ids:
             assert file_id in [

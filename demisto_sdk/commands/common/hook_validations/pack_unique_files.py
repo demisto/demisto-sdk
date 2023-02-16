@@ -142,11 +142,7 @@ class PackUniqueFilesValidator(BaseValidator):
         if not prev_ver:
             git_util = GitUtil(repo=Content.git())
             main_branch = git_util.handle_prev_ver()[1]
-            self.prev_ver = (
-                f"origin/{main_branch}"
-                if not main_branch.startswith("origin")
-                else main_branch
-            )
+            self.prev_ver = f"origin/{main_branch}" if not main_branch.startswith("origin") else main_branch
         else:
             self.prev_ver = prev_ver
 
@@ -187,9 +183,7 @@ class PackUniqueFilesValidator(BaseValidator):
         if raw:
             errors = "\n  ".join(self._errors)
         elif self._errors:
-            errors = " - Issues with unique files in pack: {}\n  {}".format(
-                self.pack, "\n  ".join(self._errors)
-            )
+            errors = " - Issues with unique files in pack: {}\n  {}".format(self.pack, "\n  ".join(self._errors))
 
         return errors
 
@@ -207,9 +201,7 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         list_of_files = glob.glob(self.pack_path + "/ReleaseNotes/*")
         list_of_release_notes = [os.path.basename(file) for file in list_of_files]
-        list_of_versions = [
-            rn[: rn.rindex(".")].replace("_", ".") for rn in list_of_release_notes
-        ]
+        list_of_versions = [rn[: rn.rindex(".")].replace("_", ".") for rn in list_of_release_notes]
         if list_of_versions:
             list_of_versions.sort(key=LooseVersion)
             return list_of_versions[-1]
@@ -225,9 +217,7 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         if not os.path.isfile(self._get_pack_file_path(file_name)):
             error_function = (
-                Errors.required_pack_file_does_not_exist
-                if is_required
-                else Errors.pack_file_does_not_exist
+                Errors.required_pack_file_does_not_exist if is_required else Errors.pack_file_does_not_exist
             )
             if self._add_error(error_function(file_name), file_name):
                 if is_required:
@@ -267,9 +257,7 @@ class PackUniqueFilesValidator(BaseValidator):
             if file_content:
                 return file_content.split(delimiter)
         except ValueError:
-            if not self._add_error(
-                Errors.cant_parse_pack_file_to_list(file_name), file_name
-            ):
+            if not self._add_error(Errors.cant_parse_pack_file_to_list(file_name), file_name):
                 return True
 
         return False
@@ -286,9 +274,7 @@ class PackUniqueFilesValidator(BaseValidator):
     # secrets validation
     def validate_secrets_file(self):
         """Validate everything related to .secrets-ignore file"""
-        if self._is_pack_file_exists(self.secrets_file) and all(
-            [self._is_secrets_file_structure_valid()]
-        ):
+        if self._is_pack_file_exists(self.secrets_file) and all([self._is_secrets_file_structure_valid()]):
             return True
 
         return False
@@ -313,9 +299,7 @@ class PackUniqueFilesValidator(BaseValidator):
             specific_validations=self.specific_validations,
         )
         errors = readme_validator.check_readme_relative_image_paths(is_pack_readme=True)
-        errors += readme_validator.check_readme_absolute_image_paths(
-            is_pack_readme=True
-        )
+        errors += readme_validator.check_readme_absolute_image_paths(is_pack_readme=True)
         if errors:
             self._errors.extend(errors)
             return False
@@ -354,12 +338,8 @@ class PackUniqueFilesValidator(BaseValidator):
         Validates that README.md file is not empty for partner packs and packs with playbooks
         """
         playbooks_path = os.path.join(self.pack_path, "Playbooks")
-        contains_playbooks = (
-            os.path.exists(playbooks_path) and len(os.listdir(playbooks_path)) != 0
-        )
-        if (
-            self.support == "partner" or contains_playbooks
-        ) and self._check_if_file_is_empty(self.readme_file):
+        contains_playbooks = os.path.exists(playbooks_path) and len(os.listdir(playbooks_path)) != 0
+        if (self.support == "partner" or contains_playbooks) and self._check_if_file_is_empty(self.readme_file):
             if self._add_error(Errors.empty_readme_error(), self.readme_file):
                 return False
 
@@ -373,15 +353,11 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         metadata = self._read_metadata_content()
         metadata_description = metadata.get(PACK_METADATA_DESC, "").lower().strip()
-        if self._is_pack_file_exists(
-            self.readme_file
-        ) and not self._check_if_file_is_empty(self.readme_file):
+        if self._is_pack_file_exists(self.readme_file) and not self._check_if_file_is_empty(self.readme_file):
             pack_readme = self._read_file_content(self.readme_file)
             readme_content = pack_readme.lower().strip()
             if metadata_description == readme_content:
-                if self._add_error(
-                    Errors.readme_equal_description_error(), self.readme_file
-                ):
+                if self._add_error(Errors.readme_equal_description_error(), self.readme_file):
                     return False
 
         return True
@@ -396,9 +372,7 @@ class PackUniqueFilesValidator(BaseValidator):
     # pack ignore validation
     def validate_pack_ignore_file(self):
         """Validate everything related to .pack-ignore file"""
-        if self._is_pack_file_exists(self.pack_ignore_file) and all(
-            [self._is_pack_ignore_file_structure_valid()]
-        ):
+        if self._is_pack_file_exists(self.pack_ignore_file) and all([self._is_pack_ignore_file_structure_valid()]):
             return True
 
         return False
@@ -464,14 +438,10 @@ class PackUniqueFilesValidator(BaseValidator):
         # check validity of pack metadata mandatory fields
         pack_name: str = metadata_file_content.get(PACK_METADATA_NAME, "")
         if not pack_name or "fill mandatory field" in pack_name:
-            if self._add_error(
-                Errors.pack_metadata_name_not_valid(), self.pack_meta_file
-            ):
+            if self._add_error(Errors.pack_metadata_name_not_valid(), self.pack_meta_file):
                 return False
         if len(pack_name) < 3:
-            if self._add_error(
-                Errors.pack_name_is_not_in_xsoar_standards("short"), self.pack_meta_file
-            ):
+            if self._add_error(Errors.pack_name_is_not_in_xsoar_standards("short"), self.pack_meta_file):
                 return False
         if pack_name[0].islower():
             if self._add_error(
@@ -487,9 +457,7 @@ class PackUniqueFilesValidator(BaseValidator):
                 return False
         if not self.name_does_not_contain_excluded_word(pack_name):
             if self._add_error(
-                Errors.pack_name_is_not_in_xsoar_standards(
-                    "excluded_word", EXCLUDED_DISPLAY_NAME_WORDS
-                ),
+                Errors.pack_name_is_not_in_xsoar_standards("excluded_word", EXCLUDED_DISPLAY_NAME_WORDS),
                 self.pack_meta_file,
             ):
                 return False
@@ -504,19 +472,14 @@ class PackUniqueFilesValidator(BaseValidator):
             (bool) False if name corresponding pack name contains excluded name, true otherwise.
         """
         lowercase_name = pack_name.lower()
-        return not any(
-            excluded_word in lowercase_name
-            for excluded_word in EXCLUDED_DISPLAY_NAME_WORDS
-        )
+        return not any(excluded_word in lowercase_name for excluded_word in EXCLUDED_DISPLAY_NAME_WORDS)
 
     def _is_empty_dir(self, dir_path: Path) -> bool:
         return dir_path.stat().st_size == 0
 
     def _is_integration_pack(self):
         integration_dir: Path = Path(self.pack_path) / INTEGRATIONS_DIR
-        return integration_dir.exists() and not self._is_empty_dir(
-            dir_path=integration_dir
-        )
+        return integration_dir.exists() and not self._is_empty_dir(dir_path=integration_dir)
 
     @error_codes("PA105,PA106,PA107,PA109,PA110,PA115,PA111,PA129,PA118,PA112")
     def _is_pack_meta_file_structure_valid(self):
@@ -534,14 +497,10 @@ class PackUniqueFilesValidator(BaseValidator):
                 ):
                     raise BlockingValidationFailureException()
 
-            missing_fields = [
-                field for field in PACK_METADATA_FIELDS if field not in metadata.keys()
-            ]
+            missing_fields = [field for field in PACK_METADATA_FIELDS if field not in metadata.keys()]
             if missing_fields:
                 if self._add_error(
-                    Errors.missing_field_iin_pack_metadata(
-                        self.pack_meta_file, missing_fields
-                    ),
+                    Errors.missing_field_iin_pack_metadata(self.pack_meta_file, missing_fields),
                     self.pack_meta_file,
                 ):
                     raise BlockingValidationFailureException()
@@ -551,9 +510,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
             description_name = metadata.get(PACK_METADATA_DESC, "").lower()
             if not description_name or "fill mandatory field" in description_name:
-                if self._add_error(
-                    Errors.pack_metadata_field_invalid(), self.pack_meta_file
-                ):
+                if self._add_error(Errors.pack_metadata_field_invalid(), self.pack_meta_file):
                     raise BlockingValidationFailureException()
 
             if not self.is_pack_metadata_desc_too_long(description_name):
@@ -593,9 +550,7 @@ class PackUniqueFilesValidator(BaseValidator):
                     value = field[0]
                     if not value:
                         if self._add_error(
-                            Errors.empty_field_in_pack_metadata(
-                                self.pack_meta_file, list_field
-                            ),
+                            Errors.empty_field_in_pack_metadata(self.pack_meta_file, list_field),
                             self.pack_meta_file,
                         ):
                             return False
@@ -624,9 +579,7 @@ class PackUniqueFilesValidator(BaseValidator):
                 return False
 
         except (ValueError, TypeError):
-            if self._add_error(
-                Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file
-            ):
+            if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):
                 raise BlockingValidationFailureException()
 
         return True
@@ -645,13 +598,8 @@ class PackUniqueFilesValidator(BaseValidator):
     @error_codes("PA113")
     def validate_support_details_exist(self, pack_meta_file_content):
         """Validate either email or url exist in contributed pack details."""
-        if (
-            not pack_meta_file_content[PACK_METADATA_URL]
-            and not pack_meta_file_content[PACK_METADATA_EMAIL]
-        ):
-            if self._add_error(
-                Errors.pack_metadata_missing_url_and_email(), self.pack_meta_file
-            ):
+        if not pack_meta_file_content[PACK_METADATA_URL] and not pack_meta_file_content[PACK_METADATA_EMAIL]:
+            if self._add_error(Errors.pack_metadata_missing_url_and_email(), self.pack_meta_file):
                 return False
 
         return True
@@ -674,10 +622,7 @@ class PackUniqueFilesValidator(BaseValidator):
         """Check email and url in contributed pack metadata details."""
         try:
             pack_meta_file_content = self._read_metadata_content()
-            if (
-                pack_meta_file_content[PACK_METADATA_SUPPORT]
-                in SUPPORTED_CONTRIBUTORS_LIST
-            ):
+            if pack_meta_file_content[PACK_METADATA_SUPPORT] in SUPPORTED_CONTRIBUTORS_LIST:
                 return all(
                     [
                         self.validate_support_details_exist(pack_meta_file_content),
@@ -686,9 +631,7 @@ class PackUniqueFilesValidator(BaseValidator):
                 )
 
         except (ValueError, TypeError):
-            if self._add_error(
-                Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file
-            ):
+            if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):
                 return False
 
         return True
@@ -704,15 +647,11 @@ class PackUniqueFilesValidator(BaseValidator):
         try:
             pack_meta_file_content = self._read_metadata_content()
             if pack_meta_file_content[PACK_METADATA_SUPPORT] not in SUPPORT_TYPES:
-                self._add_error(
-                    Errors.pack_metadata_invalid_support_type(), self.pack_meta_file
-                )
+                self._add_error(Errors.pack_metadata_invalid_support_type(), self.pack_meta_file)
                 return False
             self.support = pack_meta_file_content[PACK_METADATA_SUPPORT]
         except (ValueError, TypeError):
-            if self._add_error(
-                Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file
-            ):
+            if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):
                 return False
 
         return True
@@ -731,9 +670,7 @@ class PackUniqueFilesValidator(BaseValidator):
         try:
             pack_meta_file_content = self._read_metadata_content()
             current_usecases = tools.get_current_usecases()
-            non_approved_usecases = set(
-                pack_meta_file_content[PACK_METADATA_USE_CASES]
-            ) - set(current_usecases)
+            non_approved_usecases = set(pack_meta_file_content[PACK_METADATA_USE_CASES]) - set(current_usecases)
             if non_approved_usecases:
                 if self._add_error(
                     Errors.pack_metadata_non_approved_usecases(non_approved_usecases),
@@ -784,9 +721,7 @@ class PackUniqueFilesValidator(BaseValidator):
                 for marketplace in marketplaces:
                     if marketplace not in approved_prefixes:
                         if self._add_error(
-                            Errors.pack_metadata_non_approved_tag_prefix(
-                                tag, approved_prefixes
-                            ),
+                            Errors.pack_metadata_non_approved_tag_prefix(tag, approved_prefixes),
                             self.pack_meta_file,
                         ):
                             is_valid = False
@@ -856,13 +791,9 @@ class PackUniqueFilesValidator(BaseValidator):
     def extract_non_approved_tags(self, pack_tags, marketplaces) -> Set[str]:
         approved_tags = tools.get_approved_tags_from_branch()
 
-        non_approved_tags = set(pack_tags.get("common", [])) - set(
-            approved_tags.get("common", [])
-        )
+        non_approved_tags = set(pack_tags.get("common", [])) - set(approved_tags.get("common", []))
         for marketplace in marketplaces:
-            non_approved_tags |= set(pack_tags.get(marketplace, [])) - set(
-                approved_tags.get(marketplace, [])
-            )
+            non_approved_tags |= set(pack_tags.get(marketplace, [])) - set(approved_tags.get(marketplace, []))
 
         return non_approved_tags
 
@@ -883,9 +814,7 @@ class PackUniqueFilesValidator(BaseValidator):
             return False
         if parse(rn_version) != parse(current_version):
             self._add_error(
-                Errors.pack_metadata_version_diff_from_rn(
-                    self.pack, rn_version, current_version
-                ),
+                Errors.pack_metadata_version_diff_from_rn(self.pack, rn_version, current_version),
                 metadata_file_path,
             )
             return False
@@ -919,14 +848,10 @@ class PackUniqueFilesValidator(BaseValidator):
 
             if "Use Case" in pack_meta_file_content["tags"]:
                 if not self._contains_use_case():
-                    if self._add_error(
-                        Errors.is_wrong_usage_of_usecase_tag(), self.pack_meta_file
-                    ):
+                    if self._add_error(Errors.is_wrong_usage_of_usecase_tag(), self.pack_meta_file):
                         return False
         except (ValueError, TypeError):
-            if self._add_error(
-                Errors.is_wrong_usage_of_usecase_tag(), self.pack_meta_file
-            ):
+            if self._add_error(Errors.is_wrong_usage_of_usecase_tag(), self.pack_meta_file):
                 return False
         return True
 
@@ -951,8 +876,7 @@ class PackUniqueFilesValidator(BaseValidator):
         except GitCommandError as e:
             if not self.suppress_print:
                 click.secho(
-                    f"Got an error while trying to connect to git - {str(e)}\n"
-                    f"Skipping price change validation"
+                    f"Got an error while trying to connect to git - {str(e)}\n" f"Skipping price change validation"
                 )
             return None
 
@@ -974,9 +898,7 @@ class PackUniqueFilesValidator(BaseValidator):
             return True
 
         metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
-        old_meta_file_content = self.get_master_private_repo_meta_file(
-            metadata_file_path
-        )
+        old_meta_file_content = self.get_master_private_repo_meta_file(metadata_file_path)
 
         # if there was no past version or running on master branch
         if not old_meta_file_content:
@@ -987,11 +909,7 @@ class PackUniqueFilesValidator(BaseValidator):
         old_price = old_meta_file_content.get("price")
 
         # if a price was added, removed or changed compared to the master version - return an error
-        if (
-            (old_price and not current_price)
-            or (current_price and not old_price)
-            or (old_price != current_price)
-        ):
+        if (old_price and not current_price) or (current_price and not old_price) or (old_price != current_price):
             if self._add_error(
                 Errors.pack_metadata_price_change(old_price, current_price),
                 self.pack_meta_file,
@@ -1021,9 +939,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
             # Check if unique files are valid against the rest of the files, using the ID set.
             if id_set_validations:
-                is_valid, error = id_set_validations.is_unique_file_valid_in_set(
-                    self.pack_path, self.ignored_errors
-                )
+                is_valid, error = id_set_validations.is_unique_file_valid_in_set(self.pack_path, self.ignored_errors)
                 if not is_valid:
                     self._add_error(error, self.pack_path)
         except BlockingValidationFailureException:
@@ -1061,17 +977,11 @@ class PackUniqueFilesValidator(BaseValidator):
                 first_level_dependencies.pop(core_pack, None)
             if not first_level_dependencies:
                 if not self.suppress_print:
-                    click.secho(
-                        "Found first level dependencies only on core packs", fg="yellow"
-                    )
+                    click.secho("Found first level dependencies only on core packs", fg="yellow")
                 return True
 
             dependency_result = json.dumps(first_level_dependencies, indent=4)
-            click.echo(
-                click.style(
-                    f"Found dependencies result for {self.pack} pack:", bold=True
-                )
-            )
+            click.echo(click.style(f"Found dependencies result for {self.pack} pack:", bold=True))
             click.echo(click.style(dependency_result, bold=True))
 
             if self.pack in core_pack_list:
@@ -1081,9 +991,7 @@ class PackUniqueFilesValidator(BaseValidator):
             non_supported_pack = first_level_dependencies.get("NonSupported", {})
             deprecated_pack = first_level_dependencies.get("DeprecatedContent", {})
 
-            if not self.is_invalid_package_dependencies(
-                non_supported_pack, deprecated_pack
-            ):
+            if not self.is_invalid_package_dependencies(non_supported_pack, deprecated_pack):
                 return False
 
             return True
@@ -1091,9 +999,7 @@ class PackUniqueFilesValidator(BaseValidator):
         except ValueError as e:
             if "Couldn't find any items for pack" in str(e):
                 error_message, error_code = Errors.invalid_id_set()
-                if self._add_error(
-                    (error_message, error_code), file_path=self.pack_path
-                ):
+                if self._add_error((error_message, error_code), file_path=self.pack_path):
                     return False
                 return True
             else:
@@ -1116,9 +1022,7 @@ class PackUniqueFilesValidator(BaseValidator):
                 found_dependencies.append(dependency_pack)
 
         if found_dependencies:
-            error_message, error_code = Errors.invalid_core_pack_dependencies(
-                self.pack, str(found_dependencies)
-            )
+            error_message, error_code = Errors.invalid_core_pack_dependencies(self.pack, str(found_dependencies))
             if self._add_error((error_message, error_code), file_path=self.pack_path):
                 return False
         return True
@@ -1139,9 +1043,7 @@ class PackUniqueFilesValidator(BaseValidator):
                 (error_message, error_code),
                 file_path=self.pack_meta_file,
                 should_print=True,
-                suggested_fix=Errors.suggest_fix(
-                    file_path=self._get_pack_file_path(self.pack_meta_file)
-                ),
+                suggested_fix=Errors.suggest_fix(file_path=self._get_pack_file_path(self.pack_meta_file)),
             )
         return False
 
@@ -1157,9 +1059,7 @@ class PackUniqueFilesValidator(BaseValidator):
             return True
         categories = self._read_metadata_content().get("categories", [])
         approved_list = tools.get_current_categories()
-        if not len(categories) == 1 or not self.validate_categories_approved(
-            categories, approved_list
-        ):
+        if not len(categories) == 1 or not self.validate_categories_approved(categories, approved_list):
             if self._add_error(
                 Errors.categories_field_does_not_match_standard(approved_list),
                 self.pack_meta_file,

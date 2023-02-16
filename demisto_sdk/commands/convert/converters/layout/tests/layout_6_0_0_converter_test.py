@@ -77,30 +77,17 @@ class TestLayoutSixConverter:
         repo = Repo(tmpdir)
         repo_path = Path(repo.path)
         fake_pack = MockPack(repo_path / "Packs", fake_pack_name, repo)
-        fake_pack.create_layout(
-            "close-ExtraHop_Detection", util_load_json(self.LAYOUT_CLOSE_PATH)
-        )
-        fake_pack.create_layout(
-            "details-ExtraHop_Detection", util_load_json(self.LAYOUT_DETAILS_PATH)
-        )
-        fake_pack.create_layout(
-            "edit-ExtraHop_Detection", util_load_json(self.LAYOUT_EDIT_PATH)
-        )
-        fake_pack.create_layout(
-            "quickView-ExtraHop_Detection", util_load_json(self.LAYOUT_QUICK_VIEW_PATH)
-        )
-        fake_pack.create_layout(
-            "mobile-ExtraHop_Detection", util_load_json(self.LAYOUT_MOBILE_PATH)
-        )
+        fake_pack.create_layout("close-ExtraHop_Detection", util_load_json(self.LAYOUT_CLOSE_PATH))
+        fake_pack.create_layout("details-ExtraHop_Detection", util_load_json(self.LAYOUT_DETAILS_PATH))
+        fake_pack.create_layout("edit-ExtraHop_Detection", util_load_json(self.LAYOUT_EDIT_PATH))
+        fake_pack.create_layout("quickView-ExtraHop_Detection", util_load_json(self.LAYOUT_QUICK_VIEW_PATH))
+        fake_pack.create_layout("mobile-ExtraHop_Detection", util_load_json(self.LAYOUT_MOBILE_PATH))
         fake_pack_path = fake_pack.path
         layout_converter = LayoutSixConverter(Pack(fake_pack_path))
         result = layout_converter.group_layouts_needing_conversion_by_layout_id()
         assert len(result) == 1 and "ExtraHop Detection" in result
         layout_kinds = {layout["kind"] for layout in result["ExtraHop Detection"]}
-        assert all(
-            layout.layout_id() == "ExtraHop Detection"
-            for layout in result["ExtraHop Detection"]
-        )
+        assert all(layout.layout_id() == "ExtraHop Detection" for layout in result["ExtraHop Detection"])
         assert layout_kinds == {"close", "details", "edit", "mobile", "quickView"}
 
     CALCULATE_NEW_LAYOUT_GROUP_INPUTS = [
@@ -123,12 +110,8 @@ class TestLayoutSixConverter:
         ),
     ]
 
-    @pytest.mark.parametrize(
-        "old_layout_path, expected", CALCULATE_NEW_LAYOUT_GROUP_INPUTS
-    )
-    def test_calculate_new_layout_group(
-        self, tmpdir, old_layout_path: str, expected: str
-    ):
+    @pytest.mark.parametrize("old_layout_path, expected", CALCULATE_NEW_LAYOUT_GROUP_INPUTS)
+    def test_calculate_new_layout_group(self, tmpdir, old_layout_path: str, expected: str):
         """
         Given:
         - 'old_layouts': List of old layout objects.
@@ -147,22 +130,14 @@ class TestLayoutSixConverter:
         fake_pack_path = fake_pack.path
         layout_converter = LayoutSixConverter(Pack(fake_pack_path))
         assert (
-            layout_converter.calculate_new_layout_group(
-                [layout for layout in layout_converter.pack.layouts]
-            )
+            layout_converter.calculate_new_layout_group([layout for layout in layout_converter.pack.layouts])
             == expected
         )
 
-    CALCULATE_NEW_LAYOUT_RELATIVE_PATH_INPUTS = [
-        ("ExtraHop Detection", "layoutscontainer-ExtraHop_Detection.json")
-    ]
+    CALCULATE_NEW_LAYOUT_RELATIVE_PATH_INPUTS = [("ExtraHop Detection", "layoutscontainer-ExtraHop_Detection.json")]
 
-    @pytest.mark.parametrize(
-        "layout_id, expected_suffix", CALCULATE_NEW_LAYOUT_RELATIVE_PATH_INPUTS
-    )
-    def test_calculate_new_layout_relative_path(
-        self, tmpdir, layout_id: str, expected_suffix: str
-    ):
+    @pytest.mark.parametrize("layout_id, expected_suffix", CALCULATE_NEW_LAYOUT_RELATIVE_PATH_INPUTS)
+    def test_calculate_new_layout_relative_path(self, tmpdir, layout_id: str, expected_suffix: str):
         """
         Given:
         - 'layout_id': Layout ID of the new layout created.
@@ -176,9 +151,7 @@ class TestLayoutSixConverter:
         """
         layout_converter = LayoutSixConverter(Pack(tmpdir))
         expected = f"{layout_converter.pack.path}/Layouts/{expected_suffix}"
-        assert (
-            layout_converter.calculate_new_layout_relative_path(layout_id) == expected
-        )
+        assert layout_converter.calculate_new_layout_relative_path(layout_id) == expected
 
     def test_convert_dir(self, tmpdir):
         """
@@ -195,21 +168,11 @@ class TestLayoutSixConverter:
         repo = Repo(tmpdir)
         repo_path = Path(repo.path)
         fake_pack = MockPack(repo_path / "Packs", fake_pack_name, repo)
-        fake_pack.create_layout(
-            "close-ExtraHop_Detection", util_load_json(self.LAYOUT_CLOSE_PATH)
-        )
-        fake_pack.create_layout(
-            "details-ExtraHop_Detection", util_load_json(self.LAYOUT_DETAILS_PATH)
-        )
-        fake_pack.create_layout(
-            "edit-ExtraHop_Detection", util_load_json(self.LAYOUT_EDIT_PATH)
-        )
-        fake_pack.create_layout(
-            "quickView-ExtraHop_Detection", util_load_json(self.LAYOUT_QUICK_VIEW_PATH)
-        )
-        fake_pack.create_layout(
-            "mobile-ExtraHop_Detection", util_load_json(self.LAYOUT_MOBILE_PATH)
-        )
+        fake_pack.create_layout("close-ExtraHop_Detection", util_load_json(self.LAYOUT_CLOSE_PATH))
+        fake_pack.create_layout("details-ExtraHop_Detection", util_load_json(self.LAYOUT_DETAILS_PATH))
+        fake_pack.create_layout("edit-ExtraHop_Detection", util_load_json(self.LAYOUT_EDIT_PATH))
+        fake_pack.create_layout("quickView-ExtraHop_Detection", util_load_json(self.LAYOUT_QUICK_VIEW_PATH))
+        fake_pack.create_layout("mobile-ExtraHop_Detection", util_load_json(self.LAYOUT_MOBILE_PATH))
         fake_pack_path = fake_pack.path
         layout_converter = LayoutSixConverter(Pack(fake_pack_path))
         layout_converter.convert_dir()

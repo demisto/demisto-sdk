@@ -13,9 +13,7 @@ class ParsingRule(ContentItemXSIAM, content_type=ContentType.PARSING_RULE):  # t
         return {"name", "description"}
 
     def prepare_for_upload(
-        self,
-        marketplace: MarketplaceVersions = MarketplaceVersions.MarketplaceV2,
-        **kwargs
+        self, marketplace: MarketplaceVersions = MarketplaceVersions.MarketplaceV2, **kwargs
     ) -> dict:
         if not kwargs.get("unify_only"):
             data = super().prepare_for_upload(marketplace)

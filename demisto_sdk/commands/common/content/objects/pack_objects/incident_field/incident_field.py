@@ -32,9 +32,7 @@ class IncidentField(JSONContentObject):
             incident_fields_unified_data = {"incidentFields": self._as_dict}
 
         with NamedTemporaryFile(suffix=".json") as incident_fields_unified_file:
-            incident_fields_unified_file.write(
-                bytes(json.dumps(incident_fields_unified_data), "utf-8")
-            )
+            incident_fields_unified_file.write(bytes(json.dumps(incident_fields_unified_data), "utf-8"))
             incident_fields_unified_file.seek(0)
             return client.import_incident_fields(file=incident_fields_unified_file.name)
 

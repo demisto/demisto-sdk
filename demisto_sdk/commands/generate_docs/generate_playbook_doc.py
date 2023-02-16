@@ -39,9 +39,7 @@ def generate_playbook_doc(
             "This playbook uses the following sub-playbooks, integrations, and scripts.",
             "",
         ]
-        playbooks, integrations, scripts, commands = get_playbook_dependencies(
-            playbook, input_path
-        )
+        playbooks, integrations, scripts, commands = get_playbook_dependencies(playbook, input_path)
         inputs, inputs_errors = get_inputs(playbook)
         outputs, outputs_errors = get_outputs(playbook)
         playbook_filename = os.path.basename(input_path).replace(".yml", "")
@@ -89,17 +87,9 @@ def generate_playbook_doc(
             )
         )
 
-        doc.extend(
-            generate_table_section(
-                inputs, "Playbook Inputs", "There are no inputs for this playbook."
-            )
-        )
+        doc.extend(generate_table_section(inputs, "Playbook Inputs", "There are no inputs for this playbook."))
 
-        doc.extend(
-            generate_table_section(
-                outputs, "Playbook Outputs", "There are no outputs for this playbook."
-            )
-        )
+        doc.extend(generate_table_section(outputs, "Playbook Outputs", "There are no outputs for this playbook."))
 
         # Known limitations
         if limitations:
@@ -144,9 +134,7 @@ def get_playbook_dependencies(
     pack_path = os.path.dirname(os.path.dirname(playbook_path))
     integration_dir_path = os.path.join(pack_path, "Integrations")
     # Get all files in integrations directories
-    pack_files = [
-        os.path.join(r, file) for r, d, f in os.walk(integration_dir_path) for file in f
-    ]
+    pack_files = [os.path.join(r, file) for r, d, f in os.walk(integration_dir_path) for file in f]
     integrations_files = []
     for file in pack_files:
         if file.endswith(".yml"):
@@ -173,20 +161,14 @@ def get_playbook_dependencies(
                     with open(file_) as f:
                         if command_name in f.read():
                             integration_dependency_path = os.path.dirname(file_)
-                            integration_dependency = os.path.basename(
-                                integration_dependency_path
-                            )
+                            integration_dependency = os.path.basename(integration_dependency_path)
                             # Case of old integrations without a package.
                             if integration_dependency == "Integrations":
-                                integrations.add(
-                                    os.path.basename(file_).replace(".yml", "")
-                                )
+                                integrations.add(os.path.basename(file_).replace(".yml", ""))
                             else:
                                 integrations.add(integration_dependency)
         else:
-            script_name = (
-                task.get("scriptName") if task.get("scriptName") else task.get("script")
-            )
+            script_name = task.get("scriptName") if task.get("scriptName") else task.get("script")
             if script_name:
                 scripts.add(script_name)
             elif task.get("type") == "playbook":
@@ -223,15 +205,11 @@ def get_inputs(playbook: Dict[str, List[Dict]]) -> Tuple[List[Dict], List[str]]:
         if not name and isinstance(playbook_input_query, dict):
             name = "Indicator Query"
             _value = playbook_input_query.get("query")
-            default_description = (
-                "Indicators matching the indicator query will be used as playbook input"
-            )
+            default_description = "Indicators matching the indicator query will be used as playbook input"
             description = description if description else default_description
 
         if not description:
-            errors.append(
-                f"Error! You are missing description in playbook input {name}"
-            )
+            errors.append(f"Error! You are missing description in playbook input {name}")
 
         inputs.append(
             {
@@ -259,11 +237,7 @@ def get_outputs(playbook):
 
     for output in playbook.get("outputs"):
         if not output.get("description"):
-            errors.append(
-                "Error! You are missing description in playbook output {}".format(
-                    output.get("contextPath")
-                )
-            )
+            errors.append("Error! You are missing description in playbook output {}".format(output.get("contextPath")))
 
         output_type = output.get("type")
         if not output_type:

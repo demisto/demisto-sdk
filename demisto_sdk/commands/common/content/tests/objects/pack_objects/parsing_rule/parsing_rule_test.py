@@ -19,10 +19,7 @@ class TestParsingRule:
 
         parsing_rule = get_parsing_rule(pack, "parsing_rule_name")
         obj = ParsingRule(parsing_rule._tmpdir_rule_path)
-        assert (
-            obj.normalize_file_name()
-            == f"external-parsingrule-{parsing_rule.yml._tmp_path.name}"
-        )
+        assert obj.normalize_file_name() == f"external-parsingrule-{parsing_rule.yml._tmp_path.name}"
 
     def test_files_detection(self, pack):
         parsing_rule = get_parsing_rule(pack, "parsing_rule_name")

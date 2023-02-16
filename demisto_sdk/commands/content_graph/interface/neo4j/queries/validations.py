@@ -19,9 +19,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
 
 
 def validate_unknown_content(tx: Transaction, file_paths: List[str]):
-    file_paths_filter = (
-        f"WHERE content_item_from.path in {file_paths}" if file_paths else ""
-    )
+    file_paths_filter = f"WHERE content_item_from.path in {file_paths}" if file_paths else ""
     query = f"""// Returns USES relationships to content items not in the repository
 MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}]->(n{{not_in_repository:true}})
 {file_paths_filter}
@@ -37,9 +35,7 @@ RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
     }
 
 
-def validate_fromversion(
-    tx: Transaction, file_paths: List[str], for_supported_versions: bool
-):
+def validate_fromversion(tx: Transaction, file_paths: List[str], for_supported_versions: bool):
     op = ">=" if for_supported_versions else "<"
     query = f"""// Returning all the USES relationships with where the target's fromversion is higher than the source's
 MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}{{mandatorily:true}}]->(n)
@@ -67,9 +63,7 @@ RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
     }
 
 
-def validate_toversion(
-    tx: Transaction, file_paths: List[str], for_supported_versions: bool
-):
+def validate_toversion(tx: Transaction, file_paths: List[str], for_supported_versions: bool):
     op = ">=" if for_supported_versions else "<"
     query = f"""// Returning all the USES relationships with where the target's toversion is lower than the source's
 MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}{{mandatorily:true}}]->(n)
@@ -135,10 +129,7 @@ WHERE a.name = b.name
 AND id(a) <> id(b)
 RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
 """
-    return [
-        (item.get("a_object_id"), item.get("b_object_ids"))
-        for item in run_query(tx, query)
-    ]
+    return [(item.get("a_object_id"), item.get("b_object_ids")) for item in run_query(tx, query)]
 
 
 def validate_core_packs_dependencies(

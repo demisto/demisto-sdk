@@ -36,9 +36,7 @@ def fix_file_path(coverage_file: str, code_file_absolute_path: str):
         if not index == 1:
             logger.debug("unexpected file list in coverage report")
         else:
-            cursor.execute(
-                "UPDATE file SET path = ? WHERE id = ?", (code_file_absolute_path, 1)
-            )
+            cursor.execute("UPDATE file SET path = ? WHERE id = ?", (code_file_absolute_path, 1))
             sql_connection.commit()
         cursor.close()
     if not index == 1:
@@ -70,9 +68,7 @@ def get_coverage_obj(
     if report_dir:
         coverage_obj.set_option("html:directory", os.path.join(report_dir, "html"))
         coverage_obj.set_option("xml:output", os.path.join(report_dir, "coverage.xml"))
-        coverage_obj.set_option(
-            "json:output", os.path.join(report_dir, "coverage.json")
-        )
+        coverage_obj.set_option("json:output", os.path.join(report_dir, "coverage.json"))
     if load_old:
         coverage_obj.load()
     if combine_from_content_repo:
@@ -170,9 +166,7 @@ class CoverageSummary:
         min_summary_files = {}
         original_summary_files = original_summary["files"]
         for py_file_name, py_file_cov_data in original_summary_files.items():
-            min_summary_files[py_file_name] = round(
-                py_file_cov_data["summary"]["percent_covered"], 2
-            )
+            min_summary_files[py_file_name] = round(py_file_cov_data["summary"]["percent_covered"], 2)
 
         summary_time = original_summary["meta"]["timestamp"].split(".")[0]
         min_summary = {
@@ -189,23 +183,17 @@ class CoverageSummary:
         Getes the summary file
         based on the cache policy and the summary creation time.
         """
-        json_path = (
-            os.path.join(self.cache_dir, "coverage-min.json") if self.cache_dir else ""
-        )
+        json_path = os.path.join(self.cache_dir, "coverage-min.json") if self.cache_dir else ""
         if self.use_cache and self.cache_dir:
             try:
                 with open(json_path) as coverage_summary_file:
                     full_coverage_summary = json.load(coverage_summary_file)
-                last_updated = datetime.strptime(
-                    full_coverage_summary["last_updated"], "%Y-%m-%dT%H:%M:%SZ"
-                )
+                last_updated = datetime.strptime(full_coverage_summary["last_updated"], "%Y-%m-%dT%H:%M:%SZ")
                 next_update = last_updated + timedelta(days=1)
                 if next_update > datetime.utcnow():
                     return full_coverage_summary["files"]
             except FileNotFoundError:
-                logger.info(
-                    "No cache file found. creatig a cache dir at %s", self.cache_dir
-                )
+                logger.info("No cache file found. creatig a cache dir at %s", self.cache_dir)
                 os.makedirs(self.cache_dir, exist_ok=True)
             except (json.JSONDecodeError, KeyError, ValueError) as exc:
                 logger.exception(exc)

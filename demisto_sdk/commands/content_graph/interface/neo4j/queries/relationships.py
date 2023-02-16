@@ -213,9 +213,7 @@ def create_relationships_by_type(
 
     result = run_query(tx, query, data=data).single()
     merged_relationships_count: int = result["relationships_merged"]
-    logger.debug(
-        f"Merged {merged_relationships_count} relationships of type {relationship}."
-    )
+    logger.debug(f"Merged {merged_relationships_count} relationships of type {relationship}.")
 
 
 def _match_relationships(

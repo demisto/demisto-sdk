@@ -36,9 +36,7 @@ class TestParallelLoggingManager:
         assert not log_file_lines
         logging_manager.execute_logs()
         log_file_lines = self.get_log_content(log_file_path)
-        for expected_in_log, log_line in zip(
-            self.get_expected_content("1").values(), log_file_lines
-        ):
+        for expected_in_log, log_line in zip(self.get_expected_content("1").values(), log_file_lines):
             thread_name, level, content = expected_in_log
             self.assert_log_line(log_line, thread_name, level, content)
 
@@ -88,18 +86,12 @@ class TestParallelLoggingManager:
             logging_manager.info("test1")
             logging_manager.info("test2")
             logging_manager.info("test3")
-            log_content_lines = TestParallelLoggingManager.get_log_content(
-                logging_manager.log_file_name
-            )
+            log_content_lines = TestParallelLoggingManager.get_log_content(logging_manager.log_file_name)
             thread_logs = [line for line in log_content_lines if thread_name in line]
             assert not thread_logs
             logging_manager.execute_logs()
-            log_content_lines = TestParallelLoggingManager.get_log_content(
-                logging_manager.log_file_name
-            )
-            first_thread_log_line = next(
-                line for line in log_content_lines if thread_name in line
-            )
+            log_content_lines = TestParallelLoggingManager.get_log_content(logging_manager.log_file_name)
+            first_thread_log_line = next(line for line in log_content_lines if thread_name in line)
             first_thread_log_line_index = log_content_lines.index(first_thread_log_line)
             self.assert_log_line(
                 log_content_lines[first_thread_log_line_index],
@@ -165,9 +157,7 @@ class TestParallelLoggingManager:
             log_file_lines = log_file.readlines()
         return log_file_lines
 
-    def assert_latest_log_line(
-        self, log_file_path: str, thread_name: str, level: str, content: str
-    ) -> None:
+    def assert_latest_log_line(self, log_file_path: str, thread_name: str, level: str, content: str) -> None:
         """
         Assert that the last line in the log file has the thread name, log level name, and content as expected
         Args:
@@ -180,9 +170,7 @@ class TestParallelLoggingManager:
         self.assert_log_line(latest_log_line, thread_name, level, content)
 
     @staticmethod
-    def assert_log_line(
-        log_line: str, thread_name: str, level: str, content: str
-    ) -> None:
+    def assert_log_line(log_line: str, thread_name: str, level: str, content: str) -> None:
         """
         Assert that the line of the log file has the thread name, log level name, and content as expected
         Args:

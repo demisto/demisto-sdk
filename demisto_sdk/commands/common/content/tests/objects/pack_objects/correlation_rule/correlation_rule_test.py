@@ -20,9 +20,7 @@ def test_objects_factory(pack):
 
 
 def test_prefix(pack):
-    correlation_rule = get_correlation_rule(
-        pack, "external-correlationrule-correlation_rule_name"
-    )
+    correlation_rule = get_correlation_rule(pack, "external-correlationrule-correlation_rule_name")
 
     obj = CorrelationRule(correlation_rule.correlation_rule_tmp_path)
     assert obj.normalize_file_name() == correlation_rule.correlation_rule_tmp_path.name
@@ -30,7 +28,4 @@ def test_prefix(pack):
     correlation_rule = get_correlation_rule(pack, "correlation_rule_name")
 
     obj = CorrelationRule(correlation_rule.correlation_rule_tmp_path)
-    assert (
-        obj.normalize_file_name()
-        == f"external-correlationrule-{correlation_rule.correlation_rule_tmp_path.name}"
-    )
+    assert obj.normalize_file_name() == f"external-correlationrule-{correlation_rule.correlation_rule_tmp_path.name}"

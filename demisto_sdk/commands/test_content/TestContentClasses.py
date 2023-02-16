@@ -85,16 +85,10 @@ class IntegrationConfiguration:
     def __init__(self, integration_configuration):
         self.raw_dict = integration_configuration
         self.name: str = integration_configuration.get("name", "")
-        self.instance_name: str = integration_configuration.get(
-            "instance_name", self.name
-        )
+        self.instance_name: str = integration_configuration.get("instance_name", self.name)
         self.is_byoi: bool = integration_configuration.get("byoi", True)
-        self.should_validate_test_module: bool = integration_configuration.get(
-            "validate_test", True
-        )
-        self.has_integration: bool = integration_configuration.get(
-            "has_integration", True
-        )
+        self.should_validate_test_module: bool = integration_configuration.get("validate_test", True)
+        self.has_integration: bool = integration_configuration.get("has_integration", True)
         self.params: dict = integration_configuration.get("params", {})
 
     def __str__(self):
@@ -128,36 +122,18 @@ class TestConfiguration:
         self.raw_dict = test_configuration
         self.playbook_id = test_configuration.get("playbookID", "")
         self.nightly_test = test_configuration.get("nightly", False)
-        self.from_version = test_configuration.get(
-            "fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION
-        )
-        self.to_version = test_configuration.get(
-            "toversion", DEFAULT_CONTENT_ITEM_TO_VERSION
-        )
+        self.from_version = test_configuration.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
+        self.to_version = test_configuration.get("toversion", DEFAULT_CONTENT_ITEM_TO_VERSION)
         self.timeout = test_configuration.get("timeout", default_test_timeout)
-        self.memory_threshold = test_configuration.get(
-            "memory_threshold", Docker.DEFAULT_CONTAINER_MEMORY_USAGE
-        )
-        self.pid_threshold = test_configuration.get(
-            "pid_threshold", Docker.DEFAULT_CONTAINER_PIDS_USAGE
-        )
-        self.runnable_on_docker_only: bool = test_configuration.get(
-            "runnable_on_docker_only", False
-        )
+        self.memory_threshold = test_configuration.get("memory_threshold", Docker.DEFAULT_CONTAINER_MEMORY_USAGE)
+        self.pid_threshold = test_configuration.get("pid_threshold", Docker.DEFAULT_CONTAINER_PIDS_USAGE)
+        self.runnable_on_docker_only: bool = test_configuration.get("runnable_on_docker_only", False)
         self.is_mockable = test_configuration.get("is_mockable")
         self.context_print_dt = test_configuration.get("context_print_dt")
-        self.test_integrations: List[str] = self._parse_integrations_conf(
-            test_configuration
-        )
-        self.test_instance_names: List[str] = self._parse_instance_names_conf(
-            test_configuration
-        )
-        self.instance_configuration: dict = test_configuration.get(
-            "instance_configuration", {}
-        )
-        self.external_playbook_config: dict = test_configuration.get(
-            "external_playbook_config", {}
-        )
+        self.test_integrations: List[str] = self._parse_integrations_conf(test_configuration)
+        self.test_instance_names: List[str] = self._parse_instance_names_conf(test_configuration)
+        self.instance_configuration: dict = test_configuration.get("instance_configuration", {})
+        self.external_playbook_config: dict = test_configuration.get("external_playbook_config", {})
         self.is_first_playback_failed: bool = False
         self.number_of_executions: int = 0
         self.number_of_successful_runs: int = 0
@@ -188,8 +164,7 @@ class Conf:
         """
         self.default_timeout: int = conf.get("testTimeout", 30)
         self.tests: list = [
-            TestConfiguration(test_configuration, self.default_timeout)
-            for test_configuration in conf.get("tests", [])
+            TestConfiguration(test_configuration, self.default_timeout) for test_configuration in conf.get("tests", [])
         ]
         self.skipped_tests: Dict[str, str] = conf.get("skipped_tests")  # type: ignore
         self.skipped_integrations: Dict[str, str] = conf.get("skipped_integrations")  # type: ignore
@@ -208,9 +183,7 @@ class TestPlaybook:
         """
         self.build_context = build_context
         self.configuration: TestConfiguration = test_configuration
-        self.is_mockable: bool = (
-            self.configuration.playbook_id not in build_context.unmockable_test_ids
-        )
+        self.is_mockable: bool = self.configuration.playbook_id not in build_context.unmockable_test_ids
         self.integrations: List[Integration] = [
             Integration(
                 self.build_context,
@@ -240,15 +213,10 @@ class TestPlaybook:
             """
             if (
                 not self.build_context.filtered_tests
-                or self.configuration.playbook_id
-                not in self.build_context.filtered_tests
+                or self.configuration.playbook_id not in self.build_context.filtered_tests
             ):
-                self.build_context.logging_module.debug(
-                    f"Skipping {self} because it's not in filtered tests"
-                )
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = "not in filtered tests"
+                self.build_context.logging_module.debug(f"Skipping {self} because it's not in filtered tests")
+                skipped_tests_collected[self.configuration.playbook_id] = "not in filtered tests"
                 return False
             return True
 
@@ -262,9 +230,7 @@ class TestPlaybook:
                     self.build_context.logging_module.warning(log_message)
                 else:
                     self.build_context.logging_module.debug(log_message)
-                skipped_tests_collected[
-                    self.configuration.playbook_id
-                ] = "nightly test in a non nightly build"
+                skipped_tests_collected[self.configuration.playbook_id] = "nightly test in a non nightly build"
                 return True
             return False
 
@@ -272,16 +238,10 @@ class TestPlaybook:
             if self.configuration.playbook_id in self.build_context.conf.skipped_tests:
                 if self.configuration.playbook_id in self.build_context.filtered_tests:
                     # Add warning log, as the playbook is supposed to run according to the filters, but it's skipped
-                    self.build_context.logging_module.warning(
-                        f"Skipping test {self} because it's in skipped test list"
-                    )
+                    self.build_context.logging_module.warning(f"Skipping test {self} because it's in skipped test list")
                 else:
-                    self.build_context.logging_module.debug(
-                        f"Skipping test {self} because it's in skipped test list"
-                    )
-                reason = self.build_context.conf.skipped_tests[
-                    self.configuration.playbook_id
-                ]
+                    self.build_context.logging_module.debug(f"Skipping test {self} because it's in skipped test list")
+                reason = self.build_context.conf.skipped_tests[self.configuration.playbook_id]
                 skipped_tests_collected[self.configuration.playbook_id] = reason
                 return True
             return False
@@ -312,13 +272,10 @@ class TestPlaybook:
                     # The playbook should be run but has a skipped integration
                     if (
                         self.build_context.filtered_tests
-                        and self.configuration.playbook_id
-                        in self.build_context.filtered_tests
+                        and self.configuration.playbook_id in self.build_context.filtered_tests
                     ):
                         # Adding the playbook ID to playbook_skipped_integration so that we can send a PR comment about it
-                        skip_reason = self.build_context.conf.skipped_integrations[
-                            integration
-                        ]
+                        skip_reason = self.build_context.conf.skipped_integrations[integration]
                         self.build_context.tests_data_keeper.playbook_skipped_integration.add(
                             f"{self.configuration.playbook_id} - reason: {skip_reason}"
                         )
@@ -390,9 +347,7 @@ class TestPlaybook:
             configured_integrations.append(integration)
         return True
 
-    def disable_integrations(
-        self, client: DefaultApi, server_context: "ServerContext"
-    ) -> None:
+    def disable_integrations(self, client: DefaultApi, server_context: "ServerContext") -> None:
         """
         Disables all integrations that the playbook uses
         Clears server configurations set for the integration if there are such
@@ -410,9 +365,7 @@ class TestPlaybook:
         if updated_keys:
             server_context._reset_containers()
 
-    def _set_prev_server_keys(
-        self, client: DefaultApi, server_context: "ServerContext"
-    ) -> bool:
+    def _set_prev_server_keys(self, client: DefaultApi, server_context: "ServerContext") -> bool:
         """Sets previous stored system (server) config, if existed
 
         Args:
@@ -424,10 +377,7 @@ class TestPlaybook:
         """
         updated = False
         for integration in self.integrations:
-            if (
-                integration.configuration
-                and "server_keys" not in integration.configuration.params
-            ):
+            if integration.configuration and "server_keys" not in integration.configuration.params:
                 continue
             if server_context.prev_system_conf:
                 update_server_configuration(
@@ -466,8 +416,7 @@ class TestPlaybook:
         # Preparing the incident request
 
         incident_name = (
-            f"inc-{self.configuration.playbook_id}--build_number:"
-            f"{self.build_context.build_number}--{uuid.uuid4()}"
+            f"inc-{self.configuration.playbook_id}--build_number:" f"{self.build_context.build_number}--{uuid.uuid4()}"
         )
         create_incident_request = demisto_client.demisto_api.CreateIncidentRequest()
         create_incident_request.create_investigation = True
@@ -475,9 +424,7 @@ class TestPlaybook:
         create_incident_request.name = incident_name
 
         try:
-            response = client.create_incident(
-                create_incident_request=create_incident_request
-            )
+            response = client.create_incident(create_incident_request=create_incident_request)
         except ApiException:
             self.build_context.logging_module.exception(
                 f"Failed to create incident with name {incident_name} for playbook {self}"
@@ -519,27 +466,18 @@ class TestPlaybook:
                 incident_search_responses.append(incidents)
             except ApiException:
                 if IS_XSIAM:
-                    self.build_context.logging_module.exception(
-                        f"Searching incident with name {incident_name} failed"
-                    )
+                    self.build_context.logging_module.exception(f"Searching incident with name {incident_name} failed")
                 else:
-                    self.build_context.logging_module.exception(
-                        f"Searching incident with id {inc_id} failed"
-                    )
+                    self.build_context.logging_module.exception(f"Searching incident with id {inc_id} failed")
             if time.time() > timeout:
                 if IS_XSIAM:
                     self.build_context.logging_module.error(
-                        f"Got timeout for searching incident with name "
-                        f"{incident_name}"
+                        f"Got timeout for searching incident with name " f"{incident_name}"
                     )
                 else:
-                    self.build_context.logging_module.error(
-                        f"Got timeout for searching incident id {inc_id}"
-                    )
+                    self.build_context.logging_module.error(f"Got timeout for searching incident id {inc_id}")
 
-                self.build_context.logging_module.error(
-                    f"Incident search responses: {incident_search_responses}"
-                )
+                self.build_context.logging_module.error(f"Incident search responses: {incident_search_responses}")
                 return None
 
             time.sleep(10)
@@ -568,9 +506,7 @@ class TestPlaybook:
             return False
 
         if int(res[1]) != 200:
-            self.build_context.logging_module.error(
-                f"delete incident failed with Status code {res[1]}"
-            )
+            self.build_context.logging_module.error(f"delete incident failed with Status code {res[1]}")
             self.build_context.logging_module.error(pformat(res))
             return False
 
@@ -588,9 +524,7 @@ class TestPlaybook:
         """
         try:
             body = {"id": incident_id, "CustomFields": {}}
-            res = demisto_client.generic_request_func(
-                self=client, method="POST", path="/incident/close", body=body
-            )
+            res = demisto_client.generic_request_func(self=client, method="POST", path="/incident/close", body=body)
             self.build_context.logging_module.info(f"Closed incident: {incident_id}.")
         except ApiException:
             self.build_context.logging_module.warning(
@@ -599,9 +533,7 @@ class TestPlaybook:
             return False
 
         if int(res[1]) != 200:
-            self.build_context.logging_module.warning(
-                f"Close incident failed with Status code {res[1]}"
-            )
+            self.build_context.logging_module.warning(f"Close incident failed with Status code {res[1]}")
             self.build_context.logging_module.warning(pformat(res))
             return False
 
@@ -617,19 +549,13 @@ class TestPlaybook:
                 body=body,
             )
             if int(res[1]) != 200:
-                self.build_context.logging_module.error(
-                    f"incident context fetch failed with Status code {res[1]}"
-                )
+                self.build_context.logging_module.error(f"incident context fetch failed with Status code {res[1]}")
                 self.build_context.logging_module.error(pformat(res))
                 return
             try:
-                self.build_context.logging_module.info(
-                    json.dumps(ast.literal_eval(res[0]), indent=4)
-                )
+                self.build_context.logging_module.info(json.dumps(ast.literal_eval(res[0]), indent=4))
             except ValueError:
-                self.build_context.logging_module.error(
-                    f"unable to parse result for result with value: {res[0]}"
-                )
+                self.build_context.logging_module.error(f"unable to parse result for result with value: {res[0]}")
         except ApiException:
             self.build_context.logging_module.exception(
                 "Failed to get context, error trying to communicate with demisto server"
@@ -645,9 +571,7 @@ class BuildContext:
         self.server = kwargs["server"]
         self.xsiam_machine = kwargs.get("xsiam_machine")
         self.xsiam_servers_path = kwargs.get("xsiam_servers_path")
-        self.conf, self.secret_conf = self._load_conf_files(
-            kwargs["conf"], kwargs["secret"]
-        )
+        self.conf, self.secret_conf = self._load_conf_files(kwargs["conf"], kwargs["secret"])
         if self.is_xsiam:
             with open(kwargs.get("xsiam_servers_api_keys_path")) as json_file:  # type: ignore[arg-type]
                 xsiam_servers_api_keys = json.loads(json_file.read())
@@ -683,9 +607,7 @@ class BuildContext:
         ) = self._get_tests_to_run()
         self.test_retries_queue: Queue = Queue()
         self.slack_user_id = self._retrieve_slack_user_id()
-        self.all_integrations_configurations = self._get_all_integration_config(
-            self.instances_ips
-        )
+        self.all_integrations_configurations = self._get_all_integration_config(self.instances_ips)
 
     def _get_all_integration_config(self, instances_ips: dict) -> Optional[list]:
         """
@@ -734,9 +656,7 @@ class BuildContext:
                 body={},
             )
         except ApiException:
-            self.logging_module.exception(
-                "failed to get all integrations configuration"
-            )
+            self.logging_module.exception("failed to get all integrations configuration")
             return []
         res = ast.literal_eval(res_raw[0])
         TIMEOUT = 180
@@ -744,9 +664,7 @@ class BuildContext:
         total_sleep = 0
         while "configurations" not in res:
             if total_sleep == TIMEOUT:
-                self.logging_module.error(
-                    f"Timeout - failed to get all integration configuration. Error: {res}"
-                )
+                self.logging_module.error(f"Timeout - failed to get all integration configuration. Error: {res}")
                 return []
 
             time.sleep(SLEEP_INTERVAL)
@@ -782,20 +700,10 @@ class BuildContext:
             self.unmockable_test_ids = {test.playbook_id for test in all_tests}
         elif self.isAMI:
             unmockable_tests = self.conf_unmockable_tests
-            self.unmockable_test_ids = {
-                test.playbook_id for test in self.conf_unmockable_tests
-            }
-        self.logging_module.debug(
-            f"Unmockable tests selected: {pformat(self.unmockable_test_ids)}"
-        )
-        mockable_tests = [
-            test
-            for test in all_tests
-            if test.playbook_id not in self.unmockable_test_ids
-        ]
-        self.logging_module.debug(
-            f"Mockable tests selected: {pformat([test.playbook_id for test in mockable_tests])}"
-        )
+            self.unmockable_test_ids = {test.playbook_id for test in self.conf_unmockable_tests}
+        self.logging_module.debug(f"Unmockable tests selected: {pformat(self.unmockable_test_ids)}")
+        mockable_tests = [test for test in all_tests if test.playbook_id not in self.unmockable_test_ids]
+        self.logging_module.debug(f"Mockable tests selected: {pformat([test.playbook_id for test in mockable_tests])}")
         mockable_tests_queue = self._generate_tests_queue(mockable_tests)
         unmockable_tests_queue = self._generate_tests_queue(unmockable_tests)
         return mockable_tests_queue, unmockable_tests_queue
@@ -829,11 +737,7 @@ class BuildContext:
                 for integration_name in test_record.test_integrations
                 if integration_name in unmockable_integrations
             ]
-            if (
-                test_name
-                and (not test_record.test_integrations or unmockable_integrations_used)
-                or not self.isAMI
-            ):
+            if test_name and (not test_record.test_integrations or unmockable_integrations_used) or not self.isAMI:
                 unmockable_tests.append(test_record)
                 # In case a test has both - an unmockable integration and is configured with is_mockable=False -
                 # it will be added twice if we don't continue.
@@ -905,9 +809,7 @@ class BuildContext:
         for server_private_ip, tunnel_port in self.instances_ips.items():
             if tunnel_port == port:
                 return f"https://{server_private_ip}"
-        raise Exception(
-            f"Could not find private ip for the server mapped to port {port}"
-        )
+        raise Exception(f"Could not find private ip for the server mapped to port {port}")
 
     @staticmethod
     def _parse_tests_list_arg(tests_list: str):
@@ -964,12 +866,8 @@ class BuildContext:
             "XSIAM 1.2": "6.9.0",
             "XSIAM Master": default_version,
         }
-        server_numeric_version = server_version_mapping.get(
-            self.server_version, default_version
-        )
-        self.logging_module.info(
-            f"Server version: {server_numeric_version}", real_time=True
-        )
+        server_numeric_version = server_version_mapping.get(self.server_version, default_version)
+        self.logging_module.info(f"Server version: {server_numeric_version}", real_time=True)
         return server_numeric_version
 
     @staticmethod
@@ -1018,9 +916,7 @@ class BuildContext:
         """
         user_id = ""
         try:
-            user_name = (
-                os.getenv("GITLAB_USER_LOGIN") or self._get_user_name_from_circle()
-            )
+            user_name = os.getenv("GITLAB_USER_LOGIN") or self._get_user_name_from_circle()
             res = self.slack_client.api_call("users.list")
 
             user_list = res.get("members", [])  # type: ignore
@@ -1063,9 +959,7 @@ class TestResults:
             skipped_tests_file.write("\n".join(self.skipped_tests))
         with open("./Tests/skipped_integrations.txt", "w") as skipped_integrations_file:
             skipped_integrations_file.write("\n".join(self.skipped_integrations))
-        with open(
-            "./Tests/test_playbooks_report.json", "w"
-        ) as test_playbooks_report_file:
+        with open("./Tests/test_playbooks_report.json", "w") as test_playbooks_report_file:
             json.dump(self.playbook_report, test_playbooks_report_file, indent=4)
 
     def print_test_summary(
@@ -1093,31 +987,19 @@ class TestResults:
         empty_mocks_count = len(empty_files) if is_ami else 0
         logging_module.real_time_logs_only = True
         logging_module.info("TEST RESULTS:")
-        logging_module.info(
-            f"Number of playbooks tested - {succeed_count + failed_count}"
-        )
+        logging_module.info(f"Number of playbooks tested - {succeed_count + failed_count}")
         if failed_count:
             logging_module.error(f"Number of failed tests - {failed_count}:")
             logging_module.error(
                 "Failed Tests: {}".format(
-                    "".join(
-                        [
-                            f"\n\t\t\t\t\t\t\t - {playbook_id}"
-                            for playbook_id in failed_playbooks
-                        ]
-                    )
+                    "".join([f"\n\t\t\t\t\t\t\t - {playbook_id}" for playbook_id in failed_playbooks])
                 )
             )
         if succeed_count:
             logging_module.success(f"Number of succeeded tests - {succeed_count}")
             logging_module.success(
                 "Successful Tests: {}".format(
-                    "".join(
-                        [
-                            f"\n\t\t\t\t\t\t\t - {playbook_id}"
-                            for playbook_id in succeed_playbooks
-                        ]
-                    )
+                    "".join([f"\n\t\t\t\t\t\t\t - {playbook_id}" for playbook_id in succeed_playbooks])
                 )
             )
         if rerecorded_count > 0:
@@ -1126,19 +1008,12 @@ class TestResults:
             )
             logging_module.debug(
                 "Tests with failed playback and successful re-recording: {}".format(
-                    "".join(
-                        [
-                            f"\n\t\t\t\t\t\t\t - {playbook_id}"
-                            for playbook_id in rerecorded_tests
-                        ]
-                    )
+                    "".join([f"\n\t\t\t\t\t\t\t - {playbook_id}" for playbook_id in rerecorded_tests])
                 )
             )
 
         if empty_mocks_count > 0:
-            logging_module.debug(
-                f"Successful tests with empty mock files count- {empty_mocks_count}:\n"
-            )
+            logging_module.debug(f"Successful tests with empty mock files count- {empty_mocks_count}:\n")
             proxy_explanation = (
                 "\t\t\t\t\t\t\t (either there were no http requests or no traffic is passed through the proxy.\n"
                 "\t\t\t\t\t\t\t Investigate the playbook and the integrations.\n"
@@ -1147,19 +1022,12 @@ class TestResults:
             logging_module.debug(proxy_explanation)
             logging_module.debug(
                 "Successful tests with empty mock files: {}".format(
-                    "".join(
-                        [
-                            f"\n\t\t\t\t\t\t\t - {playbook_id}"
-                            for playbook_id in empty_files
-                        ]
-                    )
+                    "".join([f"\n\t\t\t\t\t\t\t - {playbook_id}" for playbook_id in empty_files])
                 )
             )
 
         if skipped_integration:
-            self.print_table(
-                "Skipped Integrations", skipped_integration, logging_module.debug
-            )
+            self.print_table("Skipped Integrations", skipped_integration, logging_module.debug)
 
         if skipped_tests:
             self.print_table("Skipped Tests", skipped_tests, logging_module.debug)
@@ -1172,9 +1040,7 @@ class TestResults:
             )
 
     @staticmethod
-    def print_table(
-        table_name: str, table_data: dict, logging_method: Callable
-    ) -> None:
+    def print_table(table_name: str, table_data: dict, logging_method: Callable) -> None:
         table = prettytable.PrettyTable()
         table.field_names = ["Index", "Name", "Reason"]
         for index, record in enumerate(table_data, start=1):
@@ -1202,9 +1068,9 @@ class Integration:
         self.name = integration_name
         self.instance_names = potential_integration_instance_names
         self.instance_name = ""
-        self.configuration: Optional[
-            IntegrationConfiguration
-        ] = IntegrationConfiguration({"name": self.name, "params": {}})
+        self.configuration: Optional[IntegrationConfiguration] = IntegrationConfiguration(
+            {"name": self.name, "params": {}}
+        )
         self.docker_image: list = []
         self.integration_configuration_from_server: dict = {}
         self.integration_type: str = ""
@@ -1232,9 +1098,7 @@ class Integration:
         config_item.params = json.loads(item_as_string)
         return config_item
 
-    def _set_integration_params(
-        self, server_url: str, playbook_id: str, is_mockable: bool
-    ) -> bool:
+    def _set_integration_params(self, server_url: str, playbook_id: str, is_mockable: bool) -> bool:
         """
         Finds the matching configuration for the integration in content-test-data conf.json file
         in accordance with the configured instance name if exist and configures the proxy parameter if needed
@@ -1246,20 +1110,15 @@ class Integration:
         Returns:
             True if found a matching configuration else False if found more that one configuration candidate returns False
         """
-        self.build_context.logging_module.debug(
-            f"Searching integration configuration for {self}"
-        )
+        self.build_context.logging_module.debug(f"Searching integration configuration for {self}")
 
         # Finding possible configuration matches
         integration_params: List[IntegrationConfiguration] = [
-            deepcopy(conf)
-            for conf in self.build_context.secret_conf.integrations
-            if conf.name == self.name
+            deepcopy(conf) for conf in self.build_context.secret_conf.integrations if conf.name == self.name
         ]
         # Modifying placeholders if exists
         integration_params: List[IntegrationConfiguration] = [
-            self._change_placeholders_to_values(server_url, conf)
-            for conf in integration_params
+            self._change_placeholders_to_values(server_url, conf) for conf in integration_params
         ]
 
         if integration_params:
@@ -1274,8 +1133,7 @@ class Integration:
 
                 if not found_matching_instance:
                     optional_instance_names = [
-                        optional_integration.instance_name
-                        for optional_integration in integration_params
+                        optional_integration.instance_name for optional_integration in integration_params
                     ]
                     error_msg = FAILED_MATCH_INSTANCE_MSG.format(
                         playbook_id,
@@ -1301,9 +1159,7 @@ class Integration:
                 "insecure": True,
             }
         if is_mockable:
-            self.build_context.logging_module.debug(
-                f"configuring {self} with proxy params"
-            )
+            self.build_context.logging_module.debug(f"configuring {self} with proxy params")
             for param in ("proxy", "useProxy", "useproxy", "insecure", "unsecure"):
                 self.configuration.params[param] = True  # type: ignore
         return True
@@ -1319,19 +1175,11 @@ class Integration:
         """
         if self.build_context.all_integrations_configurations:
             match_configurations = [
-                x
-                for x in self.build_context.all_integrations_configurations
-                if x["name"] == self.name
+                x for x in self.build_context.all_integrations_configurations if x["name"] == self.name
             ]
         else:
-            all_configurations = (
-                self.build_context.get_all_installed_integrations_configurations(
-                    server_url
-                )
-            )
-            match_configurations = [
-                x for x in all_configurations if x["name"] == self.name
-            ]
+            all_configurations = self.build_context.get_all_installed_integrations_configurations(server_url)
+            match_configurations = [x for x in all_configurations if x["name"] == self.name]
 
         if not match_configurations:
             self.build_context.logging_module.error("integration was not found")
@@ -1339,9 +1187,7 @@ class Integration:
 
         return deepcopy(match_configurations[0])
 
-    def _delete_integration_instance_if_determined_by_name(
-        self, client: DefaultApi, instance_name: str
-    ) -> None:
+    def _delete_integration_instance_if_determined_by_name(self, client: DefaultApi, instance_name: str) -> None:
         """Deletes integration instance by it's name.
 
         Args:
@@ -1374,9 +1220,7 @@ class Integration:
             )
             return
         if "instances" not in int_instances:
-            self.build_context.logging_module.info(
-                f"No integrations instances found to delete for {self}"
-            )
+            self.build_context.logging_module.info(f"No integrations instances found to delete for {self}")
             return
 
         for instance in int_instances["instances"]:
@@ -1386,9 +1230,7 @@ class Integration:
                 )
                 self.delete_integration_instance(client, instance.get("id"))
 
-    def _set_server_keys(
-        self, client: DefaultApi, server_context: "ServerContext"
-    ) -> None:
+    def _set_server_keys(self, client: DefaultApi, server_context: "ServerContext") -> None:
         """In case the the params of the test in the content-test-conf repo has 'server_keys' key:
             Resets containers
             Adds server configuration keys using the demisto_client.
@@ -1402,9 +1244,7 @@ class Integration:
 
         server_context._reset_containers()
 
-        self.build_context.logging_module.debug(
-            f"Setting server keys for integration: {self}"
-        )
+        self.build_context.logging_module.debug(f"Setting server keys for integration: {self}")
 
         data = {"data": {}, "version": -1}
 
@@ -1436,9 +1276,7 @@ class Integration:
                 )
             )
 
-            incident_type_configuration[0]["value"] = incident_configuration.get(
-                "incident_type"
-            )
+            incident_type_configuration[0]["value"] = incident_configuration.get("incident_type")
 
         module_instance = {
             "brand": configuration["name"],
@@ -1461,9 +1299,7 @@ class Integration:
         if incident_configuration and incident_configuration.get("classifier_id"):
             module_instance["mappingId"] = incident_configuration.get("classifier_id")
         if incident_configuration and incident_configuration.get("incoming_mapper_id"):
-            module_instance["incomingMapperId"] = incident_configuration.get(
-                "incoming_mapper_id"
-            )
+            module_instance["incomingMapperId"] = incident_configuration.get("incoming_mapper_id")
 
         return module_instance
 
@@ -1486,17 +1322,11 @@ class Integration:
         Returns:
             The integration configuration as it exists on the server after it was configured
         """
-        server_url = self.build_context.get_public_ip_from_server_url(
-            client.api_client.configuration.host
-        )
+        server_url = self.build_context.get_public_ip_from_server_url(client.api_client.configuration.host)
         self._set_integration_params(server_url, playbook_id, is_mockable)
-        configuration = self._get_integration_config(
-            client.api_client.configuration.host
-        )
+        configuration = self._get_integration_config(client.api_client.configuration.host)
         if not configuration:
-            self.build_context.logging_module.error(
-                f"Could not find configuration for integration {self}"
-            )
+            self.build_context.logging_module.error(f"Could not find configuration for integration {self}")
             return False
 
         module_configuration = configuration["configuration"]
@@ -1505,9 +1335,7 @@ class Integration:
 
         if "integrationInstanceName" in self.configuration.params:  # type: ignore
             instance_name = self.configuration.params["integrationInstanceName"]  # type: ignore
-            self._delete_integration_instance_if_determined_by_name(
-                client, instance_name
-            )
+            self._delete_integration_instance_if_determined_by_name(client, instance_name)
         else:
             instance_name = f'{self.configuration.instance_name.replace(" ", "_")}_test_{uuid.uuid4()}'  # type: ignore
 
@@ -1519,9 +1347,7 @@ class Integration:
         # define module instance:
         params = self.configuration.params  # type: ignore
 
-        module_instance = self.create_module(
-            instance_name, configuration, instance_configuration
-        )
+        module_instance = self.create_module(instance_name, configuration, instance_configuration)
 
         # set server keys
         if not IS_XSIAM:
@@ -1531,11 +1357,7 @@ class Integration:
         for param_conf in module_configuration:
             if param_conf["display"] in params or param_conf["name"] in params:
                 # param defined in conf
-                key = (
-                    param_conf["display"]
-                    if param_conf["display"] in params
-                    else param_conf["name"]
-                )
+                key = param_conf["display"] if param_conf["display"] in params else param_conf["name"]
                 if key == "credentials":
                     credentials = params[key]
                     param_value = {
@@ -1561,31 +1383,22 @@ class Integration:
                 body=module_instance,
             )
         except ApiException:
-            self.build_context.logging_module.exception(
-                f"Error trying to create instance for integration: {self}"
-            )
+            self.build_context.logging_module.exception(f"Error trying to create instance for integration: {self}")
             return False
 
         if res[1] != 200:
-            self.build_context.logging_module.error(
-                f"create instance failed with status code  {res[1]}"
-            )
+            self.build_context.logging_module.error(f"create instance failed with status code  {res[1]}")
             self.build_context.logging_module.error(pformat(res[0]))
             return False
 
         integration_config = ast.literal_eval(res[0])
         self.integration_configuration_from_server = integration_config
         self.module_instance = module_instance
-        integration_script = (
-            integration_config.get("configuration", {}).get("integrationScript", {})
-            or {}
-        )
+        integration_script = integration_config.get("configuration", {}).get("integrationScript", {}) or {}
         self.integration_type = integration_script.get("type", "")
         return True
 
-    def delete_integration_instance(
-        self, client, instance_id: Optional[str] = None
-    ) -> bool:
+    def delete_integration_instance(self, client, instance_id: Optional[str] = None) -> bool:
         """
         Deletes an integration with the given ID
         Args:
@@ -1596,13 +1409,9 @@ class Integration:
             True if integration was deleted else False
         """
         self.build_context.logging_module.debug(f"Deleting {self} instance")
-        instance_id = instance_id or self.integration_configuration_from_server.get(
-            "id"
-        )
+        instance_id = instance_id or self.integration_configuration_from_server.get("id")
         if not instance_id:
-            self.build_context.logging_module.debug(
-                f"no instance ID for integration {self} was supplied"
-            )
+            self.build_context.logging_module.debug(f"no instance ID for integration {self} was supplied")
             return True
         try:
             res = demisto_client.generic_request_func(
@@ -1616,9 +1425,7 @@ class Integration:
             )
             return False
         if int(res[1]) != 200:
-            self.build_context.logging_module.error(
-                f"delete integration instance failed\nStatus code {res[1]}"
-            )
+            self.build_context.logging_module.error(f"delete integration instance failed\nStatus code {res[1]}")
             self.build_context.logging_module.error(pformat(res))
             return False
         if self.module_instance:
@@ -1641,9 +1448,7 @@ class Integration:
 
         connection_retries = 3
         response_code = 0
-        integration_of_instance = self.integration_configuration_from_server.get(
-            "brand", ""
-        )
+        integration_of_instance = self.integration_configuration_from_server.get("brand", "")
         instance_name = self.integration_configuration_from_server.get("name", "")
         self.build_context.logging_module.info(
             f'Running "test-module" for instance "{instance_name}" of integration "{integration_of_instance}".'
@@ -1665,9 +1470,7 @@ class Integration:
                 )
                 return False
             except urllib3.exceptions.ReadTimeoutError:
-                self.build_context.logging_module.warning(
-                    f"Could not connect. Trying to connect for the {i + 1} time"
-                )
+                self.build_context.logging_module.warning(f"Could not connect. Trying to connect for the {i + 1} time")
 
         if int(response_code) != 200:
             self.build_context.logging_module.error(
@@ -1677,14 +1480,11 @@ class Integration:
             return False
 
         result_object = ast.literal_eval(response_data)
-        success, failure_message = bool(
-            result_object.get("success")
-        ), result_object.get("message")
+        success, failure_message = bool(result_object.get("success")), result_object.get("message")
         if not success:
             server_url = get_ui_url(client.api_client.configuration.host)
             test_failed_msg = (
-                f"Test integration failed - server: {server_url}.\n"
-                f"Failure message: {failure_message}"
+                f"Test integration failed - server: {server_url}.\n" f"Failure message: {failure_message}"
                 if failure_message
                 else " No failure message."
             )
@@ -1712,9 +1512,7 @@ class Integration:
         }
         module_instance["enable"] = "false"
         module_instance["version"] = -1
-        self.build_context.logging_module.debug(
-            f'Disabling integration instance "{module_instance.get("name")}"'
-        )
+        self.build_context.logging_module.debug(f'Disabling integration instance "{module_instance.get("name")}"')
         try:
             res = demisto_client.generic_request_func(
                 self=client,
@@ -1723,15 +1521,11 @@ class Integration:
                 body=module_instance,
             )
         except ApiException:
-            self.build_context.logging_module.exception(
-                "Failed to disable integration instance"
-            )
+            self.build_context.logging_module.exception("Failed to disable integration instance")
             return
 
         if res[1] != 200:
-            self.build_context.logging_module.error(
-                f"disable instance failed, Error: {pformat(res)}"
-            )
+            self.build_context.logging_module.error(f"disable instance failed, Error: {pformat(res)}")
 
     def get_docker_images(self) -> List[str]:
         """
@@ -1740,13 +1534,9 @@ class Integration:
 
         """
         if self.integration_configuration_from_server:
-            return Docker.get_integration_image(
-                self.integration_configuration_from_server
-            )
+            return Docker.get_integration_image(self.integration_configuration_from_server)
         else:
-            raise Exception(
-                "Cannot get docker image - integration instance was not created yet"
-            )
+            raise Exception("Cannot get docker image - integration instance was not created yet")
 
     def __str__(self):
         return f'"{self.name}"'
@@ -1849,26 +1639,18 @@ class TestContext:
                 resp_json = ast.literal_eval(res[0])
                 entries = resp_json["entries"]
 
-                self.build_context.logging_module.error(
-                    f"Playbook {self.playbook} has failed:"
-                )
+                self.build_context.logging_module.error(f"Playbook {self.playbook} has failed:")
                 for entry in entries:
                     if entry["type"] == ENTRY_TYPE_ERROR and entry["parentContent"]:
-                        self.build_context.logging_module.error(
-                            f'- Task ID: {entry["taskId"]}'
-                        )
+                        self.build_context.logging_module.error(f'- Task ID: {entry["taskId"]}')
                         # Checks for passwords and replaces them with "******"
                         parent_content = re.sub(
                             r' (P|p)assword="[^";]*"',
                             " password=******",
                             entry["parentContent"],
                         )
-                        self.build_context.logging_module.error(
-                            f"  Command: {parent_content}"
-                        )
-                        self.build_context.logging_module.error(
-                            f'  Body:\n{entry["contents"]}'
-                        )
+                        self.build_context.logging_module.error(f"  Command: {parent_content}")
+                        self.build_context.logging_module.error(f'  Body:\n{entry["contents"]}')
             else:
                 self.build_context.logging_module.error(
                     f"Failed getting entries for investigation: {self.incident_id}. Res: {res}"
@@ -1895,22 +1677,16 @@ class TestContext:
                 playbook_state = self._get_investigation_playbook_state()
             except demisto_client.demisto_api.rest.ApiException:
                 playbook_state = "Pending"
-                self.build_context.logging_module.exception(
-                    "Error when trying to get investigation playbook state"
-                )
+                self.build_context.logging_module.exception("Error when trying to get investigation playbook state")
 
             if playbook_state in (PB_Status.COMPLETED, PB_Status.NOT_SUPPORTED_VERSION):
                 break
             if playbook_state == PB_Status.FAILED:
-                self.build_context.logging_module.error(
-                    f"{self.playbook} failed with error/s"
-                )
+                self.build_context.logging_module.error(f"{self.playbook} failed with error/s")
                 self._print_investigation_error()
                 break
             if time.time() > timeout:
-                self.build_context.logging_module.error(
-                    f"{self.playbook} failed on timeout"
-                )
+                self.build_context.logging_module.error(f"{self.playbook} failed on timeout")
                 break
 
             if number_of_attempts % DEFAULT_INTERVAL == 0:
@@ -1928,35 +1704,25 @@ class TestContext:
         """
         try:
             if not self.build_context.is_xsiam:
-                self.build_context.logging_module.info(
-                    f"ssh tunnel command:\n{self.tunnel_command}"
-                )
+                self.build_context.logging_module.info(f"ssh tunnel command:\n{self.tunnel_command}")
             instance_configuration = self.playbook.configuration.instance_configuration
 
-            if not self.playbook.configure_integrations(
-                self.client, self.server_context, instance_configuration
-            ):
+            if not self.playbook.configure_integrations(self.client, self.server_context, instance_configuration):
                 return PB_Status.CONFIGURATION_FAILED
 
-            test_module_result = self.playbook.run_test_module_on_integrations(
-                self.client
-            )
+            test_module_result = self.playbook.run_test_module_on_integrations(self.client)
             if not test_module_result:
                 self.playbook.disable_integrations(self.client, self.server_context)
                 return PB_Status.FAILED
 
-            external_playbook_configuration = (
-                self.playbook.configuration.external_playbook_config
-            )
+            external_playbook_configuration = self.playbook.configuration.external_playbook_config
 
             # Change Configuration for external configuration if needed
             (
                 restore_needed,
                 default_vals,
                 restore_path,
-            ) = replace_external_playbook_configuration(
-                self.client, external_playbook_configuration
-            )
+            ) = replace_external_playbook_configuration(self.client, external_playbook_configuration)
 
             incident = self.playbook.create_incident(self.client)
             if not incident:
@@ -1965,14 +1731,10 @@ class TestContext:
             self.incident_id = incident.id if IS_XSIAM else incident.investigation_id
             investigation_id = self.incident_id
             if investigation_id is None:
-                self.build_context.logging_module.error(
-                    f"Failed to get investigation id of incident: {incident}"
-                )
+                self.build_context.logging_module.error(f"Failed to get investigation id of incident: {incident}")
                 return ""
 
-            self.build_context.logging_module.info(
-                f"Found incident with incident ID: {investigation_id}."
-            )
+            self.build_context.logging_module.info(f"Found incident with incident ID: {investigation_id}.")
 
             server_url = get_ui_url(self.client.api_client.configuration.host)
             if IS_XSIAM:
@@ -1981,13 +1743,9 @@ class TestContext:
                     f"{investigation_id}&action:openAlertDetails={investigation_id}-work_plan"
                 )
             else:
-                self.build_context.logging_module.info(
-                    f"Investigation URL: {server_url}/#/WorkPlan/{investigation_id}"
-                )
+                self.build_context.logging_module.info(f"Investigation URL: {server_url}/#/WorkPlan/{investigation_id}")
             playbook_state = self._poll_for_playbook_state()
-            self.build_context.logging_module.info(
-                f"Got incident: {investigation_id} status: {playbook_state}."
-            )
+            self.build_context.logging_module.info(f"Got incident: {investigation_id} status: {playbook_state}.")
             if self.playbook.configuration.context_print_dt:
                 self.playbook.print_context_to_log(self.client, investigation_id)
 
@@ -2001,9 +1759,7 @@ class TestContext:
             self._clean_incident_if_successful(playbook_state)
             return playbook_state
         except Exception:
-            self.build_context.logging_module.exception(
-                f"Failed to run incident test for {self.playbook}"
-            )
+            self.build_context.logging_module.exception(f"Failed to run incident test for {self.playbook}")
             return PB_Status.FAILED
 
     def _clean_incident_if_successful(self, playbook_state: str) -> None:
@@ -2059,9 +1815,7 @@ class TestContext:
             if integration.integration_type == Docker.POWERSHELL_INTEGRATION_TYPE
         )
         if has_pwsh_integration:
-            memory_threshold = max(
-                Docker.DEFAULT_PWSH_CONTAINER_MEMORY_USAGE, memory_threshold
-            )
+            memory_threshold = max(Docker.DEFAULT_PWSH_CONTAINER_MEMORY_USAGE, memory_threshold)
             pid_threshold = max(Docker.DEFAULT_PWSH_CONTAINER_PIDS_USAGE, pid_threshold)
         return memory_threshold, pid_threshold
 
@@ -2099,13 +1853,9 @@ class TestContext:
         """
         Adds the playbook to the succeeded playbooks list
         """
-        self.build_context.tests_data_keeper.succeeded_playbooks.append(
-            self.playbook.configuration.playbook_id
-        )
+        self.build_context.tests_data_keeper.succeeded_playbooks.append(self.playbook.configuration.playbook_id)
 
-    def _add_details_to_failed_tests_report(
-        self, playbook_name: str, failed_stage: str
-    ) -> None:
+    def _add_details_to_failed_tests_report(self, playbook_name: str, failed_stage: str) -> None:
         """
         Adds the relevant details to the failed tests report.
 
@@ -2113,9 +1863,7 @@ class TestContext:
             playbook_name: The test's name.
             failed_stage: The stage where the test failed.
         """
-        self.build_context.tests_data_keeper.playbook_report.setdefault(
-            playbook_name, []
-        ).append(
+        self.build_context.tests_data_keeper.playbook_report.setdefault(playbook_name, []).append(
             {
                 "number_of_executions": self.playbook.configuration.number_of_executions,
                 "number_of_successful_runs": self.playbook.configuration.number_of_successful_runs,
@@ -2124,9 +1872,7 @@ class TestContext:
         )
 
     @staticmethod
-    def _get_failed_stage(
-        status: Optional[str], is_second_playback_run: bool = False
-    ) -> str:
+    def _get_failed_stage(status: Optional[str], is_second_playback_run: bool = False) -> str:
         """
         Gets the test failed stage.
 
@@ -2142,9 +1888,7 @@ class TestContext:
             return "Configuration"
         return "Execution"
 
-    def _add_to_failed_playbooks(
-        self, is_second_playback_run: bool = False, status: Optional[str] = None
-    ) -> None:
+    def _add_to_failed_playbooks(self, is_second_playback_run: bool = False, status: Optional[str] = None) -> None:
         """
         Adds the playbook to the failed playbooks list
 
@@ -2162,9 +1906,7 @@ class TestContext:
             )
             playbook_name_to_add += " (Second Playback)"
 
-        self._add_details_to_failed_tests_report(
-            self.playbook.configuration.playbook_id, failed_stage
-        )
+        self._add_details_to_failed_tests_report(self.playbook.configuration.playbook_id, failed_stage)
         self.build_context.logging_module.error(f"Test failed: {self}")
         self.build_context.tests_data_keeper.failed_playbooks.add(playbook_name_to_add)
 
@@ -2188,9 +1930,7 @@ class TestContext:
         """
         Returns some data about the processes currently running in the circle build instance
         """
-        process = subprocess.Popen(
-            ["ps", "aux"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-        )
+        process = subprocess.Popen(["ps", "aux"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         stdout, stderr = process.communicate()
         return stdout.decode(), stderr.decode()
 
@@ -2198,21 +1938,13 @@ class TestContext:
         """
         Sends a slack messages with the number of bytes currently in use and the number of processes currently in use
         """
-        if (
-            self.build_context.is_nightly
-            and self.build_context.memCheck
-            and not self.build_context.is_local_run
-        ):
+        if self.build_context.is_nightly and self.build_context.memCheck and not self.build_context.is_local_run:
             stdout, stderr = self._get_circle_memory_data()
             text = f"Memory Usage: {stdout}" if not stderr else stderr
-            self._send_slack_message(
-                SLACK_MEM_CHANNEL_ID, text, "Content CircleCI", "False"
-            )
+            self._send_slack_message(SLACK_MEM_CHANNEL_ID, text, "Content CircleCI", "False")
             stdout, stderr = self._get_circle_processes_data()
             text = stdout if not stderr else stderr
-            self._send_slack_message(
-                SLACK_MEM_CHANNEL_ID, text, "Content CircleCI", "False"
-            )
+            self._send_slack_message(SLACK_MEM_CHANNEL_ID, text, "Content CircleCI", "False")
 
     def _incident_and_docker_test(self) -> str:
         """
@@ -2223,10 +1955,7 @@ class TestContext:
         playbook_state = self._run_incident_test()
         # We don't want to run docker tests on redhat instance because it does not use docker and it does not support
         # the threshold configurations.
-        if (
-            playbook_state == PB_Status.COMPLETED
-            and self.server_context.is_instance_using_docker
-        ):
+        if playbook_state == PB_Status.COMPLETED and self.server_context.is_instance_using_docker:
             #  currently not supported on XSIAM (etc/#47908)
             if not IS_XSIAM:
                 docker_test_results = self._run_docker_threshold_test()
@@ -2243,9 +1972,7 @@ class TestContext:
         Returns:
             True if test has finished it's execution else False
         """
-        self.build_context.logging_module.info(
-            f"------ Test {self} start ------ (Mock: Disabled)"
-        )
+        self.build_context.logging_module.info(f"------ Test {self} start ------ (Mock: Disabled)")
         with acquire_test_lock(self.playbook) as lock:
             if lock:
                 status = self._incident_and_docker_test()
@@ -2296,9 +2023,7 @@ class TestContext:
             return PB_Status.COMPLETED
 
         if use_retries_mechanism:
-            return self._update_status_based_on_retries_mechanism(
-                number_of_executions, is_record_run
-            )
+            return self._update_status_based_on_retries_mechanism(number_of_executions, is_record_run)
 
         return PB_Status.COMPLETED
 
@@ -2336,16 +2061,12 @@ class TestContext:
         # in case of using the retries mechanism, the function should determine whether the test-playbook is considered
         # a failure or give it another try.
         if use_retries_mechanism:
-            return self._update_status_based_on_retries_mechanism(
-                number_of_executions, is_record_run
-            )
+            return self._update_status_based_on_retries_mechanism(number_of_executions, is_record_run)
 
         # the test-playbook is considered a failed playbook.
         return PB_Status.FAILED
 
-    def _update_status_based_on_retries_mechanism(
-        self, number_of_executions, is_record_run
-    ):
+    def _update_status_based_on_retries_mechanism(self, number_of_executions, is_record_run):
         """
         Updates the status of a test-playbook when using the retries mechanism.
         Args:
@@ -2367,10 +2088,7 @@ class TestContext:
 
         else:  # number_of_executions == MAX_RETRIES:
             # check if in most executions, the test passed.
-            if (
-                self.playbook.configuration.number_of_successful_runs
-                >= RETRIES_THRESHOLD
-            ):
+            if self.playbook.configuration.number_of_successful_runs >= RETRIES_THRESHOLD:
                 # It's not enough that the record run will pass to declare the test as successful,
                 # we need the second playback to pass as well.
                 if is_record_run:
@@ -2456,16 +2174,10 @@ class TestContext:
         if not self.playbook.configuration.is_first_playback_failed:
             if proxy.has_mock_file(self.playbook.configuration.playbook_id):
                 # Running first playback run on mock file
-                self.build_context.logging_module.info(
-                    f"------ Test {self} start ------ (Mock: Playback)"
-                )
-                with run_with_mock(
-                    proxy, self.playbook.configuration.playbook_id
-                ) as result_holder:
+                self.build_context.logging_module.info(f"------ Test {self} start ------ (Mock: Playback)")
+                with run_with_mock(proxy, self.playbook.configuration.playbook_id) as result_holder:
                     status = self._incident_and_docker_test()
-                    status = self._update_playbook_status(
-                        status, is_first_playback_run=True
-                    )
+                    status = self._update_playbook_status(status, is_first_playback_run=True)
                     result_holder[RESULT] = status == PB_Status.COMPLETED
                 if status in (PB_Status.COMPLETED, PB_Status.FAILED_DOCKER_TEST):
                     return True
@@ -2475,14 +2187,10 @@ class TestContext:
                 self.playbook.configuration.is_first_playback_failed = True
 
         # Running on record mode since playback has failed or mock file was not found
-        self.build_context.logging_module.info(
-            f"------ Test {self} start ------ (Mock: Recording)"
-        )
+        self.build_context.logging_module.info(f"------ Test {self} start ------ (Mock: Recording)")
         with acquire_test_lock(self.playbook) as lock:
             if lock:
-                with run_with_mock(
-                    proxy, self.playbook.configuration.playbook_id, record=True
-                ) as result_holder:
+                with run_with_mock(proxy, self.playbook.configuration.playbook_id, record=True) as result_holder:
                     status = self._incident_and_docker_test()
                     self.playbook.configuration.number_of_executions += 1
                     status = self._update_playbook_status(status, is_record_run=True)
@@ -2493,12 +2201,8 @@ class TestContext:
 
         # Running playback after successful record to verify the record is valid for future runs
         if status == PB_Status.SECOND_PLAYBACK_REQUIRED:
-            self.build_context.logging_module.info(
-                f"------ Test {self} start ------ (Mock: Second playback)"
-            )
-            with run_with_mock(
-                proxy, self.playbook.configuration.playbook_id
-            ) as result_holder:
+            self.build_context.logging_module.info(f"------ Test {self} start ------ (Mock: Second playback)")
+            with run_with_mock(proxy, self.playbook.configuration.playbook_id) as result_holder:
                 status = self._run_incident_test()
                 self._update_playbook_status(status, is_second_playback_run=True)
                 result_holder[RESULT] = status == PB_Status.COMPLETED
@@ -2513,10 +2217,7 @@ class TestContext:
         Returns:
             True if this instance can be run on the current instance else False
         """
-        if (
-            self.playbook.configuration.runnable_on_docker_only
-            and not self.server_context.is_instance_using_docker
-        ):
+        if self.playbook.configuration.runnable_on_docker_only and not self.server_context.is_instance_using_docker:
             self.build_context.logging_module.debug(
                 f"Skipping test {self.playbook} since it's not runnable on podman instances"
             )
@@ -2583,11 +2284,7 @@ class ServerContext:
             # we use client without demisto username
             os.environ.pop("DEMISTO_USERNAME", None)
         else:
-            self.server_url = (
-                f"https://localhost:{tunnel_port}"
-                if tunnel_port
-                else f"https://{self.server_ip}"
-            )
+            self.server_url = f"https://localhost:{tunnel_port}" if tunnel_port else f"https://{self.server_ip}"
         self.client: Optional[DefaultApi] = None
         self._configure_new_client()
         # currently not supported on XSIAM (etc/#47851)
@@ -2633,9 +2330,7 @@ class ServerContext:
             except Empty:
                 continue
             self._configure_new_client()
-            test_executed = TestContext(
-                self.build_context, test_playbook, self.client, self
-            ).execute_test(self.proxy)
+            test_executed = TestContext(self.build_context, test_playbook, self.client, self).execute_test(self.proxy)
             if test_executed:
                 self.executed_tests.add(test_playbook.configuration.playbook_id)
             else:
@@ -2666,9 +2361,7 @@ class ServerContext:
     def _execute_failed_tests(self):
         self._execute_tests(self.build_context.test_retries_queue)
 
-    def _reset_tests_round_if_necessary(
-        self, test_playbook: TestPlaybook, queue_: Queue
-    ) -> None:
+    def _reset_tests_round_if_necessary(self, test_playbook: TestPlaybook, queue_: Queue) -> None:
         """
         Checks if the string representation of the current test configuration is already in
         the executed_in_current_round set.
@@ -2728,14 +2421,10 @@ class ServerContext:
                 real_time=True,
             )
             self._execute_mockable_tests()
-            self.build_context.logging_module.info(
-                "Running mock-disabled tests", real_time=True
-            )
+            self.build_context.logging_module.info("Running mock-disabled tests", real_time=True)
             self._execute_unmockable_tests()
             if self.use_retries_mechanism:
-                self.build_context.logging_module.info(
-                    "Running failed tests", real_time=True
-                )
+                self.build_context.logging_module.info("Running failed tests", real_time=True)
                 self._execute_failed_tests()
             self.build_context.logging_module.info(
                 f"Finished tests with server url - " f"{get_ui_url(self.server_url)}",
@@ -2743,16 +2432,13 @@ class ServerContext:
             )
             # no need in xsiam, no proxy
             if not IS_XSIAM:
-                self.build_context.tests_data_keeper.add_proxy_related_test_data(
-                    self.proxy
-                )
+                self.build_context.tests_data_keeper.add_proxy_related_test_data(self.proxy)
 
             if self.build_context.isAMI and not IS_XSIAM:
                 if self.proxy.should_update_mock_repo:  # type: ignore[union-attr]
                     self.proxy.push_mock_files()  # type: ignore[union-attr]
             self.build_context.logging_module.debug(
-                f"Tests executed on server {self.server_ip}:\n"
-                f"{pformat(self.executed_tests)}"
+                f"Tests executed on server {self.server_ip}:\n" f"{pformat(self.executed_tests)}"
             )
         except Exception:
             self.build_context.logging_module.exception("~~ Thread failed ~~")
@@ -2794,18 +2480,14 @@ class ServerContext:
             for instance in all_configurations:
                 if instance.get("id") == "Manual":
                     self.build_context.logging_module.info(
-                        "Server is able to create manual alerts "
-                        '("Manual" integration exists).'
+                        "Server is able to create manual alerts " '("Manual" integration exists).'
                     )
                     return
         except ApiException:
-            self.build_context.logging_module.exception(
-                "Failed to get integrations configuration."
-            )
+            self.build_context.logging_module.exception("Failed to get integrations configuration.")
 
         self.build_context.logging_module.warning(
-            'No "Manual" integration found in XSIAM instance. '
-            "Adding it in order to create Manual Correlation Rule."
+            'No "Manual" integration found in XSIAM instance. ' "Adding it in order to create Manual Correlation Rule."
         )
         self.create_manual_integration()
 
@@ -2859,18 +2541,14 @@ def replace_external_playbook_configuration(
 
     # Checking configuration
     if not external_playbook_configuration:
-        logger_module.info(
-            "External Playbook Configuration not provided, skipping re-configuration."
-        )
+        logger_module.info("External Playbook Configuration not provided, skipping re-configuration.")
         return False, {}, ""
 
     # Checking server version
     server_version = get_demisto_version(client)
 
     if LooseVersion(server_version.base_version) < LooseVersion("6.2.0"):  # type: ignore
-        logger_module.info(
-            "External Playbook not supported in versions previous to 6.2.0, skipping re-configuration."
-        )
+        logger_module.info("External Playbook not supported in versions previous to 6.2.0, skipping re-configuration.")
         return False, {}, ""
 
     logger_module.info("External Playbook in use, starting re-configuration.")
@@ -2898,12 +2576,8 @@ def replace_external_playbook_configuration(
         matching_record = list(filter(lambda x: x.get("key") == input_, inputs))
         if matching_record:
             existing_val = matching_record[0]
-            simple = external_playbook_configuration["input_parameters"][input_].get(
-                "simple"
-            )
-            complex = external_playbook_configuration["input_parameters"][input_].get(
-                "complex"
-            )
+            simple = external_playbook_configuration["input_parameters"][input_].get("simple")
+            complex = external_playbook_configuration["input_parameters"][input_].get("complex")
 
             # If no value (simple or complex) was found, It is a typo
             if complex is None and simple is None:
@@ -2921,27 +2595,19 @@ def replace_external_playbook_configuration(
             failed_keys.append(input_)
 
     if failed_keys:
-        raise Exception(
-            f'Some input keys was not found in playbook: {",".join(failed_keys)}.'
-        )
+        raise Exception(f'Some input keys was not found in playbook: {",".join(failed_keys)}.')
 
     logger_module.info(f"Changing keys: {changed_keys}.")
     saving_inputs_path = f"/playbook/inputs/{external_playbook_id}"
 
     try:
         if changed_keys:
-            demisto_client.generic_request_func(
-                client, method="POST", path=saving_inputs_path, body=inputs
-            )
+            demisto_client.generic_request_func(client, method="POST", path=saving_inputs_path, body=inputs)
 
     except Exception as e:
-        raise Exception(
-            f"Could not change inputs in playbook configuration. Error: {e}"
-        )
+        raise Exception(f"Could not change inputs in playbook configuration. Error: {e}")
 
-    logger_module.info(
-        f"Re-configured {external_playbook_id} successfully with {len(changed_keys)} new values."
-    )
+    logger_module.info(f"Re-configured {external_playbook_id} successfully with {len(changed_keys)} new values.")
 
     return True, inputs_default, saving_inputs_path
 
@@ -2954,8 +2620,6 @@ def restore_external_playbook_configuration(
 ):
     logger_module.info("Restoring External Playbook parameters.")
 
-    res, _, _ = demisto_client.generic_request_func(
-        client, method="POST", path=restore_path, body=restore_values
-    )
+    res, _, _ = demisto_client.generic_request_func(client, method="POST", path=restore_path, body=restore_values)
 
     logger_module.info("Restored External Playbook successfully.")

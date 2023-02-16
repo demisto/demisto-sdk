@@ -40,9 +40,7 @@ def test_generate_outputs_json_to_outputs_flow(mocker, args, excpected_stdout):
         (["-e", "<example>", "-i", "123"], "Input file 123 was not found"),
     ],
 )
-def test_generate_outputs_generate_integration_context_flow(
-    mocker, args, excpected_stdout
-):
+def test_generate_outputs_generate_integration_context_flow(mocker, args, excpected_stdout):
     """
     Given
         - Bad inputs

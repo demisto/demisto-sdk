@@ -148,10 +148,7 @@ def init_test_data(
                         for _ in range(count)
                     ]
                 )
-                test_data_file = (
-                    mr_entity.path.parent
-                    / f"{mr_entity.path.parent.stem}{mr_entity.TESTDATA_FILE_SUFFIX}"
-                )
+                test_data_file = mr_entity.path.parent / f"{mr_entity.path.parent.stem}{mr_entity.TESTDATA_FILE_SUFFIX}"
             test_data_file.write_text(test_data.json(indent=4))
             logger.info(
                 f"[green]Successfully {operation_mode}d {test_data_file}[/green]",

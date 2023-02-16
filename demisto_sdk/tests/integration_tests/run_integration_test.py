@@ -6,9 +6,7 @@ from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.run_cmd.runner import Runner
 
-DEBUG_FILE_PATH = (
-    f"{git_path()}/demisto_sdk/commands/run_cmd/tests/test_data/kl-get-component.txt"
-)
+DEBUG_FILE_PATH = f"{git_path()}/demisto_sdk/commands/run_cmd/tests/test_data/kl-get-component.txt"
 YAML_OUTPUT = """arguments: []
 name: kl-get-records
 outputs:
@@ -109,8 +107,5 @@ def test_json_to_outputs_flag_fail_no_prefix(mocker, set_environment_variables):
         mix_stderr=False,
     ).invoke(main, ["run", "-q", command, "--json-to-outputs"])
     assert 1 == run_result.exit_code
-    assert (
-        "A prefix for the outputs is needed for this command. Please provide one"
-        in run_result.stdout
-    )
+    assert "A prefix for the outputs is needed for this command. Please provide one" in run_result.stdout
     assert not run_result.stderr

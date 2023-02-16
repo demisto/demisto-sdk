@@ -62,16 +62,12 @@ def get_changed_files(from_branch: str = "master", filter_results: Callable = No
 
 def add_origin(branch_name, prev_ver):
     # If git base not provided - check against origin/prev_ver unless using release branch
-    if "/" not in prev_ver and not (
-        branch_name.startswith("20.") or branch_name.startswith("21.")
-    ):
+    if "/" not in prev_ver and not (branch_name.startswith("20.") or branch_name.startswith("21.")):
         prev_ver = "origin/" + prev_ver
     return prev_ver
 
 
-def filter_staged_only(
-    modified_files, added_files, old_format_files, changed_meta_files
-):
+def filter_staged_only(modified_files, added_files, old_format_files, changed_meta_files):
     """The function gets sets of files which were changed in the current branch and filters
     out only the files that were changed in the current commit"""
     all_changed_files = run_command("git diff --name-only --staged").split()
@@ -125,9 +121,7 @@ def get_modified_and_added_files(
 
     prev_ver = add_origin(branch_name, prev_ver)
     # all committed changes of the current branch vs the prev_ver
-    all_committed_files_string = run_command(
-        f"git diff --name-status {prev_ver}{compare_type}refs/heads/{branch_name}"
-    )
+    all_committed_files_string = run_command(f"git diff --name-status {prev_ver}{compare_type}refs/heads/{branch_name}")
 
     (
         modified_files,
@@ -137,24 +131,18 @@ def get_modified_and_added_files(
         changed_meta_files,
         ignored_files,
         new_packs,
-    ) = filter_changed_files(
-        all_committed_files_string, prev_ver, print_ignored_files=print_ignored_files
-    )
+    ) = filter_changed_files(all_committed_files_string, prev_ver, print_ignored_files=print_ignored_files)
 
     if not is_circle:
         remote_configured = has_remote_configured()
         is_origin_demisto = is_origin_content_repo()
         if remote_configured and not is_origin_demisto:
             if not no_configuration_prints:
-                click.echo(
-                    "Collecting all local changed files from fork against the content master"
-                )
+                click.echo("Collecting all local changed files from fork against the content master")
 
             # only changes against prev_ver (without local changes)
 
-            all_changed_files_string = run_command(
-                "git diff --name-status upstream/master...HEAD"
-            )
+            all_changed_files_string = run_command("git diff --name-status upstream/master...HEAD")
             (
                 modified_files_from_tag,
                 added_files_from_tag,
@@ -163,14 +151,10 @@ def get_modified_and_added_files(
                 changed_meta_files_from_tag,
                 ignored_files_from_tag,
                 new_packs_from_tag,
-            ) = filter_changed_files(
-                all_changed_files_string, print_ignored_files=print_ignored_files
-            )
+            ) = filter_changed_files(all_changed_files_string, print_ignored_files=print_ignored_files)
 
             # all local non-committed changes and changes against prev_ver
-            outer_changes_files_string = run_command(
-                "git diff --name-status --no-merges upstream/master...HEAD"
-            )
+            outer_changes_files_string = run_command("git diff --name-status --no-merges upstream/master...HEAD")
             (
                 nc_modified_files,
                 nc_added_files,
@@ -179,14 +163,10 @@ def get_modified_and_added_files(
                 nc_changed_meta_files,
                 nc_ignored_files,
                 nc_new_packs,
-            ) = filter_changed_files(
-                outer_changes_files_string, print_ignored_files=print_ignored_files
-            )
+            ) = filter_changed_files(outer_changes_files_string, print_ignored_files=print_ignored_files)
 
         else:
-            if (
-                not is_origin_demisto and not remote_configured
-            ) and not no_configuration_prints:
+            if (not is_origin_demisto and not remote_configured) and not no_configuration_prints:
                 error_message, error_code = Errors.changes_may_fail_validation()
                 base_validator.handle_error(
                     error_message,
@@ -197,9 +177,7 @@ def get_modified_and_added_files(
                 )
 
             if not no_configuration_prints and not staged:
-                click.echo(
-                    "Collecting all local changed files against the content master"
-                )
+                click.echo("Collecting all local changed files against the content master")
 
             # only changes against prev_ver (without local changes)
             all_changed_files_string = run_command(f"git diff --name-status {prev_ver}")
@@ -211,14 +189,10 @@ def get_modified_and_added_files(
                 changed_meta_files_from_tag,
                 ignored_files_from_tag,
                 new_packs_from_tag,
-            ) = filter_changed_files(
-                all_changed_files_string, print_ignored_files=print_ignored_files
-            )
+            ) = filter_changed_files(all_changed_files_string, print_ignored_files=print_ignored_files)
 
             # all local non-committed changes and changes against prev_ver
-            outer_changes_files_string = run_command(
-                "git diff --name-status --no-merges HEAD"
-            )
+            outer_changes_files_string = run_command("git diff --name-status --no-merges HEAD")
             (
                 nc_modified_files,
                 nc_added_files,
@@ -227,26 +201,16 @@ def get_modified_and_added_files(
                 nc_changed_meta_files,
                 nc_ignored_files,
                 nc_new_packs,
-            ) = filter_changed_files(
-                outer_changes_files_string, print_ignored_files=print_ignored_files
-            )
+            ) = filter_changed_files(outer_changes_files_string, print_ignored_files=print_ignored_files)
 
         old_format_files = old_format_files.union(nc_old_format_files)
-        modified_files = modified_files.union(
-            modified_files_from_tag.intersection(nc_modified_files)
-        )
+        modified_files = modified_files.union(modified_files_from_tag.intersection(nc_modified_files))
 
-        added_files = added_files.union(
-            added_files_from_tag.intersection(nc_added_files)
-        )
+        added_files = added_files.union(added_files_from_tag.intersection(nc_added_files))
 
-        changed_meta_files = changed_meta_files.union(
-            changed_meta_files_from_tag.intersection(nc_changed_meta_files)
-        )
+        changed_meta_files = changed_meta_files.union(changed_meta_files_from_tag.intersection(nc_changed_meta_files))
 
-        ignored_files = ignored_files.union(
-            ignored_files_from_tag.intersection(nc_ignored_files)
-        )
+        ignored_files = ignored_files.union(ignored_files_from_tag.intersection(nc_ignored_files))
 
         new_packs = new_packs.union(new_packs_from_tag.intersection(nc_new_packs))
 
@@ -260,15 +224,9 @@ def get_modified_and_added_files(
             added_files,
             old_format_files,
             changed_meta_files,
-        ) = filter_staged_only(
-            modified_files, added_files, old_format_files, changed_meta_files
-        )
+        ) = filter_staged_only(modified_files, added_files, old_format_files, changed_meta_files)
 
-    modified_packs = (
-        get_packs(modified_files)
-        .union(get_packs(old_format_files))
-        .union(get_packs(added_files))
-    )
+    modified_packs = get_packs(modified_files).union(get_packs(old_format_files)).union(get_packs(added_files))
     return (
         modified_files,
         added_files,
@@ -312,9 +270,7 @@ def filter_changed_files(files_string, tag="master", print_ignored_files=False):
         if file_status.lower().startswith("r"):
             file_status = "r"
             file_path = file_data[2]
-        path = Path(
-            file_path
-        )  # added as a quick-fix, not replacing in all places even though they'd be prettier.
+        path = Path(file_path)  # added as a quick-fix, not replacing in all places even though they'd be prettier.
         try:
             file_type = find_type(file_path)
             # if the file is a code file - change path to
@@ -332,9 +288,7 @@ def filter_changed_files(files_string, tag="master", print_ignored_files=False):
                 if file_path not in ignored_files:
                     ignored_files.add(file_path)
                     if print_ignored_files:
-                        click.secho(
-                            f"Ignoring file path: {file_path} - code file", fg="yellow"
-                        )
+                        click.secho(f"Ignoring file path: {file_path} - code file", fg="yellow")
                 continue
 
             # ignore changes in TESTS_DIRECTORIES files.
@@ -342,9 +296,7 @@ def filter_changed_files(files_string, tag="master", print_ignored_files=False):
                 if file_path not in ignored_files:
                     ignored_files.add(file_path)
                     if print_ignored_files:
-                        click.secho(
-                            f"Ignoring file path: {file_path} - test file", fg="yellow"
-                        )
+                        click.secho(f"Ignoring file path: {file_path} - test file", fg="yellow")
                 continue
 
             # identify deleted files
@@ -354,9 +306,7 @@ def filter_changed_files(files_string, tag="master", print_ignored_files=False):
             # ignore directories
             elif not os.path.isfile(file_path):
                 if print_ignored_files:
-                    click.secho(
-                        f"Ignoring file path: {file_path} - directory", fg="yellow"
-                    )
+                    click.secho(f"Ignoring file path: {file_path} - directory", fg="yellow")
                 continue
 
             # changes in old scripts and integrations - unified python scripts/integrations
@@ -367,18 +317,10 @@ def filter_changed_files(files_string, tag="master", print_ignored_files=False):
             ):
                 old_format_files.add(file_path)
             # identify modified files
-            elif (
-                file_status.lower() == "m"
-                and file_type
-                and not path.name.startswith(".")
-            ):
+            elif file_status.lower() == "m" and file_type and not path.name.startswith("."):
                 modified_files_list.add(file_path)
             # identify added files
-            elif (
-                file_status.lower() == "a"
-                and file_type
-                and not path.name.startswith(".")
-            ):
+            elif file_status.lower() == "a" and file_type and not path.name.startswith("."):
                 added_files_list.add(file_path)
             # identify renamed files
             elif file_status.lower().startswith("r") and file_type:
@@ -424,9 +366,7 @@ def filter_changed_files(files_string, tag="master", print_ignored_files=False):
             if file_path not in ignored_files:
                 ignored_files.add(file_path)
                 if print_ignored_files:
-                    click.secho(
-                        f"Ignoring file path: {file_path} - File not found", fg="yellow"
-                    )
+                    click.secho(f"Ignoring file path: {file_path} - File not found", fg="yellow")
 
     modified_files_list, added_files_list, deleted_files = filter_packagify_changes(
         modified_files_list, added_files_list, deleted_files, tag

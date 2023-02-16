@@ -182,9 +182,7 @@ def test_build_pytest_command_3():
     """Build Pytest command with cov"""
     from demisto_sdk.commands.lint.commands_builder import build_pytest_command
 
-    command = (
-        "pytest -ra --junitxml=/devwork/report_pytest.xml --cov-report= --cov=test"
-    )
+    command = "pytest -ra --junitxml=/devwork/report_pytest.xml --cov-report= --cov=test"
     assert command == build_pytest_command(test_xml="test", cov="test")
 
 

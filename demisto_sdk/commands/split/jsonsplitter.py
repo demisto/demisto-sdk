@@ -99,12 +99,8 @@ class JsonSplitter:
                 dashboard_data = tab.get("dashboard")
 
                 if dashboard_data:
-                    dashboard_file_name = (
-                        dashboard_data.get("name").replace(" ", "") + ".json"
-                    )
-                    full_dashboard_path = os.path.join(
-                        self.dashboard_dir, dashboard_file_name
-                    )
+                    dashboard_file_name = dashboard_data.get("name").replace(" ", "") + ".json"
+                    full_dashboard_path = os.path.join(self.dashboard_dir, dashboard_file_name)
 
                     if self.logging:
                         click.echo(f"Creating dashboard: {full_dashboard_path}")

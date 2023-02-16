@@ -12,16 +12,12 @@ class TestPylint:
         exp_container_log = ""
         linter_obj._linter_to_commands()
         # Docker client mocking
-        mocker.patch(
-            "demisto_sdk.commands.common.docker_helper.DockerBase.create_container"
-        )
+        mocker.patch("demisto_sdk.commands.common.docker_helper.DockerBase.create_container")
 
         linter_obj._docker_client.containers.run("test-image").wait.return_value = {
             "StatusCode": exp_container_exit_code
         }
-        linter_obj._docker_client.containers.run(
-            "test-image"
-        ).logs.return_value = exp_container_log.encode("utf-8")
+        linter_obj._docker_client.containers.run("test-image").logs.return_value = exp_container_log.encode("utf-8")
         act_container_exit_code, act_container_log = linter_obj._docker_run_linter(
             linter="pylint", test_image="test-image", keep_container=False
         )
@@ -52,12 +48,8 @@ class TestPylint:
         # Docker client mocking
         mocker.patch.object(linter.get_docker(), "create_container")
         linter_obj._linter_to_commands()
-        linter.get_docker().create_container().wait.return_value = {
-            "StatusCode": exp_container_exit_code
-        }
-        linter.get_docker().create_container().logs.return_value = (
-            exp_container_log.encode("utf-8")
-        )
+        linter.get_docker().create_container().wait.return_value = {"StatusCode": exp_container_exit_code}
+        linter.get_docker().create_container().logs.return_value = exp_container_log.encode("utf-8")
         act_exit_code, act_output = linter_obj._docker_run_linter(
             linter="pylint", test_image="test-image", keep_container=False
         )
@@ -87,15 +79,11 @@ class TestPytest:
         exp_container_exit_code: int,
         exp_exit_code: int,
     ):
-        exp_test_json = (
-            mocker.MagicMock() if exp_container_exit_code in [0, 1, 2, 5] else {}
-        )
+        exp_test_json = mocker.MagicMock() if exp_container_exit_code in [0, 1, 2, 5] else {}
 
         # Docker client mocking
         mocker.patch.object(linter.get_docker(), "create_container")
-        linter.get_docker().create_container().wait.return_value = {
-            "StatusCode": exp_container_exit_code
-        }
+        linter.get_docker().create_container().wait.return_value = {"StatusCode": exp_container_exit_code}
 
         # Docker related mocking
         mocker.patch.object(linter, "json")
@@ -106,9 +94,7 @@ class TestPytest:
             act_container_exit_code,
             act_output,
             act_test_json,
-        ) = linter_obj._docker_run_pytest(
-            test_image="test-image", keep_container=False, test_xml="", no_coverage=True
-        )
+        ) = linter_obj._docker_run_pytest(test_image="test-image", keep_container=False, test_xml="", no_coverage=True)
 
         assert exp_exit_code == act_container_exit_code
         assert exp_test_json == act_test_json
@@ -181,9 +167,7 @@ class TestRunLintInContainer:
         assert linter_obj._pkg_lint_status.get("exit_code") == 0b0
         if not no_test and pack_type == TYPE_PYTHON:
             linter_obj._docker_run_pytest.assert_called_once()
-        elif (
-            not no_pylint or not no_flake8 or not no_vulture
-        ) and pack_type == TYPE_PYTHON:
+        elif (not no_pylint or not no_flake8 or not no_vulture) and pack_type == TYPE_PYTHON:
             linter_obj._docker_run_linter.assert_called_once()
         elif not no_pwsh_analyze and pack_type == TYPE_PWSH:
             linter_obj._docker_run_pwsh_analyze.assert_called_once()

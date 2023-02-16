@@ -4,9 +4,7 @@ from TestSuite.json_based import JSONBased
 
 
 class LayoutRule(JSONBased):
-    def __init__(
-        self, name: str, layout_rule_dir_path: Path, json_content: dict = None
-    ):
+    def __init__(self, name: str, layout_rule_dir_path: Path, json_content: dict = None):
         self.layout_rule_tmp_path = layout_rule_dir_path / f"{name}.json"
         self.name = name
         self.rule_id = name

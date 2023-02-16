@@ -22,19 +22,13 @@ class LayoutSixConverter(LayoutBaseConverter):
         Returns:
             (int): 0 if convert finished successfully, 1 otherwise.
         """
-        old_layout_id_to_layouts_dict = (
-            self.group_layouts_needing_conversion_by_layout_id()
-        )
+        old_layout_id_to_layouts_dict = self.group_layouts_needing_conversion_by_layout_id()
         for (
             layout_id,
             old_corresponding_layouts,
         ) in old_layout_id_to_layouts_dict.items():
-            new_layout_dict = self.create_layout_dict(
-                from_version="6.0.0", layout_id=layout_id
-            )
-            new_layout_dict["group"] = self.calculate_new_layout_group(
-                old_corresponding_layouts
-            )
+            new_layout_dict = self.create_layout_dict(from_version="6.0.0", layout_id=layout_id)
+            new_layout_dict["group"] = self.calculate_new_layout_group(old_corresponding_layouts)
 
             for old_layout in old_corresponding_layouts:
                 layout_kind = old_layout.get("kind")
@@ -48,9 +42,7 @@ class LayoutSixConverter(LayoutBaseConverter):
                 if tabs:
                     new_layout_dict[layout_kind] = {"tabs": tabs}
 
-            self.update_incident_and_indicator_types_related_to_old_layouts(
-                old_corresponding_layouts, layout_id
-            )
+            self.update_incident_and_indicator_types_related_to_old_layouts(old_corresponding_layouts, layout_id)
 
             new_layout_path = self.calculate_new_layout_relative_path(layout_id)
             self.dump_new_entity(new_layout_path, new_layout_dict)
@@ -63,11 +55,7 @@ class LayoutSixConverter(LayoutBaseConverter):
         Returns:
             (Set[str]): Set of all of the indicator field names in the layouts container schema.
         """
-        return {
-            schema_field
-            for schema_field in self.get_layout_dynamic_fields().keys()
-            if "indicator" in schema_field
-        }
+        return {schema_field for schema_field in self.get_layout_dynamic_fields().keys() if "indicator" in schema_field}
 
     def group_layouts_needing_conversion_by_layout_id(
         self,
@@ -84,13 +72,9 @@ class LayoutSixConverter(LayoutBaseConverter):
             (Dict[str, List[LayoutObject]]): Dict of (layoutID, [List of layouts with the corresponding layout ID).
         """
         layout_id_to_layouts_dict: Dict[str, List[LayoutObject]] = dict()
-        for layout in self.get_entities_by_entity_type(
-            self.pack.layouts, FileType.LAYOUT
-        ):
+        for layout in self.get_entities_by_entity_type(self.pack.layouts, FileType.LAYOUT):
             layout_id = layout.layout_id()
-            layout_id_to_layouts_dict[layout_id] = layout_id_to_layouts_dict.get(
-                layout_id, []
-            ) + [layout]
+            layout_id_to_layouts_dict[layout_id] = layout_id_to_layouts_dict.get(layout_id, []) + [layout]
         return layout_id_to_layouts_dict
 
     def calculate_new_layout_group(self, old_layouts: List[LayoutObject]) -> str:
@@ -102,9 +86,7 @@ class LayoutSixConverter(LayoutBaseConverter):
         Returns:
             (str): The group type of the layouts.
         """
-        is_group_indicator = any(
-            layout.get("kind") in self.layout_indicator_fields for layout in old_layouts
-        )
+        is_group_indicator = any(layout.get("kind") in self.layout_indicator_fields for layout in old_layouts)
         return "indicator" if is_group_indicator else "incident"
 
     def calculate_new_layout_relative_path(self, layout_id: str) -> str:

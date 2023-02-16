@@ -206,9 +206,7 @@ class Client(BaseClient):
 
         except ValueError as err:
             demisto.debug(str(err))
-            raise ValueError(
-                f"Could not parse returned data as indicator. \n\nError massage: {err}"
-            )
+            raise ValueError(f"Could not parse returned data as indicator. \n\nError massage: {err}")
         return result
 
 
@@ -293,9 +291,7 @@ def fetch_indicators(
     return indicators
 
 
-def get_indicators_command(
-    client: Client, params: Dict[str, str], args: Dict[str, str]
-) -> CommandResults:
+def get_indicators_command(client: Client, params: Dict[str, str], args: Dict[str, str]) -> CommandResults:
     """Wrapper for retrieving indicators from the feed to the war-room.
     Args:
         client: Client object with request

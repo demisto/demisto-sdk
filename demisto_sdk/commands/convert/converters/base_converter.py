@@ -15,9 +15,7 @@ json = JSON_Handler()
 
 
 class BaseConverter:
-    ENTITY_NAME_SEPARATORS_REGEX = re.compile(
-        rf"""[{'|'.join(ENTITY_NAME_SEPARATORS)}]"""
-    )
+    ENTITY_NAME_SEPARATORS_REGEX = re.compile(rf"""[{'|'.join(ENTITY_NAME_SEPARATORS)}]""")
 
     def __init__(self):
         pass

@@ -82,7 +82,7 @@ class WidgetJSONFormat(BaseUpdateJSON):
         widget_data_type = self.data.get("dataType", "")
         current_from_version = self.data.get("fromVersion")
 
-        if widget_data_type == "metrics" and LooseVersion(
-            current_from_version
-        ) < LooseVersion(self.WIDGET_TYPE_METRICS_MIN_VERSION):
+        if widget_data_type == "metrics" and LooseVersion(current_from_version) < LooseVersion(
+            self.WIDGET_TYPE_METRICS_MIN_VERSION
+        ):
             self.data["fromVersion"] = self.WIDGET_TYPE_METRICS_MIN_VERSION

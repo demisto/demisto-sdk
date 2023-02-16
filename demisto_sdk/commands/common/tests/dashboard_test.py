@@ -37,9 +37,7 @@ def test_is_valid_version(version, is_valid):
     structure = StructureValidator("")
     structure.current_file = {"version": version}
     validator = DashboardValidator(structure)
-    assert (
-        validator.is_valid_version() == is_valid
-    ), f"is_valid_version({version}) returns {not is_valid}."
+    assert validator.is_valid_version() == is_valid, f"is_valid_version({version}) returns {not is_valid}."
 
 
 data_is_id_equal_name = [
@@ -54,9 +52,7 @@ def test_is_id_equal_name(id_, name, is_valid):
     structure = StructureValidator("")
     structure.current_file = {"id": id_, "name": name}
     validator = DashboardValidator(structure)
-    assert (
-        validator.is_id_equals_name() == is_valid
-    ), f"is_id_equal_name returns {not is_valid}."
+    assert validator.is_id_equals_name() == is_valid, f"is_id_equal_name returns {not is_valid}."
 
 
 data_contains_forbidden_fields = [
@@ -74,9 +70,7 @@ data_contains_forbidden_fields = [
 def test_contains_forbidden_fields(current_file, is_valid):
     structure = mock_structure("", current_file)
     validator = DashboardValidator(structure)
-    assert (
-        validator.contains_forbidden_fields() == is_valid
-    ), f"is_excluding_fields returns {not is_valid}."
+    assert validator.contains_forbidden_fields() == is_valid, f"is_excluding_fields returns {not is_valid}."
 
 
 data_is_including_fields = [
@@ -87,9 +81,7 @@ data_is_including_fields = [
             "fromDate": "1",
             "toDate": "2",
             "fromDateLicense": "3",
-            "layout": [
-                {"widget": {"fromDate": "1", "toDate": "2", "fromDateLicense": "3"}}
-            ],
+            "layout": [{"widget": {"fromDate": "1", "toDate": "2", "fromDateLicense": "3"}}],
         },
         True,
     ),
@@ -98,9 +90,7 @@ data_is_including_fields = [
             "fromDate": "1",
             "toDate": "2",
             "fromDateLicense": "3",
-            "layout": [
-                {"widget": {"name": "bla", "fromDate": "1", "fromDateLicense": "3"}}
-            ],
+            "layout": [{"widget": {"name": "bla", "fromDate": "1", "fromDateLicense": "3"}}],
         },
         False,
     ),
@@ -111,6 +101,4 @@ data_is_including_fields = [
 def test_is_including_fields(current_file, is_valid):
     structure = mock_structure("", current_file)
     validator = DashboardValidator(structure)
-    assert (
-        validator.is_including_fields() == is_valid
-    ), f"is_including_fields returns {not is_valid}."
+    assert validator.is_including_fields() == is_valid, f"is_including_fields returns {not is_valid}."

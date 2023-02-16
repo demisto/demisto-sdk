@@ -63,13 +63,9 @@ class IntegrationDiffDetector:
         old_commands_data = self.old_yaml_data["script"]["commands"]
         new_commands_data = self.new_yaml_data["script"]["commands"]
 
-        commands, arguments, outputs = self.get_different_commands(
-            old_commands_data, new_commands_data
-        )
+        commands, arguments, outputs = self.get_different_commands(old_commands_data, new_commands_data)
 
-        parameters = self.get_different_params(
-            self.old_yaml_data["configuration"], self.new_yaml_data["configuration"]
-        )
+        parameters = self.get_different_params(self.old_yaml_data["configuration"], self.new_yaml_data["configuration"])
 
         if parameters:
             differences_result["parameters"] = parameters
@@ -103,9 +99,7 @@ class IntegrationDiffDetector:
         # for each old integration command check if exist in the new, if not, check what is missing
         for old_command in old_commands:
             if old_command not in new_commands:
-                new_command = self.check_if_element_exist(
-                    old_command, new_commands, "name"
-                )
+                new_command = self.check_if_element_exist(old_command, new_commands, "name")
 
                 if not new_command:
                     commands.append(
@@ -122,19 +116,14 @@ class IntegrationDiffDetector:
                     changed_fields = [
                         field
                         for field in new_command
-                        if field in old_command
-                        and new_command[field] != old_command[field]
+                        if field in old_command and new_command[field] != old_command[field]
                     ]
 
                     if "arguments" in changed_fields:
-                        arguments.extend(
-                            self.get_different_arguments(new_command, old_command)
-                        )
+                        arguments.extend(self.get_different_arguments(new_command, old_command))
 
                     if "outputs" in changed_fields:
-                        outputs.extend(
-                            self.get_different_outputs(new_command, old_command)
-                        )
+                        outputs.extend(self.get_different_outputs(new_command, old_command))
 
         return commands, arguments, outputs
 
@@ -176,10 +165,7 @@ class IntegrationDiffDetector:
                     changed_fields = [
                         field
                         for field in new_command_argument
-                        if (
-                            field in argument
-                            and new_command_argument[field] != argument[field]
-                        )
+                        if (field in argument and new_command_argument[field] != argument[field])
                         or (field not in argument and new_command_argument[field])
                     ]
 
@@ -195,9 +181,7 @@ class IntegrationDiffDetector:
 
         return arguments
 
-    def check_changed_fields(
-        self, element, element_type, fields_to_check, changed_fields, command=None
-    ) -> list:
+    def check_changed_fields(self, element, element_type, fields_to_check, changed_fields, command=None) -> list:
         """
         Checks for important changed fields in a given element.
 
@@ -314,8 +298,7 @@ class IntegrationDiffDetector:
                     changed_fields = [
                         field
                         for field in new_command_output
-                        if field in output
-                        and new_command_output[field] != output[field]
+                        if field in output and new_command_output[field] != output[field]
                     ]
 
                     if "type" in changed_fields:
@@ -378,9 +361,7 @@ class IntegrationDiffDetector:
         return parameters
 
     @staticmethod
-    def check_if_element_exist(
-        element_to_check, list_of_elements, field_to_check
-    ) -> dict:
+    def check_if_element_exist(element_to_check, list_of_elements, field_to_check) -> dict:
         """
         Check if a given element exists in a given list.
 
@@ -459,35 +440,23 @@ class IntegrationDiffDetector:
             ]
 
             if removed_arguments:
-                result += (
-                    "\n#### The following arguments were removed in this version:\n"
-                )
+                result += "\n#### The following arguments were removed in this version:\n"
                 argument_per_command = self.get_elements_per_command(removed_arguments)
-                result += self.get_elements_per_command_in_docs_format(
-                    argument_per_command, "argument"
-                )
+                result += self.get_elements_per_command_in_docs_format(argument_per_command, "argument")
 
             if changed_arguments:
-                result += (
-                    "\n#### The behavior of the following arguments was changed:\n"
-                )
+                result += "\n#### The behavior of the following arguments was changed:\n"
                 argument_per_command = self.get_elements_per_command(changed_arguments)
-                result += self.get_elements_per_command_in_docs_format(
-                    argument_per_command, "argument", True
-                )
+                result += self.get_elements_per_command_in_docs_format(argument_per_command, "argument", True)
 
         if "outputs" in self.missing_items_report:
             result += "\n### Outputs\n#### The following outputs were removed in this version:\n"
             # Get only the removed outputs, and removed the changed.
             removed_outputs = [
-                output
-                for output in self.missing_items_report["outputs"]
-                if "changed_field" not in output
+                output for output in self.missing_items_report["outputs"] if "changed_field" not in output
             ]
             output_per_command = self.get_elements_per_command(removed_outputs)
-            result += self.get_elements_per_command_in_docs_format(
-                output_per_command, "output"
-            )
+            result += self.get_elements_per_command_in_docs_format(output_per_command, "output")
 
         if secho_result:
             result += (
@@ -518,9 +487,7 @@ class IntegrationDiffDetector:
         return True
 
     @staticmethod
-    def get_elements_per_command_in_docs_format(
-        elements_per_command, element_type, message=False
-    ) -> str:
+    def get_elements_per_command_in_docs_format(elements_per_command, element_type, message=False) -> str:
         """
         Gets the elements split per commands in docs format.
 

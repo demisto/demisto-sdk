@@ -88,9 +88,7 @@ class DocReviewer:
         else:
             self.ignore_invalid_schema_file = False
 
-        self.known_words_file_paths = (
-            known_words_file_paths if known_words_file_paths else []
-        )
+        self.known_words_file_paths = known_words_file_paths if known_words_file_paths else []
         self.load_known_words_from_pack = load_known_words_from_pack
         self.known_pack_words_file_path = ""
 
@@ -119,17 +117,13 @@ class DocReviewer:
         file_path_obj = Path(file_path)
         if "Packs" in file_path_obj.parts:
             pack_name = file_path_obj.parts[file_path_obj.parts.index("Packs") + 1]
-            packs_ignore_path = os.path.join(
-                "Packs", pack_name, PACKS_PACK_IGNORE_FILE_NAME
-            )
+            packs_ignore_path = os.path.join("Packs", pack_name, PACKS_PACK_IGNORE_FILE_NAME)
             default_pack_known_words = add_default_pack_known_words(file_path)
             if os.path.isfile(packs_ignore_path):
                 config = ConfigParser(allow_no_value=True)
                 config.read(packs_ignore_path)
                 if "known_words" in config.sections():
-                    packs_known_words = default_pack_known_words + list(
-                        config["known_words"]
-                    )
+                    packs_known_words = default_pack_known_words + list(config["known_words"])
                     return packs_ignore_path, packs_known_words
                 else:
                     click.secho(
@@ -161,12 +155,7 @@ class DocReviewer:
 
     def is_camel_case(self, word):
         """check if a given word is in camel case"""
-        if (
-            word != word.lower()
-            and word != word.upper()
-            and "_" not in word
-            and word != word.title()
-        ):
+        if word != word.lower() and word != word.upper() and "_" not in word and word != word.title():
             # check if word is an upper case plural, like IPs. If it is, then the word is not in camel case
             return not self.is_upper_case_word_plural(word)
         return False
@@ -208,9 +197,7 @@ class DocReviewer:
             file = str(file)
             if (
                 os.path.isfile(file)
-                and find_type(
-                    file, ignore_invalid_schema_file=self.ignore_invalid_schema_file
-                )
+                and find_type(file, ignore_invalid_schema_file=self.ignore_invalid_schema_file)
                 in self.SUPPORTED_FILE_TYPES
             ):
                 self.files.append(file)
@@ -224,9 +211,7 @@ class DocReviewer:
             self.get_all_md_and_yml_files_in_dir(file_path)
 
         elif (
-            find_type(
-                file_path, ignore_invalid_schema_file=self.ignore_invalid_schema_file
-            )
+            find_type(file_path, ignore_invalid_schema_file=self.ignore_invalid_schema_file)
             in self.SUPPORTED_FILE_TYPES
         ):
             self.files.append(file_path)
@@ -235,9 +220,7 @@ class DocReviewer:
     def print_unknown_words(unknown_words):
         for word, corrections in unknown_words.items():
             if corrections:
-                click.secho(
-                    f"  - {word} - did you mean: {corrections}", fg="bright_red"
-                )
+                click.secho(f"  - {word} - did you mean: {corrections}", fg="bright_red")
             else:
                 click.secho(f"  - {word}", fg="bright_red")
         click.secho(
@@ -349,9 +332,7 @@ class DocReviewer:
         """
         restarted_spellchecker = False
         if self.load_known_words_from_pack:
-            known_pack_words_file_path, known_words = self.find_known_words_from_pack(
-                file_path
-            )
+            known_pack_words_file_path, known_words = self.find_known_words_from_pack(file_path)
             if self.known_pack_words_file_path != known_pack_words_file_path:
                 click.secho(
                     f"\nUsing known words file found within pack: {known_pack_words_file_path}",
@@ -428,9 +409,7 @@ class DocReviewer:
         for sub_word in sub_words:
             sub_word = self.remove_punctuation(sub_word)
             if sub_word.isalpha() and self.spellchecker.unknown([sub_word]):
-                self.unknown_words[word].update(
-                    list(self.spellchecker.candidates(sub_word))[:5]
-                )
+                self.unknown_words[word].update(list(self.spellchecker.candidates(sub_word))[:5])
 
         if not self.unknown_words[word]:
             del self.unknown_words[word]
@@ -476,9 +455,7 @@ class DocReviewer:
         """Check spelling on an integration file"""
         self.check_params(yml_file.get("configuration", []))
         self.check_commands(yml_file.get("script", {}).get("commands", []))
-        self.check_display_and_description(
-            yml_file.get("display"), yml_file.get("description")
-        )
+        self.check_display_and_description(yml_file.get("display"), yml_file.get("description"))
 
     def check_params(self, param_list):
         """Check spelling in integration parameters"""
@@ -555,9 +532,7 @@ class DocReviewer:
 
     def check_spelling_in_playbook(self, yml_file):
         """Check spelling in playbook file"""
-        self.check_playbook_description_and_name(
-            yml_file.get("description"), yml_file.get("name")
-        )
+        self.check_playbook_description_and_name(yml_file.get("description"), yml_file.get("name"))
         self.check_tasks(yml_file.get("tasks", {}))
 
     def check_playbook_description_and_name(self, description, name):

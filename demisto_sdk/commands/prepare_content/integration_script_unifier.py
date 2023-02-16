@@ -74,17 +74,13 @@ class IntegrationScriptUnifier(Unifier):
         script_obj = data
 
         if not is_script_package:  # integration
-            IntegrationScriptUnifier.update_hidden_parameters_value(
-                data, marketplace
-            )  # changes data
+            IntegrationScriptUnifier.update_hidden_parameters_value(data, marketplace)  # changes data
             script_obj = data["script"]
         script_type = TYPE_TO_EXTENSION[script_obj["type"]]
         try:
             IntegrationScriptUnifier.get_code_file(package_path, script_type)
         except ValueError:
-            print_warning(
-                f"No code file found for {path}, assuming it is already unified"
-            )
+            print_warning(f"No code file found for {path}, assuming it is already unified")
             return data
         yml_unified = copy.deepcopy(data)
 
@@ -101,9 +97,7 @@ class IntegrationScriptUnifier(Unifier):
             (
                 contributor_type,
                 metadata_data,
-            ) = IntegrationScriptUnifier.get_contributor_data(
-                package_path, is_script_package
-            )
+            ) = IntegrationScriptUnifier.get_contributor_data(package_path, is_script_package)
 
             if IntegrationScriptUnifier.is_contributor_pack(contributor_type):
                 contributor_email = metadata_data.get("email", "")
@@ -118,17 +112,13 @@ class IntegrationScriptUnifier(Unifier):
                 )
 
         if custom:
-            yml_unified = IntegrationScriptUnifier.add_custom_section(
-                yml_unified, custom, is_script_package
-            )
+            yml_unified = IntegrationScriptUnifier.add_custom_section(yml_unified, custom, is_script_package)
 
         print_color(f"Created unified yml: {path.name}", LOG_COLORS.GREEN)
         return yml_unified
 
     @staticmethod
-    def update_hidden_parameters_value(
-        data: dict, marketplace: MarketplaceVersions = None
-    ) -> None:
+    def update_hidden_parameters_value(data: dict, marketplace: MarketplaceVersions = None) -> None:
         """
         The `hidden` attribute of each param may be a bool (affecting both marketplaces),
         or a list of marketplaces where this param is hidden.
@@ -145,9 +135,7 @@ class IntegrationScriptUnifier(Unifier):
                 data["configuration"][i]["hidden"] = marketplace in hidden
 
     @staticmethod
-    def add_custom_section(
-        unified_yml: Dict, custom: str = "", is_script_package: bool = False
-    ) -> Dict:
+    def add_custom_section(unified_yml: Dict, custom: str = "", is_script_package: bool = False) -> Dict:
         """
         Args:
             unified_yml - The unified_yml
@@ -173,9 +161,7 @@ class IntegrationScriptUnifier(Unifier):
         is_script_package: bool = False,
         image_prefix: str = DEFAULT_IMAGE_PREFIX,
     ):
-        image_data, found_img_path = IntegrationScriptUnifier.get_data(
-            package_path, "*png", is_script_package
-        )
+        image_data, found_img_path = IntegrationScriptUnifier.get_data(package_path, "*png", is_script_package)
         if image_data:
             image_data = image_prefix + base64.b64encode(image_data).decode("utf-8")
             yml_unified["image"] = image_data
@@ -185,24 +171,18 @@ class IntegrationScriptUnifier(Unifier):
         return yml_unified, found_img_path
 
     @staticmethod
-    def insert_description_to_yml(
-        package_path: Path, yml_unified: dict, is_script_package: bool
-    ):
+    def insert_description_to_yml(package_path: Path, yml_unified: dict, is_script_package: bool):
         desc_data, found_desc_path = IntegrationScriptUnifier.get_data(
             package_path, "*_description.md", is_script_package
         )
 
         detailed_description = ""
         if desc_data:
-            detailed_description = get_mp_tag_parser().parse_text(
-                FoldedScalarString(desc_data.decode("utf-8"))
-            )
+            detailed_description = get_mp_tag_parser().parse_text(FoldedScalarString(desc_data.decode("utf-8")))
 
         integration_doc_link = ""
         if "[View Integration Documentation]" not in detailed_description:
-            integration_doc_link = IntegrationScriptUnifier.get_integration_doc_link(
-                package_path, yml_unified
-            )
+            integration_doc_link = IntegrationScriptUnifier.get_integration_doc_link(package_path, yml_unified)
         if integration_doc_link:
             if detailed_description:
                 detailed_description += "\n\n---\n" + integration_doc_link
@@ -249,9 +229,7 @@ class IntegrationScriptUnifier(Unifier):
         if package_path.endswith(os.path.join("Scripts", "CommonServerUserPowerShell")):
             return os.path.join(package_path, "CommonServerUserPowerShell.ps1")
         if package_path.endswith(API_MODULE_FILE_SUFFIX):
-            return os.path.join(
-                package_path, os.path.basename(os.path.normpath(package_path)) + ".py"
-            )
+            return os.path.join(package_path, os.path.basename(os.path.normpath(package_path)) + ".py")
 
         script_path_list = list(
             filter(
@@ -262,9 +240,7 @@ class IntegrationScriptUnifier(Unifier):
         if script_path_list:
             return script_path_list[0]
         else:
-            raise ValueError(
-                f"Could not find a code file {script_type} in {package_path}"
-            )
+            raise ValueError(f"Could not find a code file {script_type} in {package_path}")
 
     @staticmethod
     def insert_script_to_yml(
@@ -280,12 +256,8 @@ class IntegrationScriptUnifier(Unifier):
 
         # Check if the script imports an API module. If it does,
         # the API module code will be pasted in place of the import.
-        imports_to_names = IntegrationScriptUnifier.check_api_module_imports(
-            script_code
-        )
-        script_code = IntegrationScriptUnifier.insert_module_code(
-            script_code, imports_to_names
-        )
+        imports_to_names = IntegrationScriptUnifier.check_api_module_imports(script_code)
+        script_code = IntegrationScriptUnifier.insert_module_code(script_code, imports_to_names)
 
         if script_type == ".py":
             clean_code = IntegrationScriptUnifier.clean_python_code(script_code)
@@ -305,8 +277,7 @@ class IntegrationScriptUnifier(Unifier):
         if is_script_package:
             if yml_data.get("script", "") not in ("", "-"):
                 print_warning(
-                    f"Script section is not empty in package {package_path}."
-                    f"It should be blank or a dash(-)."
+                    f"Script section is not empty in package {package_path}." f"It should be blank or a dash(-)."
                 )
 
             yml_unified["script"] = FoldedScalarString(clean_code)
@@ -314,8 +285,7 @@ class IntegrationScriptUnifier(Unifier):
         else:
             if yml_data["script"].get("script", "") not in ("", "-"):
                 print_warning(
-                    f"Script section is not empty in package {package_path}."
-                    f"It should be blank or a dash(-)."
+                    f"Script section is not empty in package {package_path}." f"It should be blank or a dash(-)."
                 )
 
             yml_unified["script"]["script"] = FoldedScalarString(clean_code)
@@ -328,18 +298,13 @@ class IntegrationScriptUnifier(Unifier):
         _, yml_path = get_yml_paths_in_dir(str(package_path), error_msg="")
 
         if not yml_path:
-            raise Exception(
-                f"No yml files found in package path: {package_path}. "
-                "Is this really a package dir?"
-            )
+            raise Exception(f"No yml files found in package path: {package_path}. " "Is this really a package dir?")
 
         if find_type(yml_path) in (FileType.SCRIPT, FileType.TEST_SCRIPT):
             code_type = get_yaml(yml_path).get("type")
         else:
             code_type = get_yaml(yml_path).get("script", {}).get("type")
-        code_path = IntegrationScriptUnifier.get_code_file(
-            package_path, TYPE_TO_EXTENSION[code_type]
-        )
+        code_path = IntegrationScriptUnifier.get_code_file(package_path, TYPE_TO_EXTENSION[code_type])
         with open(code_path, encoding="utf-8") as code_file:
             code = code_file.read()
 
@@ -358,10 +323,7 @@ class IntegrationScriptUnifier(Unifier):
 
         module_matches = re.finditer(module_regex, script_code)
 
-        return {
-            module_match.group(): module_match.group(1)
-            for module_match in module_matches
-        }
+        return {module_match.group(): module_match.group(1) for module_match in module_matches}
 
     @staticmethod
     def insert_module_code(script_code: str, import_to_name: Dict[str, str]) -> str:
@@ -374,12 +336,8 @@ class IntegrationScriptUnifier(Unifier):
         """
         for module_import, module_name in import_to_name.items():
 
-            module_path = os.path.join(
-                "./Packs", "ApiModules", "Scripts", module_name, module_name + ".py"
-            )
-            module_code = IntegrationScriptUnifier._get_api_module_code(
-                module_name, module_path
-            )
+            module_path = os.path.join("./Packs", "ApiModules", "Scripts", module_name, module_name + ".py")
+            module_code = IntegrationScriptUnifier._get_api_module_code(module_name, module_path)
 
             # the wrapper numbers represents the number of generated lines added
             # before (negative) or after (positive) the registration line
@@ -407,37 +365,25 @@ class IntegrationScriptUnifier(Unifier):
             with open(module_path, encoding="utf-8") as script_file:
                 module_code = script_file.read()
         except Exception as exc:
-            raise ValueError(
-                f"Could not retrieve the module [{module_name}] code: {str(exc)}"
-            )
+            raise ValueError(f"Could not retrieve the module [{module_name}] code: {str(exc)}")
 
         return module_code
 
     @staticmethod
     def clean_python_code(script_code, remove_print_future=True):
         # we use '[ \t]' and not \s as we don't want to match newline
-        script_code = re.sub(
-            r"import demistomock as demisto[ \t]*(#.*)?", "", script_code
-        )
-        script_code = re.sub(
-            r"from CommonServerPython import \*[ \t]*(#.*)?", "", script_code
-        )
-        script_code = re.sub(
-            r"from CommonServerUserPython import \*[ \t]*(#.*)?", "", script_code
-        )
+        script_code = re.sub(r"import demistomock as demisto[ \t]*(#.*)?", "", script_code)
+        script_code = re.sub(r"from CommonServerPython import \*[ \t]*(#.*)?", "", script_code)
+        script_code = re.sub(r"from CommonServerUserPython import \*[ \t]*(#.*)?", "", script_code)
         # print function is imported in python loop
         if remove_print_future:  # docs generation requires to leave this
-            script_code = re.sub(
-                r"from __future__ import print_function[ \t]*(#.*)?", "", script_code
-            )
+            script_code = re.sub(r"from __future__ import print_function[ \t]*(#.*)?", "", script_code)
         return script_code
 
     @staticmethod
     def clean_pwsh_code(script_code):
         script_code = script_code.replace(". $PSScriptRoot\\demistomock.ps1", "")
-        script_code = script_code.replace(
-            ". $PSScriptRoot\\CommonServerPowerShell.ps1", ""
-        )
+        script_code = script_code.replace(". $PSScriptRoot\\CommonServerPowerShell.ps1", "")
         return script_code
 
     @staticmethod
@@ -473,9 +419,7 @@ class IntegrationScriptUnifier(Unifier):
                 json_pack_metadata = json.loads(pack_metadata_data)
             except json.JSONDecodeError as e:
                 pack_name: str = get_pack_name(pack_path)
-                raise Exception(
-                    f"Failed to load pack metadata of pack {pack_name}: {str(e)}"
-                ) from e
+                raise Exception(f"Failed to load pack metadata of pack {pack_name}: {str(e)}") from e
             support_field = json_pack_metadata.get("support")
             return support_field, json_pack_metadata
         return None, None
@@ -501,35 +445,23 @@ class IntegrationScriptUnifier(Unifier):
             The unified yaml file (dict).
         """
         if " Contribution)" not in unified_yml["display"]:
-            unified_yml["display"] += CONTRIBUTOR_DISPLAY_NAME.format(
-                contributor_type.capitalize()
-            )
+            unified_yml["display"] += CONTRIBUTOR_DISPLAY_NAME.format(contributor_type.capitalize())
         existing_detailed_description = unified_yml.get("detaileddescription", "")
         if contributor_type == COMMUNITY_CONTRIBUTOR:
             contributor_description = CONTRIBUTOR_COMMUNITY_DETAILED_DESC.format(author)
         else:
-            contributor_description = CONTRIBUTOR_DETAILED_DESC.format(
-                contributor_type.capitalize(), author
-            )
+            contributor_description = CONTRIBUTOR_DETAILED_DESC.format(contributor_type.capitalize(), author)
             if contributor_email:
                 email_list: List[str] = arg_to_list(contributor_email, ",")
                 for email in email_list:
-                    contributor_description += (
-                        f"\n- **Email**: [{email}](mailto:{email})"
-                    )
+                    contributor_description += f"\n- **Email**: [{email}](mailto:{email})"
             if contributor_url:
-                contributor_description += (
-                    f"\n- **URL**: [{contributor_url}]({contributor_url})"
-                )
+                contributor_description += f"\n- **URL**: [{contributor_url}]({contributor_url})"
 
-        contrib_details = re.findall(
-            r"### .* Contributed Integration", existing_detailed_description
-        )
+        contrib_details = re.findall(r"### .* Contributed Integration", existing_detailed_description)
 
         if not contrib_details:
-            unified_yml["detaileddescription"] = (
-                contributor_description + "\n***\n" + existing_detailed_description
-            )
+            unified_yml["detaileddescription"] = contributor_description + "\n***\n" + existing_detailed_description
 
         return unified_yml
 
@@ -543,9 +475,7 @@ class IntegrationScriptUnifier(Unifier):
         Returns:
             str: The integration doc markdown link to add to the detailed description (if reachable)
         """
-        normalized_integration_id = IntegrationScriptUnifier.normalize_integration_id(
-            unified_yml["commonfields"]["id"]
-        )
+        normalized_integration_id = IntegrationScriptUnifier.normalize_integration_id(unified_yml["commonfields"]["id"])
         integration_doc_link = INTEGRATIONS_DOCS_REFERENCE + normalized_integration_id
 
         readme_path = os.path.join(package_path, "README.md")
@@ -577,8 +507,6 @@ class IntegrationScriptUnifier(Unifier):
         Returns:
             str: The normalized identifier
         """
-        dasherized_integration_id = dasherize(underscore(integration_id)).replace(
-            " ", "-"
-        )
+        dasherized_integration_id = dasherize(underscore(integration_id)).replace(" ", "-")
         # remove all non-word characters (dash is ok)
         return re.sub(r"[^\w-]", "", dasherized_integration_id)

@@ -42,9 +42,7 @@ def create_a_pack_entity(
     if entity_type == FileType.SCRIPT:
         pack.create_script(entity_id).create_default_script(entity_id)
     elif entity_type == FileType.INTEGRATION:
-        pack.create_integration(entity_id).create_default_integration(
-            entity_id, commands
-        )
+        pack.create_integration(entity_id).create_default_integration(entity_id, commands)
     elif entity_type == FileType.PLAYBOOK:
         pack.create_playbook(entity_id).create_default_playbook(entity_id)
     elif entity_type == FileType.TEST_PLAYBOOK:
@@ -168,9 +166,7 @@ def working_repo(repo):
 
     # Create a pack called 'ActiveMQ' with 1 integration.
     active_mq = repo.create_pack("ActiveMQ")
-    create_a_pack_entity(
-        active_mq, FileType.INTEGRATION, "ActiveMQ", commands=["activemq-subscribe"]
-    )
+    create_a_pack_entity(active_mq, FileType.INTEGRATION, "ActiveMQ", commands=["activemq-subscribe"])
 
     # Create a pack called 'FeedAlienVault' with 1 integration.
     feed_alien_vault = repo.create_pack("FeedAlienVault")
@@ -183,9 +179,7 @@ def working_repo(repo):
 
     # Create a pack called 'QRadar' with 1 integration.
     qradar = repo.create_pack("QRadar")
-    create_a_pack_entity(
-        qradar, FileType.INTEGRATION, "QRadar", commands=["qradar-searches"]
-    )
+    create_a_pack_entity(qradar, FileType.INTEGRATION, "QRadar", commands=["qradar-searches"])
 
     # Create a pack called 'Active_Directory_Query' with 1 integration and 1 script.
     active_directory_query = repo.create_pack("Active_Directory_Query")
@@ -211,9 +205,7 @@ def working_repo(repo):
 
     # Create a pack called 'FeedAWS' with 1 integration.
     feed_aws = repo.create_pack("FeedAWS")
-    create_a_pack_entity(
-        feed_aws, FileType.INTEGRATION, "FeedAWS", commands=["aws-get-indicators"]
-    )
+    create_a_pack_entity(feed_aws, FileType.INTEGRATION, "FeedAWS", commands=["aws-get-indicators"])
 
     # Create a pack called 'FeedAutoFocus' with 1 integration.
     feed_autofocus = repo.create_pack("FeedAutofocus")
@@ -248,13 +240,9 @@ def working_repo(repo):
 
     # Create a pack called 'Phishing' with 3 incident_fields and 1 script.
     phishing = repo.create_pack("Phishing")
-    create_a_pack_entity(
-        phishing, FileType.INCIDENT_FIELD, "attachmentname", "Attachment Name"
-    )
+    create_a_pack_entity(phishing, FileType.INCIDENT_FIELD, "attachmentname", "Attachment Name")
     create_a_pack_entity(phishing, FileType.INCIDENT_FIELD, "emailfrom", "Email From")
-    create_a_pack_entity(
-        phishing, FileType.INCIDENT_FIELD, "emailsubject", "Email Subject"
-    )
+    create_a_pack_entity(phishing, FileType.INCIDENT_FIELD, "emailsubject", "Email Subject")
     create_a_pack_entity(phishing, FileType.SCRIPT, "CheckEmailAuthenticity")
 
     # Create a pack called 'CommonTypes' with 3 incident_fields 2 incident_types 5 indicator_fields 1 indicator_type.
@@ -278,15 +266,11 @@ def working_repo(repo):
         "Admin Email",
     ]
     for field_id, field_name in zip(ct_incident_field_ids, ct_incident_field_names):
-        create_a_pack_entity(
-            common_types, FileType.INCIDENT_FIELD, field_id, field_name
-        )
+        create_a_pack_entity(common_types, FileType.INCIDENT_FIELD, field_id, field_name)
     for field_id, field_name in zip(ct_incident_type_ids, ct_incident_type_names):
         create_a_pack_entity(common_types, FileType.INCIDENT_TYPE, field_id, field_name)
     for field_id, field_name in zip(ct_indicator_field_ids, ct_indicator_field_names):
-        create_a_pack_entity(
-            common_types, FileType.INDICATOR_FIELD, field_id, field_name
-        )
+        create_a_pack_entity(common_types, FileType.INDICATOR_FIELD, field_id, field_name)
     create_a_pack_entity(common_types, FileType.REPUTATION, "accountrep", "Account Rep")
 
     # Create a pack called 'SafeBreach' with 1 incident_field and 1 integration.
@@ -317,16 +301,12 @@ def working_repo(repo):
 
     # Create a pack called 'CalculateTimeDifference' with 1 script.
     calculate_time_difference = repo.create_pack("CalculateTimeDifference")
-    create_a_pack_entity(
-        calculate_time_difference, FileType.SCRIPT, "CalculateTimeDifference"
-    )
+    create_a_pack_entity(calculate_time_difference, FileType.SCRIPT, "CalculateTimeDifference")
 
     # Create a pack called 'CommonPlaybooks' with 3 playbooks.
     common_playbooks = repo.create_pack("CommonPlaybooks")
     create_a_pack_entity(common_playbooks, FileType.PLAYBOOK, "Block IP - Generic v2")
-    create_a_pack_entity(
-        common_playbooks, FileType.PLAYBOOK, "IP Enrichment - Generic v2"
-    )
+    create_a_pack_entity(common_playbooks, FileType.PLAYBOOK, "IP Enrichment - Generic v2")
     create_a_pack_entity(
         common_playbooks,
         FileType.PLAYBOOK,
@@ -335,26 +315,16 @@ def working_repo(repo):
 
     # Create a pack called 'FeedMitreAttack' with 1 indicator_type.
     feed_mitre_attack = repo.create_pack("FeedMitreAttack")
-    create_a_pack_entity(
-        feed_mitre_attack, FileType.REPUTATION, "MITRE ATT&CK", "MITRE ATT&CK"
-    )
+    create_a_pack_entity(feed_mitre_attack, FileType.REPUTATION, "MITRE ATT&CK", "MITRE ATT&CK")
 
     # Create a pack called 'CrisisManagement' with 1 incident_type and 1 incident_field.
     crisis_management = repo.create_pack("CrisisManagement")
-    create_a_pack_entity(
-        crisis_management, FileType.INCIDENT_TYPE, "HR Ticket", "HR Ticket"
-    )
-    create_a_pack_entity(
-        crisis_management, FileType.INDICATOR_FIELD, "jobtitle", "Job Title"
-    )
+    create_a_pack_entity(crisis_management, FileType.INCIDENT_TYPE, "HR Ticket", "HR Ticket")
+    create_a_pack_entity(crisis_management, FileType.INDICATOR_FIELD, "jobtitle", "Job Title")
 
     # Create a pack called 'Carbon_Black_Enterprise_Response' with 2 scripts.
-    carbon_black_enterprise_response = repo.create_pack(
-        "Carbon_Black_Enterprise_Response"
-    )
-    create_a_pack_entity(
-        carbon_black_enterprise_response, FileType.SCRIPT, "CBLiveFetchFiles"
-    )
+    carbon_black_enterprise_response = repo.create_pack("Carbon_Black_Enterprise_Response")
+    create_a_pack_entity(carbon_black_enterprise_response, FileType.SCRIPT, "CBLiveFetchFiles")
     create_a_pack_entity(carbon_black_enterprise_response, FileType.SCRIPT, "CBAlerts")
 
     # Create a pack called 'Claroty' with 3 mappers and 1 incident_type.
@@ -393,21 +363,15 @@ def working_repo(repo):
 
     # Create a pack called 'PAN-OS' with 1 incident_type.
     pan_os = repo.create_pack("PAN-OS")
-    create_a_pack_entity(
-        pan_os, FileType.INCIDENT_TYPE, "FirewallUpgrade", "FirewallUpgrade"
-    )
+    create_a_pack_entity(pan_os, FileType.INCIDENT_TYPE, "FirewallUpgrade", "FirewallUpgrade")
 
     # Create a pack called 'Logzio' with 1 incident_type.
     logzio = repo.create_pack("Logzio")
-    create_a_pack_entity(
-        logzio, FileType.INCIDENT_TYPE, "Logz.io Alert", "Logz.io Alert"
-    )
+    create_a_pack_entity(logzio, FileType.INCIDENT_TYPE, "Logz.io Alert", "Logz.io Alert")
 
     # Create a pack called 'AccessInvestigation' with 1 incident_type.
     access_investigation = repo.create_pack("AccessInvestigation")
-    create_a_pack_entity(
-        access_investigation, FileType.INCIDENT_TYPE, "Access", "Access"
-    )
+    create_a_pack_entity(access_investigation, FileType.INCIDENT_TYPE, "Access", "Access")
 
     # Create a pack called 'PrismaCloud' with 1 incident_type.
     prisma_cloud = repo.create_pack("PrismaCloud")
@@ -420,34 +384,24 @@ def working_repo(repo):
 
     # Create a pack called 'BruteForce' with 1 incident_field.
     brute_force = repo.create_pack("BruteForce")
-    create_a_pack_entity(
-        brute_force, FileType.INCIDENT_FIELD, "accountgroups", "Account Groups"
-    )
+    create_a_pack_entity(brute_force, FileType.INCIDENT_FIELD, "accountgroups", "Account Groups")
 
     # Create a pack called 'Compliance' with 1 incident_field.
     complience = repo.create_pack("Compliance")
-    create_a_pack_entity(
-        complience, FileType.INCIDENT_FIELD, "emailaddress", "E-mail Address"
-    )
+    create_a_pack_entity(complience, FileType.INCIDENT_FIELD, "emailaddress", "E-mail Address")
 
     # Create a pack called 'CortexXDR' with 1 classifier.
     cortex_xdr = repo.create_pack("CortexXDR")
-    create_a_pack_entity(
-        cortex_xdr, FileType.CLASSIFIER, "Cortex XDR - IR", "Cortex XDR - IR"
-    )
+    create_a_pack_entity(cortex_xdr, FileType.CLASSIFIER, "Cortex XDR - IR", "Cortex XDR - IR")
 
     # Create a pack called 'ImpossibleTraveler' with:
     # 1 integration 1 playbook 1 test_playbook 1 layout 7 incident_fields 1 incident type
     impossible_traveler = repo.create_pack("ImpossibleTraveler")
     create_a_pack_entity(impossible_traveler, FileType.SCRIPT, "CalculateGeoDistance")
     create_a_pack_entity(impossible_traveler, FileType.PLAYBOOK, "Impossible Traveler")
-    create_a_pack_entity(
-        impossible_traveler, FileType.TEST_PLAYBOOK, "Impossible Traveler - Test"
-    )
+    create_a_pack_entity(impossible_traveler, FileType.TEST_PLAYBOOK, "Impossible Traveler - Test")
     create_a_pack_entity(impossible_traveler, FileType.LAYOUT, "Impossible Traveler")
-    create_a_pack_entity(
-        impossible_traveler, FileType.INCIDENT_FIELD, "coordinates" "Coordinates"
-    )
+    create_a_pack_entity(impossible_traveler, FileType.INCIDENT_FIELD, "coordinates" "Coordinates")
     create_a_pack_entity(
         impossible_traveler,
         FileType.INCIDENT_FIELD,
@@ -473,9 +427,7 @@ def working_repo(repo):
         FileType.INCIDENT_FIELD,
         "signindatetime" "Sign In Date Time",
     )
-    create_a_pack_entity(
-        impossible_traveler, FileType.INCIDENT_FIELD, "travelmaplink" "Travel Map Link"
-    )
+    create_a_pack_entity(impossible_traveler, FileType.INCIDENT_FIELD, "travelmaplink" "Travel Map Link")
     create_a_pack_entity(
         impossible_traveler,
         FileType.INCIDENT_TYPE,
@@ -484,15 +436,11 @@ def working_repo(repo):
 
     # Create a pack called 'pack_with_definition' with 1 generic definition.
     definition_pack = repo.create_pack("pack_with_definition")
-    create_a_pack_entity(
-        definition_pack, FileType.GENERIC_DEFINITION, "assets", "assets"
-    )
+    create_a_pack_entity(definition_pack, FileType.GENERIC_DEFINITION, "assets", "assets")
 
     # Create a pack called 'pack_with_module' with 1 generic module.
     pack_with_module = repo.create_pack("pack_with_module")
-    create_a_pack_entity(
-        pack_with_module, FileType.GENERIC_MODULE, "module_id", "module_id"
-    )
+    create_a_pack_entity(pack_with_module, FileType.GENERIC_MODULE, "module_id", "module_id")
 
     # Create a pack called 'pack_with_generic_field' with 1 generic field.
     pack_with_generic_field = repo.create_pack("pack_with_generic_field")
@@ -751,9 +699,7 @@ class TestDependsOnScriptAndIntegration:
             ("PrismaCloudComputeParseAuditAlert", {("PrismaCloudCompute", True)}),
         ],
     )
-    def test_collect_scripts_depends_on_script(
-        self, dependency_script, expected_result, module_repo
-    ):
+    def test_collect_scripts_depends_on_script(self, dependency_script, expected_result, module_repo):
         """
         Given
             - A script entry in the id_set depending on a script.
@@ -793,31 +739,17 @@ class TestDependsOnScriptAndIntegration:
             (
                 "GetServerURL",
                 {("GetServerURL", True)},
-                {
-                    ("script", "DummyScript"): {
-                        "GetServerURL": [("script", "GetServerURL")]
-                    }
-                },
+                {("script", "DummyScript"): {"GetServerURL": [("script", "GetServerURL")]}},
             ),
             (
                 "HelloWorldScript",
                 {("HelloWorld", True)},
-                {
-                    ("script", "DummyScript"): {
-                        "HelloWorld": [("script", "HelloWorldScript")]
-                    }
-                },
+                {("script", "DummyScript"): {"HelloWorld": [("script", "HelloWorldScript")]}},
             ),
             (
                 "PrismaCloudComputeParseAuditAlert",
                 {("PrismaCloudCompute", True)},
-                {
-                    ("script", "DummyScript"): {
-                        "PrismaCloudCompute": [
-                            ("script", "PrismaCloudComputeParseAuditAlert")
-                        ]
-                    }
-                },
+                {("script", "DummyScript"): {"PrismaCloudCompute": [("script", "PrismaCloudComputeParseAuditAlert")]}},
             ),
         ],
     )
@@ -866,9 +798,7 @@ class TestDependsOnScriptAndIntegration:
             ("alienvault-get-indicators", {("FeedAlienVault", True)}),
         ],
     )
-    def test_collect_scripts_depends_on_integration(
-        self, dependency_integration_command, expected_result, module_repo
-    ):
+    def test_collect_scripts_depends_on_integration(self, dependency_integration_command, expected_result, module_repo):
         """
         Given
             - A script entry in the id_set depending on integration commands.
@@ -908,33 +838,21 @@ class TestDependsOnScriptAndIntegration:
                 "sslbl-get-indicators",
                 (
                     {("Feedsslabusech", True)},
-                    {
-                        ("script", "DummyScript"): {
-                            "Feedsslabusech": [("integration", "Feedsslabusech")]
-                        }
-                    },
+                    {("script", "DummyScript"): {"Feedsslabusech": [("integration", "Feedsslabusech")]}},
                 ),
             ),
             (
                 "activemq-subscribe",
                 (
                     {("ActiveMQ", True)},
-                    {
-                        ("script", "DummyScript"): {
-                            "ActiveMQ": [("integration", "ActiveMQ")]
-                        }
-                    },
+                    {("script", "DummyScript"): {"ActiveMQ": [("integration", "ActiveMQ")]}},
                 ),
             ),
             (
                 "alienvault-get-indicators",
                 (
                     {("FeedAlienVault", True)},
-                    {
-                        ("script", "DummyScript"): {
-                            "FeedAlienVault": [("integration", "FeedAlienVault")]
-                        }
-                    },
+                    {("script", "DummyScript"): {"FeedAlienVault": [("integration", "FeedAlienVault")]}},
                 ),
             ),
         ],
@@ -1152,9 +1070,7 @@ class TestDependsOnScriptAndIntegration:
 
         assert set(found_result) == set(expected_result)
 
-    def test_collect_scripts_command_to_integrations_and_script_executions(
-        self, module_repo
-    ):
+    def test_collect_scripts_command_to_integrations_and_script_executions(self, module_repo):
         """
         Given
             - A script entry in the id_set containing command_to_integrations with a reputation command
@@ -1249,9 +1165,7 @@ class TestDependsOnScriptAndIntegration:
             "send-notification",
         ],
     )
-    def test_collect_detection_of_optional_dependencies(
-        self, generic_command, module_repo
-    ):
+    def test_collect_detection_of_optional_dependencies(self, generic_command, module_repo):
         """
         Given
             - Scripts that depends on generic commands
@@ -1292,9 +1206,7 @@ class TestDependsOnPlaybook:
             ("PrismaCloudComputeParseAuditAlert", {("PrismaCloudCompute", True)}),
         ],
     )
-    def test_collect_playbooks_dependencies_on_script(
-        self, dependency_script, expected_result, module_repo
-    ):
+    def test_collect_playbooks_dependencies_on_script(self, dependency_script, expected_result, module_repo):
         test_input = [
             {
                 "Dummy Playbook": {
@@ -1324,29 +1236,19 @@ class TestDependsOnPlaybook:
             (
                 "GetServerURL",
                 {("GetServerURL", True)},
-                {
-                    ("playbook", "Dummy Playbook"): {
-                        "GetServerURL": [("script", "GetServerURL")]
-                    }
-                },
+                {("playbook", "Dummy Playbook"): {"GetServerURL": [("script", "GetServerURL")]}},
             ),
             (
                 "HelloWorldScript",
                 {("HelloWorld", True)},
-                {
-                    ("playbook", "Dummy Playbook"): {
-                        "HelloWorld": [("script", "HelloWorldScript")]
-                    }
-                },
+                {("playbook", "Dummy Playbook"): {"HelloWorld": [("script", "HelloWorldScript")]}},
             ),
             (
                 "PrismaCloudComputeParseAuditAlert",
                 {("PrismaCloudCompute", True)},
                 {
                     ("playbook", "Dummy Playbook"): {
-                        "PrismaCloudCompute": [
-                            ("script", "PrismaCloudComputeParseAuditAlert")
-                        ]
+                        "PrismaCloudCompute": [("script", "PrismaCloudComputeParseAuditAlert")]
                     }
                 },
             ),
@@ -1388,9 +1290,7 @@ class TestDependsOnPlaybook:
             ("Failed Login Playbook - Slack v2", {("Slack", True)}),
         ],
     )
-    def test_collect_playbooks_dependencies_on_playbook(
-        self, dependency_playbook, expected_result, module_repo
-    ):
+    def test_collect_playbooks_dependencies_on_playbook(self, dependency_playbook, expected_result, module_repo):
         test_input = [
             {
                 "Dummy Playbook": {
@@ -1422,9 +1322,7 @@ class TestDependsOnPlaybook:
             ("alienvault-get-indicators", {("FeedAlienVault", True)}),
         ],
     )
-    def test_collect_playbooks_dependencies_on_integrations(
-        self, integration_command, expected_result, module_repo
-    ):
+    def test_collect_playbooks_dependencies_on_integrations(self, integration_command, expected_result, module_repo):
         test_input = [
             {
                 "Dummy Playbook": {
@@ -1448,9 +1346,7 @@ class TestDependsOnPlaybook:
 
         assert set(found_result) == set(expected_result)
 
-    def test_collect_playbooks_dependencies_on_integrations_with_brand(
-        self, module_repo
-    ):
+    def test_collect_playbooks_dependencies_on_integrations_with_brand(self, module_repo):
         command = "ip"
         pack_name = "ipinfo"
         test_input = [
@@ -1479,9 +1375,7 @@ class TestDependsOnPlaybook:
         assert found_result[1]
 
     @pytest.mark.parametrize("integration_command", ["ip", "domain", "url", "cve"])
-    def test_collect_detection_of_optional_dependencies_in_playbooks(
-        self, integration_command, module_repo
-    ):
+    def test_collect_detection_of_optional_dependencies_in_playbooks(self, integration_command, module_repo):
         """
         Given
             - Playbooks that are using generic commands
@@ -1556,9 +1450,7 @@ class TestDependsOnPlaybook:
 
         assert set(found_result) == set(expected_result)
 
-    def test_collect_playbooks_dependencies_on_incident_fields__phishing_pack(
-        self, module_repo
-    ):
+    def test_collect_playbooks_dependencies_on_incident_fields__phishing_pack(self, module_repo):
         """
         Given
             - A playbook entry in the id_set which is using incident fields from the Phishing pack.
@@ -1591,9 +1483,7 @@ class TestDependsOnPlaybook:
 
         assert set(found_result) == set(expected_result)
 
-    def test_collect_playbooks_dependencies_on_incident_fields__commontypes_pack(
-        self, module_repo
-    ):
+    def test_collect_playbooks_dependencies_on_incident_fields__commontypes_pack(self, module_repo):
         """
         Given
             - A playbook entry in the id_set which is using incident fields from the CommonTYpes pack.
@@ -2129,9 +2019,7 @@ class TestDependsOnIncidentField:
             {("Phishing", True), ("Carbon_Black_Enterprise_Response", True)},
             {
                 ("incident_field", "Dummy Incident Field"): {
-                    "Carbon_Black_Enterprise_Response": [
-                        ("script", "CBLiveFetchFiles")
-                    ],
+                    "Carbon_Black_Enterprise_Response": [("script", "CBLiveFetchFiles")],
                     "Phishing": [("script", "CheckEmailAuthenticity")],
                 }
             },
@@ -2382,9 +2270,7 @@ class TestDependsOnIncidentType:
             {("AutoFocus", True), ("Volatility", True)},
             {
                 ("incidenttype", "Dummy Incident Type"): {
-                    "AutoFocus": [
-                        ("playbook", "Autofocus Query Samples, Sessions and Tags")
-                    ],
+                    "AutoFocus": [("playbook", "Autofocus Query Samples, Sessions and Tags")],
                     "Volatility": [("script", "AnalyzeMemImage")],
                 }
             },
@@ -2629,11 +2515,7 @@ class TestDependsOnMappers:
                 ("AccessInvestigation", False),
                 ("CommonTypes", True),
             },
-            {
-                ("mapper", "Dummy Mapper"): {
-                    "CommonTypes": [("incidentfield", "incident_accountid")]
-                }
-            },
+            {("mapper", "Dummy Mapper"): {"CommonTypes": [("incidentfield", "incident_accountid")]}},
         )
 
         test_input = [
@@ -2821,11 +2703,7 @@ class TestDependsOnWidgets:
         """
         expected_result = (
             {("CommonScripts", True)},
-            {
-                ("widget", "Dummy_widget"): {
-                    "CommonScripts": [("script", "AssignAnalystToIncident")]
-                }
-            },
+            {("widget", "Dummy_widget"): {"CommonScripts": [("script", "AssignAnalystToIncident")]}},
         )
 
         test_input = [
@@ -2892,11 +2770,7 @@ class TestDependsOnDashboard:
         """
         expected_result = (
             {("CommonScripts", True)},
-            {
-                ("dashboard", "Dummy_dashboard"): {
-                    "CommonScripts": [("script", "AssignAnalystToIncident")]
-                }
-            },
+            {("dashboard", "Dummy_dashboard"): {"CommonScripts": [("script", "AssignAnalystToIncident")]}},
         )
 
         test_input = [
@@ -3037,11 +2911,7 @@ class TestDependsOnReports:
         """
         expected_result = (
             {("CommonScripts", True)},
-            {
-                ("report", "Dummy_report"): {
-                    "CommonScripts": [("script", "AssignAnalystToIncident")]
-                }
-            },
+            {("report", "Dummy_report"): {"CommonScripts": [("script", "AssignAnalystToIncident")]}},
         )
 
         test_input = [
@@ -3119,16 +2989,9 @@ SEARCH_PACKS_INPUT = [
 ]
 
 
-@pytest.mark.parametrize(
-    "item_names, section_name, expected_result, type", SEARCH_PACKS_INPUT
-)
-def test_search_packs_by_items_names_or_ids(
-    item_names, section_name, expected_result, module_repo, type
-):
-    (
-        found_packs,
-        packs_and_items_dict,
-    ) = PackDependencies._search_packs_by_items_names_or_ids(
+@pytest.mark.parametrize("item_names, section_name, expected_result, type", SEARCH_PACKS_INPUT)
+def test_search_packs_by_items_names_or_ids(item_names, section_name, expected_result, module_repo, type):
+    (found_packs, packs_and_items_dict,) = PackDependencies._search_packs_by_items_names_or_ids(
         item_names,
         module_repo.id_set.read_json_as_dict()[section_name],
         True,
@@ -3177,9 +3040,7 @@ def test_find_dependencies_using_pack_metadata(mocker):
         return_value=mock_pack_meta_file,
     )
 
-    first_level_dependencies = PackDependencies.update_dependencies_from_pack_metadata(
-        "", dependencies_from_id_set
-    )
+    first_level_dependencies = PackDependencies.update_dependencies_from_pack_metadata("", dependencies_from_id_set)
 
     assert not first_level_dependencies.get("dependency_pack2", {}).get("mandatory")
     assert not first_level_dependencies.get("dependency_pack3", {}).get("mandatory")
@@ -3194,9 +3055,7 @@ class TestDependencyGraph:
             ("pack2", ["pack2", "pack3"], ["pack4", "pack1"]),
         ],
     )
-    def test_get_dependencies_subgraph_by_dfs(
-        self, source_node, expected_nodes_in, expected_nodes_out
-    ):
+    def test_get_dependencies_subgraph_by_dfs(self, source_node, expected_nodes_in, expected_nodes_out):
         """
         Given
             - A directional graph and a source node.
@@ -3213,9 +3072,7 @@ class TestDependencyGraph:
         graph.add_node("pack4")
         graph.add_edge("pack1", "pack2")
         graph.add_edge("pack2", "pack3")
-        dfs_graph = PackDependencies.get_dependencies_subgraph_by_dfs(
-            graph, source_node
-        )
+        dfs_graph = PackDependencies.get_dependencies_subgraph_by_dfs(graph, source_node)
         for i in expected_nodes_in:
             assert i in dfs_graph.nodes()
         for i in expected_nodes_out:
@@ -3254,9 +3111,7 @@ class TestDependencyGraph:
                     }
                 },
                 "pack3": {},
-                "pack4": {
-                    ("type_item_c", "item_c"): {"pack4": [("type_item_4", "item4")]}
-                },
+                "pack4": {("type_item_c", "item_c"): {"pack4": [("type_item_4", "item4")]}},
             }
 
             return dependencies[pack_id], dependencies_items[pack_id]
@@ -3275,9 +3130,7 @@ class TestDependencyGraph:
             side_effect=mock_find_pack_dependencies,
         )
         pack_ids = ["pack1", "pack2", "pack3", "pack4"]
-        dependency_graph = PackDependencies.build_all_dependencies_graph(
-            pack_ids, {}, False
-        )
+        dependency_graph = PackDependencies.build_all_dependencies_graph(pack_ids, {}, False)
 
         # Asserting Dependencies (mandatory and non-mandatory)
         assert [n for n in dependency_graph.neighbors("pack1")] == ["pack2", "pack3"]
@@ -3345,12 +3198,8 @@ class TestDependencyGraph:
             id_set=module_repo.id_set.read_json_as_dict(),
             verbose=False,
         )
-        root_of_graph = [n for n in found_graph.nodes if found_graph.in_degree(n) == 0][
-            0
-        ]
-        pack_dependencies = [
-            n for n in found_graph.nodes if found_graph.in_degree(n) > 0
-        ]
+        root_of_graph = [n for n in found_graph.nodes if found_graph.in_degree(n) == 0][0]
+        pack_dependencies = [n for n in found_graph.nodes if found_graph.in_degree(n) > 0]
 
         assert root_of_graph == pack_name
         assert len(pack_dependencies) > 0
@@ -3372,12 +3221,8 @@ class TestDependencyGraph:
             verbose=False,
             exclude_ignored_dependencies=False,
         )
-        root_of_graph = [n for n in found_graph.nodes if found_graph.in_degree(n) == 0][
-            0
-        ]
-        pack_dependencies = [
-            n for n in found_graph.nodes if found_graph.in_degree(n) > 0
-        ]
+        root_of_graph = [n for n in found_graph.nodes if found_graph.in_degree(n) == 0][0]
+        pack_dependencies = [n for n in found_graph.nodes if found_graph.in_degree(n) > 0]
 
         assert root_of_graph == pack_name
         assert len(pack_dependencies) > 0
@@ -3639,9 +3484,7 @@ def get_mock_dependency_graph():
                 "pack2": ("type_item_2", "item2"),
             }
         },
-        mandatory_for_items={
-            ("type_item_2", "item2"): {"pack1": ("type_item_a", "item_a")}
-        },
+        mandatory_for_items={("type_item_2", "item2"): {"pack1": ("type_item_a", "item_a")}},
         depending_on_packs=[("pack3", True), ("pack2", True)],
     )
     graph.add_node(
@@ -3678,8 +3521,7 @@ class TestGetDependentOnGivenPack:
             return_value=[],
         )
         mocker.patch(
-            "demisto_sdk.commands.find_dependencies.find_dependencies.PackDependencies.build_all_"
-            "dependencies_graph",
+            "demisto_sdk.commands.find_dependencies.find_dependencies.PackDependencies.build_all_" "dependencies_graph",
             return_value=get_mock_dependency_graph(),
         )
         mocker.patch(
@@ -3687,23 +3529,17 @@ class TestGetDependentOnGivenPack:
             return_value="pack3",
         )
 
-        dependent_packs_dict, dependent_packs = get_packs_dependent_on_given_packs(
-            "pack3", ""
-        )
+        dependent_packs_dict, dependent_packs = get_packs_dependent_on_given_packs("pack3", "")
         assert "pack2" in dependent_packs
         assert "pack1" in dependent_packs
-        assert dependent_packs_dict["pack3"]["packsDependentOnThisPackMandatorily"][
-            "pack1"
-        ]["mandatory"]
-        assert dependent_packs_dict["pack3"]["packsDependentOnThisPackMandatorily"][
-            "pack2"
-        ]["mandatory"]
-        assert dependent_packs_dict["pack3"]["packsDependentOnThisPackMandatorily"][
-            "pack1"
-        ]["dependent_items"] == [(("type_item_3", "item3"), ("type_item_a", "item_a"))]
-        assert dependent_packs_dict["pack3"]["packsDependentOnThisPackMandatorily"][
-            "pack2"
-        ]["dependent_items"] == [(("type_item_3", "item3"), ("type_item_b", "item_b"))]
+        assert dependent_packs_dict["pack3"]["packsDependentOnThisPackMandatorily"]["pack1"]["mandatory"]
+        assert dependent_packs_dict["pack3"]["packsDependentOnThisPackMandatorily"]["pack2"]["mandatory"]
+        assert dependent_packs_dict["pack3"]["packsDependentOnThisPackMandatorily"]["pack1"]["dependent_items"] == [
+            (("type_item_3", "item3"), ("type_item_a", "item_a"))
+        ]
+        assert dependent_packs_dict["pack3"]["packsDependentOnThisPackMandatorily"]["pack2"]["dependent_items"] == [
+            (("type_item_3", "item3"), ("type_item_b", "item_b"))
+        ]
 
     def test_find_dependencies_between_two_packs(self, mocker):
         """
@@ -3720,15 +3556,11 @@ class TestGetDependentOnGivenPack:
                 "packsDependentOnThisPackMandatorily": {
                     "pack1": {
                         "mandatory": True,
-                        "dependent_items": [
-                            (("type_item_3", "item3"), ("type_item_a", "item_a"))
-                        ],
+                        "dependent_items": [(("type_item_3", "item3"), ("type_item_a", "item_a"))],
                     },
                     "pack2": {
                         "mandatory": True,
-                        "dependent_items": [
-                            (("type_item_3", "item3"), ("type_item_b", "item_b"))
-                        ],
+                        "dependent_items": [(("type_item_3", "item3"), ("type_item_b", "item_b"))],
                     },
                 },
                 "path": "Packs/pack3",
@@ -3740,9 +3572,7 @@ class TestGetDependentOnGivenPack:
             return_value=(dependent_pack_dict, {"pack2", "pack1"}),
         )
 
-        result = find_dependencies_between_two_packs(
-            input_paths=("Packs/pack1", ""), dependency="Packs/pack3"
-        )
+        result = find_dependencies_between_two_packs(input_paths=("Packs/pack1", ""), dependency="Packs/pack3")
         expected_results = """{
     "mandatory": true,
     "dependent_items": [
@@ -3849,12 +3679,8 @@ def test_remove_items_from_packs_section():
         "pack2": {("script", "script1")},
     }
 
-    expected_id_set_packs_section = {
-        "pack2": {"name": "pack2", "ContentItems": {"scripts": ["script2"]}}
-    }
+    expected_id_set_packs_section = {"pack2": {"name": "pack2", "ContentItems": {"scripts": ["script2"]}}}
 
     id_set = ID_SET.copy()
     remove_items_from_packs_section(id_set, excluded_items_by_pack)
-    assert IsEqualFunctions.is_dicts_equal(
-        id_set.get("Packs"), expected_id_set_packs_section
-    )
+    assert IsEqualFunctions.is_dicts_equal(id_set.get("Packs"), expected_id_set_packs_section)

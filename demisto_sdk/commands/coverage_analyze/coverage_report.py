@@ -43,12 +43,8 @@ class CoverageReport:
         self.default = default_min_coverage
         self.epsilon = allowed_coverage_degradation_percentage
 
-        cache_dir = (
-            str(os.path.join(self.report_dir, "cache")) if not no_cache else None
-        )
-        self._original_summary: Union[
-            CoverageSummary, Dict[str, float]
-        ] = CoverageSummary(
+        cache_dir = str(os.path.join(self.report_dir, "cache")) if not no_cache else None
+        self._original_summary: Union[CoverageSummary, Dict[str, float]] = CoverageSummary(
             cache_dir=cache_dir,
             previous_coverage_report_url=previous_coverage_report_url,
             no_cache=no_cache,

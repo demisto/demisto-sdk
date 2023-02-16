@@ -45,27 +45,19 @@ def _add_pr_comment(comment, logging_module):
         res = _handle_github_response(response, logging_module)
 
         if res and res.get("total_count", 0) == 1:
-            issue_url = (
-                res["items"][0].get("comments_url") if res.get("items", []) else None
-            )
+            issue_url = res["items"][0].get("comments_url") if res.get("items", []) else None
             if issue_url:
                 # Check if a comment about skipped tests already exists. If there is delete it first and then post a
                 # new comment:
                 response = requests.get(issue_url, headers=headers, verify=False)
                 issue_comments = _handle_github_response(response, logging_module)
                 for existing_comment in issue_comments:
-                    if (
-                        is_skipped_tests_flow
-                        and SKIPPED_CONTENT_COMMENT in existing_comment.get("body", "")
-                    ) or (
-                        not is_skipped_tests_flow
-                        and COVERAGE_REPORT_COMMENT in existing_comment.get("body", "")
+                    if (is_skipped_tests_flow and SKIPPED_CONTENT_COMMENT in existing_comment.get("body", "")) or (
+                        not is_skipped_tests_flow and COVERAGE_REPORT_COMMENT in existing_comment.get("body", "")
                     ):
                         comment_url = existing_comment.get("url")
                         requests.delete(comment_url, headers=headers, verify=False)
-                response = requests.post(
-                    issue_url, json={"body": comment}, headers=headers, verify=False
-                )
+                response = requests.post(issue_url, json={"body": comment}, headers=headers, verify=False)
                 _handle_github_response(response, logging_module)
         else:
             logging_module.warning(
@@ -78,9 +70,7 @@ def _add_pr_comment(comment, logging_module):
 
 
 def execute_test_content(**kwargs):
-    logging_manager = ParallelLoggingManager(
-        "Run_Tests.log", real_time_logs_only=not kwargs["nightly"]
-    )
+    logging_manager = ParallelLoggingManager("Run_Tests.log", real_time_logs_only=not kwargs["nightly"])
     build_context = BuildContext(kwargs, logging_manager)
     use_retries_mechanism = kwargs.get("use_retries", False)
     threads_list = []
@@ -100,27 +90,18 @@ def execute_test_content(**kwargs):
     for t in threads_list:
         t.join()
 
-    if (
-        not build_context.unmockable_tests_to_run.empty()
-        or not build_context.mockable_tests_to_run.empty()
-    ):
+    if not build_context.unmockable_tests_to_run.empty() or not build_context.mockable_tests_to_run.empty():
         raise Exception("Not all tests have been executed")
     if (
         build_context.tests_data_keeper.playbook_skipped_integration
         and build_context.build_name != "master"
         and not build_context.is_nightly
     ):
-        skipped_integrations = "\n- ".join(
-            build_context.tests_data_keeper.playbook_skipped_integration
-        )
+        skipped_integrations = "\n- ".join(build_context.tests_data_keeper.playbook_skipped_integration)
         comment = f"{SKIPPED_CONTENT_COMMENT}:\n- {skipped_integrations}"
         _add_pr_comment(comment, logging_manager)
-    build_context.tests_data_keeper.print_test_summary(
-        build_context.isAMI, logging_manager
-    )
+    build_context.tests_data_keeper.print_test_summary(build_context.isAMI, logging_manager)
     build_context.tests_data_keeper.create_result_files()
     if build_context.tests_data_keeper.failed_playbooks:
-        logging_manager.critical(
-            "Some tests have failed. Not destroying instances.", real_time=True
-        )
+        logging_manager.critical("Some tests have failed. Not destroying instances.", real_time=True)
         sys.exit(1)

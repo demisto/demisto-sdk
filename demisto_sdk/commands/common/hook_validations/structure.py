@@ -134,13 +134,9 @@ class StructureValidator(BaseValidator):
             if checked_type_by_reg(self.file_path, regex_list):
                 return scheme_name
 
-        pretty_formatted_string_of_regexes = json.dumps(
-            SCHEMA_TO_REGEX, indent=4, sort_keys=True
-        )
+        pretty_formatted_string_of_regexes = json.dumps(SCHEMA_TO_REGEX, indent=4, sort_keys=True)
 
-        error_message, error_code = Errors.structure_doesnt_match_scheme(
-            pretty_formatted_string_of_regexes
-        )
+        error_message, error_code = Errors.structure_doesnt_match_scheme(pretty_formatted_string_of_regexes)
         self.handle_error(error_message, error_code, file_path=self.file_path)
 
         return None
@@ -165,10 +161,7 @@ class StructureValidator(BaseValidator):
                 FileType.PYTHON_FILE,
             ]
             or self.skip_schema_check
-            or (
-                self.scheme_name == FileType.REPUTATION
-                and os.path.basename(self.file_path) == OLD_REPUTATION
-            )
+            or (self.scheme_name == FileType.REPUTATION and os.path.basename(self.file_path) == OLD_REPUTATION)
         ):
             return True
 
@@ -182,11 +175,7 @@ class StructureValidator(BaseValidator):
                 # reactivating pykwalify ERROR level logs
                 logging.disable(logging.ERROR)
             scheme_file_name = "integration" if self.scheme_name.value == "betaintegration" else self.scheme_name.value  # type: ignore
-            path = os.path.normpath(
-                os.path.join(
-                    __file__, "..", "..", self.SCHEMAS_PATH, f"{scheme_file_name}.yml"
-                )
-            )
+            path = os.path.normpath(os.path.join(__file__, "..", "..", self.SCHEMAS_PATH, f"{scheme_file_name}.yml"))
             core = Core(source_file=self.file_path, schema_files=[path])
             core.validate(raise_exception=True)
         except Exception as err:
@@ -244,9 +233,7 @@ class StructureValidator(BaseValidator):
     def is_valid_file_extension(self):
         file_extension = os.path.splitext(self.file_path)[1]
         if file_extension not in self.valid_extensions:
-            error_message, error_code = Errors.wrong_file_extension(
-                file_extension, self.valid_extensions
-            )
+            error_message, error_code = Errors.wrong_file_extension(file_extension, self.valid_extensions)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 
@@ -301,9 +288,7 @@ class StructureValidator(BaseValidator):
         is_valid_path = bool(self.scheme_name or self.file_type)
         if not is_valid_path:
             error_message, error_code = Errors.invalid_file_path()
-            if not self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            if not self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid_path = True
         return is_valid_path
 
@@ -399,9 +384,7 @@ class StructureValidator(BaseValidator):
         return clean_path
 
     @error_codes("ST107,ST109")
-    def parse_missing_key_line(
-        self, error_path: List[str], error_msg: str
-    ) -> Tuple[str, str, bool]:
+    def parse_missing_key_line(self, error_path: List[str], error_msg: str) -> Tuple[str, str, bool]:
         """Parse a missing key pykwalify error.
 
         Arguments:
@@ -412,14 +395,10 @@ class StructureValidator(BaseValidator):
             str, str, bool: the validate error message, code and whether to suggest format as a possible fix
         """
         # error message example:  - Cannot find required key 'version'. Path: '/commonfields'.
-        error_key = (
-            str(error_msg).split("key")[1].split(".")[0].replace("'", "").strip()
-        )
+        error_key = str(error_msg).split("key")[1].split(".")[0].replace("'", "").strip()
         if error_path:
             error_path_str = self.translate_error_path(error_path)
-            error_message, error_code = Errors.pykwalify_missing_parameter(
-                str(error_key), error_path_str
-            )
+            error_message, error_code = Errors.pykwalify_missing_parameter(str(error_key), error_path_str)
             return error_message, error_code, True
 
         # if no path found this is an error in root
@@ -428,9 +407,7 @@ class StructureValidator(BaseValidator):
             return error_message, error_code, True
 
     @error_codes("ST111,ST108")
-    def parse_undefined_key_line(
-        self, error_path: List[str], error_msg: str
-    ) -> Tuple[str, str, bool]:
+    def parse_undefined_key_line(self, error_path: List[str], error_msg: str) -> Tuple[str, str, bool]:
         """Parse a undefined key pykwalify error.
 
         Arguments:
@@ -441,14 +418,10 @@ class StructureValidator(BaseValidator):
             str, str, bool: the validate error message, code and whether to suggest format as a possible fix
         """
         # error message example: - Key 'ok' was not defined. Path: '/configuration/0'.
-        error_key = (
-            str(error_msg).split("Key")[1].split(" ")[1].replace("'", "").strip()
-        )
+        error_key = str(error_msg).split("Key")[1].split(" ")[1].replace("'", "").strip()
         if error_path:
             error_path_str = self.translate_error_path(error_path)
-            error_message, error_code = Errors.pykwalify_field_undefined_with_path(
-                str(error_key), error_path_str
-            )
+            error_message, error_code = Errors.pykwalify_field_undefined_with_path(str(error_key), error_path_str)
             return error_message, error_code, True
 
         else:
@@ -456,9 +429,7 @@ class StructureValidator(BaseValidator):
             return error_message, error_code, True
 
     @error_codes("ST112")
-    def parse_enum_error_line(
-        self, error_path: List[str], error_msg: str
-    ) -> Tuple[str, str, bool]:
+    def parse_enum_error_line(self, error_path: List[str], error_msg: str) -> Tuple[str, str, bool]:
         """Parse a wrong enum value pykwalify error.
 
         Arguments:
@@ -470,9 +441,7 @@ class StructureValidator(BaseValidator):
         """
         # error message example: - Enum 'Network Securitys' does not exist.
         # Path: '/category' Enum: ['Analytics & SIEM', 'Utilities', 'Messaging'].
-        wrong_enum = (
-            str(error_msg).split("Enum ")[1].split("does")[0].replace("'", "").strip()
-        )
+        wrong_enum = str(error_msg).split("Enum ")[1].split("does")[0].replace("'", "").strip()
         possible_values = str(error_msg).split("Enum:")[-1].strip(" [].")
         error_message, error_code = Errors.pykwalify_incorrect_enum(
             self.translate_error_path(error_path), wrong_enum, possible_values

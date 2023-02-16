@@ -83,9 +83,7 @@ class DashboardValidator(ContentEntityValidator):
             if widgets:
                 for widget in widgets:
                     if widget.get(field):
-                        error_message, error_code = Errors.remove_field_from_widget(
-                            field, widget
-                        )
+                        error_message, error_code = Errors.remove_field_from_widget(field, widget)
                         formatted_message = self.handle_error(
                             error_message,
                             error_code,
@@ -129,9 +127,7 @@ class DashboardValidator(ContentEntityValidator):
                 for widget in widgets:
                     if not widget.get(field):
                         widget_name = widget.get("name")
-                        error_message, error_code = Errors.include_field_in_widget(
-                            field, widget_name
-                        )
+                        error_message, error_code = Errors.include_field_in_widget(field, widget_name)
                         formatted_message = self.handle_error(
                             error_message,
                             error_code,

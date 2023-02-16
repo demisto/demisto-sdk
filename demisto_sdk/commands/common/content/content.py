@@ -105,9 +105,7 @@ class Content:
         Returns:
             object: Any valid content object found in the given directory.
         """
-        objects_path = (self._path / dir_name).glob(
-            patterns=[f"{prefix}*.{suffix}", f"*/*.{suffix}"]
-        )
+        objects_path = (self._path / dir_name).glob(patterns=[f"{prefix}*.{suffix}", f"*/*.{suffix}"])
         for object_path in objects_path:
             yield path_to_pack_object(object_path)
 
@@ -127,9 +125,7 @@ class Content:
     @property
     def test_playbooks(self) -> Iterator[Playbook | Script]:
         """<content>/TestPlaybooks directory"""
-        return self._content_files_list_generator_factory(
-            dir_name=TEST_PLAYBOOKS_DIR, suffix="yml"
-        )
+        return self._content_files_list_generator_factory(dir_name=TEST_PLAYBOOKS_DIR, suffix="yml")
 
     @property
     def documentations(self) -> Iterator[Documentation]:

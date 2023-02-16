@@ -21,9 +21,7 @@ class ContentDTO(BaseModel):
     path: DirectoryPath = Path(get_content_path())  # type: ignore
     packs: List[Pack]
 
-    def dump(
-        self, dir: DirectoryPath, marketplace: MarketplaceVersions, zip: bool = True
-    ):
+    def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions, zip: bool = True):
         dir.mkdir(parents=True, exist_ok=True)
         logger.debug("Starting repository dump")
         start_time = time.time()

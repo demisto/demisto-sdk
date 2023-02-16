@@ -35,19 +35,13 @@ class RepositoryParser:
         try:
             logger.info("Parsing packs...")
             with multiprocessing.Pool(processes=cpu_count()) as pool:
-                self.packs: List[PackParser] = list(
-                    pool.map(PackParser, self.iter_packs())
-                )
+                self.packs: List[PackParser] = list(pool.map(PackParser, self.iter_packs()))
         except Exception:
             logger.error(traceback.format_exc())
             raise
 
     def should_parse_pack(self, path: Path) -> bool:
-        return (
-            path.is_dir()
-            and not path.name.startswith(".")
-            and path.name not in IGNORED_PACKS_FOR_PARSING
-        )
+        return path.is_dir() and not path.name.startswith(".") and path.name not in IGNORED_PACKS_FOR_PARSING
 
     def iter_packs(self) -> Iterator[Path]:
         """Iterates all packs in the repository.

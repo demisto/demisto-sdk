@@ -135,12 +135,7 @@ def is_date(val):
         # if number is between these two numbers it probably is timestamp=date
         return True
 
-    if (
-        isinstance(val, str)
-        and len(val) >= 10
-        and len(val) <= 30
-        and (_is_min_date(val) or dateparser.parse(val))
-    ):
+    if isinstance(val, str) and len(val) >= 10 and len(val) <= 30 and (_is_min_date(val) or dateparser.parse(val)):
         # the shortest date string is => len(2019-10-10) = 10
         # The longest date string I could think of wasn't of length over len=30 '2019-10-10T00:00:00.000 +0900'
         return True
@@ -191,13 +186,9 @@ def parse_json(
 
     flattened_data = flatten_json(data)
     if prefix:
-        flattened_data = {
-            f"{prefix}.{key}": value for key, value in flattened_data.items()
-        }
+        flattened_data = {f"{prefix}.{key}": value for key, value in flattened_data.items()}
         if descriptions:
-            descriptions = {
-                f"{prefix}.{key}": value for key, value in descriptions.items()
-            }
+            descriptions = {f"{prefix}.{key}": value for key, value in descriptions.items()}
 
     arg_json = []
     for key, value in flattened_data.items():
@@ -258,9 +249,7 @@ def json_to_outputs(
             input_json = input_multiline()
 
         descriptions = _parse_description_argument(descriptions)
-        yaml_output = parse_json(
-            input_json, command, prefix, verbose, interactive, descriptions
-        )
+        yaml_output = parse_json(input_json, command, prefix, verbose, interactive, descriptions)
 
         if output:
             with open(output, "w") as yf:

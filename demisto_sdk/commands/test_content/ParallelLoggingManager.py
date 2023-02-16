@@ -20,9 +20,7 @@ LEVEL_STYLES = {
 }
 
 
-def _add_logging_level(
-    level_name: str, level_num: int, method_name: str = None
-) -> None:
+def _add_logging_level(level_name: str, level_num: int, method_name: str = None) -> None:
     """
     Comprehensively adds a new logging level to the `logging` module and the
     currently configured logging class.
@@ -123,9 +121,7 @@ class ParallelLoggingManager:
             _add_logging_level("SUCCESS", 25)
         self.real_time_logs_only = real_time_logs_only
         self.log_file_name = log_file_name
-        formatter = coloredlogs.ColoredFormatter(
-            fmt=LOGGING_FORMAT, level_styles=LEVEL_STYLES
-        )
+        formatter = coloredlogs.ColoredFormatter(fmt=LOGGING_FORMAT, level_styles=LEVEL_STYLES)
         self.console_handler = logging.StreamHandler(sys.stdout)
         self.console_handler.setFormatter(formatter)
         log_file_path = (
@@ -184,9 +180,7 @@ class ParallelLoggingManager:
         if thread_name not in self.thread_names:
             self._add_logger(thread_name)
         log_method = (
-            self.real_time_logger.debug
-            if real_time or self.real_time_logs_only
-            else self.loggers[thread_name].debug
+            self.real_time_logger.debug if real_time or self.real_time_logs_only else self.loggers[thread_name].debug
         )
         log_method(message)
 
@@ -203,9 +197,7 @@ class ParallelLoggingManager:
         if thread_name not in self.thread_names:
             self._add_logger(thread_name)
         log_method = (
-            self.real_time_logger.info
-            if real_time or self.real_time_logs_only
-            else self.loggers[thread_name].info
+            self.real_time_logger.info if real_time or self.real_time_logs_only else self.loggers[thread_name].info
         )
         log_method(message)
 
@@ -241,9 +233,7 @@ class ParallelLoggingManager:
         if thread_name not in self.thread_names:
             self._add_logger(thread_name)
         log_method = (
-            self.real_time_logger.error
-            if real_time or self.real_time_logs_only
-            else self.loggers[thread_name].error
+            self.real_time_logger.error if real_time or self.real_time_logs_only else self.loggers[thread_name].error
         )
         log_method(message)
 

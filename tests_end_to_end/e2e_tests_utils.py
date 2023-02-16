@@ -30,13 +30,9 @@ def cli(command: str) -> subprocess.CompletedProcess:
 
 
 def connect_to_server(insecure: bool = False):
-    verify = (
-        (not insecure) if insecure else None
-    )  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
+    verify = (not insecure) if insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
     client = demisto_client.configure(verify_ssl=verify)
     demisto_version = get_demisto_version(client)
     if demisto_version == "0":
-        raise Exception(
-            "Could not connect to XSOAR server. Please check your connection configurations."
-        )
+        raise Exception("Could not connect to XSOAR server. Please check your connection configurations.")
     return client

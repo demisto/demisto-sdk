@@ -26,16 +26,12 @@ class ClassifierSixConverter(ClassifierBaseConverter):
         )
         intersection_fields = self.get_classifiers_schema_intersection_fields()
         for old_classifier in old_classifiers:
-            self.create_classifier_from_old_classifier(
-                old_classifier, intersection_fields
-            )
+            self.create_classifier_from_old_classifier(old_classifier, intersection_fields)
             self.create_mapper_from_old_classifier(old_classifier)
 
         return 0
 
-    def create_classifier_from_old_classifier(
-        self, old_classifier: Classifier, intersection_fields: Set[str]
-    ) -> None:
+    def create_classifier_from_old_classifier(self, old_classifier: Classifier, intersection_fields: Set[str]) -> None:
         """
         Receives classifier of format 5_9_9. Builds classifier of format 6_0_0 and above.
         Args:
@@ -48,11 +44,7 @@ class ClassifierSixConverter(ClassifierBaseConverter):
         classifier_name_and_id = self.extract_classifier_name(old_classifier)
         if not classifier_name_and_id:
             return
-        new_classifier = {
-            k: v
-            for k, v in old_classifier.to_dict().items()
-            if k in intersection_fields
-        }
+        new_classifier = {k: v for k, v in old_classifier.to_dict().items() if k in intersection_fields}
         new_classifier = dict(
             new_classifier,
             type="classification",
@@ -62,9 +54,7 @@ class ClassifierSixConverter(ClassifierBaseConverter):
             id=classifier_name_and_id,
         )
 
-        new_classifier_path = self.calculate_new_path(
-            classifier_name_and_id, is_mapper=False
-        )
+        new_classifier_path = self.calculate_new_path(classifier_name_and_id, is_mapper=False)
         self.dump_new_entity(new_classifier_path, new_classifier)
 
     def create_mapper_from_old_classifier(self, old_classifier: Classifier) -> None:
@@ -95,9 +85,7 @@ class ClassifierSixConverter(ClassifierBaseConverter):
         if default_incident_type:
             mapper["defaultIncidentType"] = default_incident_type
 
-        new_mapper_path = self.calculate_new_path(
-            classifier_name_and_id, is_mapper=True
-        )
+        new_mapper_path = self.calculate_new_path(classifier_name_and_id, is_mapper=True)
         self.dump_new_entity(new_mapper_path, mapper)
 
     def calculate_new_path(self, old_classifier_brand: str, is_mapper: bool) -> str:

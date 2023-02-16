@@ -27,9 +27,7 @@ content_type_to_model: Dict[ContentType, Type["BaseContent"]] = {}
 
 
 class BaseContentMetaclass(ModelMetaclass):
-    def __new__(
-        cls, name, bases, namespace, content_type: ContentType = None, **kwargs
-    ):
+    def __new__(cls, name, bases, namespace, content_type: ContentType = None, **kwargs):
         """This method is called before every creation of a ContentItem *class* (NOT class instances!).
         If `content_type` is passed as an argument of the class, we add a mapping between the content type
         and the model class object.
@@ -56,9 +54,7 @@ class BaseContentMetaclass(ModelMetaclass):
 
 
 class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
-    database_id: Optional[int] = Field(
-        None, exclude=True, repr=False
-    )  # used for the database
+    database_id: Optional[int] = Field(None, exclude=True, repr=False)  # used for the database
     object_id: str = Field(alias="id")
     content_type: ClassVar[ContentType] = Field(include=True)
     node_id: str
@@ -69,9 +65,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     )
 
     class Config:
-        arbitrary_types_allowed = (
-            True  # allows having custom classes for properties in model
-        )
+        arbitrary_types_allowed = True  # allows having custom classes for properties in model
         orm_mode = True  # allows using from_orm() method
         allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
 
@@ -119,13 +113,9 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
         if not content_item_parser:
             # This is a workaround because `create-content-artifacts` still creates deprecated content items
-            demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = (
-                "0.0.0"
-            )
+            demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = "0.0.0"
             content_item_parser = ContentItemParser.from_path(path)
-            demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = (
-                MARKETPLACE_MIN_VERSION
-            )
+            demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = MARKETPLACE_MIN_VERSION
 
         if not content_item_parser:  # if we still can't parse the content item
             logger.error(f"Could not parse content item from path: {path}")
@@ -139,18 +129,14 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         try:
             return model.from_orm(content_item_parser)
         except Exception as e:
-            logger.error(
-                f"Could not parse content item from path: {path}: {e}. Parser class: {content_item_parser}"
-            )
+            logger.error(f"Could not parse content item from path: {path}: {e}. Parser class: {content_item_parser}")
             return None
 
     @abstractmethod
     def dump(self, path: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         pass
 
-    def add_relationship(
-        self, relationship_type: RelationshipType, relationship: "RelationshipData"
-    ) -> None:
+    def add_relationship(self, relationship_type: RelationshipType, relationship: "RelationshipData") -> None:
         if relationship.content_item_to == self:
             # skip adding circular dependency
             return

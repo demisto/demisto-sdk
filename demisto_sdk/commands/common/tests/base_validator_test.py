@@ -20,10 +20,8 @@ from TestSuite.test_tools import ChangeCWD
 json = JSON_Handler()
 
 
-DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = (
-    BaseValidator.create_reverse_ignored_errors_list(
-        PRESET_ERROR_TO_CHECK["deprecated"]
-    )
+DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = BaseValidator.create_reverse_ignored_errors_list(
+    PRESET_ERROR_TO_CHECK["deprecated"]
 )
 
 
@@ -62,9 +60,7 @@ def test_handle_error_on_unignorable_error_codes(mocker, ignored_errors, error_c
     import click
 
     base_validator = BaseValidator(ignored_errors=ignored_errors)
-    expected_error = (
-        f"[ERROR]: file_name: [{error_code}] can not be ignored in .pack-ignore\n"
-    )
+    expected_error = f"[ERROR]: file_name: [{error_code}] can not be ignored in .pack-ignore\n"
 
     click_mock = mocker.patch.object(click, "secho")
     result = base_validator.handle_error(
@@ -97,9 +93,7 @@ def test_handle_error(mocker):
     """
     import click
 
-    base_validator = BaseValidator(
-        ignored_errors={"file_name": ["BA101"]}, print_as_warnings=True
-    )
+    base_validator = BaseValidator(ignored_errors={"file_name": ["BA101"]}, print_as_warnings=True)
 
     # passing the flag checks - checked separately
     base_validator.checked_files.union({"PATH", "file_name"})
@@ -108,30 +102,18 @@ def test_handle_error(mocker):
     assert formatted_error == "[ERROR]: PATH: [SC102] - Error-message\n"
     assert "PATH - [SC102]" in FOUND_FILES_AND_ERRORS
 
-    formatted_error = base_validator.handle_error(
-        "another-error-message", "IN101", "path/to/file_name"
-    )
-    assert (
-        formatted_error
-        == "[ERROR]: path/to/file_name: [IN101] - another-error-message\n"
-    )
+    formatted_error = base_validator.handle_error("another-error-message", "IN101", "path/to/file_name")
+    assert formatted_error == "[ERROR]: path/to/file_name: [IN101] - another-error-message\n"
     assert "path/to/file_name - [IN101]" in FOUND_FILES_AND_ERRORS
 
     click_mock = mocker.patch.object(click, "secho")
-    formatted_error = base_validator.handle_error(
-        "ignore-file-specific", "BA101", "path/to/file_name"
-    )
+    formatted_error = base_validator.handle_error("ignore-file-specific", "BA101", "path/to/file_name")
     assert formatted_error is None
     assert "path/to/file_name - [BA101]" not in FOUND_FILES_AND_ERRORS
     assert "path/to/file_name - [BA101]" in FOUND_FILES_AND_IGNORED_ERRORS
-    assert (
-        click_mock.call_args_list[0][0][0]
-        == "[WARNING]: path/to/file_name: [BA101] - ignore-file-specific\n"
-    )
+    assert click_mock.call_args_list[0][0][0] == "[WARNING]: path/to/file_name: [BA101] - ignore-file-specific\n"
 
-    formatted_error = base_validator.handle_error(
-        "Error-message", "ST109", "path/to/file_name"
-    )
+    formatted_error = base_validator.handle_error("Error-message", "ST109", "path/to/file_name")
     assert formatted_error == "[ERROR]: path/to/file_name: [ST109] - Error-message\n"
     assert "path/to/file_name - [ST109]" in FOUND_FILES_AND_ERRORS
 
@@ -153,9 +135,7 @@ def test_handle_error_file_with_path(pack):
     - Ensure ignored error are not in FOUND_FILES_AND_ERRORS and in FOUND_FILES_AND_IGNORED_ERRORS
     """
     integration = pack.create_integration("TestIntegration")
-    rel_path_integration_readme = integration.readme.path[
-        integration.readme.path.find("Packs") :
-    ]
+    rel_path_integration_readme = integration.readme.path[integration.readme.path.find("Packs") :]
     rel_path_pack_readme = pack.readme.path[pack.readme.path.find("Packs") :]
 
     pack_ignore_text = f"""[file:{rel_path_integration_readme}]
@@ -173,31 +153,20 @@ def test_handle_error_file_with_path(pack):
         print_as_warnings=True,
     )
 
-    formatted_error = base_validator.handle_error(
-        "Error-message", "BA101", integration.readme.path
-    )
-    assert (
-        formatted_error
-        == f"[ERROR]: {integration.readme.path}: [BA101] - Error-message\n"
-    )
+    formatted_error = base_validator.handle_error("Error-message", "BA101", integration.readme.path)
+    assert formatted_error == f"[ERROR]: {integration.readme.path}: [BA101] - Error-message\n"
     assert f"{integration.readme.path} - [BA101]" in FOUND_FILES_AND_ERRORS
 
-    formatted_error = base_validator.handle_error(
-        "Error-message", "PA113", integration.readme.path
-    )
+    formatted_error = base_validator.handle_error("Error-message", "PA113", integration.readme.path)
     assert formatted_error is None
     assert f"{integration.readme.path} - [PA113]" not in FOUND_FILES_AND_ERRORS
     assert f"{integration.readme.path} - [PA113]" in FOUND_FILES_AND_IGNORED_ERRORS
 
-    formatted_error = base_validator.handle_error(
-        "Error-message", "PA113", pack.readme.path
-    )
+    formatted_error = base_validator.handle_error("Error-message", "PA113", pack.readme.path)
     assert formatted_error == f"[ERROR]: {pack.readme.path}: [PA113] - Error-message\n"
     assert f"{pack.readme.path} - [PA113]" in FOUND_FILES_AND_ERRORS
 
-    formatted_error = base_validator.handle_error(
-        "Error-message", "BA101", pack.readme.path
-    )
+    formatted_error = base_validator.handle_error("Error-message", "BA101", pack.readme.path)
     assert formatted_error is None
     assert f"{pack.readme.path} - [BA101]" not in FOUND_FILES_AND_ERRORS
     assert f"{pack.readme.path} - [BA101]" in FOUND_FILES_AND_IGNORED_ERRORS
@@ -224,9 +193,7 @@ def test_check_deprecated_where_ignored_list_exists(repo):
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={"integration.yml": ["BA101"]})
         base_validator.check_deprecated(files_path)
-    assert base_validator.predefined_deprecated_ignored_errors == {
-        files_path: DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
-    }
+    assert base_validator.predefined_deprecated_ignored_errors == {files_path: DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST}
     assert base_validator.ignored_errors == {"integration.yml": ["BA101"]}
     assert not base_validator.predefined_by_support_ignored_errors
 
@@ -252,9 +219,7 @@ def test_check_deprecated_where_ignored_list_does_not_exist(repo):
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
         base_validator.check_deprecated(files_path)
-    assert base_validator.predefined_deprecated_ignored_errors == {
-        files_path: DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
-    }
+    assert base_validator.predefined_deprecated_ignored_errors == {files_path: DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST}
     assert not base_validator.ignored_errors
     assert not base_validator.predefined_by_support_ignored_errors
 
@@ -333,9 +298,7 @@ def test_check_deprecated_playbook(repo):
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
         base_validator.check_deprecated(files_path)
-    assert base_validator.predefined_deprecated_ignored_errors == {
-        files_path: DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
-    }
+    assert base_validator.predefined_deprecated_ignored_errors == {files_path: DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST}
 
 
 def test_check_support_status_xsoar_file(repo, mocker):
@@ -352,9 +315,7 @@ def test_check_support_status_xsoar_file(repo, mocker):
     pack = repo.create_pack("pack")
     integration = pack.create_integration("integration")
     meta_json = {PACK_METADATA_SUPPORT: "xsoar"}
-    mocker.patch.object(
-        BaseValidator, "get_metadata_file_content", return_value=meta_json
-    )
+    mocker.patch.object(BaseValidator, "get_metadata_file_content", return_value=meta_json)
     pack.pack_metadata.write_json(meta_json)
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
@@ -377,18 +338,14 @@ def test_check_support_status_partner_file(repo, mocker):
     pack = repo.create_pack("pack")
     integration = pack.create_integration("integration")
     meta_json = {PACK_METADATA_SUPPORT: "partner"}
-    mocker.patch.object(
-        BaseValidator, "get_metadata_file_content", return_value=meta_json
-    )
+    mocker.patch.object(BaseValidator, "get_metadata_file_content", return_value=meta_json)
     pack.pack_metadata.write_json(meta_json)
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
         base_validator.update_checked_flags_by_support_level(integration.yml.rel_path)
 
         assert (
-            base_validator.predefined_by_support_ignored_errors[
-                integration.yml.rel_path
-            ]
+            base_validator.predefined_by_support_ignored_errors[integration.yml.rel_path]
             == PRESET_ERROR_TO_IGNORE["partner"]
         )  # noqa: E501
 
@@ -407,18 +364,14 @@ def test_check_support_status_community_file(repo, mocker):
     pack = repo.create_pack("pack")
     integration = pack.create_integration("integration")
     meta_json = {PACK_METADATA_SUPPORT: "community"}
-    mocker.patch.object(
-        BaseValidator, "get_metadata_file_content", return_value=meta_json
-    )
+    mocker.patch.object(BaseValidator, "get_metadata_file_content", return_value=meta_json)
     pack.pack_metadata.write_json(meta_json)
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
         base_validator.update_checked_flags_by_support_level(integration.yml.rel_path)
 
         assert (
-            base_validator.predefined_by_support_ignored_errors[
-                integration.yml.rel_path
-            ]
+            base_validator.predefined_by_support_ignored_errors[integration.yml.rel_path]
             == PRESET_ERROR_TO_IGNORE["community"]
         )  # noqa: E501
 

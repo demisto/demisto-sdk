@@ -32,14 +32,9 @@ def test_timers__happy_path(mocker):
     some_func()
 
     with tempfile.TemporaryDirectory() as dir:
-        report_time_measurements(
-            group_name="test_group", time_measurements_dir=str(dir)
-        )
+        report_time_measurements(group_name="test_group", time_measurements_dir=str(dir))
         assert some_func.stat_info().call_count == 2
-        assert all(
-            header in logger.info.call_args[0][0]
-            for header in MEASURE_TYPE_TO_HEADERS[MeasureType.FUNCTIONS]
-        )
+        assert all(header in logger.info.call_args[0][0] for header in MEASURE_TYPE_TO_HEADERS[MeasureType.FUNCTIONS])
         assert (Path(dir) / "test_group_time_measurements.csv").exists()
 
 
@@ -66,7 +61,4 @@ def test_timers__no_group_exist(mocker):
     report_time_measurements(not_exist_group)
 
     assert some_func.stat_info().call_count == 1
-    assert (
-        f"There is no timers registered for the group {not_exist_group}"
-        in logger.debug.call_args[0][0]
-    )
+    assert f"There is no timers registered for the group {not_exist_group}" in logger.debug.call_args[0][0]

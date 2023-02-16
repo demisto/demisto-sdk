@@ -29,9 +29,7 @@ class TestLayoutValidator:
     }
 
     LAYOUT_CONTAINER_WITH_VALID_INCIDENT_FIELD = {
-        "detailsV2": {
-            "tabs": [{"sections": [{"items": [{"fieldId": "Incident Field"}]}]}]
-        }
+        "detailsV2": {"tabs": [{"sections": [{"items": [{"fieldId": "Incident Field"}]}]}]}
     }
 
     LAYOUT_CONTAINER_WITH_INVALID_TYPES = {
@@ -45,9 +43,7 @@ class TestLayoutValidator:
     }
 
     LAYOUT_CONTAINER_WITHOUT_INVALID_TYPES = {
-        "detailsV2": {
-            "tabs": [{"sections": [{"items": [{"fieldId": "Incident Field"}]}]}]
-        },
+        "detailsV2": {"tabs": [{"sections": [{"items": [{"fieldId": "Incident Field"}]}]}]},
         "marketplaces": ["marketplacev2"],
     }
 
@@ -66,9 +62,7 @@ class TestLayoutValidator:
         (LAYOUT_WITH_VALID_INCIDENT_FIELD, ID_SET_WITHOUT_INCIDENT_FIELD, True, False),
     ]
 
-    @pytest.mark.parametrize(
-        "layout_json, id_set_json, is_circle, expected_result", IS_INCIDENT_FIELD_EXIST
-    )
+    @pytest.mark.parametrize("layout_json, id_set_json, is_circle, expected_result", IS_INCIDENT_FIELD_EXIST)
     def test_layout_is_incident_field_exist_in_content(
         self, repo, layout_json, id_set_json, is_circle, expected_result
     ):
@@ -84,9 +78,7 @@ class TestLayoutValidator:
         repo.id_set.write_json(id_set_json)
         structure = mock_structure("", layout_json)
         validator = LayoutValidator(structure)
-        assert (
-            validator.is_incident_field_exist(id_set_json, is_circle) == expected_result
-        )
+        assert validator.is_incident_field_exist(id_set_json, is_circle) == expected_result
 
     IS_INCIDENT_FIELD_EXIST = [
         (
@@ -103,9 +95,7 @@ class TestLayoutValidator:
         ),
     ]
 
-    @pytest.mark.parametrize(
-        "layout_json, id_set_json, is_circle, expected_result", IS_INCIDENT_FIELD_EXIST
-    )
+    @pytest.mark.parametrize("layout_json, id_set_json, is_circle, expected_result", IS_INCIDENT_FIELD_EXIST)
     def test_layout_container_is_incident_field_exist_in_content(
         self, repo, layout_json, id_set_json, is_circle, expected_result
     ):
@@ -121,9 +111,7 @@ class TestLayoutValidator:
         repo.id_set.write_json(id_set_json)
         structure = mock_structure("", layout_json)
         validator = LayoutsContainerValidator(structure)
-        assert (
-            validator.is_incident_field_exist(id_set_json, is_circle) == expected_result
-        )
+        assert validator.is_incident_field_exist(id_set_json, is_circle) == expected_result
 
     IS_VALID_MPV2 = [
         (LAYOUT_CONTAINER_WITH_INVALID_TYPES, False),

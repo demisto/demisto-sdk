@@ -109,9 +109,7 @@ class Pack:
         self._filter_items_by_id_set = False
         self._pack_info_from_id_set: Dict[Any, Any] = {}
 
-    def _content_files_list_generator_factory(
-        self, dir_name: str, suffix: str
-    ) -> Iterator[Any]:
+    def _content_files_list_generator_factory(self, dir_name: str, suffix: str) -> Iterator[Any]:
         """Generic content objects iterable generator
 
         Args:
@@ -121,9 +119,7 @@ class Pack:
         Returns:
             object: Any valid content object found in the given directory.
         """
-        objects_path = (self._path / dir_name).glob(
-            patterns=[f"*.{suffix}", f"*/*.{suffix}"]
-        )
+        objects_path = (self._path / dir_name).glob(patterns=[f"*.{suffix}", f"*/*.{suffix}"])
         for object_path in objects_path:
             content_object = path_to_pack_object(object_path)
             # skip content items that are not displayed in the id set, if the corresponding flag is used,
@@ -137,9 +133,7 @@ class Pack:
             ]:
 
                 object_id = content_object.get_id()
-                if is_object_in_id_set(
-                    object_id, content_object.type().value, self._pack_info_from_id_set
-                ):
+                if is_object_in_id_set(object_id, content_object.type().value, self._pack_info_from_id_set):
                     yield content_object
                 else:
                     logging.warning(
@@ -173,9 +167,7 @@ class Pack:
 
     @property
     def integrations(self) -> Iterator[Integration]:
-        return self._content_files_list_generator_factory(
-            dir_name=INTEGRATIONS_DIR, suffix="yml"
-        )
+        return self._content_files_list_generator_factory(dir_name=INTEGRATIONS_DIR, suffix="yml")
 
     @property
     def integrations_count(self) -> int:
@@ -183,9 +175,7 @@ class Pack:
 
     @property
     def scripts(self) -> Iterator[Script]:
-        return self._content_files_list_generator_factory(
-            dir_name=SCRIPTS_DIR, suffix="yml"
-        )
+        return self._content_files_list_generator_factory(dir_name=SCRIPTS_DIR, suffix="yml")
 
     @property
     def scripts_count(self) -> int:
@@ -193,9 +183,7 @@ class Pack:
 
     @property
     def playbooks(self) -> Iterator[Playbook]:
-        return self._content_files_list_generator_factory(
-            dir_name=PLAYBOOKS_DIR, suffix="yml"
-        )
+        return self._content_files_list_generator_factory(dir_name=PLAYBOOKS_DIR, suffix="yml")
 
     @property
     def playbooks_count(self) -> int:
@@ -203,125 +191,85 @@ class Pack:
 
     @property
     def reports(self) -> Iterator[Report]:
-        return self._content_files_list_generator_factory(
-            dir_name=REPORTS_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=REPORTS_DIR, suffix="json")
 
     @property
     def dashboards(self) -> Iterator[Dashboard]:
-        return self._content_files_list_generator_factory(
-            dir_name=DASHBOARDS_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=DASHBOARDS_DIR, suffix="json")
 
     @property
     def incident_types(self) -> Iterator[IncidentType]:
-        return self._content_files_list_generator_factory(
-            dir_name=INCIDENT_TYPES_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=INCIDENT_TYPES_DIR, suffix="json")
 
     @property
     def incident_fields(self) -> Iterator[IncidentField]:
-        return self._content_files_list_generator_factory(
-            dir_name=INCIDENT_FIELDS_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=INCIDENT_FIELDS_DIR, suffix="json")
 
     @property
     def layouts(self) -> Iterator[LayoutObject]:
-        return self._content_files_list_generator_factory(
-            dir_name=LAYOUTS_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=LAYOUTS_DIR, suffix="json")
 
     @property
     def pre_process_rules(self) -> Iterator[PreProcessRule]:
-        return self._content_files_list_generator_factory(
-            dir_name=PRE_PROCESS_RULES_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=PRE_PROCESS_RULES_DIR, suffix="json")
 
     @property
     def lists(self) -> Iterator[Lists]:
-        return self._content_files_list_generator_factory(
-            dir_name=LISTS_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=LISTS_DIR, suffix="json")
 
     @property
     def classifiers(
         self,
     ) -> Iterator[Union[Classifier, OldClassifier, ClassifierMapper]]:
-        return self._content_files_list_generator_factory(
-            dir_name=CLASSIFIERS_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=CLASSIFIERS_DIR, suffix="json")
 
     @property
     def indicator_types(self) -> Iterator[IndicatorType]:
-        return self._content_files_list_generator_factory(
-            dir_name=INDICATOR_TYPES_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=INDICATOR_TYPES_DIR, suffix="json")
 
     @property
     def indicator_fields(self) -> Iterator[IndicatorField]:
-        return self._content_files_list_generator_factory(
-            dir_name=INDICATOR_FIELDS_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=INDICATOR_FIELDS_DIR, suffix="json")
 
     @property
     def connections(self) -> Iterator[Connection]:
-        return self._content_files_list_generator_factory(
-            dir_name=CONNECTIONS_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=CONNECTIONS_DIR, suffix="json")
 
     @property
     def test_playbooks(self) -> Iterator[Union[Playbook, Script]]:
-        return self._content_files_list_generator_factory(
-            dir_name=TEST_PLAYBOOKS_DIR, suffix="yml"
-        )
+        return self._content_files_list_generator_factory(dir_name=TEST_PLAYBOOKS_DIR, suffix="yml")
 
     @property
     def widgets(self) -> Iterator[Widget]:
-        return self._content_files_list_generator_factory(
-            dir_name=WIDGETS_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=WIDGETS_DIR, suffix="json")
 
     @property
     def wizards(self) -> Iterator[Wizard]:
-        return self._content_files_list_generator_factory(
-            dir_name=WIZARDS_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=WIZARDS_DIR, suffix="json")
 
     @property
     def release_notes(self) -> Iterator[ReleaseNote]:
-        return self._content_files_list_generator_factory(
-            dir_name=RELEASE_NOTES_DIR, suffix="md"
-        )
+        return self._content_files_list_generator_factory(dir_name=RELEASE_NOTES_DIR, suffix="md")
 
     @property
     def release_notes_config(self) -> Iterator[ReleaseNoteConfig]:
-        return self._content_files_list_generator_factory(
-            dir_name=RELEASE_NOTES_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=RELEASE_NOTES_DIR, suffix="json")
 
     @property
     def generic_definitions(self) -> Iterator[GenericDefinition]:
-        return self._content_files_list_generator_factory(
-            dir_name=GENERIC_DEFINITIONS_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=GENERIC_DEFINITIONS_DIR, suffix="json")
 
     @property
     def generic_modules(self) -> Iterator[GenericModule]:
-        return self._content_files_list_generator_factory(
-            dir_name=GENERIC_MODULES_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=GENERIC_MODULES_DIR, suffix="json")
 
     @property
     def generic_types(self) -> Iterator[GenericType]:
-        return self._content_files_list_generator_factory(
-            dir_name=GENERIC_TYPES_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=GENERIC_TYPES_DIR, suffix="json")
 
     @property
     def generic_fields(self) -> Iterator[GenericField]:
-        return self._content_files_list_generator_factory(
-            dir_name=GENERIC_FIELDS_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=GENERIC_FIELDS_DIR, suffix="json")
 
     @property
     def tools(self) -> Iterator[AgentTool]:
@@ -329,9 +277,7 @@ class Pack:
 
     @property
     def doc_files(self) -> Iterator[DocFile]:
-        return self._content_files_list_generator_factory(
-            dir_name=DOC_FILES_DIR, suffix="*"
-        )
+        return self._content_files_list_generator_factory(dir_name=DOC_FILES_DIR, suffix="*")
 
     @property
     def jobs(self) -> Iterator[Job]:
@@ -339,51 +285,35 @@ class Pack:
 
     @property
     def parsing_rules(self) -> Iterator[ParsingRule]:
-        return self._content_files_list_generator_factory(
-            dir_name=PARSING_RULES_DIR, suffix="yml"
-        )
+        return self._content_files_list_generator_factory(dir_name=PARSING_RULES_DIR, suffix="yml")
 
     @property
     def modeling_rules(self) -> Iterator[ModelingRule]:
-        return self._content_files_list_generator_factory(
-            dir_name=MODELING_RULES_DIR, suffix="yml"
-        )
+        return self._content_files_list_generator_factory(dir_name=MODELING_RULES_DIR, suffix="yml")
 
     @property
     def correlation_rules(self) -> Iterator[CorrelationRule]:
-        return self._content_files_list_generator_factory(
-            dir_name=CORRELATION_RULES_DIR, suffix="yml"
-        )
+        return self._content_files_list_generator_factory(dir_name=CORRELATION_RULES_DIR, suffix="yml")
 
     @property
     def xsiam_dashboards(self) -> Iterator[XSIAMDashboard]:
-        return self._content_files_list_generator_factory(
-            dir_name=XSIAM_DASHBOARDS_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=XSIAM_DASHBOARDS_DIR, suffix="json")
 
     @property
     def xsiam_reports(self) -> Iterator[XSIAMReport]:
-        return self._content_files_list_generator_factory(
-            dir_name=XSIAM_REPORTS_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=XSIAM_REPORTS_DIR, suffix="json")
 
     @property
     def triggers(self) -> Iterator[Trigger]:
-        return self._content_files_list_generator_factory(
-            dir_name=TRIGGER_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=TRIGGER_DIR, suffix="json")
 
     @property
     def xdrc_templates(self) -> Iterator[XDRCTemplate]:
-        return self._content_files_list_generator_factory(
-            dir_name=XDRC_TEMPLATE_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=XDRC_TEMPLATE_DIR, suffix="json")
 
     @property
     def layout_rules(self) -> Iterator[LayoutRule]:
-        return self._content_files_list_generator_factory(
-            dir_name=LAYOUT_RULES_DIR, suffix="json"
-        )
+        return self._content_files_list_generator_factory(dir_name=LAYOUT_RULES_DIR, suffix="json")
 
     @property
     def pack_metadata(self) -> Optional[PackMetaData]:
@@ -461,15 +391,9 @@ class Pack:
 
     @pack_info_from_id_set.setter
     def pack_info_from_id_set(self, pack_section_from_id_set: dict):
-        self._pack_info_from_id_set = (
-            pack_section_from_id_set.get(self.id, {})
-            if pack_section_from_id_set
-            else {}
-        )
+        self._pack_info_from_id_set = pack_section_from_id_set.get(self.id, {}) if pack_section_from_id_set else {}
 
-    def sign_pack(
-        self, logger: logging.Logger, dumped_pack_dir: Path, sign_directory: Path
-    ):
+    def sign_pack(self, logger: logging.Logger, dumped_pack_dir: Path, sign_directory: Path):
         """Signs pack folder and creates signature file.
 
         Args:
@@ -481,9 +405,7 @@ class Pack:
         try:
             full_command = f"{sign_directory} {dumped_pack_dir} keyfile base64"
 
-            signing_process = subprocess.Popen(
-                full_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True
-            )
+            signing_process = subprocess.Popen(full_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
             output, err = signing_process.communicate()
             signing_process.wait()
 
@@ -509,13 +431,10 @@ class Pack:
         Returns whether a pack is deprecated.
         """
         pack_metadata = self.pack_metadata_as_dict()
-        pack_name, pack_desc = pack_metadata.get("name", ""), pack_metadata.get(
-            "description", ""
-        )
+        pack_name, pack_desc = pack_metadata.get("name", ""), pack_metadata.get("description", "")
 
         return regex.match(PACK_NAME_DEPRECATED_REGEX, pack_name) and (
-            regex.match(DEPRECATED_NO_REPLACE_DESC_REGEX, pack_desc)
-            or regex.match(DEPRECATED_DESC_REGEX, pack_desc)
+            regex.match(DEPRECATED_NO_REPLACE_DESC_REGEX, pack_desc) or regex.match(DEPRECATED_DESC_REGEX, pack_desc)
         )
 
     def should_be_deprecated(self) -> Optional[bool]:
@@ -536,18 +455,9 @@ class Pack:
 
         if self._are_integrations_or_scripts_or_playbooks_exist():
             return (
-                (
-                    self.integrations_count
-                    == _get_deprecated_content_entities_count(self.integrations)
-                )
-                and (
-                    self.playbooks_count
-                    == _get_deprecated_content_entities_count(self.playbooks)
-                )
-                and (
-                    self.scripts_count
-                    == _get_deprecated_content_entities_count(self.scripts)
-                )
+                (self.integrations_count == _get_deprecated_content_entities_count(self.integrations))
+                and (self.playbooks_count == _get_deprecated_content_entities_count(self.playbooks))
+                and (self.scripts_count == _get_deprecated_content_entities_count(self.scripts))
             )
         # if there aren't any playbooks/scripts/integrations -> no deprecated content -> pack shouldn't be deprecated.
         return False
@@ -564,9 +474,7 @@ class Pack:
         server_version = get_demisto_version(client)
         return LooseVersion(server_version.base_version) >= LooseVersion(server_version_to_check)  # type: ignore
 
-    def upload(
-        self, logger: logging.Logger, client: demisto_client, skip_validation: bool
-    ):
+    def upload(self, logger: logging.Logger, client: demisto_client, skip_validation: bool):
         """
         Upload the pack zip to demisto_client,
         from 6.5 server version we have the option to use skip_verify arg instead of server configuration.
@@ -623,8 +531,6 @@ class Pack:
                 )
             except (Exception, KeyboardInterrupt):
                 action = (
-                    DELETE_VERIFY_KEY_ACTION
-                    if prev_key_val is None
-                    else SET_VERIFY_KEY_ACTION.format(prev_key_val)
+                    DELETE_VERIFY_KEY_ACTION if prev_key_val is None else SET_VERIFY_KEY_ACTION.format(prev_key_val)
                 )
                 raise Exception(TURN_VERIFICATION_ERROR_MSG.format(action=action))

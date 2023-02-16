@@ -243,9 +243,7 @@ BUILT_IN_FIELDS = [
 ]
 
 
-def add_item_to_exclusion_dict(
-    excluded_items_from_id_set: dict, file_path: str, item_id: str
-) -> None:
+def add_item_to_exclusion_dict(excluded_items_from_id_set: dict, file_path: str, item_id: str) -> None:
     """
     Adds an item to the exclusion dict
 
@@ -323,16 +321,12 @@ def should_skip_item_by_mp(
     except (ValueError, FileNotFoundError, IsADirectoryError):
         return True
 
-    item_marketplaces = get_item_marketplaces(
-        file_path, item_data=item_data, packs=packs, item_type=item_type
-    )
+    item_marketplaces = get_item_marketplaces(file_path, item_data=item_data, packs=packs, item_type=item_type)
     if marketplace not in item_marketplaces:
         if print_logs:
             print(f"Skipping {file_path} due to mismatch with the given marketplace")
 
-        if (
-            "pack_metadata" not in file_path
-        ):  # only add pack items to the exclusion dict, not whole packs
+        if "pack_metadata" not in file_path:  # only add pack items to the exclusion dict, not whole packs
             add_item_to_exclusion_dict(
                 excluded_items_from_id_set,
                 file_path,
@@ -357,9 +351,7 @@ def build_tasks_graph(playbook_data):
     tasks = playbook_data.get("tasks", {})
 
     graph = networkx.DiGraph()
-    graph.add_node(
-        initial_task, mandatory=True
-    )  # add starting task as root of the direct graph
+    graph.add_node(initial_task, mandatory=True)  # add starting task as root of the direct graph
 
     found_new_tasks = True
     while found_new_tasks:
@@ -388,9 +380,7 @@ def build_tasks_graph(playbook_data):
                 else:
                     # If task already in graph, update mandatory field.
                     # If one of the paths to the task is mandatory - set as mandatory.
-                    graph.nodes[task_id]["mandatory"] = (
-                        graph.nodes[task_id]["mandatory"] or mandatory
-                    )
+                    graph.nodes[task_id]["mandatory"] = graph.nodes[task_id]["mandatory"] or mandatory
                 graph.add_edge(leaf, task_id)
 
         found_new_tasks = graph.number_of_nodes() > current_number_of_nodes
@@ -398,9 +388,7 @@ def build_tasks_graph(playbook_data):
     return graph
 
 
-def get_lists_names_from_playbook(
-    data_dictionary: dict, graph: networkx.DiGraph
-) -> tuple:
+def get_lists_names_from_playbook(data_dictionary: dict, graph: networkx.DiGraph) -> tuple:
     lists_names = set()
     lists_names_skippable = set()
     tasks = data_dictionary.get("tasks", {})
@@ -408,9 +396,7 @@ def get_lists_names_from_playbook(
     for task_id, task in tasks.items():
         script = task.get("task", {}).get("script")
         if script in lists_tasks_scripts:
-            list_name = (
-                task.get("scriptarguments", {}).get("listName", {}).get("simple")
-            )
+            list_name = task.get("scriptarguments", {}).get("listName", {}).get("simple")
 
             try:
                 skippable = not graph.nodes[task_id]["mandatory"]
@@ -426,9 +412,7 @@ def get_lists_names_from_playbook(
     return list(lists_names), list(lists_names_skippable)
 
 
-def get_task_ids_from_playbook(
-    param_to_enrich_by: str, data_dict: dict, graph: networkx.DiGraph
-) -> tuple:
+def get_task_ids_from_playbook(param_to_enrich_by: str, data_dict: dict, graph: networkx.DiGraph) -> tuple:
     implementing_ids = set()
     implementing_ids_skippable = set()
     tasks = data_dict.get("tasks", {})
@@ -514,27 +498,15 @@ def get_filters_and_transformers_from_playbook(data_dict: dict) -> Tuple[list, l
                 for inner_condition in condition_entry.get("condition", []):
                     if inner_condition:
                         for condition in inner_condition:
-                            complex_values.append(
-                                condition.get("left", {})
-                                .get("value", {})
-                                .get("complex", {})
-                            )
-                            complex_values.append(
-                                condition.get("right", {})
-                                .get("value", {})
-                                .get("complex", {})
-                            )
+                            complex_values.append(condition.get("left", {}).get("value", {}).get("complex", {}))
+                            complex_values.append(condition.get("right", {}).get("value", {}).get("complex", {}))
         else:
-            complex_values.append(
-                task.get("scriptarguments", {}).get("value", {}).get("complex", {})
-            )
+            complex_values.append(task.get("scriptarguments", {}).get("value", {}).get("complex", {}))
 
     # get transformers and filters from the values
     for complex_value in complex_values:
         if complex_value:
-            transformers, filters = get_filters_and_transformers_from_complex_value(
-                complex_value
-            )
+            transformers, filters = get_filters_and_transformers_from_complex_value(complex_value)
             all_transformers.update(transformers)
             all_filters.update(filters)
 
@@ -548,23 +520,15 @@ def get_integration_api_modules(file_path, data_dictionary, is_unified_integrati
         (
             _,
             integration_script_code,
-        ) = IntegrationScriptUnifier.get_script_or_integration_package_data(
-            os.path.dirname(file_path)
-        )
+        ) = IntegrationScriptUnifier.get_script_or_integration_package_data(os.path.dirname(file_path))
 
-    return list(
-        IntegrationScriptUnifier.check_api_module_imports(
-            integration_script_code
-        ).values()
-    )
+    return list(IntegrationScriptUnifier.check_api_module_imports(integration_script_code).values())
 
 
 def get_integration_data(file_path, packs: Dict[str, Dict] = None):
     data_dictionary = get_yaml(file_path)
 
-    is_unified_integration = data_dictionary.get("script", {}).get(
-        "script", ""
-    ) not in ["-", ""]
+    is_unified_integration = data_dictionary.get("script", {}).get("script", "") not in ["-", ""]
 
     id_ = data_dictionary.get("commonfields", {}).get("id", "-")
     name = data_dictionary.get("name", "-")
@@ -582,16 +546,12 @@ def get_integration_data(file_path, packs: Dict[str, Dict] = None):
     commands = script.get("commands", [])
     cmd_list = [command.get("name") for command in commands]
     pack = get_pack_name(file_path)
-    integration_api_modules = get_integration_api_modules(
-        file_path, data_dictionary, is_unified_integration
-    )
+    integration_api_modules = get_integration_api_modules(file_path, data_dictionary, is_unified_integration)
     default_classifier = data_dictionary.get("defaultclassifier")
     default_incident_type = data_dictionary.get("defaultIncidentType")
     is_fetch = script.get("isfetch", False)
     is_feed = script.get("feed", False)
-    marketplaces = get_item_marketplaces(
-        file_path, item_data=data_dictionary, packs=packs
-    )
+    marketplaces = get_item_marketplaces(file_path, item_data=data_dictionary, packs=packs)
     mappers = set()
 
     deprecated_commands = []
@@ -749,12 +709,8 @@ def get_dependent_incident_and_indicator_fields(data_dictionary):
     # incident fields by playbook inputs
     for playbook_input in data_dictionary.get("inputs", []):
         input_value_dict = playbook_input.get("value", {})
-        if input_value_dict and isinstance(
-            input_value_dict, dict
-        ):  # deprecated playbooks bug
-            dependent_incident_fields.update(
-                get_incident_fields_by_playbook_input(input_value_dict)
-            )
+        if input_value_dict and isinstance(input_value_dict, dict):  # deprecated playbooks bug
+            dependent_incident_fields.update(get_incident_fields_by_playbook_input(input_value_dict))
 
     return dependent_incident_fields, dependent_indicator_fields
 
@@ -770,9 +726,7 @@ def get_playbook_data(file_path: str, packs: Dict[str, Dict] = None) -> dict:
     tests = data_dictionary.get("tests")
     toversion = data_dictionary.get("toversion")
     fromversion = data_dictionary.get("fromversion")
-    marketplaces = get_item_marketplaces(
-        file_path, item_data=data_dictionary, packs=packs
-    )
+    marketplaces = get_item_marketplaces(file_path, item_data=data_dictionary, packs=packs)
 
     implementing_scripts, implementing_scripts_skippable = get_task_ids_from_playbook(
         "scriptName", data_dictionary, graph
@@ -781,9 +735,7 @@ def get_playbook_data(file_path: str, packs: Dict[str, Dict] = None) -> dict:
         implementing_playbooks,
         implementing_playbooks_skippable,
     ) = get_task_ids_from_playbook("playbookName", data_dictionary, graph)
-    implementing_lists, implementing_lists_skippable = get_lists_names_from_playbook(
-        data_dictionary, graph
-    )
+    implementing_lists, implementing_lists_skippable = get_lists_names_from_playbook(data_dictionary, graph)
     (
         command_to_integration,
         command_to_integration_skippable,
@@ -858,18 +810,10 @@ def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None):
     docker_image = data_dictionary.get("dockerimage")
     depends_on, command_to_integration = get_depends_on(data_dictionary)
     script_executions = sorted(
-        list(
-            set(
-                re.findall(
-                    r"execute_?command\(['\"](\w+)['\"].*", script_code, re.IGNORECASE
-                )
-            )
-        )
+        list(set(re.findall(r"execute_?command\(['\"](\w+)['\"].*", script_code, re.IGNORECASE)))
     )
     pack = get_pack_name(file_path)
-    marketplaces = get_item_marketplaces(
-        file_path, item_data=data_dictionary, packs=packs
-    )
+    marketplaces = get_item_marketplaces(file_path, item_data=data_dictionary, packs=packs)
 
     if "Packs" in file_path and not file_path.startswith("Packs"):
         file_path = file_path[file_path.index("Packs") :]
@@ -977,9 +921,7 @@ def get_layout_data(path: str, packs: Dict[str, Dict] = None):
     pack = get_pack_name(path)
     marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
     incident_indicator_types_dependency = {id_}
-    incident_indicator_fields_dependency = get_values_for_keys_recursively(
-        json_data, ["fieldId"]
-    )
+    incident_indicator_fields_dependency = get_values_for_keys_recursively(json_data, ["fieldId"])
     definition_id = json_data.get("definitionId")
     tabs = layout.get("tabs", [])
     scripts = get_layouts_scripts_ids(tabs)
@@ -1002,9 +944,7 @@ def get_layout_data(path: str, packs: Dict[str, Dict] = None):
         data["kind"] = kind
     data["incident_and_indicator_types"] = list(incident_indicator_types_dependency)
     if incident_indicator_fields_dependency["fieldId"]:
-        data["incident_and_indicator_fields"] = incident_indicator_fields_dependency[
-            "fieldId"
-        ]
+        data["incident_and_indicator_fields"] = incident_indicator_fields_dependency["fieldId"]
     if definition_id:
         data["definitionId"] = definition_id
     if scripts:
@@ -1072,38 +1012,24 @@ def get_layoutscontainer_data(path: str, packs: Dict[str, Dict] = None):
         pack=pack,
         marketplaces=marketplaces,
     )
-    data.update(
-        OrderedDict(
-            {
-                field: json_data[field]
-                for field in layouts_container_fields
-                if json_data.get(field)
-            }
-        )
-    )
+    data.update(OrderedDict({field: json_data[field] for field in layouts_container_fields if json_data.get(field)}))
 
     id_ = json_data.get("id")
     incident_indicator_types_dependency = {id_}
-    incident_indicator_fields_dependency = get_values_for_keys_recursively(
-        json_data, ["fieldId"]
-    )
+    incident_indicator_fields_dependency = get_values_for_keys_recursively(json_data, ["fieldId"])
     definition_id = json_data.get("definitionId")
     if data.get("name"):
         incident_indicator_types_dependency.add(data["name"])
     data["incident_and_indicator_types"] = list(incident_indicator_types_dependency)
     if incident_indicator_fields_dependency["fieldId"]:
-        data["incident_and_indicator_fields"] = incident_indicator_fields_dependency[
-            "fieldId"
-        ]
+        data["incident_and_indicator_fields"] = incident_indicator_fields_dependency["fieldId"]
     if definition_id:
         data["definitionId"] = definition_id
 
     return {id_: data}
 
 
-def get_incident_field_data(
-    path: str, incident_types: List, packs: Dict[str, Dict] = None
-):
+def get_incident_field_data(path: str, incident_types: List, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
 
     id_ = json_data.get("id")
@@ -1125,9 +1051,7 @@ def get_incident_field_data(
         all_associated_types = all_associated_types.union(set(system_associated_types))
 
     if "all" in all_associated_types:
-        all_associated_types = {
-            list(incident_type.keys())[0] for incident_type in incident_types
-        }
+        all_associated_types = {list(incident_type.keys())[0] for incident_type in incident_types}
 
     scripts = json_data.get("script")
     if scripts:
@@ -1168,9 +1092,7 @@ def get_incident_field_data(
     return {id_: data}
 
 
-def get_indicator_type_data(
-    path: str, all_integrations: List, packs: Dict[str, Dict] = None
-):
+def get_indicator_type_data(path: str, all_integrations: List, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
 
     id_ = json_data.get("id")
@@ -1189,11 +1111,7 @@ def get_indicator_type_data(
         if not associated_scripts or associated_scripts == "null":
             continue
 
-        associated_scripts = (
-            [associated_scripts]
-            if not isinstance(associated_scripts, list)
-            else associated_scripts
-        )
+        associated_scripts = [associated_scripts] if not isinstance(associated_scripts, list) else associated_scripts
         if associated_scripts:
             all_scripts = all_scripts.union(set(associated_scripts))
 
@@ -1276,9 +1194,7 @@ def get_classifier_data(path: str, packs: Dict[str, Dict] = None):
     if transformer is dict:
         complex_value = transformer.get("complex", {})
         if complex_value:
-            transformers, filters = get_filters_and_transformers_from_complex_value(
-                complex_value
-            )
+            transformers, filters = get_filters_and_transformers_from_complex_value(complex_value)
 
     data = create_common_entity_data(
         path=path,
@@ -1301,9 +1217,7 @@ def get_classifier_data(path: str, packs: Dict[str, Dict] = None):
     return {id_: data}
 
 
-def create_common_entity_data(
-    path, name, display_name, to_version, from_version, pack, marketplaces
-):
+def create_common_entity_data(path, name, display_name, to_version, from_version, pack, marketplaces):
     data = OrderedDict()
     if name:
         data["name"] = name
@@ -1336,15 +1250,11 @@ def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str = ""):
             "current_version": json_data.get("currentVersion"),
             "source": get_current_repo(),
             "author": json_data.get("author", ""),
-            "certification": "certified"
-            if json_data.get("support", "").lower() in ["xsoar", "partner"]
-            else "",
+            "certification": "certified" if json_data.get("support", "").lower() in ["xsoar", "partner"] else "",
             "tags": json_data.get("tags", []),
             "use_cases": json_data.get("useCases", []),
             "categories": json_data.get("categories", []),
-            "marketplaces": json_data.get(
-                "marketplaces", [MarketplaceVersions.XSOAR.value]
-            ),
+            "marketplaces": json_data.get("marketplaces", [MarketplaceVersions.XSOAR.value]),
         }
 
         pack_id = get_pack_name(file_path)
@@ -1401,17 +1311,11 @@ def get_mapper_data(path: str, packs: Dict[str, Dict] = None):
         for internal_mapping in internal_mapping.values():
             incident_field_complex = internal_mapping.get("complex", {})
             if incident_field_complex:
-                transformers, filters = get_filters_and_transformers_from_complex_value(
-                    incident_field_complex
-                )
+                transformers, filters = get_filters_and_transformers_from_complex_value(incident_field_complex)
                 all_transformers.update(transformers)
                 all_filters.update(filters)
 
-    incidents_fields = {
-        incident_field
-        for incident_field in incidents_fields
-        if incident_field not in BUILT_IN_FIELDS
-    }
+    incidents_fields = {incident_field for incident_field in incidents_fields if incident_field not in BUILT_IN_FIELDS}
     data = create_common_entity_data(
         path=path,
         name=name,
@@ -1480,9 +1384,7 @@ def get_report_data(path: str, packs: Dict[str, Dict] = None):
     return parse_dashboard_or_report_data(path, report_data, layouts, packs)
 
 
-def parse_dashboard_or_report_data(
-    path: str, data_file_json: Dict, all_layouts: List, packs: Dict[str, Dict] = None
-):
+def parse_dashboard_or_report_data(path: str, data_file_json: Dict, all_layouts: List, packs: Dict[str, Dict] = None):
     id_ = data_file_json.get("id")
     name = data_file_json.get("name", "")
     display_name = get_display_name(path, data_file_json)
@@ -1792,9 +1694,7 @@ def process_integration(
     return res, excluded_items_from_id_set
 
 
-def process_script(
-    file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool
-) -> Tuple[list, dict]:
+def process_script(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool) -> Tuple[list, dict]:
     """
     Process script dir or file
 
@@ -1828,9 +1728,7 @@ def process_script(
             (
                 yml_path,
                 code,
-            ) = IntegrationScriptUnifier.get_script_or_integration_package_data(
-                Path(file_path)
-            )
+            ) = IntegrationScriptUnifier.get_script_or_integration_package_data(Path(file_path))
             if should_skip_item_by_mp(
                 yml_path,
                 marketplace,
@@ -1920,20 +1818,13 @@ def process_indicator_types(
             print_logs=print_logs,
         ):
             if print_logs:
-                print(
-                    f"Skipping {file_path} due to mismatch with the marketplace this id set is generated for."
-                )
+                print(f"Skipping {file_path} due to mismatch with the marketplace this id set is generated for.")
             return [], excluded_items_from_id_set
         # ignore old reputations.json files
-        if (
-            not os.path.basename(file_path) == "reputations.json"
-            and find_type(file_path) == FileType.REPUTATION
-        ):
+        if not os.path.basename(file_path) == "reputations.json" and find_type(file_path) == FileType.REPUTATION:
             if print_logs:
                 print(f"adding {file_path} to id_set")
-            res.append(
-                get_indicator_type_data(file_path, all_integrations, packs=packs)
-            )
+            res.append(get_indicator_type_data(file_path, all_integrations, packs=packs))
     except Exception as exp:  # noqa
         print_error(f"failed to process {file_path}, Error: {str(exp)}")
         raise
@@ -1975,9 +1866,7 @@ def process_generic_items(
         if find_type(file_path) == FileType.GENERIC_FIELD:
             if print_logs:
                 print(f"adding {file_path} to id_set")
-            res.append(
-                get_generic_field_data(file_path, generic_types_list, packs=packs)
-            )
+            res.append(get_generic_field_data(file_path, generic_types_list, packs=packs))
         elif find_type(file_path) == FileType.GENERIC_TYPE:
             if print_logs:
                 print(f"adding {file_path} to id_set")
@@ -1988,9 +1877,7 @@ def process_generic_items(
     return res, excluded_items_from_id_set
 
 
-def process_jobs(
-    file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool
-) -> list:
+def process_jobs(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool) -> list:
     """
     Process a JSON file representing a Job object.
     Args:
@@ -2004,9 +1891,7 @@ def process_jobs(
     """
     result: List = []
     try:
-        if should_skip_item_by_mp(
-            file_path, marketplace, {}, packs=packs, print_logs=print_logs
-        ):
+        if should_skip_item_by_mp(file_path, marketplace, {}, packs=packs, print_logs=print_logs):
             return []
         if find_type(file_path) == FileType.JOB:
             if print_logs:
@@ -2018,9 +1903,7 @@ def process_jobs(
     return result
 
 
-def process_wizards(
-    file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool
-) -> list:
+def process_wizards(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool) -> list:
     """
     Process a JSON file representing a Wizard object.
     Args:
@@ -2034,9 +1917,7 @@ def process_wizards(
     """
     result: List = []
     try:
-        if should_skip_item_by_mp(
-            file_path, marketplace, {}, packs=packs, print_logs=print_logs
-        ):
+        if should_skip_item_by_mp(file_path, marketplace, {}, packs=packs, print_logs=print_logs):
             return []
         if find_type(file_path) == FileType.WIZARD:
             if print_logs:
@@ -2078,9 +1959,7 @@ def process_layoutscontainers(
 
         if find_type(file_path) != FileType.LAYOUTS_CONTAINER:
             if print_logs:
-                print(
-                    f"Recieved an invalid layoutcontainer file: {file_path}, Ignoring."
-                )
+                print(f"Recieved an invalid layoutcontainer file: {file_path}, Ignoring.")
             return result, excluded_items_from_id_set
 
         layout_data = get_layoutscontainer_data(file_path, packs=packs)
@@ -2179,9 +2058,7 @@ def process_general_items(
     return res, excluded_items_from_id_set
 
 
-def process_test_playbook_path(
-    file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool
-) -> tuple:
+def process_test_playbook_path(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool) -> tuple:
     """
     Process a yml file in the test playbook dir. Maybe either a script or playbook
 
@@ -2199,9 +2076,7 @@ def process_test_playbook_path(
     try:
         if print_logs:
             print(f"adding {file_path} to id_set")
-        if should_skip_item_by_mp(
-            file_path, marketplace, {}, packs=packs, print_logs=print_logs
-        ):
+        if should_skip_item_by_mp(file_path, marketplace, {}, packs=packs, print_logs=print_logs):
             return None, None
         if find_type(file_path) == FileType.TEST_SCRIPT:
             script = get_script_data(file_path, packs=packs)
@@ -2346,9 +2221,7 @@ def get_generic_field_data(path, generic_types_list, packs: Dict[str, Dict] = No
         all_associated_types = all_associated_types.union(set(system_associated_types))
 
     if "all" in all_associated_types:
-        all_associated_types = {
-            list(generic_type.keys())[0] for generic_type in generic_types_list
-        }
+        all_associated_types = {list(generic_type.keys())[0] for generic_type in generic_types_list}
 
     scripts = json_data.get("script")
     if scripts:
@@ -2412,9 +2285,7 @@ def get_generic_module_data(path, packs: Dict[str, Dict] = None):
     views = {
         view.get("name"): {
             "title": view.get("title"),
-            "dashboards": [
-                tab.get("dashboard", {}).get("id") for tab in view.get("tabs", [])
-            ],
+            "dashboards": [tab.get("dashboard", {}).get("id") for tab in view.get("tabs", [])],
         }
         for view in views
     }
@@ -2547,9 +2418,7 @@ class IDSet:
         self._id_set_dict.setdefault(object_type, {}).update({obj_name: obj_value})
 
 
-def merge_id_sets_from_files(
-    first_id_set_path, second_id_set_path, output_id_set_path, print_logs: bool = True
-):
+def merge_id_sets_from_files(first_id_set_path, second_id_set_path, output_id_set_path, print_logs: bool = True):
     """
     Merges two id-sets. Loads them from files and saves the merged unified id_set into output_id_set_path.
     """
@@ -2568,9 +2437,7 @@ def merge_id_sets_from_files(
     return unified_id_set, duplicates
 
 
-def merge_id_sets(
-    first_id_set_dict: dict, second_id_set_dict: dict, print_logs: bool = True
-):
+def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs: bool = True):
     """
     Merged two id_set dictionaries into single id_set. Returns the unified id_set dict.
     """
@@ -2657,9 +2524,7 @@ def re_create_id_set(  # noqa: C901
                 "\nPlease modify or unset env var.",
                 LOG_COLORS.YELLOW,
             )
-        if (
-            refresh_interval > 0
-        ):  # if the file is newer than the refresh interval, use it as is
+        if refresh_interval > 0:  # if the file is newer than the refresh interval, use it as is
             mtime = os.path.getmtime(id_set_path)
             mtime_dt = datetime.fromtimestamp(mtime)
             target_time = time.time() - (refresh_interval * 60)
@@ -2729,9 +2594,7 @@ def re_create_id_set(  # noqa: C901
 
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 
-    with click.progressbar(
-        length=len(objects_to_create), label="Creating id-set"
-    ) as progress_bar:
+    with click.progressbar(length=len(objects_to_create), label="Creating id-set") as progress_bar:
 
         if "Packs" in objects_to_create:
             print_color("\nStarting iteration over Packs", LOG_COLORS.GREEN)
@@ -2759,13 +2622,11 @@ def re_create_id_set(  # noqa: C901
                 get_integrations_paths(pack_to_create),
             ):
 
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("integrations", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault(
+                            "integrations", []
+                        ).append(_id)
                 integration_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -2788,13 +2649,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_playbooks_paths(pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("playbooks", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault("playbooks", []).append(
+                            _id
+                        )
                 playbooks_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -2815,13 +2674,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(SCRIPTS_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("scripts", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault("scripts", []).append(
+                            _id
+                        )
                 scripts_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -2862,13 +2719,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(CLASSIFIERS_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("classifiers", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault(
+                            "classifiers", []
+                        ).append(_id)
                 classifiers_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -2891,13 +2746,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(DASHBOARDS_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("dashboards", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault("dashboards", []).append(
+                            _id
+                        )
                 dashboards_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -2920,13 +2773,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(INCIDENT_TYPES_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("incidentTypes", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault(
+                            "incidentTypes", []
+                        ).append(_id)
                 incident_type_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -2949,13 +2800,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(INCIDENT_FIELDS_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("incidentFields", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault(
+                            "incidentFields", []
+                        ).append(_id)
                 incident_fields_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -2978,13 +2827,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(INDICATOR_FIELDS_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("indicatorFields", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault(
+                            "indicatorFields", []
+                        ).append(_id)
                 indicator_fields_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -3007,13 +2854,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(INDICATOR_TYPES_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("indicatorTypes", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault(
+                            "indicatorTypes", []
+                        ).append(_id)
                 indicator_types_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -3052,13 +2897,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(LAYOUTS_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("layouts", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault("layouts", []).append(
+                            _id
+                        )
                 layouts_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -3081,13 +2924,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(REPORTS_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("reports", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault("reports", []).append(
+                            _id
+                        )
                 reports_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -3110,13 +2951,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(WIDGETS_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("widgets", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault("widgets", []).append(
+                            _id
+                        )
                 widgets_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -3139,13 +2978,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(MAPPERS_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("mappers", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault("mappers", []).append(
+                            _id
+                        )
                 mappers_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -3168,13 +3005,9 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(LISTS_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("lists", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault("lists", []).append(_id)
                 lists_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -3185,9 +3018,7 @@ def re_create_id_set(  # noqa: C901
         progress_bar.update(1)
 
         if "GenericDefinitions" in objects_to_create:
-            print_color(
-                "\nStarting iteration over Generic Definitions", LOG_COLORS.GREEN
-            )
+            print_color("\nStarting iteration over Generic Definitions", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(
                 partial(
                     process_general_items,
@@ -3199,13 +3030,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(GENERIC_DEFINITIONS_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("genericDefinitions", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault(
+                            "genericDefinitions", []
+                        ).append(_id)
                 generic_definitions_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -3228,13 +3057,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(GENERIC_MODULES_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("genericModules", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault(
+                            "genericModules", []
+                        ).append(_id)
                 generic_modules_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -3255,13 +3082,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_generic_entities_paths(GENERIC_TYPES_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("genericTypes", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault(
+                            "genericTypes", []
+                        ).append(_id)
                 generic_types_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -3284,13 +3109,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_generic_entities_paths(GENERIC_FIELDS_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("genericFields", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault(
+                            "genericFields", []
+                        ).append(_id)
                 generic_fields_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -3311,13 +3134,9 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(JOBS_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("jobs", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault("jobs", []).append(_id)
                 jobs_list.extend(arr)
 
         progress_bar.update(1)
@@ -3335,13 +3154,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(PARSING_RULES_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("parsingRules", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault(
+                            "parsingRules", []
+                        ).append(_id)
                 parsing_rules_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -3364,13 +3181,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(MODELING_RULES_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("modelingRules", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault(
+                            "modelingRules", []
+                        ).append(_id)
                 modeling_rules_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -3393,13 +3208,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(CORRELATION_RULES_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("correlationRules", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault(
+                            "correlationRules", []
+                        ).append(_id)
                 correlation_rules_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -3422,13 +3235,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(XSIAM_DASHBOARDS_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("xsiamdashboards", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault(
+                            "xsiamdashboards", []
+                        ).append(_id)
                 xsiam_dashboards_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -3451,13 +3262,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(XSIAM_REPORTS_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("xsiamreports", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault(
+                            "xsiamreports", []
+                        ).append(_id)
                 xsiam_reports_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -3480,13 +3289,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(TRIGGER_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("triggers", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault("triggers", []).append(
+                            _id
+                        )
                 triggers_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -3507,13 +3314,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(WIZARDS_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("wizards", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault("wizards", []).append(
+                            _id
+                        )
                 wizards_list.extend(arr)
 
         progress_bar.update(1)
@@ -3532,13 +3337,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(XDRC_TEMPLATE_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("XDRCTemplates", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault(
+                            "XDRCTemplates", []
+                        ).append(_id)
                 xdrc_templates_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -3562,13 +3365,11 @@ def re_create_id_set(  # noqa: C901
                 ),
                 get_general_paths(LAYOUT_RULES_DIR, pack_to_create),
             ):
-                for _id, data in (
-                    arr[0].items() if arr and isinstance(arr, list) else {}
-                ):
+                for _id, data in arr[0].items() if arr and isinstance(arr, list) else {}:
                     if data.get("pack"):
-                        packs_dict[data.get("pack")].setdefault(
-                            "ContentItems", {}
-                        ).setdefault("LayoutRules", []).append(_id)
+                        packs_dict[data.get("pack")].setdefault("ContentItems", {}).setdefault(
+                            "LayoutRules", []
+                        ).append(_id)
                 layout_rules_list.extend(arr)
                 update_excluded_items_dict(
                     excluded_items_by_pack,
@@ -3630,9 +3431,7 @@ def re_create_id_set(  # noqa: C901
 
     duplicates = find_duplicates(new_ids_dict, print_logs, marketplace)
     if any(duplicates) and fail_on_duplicates:
-        raise Exception(
-            f"The following ids were found duplicates\n{json.dumps(duplicates, indent=4)}\n"
-        )
+        raise Exception(f"The following ids were found duplicates\n{json.dumps(duplicates, indent=4)}\n")
 
     return new_ids_dict, excluded_items_by_pack, excluded_items_by_type
 
@@ -3652,9 +3451,7 @@ def find_duplicates(id_set, print_logs, marketplace):
 
         dup_list = []
         for id_to_check in ids:
-            if has_duplicate(
-                objects, id_to_check, object_type, print_logs, is_create_new=True
-            ):
+            if has_duplicate(objects, id_to_check, object_type, print_logs, is_create_new=True):
                 dup_list.append(id_to_check)
         lists_to_return.append(dup_list)
 
@@ -3696,9 +3493,7 @@ def has_duplicate(
     Pass `is_create_new` if searching for duplicate while creating a new id-set.
 
     """
-    duplicates = [
-        duplicate for duplicate in id_set_subset_list if duplicate.get(id_to_check)
-    ]
+    duplicates = [duplicate for duplicate in id_set_subset_list if duplicate.get(id_to_check)]
 
     if external_object and len(duplicates) == 0:
         return False
@@ -3712,23 +3507,13 @@ def has_duplicate(
     for dup1, dup2 in itertools.combinations(duplicates, 2):
         dict1 = list(dup1.values())[0]
         dict2 = list(dup2.values())[0]
-        dict1_from_version = LooseVersion(
-            dict1.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
-        )
-        dict2_from_version = LooseVersion(
-            dict2.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
-        )
-        dict1_to_version = LooseVersion(
-            dict1.get("toversion", DEFAULT_CONTENT_ITEM_TO_VERSION)
-        )
-        dict2_to_version = LooseVersion(
-            dict2.get("toversion", DEFAULT_CONTENT_ITEM_TO_VERSION)
-        )
+        dict1_from_version = LooseVersion(dict1.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION))
+        dict2_from_version = LooseVersion(dict2.get("fromversion", DEFAULT_CONTENT_ITEM_FROM_VERSION))
+        dict1_to_version = LooseVersion(dict1.get("toversion", DEFAULT_CONTENT_ITEM_TO_VERSION))
+        dict2_to_version = LooseVersion(dict2.get("toversion", DEFAULT_CONTENT_ITEM_TO_VERSION))
 
         # Check whether the items belong to the same marketplaces
-        if not set(dict1.get("marketplaces", [])).intersection(
-            set(dict2.get("marketplaces", []))
-        ):
+        if not set(dict1.get("marketplaces", [])).intersection(set(dict2.get("marketplaces", []))):
             continue
 
         # Checks if the Layouts kind is different then they are not duplicates
@@ -3753,18 +3538,10 @@ def has_duplicate(
         # D: 4.5.0 - 99.99.99
         if any(
             [
-                dict1_from_version
-                <= dict2_from_version
-                < dict1_to_version,  # will catch (B, C), (A, B), (A, C)
-                dict1_from_version
-                < dict2_to_version
-                <= dict1_to_version,  # will catch (B, C), (A, C)
-                dict2_from_version
-                <= dict1_from_version
-                < dict2_to_version,  # will catch (C, B), (B, A), (C, A)
-                dict2_from_version
-                < dict1_to_version
-                <= dict2_to_version,  # will catch (C, B), (C, A)
+                dict1_from_version <= dict2_from_version < dict1_to_version,  # will catch (B, C), (A, B), (A, C)
+                dict1_from_version < dict2_to_version <= dict1_to_version,  # will catch (B, C), (A, C)
+                dict2_from_version <= dict1_from_version < dict2_to_version,  # will catch (C, B), (B, A), (C, A)
+                dict2_from_version < dict1_to_version <= dict2_to_version,  # will catch (C, B), (C, A)
             ]
         ):
             print_warning(
@@ -3839,6 +3616,4 @@ def update_excluded_items_dict(
     for key, val in excluded_items_to_add.items():
         excluded_items_by_pack.setdefault(key, set()).update(val)
         for tuple_item in val:
-            excluded_items_by_type.setdefault(tuple_item[0], set()).update(
-                [tuple_item[1]]
-            )
+            excluded_items_by_type.setdefault(tuple_item[0], set()).update([tuple_item[1]])

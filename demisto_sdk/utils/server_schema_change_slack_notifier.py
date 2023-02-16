@@ -16,13 +16,9 @@ SUFFIX = "_struct.go"
 
 
 def options_handler():
-    parser = argparse.ArgumentParser(
-        description="Slack notifier for changes in schema structs."
-    )
+    parser = argparse.ArgumentParser(description="Slack notifier for changes in schema structs.")
     parser.add_argument("-c", "--commit", help="The commit hash", required=True)
-    parser.add_argument(
-        "-s", "--slack_token", help="Token for slack messages", required=True
-    )
+    parser.add_argument("-s", "--slack_token", help="Token for slack messages", required=True)
     options = parser.parse_args()
     return options
 
@@ -45,9 +41,7 @@ def extract_changes_from_commit(commit_hash: str) -> Tuple[str, List[str], dict,
     commit_author = output_stream.read()
 
     # Getting changed file names between last commit on branch (HEAD^) and current commit.
-    output_stream = os.popen(
-        f"git diff-tree --no-commit-id --name-only -r HEAD^ {commit_hash}"
-    )
+    output_stream = os.popen(f"git diff-tree --no-commit-id --name-only -r HEAD^ {commit_hash}")
     changed_files = output_stream.read().split("\n")
     print(f"all Changed files: {changed_files}")
 
@@ -56,9 +50,7 @@ def extract_changes_from_commit(commit_hash: str) -> Tuple[str, List[str], dict,
         if changed_file.startswith(PREFIX) and changed_file.endswith(SUFFIX):
             # Getting diff of specific changed file from last commit on branch (HEAD^).
             # Filtering only lines indicating changes: starting with + or -
-            output_stream = os.popen(
-                f"git diff HEAD^ -- {changed_file} | grep '^[+|-][^+|-]'"
-            )
+            output_stream = os.popen(f"git diff HEAD^ -- {changed_file} | grep '^[+|-][^+|-]'")
             change_diffs[changed_file] = output_stream.read()
 
     relevant_changed_files = list(change_diffs.keys())
@@ -131,13 +123,9 @@ def main():
             commit_author,
         ) = extract_changes_from_commit(options.commit)
         if len(changed_files) == 0:
-            print(
-                "Found no relevant schema files in commit. Not sending slack message."
-            )
+            print("Found no relevant schema files in commit. Not sending slack message.")
             return
-        message = build_message(
-            options.commit, commit_github_url, changed_files, diffs, commit_author
-        )
+        message = build_message(options.commit, commit_github_url, changed_files, diffs, commit_author)
         print(f"Posting message...\n{pformat(message)}")
         notify_slack(options.slack_token, SCHEMA_UPDATE_CHANNEL, message)
         print("Notified slack.")

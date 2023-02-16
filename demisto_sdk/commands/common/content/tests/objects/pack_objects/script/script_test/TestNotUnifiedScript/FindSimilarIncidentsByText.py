@@ -97,9 +97,7 @@ def incident_to_record(incident, time_field):
         "id": "[{}](#/Details/{})".format(incident["id"], incident["id"]),
         "rawId": incident["id"],
         "name": incident["name"],
-        "closedTime": parse_time(incident["closed"])
-        if incident["closed"] != "0001-01-01T00:00:00Z"
-        else "",
+        "closedTime": parse_time(incident["closed"]) if incident["closed"] != "0001-01-01T00:00:00Z" else "",
         "Time": occured_time,
         "similarity": "{:.2f}".format(incident["similarity"]),
     }
@@ -136,10 +134,7 @@ def main():
     incident = demisto.incidents()[0]
     incident_text = get_texts_from_incident(incident, TEXT_FIELDS)
     if len(incident_text) < MIN_TEXT_LENGTH:
-        demisto.results(
-            "The text is too short to compare - minimum of %d chars required"
-            % MIN_TEXT_LENGTH
-        )
+        demisto.results("The text is too short to compare - minimum of %d chars required" % MIN_TEXT_LENGTH)
         sys.exit(0)
 
     # get initial candidates list
@@ -155,9 +150,7 @@ def main():
 
     # filter candidates with minimum length constraint
     map(lambda x: add_text_to_incident(x, TEXT_FIELDS), candidates)
-    candidates = [
-        x for x in candidates if len(x.get(INCIDENT_TEXT_FIELD, 0)) >= MIN_TEXT_LENGTH
-    ]
+    candidates = [x for x in candidates if len(x.get(INCIDENT_TEXT_FIELD, 0)) >= MIN_TEXT_LENGTH]
 
     # compare candidates to the orginial incident using TF-IDF
     candidates_text = map(lambda x: x[INCIDENT_TEXT_FIELD], candidates)
@@ -174,9 +167,7 @@ def main():
 
     # update context
     if len(similar_incidents or []) > 0:
-        similar_incidents_rows = map(
-            lambda incident: incident_to_record(incident, TIME_FIELD), similar_incidents
-        )
+        similar_incidents_rows = map(lambda incident: incident_to_record(incident, TIME_FIELD), similar_incidents)
         similar_incidents_rows = sorted(similar_incidents_rows, key=lambda x: x["Time"])
         context = {
             "similarIncidentList": similar_incidents_rows[:MAX_CANDIDATES_IN_LIST],

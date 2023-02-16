@@ -16,18 +16,10 @@ logger = logging.getLogger(__name__)
 
 
 class XsiamApiClientConfig(BaseModel):
-    base_url: HttpUrl = Field(
-        default=os.getenv("DEMISTO_BASE_URL"), description="XSIAM Tenant Base URL"
-    )
-    api_key: SecretStr = Field(
-        default=SecretStr(os.getenv("DEMISTO_API_KEY", "")), description="XSIAM API Key"
-    )
-    auth_id: str = Field(
-        default=os.getenv("XSIAM_AUTH_ID"), description="XSIAM Auth ID"
-    )
-    token: Optional[SecretStr] = Field(
-        default=SecretStr(os.getenv("XSIAM_TOKEN", "")), description="XSIAM Token"
-    )
+    base_url: HttpUrl = Field(default=os.getenv("DEMISTO_BASE_URL"), description="XSIAM Tenant Base URL")
+    api_key: SecretStr = Field(default=SecretStr(os.getenv("DEMISTO_API_KEY", "")), description="XSIAM API Key")
+    auth_id: str = Field(default=os.getenv("XSIAM_AUTH_ID"), description="XSIAM Auth ID")
+    token: Optional[SecretStr] = Field(default=SecretStr(os.getenv("XSIAM_TOKEN", "")), description="XSIAM Token")
     collector_token: Optional[SecretStr] = Field(
         default=SecretStr(os.getenv("XSIAM_COLLECTOR_TOKEN", "")),
         description="XSIAM HTTP Collector Token",
@@ -90,17 +82,9 @@ class XsiamApiInterface(ABC):
 class XsiamApiClient(XsiamApiInterface):
     def __init__(self, config: XsiamApiClientConfig):
         self.base_url = config.base_url
-        self.api_key = (
-            config.api_key.get_secret_value()
-            if isinstance(config.api_key, SecretStr)
-            else config.api_key
-        )
+        self.api_key = config.api_key.get_secret_value() if isinstance(config.api_key, SecretStr) else config.api_key
         self.auth_id = config.auth_id
-        self.token = (
-            config.token.get_secret_value()
-            if isinstance(config.token, SecretStr)
-            else config.token
-        )
+        self.token = config.token.get_secret_value() if isinstance(config.token, SecretStr) else config.token
         self.collector_token = (
             config.collector_token.get_secret_value()
             if isinstance(config.collector_token, SecretStr)
@@ -154,30 +138,21 @@ class XsiamApiClient(XsiamApiInterface):
         files = {"file": file_path}
         response = self._session.post(endpoint, files=files, headers=header_params)
         response.raise_for_status()
-        logging.info(
-            f"All packs from file {zip_path} were successfully installed on server {self.base_url}"
-        )
+        logging.info(f"All packs from file {zip_path} were successfully installed on server {self.base_url}")
 
     def install_packs(self, packs: List[Dict[str, Any]]):
         endpoint = urljoin(self.base_url, "xsoar/contentpacks/marketplace/install")
-        response = self._session.post(
-            url=endpoint, json={"packs": packs, "ignoreWarnings": True}
-        )
+        response = self._session.post(url=endpoint, json={"packs": packs, "ignoreWarnings": True})
         response.raise_for_status()
         if response.status_code in range(200, 300) and response.status_code != 204:
             response_data = response.json()
             packs_data = [
-                {"ID": pack.get("id"), "CurrentVersion": pack.get("currentVersion")}
-                for pack in response_data
+                {"ID": pack.get("id"), "CurrentVersion": pack.get("currentVersion")} for pack in response_data
             ]
             logger.info(f"Packs were successfully installed on server {self.base_url}")
-            logger.debug(
-                f"The packs that were successfully installed on server {self.base_url}:\n{packs_data}"
-            )
+            logger.debug(f"The packs that were successfully installed on server {self.base_url}:\n{packs_data}")
         elif response.status_code == 204:
-            logger.info(
-                f"All packs were successfully installed on server {self.base_url}"
-            )
+            logger.info(f"All packs were successfully installed on server {self.base_url}")
 
     def sync_marketplace(self):
         endpoint = urljoin(self.base_url, "xsoar/contentpacks/marketplace/sync")
@@ -206,18 +181,14 @@ class XsiamApiClient(XsiamApiInterface):
             endpoint = urljoin(self.base_url, "logs/v1/event")
             additional_headers = {
                 "authorization": self.collector_token,
-                "content-type": "application/json"
-                if data_format.casefold == "json"
-                else "text/plain",
+                "content-type": "application/json" if data_format.casefold == "json" else "text/plain",
                 "content-encoding": "gzip",
             }
             token_type = "collector_token"
 
         formatted_data = "\n".join([json.dumps(d) for d in data])
         compressed_data = gzip.compress(formatted_data.encode("utf-8"))
-        response = self._session.post(
-            endpoint, data=compressed_data, headers=additional_headers
-        )
+        response = self._session.post(endpoint, data=compressed_data, headers=additional_headers)
         try:
             data = response.json()
         except requests.exceptions.JSONDecodeError:  # type: ignore[attr-defined]
@@ -269,13 +240,8 @@ class XsiamApiClient(XsiamApiInterface):
         data = response.json()
         logger.debug(pformat(data))
 
-        if (
-            response.status_code in range(200, 300)
-            and data.get("reply", {}).get("status", "") == "SUCCESS"
-        ):
-            reply_results_data = (
-                data.get("reply", {}).get("results", {}).get("data", [])
-            )
+        if response.status_code in range(200, 300) and data.get("reply", {}).get("status", "") == "SUCCESS":
+            reply_results_data = data.get("reply", {}).get("results", {}).get("data", [])
             return reply_results_data
         else:
             err_msg = (

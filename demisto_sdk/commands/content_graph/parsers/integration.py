@@ -34,15 +34,10 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         if self.type == "python":
             self.type += "2"
         self.commands: List[CommandParser] = []
-
         self.connect_to_commands()
         self.connect_to_dependencies()
         self.connect_to_api_modules()
         self.connect_to_tests()
-
-    @property
-    def name(self) -> Optional[str]:
-        return self.yml_data.get("display")
 
     @property
     def display_name(self) -> Optional[str]:
@@ -99,6 +94,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         """Gets the integration code.
         If the integration is unified, then it is taken from the yml file.
         Otherwise, uses the Unifier object to get it.
+
         Returns:
             str: The integration code.
         """

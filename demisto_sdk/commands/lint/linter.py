@@ -42,6 +42,7 @@ from demisto_sdk.commands.common.timers import timer
 from demisto_sdk.commands.common.tools import (
     get_docker_images_from_yml,
     get_pack_name,
+    get_yaml,
     run_command_os,
 )
 from demisto_sdk.commands.lint.commands_builder import (
@@ -180,6 +181,7 @@ class Linter:
             try:
                 self._yml_file = next(yml_file)  # type: ignore
                 self._pack_name = self._yml_file.stem
+                self._yml_file_content = get_yaml(self._yml_file)
             except StopIteration:
                 logger.info(
                     f"{self._pack_abs_dir} - Skipping no yaml file found {yml_file}"
@@ -197,8 +199,11 @@ class Linter:
             config = ConfigParser(allow_no_value=True)
             config.read(_pack_ignore_file_path)
             if TESTS_REQUIRE_NETWORK_PACK_IGNORE in config.sections():
-                ignored_integrations_scripts = config[TESTS_REQUIRE_NETWORK_PACK_IGNORE]
-                if self._facts["object_id"] in ignored_integrations_scripts:
+                ignored_integrations_scripts_ids = config[
+                    TESTS_REQUIRE_NETWORK_PACK_IGNORE
+                ]
+                _id = self._yml_file_content.get("commonfields", {}).get("id")
+                if _id in ignored_integrations_scripts_ids:
                     return False
         return True
 

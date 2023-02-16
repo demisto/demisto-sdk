@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from pathlib import PosixPath
@@ -471,8 +472,6 @@ def test_format_on_valid_py(mocker, repo):
                 "-nv",
                 "-i",
                 integration.code.path,
-                "--console_log_threshold",
-                "DEBUG",
             ],
             catch_exceptions=True,
         )
@@ -509,8 +508,6 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
                 "-nv",
                 "-i",
                 integration.code.path,
-                "--console_log_threshold",
-                "DEBUG",
             ],
             catch_exceptions=False,
         )
@@ -548,8 +545,6 @@ def test_format_on_invalid_py_dict(mocker, repo):
                 "-nv",
                 "-i",
                 integration.code.path,
-                "--console_log_threshold",
-                "DEBUG",
             ],
             catch_exceptions=False,
         )
@@ -590,8 +585,6 @@ def test_format_on_invalid_py_long_dict(mocker, repo):
                 "-nv",
                 "-i",
                 integration.code.path,
-                "--console_log_threshold",
-                "DEBUG",
             ],
             catch_exceptions=False,
         )
@@ -678,8 +671,6 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
                 FORMAT_CMD,
                 "-i",
                 "playbook.yml",
-                "--console_log_threshold",
-                "DEBUG",
                 "-y",
             ],
             catch_exceptions=False,
@@ -754,8 +745,6 @@ def test_format_commonserver_skipped_files(repo):
             FORMAT_CMD,
             "-i",
             str(pack.path),
-            "--console_log_threshold",
-            "DEBUG",
         ],
         catch_exceptions=False,
     )
@@ -798,8 +787,6 @@ def test_format_playbook_without_fromversion_no_preset_flag(repo):
             "-i",
             str(playbook.yml.path),
             "--assume-yes",
-            "--console_log_threshold",
-            "DEBUG",
         ],
     )
     assert "Success" in format_result.stdout
@@ -838,8 +825,6 @@ def test_format_playbook_without_fromversion_with_preset_flag(repo):
             "--assume-yes",
             "--from-version",
             "6.0.0",
-            "--console_log_threshold",
-            "DEBUG",
         ],
     )
     assert "Success" in format_result.stdout
@@ -877,8 +862,6 @@ def test_format_playbook_without_fromversion_with_preset_flag_manual(repo):
             str(playbook.yml.path),
             "--from-version",
             "6.0.0",
-            "--console_log_threshold",
-            "DEBUG",
         ],
         input="y",
     )
@@ -914,8 +897,6 @@ def test_format_playbook_without_fromversion_without_preset_flag_manual(repo):
             FORMAT_CMD,
             "-i",
             str(playbook.yml.path),
-            "--console_log_threshold",
-            "DEBUG",
         ],
         input="y",
     )
@@ -952,8 +933,6 @@ def test_format_playbook_copy_removed_from_name_and_id(repo):
             FORMAT_CMD,
             "-i",
             str(playbook.yml.path),
-            "--console_log_threshold",
-            "DEBUG",
         ],
         input="y\n5.5.0",
     )
@@ -995,8 +974,6 @@ def test_format_playbook_no_input_specified(mocker, repo):
         main,
         [
             FORMAT_CMD,
-            "--console_log_threshold",
-            "DEBUG",
         ],
         input="y\n5.5.0",
     )
@@ -1020,6 +997,7 @@ def test_format_incident_type_layout_id(repo):
         - Verify layout ID is updated
         - Verify the updated layout ID is also updated in the incident type
     """
+    logging.getLogger("demisto-sdk").propagate = True
     pack = repo.create_pack("PackName")
     layout = pack.create_layoutcontainer(
         name="layout",
@@ -1057,8 +1035,6 @@ def test_format_incident_type_layout_id(repo):
                 FORMAT_CMD,
                 "-i",
                 str(pack.path),
-                "--console_log_threshold",
-                "DEBUG",
                 "-y",
             ],
             catch_exceptions=False,
@@ -1127,8 +1103,6 @@ def test_format_generic_field_wrong_values(
                 FORMAT_CMD,
                 "-i",
                 generic_field_path,
-                "--console_log_threshold",
-                "DEBUG",
                 "-y",
             ],
             catch_exceptions=False,
@@ -1177,8 +1151,6 @@ def test_format_generic_field_missing_from_version_key(mocker, repo):
                 FORMAT_CMD,
                 "-i",
                 generic_field_path,
-                "--console_log_threshold",
-                "DEBUG",
                 "-y",
             ],
             catch_exceptions=False,
@@ -1227,8 +1199,6 @@ def test_format_generic_type_wrong_from_version(mocker, repo):
                 FORMAT_CMD,
                 "-i",
                 generic_type_path,
-                "--console_log_threshold",
-                "DEBUG",
                 "-y",
             ],
             catch_exceptions=False,
@@ -1277,8 +1247,6 @@ def test_format_generic_type_missing_from_version_key(mocker, repo):
                 FORMAT_CMD,
                 "-i",
                 generic_type_path,
-                "--console_log_threshold",
-                "DEBUG",
                 "-y",
             ],
             catch_exceptions=False,
@@ -1326,8 +1294,6 @@ def test_format_generic_module_wrong_from_version(mocker, repo):
                 FORMAT_CMD,
                 "-i",
                 generic_module_path,
-                "--console_log_threshold",
-                "DEBUG",
                 "-y",
             ],
             catch_exceptions=False,
@@ -1376,8 +1342,6 @@ def test_format_generic_module_missing_from_version_key(mocker, repo):
                 FORMAT_CMD,
                 "-i",
                 generic_module_path,
-                "--console_log_threshold",
-                "DEBUG",
                 "-y",
             ],
             catch_exceptions=False,
@@ -1425,8 +1389,6 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
                 FORMAT_CMD,
                 "-i",
                 generic_definition_path,
-                "--console_log_threshold",
-                "DEBUG",
                 "-y",
             ],
             catch_exceptions=False,
@@ -1457,6 +1419,7 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
     - Ensure Format fixed the given generic definition - fromVersion field was added and it's value is 6.5.0
     - Ensure success message is printed.
     """
+    logging.getLogger("demisto-sdk").propagate = True
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -1478,8 +1441,6 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
                 FORMAT_CMD,
                 "-i",
                 generic_definition_path,
-                "--console_log_threshold",
-                "DEBUG",
                 "-y",
             ],
             catch_exceptions=False,

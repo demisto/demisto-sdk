@@ -145,7 +145,7 @@ class BaseUpdate:
 
     def set_default_value(self, key: str, value: Any, location=None):
         """Replaces the version to default."""
-        logger.debug(
+        secho_and_info(
             f"Setting {key} to default={value}" + " in custom location"
             if location
             else ""
@@ -349,7 +349,7 @@ class BaseUpdate:
         ):
             return  # nothing to set
         current_fromversion_value = self.data.get(self.from_version_key, "")
-        logger.debug("Setting fromVersion field")
+        secho_and_info("Setting fromVersion field")
 
         if self.from_version:
             self.data[self.from_version_key] = self.from_version
@@ -397,7 +397,9 @@ class BaseUpdate:
         """Removes any _dev and _copy suffixes in the file.
         When developer clones playbook/integration/script it will automatically add _copy or _dev suffix.
         """
-        logger.debug("Removing _dev and _copy suffixes from name, id and display tags")
+        secho_and_info(
+            "Removing _dev and _copy suffixes from name, id and display tags"
+        )
         if self.data["name"]:
             self.data["name"] = (
                 self.data.get("name", "").replace("_copy", "").replace("_dev", "")

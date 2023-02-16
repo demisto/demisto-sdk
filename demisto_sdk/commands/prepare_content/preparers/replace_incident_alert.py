@@ -19,16 +19,6 @@ def change_incident_to_alert(data: dict) -> dict:
     def is_replaceable_in_layoutscontainer(datum_: dict):
         return {"i", "x", "y", "h", "w"}.issubset(datum_.keys())
 
-    def replace(name: str):
-        for function in (
-            lambda x: x.lower(),
-            lambda x: x.upper(),
-            lambda x: x.title(),
-        ):
-            if (old := function("incidents")) in name:
-                name = name.replace(old, function("alerts"))
-        return name
-
     def fix_recursively(datum: Union[list, dict]) -> Union[list, dict]:
         if isinstance(datum, dict):
             if datum.get("name_x2") is not None:
@@ -39,7 +29,7 @@ def change_incident_to_alert(data: dict) -> dict:
                 or is_replaceable_in_layoutscontainer(datum)
             ) and is_replaceable_name(name := datum.get("name", "")):
 
-                datum["name"] = replace(name)
+                datum["name"] = name.replace("Incidents", "Alerts")
                 return datum
             else:  # not the atomic dictionary that we intend to fix, use recursion instead.
                 return {key: fix_recursively(value) for key, value in datum.items()}

@@ -54,6 +54,7 @@ class Runner:
         json_to_outputs: bool = False,
         prefix: str = "",
         raw_response: bool = False,
+        **kwargs,
     ):
         self.query = query if query.startswith("!") else f"!{query}"
         self.debug = debug

@@ -56,8 +56,6 @@ def test_integration_run_non_existing_command(mocker, set_environment_variables)
             "-q",
             "!non-existing-command",
             "-D",
-            "--console_log_threshold",
-            "DEBUG",
         ],
     )
     assert 0 == result.exit_code

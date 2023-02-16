@@ -1090,7 +1090,7 @@ class Linter:
             int: 0 on successful, errors 1, need to retry 2
             str: Unit test json report
         """
-        log_prompt = f"{self._pack_name} - Pytest - Image {test_image}"
+        log_prompt = f"{self._pack_name} - Pytest - Image {test_image}, docker network disabled = {should_disable_network}"
         logger.info(f"{log_prompt} - Start")
         container_name = f"{self._pack_name}-pytest"
         # Check if previous run left container a live if it does, Remove it

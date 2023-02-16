@@ -4,6 +4,7 @@
 * Fixed an issue where in some occasions running of test-playbooks could receive session timeouts.
 * Fixed an issue where making a change in a module using an ApiModule would cause lint to run on the ApiModule unnecessarily.
 * Added a modification for layout and widget objects in **prepare-content**, where `Related Incidents`, `Linked Incidents` and `Child Incidents` are replaced with the suitable `... Alerts` name when uploading to `marketplacev2` (XSIAM).
+* Fixed an issue where the `marketplace` field was not used when dumping pack zips.
 
 ## 1.10.2
 * Added markdown lint formatting for README files in the **format** command.

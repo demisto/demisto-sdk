@@ -173,9 +173,9 @@ class ContentItem(BaseContent):
         logger.debug(f"Normalized file name from {name} to {normalized}")
         return normalized
 
-    def dump(self, dir: DirectoryPath, _: MarketplaceVersions) -> None:
+    def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)
-        data = self.prepare_for_upload()
+        data = self.prepare_for_upload(marketplace=marketplace)
         try:
             with (dir / self.normalize_name).open("w") as f:
                 self.handler.dump(data, f)

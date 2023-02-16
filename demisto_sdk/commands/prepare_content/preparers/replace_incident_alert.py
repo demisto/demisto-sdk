@@ -1,30 +1,47 @@
-from typing import Union
+from typing import Optional, Union
 
 
 def change_incident_to_alert(data: dict) -> dict:
     """
-    Changes internal {name: 'Related Incidents', ... }, into {name: 'Related Alerts', ... }, see the condition below.
+    Changes {"name": "Related/Linked/Chiled Incidents", ... }
+         to {"name": "Related/Linked/Chiled Alerts", ... }
     """
+
     if not isinstance(data, dict):
         raise TypeError(f"expected dictionary, got {type(data)}")
 
+    def is_replaceable_by_type(type_: Optional[str]):
+        return type_ in {"childInv", "relatedIncidents", "linkedIncidents"}
+
+    def is_replaceable_name(name: str):
+        return name in {"Child Incidents", "Linked Incidents", "Related Incidents"}
+
+    def is_replaceable_in_layoutscontainer(datum_: dict):
+        return {"i", "x", "y", "h", "w"}.issubset(datum_.keys())
+
+    def replace(name: str):
+        for function in (
+            lambda x: x.lower(),
+            lambda x: x.upper(),
+            lambda x: x.title(),
+        ):
+            if (old := function("incidents")) in name:
+                name = name.replace(old, function("alerts"))
+        return name
+
     def fix_recursively(datum: Union[list, dict]) -> Union[list, dict]:
         if isinstance(datum, dict):
-            if (
-                (
-                    ("id" in datum and datum["id"] == "relatedIncidents")  # layout
-                    or (
-                        {"i", "x", "y", "h", "w"}.issubset(
-                            datum.keys()
-                        )  # layout container
-                    )
-                )
-                and datum.get("name") == "Related Incidents"
-                and datum.get("name_x2") is None
-            ):  # the kind of dictionary we want to fix
-                datum["name"] = "Related Alerts"
+            if datum.get("name_x2") is not None:
+                # already has a xsiam name, then we have nothing to do
                 return datum
-            else:  # not the atomic dictionary that we fix, use recursion instead.
+            if (
+                is_replaceable_by_type(datum.get("type"))
+                or is_replaceable_in_layoutscontainer(datum)
+            ) and is_replaceable_name(name := datum.get("name", "")):
+
+                datum["name"] = replace(name)
+                return datum
+            else:  # not the atomic dictionary that we intend to fix, use recursion instead.
                 return {key: fix_recursively(value) for key, value in datum.items()}
 
         elif isinstance(datum, list):

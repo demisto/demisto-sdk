@@ -1537,6 +1537,7 @@ class TestParsersAndModels:
         pack_ids = {pack.object_id for pack in model.packs}
         assert pack_ids == {"sample1", "sample2"}
 
+
 @pytest.mark.parametrize(
     "incident_data,expected_output",
     [
@@ -1659,6 +1660,7 @@ class TestParsersAndModels:
                 "y": 6,
             },
         ),
+        (
             {  # Layout container section, child incidents
                 "columns": [
                     {"displayed": True, "isDefault": False, "key": "id", "width": 110},

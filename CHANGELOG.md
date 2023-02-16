@@ -3,6 +3,7 @@
 ## Unreleased
 * Fixed an issue where in some occasions running of test-playbooks could receive session timeouts.
 * Fixed an issue where making a change in a module using an ApiModule would cause lint to run on the ApiModule unnecessarily.
+* Added a modification for layout and widget objects in **prepare-content**, where `Related Incidents`, `Linked Incidents` and `Child Incidents` are replaced with the suitable `... Alerts` name when uploading to `marketplacev2` (XSIAM).
 
 ## 1.10.2
 * Added markdown lint formatting for README files in the **format** command.
@@ -22,7 +23,6 @@
 * Added formatting and validation to XSIAM content types.
 * Fixed an issue where several XSIAM content types were not validated when passing the `-a` flag.
 * Added a UUID to name mapper for **download** it replaces UUIDs with names on all downloaded files.
-* Added a modification for layout and widget objects in **prepare-content**, where `Related Incident` is replaced with `Related Alerts` when uploading to `marketplacev2` (XSIAM).
 * Updated the demisto-py to v3.2.6 which now supports basic proxy authentication.
 * Improved the message shown when using **upload** and overwriting packs.
 * Added support for the **Layout Rule** content type in the id-set and the content graph.

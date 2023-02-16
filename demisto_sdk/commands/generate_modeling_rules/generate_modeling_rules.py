@@ -1,13 +1,12 @@
-import json
 import logging
 import traceback
 from io import StringIO
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 import pandas as pd
 import typer
-
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
     GENERAL_DEFAULT_FROMVERSION,
@@ -18,6 +17,12 @@ from demisto_sdk.commands.common.tools import get_max_version
 
 app = typer.Typer()
 logger = logging.getLogger("demisto-sdk")
+json = JSON_Handler()
+yaml = YAML_Handler()
+
+SCHEMA_TYPE_STRING = 'String'
+SCHEMA_TYPE_NUMBER = 'Number'
+SCHEMA_TYPE_BOOLEAN = 'Boolean'
 
 
 @app.command(no_args_is_help=True)
@@ -25,7 +30,6 @@ def generate_modeling_rules(
     mapping: Path = typer.Argument(
         ...,
         exists=True,
-        dir_okay=True,
         resolve_path=True,
         show_default=False,
         help=(
@@ -35,7 +39,6 @@ def generate_modeling_rules(
     raw_event_path: Path = typer.Argument(
         ...,
         exists=True,
-        dir_okay=True,
         resolve_path=True,
         show_default=False,
         help=("The path to a raw event from the api call in a json format."),
@@ -43,7 +46,6 @@ def generate_modeling_rules(
     output_path: Path = typer.Argument(
         ...,
         exists=True,
-        dir_okay=True,
         resolve_path=True,
         show_default=False,
         help=(
@@ -58,7 +60,7 @@ def generate_modeling_rules(
     product: str = typer.Argument(
         default="test",
         show_default=False,
-        help=("The vendor name of the product"),
+        help=("The name of the product"),
     ),
     verbosity: int = typer.Option(
         0,
@@ -104,9 +106,8 @@ def generate_modeling_rules(
         outputfile_xif = output_path.joinpath(f"{vendor}_{product}_modeling_rules.xif")
         outputfile_yml = output_path.joinpath(f"{vendor}_{product}_modeling_rules.yml")
         data_set_name = f"{vendor.lower()}_{product.lower()}_raw"
-        sdk_from_version = "6.10.0"  # @TODO: get this from the schema of the xsiam
 
-        if ".tsv" in str(mapping):
+        if str(mapping).endswith('tsv'):
             modeling_rules_df = pd.read_csv(mapping, sep="\t")
         else:
             modeling_rules_df = pd.read_csv(mapping)
@@ -125,7 +126,7 @@ def generate_modeling_rules(
 
         create_scheme_file(mapping_list, data_set_name, outputfile_schema)
         create_xif_file(mapping_list, outputfile_xif, data_set_name)
-        create_yml_file(outputfile_yml, vendor, product, sdk_from_version)
+        create_yml_file(outputfile_yml, vendor, product)
 
     except Exception:
         with StringIO() as sio:
@@ -165,29 +166,29 @@ class MappingField:
         return {"type": self.type_raw, "is_array": self.is_array_raw}
 
 
-def to_string(s: str) -> str:
+def to_string_wrap(s: str) -> str:
     """
     Gets a xql and wraps it with a to_string function
     """
     return f"to_string({s})"
 
 
-def to_number(s: str) -> str:
+def to_number_wrap(s: str) -> str:
     """
     Gets a xql and wraps it with a to_number function
     """
     return f"to_number({s})"
 
 
-def json_extract_array(prefix: str, suffix: str) -> str:
+def json_extract_array_wrap(prefix: str, suffix: str) -> str:
     return f'json_extract_array({prefix}, "$.{suffix}")'
 
 
-def json_extract_scalar(prefix: str, suffix: str) -> str:
+def json_extract_scalar_wrap(prefix: str, suffix: str) -> str:
     return f'json_extract_scalar({prefix}, "$.{suffix}")'
 
 
-def array_create(s: str) -> str:
+def array_create_wrap(s: str) -> str:
     return f"arraycreate({s})"
 
 
@@ -239,9 +240,9 @@ def convert_raw_type_to_xdm_type(schema_type: str) -> str:
     """
     returns the xdm type convention
     """
-    converting_dict = {"string": "String", "int": "Number", "boolean": "Boolean"}
+    converting_dict = {"string": SCHEMA_TYPE_STRING, "int": SCHEMA_TYPE_NUMBER, "boolean": SCHEMA_TYPE_BOOLEAN}
 
-    return converting_dict.get(schema_type, "String")
+    return converting_dict.get(schema_type, SCHEMA_TYPE_STRING)
 
 
 def convert_to_xdm_type(name: str, xdm_type: str) -> str:
@@ -249,9 +250,9 @@ def convert_to_xdm_type(name: str, xdm_type: str) -> str:
     Wraps the xql with a conversion to fit the xdm schema if the raw response type is incompatible with the schema type
     """
     if xdm_type == "String":
-        name = to_string(name)
+        name = to_string_wrap(name)
     elif xdm_type == "Number":
-        name = to_number(name)
+        name = to_number_wrap(name)
 
     return name
 
@@ -275,21 +276,21 @@ def create_xif_file(
             prefix = dict_keys[0]
             suffix = ".".join(dict_keys[1:])
             if mapping_rule.xdm_class_type == "Array":
-                name = json_extract_array(prefix, suffix)
+                name = json_extract_array_wrap(prefix, suffix)
                 xif_rule += f"\t{mapping_rule.xdm_rule} = {name},\n"
                 continue
             else:
-                name = json_extract_scalar(prefix, suffix)
+                name = json_extract_scalar_wrap(prefix, suffix)
 
         if mapping_rule.xdm_field_type != convert_raw_type_to_xdm_type(
             mapping_rule.type_raw
         ):
-            # Tpue casting
+            # Type casting
             name = convert_to_xdm_type(name, mapping_rule.xdm_field_type)
 
         if mapping_rule.xdm_class_type == "Array":
             # convert a scalar into an array
-            name = array_create(name)
+            name = array_create_wrap(name)
 
         xif_rule += f"\t{mapping_rule.xdm_rule} = {name},\n"
 
@@ -301,16 +302,14 @@ def create_xif_file(
 
 def replace_last_char(s: str) -> str:
     """
-    Replaces the last char of the xif file to be ;
+    Replaces the second last char of the xif file to be ; instead of ,
     """
-    s = s[:-2]
-    s += ";\n"
-    return s
+    return s[:-2] + ';' + s[-1] if s else s
 
 
 def create_scheme_file(
     mapping_list: List[MappingField], dataset_name, outputfile_schema
-):
+) -> None:
     """
     Creates the .json schema file
     """
@@ -324,11 +323,10 @@ def create_scheme_file(
     modeling_rules_json = {dataset_name: name_type_dict}
 
     with open(outputfile_schema, "w") as f:
-        res = json.dumps(modeling_rules_json, indent=4)
-        f.write(res)
+        json.dump(modeling_rules_json, f, indent=4)
 
 
-def process_yml_name(product: str, vendor: str):
+def process_yml_name(product: str, vendor: str) -> str:
     """
     Returns the name of the modeling rules capitalized
     """
@@ -339,7 +337,7 @@ def process_yml_name(product: str, vendor: str):
     return " ".join(capitalized_name_list)
 
 
-def create_yml_file(outputfile_yml: Path, vendor: str, product: str, sdk_from_version):
+def create_yml_file(outputfile_yml: Path, vendor: str, product: str) -> None:
     """
     Creates the yml file of the modeling rules
     """
@@ -360,10 +358,10 @@ def create_yml_file(outputfile_yml: Path, vendor: str, product: str, sdk_from_ve
     )
 
     with open(outputfile_yml, "w") as f:
-        f.write(yml_file)
+        yaml.dump(yml_file, f)
 
 
-def discoverType(value) -> str:
+def discover_type(value) -> str:
     """
     discovers the type of the event fiels and return a type compatible with the modeling rules schema
     """
@@ -398,10 +396,10 @@ def extract_raw_type_data(event: dict, path_to_dict_field: str) -> tuple:
         else:
             # for example when we have an array inside of a dict
             logger.info(
-                f"{key=} is not of type dict, or was not found in the event you provided"
+                f"{key=} is not of type dict, or was not found in the event you provided. Please check the Raw event"
             )
 
-    discovered = discoverType(temp)
+    discovered = discover_type(temp)
     return ("string", True) if discovered == "array" else (discovered, False)
 
     # if discovered == 'array':
@@ -409,18 +407,18 @@ def extract_raw_type_data(event: dict, path_to_dict_field: str) -> tuple:
     # return 'string', True
     # Security team said in the schema if its array we put type string.
     # if temp:
-    #     inner_array_type = discoverType(temp[0])
+    #     inner_array_type = discover_type(temp[0])
     #     return inner_array_type, True
     # return discovered, False
 
 
-def extract_data_from_all_xdm_schema(path: str) -> tuple:
+def extract_data_from_all_xdm_schema(path: str) -> Tuple[dict, dict]:
     """
-    Extracts for the XDM full schema the columns of the xdm rule, datatype, and data class
+    Extracts from the XDM full schema the columns of the xdm rule, datatype, and data class
     Args:
         path (str): The path to the location of the all xdm rules schema
     Returns:
-        (tuple): {xdf_rule: data_type}, {xdm_rule: data_class}
+        Tuple[dict, dict]: {xdf_rule: data_type}, {xdm_rule: data_class}
     """
     schema_all_dict = pd.read_csv(path)
 

@@ -1537,7 +1537,6 @@ class TestParsersAndModels:
         pack_ids = {pack.object_id for pack in model.packs}
         assert pack_ids == {"sample1", "sample2"}
 
-
 @pytest.mark.parametrize(
     "incident_data,expected_output",
     [
@@ -1655,6 +1654,49 @@ class TestParsersAndModels:
                 "readOnly": True,
                 "static": False,
                 "type": "relatedIncidents",
+                "w": 3,
+                "x": 0,
+                "y": 6,
+            },
+        ),
+            {  # Layout container section, child incidents
+                "columns": [
+                    {"displayed": True, "isDefault": False, "key": "id", "width": 110},
+                ],
+                "displayType": "ROW",
+                "h": 3,
+                "hideName": False,
+                "i": "main-c1f3f0d0-a09d-11e9-8956-390f602b039a",
+                "isVisible": True,
+                "items": None,
+                "maxW": 3,
+                "minH": 1,
+                "moved": False,
+                "name": "Child Incidents",
+                "readOnly": True,
+                "static": False,
+                "type": "childInv",
+                "w": 3,
+                "x": 0,
+                "y": 6,
+            },
+            {
+                "columns": [
+                    {"displayed": True, "isDefault": False, "key": "id", "width": 110},
+                ],
+                "displayType": "ROW",
+                "h": 3,
+                "hideName": False,
+                "i": "main-c1f3f0d0-a09d-11e9-8956-390f602b039a",
+                "isVisible": True,
+                "items": None,
+                "maxW": 3,
+                "minH": 1,
+                "moved": False,
+                "name": "Child Alerts",
+                "readOnly": True,
+                "static": False,
+                "type": "childInv",
                 "w": 3,
                 "x": 0,
                 "y": 6,

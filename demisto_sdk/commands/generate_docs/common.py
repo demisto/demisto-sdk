@@ -49,6 +49,7 @@ def generate_section(title, data=""):
     section = [f"## {title}", ""]
     if data:
         section.extend(add_lines(data))
+        section.extend("")
     return section
 
 
@@ -59,14 +60,14 @@ def generate_numbered_section(title: str, data: str = ""):
     :param data: The section text.
     :return: array of strings contains the section lines in markdown format.
     """
-    section = [f"## {title}"]
+    section = [f"## {title}", ""]
 
     list_data = data.split("* ")
     if list_data:
         for i, item in enumerate(list_data):
             if item:
                 section.append(f"{i}. {item.rstrip()}")
-
+        section.append("")
     return section
 
 
@@ -90,7 +91,7 @@ def generate_list_section(
     """
     section = []
     if title:
-        section.append(f"{header_type} {title}")
+        section.extend([f"{header_type} {title}", ""])
 
     if horizontal_rule:
         section.append("---")
@@ -100,7 +101,7 @@ def generate_list_section(
         return section
 
     if text:
-        section.append(text)
+        section.extend([text, ""])
     for item in data:
         section.append(f"* {item}")
     section.append("")
@@ -127,7 +128,7 @@ def generate_table_section(
     """
     section = []
     if title:
-        section.append(f"## {title}")
+        section.extend([f"## {title}", ""])
 
     if horizontal_rule:
         section.append("---")

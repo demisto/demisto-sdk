@@ -45,7 +45,6 @@ from demisto_sdk.commands.common.tools import (
     get_url_with_retries,
     get_yaml,
     get_yml_paths_in_dir,
-    print_warning,
     run_command_os,
 )
 
@@ -394,7 +393,7 @@ class ReadMeValidator(BaseValidator):
         # Check node exist
         stdout, stderr, exit_code = run_command_os("node -v", cwd=content_path)
         if exit_code:
-            print_warning(
+            click.secho(
                 f"There is no node installed on the machine, error - {stderr}, {stdout}"
             )
             valid = False
@@ -412,9 +411,10 @@ class ReadMeValidator(BaseValidator):
                         missing_module.append(pack)
         if missing_module:
             valid = False
-            print_warning(
-                f"The npm modules: {missing_module} are not installed. Use "
-                f"'npm install' to install all required node dependencies"
+            click.secho(
+                f"The npm modules: {missing_module} are not installed. To run the mdx server locally, use "
+                f"'npm install' to install all required node dependencies. Otherwise, if docker is installed the server"
+                f"will run in a docker container"
             )
         return valid
 
@@ -883,6 +883,7 @@ class ReadMeValidator(BaseValidator):
                 logging.debug("server is already up. Not restarting")
                 return empty_context_mgr(True)
             if ReadMeValidator.are_modules_installed_for_verify(get_content_path()):  # type: ignore
+                ReadMeValidator.add_node_env_vars()
                 return start_local_MDX_server(handle_error, file_path)
             elif ReadMeValidator.is_docker_available():
                 return start_docker_MDX_server(handle_error, file_path)

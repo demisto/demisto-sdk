@@ -1,8 +1,17 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where in some occasions running of test-playbooks could receive session timeouts.
+* Fixed an issue where making a change in a module using an ApiModule would cause lint to run on the ApiModule unnecessarily.
+* Fixed an issue where the `marketplace` field was not used when dumping pack zips.
 * Fixed an issue in **validate**, where using the `-gr` and `-i` flags did not run properly.
-* Fixed an issue where **lint** failed when using the `-cdam` flag with changed dependant api modules due to partial file duplications filtering.
+
+## 1.10.2
+* Added markdown lint formatting for README files in the **format** command.
+* Fixed an issue where **lint** failed when using the `-cdam` flag with changed dependant api modules.
+* Fixed an issue in the **upload** command, where `json`-based content items were not unified correctly when using the `--zip` argument.
+* Added XPANSE core packs validations.
+* Added the `sectionorder` field to the integration scheme.
 
 ## 1.10.1
 * Fixed an issue where **update-content-graph** failed to execute.

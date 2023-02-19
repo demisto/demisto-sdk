@@ -1990,12 +1990,12 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def wrong_default_argument(arg_name, command_name):
-        return "The argument '{}' of the command '{}' is not configured as default".format(arg_name, command_name)
+        return f"The argument '{arg_name}' of the command '{command_name}' is not configured as default"
 
     @staticmethod
     @error_code_decorator
     def wrong_is_array_argument(arg_name, command_name):
-        return "The argument '{}' of the command '{}' is not configured as array input.".format(arg_name, command_name)
+        return f"The argument '{arg_name}' of the command '{command_name}' is not configured as array input."
 
     @staticmethod
     @error_code_decorator

@@ -407,7 +407,9 @@ def _verify_conf_json_modified(
         raise
 
 
-def test_integration_format_remove_playbook_sourceplaybookid(mocker, tmp_path):
+def test_integration_format_remove_playbook_sourceplaybookid(
+    mocker, tmp_path, monkeypatch
+):
     """
     Given
     - Playbook with field  `sourceplaybookid`.
@@ -421,6 +423,8 @@ def test_integration_format_remove_playbook_sourceplaybookid(mocker, tmp_path):
     Then
     - Ensure 'sourceplaybookid' was deleted from the yml file.
     """
+    monkeypatch.setenv("COLUMNS", "1000")
+
     source_playbook_path = SOURCE_FORMAT_PLAYBOOK_COPY
     playbook_path = str(tmp_path / "format_new_playbook_copy.yml")
     runner = CliRunner()
@@ -587,6 +591,8 @@ def test_format_on_invalid_py_long_dict(mocker, repo, monkeypatch):
                 "-nv",
                 "-i",
                 integration.code.path,
+                "--console_log_threshold",
+                "DEBUG",
             ],
             catch_exceptions=False,
         )
@@ -610,6 +616,7 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo, monkeypatch):
     Then
     - Ensure format passes and that the verbose is off
     """
+
     monkeypatch.setenv("COLUMNS", "1000")
 
     mocker.patch.object(
@@ -626,7 +633,14 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo, monkeypatch):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(
             main,
-            [FORMAT_CMD, "-nv", "-i", integration.code.path],
+            [
+                FORMAT_CMD,
+                "-nv",
+                "-i",
+                integration.code.path,
+                "--console_log_threshold",
+                "INFO",
+            ],
             catch_exceptions=False,
         )
 
@@ -1431,7 +1445,6 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
     - Ensure Format fixed the given generic definition - fromVersion field was added and it's value is 6.5.0
     - Ensure success message is printed.
     """
-    # logging.getLogger("demisto-sdk").propagate = True
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )

@@ -152,8 +152,8 @@ pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 @pass_config
 def main(config, version, release_notes, **kwargs):
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     config.configuration = Configuration()
     import dotenv
@@ -241,8 +241,8 @@ def split(config, **kwargs):
     to multiple files(To a package format - https://demisto.pan.dev/docs/package-dir).
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
 
@@ -314,8 +314,8 @@ def split(config, **kwargs):
 def extract_code(config, **kwargs):
     """Extract code from a Demisto integration or script yaml file."""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
@@ -398,8 +398,8 @@ def prepare_content(**kwargs):
     This command is used to prepare the content to be used in the platform.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     if click.get_current_context().info_name == "unify":
         kwargs["unify_only"] = True
@@ -471,8 +471,8 @@ main.add_command(prepare_content, name="unify")
 def zip_packs(**kwargs) -> int:
     """Generating zipped packs that are ready to be uploaded to Cortex XSOAR machine."""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.upload.uploader import Uploader
     from demisto_sdk.commands.zip_packs.packs_zipper import (
@@ -666,8 +666,8 @@ def zip_packs(**kwargs) -> int:
 def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
@@ -843,8 +843,8 @@ def create_content_artifacts(**kwargs) -> int:
     5. uploadable_packs - Contains zipped packs that are ready to be uploaded to Cortex XSOAR machine.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
         ArtifactsManager,
@@ -898,8 +898,8 @@ def secrets(config, **kwargs):
     Attach path to whitelist to allow manual whitelists.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
@@ -1022,8 +1022,8 @@ def lint(**kwargs):
     If no additional flags specifying the packs are given, will lint only changed files.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.lint.lint_manager import LintManager
 
@@ -1118,8 +1118,8 @@ def lint(**kwargs):
 )
 def coverage_analyze(**kwargs):
     logger = logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
 
@@ -1248,8 +1248,8 @@ def format(
     genericmodule/genericdefinition.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.format.format_module import format_manager
 
@@ -1345,8 +1345,8 @@ def upload(**kwargs):
     * Note: Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up. *
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     return upload_content_entity(**kwargs)
 
@@ -1433,8 +1433,8 @@ def download(**kwargs):
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.download.downloader import Downloader
 
@@ -1500,8 +1500,8 @@ def xsoar_config_file_update(**kwargs):
     Add a Pack to both marketplace_packs and custom_packs sections in the Configuration File.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import (
         XSOARConfigFileUpdater,
@@ -1562,8 +1562,8 @@ def run(**kwargs):
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.run_cmd.runner import Runner
 
@@ -1610,8 +1610,8 @@ def run_playbook(**kwargs):
     'https://demisto.local'.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 
@@ -1659,8 +1659,8 @@ def run_playbook(**kwargs):
 def run_test_playbook(**kwargs):
     """Run a test playbooks in your instance."""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.run_test_playbook.test_playbook_runner import (
         TestPlaybookRunner,
@@ -1747,8 +1747,8 @@ def generate_outputs(**kwargs):
     In addition you can supply examples files and generate the context description directly in the YML from those examples.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.generate_outputs.generate_outputs import (
         run_generate_outputs,
@@ -1829,8 +1829,8 @@ def generate_outputs(**kwargs):
 def generate_test_playbook(**kwargs):
     """Generate test playbook from integration or script"""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import (
         PlaybookTestsGenerator,
@@ -1915,8 +1915,8 @@ def init(**kwargs):
     Otherwise when using the flags we will generate a script/integration based on your selection.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.init.initiator import Initiator
 
@@ -2006,8 +2006,8 @@ def init(**kwargs):
 def generate_docs(**kwargs):
     """Generate documentation for integration, playbook or script from yaml file."""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
 
     check_configuration_file("generate-docs", kwargs)
@@ -2179,8 +2179,8 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
 def create_id_set(**kwargs):
     """Create the content dependency tree by ids."""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
     from demisto_sdk.commands.find_dependencies.find_dependencies import (
@@ -2228,8 +2228,8 @@ def create_id_set(**kwargs):
 def merge_id_sets(**kwargs):
     """Merge two id_sets"""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 
@@ -2315,8 +2315,8 @@ def merge_id_sets(**kwargs):
 def update_release_notes(**kwargs):
     """Auto-increment pack version and generate release notes template."""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.update_release_notes.update_rn_manager import (
         UpdateReleaseNotesManager,
@@ -2426,8 +2426,8 @@ def update_release_notes(**kwargs):
 def find_dependencies(**kwargs):
     """Find pack dependencies and update pack metadata."""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.find_dependencies.find_dependencies import (
         PackDependencies,
@@ -2521,8 +2521,8 @@ def postman_codegen(
 ):
     """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
     logger = logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.postman_codegen.postman_codegen import (
         postman_to_autogen_configuration,
@@ -2590,8 +2590,8 @@ def generate_integration(input: IO, output: Path, **kwargs):
     which is generated by commands like postman-codegen
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.generate_integration.code_generator import (
         IntegrationGeneratorConfig,
@@ -2672,8 +2672,8 @@ def openapi_codegen(**kwargs):
     Then, the command is run a second time with the integration configuration to generate the actual integration files.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.openapi_codegen.openapi_codegen import OpenAPIIntegration
 
@@ -2842,8 +2842,8 @@ def test_content(**kwargs):
     Collect the result and give a report.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.test_content.execute_test_content import (
         execute_test_content,
@@ -2928,8 +2928,8 @@ def test_content(**kwargs):
 def doc_review(**kwargs):
     """Check the spelling in .md and .yml files as well as review release notes"""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 
@@ -2992,8 +2992,8 @@ def integration_diff(**kwargs):
     Checks for differences between two versions of an integration, and verified that the new version covered the old version.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.integration_diff.integration_diff_detector import (
         IntegrationDiffDetector,
@@ -3049,8 +3049,8 @@ def generate_yml_from_python(**kwargs):
     Checks for differences between two versions of an integration, and verified that the new version covered the old version.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.generate_yml_from_python.generate_yml import YMLGenerator
 
@@ -3090,8 +3090,8 @@ def convert(config, **kwargs):
     version command.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.convert.convert_manager import ConvertManager
 
@@ -3166,8 +3166,8 @@ def generate_unit_tests(
     Also supports generating unit tests for specific commands.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
 
     klara_logger = logging.getLogger("PYSCA")
@@ -3207,8 +3207,8 @@ def error_code(config, **kwargs):
     )
 
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
 
     check_configuration_file("error-code-info", kwargs)
@@ -3260,8 +3260,8 @@ def create_content_graph(
     **kwargs,
 ):
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.content_graph.content_graph_commands import (
         create_content_graph as create_content_graph_command,
@@ -3353,8 +3353,8 @@ def update_content_graph(
     **kwargs,
 ):
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
-        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
+        console_log_threshold=kwargs.get("console_log_threshold", "INFO"),
+        file_log_threshold=kwargs.get("file_log_threshold", "DEBUG"),
     )
     from demisto_sdk.commands.content_graph.content_graph_commands import (
         update_content_graph as update_content_graph_command,

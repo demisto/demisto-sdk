@@ -2706,7 +2706,6 @@ def is_pack_path(input_path: str) -> bool:
 
 
 def is_xsoar_supported_pack(file_path: str) -> bool:
-
     """
     Takes a path to a file and returns a boolean indicating
     whether this file belongs to an XSOAR-supported Pack.

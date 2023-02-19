@@ -84,6 +84,7 @@ class GraphValidator(BaseValidator):
                 non_core_pack_dependencies = [
                     relationship.content_item_to.object_id
                     for relationship in core_pack_node.depends_on
+                    if not relationship.is_test
                 ]
                 error_message, error_code = Errors.invalid_core_pack_dependencies(
                     core_pack_node.object_id, non_core_pack_dependencies
@@ -103,7 +104,7 @@ class GraphValidator(BaseValidator):
         is_valid = True
         content_item: ContentItem
         for content_item in self.graph.find_uses_paths_with_invalid_marketplaces(
-            self.file_paths
+            self.pack_ids
         ):
             used_content_items = [
                 relationship.content_item_to.object_id

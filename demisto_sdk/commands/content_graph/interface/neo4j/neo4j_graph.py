@@ -395,7 +395,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return [self._id_to_obj[result] for result in results]
 
     def find_uses_paths_with_invalid_marketplaces(
-        self, file_paths: List[str]
+        self, pack_ids: List[str]
     ) -> List[BaseContent]:
         """Searches and retrievs content items who use content items with invalid marketplaces.
 
@@ -408,7 +408,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         """
         with self.driver.session() as session:
             results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
-                validate_marketplaces, file_paths
+                validate_marketplaces, pack_ids
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)

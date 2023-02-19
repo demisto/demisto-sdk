@@ -7,6 +7,7 @@
 * Fixed an issue where making a change in a module using an ApiModule would cause lint to run on the ApiModule unnecessarily.
 * Fixed an issue where the `marketplace` field was not used when dumping pack zips.
 * Fixed a typo in the README content generated with **update-release-notes** for updating integrations.
+* Fixed an issue in **validate**, where using the `-gr` and `-i` flags did not run properly.
 
 ## 1.10.2
 * Added markdown lint formatting for README files in the **format** command.

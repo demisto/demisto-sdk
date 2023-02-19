@@ -1,3 +1,4 @@
+import logging
 import subprocess
 from shutil import copy
 from typing import Tuple
@@ -11,6 +12,8 @@ from demisto_sdk.commands.format.format_constants import (
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdate
+
+logger = logging.getLogger("demisto-sdk")
 
 AUTOPEP_LINE_LENGTH = "130"
 
@@ -54,8 +57,7 @@ class PythonFileFormat(BaseUpdate):
         Returns:
             bool. True if succeed to run autopep8 on file, False otherwise.
         """
-        if verbose:
-            print(f"\nRunning autopep8 on file: {py_file_path}\n")
+        logger.debug(f"\nRunning autopep8 on file: {py_file_path}\n")
         try:
             subprocess.call(
                 [

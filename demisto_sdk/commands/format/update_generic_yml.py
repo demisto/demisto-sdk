@@ -115,7 +115,7 @@ class BaseUpdateYML(BaseUpdate):
         """
         updated_integration_id = {}
         if not self.old_file:
-            logger.debug("Updating YML ID to be the same as YML name")
+            secho_and_debug("Updating YML ID to be the same as YML name")
             if is_uuid(self.id_and_version_location["id"]):
                 updated_integration_id[self.id_and_version_location["id"]] = self.data[
                     "name"
@@ -125,7 +125,7 @@ class BaseUpdateYML(BaseUpdate):
             current_id = self.id_and_version_location.get("id")
             old_id = self.get_id_and_version_for_data(self.old_file).get("id")
             if current_id != old_id:
-                logger.info(
+                secho_and_info(
                     f"The modified YML file corresponding to the path: {self.relative_content_path} ID does not match the ID in remote YML file."
                     f" Changing the YML ID from {current_id} back to {old_id}."
                 )
@@ -304,9 +304,9 @@ class BaseUpdateYML(BaseUpdate):
                     )
                 )
                 self._save_to_conf_json(conf_json_content)
-                logger.info("Added test playbooks to conf.json successfully")
+                secho_and_info("Added test playbooks to conf.json successfully")
             else:
-                logger.info("Skipping test playbooks configuration")
+                secho_and_info("Skipping test playbooks configuration")
 
     def _save_to_conf_json(self, conf_json_content: Dict) -> None:
         """Save formatted JSON data to destination file."""
@@ -378,7 +378,7 @@ class BaseUpdateYML(BaseUpdate):
     def remove_spaces_end_of_id_and_name(self):
         """Updates the id and name of the YML to have no spaces on its end"""
         if not self.old_file:
-            logger.debug("Updating YML ID and name to be without spaces at the end")
+            secho_and_debug("Updating YML ID and name to be without spaces at the end")
             self.data["name"] = self.data["name"].strip()
             if self.id_and_version_location:
                 self.id_and_version_location["id"] = self.id_and_version_location[
@@ -415,7 +415,7 @@ class BaseUpdateYML(BaseUpdate):
             self.save_yml_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            logger.info(
+            secho_and_info(
                 "".join(
                     traceback.format_exception(
                         type(err), value=err, tb=err.__traceback__

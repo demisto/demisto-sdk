@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 from pathlib import PosixPath
@@ -556,7 +555,7 @@ def test_format_on_invalid_py_dict(mocker, repo):
     assert invalid_py != integration.code.read()
 
 
-def test_format_on_invalid_py_long_dict(mocker, repo):
+def test_format_on_invalid_py_long_dict(mocker, repo, monkeypatch):
     """
     Given
     - Invalid python file - long dict.
@@ -567,6 +566,8 @@ def test_format_on_invalid_py_long_dict(mocker, repo):
     Then
     - Ensure format passes.
     """
+    monkeypatch.setenv("COLUMNS", "1000")
+
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -590,13 +591,14 @@ def test_format_on_invalid_py_long_dict(mocker, repo):
             catch_exceptions=False,
         )
 
+    print(f"*** {result.stdout=}")
     assert "======= Updating file" in result.stdout
     assert "Running autopep8 on file" in result.stdout
     assert "Success" in result.stdout
     assert invalid_py != integration.code.read()
 
 
-def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo):
+def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo, monkeypatch):
     """
     (This is the same test as the previous one only not using the '-v' argument)
     Given
@@ -608,6 +610,8 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo):
     Then
     - Ensure format passes and that the verbose is off
     """
+    monkeypatch.setenv("COLUMNS", "1000")
+
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -645,6 +649,8 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
     - Ensure format passes.
     - Ensure validate passes.
     """
+    monkeypatch.setenv("COLUMNS", "1000")
+
     pack = repo.create_pack("PackName")
     playbook = pack.create_playbook("playbook")
     playbook.create_default_playbook()
@@ -986,7 +992,7 @@ def test_format_playbook_no_input_specified(mocker, repo):
     assert playbook.yml.read_dict().get("name") == playbook_name
 
 
-def test_format_incident_type_layout_id(repo, mocker):
+def test_format_incident_type_layout_id(repo, mocker, monkeypatch):
     """
     Given:
         - Content pack with incident type and layout
@@ -1000,7 +1006,8 @@ def test_format_incident_type_layout_id(repo, mocker):
         - Verify layout ID is updated
         - Verify the updated layout ID is also updated in the incident type
     """
-    logging.getLogger("demisto-sdk").propagate = True
+    monkeypatch.setenv("COLUMNS", "1000")
+
     mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
 
     pack = repo.create_pack("PackName")
@@ -1424,7 +1431,7 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
     - Ensure Format fixed the given generic definition - fromVersion field was added and it's value is 6.5.0
     - Ensure success message is printed.
     """
-    logging.getLogger("demisto-sdk").propagate = True
+    # logging.getLogger("demisto-sdk").propagate = True
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )

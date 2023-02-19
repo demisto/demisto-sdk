@@ -218,7 +218,10 @@ class GraphValidator(BaseValidator):
                 content_item.name, unknown_content_names
             )
             if self.handle_error(
-                error_message, error_code, content_item.path, warning=True
+                error_message,
+                error_code,
+                content_item.path,
+                warning=bool(self.file_paths),
             ):
                 is_valid = False
 

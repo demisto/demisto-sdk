@@ -175,11 +175,13 @@ def test_extract_data_from_all_xdm_schema():
     xdm_rule_to_dtype = {'_insert_time': 'Timestamp', '_time': 'Timestamp', '_vendor': 'String', '_product': 'String', 'xdm.session_context_id': 'String'}
     xdm_rule_to_dclass = {'_insert_time': 'Scalar', '_time': 'Scalar', '_vendor': 'Scalar', '_product': 'Scalar', 'xdm.session_context_id': 'Scalar'}
     schema_path = Path(__file__).parent / "test_data/Schema.csv"
-    assert extract_data_from_all_xdm_schema(schema_path) == (xdm_rule_to_dtype , xdm_rule_to_dclass)
+    assert extract_data_from_all_xdm_schema(schema_path) == (xdm_rule_to_dtype, xdm_rule_to_dclass)
 
 
 def test_read_mapping_file():
     mapping_file_path = Path(__file__).parent / "test_data/mapping_dfender_for_cloud.csv"
-    name_columen = ['id', 'name', 'properties.alertDisplayName', 'properties.alertType', 'properties.compromisedEntity', 'properties.description', 'properties.entities', 'properties.entities.address']
-    xdm_one_data_model = ['xdm.observer.unique_identifier', 'xdm.observer.name', 'xdm.alert.name', 'xdm.alert.category', 'xdm.target.host.hostname', 'xdm.alert.description', '', 'xdm.target.host.ipv4_addresses']
+    name_columen = ['id', 'name', 'properties.alertDisplayName', 'properties.alertType',
+                    'properties.compromisedEntity', 'properties.description', 'properties.entities', 'properties.entities.address']
+    xdm_one_data_model = ['xdm.observer.unique_identifier', 'xdm.observer.name', 'xdm.alert.name',
+                          'xdm.alert.category', 'xdm.target.host.hostname', 'xdm.alert.description', '', 'xdm.target.host.ipv4_addresses']
     assert read_mapping_file(mapping_file_path) == (name_columen, xdm_one_data_model)

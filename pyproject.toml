@@ -35,7 +35,7 @@ coloredlogs = "^15.0.1"
 configparser = "^5.2.0"
 coverage = "6.3.2"
 decorator = "^5.1.1"
-demisto-py = "^3.2.6"
+demisto-py = {git = "https://github.com/demisto/demisto-py.git", rev = "re_create_client_session_timeouts"}
 dictor = "^0.1.9"
 docker = "^5.0.3"
 flatten-dict = "^0.4.2"

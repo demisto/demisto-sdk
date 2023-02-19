@@ -1,5 +1,5 @@
 import pytest
-
+from pathlib import Path
 from demisto_sdk.commands.generate_modeling_rules.generate_modeling_rules import (
     array_create_wrap,
     convert_raw_type_to_xdm_type,
@@ -11,6 +11,8 @@ from demisto_sdk.commands.generate_modeling_rules.generate_modeling_rules import
     replace_last_char,
     to_number_wrap,
     to_string_wrap,
+    extract_data_from_all_xdm_schema,
+    read_mapping_file,
 )
 
 
@@ -21,7 +23,7 @@ def test_replace_last_char(s, res):
         A line that ends with ,\n
 
     When:
-        We are at the last line of the xif file 
+        We are at the last line of the xif file
 
     Then:
         replace the second last char with ;
@@ -38,7 +40,7 @@ def test_create_xif_header(mocker):
         creating the header of the xif file.
 
     Then:
-        check that the header is formed corectlly. 
+        check that the header is formed corectlly.
     """
     res = "[MODEL: dataset=fake_dataset_name]\n" "| alter\n"
     assert create_xif_header("fake_dataset_name") == res
@@ -167,3 +169,17 @@ def test_to_number_wrap():
 )
 def test_convert_to_xdm_type(name, xdm_type, res):
     assert convert_to_xdm_type(name, xdm_type) == res
+
+
+def test_extract_data_from_all_xdm_schema():
+    xdm_rule_to_dtype = {'_insert_time': 'Timestamp', '_time': 'Timestamp', '_vendor': 'String', '_product': 'String', 'xdm.session_context_id': 'String'}
+    xdm_rule_to_dclass = {'_insert_time': 'Scalar', '_time': 'Scalar', '_vendor': 'Scalar', '_product': 'Scalar', 'xdm.session_context_id': 'Scalar'}
+    schema_path = Path(__file__).parent / "test_data/Schema.csv"
+    assert extract_data_from_all_xdm_schema(schema_path) == (xdm_rule_to_dtype , xdm_rule_to_dclass)
+
+
+def test_read_mapping_file():
+    mapping_file_path = Path(__file__).parent / "test_data/mapping_dfender_for_cloud.csv"
+    name_columen = ['id', 'name', 'properties.alertDisplayName', 'properties.alertType', 'properties.compromisedEntity', 'properties.description', 'properties.entities', 'properties.entities.address']
+    xdm_one_data_model = ['xdm.observer.unique_identifier', 'xdm.observer.name', 'xdm.alert.name', 'xdm.alert.category', 'xdm.target.host.hostname', 'xdm.alert.description', '', 'xdm.target.host.ipv4_addresses']
+    assert read_mapping_file(mapping_file_path) == (name_columen, xdm_one_data_model)

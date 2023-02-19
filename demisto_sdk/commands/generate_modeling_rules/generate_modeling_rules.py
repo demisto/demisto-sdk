@@ -1,10 +1,9 @@
 import logging
 import traceback
 from io import StringIO
+import csv
 from pathlib import Path
 from typing import List, Tuple
-
-import pandas as pd
 import typer
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.constants import (
@@ -100,17 +99,14 @@ def generate_modeling_rules(
     try:
         setup_rich_logging(verbosity, quiet, log_path, log_file_name)
 
-        outputfile_schema = output_path.joinpath(
+        outputfile_schema = Path(output_path, (
             f"{vendor}_{product}_modeling_rules.json"
-        )
-        outputfile_xif = output_path.joinpath(f"{vendor}_{product}_modeling_rules.xif")
-        outputfile_yml = output_path.joinpath(f"{vendor}_{product}_modeling_rules.yml")
+        ))
+        outputfile_xif = Path(output_path, (f"{vendor}_{product}_modeling_rules.xif"))
+        outputfile_yml = Path(output_path, (f"{vendor}_{product}_modeling_rules.yml"))
         data_set_name = f"{vendor.lower()}_{product.lower()}_raw"
 
-        if str(mapping).endswith('tsv'):
-            modeling_rules_df = pd.read_csv(mapping, sep="\t")
-        else:
-            modeling_rules_df = pd.read_csv(mapping)
+        name_columen, xdm_one_data_model = read_mapping_file(mapping)
 
         with open(raw_event_path) as f:
             raw_event = json.load(f)
@@ -121,7 +117,7 @@ def generate_modeling_rules(
         )
 
         mapping_list = init_mapping_field_list(
-            modeling_rules_df, raw_event, xdm_rule_to_dtype, xdm_rule_to_dclass
+            name_columen, xdm_one_data_model, raw_event, xdm_rule_to_dtype, xdm_rule_to_dclass
         )
 
         create_scheme_file(mapping_list, data_set_name, outputfile_schema)
@@ -203,7 +199,8 @@ def create_xif_header(dataset_name: str) -> str:
 
 
 def init_mapping_field_list(
-    modeling_rules_df: pd.DataFrame,
+    name_columen: list,
+    xdm_one_data_model: list,
     raw_event: dict,
     xdm_rule_to_dtype: dict,
     xdm_rule_to_dclass: dict,
@@ -211,13 +208,8 @@ def init_mapping_field_list(
     """
     This function takes all the data gathered and generates the list of MappingFields
     """
-    name_columen = modeling_rules_df["Name"]
-    xdm_one_data_model = modeling_rules_df["XDM Field One Data Model"]
-    names_list = name_columen.to_numpy()
-    xdm_one_data_model_list = xdm_one_data_model.to_numpy()
-
     mapping_list = []
-    for (field_name, xdm_field_name) in zip(names_list, xdm_one_data_model_list):
+    for (field_name, xdm_field_name) in zip(name_columen, xdm_one_data_model):
         type_raw, is_array_raw = extract_raw_type_data(raw_event, field_name)
         xdm_field_type = xdm_rule_to_dtype.get(xdm_field_name)
         xdm_class_type = xdm_rule_to_dclass.get(xdm_field_name)
@@ -255,6 +247,20 @@ def convert_to_xdm_type(name: str, xdm_type: str) -> str:
         name = to_number_wrap(name)
 
     return name
+
+
+def read_mapping_file(mapping: Path):
+    name_column = []
+    xdm_one_data_model = []
+
+    with open(mapping, newline='') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter='\t' if str(mapping).endswith('tsv') else ',')
+
+        for row in reader:
+            name_column.append(row['Name'])
+            xdm_one_data_model.append(row['XDM Field One Data Model'])
+
+    return (name_column, xdm_one_data_model)
 
 
 def create_xif_file(
@@ -304,7 +310,7 @@ def replace_last_char(s: str) -> str:
     """
     Replaces the second last char of the xif file to be ; instead of ,
     """
-    return s[:-2] + ';' + s[-1] if s else s
+    return f'{s[:-2]};{s[-1]}' if s else s
 
 
 def create_scheme_file(
@@ -392,7 +398,7 @@ def extract_raw_type_data(event: dict, path_to_dict_field: str) -> tuple:
     temp: dict = event
     for key in keys_split:
         if isinstance(temp, dict):
-            temp = temp.get(key)  # type: ignore
+            temp = temp.get(key)    # type: ignore[assignment]
         else:
             # for example when we have an array inside of a dict
             logger.info(
@@ -420,17 +426,20 @@ def extract_data_from_all_xdm_schema(path: str) -> Tuple[dict, dict]:
     Returns:
         Tuple[dict, dict]: {xdf_rule: data_type}, {xdm_rule: data_class}
     """
-    schema_all_dict = pd.read_csv(path)
+    with open(path, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
 
-    columns_to_keep = ["name", "datatype", "dataclass"]
-    df_dict = schema_all_dict[columns_to_keep].set_index("name")
-    data_from_xdm_full_schema = df_dict.to_dict()
+        columns_to_keep = ["name", "datatype", "dataclass"]
+        data = {
+            row['name']: {
+                col: row[col] for col in columns_to_keep if col in row
+            }
+            for row in reader
+        }
+        xdm_rule_to_dtype = {k: v["datatype"] for k, v in data.items() if "datatype" in v}
+        xdm_rule_to_dclass = {k: v["dataclass"] for k, v in data.items() if "dataclass" in v}
 
-    data_from_xdm_full_schema = df_dict.to_dict()
-    xdm_rule_to_dtype = data_from_xdm_full_schema.get("datatype")
-    xdm_rule_to_dclass = data_from_xdm_full_schema.get("dataclass")
-
-    return xdm_rule_to_dtype, xdm_rule_to_dclass
+        return xdm_rule_to_dtype, xdm_rule_to_dclass
 
 
 if __name__ == "__main__":

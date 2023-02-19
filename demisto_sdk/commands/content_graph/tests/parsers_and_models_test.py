@@ -1459,7 +1459,7 @@ class TestParsersAndModels:
             expected_support="community",
             expected_url="https://www.paloaltonetworks.com/cortex",
             expected_author="Cortex XSOAR",
-            expected_certification="",
+            expected_certification="verified",
             expected_hidden=False,
             expected_current_version="1.2.12",
             expected_tags=[],

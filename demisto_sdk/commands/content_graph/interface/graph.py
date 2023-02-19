@@ -108,13 +108,16 @@ class ContentGraphInterface(ABC):
 
     @abstractmethod
     def find_uses_paths_with_invalid_marketplaces(
-        self, file_paths: List[str]
+        self, pack_ids: List[str]
     ) -> List[BaseContent]:
         pass
 
     @abstractmethod
     def find_core_packs_depend_on_non_core_packs(
-        self, pack_ids: List[str], core_pack_list
+        self,
+        pack_ids: List[str],
+        marketplace: MarketplaceVersions,
+        core_pack_list: List[str],
     ) -> List[BaseContent]:
         pass
 

@@ -1,5 +1,7 @@
 {
-  "fromVersion": "6.0.0",
-  "group": "test",
-  "details": "test"
+    "fromVersion": "6.0.0",
+    "group": "incident",
+  	"details": "test",
+	"id": "test",
+	"name": "test"
 }

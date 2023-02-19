@@ -4,16 +4,12 @@ import os
 import sys
 
 import pytest
-import requests
 import requests_mock
-from requests.adapters import HTTPAdapter
-from urllib3 import Retry
 
 import demisto_sdk
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.MDXServer import start_local_MDX_server
 from TestSuite.test_tools import ChangeCWD
 
 VALID_MD = f"{git_path()}/demisto_sdk/tests/test_files/README-valid.md"
@@ -66,48 +62,10 @@ def test_is_file_valid(mocker, current, answer):
             status_code=200,
             text="Test3",
         )
-        mocker.patch.dict(
-            os.environ,
-            {"DEMISTO_README_VALIDATION": "yes", "DEMISTO_MDX_CMD_VERIFY": "yes"},
-        )
-        assert readme_validator.is_valid_file() is answer
+        m.post("http://localhost:6161/", real_http=True)
+        with ReadMeValidator.start_mdx_server():
+            assert readme_validator.is_valid_file() is answer
         assert not demisto_sdk.commands.common.MDXServer._MDX_SERVER_PROCESS
-
-
-def test_local_server_up_and_down():
-    """
-    Given:
-        - node dependencies installed
-        - a valid file for mdx
-    When:
-        starting a local server with an mdx server
-    Then:
-        - The server is started successfully.
-        - The call is successful.
-    """
-    ReadMeValidator.add_node_env_vars()
-    readme_validator = ReadMeValidator(VALID_MD)
-    valid = ReadMeValidator.are_modules_installed_for_verify(
-        readme_validator.content_path
-    )
-    if not valid:
-        pytest.skip("skipping mdx server test. " + MDX_SKIP_NPM_MESSAGE)
-        return
-
-    with start_local_MDX_server() as started:
-        assert started
-        assert_successful_mdx_call()
-
-
-def assert_successful_mdx_call():
-    session = requests.Session()
-    retry = Retry(total=2)
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount("http://", adapter)
-    response = session.request(
-        "POST", "http://localhost:6161", data="## Hello", timeout=20
-    )
-    assert response.status_code == 200
 
 
 @pytest.mark.parametrize("current, answer", README_INPUTS)
@@ -123,29 +81,6 @@ def test_is_file_valid_mdx_server(mocker, current, answer):
             return
         mocker.patch.dict(os.environ, {"DEMISTO_README_VALIDATION": "yes"})
         assert readme_validator.is_valid_file() is answer
-
-
-def test_local_server_is_up():
-    """
-    Given:
-        A valid file for mdx
-    When:
-        starting a local server and checking if up inside the context
-    Then:
-        - The if statement passes
-        - The api call succeeds
-    """
-    readme_validator = ReadMeValidator(INVALID_MD)
-    valid = ReadMeValidator.are_modules_installed_for_verify(
-        readme_validator.content_path
-    )
-    if not valid:
-        pytest.skip("skipping mdx server test. " + MDX_SKIP_NPM_MESSAGE)
-        return
-    with start_local_MDX_server():
-        if start_local_MDX_server():
-            assert_successful_mdx_call()
-        assert_successful_mdx_call()
 
 
 def test_are_modules_installed_for_verify_false_res(tmp_path):

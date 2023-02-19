@@ -251,6 +251,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 logger.error(f"Failed dumping readme: {e}")
 
     def dump(self, path: Path, marketplace: MarketplaceVersions):
+        if not self.path.exists():
+            logger.warning(f"Pack {self.name} does not exist in {self.path}")
+            return
         try:
             path.mkdir(exist_ok=True, parents=True)
             for content_item in self.content_items:

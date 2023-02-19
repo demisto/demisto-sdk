@@ -58,7 +58,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
     create_relationships,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
-    validate_dependencies,
+    validate_core_packs_dependencies,
     validate_fromversion,
     validate_marketplaces,
     validate_multiple_packs_with_same_display_name,
@@ -395,7 +395,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return [self._id_to_obj[result] for result in results]
 
     def find_uses_paths_with_invalid_marketplaces(
-        self, file_paths: List[str]
+        self, pack_ids: List[str]
     ) -> List[BaseContent]:
         """Searches and retrievs content items who use content items with invalid marketplaces.
 
@@ -408,14 +408,17 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         """
         with self.driver.session() as session:
             results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
-                validate_marketplaces, file_paths
+                validate_marketplaces, pack_ids
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
     def find_core_packs_depend_on_non_core_packs(
-        self, pack_ids: List[str], core_pack_list
+        self,
+        pack_ids: List[str],
+        marketplace: MarketplaceVersions,
+        core_pack_list: List[str],
     ) -> List[BaseContent]:
         """Searches and retrieves core packs who depends on content items who are not core packs.
 
@@ -428,7 +431,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         """
         with self.driver.session() as session:
             results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
-                validate_dependencies, pack_ids, core_pack_list
+                validate_core_packs_dependencies, pack_ids, marketplace, core_pack_list
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)

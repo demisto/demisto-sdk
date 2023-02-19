@@ -20,6 +20,7 @@ from demisto_sdk.commands.common.hook_validations.integration import (
     IntegrationValidator,
 )
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.tools import get_dict_from_file, is_test_config_match
 from demisto_sdk.commands.format import format_module, update_generic
 from demisto_sdk.commands.format.update_generic import BaseUpdate
@@ -695,7 +696,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
     assert "The files are valid" in result_validate.stdout
 
 
-def test_format_integration_skipped_files(repo):
+def test_format_integration_skipped_files(repo, mocker):
     """
     Given:
         - Content pack with integration and doc files
@@ -711,6 +712,7 @@ def test_format_integration_skipped_files(repo):
     pack = repo.create_pack("PackName")
     pack.create_integration("integration")
     pack.create_doc_file()
+    mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
 
     runner = CliRunner(mix_stderr=False)
     format_result = runner.invoke(
@@ -723,7 +725,7 @@ def test_format_integration_skipped_files(repo):
         assert excluded_file not in format_result.stdout
 
 
-def test_format_commonserver_skipped_files(repo):
+def test_format_commonserver_skipped_files(repo, mocker):
     """
     Given:
         - Base content pack with CommonServerPython script
@@ -737,6 +739,7 @@ def test_format_commonserver_skipped_files(repo):
     """
     pack = repo.create_pack("Base")
     pack.create_script("CommonServerPython")
+    mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
 
     runner = CliRunner(mix_stderr=False)
     format_result = runner.invoke(
@@ -983,7 +986,7 @@ def test_format_playbook_no_input_specified(mocker, repo):
     assert playbook.yml.read_dict().get("name") == playbook_name
 
 
-def test_format_incident_type_layout_id(repo):
+def test_format_incident_type_layout_id(repo, mocker):
     """
     Given:
         - Content pack with incident type and layout
@@ -998,6 +1001,8 @@ def test_format_incident_type_layout_id(repo):
         - Verify the updated layout ID is also updated in the incident type
     """
     logging.getLogger("demisto-sdk").propagate = True
+    mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
+
     pack = repo.create_pack("PackName")
     layout = pack.create_layoutcontainer(
         name="layout",

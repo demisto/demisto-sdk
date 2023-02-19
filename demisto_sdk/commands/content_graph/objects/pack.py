@@ -214,14 +214,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
             if r.content_item_to.database_id == r.target_id
         ]
 
-    @property
-    def dependent_packs(self):
-        return [
-            r
-            for r in self.depends_on
-            if r.content_item_to.content_type == ContentType.PACK
-        ]
-
     def set_content_items(self):
         content_items: List[ContentItem] = [
             r.content_item_to  # type: ignore[misc]
@@ -428,7 +420,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
                 "name": r.content_item_to.name,
                 "certification": r.content_item_to.certification,
             }
-            for r in self.dependent_packs
+            for r in self.depends_on
         }
 
     @staticmethod

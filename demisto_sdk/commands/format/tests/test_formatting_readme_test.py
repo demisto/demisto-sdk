@@ -27,10 +27,7 @@ def test_readme_markdown_fixes():
         readme_formatter.fix_lint_markdown()
 
         assert old_content != readme_formatter.readme_content
-        assert (
-            run_markdownlint(open(INVALID_MD).read(), fix=True).fixed_text
-            == readme_formatter.readme_content
-        )
+        assert run_markdownlint(open(INVALID_MD).read(), fix=True).fixed_text == readme_formatter.readme_content
 
 
 def test_format_with_update_docker_flag(mocker):
@@ -43,9 +40,7 @@ def test_format_with_update_docker_flag(mocker):
     from demisto_sdk.commands.format.format_module import format_manager
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
-    mocker.patch.object(
-        ReadMeValidator, "are_modules_installed_for_verify", return_value=False
-    )
+    mocker.patch.object(ReadMeValidator, "are_modules_installed_for_verify", return_value=False)
     mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
     mocker.patch.object(
         ValidateManager,
@@ -102,9 +97,7 @@ class TestReadmeFormat:
             ),
         ),
     )
-    def test_replace_url_in_content(
-        self, regex_relative_url: list, new_url: str, expected_link: str
-    ):
+    def test_replace_url_in_content(self, regex_relative_url: list, new_url: str, expected_link: str):
         """
         Given
             - A README file , and a relative url link found in it.
@@ -114,9 +107,7 @@ class TestReadmeFormat:
             - Ensure the url changes to the expected output.
         """
         readme_formatter = ReadmeFormat(INVALID_MD)
-        readme_url = ReadmeUrl(
-            regex_relative_url[0], regex_relative_url[1], regex_relative_url[2]
-        )
+        readme_url = ReadmeUrl(regex_relative_url[0], regex_relative_url[1], regex_relative_url[2])
         readme_formatter.replace_url_in_content(readme_url, new_url)
         assert expected_link in readme_formatter.readme_content
 
@@ -150,12 +141,6 @@ class TestReadmeFormat:
         stripped_url = str.strip(relative_url[1])
         readme_url = ReadmeUrl(relative_url[0], relative_url[1], relative_url[2])
         assert get_new_url_from_user_assume_yes(readme_url) == f"https://{stripped_url}"
-        assert (
-            get_new_url_from_user_add_prefix(mocker, readme_url)
-            == f"https://{stripped_url}"
-        )
-        assert (
-            get_new_url_from_user_change_url(mocker, readme_url)
-            == "https://goodurl.com"
-        )
+        assert get_new_url_from_user_add_prefix(mocker, readme_url) == f"https://{stripped_url}"
+        assert get_new_url_from_user_change_url(mocker, readme_url) == "https://goodurl.com"
         assert get_new_url_from_user_skip(mocker, readme_url) is None

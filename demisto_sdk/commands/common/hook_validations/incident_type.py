@@ -22,9 +22,7 @@ class IncidentTypeValidator(ContentEntityValidator):
         if not self.old_file:
             return True
 
-        is_bc_broke = any(
-            [not super().is_backward_compatible(), self.is_changed_from_version()]
-        )
+        is_bc_broke = any([not super().is_backward_compatible(), self.is_changed_from_version()])
 
         return not is_bc_broke
 
@@ -98,19 +96,13 @@ class IncidentTypeValidator(ContentEntityValidator):
         fields_to_include = ["hours", "days", "weeks", "hoursR", "daysR", "weeksR"]
 
         try:
-            from_version = self.current_file.get(
-                "fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION
-            )
+            from_version = self.current_file.get("fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
             if LooseVersion(from_version) >= LooseVersion("5.0.0"):
                 for field in fields_to_include:
                     int_field = self.current_file.get(field, -1)
                     if not isinstance(int_field, int) or int_field < 0:
-                        error_message, error_code = Errors.incident_type_integer_field(
-                            field
-                        )
-                        if self.handle_error(
-                            error_message, error_code, file_path=self.file_path
-                        ):
+                        error_message, error_code = Errors.incident_type_integer_field(field)
+                        if self.handle_error(error_message, error_code, file_path=self.file_path):
                             is_valid = False
 
         except (AttributeError, ValueError):
@@ -159,9 +151,7 @@ class IncidentTypeValidator(ContentEntityValidator):
             for incident_field, extracted_settings in auto_extract_fields.items():
                 extracting_all = extracted_settings.get("isExtractingAllIndicatorTypes")
                 extract_as_is = extracted_settings.get("extractAsIsIndicatorTypeId")
-                extracted_indicator_types = extracted_settings.get(
-                    "extractIndicatorTypesIDs"
-                )
+                extracted_indicator_types = extracted_settings.get("extractIndicatorTypesIDs")
 
                 # General format check.
                 if (
@@ -187,9 +177,7 @@ class IncidentTypeValidator(ContentEntityValidator):
                 (
                     error_message,
                     error_code,
-                ) = Errors.incident_type_auto_extract_fields_invalid(
-                    invalid_incident_fields
-                )
+                ) = Errors.incident_type_auto_extract_fields_invalid(invalid_incident_fields)
                 if self.handle_error(error_message, error_code, self.file_path):
                     is_valid = False
 

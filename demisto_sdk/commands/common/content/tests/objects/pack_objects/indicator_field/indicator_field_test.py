@@ -4,13 +4,7 @@ from demisto_sdk.commands.common.tools import src_root
 
 TEST_DATA = src_root() / "tests" / "test_files"
 TEST_CONTENT_REPO = TEST_DATA / "content_slim"
-INDICATOR_FIELD = (
-    TEST_CONTENT_REPO
-    / PACKS_DIR
-    / "Sample01"
-    / INDICATOR_FIELDS_DIR
-    / "incidentfield-sample.json"
-)
+INDICATOR_FIELD = TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / INDICATOR_FIELDS_DIR / "incidentfield-sample.json"
 
 
 def test_prefix():

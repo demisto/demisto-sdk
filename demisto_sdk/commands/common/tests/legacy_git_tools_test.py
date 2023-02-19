@@ -136,9 +136,7 @@ def test_staged(mocker):
         "demisto_sdk.commands.common.legacy_git_tools.run_command",
         side_effect=run_command_effect,
     )
-    mocker.patch(
-        "demisto_sdk.commands.common.legacy_git_tools.os.path.isfile", return_value=True
-    )
+    mocker.patch("demisto_sdk.commands.common.legacy_git_tools.os.path.isfile", return_value=True)
     mocker.patch(
         "demisto_sdk.commands.common.legacy_git_tools.find_type",
         return_value=FileType.INTEGRATION,

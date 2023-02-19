@@ -77,16 +77,12 @@ class PacksManager(ArtifactsManager):
         marketplace: str = MarketplaceVersions.XSOAR.value,
         **kwargs,
     ):
-        super().__init__(
-            packs=True, zip=True, cpus=1, suffix="", marketplace=marketplace, **kwargs
-        )
+        super().__init__(packs=True, zip=True, cpus=1, suffix="", marketplace=marketplace, **kwargs)
         self.init_packs(pack_paths)
         self.zip_all = all_in_one_zip
         self.quiet_mode = quiet_mode
         self.output_path = (
-            f"{self.content_uploadable_zips_path}.zip"
-            if self.zip_all
-            else str(self.content_uploadable_zips_path)
+            f"{self.content_uploadable_zips_path}.zip" if self.zip_all else str(self.content_uploadable_zips_path)
         )
 
     def init_packs(self, pack_paths):
@@ -99,9 +95,7 @@ class PacksManager(ArtifactsManager):
         self.packs = {}
         for path_str in arg_to_list(pack_paths):
             path = Path(path_str)
-            if (
-                len(path.parts) == 2 and path.parts[0] == PACKS_DIR
-            ):  # relative path from Packs/...
+            if len(path.parts) == 2 and path.parts[0] == PACKS_DIR:  # relative path from Packs/...
                 path = self.content.path / path
 
             if not os.path.exists(path):
@@ -147,9 +141,7 @@ class PacksManager(ArtifactsManager):
         """
         reports = []
         # we quiet the outputs and in case we want the output - a summery will be printed
-        with QuietModeController(
-            quiet_logger=True, quiet_output=True
-        ), PacksDirsHandler(self):
+        with QuietModeController(quiet_logger=True, quiet_output=True), PacksDirsHandler(self):
             for pack_name in self.pack_names:
                 if pack_name not in IGNORED_PACKS:
                     reports.append(dump_pack(self, self.packs[pack_name]))
@@ -162,12 +154,7 @@ class PacksManager(ArtifactsManager):
             created_zip_path = (
                 self.output_path
                 if self.zip_all
-                else "\n".join(
-                    [
-                        f"{self.output_path}/{pack_name}.zip"
-                        for pack_name in self.pack_names
-                    ]
-                )
+                else "\n".join([f"{self.output_path}/{pack_name}.zip" for pack_name in self.pack_names])
             )
             logger.info(f"\nCreated zips:\n{created_zip_path}")
 

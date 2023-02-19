@@ -23,9 +23,7 @@ from TestSuite.pack import Pack
 from TestSuite.repo import Repo
 
 
-def content_items_to_node_ids(
-    content_items_dict: Dict[ContentType, List[str]]
-) -> Set[str]:
+def content_items_to_node_ids(content_items_dict: Dict[ContentType, List[str]]) -> Set[str]:
     """A helper method that converts a dict of content items to a set of their node ids."""
     return {
         f"{content_type}:{content_item_id}"
@@ -54,9 +52,7 @@ class RelationshipsVerifier:
     ) -> None:
         targets = {
             relationship.get("target")
-            for relationship in relationships.get(
-                RelationshipType.USES_COMMAND_OR_SCRIPT, []
-            )
+            for relationship in relationships.get(RelationshipType.USES_COMMAND_OR_SCRIPT, [])
         }
         expected_targets = {command for command in expected_commands}
         assert targets == expected_targets
@@ -66,10 +62,7 @@ class RelationshipsVerifier:
         relationships: Relationships,
         expected_playbooks: List[str],
     ) -> None:
-        targets = {
-            relationship.get("target")
-            for relationship in relationships.get(RelationshipType.USES_PLAYBOOK, [])
-        }
+        targets = {relationship.get("target") for relationship in relationships.get(RelationshipType.USES_PLAYBOOK, [])}
         expected_targets = {playbook for playbook in expected_playbooks}
         assert targets == expected_targets
 
@@ -78,10 +71,7 @@ class RelationshipsVerifier:
         relationships: Relationships,
         expected_commands: List[str],
     ) -> None:
-        targets = {
-            relationship.get("target")
-            for relationship in relationships.get(RelationshipType.HAS_COMMAND, [])
-        }
+        targets = {relationship.get("target") for relationship in relationships.get(RelationshipType.HAS_COMMAND, [])}
         expected_targets = set(expected_commands)
         assert targets == expected_targets
 
@@ -90,10 +80,7 @@ class RelationshipsVerifier:
         relationships: Relationships,
         expected_tests: List[str],
     ) -> None:
-        targets = {
-            relationship.get("target")
-            for relationship in relationships.get(RelationshipType.TESTED_BY, [])
-        }
+        targets = {relationship.get("target") for relationship in relationships.get(RelationshipType.TESTED_BY, [])}
         expected_targets = set(expected_tests)
         assert targets == expected_targets
 
@@ -102,10 +89,7 @@ class RelationshipsVerifier:
         relationships: Relationships,
         expected_imports: List[str],
     ) -> None:
-        targets = {
-            relationship.get("target")
-            for relationship in relationships.get(RelationshipType.IMPORTS, [])
-        }
+        targets = {relationship.get("target") for relationship in relationships.get(RelationshipType.IMPORTS, [])}
         expected_targets = set(expected_imports)
         assert targets == expected_targets
 
@@ -120,23 +104,13 @@ class RelationshipsVerifier:
         imports: List[str] = [],
         integration_commands: List[str] = [],
     ) -> None:
-        RelationshipsVerifier.verify_uses(
-            relationships, RelationshipType.USES_BY_ID, dependency_ids
-        )
-        RelationshipsVerifier.verify_uses(
-            relationships, RelationshipType.USES_BY_NAME, dependency_names
-        )
+        RelationshipsVerifier.verify_uses(relationships, RelationshipType.USES_BY_ID, dependency_ids)
+        RelationshipsVerifier.verify_uses(relationships, RelationshipType.USES_BY_NAME, dependency_names)
         RelationshipsVerifier.verify_tests(relationships, tests)
         RelationshipsVerifier.verify_imports(relationships, imports)
-        RelationshipsVerifier.verify_command_executions(
-            relationships, commands_or_scripts_executions
-        )
-        RelationshipsVerifier.verify_playbook_executions(
-            relationships, playbook_executions
-        )
-        RelationshipsVerifier.verify_integration_commands(
-            relationships, integration_commands
-        )
+        RelationshipsVerifier.verify_command_executions(relationships, commands_or_scripts_executions)
+        RelationshipsVerifier.verify_playbook_executions(relationships, playbook_executions)
+        RelationshipsVerifier.verify_integration_commands(relationships, integration_commands)
 
 
 class ContentItemModelVerifier:
@@ -155,9 +129,7 @@ class ContentItemModelVerifier:
         assert expected_id is None or model.object_id == expected_id
         assert expected_name is None or model.name == expected_name
         assert expected_path is None or model.path == expected_path
-        assert (
-            expected_content_type is None or model.content_type == expected_content_type
-        )
+        assert expected_content_type is None or model.content_type == expected_content_type
         assert expected_description is None or model.description == expected_description
         assert expected_deprecated is None or model.deprecated == expected_deprecated
         assert expected_fromversion is None or model.fromversion == expected_fromversion
@@ -205,19 +177,10 @@ class PackModelVerifier:
         assert expected_email is None or model.email == expected_email
         assert expected_url is None or model.url == expected_url
         assert expected_author is None or model.author == expected_author
-        assert (
-            expected_certification is None
-            or model.certification == expected_certification
-        )
+        assert expected_certification is None or model.certification == expected_certification
         assert expected_hidden is None or model.hidden == expected_hidden
-        assert (
-            expected_server_min_version is None
-            or model.server_min_version == expected_server_min_version
-        )
-        assert (
-            expected_current_version is None
-            or model.current_version == expected_current_version
-        )
+        assert expected_server_min_version is None or model.server_min_version == expected_server_min_version
+        assert expected_current_version is None or model.current_version == expected_current_version
         assert expected_tags is None or model.tags == expected_tags
         assert expected_categories is None or model.categories == expected_categories
         assert expected_use_cases is None or model.use_cases == expected_use_cases
@@ -226,17 +189,10 @@ class PackModelVerifier:
         assert expected_premium is None or model.premium == expected_premium
         assert expected_vendor_id is None or model.vendor_id == expected_vendor_id
         assert expected_vendor_name is None or model.vendor_name == expected_vendor_name
-        assert (
-            expected_preview_only is None or model.preview_only == expected_preview_only
-        )
-        assert (
-            expected_marketplaces is None or model.marketplaces == expected_marketplaces
-        )
+        assert expected_preview_only is None or model.preview_only == expected_preview_only
+        assert expected_marketplaces is None or model.marketplaces == expected_marketplaces
 
-        content_items = {
-            content_item.object_id: content_item.content_type
-            for content_item in model.content_items
-        }
+        content_items = {content_item.object_id: content_item.content_type for content_item in model.content_items}
         assert content_items == expected_content_items
 
 
@@ -268,9 +224,7 @@ class TestParsersAndModels:
             ClassifierParser,
         )
 
-        classifier = pack.create_classifier(
-            "TestClassifier", load_json("classifier.json")
-        )
+        classifier = pack.create_classifier("TestClassifier", load_json("classifier.json"))
         classifier.update({"toVersion": "5.9.9"})
         classifier_path = Path(classifier.path)
         with pytest.raises(NotAContentItemException):
@@ -292,9 +246,7 @@ class TestParsersAndModels:
             ClassifierParser,
         )
 
-        classifier = pack.create_classifier(
-            "TestClassifier", load_json("classifier.json")
-        )
+        classifier = pack.create_classifier("TestClassifier", load_json("classifier.json"))
         classifier_path = Path(classifier.path)
         parser = ClassifierParser(classifier_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
@@ -338,13 +290,9 @@ class TestParsersAndModels:
             CorrelationRuleParser,
         )
 
-        colrrelation_rule = pack.create_correlation_rule(
-            "TestCorrelationRule", load_yaml("correlation_rule.yml")
-        )
+        colrrelation_rule = pack.create_correlation_rule("TestCorrelationRule", load_yaml("correlation_rule.yml"))
         colrrelation_rule_path = Path(colrrelation_rule.path)
-        parser = CorrelationRuleParser(
-            colrrelation_rule_path, list(MarketplaceVersions)
-        )
+        parser = CorrelationRuleParser(colrrelation_rule_path, list(MarketplaceVersions))
         assert not parser.relationships
         model = CorrelationRule.from_orm(parser)
         ContentItemModelVerifier.run(
@@ -414,9 +362,7 @@ class TestParsersAndModels:
             "TestGenericDefinition", load_json("generic_definition.json")
         )
         generic_definition_path = Path(generic_definition.path)
-        parser = GenericDefinitionParser(
-            generic_definition_path, list(MarketplaceVersions)
-        )
+        parser = GenericDefinitionParser(generic_definition_path, list(MarketplaceVersions))
         assert not parser.relationships
         model = GenericDefinition.from_orm(parser)
         ContentItemModelVerifier.run(
@@ -447,9 +393,7 @@ class TestParsersAndModels:
             GenericModuleParser,
         )
 
-        generic_module = pack.create_generic_module(
-            "TestGenericModule", load_json("generic_module.json")
-        )
+        generic_module = pack.create_generic_module("TestGenericModule", load_json("generic_module.json"))
         generic_module_path = Path(generic_module.path)
         parser = GenericModuleParser(generic_module_path, list(MarketplaceVersions))
         assert not parser.relationships
@@ -481,9 +425,7 @@ class TestParsersAndModels:
             GenericTypeParser,
         )
 
-        generic_type = pack.create_generic_module(
-            "TestGenericType", load_json("generic_type.json")
-        )
+        generic_type = pack.create_generic_module("TestGenericType", load_json("generic_type.json"))
         generic_type_path = Path(generic_type.path)
         parser = GenericTypeParser(generic_type_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
@@ -520,9 +462,7 @@ class TestParsersAndModels:
             IncidentFieldParser,
         )
 
-        incident_field = pack.create_incident_field(
-            "TestIncidentField", load_json("incident_field.json")
-        )
+        incident_field = pack.create_incident_field("TestIncidentField", load_json("incident_field.json"))
         incident_field_path = Path(incident_field.path)
         parser = IncidentFieldParser(incident_field_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
@@ -564,9 +504,7 @@ class TestParsersAndModels:
             IncidentTypeParser,
         )
 
-        incident_type = pack.create_incident_field(
-            "TestIncidentType", load_json("incident_type.json")
-        )
+        incident_type = pack.create_incident_field("TestIncidentType", load_json("incident_type.json"))
         incident_type_path = Path(incident_type.path)
         parser = IncidentTypeParser(incident_type_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
@@ -610,9 +548,7 @@ class TestParsersAndModels:
             IndicatorFieldParser,
         )
 
-        indicator_field = pack.create_incident_field(
-            "TestIndicatorField", load_json("indicator_field.json")
-        )
+        indicator_field = pack.create_incident_field("TestIndicatorField", load_json("indicator_field.json"))
         indicator_field_path = Path(indicator_field.path)
         parser = IndicatorFieldParser(indicator_field_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
@@ -653,9 +589,7 @@ class TestParsersAndModels:
             IndicatorTypeParser,
         )
 
-        indicator_type = pack.create_indicator_type(
-            "TestIndicatorType", load_json("indicator_type.json")
-        )
+        indicator_type = pack.create_indicator_type("TestIndicatorType", load_json("indicator_type.json"))
         indicator_type_path = Path(indicator_type.path)
         parser = IndicatorTypeParser(indicator_type_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
@@ -828,9 +762,7 @@ class TestParsersAndModels:
         from demisto_sdk.commands.content_graph.objects.layout import Layout
         from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
 
-        layout = pack.create_layoutcontainer(
-            "TestLayoutscontainer", load_json("layoutscontainer.json")
-        )
+        layout = pack.create_layoutcontainer("TestLayoutscontainer", load_json("layoutscontainer.json"))
         layout_path = Path(layout.path)
         parser = LayoutParser(layout_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
@@ -902,9 +834,7 @@ class TestParsersAndModels:
         from demisto_sdk.commands.content_graph.objects.mapper import Mapper
         from demisto_sdk.commands.content_graph.parsers.mapper import MapperParser
 
-        mapper = pack.create_mapper(
-            "TestIncomingMapper", load_json("incoming_mapper.json")
-        )
+        mapper = pack.create_mapper("TestIncomingMapper", load_json("incoming_mapper.json"))
         mapper_path = Path(mapper.path)
         parser = MapperParser(mapper_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
@@ -945,9 +875,7 @@ class TestParsersAndModels:
         from demisto_sdk.commands.content_graph.objects.mapper import Mapper
         from demisto_sdk.commands.content_graph.parsers.mapper import MapperParser
 
-        mapper = pack.create_mapper(
-            "TestOutgoingMapper", load_json("outgoing_mapper.json")
-        )
+        mapper = pack.create_mapper("TestOutgoingMapper", load_json("outgoing_mapper.json"))
         mapper_path = Path(mapper.path)
         parser = MapperParser(mapper_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
@@ -992,9 +920,7 @@ class TestParsersAndModels:
             ModelingRuleParser,
         )
 
-        modeling_rule = pack.create_modeling_rule(
-            "TestModelingRule", load_yaml("modeling_rule.yml")
-        )
+        modeling_rule = pack.create_modeling_rule("TestModelingRule", load_yaml("modeling_rule.yml"))
         modeling_rule_path = Path(modeling_rule.path)
         parser = ModelingRuleParser(modeling_rule_path, list(MarketplaceVersions))
         assert not parser.relationships
@@ -1024,9 +950,7 @@ class TestParsersAndModels:
             ParsingRuleParser,
         )
 
-        parsing_rule = pack.create_parsing_rule(
-            "TestParsingRule", load_yaml("parsing_rule.yml")
-        )
+        parsing_rule = pack.create_parsing_rule("TestParsingRule", load_yaml("parsing_rule.yml"))
         parsing_rule_path = Path(parsing_rule.path)
         parser = ParsingRuleParser(parsing_rule_path, list(MarketplaceVersions))
         assert not parser.relationships
@@ -1309,16 +1233,10 @@ class TestParsersAndModels:
         wizard_json = load_json("wizard.json")
         wizard = pack.create_wizard(
             "TestWizard",
-            categories_to_packs={
-                c["name"]: c["packs"] for c in wizard_json["dependency_packs"]
-            },
-            fetching_integrations=[
-                i["name"] for i in wizard_json["wizard"]["fetching_integrations"]
-            ],
+            categories_to_packs={c["name"]: c["packs"] for c in wizard_json["dependency_packs"]},
+            fetching_integrations=[i["name"] for i in wizard_json["wizard"]["fetching_integrations"]],
             set_playbooks=wizard_json["wizard"]["set_playbook"],
-            supporting_integrations=[
-                i["name"] for i in wizard_json["wizard"]["supporting_integrations"]
-            ],
+            supporting_integrations=[i["name"] for i in wizard_json["wizard"]["supporting_integrations"]],
         )
         wizard_path = Path(wizard.path)
         parser = WizardParser(wizard_path, list(MarketplaceVersions))
@@ -1342,9 +1260,7 @@ class TestParsersAndModels:
             "WildFire-v2",
             "Microsoft Defender Advanced Threat Protection",
         }
-        assert set(model.playbooks) == {
-            "Malware Investigation & Response Incident Handler"
-        }
+        assert set(model.playbooks) == {"Malware Investigation & Response Incident Handler"}
 
     def test_xsiam_dashboard_parser(self, pack: Pack):
         """
@@ -1364,9 +1280,7 @@ class TestParsersAndModels:
             XSIAMDashboardParser,
         )
 
-        xsiam_dashboard = pack.create_xsiam_dashboard(
-            "TestXSIAMDashboard", load_json("xsiam_dashboard.json")
-        )
+        xsiam_dashboard = pack.create_xsiam_dashboard("TestXSIAMDashboard", load_json("xsiam_dashboard.json"))
         xsiam_dashboard_path = Path(xsiam_dashboard.path)
         parser = XSIAMDashboardParser(xsiam_dashboard_path, list(MarketplaceVersions))
         assert not parser.relationships
@@ -1397,9 +1311,7 @@ class TestParsersAndModels:
             XSIAMReportParser,
         )
 
-        xsiam_report = pack.create_xsiam_report(
-            "TestXSIAMReport", load_json("xsiam_report.json")
-        )
+        xsiam_report = pack.create_xsiam_report("TestXSIAMReport", load_json("xsiam_report.json"))
         xsiam_report_path = Path(xsiam_report.path)
         parser = XSIAMReportParser(xsiam_report_path, list(MarketplaceVersions))
         assert not parser.relationships

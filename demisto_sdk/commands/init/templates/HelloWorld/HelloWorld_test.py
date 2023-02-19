@@ -72,9 +72,7 @@ def test_say_hello():
     """
     from HelloWorld import Client, say_hello_command
 
-    client = Client(
-        base_url="https://test.com/api/v1", verify=False, auth=("test", "test")
-    )
+    client = Client(base_url="https://test.com/api/v1", verify=False, auth=("test", "test"))
     args = {"name": "Dbot"}
     response = say_hello_command(client, args)
 
@@ -94,9 +92,7 @@ def test_start_scan(requests_mock):
         "scan_id": "7a161a3f-8d53-42de-80cd-92fb017c5a12",
         "status": "RUNNING",
     }
-    requests_mock.get(
-        "https://test.com/api/v1/start_scan?hostname=example.com", json=mock_response
-    )
+    requests_mock.get("https://test.com/api/v1/start_scan?hostname=example.com", json=mock_response)
 
     client = Client(
         base_url="https://test.com/api/v1",
@@ -128,19 +124,13 @@ def test_status_scan(requests_mock):
     from HelloWorld import Client, scan_status_command
 
     mock_response = {"scan_id": "100", "status": "COMPLETE"}
-    requests_mock.get(
-        "https://test.com/api/v1/check_scan?scan_id=100", json=mock_response
-    )
+    requests_mock.get("https://test.com/api/v1/check_scan?scan_id=100", json=mock_response)
 
     mock_response = {"scan_id": "200", "status": "RUNNING"}
-    requests_mock.get(
-        "https://test.com/api/v1/check_scan?scan_id=200", json=mock_response
-    )
+    requests_mock.get("https://test.com/api/v1/check_scan?scan_id=200", json=mock_response)
 
     mock_response = {"scan_id": "300", "status": "COMPLETE"}
-    requests_mock.get(
-        "https://test.com/api/v1/check_scan?scan_id=300", json=mock_response
-    )
+    requests_mock.get("https://test.com/api/v1/check_scan?scan_id=300", json=mock_response)
 
     client = Client(
         base_url="https://test.com/api/v1",
@@ -172,9 +162,7 @@ def test_scan_results(requests_mock):
     from HelloWorld import Client, scan_results_command
 
     mock_response = util_load_json("test_data/scan_results.json")
-    requests_mock.get(
-        "https://test.com/api/v1/get_scan_results?scan_id=100", json=mock_response
-    )
+    requests_mock.get("https://test.com/api/v1/get_scan_results?scan_id=100", json=mock_response)
 
     client = Client(
         base_url="https://test.com/api/v1",
@@ -356,9 +344,7 @@ def test_domain(requests_mock):
 
     domain_to_check = "google.com"
     mock_response = util_load_json("test_data/domain_reputation.json")
-    requests_mock.get(
-        f"http://test.com/api/v1/domain?domain={domain_to_check}", json=mock_response
-    )
+    requests_mock.get(f"http://test.com/api/v1/domain?domain={domain_to_check}", json=mock_response)
 
     client = Client(
         base_url="http://test.com/api/v1",

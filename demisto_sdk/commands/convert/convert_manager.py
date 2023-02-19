@@ -31,14 +31,11 @@ class ConvertManager:
             for dir_converter in AbstractDirConvertManager.__subclasses__()
         ]  # type: ignore[abstract]
         relevant_dir_converters = [
-            dir_converter
-            for dir_converter in all_dir_converters
-            if dir_converter.should_convert()
+            dir_converter for dir_converter in all_dir_converters if dir_converter.should_convert()
         ]
         if not relevant_dir_converters:
             click.secho(
-                f"No entities were found to convert. Please validate your input path is "
-                f"valid: {self.input_path}",
+                f"No entities were found to convert. Please validate your input path is " f"valid: {self.input_path}",
                 fg="red",
             )
             return 1
@@ -65,9 +62,5 @@ class ConvertManager:
         Returns:
             (Pack): Pack object of the pack the conversion was requested for.
         """
-        pack_path = (
-            self.input_path
-            if is_pack_path(self.input_path)
-            else os.path.dirname(self.input_path)
-        )
+        pack_path = self.input_path if is_pack_path(self.input_path) else os.path.dirname(self.input_path)
         return Pack(pack_path)

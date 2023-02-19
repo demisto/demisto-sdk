@@ -5,13 +5,7 @@ from demisto_sdk.commands.common.tools import src_root
 
 TEST_DATA = src_root() / "tests" / "test_files"
 TEST_CONTENT_REPO = TEST_DATA / "content_slim"
-INCIDENT_TYPE = (
-    TEST_CONTENT_REPO
-    / PACKS_DIR
-    / "Sample01"
-    / INCIDENT_TYPES_DIR
-    / "incidenttype-sample_new.json"
-)
+INCIDENT_TYPE = TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / INCIDENT_TYPES_DIR / "incidenttype-sample_new.json"
 
 
 def test_objects_factory():

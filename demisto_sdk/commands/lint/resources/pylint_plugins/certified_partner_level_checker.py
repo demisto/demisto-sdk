@@ -43,8 +43,7 @@ cert_partner_msg = {
         "Do not use return_outputs function.",
     ),
     "W9016": (
-        "Initialize of params was found outside of main function. Please use demisto.params() only inside main "
-        "func",
+        "Initialize of params was found outside of main function. Please use demisto.params() only inside main " "func",
         "init-params-outside-main",
         "Initialize of params was found outside of main function. Please initialize params only inside main func",
     ),
@@ -116,12 +115,7 @@ class CertifiedPartnerChecker(BaseChecker):
         Adds the relevant error message using `add_message` function if one of the above exists.
         """
         try:
-            if (
-                node.func.attrname == "exit"
-                and node.func.expr.name == "sys"
-                and node.args
-                and node.args[0].value != 0
-            ):
+            if node.func.attrname == "exit" and node.func.expr.name == "sys" and node.args and node.args[0].value != 0:
                 self.add_message("sys-exit-exists", node=node)
 
         except Exception:
@@ -172,10 +166,7 @@ class CertifiedPartnerChecker(BaseChecker):
 
                 # check if main function is one of the parent nodes of the current node that contains demisto.params()
                 while check_param and parent:
-                    if (
-                        isinstance(parent, astroid.FunctionDef)
-                        and parent.name == "main"
-                    ):
+                    if isinstance(parent, astroid.FunctionDef) and parent.name == "main":
                         check_param = False
                     parent = parent.parent
 
@@ -200,10 +191,7 @@ class CertifiedPartnerChecker(BaseChecker):
 
                 # check if main function is one of the parent nodes of the current node that contains demisto.params()
                 while check_param and parent:
-                    if (
-                        isinstance(parent, astroid.FunctionDef)
-                        and parent.name == "main"
-                    ):
+                    if isinstance(parent, astroid.FunctionDef) and parent.name == "main":
                         check_param = False
                     parent = parent.parent
 

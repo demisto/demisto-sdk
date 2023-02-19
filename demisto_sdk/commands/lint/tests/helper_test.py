@@ -87,9 +87,7 @@ def test_build_skipped_exit_code(
         ("demisto/python:2.7.18.24398", "", "2.7"),
     ],
 )
-def test_get_python_version_from_image(
-    image: str, output: bytes, expected: float, mocker
-):
+def test_get_python_version_from_image(image: str, output: bytes, expected: float, mocker):
     from demisto_sdk.commands.lint import helpers
 
     mocker.patch.object(helpers, "init_global_docker_client")
@@ -130,9 +128,7 @@ def test_cache_of_get_python_version_from_image():
         ([False, False], 2, True),
     ],
 )
-def test_copy_dir_to_container(
-    mocker, archive_response: bool, expected_count: int, expected_exception: bool
-):
+def test_copy_dir_to_container(mocker, archive_response: bool, expected_count: int, expected_exception: bool):
     from demisto_sdk.commands.lint import helpers
 
     mocker.patch.object(helpers, "docker")
@@ -144,13 +140,9 @@ def test_copy_dir_to_container(
     mock_container.put_archive.side_effect = archive_response
     if expected_exception:
         with pytest.raises(Exception):
-            helpers.copy_dir_to_container(
-                mock_container, mock_container_path, mock_host_path
-            )
+            helpers.copy_dir_to_container(mock_container, mock_container_path, mock_host_path)
     else:
-        helpers.copy_dir_to_container(
-            mock_container, mock_container_path, mock_host_path
-        )
+        helpers.copy_dir_to_container(mock_container, mock_container_path, mock_host_path)
 
     assert mock_container.put_archive.call_count == expected_count
 
@@ -180,9 +172,7 @@ MSG = [
         "main function. Please add them (try-except-main-doesnt-exists)\nMaltiverse.py:509:0: W9012: return_error "
         "should be used in main function. Please add it. (return-error-does-not-exist-in-main)\nMaltiverse.py:511:4: "
         "E9002: Print is found, Please remove all prints from the code. (print-exists)",
-        [
-            "Maltiverse.py:511:4: E9002: Print is found, Please remove all prints from the code. (print-exists)"
-        ],
+        ["Maltiverse.py:511:4: E9002: Print is found, Please remove all prints from the code. (print-exists)"],
         [
             "Maltiverse.py:509:0: W9010: try and except statements were not found in main function. Please add them ("
             "try-except-main-doesnt-exists)",
@@ -231,12 +221,8 @@ MSG = [
 ]
 
 
-@pytest.mark.parametrize(
-    "linter_name, input_msg, output_error, output_warning, output_other", MSG
-)
-def test_split_warnings_errors(
-    linter_name, input_msg, output_error, output_warning, output_other
-):
+@pytest.mark.parametrize("linter_name, input_msg, output_error, output_warning, output_other", MSG)
+def test_split_warnings_errors(linter_name, input_msg, output_error, output_warning, output_other):
     """
     Given:
         - linter name releated to input_msg which was returned from this specific linter.

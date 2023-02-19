@@ -136,16 +136,12 @@ class SecretsValidator:
             secrets_file_paths = self.get_all_diff_text_files(branch_name, is_circle)
         # If a input path supplied, should not run on git. If not supplied make sure not in middle of merge.
         if not run_command("git rev-parse -q --verify MERGE_HEAD") or self.input_paths:
-            secret_to_location_mapping = self.search_potential_secrets(
-                secrets_file_paths, self.ignore_entropy
-            )
+            secret_to_location_mapping = self.search_potential_secrets(secrets_file_paths, self.ignore_entropy)
             if secret_to_location_mapping:
                 secrets_found_string = "Secrets were found in the following files:"
                 for file_name in secret_to_location_mapping:
                     for line in sorted(secret_to_location_mapping[file_name]):
-                        secrets_found_string += (
-                            "\nIn File: " + f"{file_name}:{line}" + "\n"
-                        )
+                        secrets_found_string += "\nIn File: " + f"{file_name}:{line}" + "\n"
                         if len(secret_to_location_mapping[file_name][line]) == 1:
                             secrets_found_string += f"Secret found: {secret_to_location_mapping[file_name][line][0]}\n"
                         else:
@@ -156,8 +152,7 @@ class SecretsValidator:
 
                 else:
                     secrets_found_string += (
-                        "\n\nThe secrets were exposed in public repository,"
-                        " remove the files asap and report it.\n"
+                        "\n\nThe secrets were exposed in public repository," " remove the files asap and report it.\n"
                     )
 
                 secrets_found_string += (
@@ -191,14 +186,10 @@ class SecretsValidator:
                 prev_ver = "origin/" + prev_ver
             print(f"Running secrets validation against {prev_ver}")
 
-            changed_files_string = run_command(
-                f"git diff --name-status {prev_ver}...{branch_name}"
-            )
+            changed_files_string = run_command(f"git diff --name-status {prev_ver}...{branch_name}")
         else:
             print("Running secrets validation on all changes")
-            changed_files_string = run_command(
-                "git diff --name-status --no-merges HEAD"
-            )
+            changed_files_string = run_command("git diff --name-status --no-merges HEAD")
         return list(self.get_diff_text_files(changed_files_string))
 
     def get_diff_text_files(self, files_string):
@@ -219,10 +210,9 @@ class SecretsValidator:
             else:
                 file_path = file_data[1]
             # only modified/added file, text readable, exclude white_list file
-            if (
-                file_status.lower() in ACCEPTED_FILE_STATUSES
-                or "r" in file_status.lower()
-            ) and self.is_text_file(file_path):
+            if (file_status.lower() in ACCEPTED_FILE_STATUSES or "r" in file_status.lower()) and self.is_text_file(
+                file_path
+            ):
                 if not any(skipped_file in file_path for skipped_file in SKIPPED_FILES):
                     text_files_list.add(file_path)
         return text_files_list
@@ -234,18 +224,14 @@ class SecretsValidator:
             return True
         return False
 
-    def search_potential_secrets(
-        self, secrets_file_paths: list, ignore_entropy: bool = False
-    ):
+    def search_potential_secrets(self, secrets_file_paths: list, ignore_entropy: bool = False):
         """Returns potential secrets(sensitive data) found in committed and added files
         :param secrets_file_paths: paths of files that are being commited to git repo
         :param ignore_entropy: If True then will ignore running entropy algorithm for finding potential secrets
 
         :return: dictionary(filename: (list)secrets) of strings sorted by file name for secrets found in files
         """
-        secret_to_location_mapping: DefaultDict[str, defaultdict] = defaultdict(
-            lambda: defaultdict(list)
-        )
+        secret_to_location_mapping: DefaultDict[str, defaultdict] = defaultdict(lambda: defaultdict(list))
         for file_path in secrets_file_paths:
             # Get if file path in pack and pack name
             is_pack = is_file_path_in_pack(file_path)
@@ -259,9 +245,7 @@ class SecretsValidator:
             # Skip white listed files
 
             if file_path in files_white_list:
-                print(
-                    f"Skipping secrets detection for file: {file_path} as it is white listed"
-                )
+                print(f"Skipping secrets detection for file: {file_path} as it is white listed")
                 continue
             # Init vars for current loop
             file_name = os.path.basename(file_path)
@@ -272,28 +256,20 @@ class SecretsValidator:
             file_contents = self.remove_secrets_disabled_line(file_contents)
             # in packs regard all items as regex as well, reset pack's whitelist in order to avoid repetition later
             if is_pack:
-                file_contents = self.remove_whitelisted_items_from_file(
-                    file_contents, secrets_white_list
-                )
+                file_contents = self.remove_whitelisted_items_from_file(file_contents, secrets_white_list)
 
             yml_file_contents = self.get_related_yml_contents(file_path)
             # Add all context output paths keywords to whitelist temporary
             if file_extension == YML_FILE_EXTENSION or yml_file_contents:
-                temp_white_list = self.create_temp_white_list(
-                    yml_file_contents if yml_file_contents else file_contents
-                )
+                temp_white_list = self.create_temp_white_list(yml_file_contents if yml_file_contents else file_contents)
                 secrets_white_list = secrets_white_list.union(temp_white_list)
             # Search by lines after strings with high entropy / IoCs regex as possibly suspicious
             for line_num, line in enumerate(file_contents.split("\n")):
                 # REGEX scanning for IOCs and false positive groups
                 regex_secrets, false_positives = self.regex_for_secrets(line)
                 for regex_secret in regex_secrets:
-                    if not any(
-                        ioc.lower() in regex_secret.lower() for ioc in ioc_white_list
-                    ):
-                        secret_to_location_mapping[file_path][line_num + 1].append(
-                            regex_secret
-                        )
+                    if not any(ioc.lower() in regex_secret.lower() for ioc in ioc_white_list):
+                        secret_to_location_mapping[file_path][line_num + 1].append(regex_secret)
                 # added false positives into white list array before testing the strings in line
 
                 secrets_white_list = secrets_white_list.union(false_positives)
@@ -301,8 +277,7 @@ class SecretsValidator:
                 if not ignore_entropy:
                     # due to nature of eml files, skip string by string secret detection - only regex
                     if file_extension in SKIP_FILE_TYPE_ENTROPY_CHECKS or any(
-                        demisto_type in file_name
-                        for demisto_type in SKIP_DEMISTO_TYPE_ENTROPY_CHECKS
+                        demisto_type in file_name for demisto_type in SKIP_DEMISTO_TYPE_ENTROPY_CHECKS
                     ):
                         continue
                     line = self.remove_false_positives(line)
@@ -310,22 +285,17 @@ class SecretsValidator:
                     for string_ in line.split():
                         # compare the lower case of the string against both generic whitelist & temp white list
                         if not any(
-                            white_list_string.lower() in string_.lower()
-                            for white_list_string in secrets_white_list
+                            white_list_string.lower() in string_.lower() for white_list_string in secrets_white_list
                         ):
 
                             entropy = self.calculate_shannon_entropy(string_)
                             if entropy >= ENTROPY_THRESHOLD:
-                                secret_to_location_mapping[file_path][
-                                    line_num + 1
-                                ].append(string_)
+                                secret_to_location_mapping[file_path][line_num + 1].append(string_)
 
         return secret_to_location_mapping
 
     @staticmethod
-    def remove_whitelisted_items_from_file(
-        file_content: str, secrets_white_list: set
-    ) -> str:
+    def remove_whitelisted_items_from_file(file_content: str, secrets_white_list: set) -> str:
         """Removes whitelisted items from file content
 
         Arguments:
@@ -337,9 +307,7 @@ class SecretsValidator:
         """
         for item in secrets_white_list:
             try:
-                file_content = re.sub(
-                    WHILEIST_REGEX.format(re.escape(item)), "", file_content
-                )
+                file_content = re.sub(WHILEIST_REGEX.format(re.escape(item)), "", file_content)
             except re.error as err:
                 error_string = f"Could not use secrets with item: {item}"
                 print_error(error_string)
@@ -352,9 +320,7 @@ class SecretsValidator:
         context_paths = re.findall(r"contextPath: (\S+\.+\S+)", file_contents)
         for context_path in context_paths:
             context_path = context_path.split(".")
-            context_path = [
-                white_item.lower() for white_item in context_path if len(white_item) > 4
-            ]
+            context_path = [white_item.lower() for white_item in context_path if len(white_item) > 4]
             temp_white_list = temp_white_list.union(context_path)
 
         return temp_white_list
@@ -374,9 +340,7 @@ class SecretsValidator:
     @staticmethod
     def retrieve_related_yml(integration_path):
         matching_yml_file_contents = None
-        yml_file = os.path.join(
-            integration_path, os.path.basename(integration_path) + ".yml"
-        )
+        yml_file = os.path.join(integration_path, os.path.basename(integration_path) + ".yml")
         if os.path.exists(yml_file):
             with open(yml_file, encoding="utf-8") as matching_yml_file:
                 matching_yml_file_contents = matching_yml_file.read()
@@ -453,12 +417,8 @@ class SecretsValidator:
             files_white_list,
         ) = self.get_generic_white_list(self.white_list_path)
         if is_pack:
-            pack_whitelist_path = os.path.join(
-                PACKS_DIR, pack_name, PACKS_WHITELIST_FILE_NAME
-            )
-            pack_white_list, _, pack_files_white_list = self.get_packs_white_list(
-                pack_whitelist_path, pack_name
-            )
+            pack_whitelist_path = os.path.join(PACKS_DIR, pack_name, PACKS_WHITELIST_FILE_NAME)
+            pack_white_list, _, pack_files_white_list = self.get_packs_white_list(pack_whitelist_path, pack_name)
             final_white_list.extend(pack_white_list)
             files_white_list.extend(pack_files_white_list)
 
@@ -481,20 +441,12 @@ class SecretsValidator:
                 for name, white_list in secrets_white_list_file.items():  # type: ignore
                     if name == "iocs":
                         for sublist in white_list:
-                            ioc_white_list += [
-                                white_item
-                                for white_item in white_list[sublist]
-                                if len(white_item) > 4
-                            ]
+                            ioc_white_list += [white_item for white_item in white_list[sublist] if len(white_item) > 4]
                         final_white_list += ioc_white_list
                     elif name == "files":
                         files_while_list = white_list
                     else:
-                        final_white_list += [
-                            white_item
-                            for white_item in white_list
-                            if len(white_item) > 4
-                        ]
+                        final_white_list += [white_item for white_item in white_list if len(white_item) > 4]
 
         return final_white_list, ioc_white_list, files_while_list
 
@@ -508,9 +460,7 @@ class SecretsValidator:
                 temp_white_list = secrets_white_list_file.read().split("\n")
             for white_list_line in temp_white_list:
                 if white_list_line.startswith("file:"):
-                    white_list_line = os.path.join(
-                        PACKS_DIR, pack_name, white_list_line[5:]
-                    )
+                    white_list_line = os.path.join(PACKS_DIR, pack_name, white_list_line[5:])
                     if not os.path.isfile(os.path.join(white_list_line)):
                         print_warning(
                             f"{white_list_line} not found.\n"
@@ -537,9 +487,7 @@ class SecretsValidator:
                 file_contents = self.extract_text_from_md_html(file_path)
             else:
                 # Open each file, read its contents in UTF-8 encoding to avoid unicode characters
-                with open(
-                    file_path, encoding="utf-8", errors="ignore"
-                ) as commited_file:
+                with open(file_path, encoding="utf-8", errors="ignore") as commited_file:
                     file_contents = commited_file.read()
             file_contents = self.ignore_base64(file_contents)
             return file_contents
@@ -556,9 +504,7 @@ class SecretsValidator:
             pdf_reader = PyPDF2.PdfFileReader(pdf_file_obj)
             num_pages = pdf_reader.numPages
         except PyPDF2.errors.PdfReadError:
-            print(
-                f"ERROR: Could not parse PDF file in path: {file_path} - ***Review Manually***"
-            )
+            print(f"ERROR: Could not parse PDF file in path: {file_path} - ***Review Manually***")
             return file_contents
         while page_num < num_pages:
             pdf_page = pdf_reader.getPage(page_num)
@@ -575,9 +521,7 @@ class SecretsValidator:
                 file_contents = soup.text
                 return file_contents
         except Exception as ex:
-            print_error(
-                f"Unable to parse the following file {file_path} due to error {ex}"
-            )
+            print_error(f"Unable to parse the following file {file_path} due to error {ex}")
             raise
 
     @staticmethod
@@ -601,8 +545,7 @@ class SecretsValidator:
     @staticmethod
     def ignore_base64(file_contents):
         base64_strings = re.findall(
-            r"(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|"
-            r"[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})",
+            r"(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|" r"[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})",
             file_contents,
         )
         for base64_string in base64_strings:
@@ -626,9 +569,7 @@ class SecretsValidator:
         if secrets_found:
             return True
         else:
-            print_color(
-                "Finished validating secrets, no secrets were found.", LOG_COLORS.GREEN
-            )
+            print_color("Finished validating secrets, no secrets were found.", LOG_COLORS.GREEN)
             return False
 
     def remove_secrets_disabled_line(self, file_content: str) -> str:

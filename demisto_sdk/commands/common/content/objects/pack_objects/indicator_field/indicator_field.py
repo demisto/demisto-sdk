@@ -33,9 +33,7 @@ class IndicatorField(JSONContentObject):
         """
         normalize_file_name = self._path.name
         # Handle case where "incidentfield-*hello-world.yml"
-        if normalize_file_name.startswith(
-            f"{INCIDENT_FIELD}-"
-        ) and not normalize_file_name.startswith(
+        if normalize_file_name.startswith(f"{INCIDENT_FIELD}-") and not normalize_file_name.startswith(
             f"{INCIDENT_FIELD}-{INDICATOR_FIELD}-"
         ):
             normalize_file_name = normalize_file_name.replace(
@@ -49,9 +47,7 @@ class IndicatorField(JSONContentObject):
                 )
             # Handle case where "*hello-world.yml"
             else:
-                normalize_file_name = (
-                    f"{INCIDENT_FIELD}-{INDICATOR_FIELD}-{normalize_file_name}"
-                )
+                normalize_file_name = f"{INCIDENT_FIELD}-{INDICATOR_FIELD}-{normalize_file_name}"
 
         return normalize_file_name
 
@@ -71,13 +67,9 @@ class IndicatorField(JSONContentObject):
             indicator_fields_unified_data = {"incidentFields": self._as_dict}
 
         with NamedTemporaryFile(suffix=".json") as indicator_fields_unified_file:
-            indicator_fields_unified_file.write(
-                bytes(json.dumps(indicator_fields_unified_data), "utf-8")
-            )
+            indicator_fields_unified_file.write(bytes(json.dumps(indicator_fields_unified_data), "utf-8"))
             indicator_fields_unified_file.seek(0)
-            return client.import_incident_fields(
-                file=indicator_fields_unified_file.name
-            )
+            return client.import_incident_fields(file=indicator_fields_unified_file.name)
 
     def type(self):
         return FileType.INDICATOR_FIELD

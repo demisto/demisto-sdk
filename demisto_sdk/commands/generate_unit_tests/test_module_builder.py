@@ -72,9 +72,7 @@ class TestModule:
         )
         body = [
             ast_mod.With(
-                items=[
-                    ast_mod.withitem(context_expr=io_open, optional_vars=ast_name("f"))
-                ],
+                items=[ast_mod.withitem(context_expr=io_open, optional_vars=ast_name("f"))],
                 body=[ast_mod.Expr(value=return_node)],
             )
         ]
@@ -106,22 +104,14 @@ class TestModule:
             arg_name = arg.arg
             arg_annotation = str(arg.annotation) if hasattr(arg, "annotation") else None
             if "url" in arg_name:
-                keywords.append(
-                    ast_mod.keyword(arg=arg_name, value=ast_name("SERVER_URL"))
-                )
+                keywords.append(ast_mod.keyword(arg=arg_name, value=ast_name("SERVER_URL")))
             elif arg_annotation and arg_annotation == "bool":
                 keywords.append(ast_mod.keyword(arg=arg_name, value=ast_name("True")))
             elif arg_annotation and arg_annotation == "str":
-                keywords.append(
-                    ast_mod.keyword(arg=arg_name, value=ast_mod.Constant("test"))
-                )
+                keywords.append(ast_mod.keyword(arg=arg_name, value=ast_mod.Constant("test")))
             elif arg_name != "self":
                 keywords.append(ast_mod.keyword(arg=arg_name, value=ast_name("None")))
-        body = [
-            ast_mod.Return(
-                value=ast_mod.Call(func=ast_name("Client"), args=[], keywords=keywords)
-            )
-        ]
+        body = [ast_mod.Return(value=ast_mod.Call(func=ast_name("Client"), args=[], keywords=keywords))]
 
         func = ast_mod.FunctionDef(
             name="client",

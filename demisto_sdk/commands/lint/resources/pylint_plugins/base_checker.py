@@ -46,8 +46,7 @@ base_msg = {
         "Please remove all quit statements from the code.",
     ),
     "E9006": (
-        "Invalid CommonServerPython import was found. Please change the import to: "
-        "from CommonServerPython import *",
+        "Invalid CommonServerPython import was found. Please change the import to: " "from CommonServerPython import *",
         "invalid-import-common-server-python",
         "Please change the import to: from CommonServerPython import *",
     ),
@@ -103,9 +102,7 @@ class CustomBaseChecker(BaseChecker):
 
     def __init__(self, linter=None):
         super().__init__(linter)
-        self.commands = (
-            os.getenv("commands", "").split(",") if os.getenv("commands") else []
-        )
+        self.commands = os.getenv("commands", "").split(",") if os.getenv("commands") else []
         self.is_script = True if os.getenv("is_script") == "True" else False
         # we treat scripts as they already implement the test-module
         self.test_module_implemented = False if not self.is_script else True
@@ -408,9 +405,7 @@ class CustomBaseChecker(BaseChecker):
                     self.test_module_implemented = True
 
             # for if command in ['command1','command2'] or for if command in {'command1','command2'}
-            if isinstance(comp_with, astroid.List) or isinstance(
-                comp_with, astroid.Set
-            ):
+            if isinstance(comp_with, astroid.List) or isinstance(comp_with, astroid.Set):
                 for var_lst in comp_with.itered():
                     commands = self._infer_name(var_lst)
 
@@ -460,9 +455,7 @@ class CustomBaseChecker(BaseChecker):
         Adds the relevant error message using `add_message` function if there were commands which are not implemented.
         """
         if self.commands:
-            self.add_message(
-                "unimplemented-commands-exist", args=str(self.commands), node=node
-            )
+            self.add_message("unimplemented-commands-exist", args=str(self.commands), node=node)
 
     def _test_module_implemented(self, node):
         """

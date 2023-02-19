@@ -73,9 +73,7 @@ class BaseUpdate:
         _, self.relative_content_path = is_file_from_content_repo(self.output_file)
         self.prev_ver = prev_ver
         self.old_file = self.is_old_file(
-            self.relative_content_path
-            if self.relative_content_path
-            else self.output_file,
+            self.relative_content_path if self.relative_content_path else self.output_file,
             self.prev_ver,
             self.verbose,
         )
@@ -98,13 +96,9 @@ class BaseUpdate:
             )
 
         if not self.source_file:
-            raise Exception(
-                "Please provide <source path>, <optional - destination path>."
-            )
+            raise Exception("Please provide <source path>, <optional - destination path>.")
         try:
-            self.data, self.file_type = get_dict_from_file(
-                self.source_file, clear_cache=clear_cache
-            )
+            self.data, self.file_type = get_dict_from_file(self.source_file, clear_cache=clear_cache)
         except Exception:
             raise Exception(f"Provided file {self.source_file} is not a valid file.")
         self.from_version_key = self.set_from_version_key_name()
@@ -144,11 +138,7 @@ class BaseUpdate:
     def set_default_value(self, key: str, value: Any, location=None):
         """Replaces the version to default."""
         if self.verbose:
-            click.echo(
-                f"Setting {key} to default={value}" + " in custom location"
-                if location
-                else ""
-            )
+            click.echo(f"Setting {key} to default={value}" + " in custom location" if location else "")
         if location:
             location[key] = value
         else:
@@ -159,9 +149,7 @@ class BaseUpdate:
         if self.verbose:
             print("Removing Unnecessary fields from file")
         if isinstance(self.extended_schema, dict):
-            self.recursive_remove_unnecessary_keys(
-                self.extended_schema.get("mapping", {}), self.data
-            )
+            self.recursive_remove_unnecessary_keys(self.extended_schema.get("mapping", {}), self.data)
 
     def get_schema(self) -> dict:
         try:
@@ -191,10 +179,7 @@ class BaseUpdate:
             return current_schema
         # If the current schema is a list - we will return the extended schema of each of it's elements
         if isinstance(current_schema, list):
-            return [
-                BaseUpdate.recursive_extend_schema(value, full_schema)
-                for value in current_schema
-            ]
+            return [BaseUpdate.recursive_extend_schema(value, full_schema) for value in current_schema]
         # If the current schema is a dict this is the main condition we will handle
         if isinstance(current_schema, dict):
             modified_schema = {}
@@ -206,18 +191,12 @@ class BaseUpdate:
                 if isinstance(value, str) and key == "include":
                     extended_schema: dict = full_schema.get(f"schema;{value}")  # type: ignore
                     if extended_schema is None:
-                        click.echo(
-                            f"Could not find sub-schema for {value}", LOG_COLORS.YELLOW
-                        )
+                        click.echo(f"Could not find sub-schema for {value}", LOG_COLORS.YELLOW)
                     # sometimes the sub-schema can have it's own sub-schemas so we need to unify that too
-                    return BaseUpdate.recursive_extend_schema(
-                        deepcopy(extended_schema), full_schema
-                    )
+                    return BaseUpdate.recursive_extend_schema(deepcopy(extended_schema), full_schema)
                 else:
                     # This is the mapping case in which we can let the recursive method do it's thing on the values
-                    modified_schema[key] = BaseUpdate.recursive_extend_schema(
-                        value, full_schema
-                    )
+                    modified_schema[key] = BaseUpdate.recursive_extend_schema(value, full_schema)
             return modified_schema
 
     def recursive_remove_unnecessary_keys(self, schema: dict, data: dict) -> None:
@@ -247,9 +226,7 @@ class BaseUpdate:
             else:
                 mapping = schema.get(field, {}).get("mapping")
                 if mapping:  # type: ignore
-                    self.recursive_remove_unnecessary_keys(
-                        schema.get(field, {}).get("mapping"), data.get(field, {})
-                    )
+                    self.recursive_remove_unnecessary_keys(schema.get(field, {}).get("mapping"), data.get(field, {}))
                 # In case he have a sequence with mapping key in it's first element it's a continuation of the schema
                 # and we need to remove unnecessary keys from it too.
                 # In any other case there is nothing to do with the sequence
@@ -258,15 +235,11 @@ class BaseUpdate:
                     if sequence and sequence[0].get("mapping"):
                         if data[field] is None:
                             if self.verbose:
-                                print(
-                                    f"Adding an empty array - `[]` as the value of the `{field}` field"
-                                )
+                                print(f"Adding an empty array - `[]` as the value of the `{field}` field")
                             data[field] = []
                         else:
                             for list_element in data[field]:
-                                self.recursive_remove_unnecessary_keys(
-                                    sequence[0].get("mapping"), list_element
-                                )
+                                self.recursive_remove_unnecessary_keys(sequence[0].get("mapping"), list_element)
 
     def regex_matching_key(self, field, schema_keys):
         """
@@ -308,9 +281,7 @@ class BaseUpdate:
             click.secho("Skipping update of fromVersion", fg="yellow")
             return False
 
-    def set_default_from_version(
-        self, default_from_version: str, current_fromversion_value: str, file_type: str
-    ):
+    def set_default_from_version(self, default_from_version: str, current_fromversion_value: str, file_type: str):
         """
         Sets the default fromVersion key in the file:
             In case the user approved it:
@@ -322,9 +293,7 @@ class BaseUpdate:
             current_fromversion_value: current from_version if exists in the file.
             file_type: the file type.
         """
-        print(
-            default_from_version, GENERAL_DEFAULT_FROMVERSION, current_fromversion_value
-        )
+        print(default_from_version, GENERAL_DEFAULT_FROMVERSION, current_fromversion_value)
         max_version = get_max_version(
             [
                 GENERAL_DEFAULT_FROMVERSION,
@@ -332,9 +301,7 @@ class BaseUpdate:
                 current_fromversion_value,
             ]
         )
-        if max_version != current_fromversion_value and (
-            self.assume_yes or self.ask_user()
-        ):
+        if max_version != current_fromversion_value and (self.assume_yes or self.ask_user()):
             self.data[self.from_version_key] = max_version
 
     def set_fromVersion(self, default_from_version="", file_type: str = ""):
@@ -343,9 +310,7 @@ class BaseUpdate:
             default_from_version: default fromVersion specific to the content type.
             file_type: the file type.
         """
-        if self.from_version_key and not self.is_key_in_schema_root(
-            self.from_version_key
-        ):
+        if self.from_version_key and not self.is_key_in_schema_root(self.from_version_key):
             return  # nothing to set
         current_fromversion_value = self.data.get(self.from_version_key, "")
         if self.verbose:
@@ -355,15 +320,11 @@ class BaseUpdate:
             self.data[self.from_version_key] = self.from_version
         elif self.old_file.get(self.from_version_key):
             if not current_fromversion_value:
-                self.data[self.from_version_key] = self.old_file.get(
-                    self.from_version_key
-                )
+                self.data[self.from_version_key] = self.old_file.get(self.from_version_key)
         elif file_type and file_type in OLD_FILE_TYPES:
             self.data[self.from_version_key] = VERSION_5_5_0
         else:
-            self.set_default_from_version(
-                default_from_version, current_fromversion_value, file_type
-            )
+            self.set_default_from_version(default_from_version, current_fromversion_value, file_type)
 
     def arguments_to_remove(self) -> Set[str]:
         """Finds diff between keys in file and schema of file type.
@@ -398,21 +359,13 @@ class BaseUpdate:
         When developer clones playbook/integration/script it will automatically add _copy or _dev suffix.
         """
         if self.verbose:
-            click.echo(
-                "Removing _dev and _copy suffixes from name, id and display tags"
-            )
+            click.echo("Removing _dev and _copy suffixes from name, id and display tags")
         if self.data["name"]:
-            self.data["name"] = (
-                self.data.get("name", "").replace("_copy", "").replace("_dev", "")
-            )
+            self.data["name"] = self.data.get("name", "").replace("_copy", "").replace("_dev", "")
         if self.data.get("display"):
-            self.data["display"] = (
-                self.data.get("display", "").replace("_copy", "").replace("_dev", "")
-            )
+            self.data["display"] = self.data.get("display", "").replace("_copy", "").replace("_dev", "")
         if self.data.get("id"):
-            self.data["id"] = (
-                self.data.get("id", "").replace("_copy", "").replace("_dev", "")
-            )
+            self.data["id"] = self.data.get("id", "").replace("_copy", "").replace("_dev", "")
 
     def initiate_file_validator(self) -> int:
         """Run schema validate and file validate of file
@@ -433,9 +386,7 @@ class BaseUpdate:
             if self.is_old_file(self.output_file, self.prev_ver):
                 validation_result = self.validate_manager.run_validation_using_git()
             else:
-                validation_result = (
-                    self.validate_manager.run_validation_on_specific_files()
-                )
+                validation_result = self.validate_manager.run_validation_on_specific_files()
 
             if not validation_result:
                 return ERROR_RETURN_CODE
@@ -454,11 +405,7 @@ class BaseUpdate:
         current_from_version = self.data.get(self.from_version_key)
         old_from_server_version = self.old_file.get(self.json_from_server_version_key)
 
-        if (
-            old_from_server_version
-            and not current_from_server_version
-            and not current_from_version
-        ):
+        if old_from_server_version and not current_from_server_version and not current_from_version:
             self.data[self.from_version_key] = old_from_server_version
         elif current_from_server_version and not current_from_version:
             self.data[self.from_version_key] = current_from_server_version
@@ -467,9 +414,7 @@ class BaseUpdate:
             if current_from_server_version == current_from_version:
                 self.data.pop(self.json_from_server_version_key)
             else:
-                preserve_from_version = self.ask_user(
-                    preserve_from_version_question=True
-                )
+                preserve_from_version = self.ask_user(preserve_from_version_question=True)
                 if preserve_from_version or self.assume_yes:
                     self.data.pop(self.json_from_server_version_key)
                 else:

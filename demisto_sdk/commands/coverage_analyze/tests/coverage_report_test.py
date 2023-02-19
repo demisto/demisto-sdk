@@ -35,9 +35,7 @@ class TestCoverageReport:
 
     @staticmethod
     def patern(r_type, file_name, suffix):
-        return (
-            rf"^exporting {r_type} coverage report to [\w\-\./]+/{file_name}\.{suffix}$"
-        )
+        return rf"^exporting {r_type} coverage report to [\w\-\./]+/{file_name}\.{suffix}$"
 
     def test_without_coverage_file(self, tmpdir, monkeypatch, caplog):
         monkeypatch.chdir(tmpdir)
@@ -58,9 +56,7 @@ class TestCoverageReport:
 
     def test_with_export_report_function(self, tmpdir, monkeypatch, caplog):
         monkeypatch.chdir(tmpdir)
-        coverage_path = os.path.join(
-            COVERAGE_FILES_DIR, "HealthCheckAnalyzeLargeInvestigations"
-        )
+        coverage_path = os.path.join(COVERAGE_FILES_DIR, "HealthCheckAnalyzeLargeInvestigations")
         temp_cover_file = tmpdir.join(".coverage")
         copy_file(coverage_path, temp_cover_file)
         fix_file_path(temp_cover_file, PYTHON_FILE_PATH)
@@ -72,28 +68,18 @@ class TestCoverageReport:
         with caplog.at_level(logging.INFO, logger="demisto-sdk"):
             cov_report.coverage_report()
 
-        assert re.fullmatch(
-            self.patern("html", "html/index", "html"), caplog.records[1].msg
-        )
-        assert re.fullmatch(
-            self.patern("xml", "coverage", "xml"), caplog.records[2].msg
-        )
-        assert re.fullmatch(
-            self.patern("json", "coverage", "json"), caplog.records[3].msg
-        )
+        assert re.fullmatch(self.patern("html", "html/index", "html"), caplog.records[1].msg)
+        assert re.fullmatch(self.patern("xml", "coverage", "xml"), caplog.records[2].msg)
+        assert re.fullmatch(self.patern("json", "coverage", "json"), caplog.records[3].msg)
         assert len(caplog.records) == 4
 
     def test_with_txt_report(self, tmpdir, monkeypatch, caplog):
         monkeypatch.chdir(tmpdir)
-        coverage_path = os.path.join(
-            COVERAGE_FILES_DIR, "HealthCheckAnalyzeLargeInvestigations"
-        )
+        coverage_path = os.path.join(COVERAGE_FILES_DIR, "HealthCheckAnalyzeLargeInvestigations")
         temp_cover_file = tmpdir.join(".coverage")
         copy_file(coverage_path, temp_cover_file)
         fix_file_path(temp_cover_file, PYTHON_FILE_PATH)
-        cov_report = CoverageReport(
-            report_dir=str(tmpdir), report_type="text", coverage_file=temp_cover_file
-        )
+        cov_report = CoverageReport(report_dir=str(tmpdir), report_type="text", coverage_file=temp_cover_file)
         with caplog.at_level(logging.INFO, logger="demisto-sdk"):
             cov_report.coverage_report()
         # assert re.fullmatch(self.patern('txt', 'coverage', 'txt'), caplog.records[1].msg)
@@ -101,9 +87,7 @@ class TestCoverageReport:
 
     def test_with_json_min_report(self, tmpdir, monkeypatch, caplog):
         monkeypatch.chdir(tmpdir)
-        coverage_path = os.path.join(
-            COVERAGE_FILES_DIR, "HealthCheckAnalyzeLargeInvestigations"
-        )
+        coverage_path = os.path.join(COVERAGE_FILES_DIR, "HealthCheckAnalyzeLargeInvestigations")
         temp_cover_file = tmpdir.join(".coverage")
         copy_file(coverage_path, temp_cover_file)
         fix_file_path(temp_cover_file, PYTHON_FILE_PATH)
@@ -119,16 +103,12 @@ class TestCoverageReport:
 
     def test_get_report_str(self, tmpdir, monkeypatch):
         monkeypatch.chdir(tmpdir)
-        coverage_path = os.path.join(
-            COVERAGE_FILES_DIR, "HealthCheckAnalyzeLargeInvestigations"
-        )
+        coverage_path = os.path.join(COVERAGE_FILES_DIR, "HealthCheckAnalyzeLargeInvestigations")
         temp_coverage_path = tmpdir.join(".coverage")
         copy_file(coverage_path, temp_coverage_path)
         fix_file_path(temp_coverage_path, PYTHON_FILE_PATH)
         cov_report = CoverageReport(coverage_file=temp_coverage_path)
-        cov_report._cov = get_coverage_obj(
-            coverage_file=temp_coverage_path, report_dir=None, load_old=True
-        )
+        cov_report._cov = get_coverage_obj(coverage_file=temp_coverage_path, report_dir=None, load_old=True)
         report_str = cov_report.report_str
         assert report_str.split("\n")[2].split() == [
             PYTHON_FILE_PATH,
@@ -141,25 +121,19 @@ class TestCoverageReport:
         monkeypatch.chdir(tmpdir)
         cov_report = CoverageReport()
         assert cov_report._cov is None
-        get_coverage_obj_mock = mocker.patch(
-            "demisto_sdk.commands.coverage_analyze.coverage_report.get_coverage_obj"
-        )
+        get_coverage_obj_mock = mocker.patch("demisto_sdk.commands.coverage_analyze.coverage_report.get_coverage_obj")
         cov_report.cov
         assert cov_report._cov is not None
         get_coverage_obj_mock.assert_called_once()
 
     def test_files(self, tmpdir, monkeypatch):
         monkeypatch.chdir(tmpdir)
-        coverage_path = os.path.join(
-            COVERAGE_FILES_DIR, "HealthCheckAnalyzeLargeInvestigations"
-        )
+        coverage_path = os.path.join(COVERAGE_FILES_DIR, "HealthCheckAnalyzeLargeInvestigations")
         temp_coverage_path = tmpdir.join(".coverage")
         copy_file(coverage_path, temp_coverage_path)
         fix_file_path(temp_coverage_path, PYTHON_FILE_PATH)
         cov_report = CoverageReport(coverage_file=temp_coverage_path)
-        cov_report._cov = get_coverage_obj(
-            coverage_file=temp_coverage_path, report_dir=None, load_old=True
-        )
+        cov_report._cov = get_coverage_obj(coverage_file=temp_coverage_path, report_dir=None, load_old=True)
         file_path, cover = list(cov_report.files.items())[0]
         assert os.path.abspath(file_path) == PYTHON_FILE_PATH
         assert isinstance(cover, float)
@@ -167,9 +141,7 @@ class TestCoverageReport:
     def test_original_summary(self, tmpdir, monkeypatch, requests_mock):
         requests_mock.get(DEFAULT_URL, json=read_file(JSON_MIN_DATA_FILE))
         monkeypatch.chdir(tmpdir)
-        assert (
-            CoverageReport().original_summary == read_file(JSON_MIN_DATA_FILE)["files"]
-        )
+        assert CoverageReport().original_summary == read_file(JSON_MIN_DATA_FILE)["files"]
 
 
 class TestFileMinCoverage:
@@ -200,12 +172,8 @@ class TestFileMinCoverage:
         ),
     ]
 
-    @pytest.mark.parametrize(
-        "file_path, current_cover, expected_min_cover", data_test_with_exist_file
-    )
-    def test_with_exist_file(
-        self, file_path, current_cover, expected_min_cover, tmpdir, monkeypatch
-    ):
+    @pytest.mark.parametrize("file_path, current_cover, expected_min_cover", data_test_with_exist_file)
+    def test_with_exist_file(self, file_path, current_cover, expected_min_cover, tmpdir, monkeypatch):
         file_path = os.path.relpath(file_path)
         monkeypatch.chdir(tmpdir)
         cov_report = CoverageReport()
@@ -221,12 +189,8 @@ class TestFileMinCoverage:
         ),
     ]
 
-    @pytest.mark.parametrize(
-        "file_path, epsilon, expected_min_cover", data_test_with_custom_epsilon_file
-    )
-    def test_with_custom_epsilon_file(
-        self, file_path, epsilon, expected_min_cover, tmpdir, monkeypatch
-    ):
+    @pytest.mark.parametrize("file_path, epsilon, expected_min_cover", data_test_with_custom_epsilon_file)
+    def test_with_custom_epsilon_file(self, file_path, epsilon, expected_min_cover, tmpdir, monkeypatch):
         file_path = os.path.relpath(file_path)
         monkeypatch.chdir(tmpdir)
         cov_report = CoverageReport(allowed_coverage_degradation_percentage=epsilon)

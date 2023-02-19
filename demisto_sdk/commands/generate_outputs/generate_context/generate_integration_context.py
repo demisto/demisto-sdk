@@ -53,24 +53,19 @@ def insert_outputs(yml_data: Dict, command_name: str, output_with_contexts: List
     commands = yml_data.get("script", {}).get("commands") or []
     command_names = [command.get("name") for command in commands]
     if command_name not in command_names:
-        raise ValueError(
-            f"The {command_name} command is missing from the integration YML."
-        )
+        raise ValueError(f"The {command_name} command is missing from the integration YML.")
     command_index = command_names.index(command_name)
     command = commands[command_index]
 
     outputs: List[Dict[str, str]] = command.get("outputs") or []
     old_descriptions = _output_path_to_description(outputs)
     new_descriptions = _output_path_to_description(output_with_contexts)
-    old_output_paths = {
-        output.get("contextPath") for output in command.get("outputs", [])
-    }
+    old_output_paths = {output.get("contextPath") for output in command.get("outputs", [])}
 
     outputs.extend(
         output
         for output in output_with_contexts
-        if output.get("contextPath")
-        and output.get("contextPath") not in old_output_paths
+        if output.get("contextPath") and output.get("contextPath") not in old_output_paths
     )
 
     # populates the description field, preferring the new value (if not blank), and existing values over blanks.
@@ -79,16 +74,12 @@ def insert_outputs(yml_data: Dict, command_name: str, output_with_contexts: List
         if not path:
             raise ValueError("Found a command without a contextPath value")
         if not output.get("description"):
-            output["description"] = (
-                new_descriptions.get(path) or old_descriptions.get(path) or ""
-            )
+            output["description"] = new_descriptions.get(path) or old_descriptions.get(path) or ""
     yml_data["script"]["commands"][command_index]["outputs"] = outputs
     return yml_data
 
 
-def _output_path_to_description(
-    command_outputs: List[Dict[str, str]]
-) -> Dict[str, str]:
+def _output_path_to_description(command_outputs: List[Dict[str, str]]) -> Dict[str, str]:
     """creates a mapping of contextPath -> description, if the description is not null."""
     descriptions = {}
     for output in command_outputs:
@@ -129,9 +120,7 @@ def generate_integration_context(
 
             # Generate the examples with a local server
             for _, _, outputs in example:
-                output_with_contexts = dict_from_outputs_str(
-                    command, outputs, verbose=verbose
-                )
+                output_with_contexts = dict_from_outputs_str(command, outputs, verbose=verbose)
                 output_contexts = output_with_contexts.get("outputs")
                 yml_data = insert_outputs(yml_data, command, output_contexts)
 

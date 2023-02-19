@@ -71,9 +71,7 @@ class TestPlaybookRunner:
 
         # Run all pack test playbooks
         elif os.path.isdir(self.test_playbook_path):
-            test_playbooks.extend(
-                self.get_test_playbooks_from_folder(self.test_playbook_path)
-            )
+            test_playbooks.extend(self.get_test_playbooks_from_folder(self.test_playbook_path))
 
         # Run specific test playbook
         elif os.path.isfile(self.test_playbook_path):
@@ -117,9 +115,7 @@ class TestPlaybookRunner:
         """
         full_path = f"{folder_path}/TestPlaybooks"
         list_test_playbooks_files = os.listdir(full_path)
-        list_test_playbooks_files = [
-            f"{full_path}/{tpb}" for tpb in list_test_playbooks_files
-        ]
+        list_test_playbooks_files = [f"{full_path}/{tpb}" for tpb in list_test_playbooks_files]
         return list_test_playbooks_files
 
     def get_all_test_playbooks(self):
@@ -152,14 +148,10 @@ class TestPlaybookRunner:
 
         work_plan_link = self.base_link_to_workplan + str(incident_id)
         if self.should_wait:
-            status_code = self.run_and_check_tpb_status(
-                test_playbook_id, work_plan_link, incident_id
-            )
+            status_code = self.run_and_check_tpb_status(test_playbook_id, work_plan_link, incident_id)
 
         else:
-            print_color(
-                f"To see results please go to : {work_plan_link}", LOG_COLORS.NATIVE
-            )
+            print_color(f"To see results please go to : {work_plan_link}", LOG_COLORS.NATIVE)
 
         return status_code
 
@@ -205,9 +197,7 @@ class TestPlaybookRunner:
 
         return status_code
 
-    def create_incident_with_test_playbook(
-        self, incident_name: str, test_playbook_id: str
-    ) -> int:
+    def create_incident_with_test_playbook(self, incident_name: str, test_playbook_id: str) -> int:
         """Create an incident in your xsoar instance with the given incident_name and the given test_playbook_id
 
         Args:
@@ -227,9 +217,7 @@ class TestPlaybookRunner:
         create_incident_request.name = incident_name
 
         try:
-            response = self.demisto_client.create_incident(
-                create_incident_request=create_incident_request
-            )
+            response = self.demisto_client.create_incident(create_incident_request=create_incident_request)
         except ApiException as e:
             print_color(
                 f'Failed to create incident with playbook id : "{test_playbook_id}", '
@@ -248,9 +236,7 @@ class TestPlaybookRunner:
         return response.id
 
     def get_test_playbook_results_dict(self, inc_id):
-        test_playbook_results = self.demisto_client.generic_request(
-            method="GET", path=f"/inv-playbook/{inc_id}"
-        )
+        test_playbook_results = self.demisto_client.generic_request(method="GET", path=f"/inv-playbook/{inc_id}")
         return eval(test_playbook_results[0])
 
     def print_tpb_error_details(self, tpb_res, tpb_id):

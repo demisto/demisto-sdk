@@ -59,9 +59,7 @@ def set_environment_variables(monkeypatch):
 
 
 @pytest.mark.parametrize("file_path, expected_output", INPUT_OUTPUTS)
-def test_return_raw_outputs_from_log(
-    mocker, set_environment_variables, file_path, expected_output
-):
+def test_return_raw_outputs_from_log(mocker, set_environment_variables, file_path, expected_output):
     """
     Validates that the context of a log file is extracted correctly.
 
@@ -73,9 +71,7 @@ def test_return_raw_outputs_from_log(
 
 
 @pytest.mark.parametrize("file_path, expected_output", INPUT_OUTPUTS)
-def test_return_raw_outputs_from_log_also_write_log(
-    mocker, set_environment_variables, file_path, expected_output
-):
+def test_return_raw_outputs_from_log_also_write_log(mocker, set_environment_variables, file_path, expected_output):
     """
     Validates that the context of a log file is extracted correctly and that the log file is saved correctly in
     the expected output path.

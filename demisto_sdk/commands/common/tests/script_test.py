@@ -67,13 +67,9 @@ class TestScriptValidator:
     CONTEXT_NEW = {"outputs": [{"contextPath": "test1"}]}
 
     CONTEXT_CHANGED = {"outputs": [{"contextPath": "test2"}]}
-    CONTEXT_MULTI_OLD = {
-        "outputs": [{"contextPath": "test1"}, {"contextPath": "test2"}]
-    }
+    CONTEXT_MULTI_OLD = {"outputs": [{"contextPath": "test1"}, {"contextPath": "test2"}]}
 
-    CONTEXT_MULTI_NEW = {
-        "outputs": [{"contextPath": "test2"}, {"contextPath": "test1"}]
-    }
+    CONTEXT_MULTI_NEW = {"outputs": [{"contextPath": "test2"}, {"contextPath": "test1"}]}
     CONTEXT_EMPTY_OUTPUTS = {"outputs": None}
     INPUTS_CONTEXT_PATHS = [
         (CONTEXT_NEW, CONTEXT_OLD, True),
@@ -101,9 +97,7 @@ class TestScriptValidator:
 
     CURRENT_MULTI_ARGS = {"args": [{"name": "test1"}, {"name": "test2"}]}
 
-    ADDED_MULTI_ARGS = {
-        "args": [{"name": "test2"}, {"name": "test1"}, {"name": "test3"}]
-    }
+    ADDED_MULTI_ARGS = {"args": [{"name": "test2"}, {"name": "test1"}, {"name": "test3"}]}
     INPUTS_ARGS_CHANGED = [
         (CURRENT_ARGS, OLD_ARGS, False),
         (MOVED_ARG, OLD_ARGS, False),
@@ -154,15 +148,11 @@ class TestScriptValidator:
         ]
     }
     EXPECTED_CONFIGURATION_1 = {"test": False, "test1": True}
-    INPUTS_CONFIGURATION_EXTRACTION = [
-        (INPUT_CONFIGURATION_1, EXPECTED_CONFIGURATION_1)
-    ]
+    INPUTS_CONFIGURATION_EXTRACTION = [(INPUT_CONFIGURATION_1, EXPECTED_CONFIGURATION_1)]
 
     @pytest.mark.parametrize("script, expected", INPUTS_CONFIGURATION_EXTRACTION)
     def test_configuration_extraction(self, script, expected):
-        assert (
-            ScriptValidator._get_arg_to_required_dict(script) == expected
-        ), "Failed to extract configuration"
+        assert ScriptValidator._get_arg_to_required_dict(script) == expected, "Failed to extract configuration"
 
     PYTHON3_SUBTYPE = {"type": "python", "subtype": "python3"}
     PYTHON2_SUBTYPE = {"type": "python", "subtype": "python2"}
@@ -209,9 +199,7 @@ class TestScriptValidator:
         ("Packs/Pack1", True, True),
     ]
 
-    @pytest.mark.parametrize(
-        "file_path, skip_docker_check, answer", IS_SKIPPING_DOCKER_CHECK
-    )
+    @pytest.mark.parametrize("file_path, skip_docker_check, answer", IS_SKIPPING_DOCKER_CHECK)
     def test_is_docker_image_valid(self, file_path, skip_docker_check, answer):
         validator = get_validator()
         validator.file_path = file_path
@@ -256,15 +244,11 @@ class TestScriptValidator:
         """
 
         validator = get_validator()
-        validator.file_path = (
-            "Packs/AbuseDB/Scripts/script-AbuseIPDBPopulateIndicators.yml"
-        )
+        validator.file_path = "Packs/AbuseDB/Scripts/script-AbuseIPDBPopulateIndicators.yml"
 
         assert validator.is_valid_script_file_path()
 
-        validator.file_path = (
-            "Packs/AWS-EC2/Scripts/AwsEC2GetPublicSGRules/AwsEC2GetPublicSGRules.yml"
-        )
+        validator.file_path = "Packs/AWS-EC2/Scripts/AwsEC2GetPublicSGRules/AwsEC2GetPublicSGRules.yml"
 
         assert validator.is_valid_script_file_path()
 
@@ -383,8 +367,7 @@ class TestScriptValidator:
     }
     DEPRECATED_VALID2 = {
         "deprecated": True,
-        "comment": "Deprecated. Feodo Tracker no longer supports this feed "
-        "No available replacement.",
+        "comment": "Deprecated. Feodo Tracker no longer supports this feed " "No available replacement.",
     }
     DEPRECATED_VALID3 = {
         "deprecated": True,
@@ -511,13 +494,9 @@ class TestScriptValidator:
         (True, True, True),
     ]
 
-    @pytest.mark.parametrize(
-        "remove_readme, validate_all, expected_result", README_TEST_DATA
-    )
+    @pytest.mark.parametrize("remove_readme, validate_all, expected_result", README_TEST_DATA)
     @pytest.mark.parametrize("unified", [True, False])
-    def test_validate_readme_exists(
-        self, repo, unified, remove_readme, validate_all, expected_result
-    ):
+    def test_validate_readme_exists(self, repo, unified, remove_readme, validate_all, expected_result):
         """
         Given:
             - An integration yml that was added or modified to validate
@@ -538,15 +517,10 @@ class TestScriptValidator:
         script = read_me_pack.create_script("script1", create_unified=unified)
 
         structure_validator = StructureValidator(script.yml.path)
-        script_validator = ScriptValidator(
-            structure_validator, validate_all=validate_all
-        )
+        script_validator = ScriptValidator(structure_validator, validate_all=validate_all)
         if remove_readme:
             os.remove(script.readme.path)
-        assert (
-            script_validator.validate_readme_exists(script_validator.validate_all)
-            is expected_result
-        )
+        assert script_validator.validate_readme_exists(script_validator.validate_all) is expected_result
 
     @pytest.mark.parametrize(
         "script_yml, is_validation_ok",
@@ -555,9 +529,7 @@ class TestScriptValidator:
             ({"commonfields": {"id": "test"}}, True),
         ],
     )
-    def test_is_native_image_does_not_exist_in_yml_fail(
-        self, repo, script_yml, is_validation_ok
-    ):
+    def test_is_native_image_does_not_exist_in_yml_fail(self, repo, script_yml, is_validation_ok):
         """
         Given:
             - Case A: script yml that has the nativeimage key
@@ -573,7 +545,4 @@ class TestScriptValidator:
         structure_validator = StructureValidator(script.yml.path)
         integration_validator = ScriptValidator(structure_validator)
 
-        assert (
-            integration_validator.is_nativeimage_key_does_not_exist_in_yml()
-            == is_validation_ok
-        )
+        assert integration_validator.is_nativeimage_key_does_not_exist_in_yml() == is_validation_ok

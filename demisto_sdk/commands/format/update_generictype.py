@@ -48,11 +48,7 @@ class GenericTypeJSONFormat(BaseUpdateJSON):
                 f"\n================= Updating file {self.source_file} =================",
                 fg="bright_blue",
             )
-            super().update_json(
-                default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(
-                    FileType.GENERIC_TYPE
-                )
-            )
+            super().update_json(default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.GENERIC_TYPE))
             self.set_default_values_as_needed()
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE

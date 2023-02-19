@@ -23,16 +23,12 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
 class TestMapperValidator:
 
     INCOMING_MAPPER = {
-        "mapping": {
-            "0": {"internalMapping": {"Incident Field": {"simple": "Incident Field"}}}
-        },
+        "mapping": {"0": {"internalMapping": {"Incident Field": {"simple": "Incident Field"}}}},
         "type": "mapping-incoming",
     }
 
     OUTGOING_MAPPER = {
-        "mapping": {
-            "0": {"internalMapping": {"Incident Field": {"simple": "Incident Field"}}}
-        },
+        "mapping": {"0": {"internalMapping": {"Incident Field": {"simple": "Incident Field"}}}},
         "type": "mapping-outgoing",
     }
 
@@ -53,12 +49,8 @@ class TestMapperValidator:
         (OUTGOING_MAPPER, ID_SET_WITHOUT_INCIDENT_FIELD, True, False),
     ]
 
-    @pytest.mark.parametrize(
-        "mapper_json, id_set_json, is_circle, expected_result", IS_INCIDENT_FIELD_EXIST
-    )
-    def test_is_incident_field_exist(
-        self, repo, mapper_json, id_set_json, is_circle, expected_result
-    ):
+    @pytest.mark.parametrize("mapper_json, id_set_json, is_circle, expected_result", IS_INCIDENT_FIELD_EXIST)
+    def test_is_incident_field_exist(self, repo, mapper_json, id_set_json, is_circle, expected_result):
         """
         Given
         - A mapper with incident fields
@@ -71,9 +63,7 @@ class TestMapperValidator:
         repo.id_set.write_json(id_set_json)
         structure = mock_structure("", mapper_json)
         validator = MapperValidator(structure)
-        assert (
-            validator.is_incident_field_exist(id_set_json, is_circle) == expected_result
-        )
+        assert validator.is_incident_field_exist(id_set_json, is_circle) == expected_result
 
     IS_MATCHING_NAME_ID_INPUT = [
         ({"id": "name", "name": "name"}, True),

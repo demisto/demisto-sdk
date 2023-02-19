@@ -44,9 +44,7 @@ class OldReleaseNotesValidator(BaseValidator):
         )
         self.file_path = file_path
         self.release_notes_path = old_get_release_notes_file_path(self.file_path)
-        self.latest_release_notes = old_get_latest_release_notes_text(
-            self.release_notes_path
-        )
+        self.latest_release_notes = old_get_latest_release_notes_text(self.release_notes_path)
         self.master_diff = self.get_master_diff()
 
     def get_master_diff(self):
@@ -59,9 +57,7 @@ class OldReleaseNotesValidator(BaseValidator):
         Returns:
             str. empty string if no changes made or no origin/master branch, otherwise full difference context.
         """
-        return run_command(
-            f"git diff --unified=100 " f"origin/master {self.release_notes_path}"
-        )
+        return run_command(f"git diff --unified=100 " f"origin/master {self.release_notes_path}")
 
     @error_codes("RN101")
     def is_release_notes_changed(self):
@@ -96,9 +92,9 @@ class OldReleaseNotesValidator(BaseValidator):
         return True
 
     def is_valid_one_line_comment(self, release_notes_comments):
-        if re.match(
-            self.SINGLE_LINE_REAL_COMMENT_REGEX, release_notes_comments[0]
-        ) or re.match(self.COMMENT_FILLER_REGEX, release_notes_comments[0]):
+        if re.match(self.SINGLE_LINE_REAL_COMMENT_REGEX, release_notes_comments[0]) or re.match(
+            self.COMMENT_FILLER_REGEX, release_notes_comments[0]
+        ):
             return True
 
         return False
@@ -106,8 +102,7 @@ class OldReleaseNotesValidator(BaseValidator):
     def is_valid_multi_line_comment(self, release_notes_comments):
         for comment in release_notes_comments:
             if not (
-                re.match(self.MULTI_LINE_REAL_COMMENT_REGEX, comment)
-                or re.match(self.COMMENT_FILLER_REGEX, comment)
+                re.match(self.MULTI_LINE_REAL_COMMENT_REGEX, comment) or re.match(self.COMMENT_FILLER_REGEX, comment)
             ):
                 return False
 
@@ -124,12 +119,8 @@ class OldReleaseNotesValidator(BaseValidator):
             release_notes_comments = self.latest_release_notes.split("\n")
 
         else:
-            error_message, error_code = Errors.no_new_release_notes(
-                self.release_notes_path
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=self.release_notes_path
-            ):
+            error_message, error_code = Errors.no_new_release_notes(self.release_notes_path)
+            if self.handle_error(error_message, error_code, file_path=self.release_notes_path):
                 return False
 
             return True
@@ -137,18 +128,14 @@ class OldReleaseNotesValidator(BaseValidator):
         if not release_notes_comments[-1]:
             release_notes_comments = release_notes_comments[:-1]
 
-        if len(release_notes_comments) == 1 and self.is_valid_one_line_comment(
-            release_notes_comments
-        ):
+        if len(release_notes_comments) == 1 and self.is_valid_one_line_comment(release_notes_comments):
             return True
 
         elif len(release_notes_comments) <= 1:
             error_message, error_code = Errors.release_notes_not_formatted_correctly(
                 self.LINK_TO_RELEASE_NOTES_STANDARD
             )
-            if self.handle_error(
-                error_message, error_code, file_path=self.release_notes_path
-            ):
+            if self.handle_error(error_message, error_code, file_path=self.release_notes_path):
                 return False
 
         else:
@@ -159,12 +146,8 @@ class OldReleaseNotesValidator(BaseValidator):
                 (
                     error_message,
                     error_code,
-                ) = Errors.release_notes_not_formatted_correctly(
-                    self.LINK_TO_RELEASE_NOTES_STANDARD
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.release_notes_path
-                ):
+                ) = Errors.release_notes_not_formatted_correctly(self.LINK_TO_RELEASE_NOTES_STANDARD)
+                if self.handle_error(error_message, error_code, file_path=self.release_notes_path):
                     return False
 
         return True
@@ -178,9 +161,7 @@ class OldReleaseNotesValidator(BaseValidator):
         """
         # checks that release notes file exists and contains text
         if not (os.path.isfile(self.release_notes_path) and self.latest_release_notes):
-            error_message, error_code = Errors.missing_release_notes(
-                self.release_notes_path
-            )
+            error_message, error_code = Errors.missing_release_notes(self.release_notes_path)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 

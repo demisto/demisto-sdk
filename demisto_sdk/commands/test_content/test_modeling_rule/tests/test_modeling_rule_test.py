@@ -241,9 +241,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
         mrule_dir = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
         test_data_file = mrule_dir / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
+        path_to_fake_test_data_file = Path(__file__).parent / "test_data/fake_test_data_file.json"
         fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
         test_data_file.write_text(fake_test_data.json(indent=4))
 
@@ -291,9 +289,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
         mrule_dir = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
         test_data_file = mrule_dir / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
+        path_to_fake_test_data_file = Path(__file__).parent / "test_data/fake_test_data_file.json"
         fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
         test_data_file.write_text(fake_test_data.json(indent=4))
 
@@ -320,9 +316,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
-    def test_the_test_modeling_rule_command_fail_to_check_dataset_exists(
-        self, pack, monkeypatch
-    ):
+    def test_the_test_modeling_rule_command_fail_to_check_dataset_exists(self, pack, monkeypatch):
         """
         Given:
             - A test data file.
@@ -343,10 +337,7 @@ class TestTheTestModelingRuleCommandSingleRule:
             check_dataset_exists,
         )
 
-        func_path = (
-            "demisto_sdk.commands.test_content.test_modeling_rule."
-            "test_modeling_rule.check_dataset_exists"
-        )
+        func_path = "demisto_sdk.commands.test_content.test_modeling_rule." "test_modeling_rule.check_dataset_exists"
         # override the default timeout to 1 second so only one iteration of the loop will be executed
         check_dataset_exists_with_timeout = partial(check_dataset_exists, timeout=5)
         monkeypatch.setattr(func_path, check_dataset_exists_with_timeout)
@@ -365,9 +356,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
         mrule_dir = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
         test_data_file = mrule_dir / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
+        path_to_fake_test_data_file = Path(__file__).parent / "test_data/fake_test_data_file.json"
         fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
         test_data_file.write_text(fake_test_data.json(indent=4))
 
@@ -397,16 +386,11 @@ class TestTheTestModelingRuleCommandSingleRule:
                     )
                     # Assert
                     assert result.exit_code == 1
-                    assert (
-                        f"Dataset {fake_test_data.data[0].dataset} does not exist"
-                        in result.stdout
-                    )
+                    assert f"Dataset {fake_test_data.data[0].dataset} does not exist" in result.stdout
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
-    def test_the_test_modeling_rule_command_fail_to_start_xql_query(
-        self, pack, monkeypatch
-    ):
+    def test_the_test_modeling_rule_command_fail_to_start_xql_query(self, pack, monkeypatch):
         """
         Given:
             - A test data file.
@@ -428,10 +412,7 @@ class TestTheTestModelingRuleCommandSingleRule:
             check_dataset_exists,
         )
 
-        func_path = (
-            "demisto_sdk.commands.test_content.test_modeling_rule."
-            "test_modeling_rule.check_dataset_exists"
-        )
+        func_path = "demisto_sdk.commands.test_content.test_modeling_rule." "test_modeling_rule.check_dataset_exists"
         # override the default timeout to 1 second so only one iteration of the loop will be executed
         check_dataset_exists_with_timeout = partial(check_dataset_exists, timeout=5)
         monkeypatch.setattr(func_path, check_dataset_exists_with_timeout)
@@ -450,9 +431,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
         mrule_dir = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
         test_data_file = mrule_dir / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
+        path_to_fake_test_data_file = Path(__file__).parent / "test_data/fake_test_data_file.json"
         fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
         test_data_file.write_text(fake_test_data.json(indent=4))
 
@@ -500,9 +479,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
-    def test_the_test_modeling_rule_command_fail_to_get_xql_query_results(
-        self, pack, monkeypatch
-    ):
+    def test_the_test_modeling_rule_command_fail_to_get_xql_query_results(self, pack, monkeypatch):
         """
         Given:
             - A test data file.
@@ -525,10 +502,7 @@ class TestTheTestModelingRuleCommandSingleRule:
             check_dataset_exists,
         )
 
-        func_path = (
-            "demisto_sdk.commands.test_content.test_modeling_rule."
-            "test_modeling_rule.check_dataset_exists"
-        )
+        func_path = "demisto_sdk.commands.test_content.test_modeling_rule." "test_modeling_rule.check_dataset_exists"
         # override the default timeout to 1 second so only one iteration of the loop will be executed
         check_dataset_exists_with_timeout = partial(check_dataset_exists, timeout=5)
         monkeypatch.setattr(func_path, check_dataset_exists_with_timeout)
@@ -547,9 +521,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
         mrule_dir = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
         test_data_file = mrule_dir / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
+        path_to_fake_test_data_file = Path(__file__).parent / "test_data/fake_test_data_file.json"
         fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
         test_data_file.write_text(fake_test_data.json(indent=4))
 
@@ -602,9 +574,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
-    def test_the_test_modeling_rule_command_results_match_expectations(
-        self, pack, monkeypatch
-    ):
+    def test_the_test_modeling_rule_command_results_match_expectations(self, pack, monkeypatch):
         """
         Given:
             - A test data file.
@@ -628,10 +598,7 @@ class TestTheTestModelingRuleCommandSingleRule:
             check_dataset_exists,
         )
 
-        func_path = (
-            "demisto_sdk.commands.test_content.test_modeling_rule."
-            "test_modeling_rule.check_dataset_exists"
-        )
+        func_path = "demisto_sdk.commands.test_content.test_modeling_rule." "test_modeling_rule.check_dataset_exists"
         # override the default timeout to 1 second so only one iteration of the loop will be executed
         check_dataset_exists_with_timeout = partial(check_dataset_exists, timeout=5)
         monkeypatch.setattr(func_path, check_dataset_exists_with_timeout)
@@ -650,9 +617,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
         mrule_dir = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
         test_data_file = mrule_dir / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
+        path_to_fake_test_data_file = Path(__file__).parent / "test_data/fake_test_data_file.json"
         fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
         test_data_file.write_text(fake_test_data.json(indent=4))
 
@@ -698,15 +663,11 @@ class TestTheTestModelingRuleCommandSingleRule:
                                             "data": [
                                                 {
                                                     id_key: event_id_1,
-                                                    **fake_test_data.data[
-                                                        0
-                                                    ].expected_values,
+                                                    **fake_test_data.data[0].expected_values,
                                                 },
                                                 {
                                                     id_key: event_id_2,
-                                                    **fake_test_data.data[
-                                                        1
-                                                    ].expected_values,
+                                                    **fake_test_data.data[1].expected_values,
                                                 },
                                             ]
                                         },
@@ -727,9 +688,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
-    def test_the_test_modeling_rule_command_results_do_not_match_expectations(
-        self, pack, monkeypatch
-    ):
+    def test_the_test_modeling_rule_command_results_do_not_match_expectations(self, pack, monkeypatch):
         """
         Given:
             - A test data file.
@@ -753,10 +712,7 @@ class TestTheTestModelingRuleCommandSingleRule:
             check_dataset_exists,
         )
 
-        func_path = (
-            "demisto_sdk.commands.test_content.test_modeling_rule."
-            "test_modeling_rule.check_dataset_exists"
-        )
+        func_path = "demisto_sdk.commands.test_content.test_modeling_rule." "test_modeling_rule.check_dataset_exists"
         # override the default timeout to 1 second so only one iteration of the loop will be executed
         check_dataset_exists_with_timeout = partial(check_dataset_exists, timeout=5)
         monkeypatch.setattr(func_path, check_dataset_exists_with_timeout)
@@ -775,9 +731,7 @@ class TestTheTestModelingRuleCommandSingleRule:
         pack.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
         mrule_dir = Path(pack._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
         test_data_file = mrule_dir / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
+        path_to_fake_test_data_file = Path(__file__).parent / "test_data/fake_test_data_file.json"
         fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
         test_data_file.write_text(fake_test_data.json(indent=4))
 
@@ -826,9 +780,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                                                 {id_key: event_id_1, **query_results_1},
                                                 {
                                                     id_key: event_id_2,
-                                                    **fake_test_data.data[
-                                                        1
-                                                    ].expected_values,
+                                                    **fake_test_data.data[1].expected_values,
                                                 },
                                             ]
                                         },
@@ -845,10 +797,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                     )
                     # Assert
                     assert result.exit_code == 1
-                    assert (
-                        'xdm.event.outcome_reason --- "DisAllowed" != "Allowed"'
-                        in result.stdout
-                    )
+                    assert 'xdm.event.outcome_reason --- "DisAllowed" != "Allowed"' in result.stdout
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
@@ -882,27 +831,19 @@ class TestTheTestModelingRuleCommandMultipleRules:
 
         # Create Pack 1 with Modeling Rule
         pack_1 = repo.create_pack("Pack1")
-        pack_1.create_modeling_rule(
-            DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT
-        )
+        pack_1.create_modeling_rule(DEFAULT_MODELING_RULE_NAME, rules=ONE_MODEL_RULE_TEXT)
         mrule_dir_1 = Path(pack_1._modeling_rules_path / DEFAULT_MODELING_RULE_NAME)
         test_data_file = mrule_dir_1 / f"{DEFAULT_MODELING_RULE_NAME}_testdata.json"
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
+        path_to_fake_test_data_file = Path(__file__).parent / "test_data/fake_test_data_file.json"
         fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
         test_data_file.write_text(fake_test_data.json(indent=4))
 
         # Create Pack 2 with Modeling Rule
         pack_2 = repo.create_pack("Pack2")
-        pack_2.create_modeling_rule(
-            DEFAULT_MODELING_RULE_NAME_2, rules=ONE_MODEL_RULE_TEXT
-        )
+        pack_2.create_modeling_rule(DEFAULT_MODELING_RULE_NAME_2, rules=ONE_MODEL_RULE_TEXT)
         mrule_dir_2 = Path(pack_2._modeling_rules_path / DEFAULT_MODELING_RULE_NAME_2)
         test_data_file = mrule_dir_2 / f"{DEFAULT_MODELING_RULE_NAME_2}_testdata.json"
-        path_to_fake_test_data_file = (
-            Path(__file__).parent / "test_data/fake_test_data_file.json"
-        )
+        path_to_fake_test_data_file = Path(__file__).parent / "test_data/fake_test_data_file.json"
         fake_test_data = TestData.parse_file(path_to_fake_test_data_file.as_posix())
         test_data_file.write_text(fake_test_data.json(indent=4))
 
@@ -954,15 +895,11 @@ class TestTheTestModelingRuleCommandMultipleRules:
                                             "data": [
                                                 {
                                                     id_key: event_id_1,
-                                                    **fake_test_data.data[
-                                                        0
-                                                    ].expected_values,
+                                                    **fake_test_data.data[0].expected_values,
                                                 },
                                                 {
                                                     id_key: event_id_2,
-                                                    **fake_test_data.data[
-                                                        1
-                                                    ].expected_values,
+                                                    **fake_test_data.data[1].expected_values,
                                                 },
                                             ]
                                         },
@@ -1030,29 +967,22 @@ class TestTheTestModelingRuleCommandInteractive:
         try:
             with SetFakeXsiamClientEnvironmentVars():
                 mock_confirm = mocker.patch(
-                    "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule."
-                    "typer.confirm"
+                    "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule." "typer.confirm"
                 )
                 mock_prompt = mocker.patch(
-                    "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule."
-                    "typer.prompt"
+                    "demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule." "typer.prompt"
                 )
                 # Arrange
                 mock_confirm.return_value = True
                 mock_prompt.return_value = 2
                 # Act
-                result = runner.invoke(
-                    test_modeling_rule_cmd, [mrule_dir.as_posix(), "--interactive"]
-                )
+                result = runner.invoke(test_modeling_rule_cmd, [mrule_dir.as_posix(), "--interactive"])
                 # Assert
                 expected_log_count = 1
                 assert result.exit_code == 0
                 assert test_data_file.exists()
                 assert "WARNING  No test data file found for" in result.stdout
-                assert (
-                    result.stdout.count("Creating test data file for: ")
-                    == expected_log_count
-                )
+                assert result.stdout.count("Creating test data file for: ") == expected_log_count
 
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."

@@ -8,12 +8,8 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 )
 
 
-class IndicatorFieldParser(
-    JSONContentItemParser, content_type=ContentType.INDICATOR_FIELD
-):
-    def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
-    ) -> None:
+class IndicatorFieldParser(JSONContentItemParser, content_type=ContentType.INDICATOR_FIELD):
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         super().__init__(path, pack_marketplaces)
         self.cli_name = self.json_data.get("cliName")
         self.type = self.json_data.get("type")
@@ -32,16 +28,10 @@ class IndicatorFieldParser(
     def connect_to_dependencies(self) -> None:
         """Collects indicator types used by the field as optional dependencies, and scripts as mandatory dependencies."""
         for associated_type in set(self.json_data.get("associatedTypes") or []):
-            self.add_dependency_by_name(
-                associated_type, ContentType.INDICATOR_TYPE, is_mandatory=False
-            )
+            self.add_dependency_by_name(associated_type, ContentType.INDICATOR_TYPE, is_mandatory=False)
 
-        for system_associated_type in set(
-            self.json_data.get("systemAssociatedTypes") or []
-        ):
-            self.add_dependency_by_name(
-                system_associated_type, ContentType.INDICATOR_TYPE, is_mandatory=False
-            )
+        for system_associated_type in set(self.json_data.get("systemAssociatedTypes") or []):
+            self.add_dependency_by_name(system_associated_type, ContentType.INDICATOR_TYPE, is_mandatory=False)
 
         if script := self.json_data.get("script"):
             self.add_dependency_by_id(script, ContentType.SCRIPT)

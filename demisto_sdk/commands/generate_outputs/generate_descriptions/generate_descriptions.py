@@ -96,9 +96,7 @@ def generate_desc_with_spinner(command_output_path, insecure, output, verbose):
     LOADING_DONE = False
     t = threading.Thread(target=animate)
     t.start()
-    output = generate_desc(
-        command_output_path, verbose=verbose, prob_check=True, insecure=insecure
-    )
+    output = generate_desc(command_output_path, verbose=verbose, prob_check=True, insecure=insecure)
     LOADING_DONE = True
     return output
 
@@ -167,9 +165,7 @@ def write_desc(c_index, final_output, o_index, output_path, verbose, yml_data):
     """Write a description to disk"""
     if verbose:
         logger.debug(f"Writing: {final_output}\n---")
-    yml_data["script"]["commands"][c_index]["outputs"][o_index][
-        "description"
-    ] = final_output
+    yml_data["script"]["commands"][c_index]["outputs"][o_index]["description"] = final_output
     write_yml(output_path, yml_data)
 
 
@@ -254,17 +250,13 @@ def generate_ai_descriptions(
 
                 # Match past paths automatically.
                 if command_output_path in similar_paths:
-                    print(
-                        f"\n--Already added description for exact path: {command_output_path}--"
-                    )
+                    print(f"\n--Already added description for exact path: {command_output_path}--")
                     final_output = similar_paths.get(command_output_path)
                     print(f"Last output was: '{final_output}'")
                     y = input("Should we use it (y/n)? ").lower()
                     if y == "y" or y == "yes":
                         print("Using last seen output.")
-                        yml_data["script"]["commands"][c_index]["outputs"][o_index][
-                            "description"
-                        ] = final_output
+                        yml_data["script"]["commands"][c_index]["outputs"][o_index]["description"] = final_output
                         write_yml(output_path, yml_data)
                         continue
                     else:
@@ -282,9 +274,7 @@ def generate_ai_descriptions(
                 # have a long prompt we need to clear).
                 for _exception in range(2):
                     try:
-                        output = generate_desc_with_spinner(
-                            command_output_path, insecure, output, verbose
-                        )
+                        output = generate_desc_with_spinner(command_output_path, insecure, output, verbose)
                         break
                     except requests.exceptions.RequestException as e:
                         print("Failed AI description request: ", e)
@@ -295,14 +285,10 @@ def generate_ai_descriptions(
 
                 # Correct the description if needed interactively
                 if interactive:
-                    final_output = correct_interactively(
-                        command_output_path, final_output, output
-                    )
+                    final_output = correct_interactively(command_output_path, final_output, output)
 
                 # Write the final description to the file (backup)
-                write_desc(
-                    c_index, final_output, o_index, output_path, verbose, yml_data
-                )
+                write_desc(c_index, final_output, o_index, output_path, verbose, yml_data)
 
                 # Update the similar context paths
                 similar_paths[command_output_path] = str(final_output)

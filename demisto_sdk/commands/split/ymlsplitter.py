@@ -94,9 +94,7 @@ class YmlSplitter:
             output_path = output_path / pascal_case(code_name)
         return output_path
 
-    def extract_to_package_format(
-        self, executed_from_contrib_converter: bool = False
-    ) -> int:
+    def extract_to_package_format(self, executed_from_contrib_converter: bool = False) -> int:
         """Extracts the self.input yml file into several files according to the XSOAR standard of the package format.
 
         Returns:
@@ -116,17 +114,11 @@ class YmlSplitter:
         code_file = output_path / base_name
         self.extract_code(code_file, executed_from_contrib_converter)
         script = self.yml_data.get("script", {})
-        lang_type: str = (
-            script.get("type", "")
-            if self.file_type == "integration"
-            else self.yml_data.get("type")
-        )
+        lang_type: str = script.get("type", "") if self.file_type == "integration" else self.yml_data.get("type")
         self.extract_image(f"{output_path}/{base_name}_image.png")
         self.extract_long_description(f"{output_path}/{base_name}_description.md")
         yaml_out = f"{output_path}/{base_name}.yml"
-        self.print_logs(
-            f"Creating yml file: {yaml_out} ...", log_color=LOG_COLORS.NATIVE
-        )
+        self.print_logs(f"Creating yml file: {yaml_out} ...", log_color=LOG_COLORS.NATIVE)
         with open(self.input) as yf:
             yaml_obj = yaml.load(yf)
         script_obj = yaml_obj
@@ -136,9 +128,7 @@ class YmlSplitter:
             if "rules" in yaml_obj:
                 yaml_obj["rules"] = PlainScalarString("")
             if "schema" in yaml_obj:
-                self.extract_rule_schema_and_samples(
-                    f"{output_path}/{base_name}_schema.json"
-                )
+                self.extract_rule_schema_and_samples(f"{output_path}/{base_name}_schema.json")
                 yaml_obj["schema"] = PlainScalarString("")
             if "samples" in yaml_obj:
                 self.extract_rule_schema_and_samples(f"{output_path}/{base_name}.json")
@@ -168,9 +158,7 @@ class YmlSplitter:
                 yml_readme = self.input.parent / f"{self.input.stem}_README.md"
                 readme = output_path / "README.md"
                 if yml_readme.exists():
-                    self.print_logs(
-                        f"Copying {readme} to {readme}", log_color=LOG_COLORS.NATIVE
-                    )
+                    self.print_logs(f"Copying {readme} to {readme}", log_color=LOG_COLORS.NATIVE)
                     shutil.copy(yml_readme, readme)
                 else:
                     # open an empty file
@@ -182,9 +170,7 @@ class YmlSplitter:
         )
         return 0
 
-    def extract_code(
-        self, code_file_path, executed_from_contrib_converter: bool = False
-    ) -> int:
+    def extract_code(self, code_file_path, executed_from_contrib_converter: bool = False) -> int:
         """Extracts the code from the yml_file.
         If code_file_path doesn't contain the proper extension will add it.
 
@@ -193,26 +179,22 @@ class YmlSplitter:
         """
         common_server = self.common_server
         if common_server:
-            common_server = "CommonServerPython" not in str(
+            common_server = "CommonServerPython" not in str(self.input) and "CommonServerPowerShell" not in str(
                 self.input
-            ) and "CommonServerPowerShell" not in str(self.input)
+            )
         if self.file_type == "modelingrule" or self.file_type == "parsingrule":
             # no need to extract code
             return 0
 
         script = self.yml_data["script"]
-        if (
-            self.file_type == "integration"
-        ):  # in integration the script is stored at a second level
+        if self.file_type == "integration":  # in integration the script is stored at a second level
             lang_type = script["type"]
             script = script["script"]
         else:
             lang_type = self.yml_data["type"]
         ext = TYPE_TO_EXTENSION[lang_type]
         code_file_path = code_file_path.with_suffix(ext)
-        self.print_logs(
-            f"Extracting code to: {code_file_path} ...", log_color=LOG_COLORS.NATIVE
-        )
+        self.print_logs(f"Extracting code to: {code_file_path} ...", log_color=LOG_COLORS.NATIVE)
         with open(code_file_path, "w") as code_file:
             if lang_type == TYPE_PYTHON and self.demisto_mock:
                 code_file.write("import demistomock as demisto  # noqa: F401\n")
@@ -240,9 +222,7 @@ class YmlSplitter:
         """
         if self.file_type == "script":
             return 0  # no image in script type
-        self.print_logs(
-            f"Extracting image to: {output_path} ...", log_color=LOG_COLORS.NATIVE
-        )
+        self.print_logs(f"Extracting image to: {output_path} ...", log_color=LOG_COLORS.NATIVE)
         im_field = self.yml_data.get("image")
         if im_field and len(im_field.split(",")) >= 2:
             image_b64 = self.yml_data["image"].split(",")[1]
@@ -252,19 +232,13 @@ class YmlSplitter:
 
     def remove_integration_documentation(self, detailed_description):
         if "[View Integration Documentation]" in detailed_description:
-            normalized_integration_id = (
-                IntegrationScriptUnifier.normalize_integration_id(
-                    self.yml_data["commonfields"]["id"]
-                )
+            normalized_integration_id = IntegrationScriptUnifier.normalize_integration_id(
+                self.yml_data["commonfields"]["id"]
             )
-            integration_doc_link = (
-                INTEGRATIONS_DOCS_REFERENCE + normalized_integration_id
-            )
+            integration_doc_link = INTEGRATIONS_DOCS_REFERENCE + normalized_integration_id
             documentation = f"[View Integration Documentation]({integration_doc_link})"
             if "\n\n---\n" + documentation in detailed_description:
-                detailed_description = detailed_description.replace(
-                    "\n\n---\n" + documentation, ""
-                )
+                detailed_description = detailed_description.replace("\n\n---\n" + documentation, "")
             elif documentation in detailed_description:
                 detailed_description = detailed_description.replace(documentation, "")
 
@@ -297,9 +271,7 @@ class YmlSplitter:
         """
         rules = self.yml_data.get("rules")
         if rules:
-            self.print_logs(
-                f"Extracting rules to: {output_path} ...", log_color=LOG_COLORS.NATIVE
-            )
+            self.print_logs(f"Extracting rules to: {output_path} ...", log_color=LOG_COLORS.NATIVE)
             with open(output_path, "w", encoding="utf-8") as rules_file:
                 rules_file.write(rules)
         return 0
@@ -350,44 +322,27 @@ class YmlSplitter:
         :param imported_line: the imported line in the code, represents the Api Module used.
         :return: None
         """
-        imported_line_arr = imported_line.split(
-            " "
-        )  # example: imported_line = from CorIRApiModule import *
+        imported_line_arr = imported_line.split(" ")  # example: imported_line = from CorIRApiModule import *
         updated_lines = lines[4:-3]  # ignore first 4 lines and last 3 line.
-        if (
-            len(imported_line_arr) >= 3
-            and imported_line_arr[0] == "from"
-            and imported_line_arr[2] == "import"
-        ):
+        if len(imported_line_arr) >= 3 and imported_line_arr[0] == "from" and imported_line_arr[2] == "import":
             module_name = imported_line_arr[1]
-            self.api_module_path = os.path.join(
-                "./Packs", "ApiModules", "Scripts", module_name, module_name + ".py"
-            )
+            self.api_module_path = os.path.join("./Packs", "ApiModules", "Scripts", module_name, module_name + ".py")
             with open(self.api_module_path, "w") as f:
                 f.write("from CommonServerPython import *  # noqa: F401\n")
                 f.write("import demistomock as demisto  # noqa: F401\n")
                 f.write("\n".join(updated_lines))
 
-    def replace_imported_code(
-        self, script, executed_from_contrib_converter: bool = False
-    ):
+    def replace_imported_code(self, script, executed_from_contrib_converter: bool = False):
         # this is how we check that generated code exists, and the syntax of the generated code is up to date
-        if (
-            "### GENERATED CODE ###:" in script
-            and "### END GENERATED CODE ###" in script
-        ):
+        if "### GENERATED CODE ###:" in script and "### END GENERATED CODE ###" in script:
             matches = re.finditer(REGEX_MODULE, script)
             for match in matches:
                 code = match.group(1)
                 lines = code.split("\n")
-                imported_line = lines[0][
-                    2:
-                ]  # the first two chars are not part of the code
+                imported_line = lines[0][2:]  # the first two chars are not part of the code
                 if executed_from_contrib_converter:
                     self.update_api_module_contribution(lines, imported_line)
-                self.print_logs(
-                    f"Replacing code block with `{imported_line}`", LOG_COLORS.NATIVE
-                )
+                self.print_logs(f"Replacing code block with `{imported_line}`", LOG_COLORS.NATIVE)
                 script = script.replace(match.group(), imported_line)
         return script
 
@@ -395,6 +350,4 @@ class YmlSplitter:
         """
         remove the auto-generated section headers if they exist.
         """
-        return re.sub(
-            r"register_module_line\('.+', '(?:start|end)', __line__\(\)\)\n", "", script
-        )
+        return re.sub(r"register_module_line\('.+', '(?:start|end)', __line__\(\)\)\n", "", script)

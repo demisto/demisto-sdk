@@ -79,9 +79,7 @@ class TestFormattingFromVersionKey:
         mocker.patch.object(BaseUpdate, "__init__", return_value=None)
         mocker.patch.object(BaseUpdate, "is_key_in_schema_root", return_value=True)
         base_update = BaseUpdate()
-        self.init_BaseUpdate(
-            base_update, oldfile_version="6.1.0", current_fromVersion=VERSION_6_0_0
-        )
+        self.init_BaseUpdate(base_update, oldfile_version="6.1.0", current_fromVersion=VERSION_6_0_0)
         base_update.set_fromVersion()
         assert base_update.data.get(base_update.from_version_key) == VERSION_6_0_0
 
@@ -112,9 +110,7 @@ class TestFormattingFromVersionKey:
         base_update = BaseUpdate()
         self.init_BaseUpdate(base_update)
         base_update.set_fromVersion(FILETYPE_TO_DEFAULT_FROMVERSION.get(content_type))
-        assert base_update.data.get(
-            base_update.from_version_key
-        ) == FILETYPE_TO_DEFAULT_FROMVERSION.get(content_type)
+        assert base_update.data.get(base_update.from_version_key) == FILETYPE_TO_DEFAULT_FROMVERSION.get(content_type)
 
     def test_update_fromVersion_from_default_contentItem_askuser_True(self, mocker):
         """
@@ -132,10 +128,7 @@ class TestFormattingFromVersionKey:
         self.init_BaseUpdate(base_update, assume_yes=False)
         mocker.patch.object(BaseUpdate, "get_answer", return_value="Y")
         base_update.set_fromVersion()
-        assert (
-            base_update.data.get(base_update.from_version_key)
-            == GENERAL_DEFAULT_FROMVERSION
-        )
+        assert base_update.data.get(base_update.from_version_key) == GENERAL_DEFAULT_FROMVERSION
 
     def test_update_fromVersion_from_default_contentItem_askuser_False(self, mocker):
         """
@@ -168,10 +161,7 @@ class TestFormattingFromVersionKey:
         base_update = BaseUpdate()
         self.init_BaseUpdate(base_update)
         base_update.set_fromVersion("5.5.0")
-        assert (
-            base_update.data.get(base_update.from_version_key)
-            == GENERAL_DEFAULT_FROMVERSION
-        )
+        assert base_update.data.get(base_update.from_version_key) == GENERAL_DEFAULT_FROMVERSION
 
     OLD_FILE = [{}, {}, {}, {}, {}, {"fromServerVersion": "6.0.0"}]
     DATA = [

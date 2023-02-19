@@ -22,18 +22,11 @@ def test_unify_xdrc_template():
     Then
     - Ensure Unify xdrc template works
     """
-    input_path = (
-        TESTS_DIR + "/test_files/Packs/DummyPack/XDRCTemplates/DummyXDRCTemplate"
-    )
+    input_path = TESTS_DIR + "/test_files/Packs/DummyPack/XDRCTemplates/DummyXDRCTemplate"
     output_path = TESTS_DIR + "/test_files/Packs/DummyPack/XDRCTemplates/"
-    export_json_path = PrepareUploadManager.prepare_for_upload(
-        Path(input_path), Path(output_path)
-    )
+    export_json_path = PrepareUploadManager.prepare_for_upload(Path(input_path), Path(output_path))
 
-    expected_json_path = (
-        TESTS_DIR
-        + "/test_files/Packs/DummyPack/XDRCTemplates/xdrctemplate-DummyXDRCTemplate.json"
-    )
+    expected_json_path = TESTS_DIR + "/test_files/Packs/DummyPack/XDRCTemplates/xdrctemplate-DummyXDRCTemplate.json"
 
     assert export_json_path == Path(expected_json_path)
 

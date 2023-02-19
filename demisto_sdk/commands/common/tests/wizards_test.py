@@ -41,11 +41,7 @@ class TestWizardValidator:
                 True,
             ),
             (
-                {
-                    "dependency_packs": [
-                        {"packs": [{"name": "exists"}, {"name": "not_exists"}]}
-                    ]
-                },
+                {"dependency_packs": [{"packs": [{"name": "exists"}, {"name": "not_exists"}]}]},
                 {"Packs": {"exists": {}}},
                 False,
             ),
@@ -148,9 +144,7 @@ class TestWizardValidator:
             (
                 {
                     "wizard": {
-                        "set_playbook": [
-                            {"name": "exists", "link_to_integration": "exists"}
-                        ],
+                        "set_playbook": [{"name": "exists", "link_to_integration": "exists"}],
                         "fetching_integrations": [
                             {"name": "exists"},
                             {"name": "exists2"},
@@ -162,9 +156,7 @@ class TestWizardValidator:
             (
                 {
                     "wizard": {
-                        "set_playbook": [
-                            {"name": "exists", "link_to_integration": "not_exists"}
-                        ],
+                        "set_playbook": [{"name": "exists", "link_to_integration": "not_exists"}],
                         "fetching_integrations": [{"name": "exists"}],
                     }
                 },
@@ -173,9 +165,7 @@ class TestWizardValidator:
             (
                 {
                     "wizard": {
-                        "set_playbook": [
-                            {"name": "exists", "link_to_integration": "exists"}
-                        ],
+                        "set_playbook": [{"name": "exists", "link_to_integration": "exists"}],
                         "fetching_integrations": [{"name": "exists"}],
                     }
                 },
@@ -184,9 +174,7 @@ class TestWizardValidator:
             (
                 {
                     "wizard": {
-                        "set_playbook": [
-                            {"name": "exists", "link_to_integration": None}
-                        ],
+                        "set_playbook": [{"name": "exists", "link_to_integration": None}],
                         "fetching_integrations": [{"name": "exists"}],
                     }
                 },

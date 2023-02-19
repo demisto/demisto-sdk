@@ -23,9 +23,7 @@ from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
         ),
         (["Added 2 commands:", "***command-one***", "***command-two***"], True),
         (
-            [
-                "Fixed an issue where mirrored investigations contained mismatched user names."
-            ],
+            ["Fixed an issue where mirrored investigations contained mismatched user names."],
             True,
         ),
         (["Updated the Docker image to: *demisto/python3:3.9.1.15759*."], True),

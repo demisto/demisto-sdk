@@ -14,9 +14,7 @@ from demisto_sdk.commands.validate.validate_manager import ValidateManager
 def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     # Importing TestSuite classes from Demisto-SDK, as they are excluded when pip installing the SDK.
     e2e_tests_utils.cli(f"mkdir {tmpdir}/git")
-    e2e_tests_utils.git_clone_demisto_sdk(
-        destination_folder=f"{tmpdir}/git/demisto-sdk", sdk_git_branch="master"
-    )
+    e2e_tests_utils.git_clone_demisto_sdk(destination_folder=f"{tmpdir}/git/demisto-sdk", sdk_git_branch="master")
     from TestSuite.playbook import Playbook
     from TestSuite.repo import Repo
 
@@ -30,12 +28,8 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     playbook.create_default_playbook(name=playbook_name)
     assert path.exists(f"{tmpdir}/Packs/{pack_name}/Playbooks/{playbook_name}.yml")
 
-    print(
-        f"Trying to upload playbook from {tmpdir}/Packs/{pack_name}/Playbooks/{playbook_name}.yml"
-    )
-    Uploader(
-        input=f"{tmpdir}/Packs/{pack_name}/Playbooks/{playbook_name}.yml", insecure=True
-    ).upload()
+    print(f"Trying to upload playbook from {tmpdir}/Packs/{pack_name}/Playbooks/{playbook_name}.yml")
+    Uploader(input=f"{tmpdir}/Packs/{pack_name}/Playbooks/{playbook_name}.yml", insecure=True).upload()
 
     # Preparing updated pack folder
     e2e_tests_utils.cli(f"mkdir {tmpdir}/Packs/{pack_name}_testsuite")
@@ -48,9 +42,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
         input=[playbook_name],
         insecure=True,
     ).download()
-    assert path.exists(
-        f"{tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
-    )
+    assert path.exists(f"{tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml")
 
     print(
         "Generating docs (creating a readme file)"
@@ -59,30 +51,18 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     generate_playbook_doc.generate_playbook_doc(
         input_path=f"{tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
     )
-    assert path.exists(
-        f"{tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}_README.md"
-    )
+    assert path.exists(f"{tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}_README.md")
 
-    print(
-        f"Formating playbook {tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
-    )
+    print(f"Formating playbook {tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml")
     format_manager(
         input=f"{tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml",
         assume_yes=True,
     )
-    print(
-        f"Validating playbook {tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
-    )
-    ValidateManager(
-        file_path=f"{tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
-    ).run_validation()
+    print(f"Validating playbook {tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml")
+    ValidateManager(file_path=f"{tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml").run_validation()
 
-    print(
-        f"Uploading updated playbook {tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml"
-    )
-    Uploader(
-        input=f"{tmpdir}/Packs/{pack_name}/Playbooks/{playbook_name}.yml", insecure=True
-    ).upload()
+    print(f"Uploading updated playbook {tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml")
+    Uploader(input=f"{tmpdir}/Packs/{pack_name}/Playbooks/{playbook_name}.yml", insecure=True).upload()
 
 
 def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
@@ -135,9 +115,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
         input=[playbook_name],
         insecure=True,
     ).download()
-    assert path.exists(
-        f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
-    )
+    assert path.exists(f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml")
 
     print(
         "Generating docs (creating a readme file)"
@@ -146,27 +124,15 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
     generate_playbook_doc.generate_playbook_doc(
         input_path=f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
     )
-    assert path.exists(
-        f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}_README.md"
-    )
+    assert path.exists(f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}_README.md")
 
-    print(
-        f"Formating playbook {tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
-    )
+    print(f"Formating playbook {tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml")
     format_manager(
         input=f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml",
         assume_yes=True,
     )
-    print(
-        f"Validating playbook {tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
-    )
-    ValidateManager(
-        file_path=f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
-    ).run_validation()
+    print(f"Validating playbook {tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml")
+    ValidateManager(file_path=f"{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml").run_validation()
 
-    print(
-        f"Uploading updated playbook {tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml"
-    )
-    Uploader(
-        input=f"{tmpdir}/Packs/{pack_name}/Playbooks/{playbook_name}.yml", insecure=True
-    ).upload()
+    print(f"Uploading updated playbook {tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml")
+    Uploader(input=f"{tmpdir}/Packs/{pack_name}/Playbooks/{playbook_name}.yml", insecure=True).upload()

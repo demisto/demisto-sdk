@@ -16,10 +16,6 @@ def get_outputs(yml: dict, ignore_prefix: Optional[str]):
 
 path = "/Users/dschwartz/dev/demisto/content/Packs/AutoFocus/Integrations/AutofocusV2/AutofocusV2.yml"
 d2 = get_outputs(YAML().load(open(path)), "AutoFocus")
-d1 = load(
-    open(
-        "/Users/dschwartz/dev/demisto/demisto-sdk/demisto_sdk/commands/common/default_output_descriptions.json"
-    )
-)
+d1 = load(open("/Users/dschwartz/dev/demisto/demisto-sdk/demisto_sdk/commands/common/default_output_descriptions.json"))
 d1.update(d2)
 print(dumps(d1))

@@ -39,9 +39,7 @@ def test_is_runnable_on_this_instance(mocker):
         - Ensure that it returns True when the test is running on a regular Linux instance that uses docker
     """
     test_playbook_configuration = TestConfiguration(
-        generate_test_configuration(
-            playbook_id="playbook_runnable_only_on_docker", runnable_on_docker_only=True
-        ),
+        generate_test_configuration(playbook_id="playbook_runnable_only_on_docker", runnable_on_docker_only=True),
         default_test_timeout=30,
     )
     test_context_builder = partial(
@@ -51,13 +49,9 @@ def test_is_runnable_on_this_instance(mocker):
         client=mocker.MagicMock(),
     )
 
-    test_context = test_context_builder(
-        server_context=mocker.MagicMock(is_instance_using_docker=False)
-    )
+    test_context = test_context_builder(server_context=mocker.MagicMock(is_instance_using_docker=False))
     assert not test_context._is_runnable_on_current_server_instance()
-    test_context = test_context_builder(
-        server_context=mocker.MagicMock(is_instance_using_docker=True)
-    )
+    test_context = test_context_builder(server_context=mocker.MagicMock(is_instance_using_docker=True))
     assert test_context._is_runnable_on_current_server_instance()
 
 
@@ -86,18 +80,10 @@ def init_server_context(mocker, tmp_path, mockable=False):
     unmockable_integration = {integrations_type: "reason"} if not mockable else {}
 
     filtered_tests = [playbook_type]
-    tests = [
-        generate_test_configuration(
-            playbook_id=playbook_id_type, integrations=[integrations_type]
-        )
-    ]
-    integrations_configurations = [
-        generate_integration_configuration(integrations_type)
-    ]
+    tests = [generate_test_configuration(playbook_id=playbook_id_type, integrations=[integrations_type])]
+    integrations_configurations = [generate_integration_configuration(integrations_type)]
     secret_test_conf = generate_secret_conf_json(integrations_configurations)
-    content_conf_json = generate_content_conf_json(
-        tests=tests, unmockable_integrations=unmockable_integration
-    )
+    content_conf_json = generate_content_conf_json(tests=tests, unmockable_integrations=unmockable_integration)
     build_context = get_mocked_build_context(
         mocker,
         tmp_path,
@@ -106,9 +92,7 @@ def init_server_context(mocker, tmp_path, mockable=False):
         filtered_tests_content=filtered_tests,
     )
     mocked_demisto_client = DemistoClientMock(integrations=[integrations_type])
-    server_context = generate_mocked_server_context(
-        build_context, mocked_demisto_client, mocker
-    )
+    server_context = generate_mocked_server_context(build_context, mocked_demisto_client, mocker)
     mocker.patch.object(server_context, mock_func, return_value=None)
 
     return build_context, server_context
@@ -161,8 +145,7 @@ def test_unmockable_playbook_passes_most_of_the_time(mocker, tmp_path):
     assert not build_context.tests_data_keeper.failed_playbooks
     assert "unmocked_playbook" in build_context.tests_data_keeper.succeeded_playbooks
     assert any(
-        "Test-Playbook was executed 3 times, and passed 2 times. Adding to succeeded playbooks."
-        in log_item[0][0]
+        "Test-Playbook was executed 3 times, and passed 2 times. Adding to succeeded playbooks." in log_item[0][0]
         for log_item in logs.info.call_args_list
     )
 
@@ -188,14 +171,10 @@ def test_unmockable_playbook_fails_every_time(mocker, tmp_path):
     server_context.execute_tests()
 
     assert incident_test_mock.call_count == 3
-    assert (
-        "unmocked_playbook (Mock Disabled)"
-        in build_context.tests_data_keeper.failed_playbooks
-    )
+    assert "unmocked_playbook (Mock Disabled)" in build_context.tests_data_keeper.failed_playbooks
     assert not build_context.tests_data_keeper.succeeded_playbooks
     assert any(
-        "Test-Playbook was executed 3 times, and passed only 0 times. Adding to failed playbooks."
-        in log_item[0][0]
+        "Test-Playbook was executed 3 times, and passed only 0 times. Adding to failed playbooks." in log_item[0][0]
         for log_item in logs.info.call_args_list
     )
 
@@ -221,14 +200,10 @@ def test_unmockable_playbook_fails_most_of_the_times(mocker, tmp_path):
     server_context.execute_tests()
 
     assert incident_test_mock.call_count == 3
-    assert (
-        "unmocked_playbook (Mock Disabled)"
-        in build_context.tests_data_keeper.failed_playbooks
-    )
+    assert "unmocked_playbook (Mock Disabled)" in build_context.tests_data_keeper.failed_playbooks
     assert not build_context.tests_data_keeper.succeeded_playbooks
     assert any(
-        "Test-Playbook was executed 3 times, and passed only 1 times. Adding to failed playbooks."
-        in [log_item][0][0]
+        "Test-Playbook was executed 3 times, and passed only 1 times. Adding to failed playbooks." in [log_item][0][0]
         for log_item in logs.info.call_args_list
     )
 
@@ -284,9 +259,7 @@ def test_mockable_playbook_second_playback_passes(mocker, tmp_path):
     assert not build_context.tests_data_keeper.failed_playbooks
 
 
-def test_mockable_playbook_recording_passes_most_of_the_time_Playback_pass(
-    mocker, tmp_path
-):
+def test_mockable_playbook_recording_passes_most_of_the_time_Playback_pass(mocker, tmp_path):
     """
     Given:
         - A mockable test
@@ -317,9 +290,7 @@ def test_mockable_playbook_recording_passes_most_of_the_time_Playback_pass(
     assert not data_keeper.failed_playbooks
 
 
-def test_mockable_playbook_recording_passes_most_of_the_time_playback_fails(
-    mocker, tmp_path
-):
+def test_mockable_playbook_recording_passes_most_of_the_time_playback_fails(mocker, tmp_path):
     """
     Given:
         - A mockable test
@@ -348,17 +319,9 @@ def test_mockable_playbook_recording_passes_most_of_the_time_playback_fails(
     assert incident_test_mock.call_count == 5
     assert not data_keeper.succeeded_playbooks
     assert "mocked_playbook (Second Playback)" in data_keeper.failed_playbooks
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["number_of_executions"] == 3
-    )
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["number_of_successful_runs"]
-        == 2
-    )
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["failed_stage"]
-        == "Second playback"
-    )
+    assert data_keeper.playbook_report["mocked_playbook"][0]["number_of_executions"] == 3
+    assert data_keeper.playbook_report["mocked_playbook"][0]["number_of_successful_runs"] == 2
+    assert data_keeper.playbook_report["mocked_playbook"][0]["failed_stage"] == "Second playback"
 
 
 def test_mockable_playbook_recording_fails_most_of_the_time(mocker, tmp_path):
@@ -390,16 +353,9 @@ def test_mockable_playbook_recording_fails_most_of_the_time(mocker, tmp_path):
     assert incident_test_mock.call_count == 4
     assert not data_keeper.succeeded_playbooks
     assert "mocked_playbook" in data_keeper.failed_playbooks
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["number_of_executions"] == 3
-    )
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["number_of_successful_runs"]
-        == 1
-    )
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["failed_stage"] == "Execution"
-    )
+    assert data_keeper.playbook_report["mocked_playbook"][0]["number_of_executions"] == 3
+    assert data_keeper.playbook_report["mocked_playbook"][0]["number_of_successful_runs"] == 1
+    assert data_keeper.playbook_report["mocked_playbook"][0]["failed_stage"] == "Execution"
 
 
 def test_mockable_playbook_recording_fails_every_time(mocker, tmp_path):
@@ -431,16 +387,9 @@ def test_mockable_playbook_recording_fails_every_time(mocker, tmp_path):
     assert incident_test_mock.call_count == 4
     assert not data_keeper.succeeded_playbooks
     assert "mocked_playbook" in data_keeper.failed_playbooks
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["number_of_executions"] == 3
-    )
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["number_of_successful_runs"]
-        == 0
-    )
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["failed_stage"] == "Execution"
-    )
+    assert data_keeper.playbook_report["mocked_playbook"][0]["number_of_executions"] == 3
+    assert data_keeper.playbook_report["mocked_playbook"][0]["number_of_successful_runs"] == 0
+    assert data_keeper.playbook_report["mocked_playbook"][0]["failed_stage"] == "Execution"
 
 
 def test_mockable_playbook_second_playback_fails(mocker, tmp_path):
@@ -467,17 +416,9 @@ def test_mockable_playbook_second_playback_fails(mocker, tmp_path):
     assert incident_test_mock.call_count == 3
     assert not data_keeper.succeeded_playbooks
     assert "mocked_playbook (Second Playback)" in data_keeper.failed_playbooks
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["number_of_executions"] == 1
-    )
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["number_of_successful_runs"]
-        == 1
-    )
-    assert (
-        data_keeper.playbook_report["mocked_playbook"][0]["failed_stage"]
-        == "Second playback"
-    )
+    assert data_keeper.playbook_report["mocked_playbook"][0]["number_of_executions"] == 1
+    assert data_keeper.playbook_report["mocked_playbook"][0]["number_of_successful_runs"] == 1
+    assert data_keeper.playbook_report["mocked_playbook"][0]["failed_stage"] == "Second playback"
 
 
 def test_docker_thresholds_for_non_pwsh_integrations(mocker):
@@ -491,9 +432,7 @@ def test_docker_thresholds_for_non_pwsh_integrations(mocker):
         - Ensure that the pis threshold is the default python pid threshold value
     """
     test_playbook_configuration = TestConfiguration(
-        generate_test_configuration(
-            playbook_id="playbook_runnable_only_on_docker", integrations=["integration"]
-        ),
+        generate_test_configuration(playbook_id="playbook_runnable_only_on_docker", integrations=["integration"]),
         default_test_timeout=30,
     )
     playbook_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
@@ -520,15 +459,11 @@ def test_docker_thresholds_for_pwsh_integrations(mocker):
         - Ensure that the pis threshold is the default powershell pid threshold value
     """
     test_playbook_configuration = TestConfiguration(
-        generate_test_configuration(
-            playbook_id="playbook_runnable_only_on_docker", integrations=["integration"]
-        ),
+        generate_test_configuration(playbook_id="playbook_runnable_only_on_docker", integrations=["integration"]),
         default_test_timeout=30,
     )
     playbook_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
-    playbook_instance.integrations[
-        0
-    ].integration_type = Docker.POWERSHELL_INTEGRATION_TYPE
+    playbook_instance.integrations[0].integration_type = Docker.POWERSHELL_INTEGRATION_TYPE
     test_context = TestContext(
         build_context=mocker.MagicMock(),
         playbook=playbook_instance,
@@ -544,9 +479,7 @@ class TestPrintContextToLog:
     @staticmethod
     def create_playbook_instance(mocker):
         test_playbook_configuration = TestConfiguration(
-            generate_test_configuration(
-                playbook_id="playbook_with_context", integrations=["integration"]
-            ),
+            generate_test_configuration(playbook_id="playbook_with_context", integrations=["integration"]),
             default_test_timeout=30,
         )
         pb_instance = TestPlaybook(mocker.MagicMock(), test_playbook_configuration)
@@ -569,10 +502,7 @@ class TestPrintContextToLog:
         client = mocker.MagicMock()
         client.api_client.call_api.return_value = (dt_result, 200)
         playbook_instance.print_context_to_log(client, incident_id="1")
-        assert (
-            playbook_instance.build_context.logging_module.info.call_args[0][0]
-            == expected_result
-        )
+        assert playbook_instance.build_context.logging_module.info.call_args[0][0] == expected_result
 
     def test_print_context_to_log__empty(self, mocker):
         """
@@ -589,10 +519,7 @@ class TestPrintContextToLog:
         client = mocker.MagicMock()
         client.api_client.call_api.return_value = (expected_dt, 200)
         playbook_instance.print_context_to_log(client, incident_id="1")
-        assert (
-            playbook_instance.build_context.logging_module.info.call_args[0][0]
-            == expected_dt
-        )
+        assert playbook_instance.build_context.logging_module.info.call_args[0][0] == expected_dt
 
     def test_print_context_to_log__none(self, mocker):
         """
@@ -610,10 +537,7 @@ class TestPrintContextToLog:
         client = mocker.MagicMock()
         client.api_client.call_api.return_value = (expected_dt, 200)
         playbook_instance.print_context_to_log(client, incident_id="1")
-        assert (
-            playbook_instance.build_context.logging_module.error.call_args[0][0]
-            == expected_error
-        )
+        assert playbook_instance.build_context.logging_module.error.call_args[0][0] == expected_error
 
     def test_print_context_to_log__error(self, mocker):
         """
@@ -632,14 +556,8 @@ class TestPrintContextToLog:
         client = mocker.MagicMock()
         client.api_client.call_api.return_value = (expected_dt, 403)
         playbook_instance.print_context_to_log(client, incident_id="1")
-        assert (
-            playbook_instance.build_context.logging_module.error.call_args_list[0][0][0]
-            == expected_first_error
-        )
-        assert (
-            playbook_instance.build_context.logging_module.error.call_args_list[1][0][0]
-            == expected_second_error
-        )
+        assert playbook_instance.build_context.logging_module.error.call_args_list[0][0][0] == expected_first_error
+        assert playbook_instance.build_context.logging_module.error.call_args_list[1][0][0] == expected_second_error
 
 
 def test_replacing_placeholders(mocker, tmp_path):
@@ -673,9 +591,7 @@ def test_replacing_placeholders(mocker, tmp_path):
     # Setting up the content-test-conf conf.json
     integration_names = ["integration_with_placeholders"]
     integrations_configurations = [
-        generate_integration_configuration(
-            name=integration_name, params={"url": "%%SERVER_HOST%%/server"}
-        )
+        generate_integration_configuration(name=integration_name, params={"url": "%%SERVER_HOST%%/server"})
         for integration_name in integration_names
     ]
     secret_test_conf = generate_secret_conf_json(integrations_configurations)
@@ -689,21 +605,11 @@ def test_replacing_placeholders(mocker, tmp_path):
         filtered_tests_content=filtered_tests,
     )
 
-    integration = Integration(
-        build_context, "integration_with_placeholders", ["instance"]
-    )
-    integration._set_integration_params(
-        server_url="1.1.1.1", playbook_id="playbook_integration", is_mockable=False
-    )
-    integration = Integration(
-        build_context, "integration_with_placeholders", ["instance"]
-    )
-    integration._set_integration_params(
-        server_url="1.2.3.4", playbook_id="playbook_integration", is_mockable=False
-    )
-    assert "%%SERVER_HOST%%" in build_context.secret_conf.integrations[0].params.get(
-        "url"
-    )
+    integration = Integration(build_context, "integration_with_placeholders", ["instance"])
+    integration._set_integration_params(server_url="1.1.1.1", playbook_id="playbook_integration", is_mockable=False)
+    integration = Integration(build_context, "integration_with_placeholders", ["instance"])
+    integration._set_integration_params(server_url="1.2.3.4", playbook_id="playbook_integration", is_mockable=False)
+    assert "%%SERVER_HOST%%" in build_context.secret_conf.integrations[0].params.get("url")
 
 
 CASES = [
@@ -811,9 +717,7 @@ def test_replacing_pb_inputs(mocker, current, new_configuration, expected):
         else:
             assert False  # Unexpected path
 
-    mocker.patch.object(
-        demisto_client, "generic_request_func", side_effect=generic_request_func
-    )
+    mocker.patch.object(demisto_client, "generic_request_func", side_effect=generic_request_func)
 
     replace_external_playbook_configuration(clientMock(), new_configuration)
 
@@ -903,12 +807,8 @@ BAD_CASES = [
 ]
 
 
-@pytest.mark.parametrize(
-    "current, new_configuration, version, expected_error", BAD_CASES
-)
-def test_replacing_pb_inputs_fails_with_build_pass(
-    mocker, current, new_configuration, version, expected_error
-):
+@pytest.mark.parametrize("current, new_configuration, version, expected_error", BAD_CASES)
+def test_replacing_pb_inputs_fails_with_build_pass(mocker, current, new_configuration, version, expected_error):
     """
 
     Given: Missing configuration
@@ -945,13 +845,9 @@ def test_replacing_pb_inputs_fails_with_build_pass(
         else:
             assert False  # Unexpected path
 
-    mocker.patch.object(
-        demisto_client, "generic_request_func", side_effect=generic_request_func
-    )
+    mocker.patch.object(demisto_client, "generic_request_func", side_effect=generic_request_func)
 
-    replace_external_playbook_configuration(
-        clientMock(), new_configuration, LoggerMock("test logger")
-    )
+    replace_external_playbook_configuration(clientMock(), new_configuration, LoggerMock("test logger"))
 
 
 BAD_CASES_BUILD_FAIL = [
@@ -1020,12 +916,8 @@ BAD_CASES_BUILD_FAIL = [
 ]
 
 
-@pytest.mark.parametrize(
-    "current, new_configuration, version, expected_error", BAD_CASES_BUILD_FAIL
-)
-def test_replacing_pb_inputs_fails_with_build_fail(
-    mocker, current, new_configuration, version, expected_error
-):
+@pytest.mark.parametrize("current, new_configuration, version, expected_error", BAD_CASES_BUILD_FAIL)
+def test_replacing_pb_inputs_fails_with_build_fail(mocker, current, new_configuration, version, expected_error):
     """
 
     Given: Bad configuration - external playbooks is wrong
@@ -1054,9 +946,7 @@ def test_replacing_pb_inputs_fails_with_build_fail(
         else:
             assert False  # Unexpected path
 
-    mocker.patch.object(
-        demisto_client, "generic_request_func", side_effect=generic_request_func
-    )
+    mocker.patch.object(demisto_client, "generic_request_func", side_effect=generic_request_func)
 
     with pytest.raises(Exception) as e:
         replace_external_playbook_configuration(clientMock(), new_configuration)

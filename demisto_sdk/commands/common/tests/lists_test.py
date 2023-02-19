@@ -13,22 +13,10 @@ json = JSON_Handler()
 
 TEST_DATA = src_root() / "tests" / "test_files"
 TEST_CONTENT_REPO = TEST_DATA / "content_slim"
-LIST_GOOD = (
-    TEST_CONTENT_REPO
-    / PACKS_DIR
-    / "Sample01"
-    / LISTS_DIR
-    / "list-checked_integrations.json"
-)
-LIST_BAD_FROM_VERSION = (
-    TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / LISTS_DIR / "bad_from_version.json"
-)
-LIST_BAD_VERSION = (
-    TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / LISTS_DIR / "bad_version.json"
-)
-LIST_BAD_FORMAT = (
-    TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / LISTS_DIR / "list-bad_format.json"
-)
+LIST_GOOD = TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / LISTS_DIR / "list-checked_integrations.json"
+LIST_BAD_FROM_VERSION = TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / LISTS_DIR / "bad_from_version.json"
+LIST_BAD_VERSION = TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / LISTS_DIR / "bad_version.json"
+LIST_BAD_FORMAT = TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / LISTS_DIR / "list-bad_format.json"
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):

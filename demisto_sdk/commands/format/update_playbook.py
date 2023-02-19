@@ -138,28 +138,20 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
             git_util = GitUtil()
             modified_files = git_util.modified_files(include_untracked=True)
             added_files = git_util.added_files(include_untracked=True)
-            renamed_files = git_util.renamed_files(
-                include_untracked=True, get_only_current_file_names=True
-            )
+            renamed_files = git_util.renamed_files(include_untracked=True, get_only_current_file_names=True)
 
             all_changed_files = modified_files.union(added_files).union(renamed_files)  # type: ignore[arg-type]
 
         except (InvalidGitRepositoryError, TypeError) as e:
-            click.secho(
-                "Unable to connect to git - skipping sub-playbook checks", fg="yellow"
-            )
+            click.secho("Unable to connect to git - skipping sub-playbook checks", fg="yellow")
             if self.verbose:
                 click.secho(f"The error: {e}")
             return
 
         for file_path in all_changed_files:
-            self.check_for_subplaybook_usages(
-                str(file_path), current_playbook_id, new_playbook_id
-            )
+            self.check_for_subplaybook_usages(str(file_path), current_playbook_id, new_playbook_id)
 
-    def check_for_subplaybook_usages(
-        self, file_path: str, current_playbook_id: str, new_playbook_id: str
-    ) -> None:
+    def check_for_subplaybook_usages(self, file_path: str, current_playbook_id: str, new_playbook_id: str) -> None:
         """Check if the current_playbook_id appears in the file's playbook type tasks and change it if needed.
 
         Arguments:
@@ -175,16 +167,10 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
             for task_id, task_data in playbook_data.get("tasks").items():
                 # if a task is of playbook type
                 if task_data.get("type") == "playbook":
-                    id_key = (
-                        "playbookId"
-                        if "playbookId" in task_data.get("task")
-                        else "playbookName"
-                    )
+                    id_key = "playbookId" if "playbookId" in task_data.get("task") else "playbookName"
                     # make sure the playbookId or playbookName use the new id and not the old
                     if task_data.get("task", {}).get(id_key) == current_playbook_id:
-                        playbook_data["tasks"][task_id]["task"][
-                            id_key
-                        ] = new_playbook_id
+                        playbook_data["tasks"][task_id]["task"][id_key] = new_playbook_id
                         updated_tasks.append(task_id)
 
             # if any tasks were changed re-write the playbook
@@ -215,20 +201,14 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
     def remove_copy_and_dev_suffixes_from_subplaybook(self):
         for task_id, task in self.data.get("tasks", {}).items():
             if task["task"].get("playbookName"):
-                task["task"]["playbookName"] = remove_copy_and_dev_suffixes_from_str(
-                    task["task"].get("playbookName")
-                )
+                task["task"]["playbookName"] = remove_copy_and_dev_suffixes_from_str(task["task"].get("playbookName"))
 
-                task["task"]["name"] = remove_copy_and_dev_suffixes_from_str(
-                    task["task"].get("name")
-                )
+                task["task"]["name"] = remove_copy_and_dev_suffixes_from_str(task["task"].get("name"))
 
     def remove_copy_and_dev_suffixes_from_subscripts(self):
         for task_id, task in self.data.get("tasks", {}).items():
             if task["task"].get("scriptName"):
-                task["task"]["scriptName"] = remove_copy_and_dev_suffixes_from_str(
-                    task["task"].get("scriptName")
-                )
+                task["task"]["scriptName"] = remove_copy_and_dev_suffixes_from_str(task["task"].get("scriptName"))
 
     def update_playbook_task_name(self):
         """Updates the name of the task to be the same as playbookName it is running."""
@@ -237,9 +217,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
 
         for task_id, task in self.data.get("tasks", {}).items():
             if task.get("type", "") == "playbook":
-                task_name = task.get("task").get(
-                    "playbookName", task.get("task").get("playbookId", "")
-                )
+                task_name = task.get("task").get("playbookName", task.get("task").get("playbookId", ""))
                 if task_name:
                     task["task"]["name"] = task_name
 
@@ -294,9 +272,7 @@ class TestPlaybookYMLFormat(BasePlaybookYMLFormat):
     """
 
     def __init__(self, *args, **kwargs):
-        kwargs["path"] = os.path.normpath(
-            os.path.join(__file__, "..", "..", "common", SCHEMAS_PATH, "playbook.yml")
-        )
+        kwargs["path"] = os.path.normpath(os.path.join(__file__, "..", "..", "common", SCHEMAS_PATH, "playbook.yml"))
         super().__init__(*args, **kwargs)
 
     def run_format(self) -> int:

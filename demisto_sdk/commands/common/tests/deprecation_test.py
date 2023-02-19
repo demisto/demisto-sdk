@@ -251,12 +251,8 @@ class TestDeprecationValidator:
         )
     ]
 
-    @pytest.mark.parametrize(
-        "integration_yml, expected_results", INTEGRATIONS_FORMAT_VALIDATIONS
-    )
-    def test_validate_integration_error_format(
-        self, capsys, integration_yml, expected_results
-    ):
+    @pytest.mark.parametrize("integration_yml, expected_results", INTEGRATIONS_FORMAT_VALIDATIONS)
+    def test_validate_integration_error_format(self, capsys, integration_yml, expected_results):
         """
         Given
         - Case 1: Integration with two deprecated commands, one none-deprecated command and two testplaybooks in the tests section,
@@ -372,12 +368,8 @@ class TestDeprecationValidator:
         )
     ]
 
-    @pytest.mark.parametrize(
-        "playbook_yml, expected_results", PLAYBOOKS_FORMAT_VALIDATIONS
-    )
-    def test_validate_playbook_error_format(
-        self, capsys, playbook_yml, expected_results
-    ):
+    @pytest.mark.parametrize("playbook_yml, expected_results", PLAYBOOKS_FORMAT_VALIDATIONS)
+    def test_validate_playbook_error_format(self, capsys, playbook_yml, expected_results):
         """
         Given
         - Case 1: deprecated playbook that is used in a none-deprecated playbook.

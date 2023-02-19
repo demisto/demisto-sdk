@@ -46,24 +46,12 @@ class PreProcessRulesFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n======= Updating file: {self.source_file} =======", fg="white"
-            )
-            super().update_json(
-                default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(
-                    FileType.PRE_PROCESS_RULES
-                )
-            )
+            click.secho(f"\n======= Updating file: {self.source_file} =======", fg="white")
+            super().update_json(default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.PRE_PROCESS_RULES))
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            print(
-                "".join(
-                    traceback.format_exception(
-                        type(err), value=err, tb=err.__traceback__
-                    )
-                )
-            )
+            print("".join(traceback.format_exception(type(err), value=err, tb=err.__traceback__)))
             if self.verbose:
                 click.secho(
                     f"\nFailed to update file {self.source_file}. Error: {err}",

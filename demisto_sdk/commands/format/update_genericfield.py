@@ -51,11 +51,7 @@ class GenericFieldJSONFormat(BaseUpdateJSON):
                 f"\n================= Updating file {self.source_file} =================",
                 fg="bright_blue",
             )
-            super().update_json(
-                default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(
-                    FileType.GENERIC_FIELD
-                )
-            )
+            super().update_json(default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.GENERIC_FIELD))
             self.set_default_values_as_needed()
             self.update_group_field()
             self.update_id_field_if_needed()
@@ -83,9 +79,7 @@ class GenericFieldJSONFormat(BaseUpdateJSON):
         if not generic_field_id.startswith(GENERIC_FIELD_DEFAULT_ID_PREFIX):
             updated_id = f"{GENERIC_FIELD_DEFAULT_ID_PREFIX}{generic_field_id}"
             if self.verbose:
-                click.echo(
-                    f"Adding to id field the default prefix: {GENERIC_FIELD_DEFAULT_ID_PREFIX}"
-                )
+                click.echo(f"Adding to id field the default prefix: {GENERIC_FIELD_DEFAULT_ID_PREFIX}")
             self.data["id"] = updated_id
 
     def update_group_field(self):

@@ -35,22 +35,14 @@ class TestClassifierSixConverter:
         repo = Repo(tmpdir)
         repo_path = Path(repo.path)
         fake_pack = MockPack(repo_path / "Packs", fake_pack_name, repo)
-        fake_pack.create_classifier(
-            "Cymulate_5_9_9", util_load_json(self.OLD_CLASSIFIER_PATH)
-        )
+        fake_pack.create_classifier("Cymulate_5_9_9", util_load_json(self.OLD_CLASSIFIER_PATH))
         fake_pack_path = fake_pack.path
         classifier_converter = ClassifierSixConverter(Pack(fake_pack_path))
         assert classifier_converter.convert_dir() == 0
-        expected_new_classifier_path = (
-            f"{tmpdir}/Packs/FakeTestPack/Classifiers/classifier-Cymulate.json"
-        )
+        expected_new_classifier_path = f"{tmpdir}/Packs/FakeTestPack/Classifiers/classifier-Cymulate.json"
         expected_new_mapper_path = f"{tmpdir}/Packs/FakeTestPack/Classifiers/classifier-mapper-incoming-Cymulate.json"
-        self.assert_expected_file_output(
-            expected_new_classifier_path, "classifier-Cymulate"
-        )
-        self.assert_expected_file_output(
-            expected_new_mapper_path, "classifier-mapper-incoming-Cymulate"
-        )
+        self.assert_expected_file_output(expected_new_classifier_path, "classifier-Cymulate")
+        self.assert_expected_file_output(expected_new_mapper_path, "classifier-mapper-incoming-Cymulate")
 
     def test_create_classifier_from_old_classifier(self, tmpdir):
         """
@@ -69,22 +61,14 @@ class TestClassifierSixConverter:
         repo = Repo(tmpdir)
         repo_path = Path(repo.path)
         fake_pack = MockPack(repo_path / "Packs", fake_pack_name, repo)
-        fake_pack.create_classifier(
-            "Cymulate_5_9_9", util_load_json(self.OLD_CLASSIFIER_PATH)
-        )
+        fake_pack.create_classifier("Cymulate_5_9_9", util_load_json(self.OLD_CLASSIFIER_PATH))
         fake_pack_path = fake_pack.path
         converter = ClassifierSixConverter(Pack(fake_pack_path))
         old_classifier = Classifier(self.OLD_CLASSIFIER_PATH)
         intersecting_fields = converter.get_classifiers_schema_intersection_fields()
-        converter.create_classifier_from_old_classifier(
-            old_classifier, intersecting_fields
-        )
-        classifier_expected_path = (
-            f"{tmpdir}/Packs/FakeTestPack/Classifiers/classifier-Cymulate.json"
-        )
-        self.assert_expected_file_output(
-            classifier_expected_path, "classifier-Cymulate"
-        )
+        converter.create_classifier_from_old_classifier(old_classifier, intersecting_fields)
+        classifier_expected_path = f"{tmpdir}/Packs/FakeTestPack/Classifiers/classifier-Cymulate.json"
+        self.assert_expected_file_output(classifier_expected_path, "classifier-Cymulate")
 
     def test_create_mapper_from_old_classifier(self, tmpdir):
         """
@@ -102,29 +86,21 @@ class TestClassifierSixConverter:
         repo = Repo(tmpdir)
         repo_path = Path(repo.path)
         fake_pack = MockPack(repo_path / "Packs", fake_pack_name, repo)
-        fake_pack.create_classifier(
-            "Cymulate_5_9_9", util_load_json(self.OLD_CLASSIFIER_PATH)
-        )
+        fake_pack.create_classifier("Cymulate_5_9_9", util_load_json(self.OLD_CLASSIFIER_PATH))
         fake_pack_path = fake_pack.path
         converter = ClassifierSixConverter(Pack(fake_pack_path))
         old_classifier = Classifier(self.OLD_CLASSIFIER_PATH)
         converter.create_mapper_from_old_classifier(old_classifier)
         mapper_path = f"{tmpdir}/Packs/FakeTestPack/Classifiers/classifier-mapper-incoming-Cymulate.json"
-        self.assert_expected_file_output(
-            mapper_path, "classifier-mapper-incoming-Cymulate"
-        )
+        self.assert_expected_file_output(mapper_path, "classifier-mapper-incoming-Cymulate")
 
     CALCULATE_NEW_PATH_INPUTS = [
         ("QRadar-v3", False, "classifier-QRadar_v3.json"),
         ("QRadar v2", True, "classifier-mapper-incoming-QRadar_v2.json"),
     ]
 
-    @pytest.mark.parametrize(
-        "old_classifier_brand, is_mapper, expected_suffix", CALCULATE_NEW_PATH_INPUTS
-    )
-    def test_calculate_new_path(
-        self, tmpdir, old_classifier_brand: str, is_mapper: bool, expected_suffix: str
-    ):
+    @pytest.mark.parametrize("old_classifier_brand, is_mapper, expected_suffix", CALCULATE_NEW_PATH_INPUTS)
+    def test_calculate_new_path(self, tmpdir, old_classifier_brand: str, is_mapper: bool, expected_suffix: str):
         """
         Given:
         - 'old_classifier_brand': Old classifier brand name.
@@ -147,8 +123,7 @@ class TestClassifierSixConverter:
     def assert_expected_file_output(result_path: str, file_name: str):
         expected_result_path = os.path.join(
             __file__,
-            f"{git_path()}/demisto_sdk/commands/convert/converters/classifier/"
-            f"tests/test_data/{file_name}.json",
+            f"{git_path()}/demisto_sdk/commands/convert/converters/classifier/" f"tests/test_data/{file_name}.json",
         )
         assert os.path.exists(result_path)
         assert util_load_json(result_path) == util_load_json(expected_result_path)

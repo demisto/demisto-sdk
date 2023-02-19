@@ -54,13 +54,9 @@ def test_is_incident_type_using_real_playbook__happy_flow():
     Then
         - Ensure that the playbook is in the id set.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
-    incident_type_data = {
-        "Zimperium Event": {"playbooks": "Zimperium Incident Enrichment"}
-    }
+    incident_type_data = {"Zimperium Event": {"playbooks": "Zimperium Incident Enrichment"}}
     validator.playbook_set = [
         {
             "Zimperium Incident Enrichment": {
@@ -72,10 +68,7 @@ def test_is_incident_type_using_real_playbook__happy_flow():
     ]
 
     assert (
-        validator._is_incident_type_default_playbook_found(
-            incident_type_data=incident_type_data
-        )
-        is True
+        validator._is_incident_type_default_playbook_found(incident_type_data=incident_type_data) is True
     ), "The incident type default playbook id does not exist in the id set"
 
 
@@ -91,9 +84,7 @@ def test_is_incident_type_using_real_playbook__no_matching_playbook_id():
     Then
         - Ensure that the playbook is in the id set.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     incident_type_data = {"Zimperium Event": {"playbooks": "a fake playbook id"}}
     validator.playbook_set = [
@@ -106,12 +97,7 @@ def test_is_incident_type_using_real_playbook__no_matching_playbook_id():
         }
     ]
 
-    assert (
-        validator._is_incident_type_default_playbook_found(
-            incident_type_data=incident_type_data
-        )
-        is False
-    )
+    assert validator._is_incident_type_default_playbook_found(incident_type_data=incident_type_data) is False
 
 
 def test_is_incident_field_using_existing_script_positive():
@@ -126,9 +112,7 @@ def test_is_incident_field_using_existing_script_positive():
     Then
         - Ensure that the script is in the id set - i.e is_incident_field_scripts_found returns True.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     incident_field_data = {
         "Incident_field_test": {
@@ -149,10 +133,7 @@ def test_is_incident_field_using_existing_script_positive():
     ]
 
     assert (
-        validator._is_incident_field_scripts_found(
-            incident_field_data=incident_field_data
-        )
-        is True
+        validator._is_incident_field_scripts_found(incident_field_data=incident_field_data) is True
     ), "The incident field's script id is in the id set thus result should be True."
 
 
@@ -168,9 +149,7 @@ def test_is_incident_field_using_existing_script_negative():
     Then
         - Ensure that the script is not in the id set - i.e is_incident_field_scripts_found returns False.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     incident_field_data = {
         "Incident_field_test": {
@@ -192,10 +171,7 @@ def test_is_incident_field_using_existing_script_negative():
     ]
 
     assert (
-        validator._is_incident_field_scripts_found(
-            incident_field_data=incident_field_data
-        )
-        is False
+        validator._is_incident_field_scripts_found(incident_field_data=incident_field_data) is False
     ), "The incident field's script id is not in the id set thus result should be False."
 
 
@@ -211,9 +187,7 @@ def test_is_incident_field_using_existing_script_with_command_positive():
     Then
         - Ensure that the script is in the id set and command - i.e is_incident_field_scripts_found returns True.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     incident_field_data = {
         "Incident_field_test": {
@@ -247,10 +221,7 @@ def test_is_incident_field_using_existing_script_with_command_positive():
     ]
 
     assert (
-        validator._is_incident_field_scripts_found(
-            incident_field_data=incident_field_data
-        )
-        is True
+        validator._is_incident_field_scripts_found(incident_field_data=incident_field_data) is True
     ), "The incident field's script id is in the id set thus result should be True."
 
 
@@ -266,9 +237,7 @@ def test_is_incident_field_using_existing_script_with_command_negative():
     Then
         - Ensure that the script is in the id set and non-existing command - i.e is_incident_field_scripts_found returns False.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     incident_field_data = {
         "Incident_field_test": {
@@ -302,10 +271,7 @@ def test_is_incident_field_using_existing_script_with_command_negative():
     ]
 
     assert (
-        validator._is_incident_field_scripts_found(
-            incident_field_data=incident_field_data
-        )
-        is False
+        validator._is_incident_field_scripts_found(incident_field_data=incident_field_data) is False
     ), "The incident field's script id is in the id set but the command not thus result should be False."
 
 
@@ -321,9 +287,7 @@ def test_is_incident_field_using_existing_script_no_scripts():
     Then
         - Ensure is_incident_field_scripts_found returns True.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     incident_field_data = {
         "Incident_field_test": {
@@ -344,10 +308,7 @@ def test_is_incident_field_using_existing_script_no_scripts():
     ]
 
     assert (
-        validator._is_incident_field_scripts_found(
-            incident_field_data=incident_field_data
-        )
-        is True
+        validator._is_incident_field_scripts_found(incident_field_data=incident_field_data) is True
     ), "The incident field doesn't have any scripts thus the result should be True."
 
 
@@ -363,9 +324,7 @@ def test_is_layouts_container_using_existing_script_positive():
     Then
         - Ensure that the script is in the id set - i.e is_layouts_container_scripts_found returns True.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.script_set = [
         {
@@ -379,10 +338,7 @@ def test_is_layouts_container_using_existing_script_positive():
     ]
 
     assert (
-        validator._is_layouts_container_scripts_found(
-            layouts_container_data=LAYOUTS_CONTAINER_DATA
-        )
-        is True
+        validator._is_layouts_container_scripts_found(layouts_container_data=LAYOUTS_CONTAINER_DATA) is True
     ), "The layouts container's script id is in the id set thus result should be True."
 
 
@@ -398,9 +354,7 @@ def test_is_layouts_container_using_existing_script_negative():
     Then
         - Ensure that the script is not in the id set - i.e is_layouts_container_scripts_found returns False.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.script_set = [
         {
@@ -414,10 +368,7 @@ def test_is_layouts_container_using_existing_script_negative():
     ]
 
     assert (
-        validator._is_layouts_container_scripts_found(
-            layouts_container_data=LAYOUTS_CONTAINER_DATA
-        )
-        is False
+        validator._is_layouts_container_scripts_found(layouts_container_data=LAYOUTS_CONTAINER_DATA) is False
     ), "The layouts container's script id is not in the id set thus result should be False."
 
 
@@ -433,9 +384,7 @@ def test_is_layouts_container_using_existing_script_no_scripts():
     Then
         - Ensure that is_layouts_container_scripts_found returns True.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     layouts_container_data_without_scripts = {
         "my_layoutscontainer": {
@@ -481,9 +430,7 @@ def test_is_layouts_container_using_existing_script_no_scripts():
     ]
 
     assert (
-        validator._is_layouts_container_scripts_found(
-            layouts_container_data=layouts_container_data_without_scripts
-        )
+        validator._is_layouts_container_scripts_found(layouts_container_data=layouts_container_data_without_scripts)
         is True
     ), "The layouts container's doesn't have any scripts thus result should be False."
 
@@ -500,9 +447,7 @@ def test_is_layout_using_existing_script_positive():
     Then
         - Ensure that the script is in the id set - i.e is_layout_scripts_found returns True.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.script_set = [
         {
@@ -532,9 +477,7 @@ def test_is_layout_using_existing_script_negative():
     Then
         - Ensure that the script is not in the id set - i.e is_layout_scripts_found returns False.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.script_set = [
         {
@@ -564,13 +507,9 @@ def test_is_layout_using_existing_script_no_scripts():
     Then
         - Ensure that is_layout_scripts_found returns True.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
-    layout_data_without_scripts = {
-        "my-layout": {"typename": "my-layout", "scripts": []}
-    }
+    layout_data_without_scripts = {"my-layout": {"typename": "my-layout", "scripts": []}}
 
     validator.script_set = [
         {
@@ -584,8 +523,7 @@ def test_is_layout_using_existing_script_no_scripts():
     ]
 
     assert (
-        validator._is_layout_scripts_found(layout_data=layout_data_without_scripts)
-        is True
+        validator._is_layout_scripts_found(layout_data=layout_data_without_scripts) is True
     ), "The layout doesn't have any scripts thus result should be True."
 
 
@@ -602,9 +540,7 @@ def test_is_layout_using_existing_script_ignore_builtin_scripts():
         - Ensure that the builtin script is ignored - i.e is_layout_scripts_found returns True.
     """
 
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.script_set = [
         {
@@ -642,9 +578,7 @@ def test_is_layout_using_script_validate_integration_commands_scripts():
         - Ensure that the integration command script is not ignored - i.e is_layout_scripts_found returns True.
     """
 
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.script_set = [
         {
@@ -702,9 +636,7 @@ def test_is_layout_using_script_validate_integration_commands_scripts_on_wrong_c
         - Ensure that the integration command script is not ignored - i.e is_layout_scripts_found returns False.
     """
 
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.script_set = [
         {
@@ -760,9 +692,7 @@ def test_is_non_real_command_found__happy_flow():
     Then
         - Ensure that the scripts depend-on commands are valid.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     script_data = {
         "name": "OktaUpdateUser",
@@ -774,9 +704,7 @@ def test_is_non_real_command_found__happy_flow():
         "pack": "DeprecatedContent",
     }
 
-    assert (
-        validator._is_non_real_command_found(script_data=script_data) is True
-    ), "The script has a non real command"
+    assert validator._is_non_real_command_found(script_data=script_data) is True, "The script has a non real command"
 
 
 def test_is_non_real_command_found__bad_command_name():
@@ -790,9 +718,7 @@ def test_is_non_real_command_found__bad_command_name():
     Then
         - Ensure that the scripts depend-on commands are non valid.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     script_data = {
         "name": "OktaUpdateUser",
@@ -804,9 +730,7 @@ def test_is_non_real_command_found__bad_command_name():
         "pack": "DeprecatedContent",
     }
 
-    assert (
-        validator._is_non_real_command_found(script_data=script_data) is False
-    ), "The script has a non real command"
+    assert validator._is_non_real_command_found(script_data=script_data) is False, "The script has a non real command"
 
 
 def test_is_non_real_command_found__no_depend_on_name():
@@ -820,9 +744,7 @@ def test_is_non_real_command_found__no_depend_on_name():
     Then
         - Ensure that the scripts depend-on commands are valid.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     script_data = {
         "name": "OktaUpdateUser",
@@ -833,9 +755,7 @@ def test_is_non_real_command_found__no_depend_on_name():
         "pack": "CommonScripts",
     }
 
-    assert (
-        validator._is_non_real_command_found(script_data=script_data) is True
-    ), "The script has a non real command"
+    assert validator._is_non_real_command_found(script_data=script_data) is True, "The script has a non real command"
 
 
 def test_is_integration_classifier_and_mapper_found__exist():
@@ -849,9 +769,7 @@ def test_is_integration_classifier_and_mapper_found__exist():
     Then
         - Ensure that the integration classifier and mapper were found.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.mappers_set = [
         {
@@ -909,10 +827,7 @@ def test_is_integration_classifier_and_mapper_found__exist():
     }
 
     assert (
-        validator._is_integration_classifier_and_mapper_found(
-            integration_data=integration_data
-        )
-        is True
+        validator._is_integration_classifier_and_mapper_found(integration_data=integration_data) is True
     ), "The incident classifier and mapper were not found"
 
 
@@ -927,9 +842,7 @@ def test_is_integration_classifier_and_mapper_found__mapper_not_exist():
     Then
         - Ensure that the integration mapper was not found.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.mappers_set = [
         {
@@ -987,10 +900,7 @@ def test_is_integration_classifier_and_mapper_found__mapper_not_exist():
     }
 
     assert (
-        validator._is_integration_classifier_and_mapper_found(
-            integration_data=integration_data
-        )
-        is False
+        validator._is_integration_classifier_and_mapper_found(integration_data=integration_data) is False
     ), "The incident mapper was found"
 
 
@@ -1005,9 +915,7 @@ def test_is_integration_classifier_and_mapper_found__classifier_not_exist():
     Then
         - Ensure that the integration classifier was not found.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.mappers_set = [
         {
@@ -1065,10 +973,7 @@ def test_is_integration_classifier_and_mapper_found__classifier_not_exist():
     }
 
     assert (
-        validator._is_integration_classifier_and_mapper_found(
-            integration_data=integration_data
-        )
-        is False
+        validator._is_integration_classifier_and_mapper_found(integration_data=integration_data) is False
     ), "The incident classifier was found"
 
 
@@ -1083,9 +988,7 @@ def test_is_classifier_incident_types_found__exists():
     Then
         - Ensure that the classifier incident types were found.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.incident_types_set = [
         {
@@ -1117,8 +1020,7 @@ def test_is_classifier_incident_types_found__exists():
     }
 
     assert (
-        validator._is_classifier_incident_types_found(classifier_data=classifier_data)
-        is True
+        validator._is_classifier_incident_types_found(classifier_data=classifier_data) is True
     ), "The classifier incidenttypes were not found"
 
 
@@ -1133,9 +1035,7 @@ def test_is_classifier_incident_types_found__missing_classifier():
     Then
         - Ensure that the missing incident type was not found.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.incident_types_set = [
         {
@@ -1158,8 +1058,7 @@ def test_is_classifier_incident_types_found__missing_classifier():
     }
 
     assert (
-        validator._is_classifier_incident_types_found(classifier_data=classifier_data)
-        is False
+        validator._is_classifier_incident_types_found(classifier_data=classifier_data) is False
     ), "The classifier incidenttypes was found"
 
 
@@ -1174,9 +1073,7 @@ def test_is_mapper_incident_types_found__exists():
     Then
         - Ensure that the mapper incident types were found.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.incident_types_set = [
         {
@@ -1232,9 +1129,7 @@ def test_is_mapper_incident_types_found__missing_classifier():
     Then
         - Ensure that the missing incident type was not found.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.incident_types_set = [
         {
@@ -1292,9 +1187,7 @@ def test_is_unique_file_valid_in_set(pack):
         }
     }
     pack.pack_metadata.write_json(pack_metadata_data)
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
     is_valid, error = validator.is_unique_file_valid_in_set(pack_path=pack.path)
     assert is_valid
     assert not error
@@ -1309,9 +1202,7 @@ def test_new_valid_is_pack_display_name_already_exist():
     Then
         - Ensure it is valid and no error is returned.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.packs_set = {
         "VMware": {
@@ -1338,9 +1229,7 @@ def test_new_valid_is_pack_display_name_already_exist():
             "id": "VMware",
         }
     }
-    is_valid, error = validator._is_pack_display_name_already_exist(
-        pack_metadata_data=pack_metadata_data
-    )
+    is_valid, error = validator._is_pack_display_name_already_exist(pack_metadata_data=pack_metadata_data)
     assert is_valid
     assert not error
 
@@ -1355,9 +1244,7 @@ def test_valid_is_pack_display_name_already_exist():
         - Ensure it is valid and no error is returned.
     """
 
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.packs_set = {
         "VMware": {
@@ -1384,9 +1271,7 @@ def test_valid_is_pack_display_name_already_exist():
             "id": "VMware",
         }
     }
-    is_valid, error = validator._is_pack_display_name_already_exist(
-        pack_metadata_data=pack_metadata_data
-    )
+    is_valid, error = validator._is_pack_display_name_already_exist(pack_metadata_data=pack_metadata_data)
     assert is_valid
     assert not error
 
@@ -1400,9 +1285,7 @@ def test_invalid_is_pack_display_name_already_exist():
     Then
         - Ensure it is invalid and the error message is returned.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.packs_set = {
         "VMware": {
@@ -1429,13 +1312,10 @@ def test_invalid_is_pack_display_name_already_exist():
             "id": "VMware",
         }
     }
-    is_valid, error = validator._is_pack_display_name_already_exist(
-        pack_metadata_data=pack_metadata_data
-    )
+    is_valid, error = validator._is_pack_display_name_already_exist(pack_metadata_data=pack_metadata_data)
     assert not is_valid
     assert error == (
-        "A pack named: VMware already exists in content repository, change the pack's "
-        "name in the metadata file.",
+        "A pack named: VMware already exists in content repository, change the pack's " "name in the metadata file.",
         "PA122",
     )
 
@@ -1449,9 +1329,7 @@ def test_new_invalid_is_pack_display_name_already_exist():
     Then
         - Ensure it is invalid and the error message is returned.
     """
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
 
     validator.packs_set = {
         "CiscoEmailSecurity": {
@@ -1478,9 +1356,7 @@ def test_new_invalid_is_pack_display_name_already_exist():
             "id": "VMware",
         }
     }
-    is_valid, error = validator._is_pack_display_name_already_exist(
-        pack_metadata_data=pack_metadata_data
-    )
+    is_valid, error = validator._is_pack_display_name_already_exist(pack_metadata_data=pack_metadata_data)
     assert not is_valid
     assert error == (
         "A pack named: Cisco Email Security already exists in content repository, change the pack's "
@@ -1490,9 +1366,7 @@ def test_new_invalid_is_pack_display_name_already_exist():
 
 
 class TestPlaybookEntitiesVersionsValid:
-    validator = IDSetValidations(
-        is_circle=False, is_test_run=True, configuration=CONFIG
-    )
+    validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
     playbook_path = "Packs/Example/Playbooks/playbook-Example_Playbook.yml"
     playbook_with_valid_versions = {
         "Example Playbook": {
@@ -1511,9 +1385,7 @@ class TestPlaybookEntitiesVersionsValid:
                 "SubPlaybook_version_5_5",
                 "playbook_dup",
             ],
-            "command_to_integration": {
-                "test-command": ["Integration_version_5", "Integration_version_4"]
-            },
+            "command_to_integration": {"test-command": ["Integration_version_5", "Integration_version_4"]},
         }
     }
 
@@ -1690,39 +1562,27 @@ class TestPlaybookEntitiesVersionsValid:
         self.validator.script_set = self.id_set["scripts"]
 
         with ChangeCWD(repo.path):
-            (
-                is_sub_playbook_invalid,
-                error,
-            ) = self.validator._are_playbook_entities_versions_valid(
+            (is_sub_playbook_invalid, error,) = self.validator._are_playbook_entities_versions_valid(
                 self.playbook_with_sub_playbook_not_in_id_set, playbook.yml.path
             )
             assert not is_sub_playbook_invalid
             assert "do not exist in the id_set" in error
 
             # all playbook's entities has valid versions
-            (
-                is_playbook_version_valid,
-                error,
-            ) = self.validator._are_playbook_entities_versions_valid(
+            (is_playbook_version_valid, error,) = self.validator._are_playbook_entities_versions_valid(
                 self.playbook_with_valid_versions, playbook.yml.path
             )
             assert is_playbook_version_valid, error
             assert error is None
 
             # playbook uses scripts with invalid versions
-            (
-                is_script_version_invalid,
-                error,
-            ) = self.validator._are_playbook_entities_versions_valid(
+            (is_script_version_invalid, error,) = self.validator._are_playbook_entities_versions_valid(
                 self.playbook_with_invalid_scripts_version, playbook.yml.path
             )
             assert not is_script_version_invalid
 
             # playbook uses sub playbooks with invalid versions
-            (
-                is_sub_playbook_version_invalid,
-                error,
-            ) = self.validator._are_playbook_entities_versions_valid(
+            (is_sub_playbook_version_invalid, error,) = self.validator._are_playbook_entities_versions_valid(
                 self.playbook_with_invalid_sub_playbook_version_from_version_5_0_0,
                 playbook.yml.path,
             )
@@ -1767,10 +1627,7 @@ class TestPlaybookEntitiesVersionsValid:
                 }
             }
             playbook1.yml.write_dict(playbook1_data)
-            (
-                is_sub_playbook_version_invalid,
-                error,
-            ) = self.validator._are_playbook_entities_versions_valid(
+            (is_sub_playbook_version_invalid, error,) = self.validator._are_playbook_entities_versions_valid(
                 self.playbook_with_invalid_sub_playbook_version_from_version_6_0_0,
                 playbook1.yml.path,
             )
@@ -1785,18 +1642,13 @@ class TestPlaybookEntitiesVersionsValid:
                 }
             }
             playbook2.yml.write_dict(playbook2_data)
-            (
-                is_sub_playbook_version_invalid,
-                error,
-            ) = self.validator._are_playbook_entities_versions_valid(
+            (is_sub_playbook_version_invalid, error,) = self.validator._are_playbook_entities_versions_valid(
                 self.playbook_with_invalid_sub_playbook_version_from_version_5_0_0,
                 playbook2.yml.path,
             )
             assert not is_sub_playbook_version_invalid
 
-    def test_are_playbook_entities_versions_valid_integration_commands(
-        self, repo, mocker
-    ):
+    def test_are_playbook_entities_versions_valid_integration_commands(self, repo, mocker):
         """
 
         Given
@@ -1815,9 +1667,7 @@ class TestPlaybookEntitiesVersionsValid:
         playbook.create_default_playbook()
 
         # setup validator
-        validator = IDSetValidations(
-            is_circle=False, is_test_run=True, configuration=CONFIG
-        )
+        validator = IDSetValidations(is_circle=False, is_test_run=True, configuration=CONFIG)
         validator.playbook_set = [
             {
                 playbook.name: {
@@ -1843,9 +1693,7 @@ class TestPlaybookEntitiesVersionsValid:
                 "file_path": playbook.yml.path,
                 "fromversion": "3.0.0",
                 "pack": "Example",
-                "command_to_integration": {
-                    "test-command": ["Integration_version_4", "Integration_version_5"]
-                },
+                "command_to_integration": {"test-command": ["Integration_version_4", "Integration_version_5"]},
             }
         }
 
@@ -1855,29 +1703,21 @@ class TestPlaybookEntitiesVersionsValid:
                 "file_path": playbook.yml.path,
                 "fromversion": "5.0.0",
                 "pack": "Example",
-                "command_to_integration": {
-                    "test-command": ["Integration_version_4", "Integration_version_5"]
-                },
+                "command_to_integration": {"test-command": ["Integration_version_4", "Integration_version_5"]},
             }
         }
 
         with ChangeCWD(repo.path):
             # playbook uses integration's commands with invalid versions
             mocker.patch.object(validator, "handle_error", return_value=True)
-            (
-                is_integration_version_invalid,
-                error,
-            ) = validator._are_playbook_entities_versions_valid(
+            (is_integration_version_invalid, error,) = validator._are_playbook_entities_versions_valid(
                 playbook_with_invalid_integration_version, playbook.yml.path
             )
             assert not is_integration_version_invalid
 
             # playbook uses integration's commands with valid versions
             mocker.patch.object(validator, "handle_error", return_value=True)
-            (
-                is_integration_version_invalid,
-                error,
-            ) = validator._are_playbook_entities_versions_valid(
+            (is_integration_version_invalid, error,) = validator._are_playbook_entities_versions_valid(
                 playbook_with_valid_integration_version, playbook.yml.path
             )
             assert is_integration_version_invalid
@@ -1954,6 +1794,4 @@ def test_invalid_playbook_is_file_valid_in_id_set(mocker):
     )
     mocker.patch.object(validator, "is_subplaybook_name_valid", return_value=True)
 
-    assert not validator.is_file_valid_in_set(
-        file_path="some_path", file_type=FileType.PLAYBOOK
-    )
+    assert not validator.is_file_valid_in_set(file_path="some_path", file_type=FileType.PLAYBOOK)

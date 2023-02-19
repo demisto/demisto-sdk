@@ -36,9 +36,7 @@ class AuthorImageValidator(ImageValidator):
             specific_validations=specific_validations,
         )
         self.pack_path = os.path.join(PACKS_DIR, get_pack_name(file_path))
-        self.maximum_image_size = (
-            maximum_image_size if maximum_image_size else self.IMAGE_MAX_SIZE
-        )
+        self.maximum_image_size = maximum_image_size if maximum_image_size else self.IMAGE_MAX_SIZE
 
     def get_support_level(self):
         metadata_path = os.path.join(self.pack_path, PACKS_PACK_META_FILE_NAME)
@@ -54,16 +52,10 @@ class AuthorImageValidator(ImageValidator):
             (bool): Whether author image is valid.
         """
         if os.path.exists(self.file_path):
-            self.validate_size(
-                allow_empty_image_file=False, maximum_size=self.maximum_image_size
-            )
+            self.validate_size(allow_empty_image_file=False, maximum_size=self.maximum_image_size)
         else:
             if self.get_support_level() == "partner":
-                error_message, error_code = Errors.author_image_is_missing(
-                    self.file_path
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.author_image_is_missing(self.file_path)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
         return self._is_valid

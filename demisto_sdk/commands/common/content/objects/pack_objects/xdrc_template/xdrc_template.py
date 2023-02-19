@@ -42,13 +42,9 @@ class XDRCTemplate(JSONContentObject):
         Returns:
             List[Path]: List of new created files.
         """
-        return super()._unify(
-            dest_dir=dest_dir, output=output or self.normalize_file_name()
-        )
+        return super()._unify(dest_dir=dest_dir, output=output or self.normalize_file_name())
 
-    def _create_target_dump_dir(
-        self, dest_dir: Optional[Union[Path, str]] = None
-    ) -> Path:
+    def _create_target_dump_dir(self, dest_dir: Optional[Union[Path, str]] = None) -> Path:
         """Create destination directory, Destination must be valid directory, If not specified dump in
          path of origin object.
 
@@ -64,9 +60,7 @@ class XDRCTemplate(JSONContentObject):
         if dest_dir:
             dest_dir = Path(dest_dir)  # type: ignore
             if dest_dir.exists() and not Path(dest_dir).is_dir():  # type: ignore
-                raise exc.ContentDumpError(
-                    self, self._path, "Destiantion is not valid directory path"
-                )
+                raise exc.ContentDumpError(self, self._path, "Destiantion is not valid directory path")
             else:
                 dest_dir.mkdir(parents=True, exist_ok=True)
         else:
@@ -74,9 +68,7 @@ class XDRCTemplate(JSONContentObject):
 
         return dest_dir  # type: ignore
 
-    def dump(
-        self, dest_dir: Optional[Union[Path, str]] = None, unify: bool = True
-    ) -> List[Path]:
+    def dump(self, dest_dir: Optional[Union[Path, str]] = None, unify: bool = True) -> List[Path]:
         """
         Dump XDRCTemplate.
 

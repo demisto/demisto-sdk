@@ -86,9 +86,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 ],
                 catch_exceptions=False,
             )
-        assert (
-            secho.call_args_list[0][0][0] == "\n# Pack ID: FindDependencyPack"
-        )  # first log line is the pack name
+        assert secho.call_args_list[0][0][0] == "\n# Pack ID: FindDependencyPack"  # first log line is the pack name
         assert secho.call_args_list[1][0][0] == "### Scripts"
         assert secho.call_args_list[2][0][0] == "### Playbooks"
         assert secho.call_args_list[3][0][0] == "### Layouts"
@@ -105,9 +103,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         assert secho.call_args_list[14][0][0] == "### Generic Fields"
         assert secho.call_args_list[15][0][0] == "### Generic Modules"
         assert secho.call_args_list[16][0][0] == "### Jobs"
-        assert (
-            secho.call_args_list[17][0][0] == "All level dependencies are: []"
-        )  # last log is regarding all the deps
+        assert secho.call_args_list[17][0][0] == "All level dependencies are: []"  # last log is regarding all the deps
         assert result.exit_code == 0
         assert result.stderr == ""
 
@@ -273,9 +269,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
 
         assert secho.call_args_list[0][0][0] == "\n# Pack ID: FindDependencyPack2"
         assert "All level dependencies are:" in secho.call_args_list[-1][0][0]
-        assert (
-            "Found dependencies result for FindDependencyPack2 pack:" in result.output
-        )
+        assert "Found dependencies result for FindDependencyPack2 pack:" in result.output
         assert '"display_name": "FindDependencyPack1"' in result.output
         assert result.exit_code == 0
         assert result.stderr == ""

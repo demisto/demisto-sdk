@@ -140,9 +140,7 @@ def generate_table_section(
             section = [""]
         return section
 
-    section.extend([text, "    |", "    |"]) if numbered_section else section.extend(
-        [text, "|", "|"]
-    )
+    section.extend([text, "    |", "    |"]) if numbered_section else section.extend([text, "|", "|"])
     header_index = len(section) - 2
     for key in data[0]:
         section[header_index] += f" **{key}** |"
@@ -150,9 +148,7 @@ def generate_table_section(
 
     for item in data:
         tmp_item = "    |" if numbered_section else "|"
-        escape_less_greater_signs = (
-            "First fetch time" in item
-        )  # instead of html escaping
+        escape_less_greater_signs = "First fetch time" in item  # instead of html escaping
         for key in item:
             escaped_string = string_escape_md(
                 str(item.get(key, "")),
@@ -230,16 +226,8 @@ def string_escape_md(
         added_char_count = 1
         for match in re.finditer(r"([\s.,()])(_\S*)(_[\s.,()])", st):
             # In case there is more than one match, the next word index get changed because of the added escape chars.
-            st = (
-                st[: match.regs[0][0] + added_char_count]
-                + "\\"
-                + st[match.regs[0][0] + added_char_count :]
-            )
-            st = (
-                st[: match.regs[3][0] + added_char_count]
-                + "\\"
-                + st[match.regs[3][0] + added_char_count :]
-            )
+            st = st[: match.regs[0][0] + added_char_count] + "\\" + st[match.regs[0][0] + added_char_count :]
+            st = st[: match.regs[3][0] + added_char_count] + "\\" + st[match.regs[3][0] + added_char_count :]
             added_char_count += 2
 
     return st
@@ -254,15 +242,11 @@ def execute_command(command_example, insecure: bool):
         runner = Runner("", insecure=insecure)
         res, raw_context = runner.execute_command(command_example)
         if not res:
-            raise RuntimeError(
-                f"something went wrong with your command: {command_example}"
-            )
+            raise RuntimeError(f"something went wrong with your command: {command_example}")
 
         for entry in res:
             if is_error(entry):
-                raise RuntimeError(
-                    f"something went wrong with your command: {command_example}"
-                )
+                raise RuntimeError(f"something went wrong with your command: {command_example}")
 
             if raw_context:
                 context = {k.split("(")[0]: v for k, v in raw_context.items()}
@@ -272,9 +256,7 @@ def execute_command(command_example, insecure: bool):
                 if isinstance(content, STRING_TYPES):
                     md_example = format_md(content)
                 else:
-                    md_example = (
-                        f"```\n{json.dumps(content, sort_keys=True, indent=4)}\n```"
-                    )
+                    md_example = f"```\n{json.dumps(content, sort_keys=True, indent=4)}\n```"
 
     except RuntimeError:
         errors.append(f"The provided example for cmd {cmd} has failed...")
@@ -322,9 +304,7 @@ def build_example_dict(
     examples: dict = {}
     errors: list = []
     for example in command_examples:
-        name, md_example, context_example, cmd_errors = execute_command(
-            example, insecure
-        )
+        name, md_example, context_example, cmd_errors = execute_command(example, insecure)
         if "playbookQuery" in context_example:
             del context_example["playbookQuery"]
 

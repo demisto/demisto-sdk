@@ -30,9 +30,7 @@ class XSIAMDashboard(JSONContentObject):
         """
         if not self._image_file:
             image_file = next(
-                self._path.parent.glob(
-                    patterns=rf"{re.escape(self.path.stem)}_image.png"
-                ),
+                self._path.parent.glob(patterns=rf"{re.escape(self.path.stem)}_image.png"),
                 None,
             )
             if image_file:

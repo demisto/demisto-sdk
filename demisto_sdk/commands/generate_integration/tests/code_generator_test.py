@@ -64,9 +64,7 @@ class TestCodeGenerator:
         "test_files",
     )
     test_integration_dir = os.path.join(test_files_path, "VirusTotalTest")
-    autogen_config_path = os.path.join(
-        test_files_path, "VirusTotal-autogen-config.json"
-    )
+    autogen_config_path = os.path.join(test_files_path, "VirusTotal-autogen-config.json")
 
     def test_py_code_generated_from_config(self, mocker, tmpdir):
         """
@@ -238,9 +236,7 @@ class TestCodeGenerator:
         - ensure in the code we return response.get('scans')
         - ensure in yml, we generate outputs for scans object, and not to the whole response
         """
-        with open(
-            os.path.join(self.test_files_path, "VirusTotal-autogen-config.json")
-        ) as f:
+        with open(os.path.join(self.test_files_path, "VirusTotal-autogen-config.json")) as f:
             config_dict = json.load(f)
 
         config = IntegrationGeneratorConfig(**config_dict)
@@ -249,12 +245,8 @@ class TestCodeGenerator:
             root_object="scans",
             context_path="TestScan",
             outputs=[
-                IntegrationGeneratorOutput(
-                    name="total_count", description="", type_="Number"
-                ),
-                IntegrationGeneratorOutput(
-                    name="scans.field1", description="", type_="String"
-                ),
+                IntegrationGeneratorOutput(name="total_count", description="", type_="Number"),
+                IntegrationGeneratorOutput(name="scans.field1", description="", type_="String"),
             ],
         )
         config.commands.append(test_command)
@@ -264,15 +256,11 @@ class TestCodeGenerator:
         integration_yml_str = yaml.dumps(integration_yml.to_dict())
 
         assert "outputs=response.get('scans')" in integration_code
-        assert (
-            "contextPath: VirusTotalTest.TestScan.scans.field1" in integration_yml_str
-        )
+        assert "contextPath: VirusTotalTest.TestScan.scans.field1" in integration_yml_str
         assert "contextPath: VirusTotalTest.TestScan.total_count" in integration_yml_str
 
 
-def _testutil_create_command(
-    name, root_object=None, context_path=None, url_path=None, outputs=None
-):
+def _testutil_create_command(name, root_object=None, context_path=None, url_path=None, outputs=None):
     if url_path is None:
         url_path = "/test"
 

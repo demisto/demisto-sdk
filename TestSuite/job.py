@@ -20,9 +20,7 @@ class Job(JSONBased):
     ):
         super().__init__(jobs_dir_path, pure_name, "job")
         self.pure_name = pure_name
-        self.create_default_job(
-            is_feed=is_feed, selected_feeds=selected_feeds or [], details=details
-        )
+        self.create_default_job(is_feed=is_feed, selected_feeds=selected_feeds or [], details=details)
 
     def create_default_job(self, is_feed: bool, selected_feeds: list, details: str):
         self.write_json(

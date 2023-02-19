@@ -110,9 +110,7 @@ DETACH DELETE n, p"""
     run_query(tx, query)
 
 
-def return_preserved_relationships(
-    tx: Transaction, rels_to_preserve: List[Dict[str, Any]]
-) -> None:
+def return_preserved_relationships(tx: Transaction, rels_to_preserve: List[Dict[str, Any]]) -> None:
     query = f"""// Returns the preserved relationships
 UNWIND $rels_data AS rel_data
 MATCH (s) WHERE id(s) = rel_data.source_id
@@ -203,12 +201,7 @@ RETURN node"""
     if ids_list:
         query = "UNWIND $filter_list AS node_id\n" + query
 
-    return [
-        item.get("node")
-        for item in run_query(
-            tx, query, filter_list=list(ids_list) if ids_list else None
-        )
-    ]
+    return [item.get("node") for item in run_query(tx, query, filter_list=list(ids_list) if ids_list else None)]
 
 
 def delete_all_graph_nodes(tx: Transaction) -> None:

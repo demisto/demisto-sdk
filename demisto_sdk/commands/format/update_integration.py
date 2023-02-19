@@ -76,17 +76,13 @@ class IntegrationYMLFormat(BaseUpdateYML):
     def update_proxy_insecure_param_to_default(self):
         """Updates important integration arguments names and description."""
         if self.verbose:
-            click.echo(
-                "Updating proxy and insecure/unsecure integration arguments description to default"
-            )
+            click.echo("Updating proxy and insecure/unsecure integration arguments description to default")
 
         for integration_argument in self.data.get("configuration", {}):
             argument_name = integration_argument.get("name", "")
 
             if argument_name in self.ARGUMENTS_DESCRIPTION:
-                integration_argument["display"] = self.ARGUMENTS_DESCRIPTION[
-                    argument_name
-                ]
+                integration_argument["display"] = self.ARGUMENTS_DESCRIPTION[argument_name]
                 if integration_argument.get("required", False):
                     integration_argument["required"] = False
                 integration_argument["type"] = 8
@@ -99,14 +95,10 @@ class IntegrationYMLFormat(BaseUpdateYML):
         default_additional_info = load_default_additional_info_dict()
 
         if self.verbose:
-            click.echo(
-                "Updating params with an empty additionalnifo, to the default (if exists)"
-            )
+            click.echo("Updating params with an empty additionalnifo, to the default (if exists)")
 
         for param in self.data.get("configuration", {}):
-            if param["name"] in default_additional_info and not param.get(
-                "additionalinfo"
-            ):
+            if param["name"] in default_additional_info and not param.get("additionalinfo"):
                 param["additionalinfo"] = default_additional_info[param["name"]]
 
     def set_default_outputs(self):
@@ -115,29 +107,23 @@ class IntegrationYMLFormat(BaseUpdateYML):
             return
 
         default_values = get_json(
-            Path(__file__).absolute().parents[3] / "demisto_sdk/commands/common/"
-            "default_output_descriptions.json"
+            Path(__file__).absolute().parents[3] / "demisto_sdk/commands/common/" "default_output_descriptions.json"
         )
 
         if self.verbose:
-            click.echo(
-                "Updating empty integration outputs to their default (if exists)"
-            )
+            click.echo("Updating empty integration outputs to their default (if exists)")
 
         for command in self.data.get("script", {}).get("commands", {}):
             for output in command.get("outputs", []):
                 if (
-                    output["contextPath"] in default_values
-                    and output.get("description") == ""
+                    output["contextPath"] in default_values and output.get("description") == ""
                 ):  # could be missing -> None
                     output["description"] = default_values[output["contextPath"]]
 
     def set_reputation_commands_basic_argument_as_needed(self):
         """Sets basic arguments of reputation commands to be default, isArray and required."""
         if self.verbose:
-            click.echo(
-                "Updating reputation commands' basic arguments to be True for default, isArray and required"
-            )
+            click.echo("Updating reputation commands' basic arguments to be True for default, isArray and required")
 
         integration_commands = self.data.get("script", {}).get("commands", [])
 
@@ -145,9 +131,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
             command_name = command.get("name", "")
 
             if command_name in BANG_COMMAND_NAMES:
-                for argument in command.get(
-                    "arguments", []
-                ):  # If there're arguments under the command
+                for argument in command.get("arguments", []):  # If there're arguments under the command
                     name = argument.get("name")
                     if name == command_name:
                         is_array = argument.get("isArray", False)
@@ -155,9 +139,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
                             click.echo(
                                 f"isArray field in {name} command is set to False. Fix the command to support that function and set it to True."
                             )
-                        argument.update(
-                            {"default": True, "isArray": is_array, "required": True}
-                        )
+                        argument.update({"default": True, "isArray": is_array, "required": True})
                         break
                 else:  # No arguments at all
                     default_bang_args = {
@@ -193,21 +175,15 @@ class IntegrationYMLFormat(BaseUpdateYML):
             # get the iten marketplaces to decide which are the required params
             # if no marketplaces or xsoar in marketplaces - the required params will be INCIDENT_FETCH_REQUIRED_PARAMS (with Incident type etc. )
             # otherwise it will be the ALERT_FETCH_REQUIRED_PARAMS (with Alert type etc. )
-            marketplaces = get_item_marketplaces(
-                item_path=self.source_file, item_data=self.data
-            )
-            is_xsoar_marketplace = (
-                not marketplaces or MarketplaceVersions.XSOAR.value in marketplaces
-            )
+            marketplaces = get_item_marketplaces(item_path=self.source_file, item_data=self.data)
+            is_xsoar_marketplace = not marketplaces or MarketplaceVersions.XSOAR.value in marketplaces
             fetch_required_params, params_to_remove = (
                 (INCIDENT_FETCH_REQUIRED_PARAMS, ALERT_FETCH_REQUIRED_PARAMS)
                 if is_xsoar_marketplace
                 else (ALERT_FETCH_REQUIRED_PARAMS, INCIDENT_FETCH_REQUIRED_PARAMS)
             )
 
-            for param_to_add, param_to_remove in zip(
-                fetch_required_params, params_to_remove
-            ):
+            for param_to_add, param_to_remove in zip(fetch_required_params, params_to_remove):
                 if param_to_add not in params:
                     self.data["configuration"].append(param_to_add)
                 if param_to_remove in params:
@@ -262,9 +238,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
                 f"\n================= Updating file {self.source_file} =================",
                 fg="bright_blue",
             )
-            super().update_yml(
-                file_type=BETA_INTEGRATION if self.is_beta else INTEGRATION
-            )
+            super().update_yml(file_type=BETA_INTEGRATION if self.is_beta else INTEGRATION)
             self.update_tests()
             self.update_conf_json("integration")
             self.update_proxy_insecure_param_to_default()

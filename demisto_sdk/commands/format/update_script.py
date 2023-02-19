@@ -54,9 +54,7 @@ class ScriptYMLFormat(BaseUpdateYML):
             self.from_version = "5.5.0"
 
     @staticmethod
-    def update_docker_image_in_script(
-        script_obj: dict, file_path: str, from_version: Optional[str] = None
-    ):
+    def update_docker_image_in_script(script_obj: dict, file_path: str, from_version: Optional[str] = None):
         """Update the docker image for the passed script object. Will ignore if this is a javascript
         object or using default image (not set).
 
@@ -79,13 +77,9 @@ class ScriptYMLFormat(BaseUpdateYML):
         image_name = dockerimage.split(":")[0]
         try:
             if is_iron_bank_pack(file_path):
-                latest_tag = DockerImageValidator.get_docker_image_latest_tag_from_iron_bank_request(
-                    image_name
-                )
+                latest_tag = DockerImageValidator.get_docker_image_latest_tag_from_iron_bank_request(image_name)
             else:
-                latest_tag = DockerImageValidator.get_docker_image_latest_tag_request(
-                    image_name
-                )
+                latest_tag = DockerImageValidator.get_docker_image_latest_tag_request(image_name)
             if not latest_tag:
                 click.secho("Failed getting docker image latest tag", fg="yellow")
                 return
@@ -102,20 +96,14 @@ class ScriptYMLFormat(BaseUpdateYML):
             if (not from_version) or server_version_compare("5.0.0", from_version) > 0:
                 # if this is a script that supports 4.5 and earlier. Make sure dockerimage45 is set
                 if not script_obj.get("dockerimage45"):
-                    print(
-                        f"Setting dockerimage45 to previous image value: {dockerimage} for 4.5 and earlier support"
-                    )
+                    print(f"Setting dockerimage45 to previous image value: {dockerimage} for 4.5 and earlier support")
                     script_obj["dockerimage45"] = dockerimage
         else:
-            print(
-                f"Already using latest docker image: {dockerimage}. Nothing to update."
-            )
+            print(f"Already using latest docker image: {dockerimage}. Nothing to update.")
 
     def update_docker_image(self):
         if self.update_docker:
-            self.update_docker_image_in_script(
-                self.data, self.source_file, self.data.get(self.from_version_key)
-            )
+            self.update_docker_image_in_script(self.data, self.source_file, self.data.get(self.from_version_key))
 
     def run_format(self) -> int:
         try:

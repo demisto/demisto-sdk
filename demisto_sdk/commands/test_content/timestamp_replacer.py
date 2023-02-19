@@ -22,9 +22,7 @@ from mitmproxy.addons.serverplayback import ServerPlayback
 from mitmproxy.http import HTTPFlow, Request
 from mitmproxy.script import concurrent
 
-logging.basicConfig(
-    level=logging.DEBUG, format="[%(asctime)s] - [%(funcName)s] - %(message)s"
-)
+logging.basicConfig(level=logging.DEBUG, format="[%(asctime)s] - [%(funcName)s] - %(message)s")
 
 
 def record_concurrently(replaying: bool = False):
@@ -142,27 +140,19 @@ class TimestampReplacer:
         if ctx.options.script_mode == "record":
             if ctx.options.detect_timestamps:
                 self.run_all_key_detections(req)
-                logging.info(
-                    f'updating problem_keys file at "{self.bad_keys_filepath}"'
-                )
+                logging.info(f'updating problem_keys file at "{self.bad_keys_filepath}"')
                 self.update_problem_keys_file()
         elif ctx.options.script_mode in {"clean", "playback"}:
             logging.info(f"flow.live is: {flow.live}")
             flow.live = False
-            logging.info(
-                f"mode={ctx.options.script_mode} cleaning problematic key values from the request"
-            )
+            logging.info(f"mode={ctx.options.script_mode} cleaning problematic key values from the request")
             self.clean_bad_keys(req)
 
     @staticmethod
     def replace_boundary(req: Request):
         fixed_boundary = "fixed_boundary"
-        content_type_header, old_boundary = req.headers["Content-Type"].split(
-            "boundary="
-        )
-        req.headers["Content-Type"] = "boundary=".join(
-            [content_type_header, fixed_boundary]
-        )
+        content_type_header, old_boundary = req.headers["Content-Type"].split("boundary=")
+        req.headers["Content-Type"] = "boundary=".join([content_type_header, fixed_boundary])
         req.content = req.content.replace(old_boundary.encode(), fixed_boundary.encode())  # type: ignore
 
     def clean_bad_keys(self, req: Request) -> None:
@@ -248,13 +238,9 @@ class TimestampReplacer:
                     self.modify_json_body(req, content)  # type: ignore
                     return
                 except Exception:
-                    logging.exception(
-                        f"failed to run literal_eval on content {content}"
-                    )
+                    logging.exception(f"failed to run literal_eval on content {content}")
                 try:
-                    logging.info(
-                        'parsing the request body with "literal_eval" failed - trying with "json.loads"'
-                    )
+                    logging.info('parsing the request body with "literal_eval" failed - trying with "json.loads"')
                     content = json.loads(content)
                     self.modify_json_body(req, content)  # type: ignore
                 except Exception:
@@ -294,18 +280,12 @@ class TimestampReplacer:
                     logging.info(f'modifying request to "{req.pretty_url}"')
                     body[lastkey] = self.constant
                     modified = True
-                elif (
-                    isinstance(body, list)
-                    and lastkey.isdigit()
-                    and int(lastkey) <= len(body) - 1
-                ):
+                elif isinstance(body, list) and lastkey.isdigit() and int(lastkey) <= len(body) - 1:
                     logging.info(f'modifying request to "{req.pretty_url}"')
                     body[int(lastkey)] = self.constant
                     modified = True
         if modified:
-            logging.info(
-                f"original request body:\n{json.dumps(original_content, indent=4)}"
-            )
+            logging.info(f"original request body:\n{json.dumps(original_content, indent=4)}")
             logging.info(f"modified request body:\n{json.dumps(json_body, indent=4)}")
             req.set_content(json.dumps(json_body).encode())
 
@@ -385,9 +365,7 @@ class TimestampReplacer:
                 except Exception:
                     logging.exception(f"failed to run literal_eval content: {content}")
                 try:
-                    logging.info(
-                        'parsing the request body with "literal_eval" failed - trying with "json.loads"'
-                    )
+                    logging.info('parsing the request body with "literal_eval" failed - trying with "json.loads"')
                     content = json.loads(content)
                     json_keys = self.determine_problematic_keys(content)  # type: ignore
                     self.json_keys.update(json_keys)
@@ -414,9 +392,7 @@ class TimestampReplacer:
                         bad_key_paths.extend(travel_dict(val, sub_key_path))
                     else:
                         is_string = isinstance(val, str) and len(val) > 4
-                        possible_timestamp = (
-                            isinstance(val, (int, float)) and len(str(val)) >= 8
-                        )
+                        possible_timestamp = isinstance(val, (int, float)) and len(str(val)) >= 8
                         if is_string or possible_timestamp:
                             for_eval = val
                             if possible_timestamp:
@@ -440,9 +416,7 @@ class TimestampReplacer:
                         bad_key_paths.extend(travel_dict(val, sub_key_path))
                     else:
                         is_string = isinstance(val, str) and len(val) > 4
-                        possible_timestamp = (
-                            isinstance(val, (int, float)) and len(str(val)) >= 8
-                        )
+                        possible_timestamp = isinstance(val, (int, float)) and len(str(val)) >= 8
                         if is_string or possible_timestamp:
                             for_eval = val
                             if possible_timestamp:
@@ -469,17 +443,11 @@ class TimestampReplacer:
         existing_problem_keys = self.read_in_problematic_keys()
         for key, val in existing_problem_keys.items():
             if key == "keys_to_replace":
-                existing_problem_keys[key] = " ".join(
-                    set(val.split()).union(self.json_keys)
-                )
+                existing_problem_keys[key] = " ".join(set(val.split()).union(self.json_keys))
             elif key == "server_replay_ignore_payload_params":
-                existing_problem_keys[key] = " ".join(
-                    set(val.split()).union(self.form_keys)
-                )
+                existing_problem_keys[key] = " ".join(set(val.split()).union(self.form_keys))
             elif key == "server_replay_ignore_params":
-                existing_problem_keys[key] = " ".join(
-                    set(val.split()).union(self.query_keys)
-                )
+                existing_problem_keys[key] = " ".join(set(val.split()).union(self.query_keys))
         self.write_out_problematic_keys(existing_problem_keys)
 
     def read_in_problematic_keys(self):
@@ -487,15 +455,9 @@ class TimestampReplacer:
         if it exists. Otherwise, return the dictionary with empty values.
         """
         logging.info('executing "read_in_problematic_keys" method')
-        repo_bad_keys_filepath = self.bad_keys_filepath.replace(
-            "/tmp/Mocks", "content-test-data"
-        )
-        logging.info(
-            f'reading in problematic keys data from "{repo_bad_keys_filepath}"'
-        )
-        if not path.exists(self.bad_keys_filepath) and path.exists(
-            repo_bad_keys_filepath
-        ):
+        repo_bad_keys_filepath = self.bad_keys_filepath.replace("/tmp/Mocks", "content-test-data")
+        logging.info(f'reading in problematic keys data from "{repo_bad_keys_filepath}"')
+        if not path.exists(self.bad_keys_filepath) and path.exists(repo_bad_keys_filepath):
             with open(repo_bad_keys_filepath) as fp:
                 problem_keys = json.load(fp)
         elif path.exists(self.bad_keys_filepath):
@@ -529,26 +491,18 @@ class TimestampReplacer:
             problem_keys = json.load(open(self.bad_keys_filepath))
 
             query_keys = problem_keys.get("server_replay_ignore_params")
-            self.query_keys.update(
-                query_keys.split() if isinstance(query_keys, str) else query_keys
-            )
+            self.query_keys.update(query_keys.split() if isinstance(query_keys, str) else query_keys)
             form_keys = problem_keys.get("server_replay_ignore_payload_params")
-            self.form_keys.update(
-                form_keys.split() if isinstance(form_keys, str) else form_keys
-            )
+            self.form_keys.update(form_keys.split() if isinstance(form_keys, str) else form_keys)
             json_keys = problem_keys.get("keys_to_replace")
-            self.json_keys.update(
-                json_keys.split() if isinstance(json_keys, str) else json_keys
-            )
+            self.json_keys.update(json_keys.split() if isinstance(json_keys, str) else json_keys)
 
             logging.info("bad keys loaded\n---------------")
             logging.info(f"self.query_keys={self.query_keys}")
             logging.info(f"self.form_keys={self.form_keys}")
             logging.info(f"self.json_keys={self.json_keys}")
         else:
-            logging.info(
-                f'"{self.bad_keys_filepath}" path doesn\'t exist - no bad keys to set'
-            )
+            logging.info(f'"{self.bad_keys_filepath}" path doesn\'t exist - no bad keys to set')
             logging.info("not setting bad keys from file")
 
     @staticmethod

@@ -14,19 +14,10 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
 
 class JobValidator(ContentEntityValidator):
     def __init__(
-        self,
-        structure_validator,
-        ignored_errors=False,
-        print_as_warnings=False,
-        json_file_path=None,
-        **kwargs
+        self, structure_validator, ignored_errors=False, print_as_warnings=False, json_file_path=None, **kwargs
     ):
         super().__init__(
-            structure_validator,
-            ignored_errors,
-            print_as_warnings,
-            json_file_path=json_file_path,
-            **kwargs
+            structure_validator, ignored_errors, print_as_warnings, json_file_path=json_file_path, **kwargs
         )
         self.from_version = self.current_file.get("fromVersion")
         self._errors = []
@@ -43,12 +34,8 @@ class JobValidator(ContentEntityValidator):
         if not self.from_version or LooseVersion(self.from_version) < LooseVersion(
             FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)
         ):
-            error_message, error_code = Errors.invalid_fromversion_in_job(
-                self.from_version
-            )
-            formatted_error = self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            )
+            error_message, error_code = Errors.invalid_fromversion_in_job(self.from_version)
+            formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path)
             if formatted_error:
                 self._errors.append(error_message)
                 return False
@@ -66,9 +53,7 @@ class JobValidator(ContentEntityValidator):
                     error_message,
                     error_code,
                 ) = Errors.invalid_both_selected_and_all_feeds_in_job()
-                formatted_error = self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                )
+                formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path)
                 if formatted_error:
                     self._errors.append(error_message)
                     return False
@@ -81,9 +66,7 @@ class JobValidator(ContentEntityValidator):
 
             else:  # neither selected_fields nor is_all_fields
                 error_message, error_code = Errors.missing_field_values_in_feed_job()
-                formatted_error = self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                )
+                formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path)
                 if formatted_error:
                     self._errors.append(error_message)
                     return False
@@ -93,12 +76,8 @@ class JobValidator(ContentEntityValidator):
                 (
                     error_message,
                     error_code,
-                ) = Errors.unexpected_field_values_in_non_feed_job(
-                    bool(selected_feeds), bool(is_all_feeds)
-                )
-                formatted_error = self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                )
+                ) = Errors.unexpected_field_values_in_non_feed_job(bool(selected_feeds), bool(is_all_feeds))
+                formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path)
                 if formatted_error:
                     self._errors.append(error_message)
                     return False
@@ -110,9 +89,7 @@ class JobValidator(ContentEntityValidator):
         name = self.current_file.get("name")
         if (not name) or (name.isspace()):
             error_message, error_code = Errors.empty_or_missing_job_name()
-            formatted_error = self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            )
+            formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path)
             if formatted_error:
                 self._errors.append(error_message)
                 return False

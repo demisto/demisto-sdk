@@ -40,9 +40,7 @@ class Client(BaseClient):  # type: ignore
             dict containing the alert as returned from the API
         """
 
-        return self._http_request(
-            method="GET", url_suffix="/get_alert_details", params={"alert_id": alert_id}
-        )
+        return self._http_request(method="GET", url_suffix="/get_alert_details", params={"alert_id": alert_id})
 
     def update_alert_status(self, alert_id: str, alert_status: str) -> Dict[str, Any]:
         """
@@ -185,9 +183,7 @@ def main() -> None:
     demisto.debug(f"Command being called is {command}")
     try:
         headers = {"Authorization": f"Bearer {api_key}"}
-        client = Client(
-            base_url=base_url, verify=verify_certificate, headers=headers, proxy=proxy
-        )
+        client = Client(base_url=base_url, verify=verify_certificate, headers=headers, proxy=proxy)
 
         if command == "test-module":
             # This is the call made when pressing the integration Test button.

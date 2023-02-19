@@ -185,9 +185,7 @@ class Pack:
 
         self.pack_metadata = JSONBased(self._pack_path, "pack_metadata", "")
 
-        self.author_image = File(
-            tmp_path=self._pack_path / "Author_image.png", repo_path=repo.path
-        )
+        self.author_image = File(tmp_path=self._pack_path / "Author_image.png", repo_path=repo.path)
         self.author_image.write(DEFAULT_IMAGE_BASE64)
 
         self._jobs_path = self._pack_path / "Jobs"
@@ -226,13 +224,9 @@ class Pack:
                 },
             }
         if image is None:
-            with open(
-                suite_join_path("assets/default_integration", "sample_image.png"), "rb"
-            ) as image_file:
+            with open(suite_join_path("assets/default_integration", "sample_image.png"), "rb") as image_file:
                 image = image_file.read()
-        integration = Integration(
-            self._integrations_path, name, self._repo, create_unified=create_unified
-        )
+        integration = Integration(self._integrations_path, name, self._repo, create_unified=create_unified)
         integration.build(code, yml, readme, description, changelog, image)
         self.integrations.append(integration)
         return integration
@@ -259,9 +253,7 @@ class Pack:
                 "subtype": "python3",
                 "script": "-",
             }
-        script = Script(
-            self._scripts_path, name, self._repo, create_unified=create_unified
-        )
+        script = Script(self._scripts_path, name, self._repo, create_unified=create_unified)
         script.build(code, yml, readme, description, changelog, image)
         self.scripts.append(script)
         return script
@@ -271,9 +263,7 @@ class Pack:
         script.create_default_script()
         return script
 
-    def _create_json_based(
-        self, name, prefix: str, content: dict = None, dir_path: Path = None
-    ) -> JSONBased:
+    def _create_json_based(self, name, prefix: str, content: dict = None, dir_path: Path = None) -> JSONBased:
         if content is None:
             content = {}
         if dir_path:
@@ -295,9 +285,7 @@ class Pack:
         obj.write_dict(content)
         return obj
 
-    def _create_text_based(
-        self, name, content: str = "", dir_path: Path = None
-    ) -> TextBased:
+    def _create_text_based(self, name, content: str = "", dir_path: Path = None) -> TextBased:
         if dir_path:
             obj = TextBased(dir_path, name)
         else:
@@ -307,35 +295,25 @@ class Pack:
 
     def create_classifier(self, name, content: dict = None) -> JSONBased:
         prefix = "classifier"
-        classifier = self._create_json_based(
-            name, prefix, content, dir_path=self._classifiers_path
-        )
+        classifier = self._create_json_based(name, prefix, content, dir_path=self._classifiers_path)
         self.classifiers.append(classifier)
         return classifier
 
     def create_mapper(self, name, content: dict = None) -> JSONBased:
         prefix = "classifier-mapper"
-        mapper = self._create_json_based(
-            name, prefix, content, dir_path=self._mappers_path
-        )
+        mapper = self._create_json_based(name, prefix, content, dir_path=self._mappers_path)
         self.mappers.append(mapper)
         return mapper
 
     def create_dashboard(self, name, content: dict = None) -> JSONBased:
         prefix = "dashboard"
-        dashboard = self._create_json_based(
-            name, prefix, content, dir_path=self._dashboards_path
-        )
+        dashboard = self._create_json_based(name, prefix, content, dir_path=self._dashboards_path)
         self.dashboards.append(dashboard)
         return dashboard
 
-    def create_incident_field(
-        self, name, content: dict = None, release_notes: bool = False
-    ) -> JSONBased:
+    def create_incident_field(self, name, content: dict = None, release_notes: bool = False) -> JSONBased:
         prefix = "incidentfield"
-        incident_field = self._create_json_based(
-            name, prefix, content, dir_path=self._incidents_field_path
-        )
+        incident_field = self._create_json_based(name, prefix, content, dir_path=self._incidents_field_path)
         if release_notes:
             # release_notes = self._create_text_based(f'{incident_field}_CHANGELOG.md',
             # dir_path=self._incidents_field_path)
@@ -346,25 +324,19 @@ class Pack:
 
     def create_incident_type(self, name, content: dict = None) -> JSONBased:
         prefix = "incidenttype"
-        incident_type = self._create_json_based(
-            name, prefix, content, dir_path=self._incident_types_path
-        )
+        incident_type = self._create_json_based(name, prefix, content, dir_path=self._incident_types_path)
         self.incident_types.append(incident_type)
         return incident_type
 
     def create_indicator_field(self, name, content: dict = None) -> JSONBased:
         prefix = "incidentfield"
-        indicator_field = self._create_json_based(
-            name, prefix, content, dir_path=self._indicator_fields
-        )
+        indicator_field = self._create_json_based(name, prefix, content, dir_path=self._indicator_fields)
         self.indicator_fields.append(indicator_field)
         return indicator_field
 
     def create_indicator_type(self, name, content: dict = None) -> JSONBased:
         prefix = "reputation"
-        indicator_type = self._create_json_based(
-            name, prefix, content, dir_path=self._indicator_types
-        )
+        indicator_type = self._create_json_based(name, prefix, content, dir_path=self._indicator_types)
         self.indicator_types.append(indicator_type)
         return indicator_type
 
@@ -372,9 +344,7 @@ class Pack:
         dir_path = self._generic_fields_path / name
         dir_path.mkdir()
         prefix = "genericfield"
-        generic_field = self._create_json_based(
-            name, prefix, content, dir_path=dir_path
-        )
+        generic_field = self._create_json_based(name, prefix, content, dir_path=dir_path)
         self.generic_fields.append(generic_field)
         return generic_field
 
@@ -388,17 +358,13 @@ class Pack:
 
     def create_generic_module(self, name, content: dict = None) -> JSONBased:
         prefix = "genericmodule"
-        generic_module = self._create_json_based(
-            name, prefix, content, dir_path=self._generic_modules_path
-        )
+        generic_module = self._create_json_based(name, prefix, content, dir_path=self._generic_modules_path)
         self.generic_modules.append(generic_module)
         return generic_module
 
     def create_generic_definition(self, name, content: dict = None) -> JSONBased:
         prefix = "genericdefinition"
-        generic_definition = self._create_json_based(
-            name, prefix, content, dir_path=self._generic_definitions_path
-        )
+        generic_definition = self._create_json_based(name, prefix, content, dir_path=self._generic_definitions_path)
         self.generic_definitions.append(generic_definition)
         return generic_definition
 
@@ -416,41 +382,31 @@ class Pack:
             selected_feeds=selected_feeds,
             details=details,
         )
-        self.create_playbook(name=job.playbook_name).create_default_playbook(
-            name=job.playbook_name
-        )
+        self.create_playbook(name=job.playbook_name).create_default_playbook(name=job.playbook_name)
         self.jobs.append(job)
         return job
 
     def create_layout(self, name, content: dict = None) -> JSONBased:
         prefix = "layout"
-        layout = self._create_json_based(
-            name, prefix, content, dir_path=self._layout_path
-        )
+        layout = self._create_json_based(name, prefix, content, dir_path=self._layout_path)
         self.layouts.append(layout)
         return layout
 
     def create_layoutcontainer(self, name, content: dict = None) -> JSONBased:
         prefix = "layoutscontainer"
-        layoutcontainer = self._create_json_based(
-            name, prefix, content, dir_path=self._layout_path
-        )
+        layoutcontainer = self._create_json_based(name, prefix, content, dir_path=self._layout_path)
         self.layoutcontainers.append(layoutcontainer)
         return layoutcontainer
 
     def create_report(self, name, content: dict = None) -> JSONBased:
         prefix = "report"
-        report = self._create_json_based(
-            name, prefix, content, dir_path=self._report_path
-        )
+        report = self._create_json_based(name, prefix, content, dir_path=self._report_path)
         self.reports.append(report)
         return report
 
     def create_widget(self, name, content: dict = None) -> JSONBased:
         prefix = "widget"
-        widget = self._create_json_based(
-            name, prefix, content, dir_path=self._widget_path
-        )
+        widget = self._create_json_based(name, prefix, content, dir_path=self._widget_path)
         self.widgets.append(widget)
         return widget
 
@@ -485,9 +441,7 @@ class Pack:
 
     def create_list(self, name, content: dict = None) -> JSONBased:
         prefix = "list"
-        list_item = self._create_json_based(
-            name, prefix, content, dir_path=self._lists_path
-        )
+        list_item = self._create_json_based(name, prefix, content, dir_path=self._lists_path)
         self.lists.append(list_item)
         return list_item
 
@@ -524,9 +478,7 @@ class Pack:
             yml = {
                 "tasks": {},
             }
-        playbook = Playbook(
-            self._test_playbooks_path, name, self._repo, is_test_playbook=True
-        )
+        playbook = Playbook(self._test_playbooks_path, name, self._repo, is_test_playbook=True)
         playbook.build(
             yml,
             readme,
@@ -534,21 +486,15 @@ class Pack:
         self.test_playbooks.append(playbook)
         return playbook
 
-    def create_release_notes(
-        self, version: str, content: str = "", is_bc: bool = False
-    ):
-        rn = self._create_text_based(
-            f"{version}.md", content, dir_path=self._release_notes
-        )
+    def create_release_notes(self, version: str, content: str = "", is_bc: bool = False):
+        rn = self._create_text_based(f"{version}.md", content, dir_path=self._release_notes)
         self.release_notes.append(rn)
         if is_bc:
             self.create_release_notes_config(version, {"breakingChanges": True})
         return rn
 
     def create_release_notes_config(self, version: str, content: dict):
-        rn_config = self._create_json_based(
-            f"{version}", "", content, dir_path=self._release_notes
-        )
+        rn_config = self._create_json_based(f"{version}", "", content, dir_path=self._release_notes)
         self.release_notes_config.append(rn_config)
         return rn_config
 
@@ -630,9 +576,7 @@ class Pack:
         return rule
 
     def create_correlation_rule(self, name, content: dict = None) -> CorrelationRule:
-        correlation_rule = CorrelationRule(
-            name, self._correlation_rules_path, self.repo_path, content
-        )
+        correlation_rule = CorrelationRule(name, self._correlation_rules_path, self.repo_path, content)
         self.correlation_rules.append(correlation_rule)
         return correlation_rule
 
@@ -651,14 +595,10 @@ class Pack:
         self.triggers.append(trigger)
         return trigger
 
-    def create_xdrc_template(
-        self, name, json_content: dict = None, yaml_content: dict = None
-    ) -> XDRCTemplate:
+    def create_xdrc_template(self, name, json_content: dict = None, yaml_content: dict = None) -> XDRCTemplate:
         xdrc_template_dir: Path = self._xdrc_templates_path / f"{self.name}_{name}"
         xdrc_template_dir.mkdir()
-        xdrc_template = XDRCTemplate(
-            name, xdrc_template_dir, json_content, yaml_content
-        )
+        xdrc_template = XDRCTemplate(name, xdrc_template_dir, json_content, yaml_content)
         self.xdrc_templates.append(xdrc_template)
         return xdrc_template
 

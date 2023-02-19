@@ -75,9 +75,9 @@ def test_markdown_fixes(file_content, expected_fix):
 def test_disabled_rule():
     # Tests no h1 header and duplicate headers rule not active. Just to ensure config working properly
     with ReadMeValidator.start_mdx_server():
-        assert not run_markdownlint(
+        assert not run_markdownlint("## Hello\n\n## Hello").has_errors, run_markdownlint(
             "## Hello\n\n## Hello"
-        ).has_errors, run_markdownlint("## Hello\n\n## Hello").validations
+        ).validations
 
 
 def test_filename_returned_in_validations():

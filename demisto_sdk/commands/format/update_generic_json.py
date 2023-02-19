@@ -81,18 +81,14 @@ class BaseUpdateJSON(BaseUpdate):
                 ensure_ascii=ensure_ascii,
             )
 
-    def update_json(
-        self, default_from_version: Optional[str] = "", file_type: str = ""
-    ):
+    def update_json(self, default_from_version: Optional[str] = "", file_type: str = ""):
         """Manager function for the generic JSON updates."""
         self.remove_null_fields()
         self.check_server_version()
         self.remove_spaces_end_of_id_and_name()
         self.remove_unnecessary_keys()
         self.set_version_to_default()
-        self.set_fromVersion(
-            default_from_version=default_from_version, file_type=file_type
-        )
+        self.set_fromVersion(default_from_version=default_from_version, file_type=file_type)
         self.sync_data_to_master()
 
     def set_toVersion(self):
@@ -102,8 +98,7 @@ class BaseUpdateJSON(BaseUpdate):
         """
         if (
             not self.data.get("toVersion")
-            or LooseVersion(self.data.get("toVersion", DEFAULT_CONTENT_ITEM_TO_VERSION))
-            >= TO_VERSION_5_9_9
+            or LooseVersion(self.data.get("toVersion", DEFAULT_CONTENT_ITEM_TO_VERSION)) >= TO_VERSION_5_9_9
         ):
             if self.verbose:
                 click.echo("Setting toVersion field")
@@ -148,13 +143,9 @@ class BaseUpdateJSON(BaseUpdate):
             if self.verbose:
                 click.echo("Updating ID to be the same as JSON name")
             if field not in self.data:
-                print_error(
-                    f"Missing {field} field in file {self.source_file} - add this field manually"
-                )
+                print_error(f"Missing {field} field in file {self.source_file} - add this field manually")
                 return None
-            if "id" in self.data and is_uuid(
-                self.data["id"]
-            ):  # only happens if id had been defined
+            if "id" in self.data and is_uuid(self.data["id"]):  # only happens if id had been defined
                 updated_integration_id_dict[self.data["id"]] = self.data[field]
             self.data["id"] = self.data[field]
             if updated_integration_id_dict:
@@ -180,24 +171,14 @@ class BaseUpdateJSON(BaseUpdate):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n======= Updating file: {self.source_file} =======", fg="white"
-            )
+            click.secho(f"\n======= Updating file: {self.source_file} =======", fg="white")
             self.update_json(
-                default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(
-                    self.source_file_type  # type: ignore
-                )
+                default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(self.source_file_type)  # type: ignore
             )
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            print(
-                "".join(
-                    traceback.format_exception(
-                        type(err), value=err, tb=err.__traceback__
-                    )
-                )
-            )
+            print("".join(traceback.format_exception(type(err), value=err, tb=err.__traceback__)))
             if self.verbose:
                 click.secho(
                     f"\nFailed to update file {self.source_file}. Error: {err}",

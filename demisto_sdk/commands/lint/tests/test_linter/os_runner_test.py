@@ -8,9 +8,7 @@ from demisto_sdk.commands.lint.linter import Linter
 
 
 class TestBandit:
-    def test_run_bandit_success(
-        self, linter_obj: Linter, lint_files: List[Path], mocker
-    ):
+    def test_run_bandit_success(self, linter_obj: Linter, lint_files: List[Path], mocker):
         from demisto_sdk.commands.lint import linter
 
         mocker.patch.object(linter, "run_command_os")
@@ -21,9 +19,7 @@ class TestBandit:
         assert exit_code == 0b0, "Exit code should be 0"
         assert output == "", "Output should be empty"
 
-    def test_run_bandit_fail_lint(
-        self, linter_obj: Linter, lint_files: List[Path], mocker
-    ):
+    def test_run_bandit_fail_lint(self, linter_obj: Linter, lint_files: List[Path], mocker):
         from demisto_sdk.commands.lint import linter
 
         mocker.patch.object(linter, "run_command_os")
@@ -35,9 +31,7 @@ class TestBandit:
         assert exit_code == 0b1, "Exit code should be 1"
         assert output == expected_output, "Output should be empty"
 
-    def test_run_bandit_usage_stderr(
-        self, linter_obj: Linter, lint_files: List[Path], mocker
-    ):
+    def test_run_bandit_usage_stderr(self, linter_obj: Linter, lint_files: List[Path], mocker):
         from demisto_sdk.commands.lint import linter
 
         mocker.patch.object(linter, "run_command_os")
@@ -62,9 +56,7 @@ class TestMypy:
         assert exit_code == 0b0, "Exit code should be 0"
         assert output == "", "Output should be empty"
 
-    def test_run_mypy_fail_lint(
-        self, linter_obj: Linter, lint_files: List[Path], mocker
-    ):
+    def test_run_mypy_fail_lint(self, linter_obj: Linter, lint_files: List[Path], mocker):
         from demisto_sdk.commands.lint import linter
 
         mocker.patch.object(linter, "run_command_os")
@@ -76,9 +68,7 @@ class TestMypy:
         assert exit_code == 0b1, "Exit code should be 1"
         assert output == expected_output, "Output should be empty"
 
-    def test_run_mypy_usage_stderr(
-        self, linter_obj: Linter, lint_files: List[Path], mocker
-    ):
+    def test_run_mypy_usage_stderr(self, linter_obj: Linter, lint_files: List[Path], mocker):
         from demisto_sdk.commands.lint import linter
 
         mocker.patch.object(linter, "run_command_os")
@@ -191,10 +181,7 @@ class TestRunLintInHost:
         if not no_xsoar_linter:
             linter_obj._run_xsoar_linter.assert_called_once()
             assert linter_obj._pkg_lint_status.get("XSOAR_linter_errors") == "Error"
-            assert (
-                linter_obj._pkg_lint_status.get("exit_code")
-                == EXIT_CODES["XSOAR_linter"]
-            )
+            assert linter_obj._pkg_lint_status.get("exit_code") == EXIT_CODES["XSOAR_linter"]
         elif not no_bandit:
             linter_obj._run_bandit.assert_called_once()
             assert linter_obj._pkg_lint_status.get("bandit_errors") == "Error"

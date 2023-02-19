@@ -67,28 +67,16 @@ json = JSON_Handler()
 class PackContentItems(BaseModel):
     # The alias is for marshalling purposes
     classifier: List[Classifier] = Field([], alias=ContentType.CLASSIFIER.value)
-    correlation_rule: List[CorrelationRule] = Field(
-        [], alias=ContentType.CORRELATION_RULE.value
-    )
+    correlation_rule: List[CorrelationRule] = Field([], alias=ContentType.CORRELATION_RULE.value)
     dashboard: List[Dashboard] = Field([], alias=ContentType.DASHBOARD.value)
-    generic_definition: List[GenericDefinition] = Field(
-        [], alias=ContentType.GENERIC_DEFINITION.value
-    )
+    generic_definition: List[GenericDefinition] = Field([], alias=ContentType.GENERIC_DEFINITION.value)
     generic_field: List[GenericField] = Field([], alias=ContentType.GENERIC_FIELD.value)
-    generic_module: List[GenericModule] = Field(
-        [], alias=ContentType.GENERIC_MODULE.value
-    )
+    generic_module: List[GenericModule] = Field([], alias=ContentType.GENERIC_MODULE.value)
     generic_type: List[GenericType] = Field([], alias=ContentType.GENERIC_TYPE.value)
-    incident_field: List[IncidentField] = Field(
-        [], alias=ContentType.INCIDENT_FIELD.value
-    )
+    incident_field: List[IncidentField] = Field([], alias=ContentType.INCIDENT_FIELD.value)
     incident_type: List[IncidentType] = Field([], alias=ContentType.INCIDENT_TYPE.value)
-    indicator_field: List[IndicatorField] = Field(
-        [], alias=ContentType.INDICATOR_FIELD.value
-    )
-    indicator_type: List[IndicatorType] = Field(
-        [], alias=ContentType.INDICATOR_TYPE.value
-    )
+    indicator_field: List[IndicatorField] = Field([], alias=ContentType.INDICATOR_FIELD.value)
+    indicator_type: List[IndicatorType] = Field([], alias=ContentType.INDICATOR_TYPE.value)
     integration: List[Integration] = Field([], alias=ContentType.INTEGRATION.value)
     job: List[Job] = Field([], alias=ContentType.JOB.value)
     layout: List[Layout] = Field([], alias=ContentType.LAYOUT.value)
@@ -103,9 +91,7 @@ class PackContentItems(BaseModel):
     trigger: List[Trigger] = Field([], alias=ContentType.TRIGGER.value)
     widget: List[Widget] = Field([], alias=ContentType.WIDGET.value)
     wizard: List[Wizard] = Field([], alias=ContentType.WIZARD.value)
-    xsiam_dashboard: List[XSIAMDashboard] = Field(
-        [], alias=ContentType.XSIAM_DASHBOARD.value
-    )
+    xsiam_dashboard: List[XSIAMDashboard] = Field([], alias=ContentType.XSIAM_DASHBOARD.value)
     xsiam_report: List[XSIAMReport] = Field([], alias=ContentType.XSIAM_REPORT.value)
     xdrc_template: List[XDRCTemplate] = Field([], alias=ContentType.XDRC_TEMPLATE.value)
     layout_rule: List[LayoutRule] = Field([], alias=ContentType.LAYOUT_RULE.value)
@@ -155,9 +141,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
 
-    content_items: PackContentItems = Field(
-        PackContentItems(), alias="contentItems", exclude=True
-    )
+    content_items: PackContentItems = Field(PackContentItems(), alias="contentItems", exclude=True)
 
     @validator("path", always=True)
     def validate_path(cls, v: Path) -> Path:
@@ -207,22 +191,18 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         # If there is no server_min_version, set it to the maximum of its content items fromversion
         max_content_items_version = MARKETPLACE_MIN_VERSION
         if content_items:
-            max_content_items_version = str(
-                max(parse(content_item.fromversion) for content_item in content_items)
-            )
+            max_content_items_version = str(max(parse(content_item.fromversion) for content_item in content_items))
         self.server_min_version = self.server_min_version or max_content_items_version
         self.content_items = PackContentItems(**content_item_dct)
 
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
-        metadata = self.dict(
-            exclude={"path", "node_id", "content_type", "excluded_dependencies"}
-        )
+        metadata = self.dict(exclude={"path", "node_id", "content_type", "excluded_dependencies"})
         metadata["contentItems"] = {}
         for content_item in self.content_items:
             try:
-                metadata["contentItems"].setdefault(
-                    content_item.content_type.server_name, []
-                ).append(content_item.summary(marketplace))
+                metadata["contentItems"].setdefault(content_item.content_type.server_name, []).append(
+                    content_item.summary(marketplace)
+                )
             except NotImplementedError as e:
                 logger.debug(f"Could not add {content_item.name} to pack metadata: {e}")
         with open(path, "w") as f:
@@ -231,12 +211,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:
         shutil.copyfile(self.path / "README.md", path)
         if self.contributors:
-            fixed_contributor_names = [
-                f" - {contrib_name}\n" for contrib_name in self.contributors
-            ]
-            contribution_data = CONTRIBUTORS_README_TEMPLATE.format(
-                contributors_names="".join(fixed_contributor_names)
-            )
+            fixed_contributor_names = [f" - {contrib_name}\n" for contrib_name in self.contributors]
+            contribution_data = CONTRIBUTORS_README_TEMPLATE.format(contributors_names="".join(fixed_contributor_names))
             with open(path, "a+") as f:
                 f.write(contribution_data)
         with open(path, "r+") as f:
@@ -258,17 +234,12 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             path.mkdir(exist_ok=True, parents=True)
             for content_item in self.content_items:
                 folder = content_item.content_type.as_folder
-                if (
-                    content_item.content_type == ContentType.SCRIPT
-                    and content_item.is_test
-                ):
+                if content_item.content_type == ContentType.SCRIPT and content_item.is_test:
                     folder = ContentType.TEST_PLAYBOOK.as_folder
                 content_item.dump(path / folder, marketplace)
             self.dump_metadata(path / "metadata.json", marketplace)
             self.dump_readme(path / "README.md", marketplace)
-            shutil.copy(
-                self.path / PACK_METADATA_FILENAME, path / PACK_METADATA_FILENAME
-            )
+            shutil.copy(self.path / PACK_METADATA_FILENAME, path / PACK_METADATA_FILENAME)
             try:
                 shutil.copytree(self.path / "ReleaseNotes", path / "ReleaseNotes")
             except FileNotFoundError:

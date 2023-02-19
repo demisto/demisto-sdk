@@ -14,10 +14,7 @@ yaml = YAML_Handler()
 def linter_obj(mocker) -> Linter:
     mocker.patch.object(linter, "init_global_docker_client")
     return Linter(
-        pack_dir=Path(__file__).parent
-        / "content"
-        / "Integrations"
-        / "Sample_integration",
+        pack_dir=Path(__file__).parent / "content" / "Integrations" / "Sample_integration",
         content_repo=Path(__file__).parent / "data",
         req_3=["pytest==3.0"],
         req_2=["pytest==2.0"],
@@ -28,13 +25,7 @@ def linter_obj(mocker) -> Linter:
 
 @pytest.fixture(scope="session")
 def lint_files() -> List[Path]:
-    return [
-        Path(__file__).parent
-        / "test_data"
-        / "Integration"
-        / "intergration_sample"
-        / "intergration_sample.py"
-    ]
+    return [Path(__file__).parent / "test_data" / "Integration" / "intergration_sample" / "intergration_sample.py"]
 
 
 @pytest.fixture
@@ -113,31 +104,19 @@ def create_integration(mocker) -> Callable:
 
         if test_reqs:
             (integration_path / "test-requirements.txt").touch()
-            (integration_path / "test-requirements.txt").write_text(
-                "\nmock\npre-commit\npytest"
-            )
+            (integration_path / "test-requirements.txt").write_text("\nmock\npre-commit\npytest")
         if flake8:
-            (integration_path / f"{integration_name}.py").write_text(
-                "\nfrom typing import *"
-            )
+            (integration_path / f"{integration_name}.py").write_text("\nfrom typing import *")
         if bandit:
-            (integration_path / f"{integration_name}.py").write_text(
-                "\nimport os\n  os.chmod('/etc/hosts', 0o777)"
-            )
+            (integration_path / f"{integration_name}.py").write_text("\nimport os\n  os.chmod('/etc/hosts', 0o777)")
         if mypy:
-            (integration_path / f"{integration_name}.py").write_text(
-                '\nx: int = "hello"'
-            )
+            (integration_path / f"{integration_name}.py").write_text('\nx: int = "hello"')
         if vulture:
-            (integration_path / f"{integration_name}.py").write_text(
-                "\nfrom typing import *"
-            )
+            (integration_path / f"{integration_name}.py").write_text("\nfrom typing import *")
         if pylint:
             (integration_path / f"{integration_name}.py").write_text("\ntest()")
         if test and not no_tests:
-            (integration_path / f"{integration_name}_test.py").write_text(
-                "\nassert False"
-            )
+            (integration_path / f"{integration_name}_test.py").write_text("\nassert False")
         yml_file = integration_path / f"{integration_name}.yml"
         if yml:
             yml_file.write_text("")

@@ -62,9 +62,7 @@ MOCK_TAG_LIST = [
     },
 ]
 
-FILES_PATH = os.path.normpath(
-    os.path.join(__file__, f"{git_path()}/demisto_sdk/tests", "test_files")
-)
+FILES_PATH = os.path.normpath(os.path.join(__file__, f"{git_path()}/demisto_sdk/tests", "test_files"))
 TEST_INTEGRATION_FILE = os.path.join(FILES_PATH, "fake_integration.yml")
 TEST_SCRIPT_FILE = os.path.join(FILES_PATH, "fake-script.yml")
 
@@ -86,9 +84,7 @@ def mock_docker_image_validator():
 
 class TestDockerImage:
     # demisto/python-deb doesn't contain a latest tag
-    @pytest.mark.parametrize(
-        "image", ["python", "python-deb", "python3", "python3-deb"]
-    )
+    @pytest.mark.parametrize("image", ["python", "python-deb", "python3", "python3-deb"])
     def test_get_docker_image_latest_tag(self, image):
         docker_image_validator = mock_docker_image_validator()
         docker_image_validator.docker_image_latest_tag = "1.0.3"
@@ -109,9 +105,7 @@ class TestDockerImage:
         ("feedparser", "latest", ""),
     ]
 
-    @pytest.mark.parametrize(
-        "docker, docker_tag, expected_output", data_test_none_demisto_docker
-    )
+    @pytest.mark.parametrize("docker, docker_tag, expected_output", data_test_none_demisto_docker)
     def test_none_demisto_docker(self, docker, docker_tag, expected_output):
         docker_image_validator = mock_docker_image_validator()
         assert (
@@ -146,9 +140,7 @@ class TestDockerImage:
         tag = DockerImageValidator.find_latest_tag_by_date(MOCK_TAG_LIST)
         assert tag == "1.0.0.2876"
 
-    @pytest.mark.parametrize(
-        "www_auth, expected", [('AAArealm="2",service="3"AAA', ("2", "3")), ("bbb", ())]
-    )
+    @pytest.mark.parametrize("www_auth, expected", [('AAArealm="2",service="3"AAA', ("2", "3")), ("bbb", ())])
     def test_parse_www_auth(self, www_auth, expected):
         assert expected == DockerImageValidator.parse_www_auth(www_auth)
 
@@ -165,29 +157,21 @@ class TestDockerImage:
     )
     # disable-secrets-detection-end
     def test_clear_non_numbered_tags(self, input_tags, output_tags):
-        assert sorted(output_tags) == sorted(
-            DockerImageValidator.clear_non_numbered_tags(input_tags)
-        )
+        assert sorted(output_tags) == sorted(DockerImageValidator.clear_non_numbered_tags(input_tags))
 
     # disable-secrets-detection-start
     def test_parse_docker_image(self):
         docker_image_validator = mock_docker_image_validator()
         docker_image_validator.docker_image_latest_tag = "1.0.3"
         docker_image_validator.docker_image_name = "demisto/python"
-        assert (
-            "demisto/python"
-        ), "1.3-alpine" == docker_image_validator.parse_docker_image(
+        assert "demisto/python", "1.3-alpine" == docker_image_validator.parse_docker_image(
             docker_image="demisto/python:1.3-alpine"
         )
         assert "demisto/slack", "1.2.3.4" == docker_image_validator.parse_docker_image(
             docker_image="demisto/slack:1.2.3.4"
         )
-        assert "demisto/python", "" == docker_image_validator.parse_docker_image(
-            docker_image="demisto/python/1.2.3.4"
-        )
-        assert ("", "") == docker_image_validator.parse_docker_image(
-            docker_image="blah/blah:1.2.3.4"
-        )
+        assert "demisto/python", "" == docker_image_validator.parse_docker_image(docker_image="demisto/python/1.2.3.4")
+        assert ("", "") == docker_image_validator.parse_docker_image(docker_image="blah/blah:1.2.3.4")
 
     # disable-secrets-detection-end
     def test_is_docker_image_latest_tag_with_default_image(self):
@@ -322,9 +306,7 @@ class TestDockerImage:
         assert docker_image_validator.is_latest_tag is False
         assert docker_image_validator.is_docker_image_valid() is False
 
-    @pytest.mark.parametrize(
-        "code_type, expected", [("javascript", True), ("python", False)]
-    )
+    @pytest.mark.parametrize("code_type, expected", [("javascript", True), ("python", False)])
     def test_no_dockerimage_in_yml_file(self, code_type, expected):
         """
         Given
@@ -470,9 +452,7 @@ class TestDockerImage:
             ),
         ]
 
-        @pytest.mark.parametrize(
-            "mock_results, mocked_status, expected", FAIL_CASES_GET_COMMIT
-        )
+        @pytest.mark.parametrize("mock_results, mocked_status, expected", FAIL_CASES_GET_COMMIT)
         def test_get_latest_commit_fails(
             self,
             mocker,
@@ -529,8 +509,7 @@ class TestDockerImage:
             DockerImageValidator._get_manifest_from_commit(manifest_url, "sha1")
             assert request_mock.last_request.query == "ref=sha1"
             assert (
-                request_mock.last_request.path
-                == "/api/v4/projects/dsop%2fopensource%2fpalo-alto-networks%2f"
+                request_mock.last_request.path == "/api/v4/projects/dsop%2fopensource%2fpalo-alto-networks%2f"
                 "test%2ftest_project/repository/files/hardening_manifest.yaml/raw"
             )
 
@@ -538,9 +517,7 @@ class TestDockerImage:
             ("", 404, "Missing manifest file in the latest successful commit."),
         ]
 
-        @pytest.mark.parametrize(
-            "mock_results, mocked_status, expected", FAIL_CASES_GET_MANIFEST
-        )
+        @pytest.mark.parametrize("mock_results, mocked_status, expected", FAIL_CASES_GET_MANIFEST)
         def test_get_manifest_from_commit_fails(
             self,
             mocker,
@@ -562,9 +539,7 @@ class TestDockerImage:
                 "https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Ftest%2F"
                 "test_project/repository/files/hardening_manifest.yaml/raw"
             )
-            requests_mock.get(
-                manifest_url, status_code=mocked_status, text=mock_results
-            )
+            requests_mock.get(manifest_url, status_code=mocked_status, text=mock_results)
 
             DockerImageValidator.is_iron_bank = True
             docker_image_name = "test/test_project:1.0.2"

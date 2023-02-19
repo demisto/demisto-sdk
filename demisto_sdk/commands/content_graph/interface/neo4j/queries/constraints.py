@@ -8,15 +8,9 @@ CMD_UNIQUE_OBJ_ID = "cmd_unique_object_id"
 
 DROP_CONSTRAINT_TEMPLATE = "DROP CONSTRAINT {name} IF EXISTS"
 
-NODE_PROPERTY_UNIQUENESS_TEMPLATE = (
-    "CREATE CONSTRAINT {name} IF NOT EXISTS FOR (n:{label}) REQUIRE n.{prop} IS UNIQUE"
-)
-NODE_PROPERTY_EXISTENCE_TEMPLATE = (
-    "CREATE CONSTRAINT IF NOT EXISTS FOR (n:{label}) REQUIRE n.{prop} IS NOT NULL"
-)
-REL_PROPERTY_EXISTENCE_TEMPLATE = (
-    "CREATE CONSTRAINT IF NOT EXISTS FOR ()-[r:{label}]-() REQUIRE r.{prop} IS NOT NULL"
-)
+NODE_PROPERTY_UNIQUENESS_TEMPLATE = "CREATE CONSTRAINT {name} IF NOT EXISTS FOR (n:{label}) REQUIRE n.{prop} IS UNIQUE"
+NODE_PROPERTY_EXISTENCE_TEMPLATE = "CREATE CONSTRAINT IF NOT EXISTS FOR (n:{label}) REQUIRE n.{prop} IS NOT NULL"
+REL_PROPERTY_EXISTENCE_TEMPLATE = "CREATE CONSTRAINT IF NOT EXISTS FOR ()-[r:{label}]-() REQUIRE r.{prop} IS NOT NULL"
 
 
 def drop_constraints(tx: Transaction) -> None:
@@ -40,17 +34,13 @@ def create_constraints(tx: Transaction) -> None:
 
 
 def create_nodes_constraints(tx: Transaction) -> None:
-    create_node_property_uniqueness_constraint(
-        tx, CMD_UNIQUE_OBJ_ID, ContentType.COMMAND, "object_id"
-    )
+    create_node_property_uniqueness_constraint(tx, CMD_UNIQUE_OBJ_ID, ContentType.COMMAND, "object_id")
 
 
 def create_node_property_uniqueness_constraint(
     tx: Transaction, name: str, content_type: ContentType, prop: str
 ) -> None:
-    query = NODE_PROPERTY_UNIQUENESS_TEMPLATE.format(
-        name=name, label=content_type, prop=prop
-    )
+    query = NODE_PROPERTY_UNIQUENESS_TEMPLATE.format(name=name, label=content_type, prop=prop)
     run_query(tx, query)
 
 
@@ -64,9 +54,7 @@ def create_node_property_existence_constraint(
 
 
 def create_relationships_constraints(tx: Transaction) -> None:
-    create_relationship_property_existence_constraint(
-        tx, RelationshipType.DEPENDS_ON, "mandatorily"
-    )
+    create_relationship_property_existence_constraint(tx, RelationshipType.DEPENDS_ON, "mandatorily")
 
 
 def create_relationship_property_existence_constraint(

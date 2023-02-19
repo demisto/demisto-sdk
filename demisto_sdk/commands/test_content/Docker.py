@@ -67,14 +67,9 @@ class Docker:
 
         """
         # docker stats command with json output
-        docker_command = (
-            f'sudo docker stats --no-stream --no-trunc --format "{cls.COMMAND_FORMAT}"'
-        )
+        docker_command = f'sudo docker stats --no-stream --no-trunc --format "{cls.COMMAND_FORMAT}"'
         # replacing : and / in docker images names in order to grep the stats by container name
-        docker_images_regex = [
-            "{}--".format(re.sub("[:/]", "", docker_image))
-            for docker_image in docker_images
-        ]
+        docker_images_regex = ["{}--".format(re.sub("[:/]", "", docker_image)) for docker_image in docker_images]
         pipe = " | "
         grep_command = 'grep -Ei "{}"'.format("|".join(docker_images_regex))
         remote_command = docker_command + pipe + grep_command
@@ -131,18 +126,12 @@ class Docker:
             containers_stats = [json.loads(c) for c in stats_lines.splitlines()]
 
             for container_stat in containers_stats:
-                memory_usage_stats = (
-                    container_stat.get(cls.MEMORY_USAGE, "").split("/")[0].lower()
-                )
+                memory_usage_stats = container_stat.get(cls.MEMORY_USAGE, "").split("/")[0].lower()
 
                 if "kib" in memory_usage_stats:
-                    mib_usage = (
-                        float(memory_usage_stats.replace("kib", "").strip()) / 1024
-                    )
+                    mib_usage = float(memory_usage_stats.replace("kib", "").strip()) / 1024
                 elif "gib" in memory_usage_stats:
-                    mib_usage = (
-                        float(memory_usage_stats.replace("kib", "").strip()) * 1024
-                    )
+                    mib_usage = float(memory_usage_stats.replace("kib", "").strip()) * 1024
                 else:
                     mib_usage = float(memory_usage_stats.replace("mib", "").strip())
 
@@ -155,9 +144,7 @@ class Docker:
                     }
                 )
         except Exception:
-            logging_module.exception(
-                "Failed in parsing docker stats result, returned empty list."
-            )
+            logging_module.exception("Failed in parsing docker stats result, returned empty list.")
         finally:
             return stats_result
 
@@ -173,17 +160,13 @@ class Docker:
             str: stderr of the executed command.
 
         """
-        process = Popen(
-            cmd, stdout=PIPE, stderr=PIPE, shell=True, universal_newlines=True
-        )
+        process = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True, universal_newlines=True)
         stdout, stderr = process.communicate()
 
         return stdout, stderr
 
     @classmethod
-    def get_image_for_container_id(
-        cls, server_ip, container_id, logging_module=logging
-    ):
+    def get_image_for_container_id(cls, server_ip, container_id, logging_module=logging):
         cmd = cls._build_ssh_command(
             server_ip,
             "sudo docker inspect -f {{.Config.Image}} " + container_id,
@@ -191,9 +174,7 @@ class Docker:
         )
         stdout, stderr = cls.run_shell_command(cmd)
         if stderr:
-            logging_module.warning(
-                f"Received stderr from docker inspect command. Additional information: {stderr}"
-            )
+            logging_module.warning(f"Received stderr from docker inspect command. Additional information: {stderr}")
         res = stdout or ""
         return res.strip()
 
@@ -208,20 +189,13 @@ class Docker:
                   default python2 and python3 images are returned.
 
         """
-        integration_script = (
-            integration_config.get("configuration", {}).get("integrationScript", {})
-            or {}
-        )
+        integration_script = integration_config.get("configuration", {}).get("integrationScript", {}) or {}
         integration_type = integration_script.get("type")
         docker_image = integration_script.get("dockerImage")
 
         if integration_type == cls.JAVASCRIPT_INTEGRATION_TYPE:
             return None
-        elif (
-            integration_type
-            in {cls.PYTHON_INTEGRATION_TYPE, cls.POWERSHELL_INTEGRATION_TYPE}
-            and docker_image
-        ):
+        elif integration_type in {cls.PYTHON_INTEGRATION_TYPE, cls.POWERSHELL_INTEGRATION_TYPE} and docker_image:
             return [docker_image]
         else:
             return [cls.DEFAULT_PYTHON2_IMAGE, cls.DEFAULT_PYTHON3_IMAGE]
@@ -242,9 +216,7 @@ class Docker:
         stdout, stderr = cls.run_shell_command(cmd)
 
         if stderr:
-            logging_module.warning(
-                f"Failed running docker stats command. Additional information: {stderr}"
-            )
+            logging_module.warning(f"Failed running docker stats command. Additional information: {stderr}")
             return []
 
         return cls._parse_stats_result(stdout, logging_module)
@@ -263,9 +235,7 @@ class Docker:
         _, stderr = cls.run_shell_command(cmd)
 
         if stderr:
-            logging_module.debug(
-                f"Failed killing container: {container_name}\nAdditional information: {stderr}"
-            )
+            logging_module.debug(f"Failed killing container: {container_name}\nAdditional information: {stderr}")
 
     @classmethod
     def get_docker_pid_info(cls, server_ip, container_id, logging_module):
@@ -286,8 +256,7 @@ class Docker:
             ignored_warning_message = f"Connection to {server_ip} closed"
             if ignored_warning_message not in stderr:
                 logging_module.debug(
-                    f"Failed getting pid info for container id: {container_id}.\n"
-                    f"Additional information: {stderr}"
+                    f"Failed getting pid info for container id: {container_id}.\n" f"Additional information: {stderr}"
                 )
 
         return stdout
@@ -366,13 +335,9 @@ class Docker:
                         container_name, pid_threshold, pids_usage, pids_usage
                     )
                 )
-                additional_pid_info = cls.get_docker_pid_info(
-                    server_ip, container_id, logging_module
-                )
+                additional_pid_info = cls.get_docker_pid_info(server_ip, container_id, logging_module)
                 if additional_pid_info:
-                    error_message += (
-                        f"Additional pid information:\n{additional_pid_info}"
-                    )
+                    error_message += f"Additional pid information:\n{additional_pid_info}"
                 failed_memory_test = True
 
             if failed_memory_test:

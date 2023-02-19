@@ -28,43 +28,26 @@ class LayoutBelowSixConverter(LayoutBaseConverter):
         Returns:
             (int): 0 if convert finished successfully, 1 otherwise.
         """
-        layout_id_to_incident_type = self.layout_to_indicators_or_incidents_dict(
-            self.pack.incident_types
-        )
-        layout_id_to_indicators_dict = self.layout_to_indicators_or_incidents_dict(
-            self.pack.indicator_types
-        )
+        layout_id_to_incident_type = self.layout_to_indicators_or_incidents_dict(self.pack.incident_types)
+        layout_id_to_indicators_dict = self.layout_to_indicators_or_incidents_dict(self.pack.indicator_types)
         layout_ids_to_convert = [
             layout
-            for layout in self.get_entities_by_entity_type(
-                self.pack.layouts, FileType.LAYOUTS_CONTAINER
-            )
+            for layout in self.get_entities_by_entity_type(self.pack.layouts, FileType.LAYOUTS_CONTAINER)
             if layout_id_to_incident_type.get(layout.layout_id())
             or layout_id_to_indicators_dict.get(layout.layout_id())
         ]
         current_old_layouts = [
-            layout
-            for layout in self.get_entities_by_entity_type(
-                self.pack.layouts, FileType.LAYOUT
-            )
+            layout for layout in self.get_entities_by_entity_type(self.pack.layouts, FileType.LAYOUT)
         ]
         layout_dynamic_fields = self.get_layout_dynamic_fields()
 
         for layout in layout_ids_to_convert:
             layout_id = layout.layout_id()
-            type_ids = layout_id_to_incident_type.get(
-                layout_id, []
-            ) + layout_id_to_indicators_dict.get(layout_id, [])
+            type_ids = layout_id_to_incident_type.get(layout_id, []) + layout_id_to_indicators_dict.get(layout_id, [])
             for type_id in type_ids:
-                dynamic_fields = {
-                    k: layout.get(k)
-                    for k, v in layout_dynamic_fields.items()
-                    if k in layout
-                }
+                dynamic_fields = {k: layout.get(k) for k, v in layout_dynamic_fields.items() if k in layout}
                 for dynamic_field_key, dynamic_field_value in dynamic_fields.items():
-                    from_version = self.calculate_from_version(
-                        layout_id, dynamic_field_key, current_old_layouts
-                    )
+                    from_version = self.calculate_from_version(layout_id, dynamic_field_key, current_old_layouts)
                     new_layout_dict = self.build_old_layout(
                         layout_id,
                         type_id,
@@ -72,15 +55,11 @@ class LayoutBelowSixConverter(LayoutBaseConverter):
                         dynamic_field_value,
                         from_version,
                     )
-                    new_layout_path = self.calculate_new_layout_relative_path(
-                        dynamic_field_key, type_id
-                    )
+                    new_layout_path = self.calculate_new_layout_relative_path(dynamic_field_key, type_id)
                     self.dump_new_entity(new_layout_path, new_layout_dict)
         return 0
 
-    def calculate_new_layout_relative_path(
-        self, dynamic_field_key: str, type_id: str
-    ) -> str:
+    def calculate_new_layout_relative_path(self, dynamic_field_key: str, type_id: str) -> str:
         """
         Receives layout ID of the new layout to be created, calculates its path.
         Args:
@@ -91,9 +70,7 @@ class LayoutBelowSixConverter(LayoutBaseConverter):
             (str): The path of the new layout to be created, following the expected format for layouts below 6.0.0.
         """
         fixed_type_id = self.entity_separators_to_underscore(type_id)
-        layout_file_name = (
-            f"{FileType.LAYOUT.value}-{dynamic_field_key}-{fixed_type_id}.json"
-        )
+        layout_file_name = f"{FileType.LAYOUT.value}-{dynamic_field_key}-{fixed_type_id}.json"
         new_layout_path = f"{str(self.pack.path)}/Layouts/{layout_file_name}"
 
         return new_layout_path
@@ -157,9 +134,7 @@ class LayoutBelowSixConverter(LayoutBaseConverter):
 
         return new_layout_dict
 
-    def calculate_from_version(
-        self, layout_id: str, layout_kind: str, current_old_layouts: List[LayoutObject]
-    ) -> str:
+    def calculate_from_version(self, layout_id: str, layout_kind: str, current_old_layouts: List[LayoutObject]) -> str:
         """
         Receives the layout ID and layout kind, checks if the layout exists and has already configured a from version.
         If not, returns 'MINIMAL_FROM_VERSION'.
@@ -172,9 +147,6 @@ class LayoutBelowSixConverter(LayoutBaseConverter):
             (str): The from version for the layout.
         """
         for old_layout in current_old_layouts:
-            if (
-                old_layout.layout_id() == layout_id
-                and old_layout.get("kind") == layout_kind
-            ):
+            if old_layout.layout_id() == layout_id and old_layout.get("kind") == layout_kind:
                 return old_layout.get("fromVersion", self.MINIMAL_FROM_VERSION)
         return self.MINIMAL_FROM_VERSION

@@ -30,30 +30,15 @@ FROM_VERSION_LAYOUTS_CONTAINER = "6.0.0"
 
 class LayoutBaseValidator(ContentEntityValidator, ABC):
     def __init__(
-        self,
-        structure_validator,
-        ignored_errors=False,
-        print_as_warnings=False,
-        json_file_path=None,
-        **kwargs
+        self, structure_validator, ignored_errors=False, print_as_warnings=False, json_file_path=None, **kwargs
     ):
         super().__init__(
-            structure_validator,
-            ignored_errors,
-            print_as_warnings,
-            json_file_path=json_file_path,
-            **kwargs
+            structure_validator, ignored_errors, print_as_warnings, json_file_path=json_file_path, **kwargs
         )
-        self.from_version = self.current_file.get(
-            "fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION
-        )
-        self.to_version = self.current_file.get(
-            "toVersion", DEFAULT_CONTENT_ITEM_TO_VERSION
-        )
+        self.from_version = self.current_file.get("fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
+        self.to_version = self.current_file.get("toVersion", DEFAULT_CONTENT_ITEM_TO_VERSION)
 
-    def is_valid_layout(
-        self, validate_rn=True, id_set_file=None, is_circle=False
-    ) -> bool:
+    def is_valid_layout(self, validate_rn=True, id_set_file=None, is_circle=False) -> bool:
         """Check whether the layout is valid or not.
 
         Returns:
@@ -89,9 +74,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
         if self.to_version and self.from_version:
             if LooseVersion(self.to_version) <= LooseVersion(self.from_version):
                 error_message, error_code = Errors.from_version_higher_to_version()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
         return True
 
@@ -114,9 +97,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
             for section in layout_sections:
                 items = section.get("items", [])
                 non_existent_incident_fields.extend(
-                    get_invalid_incident_fields_from_layout(
-                        layout_incident_fields=items, content_fields=content_fields
-                    )
+                    get_invalid_incident_fields_from_layout(layout_incident_fields=items, content_fields=content_fields)
                 )
 
         return non_existent_incident_fields
@@ -158,14 +139,10 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
 class LayoutsContainerValidator(LayoutBaseValidator):
     def __init__(self, structure_validator, **kwargs):
         super().__init__(
-            structure_validator,
-            oldest_supported_version=LAYOUTS_CONTAINERS_OLDEST_SUPPORTED_VERSION,
-            **kwargs
+            structure_validator, oldest_supported_version=LAYOUTS_CONTAINERS_OLDEST_SUPPORTED_VERSION, **kwargs
         )
 
-    def is_valid_layout(
-        self, validate_rn=True, id_set_file=None, is_circle=False
-    ) -> bool:
+    def is_valid_layout(self, validate_rn=True, id_set_file=None, is_circle=False) -> bool:
         return all(
             [
                 super().is_valid_layout(),
@@ -181,12 +158,8 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         Returns:
             bool. True if from version field is valid, else False.
         """
-        if LooseVersion(self.from_version) < LooseVersion(
-            FROM_VERSION_LAYOUTS_CONTAINER
-        ):
-            error_message, error_code = Errors.invalid_version_in_layoutscontainer(
-                "fromVersion"
-            )
+        if LooseVersion(self.from_version) < LooseVersion(FROM_VERSION_LAYOUTS_CONTAINER):
+            error_message, error_code = Errors.invalid_version_in_layoutscontainer("fromVersion")
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
@@ -198,12 +171,8 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         Returns:
             bool. True if to version field is valid, else False.
         """
-        if self.to_version and LooseVersion(self.to_version) < LooseVersion(
-            FROM_VERSION_LAYOUTS_CONTAINER
-        ):
-            error_message, error_code = Errors.invalid_version_in_layoutscontainer(
-                "toVersion"
-            )
+        if self.to_version and LooseVersion(self.to_version) < LooseVersion(FROM_VERSION_LAYOUTS_CONTAINER):
+            error_message, error_code = Errors.invalid_version_in_layoutscontainer("toVersion")
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
@@ -212,17 +181,13 @@ class LayoutsContainerValidator(LayoutBaseValidator):
     def is_valid_file_path(self) -> bool:
         output_basename = os.path.basename(self.file_path)
         if not output_basename.startswith("layoutscontainer-"):
-            error_message, error_code = Errors.invalid_file_path_layoutscontainer(
-                output_basename
-            )
+            error_message, error_code = Errors.invalid_file_path_layoutscontainer(output_basename)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
 
     @error_codes("LO104")
-    def is_incident_field_exist(
-        self, id_set_file: Dict[str, List], is_circle: bool
-    ) -> bool:
+    def is_incident_field_exist(self, id_set_file: Dict[str, List], is_circle: bool) -> bool:
         """
         Check if the incident fields which are part of the layout actually exist in the content items (id set).
 
@@ -257,15 +222,11 @@ class LayoutsContainerValidator(LayoutBaseValidator):
             layout = self.current_file.get(layout_container_item, {})
             layout_tabs = layout.get("tabs", [])
             invalid_incident_fields.extend(
-                self.get_invalid_incident_fields_from_tabs(
-                    layout_tabs=layout_tabs, content_fields=content_fields
-                )
+                self.get_invalid_incident_fields_from_tabs(layout_tabs=layout_tabs, content_fields=content_fields)
             )
 
         if invalid_incident_fields:
-            error_message, error_code = Errors.invalid_incident_field_in_layout(
-                invalid_incident_fields
-            )
+            error_message, error_code = Errors.invalid_incident_field_in_layout(invalid_incident_fields)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
@@ -292,9 +253,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         invalid_tabs = ["canvas", "evidenceBoard", "relatedIncidents"]
         invalid_types_contained = []
 
-        marketplace_versions = get_item_marketplaces(
-            self.file_path, item_data=self.current_file
-        )
+        marketplace_versions = get_item_marketplaces(self.file_path, item_data=self.current_file)
         if MarketplaceVersions.MarketplaceV2.value not in marketplace_versions:
             return True
 
@@ -306,21 +265,13 @@ class LayoutsContainerValidator(LayoutBaseValidator):
                     sections = tab.get("sections", [])
                     for section in sections:
                         if "queryType" in section.keys() and "type" in section.keys():
-                            if (
-                                section.get("queryType") == "script"
-                                and section.get("type") == "dynamic"
-                            ):
+                            if section.get("queryType") == "script" and section.get("type") == "dynamic":
                                 invalid_types_contained.append(section.get("type"))
-                        if (
-                            "type" in section.keys()
-                            and section.get("type") in invalid_sections
-                        ):
+                        if "type" in section.keys() and section.get("type") in invalid_sections:
                             invalid_types_contained.append(section.get("type"))
 
         if invalid_types_contained:
-            error_message, error_code = Errors.layout_container_contains_invalid_types(
-                invalid_types_contained
-            )
+            error_message, error_code = Errors.layout_container_contains_invalid_types(invalid_types_contained)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
@@ -335,15 +286,9 @@ class LayoutValidator(LayoutBaseValidator):
             bool. True if from version field is valid, else False.
         """
         if self.from_version:
-            if LooseVersion(self.from_version) >= LooseVersion(
-                FROM_VERSION_LAYOUTS_CONTAINER
-            ):
-                error_message, error_code = Errors.invalid_version_in_layout(
-                    "fromVersion"
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+            if LooseVersion(self.from_version) >= LooseVersion(FROM_VERSION_LAYOUTS_CONTAINER):
+                error_message, error_code = Errors.invalid_version_in_layout("fromVersion")
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
         return True
 
@@ -354,9 +299,7 @@ class LayoutValidator(LayoutBaseValidator):
         Returns:
             bool. True if to version field is valid, else False.
         """
-        if not self.to_version or LooseVersion(self.to_version) >= LooseVersion(
-            FROM_VERSION_LAYOUTS_CONTAINER
-        ):
+        if not self.to_version or LooseVersion(self.to_version) >= LooseVersion(FROM_VERSION_LAYOUTS_CONTAINER):
             error_message, error_code = Errors.invalid_version_in_layout("toVersion")
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
@@ -372,9 +315,7 @@ class LayoutValidator(LayoutBaseValidator):
         return True
 
     @error_codes("LO104")
-    def is_incident_field_exist(
-        self, id_set_file: Dict[str, List], is_circle: bool
-    ) -> bool:
+    def is_incident_field_exist(self, id_set_file: Dict[str, List], is_circle: bool) -> bool:
         """
         Check if the incident fields which are part of the layout actually exist in the content items (id set).
 
@@ -404,22 +345,16 @@ class LayoutValidator(LayoutBaseValidator):
         for section in layout_sections:
             fields = section.get("fields", [])
             invalid_incident_fields.extend(
-                get_invalid_incident_fields_from_layout(
-                    layout_incident_fields=fields, content_fields=content_fields
-                )
+                get_invalid_incident_fields_from_layout(layout_incident_fields=fields, content_fields=content_fields)
             )
 
         layout_tabs = layout.get("tabs", [])
         invalid_incident_fields.extend(
-            self.get_invalid_incident_fields_from_tabs(
-                layout_tabs=layout_tabs, content_fields=content_fields
-            )
+            self.get_invalid_incident_fields_from_tabs(layout_tabs=layout_tabs, content_fields=content_fields)
         )
 
         if invalid_incident_fields:
-            error_message, error_code = Errors.invalid_incident_field_in_layout(
-                invalid_incident_fields
-            )
+            error_message, error_code = Errors.invalid_incident_field_in_layout(invalid_incident_fields)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True

@@ -21,7 +21,5 @@ class GlobalSecrets:
             ips = []
         if generic_strings is None:
             generic_strings = []
-        secrets_content = dict(
-            files=files, iocs=dict(ips=ips, urls=urls), generic_strings=generic_strings
-        )
+        secrets_content = dict(files=files, iocs=dict(ips=ips, urls=urls), generic_strings=generic_strings)
         self._secrets_path.write_text(json.dumps(secrets_content), None)

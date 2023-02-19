@@ -18,10 +18,7 @@ FILES_SRC_TARGET = List[Tuple[os.PathLike, str]]
 # this will be used to determine if the system supports mounts
 CAN_MOUNT_FILES = bool(os.getenv("GITLAB_CI", False)) or (
     (not os.getenv("CIRCLECI", False))
-    and (
-        (not os.getenv("DOCKER_HOST"))
-        or os.getenv("DOCKER_HOST", "").lower().startswith("unix:")
-    )
+    and ((not os.getenv("DOCKER_HOST")) or os.getenv("DOCKER_HOST", "").lower().startswith("unix:"))
 )
 
 
@@ -66,13 +63,9 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ""):
 
 class DockerBase:
     def __init__(self):
-        self.tmp_dir_name = tempfile.TemporaryDirectory(
-            prefix=os.path.join(os.getcwd(), "tmp")
-        )
+        self.tmp_dir_name = tempfile.TemporaryDirectory(prefix=os.path.join(os.getcwd(), "tmp"))
         self.tmp_dir = Path(self.tmp_dir_name.name)
-        installation_scripts = (
-            Path(__file__).parent.parent / "lint" / "resources" / "installation_scripts"
-        )
+        installation_scripts = Path(__file__).parent.parent / "lint" / "resources" / "installation_scripts"
         self.installation_scripts = {
             TYPE_PYTHON: installation_scripts / "python_image.sh",
             TYPE_PWSH: installation_scripts / "powershell_image.sh",
@@ -110,9 +103,7 @@ class DockerBase:
             return docker_client
 
     @staticmethod
-    def copy_files_container(
-        container: docker.models.containers.Container, files: FILES_SRC_TARGET
-    ):
+    def copy_files_container(container: docker.models.containers.Container, files: FILES_SRC_TARGET):
         """
         Args:
             container: the container object.
@@ -140,10 +131,8 @@ class DockerBase:
         """
         Creates a container and pushing requested files to the container.
         """
-        container: docker.models.containers.Container = (
-            init_global_docker_client().containers.create(
-                image=image, command=command, environment=environment, **kwargs
-            )
+        container: docker.models.containers.Container = init_global_docker_client().containers.create(
+            image=image, command=command, environment=environment, **kwargs
         )
         if files_to_push:
             self.copy_files_container(container, files_to_push)
@@ -170,9 +159,7 @@ class DockerBase:
             2. running the istallation scripts
             3. committing the docker changes (installed packages) to a new local image
         """
-        self.requirements.write_text(
-            "\n".join(install_packages) if install_packages else ""
-        )
+        self.requirements.write_text("\n".join(install_packages) if install_packages else "")
         logger.debug(f"Trying to pull image {base_image}")
         self.pull_image(base_image)
         container = self.create_container(
@@ -187,9 +174,7 @@ class DockerBase:
                 build_log=container.logs(),
             )
         repository, tag = image.split(":")
-        container.commit(
-            repository=repository, tag=tag, changes=self.changes[container_type]
-        )
+        container.commit(repository=repository, tag=tag, changes=self.changes[container_type])
         return image
 
 
@@ -202,9 +187,7 @@ class MountableDocker(DockerBase):
         ]
         for file in files:
             if file.exists():
-                self._files_to_push_on_installation.append(
-                    (shutil.copyfile(file, self.tmp_dir / file.name), str(file))
-                )
+                self._files_to_push_on_installation.append((shutil.copyfile(file, self.tmp_dir / file.name), str(file)))
 
     @staticmethod
     def get_mounts(files: FILES_SRC_TARGET) -> List[Mount]:

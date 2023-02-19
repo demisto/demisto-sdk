@@ -45,14 +45,8 @@ def test_ai21_api_request(mocker):
             json=FAKE_OUTPUT_AI21,
         )
 
-        assert (
-            generate_descriptions.ai21_api_request("test", {})
-            == "The ThreatStream Platform."
-        )
-        assert (
-            generate_descriptions.ai21_api_request("test", {"prob_check": True})
-            == "The ThreatStream **Platform**."
-        )
+        assert generate_descriptions.ai21_api_request("test", {}) == "The ThreatStream Platform."
+        assert generate_descriptions.ai21_api_request("test", {"prob_check": True}) == "The ThreatStream **Platform**."
 
 
 def test_build_description_with_probabilities():
@@ -68,10 +62,7 @@ def test_build_description_with_probabilities():
         generate_descriptions,
     )
 
-    assert (
-        generate_descriptions.build_description_with_probabilities(LOGPROB_INPUT_AI21)
-        == "The **Unkown**"
-    )
+    assert generate_descriptions.build_description_with_probabilities(LOGPROB_INPUT_AI21) == "The **Unkown**"
 
 
 def test_generate_ai_descriptions(mocker, tmp_path):
@@ -102,9 +93,7 @@ def test_generate_ai_descriptions(mocker, tmp_path):
             json=FAKE_OUTPUT_AI21,
         )
 
-        generate_descriptions.generate_ai_descriptions(
-            str(input), str(output), interactive=False, verbose=False
-        )
+        generate_descriptions.generate_ai_descriptions(str(input), str(output), interactive=False, verbose=False)
 
         output_dict = get_yaml(str(output))
         for output in output_dict.get("script").get("commands")[0].get("outputs"):
@@ -125,9 +114,7 @@ def test_generate_ai_descriptions_interactive(mocker, tmp_path, monkeypatch):
     )
 
     mocker.patch.dict(os.environ, {"AI21_KEY": "123"})
-    mocker.patch.object(
-        generate_descriptions, "pinput", return_value="The brown fox is not brown"
-    )
+    mocker.patch.object(generate_descriptions, "pinput", return_value="The brown fox is not brown")
     monkeypatch.setattr("builtins.input", lambda _: "y")
 
     input = tmp_path / "input_generate_ai_descriptions.yml"
@@ -143,9 +130,7 @@ def test_generate_ai_descriptions_interactive(mocker, tmp_path, monkeypatch):
             json=FAKE_OUTPUT_AI21,
         )
 
-        generate_descriptions.generate_ai_descriptions(
-            str(input), str(output), interactive=True, verbose=False
-        )
+        generate_descriptions.generate_ai_descriptions(str(input), str(output), interactive=True, verbose=False)
 
         output_dict = get_yaml(str(output))
         outputs = output_dict.get("script").get("commands")[0].get("outputs")
@@ -190,9 +175,7 @@ def test_generate_ai_descriptions_interactive_similar_path(mocker, tmp_path):
             json=FAKE_OUTPUT_AI21,
         )
 
-        generate_descriptions.generate_ai_descriptions(
-            str(input), str(output), interactive=True, verbose=False
-        )
+        generate_descriptions.generate_ai_descriptions(str(input), str(output), interactive=True, verbose=False)
 
         output_dict = get_yaml(str(output))
         outputs = output_dict.get("script").get("commands")[0].get("outputs")

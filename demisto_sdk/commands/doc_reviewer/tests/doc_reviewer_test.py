@@ -72,12 +72,8 @@ class TestDocReviewFilesAreFound:
         Then -
             Ensure the file that was found exist in the directory.
         """
-        doc_review = DocReviewer(
-            file_paths=[valid_spelled_content_pack.integrations[0].yml.path]
-        )
-        doc_review.get_files_to_run_on(
-            file_path=valid_spelled_content_pack.integrations[0].yml.path
-        )
+        doc_review = DocReviewer(file_paths=[valid_spelled_content_pack.integrations[0].yml.path])
+        doc_review.get_files_to_run_on(file_path=valid_spelled_content_pack.integrations[0].yml.path)
         for file in doc_review.files:
             assert path.exists(file)
 
@@ -97,9 +93,7 @@ class TestDocReviewFilesAreFound:
             valid_spelled_content_pack.scripts[0].yml.path,
         ] + [rn.path for rn in valid_spelled_content_pack.release_notes]
 
-        mocker.patch.object(
-            DocReviewer, "gather_all_changed_files", return_value=changed_files_mock
-        )
+        mocker.patch.object(DocReviewer, "gather_all_changed_files", return_value=changed_files_mock)
         doc_review = DocReviewer(use_git=True)
         doc_review.get_files_to_run_on(file_path="")
         assert set(doc_review.files) == set(changed_files_mock)
@@ -126,9 +120,7 @@ class TestDocReviewOnReleaseNotesOnly:
     Tests scenarios which are related to executing doc-review with --release-notes
     """
 
-    def test_doc_review_with_release_notes_is_skipped_on_invalid_yml_file(
-        self, malformed_integration_yml
-    ):
+    def test_doc_review_with_release_notes_is_skipped_on_invalid_yml_file(self, malformed_integration_yml):
         """
         Given -
             malformed yml integration file.
@@ -148,9 +140,7 @@ class TestDocReviewOnReleaseNotesOnly:
         except ValueError as err:
             assert False, str(err)
 
-    def test_doc_review_with_release_notes_is_skipped_on_invalid_json_file(
-        self, malformed_incident_field: JSONBased
-    ):
+    def test_doc_review_with_release_notes_is_skipped_on_invalid_json_file(self, malformed_incident_field: JSONBased):
         """
         Given -
             malformed json incident field.
@@ -170,9 +160,7 @@ class TestDocReviewOnReleaseNotesOnly:
         except ValueError as err:
             assert False, str(err)
 
-    def test_doc_review_is_performed_only_on_release_notes(
-        self, valid_spelled_content_pack
-    ):
+    def test_doc_review_is_performed_only_on_release_notes(self, valid_spelled_content_pack):
         """
         Given
             - a pack
@@ -183,13 +171,9 @@ class TestDocReviewOnReleaseNotesOnly:
         Then
             - Ensure The files that were doc-reviewed are only release-notes.
         """
-        doc_reviewer = DocReviewer(
-            file_paths=[valid_spelled_content_pack.path], release_notes_only=True
-        )
+        doc_reviewer = DocReviewer(file_paths=[valid_spelled_content_pack.path], release_notes_only=True)
         assert doc_reviewer.run_doc_review()
-        assert set(doc_reviewer.files) == {
-            rn.path for rn in valid_spelled_content_pack.release_notes
-        }
+        assert set(doc_reviewer.files) == {rn.path for rn in valid_spelled_content_pack.release_notes}
 
     def test_get_invalid_files_from_git_with_release_notes(
         self, mocker, malformed_integration_yml, malformed_incident_field
@@ -230,9 +214,7 @@ class TestDocReviewOnReleaseNotesOnly:
         Then -
             Ensure supported files contain only release-notes.
         """
-        assert DocReviewer(release_notes_only=True).SUPPORTED_FILE_TYPES == [
-            FileType.RELEASE_NOTES
-        ]
+        assert DocReviewer(release_notes_only=True).SUPPORTED_FILE_TYPES == [FileType.RELEASE_NOTES]
 
 
 class TestDocReviewPack:
@@ -259,9 +241,7 @@ class TestDocReviewPack:
         assert len(doc_reviewer.files_with_misspells) == len(misspelled_files)
         assert doc_reviewer.files_with_misspells == misspelled_files
 
-    def test_invalid_misspelled_files_with_no_failure(
-        self, invalid_spelled_content_pack
-    ):
+    def test_invalid_misspelled_files_with_no_failure(self, invalid_spelled_content_pack):
         """
         Given -
             Pack files with invalid content spelling and 'no_failure' input parameter set to True.
@@ -490,7 +470,9 @@ class TestDocReviewPrinting:
     GREEN_FG = {"fg": "green"}
     BRIGHT_RED_FG = {"fg": "bright_red"}
     README_SKIPPED_REGEX = r"^File '.*/README.md' was skipped because it does not belong to an XSOAR-supported Pack"
-    RN_SKIPPED_REGEX = r"^File '.*/ReleaseNotes/.*.md' was skipped because it does not belong to an XSOAR-supported Pack"
+    RN_SKIPPED_REGEX = (
+        r"^File '.*/ReleaseNotes/.*.md' was skipped because it does not belong to an XSOAR-supported Pack"
+    )
     FILE_MISSPELL_FOUND_REGEX = r"Words that might be misspelled were found in .*:"
 
     class SpelledFileType:
@@ -548,9 +530,7 @@ class TestDocReviewPrinting:
         Then -
             Ensure only the files without misspells are printed.
         """
-        secho_mocker = self.get_file_report_mocker(
-            mocker=mocker, files_type=self.SpelledFileType.VALID
-        )
+        secho_mocker = self.get_file_report_mocker(mocker=mocker, files_type=self.SpelledFileType.VALID)
 
         first_call = secho_mocker.mock_calls[0]
         assert "Files Without Misspells" in first_call.args[0]
@@ -574,9 +554,7 @@ class TestDocReviewPrinting:
         Then -
             Ensure only the files with misspells are printed.
         """
-        secho_mocker = self.get_file_report_mocker(
-            mocker=mocker, files_type=self.SpelledFileType.INVALID
-        )
+        secho_mocker = self.get_file_report_mocker(mocker=mocker, files_type=self.SpelledFileType.INVALID)
 
         first_call = secho_mocker.mock_calls[0]
         assert "Files With Misspells" in first_call.args[0]
@@ -600,9 +578,7 @@ class TestDocReviewPrinting:
         Then -
             Ensure 'Malformed Release Notes' is printed.
         """
-        secho_mocker = self.get_file_report_mocker(
-            mocker=mocker, files_type=self.SpelledFileType.INVALID_RELEASE_NOTES
-        )
+        secho_mocker = self.get_file_report_mocker(mocker=mocker, files_type=self.SpelledFileType.INVALID_RELEASE_NOTES)
 
         first_call = secho_mocker.mock_calls[0]
         assert "Malformed Release Notes" in first_call.args[0]
@@ -643,9 +619,7 @@ class TestDocReviewPrinting:
         assert "file1\nfile2" in forth_call.args[0]
         assert forth_call.kwargs == self.BRIGHT_RED_FG
 
-    def test_printing_skip_non_xsoar_supported_file(
-        self, mix_invalid_packs: List[Pack], mocker
-    ):
+    def test_printing_skip_non_xsoar_supported_file(self, mix_invalid_packs: List[Pack], mocker):
         """
         Given:
             - A list of Packs (1 XSOAR-supported and 1 community-supported).
@@ -666,11 +640,11 @@ class TestDocReviewPrinting:
             cmd_args.append(pack.path)
 
             if is_xsoar_supported_pack(pack.path):
-                expected_supported = (
-                    f"Words that might be misspelled were found in {pack.path}"
-                )
+                expected_supported = f"Words that might be misspelled were found in {pack.path}"
             else:
-                expected_not_supported_readme = f"File '{pack.readme.path}' was skipped because it does not belong to an XSOAR-supported Pack"
+                expected_not_supported_readme = (
+                    f"File '{pack.readme.path}' was skipped because it does not belong to an XSOAR-supported Pack"
+                )
                 expected_not_supported_rn = f"File '{pack.release_notes[0].path}' was skipped because it does not belong to an XSOAR-supported Pack"
 
         doc_review_report = t.run_doc_review_cmd(cmd_args)
@@ -765,9 +739,7 @@ def test_check_word_functionality(word, is_invalid_word, no_camelcase):
         ),
     ],
 )
-def test_having_two_known_words_files(
-    repo, file_content, unknown_words, known_words_files_contents, review_success
-):
+def test_having_two_known_words_files(repo, file_content, unknown_words, known_words_files_contents, review_success):
     """
     Given:
         - A release notes file with two misspelled words.
@@ -790,17 +762,14 @@ def test_having_two_known_words_files(
         known_words_file_paths.append(known_words_file.path)
 
     with ChangeCWD(repo.path):
-        doc_reviewer = DocReviewer(
-            file_paths=[rn_file.path], known_words_file_paths=known_words_file_paths
-        )
+        doc_reviewer = DocReviewer(file_paths=[rn_file.path], known_words_file_paths=known_words_file_paths)
         assert doc_reviewer.run_doc_review() == review_success
         assert len(doc_reviewer.files) > 0
         assert doc_reviewer.unknown_words == unknown_words
 
 
 @pytest.mark.parametrize(
-    "file_content, unknown_words, known_words_files_contents, packs_known_words_content, "
-    "review_success",
+    "file_content, unknown_words, known_words_files_contents, packs_known_words_content, " "review_success",
     [
         (
             "Added the nomnomone, nomnomtwo.",
@@ -945,12 +914,8 @@ def test_having_two_file_paths_same_pack(
         - Enusure the unknown words are as expected for each file.
     """
     pack = repo.create_pack("first_test_pack")
-    first_rn_file = pack.create_release_notes(
-        version="1_0_0", content=first_file_content
-    )
-    second_rn_file = pack.create_release_notes(
-        version="1_0_1", content=second_file_content
-    )
+    first_rn_file = pack.create_release_notes(version="1_0_0", content=first_file_content)
+    second_rn_file = pack.create_release_notes(version="1_0_1", content=second_file_content)
     pack.pack_ignore.write_list(packs_known_words_content)
     known_words_file_paths = []
     for index, known_words_file_contents in enumerate(known_words_files_contents):
@@ -972,9 +937,7 @@ def test_having_two_file_paths_same_pack(
         )
         assert doc_reviewer.run_doc_review() == review_success
         assert len(doc_reviewer.files) == 2
-        print_unknown_words.assert_has_calls(
-            unknown_word_calls_with_mocker, any_order=True
-        )
+        print_unknown_words.assert_has_calls(unknown_word_calls_with_mocker, any_order=True)
         assert len(doc_reviewer.files_with_misspells) == misspelled_files_num
 
 
@@ -1068,12 +1031,8 @@ def test_having_two_file_paths_different_pack(
     """
     first_pack = repo.create_pack("first_test_pack")
     second_pack = repo.create_pack("second_test_pack")
-    first_rn_file = first_pack.create_release_notes(
-        version="1_0_0", content=first_file_content
-    )
-    second_rn_file = second_pack.create_release_notes(
-        version="1_0_1", content=second_file_content
-    )
+    first_rn_file = first_pack.create_release_notes(version="1_0_0", content=first_file_content)
+    second_rn_file = second_pack.create_release_notes(version="1_0_1", content=second_file_content)
     first_pack.pack_ignore.write_list(first_packs_known_words_content)
     second_pack.pack_ignore.write_list(second_packs_known_words_content)
     known_words_file_paths = []
@@ -1096,9 +1055,7 @@ def test_having_two_file_paths_different_pack(
         )
         assert doc_reviewer.run_doc_review() == review_success
         assert len(doc_reviewer.files) == 2
-        print_unknown_words.assert_has_calls(
-            unknown_word_calls_with_mocker, any_order=True
-        )
+        print_unknown_words.assert_has_calls(unknown_word_calls_with_mocker, any_order=True)
         assert len(doc_reviewer.files_with_misspells) == misspelled_files_num
 
 
@@ -1164,12 +1121,8 @@ def test_having_two_file_paths_not_same_pack(
         - Enusure the unknown words are as expected for each file.
     """
     pack = repo.create_pack("first_test_pack")
-    first_rn_file = pack.create_release_notes(
-        version="1_0_0", content=first_file_content
-    )
-    second_rn_file = pack.create_release_notes(
-        version="1_0_1", content=second_file_content
-    )
+    first_rn_file = pack.create_release_notes(version="1_0_0", content=first_file_content)
+    second_rn_file = pack.create_release_notes(version="1_0_1", content=second_file_content)
     pack.pack_ignore.write_list(packs_known_words_content)
     known_words_file_paths = []
     for index, known_words_file_contents in enumerate(known_words_files_contents):
@@ -1191,9 +1144,7 @@ def test_having_two_file_paths_not_same_pack(
         )
         assert doc_reviewer.run_doc_review() == review_success
         assert len(doc_reviewer.files) == 2
-        print_unknown_words.assert_has_calls(
-            unknown_word_calls_with_mocker, any_order=True
-        )
+        print_unknown_words.assert_has_calls(unknown_word_calls_with_mocker, any_order=True)
         assert len(doc_reviewer.files_with_misspells) == misspelled_files_num
 
 
@@ -1246,9 +1197,7 @@ def test_find_known_words_from_pack_ignore_integrations_name(repo):
     pack = repo.create_pack("test_pack")
     integration1 = pack.create_integration(name="first_integration")
     integration2 = pack.create_integration(name="second_integration")
-    rn_file = pack.create_release_notes(
-        version="1_0_0", content=f"{integration1.name}\n{integration2.name}"
-    )
+    rn_file = pack.create_release_notes(version="1_0_0", content=f"{integration1.name}\n{integration2.name}")
     doc_reviewer = DocReviewer(file_paths=[])
     with ChangeCWD(repo.path):
         found_known_words = doc_reviewer.find_known_words_from_pack(rn_file.path)[1]
@@ -1270,14 +1219,10 @@ def test_find_known_words_from_pack_ignore_commands_name(repo):
     """
 
     pack = repo.create_pack("test_pack")
-    pack_integration_path = os.path.join(
-        AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml"
-    )
+    pack_integration_path = os.path.join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
     valid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
     pack.create_integration(name="first_integration", yml=valid_integration_yml)
-    rn_file = pack.create_release_notes(
-        version="1_0_0", content="azure-hidden-command \n azure-get-indicators"
-    )
+    rn_file = pack.create_release_notes(version="1_0_0", content="azure-hidden-command \n azure-get-indicators")
     doc_reviewer = DocReviewer(file_paths=[])
     with ChangeCWD(repo.path):
         found_known_words = doc_reviewer.find_known_words_from_pack(rn_file.path)[1]
@@ -1301,9 +1246,7 @@ def test_find_known_words_from_pack_ignore_scripts_name(repo):
     pack = repo.create_pack("test_pack")
     script1 = pack.create_script(name="first_script")
     script2 = pack.create_script(name="second_script")
-    rn_file = pack.create_release_notes(
-        version="1_0_0", content=f"{script1.name}\n{script2.name}"
-    )
+    rn_file = pack.create_release_notes(version="1_0_0", content=f"{script1.name}\n{script2.name}")
     doc_reviewer = DocReviewer(file_paths=[])
     with ChangeCWD(repo.path):
         found_known_words = doc_reviewer.find_known_words_from_pack(rn_file.path)[1]
@@ -1338,9 +1281,7 @@ def test_find_known_words_from_pack_ignore_commons_scripts_name(repo):
     pack._create_text_based("bla.md", "", dir_path=Path(f"{pack.path}//Scripts"))
     # add a script into second_script folder
     script2 = pack.create_script(name="second_script")
-    rn_file = pack.create_release_notes(
-        version="1_0_0", content=f"{script1_name}\n{script2.name}"
-    )
+    rn_file = pack.create_release_notes(version="1_0_0", content=f"{script1_name}\n{script2.name}")
     doc_reviewer = DocReviewer(file_paths=[])
 
     with ChangeCWD(repo.path):

@@ -26,9 +26,7 @@ json = JSON_Handler()
 logger: logging.Logger = logging.getLogger("demisto-sdk")
 
 
-def postman_headers_to_conf_headers(
-    postman_headers, skip_authorization_header: bool = False
-):
+def postman_headers_to_conf_headers(postman_headers, skip_authorization_header: bool = False):
     """
     postman_headers = [
         {
@@ -60,9 +58,7 @@ def postman_headers_to_conf_headers(
     return headers
 
 
-def create_body_format(
-    body: Union[dict, list], args: List[IntegrationGeneratorArg] = None
-):
+def create_body_format(body: Union[dict, list], args: List[IntegrationGeneratorArg] = None):
     """
     Gets the raw body of a request and creates a request holding the argument's names in it (that we will get from the users),
     instead of the values that the argument's had in postman. The argument's name are generated surrounded with {}.
@@ -76,23 +72,14 @@ def create_body_format(
             if isinstance(value, dict):
                 output_body[key] = {}
                 output_body[key] = format_value(value, output_body[key], path + (key,))
-            elif (
-                isinstance(value, list)
-                and len(value) > 0
-                and isinstance(value[0], dict)
-            ):
+            elif isinstance(value, list) and len(value) > 0 and isinstance(value[0], dict):
                 output_body[key] = [{}]
-                output_body[key][0] = format_value(
-                    value[0], output_body[key][0], path + (key,)
-                )
+                output_body[key][0] = format_value(value[0], output_body[key][0], path + (key,))
             else:
                 output_body[key] = "{" + key + "}"
                 if args:
                     for arg in args:
-                        if (
-                            arg.in_object == list(path)
-                            and key == arg.name.split("_")[-1]
-                        ):
+                        if arg.in_object == list(path) and key == arg.name.split("_")[-1]:
                             output_body[key] = "{" + arg.name + "}"
                             break
         return output_body
@@ -265,8 +252,7 @@ def postman_to_autogen_configuration(
     config = IntegrationGeneratorConfig(
         name=id_,
         display_name=display_name,
-        description=description
-        or info.get("description", "Generated description - REPLACE THIS"),
+        description=description or info.get("description", "Generated description - REPLACE THIS"),
         params=params,
         category=category or "Utilities",
         command_prefix=command_prefix or tools.to_kebab_case(id_),
@@ -283,9 +269,7 @@ def postman_to_autogen_configuration(
 
 def get_docker_image():
     try:
-        latest_tag = DockerImageValidator.get_docker_image_latest_tag_request(
-            "demisto/python3"
-        )
+        latest_tag = DockerImageValidator.get_docker_image_latest_tag_request("demisto/python3")
         docker_image = f"demisto/python3:{latest_tag}"
         logger.debug(f"docker image set to: {docker_image}")
     except Exception as e:
@@ -298,22 +282,16 @@ def get_docker_image():
 def convert_request_to_command(item: dict):
     logger.debug(f'converting request to command: {item.get("name")}')
     name = item.get("name")
-    assert isinstance(
-        name, str
-    ), "Could not find name. Is this a valid postman 2.1 collection?"
+    assert isinstance(name, str), "Could not find name. Is this a valid postman 2.1 collection?"
     command_name = tools.to_kebab_case(name)
     context_prefix = tools.to_pascal_case(name)
 
     request = item.get("request")
     if request is None:
-        raise DemistoException(
-            "Could not find request in the collection. Is it a valid postman collection?"
-        )
+        raise DemistoException("Could not find request in the collection. Is it a valid postman collection?")
 
     logger.debug(f"converting postman headers of request: {name}")
-    headers = postman_headers_to_conf_headers(
-        request.get("header"), skip_authorization_header=True
-    )
+    headers = postman_headers_to_conf_headers(request.get("header"), skip_authorization_header=True)
 
     args = []
     outputs = []
@@ -329,9 +307,7 @@ def convert_request_to_command(item: dict):
         )
         return None
 
-    url_path = (
-        "/".join(request_url_object.get("path")).replace("{{", "{").replace("}}", "}")
-    )
+    url_path = "/".join(request_url_object.get("path")).replace("{{", "{").replace("}}", "}")
     for url_path_item in request_url_object.get("path"):
         if re.match(r"\{\{.*\}\}", url_path_item):
             arg = IntegrationGeneratorArg(
@@ -354,9 +330,7 @@ def convert_request_to_command(item: dict):
         arg = IntegrationGeneratorArg(name=q.get("key"), description="", in_="query")
         args.append(arg)
 
-    logger.debug(
-        f"creating arguments which will be passed to the request body of request: {name}"
-    )
+    logger.debug(f"creating arguments which will be passed to the request body of request: {name}")
     request_body = request.get("body")
     body_format = None
     if request_body:
@@ -364,20 +338,14 @@ def convert_request_to_command(item: dict):
             try:
                 body_obj = json.loads(request_body.get("raw"))
                 flattened_json = flatten_json(body_obj)
-                shared_arg_to_split_position_dict = find_shared_args_path(
-                    flattened_json
-                )
+                shared_arg_to_split_position_dict = find_shared_args_path(flattened_json)
 
                 for key, value in flattened_json.items():
                     path_split = key.split(".")
                     json_path = path_split[:-1]
-                    min_unique_path_length = (
-                        shared_arg_to_split_position_dict[path_split[-1].lower()] + 1
-                    )
+                    min_unique_path_length = shared_arg_to_split_position_dict[path_split[-1].lower()] + 1
                     arg_name = "_".join(path_split[-min_unique_path_length:])
-                    arg = IntegrationGeneratorArg(
-                        name=arg_name, description="", in_="body", in_object=json_path
-                    )
+                    arg = IntegrationGeneratorArg(name=arg_name, description="", in_="body", in_object=json_path)
                     args.append(arg)
 
                 body_format = create_body_format(body_obj, args)
@@ -387,8 +355,7 @@ def convert_request_to_command(item: dict):
 
     if not item.get("response") or item.get("response") == 0:
         logger.error(
-            f"[{name}] request is missing response. Make sure to save at least one successful "
-            f"response in Postman"
+            f"[{name}] request is missing response. Make sure to save at least one successful " f"response in Postman"
         )
     else:
         try:
@@ -399,9 +366,7 @@ def convert_request_to_command(item: dict):
                 returns_file = True
 
         except (ValueError, IndexError, TypeError):
-            logger.exception(
-                f"Failed to parse to JSON response body of {name} request."
-            )
+            logger.exception(f"Failed to parse to JSON response body of {name} request.")
 
     command = IntegrationGeneratorCommand(
         name=command_name,
@@ -421,9 +386,7 @@ def convert_request_to_command(item: dict):
     return command
 
 
-def generate_command_outputs(
-    body: Union[Dict, List]
-) -> List[IntegrationGeneratorOutput]:
+def generate_command_outputs(body: Union[Dict, List]) -> List[IntegrationGeneratorOutput]:
     """
     Parses postman body to list of command outputs.
     Args:
@@ -437,9 +400,7 @@ def generate_command_outputs(
     if isinstance(body, list):
         flattened_body = {k[1:]: v for k, v in flattened_body.items()}
     return [
-        IntegrationGeneratorOutput(
-            name=key, description="", type_=determine_type(value)
-        )
+        IntegrationGeneratorOutput(name=key, description="", type_=determine_type(value))
         for key, value in flattened_body.items()
     ]
 
@@ -501,9 +462,7 @@ def update_min_unique_path(
     Finds the minimum unique path length needed for all arguments with the same name.
     """
     for other_arg_split_path in other_args_split_paths:
-        for max_same_path, (other_path, arg_path) in enumerate(
-            zip(other_arg_split_path[::-1], split_path[::-1])
-        ):
+        for max_same_path, (other_path, arg_path) in enumerate(zip(other_arg_split_path[::-1], split_path[::-1])):
             if other_path == arg_path:
                 current_min_unique = max(max_same_path + 1, current_min_unique)
             else:

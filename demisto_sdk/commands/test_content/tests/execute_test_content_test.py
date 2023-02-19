@@ -68,9 +68,7 @@ def test_add_pr_comment(mocker, comment, skipped_flow, coverage_flow):
                 url + query,
                 json={
                     "total_count": 1,
-                    "items": [
-                        {"comments_url": "https://api.github.com/search/issues/1"}
-                    ],
+                    "items": [{"comments_url": "https://api.github.com/search/issues/1"}],
                 },
             )
             m.get(

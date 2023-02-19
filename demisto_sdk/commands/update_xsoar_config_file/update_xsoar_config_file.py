@@ -82,14 +82,10 @@ class XSOARConfigFileUpdater:
         if self.add_marketplace_pack or self.add_custom_pack:
             if not self.pack_id:
                 is_valid_pack_structure = False
-                print_color(
-                    "Error: Missing option '-pi' / '--pack-id'.", LOG_COLORS.RED
-                )
+                print_color("Error: Missing option '-pi' / '--pack-id'.", LOG_COLORS.RED)
             if not self.pack_data:
                 is_valid_pack_structure = False
-                print_color(
-                    "Error: Missing option '-pd' / '--pack-data'.", LOG_COLORS.RED
-                )
+                print_color("Error: Missing option '-pd' / '--pack-data'.", LOG_COLORS.RED)
         return is_valid_pack_structure
 
     def add_all_installed_packs_to_config_file(self):
@@ -97,9 +93,7 @@ class XSOARConfigFileUpdater:
         Update the MarketPlace Packs Section in the Configuration File with all the installed packs on the machine.
         """
         marketplace_packs = self.get_installed_packs()
-        self.update_xsoar_config_data(
-            section_name=MARKETPLACE_PACKS_SECTION, data_to_update=marketplace_packs
-        )
+        self.update_xsoar_config_data(section_name=MARKETPLACE_PACKS_SECTION, data_to_update=marketplace_packs)
 
     def get_installed_packs(self) -> List[Dict[str, str]]:
         """
@@ -109,10 +103,7 @@ class XSOARConfigFileUpdater:
         res = client.generic_request("/contentpacks/metadata/installed", "GET")
         installed_packs_data = eval(res[0])
 
-        installed_packs = [
-            {"id": pack["id"], "version": pack["currentVersion"]}
-            for pack in installed_packs_data
-        ]
+        installed_packs = [{"id": pack["id"], "version": pack["currentVersion"]} for pack in installed_packs_data]
         return installed_packs
 
     def update_marketplace_pack(self):
@@ -120,18 +111,14 @@ class XSOARConfigFileUpdater:
         Add / Update the MarketPlace Packs Section in the Configuration File with the new pack data.
         """
         new_pack = {"id": self.pack_id, "version": self.pack_data}
-        self.update_xsoar_config_data(
-            section_name=MARKETPLACE_PACKS_SECTION, data_to_update=new_pack
-        )
+        self.update_xsoar_config_data(section_name=MARKETPLACE_PACKS_SECTION, data_to_update=new_pack)
 
     def update_custom_pack(self):
         """
         Add / Update the Custom Packs Section in the Configuration File with the new pack data.
         """
         new_pack = {"id": self.pack_id, "url": self.pack_data}
-        self.update_xsoar_config_data(
-            section_name=CUSTOM_PACKS_SECTION, data_to_update=new_pack
-        )
+        self.update_xsoar_config_data(section_name=CUSTOM_PACKS_SECTION, data_to_update=new_pack)
 
     def update_xsoar_config_data(self, section_name, data_to_update):
         """
@@ -144,9 +131,7 @@ class XSOARConfigFileUpdater:
             if isinstance(data_to_update, dict):
                 config_file_info[section_name].append(data_to_update)
         else:
-            config_file_info[section_name] = (
-                [data_to_update] if isinstance(data_to_update, dict) else data_to_update
-            )
+            config_file_info[section_name] = [data_to_update] if isinstance(data_to_update, dict) else data_to_update
         self.set_xsoar_config_data(config_file_info=config_file_info)
 
     def get_xsoar_config_data(self):

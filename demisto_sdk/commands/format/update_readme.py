@@ -112,9 +112,7 @@ class ReadmeFormat(BaseUpdate):
     def save_md_to_destination_file(self):
         """Safely saves formatted data to destination file."""
         if self.source_file != self.output_file and self.verbose:
-            click.secho(
-                f"Saving output description file to {self.output_file} \n", fg="white"
-            )
+            click.secho(f"Saving output description file to {self.output_file} \n", fg="white")
         with open(self.output_file, "w") as f:
             f.write(self.readme_content)
         f.close()

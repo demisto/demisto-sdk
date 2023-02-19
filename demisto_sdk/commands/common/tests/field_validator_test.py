@@ -323,9 +323,7 @@ class TestFieldValidator:
         structure = StructureValidator("")
         structure.current_file = {"version": version}
         validator = FieldBaseValidator(structure, set(), set())
-        assert (
-            validator.is_valid_version() == is_valid
-        ), f"is_valid_version({version}) returns {not is_valid}."
+        assert validator.is_valid_version() == is_valid, f"is_valid_version({version}) returns {not is_valid}."
 
     IS_FROM_VERSION_CHANGED_NO_OLD: Dict[any, any] = {}
     IS_FROM_VERSION_CHANGED_OLD = {"fromVersion": "5.0.0"}
@@ -340,12 +338,8 @@ class TestFieldValidator:
         (IS_FROM_VERSION_CHANGED_OLD, IS_FROM_VERSION_CHANGED_NEW_HIGHER, True),
     ]
 
-    @pytest.mark.parametrize(
-        "current_from_version, old_from_version, answer", IS_CHANGED_FROM_VERSION_INPUTS
-    )
-    def test_is_changed_from_version(
-        self, current_from_version, old_from_version, answer
-    ):
+    @pytest.mark.parametrize("current_from_version, old_from_version, answer", IS_CHANGED_FROM_VERSION_INPUTS)
+    def test_is_changed_from_version(self, current_from_version, old_from_version, answer):
         structure = StructureValidator("")
         structure.old_file = old_from_version
         structure.current_file = current_from_version
@@ -364,9 +358,7 @@ class TestFieldValidator:
         structure = StructureValidator("")
         structure.current_file = {"required": required}
         validator = FieldBaseValidator(structure, set(), set())
-        assert validator.is_valid_required() == is_valid, (
-            f"is_valid_required({required})" f" returns {not is_valid}."
-        )
+        assert validator.is_valid_required() == is_valid, f"is_valid_required({required})" f" returns {not is_valid}."
 
     data_is_changed_type = [
         ("shortText", "shortText", False),
@@ -439,9 +431,7 @@ class TestFieldValidator:
             structure.specific_validations = None
             validator = FieldBaseValidator(structure, set(), set())
             validator.current_file = current_file
-            mocker.patch.object(
-                field_base_validator, "get_pack_metadata", return_value=pack_metadata
-            )
+            mocker.patch.object(field_base_validator, "get_pack_metadata", return_value=pack_metadata)
             assert validator.is_valid_field_name_prefix() == answer
 
     IS_VALID_FROM_VERSION_FIELD = [
@@ -454,12 +444,8 @@ class TestFieldValidator:
         (LooseVersion("6.5.0"), "6.0.0", False),
     ]
 
-    @pytest.mark.parametrize(
-        "min_version, from_version, expected", IS_VALID_FROM_VERSION_FIELD
-    )
-    def test_is_valid_from_version_field(
-        self, pack, min_version: LooseVersion, from_version: str, expected: bool
-    ):
+    @pytest.mark.parametrize("min_version, from_version, expected", IS_VALID_FROM_VERSION_FIELD)
+    def test_is_valid_from_version_field(self, pack, min_version: LooseVersion, from_version: str, expected: bool):
         """
         Given
         - A field.
@@ -470,17 +456,10 @@ class TestFieldValidator:
         Then
         - Ensure the expected bool is returned according to whether the condition above is satisfied.
         """
-        indicator_field = pack.create_indicator_field(
-            "incident_1", {"type": "html", "fromVersion": from_version}
-        )
+        indicator_field = pack.create_indicator_field("incident_1", {"type": "html", "fromVersion": from_version})
         structure = StructureValidator(indicator_field.path)
         validator = FieldBaseValidator(structure, set(), set())
-        assert (
-            validator.is_valid_from_version_field(
-                min_version, reason_for_min_version=""
-            )
-            == expected
-        )
+        assert validator.is_valid_from_version_field(min_version, reason_for_min_version="") == expected
 
     def test_validate_no_empty_selected_values_value_incident(self, pack):
         """
@@ -545,9 +524,7 @@ class TestFieldValidator:
             (None, True),
         ],
     )
-    def test_is_valid_marketplaces_in_aliased_field(
-        self, pack, marketplaces: List[str], expected: bool
-    ):
+    def test_is_valid_marketplaces_in_aliased_field(self, pack, marketplaces: List[str], expected: bool):
         """
         Given
         - A field with aliases values.
@@ -559,9 +536,7 @@ class TestFieldValidator:
         - Ensure the expected bool is returned according to whether the marketplaces of the aliased fileds are valid.
         """
 
-        tested_field = pack.create_incident_field(
-            "tested_field", {"Aliases": [{"cliName": "aliased_field"}]}
-        )
+        tested_field = pack.create_incident_field("tested_field", {"Aliases": [{"cliName": "aliased_field"}]})
         incident_aliased_field = {
             "name": "incident_aliased_field",
             "cliName": "aliasedfield",
@@ -569,13 +544,9 @@ class TestFieldValidator:
         if marketplaces:
             incident_aliased_field["marketplaces"] = marketplaces
 
-        mocked_id_set = {
-            "IncidentFields": [{"incident_aliased_field": incident_aliased_field}]
-        }
+        mocked_id_set = {"IncidentFields": [{"incident_aliased_field": incident_aliased_field}]}
         structure = StructureValidator(tested_field.path)
-        validator = FieldBaseValidator(
-            structure, set(), set(), id_set_file=mocked_id_set
-        )
+        validator = FieldBaseValidator(structure, set(), set(), id_set_file=mocked_id_set)
         assert validator.is_aliased_fields_are_valid() == expected
 
     @pytest.mark.parametrize(
@@ -597,9 +568,7 @@ class TestFieldValidator:
         - Ensure the expected bool is returned according to whether the aliased field have inner alias or not.
         """
 
-        tested_field = pack.create_incident_field(
-            "tested_field", {"Aliases": [{"cliName": "aliasedfield"}]}
-        )
+        tested_field = pack.create_incident_field("tested_field", {"Aliases": [{"cliName": "aliasedfield"}]})
 
         incident_aliased_field = {
             "name": "incident_aliasedfield",
@@ -608,11 +577,7 @@ class TestFieldValidator:
         if aliases:
             incident_aliased_field["aliases"] = aliases
 
-        mocked_id_set = {
-            "IncidentFields": [{"incident_aliasedfield": incident_aliased_field}]
-        }
+        mocked_id_set = {"IncidentFields": [{"incident_aliasedfield": incident_aliased_field}]}
         structure = StructureValidator(tested_field.path)
-        validator = FieldBaseValidator(
-            structure, set(), set(), id_set_file=mocked_id_set
-        )
+        validator = FieldBaseValidator(structure, set(), set(), id_set_file=mocked_id_set)
         assert validator.is_aliased_fields_are_valid() == expected

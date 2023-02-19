@@ -30,9 +30,7 @@ class ReputationValidator(ContentEntityValidator):
 
         # check only on added files
         if not self.old_file:
-            is_reputation_valid = all(
-                [is_reputation_valid, self.is_id_equals_details()]
-            )
+            is_reputation_valid = all([is_reputation_valid, self.is_id_equals_details()])
 
         return is_reputation_valid
 
@@ -44,9 +42,7 @@ class ReputationValidator(ContentEntityValidator):
         internal_version = self.current_file.get("version")
         if internal_version != self.DEFAULT_VERSION:
             object_id = self.current_file.get("id")
-            error_message, error_code = Errors.wrong_version_reputations(
-                object_id, self.DEFAULT_VERSION
-            )
+            error_message, error_code = Errors.wrong_version_reputations(object_id, self.DEFAULT_VERSION)
 
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False
@@ -56,9 +52,7 @@ class ReputationValidator(ContentEntityValidator):
     @error_codes("RP101")
     def is_valid_expiration(self) -> bool:
         """Validate that the expiration field of a 5.5 reputation file is numeric."""
-        from_version = self.current_file.get(
-            "fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION
-        )
+        from_version = self.current_file.get("fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
         if LooseVersion(from_version) >= LooseVersion("5.5.0"):
             expiration = self.current_file.get("expiration", "")
             if not isinstance(expiration, int) or expiration < 0:
@@ -66,9 +60,7 @@ class ReputationValidator(ContentEntityValidator):
                     error_message,
                     error_code,
                 ) = Errors.reputation_expiration_should_be_numeric()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
         return True

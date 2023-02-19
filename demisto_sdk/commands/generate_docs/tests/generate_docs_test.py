@@ -28,16 +28,12 @@ from TestSuite.pack import Pack
 
 json = JSON_Handler()
 
-FILES_PATH = os.path.normpath(
-    os.path.join(__file__, git_path(), "demisto_sdk", "tests", "test_files")
-)
+FILES_PATH = os.path.normpath(os.path.join(__file__, git_path(), "demisto_sdk", "tests", "test_files"))
 FAKE_ID_SET = get_json(os.path.join(FILES_PATH, "fake_id_set.json"))
 TEST_PLAYBOOK_PATH = os.path.join(FILES_PATH, "playbook-Test_playbook.yml")
 PLAYBOOK_PATH = os.path.join(FILES_PATH, "beta-playbook-valid.yml")
 TEST_SCRIPT_PATH = os.path.join(FILES_PATH, "script-test_script.yml")
-TEST_INTEGRATION_PATH = os.path.join(
-    FILES_PATH, "fake_integration/fake_integration.yml"
-)
+TEST_INTEGRATION_PATH = os.path.join(FILES_PATH, "fake_integration/fake_integration.yml")
 TEST_INTEGRATION_2_PATH = os.path.join(
     FILES_PATH,
     "integration-display-credentials-none/integration-display" "-credentials-none.yml",
@@ -97,10 +93,7 @@ def test_string_escape_md():
         escape_multiline=True,
         escape_less_greater_signs=True,
     )
-    assert (
-        res
-        == "First fetch timestamp (`<number>` `<time unit>`, e.g., 12 hours, 7 days)"
-    )
+    assert res == "First fetch timestamp (`<number>` `<time unit>`, e.g., 12 hours, 7 days)"
 
     res = string_escape_md(
         "format: <number> <time unit>, e.g., 12 hours, 7 days.",
@@ -120,9 +113,7 @@ def test_string_escape_md():
     res = string_escape_md("Here are 'Single Quotation' marks")
     assert "'" in res
 
-    res = string_escape_md(
-        "- This _sentence_ has _wrapped_with_underscore_ and _another_ words."
-    )
+    res = string_escape_md("- This _sentence_ has _wrapped_with_underscore_ and _another_ words.")
     assert "\\_wrapped_with_underscore\\_" in res
     assert "\\_sentence\\_" in res
     assert "\\_another\\_" in res
@@ -152,9 +143,7 @@ def test_generate_numbered_section():
 def test_generate_list_section():
     from demisto_sdk.commands.generate_docs.common import generate_list_section
 
-    section = generate_list_section(
-        "Inputs", ["item1", "item2"], False, "No inputs found."
-    )
+    section = generate_list_section("Inputs", ["item1", "item2"], False, "No inputs found.")
 
     expected_section = ["## Inputs", "", "* item1", "* item2", ""]
 
@@ -164,9 +153,7 @@ def test_generate_list_section():
 def test_generate_list_with_text_section():
     from demisto_sdk.commands.generate_docs.common import generate_list_section
 
-    section = generate_list_section(
-        "Inputs", ["item1", "item2"], True, "No inputs found.", "some text"
-    )
+    section = generate_list_section("Inputs", ["item1", "item2"], True, "No inputs found.", "some text")
 
     expected_section = [
         "## Inputs",
@@ -195,12 +182,8 @@ TEST_TABLE_SECTION_EMPTY = [
 ]
 
 
-@pytest.mark.parametrize(
-    "data, title, empty_message, text, expected_result", TEST_TABLE_SECTION_EMPTY
-)
-def test_generate_table_section_empty(
-    data, title, empty_message, text, expected_result
-):
+@pytest.mark.parametrize("data, title, empty_message, text, expected_result", TEST_TABLE_SECTION_EMPTY)
+def test_generate_table_section_empty(data, title, empty_message, text, expected_result):
     """Unit test
     Given
     - Case 1: script empty metadata - an empty list instead of a list containing dicts with data to generate the tables from,
@@ -412,9 +395,7 @@ def test_get_playbook_dependencies():
 
     playbook = get_yaml(TEST_PLAYBOOK_PATH)
 
-    playbooks, integrations, scripts, commands = get_playbook_dependencies(
-        playbook, playbook_path=TEST_PLAYBOOK_PATH
-    )
+    playbooks, integrations, scripts, commands = get_playbook_dependencies(playbook, playbook_path=TEST_PLAYBOOK_PATH)
 
     assert playbooks == ["Get Original Email - Gmail"]
     assert integrations == ["Gmail"]
@@ -434,9 +415,7 @@ def test_get_input_data_simple():
     assert _value == "johnnydepp@gmail.com"
 
 
-@pytest.mark.parametrize(
-    "index, expected_result", [(0, "File.Name"), (2, "No_Accessor")]
-)
+@pytest.mark.parametrize("index, expected_result", [(0, "File.Name"), (2, "No_Accessor")])
 def test_get_input_data_complex(index, expected_result):
     from demisto_sdk.commands.generate_docs.generate_playbook_doc import get_input_data
 
@@ -541,9 +520,7 @@ def test_generate_commands_section():
         }
     }
 
-    section, errors = generate_commands_section(
-        yml_data, example_dict={}, command_permissions_dict={}
-    )
+    section, errors = generate_commands_section(yml_data, example_dict={}, command_permissions_dict={})
 
     expected_section = [
         "## Commands",
@@ -653,9 +630,7 @@ def test_generate_command_section_with_empty_cotext_example():
     }
     command = {"deprecated": False, "name": "test1"}
 
-    section, errors = generate_single_command_section(
-        command, example_dict=example_dict, command_permissions_dict={}
-    )
+    section, errors = generate_single_command_section(command, example_dict=example_dict, command_permissions_dict={})
 
     expected_section = [
         "### test1",
@@ -708,9 +683,7 @@ def test_generate_command_section_with_empty_cotext_list():
     """
     command = {"deprecated": False, "name": "test1", "outputs": []}
 
-    section, errors = generate_single_command_section(
-        command, example_dict={}, command_permissions_dict={}
-    )
+    section, errors = generate_single_command_section(command, example_dict={}, command_permissions_dict={})
 
     expected_section = [
         "### test1",
@@ -757,9 +730,7 @@ def test_generate_commands_section_human_readable():
         ]
     }
 
-    section, errors = generate_commands_section(
-        yml_data, example_dict, command_permissions_dict={}
-    )
+    section, errors = generate_commands_section(yml_data, example_dict, command_permissions_dict={})
 
     hr_section: str = section[section.index("#### Human Readable Output") + 1]
     # get lines except first one which is a \n
@@ -790,8 +761,7 @@ def test_generate_commands_with_permissions_section():
         "## Commands",
         "",
         "You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.",
-        "After you successfully execute a command"
-        ", a DBot message appears in the War Room with the command details.",
+        "After you successfully execute a command" ", a DBot message appears in the War Room with the command details.",
         "",
         "### non-deprecated-cmd",
         "",
@@ -867,10 +837,7 @@ def test_generate_commands_with_permissions_section_command_doesnt_exist():
         "There is no context output for this command.",
     ]
 
-    assert (
-        "Error! Command Permissions were not found for command non-deprecated-cmd"
-        in errors
-    )
+    assert "Error! Command Permissions were not found for command non-deprecated-cmd" in errors
     assert "\n".join(section) == "\n".join(expected_section)
 
 
@@ -947,9 +914,7 @@ def test_generate_script_doc(tmp_path, mocker):
     expected_readme = os.path.join(FILES_PATH, "docs_test", "set_expected-README.md")
     with open(id_set_file) as f:
         id_set = json.load(f)
-    patched = mocker.patch.object(
-        IDSetCreator, "create_id_set", return_value=[id_set, {}, {}]
-    )
+    patched = mocker.patch.object(IDSetCreator, "create_id_set", return_value=[id_set, {}, {}])
     mocker.patch.object(common, "execute_command", side_effect=handle_example)
     # because used in is random
     mocker.patch(
@@ -979,9 +944,7 @@ def test_generate_script_doc(tmp_path, mocker):
 
 
 class TestAppendOrReplaceCommandInDocs:
-    positive_test_data_file = os.path.join(
-        FILES_PATH, "docs_test", "positive_docs_section_end_with_eof.md"
-    )
+    positive_test_data_file = os.path.join(FILES_PATH, "docs_test", "positive_docs_section_end_with_eof.md")
     command = "dxl-send-event"
     old_doc = open(positive_test_data_file).read()
     new_docs = "\n<NEW DOCS>\n"
@@ -1004,18 +967,14 @@ class TestAppendOrReplaceCommandInDocs:
 
     @pytest.mark.parametrize("doc_file, output_docs", positive_inputs)
     def test_append_or_replace_command_in_docs_positive(self, doc_file, output_docs):
-        docs, _ = append_or_replace_command_in_docs(
-            doc_file, self.new_docs, self.command
-        )
+        docs, _ = append_or_replace_command_in_docs(doc_file, self.new_docs, self.command)
         assert docs == output_docs
 
 
 class TestGenerateIntegrationDoc:
     @classmethod
     def rm_readme(cls):
-        test_integration_readme = os.path.join(
-            os.path.dirname(TEST_INTEGRATION_PATH), "README.md"
-        )
+        test_integration_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), "README.md")
         if os.path.isfile(test_integration_readme):
             os.remove(test_integration_readme)
 
@@ -1039,19 +998,13 @@ class TestGenerateIntegrationDoc:
         """
         import demisto_sdk.commands.generate_docs.common as common
 
-        fake_readme = os.path.join(
-            os.path.dirname(TEST_INTEGRATION_PATH), "fake_README.md"
-        )
-        examples = os.path.join(
-            os.path.dirname(TEST_INTEGRATION_PATH), "command_examples.txt"
-        )
+        fake_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), "fake_README.md")
+        examples = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), "command_examples.txt")
         mocker.patch.object(common, "execute_command", side_effect=handle_example)
         # Generate doc
         generate_integration_doc(TEST_INTEGRATION_PATH, examples)
         with open(fake_readme) as fake_file:
-            with open(
-                os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), "README.md")
-            ) as real_file:
+            with open(os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), "README.md")) as real_file:
                 fake_data = fake_file.read()
                 assert fake_data == real_file.read()
 
@@ -1071,21 +1024,14 @@ class TestGenerateIntegrationDoc:
             - Validate that the integration README was created correctly,
              specifically that the `xx version` line does not exists in the file.
         """
-        fake_readme = os.path.join(
-            os.path.dirname(TEST_INTEGRATION_PATH), "fake_new_contribution_README.md"
-        )
+        fake_readme = os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), "fake_new_contribution_README.md")
         # Generate doc
         generate_integration_doc(TEST_INTEGRATION_PATH, is_contribution=True)
         with open(fake_readme) as fake_file:
-            with open(
-                os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), "README.md")
-            ) as real_file:
+            with open(os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), "README.md")) as real_file:
                 fake_data = fake_file.read()
                 assert fake_data == real_file.read()
-                assert (
-                    "This integration was integrated and tested with version xx of"
-                    not in fake_data
-                )
+                assert "This integration was integrated and tested with version xx of" not in fake_data
 
     def test_generate_integration_doc_passes_markdownlint(self):
         """
@@ -1097,9 +1043,7 @@ class TestGenerateIntegrationDoc:
         generate_integration_doc(TEST_INTEGRATION_PATH, is_contribution=False)
         # Generate doc
         with ReadMeValidator.start_mdx_server():
-            with open(
-                os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), "README.md")
-            ) as real_readme_file:
+            with open(os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), "README.md")) as real_readme_file:
                 markdownlint = run_markdownlint(real_readme_file.read())
                 assert not markdownlint.has_errors, markdownlint.validations
 
@@ -1119,19 +1063,11 @@ class TestGenerateIntegrationDoc:
         # Generate doc
         generate_integration_doc(TEST_INTEGRATION_2_PATH, skip_breaking_changes=True)
         with open(readme) as readme_file:
-            with open(
-                os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), "README.md")
-            ) as new_readme:
+            with open(os.path.join(os.path.dirname(TEST_INTEGRATION_2_PATH), "README.md")) as new_readme:
                 readme_data = readme_file.read()
                 assert readme_data == new_readme.read()
-                assert (
-                    "| None | The API key to use for the connection. | False |"
-                    not in readme_data
-                )
-                assert (
-                    "| API Token | The API key to use for the connection. | False |"
-                    in readme_data
-                )
+                assert "| None | The API key to use for the connection. | False |" not in readme_data
+                assert "| API Token | The API key to use for the connection. | False |" in readme_data
 
 
 class TestGetCommandExamples:
@@ -1179,9 +1115,7 @@ class TestGetCommandExamples:
         command_examples = tmp_path / "command_examples"
 
         with open(command_examples, "w+") as ce:
-            ce.write(
-                "zoom-create-user\nzoom-create-meeting\nzoom-fetch-recording\nzoom-list-users\nzoom-delete-user"
-            )
+            ce.write("zoom-create-user\nzoom-create-meeting\nzoom-fetch-recording\nzoom-list-users\nzoom-delete-user")
 
         command_example_a = "zoom-create-user"
         command_example_b = "zoom-list-users"
@@ -1597,9 +1531,7 @@ TEST_ADD_ACCESS_DATA_OF_TYPE_CREDENTIALS_INPUTS = [
     "access_data, credentials_conf, expected",
     TEST_ADD_ACCESS_DATA_OF_TYPE_CREDENTIALS_INPUTS,
 )
-def test_add_access_data_of_type_credentials(
-    access_data: List[Dict], credentials_conf: Dict, expected: List[Dict]
-):
+def test_add_access_data_of_type_credentials(access_data: List[Dict], credentials_conf: Dict, expected: List[Dict]):
     """
     Given:
     - 'access_data': Containing parameter data to be added to README file.
@@ -1740,9 +1672,7 @@ TEST_EMPTY_SCRIPTDATA_SECTION = [
 
 
 @pytest.mark.parametrize("yml_content, expected_result", TEST_EMPTY_SCRIPTDATA_SECTION)
-def test_missing_data_sections_when_generating_table_section(
-    yml_content, expected_result, pack: Pack
-):
+def test_missing_data_sections_when_generating_table_section(yml_content, expected_result, pack: Pack):
     """Unit test
     Given
     - Case 1: yml with no relevant tags for 'get_script_info' function.

@@ -127,9 +127,7 @@ class Uploader:
         self.client = demisto_client.configure(verify_ssl=verify)
         self.successfully_uploaded_files: List[Tuple[str, str]] = []
         self.failed_uploaded_files: List[Tuple[str, str, str]] = []
-        self.unuploaded_due_to_version: List[
-            Tuple[str, str, Version, Version, Version]
-        ] = []
+        self.unuploaded_due_to_version: List[Tuple[str, str, Version, Version, Version]] = []
         self.demisto_version = get_demisto_version(self.client)
         self.pack_names = pack_names
         self.skip_upload_packs_validation = skip_validation
@@ -150,15 +148,11 @@ class Uploader:
 
         if self.is_files_to_detached:
             item_detacher = ItemDetacher(client=self.client)
-            list_detach_items_ids: list = item_detacher.detach_item_manager(
-                upload_file=True
-            )
+            list_detach_items_ids: list = item_detacher.detach_item_manager(upload_file=True)
 
             if self.reattach_files:
                 item_reattacher = ItemReattacher(client=self.client)
-                item_reattacher.reattach_item_manager(
-                    detached_files_ids=list_detach_items_ids
-                )
+                item_reattacher.reattach_item_manager(detached_files_ids=list_detach_items_ids)
 
             if not self.path:
                 return SUCCESS_RETURN_CODE
@@ -166,16 +160,12 @@ class Uploader:
         click.secho(f"Using {host=}")
         click.secho(f"Uploading {self.path} ...")
         if self.path is None or not os.path.exists(self.path):
-            click.secho(
-                f"Error: Given input path: {self.path} does not exist", fg="bright_red"
-            )
+            click.secho(f"Error: Given input path: {self.path} does not exist", fg="bright_red")
             return ERROR_RETURN_CODE
 
         # uploading a pack zip
         elif self.path.endswith(".zip"):
-            status_code = self.zipped_pack_uploader(
-                path=self.path, skip_validation=self.skip_upload_packs_validation
-            )
+            status_code = self.zipped_pack_uploader(path=self.path, skip_validation=self.skip_upload_packs_validation)
 
         # Uploading a file
         elif os.path.isfile(self.path):
@@ -232,9 +222,7 @@ class Uploader:
             upload_object: Union[YAMLObject, JSONObject] = path_to_pack_object(path)
         except ContentFactoryError:
             file_name = os.path.split(path)[-1]
-            message = (
-                f"Cannot upload {path} as the file type is not supported for upload."
-            )
+            message = f"Cannot upload {path} as the file type is not supported for upload."
             if self.log_verbose:
                 click.secho(message, fg="bright_red")
             self.failed_uploaded_files.append((file_name, "Unknown", message))
@@ -256,17 +244,11 @@ class Uploader:
                             f"Uploaded {entity_type} - '{os.path.basename(path)}': successfully",
                             fg="green",
                         )
-                    self.successfully_uploaded_files.append(
-                        (file_name, entity_type.value)
-                    )
+                    self.successfully_uploaded_files.append((file_name, entity_type.value))
                     return SUCCESS_RETURN_CODE
                 except Exception as err:
-                    message = parse_error_response(
-                        err, entity_type, file_name, self.log_verbose
-                    )
-                    self.failed_uploaded_files.append(
-                        (file_name, entity_type.value, message)
-                    )
+                    message = parse_error_response(err, entity_type, file_name, self.log_verbose)
+                    self.failed_uploaded_files.append((file_name, entity_type.value, message))
                     return ERROR_RETURN_CODE
             else:
                 if self.log_verbose:
@@ -298,9 +280,7 @@ class Uploader:
                     f"For example a playbook: helloWorld.yml",
                     fg="bright_red",
                 )
-            self.failed_uploaded_files.append(
-                (file_name, entity_type.value, "Unsuported file path/type")
-            )
+            self.failed_uploaded_files.append((file_name, entity_type.value, "Unsuported file path/type"))
             return ERROR_RETURN_CODE
 
     def unified_entity_uploader(self, path) -> int:
@@ -324,15 +304,12 @@ class Uploader:
                 (
                     path,
                     "Entity Folder",
-                    "The folder contains more than one `.yml` file "
-                    "(not including `_unified.yml`)",
+                    "The folder contains more than one `.yml` file " "(not including `_unified.yml`)",
                 )
             )
             return ERROR_RETURN_CODE
         if not yml_files:
-            self.failed_uploaded_files.append(
-                (path, "Entity Folder", "The folder does not contain a `.yml` file")
-            )
+            self.failed_uploaded_files.append((path, "Entity Folder", "The folder does not contain a `.yml` file"))
             return ERROR_RETURN_CODE
         return self.file_uploader(yml_files[0])
 
@@ -361,9 +338,7 @@ class Uploader:
 
     def pack_uploader(self, path: str) -> int:
         status_code = SUCCESS_RETURN_CODE
-        sorted_directories = sort_directories_based_on_dependencies(
-            get_child_directories(path)
-        )
+        sorted_directories = sort_directories_based_on_dependencies(get_child_directories(path))
         for entity_folder in sorted_directories:
             if os.path.basename(entity_folder.rstrip("/")) in CONTENT_ENTITIES_DIRS:
                 status_code = self.entity_dir_uploader(entity_folder) or status_code
@@ -390,18 +365,14 @@ class Uploader:
 
         except (Exception, KeyboardInterrupt) as err:
             file_name = zipped_pack.path.name  # type: ignore
-            message = parse_error_response(
-                err, FileType.PACK.value, file_name, self.log_verbose
-            )
+            message = parse_error_response(err, FileType.PACK.value, file_name, self.log_verbose)
             self.failed_uploaded_files.append((file_name, FileType.PACK.value, message))
             return ERROR_RETURN_CODE
 
     def notify_user_should_override_packs(self):
         """Notify the user about possible overridden packs."""
 
-        response = self.client.generic_request(
-            "/contentpacks/metadata/installed", "GET"
-        )
+        response = self.client.generic_request("/contentpacks/metadata/installed", "GET")
         installed_packs = eval(response[0])
         if installed_packs:
             installed_packs = {pack["name"] for pack in installed_packs}
@@ -409,9 +380,7 @@ class Uploader:
             if common_packs:
                 pack_names = "\n".join(common_packs)
                 marketplace = (
-                    os.environ.get(
-                        ENV_DEMISTO_SDK_MARKETPLACE, MarketplaceVersions.XSOAR
-                    )
+                    os.environ.get(ENV_DEMISTO_SDK_MARKETPLACE, MarketplaceVersions.XSOAR)
                     .lower()
                     .replace(MarketplaceVersions.MarketplaceV2, "XSIAM")
                     .upper()
@@ -422,18 +391,14 @@ class Uploader:
                     fg="bright_red",
                 )
                 if not self.override_existing:
-                    click.secho(
-                        "Are you sure you want to continue? Y/[N]", fg="bright_red"
-                    )
+                    click.secho("Are you sure you want to continue? Y/[N]", fg="bright_red")
                     answer = str(input())
                     return answer in ["y", "Y", "yes"]
 
         return True
 
 
-def parse_error_response(
-    error: ApiException, file_type: str, file_name: str, print_error: bool = False
-):
+def parse_error_response(error: ApiException, file_type: str, file_name: str, print_error: bool = False):
     """
     Parses error message from exception raised in call to client to upload a file
 
@@ -469,9 +434,7 @@ def parse_error_response(
     return message
 
 
-def print_summary(
-    successfully_uploaded_files, unuploaded_due_to_version, failed_uploaded_files
-):
+def print_summary(successfully_uploaded_files, unuploaded_due_to_version, failed_uploaded_files):
     """Prints uploaded files summary
     Successful uploads grid based on `successfully_uploaded_files` attribute in green color
     Failed uploads grid based on `failed_uploaded_files` attribute in red color
@@ -534,9 +497,7 @@ def sort_directories_based_on_dependencies(dir_list: list) -> list:
     for dir_path in dir_list_copy:
         if os.path.basename(dir_path) not in CONTENT_ENTITY_UPLOAD_ORDER:
             dir_list.remove(dir_path)
-    dir_list.sort(
-        key=lambda item: srt.get(os.path.basename(item))  # type: ignore[arg-type, return-value]
-    )
+    dir_list.sort(key=lambda item: srt.get(os.path.basename(item)))  # type: ignore[arg-type, return-value]
     return dir_list
 
 
@@ -614,9 +575,7 @@ class ItemDetacher:
 
     def is_valid_file_for_detach(self, file_path: str) -> bool:
         for file in self.VALID_FILES_FOR_DETACH:
-            if file in file_path and (
-                file_path.endswith("yml") or file_path.endswith("json")
-            ):
+            if file in file_path and (file_path.endswith("yml") or file_path.endswith("json")):
                 return True
         return False
 
@@ -696,10 +655,7 @@ class ItemReattacher:
             all_files: dict = self.download_all_detach_supported_items()
             for item_type, item_list in all_files.items():
                 for item in item_list:
-                    if (
-                        not item.get("detached", "")
-                        or item.get("detached", "") == "false"
-                    ):
+                    if not item.get("detached", "") or item.get("detached", "") == "false":
                         continue
                     item_id = item.get("id")
                     if item_id and item_id not in detached_files_ids:

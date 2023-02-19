@@ -21,22 +21,14 @@ from TestSuite.repo import Repo
 
 json = JSON_Handler()
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
-CONTRIBUTION_TESTS = os.path.join(
-    DEMISTO_SDK_PATH, "commands", "init", "tests", "test_files"
-)
+CONTRIBUTION_TESTS = os.path.join(DEMISTO_SDK_PATH, "commands", "init", "tests", "test_files")
 
 RELEASE_NOTES_COPY = "demisto_sdk/commands/init/tests/RN/1_0_1-formatted.md"
 SOURCE_RELEASE_NOTES_FILE = "demisto_sdk/commands/init/tests/RN/1_0_1.md"
 EXPECTED_RELEASE_NOTES = "demisto_sdk/commands/init/tests/RN/1_0_1_expected.md"
-NEW_ENTITY_SOURCE_RELEASE_NOTES_FILE = (
-    "demisto_sdk/commands/init/tests/RN_ENTITY/1_0_1.md"
-)
-NEW_ENTITY_RELEASE_NOTES_COPY = (
-    "demisto_sdk/commands/init/tests/RN_ENTITY/1_0_1-formatted.md"
-)
-EXPECTED_NEW_ENTITY_RELEASE_NOTES = (
-    "demisto_sdk/commands/init/tests/RN_ENTITY/1_0_1_expected.md"
-)
+NEW_ENTITY_SOURCE_RELEASE_NOTES_FILE = "demisto_sdk/commands/init/tests/RN_ENTITY/1_0_1.md"
+NEW_ENTITY_RELEASE_NOTES_COPY = "demisto_sdk/commands/init/tests/RN_ENTITY/1_0_1-formatted.md"
+EXPECTED_NEW_ENTITY_RELEASE_NOTES = "demisto_sdk/commands/init/tests/RN_ENTITY/1_0_1_expected.md"
 
 name_reformatting_test_examples = [
     ("PACKYAYOK", "PACKYAYOK"),
@@ -70,17 +62,13 @@ def contrib_converter():
     return ContributionConverter("")
 
 
-def create_contribution_converter(
-    request: FixtureRequest, tmp_path_factory: TempPathFactory
-) -> ContributionConverter:
+def create_contribution_converter(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> ContributionConverter:
     tmp_dir = _mk_tmp(request, tmp_path_factory)
     return ContributionConverter(name=request.param, base_dir=str(tmp_dir))
 
 
 @pytest.fixture
-def contribution_converter(
-    request: FixtureRequest, tmp_path_factory: TempPathFactory
-) -> ContributionConverter:
+def contribution_converter(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> ContributionConverter:
     """Mocking tmp_path"""
     return create_contribution_converter(request, tmp_path_factory)
 
@@ -100,9 +88,7 @@ def rename_file_in_zip(
         original_file_name (str): The file which will be renamed
         updated_file_name (str): The name the original file will be renamed to
     """
-    modded_zip_file = os.path.join(
-        os.path.dirname(path_to_zip), "Edit" + os.path.basename(path_to_zip)
-    )
+    modded_zip_file = os.path.join(os.path.dirname(path_to_zip), "Edit" + os.path.basename(path_to_zip))
     tmp_zf = ZipFile(modded_zip_file, "w")
     with ZipFile(path_to_zip, "r") as zf:
         for item in zf.infolist():
@@ -201,9 +187,7 @@ def test_convert_contribution_zip_updated_pack(get_content_path_mock, tmp_path, 
 
 
 @patch("demisto_sdk.commands.init.contribution_converter.get_content_path")
-def test_convert_contribution_zip_outputs_structure(
-    get_content_path_mock, tmp_path, mocker
-):
+def test_convert_contribution_zip_outputs_structure(get_content_path_mock, tmp_path, mocker):
     """Create a fake contribution zip file and test that it is converted to a Pack correctly
 
     Args:
@@ -432,9 +416,7 @@ def test_convert_contribution_zip(get_content_path_mock, tmp_path, mocker):
     assert playbook_readme_md.exists()
 
     layouts_path = converted_pack_path / "Layouts"
-    sample_layoutscontainer = (
-        layouts_path / f"{LAYOUTS_CONTAINER}-fakelayoutscontainer.json"
-    )
+    sample_layoutscontainer = layouts_path / f"{LAYOUTS_CONTAINER}-fakelayoutscontainer.json"
     sample_layout = layouts_path / f"{LAYOUT}-fakelayout.json"
 
     assert layouts_path.exists()
@@ -529,9 +511,7 @@ def test_convert_contribution_zip_with_args(get_content_path_mock, tmp_path, moc
         assert not metadata.get("email")
 
 
-@pytest.mark.parametrize(
-    "input_name,expected_output_name", name_reformatting_test_examples
-)
+@pytest.mark.parametrize("input_name,expected_output_name", name_reformatting_test_examples)
 def test_format_pack_dir_name(contrib_converter, input_name, expected_output_name):
     """Test the 'format_pack_dir_name' method with various inputs
 
@@ -564,15 +544,9 @@ def test_format_pack_dir_name(contrib_converter, input_name, expected_output_nam
     if len(output_name) > 1:
         first_char = output_name[0]
         if first_char.isalpha():
-            assert (
-                first_char.isupper()
-            ), "The output's first character should be capitalized"
-    assert not output_name.startswith(
-        ("-", "_")
-    ), "The output's first character must be alphanumeric"
-    assert not output_name.endswith(
-        ("-", "_")
-    ), "The output's last character must be alphanumeric"
+            assert first_char.isupper(), "The output's first character should be capitalized"
+    assert not output_name.startswith(("-", "_")), "The output's first character must be alphanumeric"
+    assert not output_name.endswith(("-", "_")), "The output's last character must be alphanumeric"
 
 
 def test_convert_contribution_dir_to_pack_contents(tmp_path):
@@ -630,9 +604,7 @@ indicatorfield_only_check = (
     directories_set_1,
 )
 indicatorfield_and_incidentfield_check = (
-    os.path.join(
-        CONTRIBUTION_TESTS, "contribution_indicatorfield_and_incidentfield.zip"
-    ),
+    os.path.join(CONTRIBUTION_TESTS, "contribution_indicatorfield_and_incidentfield.zip"),
     directories_set_2,
 )
 
@@ -642,9 +614,7 @@ rearranging_before_conversion_inputs = [
 ]
 
 
-@pytest.mark.parametrize(
-    "zip_path, expected_directories", rearranging_before_conversion_inputs
-)
+@pytest.mark.parametrize("zip_path, expected_directories", rearranging_before_conversion_inputs)
 def test_rearranging_before_conversion(zip_path: str, expected_directories: set):
     """
     Given a zip file, fixes the wrong server mapping.
@@ -667,9 +637,7 @@ def test_rearranging_before_conversion(zip_path: str, expected_directories: set)
     """
     contribution_converter = ContributionConverter(contribution=zip_path)
     contribution_converter.convert_contribution_to_pack()
-    unpacked_contribution_dirs = get_child_directories(
-        contribution_converter.pack_dir_path
-    )
+    unpacked_contribution_dirs = get_child_directories(contribution_converter.pack_dir_path)
     results = set()
     for directory in unpacked_contribution_dirs:
         results.add(os.path.basename(directory))
@@ -762,9 +730,7 @@ class TestEnsureUniquePackDirName:
         assert result.call_args[1].get("include_untracked")
         assert result.call_args[1].get("interactive") is False
 
-    def test_ensure_unique_pack_dir_name_with_conflict_and_version_suffix(
-        self, contribution_converter
-    ):
+    def test_ensure_unique_pack_dir_name_with_conflict_and_version_suffix(self, contribution_converter):
         """Test the 'ensure_unique_pack_dir_name' method
 
         Args:
@@ -793,9 +759,7 @@ class TestEnsureUniquePackDirName:
         assert new_pack_dir_name != pack_name
         assert new_pack_dir_name == pack_name + "V2"
         os.makedirs(os.path.join(crb_crvrt.packs_dir_path, new_pack_dir_name))
-        incremented_new_pack_dir_name = crb_crvrt.ensure_unique_pack_dir_name(
-            new_pack_dir_name
-        )
+        incremented_new_pack_dir_name = crb_crvrt.ensure_unique_pack_dir_name(new_pack_dir_name)
         assert incremented_new_pack_dir_name == pack_name + "V3"
 
 
@@ -808,15 +772,11 @@ class TestReleaseNotes:
 
     @pytest.fixture(autouse=True)
     def new_entity_rn_file_copy(self):
-        yield shutil.copyfile(
-            NEW_ENTITY_SOURCE_RELEASE_NOTES_FILE, NEW_ENTITY_RELEASE_NOTES_COPY
-        )
+        yield shutil.copyfile(NEW_ENTITY_SOURCE_RELEASE_NOTES_FILE, NEW_ENTITY_RELEASE_NOTES_COPY)
         if os.path.exists(NEW_ENTITY_RELEASE_NOTES_COPY):
             os.remove(NEW_ENTITY_RELEASE_NOTES_COPY)
 
-    def test_replace_RN_template_with_value(
-        self, mocker, contrib_converter, rn_file_copy
-    ):
+    def test_replace_RN_template_with_value(self, mocker, contrib_converter, rn_file_copy):
         """Test the 'replace_RN_template_with_value' method
         Scenario:
             Adding the user's release note text to the rn file that was generated by the UpdateRN class.
@@ -853,14 +813,10 @@ class TestReleaseNotes:
         )
         contrib_converter.replace_RN_template_with_value(RELEASE_NOTES_COPY)
 
-        assert util_open_file(RELEASE_NOTES_COPY) == util_open_file(
-            EXPECTED_RELEASE_NOTES
-        )
+        assert util_open_file(RELEASE_NOTES_COPY) == util_open_file(EXPECTED_RELEASE_NOTES)
         assert True
 
-    def test_replace_RN_new_entity_in_existing_pack(
-        self, contrib_converter, new_entity_rn_file_copy
-    ):
+    def test_replace_RN_new_entity_in_existing_pack(self, contrib_converter, new_entity_rn_file_copy):
         """Test the 'replace_RN_template_with_value' method
         Scenario:
             Adding the user's release note text to the rn file that was generated by the UpdateRN class.
@@ -885,9 +841,7 @@ class TestReleaseNotes:
 
         contrib_converter.replace_RN_template_with_value(NEW_ENTITY_RELEASE_NOTES_COPY)
 
-        assert util_open_file(NEW_ENTITY_RELEASE_NOTES_COPY) == util_open_file(
-            EXPECTED_NEW_ENTITY_RELEASE_NOTES
-        )
+        assert util_open_file(NEW_ENTITY_RELEASE_NOTES_COPY) == util_open_file(EXPECTED_NEW_ENTITY_RELEASE_NOTES)
 
     def test_format_user_input(self, mocker, contrib_converter, rn_file_copy):
         """Test the 'format_user_input' method

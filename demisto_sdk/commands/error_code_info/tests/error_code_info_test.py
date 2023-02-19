@@ -5,9 +5,7 @@ from demisto_sdk.commands.error_code_info import error_code_info
 
 
 def test_parse_function_parameters():
-    def dummy_func(
-        param1: str, param2: Dict, param3: Union[str, List], param4: int = 0
-    ):
+    def dummy_func(param1: str, param2: Dict, param3: Union[str, List], param4: int = 0):
         return f"error with {param1}, {param2.items()}, {param3}, {param4 + 1}", 1234
 
     sig = inspect.signature(dummy_func)

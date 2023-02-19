@@ -77,9 +77,7 @@ def test_get_object_id(monkeypatch, initiator):
 
     initiator.id = ""
     # test script object with ID different than dir name
-    monkeypatch.setattr(
-        "builtins.input", generate_multiple_inputs(deque(["N", "SomeIntegrationID"]))
-    )
+    monkeypatch.setattr("builtins.input", generate_multiple_inputs(deque(["N", "SomeIntegrationID"])))
     initiator.get_object_id("script")
     assert initiator.id == "SomeIntegrationID"
 
@@ -321,26 +319,17 @@ def test_pack_init_without_filling_metadata(tmpdir, monkeypatch, initiator):
     Then
         - Ensure it does not fail.
     """
-    monkeypatch.setattr(
-        "builtins.input", generate_multiple_inputs(deque(["PackName", "n", "n"]))
-    )
+    monkeypatch.setattr("builtins.input", generate_multiple_inputs(deque(["PackName", "n", "n"])))
     with ChangeCWD(tmpdir):
         result = initiator.init()
     assert result
 
-    assert all(
-        Path(tmpdir / initiator.full_output_path / d).exists()
-        for d in initiator.DIR_LIST
-    )
+    assert all(Path(tmpdir / initiator.full_output_path / d).exists() for d in initiator.DIR_LIST)
 
 
 def test_get_valid_user_input(monkeypatch, initiator):
-    monkeypatch.setattr(
-        "builtins.input", generate_multiple_inputs(deque(["InvalidInput", "100", "1"]))
-    )
-    user_choice = initiator.get_valid_user_input(
-        INTEGRATION_CATEGORIES, "Choose category"
-    )
+    monkeypatch.setattr("builtins.input", generate_multiple_inputs(deque(["InvalidInput", "100", "1"])))
+    user_choice = initiator.get_valid_user_input(INTEGRATION_CATEGORIES, "Choose category")
     assert user_choice == INTEGRATION_CATEGORIES[0]
 
 
@@ -378,9 +367,7 @@ def test_yml_reformatting(monkeypatch, tmp_path, initiator):
         yaml.dump({"commonfields": {"id": ""}, "name": "", "display": ""}, f)
     dir_name = "HelloWorldTest"
     initiator.dir_name = dir_name
-    initiator.yml_reformatting(
-        current_suffix=initiator.HELLO_WORLD_INTEGRATION, integration=True
-    )
+    initiator.yml_reformatting(current_suffix=initiator.HELLO_WORLD_INTEGRATION, integration=True)
     with open(full_output_path / f"{dir_name}.yml") as f:
         yml_dict = yaml.load(f)
         assert yml_dict == OrderedDict(
@@ -435,9 +422,7 @@ def test_change_template_name_script_py(monkeypatch, tmp_path, initiator):
         f.write(SCRIPT_TEMPLATE_DATA)
     dir_name = "MyTest"
     initiator.dir_name = dir_name
-    initiator.change_template_name_script_py(
-        current_suffix=dir_name, current_template="BaseScript"
-    )
+    initiator.change_template_name_script_py(current_suffix=dir_name, current_template="BaseScript")
 
     with open(full_output_path / f"{dir_name}.py") as f:
         new_data = f.read()
@@ -558,9 +543,7 @@ def test_template_integration_init(initiator, tmpdir, monkeypatch, mocker, templ
         - Ensure integration directory contains all the files of the template integration.
         - Ensure .secrets-ignore file is not created.
     """
-    monkeypatch.setattr(
-        "builtins.input", generate_multiple_inputs(deque(["6.0.0", "n"]))
-    )
+    monkeypatch.setattr("builtins.input", generate_multiple_inputs(deque(["6.0.0", "n"])))
     white_list = {"files": [], "iocs": {}, "generic_strings": []}
     temp_test_dir = os.path.join(tmpdir, "Tests")
     os.makedirs(temp_test_dir, exist_ok=True)
@@ -576,9 +559,7 @@ def test_template_integration_init(initiator, tmpdir, monkeypatch, mocker, templ
     initiator.is_integration = True
     initiator.template = template
     initiator.category = "Utilities"
-    mocker.patch(
-        "demisto_sdk.commands.init.initiator.get_pack_name", return_value="PackName"
-    )
+    mocker.patch("demisto_sdk.commands.init.initiator.get_pack_name", return_value="PackName")
 
     integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
 
@@ -607,9 +588,7 @@ def test_template_integration_init(initiator, tmpdir, monkeypatch, mocker, templ
 
 
 @pytest.mark.parametrize("template", ["HelloWorld", "FeedHelloWorld"])
-def test_integration_init_with_ignore_secrets(
-    initiator, tmpdir, monkeypatch, mocker, template
-):
+def test_integration_init_with_ignore_secrets(initiator, tmpdir, monkeypatch, mocker, template):
     """
     Tests `integration_init` function with a given script template name.
     Given
@@ -622,9 +601,7 @@ def test_integration_init_with_ignore_secrets(
         - Ensure integration directory contain all files.
         - Ensure .secrets-ignore file is not empty.
     """
-    monkeypatch.setattr(
-        "builtins.input", generate_multiple_inputs(deque(["6.0.0", "y"]))
-    )
+    monkeypatch.setattr("builtins.input", generate_multiple_inputs(deque(["6.0.0", "y"])))
     white_list = {"files": [], "iocs": {}, "generic_strings": []}
     temp_test_dir = os.path.join(tmpdir, "Tests")
     os.makedirs(temp_test_dir, exist_ok=True)
@@ -640,9 +617,7 @@ def test_integration_init_with_ignore_secrets(
     initiator.is_integration = True
     initiator.template = template
     initiator.category = "Utilities"
-    mocker.patch(
-        "demisto_sdk.commands.init.initiator.get_pack_name", return_value="PackName"
-    )
+    mocker.patch("demisto_sdk.commands.init.initiator.get_pack_name", return_value="PackName")
 
     integration_path = os.path.join(temp_pack_dir, INTEGRATION_NAME)
 
@@ -666,9 +641,7 @@ def test_integration_init_with_ignore_secrets(
     assert res
     assert os.path.isdir(integration_path)
     diff = expected_files.difference(integration_dir_files)
-    assert (
-        not diff
-    ), f"There are missing file's in the files you expected to create, The missing file's are {diff}"
+    assert not diff, f"There are missing file's in the files you expected to create, The missing file's are {diff}"
     assert os.stat(secrets_ignore_path).st_size > 0
 
 
@@ -688,9 +661,7 @@ def test_script_init(initiator, tmpdir, monkeypatch, mocker):
         - Ensure script directory contain all files.
         - Ensure .secrets-ignore file is not created.
     """
-    monkeypatch.setattr(
-        "builtins.input", generate_multiple_inputs(deque(["6.0.0", "n"]))
-    )
+    monkeypatch.setattr("builtins.input", generate_multiple_inputs(deque(["6.0.0", "n"])))
     white_list = {"files": [], "iocs": {}, "generic_strings": []}
     temp_test_dir = os.path.join(tmpdir, "Tests")
     os.makedirs(temp_test_dir, exist_ok=True)
@@ -705,9 +676,7 @@ def test_script_init(initiator, tmpdir, monkeypatch, mocker):
     initiator.dir_name = SCRIPT_NAME
     initiator.output = temp_pack_dir
     script_path = os.path.join(temp_pack_dir, SCRIPT_NAME)
-    mocker.patch(
-        "demisto_sdk.commands.init.initiator.get_pack_name", return_value="PackName"
-    )
+    mocker.patch("demisto_sdk.commands.init.initiator.get_pack_name", return_value="PackName")
 
     with ChangeCWD(tmpdir):
         res = initiator.script_init()
@@ -724,9 +693,7 @@ def test_script_init(initiator, tmpdir, monkeypatch, mocker):
 
     assert res
     assert os.path.isdir(script_path)
-    assert (
-        not diff
-    ), f"There are missing file's in the files you expected to create, The missing file's are {diff}"
+    assert not diff, f"There are missing file's in the files you expected to create, The missing file's are {diff}"
     assert not os.path.exists(secrets_ignore_path)
 
 
@@ -743,9 +710,7 @@ def test_script_init_with_ignore_secrets(initiator, tmpdir, monkeypatch, mocker)
         - Ensure script directory contain all files.
         - Ensure .secrets-ignore file is not empty.
     """
-    monkeypatch.setattr(
-        "builtins.input", generate_multiple_inputs(deque(["6.0.0", "y"]))
-    )
+    monkeypatch.setattr("builtins.input", generate_multiple_inputs(deque(["6.0.0", "y"])))
     white_list = {"files": [], "iocs": {}, "generic_strings": []}
     temp_test_dir = os.path.join(tmpdir, "Tests")
     os.makedirs(temp_test_dir, exist_ok=True)
@@ -760,9 +725,7 @@ def test_script_init_with_ignore_secrets(initiator, tmpdir, monkeypatch, mocker)
     initiator.dir_name = SCRIPT_NAME
     initiator.output = temp_pack_dir
     script_path = os.path.join(temp_pack_dir, SCRIPT_NAME)
-    mocker.patch(
-        "demisto_sdk.commands.init.initiator.get_pack_name", return_value="PackName"
-    )
+    mocker.patch("demisto_sdk.commands.init.initiator.get_pack_name", return_value="PackName")
 
     with ChangeCWD(tmpdir):
         res = initiator.script_init()
@@ -779,7 +742,5 @@ def test_script_init_with_ignore_secrets(initiator, tmpdir, monkeypatch, mocker)
 
     assert res
     assert os.path.isdir(script_path)
-    assert (
-        not diff
-    ), f"There are missing file's in the files you expected to create, The missing file's are {diff}"
+    assert not diff, f"There are missing file's in the files you expected to create, The missing file's are {diff}"
     assert os.stat(secrets_ignore_path).st_size > 0

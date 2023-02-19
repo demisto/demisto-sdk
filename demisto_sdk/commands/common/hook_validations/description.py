@@ -45,15 +45,10 @@ class DescriptionValidator(BaseValidator):
         )
         self._is_valid = True
         # Handling a case where the init function initiated with file path instead of structure validator
-        self.file_path = (
-            file_path.file_path
-            if isinstance(file_path, StructureValidator)
-            else file_path
-        )
+        self.file_path = file_path.file_path if isinstance(file_path, StructureValidator) else file_path
         self.data_dictionary = (
             get_yaml(self.file_path)
-            if find_type(self.file_path)
-            in [FileType.INTEGRATION, FileType.BETA_INTEGRATION]
+            if find_type(self.file_path) in [FileType.INTEGRATION, FileType.BETA_INTEGRATION]
             else {}
         )
 
@@ -62,10 +57,7 @@ class DescriptionValidator(BaseValidator):
         self.verify_demisto_in_description_content()
 
         # make sure the description is a seperate file
-        if (
-            not self.data_dictionary.get("detaileddescription")
-            and ".md" in self.file_path
-        ):
+        if not self.data_dictionary.get("detaileddescription") and ".md" in self.file_path:
             # self.has_markdown_lint_errors()
             self.is_valid_description_name()
             self.contains_contrib_details()
@@ -77,9 +69,7 @@ class DescriptionValidator(BaseValidator):
         """check if DESCRIPTION file contains contribution details"""
         with open(self.file_path) as f:
             description_content = f.read()
-        contrib_details = re.findall(
-            rf"### .* {CONTRIBUTOR_DETAILED_DESC}", description_content
-        )
+        contrib_details = re.findall(rf"### .* {CONTRIBUTOR_DETAILED_DESC}", description_content)
         if contrib_details:
             error_message, error_code = Errors.description_contains_contrib_details()
             if self.handle_error(
@@ -95,28 +85,18 @@ class DescriptionValidator(BaseValidator):
     @error_codes("DS100,DS101,DS102")
     def is_valid_beta_description(self):
         """Check if beta disclaimer exists in detailed description"""
-        description_in_yml = (
-            self.data_dictionary.get("detaileddescription", "")
-            if self.data_dictionary
-            else ""
-        )
-        is_unified_integration = self.data_dictionary.get("script", {}).get(
-            "script", ""
-        ) not in {"-", ""}
+        description_in_yml = self.data_dictionary.get("detaileddescription", "") if self.data_dictionary else ""
+        is_unified_integration = self.data_dictionary.get("script", {}).get("script", "") not in {"-", ""}
 
         if not is_unified_integration:
             try:
-                md_file_path = glob.glob(
-                    os.path.join(os.path.dirname(self.file_path), "*_description.md")
-                )[0]
+                md_file_path = glob.glob(os.path.join(os.path.dirname(self.file_path), "*_description.md"))[0]
             except IndexError:
                 (
                     error_message,
                     error_code,
                 ) = Errors.description_missing_in_beta_integration()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
                     return False
 
@@ -124,9 +104,7 @@ class DescriptionValidator(BaseValidator):
                 description = description_file.read()
             if BETA_INTEGRATION_DISCLAIMER not in description:
                 error_message, error_code = Errors.no_beta_disclaimer_in_description()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
                     return False
             else:
@@ -156,17 +134,11 @@ class DescriptionValidator(BaseValidator):
                     os.path.splitext(self.file_path)[0].replace("_description", "")
                 )
                 dir_name: str = os.path.dirname(self.file_path)
-                expected_description_name: str = os.path.join(
-                    dir_name, f"{base_name_without_extension}_description.md"
-                )
+                expected_description_name: str = os.path.join(dir_name, f"{base_name_without_extension}_description.md")
                 md_file_path = glob.glob(expected_description_name)[0]
             except IndexError:
-                is_unified_integration = self.data_dictionary.get("script", {}).get(
-                    "script", ""
-                ) not in {"-", ""}
-                if not (
-                    self.data_dictionary.get("deprecated") or is_unified_integration
-                ):
+                is_unified_integration = self.data_dictionary.get("script", {}).get("script", "") not in {"-", ""}
+                if not (self.data_dictionary.get("deprecated") or is_unified_integration):
                     error_message, error_code = Errors.no_description_file_warning()
                     self.handle_error(
                         error_message,
@@ -195,9 +167,7 @@ class DescriptionValidator(BaseValidator):
     @error_codes("DS106")
     def is_valid_description_name(self):
         """Check if the description name is valid"""
-        description_path = glob.glob(
-            os.path.join(os.path.dirname(self.file_path), "*_description.md")
-        )
+        description_path = glob.glob(os.path.join(os.path.dirname(self.file_path), "*_description.md"))
         md_paths = glob.glob(os.path.join(os.path.dirname(self.file_path), "*.md"))
 
         description_file_path = self.file_path
@@ -212,11 +182,7 @@ class DescriptionValidator(BaseValidator):
             if path.endswith("README.md") or path.endswith("CHANGELOG.md"):
                 md_paths.remove(path)
 
-        if (
-            not description_path
-            and md_paths
-            or integrations_folder != description_file_base_name
-        ):
+        if not description_path and md_paths or integrations_folder != description_file_base_name:
             error_message, error_code = Errors.invalid_description_name()
 
             if self.handle_error(error_message, error_code, file_path=self.file_path):
@@ -243,14 +209,10 @@ class DescriptionValidator(BaseValidator):
             FileType.BETA_INTEGRATION,
         ]:
             integration_path = self.file_path
-            is_unified_integration = self.data_dictionary.get("script", {}).get(
-                "script", ""
-            ) not in {"-", ""}
+            is_unified_integration = self.data_dictionary.get("script", {}).get("script", "") not in {"-", ""}
 
             if is_unified_integration:
-                description_content = self.data_dictionary.get(
-                    "detaileddescription", ""
-                )
+                description_content = self.data_dictionary.get("detaileddescription", "")
                 yml_or_file = "in the yml file"
 
                 # find in which line the description begins in the yml
@@ -262,9 +224,7 @@ class DescriptionValidator(BaseValidator):
             # if not found try and look for the description file path
             else:
                 yml_or_file = "in the description file"
-                description_path = (
-                    f"{os.path.splitext(self.file_path)[0]}_description.md"
-                )
+                description_path = f"{os.path.splitext(self.file_path)[0]}_description.md"
 
                 if not os.path.exists(description_path):
                     error_message, error_code = Errors.no_description_file_warning()
@@ -292,9 +252,7 @@ class DescriptionValidator(BaseValidator):
                 invalid_lines.append(line_num + yml_line_num + 1)
 
         if invalid_lines:
-            error_message, error_code = Errors.description_contains_demisto_word(
-                invalid_lines, yml_or_file
-            )
+            error_message, error_code = Errors.description_contains_demisto_word(invalid_lines, yml_or_file)
 
             # print only if the error is not already in the report
             check_in_report = f"{integration_path} - [{error_code}]"
@@ -319,9 +277,7 @@ class DescriptionValidator(BaseValidator):
                 error_message, error_code = Errors.description_lint_errors(
                     self.file_path, markdown_response.validations
                 )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
                     return False
         return True

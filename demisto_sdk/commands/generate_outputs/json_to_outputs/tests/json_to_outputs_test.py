@@ -77,9 +77,7 @@ def test_json_to_outputs__invalid_json():
 
     """
     try:
-        parse_json(
-            data='{"aaa":100', command_name="xdr-get-incidents", prefix="XDR.Incident"
-        )
+        parse_json(data='{"aaa":100', command_name="xdr-get-incidents", prefix="XDR.Incident")
 
         assert False
     except Exception as ex:
@@ -165,9 +163,7 @@ outputs:
         ({"q": "this should not show as q is not in the data"}, "''"),
     ],
 )
-def test_json_to_outputs__invalid_description_dictionary(
-    description_dictionary, expected_a_description
-):
+def test_json_to_outputs__invalid_description_dictionary(description_dictionary, expected_a_description):
     """
     Given
         - A list of dictionaries
@@ -256,9 +252,7 @@ dummy_integration_output = {"day": "Sunday", "color": "Blue"}
         (json.dumps(dummy_description_dictionary), dummy_description_dictionary),
     ],
 )
-def test_json_to_outputs__description_dictionary(
-    tmpdir, description_argument: Optional[str], dictionary: dict
-):
+def test_json_to_outputs__description_dictionary(tmpdir, description_argument: Optional[str], dictionary: dict):
     """
     Given
         - a (possibly-empty) JSON description dictionary

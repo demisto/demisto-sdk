@@ -37,9 +37,7 @@ class Runner:
 
     ERROR_ENTRY_TYPE = 4
     DEBUG_FILE_ENTRY_TYPE = 16
-    SECTIONS_HEADER_REGEX = re.compile(
-        r"^(Context Outputs|Human Readable section|Raw Response section)"
-    )
+    SECTIONS_HEADER_REGEX = re.compile(r"^(Context Outputs|Human Readable section|Raw Response section)")
     RAW_RESPONSE_HEADER = re.compile(r"^Raw Response section")
     CONTEXT_HEADER = re.compile(r"Context Outputs:")
     HUMAN_READABLE_HEADER = re.compile(r"Human Readable section")
@@ -89,9 +87,7 @@ class Runner:
 
         if self.json2outputs:
             if not self.prefix:
-                print_error(
-                    "A prefix for the outputs is needed for this command. Please provide one"
-                )
+                print_error("A prefix for the outputs is needed for this command. Please provide one")
                 return 1
             else:
                 raw_output_json = self._return_context_dict_from_log(log_ids)
@@ -127,15 +123,10 @@ class Runner:
             if response != 200:
                 raise RuntimeError("Cannot find username")
             username = user_data.get("username")
-            playgrounds = [
-                playground
-                for playground in playgrounds
-                if playground.creating_user_id == username
-            ]
+            playgrounds = [playground for playground in playgrounds if playground.creating_user_id == username]
             if len(playgrounds) != 1:
                 raise RuntimeError(
-                    f"There is more than one playground to the user. "
-                    f"Number of playgrounds is: {len(playgrounds)}"
+                    f"There is more than one playground to the user. " f"Number of playgrounds is: {len(playgrounds)}"
                 )
 
         result = playgrounds[0].id
@@ -157,9 +148,7 @@ class Runner:
 
         answer = self.client.investigation_add_entries_sync(update_entry=update_entry)
         if not answer:
-            raise DemistoRunTimeError(
-                "Command did not run, make sure it was written correctly."
-            )
+            raise DemistoRunTimeError("Command did not run, make sure it was written correctly.")
 
         log_ids = []
 
@@ -258,10 +247,7 @@ class Runner:
                                     temp_dict = json.loads(line)
                                 except Exception:
                                     pass
-                            if (
-                                self.CONTEXT_HEADER.match(line)
-                                and not self.raw_response
-                            ):
+                            if self.CONTEXT_HEADER.match(line) and not self.raw_response:
                                 context = ""
                                 output_file.write(line.encode("utf-8"))
                                 line = log_info.readline()
@@ -297,9 +283,7 @@ class Runner:
         res = self.client.investigation_add_entries_sync(update_entry=update_entry)
 
         body = {"query": "${.}"}
-        context = self.client.generic_request(
-            f"investigation/{playground_id}/context", "POST", body
-        )[0]
+        context = self.client.generic_request(f"investigation/{playground_id}/context", "POST", body)[0]
 
         context = ast.literal_eval(context)
 

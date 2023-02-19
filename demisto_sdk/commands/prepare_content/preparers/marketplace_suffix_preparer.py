@@ -26,9 +26,7 @@ class MarketplaceSuffixPreparer:
         Returns: A (possibliy) modified content item data
 
         """
-        if not (
-            suffix := MarketplaceSuffixPreparer.MARKETPLACE_TO_SUFFIX.get(marketplace)
-        ):
+        if not (suffix := MarketplaceSuffixPreparer.MARKETPLACE_TO_SUFFIX.get(marketplace)):
             return data
         suffix_len = len(suffix)
 
@@ -45,9 +43,7 @@ class MarketplaceSuffixPreparer:
 
                     if key.casefold().endswith(suffix):
                         clean_key = key[:-suffix_len]  # without suffix
-                        logger.debug(
-                            f"Replacing {clean_key}={datum[clean_key]} to {value}."
-                        )
+                        logger.debug(f"Replacing {clean_key}={datum[clean_key]} to {value}.")
                         datum[clean_key] = value
                         datum.pop(key, None)
 
@@ -57,7 +53,5 @@ class MarketplaceSuffixPreparer:
             return datum
 
         if not isinstance(result := fix_recursively(data), dict):  # to calm mypy
-            raise ValueError(
-                f"unexpected result type {type(result)}, expected dictionary"
-            )
+            raise ValueError(f"unexpected result type {type(result)}, expected dictionary")
         return result

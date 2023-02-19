@@ -45,7 +45,9 @@ FAKE_OUTPUTS_2 = {
     }
 }
 
-FAKE_EXAMPLES_FILE = f"{git_path()}/commands/demisto_sdk/generate_outputs/generate_context/tests/test_data/fake_examples.txt"
+FAKE_EXAMPLES_FILE = (
+    f"{git_path()}/commands/demisto_sdk/generate_outputs/generate_context/tests/test_data/fake_examples.txt"
+)
 
 
 def test_generate_context_from_outputs():
@@ -69,9 +71,7 @@ def test_generate_context_from_outputs():
                                 "status": 1,
                                 "tenant_name": "esx10/lab_a/Apps/Accounting"}}}"""
 
-    assert dict_from_outputs_str(
-        "!some-test-command=172.16.1.111", EXAMPLE_INT_OUTPUTS
-    ) == {
+    assert dict_from_outputs_str("!some-test-command=172.16.1.111", EXAMPLE_INT_OUTPUTS) == {
         "arguments": [],
         "name": "some-test-command=172.16.1.111",
         "outputs": [
@@ -139,9 +139,7 @@ def test_insert_outputs(mocker):
 
     yml_data = FAKE_INTEGRATION_YML
 
-    yml_data = generate_integration_context.insert_outputs(
-        yml_data, command_name, FAKE_OUTPUT_CONTEXTS
-    )
+    yml_data = generate_integration_context.insert_outputs(yml_data, command_name, FAKE_OUTPUT_CONTEXTS)
     for command in yml_data["script"]["commands"]:
         if command.get("name") == command_name:
             assert command["outputs"] == FAKE_OUTPUT_CONTEXTS
@@ -191,9 +189,7 @@ def test_generate_integration_context(mocker, tmpdir):
     else:
         raise AssertionError(f"command {command_name} is not found in yml_data")
 
-    generate_integration_context.generate_integration_context(
-        filename, FAKE_EXAMPLES_FILE, verbose=False
-    )
+    generate_integration_context.generate_integration_context(filename, FAKE_EXAMPLES_FILE, verbose=False)
 
     # Check we have new data
     yml_data = get_yaml(filename)

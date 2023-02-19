@@ -184,14 +184,10 @@ def get_mocked_build_context(
     conf_path.write_text(json.dumps(content_conf_json or generate_content_conf_json()))
 
     secret_conf_path = tmp_file / "secret_conf_path"
-    secret_conf_path.write_text(
-        json.dumps(secret_conf_json or generate_secret_conf_json())
-    )
+    secret_conf_path.write_text(json.dumps(secret_conf_json or generate_secret_conf_json()))
 
     env_results_path = tmp_file / "env_results_path"
-    env_results_path.write_text(
-        json.dumps(env_results_content or generate_env_results_content())
-    )
+    env_results_path.write_text(json.dumps(env_results_content or generate_env_results_content()))
     mocker.patch(
         "demisto_sdk.commands.test_content.TestContentClasses.ENV_RESULTS_PATH",
         str(env_results_path),
@@ -242,9 +238,7 @@ def create_xsiam_build(mocker, tmp_file):
     xsiam_servers_path.write_text(json.dumps(generate_xsiam_servers_data()))
 
     xsiam_api_keys_path = tmp_file / "xsiam_api_keys_path.json"
-    xsiam_api_keys_path.write_text(
-        json.dumps({"qa2-test-111111": "api_key", "qa2-test-222222": "api_key"})
-    )
+    xsiam_api_keys_path.write_text(json.dumps({"qa2-test-111111": "api_key", "qa2-test-222222": "api_key"}))
 
     env_results_path = tmp_file / "env_results_path"
     env_results_path.write_text(json.dumps(generate_env_results_content()))
@@ -325,9 +319,7 @@ def test_non_filtered_tests_are_skipped(mocker, tmp_path):
         content_conf_json=content_conf_json,
         filtered_tests_content=filtered_tests,
     )
-    assert (
-        "test_that_should_be_skipped" in build_context.tests_data_keeper.skipped_tests
-    )
+    assert "test_that_should_be_skipped" in build_context.tests_data_keeper.skipped_tests
     assert "test_that_should_run" not in build_context.tests_data_keeper.skipped_tests
 
 
@@ -345,9 +337,7 @@ def test_no_tests_are_executed_when_filtered_tests_is_empty(mocker, tmp_path):
     build_context = get_mocked_build_context(
         mocker, tmp_path, content_conf_json=content_conf_json, filtered_tests_content=[]
     )
-    assert (
-        "test_that_should_be_skipped" in build_context.tests_data_keeper.skipped_tests
-    )
+    assert "test_that_should_be_skipped" in build_context.tests_data_keeper.skipped_tests
 
 
 def test_playbook_with_skipped_integrations_is_skipped(mocker, tmp_path):
@@ -367,19 +357,14 @@ def test_playbook_with_skipped_integrations_is_skipped(mocker, tmp_path):
             integrations=["skipped_integration"],
         )
     ]
-    content_conf_json = generate_content_conf_json(
-        tests=tests, skipped_integrations={"skipped_integration": ""}
-    )
+    content_conf_json = generate_content_conf_json(tests=tests, skipped_integrations={"skipped_integration": ""})
     build_context = get_mocked_build_context(
         mocker,
         tmp_path,
         content_conf_json=content_conf_json,
         filtered_tests_content=filtered_tests,
     )
-    assert (
-        "test_with_skipped_integrations"
-        in build_context.tests_data_keeper.skipped_tests
-    )
+    assert "test_with_skipped_integrations" in build_context.tests_data_keeper.skipped_tests
 
 
 def test_nightly_playbook_skipping(mocker, tmp_path):
@@ -422,11 +407,7 @@ def test_playbook_with_integration(mocker, tmp_path):
         - Ensure that the playbook with the integration is not skipped on nightly build
     """
     filtered_tests = ["playbook_with_integration"]
-    tests = [
-        generate_test_configuration(
-            playbook_id="playbook_with_integration", integrations=["integration"]
-        )
-    ]
+    tests = [generate_test_configuration(playbook_id="playbook_with_integration", integrations=["integration"])]
     content_conf_json = generate_content_conf_json(tests=tests)
     build_context = get_mocked_build_context(
         mocker,
@@ -435,9 +416,7 @@ def test_playbook_with_integration(mocker, tmp_path):
         filtered_tests_content=filtered_tests,
         nightly=True,
     )
-    assert (
-        "playbook_with_integration" not in build_context.tests_data_keeper.skipped_tests
-    )
+    assert "playbook_with_integration" not in build_context.tests_data_keeper.skipped_tests
 
 
 def test_playbook_with_version_mismatch_is_skipped(mocker, tmp_path):
@@ -450,11 +429,7 @@ def test_playbook_with_version_mismatch_is_skipped(mocker, tmp_path):
         - Ensure that the playbook with version mismatch is skipped
     """
     filtered_tests = ["playbook_with_version_mismatch"]
-    tests = [
-        generate_test_configuration(
-            playbook_id="playbook_with_version_mismatch", toversion="6.0.0"
-        )
-    ]
+    tests = [generate_test_configuration(playbook_id="playbook_with_version_mismatch", toversion="6.0.0")]
     content_conf_json = generate_content_conf_json(tests=tests)
     build_context = get_mocked_build_context(
         mocker,
@@ -462,10 +437,7 @@ def test_playbook_with_version_mismatch_is_skipped(mocker, tmp_path):
         content_conf_json=content_conf_json,
         filtered_tests_content=filtered_tests,
     )
-    assert (
-        "playbook_with_version_mismatch"
-        in build_context.tests_data_keeper.skipped_tests
-    )
+    assert "playbook_with_version_mismatch" in build_context.tests_data_keeper.skipped_tests
 
 
 def test_unmockable_playbook_configuration(mocker, tmp_path):
@@ -478,11 +450,7 @@ def test_unmockable_playbook_configuration(mocker, tmp_path):
         - Ensure that the unmockable test configuration is in the unmockable_test_ids
     """
     filtered_tests = ["unmockable_playbook"]
-    tests = [
-        generate_test_configuration(
-            playbook_id="unmockable_playbook", is_mockable=False
-        )
-    ]
+    tests = [generate_test_configuration(playbook_id="unmockable_playbook", is_mockable=False)]
     content_conf_json = generate_content_conf_json(tests=tests)
     build_context = get_mocked_build_context(
         mocker,
@@ -503,11 +471,7 @@ def test_mockable_playbook_configuration(mocker, tmp_path):
         - Ensure that the mockable test configuration is not in the unmockable_test_ids
     """
     filtered_tests = ["mockable_playbook"]
-    tests = [
-        generate_test_configuration(
-            playbook_id="mockable_playbook", integrations=["some_mockable_integration"]
-        )
-    ]
+    tests = [generate_test_configuration(playbook_id="mockable_playbook", integrations=["some_mockable_integration"])]
     content_conf_json = generate_content_conf_json(tests=tests)
     build_context = get_mocked_build_context(
         mocker,
@@ -543,16 +507,8 @@ def test_get_public_ip_from_server_url(mocker, tmp_path):
         - Ensure it raises an exception in case a non valid port is given.
     """
     build_context = get_mocked_build_context(mocker, tmp_path)
-    assert (
-        build_context.get_public_ip_from_server_url("https://localhost:4445")
-        == "https://1.1.1.1"
-    )
-    assert (
-        build_context.get_public_ip_from_server_url("https://2.2.2.2")
-        == "https://2.2.2.2"
-    )
+    assert build_context.get_public_ip_from_server_url("https://localhost:4445") == "https://1.1.1.1"
+    assert build_context.get_public_ip_from_server_url("https://2.2.2.2") == "https://2.2.2.2"
     with pytest.raises(Exception) as excinfo:
         build_context.get_public_ip_from_server_url("https://localhost:4446")
-    assert "Could not find private ip for the server mapped to port 4446" in str(
-        excinfo.value
-    )
+    assert "Could not find private ip for the server mapped to port 4446" in str(excinfo.value)

@@ -86,9 +86,7 @@ class ReportJSONFormat(BaseUpdateJSON):
                 print_error("Moving forward without updating type field")
                 return
 
-            print_color(
-                "Please specify the desired type: pdf | csv | docx", LOG_COLORS.YELLOW
-            )
+            print_color("Please specify the desired type: pdf | csv | docx", LOG_COLORS.YELLOW)
             user_desired_type = input()
             if user_desired_type.lower() in ("pdf", "csv", "docx"):
                 self.data["type"] = user_desired_type.lower()

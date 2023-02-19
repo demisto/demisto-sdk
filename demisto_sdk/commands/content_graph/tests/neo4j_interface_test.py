@@ -31,9 +31,7 @@ class TestNeo4jQueries:
             ),
         ],
     )
-    def test_labels_of(
-        self, content_type: ContentType, expected_labels: List[ContentType]
-    ):
+    def test_labels_of(self, content_type: ContentType, expected_labels: List[ContentType]):
         """
         Given:
             - A content type enum object.

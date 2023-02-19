@@ -21,9 +21,7 @@ FAILED_MASSAGE = "The test playbook finished running with status: FAILED"
 
 
 class TestTestPlaybookRunner:
-    @pytest.mark.parametrize(
-        argnames="tpb_result, res", argvalues=[("failed", 1), ("success", 0)]
-    )
+    @pytest.mark.parametrize(argnames="tpb_result, res", argvalues=[("failed", 1), ("success", 0)])
     def test_run_specific_test_playbook(self, mocker, tpb_result, res):
         """
         Given:
@@ -45,9 +43,7 @@ class TestTestPlaybookRunner:
             "get_test_playbook_results_dict",
             return_value={"state": tpb_result},
         )
-        result = click.Context(command=run_test_playbook).invoke(
-            run_test_playbook, test_playbook_path=TEST_PLAYBOOK
-        )
+        result = click.Context(command=run_test_playbook).invoke(run_test_playbook, test_playbook_path=TEST_PLAYBOOK)
         assert result == res
 
     @pytest.mark.parametrize(
@@ -76,9 +72,7 @@ class TestTestPlaybookRunner:
             "get_test_playbook_results_dict",
             return_value={"state": tpb_result},
         )
-        result = click.Context(command=run_test_playbook).invoke(
-            run_test_playbook, test_playbook_path=VALID_PACK
-        )
+        result = click.Context(command=run_test_playbook).invoke(run_test_playbook, test_playbook_path=VALID_PACK)
         assert result == res
 
         stdout, _ = capsys.readouterr()
@@ -111,9 +105,7 @@ class TestTestPlaybookRunner:
                 "get_test_playbook_results_dict",
                 return_value={"state": tpb_result},
             )
-            result = click.Context(command=run_test_playbook).invoke(
-                run_test_playbook, all=True, test_playbook_path=""
-            )
+            result = click.Context(command=run_test_playbook).invoke(run_test_playbook, all=True, test_playbook_path="")
             assert result == res
 
             stdout, _ = capsys.readouterr()
@@ -162,9 +154,7 @@ class TestTestPlaybookRunner:
             ("BlaBla", 1, "Error: Given input path: BlaBla does not exist"),
         ],
     )
-    def test_failed_run_test_playbook_manager(
-        self, mocker, input_tpb, exit_code, err, capsys
-    ):
+    def test_failed_run_test_playbook_manager(self, mocker, input_tpb, exit_code, err, capsys):
         """
         Given:
             - arguments to the run-test-playbook
@@ -199,9 +189,7 @@ class TestTestPlaybookRunner:
         argnames="playbook_id, tpb_results, exit_code",
         argvalues=[(VALID_PACK, "success", 0), (TEST_PLAYBOOK, "success", 0)],
     )
-    def test_run_test_playbook_by_id(
-        self, mocker, playbook_id, tpb_results, exit_code, capsys
-    ):
+    def test_run_test_playbook_by_id(self, mocker, playbook_id, tpb_results, exit_code, capsys):
         """
         Given:
             - arguments to the xsoar-configuration-file
@@ -225,9 +213,7 @@ class TestTestPlaybookRunner:
         )
 
         self.test_playbook_input = TEST_PLAYBOOK
-        test_playbook_runner = TestPlaybookRunner(
-            test_playbook_path=self.test_playbook_input
-        )
+        test_playbook_runner = TestPlaybookRunner(test_playbook_path=self.test_playbook_input)
         res = test_playbook_runner.run_test_playbook_by_id(playbook_id)
 
         assert res == exit_code
@@ -241,9 +227,7 @@ class TestTestPlaybookRunner:
         argnames="playbook_id, tpb_results, exit_code",
         argvalues=[("VALID_PACK", "failed", 1), ("TEST_PLAYBOOK", "failed", 1)],
     )
-    def test_failed_run_test_playbook_by_id(
-        self, mocker, playbook_id, tpb_results, exit_code, capsys
-    ):
+    def test_failed_run_test_playbook_by_id(self, mocker, playbook_id, tpb_results, exit_code, capsys):
         """
         Given:
             - arguments to the xsoar-configuration-file
@@ -267,9 +251,7 @@ class TestTestPlaybookRunner:
         )
 
         self.test_playbook_input = TEST_PLAYBOOK
-        test_playbook_runner = TestPlaybookRunner(
-            test_playbook_path=self.test_playbook_input
-        )
+        test_playbook_runner = TestPlaybookRunner(test_playbook_path=self.test_playbook_input)
         res = test_playbook_runner.run_test_playbook_by_id(playbook_id)
 
         assert res == exit_code

@@ -92,9 +92,7 @@ class PlaybookRunner:
 
         return 0
 
-    def create_incident_with_playbook(
-        self, incident_name: str, playbook_id: str
-    ) -> int:
+    def create_incident_with_playbook(self, incident_name: str, playbook_id: str) -> int:
         """Create an incident in Demisto with the given incident_name and the given playbook_id
 
         Args:
@@ -114,9 +112,7 @@ class PlaybookRunner:
         create_incident_request.name = incident_name
 
         try:
-            response = self.demisto_client.create_incident(
-                create_incident_request=create_incident_request
-            )
+            response = self.demisto_client.create_incident(create_incident_request=create_incident_request)
         except ApiException as e:
             print_error(
                 f'Failed to create incident with playbook id : "{playbook_id}", '
@@ -134,9 +130,7 @@ class PlaybookRunner:
         return response.id
 
     def get_playbook_results_dict(self, inc_id):
-        playbook_results = self.demisto_client.generic_request(
-            method="GET", path=f"/inv-playbook/{inc_id}"
-        )
+        playbook_results = self.demisto_client.generic_request(method="GET", path=f"/inv-playbook/{inc_id}")
         return eval(playbook_results[0])
 
     def get_base_link_to_workplan(self, url):

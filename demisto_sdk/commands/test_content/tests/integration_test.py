@@ -91,9 +91,7 @@ def test_create_module(mocker, incident_configuration, expected):
         "mem_check": "",
         "server_version": "",
     }
-    mocker.patch.object(
-        BuildContext, "_load_conf_files", return_value=(Dummyconf(), "")
-    )
+    mocker.patch.object(BuildContext, "_load_conf_files", return_value=(Dummyconf(), ""))
     mocker.patch.object(BuildContext, "_load_env_results_json")
     mocker.patch.object(BuildContext, "_get_server_numeric_version")
     mocker.patch.object(BuildContext, "_get_instances_ips")
@@ -114,8 +112,6 @@ def test_create_module(mocker, incident_configuration, expected):
         configuration=deepcopy(CONFIGURATION),
         incident_configuration=incident_configuration,
     )
-    assert res_module.get("configuration").get("configuration")[0].get(
-        "value"
-    ) == expected.get("incident_type")
+    assert res_module.get("configuration").get("configuration")[0].get("value") == expected.get("incident_type")
     assert res_module.get("incomingMapperId") == expected.get("mapper")
     assert res_module.get("mappingId") == expected.get("classifier")

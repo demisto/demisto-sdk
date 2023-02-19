@@ -24,18 +24,14 @@ class Playbook:
 
         self.tasks = {
             "0": create_start_task(),
-            "1": create_automation_task(
-                1, "DeleteContext", ContentItemType.SCRIPT, {"all": "yes"}
-            ),
+            "1": create_automation_task(1, "DeleteContext", ContentItemType.SCRIPT, {"all": "yes"}),
         }
         self.task_counter = len(self.tasks)
 
         self.view = json.dumps(
             {
                 "linkLabelsPosition": {},
-                "paper": {
-                    "dimensions": {"height": 200, "width": 380, "x": 50, "y": 50}
-                },
+                "paper": {"dimensions": {"height": 200, "width": 380, "x": 50, "y": 50}},
             }
         )
 
@@ -102,9 +98,7 @@ def create_end_task(id):
     }
 
 
-def create_automation_task(
-    _id, automation_name, item_type: str, args: Optional[Dict] = None, brand: str = ""
-):
+def create_automation_task(_id, automation_name, item_type: str, args: Optional[Dict] = None, brand: str = ""):
     script_args: Dict = {}
     if args and len(args) > 0:
         for arg, val in args.items():
@@ -223,21 +217,15 @@ def create_automation_task_and_verify_outputs_task(
     outputs = command.get("outputs", [])
     conditions = outputs_to_condition(outputs)
 
-    task_command = create_automation_task(
-        test_playbook.task_counter, command_name, item_type, args=args, brand=brand
-    )
+    task_command = create_automation_task(test_playbook.task_counter, command_name, item_type, args=args, brand=brand)
     test_playbook.add_task(task_command)
 
     if len(outputs) > 0:
         # add verify output task only if automation have outputs
         if no_outputs:
-            task_verify_outputs = create_verify_outputs_task(
-                test_playbook.task_counter, []
-            )
+            task_verify_outputs = create_verify_outputs_task(test_playbook.task_counter, [])
         else:
-            task_verify_outputs = create_verify_outputs_task(
-                test_playbook.task_counter, conditions
-            )
+            task_verify_outputs = create_verify_outputs_task(test_playbook.task_counter, conditions)
 
         test_playbook.add_task(task_verify_outputs)
 
@@ -266,9 +254,7 @@ def get_command_examples(commands_file_path, entity_type) -> dict:
     for command in command_examples:
         command = command.split(" ", 1)
         result_commands[command[0].strip("!")] = (
-            dict(arg.split("=") for arg in command[1].split(" "))
-            if len(command) > 1
-            else {}
+            dict(arg.split("=") for arg in command[1].split(" ")) if len(command) > 1 else {}
         )
 
     return result_commands
@@ -297,9 +283,7 @@ class PlaybookTestsGenerator:
             """if an output folder path is provided, save it there"""
             output_path = Path(output)
             if output_path.is_dir():
-                self.test_playbook_yml_path = str(
-                    output_path / generated_test_playbook_file_name
-                )
+                self.test_playbook_yml_path = str(output_path / generated_test_playbook_file_name)
             else:
                 """if a destination path is specified for the playbook, and it's of a yml file, use it"""
                 if not output_path.suffix.lower() == ".yml":
@@ -325,9 +309,7 @@ class PlaybookTestsGenerator:
                 """otherwise, save the generated test-playbook in the folder from which SDK is called."""
                 folder = Path()
 
-            self.test_playbook_yml_path = str(
-                folder / generated_test_playbook_file_name
-            )
+            self.test_playbook_yml_path = str(folder / generated_test_playbook_file_name)
 
         self.file_type = file_type
         self.name = name
@@ -374,23 +356,15 @@ class PlaybookTestsGenerator:
 
         test_playbook = Playbook(name=self.name, fromversion="4.5.0")
 
-        command_examples_args = (
-            get_command_examples(self.examples, self.file_type) if self.examples else {}
-        )
+        command_examples_args = get_command_examples(self.examples, self.file_type) if self.examples else {}
 
         if self.file_type == ContentItemType.INTEGRATION:
-            brand = (
-                ""
-                if self.use_all_brands
-                else yaml_obj.get("commonfields", {}).get("id", "")
-            )
+            brand = "" if self.use_all_brands else yaml_obj.get("commonfields", {}).get("id", "")
 
             for command in yaml_obj.get("script").get("commands"):
 
                 # Skip the commands that not specified in the `commands` argument
-                if self.commands and command.get("name") not in self.commands.split(
-                    ","
-                ):
+                if self.commands and command.get("name") not in self.commands.split(","):
                     continue
 
                 # Skip the commands that not specified in the command examples file if exist

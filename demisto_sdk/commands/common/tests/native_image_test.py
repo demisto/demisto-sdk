@@ -56,9 +56,7 @@ def test_docker_images_to_supported_native_images(native_image_config):
     "native_image, expected_image_reference",
     [("native:8.1", "demisto/py3-native:8.1.0.12345"), ("native:8.4", None)],
 )
-def test_get_native_image_reference(
-    native_image_config, native_image, expected_image_reference
-):
+def test_get_native_image_reference(native_image_config, native_image, expected_image_reference):
     """
     Given
     - native image configuration file, native image name:
@@ -73,10 +71,7 @@ def test_get_native_image_reference(
         1. The matched reference from the configuration file
         2. None
     """
-    assert (
-        native_image_config.get_native_image_reference(native_image)
-        == expected_image_reference
-    )
+    assert native_image_config.get_native_image_reference(native_image) == expected_image_reference
 
 
 class TestScriptIntegrationSupportedNativeImages:
@@ -125,8 +120,6 @@ class TestScriptIntegrationSupportedNativeImages:
         )
 
         assert (
-            native_image_supported_versions.get_supported_native_image_versions(
-                get_raw_version=True
-            )
+            native_image_supported_versions.get_supported_native_image_versions(get_raw_version=True)
             == expected_native_images
         )

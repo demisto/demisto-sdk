@@ -31,32 +31,20 @@ def initiate_linter(
 
 
 class TestYamlParse:
-    def test_valid_yaml_key_script_is_dict(
-        self, demisto_content, create_integration: Callable, mocker
-    ):
-        integration_path: Path = create_integration(
-            content_path=demisto_content, type_script_key=True
-        )
+    def test_valid_yaml_key_script_is_dict(self, demisto_content, create_integration: Callable, mocker):
+        integration_path: Path = create_integration(content_path=demisto_content, type_script_key=True)
         mocker.patch.object(linter.Linter, "_update_support_level")
         runner = initiate_linter(demisto_content, integration_path)
         assert not runner._gather_facts(modules={})
 
-    def test_valid_yaml_key_script_is_not_dict(
-        self, demisto_content: Callable, create_integration: Callable, mocker
-    ):
-        integration_path: Path = create_integration(
-            content_path=demisto_content, type_script_key=False
-        )
+    def test_valid_yaml_key_script_is_not_dict(self, demisto_content: Callable, create_integration: Callable, mocker):
+        integration_path: Path = create_integration(content_path=demisto_content, type_script_key=False)
         mocker.patch.object(linter.Linter, "_update_support_level")
         runner = initiate_linter(demisto_content, integration_path)
         assert not runner._gather_facts(modules={})
 
-    def test_not_valid_yaml(
-        self, demisto_content: Callable, create_integration: Callable
-    ):
-        integration_path: Path = create_integration(
-            content_path=demisto_content, yml=True
-        )
+    def test_not_valid_yaml(self, demisto_content: Callable, create_integration: Callable):
+        integration_path: Path = create_integration(content_path=demisto_content, yml=True)
         runner = initiate_linter(demisto_content, integration_path)
         assert runner._gather_facts(modules={})
 
@@ -76,27 +64,19 @@ class TestYamlParse:
         runner = initiate_linter(pack.path, script_path)
         runner._gather_facts(modules={})
         common_server_python_path = runner._facts.get("lint_files")[0]
-        assert "Packs/Base/Scripts/CommonServerPython/CommonServerPython.py" in str(
-            common_server_python_path
-        )
+        assert "Packs/Base/Scripts/CommonServerPython/CommonServerPython.py" in str(common_server_python_path)
 
 
 class TestPythonPack:
-    def test_package_is_python_pack(
-        self, demisto_content: Callable, create_integration: Callable, mocker
-    ):
-        integration_path: Path = create_integration(
-            content_path=demisto_content, js_type=False, api_module=True
-        )
+    def test_package_is_python_pack(self, demisto_content: Callable, create_integration: Callable, mocker):
+        integration_path: Path = create_integration(content_path=demisto_content, js_type=False, api_module=True)
         mocker.patch.object(linter.Linter, "_update_support_level")
         runner = initiate_linter(demisto_content, integration_path)
         assert not runner._gather_facts(modules={})
         assert len(runner._facts["lint_files"]) == 1
         assert "Sample_integration.py" == runner._facts["lint_files"][0].name
 
-    def test_package_is_python_pack_api_module_script(
-        self, demisto_content, pack, mocker
-    ):
+    def test_package_is_python_pack_api_module_script(self, demisto_content, pack, mocker):
         script = pack.create_script(name="TestApiModule")
         mocker.patch.object(linter.Linter, "_update_support_level")
         runner = initiate_linter(demisto_content, script.path)
@@ -104,20 +84,14 @@ class TestPythonPack:
         assert len(runner._facts["lint_files"]) == 1
         assert "TestApiModule.py" == runner._facts["lint_files"][0].name
 
-    def test_package_is_not_python_pack(
-        self, demisto_content: Callable, create_integration: Callable
-    ):
-        integration_path: Path = create_integration(
-            content_path=demisto_content, js_type=True
-        )
+    def test_package_is_not_python_pack(self, demisto_content: Callable, create_integration: Callable):
+        integration_path: Path = create_integration(content_path=demisto_content, js_type=True)
         runner = initiate_linter(demisto_content, integration_path)
         assert runner._gather_facts(modules={})
 
 
 class TestDockerImagesCollection:
-    def test_docker_images_exists(
-        self, mocker, demisto_content: Callable, create_integration: Callable
-    ):
+    def test_docker_images_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
         exp_image = "test-image:12.0"
         exp_py_num = "2.7"
         mocker.patch.object(linter.Linter, "_docker_login")
@@ -132,17 +106,13 @@ class TestDockerImagesCollection:
         assert runner._facts["images"][0][0] == exp_image
         assert runner._facts["images"][0][1] == exp_py_num
 
-    def test_docker_images_not_exists(
-        self, mocker, demisto_content: Callable, create_integration: Callable
-    ):
+    def test_docker_images_not_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
         exp_image = "demisto/python:1.3-alpine"
         exp_py_num = "2.7"
         mocker.patch.object(linter.Linter, "_docker_login")
         mocker.patch.object(linter.Linter, "_update_support_level")
         linter.Linter._docker_login.return_value = False
-        integration_path: Path = create_integration(
-            content_path=demisto_content, image="", image_py_num=exp_py_num
-        )
+        integration_path: Path = create_integration(content_path=demisto_content, image="", image_py_num=exp_py_num)
         runner = initiate_linter(demisto_content, integration_path, True)
         runner._gather_facts(modules={})
 
@@ -180,9 +150,7 @@ class TestDockerImagesCollection:
             ("demisto/py3-tools:1.0.0.40800", "demisto/py3-tools:1.0.0.40800"),
         ],
     )
-    def test_docker_images_according_to_docker_image_flag(
-        self, mocker, pack, docker_image_flag, exp_images
-    ):
+    def test_docker_images_according_to_docker_image_flag(self, mocker, pack, docker_image_flag, exp_images):
         """
         This test checks that the docker images to run lint on determined according to the docker image flag.
 
@@ -231,9 +199,7 @@ class TestDockerImagesCollection:
                 "dockerimage": docker_image_yml,
             },
         }
-        test_integration = pack.create_integration(
-            name=integration_name, yml=integration_yml
-        )
+        test_integration = pack.create_integration(name=integration_name, yml=integration_yml)
 
         # Run lint:
         with ChangeCWD(pack.repo_path):
@@ -302,8 +268,7 @@ class TestDockerImagesCollection:
         assert runner._facts["images"] == []
         assert (
             f"Skipping checks on docker for {exp_versioned_native_image_name} - TestIntegration is not supported"
-            f" by the requested native image: {exp_versioned_native_image_name}"
-            in log.call_args_list[-2][0][0]
+            f" by the requested native image: {exp_versioned_native_image_name}" in log.call_args_list[-2][0][0]
         )
         assert (
             f"{integration_name} - Facts - No docker images to run on - "
@@ -400,9 +365,7 @@ class TestDockerImagesCollection:
                 "dockerimage": docker_image_yml,
             },
         }
-        test_integration = pack.create_integration(
-            name=integration_name, yml=integration_yml
-        )
+        test_integration = pack.create_integration(name=integration_name, yml=integration_yml)
 
         # Run lint:
         with ChangeCWD(pack.repo_path):
@@ -423,8 +386,7 @@ class TestDockerImagesCollection:
             assert len(docker_images) == 0
             assert (
                 f"Skipping checks on docker for {exp_versioned_native_image_name} - TestIntegration is not supported"
-                f" by the requested native image: {exp_versioned_native_image_name}"
-                in log.call_args_list[-2][0][0]
+                f" by the requested native image: {exp_versioned_native_image_name}" in log.call_args_list[-2][0][0]
             )
             assert (
                 f"{integration_name} - Facts - No docker images to run on - "
@@ -472,13 +434,10 @@ class TestDockerImagesCollection:
         assert runner._facts["images"] == []
         assert str(e.value) == expected_err_msg
         assert (
-            log.call_args_list[0][0][0]
-            == f"Skipping checks on docker for '{docker_image_flag}' - {expected_err_msg}"
+            log.call_args_list[0][0][0] == f"Skipping checks on docker for '{docker_image_flag}' - {expected_err_msg}"
         )
 
-    def test_docker_image_flag_version_not_exists_in_native_config_file(
-        self, mocker, pack
-    ):
+    def test_docker_image_flag_version_not_exists_in_native_config_file(self, mocker, pack):
         """
         This test checks that if a native docker image flag was given, and the flag doesn't have a mapped native
         version name in the docker config file, the linter tests on docker and in host will be skipped,
@@ -557,79 +516,53 @@ class TestDockerImagesCollection:
 
 
 class TestTestsCollection:
-    def test_tests_exists(
-        self, mocker, demisto_content: Callable, create_integration: Callable
-    ):
+    def test_tests_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
         mocker.patch.object(linter.Linter, "_docker_login")
         mocker.patch.object(linter.Linter, "_update_support_level")
         linter.Linter._docker_login.return_value = False
-        integration_path: Path = create_integration(
-            content_path=demisto_content, no_tests=False
-        )
+        integration_path: Path = create_integration(content_path=demisto_content, no_tests=False)
         runner = initiate_linter(demisto_content, integration_path, True)
         runner._gather_facts(modules={})
         assert runner._facts["test"]
 
-    def test_tests_not_exists(
-        self, mocker, demisto_content: Callable, create_integration: Callable
-    ):
+    def test_tests_not_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
         mocker.patch.object(linter.Linter, "_docker_login")
         mocker.patch.object(linter.Linter, "_update_support_level")
         linter.Linter._docker_login.return_value = False
-        integration_path: Path = create_integration(
-            content_path=demisto_content, no_tests=True
-        )
+        integration_path: Path = create_integration(content_path=demisto_content, no_tests=True)
         runner = initiate_linter(demisto_content, integration_path, True)
         runner._gather_facts(modules={})
         assert not runner._facts["test"]
 
 
 class TestLintFilesCollection:
-    def test_lint_files_exists(
-        self, mocker, demisto_content: Callable, create_integration: Callable
-    ):
+    def test_lint_files_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
         mocker.patch.object(linter.Linter, "_docker_login")
         mocker.patch.object(linter.Linter, "_update_support_level")
         linter.Linter._docker_login.return_value = False
-        integration_path: Path = create_integration(
-            content_path=demisto_content, no_lint_file=False
-        )
+        integration_path: Path = create_integration(content_path=demisto_content, no_lint_file=False)
         runner = initiate_linter(demisto_content, integration_path, True)
         runner._gather_facts(modules={})
-        assert (
-            runner._facts["lint_files"][0]
-            == integration_path / f"{integration_path.name}.py"
-        )
-        assert (
-            runner._facts["lint_unittest_files"][0]
-            == integration_path / f"{integration_path.name}_test.py"
-        )
+        assert runner._facts["lint_files"][0] == integration_path / f"{integration_path.name}.py"
+        assert runner._facts["lint_unittest_files"][0] == integration_path / f"{integration_path.name}_test.py"
 
-    def test_lint_files_not_exists(
-        self, mocker, demisto_content: Callable, create_integration: Callable
-    ):
+    def test_lint_files_not_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
         mocker.patch.object(linter.Linter, "_docker_login")
         mocker.patch.object(linter.Linter, "_update_support_level")
         linter.Linter._docker_login.return_value = False
-        integration_path: Path = create_integration(
-            content_path=demisto_content, no_lint_file=True
-        )
+        integration_path: Path = create_integration(content_path=demisto_content, no_lint_file=True)
         runner = initiate_linter(demisto_content, integration_path, True)
         runner._gather_facts(modules={})
         assert not runner._facts["lint_files"]
 
 
 class TestTestRequirementsCollection:
-    def test_test_requirements_exists(
-        self, mocker, demisto_content: Callable, create_integration: Callable
-    ):
+    def test_test_requirements_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
         mocker.patch.object(linter.Linter, "_docker_login")
         mocker.patch.object(linter.Linter, "_docker_login")
         mocker.patch.object(linter.Linter, "_update_support_level")
         linter.Linter._docker_login.return_value = False
-        integration_path: Path = create_integration(
-            content_path=demisto_content, test_reqs=True
-        )
+        integration_path: Path = create_integration(content_path=demisto_content, test_reqs=True)
         runner = initiate_linter(demisto_content, integration_path, True)
         runner._gather_facts(modules={})
         assert runner._facts["additional_requirements"]
@@ -637,9 +570,7 @@ class TestTestRequirementsCollection:
         for test_req in test_requirements:
             assert test_req in runner._facts["additional_requirements"]
 
-    def test_test_requirements_not_exists(
-        self, mocker, demisto_content: Callable, create_integration: Callable
-    ):
+    def test_test_requirements_not_exists(self, mocker, demisto_content: Callable, create_integration: Callable):
         mocker.patch.object(linter.Linter, "_docker_login")
         mocker.patch.object(linter.Linter, "_update_support_level")
 

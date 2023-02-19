@@ -161,9 +161,7 @@ def format_manager(
         files = get_files_in_dir(input, supported_file_types)
 
     elif use_git:
-        files = get_files_to_format_from_git(
-            supported_file_types, prev_ver, include_untracked
-        )
+        files = get_files_to_format_from_git(supported_file_types, prev_ver, include_untracked)
 
     if output and not output.endswith(("yml", "json", "py")):
         raise Exception(
@@ -222,9 +220,7 @@ def format_manager(
             else:
                 log_list.append(
                     (
-                        [
-                            f"Was unable to identify the file type for the following file: {file_path}"
-                        ],
+                        [f"Was unable to identify the file type for the following file: {file_path}"],
                         print_error,
                     )
                 )
@@ -250,9 +246,7 @@ def format_manager(
     return 0
 
 
-def get_files_to_format_from_git(
-    supported_file_types: List[str], prev_ver: str, include_untracked: bool
-) -> List[str]:
+def get_files_to_format_from_git(supported_file_types: List[str], prev_ver: str, include_untracked: bool) -> List[str]:
     """Get the files to format from git.
 
     Args:
@@ -264,9 +258,7 @@ def get_files_to_format_from_git(
         list. a list of all the files that should be formatted.
     """
     git_util = GitUtil()
-    all_changed_files = git_util.get_all_changed_files(
-        prev_ver=prev_ver, include_untracked=include_untracked
-    )
+    all_changed_files = git_util.get_all_changed_files(prev_ver=prev_ver, include_untracked=include_untracked)
 
     filtered_files = []
     for file_path in all_changed_files:
@@ -308,9 +300,7 @@ def update_content_entity_ids(files: List[str], verbose: bool):
     for file in files:
         file_path = str(Path(file))
         if verbose:
-            click.echo(
-                f"Processing file {file_path} to check for content entities IDs to update"
-            )
+            click.echo(f"Processing file {file_path} to check for content entities IDs to update")
         with open(file_path, "r+") as f:
             file_content = f.read()
             for id_to_replace, updated_id in CONTENT_ENTITY_IDS_TO_UPDATE.items():
@@ -335,9 +325,7 @@ def run_format_on_file(
 
     if file_type == "betaintegration":
         file_type = "integration"
-    schema_path = os.path.normpath(
-        os.path.join(__file__, "..", "..", "common", SCHEMAS_PATH, f"{file_type}.yml")
-    )
+    schema_path = os.path.normpath(os.path.join(__file__, "..", "..", "common", SCHEMAS_PATH, f"{file_type}.yml"))
     if file_type not in ("integration", "script") and "update_docker" in kwargs:
         # non code formatters don't support update_docker param. remove it
         del kwargs["update_docker"]
@@ -402,9 +390,7 @@ def logger(
         else:
             info_list.append(f"Format Status   on file: {input} - Success")
             error_list.append(f"Validate Status on file: {input} - Failed")
-            error_list.append(
-                f"For more information run: `demisto-sdk validate -i {input}`"
-            )
+            error_list.append(f"For more information run: `demisto-sdk validate -i {input}`")
     elif not format_res and not validate_res:
         info_list.append(f"Format Status   on file: {input} - Success")
         info_list.append(f"Validate Status on file: {input} - Success")

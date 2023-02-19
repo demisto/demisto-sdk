@@ -130,9 +130,7 @@ def test_sign_pack_exception_thrown(repo, capsys, mocker):
     content_object_pack = Pack(pack.path)
     signer_path = Path("./signer")
 
-    content_object_pack.sign_pack(
-        pack_class.logger, content_object_pack.path, signer_path
-    )
+    content_object_pack.sign_pack(pack_class.logger, content_object_pack.path, signer_path)
     captured = capsys.readouterr()
     assert "Error while trying to sign pack Pack1" in captured.out
 
@@ -159,13 +157,9 @@ def test_sign_pack_error_from_subprocess(repo, capsys, fake_process):
     content_object_pack = Pack(pack.path)
     signer_path = Path("./signer")
 
-    fake_process.register_subprocess(
-        f"{signer_path} {pack.path} keyfile base64", stderr=["error"]
-    )
+    fake_process.register_subprocess(f"{signer_path} {pack.path} keyfile base64", stderr=["error"])
 
-    content_object_pack.sign_pack(
-        pack_class.logger, content_object_pack.path, signer_path
-    )
+    content_object_pack.sign_pack(pack_class.logger, content_object_pack.path, signer_path)
 
     captured = capsys.readouterr()
     assert "Failed to sign pack for Pack1 -" in captured.out
@@ -192,13 +186,9 @@ def test_sign_pack_success(repo, capsys, fake_process):
     content_object_pack = Pack(pack.path)
     signer_path = Path("./signer")
 
-    fake_process.register_subprocess(
-        f"{signer_path} {pack.path} keyfile base64", stdout=["success"]
-    )
+    fake_process.register_subprocess(f"{signer_path} {pack.path} keyfile base64", stdout=["success"])
 
-    content_object_pack.sign_pack(
-        pack_class.logger, content_object_pack.path, signer_path
-    )
+    content_object_pack.sign_pack(pack_class.logger, content_object_pack.path, signer_path)
 
     captured = capsys.readouterr()
     assert f"Signed {content_object_pack.path.name} pack successfully" in captured.out

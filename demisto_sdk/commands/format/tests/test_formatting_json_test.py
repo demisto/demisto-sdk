@@ -183,12 +183,8 @@ class TestFormattingJson:
 
         assert res is answer
 
-    @pytest.mark.parametrize(
-        "source, target, path, answer", FORMAT_FILES_OLD_FROMVERSION
-    )
-    def test_format_file_old_fromversion(
-        self, source, target, path, answer, monkeypatch
-    ):
+    @pytest.mark.parametrize("source, target, path, answer", FORMAT_FILES_OLD_FROMVERSION)
+    def test_format_file_old_fromversion(self, source, target, path, answer, monkeypatch):
         """
         Given
             - Incident field json file, Incident type json file, Indicator type json and classifier
@@ -211,14 +207,11 @@ class TestFormattingJson:
     @pytest.mark.parametrize("invalid_output", [INVALID_OUTPUT_PATH])
     def test_output_file(self, invalid_output):
         try:
-            res_invalid = format_manager(
-                input=invalid_output, output=invalid_output, verbose=True
-            )
+            res_invalid = format_manager(input=invalid_output, output=invalid_output, verbose=True)
             assert res_invalid
         except Exception as e:
             assert (
-                str(e)
-                == "The given output path is not a specific file path.\nOnly file path can be a output path."
+                str(e) == "The given output path is not a specific file path.\nOnly file path can be a output path."
                 "  Please specify a correct output."
             )
 
@@ -255,9 +248,7 @@ class TestFormattingJson:
         Then
         - Ensure the indicator field from version is set to 6.1.0.
         """
-        indicator_field = pack.create_indicator_field(
-            "IndicatorTestField", {"type": "html"}
-        )
+        indicator_field = pack.create_indicator_field("IndicatorTestField", {"type": "html"})
         if from_version:
             indicator_field.update({"fromVersion": from_version})
         fields_formatter = IndicatorFieldJSONFormat(input=indicator_field.path)
@@ -273,12 +264,8 @@ class TestFormattingIncidentTypes:
         ("specific", "Specific", "Specific"),
     ]
 
-    @pytest.mark.parametrize(
-        "existing_extract_mode, user_answer, expected", EXTRACTION_MODE_VARIATIONS
-    )
-    def test_format_autoextract_mode(
-        self, mocker, existing_extract_mode, user_answer, expected
-    ):
+    @pytest.mark.parametrize("existing_extract_mode, user_answer, expected", EXTRACTION_MODE_VARIATIONS)
+    def test_format_autoextract_mode(self, mocker, existing_extract_mode, user_answer, expected):
         """
         Given
         - An incident type without auto extract mode or with a valid/invalid auto extract mode.
@@ -341,9 +328,7 @@ class TestFormattingIncidentTypes:
             "demisto_sdk.commands.format.update_generic.get_dict_from_file",
             return_value=(mock_dict, "mock_type"),
         )
-        mock_func = mocker.patch(
-            "demisto_sdk.commands.format.update_incidenttype.click.prompt"
-        )
+        mock_func = mocker.patch("demisto_sdk.commands.format.update_incidenttype.click.prompt")
         mock_func.side_effect = ["all", "a", "g", "Specific"]
 
         formatter = IncidentTypesJSONFormat("test")
@@ -358,9 +343,7 @@ class TestFormattingIncidentTypes:
     ]
 
     @pytest.mark.parametrize("user_answer, expected", EXTRACTION_MODE_ALL_CONFLICT)
-    def test_format_autoextract_all_mode_conflict(
-        self, mocker, user_answer, expected, capsys
-    ):
+    def test_format_autoextract_all_mode_conflict(self, mocker, user_answer, expected, capsys):
         """
         Given
         - An incident type without auto extract mode with specific types under fieldCliNameToExtractSettings.
@@ -406,9 +389,7 @@ class TestFormattingIncidentTypes:
     ]
 
     @pytest.mark.parametrize("user_answer, expected", EXTRACTION_MODE_SPECIFIC_CONFLICT)
-    def test_format_autoextract_specific_mode_conflict(
-        self, mocker, user_answer, expected, capsys
-    ):
+    def test_format_autoextract_specific_mode_conflict(self, mocker, user_answer, expected, capsys):
         """
         Given
         - An incident type without auto extract mode and without specific types under fieldCliNameToExtractSettings.
@@ -420,9 +401,7 @@ class TestFormattingIncidentTypes:
         - If the user selected 'Specific', the mode will be changed but he will get a warning that no specific types were found.
         - If the user selected 'All', the mode will be changed.
         """
-        mock_dict = {
-            "extractSettings": {"mode": None, "fieldCliNameToExtractSettings": {}}
-        }
+        mock_dict = {"extractSettings": {"mode": None, "fieldCliNameToExtractSettings": {}}}
         mocker.patch(
             "demisto_sdk.commands.format.update_generic.get_dict_from_file",
             return_value=(mock_dict, "mock_type"),
@@ -437,10 +416,7 @@ class TestFormattingIncidentTypes:
         current_mode = formatter.data.get("extractSettings", {}).get("mode")
         assert current_mode == expected
         if user_answer == "Specific":
-            assert (
-                'Please notice that mode was set to "Specific" but there are no specific types'
-                in stdout
-            )
+            assert 'Please notice that mode was set to "Specific" but there are no specific types' in stdout
 
 
 def test_update_connection_removes_unnecessary_keys(tmpdir, monkeypatch):
@@ -548,10 +524,7 @@ def test_update_id_indicatortype_negative(mocker, tmpdir):
     try:
         indicator_formater.update_id()
     except Exception as error:
-        assert (
-            error.args[0]
-            == 'Missing "details" field in file test - add this field manually'
-        )
+        assert error.args[0] == 'Missing "details" field in file test - add this field manually'
 
 
 def test_update_id_incidenttype_positive(mocker, tmpdir):
@@ -586,10 +559,7 @@ def test_update_id_incidenttype_negative(mocker, tmpdir):
     try:
         incident_formater.update_id()
     except Exception as error:
-        assert (
-            error.args[0]
-            == 'Missing "name" field in file test - add this field manually'
-        )
+        assert error.args[0] == 'Missing "name" field in file test - add this field manually'
 
 
 def test_update_id_dashboard_positive(mocker, tmpdir):
@@ -624,10 +594,7 @@ def test_update_id_dashboard_negative(mocker, tmpdir):
     try:
         dashboard_formater.update_id()
     except Exception as error:
-        assert (
-            error.args[0]
-            == 'Missing "name" field in file test - add this field manually'
-        )
+        assert error.args[0] == 'Missing "name" field in file test - add this field manually'
 
 
 @pytest.mark.parametrize("name", ["MyDashboard", "MyDashboard ", " MyDashboard "])
@@ -676,17 +643,11 @@ def test_set_marketplaces_xsoar_only_for_aliased_fields(mocker, pack, marketplac
         return_value=mock_field_generator(),
     )
 
-    tested_filed = pack.create_incident_field(
-        name="tested_filed", content={"Aliases": [{"cliName": "aliased_field"}]}
-    )
+    tested_filed = pack.create_incident_field(name="tested_filed", content={"Aliases": [{"cliName": "aliased_field"}]})
 
-    incident_field_formatter = IncidentFieldJSONFormat(
-        input=tested_filed.path, id_set_path="mocked_path"
-    )
+    incident_field_formatter = IncidentFieldJSONFormat(input=tested_filed.path, id_set_path="mocked_path")
     incident_field_formatter.format_marketplaces_field_of_aliases()
-    updated_marketplaces = incident_field_formatter._save_alias_field_file.call_args[1][
-        "field_data"
-    ]["marketplaces"]
+    updated_marketplaces = incident_field_formatter._save_alias_field_file.call_args[1]["field_data"]["marketplaces"]
 
     assert len(updated_marketplaces) == 1
     assert updated_marketplaces[0] == "xsoar"
@@ -696,9 +657,7 @@ class TestFormattingLayoutscontainer:
     @pytest.fixture()
     def layoutscontainer_copy(self):
         os.makedirs(LAYOUTS_CONTAINER_PATH, exist_ok=True)
-        yield shutil.copyfile(
-            SOURCE_FORMAT_LAYOUTS_CONTAINER, DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY
-        )
+        yield shutil.copyfile(SOURCE_FORMAT_LAYOUTS_CONTAINER, DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY)
         if os.path.exists(DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY):
             os.remove(DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY)
         shutil.rmtree(LAYOUTS_CONTAINER_PATH, ignore_errors=True)
@@ -717,9 +676,7 @@ class TestFormattingLayoutscontainer:
         "layout_key_field_1, layout_key_field_2",
         [("detailsV2", "details"), ("close", "quickView")],
     )
-    def test_remove_non_existent_fields(
-        self, layout_key_field_1, layout_key_field_2, pack, id_set_file_mock
-    ):
+    def test_remove_non_existent_fields(self, layout_key_field_1, layout_key_field_2, pack, id_set_file_mock):
         """
         Given
             - a layout container json file content
@@ -791,14 +748,9 @@ class TestFormattingLayoutscontainer:
         layoutscontainer_formatter.data["name"] = "name"
         layoutscontainer_formatter.data["id"] = "id"
         layoutscontainer_formatter.update_id()
-        assert (
-            layoutscontainer_formatter.data["name"]
-            == layoutscontainer_formatter.data["id"]
-        )
+        assert layoutscontainer_formatter.data["name"] == layoutscontainer_formatter.data["id"]
 
-    def test_remove_copy_and_dev_suffixes_from_layoutcontainer(
-        self, layoutscontainer_formatter
-    ):
+    def test_remove_copy_and_dev_suffixes_from_layoutcontainer(self, layoutscontainer_formatter):
         """
         Given
             - A layoutscontainer file with _copy suffix in the layout name ans sub script
@@ -809,33 +761,21 @@ class TestFormattingLayoutscontainer:
         """
         assert layoutscontainer_formatter.data["name"] == "IP hadas_copy"
         assert (
-            layoutscontainer_formatter.data.get("indicatorsDetails")
-            .get("tabs")[0]
-            .get("sections")[9]
-            .get("query")
+            layoutscontainer_formatter.data.get("indicatorsDetails").get("tabs")[0].get("sections")[9].get("query")
             == "script_test_dev"
         )
         assert (
-            layoutscontainer_formatter.data.get("indicatorsDetails")
-            .get("tabs")[0]
-            .get("sections")[9]
-            .get("name")
+            layoutscontainer_formatter.data.get("indicatorsDetails").get("tabs")[0].get("sections")[9].get("name")
             == "testing_copy"
         )
         layoutscontainer_formatter.remove_copy_and_dev_suffixes_from_layoutscontainer()
         assert layoutscontainer_formatter.data["name"] == "IP hadas"
         assert (
-            layoutscontainer_formatter.data.get("indicatorsDetails")
-            .get("tabs")[0]
-            .get("sections")[9]
-            .get("query")
+            layoutscontainer_formatter.data.get("indicatorsDetails").get("tabs")[0].get("sections")[9].get("query")
             == "script_test"
         )
         assert (
-            layoutscontainer_formatter.data.get("indicatorsDetails")
-            .get("tabs")[0]
-            .get("sections")[9]
-            .get("name")
+            layoutscontainer_formatter.data.get("indicatorsDetails").get("tabs")[0].get("sections")[9].get("name")
             == "testing"
         )
 
@@ -944,10 +884,7 @@ class TestFormattingLayoutscontainer:
 
         layoutscontainer_formatter.from_version = GENERAL_DEFAULT_FROMVERSION
         layoutscontainer_formatter.set_fromVersion()
-        assert (
-            layoutscontainer_formatter.data.get("fromVersion")
-            == GENERAL_DEFAULT_FROMVERSION
-        )
+        assert layoutscontainer_formatter.data.get("fromVersion") == GENERAL_DEFAULT_FROMVERSION
 
     def test_set_output_path(self, layoutscontainer_formatter):
         """
@@ -1034,16 +971,12 @@ class TestFormattingLayout:
         }
 
         formatter = LayoutBaseFormat(
-            input=pack.create_layout(
-                name="layout-non-existent-fields-test", content=layout_content
-            ).path,
+            input=pack.create_layout(name="layout-non-existent-fields-test", content=layout_content).path,
             id_set_path=id_set_file_mock.path,
         )
 
         # remove the original container layout
-        layout_content["layout"]["sections"][0]["fields"] = [
-            {"fieldId": "incident-field-2"}
-        ]
+        layout_content["layout"]["sections"][0]["fields"] = [{"fieldId": "incident-field-2"}]
 
         formatter.remove_non_existent_fields_layout()
         assert formatter.data == layout_content
@@ -1082,25 +1015,13 @@ class TestFormattingLayout:
             - Ensure that the script name does not include the _copy suffix
         """
         assert layouts_formatter.data.get("typeId") == "ExtraHop Detection_dev"
-        assert (
-            layouts_formatter.data.get("layout").get("sections")[1].get("query")
-            == "scriptName_copy"
-        )
-        assert (
-            layouts_formatter.data.get("layout").get("sections")[1].get("name")
-            == "test_copy"
-        )
+        assert layouts_formatter.data.get("layout").get("sections")[1].get("query") == "scriptName_copy"
+        assert layouts_formatter.data.get("layout").get("sections")[1].get("name") == "test_copy"
 
         layouts_formatter.remove_copy_and_dev_suffixes_from_layout()
         assert layouts_formatter.data.get("typeId") == "ExtraHop Detection"
-        assert (
-            layouts_formatter.data.get("layout").get("sections")[1].get("query")
-            == "scriptName"
-        )
-        assert (
-            layouts_formatter.data.get("layout").get("sections")[1].get("name")
-            == "test"
-        )
+        assert layouts_formatter.data.get("layout").get("sections")[1].get("query") == "scriptName"
+        assert layouts_formatter.data.get("layout").get("sections")[1].get("name") == "test"
 
     def test_set_output_path(self, invalid_path_layouts_formatter):
         """
@@ -1320,18 +1241,14 @@ class TestFormattingClassifier:
 
         classifier_formatter.from_version = GENERAL_DEFAULT_FROMVERSION
         classifier_formatter.set_fromVersion()
-        assert (
-            classifier_formatter.data.get("fromVersion") == GENERAL_DEFAULT_FROMVERSION
-        )
+        assert classifier_formatter.data.get("fromVersion") == GENERAL_DEFAULT_FROMVERSION
 
 
 class TestFormattingOldClassifier:
     @pytest.fixture(autouse=True)
     def classifier_5_9_9_copy(self):
         os.makedirs(CLASSIFIER_PATH, exist_ok=True)
-        yield shutil.copyfile(
-            SOURCE_FORMAT_CLASSIFIER_5_9_9, DESTINATION_FORMAT_CLASSIFIER_5_9_9
-        )
+        yield shutil.copyfile(SOURCE_FORMAT_CLASSIFIER_5_9_9, DESTINATION_FORMAT_CLASSIFIER_5_9_9)
         os.remove(DESTINATION_FORMAT_CLASSIFIER_5_9_9)
         os.rmdir(CLASSIFIER_PATH)
 
@@ -1428,23 +1345,17 @@ class TestFormattingPackMetaData:
                     pack description should be: Deprecated. no available replacement.
           - Case 4: pack name should be: pack name, pack description should be: pack description.
         """
-        pack.create_integration(name="integration-1").yml.update(
-            {"deprecated": deprecated_integration}
-        )
+        pack.create_integration(name="integration-1").yml.update({"deprecated": deprecated_integration})
         pack.pack_metadata.update({"name": pack_name, "description": pack_description})
 
         pack_metadata_formatter = PackMetadataJsonFormat(input=pack.pack_metadata.path)
-        mocker.patch.object(
-            pack_metadata_formatter, "get_answer", return_value=new_pack_name_to_use
-        )
+        mocker.patch.object(pack_metadata_formatter, "get_answer", return_value=new_pack_name_to_use)
 
         pack_metadata_formatter.deprecate_pack()
         if deprecated_integration:
             expected_pack_name = "pack name (Deprecated)"
             if new_pack_name_to_use:
-                expected_pack_description = (
-                    f"Deprecated. Use {new_pack_name_to_use} instead."
-                )
+                expected_pack_description = f"Deprecated. Use {new_pack_name_to_use} instead."
             else:
                 expected_pack_description = "Deprecated. No available replacement."
         else:
@@ -1464,9 +1375,7 @@ class TestFormattingMapper:
 
     @pytest.fixture()
     def mapper_formatter(self, mapper_copy):
-        yield MapperJSONFormat(
-            input=mapper_copy, output=DESTINATION_FORMAT_MAPPER, path=MAPPER_SCHEMA_PATH
-        )
+        yield MapperJSONFormat(input=mapper_copy, output=DESTINATION_FORMAT_MAPPER, path=MAPPER_SCHEMA_PATH)
 
     @pytest.mark.parametrize("mapper_type", ["mapping-outgoing", "mapping-incoming"])
     def test_remove_non_existent_fields(self, mapper_type, id_set_file_mock, pack):
@@ -1492,18 +1401,14 @@ class TestFormattingMapper:
             }
 
         formatter = MapperJSONFormat(
-            input=pack.create_classifier(
-                name=f"{mapper_type}-non-existent-fields-test", content=mapper_content
-            ).path,
+            input=pack.create_classifier(name=f"{mapper_type}-non-existent-fields-test", content=mapper_content).path,
             id_set_path=id_set_file_mock.path,
         )
 
         formatter.remove_non_existent_fields()
 
         for i in range(1, 3):
-            mapper_content["mapping"][f"test-case-{i}"]["internalMapping"].pop(
-                f"not-existing-field-{i}"
-            )
+            mapper_content["mapping"][f"test-case-{i}"]["internalMapping"].pop(f"not-existing-field-{i}")
 
         assert formatter.data == mapper_content
 
@@ -1561,9 +1466,7 @@ class TestFormattingWidget:
 
     @pytest.fixture(autouse=True)
     def widget_formatter(self, widget_copy):
-        yield WidgetJSONFormat(
-            input=widget_copy, output=DESTINATION_FORMAT_WIDGET, path=WIDGET_SCHEMA_PATH
-        )
+        yield WidgetJSONFormat(input=widget_copy, output=DESTINATION_FORMAT_WIDGET, path=WIDGET_SCHEMA_PATH)
 
     def test_set_description(self, widget_formatter):
         """
@@ -1612,15 +1515,10 @@ class TestFormattingWidget:
         widget_formatter.set_from_version_for_type_metrics()
 
         if widget_formatter.data.get("dataType") == "metrics":
-            assert (
-                widget_formatter.data.get("fromVersion")
-                == widget_formatter.WIDGET_TYPE_METRICS_MIN_VERSION
-            )
+            assert widget_formatter.data.get("fromVersion") == widget_formatter.WIDGET_TYPE_METRICS_MIN_VERSION
 
         else:
-            assert widget_formatter.data.get("fromVersion") == widget_data.get(
-                "fromVersion"
-            )
+            assert widget_formatter.data.get("fromVersion") == widget_data.get("fromVersion")
 
 
 class TestFormattingReport:
@@ -1633,9 +1531,7 @@ class TestFormattingReport:
 
     @pytest.fixture(autouse=True)
     def report_formatter(self, report_copy):
-        yield ReportJSONFormat(
-            input=report_copy, output=DESTINATION_FORMAT_REPORT, path=REPORT_SCHEMA_PATH
-        )
+        yield ReportJSONFormat(input=report_copy, output=DESTINATION_FORMAT_REPORT, path=REPORT_SCHEMA_PATH)
 
     def test_set_description(self, report_formatter):
         """
@@ -1688,9 +1584,7 @@ class TestFormattingReport:
         assert report_formatter.data.get("orientation") == "landscape"
 
     @staticmethod
-    def exception_raise(
-        default_from_version: str = "", file_type: Optional[str] = None
-    ):
+    def exception_raise(default_from_version: str = "", file_type: Optional[str] = None):
         raise ValueError("MY ERROR")
 
     FORMAT_OBJECT = [
@@ -1721,18 +1615,10 @@ class TestFormattingReport:
             - Ensure the error is printed.
         """
         formatter = format_object(verbose=True, input="my_file_path")
-        mocker.patch.object(
-            BaseUpdateJSON, "update_json", side_effect=self.exception_raise
-        )
-        mocker.patch.object(
-            BaseUpdateJSON, "set_fromVersion", side_effect=self.exception_raise
-        )
-        mocker.patch.object(
-            BaseUpdateJSON, "remove_unnecessary_keys", side_effect=self.exception_raise
-        )
-        mocker.patch.object(
-            LayoutBaseFormat, "set_layout_key", side_effect=self.exception_raise
-        )
+        mocker.patch.object(BaseUpdateJSON, "update_json", side_effect=self.exception_raise)
+        mocker.patch.object(BaseUpdateJSON, "set_fromVersion", side_effect=self.exception_raise)
+        mocker.patch.object(BaseUpdateJSON, "remove_unnecessary_keys", side_effect=self.exception_raise)
+        mocker.patch.object(LayoutBaseFormat, "set_layout_key", side_effect=self.exception_raise)
 
         formatter.run_format()
         stdout, _ = capsys.readouterr()
@@ -1751,9 +1637,7 @@ class TestFormattingReport:
 
         pack.pack_metadata.update({"support": "partner", "currentVersion": "1.0.0"})
         incident_type = pack.create_incident_type(name="TestType", content={})
-        bs = BaseUpdate(
-            input=incident_type.path, assume_yes=True, path=INCIDENTTYPE_SCHEMA_PATH
-        )
+        bs = BaseUpdate(input=incident_type.path, assume_yes=True, path=INCIDENTTYPE_SCHEMA_PATH)
         bs.set_fromVersion()
         assert bs.data["fromVersion"] == GENERAL_DEFAULT_FROMVERSION
 
@@ -1814,9 +1698,7 @@ class TestFormattingReport:
         mocker.patch.object(BaseUpdate, "sync_data_to_master")
 
         layout = pack.create_layout(name="TestType", content={})
-        bs = LayoutBaseFormat(
-            input=layout.path, assume_yes=True, path=LAYOUTS_CONTAINER_SCHEMA_PATH
-        )
+        bs = LayoutBaseFormat(input=layout.path, assume_yes=True, path=LAYOUTS_CONTAINER_SCHEMA_PATH)
         bs.run_format()
         assert bs.data["fromVersion"] == VERSION_5_5_0
 
@@ -1869,9 +1751,7 @@ class TestFormattingReport:
         mocker.patch.object(BaseUpdate, "sync_data_to_master")
 
         classifier = pack.create_classifier(name="TestType", content={})
-        bs = OldClassifierJSONFormat(
-            input=classifier.path, assume_yes=True, path=CLASSIFIER_5_9_9_SCHEMA_PATH
-        )
+        bs = OldClassifierJSONFormat(input=classifier.path, assume_yes=True, path=CLASSIFIER_5_9_9_SCHEMA_PATH)
         bs.run_format()
         assert bs.data["fromVersion"] == VERSION_5_5_0
 

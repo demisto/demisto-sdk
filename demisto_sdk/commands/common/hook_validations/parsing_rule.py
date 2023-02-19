@@ -51,18 +51,10 @@ class ParsingRuleValidator(ContentEntityValidator):
         """
         Validates all file naming is as convention.
         """
-        files_to_check = get_files_in_dir(
-            os.path.dirname(self.file_path), ["yml", "xif"], False
-        )
-        invalid_files = tuple(
-            file
-            for file in files_to_check
-            if not self.validate_xsiam_content_item_title(file)
-        )
+        files_to_check = get_files_in_dir(os.path.dirname(self.file_path), ["yml", "xif"], False)
+        invalid_files = tuple(file for file in files_to_check if not self.validate_xsiam_content_item_title(file))
         if invalid_files:
-            error_message, error_code = Errors.parsing_rules_files_naming_error(
-                invalid_files
-            )
+            error_message, error_code = Errors.parsing_rules_files_naming_error(invalid_files)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False

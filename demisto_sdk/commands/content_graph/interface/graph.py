@@ -67,9 +67,7 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def create_relationships(
-        self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]
-    ) -> None:
+    def create_relationships(self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]) -> None:
         pass
 
     @abstractmethod
@@ -89,9 +87,7 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def get_duplicate_pack_display_name(
-        self, file_paths: List[str]
-    ) -> List[Tuple[str, List[str]]]:
+    def get_duplicate_pack_display_name(self, file_paths: List[str]) -> List[Tuple[str, List[str]]]:
         pass
 
     @abstractmethod
@@ -107,9 +103,7 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def find_uses_paths_with_invalid_marketplaces(
-        self, file_paths: List[str]
-    ) -> List[BaseContent]:
+    def find_uses_paths_with_invalid_marketplaces(self, file_paths: List[str]) -> List[BaseContent]:
         pass
 
     @abstractmethod
@@ -148,14 +142,10 @@ class ContentGraphInterface(ABC):
             List[BaseContent]: The search results
         """
         if not marketplace and all_level_dependencies:
-            raise ValueError(
-                "Cannot search for all level dependencies without a marketplace"
-            )
+            raise ValueError("Cannot search for all level dependencies without a marketplace")
         return []
 
-    def from_path(
-        self, path: Path, marketplace: Optional[MarketplaceVersions] = None
-    ) -> Union[Pack, ContentItem]:
+    def from_path(self, path: Path, marketplace: Optional[MarketplaceVersions] = None) -> Union[Pack, ContentItem]:
         """This will return a pack or content item from a path with the local changes, enriched with relationships from the graph
 
         Args:
@@ -173,16 +163,12 @@ class ContentGraphInterface(ABC):
         if not isinstance(content_item, (ContentItem, Pack)):
             raise ValueError(f"Could not parse content_item from {path}")
         # enrich the content_item with the graph
-        result = self.search(
-            path=content_item.path.relative_to(self.repo_path), marketplace=marketplace
-        )
+        result = self.search(path=content_item.path.relative_to(self.repo_path), marketplace=marketplace)
         if not result or not isinstance(result[0], (Pack, ContentItem)):
             raise ValueError(f"Could not find content item in graph from {path}")
         return result[0]
 
-    def marshal_graph(
-        self, marketplace: MarketplaceVersions, all_level_dependencies: bool = False
-    ) -> ContentDTO:
+    def marshal_graph(self, marketplace: MarketplaceVersions, all_level_dependencies: bool = False) -> ContentDTO:
         """
         This marshals the graph into a ContentDTO object
 

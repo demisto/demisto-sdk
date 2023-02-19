@@ -50,9 +50,7 @@ def save_code_as_integration(
     """
     code_snippet_lines = inspect.getsourcelines(code)[0][1:]
     first_indent = len(code_snippet_lines[0]) - len(code_snippet_lines[0].lstrip())
-    code_snippet_dedented = [
-        dedent(code_line, first_indent) for code_line in code_snippet_lines
-    ]
+    code_snippet_dedented = [dedent(code_line, first_indent) for code_line in code_snippet_lines]
     code_snippet = "".join(code_snippet_dedented)
     if docstring:
         code_snippet = code_snippet.replace("**docstring**", docstring)
@@ -62,9 +60,7 @@ def save_code_as_integration(
         if conf_in_second_line:
             code_lines = code_snippet.split("\n")
             rest_of_code = "\n".join(code_lines[1:])
-            full_code = (
-                f"{code_lines[0]}\nconfiguration={configuration}\n\n{rest_of_code}"
-            )
+            full_code = f"{code_lines[0]}\nconfiguration={configuration}\n\n{rest_of_code}"
         else:
             full_code = f"configuration={configuration}\n\n{code_snippet}"
 
@@ -127,9 +123,7 @@ class TestImportDependencies:
 
             hlem.now()
 
-            metadata_collector = YMLMetadataCollector(  # noqa: F841
-                integration_name="some_name"
-            )
+            metadata_collector = YMLMetadataCollector(integration_name="some_name")  # noqa: F841
 
             def some_func():
                 """Some func doc"""
@@ -157,9 +151,7 @@ class TestImportDependencies:
         integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
-            metadata_collector = YMLMetadataCollector(  # noqa: F841
-                integration_name="some_name"
-            )
+            metadata_collector = YMLMetadataCollector(integration_name="some_name")  # noqa: F841
 
             class MyClient(BaseClient):  # noqa: F821, F841
                 """Some class doc"""
@@ -197,9 +189,7 @@ class TestImportDependencies:
         def code_snippet():
             import datetime
 
-            metadata_collector = YMLMetadataCollector(  # noqa: F841
-                integration_name="some_name"
-            )
+            metadata_collector = YMLMetadataCollector(integration_name="some_name")  # noqa: F841
 
             def some_func():
                 """Some func doc"""
@@ -287,9 +277,7 @@ class TestConfigurationGeneration:
             "integration_name_x2",
         ],
     )
-    def test_generate_general_configuration(
-        self, tmp_path, repo, configuration, expected_update
-    ):
+    def test_generate_general_configuration(self, tmp_path, repo, configuration, expected_update):
         """
         Given
         - Integration code with various configurations of YMLMetadataCollector initialization.
@@ -311,9 +299,7 @@ class TestConfigurationGeneration:
                 """Some func doc"""
                 print("func")
 
-        save_code_as_integration(
-            code=code_snippet, integration=integration, configuration=configuration
-        )
+        save_code_as_integration(code=code_snippet, integration=integration, configuration=configuration)
         yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
@@ -351,9 +337,7 @@ class TestConfigurationGeneration:
             "subtype",
         ],
     )
-    def test_generate_general_script_configuration(
-        self, tmp_path, repo, configuration, expected_update
-    ):
+    def test_generate_general_script_configuration(self, tmp_path, repo, configuration, expected_update):
         """
         Given
         - Integration code with various script configurations of YMLMetadataCollector initialization.
@@ -375,9 +359,7 @@ class TestConfigurationGeneration:
                 """Some func doc"""
                 print("func")
 
-        save_code_as_integration(
-            code=code_snippet, integration=integration, configuration=configuration
-        )
+        save_code_as_integration(code=code_snippet, integration=integration, configuration=configuration)
         yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
@@ -436,9 +418,7 @@ class TestConfigurationGeneration:
                 """Some func doc"""
                 print("func")
 
-        save_code_as_integration(
-            code=code_snippet, integration=integration, configuration=configuration
-        )
+        save_code_as_integration(code=code_snippet, integration=integration, configuration=configuration)
         yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
@@ -476,9 +456,7 @@ class TestConfigurationGeneration:
             "key_type=MULTI_SELECT",
         ],
     )
-    def test_conf_keys_parameter_types(
-        self, tmp_path, repo, configuration, expected_update
-    ):
+    def test_conf_keys_parameter_types(self, tmp_path, repo, configuration, expected_update):
         """
         Given
         - Integration code with various ParameterTypes of ConfKey configurations of YMLMetadataCollector initialization.
@@ -501,9 +479,7 @@ class TestConfigurationGeneration:
                 """Some func doc"""
                 print("func")
 
-        save_code_as_integration(
-            code=code_snippet, integration=integration, configuration=configuration
-        )
+        save_code_as_integration(code=code_snippet, integration=integration, configuration=configuration)
         yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
@@ -624,9 +600,7 @@ class TestCommandGeneration:
             "execution=False",
         ],
     )
-    def test_generate_command_generic(
-        self, tmp_path, repo, configuration, expected_update
-    ):
+    def test_generate_command_generic(self, tmp_path, repo, configuration, expected_update):
         """
         Given
         - Integration code with decorated command and various configurations of the command.
@@ -647,9 +621,7 @@ class TestCommandGeneration:
                 """Some funky command"""
                 print("func")
 
-        save_code_as_integration(
-            code=code_snippet, integration=integration, configuration=configuration
-        )
+        save_code_as_integration(code=code_snippet, integration=integration, configuration=configuration)
         yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
@@ -683,9 +655,7 @@ class TestCommandGeneration:
                 """
                 print("func")
 
-        save_code_as_integration(
-            code=code_snippet, integration=integration, configuration=""
-        )
+        save_code_as_integration(code=code_snippet, integration=integration, configuration="")
         yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
@@ -720,9 +690,7 @@ class TestCommandGeneration:
                 command_name="funky-command",
                 outputs_prefix="funk",
                 execution=False,
-                outputs_list=[
-                    OutputArgument(name="out1", output_type=str, description="desc1")
-                ],
+                outputs_list=[OutputArgument(name="out1", output_type=str, description="desc1")],
                 inputs_list=[InputArgument(name="in1")],
                 restore=True,
             )
@@ -736,10 +704,7 @@ class TestCommandGeneration:
         generated_dict = yml_generator.get_metadata_dict()
 
         # Make sure something was generated.
-        assert (
-            "out1"
-            in generated_dict["script"]["commands"][0]["outputs"][0]["contextPath"]
-        )
+        assert "out1" in generated_dict["script"]["commands"][0]["outputs"][0]["contextPath"]
 
         arguments = generated_dict["script"]["commands"][0]["arguments"]
         args_names = [arguments[i]["name"] for i in range(len(arguments))]
@@ -784,12 +749,8 @@ class TestCommandGeneration:
         assert generated_dict.keys()
 
         # Import the integration file and run funky_command
-        integration = SourceFileLoader(
-            "integration_name", str(integration.code.path)
-        ).load_module()
-        client, command_name, outputs_prefix, execution = integration.funky_command(
-            "theClient"
-        )
+        integration = SourceFileLoader("integration_name", str(integration.code.path)).load_module()
+        client, command_name, outputs_prefix, execution = integration.funky_command("theClient")
 
         # Make sure the restored args as well as regular args are restored correctly
         assert client == "theClient"  # Regular arg
@@ -870,9 +831,7 @@ class TestCommandGeneration:
             "options",
         ],
     )
-    def test_inputs_from_input_list(
-        self, tmp_path, repo, configuration, expected_update
-    ):
+    def test_inputs_from_input_list(self, tmp_path, repo, configuration, expected_update):
         """
         Given
         - Decorated command code with explicit InputArgument use and its various configurations.
@@ -901,9 +860,7 @@ class TestCommandGeneration:
                 """Some other description"""
                 print("func")
 
-        save_code_as_integration(
-            code=code_snippet, integration=integration, configuration=configuration
-        )
+        save_code_as_integration(code=code_snippet, integration=integration, configuration=configuration)
         yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
@@ -918,15 +875,11 @@ class TestCommandGeneration:
         "docstring, expected_update",
         [
             (
-                "Some other description\n"
-                "\n    Args:"
-                "\n        some_input_arg: some desc.",
+                "Some other description\n" "\n    Args:" "\n        some_input_arg: some desc.",
                 {"name": "some_input_arg", "description": "some desc."},
             ),
             (
-                "Some other description\n"
-                "\n    Args:"
-                "\n        some_input_arg: required. some desc.\n",
+                "Some other description\n" "\n    Args:" "\n        some_input_arg: required. some desc.\n",
                 {
                     "name": "some_input_arg",
                     "description": "some desc.",
@@ -934,9 +887,7 @@ class TestCommandGeneration:
                 },
             ),
             (
-                "Some other description\n"
-                "\n    Args:"
-                "\n        some_input_arg: default=5. some desc.\n",
+                "Some other description\n" "\n    Args:" "\n        some_input_arg: default=5. some desc.\n",
                 {
                     "name": "some_input_arg",
                     "description": "some desc.",
@@ -946,15 +897,11 @@ class TestCommandGeneration:
                 },
             ),
             (
-                "Some other description\n"
-                "\n    Args:"
-                "\n        some_input_arg: secret. some desc.\n",
+                "Some other description\n" "\n    Args:" "\n        some_input_arg: secret. some desc.\n",
                 {"name": "some_input_arg", "description": "some desc.", "secret": True},
             ),
             (
-                "Some other description\n"
-                "\n    Args:"
-                "\n        some_input_arg: execution. some desc.\n",
+                "Some other description\n" "\n    Args:" "\n        some_input_arg: execution. some desc.\n",
                 {
                     "name": "some_input_arg",
                     "description": "some desc.",
@@ -962,9 +909,7 @@ class TestCommandGeneration:
                 },
             ),
             (
-                "Some other description\n"
-                "\n    Args:"
-                "\n        some_input_arg: options=[A, B]. some desc.\n",
+                "Some other description\n" "\n    Args:" "\n        some_input_arg: options=[A, B]. some desc.\n",
                 {
                     "auto": "PREDEFINED",
                     "name": "some_input_arg",
@@ -973,9 +918,7 @@ class TestCommandGeneration:
                 },
             ),
             (
-                "Some other description\n"
-                "\n    Args:"
-                "\n        some_input_arg (list): some desc.\n",
+                "Some other description\n" "\n    Args:" "\n        some_input_arg (list): some desc.\n",
                 {
                     "name": "some_input_arg",
                     "description": "some desc.",
@@ -983,9 +926,7 @@ class TestCommandGeneration:
                 },
             ),
             (
-                "Some other description\n"
-                "\n    Args:"
-                "\n        some_input_arg (int): some desc.\n",
+                "Some other description\n" "\n    Args:" "\n        some_input_arg (int): some desc.\n",
                 {
                     "name": "some_input_arg",
                     "description": "some desc.",
@@ -993,9 +934,7 @@ class TestCommandGeneration:
                 },
             ),
             (
-                "Some other description\n"
-                "\n    Args:"
-                "\n        some_input_arg: required. some desc. secret.\n",
+                "Some other description\n" "\n    Args:" "\n        some_input_arg: required. some desc. secret.\n",
                 {
                     "name": "some_input_arg",
                     "description": "some desc.",
@@ -1004,9 +943,7 @@ class TestCommandGeneration:
                 },
             ),
             (
-                "Some other description\n"
-                "\n    Args:"
-                "\n        some_input_arg (InputOptions): some desc.\n    ",
+                "Some other description\n" "\n    Args:" "\n        some_input_arg (InputOptions): some desc.\n    ",
                 {
                     "auto": "PREDEFINED",
                     "name": "some_input_arg",
@@ -1015,9 +952,7 @@ class TestCommandGeneration:
                 },
             ),
             (
-                "Some other description\n"
-                "\n    Args:"
-                "\n        some_input_arg: potentially harmful. some desc.\n",
+                "Some other description\n" "\n    Args:" "\n        some_input_arg: potentially harmful. some desc.\n",
                 {
                     "name": "some_input_arg",
                     "description": "some desc.",
@@ -1025,15 +960,11 @@ class TestCommandGeneration:
                 },
             ),
             (
-                "Some other description\n"
-                "\n    Args:"
-                "\n        some invalid arg line.\n",
+                "Some other description\n" "\n    Args:" "\n        some invalid arg line.\n",
                 {},
             ),
             (
-                "Some other description\n"
-                "\n    Args:"
-                "\n        some_input_arg (hlem): some desc.\n",
+                "Some other description\n" "\n    Args:" "\n        some_input_arg (hlem): some desc.\n",
                 {"name": "some_input_arg", "description": "some desc."},
             ),
         ],
@@ -1080,9 +1011,7 @@ class TestCommandGeneration:
                 """**docstring**"""
                 print("func")
 
-        save_code_as_integration(
-            code=code_snippet, integration=integration, docstring=docstring
-        )
+        save_code_as_integration(code=code_snippet, integration=integration, docstring=docstring)
         yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
@@ -1098,9 +1027,7 @@ class TestCommandGeneration:
         "docstring, expected_update",
         [
             (
-                "Some other description\n"
-                "\n    Context Outputs:"
-                "\n        some_out_arg (str): some desc.\n",
+                "Some other description\n" "\n    Context Outputs:" "\n        some_out_arg (str): some desc.\n",
                 {
                     "contextPath": "some_name.some_out_arg",
                     "description": "some desc.",
@@ -1108,9 +1035,7 @@ class TestCommandGeneration:
                 },
             ),
             (
-                "Some other description\n"
-                "\n    Context Outputs:"
-                "\n        some_out_arg (int): some desc.\n",
+                "Some other description\n" "\n    Context Outputs:" "\n        some_out_arg (int): some desc.\n",
                 {
                     "contextPath": "some_name.some_out_arg",
                     "description": "some desc.",
@@ -1118,9 +1043,7 @@ class TestCommandGeneration:
                 },
             ),
             (
-                "Some other description\n"
-                "\n    Context Outputs:"
-                "\n        some_out_arg (float): some desc.\n",
+                "Some other description\n" "\n    Context Outputs:" "\n        some_out_arg (float): some desc.\n",
                 {
                     "contextPath": "some_name.some_out_arg",
                     "description": "some desc.",
@@ -1128,9 +1051,7 @@ class TestCommandGeneration:
                 },
             ),
             (
-                "Some other description\n"
-                "\n    Context Outputs:"
-                "\n        some_out_arg (bool): some desc.\n",
+                "Some other description\n" "\n    Context Outputs:" "\n        some_out_arg (bool): some desc.\n",
                 {
                     "contextPath": "some_name.some_out_arg",
                     "description": "some desc.",
@@ -1148,9 +1069,7 @@ class TestCommandGeneration:
                 },
             ),
             (
-                "Some other description\n"
-                "\n    Context Outputs:"
-                "\n        some_out_arg (dict): some desc.\n",
+                "Some other description\n" "\n    Context Outputs:" "\n        some_out_arg (dict): some desc.\n",
                 {
                     "contextPath": "some_name.some_out_arg",
                     "description": "some desc.",
@@ -1168,15 +1087,11 @@ class TestCommandGeneration:
                 },
             ),
             (
-                "Some other description\n"
-                "\n    Context Outputs:"
-                "\n        some_out_arg: some description.",
+                "Some other description\n" "\n    Context Outputs:" "\n        some_out_arg: some description.",
                 {},
             ),
             (
-                "Some other description\n"
-                "\n    Context Outputs:"
-                "\n        some_out_arg (hlem): some description.",
+                "Some other description\n" "\n    Context Outputs:" "\n        some_out_arg (hlem): some description.",
                 {
                     "contextPath": "some_name.some_out_arg",
                     "description": "some description.",
@@ -1217,9 +1132,7 @@ class TestCommandGeneration:
                 """**docstring**"""
                 print("func")
 
-        save_code_as_integration(
-            code=code_snippet, integration=integration, docstring=docstring
-        )
+        save_code_as_integration(code=code_snippet, integration=integration, docstring=docstring)
         yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
@@ -1279,9 +1192,7 @@ class TestCommandGeneration:
         ],
         ids=["str", "int", "float", "bool", "dict", "list", "datetime"],
     )
-    def test_outputs_types_from_output_list(
-        self, tmp_path, repo, configuration, expected_update
-    ):
+    def test_outputs_types_from_output_list(self, tmp_path, repo, configuration, expected_update):
         """
         Given
         - Decorated command code with explicit OutputArgument use and its output_type configurations.
@@ -1348,9 +1259,7 @@ class TestCommandGeneration:
 
             @metadata_collector.command(
                 command_name="some-command",
-                inputs_list=[
-                    InputArgument(name="listed_name", description="listed desc")
-                ],
+                inputs_list=[InputArgument(name="listed_name", description="listed desc")],
             )
             def funky_command():
                 """Some other description
@@ -1442,9 +1351,7 @@ class TestCommandGeneration:
         def code_snippet():
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
 
-            @metadata_collector.command(
-                command_name="some-command", multiple_output_prefixes=True
-            )
+            @metadata_collector.command(command_name="some-command", multiple_output_prefixes=True)
             def funky_command():
                 """Some other description
 
@@ -1528,9 +1435,7 @@ class TestCommandGeneration:
                         prefix="second_prefix",
                         description="first out in second prefix.",
                     ),
-                    OutputArgument(
-                        name="no_prefix_out", description="no explicit prefix."
-                    ),
+                    OutputArgument(name="no_prefix_out", description="no explicit prefix."),
                 ],
             )
             def funky_command():
@@ -1780,12 +1685,8 @@ class TestYMLGeneration:
                 InputArgument(name="some_in2", description="in two desc"),
             ],
             outputs_list=[
-                OutputArgument(
-                    name="some_out1", description="some one desc", output_type=str
-                ),
-                OutputArgument(
-                    name="some_out2", description="some two desc", output_type=dict
-                ),
+                OutputArgument(name="some_out1", description="some one desc", output_type=str),
+                OutputArgument(name="some_out2", description="some two desc", output_type=dict),
             ],
         )
         def funky_command():

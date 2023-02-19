@@ -82,14 +82,11 @@ class UpdateReleaseNotesManager:
         self.create_release_notes(modified_files, added_files, old_format_files)
         if len(self.total_updated_packs) > 1:
             print_color(
-                "\nSuccessfully updated the following packs:\n"
-                + "\n".join(self.total_updated_packs),
+                "\nSuccessfully updated the following packs:\n" + "\n".join(self.total_updated_packs),
                 LOG_COLORS.GREEN,
             )
 
-    def filter_to_relevant_files(
-        self, file_set: set, validate_manager: ValidateManager
-    ) -> Tuple[set, set, bool]:
+    def filter_to_relevant_files(self, file_set: set, validate_manager: ValidateManager) -> Tuple[set, set, bool]:
         """
         Given a file set, filter it to only files which require RN and if given, from a specific pack
         """
@@ -120,16 +117,10 @@ class UpdateReleaseNotesManager:
         """
         Filter the raw file sets to only the relevant files for RN
         """
-        filtered_modified, old_format_files, _ = self.filter_to_relevant_files(
-            modified_files, validate_manager
-        )
-        filtered_renamed, _, _ = self.filter_to_relevant_files(
-            renamed_files, validate_manager
-        )
+        filtered_modified, old_format_files, _ = self.filter_to_relevant_files(modified_files, validate_manager)
+        filtered_renamed, _, _ = self.filter_to_relevant_files(renamed_files, validate_manager)
         filtered_modified = filtered_modified.union(filtered_renamed)
-        filtered_added, new_files_in_old_format, _ = self.filter_to_relevant_files(
-            added_files, validate_manager
-        )
+        filtered_added, new_files_in_old_format, _ = self.filter_to_relevant_files(added_files, validate_manager)
         old_format_files = old_format_files.union(new_files_in_old_format)
         return filtered_modified, filtered_added, old_format_files
 
@@ -166,18 +157,14 @@ class UpdateReleaseNotesManager:
                         added_files,
                         renamed_files,
                     ) = validate_manager.get_unfiltered_changed_files_from_git()
-                    return self.filter_files_from_git(
-                        modified_files, added_files, renamed_files, validate_manager
-                    )
+                    return self.filter_files_from_git(modified_files, added_files, renamed_files, validate_manager)
 
             (
                 modified_files,
                 added_files,
                 renamed_files,
             ) = validate_manager.get_unfiltered_changed_files_from_git()
-            return self.filter_files_from_git(
-                modified_files, added_files, renamed_files, validate_manager
-            )
+            return self.filter_files_from_git(modified_files, added_files, renamed_files, validate_manager)
 
         except (
             git.InvalidGitRepositoryError,
@@ -212,10 +199,7 @@ class UpdateReleaseNotesManager:
         # (1) The user gave a path to the api module which was changed.
         # (2) The user did not give a specific path at all (is_all = True) but some ApiModules were changed.
         api_module_was_given = self.given_pack and API_MODULES_PACK in self.given_pack
-        api_module_changed_in_git = (
-            self.changed_packs_from_git
-            and API_MODULES_PACK in self.changed_packs_from_git
-        )
+        api_module_changed_in_git = self.changed_packs_from_git and API_MODULES_PACK in self.changed_packs_from_git
 
         if api_module_was_given or (api_module_changed_in_git and self.is_all):
             updated_packs = update_api_modules_dependents_rn(
@@ -228,9 +212,7 @@ class UpdateReleaseNotesManager:
             )
             self.total_updated_packs = self.total_updated_packs.union(updated_packs)
 
-    def create_release_notes(
-        self, modified_files: set, added_files: set, old_format_files: set
-    ):
+    def create_release_notes(self, modified_files: set, added_files: set, old_format_files: set):
         """Iterates over the packs which needs an update and creates a release notes for them.
 
         :param
@@ -239,12 +221,8 @@ class UpdateReleaseNotesManager:
             old_format_files: A set of old formatted files
         """
         # Certain file types do not require release notes update
-        filtered_modified_files = filter_files_by_type(
-            modified_files, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES
-        )
-        filtered_added_files = filter_files_by_type(
-            added_files, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES
-        )
+        filtered_modified_files = filter_files_by_type(modified_files, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
+        filtered_added_files = filter_files_by_type(added_files, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
         if self.given_pack:  # A specific pack was chosen to update
             self.create_pack_release_notes(
                 self.given_pack,
@@ -255,9 +233,7 @@ class UpdateReleaseNotesManager:
 
         elif self.changed_packs_from_git:  # update all changed packs
             for pack in self.changed_packs_from_git:
-                if (
-                    API_MODULES_PACK in pack
-                ):  # We already handled Api Modules so we can skip it.
+                if API_MODULES_PACK in pack:  # We already handled Api Modules so we can skip it.
                     continue
                 self.create_pack_release_notes(
                     pack,
@@ -287,9 +263,7 @@ class UpdateReleaseNotesManager:
             old_format_files: A set of old formatted files
         """
         existing_rn_version = self.get_existing_rn(pack)
-        if (
-            existing_rn_version is None
-        ):  # New release notes file already found for the pack
+        if existing_rn_version is None:  # New release notes file already found for the pack
             raise RuntimeError(
                 f"New release notes file already found for {pack}. "
                 f"Please update manually or run `demisto-sdk update-release-notes "

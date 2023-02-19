@@ -11,9 +11,7 @@ from .yaml_content_object import YAMLContentObject
 
 
 class YAMLContentUnifiedObject(YAMLContentObject):
-    def __init__(
-        self, path: Union[Path, str], content_type: FileType, file_name_prefix: str
-    ):
+    def __init__(self, path: Union[Path, str], content_type: FileType, file_name_prefix: str):
         """YAML content object.
 
         Built from:
@@ -121,15 +119,7 @@ class YAMLContentUnifiedObject(YAMLContentObject):
         if isinstance(dest_dir, str):
             dest_dir = Path(dest_dir)
         # Unify step
-        return [
-            Path(
-                str(
-                    PrepareUploadManager.prepare_for_upload(
-                        self.path, dest_dir, force=True
-                    )
-                )
-            )
-        ]
+        return [Path(str(PrepareUploadManager.prepare_for_upload(self.path, dest_dir, force=True)))]
 
     def dump(
         self,
@@ -161,11 +151,7 @@ class YAMLContentUnifiedObject(YAMLContentObject):
             # Unify in dest dir.
             created_files.extend(self._unify(dest_dir))
             # Adding readme and changelog if requested.
-            created_files.extend(
-                super().dump(
-                    dest_dir=dest_dir, yaml=False, readme=readme, change_log=change_log
-                )
-            )
+            created_files.extend(super().dump(dest_dir=dest_dir, yaml=False, readme=readme, change_log=change_log))
 
         # Handling case where object is unified
         else:
@@ -188,10 +174,6 @@ class YAMLContentUnifiedObject(YAMLContentObject):
             # Handling case where copy of object should be without modifications.
             else:
                 # Dump as YAMLContentObject
-                created_files.extend(
-                    super().dump(
-                        dest_dir=dest_dir, readme=readme, change_log=change_log
-                    )
-                )
+                created_files.extend(super().dump(dest_dir=dest_dir, readme=readme, change_log=change_log))
 
         return created_files

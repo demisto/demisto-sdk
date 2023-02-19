@@ -28,8 +28,7 @@ def test_conf_json_description_not_given(mocker):
     validator = ConfJsonValidator()
 
     assert (
-        validator.is_valid_description_in_conf_dict(checked_dict=MISSING_DESCRIPTION)
-        is False
+        validator.is_valid_description_in_conf_dict(checked_dict=MISSING_DESCRIPTION) is False
     ), "The conf validator couldn't find the missing description in the dictionary"
 
 
@@ -68,9 +67,7 @@ def test_is_valid_conf_json_sanity_check(mocker):
     )
     validator = ConfJsonValidator()
 
-    assert (
-        validator.is_valid_conf_json()
-    ), "The conf validator didn't find the description sections although they exist"
+    assert validator.is_valid_conf_json(), "The conf validator didn't find the description sections although they exist"
 
 
 def test_is_valid_conf_json_negative_sanity_check(mocker):
@@ -92,18 +89,14 @@ def test_is_valid_conf_json_negative_sanity_check(mocker):
 INTEGRATION_IS_SKIPPED_TEST_INPUTS = [
     (
         {
-            "tests": [
-                {"integrations": "SomeIntegration", "playbookID": "SomeTestPlaybook"}
-            ],
+            "tests": [{"integrations": "SomeIntegration", "playbookID": "SomeTestPlaybook"}],
             "skipped_tests": {"SomeTestPlaybook": "Some Issue"},
         },
         False,
     ),
     (
         {
-            "tests": [
-                {"integrations": "SomeIntegration", "playbookID": "SomeTestPlaybook"}
-            ],
+            "tests": [{"integrations": "SomeIntegration", "playbookID": "SomeTestPlaybook"}],
             "skipped_tests": {"SomeOtherTestPlaybook": "Some Issue"},
         },
         True,
@@ -169,9 +162,7 @@ SCRIPT_IS_SKIPPED_TEST_INPUTS = [
 ]
 
 
-@pytest.mark.parametrize(
-    "test_playbooks, conf_dict, answer", SCRIPT_IS_SKIPPED_TEST_INPUTS
-)
+@pytest.mark.parametrize("test_playbooks, conf_dict, answer", SCRIPT_IS_SKIPPED_TEST_INPUTS)
 def test_script_has_unskipped_test_playbook(mocker, test_playbooks, conf_dict, answer):
     """
     Given:
@@ -188,9 +179,7 @@ def test_script_has_unskipped_test_playbook(mocker, test_playbooks, conf_dict, a
 
     current = {"commonfields": {"id": "SomeScript"}, "tests": test_playbooks}
     assert (
-        validator.is_valid_file_in_conf_json(
-            current_file=current, file_type=FileType.SCRIPT, file_path="SomeFilePath"
-        )
+        validator.is_valid_file_in_conf_json(current_file=current, file_type=FileType.SCRIPT, file_path="SomeFilePath")
         is answer
     )
 

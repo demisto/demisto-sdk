@@ -134,9 +134,7 @@ class TestGenericFunctions:
     FILE_PATHS = [
         (os.path.join(PATH_TO_HERE, "fake_integration.yml"), tools.get_yaml),
         (
-            os.path.join(
-                PATH_TO_HERE, "test_playbook_value_starting_with_equal_sign.yml"
-            ),
+            os.path.join(PATH_TO_HERE, "test_playbook_value_starting_with_equal_sign.yml"),
             tools.get_yaml,
         ),
         (os.path.join(PATH_TO_HERE, "fake_json.json"), tools.get_json),
@@ -147,19 +145,13 @@ class TestGenericFunctions:
         assert func(file_path)
 
     @staticmethod
-    @pytest.mark.parametrize(
-        "suffix,dump_function", ((".json", json.dumps), (".yml", yaml.dumps))
-    )
-    def test_get_file_non_unicode(
-        tmp_path, suffix: str, dump_function: Callable[[Dict], Any]
-    ):
+    @pytest.mark.parametrize("suffix,dump_function", ((".json", json.dumps), (".yml", yaml.dumps)))
+    def test_get_file_non_unicode(tmp_path, suffix: str, dump_function: Callable[[Dict], Any]):
         """Tests reading a non-unicode file"""
         text = "Nett hier. Aber waren Sie schon mal in Baden-Württemberg?"  # the umlaut is important
         path = (tmp_path / "non_unicode").with_suffix(suffix)
 
-        path.write_text(
-            dump_function({"text": text}, ensure_ascii=False), encoding="latin-1"
-        )
+        path.write_text(dump_function({"text": text}, ensure_ascii=False), encoding="latin-1")
         assert get_file(path, suffix) == {"text": text}
 
     @pytest.mark.parametrize(
@@ -177,9 +169,7 @@ class TestGenericFunctions:
     def test_generate_xsiam_normalized_name(self, file_name, prefix, result):
         assert generate_xsiam_normalized_name(file_name, prefix)
 
-    @pytest.mark.parametrize(
-        "dir_path", ["demisto_sdk", f"{GIT_ROOT}/demisto_sdk/tests/test_files"]
-    )
+    @pytest.mark.parametrize("dir_path", ["demisto_sdk", f"{GIT_ROOT}/demisto_sdk/tests/test_files"])
     def test_get_yml_paths_in_dir(self, dir_path):
         yml_paths, first_yml_path = tools.get_yml_paths_in_dir(dir_path, error_msg="")
         yml_paths_test = glob.glob(os.path.join(dir_path, "*yml"))
@@ -201,9 +191,7 @@ class TestGenericFunctions:
     @pytest.mark.parametrize("path, raises_error, _type", data_test_get_dict_from_file)
     def test_get_dict_from_file(self, path, raises_error, _type):
         output = get_dict_from_file(str(path), raises_error=raises_error)[1]
-        assert (
-            output == _type
-        ), f"get_dict_from_file({path}) returns: {output} instead {_type}"
+        assert output == _type, f"get_dict_from_file({path}) returns: {output} instead {_type}"
 
     data_test_find_type = [
         (VALID_DASHBOARD_PATH, FileType.DASHBOARD),
@@ -257,9 +245,7 @@ class TestGenericFunctions:
         - Ensure no exception/error is raised and None is returned.
         """
         try:
-            assert not find_type(
-                malformed_integration_yml.path, ignore_invalid_schema_file=True
-            )
+            assert not find_type(malformed_integration_yml.path, ignore_invalid_schema_file=True)
         except ValueError as err:
             assert False, str(err)
 
@@ -275,9 +261,7 @@ class TestGenericFunctions:
         - Ensure no exception/error is raised and None is returned.
         """
         try:
-            assert not find_type(
-                malformed_incident_field.path, ignore_invalid_schema_file=True
-            )
+            assert not find_type(malformed_incident_field.path, ignore_invalid_schema_file=True)
         except ValueError as err:
             assert False, str(err)
 
@@ -300,9 +284,7 @@ class TestGenericFunctions:
 
     @pytest.mark.parametrize("path", test_path_md)
     def test_filter_packagify_changes(self, path):
-        modified, added, removed = filter_packagify_changes(
-            modified_files=[], added_files=[], removed_files=[path]
-        )
+        modified, added, removed = filter_packagify_changes(modified_files=[], added_files=[], removed_files=[path])
         assert modified == []
         assert added == set()
         assert removed == [VALID_MD]
@@ -412,9 +394,7 @@ class TestGetRemoteFile:
         assert isinstance(hello_world_py, bytes)
         assert hello_world_py
         assert "main()" in hello_world_text
-        assert hello_world_text.startswith(
-            '"""HelloWorld Integration for Cortex XSOAR (aka Demisto)'
-        )
+        assert hello_world_text.startswith('"""HelloWorld Integration for Cortex XSOAR (aka Demisto)')
 
     def test_get_remote_file_origin(self):
         hello_world_yml = tools.get_remote_file(
@@ -476,9 +456,7 @@ class TestGetRemoteFile:
         assert hello_world_readme == {}
 
     def test_should_file_skip_validation_negative(self):
-        should_skip = tools.should_file_skip_validation(
-            "Packs/HelloWorld/Integrations/HelloWorld/search_alerts.json"
-        )
+        should_skip = tools.should_file_skip_validation("Packs/HelloWorld/Integrations/HelloWorld/search_alerts.json")
         assert not should_skip
 
     SKIPPED_FILE_PATHS = [
@@ -596,9 +574,7 @@ class TestPrintColor:
         tools.print_color("test", LOG_COLORS.GREEN)
 
         print_args = print.call_args[0][0]
-        assert print_args == "{}{}{}".format(
-            LOG_COLORS.GREEN, "test", LOG_COLORS.NATIVE
-        )
+        assert print_args == "{}{}{}".format(LOG_COLORS.GREEN, "test", LOG_COLORS.NATIVE)
 
 
 class TestReleaseVersion:
@@ -649,9 +625,7 @@ class TestGetFilesInDir:
             f"{project_dir}/downloader.py",
             f"{project_dir}/README.md",
         ]
-        assert sorted(get_files_in_dir(project_dir, ["py", "md"], False)) == sorted(
-            files
-        )
+        assert sorted(get_files_in_dir(project_dir, ["py", "md"], False)) == sorted(files)
 
     def test_recursive(self):
         integrations_dir = "demisto_sdk/commands/download/tests/tests_env/content/Packs/TestPack/Integrations"
@@ -663,9 +637,7 @@ class TestGetFilesInDir:
         assert sorted(get_files_in_dir(integrations_dir, ["py"])) == sorted(files)
 
     def test_recursive_pack(self):
-        pack_dir = (
-            "demisto_sdk/commands/download/tests/tests_env/content/Packs/TestPack"
-        )
+        pack_dir = "demisto_sdk/commands/download/tests/tests_env/content/Packs/TestPack"
         files = [
             f"{pack_dir}/Integrations/TestIntegration/TestIntegration.py",
             f"{pack_dir}/Integrations/TestIntegration/TestIntegration_testt.py",
@@ -757,9 +729,7 @@ def test_has_remote(mocker, git_value, response):
       2. Test condition passes
     :param git_value: Git string from `git remotes -v`
     """
-    mocker.patch(
-        "demisto_sdk.commands.common.tools.run_command", return_value=git_value
-    )
+    mocker.patch("demisto_sdk.commands.common.tools.run_command", return_value=git_value)
     test_remote = has_remote_configured()
     assert response == test_remote
 
@@ -782,9 +752,7 @@ def test_origin_content(mocker, git_value, response):
       2. Test condition passes
     :param git_value: Git string from `git remotes -v`
     """
-    mocker.patch(
-        "demisto_sdk.commands.common.tools.run_command", return_value=git_value
-    )
+    mocker.patch("demisto_sdk.commands.common.tools.run_command", return_value=git_value)
     test_remote = is_origin_content_repo()
     assert response == test_remote
 
@@ -799,9 +767,7 @@ def test_get_ignore_pack_tests__no_pack():
     - returns an empty set
     """
     nonexistent_pack = "NonexistentFakeTestPack"
-    ignore_test_set = get_ignore_pack_skipped_tests(
-        nonexistent_pack, {nonexistent_pack}, {}
-    )
+    ignore_test_set = get_ignore_pack_skipped_tests(nonexistent_pack, {nonexistent_pack}, {})
     assert len(ignore_test_set) == 0
 
 
@@ -826,9 +792,7 @@ def test_get_ignore_pack_tests__no_ignore_pack(tmpdir):
     if os.path.exists(pack_ignore_path):
         os.remove(pack_ignore_path)
 
-    ignore_test_set = get_ignore_pack_skipped_tests(
-        fake_pack_name, {fake_pack_name}, {}
-    )
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {fake_pack_name}, {})
     assert len(ignore_test_set) == 0
 
 
@@ -853,9 +817,7 @@ def test_get_ignore_pack_tests__test_not_ignored(tmpdir):
     # prepare .pack-ignore
     open(pack_ignore_path, "a").close()
 
-    ignore_test_set = get_ignore_pack_skipped_tests(
-        fake_pack_name, {fake_pack_name}, {}
-    )
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {fake_pack_name}, {})
     assert len(ignore_test_set) == 0
 
 
@@ -879,22 +841,17 @@ def test_get_ignore_pack_tests__ignore_test(tmpdir, mocker):
     packs_path = Path(repo.path) / PACKS_DIR
     pack = Pack(packs_path, fake_pack_name, repo)
     test_playbook_path = packs_path / fake_pack_name / TEST_PLAYBOOKS_DIR
-    test_playbook = Playbook(
-        test_playbook_path, fake_test_name, repo, is_test_playbook=True
-    )
+    test_playbook = Playbook(test_playbook_path, fake_test_name, repo, is_test_playbook=True)
     pack_ignore_path = os.path.join(pack.path, PACKS_PACK_IGNORE_FILE_NAME)
 
     # prepare .pack-ignore
     with open(pack_ignore_path, "a") as pack_ignore_f:
         pack_ignore_f.write(
-            "[file:TestIntegration.yml]\nignore=IN126\n\n"
-            f"[file:{test_playbook.name}]\nignore=auto-test"
+            "[file:TestIntegration.yml]\nignore=IN126\n\n" f"[file:{test_playbook.name}]\nignore=auto-test"
         )
 
     # prepare mocks
-    mocker.patch.object(
-        tools, "get_pack_ignore_file_path", return_value=pack_ignore_path
-    )
+    mocker.patch.object(tools, "get_pack_ignore_file_path", return_value=pack_ignore_path)
     mocker.patch.object(
         os.path,
         "join",
@@ -906,9 +863,7 @@ def test_get_ignore_pack_tests__ignore_test(tmpdir, mocker):
         return_value=("SamplePlaybookTest", "FakeTestPack"),
     )
 
-    ignore_test_set = get_ignore_pack_skipped_tests(
-        fake_pack_name, {fake_pack_name}, {}
-    )
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {fake_pack_name}, {})
     assert len(ignore_test_set) == 1
     assert expected_id in ignore_test_set
 
@@ -936,25 +891,14 @@ def test_get_ignore_pack_tests__ignore_missing_test(tmpdir, mocker):
 
     # prepare .pack-ignore
     with open(pack_ignore_path, "a") as pack_ignore_f:
-        pack_ignore_f.write(
-            "[file:TestIntegration.yml]\nignore=IN126\n\n"
-            f"[file:{fake_test_name}]\nignore=auto-test"
-        )
+        pack_ignore_f.write("[file:TestIntegration.yml]\nignore=IN126\n\n" f"[file:{fake_test_name}]\nignore=auto-test")
 
     # prepare mocks
-    mocker.patch.object(
-        tools, "get_pack_ignore_file_path", return_value=pack_ignore_path
-    )
-    mocker.patch.object(
-        os.path, "join", return_value=str(test_playbook_path / fake_test_name)
-    )
-    mocker.patch.object(
-        tools, "get_test_playbook_id", return_value=(None, "FakeTestPack")
-    )
+    mocker.patch.object(tools, "get_pack_ignore_file_path", return_value=pack_ignore_path)
+    mocker.patch.object(os.path, "join", return_value=str(test_playbook_path / fake_test_name))
+    mocker.patch.object(tools, "get_test_playbook_id", return_value=(None, "FakeTestPack"))
 
-    ignore_test_set = get_ignore_pack_skipped_tests(
-        fake_pack_name, {fake_pack_name}, {}
-    )
+    ignore_test_set = get_ignore_pack_skipped_tests(fake_pack_name, {fake_pack_name}, {})
     assert len(ignore_test_set) == 0
 
 
@@ -1052,9 +996,7 @@ GET_FILE_VERSION_SUFFIX_IF_EXISTS_NAME_INPUTS = [
 ]
 
 
-@pytest.mark.parametrize(
-    "current, answer", GET_FILE_VERSION_SUFFIX_IF_EXISTS_NAME_INPUTS
-)
+@pytest.mark.parametrize("current, answer", GET_FILE_VERSION_SUFFIX_IF_EXISTS_NAME_INPUTS)
 def test_get_file_version_suffix_if_exists_via_name(current, answer):
     assert get_file_version_suffix_if_exists(current) is answer
 
@@ -1252,9 +1194,7 @@ def test_get_file_displayed_name__reputation(repo):
     - Ensure the returned name is the id field.
     """
     pack = repo.create_pack("MyPack")
-    reputation = pack._create_json_based(
-        "MyRep", content=REPUTATION, prefix="reputation"
-    )
+    reputation = pack._create_json_based("MyRep", content=REPUTATION, prefix="reputation")
     json_content = reputation.read_json_as_dict()
     json_content["id"] = "MyDisplayName"
     reputation.write_json(json_content)
@@ -1603,9 +1543,7 @@ def test_compare_context_path_in_yml_and_readme_non_vs_code_format_invalid():
     )
 
     diffs = compare_context_path_in_yml_and_readme(yml_dict, readme_content)
-    assert "ServiceNow.Ticket.OpenedBy" in diffs.get("servicenow-create-ticket").get(
-        "only in yml"
-    )
+    assert "ServiceNow.Ticket.OpenedBy" in diffs.get("servicenow-create-ticket").get("only in yml")
 
 
 def test_compare_context_path_in_yml_and_readme_vs_code_format_valid():
@@ -1712,9 +1650,7 @@ def test_compare_context_path_in_yml_and_readme_vs_code_format_invalid():
     )
 
     diffs = compare_context_path_in_yml_and_readme(yml_dict, readme_content)
-    assert "ServiceNow.Ticket.OpenedBy" in diffs.get("servicenow-create-ticket").get(
-        "only in yml"
-    )
+    assert "ServiceNow.Ticket.OpenedBy" in diffs.get("servicenow-create-ticket").get("only in yml")
 
 
 def test_get_definition_name():
@@ -1832,9 +1768,7 @@ def test_get_test_playbook_id():
     ]
 
     test_name = "playbook-HelloWorld-Test.yml"
-    test_playbook_name, test_playbook_pack = get_test_playbook_id(
-        test_playbook_id_set, test_name
-    )
+    test_playbook_name, test_playbook_pack = get_test_playbook_id(test_playbook_id_set, test_name)
     assert test_playbook_name == "HelloWorld-Test"
     assert test_playbook_pack == "HelloWorld"
 
@@ -1966,15 +1900,9 @@ YML_DATA_CASES = [
 ]
 
 
-@pytest.mark.parametrize(
-    "data, file_type, expected_commands, expected_scripts", YML_DATA_CASES
-)
-def test_get_scripts_and_commands_from_yml_data(
-    data, file_type, expected_commands, expected_scripts
-):
-    commands, scripts = get_scripts_and_commands_from_yml_data(
-        data=data, file_type=file_type
-    )
+@pytest.mark.parametrize("data, file_type, expected_commands, expected_scripts", YML_DATA_CASES)
+def test_get_scripts_and_commands_from_yml_data(data, file_type, expected_commands, expected_scripts):
+    commands, scripts = get_scripts_and_commands_from_yml_data(data=data, file_type=file_type)
     assert commands == expected_commands
     assert scripts == expected_scripts
 
@@ -2028,9 +1956,7 @@ class TestIsObjectInIDSet:
         Then:
             - Return if the item is in the id set or not.
         """
-        assert not is_object_in_id_set(
-            "Integration", FileType.INTEGRATION.value, self.PACK_INFO
-        )
+        assert not is_object_in_id_set("Integration", FileType.INTEGRATION.value, self.PACK_INFO)
 
     def test_no_item_id_in_specific_type(self):
         """
@@ -2044,12 +1970,8 @@ class TestIsObjectInIDSet:
         Then:
             - Return if the item is in the id set or not.
         """
-        assert is_object_in_id_set(
-            "Phishing layout", FileType.LAYOUTS_CONTAINER.value, self.PACK_INFO
-        )
-        assert not is_object_in_id_set(
-            "Phishing", FileType.LAYOUTS_CONTAINER.value, self.PACK_INFO
-        )
+        assert is_object_in_id_set("Phishing layout", FileType.LAYOUTS_CONTAINER.value, self.PACK_INFO)
+        assert not is_object_in_id_set("Phishing", FileType.LAYOUTS_CONTAINER.value, self.PACK_INFO)
 
     @pytest.mark.parametrize(
         "entity_id, entity_type",
@@ -2308,9 +2230,7 @@ class TestMarketplaceTagParser:
         Then:
             - Remove all XSOAR tags and their text, and keep XSIAM text with tags
         """
-        self.MARKETPLACE_TAG_PARSER.marketplace = (
-            MarketplaceVersions.MarketplaceV2.value
-        )
+        self.MARKETPLACE_TAG_PARSER.marketplace = MarketplaceVersions.MarketplaceV2.value
         actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
         assert "### Sections:" in actual
         assert "### Inline:" in actual
@@ -2365,16 +2285,12 @@ def test_string_to_bool__default_params__error(value: str):
         string_to_bool(value)
 
 
-@pytest.mark.parametrize(
-    "value", ("true", "True", "TRUE", "t", "T", "yes", "Yes", "YES", "y", "Y", "1")
-)
+@pytest.mark.parametrize("value", ("true", "True", "TRUE", "t", "T", "yes", "Yes", "YES", "y", "Y", "1"))
 def test_string_to_bool__all_params_true__true(value: str):
     assert string_to_bool(value, True, True, True, True, True, True)
 
 
-@pytest.mark.parametrize(
-    "value", ("false", "False", "FALSE", "f", "F", "no", "No", "NO", "n", "N", "0")
-)
+@pytest.mark.parametrize("value", ("false", "False", "FALSE", "f", "F", "no", "No", "NO", "n", "N", "0"))
 def test_string_to_bool__all_params_true__false(value: str):
     assert not string_to_bool(value, True, True, True, True, True, True)
 
@@ -2495,17 +2411,10 @@ def test_field_to_cliname(value: str, expected: str):
 def test_get_core_packs(mocker):
     def mock_get_remote_file(full_file_path, git_content_config):
         if MARKETPLACE_TO_CORE_PACKS_FILE[MarketplaceVersions.XSOAR] in full_file_path:
-            return {
-                "core_packs_list": ["Base", "CommonScripts", "Active_Directory_Query"]
-            }
-        elif (
-            MARKETPLACE_TO_CORE_PACKS_FILE[MarketplaceVersions.MarketplaceV2]
-            in full_file_path
-        ):
+            return {"core_packs_list": ["Base", "CommonScripts", "Active_Directory_Query"]}
+        elif MARKETPLACE_TO_CORE_PACKS_FILE[MarketplaceVersions.MarketplaceV2] in full_file_path:
             return {"core_packs_list": ["Base", "CommonScripts", "Core"]}
-        elif (
-            MARKETPLACE_TO_CORE_PACKS_FILE[MarketplaceVersions.XPANSE] in full_file_path
-        ):
+        elif MARKETPLACE_TO_CORE_PACKS_FILE[MarketplaceVersions.XPANSE] in full_file_path:
             return ["Base", "CommonScripts", "Core"]
         return None
 

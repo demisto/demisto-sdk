@@ -17,13 +17,7 @@ TEST_DATA = src_root() / "tests" / "test_files"
 TEST_CONTENT_REPO = TEST_DATA / "content_slim"
 README = TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / "README.md"
 CONTRIBUTORS = TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / "CONTRIBUTORS2.json"
-PLAYBOOK_README = (
-    TEST_CONTENT_REPO
-    / PACKS_DIR
-    / "Sample01"
-    / PLAYBOOKS_DIR
-    / "playbook-sample_new_README.md"
-)
+PLAYBOOK_README = TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / PLAYBOOKS_DIR / "playbook-sample_new_README.md"
 
 
 @pytest.mark.parametrize(argnames="file", argvalues=[README, PLAYBOOK_README])
@@ -48,9 +42,7 @@ def test_mention_contributors_in_readme(pack):
     """
     initial_readme_text = "Test README content\n"
     readme = pack._create_text_based("README.md", initial_readme_text)
-    contributors = pack._create_json_based(
-        "CONTRIBUTORS.json", "", ["Contributor1", "Contributor2"]
-    )
+    contributors = pack._create_json_based("CONTRIBUTORS.json", "", ["Contributor1", "Contributor2"])
     obj = Readme(readme.path)
     obj.contributors = Contributors(contributors.path)
     obj.mention_contributors_in_readme()

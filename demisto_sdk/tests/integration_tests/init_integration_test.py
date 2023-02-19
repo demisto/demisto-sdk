@@ -70,14 +70,10 @@ def test_integration_init_integration_positive(monkeypatch, tmp_path):
     tmp_integration_path = tmp_pack_path / "Integrations" / integration_name
 
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(
-        main, [INIT_CMD, "-o", tmp_dir_path, "-n", pack_name], input="\n".join(inputs)
-    )
+    result = runner.invoke(main, [INIT_CMD, "-o", tmp_dir_path, "-n", pack_name], input="\n".join(inputs))
 
     assert result.exit_code == 0
-    assert (
-        f"Successfully created the pack SuperPack in: {tmp_pack_path}" in result.stdout
-    )
+    assert f"Successfully created the pack SuperPack in: {tmp_pack_path}" in result.stdout
     assert f"Created pack metadata at path : {tmp_pack_metadata_path}" in result.stdout
     assert f"Finished creating integration: {tmp_integration_path}." in result.stdout
     assert result.stderr == ""
@@ -117,9 +113,7 @@ def test_integration_init_integration_positive(monkeypatch, tmp_path):
     } == integration_dir_files
 
 
-def test_integration_init_integration_positive_no_inline_pack_name(
-    monkeypatch, tmp_path
-):
+def test_integration_init_integration_positive_no_inline_pack_name(monkeypatch, tmp_path):
     """
     Given
     - Inputs to init pack with integration without a preset pack name in the command line.
@@ -178,14 +172,10 @@ def test_integration_init_integration_positive_no_inline_pack_name(
     tmp_integration_path = tmp_pack_path / "Integrations" / integration_name
 
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(
-        main, [INIT_CMD, "-o", tmp_dir_path], input="\n".join(inputs)
-    )
+    result = runner.invoke(main, [INIT_CMD, "-o", tmp_dir_path], input="\n".join(inputs))
 
     assert result.exit_code == 0
-    assert (
-        f"Successfully created the pack SuperPack in: {tmp_pack_path}" in result.stdout
-    )
+    assert f"Successfully created the pack SuperPack in: {tmp_pack_path}" in result.stdout
     assert f"Created pack metadata at path : {tmp_pack_metadata_path}" in result.stdout
     assert f"Finished creating integration: {tmp_integration_path}." in result.stdout
     assert result.stderr == ""

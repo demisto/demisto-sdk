@@ -26,7 +26,9 @@ ACCEPT_HEADER = {
 # use 60 seconds timeout for requests
 TIMEOUT = 60
 DEFAULT_REGISTRY = "registry-1.docker.io"
-DEPRECATED_DOCKER_IMAGE_LIST_URL = "https://raw.githubusercontent.com/demisto/dockerfiles/master/docker/deprecated_images.json"
+DEPRECATED_DOCKER_IMAGE_LIST_URL = (
+    "https://raw.githubusercontent.com/demisto/dockerfiles/master/docker/deprecated_images.json"
+)
 
 
 class DockerImageValidator(BaseValidator):
@@ -58,14 +60,10 @@ class DockerImageValidator(BaseValidator):
         self.code_type = self.get_code_type()
         self.yml_docker_image = self.get_docker_image_from_yml()
         self.from_version = self.yml_file.get("fromversion", "0")
-        self.docker_image_name, self.docker_image_tag = self.parse_docker_image(
-            self.yml_docker_image
-        )
+        self.docker_image_name, self.docker_image_tag = self.parse_docker_image(self.yml_docker_image)
         self.is_latest_tag = True
         self.is_iron_bank = is_iron_bank
-        self.is_deprecated_image = self.is_docker_image_deprecated(
-            self.docker_image_name
-        )
+        self.is_deprecated_image = self.is_docker_image_deprecated(self.docker_image_name)
 
         self.docker_image_latest_tag = self.get_docker_image_latest_tag(
             self.docker_image_name, self.yml_docker_image, self.is_iron_bank
@@ -78,24 +76,18 @@ class DockerImageValidator(BaseValidator):
             return True
 
         if not self.yml_docker_image:
-            error_message, error_code = Errors.dockerimage_not_in_yml_file(
-                self.file_path
-            )
+            error_message, error_code = Errors.dockerimage_not_in_yml_file(self.file_path)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
 
         if self.is_deprecated_image:
             deprecated_reason = self.is_deprecated_image[1]
-            error_message, error_code = Errors.deprecated_docker_error(
-                self.docker_image_name, deprecated_reason
-            )
+            error_message, error_code = Errors.deprecated_docker_error(self.docker_image_name, deprecated_reason)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
 
         if not self.docker_image_latest_tag:
-            error_message, error_code = Errors.non_existing_docker(
-                self.yml_docker_image
-            )
+            error_message, error_code = Errors.non_existing_docker(self.yml_docker_image)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
 
@@ -106,10 +98,7 @@ class DockerImageValidator(BaseValidator):
 
     @error_codes("DO100,DO106,DO101")
     def is_docker_image_latest_tag(self):
-        if (
-            "demisto/python:1.3-alpine"
-            == f"{self.docker_image_name}:{self.docker_image_tag}"
-        ):
+        if "demisto/python:1.3-alpine" == f"{self.docker_image_name}:{self.docker_image_tag}":
             # the docker image is the default one
             error_message, error_code = Errors.default_docker_error()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
@@ -133,9 +122,7 @@ class DockerImageValidator(BaseValidator):
             error_message, error_code = Errors.docker_not_on_the_latest_tag(
                 self.docker_image_tag, self.docker_image_latest_tag, self.is_iron_bank
             )
-            suggested_fix = Errors.suggest_docker_fix(
-                self.docker_image_name, self.file_path, self.is_iron_bank
-            )
+            suggested_fix = Errors.suggest_docker_fix(self.docker_image_name, self.file_path, self.is_iron_bank)
             if self.handle_error(
                 error_message,
                 error_code,
@@ -146,15 +133,11 @@ class DockerImageValidator(BaseValidator):
 
             else:
                 # if this error is ignored - do print it as a warning
-                self.handle_error(
-                    error_message, error_code, file_path=self.file_path, warning=True
-                )
+                self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
 
         # the most updated tag should be numeric and not labeled "latest"
         if self.docker_image_latest_tag == "latest":
-            error_message, error_code = Errors.latest_docker_error(
-                self.docker_image_tag, self.docker_image_name
-            )
+            error_message, error_code = Errors.latest_docker_error(self.docker_image_tag, self.docker_image_name)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_latest_tag = False
 
@@ -277,9 +260,7 @@ class DockerImageValidator(BaseValidator):
         latest_tag_name = "latest"
         latest_tag_date = datetime.now() - timedelta(days=400000)
         for tag in tags:
-            tag_date = datetime.strptime(
-                tag.get("last_updated"), "%Y-%m-%dT%H:%M:%S.%fZ"
-            )
+            tag_date = datetime.strptime(tag.get("last_updated"), "%Y-%m-%dT%H:%M:%S.%fZ")
             if tag_date >= latest_tag_date and tag.get("name") != "latest":
                 latest_tag_date = tag_date
                 latest_tag_name = tag.get("name")
@@ -297,9 +278,7 @@ class DockerImageValidator(BaseValidator):
             The latest tag for the docker image.
         """
         tag = ""
-        auth_token = DockerImageValidator.docker_auth(
-            docker_image_name, False, DEFAULT_REGISTRY
-        )
+        auth_token = DockerImageValidator.docker_auth(docker_image_name, False, DEFAULT_REGISTRY)
         headers = ACCEPT_HEADER.copy()
         if auth_token:
             headers["Authorization"] = f"Bearer {auth_token}"
@@ -331,9 +310,7 @@ class DockerImageValidator(BaseValidator):
                 tag = DockerImageValidator.lexical_find_latest_tag(tags)
         return tag
 
-    def get_docker_image_latest_tag(
-        self, docker_image_name, yml_docker_image, is_iron_bank=False
-    ):
+    def get_docker_image_latest_tag(self, docker_image_name, yml_docker_image, is_iron_bank=False):
         """Returns the docker image latest tag of the given docker image
 
         Args:
@@ -346,23 +323,17 @@ class DockerImageValidator(BaseValidator):
         if yml_docker_image:
             if not yml_docker_image.startswith("demisto/"):
                 error_message, error_code = Errors.not_demisto_docker()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return ""
                 return "no-tag-required"
         try:
             if is_iron_bank:
-                return self.get_docker_image_latest_tag_from_iron_bank_request(
-                    docker_image_name
-                )
+                return self.get_docker_image_latest_tag_from_iron_bank_request(docker_image_name)
             return self.get_docker_image_latest_tag_request(docker_image_name)
         except (requests.exceptions.RequestException, Exception) as e:
             if not docker_image_name:
                 docker_image_name = yml_docker_image
-            error_message, error_code = Errors.docker_tag_not_fetched(
-                docker_image_name, str(e)
-            )
+            error_message, error_code = Errors.docker_tag_not_fetched(docker_image_name, str(e))
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return ""
 
@@ -390,27 +361,19 @@ class DockerImageValidator(BaseValidator):
                     tag = image_split[1]
                 else:
                     error_message, error_code = Errors.no_docker_tag(docker_image)
-                    self.handle_error(
-                        error_message, error_code, file_path=self.file_path
-                    )
+                    self.handle_error(error_message, error_code, file_path=self.file_path)
 
             except IndexError:
-                error_message, error_code = Errors.docker_not_formatted_correctly(
-                    docker_image
-                )
+                error_message, error_code = Errors.docker_not_formatted_correctly(docker_image)
                 self.handle_error(error_message, error_code, file_path=self.file_path)
 
             return image, tag
         else:
             if self.py_version == "python2":
                 # If the yml file has no docker image we provide a default one with numeric tag
-                return "demisto/python", self.get_docker_image_latest_tag(
-                    "demisto/python", None
-                )
+                return "demisto/python", self.get_docker_image_latest_tag("demisto/python", None)
             else:
-                return "demisto/python3", self.get_docker_image_latest_tag(
-                    "demisto/python3", None
-                )
+                return "demisto/python3", self.get_docker_image_latest_tag("demisto/python3", None)
 
     @staticmethod
     def get_docker_image_latest_tag_from_iron_bank_request(docker_image_name):
@@ -427,14 +390,10 @@ class DockerImageValidator(BaseValidator):
         manifest_url = f"{IronBankDockers.API_LINK}{project_name}/repository/files/hardening_manifest.yaml/raw"
 
         try:
-            last_commit = DockerImageValidator._get_latest_commit(
-                commits_url, docker_image_name
-            )
+            last_commit = DockerImageValidator._get_latest_commit(commits_url, docker_image_name)
             if not last_commit:
                 return ""
-            manifest_file_content = DockerImageValidator._get_manifest_from_commit(
-                manifest_url, last_commit
-            )
+            manifest_file_content = DockerImageValidator._get_manifest_from_commit(manifest_url, last_commit)
             if not manifest_file_content:
                 return ""
         except Exception as e:
@@ -445,18 +404,14 @@ class DockerImageValidator(BaseValidator):
 
         # If manifest file does not contain the tag:
         if not latest_version:
-            raise Exception(
-                "(Iron Bank) Manifest file does not contain tag in expected format."
-            )
+            raise Exception("(Iron Bank) Manifest file does not contain tag in expected format.")
 
         return latest_version[0].strip('"')
 
     @staticmethod
     def _get_manifest_from_commit(manifest_url, commit_id):
         # gets the manifest file from the specified commit in Iron Bank:
-        res = requests.get(
-            url=manifest_url, params={"ref": commit_id}, verify=False, timeout=TIMEOUT
-        )
+        res = requests.get(url=manifest_url, params={"ref": commit_id}, verify=False, timeout=TIMEOUT)
 
         # If file does not exists in the last commit:
         if res.status_code != 200:
@@ -504,9 +459,7 @@ class DockerImageValidator(BaseValidator):
         returns: Dict contains the following keys: image_name, reason and created_time_utc.
         """
         try:
-            dockers_request = requests.get(
-                DEPRECATED_DOCKER_IMAGE_LIST_URL, verify=False
-            )
+            dockers_request = requests.get(DEPRECATED_DOCKER_IMAGE_LIST_URL, verify=False)
             dockers_request.raise_for_status()
             deprecated_dockers_json = dockers_request.json()
             return deprecated_dockers_json
@@ -517,13 +470,9 @@ class DockerImageValidator(BaseValidator):
                     f'{exc_msg[exc_msg.find(">") + 3:-3]}.\n'
                     f"This may happen if you are not connected to the internet."
                 )
-            raise Exception(
-                f"Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}"
-            )
+            raise Exception(f"Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}")
 
-    def is_docker_image_deprecated(
-        self, docker_image_name
-    ) -> Union[Tuple[str, str], str]:
+    def is_docker_image_deprecated(self, docker_image_name) -> Union[Tuple[str, str], str]:
         """
         Check if the docker image is deprecated or not.
         args:

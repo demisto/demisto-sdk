@@ -131,9 +131,7 @@ class ContributionConverter:
             os.makedirs(self.packs_dir_path)
 
         self.name = name
-        self.dir_name = pack_dir_name or ContributionConverter.format_pack_dir_name(
-            name
-        )
+        self.dir_name = pack_dir_name or ContributionConverter.format_pack_dir_name(name)
         if create_new:
             # make sure that it doesn't conflict with an existing pack directory
             self.dir_name = self.ensure_unique_pack_dir_name(self.dir_name)
@@ -209,11 +207,7 @@ class ContributionConverter:
                 f"Modifying pack name because pack {pack_dir} already exists in the content repo",
                 color=LOG_COLORS.NATIVE,
             )
-            if (
-                len(pack_dir) >= 2
-                and pack_dir[-2].lower() == "v"
-                and pack_dir[-1].isdigit()
-            ):
+            if len(pack_dir) >= 2 and pack_dir[-2].lower() == "v" and pack_dir[-1].isdigit():
                 # increment by one
                 pack_dir = pack_dir[:-1] + str(int(pack_dir[-1]) + 1)
             else:
@@ -224,9 +218,7 @@ class ContributionConverter:
     def unpack_contribution_to_dst_pack_directory(self) -> None:
         """Unpacks the contribution zip's contents to the destination pack directory and performs some cleanup"""
         if self.contribution:
-            shutil.unpack_archive(
-                filename=self.contribution, extract_dir=self.pack_dir_path
-            )
+            shutil.unpack_archive(filename=self.contribution, extract_dir=self.pack_dir_path)
             # remove metadata.json file
             os.remove(os.path.join(self.pack_dir_path, "metadata.json"))
         else:
@@ -237,9 +229,7 @@ class ContributionConverter:
             )
             raise TypeError(err_msg)
 
-    def convert_contribution_dir_to_pack_contents(
-        self, unpacked_contribution_dir: str
-    ) -> None:
+    def convert_contribution_dir_to_pack_contents(self, unpacked_contribution_dir: str) -> None:
         """Converts a directory and its contents unpacked from the contribution zip file to the appropriate structure
 
         Example:
@@ -308,9 +298,7 @@ class ContributionConverter:
             interactive=False,
         )
 
-    def generate_readme_for_pack_content_item(
-        self, yml_path: str, is_contribution: bool = False
-    ) -> None:
+    def generate_readme_for_pack_content_item(self, yml_path: str, is_contribution: bool = False) -> None:
         """Runs the demisto-sdk's generate-docs command on a pack content item
 
         Args:
@@ -351,9 +339,7 @@ class ContributionConverter:
                             or file_name.startswith("automation-")
                         ):
                             unified_file = file
-                            self.generate_readme_for_pack_content_item(
-                                unified_file, is_contribution
-                            )
+                            self.generate_readme_for_pack_content_item(unified_file, is_contribution)
                             os.remove(unified_file)
             elif basename == "Playbooks":
                 files = get_child_files(pack_subdir)
@@ -376,9 +362,7 @@ class ContributionConverter:
             # incidentfield directory may contain indicator-fields files
             if dir_name == FileType.INCIDENT_FIELD.value:
 
-                dst_ioc_fields_dir = os.path.join(
-                    self.pack_dir_path, FileType.INDICATOR_FIELD.value
-                )
+                dst_ioc_fields_dir = os.path.join(self.pack_dir_path, FileType.INDICATOR_FIELD.value)
                 src_path = os.path.join(self.pack_dir_path, dir_name)
 
                 for file in os.listdir(src_path):
@@ -424,9 +408,7 @@ class ContributionConverter:
             self.rearranging_before_conversion()
             unpacked_contribution_dirs = get_child_directories(self.pack_dir_path)
             for unpacked_contribution_dir in unpacked_contribution_dirs:
-                self.convert_contribution_dir_to_pack_contents(
-                    unpacked_contribution_dir
-                )
+                self.convert_contribution_dir_to_pack_contents(unpacked_contribution_dir)
             # extract to package format
             for pack_subdir in get_child_directories(self.pack_dir_path):
                 basename = os.path.basename(pack_subdir)
@@ -449,12 +431,8 @@ class ContributionConverter:
             )
         finally:
             if self.contrib_conversion_errs:
-                click.echo(
-                    "The following errors occurred while converting unified content YAMLs to package structure:"
-                )
-                click.echo(
-                    textwrap.indent("\n".join(self.contrib_conversion_errs), "\t")
-                )
+                click.echo("The following errors occurred while converting unified content YAMLs to package structure:")
+                click.echo(textwrap.indent("\n".join(self.contrib_conversion_errs), "\t"))
 
     def content_item_to_package_format(
         self,
@@ -480,9 +458,7 @@ class ContributionConverter:
         child_files = get_child_files(content_item_dir)
         for child_file in child_files:
             cf_name_lower = os.path.basename(child_file).lower()
-            if cf_name_lower.startswith(
-                (SCRIPT, AUTOMATION, INTEGRATION)
-            ) and cf_name_lower.endswith("yml"):
+            if cf_name_lower.startswith((SCRIPT, AUTOMATION, INTEGRATION)) and cf_name_lower.endswith("yml"):
                 content_item_file_path = child_file
                 file_type = find_type(content_item_file_path)
                 file_type = file_type.value if file_type else file_type
@@ -491,19 +467,13 @@ class ContributionConverter:
                     if source_mapping and child_file_name in source_mapping.keys():
                         child_file_mapping = source_mapping.get(child_file_name, {})
                         base_name = child_file_mapping.get("base_name", "")
-                        containing_dir_name = child_file_mapping.get(
-                            "containing_dir_name", ""
-                        )
+                        containing_dir_name = child_file_mapping.get("containing_dir_name", "")
                         # for legacy unified yamls in the repo, their containing directory will be that of their
                         # entity type directly instead of the typical package format. For those cases, we need the
                         # extractor to auto create the containing directory. An example would be -
                         # 'content/Packs/AbuseDB/Scripts/script-AbuseIPDBPopulateIndicators.yml'
-                        autocreate_dir = containing_dir_name == ENTITY_TYPE_TO_DIR.get(
-                            file_type, ""
-                        )
-                        output_dir = os.path.join(
-                            self.pack_dir_path, ENTITY_TYPE_TO_DIR.get(file_type, "")
-                        )
+                        autocreate_dir = containing_dir_name == ENTITY_TYPE_TO_DIR.get(file_type, "")
+                        output_dir = os.path.join(self.pack_dir_path, ENTITY_TYPE_TO_DIR.get(file_type, ""))
                         if not autocreate_dir:
                             output_dir = os.path.join(output_dir, containing_dir_name)
                         os.makedirs(output_dir, exist_ok=True)
@@ -522,9 +492,7 @@ class ContributionConverter:
                             file_type=file_type,
                             output=content_item_dir,
                         )
-                    extractor.extract_to_package_format(
-                        executed_from_contrib_converter=True
-                    )
+                    extractor.extract_to_package_format(executed_from_contrib_converter=True)
                     self.api_module_path = extractor.api_module_path
                 except Exception as e:
                     err_msg = (
@@ -569,33 +537,17 @@ class ContributionConverter:
 
         # a description passed on the cmd line should take precedence over one pulled
         # from contribution metadata
-        metadata_dict["description"] = self.description or zipped_metadata.get(
-            "description"
-        )
+        metadata_dict["description"] = self.description or zipped_metadata.get("description")
         metadata_dict["name"] = self.name
         metadata_dict["author"] = self.author or zipped_metadata.get("author", "")
         metadata_dict["support"] = "community"
-        metadata_dict["url"] = zipped_metadata.get("supportDetails", {}).get(
-            "url", MARKETPLACE_LIVE_DISCUSSIONS
-        )
-        metadata_dict["categories"] = (
-            zipped_metadata.get("categories")
-            if zipped_metadata.get("categories")
-            else []
-        )
-        metadata_dict["tags"] = (
-            zipped_metadata.get("tags") if zipped_metadata.get("tags") else []
-        )
-        metadata_dict["useCases"] = (
-            zipped_metadata.get("useCases") if zipped_metadata.get("useCases") else []
-        )
-        metadata_dict["keywords"] = (
-            zipped_metadata.get("keywords") if zipped_metadata.get("keywords") else []
-        )
+        metadata_dict["url"] = zipped_metadata.get("supportDetails", {}).get("url", MARKETPLACE_LIVE_DISCUSSIONS)
+        metadata_dict["categories"] = zipped_metadata.get("categories") if zipped_metadata.get("categories") else []
+        metadata_dict["tags"] = zipped_metadata.get("tags") if zipped_metadata.get("tags") else []
+        metadata_dict["useCases"] = zipped_metadata.get("useCases") if zipped_metadata.get("useCases") else []
+        metadata_dict["keywords"] = zipped_metadata.get("keywords") if zipped_metadata.get("keywords") else []
         metadata_dict["githubUser"] = [self.gh_user] if self.gh_user else []
-        metadata_dict["marketplaces"] = (
-            zipped_metadata.get("marketplaces") or MARKETPLACES
-        )
+        metadata_dict["marketplaces"] = zipped_metadata.get("marketplaces") or MARKETPLACES
         metadata_dict = ContributionConverter.create_pack_metadata(data=metadata_dict)
         metadata_path = os.path.join(self.pack_dir_path, "pack_metadata.json")
         with open(metadata_path, "w") as pack_metadata_file:
@@ -672,9 +624,7 @@ class ContributionConverter:
                 if items_path.get(entity_name):
                     entity_name = get_display_name(items_path.get(entity_name))
             elif not line.startswith(content_item_type_identifier):
-                rn_per_content_item[entity_name] = (
-                    rn_per_content_item[entity_name] + line + "\n"
-                )
+                rn_per_content_item[entity_name] = rn_per_content_item[entity_name] + line + "\n"
         return rn_per_content_item
 
     def replace_RN_template_with_value(self, rn_path: str):
@@ -697,19 +647,13 @@ class ContributionConverter:
             lines = rn_file.readlines()
             for index in range(len(lines)):
                 previous_line = lines[index - 1] if index > 0 else ""
-                if template_text in lines[index] or previous_line.startswith(
-                    new_entity_identifier
-                ):
+                if template_text in lines[index] or previous_line.startswith(new_entity_identifier):
                     # when contributing a new entity to existing pack, the release notes will look something like that:
                     # "##### New: entity name". The following code will extract the entity name in each case.
                     if previous_line.startswith(new_entity_identifier):
-                        template_entity = previous_line.lstrip(
-                            new_entity_identifier
-                        ).rstrip("\n")
+                        template_entity = previous_line.lstrip(new_entity_identifier).rstrip("\n")
                     else:
-                        template_entity = previous_line.lstrip(
-                            entity_identifier
-                        ).rstrip("\n")
+                        template_entity = previous_line.lstrip(entity_identifier).rstrip("\n")
                     curr_content_items = rn_per_content_item.get(template_entity)
                     if curr_content_items:
                         lines[index] = curr_content_items

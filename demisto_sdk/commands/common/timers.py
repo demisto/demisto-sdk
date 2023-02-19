@@ -50,9 +50,7 @@ class PackStatInfo:
 
     def __lt__(self, other):
         if not isinstance(other, PackStatInfo):
-            raise PackStatInfoException(
-                f"Cannot compare `PackStatInfo` with `{type(other)}"
-            )
+            raise PackStatInfoException(f"Cannot compare `PackStatInfo` with `{type(other)}")
         if self.total_time is None or other.total_time is None:
             # If the pack didn't finish, we don't really care about their order
             return True
@@ -106,19 +104,13 @@ def timer(group_name="Common"):
             if pack_name not in packs[func.__qualname__]:
                 packs[func.__qualname__][pack_name] = []
             run_count = len(packs[func.__qualname__][pack_name])
-            packs[func.__qualname__][pack_name].append(
-                PackStatInfo(start_time=datetime.now().isoformat())
-            )
+            packs[func.__qualname__][pack_name].append(PackStatInfo(start_time=datetime.now().isoformat()))
             return pack_name, run_count
 
         def end_measure_pack(pack_name, run_count, elapsed_time):
             # __qualname__ is the function full name
-            packs[func.__qualname__][pack_name][
-                run_count
-            ].end_time = datetime.now().isoformat()
-            packs[func.__qualname__][pack_name][
-                run_count
-            ].total_time = f"{elapsed_time:0.4f}"
+            packs[func.__qualname__][pack_name][run_count].end_time = datetime.now().isoformat()
+            packs[func.__qualname__][pack_name][run_count].total_time = f"{elapsed_time:0.4f}"
 
         def stat_info():
             return StatInfo(
@@ -135,9 +127,7 @@ def timer(group_name="Common"):
     return group_timer
 
 
-def report_time_measurements(
-    group_name="Common", time_measurements_dir="time_measurements"
-):
+def report_time_measurements(group_name="Common", time_measurements_dir="time_measurements"):
     """
     Report the time measurements
 
@@ -147,19 +137,14 @@ def report_time_measurements(
     """
     if group_name == "lint":
         for func_name, data in packs.items():
-            data = {
-                k: v
-                for k, v in sorted(data.items(), key=lambda x: max(x[1]), reverse=True)
-            }
+            data = {k: v for k, v in sorted(data.items(), key=lambda x: max(x[1]), reverse=True)}
             data = [(k, *v1) for k, v in data.items() for v1 in v]
 
             if "run_pack" in func_name:  # don't spam stdout too much
                 write_measure_to_logger(func_name, data, MeasureType.PACKS, debug=False)
             else:
                 write_measure_to_logger(func_name, data, MeasureType.PACKS, debug=True)
-            write_measure_to_file(
-                time_measurements_dir, func_name, data, measure_type=MeasureType.PACKS
-            )
+            write_measure_to_file(time_measurements_dir, func_name, data, measure_type=MeasureType.PACKS)
     timers = registered_timers.get(group_name)
     if timers:
 
@@ -174,9 +159,7 @@ def report_time_measurements(
         ]
 
         # sort by the total time
-        list.sort(
-            method_states, key=lambda method_stat: float(method_stat[2]), reverse=True
-        )
+        list.sort(method_states, key=lambda method_stat: float(method_stat[2]), reverse=True)
 
         write_measure_to_logger(group_name, csv_data=method_states)
         write_measure_to_file(
@@ -207,11 +190,7 @@ def write_measure_to_logger(
 
     """
     sentence = f"Time measurements stat for {name}"
-    output_msg = (
-        f"\n{Colors.Fg.cyan}{'#' * len(sentence)}\n"
-        f"{sentence}\n"
-        f"{'#' * len(sentence)}\n{Colors.reset}"
-    )
+    output_msg = f"\n{Colors.Fg.cyan}{'#' * len(sentence)}\n" f"{sentence}\n" f"{'#' * len(sentence)}\n{Colors.reset}"
     stat_info_table = tabulate(csv_data, headers=MEASURE_TYPE_TO_HEADERS[measure_type])
     output_msg += stat_info_table
     if debug:
@@ -241,9 +220,7 @@ def write_measure_to_file(
         time_measurements_path = Path(time_measurements_dir)
         if not time_measurements_path.exists():
             time_measurements_path.mkdir(parents=True)
-        with open(
-            time_measurements_path / f"{name}_time_measurements.csv", "w+"
-        ) as file:
+        with open(time_measurements_path / f"{name}_time_measurements.csv", "w+") as file:
             # if we construct packs measurement we will use PACK_CSV_HEADERS
             file.write(",".join(MEASURE_TYPE_TO_HEADERS[measure_type]))
             for stat in csv_data:

@@ -14,15 +14,11 @@ from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs impor
 
 def json_to_outputs_flow(kwargs):
     if not kwargs.get("command"):
-        print_error(
-            "To use the json-to-outputs version of this command please include a `command` argument."
-        )
+        print_error("To use the json-to-outputs version of this command please include a `command` argument.")
         return 1
 
     if not kwargs.get("prefix"):
-        print_error(
-            "To use the json-to-outputs version of this command please include a `prefix` argument."
-        )
+        print_error("To use the json-to-outputs version of this command please include a `prefix` argument.")
         return 1
 
     args = [
@@ -48,9 +44,7 @@ def generate_integration_context_from_examples_flow(kwargs):
     insecure: bool = kwargs.get("insecure", False)
     output_path: str = kwargs.get("output")
     validate_inputs_examples(input_path)
-    generate_integration_context(
-        input_path, examples, insecure, output_path=output_path
-    )
+    generate_integration_context(input_path, examples, insecure, output_path=output_path)
 
     generate_ai_descriptions_flow(kwargs)
     return 0

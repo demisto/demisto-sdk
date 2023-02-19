@@ -75,9 +75,7 @@ class TestOpenAPICodeGen:
         integration = self.init_integration()
         integration.generate_configuration()
 
-        with open(
-            os.path.join(self.test_files_path, "swagger_config.json"), "rb"
-        ) as config_path:
+        with open(os.path.join(self.test_files_path, "swagger_config.json"), "rb") as config_path:
             config = json.load(config_path)
 
         assert json.dumps(integration.configuration) == json.dumps(config)
@@ -106,9 +104,7 @@ class TestOpenAPICodeGen:
         )
         integration = self.init_integration()
 
-        with open(
-            os.path.join(self.test_files_path, "swagger_yaml.yml"), "rb"
-        ) as yaml_file:
+        with open(os.path.join(self.test_files_path, "swagger_yaml.yml"), "rb") as yaml_file:
             expected_yaml = yaml.load(yaml_file)
 
         yaml_obj = integration.generate_yaml().to_dict()
@@ -149,11 +145,7 @@ class TestOpenAPICodeGen:
            - Ensure the commands are generated correctly
         """
         integration = self.init_integration()
-        command = [
-            c
-            for c in integration.configuration["commands"]
-            if c["name"] == "get-pet-by-id"
-        ][0]
+        command = [c for c in integration.configuration["commands"] if c["name"] == "get-pet-by-id"][0]
 
         (
             command_function,
@@ -179,11 +171,7 @@ class TestOpenAPICodeGen:
         from demisto_sdk.commands.openapi_codegen.openapi_codegen import BASE_DATA
 
         integration = self.init_integration()
-        command = [
-            c
-            for c in integration.configuration["commands"]
-            if c["name"] == "create-user"
-        ][0]
+        command = [c for c in integration.configuration["commands"] if c["name"] == "create-user"][0]
 
         expected_args = (
             "id=user_id, username=user_username, firstName=user_firstname, lastName=user_lastname,"
@@ -208,11 +196,7 @@ class TestOpenAPICodeGen:
            - Ensure the headers are generated correctly
         """
         integration = self.init_integration()
-        command = [
-            c
-            for c in integration.configuration["commands"]
-            if c["name"] == "post-pet-upload-image"
-        ][0]
+        command = [c for c in integration.configuration["commands"] if c["name"] == "post-pet-upload-image"][0]
 
         expected_headers = [{"Content-Type": "multipart/form-data"}]
 
@@ -233,15 +217,9 @@ class TestOpenAPICodeGen:
         """
 
         integration = self.init_integration()
+        assert [c for c in integration.configuration["commands"] if c["name"] == "post-pet-upload-image"][0]
         assert [
-            c
-            for c in integration.configuration["commands"]
-            if c["name"] == "post-pet-upload-image"
-        ][0]
-        assert [
-            c
-            for c in integration.configuration["commands"]
-            if c["name"] == "post-pet-upload-image-by-uploadimage"
+            c for c in integration.configuration["commands"] if c["name"] == "post-pet-upload-image-by-uploadimage"
         ][0]
 
     def test_file_not_overwritten(self):
@@ -262,9 +240,7 @@ class TestOpenAPICodeGen:
         with open(self.swagger_path) as f:
             file_data_after_config_save = json.loads(f.read())
         assert file_data_after_config_save == file_data_before_config_save
-        os.remove(
-            os.path.join(self.test_files_path, f"{integration.base_name}_config.json")
-        )
+        os.remove(os.path.join(self.test_files_path, f"{integration.base_name}_config.json"))
 
     def test_ref_props_non_dict_handling(self):
         """

@@ -28,11 +28,7 @@ class InputArgument:
         input_type: Optional[enum.EnumMeta] = None,
     ):
         # if name is not provided convert class name to camel case
-        self.name = (
-            name
-            if name
-            else re.sub(r"(?<!^)(?=[A-Z])", "_", self.__class__.__name__).lower()
-        )
+        self.name = name if name else re.sub(r"(?<!^)(?=[A-Z])", "_", self.__class__.__name__).lower()
         self.description = description
         self.required = required
         self.default = default

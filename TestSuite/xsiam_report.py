@@ -4,9 +4,7 @@ from TestSuite.json_based import JSONBased
 
 
 class XSIAMReport(JSONBased):
-    def __init__(
-        self, name: str, xsiam_report_dir_path: Path, json_content: dict = None
-    ):
+    def __init__(self, name: str, xsiam_report_dir_path: Path, json_content: dict = None):
         self.xsiam_report_tmp_path = xsiam_report_dir_path / f"{name}.json"
         self.name = name
 
@@ -18,6 +16,4 @@ class XSIAMReport(JSONBased):
             self.create_default_xsiam_report()
 
     def create_default_xsiam_report(self):
-        self.write_json(
-            {"templates_data": [{"global_id": self.name, "report_name": self.name}]}
-        )
+        self.write_json({"templates_data": [{"global_id": self.name, "report_name": self.name}]})

@@ -52,9 +52,7 @@ def safe_unlock_integrations(test_playbook):
         storage_client = storage.Client()
         unlock_integrations(test_playbook.integrations, test_playbook, storage_client)
     except Exception:
-        test_playbook.build_context.logging_module.exception(
-            "attempt to unlock integration failed for unknown reason."
-        )
+        test_playbook.build_context.logging_module.exception("attempt to unlock integration failed for unknown reason.")
 
 
 def safe_lock_integrations(test_playbook) -> bool:
@@ -68,9 +66,7 @@ def safe_lock_integrations(test_playbook) -> bool:
         A boolean indicating the lock attempt result
     """
 
-    integration_names = [
-        integration.name for integration in test_playbook.integrations_to_lock
-    ]
+    integration_names = [integration.name for integration in test_playbook.integrations_to_lock]
     if integration_names:
         print_msg = (
             f"Attempting to lock integrations {integration_names}, "
@@ -83,9 +79,7 @@ def safe_lock_integrations(test_playbook) -> bool:
         storage_client = storage.Client()
         locked = lock_integrations(test_playbook, storage_client)
     except Exception:
-        test_playbook.build_context.logging_module.exception(
-            "attempt to lock integration failed for unknown reason."
-        )
+        test_playbook.build_context.logging_module.exception("attempt to lock integration failed for unknown reason.")
         locked = False
     return locked
 
@@ -139,23 +133,15 @@ def lock_integrations(test_playbook, storage_client: storage.Client) -> bool:
     Returns:
         True if all the test's integrations were successfully locked, else False
     """
-    integrations = [
-        integration.name for integration in test_playbook.integrations_to_lock
-    ]
+    integrations = [integration.name for integration in test_playbook.integrations_to_lock]
     if not integrations:
         return True
-    existing_integrations_lock_files = get_locked_integrations(
-        integrations, storage_client
-    )
+    existing_integrations_lock_files = get_locked_integrations(integrations, storage_client)
     for integration, lock_file in existing_integrations_lock_files.items():
         # Each file has content in the form of <circleci-build-number>:<timeout in seconds>
         # If it has not expired - it means the integration is currently locked by another test.
-        workflow_id, build_number, lock_timeout = (
-            lock_file.download_as_string().decode().split(":")
-        )
-        if not lock_expired(lock_file, lock_timeout) and workflow_still_running(
-            workflow_id, test_playbook
-        ):
+        workflow_id, build_number, lock_timeout = lock_file.download_as_string().decode().split(":")
+        if not lock_expired(lock_file, lock_timeout) and workflow_still_running(workflow_id, test_playbook):
             # there is a locked integration for which the lock is not expired - test cannot be executed at the moment
             test_playbook.build_context.logging_module.warning(
                 f"Could not lock integration {integration}, another lock file was exist with "
@@ -168,19 +154,13 @@ def lock_integrations(test_playbook, storage_client: storage.Client) -> bool:
     # See https://cloud.google.com/storage/docs/generations-preconditions for details.
     for integration in integrations:
         if integration in existing_integrations_lock_files:
-            integrations_generation_number[
-                integration
-            ] = existing_integrations_lock_files[integration].generation
+            integrations_generation_number[integration] = existing_integrations_lock_files[integration].generation
         else:
             integrations_generation_number[integration] = 0
-    return create_lock_files(
-        integrations_generation_number, storage_client, test_playbook
-    )
+    return create_lock_files(integrations_generation_number, storage_client, test_playbook)
 
 
-def create_lock_files(
-    integrations_generation_number: dict, storage_client: storage.Client, test_playbook
-) -> bool:
+def create_lock_files(integrations_generation_number: dict, storage_client: storage.Client, test_playbook) -> bool:
     """
     This method tries to create a lock files for all integrations specified in 'integrations_generation_number'.
     Each file should contain <circle-ci-build-number>:<test-timeout>
@@ -204,9 +184,7 @@ def create_lock_files(
                 f"{WORKFLOW_ID}:{BUILD_NUM}:{test_playbook.configuration.timeout + 30}",
                 if_generation_match=generation_number,
             )
-            test_playbook.build_context.logging_module.debug(
-                f"integration {integration} locked"
-            )
+            test_playbook.build_context.logging_module.debug(f"integration {integration} locked")
             locked_integrations.append(integration)
         except PreconditionFailed:
             # if this exception occurs it means that another build has locked this integration
@@ -221,9 +199,7 @@ def create_lock_files(
     return True
 
 
-def unlock_integrations(
-    integrations_to_unlock: list, test_playbook, storage_client: storage.Client
-) -> None:
+def unlock_integrations(integrations_to_unlock: list, test_playbook, storage_client: storage.Client) -> None:
     """
     Delete all integration lock files for integrations specified in 'locked_integrations'
     Args:
@@ -232,18 +208,14 @@ def unlock_integrations(
         storage_client: The GCP storage client
     """
     locked_integrations = [integration.name for integration in integrations_to_unlock]
-    locked_integration_blobs = get_locked_integrations(
-        locked_integrations, storage_client
-    )
+    locked_integration_blobs = get_locked_integrations(locked_integrations, storage_client)
     for integration, lock_file in locked_integration_blobs.items():
         try:
             # Verifying build number is the same as current build number to avoid deleting other tests lock files
             _, build_number, _ = lock_file.download_as_string().decode().split(":")
             if build_number == BUILD_NUM:
                 lock_file.delete(if_generation_match=lock_file.generation)
-                test_playbook.build_context.logging_module.debug(
-                    f"Integration {integration} unlocked"
-                )
+                test_playbook.build_context.logging_module.debug(f"Integration {integration} unlocked")
         except PreconditionFailed:
             test_playbook.build_context.logging_module.error(
                 f"Could not unlock integration {integration} precondition failure"
@@ -277,9 +249,7 @@ def get_locked_integrations(integrations: list, storage_client: storage.Client) 
         )
     # Filtering 'current_integrations_lock_files' from integrations with no files
     current_integrations_lock_files = {
-        integration: blob_files[0]
-        for integration, blob_files in current_integrations_lock_files.items()
-        if blob_files
+        integration: blob_files[0] for integration, blob_files in current_integrations_lock_files.items() if blob_files
     }
     return current_integrations_lock_files
 
@@ -295,6 +265,4 @@ def lock_expired(lock_file: storage.Blob, lock_timeout: str) -> bool:
     Returns:
         True if the lock has expired it's timeout, else False
     """
-    return datetime.datetime.now(tz=pytz.utc) - lock_file.updated >= datetime.timedelta(
-        seconds=int(lock_timeout)
-    )
+    return datetime.datetime.now(tz=pytz.utc) - lock_file.updated >= datetime.timedelta(seconds=int(lock_timeout))

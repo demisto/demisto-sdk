@@ -55,18 +55,9 @@ def pre_import_write_queries(
     pass
 
 
-def import_csv(
-    tx: Transaction, node_files: List[str], relationship_files: List[str]
-) -> None:
-    nodes_files = ", ".join(
-        [f'{{fileName: "file:/{filename}", labels: []}}' for filename in node_files]
-    )
-    relationship_files = ", ".join(
-        [
-            f'{{fileName: "file:/{filename}", type: null}}'
-            for filename in relationship_files
-        ]
-    )
+def import_csv(tx: Transaction, node_files: List[str], relationship_files: List[str]) -> None:
+    nodes_files = ", ".join([f'{{fileName: "file:/{filename}", labels: []}}' for filename in node_files])
+    relationship_files = ", ".join([f'{{fileName: "file:/{filename}", type: null}}' for filename in relationship_files])
     query = f"""// Imports CSVs from import directory
 CALL apoc.import.csv([{nodes_files}], [{relationship_files}], {{}})"""
     run_query(tx, query)

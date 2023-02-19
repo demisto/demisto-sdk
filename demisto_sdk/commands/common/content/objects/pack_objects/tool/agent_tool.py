@@ -62,11 +62,7 @@ class AgentTool(GeneralObject):
                     for file_name in files:
                         zipf.write(os.path.join(root, file_name), file_name)
         else:
-            created_files.extend(
-                Path(
-                    copytree(src=self.path, dst=dest_dir / self.normalize_file_name())
-                ).iterdir()
-            )
+            created_files.extend(Path(copytree(src=self.path, dst=dest_dir / self.normalize_file_name())).iterdir())
 
         return created_files
 

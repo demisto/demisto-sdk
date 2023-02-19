@@ -52,9 +52,7 @@ class TestErrors(unittest.TestCase):
         When: Returning an error message
         Then: Return error message with the input value as a tuple containing error and error code.
         """
-        expected_result = (
-            "You may need RN in this file, please verify if they are required."
-        )
+        expected_result = "You may need RN in this file, please verify if they are required."
         result = Errors.might_need_release_notes()
         assert result == expected_result
 
@@ -84,9 +82,7 @@ class TestErrors(unittest.TestCase):
         When: Returning an error message
         Then: Return error message with the input value as a string containing error.
         """
-        expected_result = (
-            "ID may have changed, please make sure to check you have the correct one."
-        )
+        expected_result = "ID may have changed, please make sure to check you have the correct one."
         result = Errors.id_might_changed()
         assert result == expected_result
 
@@ -103,9 +99,7 @@ class TestErrors(unittest.TestCase):
         )
         name = "FileName"
         file_id = "FileID"
-        result = Errors.id_should_equal_name(
-            name, file_id, "packs/myPack/integrations/myIntegration/myIntegration.yml"
-        )
+        result = Errors.id_should_equal_name(name, file_id, "packs/myPack/integrations/myIntegration/myIntegration.yml")
         assert result == expected_result
 
     def test_file_type_not_supported(self):
@@ -181,17 +175,9 @@ class TestErrors(unittest.TestCase):
         integration_id = "dummy_integration"
         expected = f"The integration {integration_id} is currently in skipped. Please add working tests and unskip."
 
-        assert (
-            Errors.integration_is_skipped(integration_id, skip_comment=None)[0]
-            == expected
-        )
-        assert (
-            Errors.integration_is_skipped(integration_id, skip_comment="")[0]
-            == expected
-        )
-        assert (
-            Errors.integration_is_skipped(integration_id)[0] == expected
-        )  # skip_comment argument is None by default
+        assert Errors.integration_is_skipped(integration_id, skip_comment=None)[0] == expected
+        assert Errors.integration_is_skipped(integration_id, skip_comment="")[0] == expected
+        assert Errors.integration_is_skipped(integration_id)[0] == expected  # skip_comment argument is None by default
 
     def test_integration_is_skipped__comment(self):
         integration_id = "dummy_integration"
@@ -209,14 +195,10 @@ class TestErrors(unittest.TestCase):
         from demisto_sdk.commands.common.errors import ALLOWED_IGNORE_ERRORS
 
         for error in ALLOWED_IGNORE_ERRORS:
-            assert ERROR_CODE_REGEX.fullmatch(
-                error
-            ), f"{error} does not match an error code format"
+            assert ERROR_CODE_REGEX.fullmatch(error), f"{error} does not match an error code format"
 
     def test_error_code_format(self):
         from demisto_sdk.commands.common.errors import ERROR_CODE
 
         for error in ERROR_CODE.values():
-            assert ERROR_CODE_REGEX.fullmatch(
-                error["code"]
-            ), f"{error} does not match an error code format"
+            assert ERROR_CODE_REGEX.fullmatch(error["code"]), f"{error} does not match an error code format"

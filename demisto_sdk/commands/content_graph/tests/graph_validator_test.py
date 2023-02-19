@@ -228,9 +228,7 @@ def repository(mocker) -> ContentDTO:
             ),
         ],
     }
-    pack1 = mock_pack(
-        "SamplePack", [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
-    )
+    pack1 = mock_pack("SamplePack", [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2])
     pack2 = mock_pack("SamplePack2", [MarketplaceVersions.XSOAR])
     pack3 = mock_pack(
         "SamplePack3",
@@ -261,9 +259,7 @@ def repository(mocker) -> ContentDTO:
             "6.8.0",
         )
     )
-    pack3.content_items.playbook.append(
-        mock_playbook("SamplePlaybook2", [MarketplaceVersions.XSOAR], "6.8.0", "6.5.0")
-    )
+    pack3.content_items.playbook.append(mock_playbook("SamplePlaybook2", [MarketplaceVersions.XSOAR], "6.8.0", "6.5.0"))
     pack3.content_items.script.append(mock_script("SampleScript2"))
     repository.packs.extend([pack1, pack2, pack3])
     mocker.patch(
@@ -292,9 +288,7 @@ def update_repository(
 ) -> List[str]:
     updated_packs = commit_func(repository)
     pack_ids_to_update = [pack.object_id for pack in updated_packs]
-    repository.packs = [
-        pack for pack in repository.packs if pack.object_id not in pack_ids_to_update
-    ]
+    repository.packs = [pack for pack in repository.packs if pack.object_id not in pack_ids_to_update]
     repository.packs.extend(updated_packs)
     return pack_ids_to_update
 
@@ -482,15 +476,10 @@ def test_is_file_display_name_already_exists(repository: ContentDTO, capsys):
     captured = capsys.readouterr().out
     assert not is_valid
     for i in range(1, 4):
-        assert (
-            f"Pack 'SamplePack{i if i != 1 else ''}' has a duplicate display_name"
-            in captured
-        )
+        assert f"Pack 'SamplePack{i if i != 1 else ''}' has a duplicate display_name" in captured
 
 
-def test_are_marketplaces_relationships_paths_valid(
-    repository: ContentDTO, capsys, mocker
-):
+def test_are_marketplaces_relationships_paths_valid(repository: ContentDTO, capsys, mocker):
     """
     Given
     - A content repo

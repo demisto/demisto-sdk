@@ -12,9 +12,7 @@ from demisto_sdk.commands.prepare_content.unifier import Unifier
 
 class RuleUnifier(Unifier):
     @staticmethod
-    def unify(
-        path: Path, data: dict, marketplace: MarketplaceVersions = None, **kwargs
-    ) -> dict:
+    def unify(path: Path, data: dict, marketplace: MarketplaceVersions = None, **kwargs) -> dict:
         click.echo(f"Unifiying {path}...")
         RuleUnifier._insert_rules(path, data)
         RuleUnifier._insert_schema(path, data)
@@ -35,14 +33,10 @@ class RuleUnifier(Unifier):
         if os.path.isdir(samples_dir):
             samples = defaultdict(list)
             for sample_file in os.listdir(samples_dir):
-                with open(
-                    os.path.join(samples_dir, sample_file), encoding="utf-8"
-                ) as samples_file_object:
+                with open(os.path.join(samples_dir, sample_file), encoding="utf-8") as samples_file_object:
                     sample = json.loads(samples_file_object.read())
                     if data.get("id") in sample.get("rules", []):
-                        samples[
-                            f'{sample.get("vendor")}_{sample.get("product")}'
-                        ].extend(sample.get("samples"))
+                        samples[f'{sample.get("vendor")}_{sample.get("product")}'].extend(sample.get("samples"))
             if samples:
                 data["samples"] = FoldedScalarString(json.dumps(samples, indent=4))
                 click.echo(f"Added {len(samples)} samples.")

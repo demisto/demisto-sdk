@@ -11,12 +11,8 @@ from demisto_sdk.commands.common.tools import src_root
 
 TEST_DATA = src_root() / "tests" / "test_files"
 TEST_CONTENT_REPO = TEST_DATA / "content_slim"
-TEST_YAML_NO_FROM_VERSION = (
-    TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / SCRIPTS_DIR / "script-sample_new.yml"
-)
-TEST_YAML_NO_TO_VERSION = (
-    TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / SCRIPTS_DIR / "script-sample_packs.yml"
-)
+TEST_YAML_NO_FROM_VERSION = TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / SCRIPTS_DIR / "script-sample_new.yml"
+TEST_YAML_NO_TO_VERSION = TEST_CONTENT_REPO / PACKS_DIR / "Sample01" / SCRIPTS_DIR / "script-sample_packs.yml"
 
 
 def test_from_version_no_to_version(datadir):

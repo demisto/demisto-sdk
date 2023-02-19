@@ -18,9 +18,7 @@ INVALID2_MD = f"{git_path()}/demisto_sdk/tests/test_files/README-invalid2.md"
 INVALID3_MD = f"{git_path()}/demisto_sdk/tests/test_files/README-short-invalid.md"
 IMAGES_MD = f"{git_path()}/demisto_sdk/tests/test_files/README-images.md"
 EMPTY_MD = f"{git_path()}/demisto_sdk/tests/test_files/README-empty.md"
-FAKE_INTEGRATION_README = (
-    f"{git_path()}/demisto_sdk/tests/test_files/fake_integration/fake_README.md"
-)
+FAKE_INTEGRATION_README = f"{git_path()}/demisto_sdk/tests/test_files/fake_integration/fake_README.md"
 
 README_INPUTS = [
     (VALID_MD, True),
@@ -31,17 +29,14 @@ README_INPUTS = [
 ]
 
 MDX_SKIP_NPM_MESSAGE = (
-    'Required npm modules are not installed. To run this test you must run "npm install" '
-    "in the root of the project."
+    'Required npm modules are not installed. To run this test you must run "npm install" ' "in the root of the project."
 )
 
 
 @pytest.mark.parametrize("current, answer", README_INPUTS)
 def test_is_file_valid(mocker, current, answer):
     readme_validator = ReadMeValidator(current)
-    valid = ReadMeValidator.are_modules_installed_for_verify(
-        readme_validator.content_path
-    )
+    valid = ReadMeValidator.are_modules_installed_for_verify(readme_validator.content_path)
     if not valid:
         pytest.skip("skipping mdx test. " + MDX_SKIP_NPM_MESSAGE)
         return
@@ -73,9 +68,7 @@ def test_is_file_valid_mdx_server(mocker, current, answer):
     ReadMeValidator.add_node_env_vars()
     with ReadMeValidator.start_mdx_server():
         readme_validator = ReadMeValidator(current)
-        valid = readme_validator.are_modules_installed_for_verify(
-            readme_validator.content_path
-        )
+        valid = readme_validator.are_modules_installed_for_verify(readme_validator.content_path)
         if not valid:
             pytest.skip("skipping mdx server test. " + MDX_SKIP_NPM_MESSAGE)
             return
@@ -100,9 +93,7 @@ def test_air_gapped_env(tmp_path, mocker):
     r = str(tmp_path / "README.md")
     with open(r, "w") as f:
         f.write("<div> not valid")
-    mocker.patch.object(
-        ReadMeValidator, "should_run_mdx_validation", return_value=False
-    )
+    mocker.patch.object(ReadMeValidator, "should_run_mdx_validation", return_value=False)
     assert ReadMeValidator(r).is_mdx_file()
 
 
@@ -196,9 +187,7 @@ def test_is_image_path_valid():
         ("## Known Limitations\n\n----------\n", "Known Limitations"),
     ],
 )
-def test_unvalid_verify_no_empty_sections(
-    integration, capsys, file_input, missing_section
-):
+def test_unvalid_verify_no_empty_sections(integration, capsys, file_input, missing_section):
     """
     Given
         - Empty sections in different forms
@@ -216,9 +205,7 @@ def test_unvalid_verify_no_empty_sections(
         result = readme_validator.verify_no_empty_sections()
 
         stdout, _ = capsys.readouterr()
-        section_error = (
-            f"{missing_section} is empty, please elaborate or delete the section."
-        )
+        section_error = f"{missing_section} is empty, please elaborate or delete the section."
 
         assert not result
         assert section_error in stdout
@@ -226,9 +213,7 @@ def test_unvalid_verify_no_empty_sections(
 
 @pytest.mark.parametrize(
     "file_input",
-    [
-        "## Troubleshooting\n## OtherSection\n## Additional Information\n\n## OtherSection\n##"
-    ],
+    ["## Troubleshooting\n## OtherSection\n## Additional Information\n\n## OtherSection\n##"],
 )
 def test_combined_unvalid_verify_no_empty_sections(integration, capsys, file_input):
     """
@@ -405,9 +390,7 @@ def test_readme_ignore(integration, readme_fake_path, readme_text):
 
 
 @pytest.mark.parametrize("errors_found, errors_ignore, expected", ERROR_FOUND_CASES)
-def test_context_only_runs_once_when_error_exist(
-    mocker, integration, errors_found, errors_ignore, expected
-):
+def test_context_only_runs_once_when_error_exist(mocker, integration, errors_found, errors_ignore, expected):
     """
     Given
         - README that contains changes and YML file
@@ -417,9 +400,7 @@ def test_context_only_runs_once_when_error_exist(
         - Ensure validation only run once, either for YML or for README
     """
     readme_validator = ReadMeValidator(FAKE_INTEGRATION_README)
-    mocker.patch.object(
-        ReadMeValidator, "_get_error_lists", return_value=(errors_found, errors_ignore)
-    )
+    mocker.patch.object(ReadMeValidator, "_get_error_lists", return_value=(errors_found, errors_ignore))
 
     result = readme_validator.is_context_different_in_yml()
     assert result == expected
@@ -509,9 +490,7 @@ def test_demisto_in_integration_readme(repo):
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("IntName")
 
-    readme_path = glob.glob(
-        os.path.join(os.path.dirname(integration.yml.path), "*README.md")
-    )[0]
+    readme_path = glob.glob(os.path.join(os.path.dirname(integration.yml.path), "*README.md"))[0]
 
     with open(readme_path, "w") as f:
         f.write("This checks if we have the word Demisto in the README.")
@@ -568,9 +547,7 @@ def test_demisto_not_in_readme(repo):
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("IntName")
 
-    readme_path = glob.glob(
-        os.path.join(os.path.dirname(integration.yml.path), "*README.md")
-    )[0]
+    readme_path = glob.glob(os.path.join(os.path.dirname(integration.yml.path), "*README.md"))[0]
 
     with open(readme_path, "w") as f:
         f.write("This checks if we have the word XSOAR in the README.")
@@ -595,9 +572,7 @@ def test_verify_template_not_in_readme(repo):
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("IntName")
 
-    readme_path = glob.glob(
-        os.path.join(os.path.dirname(integration.yml.path), "*README.md")
-    )[0]
+    readme_path = glob.glob(os.path.join(os.path.dirname(integration.yml.path), "*README.md"))[0]
 
     with open(readme_path, "w") as f:
         f.write("This checks if we have the sentence %%FILL HERE%% in the README.")
@@ -626,9 +601,7 @@ def test_verify_readme_image_paths(mocker):
     sys.stdout = captured_output  # redirect stdout.
 
     readme_validator = ReadMeValidator(IMAGES_MD)
-    mocker.patch.object(
-        GitUtil, "get_current_working_branch", return_value="branch_name"
-    )
+    mocker.patch.object(GitUtil, "get_current_working_branch", return_value="branch_name")
 
     with requests_mock.Mocker() as m:
         # Mock get requests
@@ -658,8 +631,7 @@ def test_verify_readme_image_paths(mocker):
         "![Identity with High Risk Score](default.png)" not in captured_output
     )
     assert (
-        "Branch name was found in the URL, please change it to the commit hash:\n"
-        "![branch in url]" in captured_output
+        "Branch name was found in the URL, please change it to the commit hash:\n" "![branch in url]" in captured_output
     )
     assert (
         "Branch name was found in the URL, please change it to the commit hash:\n"
@@ -687,8 +659,7 @@ def test_verify_readme_image_paths(mocker):
     )
     assert (
         "please repair it:\n"
-        "![Identity with High Risk Score](https://github.com/demisto/test3.png)"
-        not in captured_output
+        "![Identity with High Risk Score](https://github.com/demisto/test3.png)" not in captured_output
     )
 
 
@@ -707,9 +678,7 @@ def test_check_readme_relative_image_paths(mocker):
 
     """
     readme_validator = ReadMeValidator(IMAGES_MD, ignored_errors={IMAGES_MD: "RM108"})
-    mocker.patch.object(
-        GitUtil, "get_current_working_branch", return_value="branch_name"
-    )
+    mocker.patch.object(GitUtil, "get_current_working_branch", return_value="branch_name")
     with requests_mock.Mocker() as m:
         # Mock get requests
         m.get(

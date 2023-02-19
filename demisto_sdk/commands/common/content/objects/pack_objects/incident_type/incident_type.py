@@ -32,13 +32,9 @@ class IncidentType(JSONContentObject):
             incident_type_unified_data = self._as_dict
 
         with NamedTemporaryFile(suffix=".json") as incident_type_unified_file:
-            incident_type_unified_file.write(
-                bytes(json.dumps(incident_type_unified_data), "utf-8")
-            )
+            incident_type_unified_file.write(bytes(json.dumps(incident_type_unified_data), "utf-8"))
             incident_type_unified_file.seek(0)
-            return client.import_incident_types_handler(
-                file=incident_type_unified_file.name
-            )
+            return client.import_incident_types_handler(file=incident_type_unified_file.name)
 
     def type(self):
         return FileType.INCIDENT_TYPE

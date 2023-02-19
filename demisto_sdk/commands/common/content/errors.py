@@ -5,9 +5,7 @@ from wcmatch.pathlib import Path
 
 
 class ContentError(Exception):
-    def __init__(
-        self, obj: object, obj_path: Path, additional_info: Optional[str] = ""
-    ):
+    def __init__(self, obj: object, obj_path: Path, additional_info: Optional[str] = ""):
         """Base class for exceptions in this module.
 
         Args:
@@ -26,9 +24,7 @@ class ContentError(Exception):
 
 
 class ContentInitializeError(ContentError):
-    def __init__(
-        self, obj: object, obj_path: Path, additional_info: Optional[str] = ""
-    ):
+    def __init__(self, obj: object, obj_path: Path, additional_info: Optional[str] = ""):
         """Exception raised when an error occurred in object initialization"""
         super().__init__(obj, obj_path, additional_info)
 
@@ -42,9 +38,7 @@ class ContentInitializeError(ContentError):
 
 
 class ContentDumpError(ContentError):
-    def __init__(
-        self, obj: object, obj_path: Path, additional_info: Optional[str] = ""
-    ):
+    def __init__(self, obj: object, obj_path: Path, additional_info: Optional[str] = ""):
         """Exception raised when an error occurred in object dump"""
         super().__init__(obj, obj_path, additional_info)
 
@@ -58,9 +52,7 @@ class ContentDumpError(ContentError):
 
 
 class ContentKeyError(ContentError):
-    def __init__(
-        self, obj: object, obj_path: Path, key: str, additional_info: Optional[str] = ""
-    ):
+    def __init__(self, obj: object, obj_path: Path, key: str, additional_info: Optional[str] = ""):
         """Exception raised when an error occurred in accessing key of the object (YAML/JSON)"""
         super().__init__(obj, obj_path, additional_info)
         self.key = key
@@ -75,9 +67,7 @@ class ContentKeyError(ContentError):
 
 
 class ContentSerializeError(ContentError):
-    def __init__(
-        self, obj: object, obj_path: Path, additional_info: Optional[str] = ""
-    ):
+    def __init__(self, obj: object, obj_path: Path, additional_info: Optional[str] = ""):
         """Exception raised when an error occurred in object serialization"""
         super().__init__(obj, obj_path, additional_info)
 
@@ -91,9 +81,7 @@ class ContentSerializeError(ContentError):
 
 
 class ContentFactoryError(ContentError):
-    def __init__(
-        self, obj: object, obj_path: Path, additional_info: Optional[str] = ""
-    ):
+    def __init__(self, obj: object, obj_path: Path, additional_info: Optional[str] = ""):
         """Exception raised when an error occurred in content object factory"""
         super().__init__(obj, obj_path, additional_info)
 

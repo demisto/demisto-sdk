@@ -28,18 +28,14 @@ def get_pack(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Pack
     return get_repo(request, tmp_path_factory).create_pack()
 
 
-def get_integration(
-    request: FixtureRequest, tmp_path_factory: TempPathFactory
-) -> Integration:
+def get_integration(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Integration:
     """Mocking tmp_path"""
     integration = get_pack(request, tmp_path_factory).create_integration()
     integration.create_default_integration()
     return integration
 
 
-def get_playbook(
-    request: FixtureRequest, tmp_path_factory: TempPathFactory
-) -> Playbook:
+def get_playbook(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Playbook:
     """Mocking tmp_path"""
     playbook = get_pack(request, tmp_path_factory).create_playbook()
     playbook.create_default_playbook()
@@ -56,9 +52,7 @@ def pack(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Pack:
 
 
 @pytest.fixture
-def integration(
-    request: FixtureRequest, tmp_path_factory: TempPathFactory
-) -> Integration:
+def integration(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Integration:
     """Mocking tmp_path"""
     return get_integration(request, tmp_path_factory)
 
@@ -114,9 +108,7 @@ def are_mock_calls_supported_in_python_version():
     secho_mocker.mock_calls (not supported in python < 3.8)
     """
     python_version = sys.version_info
-    if python_version.major == 2 or (
-        python_version.major == 3 and python_version.minor < 8
-    ):
+    if python_version.major == 2 or (python_version.major == 3 and python_version.minor < 8):
         pytest.skip('The current mock "calls" is supported only in python 3.8+')
 
 
@@ -126,7 +118,5 @@ def mock_update_id_set_cpu_count() -> Generator:
     Since Circle build has an issue in it's virtualization where it has only 2 vcpu's but the 'cpu_count' method returns
     all physical cpu's (36) it uses too many processes in the process pools.
     """
-    with mock.patch(
-        "demisto_sdk.commands.common.update_id_set.cpu_count", return_value=2
-    ) as _fixture:
+    with mock.patch("demisto_sdk.commands.common.update_id_set.cpu_count", return_value=2) as _fixture:
         yield _fixture

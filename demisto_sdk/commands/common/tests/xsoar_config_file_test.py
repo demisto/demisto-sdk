@@ -18,9 +18,7 @@ def test_schema_file_correct_path():
         Validate that the __init__ method finds the schema in the expected path.
     """
     validator = XSOARConfigJsonValidator("./")
-    assert (
-        "demisto_sdk/commands/common/schemas/xsoar_config.json" in validator.schema_path
-    )
+    assert "demisto_sdk/commands/common/schemas/xsoar_config.json" in validator.schema_path
 
 
 class TestCreateSchemaValidationResultsTable:
@@ -81,9 +79,7 @@ class TestCreateSchemaValidationResultsTable:
         Then:
             Validate that the table has the right data.
         """
-        generator = self.errors_iterator(
-            [ValidationError("One Error"), ValidationError("Error #2")]
-        )
+        generator = self.errors_iterator([ValidationError("One Error"), ValidationError("Error #2")])
         (
             errors_table,
             errors_found,

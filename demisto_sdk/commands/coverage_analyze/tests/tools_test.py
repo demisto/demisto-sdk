@@ -20,10 +20,7 @@ class TestGetTotalCoverage:
         assert get_total_coverage(filename=JSON_MIN_DATA_FILE) == 52.38326848249027
 
     def test_get_total_coverage_from_json_file(self):
-        assert (
-            get_total_coverage(filename=os.path.join(TEST_DATA_DIR, "coverage.json"))
-            == 52.38326848249027
-        )
+        assert get_total_coverage(filename=os.path.join(TEST_DATA_DIR, "coverage.json")) == 52.38326848249027
 
     def test_get_total_coverage_from_latest_url(self, requests_mock):
         requests_mock.get(LATEST_URL, json=read_file(JSON_MIN_DATA_FILE))

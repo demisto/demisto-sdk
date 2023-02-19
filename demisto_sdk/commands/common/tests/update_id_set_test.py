@@ -112,9 +112,7 @@ class TestPacksMetadata:
 
     @staticmethod
     @pytest.mark.parametrize("metadata_file_content, author, certification", TEST_PACK)
-    def test_process_metadata(
-        mocker, repo, metadata_file_content, author, certification
-    ):
+    def test_process_metadata(mocker, repo, metadata_file_content, author, certification):
         """
         Given
             - A pack_metadata file for Pack1
@@ -354,9 +352,7 @@ class TestDuplicates:
             ),
         ],
     )
-    def test_has_duplicate(
-        first_pack, second_pack, first_source, second_source, expected
-    ):
+    def test_has_duplicate(first_pack, second_pack, first_source, second_source, expected):
         """
         Given
             - id_set.json with two duplicate layouts of the same type (details), their versions also overrides.
@@ -400,9 +396,7 @@ class TestDuplicates:
 
         # Check for duplicates for existing id-sets,
         # Will not be considered as duplicate when two entities come from the same source
-        has_duplicates = has_duplicate(
-            id_set["Layouts"], "urlRep", "Layouts", False, is_create_new=False
-        )
+        has_duplicates = has_duplicate(id_set["Layouts"], "urlRep", "Layouts", False, is_create_new=False)
         assert has_duplicates == expected
 
         # Check for duplicates for a new id-set,
@@ -478,9 +472,7 @@ class TestDuplicates:
                 }
             },
         ]
-        has_duplicates = has_duplicate(
-            integrations, "Integ", "integrations", print_logs=False
-        )
+        has_duplicates = has_duplicate(integrations, "Integ", "integrations", print_logs=False)
         assert not has_duplicates
 
 
@@ -489,8 +481,7 @@ class TestIntegrations:
         "Dummy Integration": {
             "name": "Dummy Integration",
             "display_name": "Palo Alto Networks Cortex XDR - Investigation and Response",
-            "file_path": TESTS_DIR
-            + "/test_files/DummyPack/Integrations/DummyIntegration/DummyIntegration.yml",
+            "file_path": TESTS_DIR + "/test_files/DummyPack/Integrations/DummyIntegration/DummyIntegration.yml",
             "fromversion": "4.1.0",
             "source": ["github.com", "demisto", "demisto-sdk"],
             "marketplaces": ["xsoar"],
@@ -526,8 +517,7 @@ class TestIntegrations:
         "Dummy Integration": {
             "name": "Dummy Integration",
             "display_name": "Palo Alto Networks Cortex XDR - Investigation and Response",
-            "file_path": TESTS_DIR
-            + "/test_files/DummyPack/Integrations/integration-DummyIntegration.yml",
+            "file_path": TESTS_DIR + "/test_files/DummyPack/Integrations/integration-DummyIntegration.yml",
             "fromversion": "4.1.0",
             "source": ["github.com", "demisto", "demisto-sdk"],
             "marketplaces": ["xsoar"],
@@ -573,9 +563,7 @@ class TestIntegrations:
         mocker.patch.object(tools, "get_pack_name", return_value="DummyPack")
         packs = {"DummyPack": {"marketplaces": [MarketplaceVersions.XSOAR.value]}}
 
-        non_unified_file_path = os.path.join(
-            TESTS_DIR, "test_files", "DummyPack", "Integrations", "DummyIntegration"
-        )
+        non_unified_file_path = os.path.join(TESTS_DIR, "test_files", "DummyPack", "Integrations", "DummyIntegration")
         res, _ = process_integration(
             non_unified_file_path,
             packs,
@@ -592,9 +580,7 @@ class TestIntegrations:
             "Integrations",
             "integration-DummyIntegration.yml",
         )
-        res, _ = process_integration(
-            unified_file_path, packs, MarketplaceVersions.XSOAR.value, print_logs=True
-        )
+        res, _ = process_integration(unified_file_path, packs, MarketplaceVersions.XSOAR.value, print_logs=True)
         assert len(res) == 1
         unified_integration_data = res[0]
 
@@ -609,9 +595,7 @@ class TestIntegrations:
             const_data = constant.get("Dummy Integration")
             returned_data = returned.get("Dummy Integration")
 
-            assert IsEqualFunctions.is_dicts_equal(
-                returned_data, const_data, lists_as_sets=True
-            )
+            assert IsEqualFunctions.is_dicts_equal(returned_data, const_data, lists_as_sets=True)
 
     @staticmethod
     def test_process_integration__exception(mocker):
@@ -626,9 +610,7 @@ class TestIntegrations:
             - an exception will be raised
         """
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
-        test_file_path = os.path.join(
-            TESTS_DIR, "test_files", "invalid_file_structures", "integration.yml"
-        )
+        test_file_path = os.path.join(TESTS_DIR, "test_files", "invalid_file_structures", "integration.yml")
         with pytest.raises(Exception):
             process_integration(
                 test_file_path,
@@ -650,9 +632,7 @@ class TestIntegrations:
             - return empty list
         """
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=True)
-        test_file_path = os.path.join(
-            TESTS_DIR, "test_files", "invalid_file_structures", "integration.yml"
-        )
+        test_file_path = os.path.join(TESTS_DIR, "test_files", "invalid_file_structures", "integration.yml")
         res, _ = process_integration(
             test_file_path,
             {"DummyPack": {}},
@@ -681,8 +661,7 @@ class TestScripts:
         "DummyScript": {
             "name": "DummyScript",
             "display_name": "DummyScript",
-            "file_path": TESTS_DIR
-            + "/test_files/alternative_meta_fields/Script-top_level_alternative_fields.yml",
+            "file_path": TESTS_DIR + "/test_files/alternative_meta_fields/Script-top_level_alternative_fields.yml",
             "source": ["github.com", "demisto", "demisto-sdk"],
             "marketplaces": ["xsoar"],
             "fromversion": "5.0.0",
@@ -697,8 +676,7 @@ class TestScripts:
         "DummyScript": {
             "name": "DummyScript",
             "display_name": "DummyScript",
-            "file_path": TESTS_DIR
-            + "/test_files/alternative_meta_fields/Script-second_level_alternative_fields.yml",
+            "file_path": TESTS_DIR + "/test_files/alternative_meta_fields/Script-second_level_alternative_fields.yml",
             "source": ["github.com", "demisto", "demisto-sdk"],
             "marketplaces": ["xsoar"],
             "fromversion": "5.0.0",
@@ -757,18 +735,13 @@ class TestScripts:
         """
         mocker.patch.object(tools, "get_pack_name", return_value="DummyPack")
 
-        file_path = (
-            TESTS_DIR
-            + "/test_files/alternative_meta_fields/Script-top_level_alternative_fields.yml"
-        )
+        file_path = TESTS_DIR + "/test_files/alternative_meta_fields/Script-top_level_alternative_fields.yml"
         data = get_script_data(
             file_path,
             packs={"DummyPack": {"marketplaces": [MarketplaceVersions.XSOAR.value]}},
         )
 
-        assert list(data.keys()) == list(
-            TestScripts.SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL.keys()
-        )
+        assert list(data.keys()) == list(TestScripts.SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL.keys())
 
         const_data = TestScripts.SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL.get("DummyScript")
         returned_data = data.get("DummyScript")
@@ -790,18 +763,13 @@ class TestScripts:
         """
         mocker.patch.object(tools, "get_pack_name", return_value="DummyPack")
 
-        file_path = (
-            TESTS_DIR
-            + "/test_files/alternative_meta_fields/Script-second_level_alternative_fields.yml"
-        )
+        file_path = TESTS_DIR + "/test_files/alternative_meta_fields/Script-second_level_alternative_fields.yml"
         data = get_script_data(
             file_path,
             packs={"DummyPack": {"marketplaces": [MarketplaceVersions.XSOAR.value]}},
         )
 
-        assert list(data.keys()) == list(
-            TestScripts.SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL.keys()
-        )
+        assert list(data.keys()) == list(TestScripts.SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL.keys())
 
         const_data = TestScripts.SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL.get("DummyScript")
         returned_data = data.get("DummyScript")
@@ -861,9 +829,7 @@ class TestScripts:
         Then
             - an exception will be raised
         """
-        test_file_path = os.path.join(
-            TESTS_DIR, "test_files", "Packs", "DummyPack", "Scripts", "DummyScript"
-        )
+        test_file_path = os.path.join(TESTS_DIR, "test_files", "Packs", "DummyPack", "Scripts", "DummyScript")
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
         res, _ = process_script(
             test_file_path,
@@ -893,9 +859,7 @@ class TestScripts:
         Then
             - return empty list
         """
-        test_file_path = os.path.join(
-            TESTS_DIR, "test_files", "Packs", "DummyPack", "Scripts", "DummyScript"
-        )
+        test_file_path = os.path.join(TESTS_DIR, "test_files", "Packs", "DummyPack", "Scripts", "DummyScript")
         res, _ = process_script(
             test_file_path,
             {"DummyPack": {"marketplaces": [MarketplaceVersions.MarketplaceV2.value]}},
@@ -916,9 +880,7 @@ class TestScripts:
         Then
             - an exception will be raised
         """
-        test_file_path = os.path.join(
-            TESTS_DIR, "test_files", "invalid_file_structures", "script.yml"
-        )
+        test_file_path = os.path.join(TESTS_DIR, "test_files", "invalid_file_structures", "script.yml")
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
 
         with pytest.raises(Exception):
@@ -963,8 +925,7 @@ class TestPlaybooks:
     PLAYBOOK_DATA_ALTERNATIVE_FIELDS_TOP_LEVEL = {
         "name": "Dummy Playbook",
         "display_name": "Dummy Playbook",
-        "file_path": TESTS_DIR
-        + "/test_files/alternative_meta_fields/Playbook-top_level_alternative_fields.yml",
+        "file_path": TESTS_DIR + "/test_files/alternative_meta_fields/Playbook-top_level_alternative_fields.yml",
         "source": ["github.com", "demisto", "demisto-sdk"],
         "fromversion": "4.5.0",
         "marketplaces": ["xsoar"],
@@ -991,8 +952,7 @@ class TestPlaybooks:
     PLAYBOOK_DATA_ALTERNATIVE_FIELDS_SECOND_LEVEL = {
         "name": "Dummy Playbook",
         "display_name": "Dummy Playbook",
-        "file_path": TESTS_DIR
-        + "/test_files/alternative_meta_fields/Playbook-second_level_alternative_fields.yml",
+        "file_path": TESTS_DIR + "/test_files/alternative_meta_fields/Playbook-second_level_alternative_fields.yml",
         "source": ["github.com", "demisto", "demisto-sdk"],
         "marketplaces": ["xsoar"],
         "fromversion": "4.5.0",
@@ -1030,9 +990,7 @@ class TestPlaybooks:
             file_path,
             packs={"DummyPack": {"marketplaces": [MarketplaceVersions.XSOAR.value]}},
         )["Dummy Playbook"]
-        assert IsEqualFunctions.is_dicts_equal(
-            data, TestPlaybooks.PLAYBOOK_DATA, lists_as_sets=True
-        )
+        assert IsEqualFunctions.is_dicts_equal(data, TestPlaybooks.PLAYBOOK_DATA, lists_as_sets=True)
 
     @staticmethod
     def test_get_playbook_data_with_alternative_fields_top_level(mocker):
@@ -1048,10 +1006,7 @@ class TestPlaybooks:
             - making sure the entry has a field called "has_alternative_meta" set to True
         """
         mocker.patch.object(tools, "get_pack_name", return_value="DummyPack")
-        file_path = (
-            TESTS_DIR
-            + "/test_files/alternative_meta_fields/Playbook-top_level_alternative_fields.yml"
-        )
+        file_path = TESTS_DIR + "/test_files/alternative_meta_fields/Playbook-top_level_alternative_fields.yml"
         data = get_playbook_data(
             file_path,
             packs={"DummyPack": {"marketplaces": [MarketplaceVersions.XSOAR.value]}},
@@ -1077,10 +1032,7 @@ class TestPlaybooks:
             - making sure the entry has a field called "has_alternative_meta" set to True
         """
         mocker.patch.object(tools, "get_pack_name", return_value="DummyPack")
-        file_path = (
-            TESTS_DIR
-            + "/test_files/alternative_meta_fields/Playbook-second_level_alternative_fields.yml"
-        )
+        file_path = TESTS_DIR + "/test_files/alternative_meta_fields/Playbook-second_level_alternative_fields.yml"
         data = get_playbook_data(
             file_path,
             packs={"DummyPack": {"marketplaces": [MarketplaceVersions.XSOAR.value]}},
@@ -1155,9 +1107,7 @@ class TestPlaybooks:
             - an exception will be raised
         """
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
-        test_file_path = os.path.join(
-            TESTS_DIR, "test_files", "invalid_file_structures", "playbook.yml"
-        )
+        test_file_path = os.path.join(TESTS_DIR, "test_files", "invalid_file_structures", "playbook.yml")
         with pytest.raises(Exception):
             process_general_items(
                 test_file_path,
@@ -1182,9 +1132,7 @@ class TestPlaybooks:
         Then
             - parsing flow graph from file successfully (only tasks 0 and 1 will be in the graph)
         """
-        test_file_path = os.path.join(
-            TESTS_DIR, "test_files", "playbook-invalid-bad-graph.yml"
-        )
+        test_file_path = os.path.join(TESTS_DIR, "test_files", "playbook-invalid-bad-graph.yml")
         result = get_playbook_data(test_file_path, packs={"DummyPack": {}})
         playbook_data = result.get("InvalidPlaybook-BadGraph", {})
         assert playbook_data.get("name") == "InvalidPlaybook-BadGraph"
@@ -1207,9 +1155,7 @@ class TestPlaybooks:
         Then
             - parsing flow graph from file successfully (no actual tasks will be in the graph)
         """
-        test_file_path = os.path.join(
-            TESTS_DIR, "test_files", "playbook-invalid-bad-graph_2.yml"
-        )
+        test_file_path = os.path.join(TESTS_DIR, "test_files", "playbook-invalid-bad-graph_2.yml")
         result = get_playbook_data(test_file_path, packs={"DummyPack": {}})
         playbook_data = result.get("InvalidPlaybook-BadGraph", {})
         assert playbook_data.get("name") == "InvalidPlaybook-BadGraph"
@@ -1312,19 +1258,7 @@ class TestPlaybooks:
                     "conditions": [
                         {
                             "condition": [
-                                [
-                                    {
-                                        "left": {
-                                            "value": {
-                                                "complex": {
-                                                    "transformers": [
-                                                        {"operator": "toUpperCase"}
-                                                    ]
-                                                }
-                                            }
-                                        }
-                                    }
-                                ]
+                                [{"left": {"value": {"complex": {"transformers": [{"operator": "toUpperCase"}]}}}}]
                             ]
                         }
                     ],
@@ -1356,36 +1290,12 @@ class TestPlaybooks:
                     "conditions": [
                         {
                             "condition": [
-                                [
-                                    {
-                                        "left": {
-                                            "value": {
-                                                "complex": {
-                                                    "filters": [
-                                                        [{"operator": "isEqualString"}]
-                                                    ]
-                                                }
-                                            }
-                                        }
-                                    }
-                                ]
+                                [{"left": {"value": {"complex": {"filters": [[{"operator": "isEqualString"}]]}}}}]
                             ]
                         },
                         {
                             "condition": [
-                                [
-                                    {
-                                        "right": {
-                                            "value": {
-                                                "complex": {
-                                                    "transformers": [
-                                                        {"operator": "toUpperCase"}
-                                                    ]
-                                                }
-                                            }
-                                        }
-                                    }
-                                ]
+                                [{"right": {"value": {"complex": {"transformers": [{"operator": "toUpperCase"}]}}}}]
                             ]
                         },
                     ],
@@ -1534,9 +1444,7 @@ class TestLayouts:
         )
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
 
-        res, _ = process_layoutscontainers(
-            test_file, {"DummyPack": {}}, MarketplaceVersions.XSOAR.value, True
-        )
+        res, _ = process_layoutscontainers(test_file, {"DummyPack": {}}, MarketplaceVersions.XSOAR.value, True)
         assert len(res) == 1
         result = res[0]
         result = result.get("layouts_container_test")
@@ -1558,9 +1466,7 @@ class TestLayouts:
     ]
 
     @staticmethod
-    @pytest.mark.parametrize(
-        "layout_type, marketplace, should_exclude", LAYOUT_TYPE_TO_MARKETPLACE_TESTS
-    )
+    @pytest.mark.parametrize("layout_type, marketplace, should_exclude", LAYOUT_TYPE_TO_MARKETPLACE_TESTS)
     def test_process_layoutscontainer__excluding_from_marketplace_by_layout_type(
         layout_type, marketplace, should_exclude, repo
     ):
@@ -1584,9 +1490,7 @@ class TestLayouts:
             },
         )
 
-        res, excluded_items = process_layoutscontainers(
-            layout.path, {pack.name: {}}, marketplace, True
-        )
+        res, excluded_items = process_layoutscontainers(layout.path, {pack.name: {}}, marketplace, True)
 
         if should_exclude:
             assert not res
@@ -1651,9 +1555,7 @@ class TestIncidentFields:
         )
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
 
-        res, _ = process_incident_fields(
-            test_dir, {"DummyPack": {}}, MarketplaceVersions.XSOAR.value, True, []
-        )
+        res, _ = process_incident_fields(test_dir, {"DummyPack": {}}, MarketplaceVersions.XSOAR.value, True, [])
         assert len(res) == 1
         result = res[0]
         result = result.get("incidentfield-test")
@@ -1689,9 +1591,7 @@ class TestIncidentFields:
         )
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
 
-        res, _ = process_incident_fields(
-            test_dir, {"DummyPack": {}}, MarketplaceVersions.XSOAR.value, True, []
-        )
+        res, _ = process_incident_fields(test_dir, {"DummyPack": {}}, MarketplaceVersions.XSOAR.value, True, [])
         assert len(res) == 1
         result = res[0]
         result = result.get("incidentfield_upload_id")
@@ -1726,9 +1626,7 @@ class TestIncidentFields:
         )
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
 
-        res, _ = process_incident_fields(
-            test_dir, {"DummyPack": {}}, MarketplaceVersions.XSOAR.value, True, []
-        )
+        res, _ = process_incident_fields(test_dir, {"DummyPack": {}}, MarketplaceVersions.XSOAR.value, True, [])
         assert len(res) == 1
         result = res[0]
         result = result.get("incidentfield-test")
@@ -1760,9 +1658,7 @@ class TestIncidentFields:
             "incidentfield-to-test-no-types_scripts.json",
         )
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=True)
-        res, _ = process_incident_fields(
-            test_dir, {"DummyPack": {}}, MarketplaceVersions.XSOAR.value, True, []
-        )
+        res, _ = process_incident_fields(test_dir, {"DummyPack": {}}, MarketplaceVersions.XSOAR.value, True, [])
         assert res == []
 
 
@@ -1782,9 +1678,7 @@ class TestIndicatorType:
         test_dir = f"{git_path()}/demisto_sdk/commands/create_id_set/tests/test_data/reputation-indicatortype.json"
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
 
-        result = get_indicator_type_data(
-            test_dir, [{"integration": {"commands": ["ip"]}}]
-        )
+        result = get_indicator_type_data(test_dir, [{"integration": {"commands": ["ip"]}}])
         result = result.get("indicator-type-dummy")
         assert "name" in result.keys()
         assert "display_name" in result.keys()
@@ -2723,15 +2617,11 @@ class TestGenericFunctions:
         Then
             - an exception will be raised
         """
-        test_file_path = os.path.join(
-            TESTS_DIR, "test_files", "invalid_file_structures", "dashboard.json"
-        )
+        test_file_path = os.path.join(TESTS_DIR, "test_files", "invalid_file_structures", "dashboard.json")
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
 
         with pytest.raises(Exception):
-            process_general_items(
-                test_file_path, True, (FileType.DASHBOARD,), get_general_data
-            )
+            process_general_items(test_file_path, True, (FileType.DASHBOARD,), get_general_data)
 
     @staticmethod
     def test_get_values_for_keys_recursively():
@@ -2803,9 +2693,7 @@ class TestGenericFunctions:
 
     @staticmethod
     @pytest.mark.parametrize("playbook_input, are_there_incident_fields", INPUTS)
-    def test_get_incident_fields_by_playbook_input(
-        playbook_input, are_there_incident_fields
-    ):
+    def test_get_incident_fields_by_playbook_input(playbook_input, are_there_incident_fields):
         """
         Given
             - A list of playbook inputs
@@ -2830,9 +2718,7 @@ class TestGenericFunctions:
 
     EXAMPLE_TASK_WITH_CUSTOM_FIELDS_SCRIPT_ARGUMENTS = {
         "id": "ID",
-        "scriptarguments": {
-            "customFields": {"simple": '[{"field_name":"${inputs.IndicatorTagName}"}]'}
-        },
+        "scriptarguments": {"customFields": {"simple": '[{"field_name":"${inputs.IndicatorTagName}"}]'}},
     }
 
     TASK_INPUTS = [
@@ -3284,9 +3170,7 @@ class TestJob:
         job_details = "job details"
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
         job = pack.create_job(is_feed, details=job_details)
-        res = process_jobs(
-            job.path, {pack.name: {}}, MarketplaceVersions.XSOAR.value, print_logs
-        )
+        res = process_jobs(job.path, {pack.name: {}}, MarketplaceVersions.XSOAR.value, print_logs)
 
         captured = capsys.readouterr()
         assert len(res) == 1
@@ -3326,17 +3210,13 @@ class TestJob:
         job = pack.create_job(is_feed)
         job_path = Path(job.path)
         new_path = job_path.rename(job_path.with_suffix(".yml"))
-        res = process_jobs(
-            str(new_path), {pack.name: {}}, MarketplaceVersions.XSOAR.value, False
-        )
+        res = process_jobs(str(new_path), {pack.name: {}}, MarketplaceVersions.XSOAR.value, False)
         assert not res
 
     @staticmethod
     @pytest.mark.parametrize("print_logs", (True, False))
     @pytest.mark.parametrize("is_feed", (True, False))
-    def test_process_jobs_file_nonexistent(
-        capsys, repo, is_feed: bool, print_logs: bool, mocker
-    ):
+    def test_process_jobs_file_nonexistent(capsys, repo, is_feed: bool, print_logs: bool, mocker):
         """
         Given
             - A file that isn't a valid Job (missing file)
@@ -3385,18 +3265,14 @@ class TestWizard:
         pack = repo.create_pack()
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
         wizard = pack.create_wizard("wizard")
-        res = process_wizards(
-            wizard.path, {pack.name: {}}, MarketplaceVersions.XSOAR.value, print_logs
-        )
+        res = process_wizards(wizard.path, {pack.name: {}}, MarketplaceVersions.XSOAR.value, print_logs)
 
         captured = capsys.readouterr()
         assert len(res) == 1
         datum = res[0][wizard.id]
         assert datum["name"] == wizard.id
         assert datum["display_name"] == wizard.id
-        assert set(datum["dependency_packs"]) == set(
-            TestWizard.EXPECTED_DEPENDENCY_PACKS
-        )
+        assert set(datum["dependency_packs"]) == set(TestWizard.EXPECTED_DEPENDENCY_PACKS)
         path = Path(datum["file_path"])
         assert path.name == wizard.name
         assert path.exists()
@@ -3405,9 +3281,7 @@ class TestWizard:
         assert path.parts[-2] == WIZARDS_DIR
         assert path.parts[-3] == pack.name
 
-        assert datum["fromversion"] == FILETYPE_TO_DEFAULT_FROMVERSION.get(
-            FileType.WIZARD
-        )
+        assert datum["fromversion"] == FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.WIZARD)
         assert datum["pack"] == pack.name
 
         assert (f"adding {wizard.path} to id_set" in captured.out) == print_logs
@@ -3527,10 +3401,7 @@ class TestCorrelationRules:
         assert "file_path" in correlation_rule_result.keys()
         assert "pack" in correlation_rule_result.keys()
 
-        assert (
-            correlation_rule_result["name"]
-            == correlation_rule._tmp_path.parts[-1].split(".")[0]
-        )
+        assert correlation_rule_result["name"] == correlation_rule._tmp_path.parts[-1].split(".")[0]
         assert correlation_rule_result["file_path"] == correlation_rule.path
         assert correlation_rule_result["pack"] == pack.name
 
@@ -3551,11 +3422,7 @@ class TestXSIAMDashboards:
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
         xsiam_dashboard = pack.create_xsiam_dashboard(
             "xsiam_dashboard_name",
-            {
-                "dashboards_data": [
-                    {"global_id": "xsiam_dashboard_id", "name": "xsiam_dashboard_name"}
-                ]
-            },
+            {"dashboards_data": [{"global_id": "xsiam_dashboard_id", "name": "xsiam_dashboard_name"}]},
         )
         res = process_general_items(
             xsiam_dashboard.path,
@@ -3575,10 +3442,7 @@ class TestXSIAMDashboards:
         assert "file_path" in xsiam_dashboard_result.keys()
         assert "pack" in xsiam_dashboard_result.keys()
 
-        assert (
-            xsiam_dashboard_result["name"]
-            == xsiam_dashboard._file_path.parts[-1].split(".")[0]
-        )
+        assert xsiam_dashboard_result["name"] == xsiam_dashboard._file_path.parts[-1].split(".")[0]
         assert xsiam_dashboard_result["file_path"] == xsiam_dashboard.path
         assert xsiam_dashboard_result["pack"] == pack.name
 
@@ -3599,11 +3463,7 @@ class TestXSIAMReports:
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
         xsiam_report = pack.create_xsiam_report(
             "xsiam_report_name",
-            {
-                "templates_data": [
-                    {"global_id": "xsiam_report_id", "report_name": "xsiam_report_name"}
-                ]
-            },
+            {"templates_data": [{"global_id": "xsiam_report_id", "report_name": "xsiam_report_name"}]},
         )
         res = process_general_items(
             xsiam_report.path,
@@ -3623,10 +3483,7 @@ class TestXSIAMReports:
         assert "file_path" in xsiam_report_result.keys()
         assert "pack" in xsiam_report_result.keys()
 
-        assert (
-            xsiam_report_result["name"]
-            == xsiam_report._file_path.parts[-1].split(".")[0]
-        )
+        assert xsiam_report_result["name"] == xsiam_report._file_path.parts[-1].split(".")[0]
         assert xsiam_report_result["file_path"] == xsiam_report.path
         assert xsiam_report_result["pack"] == pack.name
 
@@ -3645,9 +3502,7 @@ class TestTriggers:
             - Verify result as expeted.
         """
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
-        trigger = pack.create_trigger(
-            "trigger_name", {"trigger_id": "trigger_id", "trigger_name": "trigger_name"}
-        )
+        trigger = pack.create_trigger("trigger_name", {"trigger_id": "trigger_id", "trigger_name": "trigger_name"})
         res = process_general_items(
             trigger.path,
             {pack.name: {}},
@@ -3714,10 +3569,7 @@ class TestXDRCTemplates:
         assert "file_path" in xdrc_template_result.keys()
         assert "pack" in xdrc_template_result.keys()
 
-        assert (
-            xdrc_template_result["name"]
-            == xdrc_template._file_path.parts[-1].split(".")[0]
-        )
+        assert xdrc_template_result["name"] == xdrc_template._file_path.parts[-1].split(".")[0]
         assert xdrc_template_result["file_path"] == xdrc_template.path
         assert xdrc_template_result["pack"] == pack.name
 
@@ -3736,9 +3588,7 @@ class TestLayoutRules:
             - Verify result as expeted.
         """
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
-        layout_rule = pack.create_layout_rule(
-            "rule_name", {"rule_id": "rule_id", "rule_name": "rule_name"}
-        )
+        layout_rule = pack.create_layout_rule("rule_name", {"rule_id": "rule_id", "rule_name": "rule_name"})
         res = process_general_items(
             layout_rule.path,
             {pack.name: {}},
@@ -3758,9 +3608,7 @@ class TestLayoutRules:
         assert "file_path" in layout_rule_result.keys()
         assert "pack" in layout_rule_result.keys()
 
-        assert (
-            layout_rule_result["name"] == layout_rule._file_path.parts[-1].split(".")[0]
-        )
+        assert layout_rule_result["name"] == layout_rule._file_path.parts[-1].split(".")[0]
         assert layout_rule_result["file_path"] == layout_rule.path
         assert layout_rule_result["pack"] == pack.name
 
@@ -3995,12 +3843,8 @@ def test_should_skip_item_by_mp(mocker):
     """
     import demisto_sdk.commands.common.tools as tools
 
-    mocker.patch.object(
-        tools, "get_mp_types_from_metadata_by_item", return_value=["xsoar"]
-    )
-    pack_path = os.path.join(
-        TESTS_DIR, "test_files", "DummyPackXsoarMPOnly", "pack_metadata.json"
-    )
+    mocker.patch.object(tools, "get_mp_types_from_metadata_by_item", return_value=["xsoar"])
+    pack_path = os.path.join(TESTS_DIR, "test_files", "DummyPackXsoarMPOnly", "pack_metadata.json")
     script_path = os.path.join(
         TESTS_DIR,
         "test_files",
@@ -4028,12 +3872,8 @@ def test_should_skip_item_by_mp_no_update_excluded_dict(mocker):
     import demisto_sdk.commands.common.tools as tools
 
     excluded_items_dict = {}
-    mocker.patch.object(
-        tools, "get_mp_types_from_metadata_by_item", return_value=["xsoar"]
-    )
-    pack_path = os.path.join(
-        TESTS_DIR, "test_files", "DummyPackXsoarMPOnly", "pack_metadata.json"
-    )
+    mocker.patch.object(tools, "get_mp_types_from_metadata_by_item", return_value=["xsoar"])
+    pack_path = os.path.join(TESTS_DIR, "test_files", "DummyPackXsoarMPOnly", "pack_metadata.json")
     res1 = should_skip_item_by_mp(pack_path, "mpv2", excluded_items_dict)
     assert res1
     assert not excluded_items_dict
@@ -4053,9 +3893,7 @@ def test_should_skip_item_by_mp_update_excluded_dict(mocker):
     import demisto_sdk.commands.common.tools as tools
 
     excluded_items_dict = {}
-    mocker.patch.object(
-        tools, "get_mp_types_from_metadata_by_item", return_value=["xsoar"]
-    )
+    mocker.patch.object(tools, "get_mp_types_from_metadata_by_item", return_value=["xsoar"])
     script_path = os.path.join(
         TESTS_DIR,
         "test_files",

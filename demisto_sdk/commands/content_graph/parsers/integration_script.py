@@ -9,9 +9,7 @@ from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
 
 
 class IntegrationScriptParser(YAMLContentItemParser):
-    def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
-    ) -> None:
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         self.is_unified = YAMLContentItemParser.is_unified_file(path)
         super().__init__(path, pack_marketplaces)
 

@@ -16,9 +16,7 @@ NODE_INDEX_OPTIONS = [
     ["object_id", "content_type", "fromversion", "marketplaces"],
 ]
 
-CREATE_REL_INDEX_TEMPLATE = (
-    "CREATE INDEX IF NOT EXISTS FOR ()-[r:{rel}]->() ON ({props})"
-)
+CREATE_REL_INDEX_TEMPLATE = "CREATE INDEX IF NOT EXISTS FOR ()-[r:{rel}]->() ON ({props})"
 
 
 def create_indexes(tx: Transaction) -> None:
@@ -27,9 +25,7 @@ def create_indexes(tx: Transaction) -> None:
             for index_option in NODE_INDEX_OPTIONS:
                 create_single_node_index(tx, content_type, index_option)
     create_single_relationship_index(tx, RelationshipType.USES, ["mandatorily"])
-    create_single_relationship_index(
-        tx, RelationshipType.HAS_COMMAND, ["deprecated", "description"]
-    )
+    create_single_relationship_index(tx, RelationshipType.HAS_COMMAND, ["deprecated", "description"])
 
 
 def create_single_node_index(

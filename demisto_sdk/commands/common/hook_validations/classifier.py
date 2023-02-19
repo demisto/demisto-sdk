@@ -95,15 +95,11 @@ class ClassifierValidator(ContentEntityValidator):
         Returns:
             bool. True if from version field is valid, else False.
         """
-        from_version = self.current_file.get(
-            "fromVersion", ""
-        ) or self.current_file.get("fromversion", "")
+        from_version = self.current_file.get("fromVersion", "") or self.current_file.get("fromversion", "")
         if from_version:
             self.from_version = from_version
             if self.new_classifier_version:
-                if LooseVersion(from_version) < LooseVersion(
-                    FROM_VERSION_FOR_NEW_CLASSIFIER
-                ):
+                if LooseVersion(from_version) < LooseVersion(FROM_VERSION_FOR_NEW_CLASSIFIER):
                     (
                         error_message,
                         error_code,
@@ -116,9 +112,7 @@ class ClassifierValidator(ContentEntityValidator):
                     ):
                         return False
             else:
-                if LooseVersion(from_version) >= LooseVersion(
-                    FROM_VERSION_FOR_NEW_CLASSIFIER
-                ):
+                if LooseVersion(from_version) >= LooseVersion(FROM_VERSION_FOR_NEW_CLASSIFIER):
                     (
                         error_message,
                         error_code,
@@ -149,27 +143,19 @@ class ClassifierValidator(ContentEntityValidator):
         Returns:
             bool. True if to version filed is valid, else False.
         """
-        to_version = self.current_file.get("toVersion", "") or self.current_file.get(
-            "toversion", ""
-        )
+        to_version = self.current_file.get("toVersion", "") or self.current_file.get("toversion", "")
         if to_version:
             self.to_version = to_version
             if self.new_classifier_version:
-                if LooseVersion(to_version) <= LooseVersion(
-                    FROM_VERSION_FOR_NEW_CLASSIFIER
-                ):
+                if LooseVersion(to_version) <= LooseVersion(FROM_VERSION_FOR_NEW_CLASSIFIER):
                     (
                         error_message,
                         error_code,
                     ) = Errors.invalid_to_version_in_new_classifiers()
-                    if self.handle_error(
-                        error_message, error_code, file_path=self.file_path
-                    ):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         return False
             else:
-                if LooseVersion(to_version) > LooseVersion(
-                    TO_VERSION_FOR_OLD_CLASSIFIER
-                ):
+                if LooseVersion(to_version) > LooseVersion(TO_VERSION_FOR_OLD_CLASSIFIER):
                     (
                         error_message,
                         error_code,
@@ -203,9 +189,7 @@ class ClassifierValidator(ContentEntityValidator):
         if self.to_version and self.from_version:
             if LooseVersion(self.to_version) <= LooseVersion(self.from_version):
                 error_message, error_code = Errors.from_version_higher_to_version()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
         return True
 
@@ -216,10 +200,7 @@ class ClassifierValidator(ContentEntityValidator):
         Returns:
             bool. True if type field is valid, else False.
         """
-        if (
-            self.new_classifier_version
-            and self.current_file.get("type") != CLASSIFICATION_TYPE
-        ):
+        if self.new_classifier_version and self.current_file.get("type") != CLASSIFICATION_TYPE:
             error_message, error_code = Errors.invalid_type_in_new_classifiers()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
@@ -242,12 +223,8 @@ class ClassifierValidator(ContentEntityValidator):
             )
             return True
 
-        built_in_fields = [
-            field.lower() for field in BUILT_IN_FIELDS
-        ] + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
-        content_incident_fields = get_all_incident_and_indicator_fields_from_id_set(
-            id_set_file, "old classifier"
-        )
+        built_in_fields = [field.lower() for field in BUILT_IN_FIELDS] + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
+        content_incident_fields = get_all_incident_and_indicator_fields_from_id_set(id_set_file, "old classifier")
 
         invalid_inc_fields_list = []
         mapper = self.current_file.get("mapping", {})
@@ -255,16 +232,11 @@ class ClassifierValidator(ContentEntityValidator):
             incident_fields = mapping.get("internalMapping", {})
 
             for inc_name, _ in incident_fields.items():
-                if (
-                    inc_name not in content_incident_fields
-                    and inc_name.lower() not in built_in_fields
-                ):
+                if inc_name not in content_incident_fields and inc_name.lower() not in built_in_fields:
                     invalid_inc_fields_list.append(inc_name)
 
         if invalid_inc_fields_list:
-            error_message, error_code = Errors.invalid_incident_field_in_mapper(
-                invalid_inc_fields_list
-            )
+            error_message, error_code = Errors.invalid_incident_field_in_mapper(invalid_inc_fields_list)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True

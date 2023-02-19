@@ -9,9 +9,7 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import (
 
 
 class ReportParser(JSONContentItemParser, content_type=ContentType.REPORT):
-    def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
-    ) -> None:
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         super().__init__(path, pack_marketplaces)
 
         self.connect_to_dependencies()
@@ -26,6 +24,4 @@ class ReportParser(JSONContentItemParser, content_type=ContentType.REPORT):
             widget_data = layout.get("widget")
             if widget_data.get("dataType") == "scripts":
                 if script_name := widget_data.get("query"):
-                    self.add_dependency_by_id(
-                        script_name, ContentType.SCRIPT, is_mandatory=False
-                    )
+                    self.add_dependency_by_id(script_name, ContentType.SCRIPT, is_mandatory=False)

@@ -35,16 +35,12 @@ class SingleModelingRule:
     """
 
     RULE_HEADER_REGEX = re.compile(
-        r"\[MODEL:\s*model\s*=\s*\"?(?P<datamodel>\w+)\"?\s*,?\s*"
-        r"dataset\s*=\s*\"?(?P<dataset>\w+)\"?\]"
+        r"\[MODEL:\s*model\s*=\s*\"?(?P<datamodel>\w+)\"?\s*,?\s*" r"dataset\s*=\s*\"?(?P<dataset>\w+)\"?\]"
     )
     RULE_HEADER_REGEX_REVERSED = re.compile(
-        r"\[MODEL:\s*dataset\s*=\s*\"?(?P<dataset>\w+)\"?\s*,?\s*"
-        r"model\s*=\s*\"?(?P<datamodel>\w+)\"?\]"
+        r"\[MODEL:\s*dataset\s*=\s*\"?(?P<dataset>\w+)\"?\s*,?\s*" r"model\s*=\s*\"?(?P<datamodel>\w+)\"?\]"
     )
-    RULE_HEADER_NEW_REGEX = re.compile(
-        r"\[MODEL:\s*dataset\s*=\s*\"?(?P<dataset>\w+)\"?\s*\]"
-    )
+    RULE_HEADER_NEW_REGEX = re.compile(r"\[MODEL:\s*dataset\s*=\s*\"?(?P<dataset>\w+)\"?\s*\]")
     RULE_FIELDS_REGEX = re.compile(r"XDM\.[\w\.]+(?=\s*?=\s*?\w+)", flags=re.IGNORECASE)
     RULE_FILTER_REGEX = re.compile(
         r"^\s*filter\s*(?P<condition>(?!.*(\||alter)).+$(\s*(^\s*(?!\||alter).+$))*)",
@@ -71,9 +67,7 @@ class SingleModelingRule:
             if match:
                 self.dataset = match.groupdict().get("dataset", "")
                 if not self._dataset:
-                    raise ValueError(
-                        f'could not parse the dataset from the rule text: "{self.rule_text}"'
-                    )
+                    raise ValueError(f'could not parse the dataset from the rule text: "{self.rule_text}"')
                 if not self._datamodel:
                     dm = match.groupdict().get("datamodel")
                     if dm:
@@ -93,9 +87,7 @@ class SingleModelingRule:
             if match:
                 self.datamodel = match.groupdict().get("datamodel", "")
                 if not self._datamodel:
-                    raise ValueError(
-                        f'could not parse the datamodel from the rule text: "{self.rule_text}"'
-                    )
+                    raise ValueError(f'could not parse the datamodel from the rule text: "{self.rule_text}"')
                 if not self._dataset:
                     ds = match.groupdict().get("dataset")
                     if ds:
@@ -112,9 +104,7 @@ class SingleModelingRule:
             uniq_fields = set(re.findall(self.RULE_FIELDS_REGEX, self.rule_text))
             self.fields = uniq_fields
             if not self._fields:
-                raise ValueError(
-                    f'could not parse datamodel fields from the rule text: "{self.rule_text}"'
-                )
+                raise ValueError(f'could not parse datamodel fields from the rule text: "{self.rule_text}"')
         return self._fields
 
     @fields.setter

@@ -89,9 +89,7 @@ def test_build_iterator(requests_mock):
         proxy=False,
     )
     indicators = client.build_iterator()
-    url_indicators = {
-        indicator["value"] for indicator in indicators if indicator["type"] == "URL"
-    }
+    url_indicators = {indicator["value"] for indicator in indicators if indicator["type"] == "URL"}
     assert expected_url in url_indicators
 
 
@@ -130,9 +128,7 @@ def test_get_indicators_command(mocker):
     client = Client(base_url=URL)
     indicators_list = util_load_json("./test_data/build_iterator_results.json")[:10]
     mocker.patch.object(Client, "build_iterator", return_value=indicators_list)
-    results = get_indicators_command(
-        client, params={"tlp_color": "RED"}, args={"limit": "10"}
-    )
+    results = get_indicators_command(client, params={"tlp_color": "RED"}, args={"limit": "10"})
     human_readable = tableToMarkdown(
         "Indicators from HelloWorld Feed:",
         indicators_list,

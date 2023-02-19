@@ -32,14 +32,10 @@ def mock_lint_manager(mocker):
     argnames="return_exit_code, skipped_code, pkgs_type",
     argvalues=[(0b0, 0b0, [TYPE_PWSH, TYPE_PYTHON])],
 )
-def test_report_pass_lint_checks(
-    mocker, return_exit_code: int, skipped_code: int, pkgs_type: list
-):
+def test_report_pass_lint_checks(mocker, return_exit_code: int, skipped_code: int, pkgs_type: list):
     from demisto_sdk.commands.lint import lint_manager
 
-    lint_manager.LintManager.report_pass_lint_checks(
-        return_exit_code, skipped_code, pkgs_type
-    )
+    lint_manager.LintManager.report_pass_lint_checks(return_exit_code, skipped_code, pkgs_type)
     assert mocker.call_count == 9
 
 
@@ -49,9 +45,7 @@ def test_report_failed_image_creation():
 
     pkgs_status = MagicMock()
     lint_status = {"fail_packs_image": ["pack"]}
-    pkgs_status.return_value = {
-        "pack": {"images": [{"image": "alpine", "image_errors": "some_errors"}]}
-    }
+    pkgs_status.return_value = {"pack": {"images": [{"image": "alpine", "image_errors": "some_errors"}]}}
     lint_manager.LintManager.report_failed_image_creation(
         lint_status=lint_status,
         pkgs_status=pkgs_status,
@@ -431,20 +425,12 @@ def test_report_summary_with_warnings(capsys):
         "warning_packs_pwsh_test": [],
         "warning_packs_image": [],
     }
-    pkg = [
-        PosixPath(
-            "/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse"
-        )
-    ]
+    pkg = [PosixPath("/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse")]
     pkgs_status = {"Maltiverse": {"exit_code": 1}}
-    lint_manager.LintManager.report_summary(
-        pkg=pkg, pkgs_status=pkgs_status, lint_status=lint_status
-    )
+    lint_manager.LintManager.report_summary(pkg=pkg, pkgs_status=pkgs_status, lint_status=lint_status)
     captured = capsys.readouterr()
     assert "Packages PASS: \x1b[32m0\x1b[0m" in captured.out
-    assert (
-        "Packages WARNING (can either PASS or FAIL): \x1b[33m1\x1b[0m" in captured.out
-    )
+    assert "Packages WARNING (can either PASS or FAIL): \x1b[33m1\x1b[0m" in captured.out
     assert "Packages FAIL: [31m1[0m" in captured.out
 
 
@@ -483,20 +469,12 @@ def test_report_summary_no_warnings(capsys):
         "warning_packs_pwsh_test": [],
         "warning_packs_image": [],
     }
-    pkg = [
-        PosixPath(
-            "/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse"
-        )
-    ]
+    pkg = [PosixPath("/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse")]
     pkgs_status = {"Maltiverse": {"exit_code": 0}}
-    lint_manager.LintManager.report_summary(
-        pkg=pkg, lint_status=lint_status, pkgs_status=pkgs_status
-    )
+    lint_manager.LintManager.report_summary(pkg=pkg, lint_status=lint_status, pkgs_status=pkgs_status)
     captured = capsys.readouterr()
     assert "Packages PASS: \x1b[32m1\x1b[0m" in captured.out
-    assert (
-        "Packages WARNING (can either PASS or FAIL): \x1b[33m0\x1b[0m" in captured.out
-    )
+    assert "Packages WARNING (can either PASS or FAIL): \x1b[33m0\x1b[0m" in captured.out
     assert "Packages FAIL: [31m0[0m" in captured.out
 
 
@@ -697,9 +675,7 @@ def test_create_json_output_vulture(repo, mocker):
     from demisto_sdk.commands.lint import lint_manager
 
     mocker.patch.object(lint_manager, "find_type", return_value=FileType.INTEGRATION)
-    mocker.patch.object(
-        lint_manager, "find_file", return_value="Packs/myPack/Integrations/INT1/INT1.py"
-    )
+    mocker.patch.object(lint_manager, "find_file", return_value="Packs/myPack/Integrations/INT1/INT1.py")
     mocker.patch.object(lint_manager, "get_file_displayed_name", return_value="Display")
     check = {
         "linter": "vulture",
@@ -783,17 +759,7 @@ class NodeMock:
     [
         pytest.param(
             [PosixPath("Packs/ApiModules/Scripts/SomeApiModule")],
-            [
-                [
-                    NodeMock(
-                        imported_by=[
-                            NodeDependencyMock(
-                                path="Packs/SomePack/Scripts/SomeScript/SomeScript.py"
-                            )
-                        ]
-                    )
-                ]
-            ],
+            [[NodeMock(imported_by=[NodeDependencyMock(path="Packs/SomePack/Scripts/SomeScript/SomeScript.py")])]],
             ["Packs/SomePack/Scripts/SomeScript/SomeScript.py"],
             [PosixPath("Packs/SomePack/Scripts/SomeScript")],
             True,
@@ -809,17 +775,7 @@ class NodeMock:
         ),
         pytest.param(
             [PosixPath("Packs/SomePack/Scripts/SomePackScript")],
-            [
-                [
-                    NodeMock(
-                        imported_by=[
-                            NodeDependencyMock(
-                                path="Packs/SomeOtherPack/Scripts/SomeScript/SomeScript.py"
-                            )
-                        ]
-                    )
-                ]
-            ],
+            [[NodeMock(imported_by=[NodeDependencyMock(path="Packs/SomeOtherPack/Scripts/SomeScript/SomeScript.py")])]],
             [],
             [],
             True,
@@ -831,12 +787,8 @@ class NodeMock:
                 [
                     NodeMock(
                         imported_by=[
-                            NodeDependencyMock(
-                                path="Packs/SomePack1/Scripts/SomeScript1/SomeScript1.py"
-                            ),
-                            NodeDependencyMock(
-                                path="Packs/SomePack2/Scripts/SomeScript2/SomeScript2.py"
-                            ),
+                            NodeDependencyMock(path="Packs/SomePack1/Scripts/SomeScript1/SomeScript1.py"),
+                            NodeDependencyMock(path="Packs/SomePack2/Scripts/SomeScript2/SomeScript2.py"),
                         ]
                     )
                 ]
@@ -858,24 +810,8 @@ class NodeMock:
                 PosixPath("Packs/ApiModules/Scripts/SomeApiModule2"),
             ],
             [
-                [
-                    NodeMock(
-                        imported_by=[
-                            NodeDependencyMock(
-                                path="Packs/SomePack1/Scripts/SomeScript1/SomeScript1.py"
-                            )
-                        ]
-                    )
-                ],
-                [
-                    NodeMock(
-                        imported_by=[
-                            NodeDependencyMock(
-                                path="Packs/SomePack2/Scripts/SomeScript2/SomeScript2.py"
-                            )
-                        ]
-                    )
-                ],
+                [NodeMock(imported_by=[NodeDependencyMock(path="Packs/SomePack1/Scripts/SomeScript1/SomeScript1.py")])],
+                [NodeMock(imported_by=[NodeDependencyMock(path="Packs/SomePack2/Scripts/SomeScript2/SomeScript2.py")])],
             ],
             [
                 "Packs/SomePack1/Scripts/SomeScript1/SomeScript1.py",
@@ -890,17 +826,7 @@ class NodeMock:
         ),
         pytest.param(
             [PosixPath("Packs/ApiModules/Scripts/SomeApiModule")],
-            [
-                [
-                    NodeMock(
-                        imported_by=[
-                            NodeDependencyMock(
-                                path="Packs/SomePack/Scripts/SomeScript/SomeScript.py"
-                            )
-                        ]
-                    )
-                ]
-            ],
+            [[NodeMock(imported_by=[NodeDependencyMock(path="Packs/SomePack/Scripts/SomeScript/SomeScript.py")])]],
             [],
             [],
             False,
@@ -912,15 +838,7 @@ class NodeMock:
                 PosixPath("Packs/SomePack/Scripts/SomeScript"),
             ],
             [
-                [
-                    NodeMock(
-                        imported_by=[
-                            NodeDependencyMock(
-                                path="Packs/SomePack/Scripts/SomeScript/SomeScript.py"
-                            )
-                        ]
-                    )
-                ],
+                [NodeMock(imported_by=[NodeDependencyMock(path="Packs/SomePack/Scripts/SomeScript/SomeScript.py")])],
                 [None],
             ],
             ["Packs/SomePack/Scripts/SomeScript/SomeScript.py"],
@@ -956,14 +874,10 @@ def test_get_api_module_dependent_items(
     mocker.patch.object(LintManager, "_gather_facts", return_value={"content_repo": ""})
 
     mocker.patch.object(Neo4jContentGraphInterface, "__init__", return_value=None)
-    mocker.patch.object(
-        Neo4jContentGraphInterface, "__enter__", return_value=Neo4jContentGraphInterface
-    )
+    mocker.patch.object(Neo4jContentGraphInterface, "__enter__", return_value=Neo4jContentGraphInterface)
     mocker.patch.object(Neo4jContentGraphInterface, "__exit__", return_value=None)
     mocker.patch("demisto_sdk.commands.lint.lint_manager.update_content_graph")
-    mocker.patch.object(
-        Neo4jContentGraphInterface, "search", side_effect=api_module_nodes
-    )
+    mocker.patch.object(Neo4jContentGraphInterface, "search", side_effect=api_module_nodes)
     lint_manager = LintManager(
         input="",
         git=False,
@@ -978,9 +892,7 @@ def test_get_api_module_dependent_items(
     # Asserts sets are equal
     assert set(lint_manager._pkgs) == set(packages_of_dependent_items + changed_files)
     # Assert no duplicates
-    assert len(lint_manager._pkgs) == len(
-        set(packages_of_dependent_items + changed_files)
-    )
+    assert len(lint_manager._pkgs) == len(set(packages_of_dependent_items + changed_files))
     if packages_of_dependent_items:
         get_packages_mock.assert_called_with(content_repo="", input=dependent_items)
 
@@ -995,15 +907,7 @@ def test_get_api_module_dependent_items(
                 PosixPath("Packs/SomePack/Scripts/SomeScript"),
             ],
             [
-                [
-                    NodeMock(
-                        imported_by=[
-                            NodeDependencyMock(
-                                path="Packs/SomePack/Scripts/SomeScript/SomeScript.py"
-                            )
-                        ]
-                    )
-                ],
+                [NodeMock(imported_by=[NodeDependencyMock(path="Packs/SomePack/Scripts/SomeScript/SomeScript.py")])],
                 [None],
             ],
             ["Packs/SomePack/Scripts/SomeScript/SomeScript.py"],
@@ -1042,14 +946,10 @@ def test_get_api_module_dependent_items_which_were_changed(
     mocker.patch.object(LintManager, "_gather_facts", return_value={"content_repo": ""})
 
     mocker.patch.object(Neo4jContentGraphInterface, "__init__", return_value=None)
-    mocker.patch.object(
-        Neo4jContentGraphInterface, "__enter__", return_value=Neo4jContentGraphInterface
-    )
+    mocker.patch.object(Neo4jContentGraphInterface, "__enter__", return_value=Neo4jContentGraphInterface)
     mocker.patch.object(Neo4jContentGraphInterface, "__exit__", return_value=None)
     mocker.patch("demisto_sdk.commands.lint.lint_manager.update_content_graph")
-    mocker.patch.object(
-        Neo4jContentGraphInterface, "search", side_effect=api_module_nodes
-    )
+    mocker.patch.object(Neo4jContentGraphInterface, "search", side_effect=api_module_nodes)
     lint_manager = LintManager(
         input="",
         git=False,
@@ -1064,8 +964,6 @@ def test_get_api_module_dependent_items_which_were_changed(
     # Asserts sets are equal
     assert set(lint_manager._pkgs) == set(packages_of_dependent_items + changed_files)
     # Assert no duplicates
-    assert len(lint_manager._pkgs) == len(
-        set(packages_of_dependent_items + changed_files)
-    )
+    assert len(lint_manager._pkgs) == len(set(packages_of_dependent_items + changed_files))
     if packages_of_dependent_items:
         get_packages_mock.assert_called_with(content_repo="", input=dependent_items)

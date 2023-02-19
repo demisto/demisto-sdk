@@ -77,24 +77,12 @@ class TestPostmanHelpers:
         }
 
         args: List[IntegrationGeneratorArg] = [
-            IntegrationGeneratorArg(
-                name="key5", description="", in_="body", in_object=[]
-            ),
-            IntegrationGeneratorArg(
-                name="key5_key3", description="", in_="body", in_object=["key5"]
-            ),
-            IntegrationGeneratorArg(
-                name="key2", description="", in_="body", in_object=[]
-            ),
-            IntegrationGeneratorArg(
-                name="key6", description="", in_="body", in_object=["key2"]
-            ),
-            IntegrationGeneratorArg(
-                name="key6_key3", description="", in_="body", in_object=["key2", "key6"]
-            ),
-            IntegrationGeneratorArg(
-                name="key8", description="", in_="body", in_object=["key2", "key6"]
-            ),
+            IntegrationGeneratorArg(name="key5", description="", in_="body", in_object=[]),
+            IntegrationGeneratorArg(name="key5_key3", description="", in_="body", in_object=["key5"]),
+            IntegrationGeneratorArg(name="key2", description="", in_="body", in_object=[]),
+            IntegrationGeneratorArg(name="key6", description="", in_="body", in_object=["key2"]),
+            IntegrationGeneratorArg(name="key6_key3", description="", in_="body", in_object=["key2", "key6"]),
+            IntegrationGeneratorArg(name="key8", description="", in_="body", in_object=["key2", "key6"]),
         ]
         body_format = create_body_format(request_body, args)
 
@@ -117,15 +105,9 @@ class TestPostmanHelpers:
         request_body = {"key1": "val1", "key4": [{"key1": "val5"}]}
 
         args: List[IntegrationGeneratorArg] = [
-            IntegrationGeneratorArg(
-                name="key1", description="", in_="body", in_object=[]
-            ),
-            IntegrationGeneratorArg(
-                name="key4", description="", in_="body", in_object=[]
-            ),
-            IntegrationGeneratorArg(
-                name="key4_key1", description="", in_="body", in_object=["key4"]
-            ),
+            IntegrationGeneratorArg(name="key1", description="", in_="body", in_object=[]),
+            IntegrationGeneratorArg(name="key4", description="", in_="body", in_object=[]),
+            IntegrationGeneratorArg(name="key4_key1", description="", in_="body", in_object=["key4"]),
         ]
         body_format = create_body_format(request_body, args)
 
@@ -244,17 +226,11 @@ class TestPostmanHelpers:
         }
         duplicate_requests_check(names_dict)
 
-    test_files_path = os.path.join(
-        git_path(), "demisto_sdk", "commands", "postman_codegen", "tests", "test_files"
-    )
-    with open(
-        os.path.join(test_files_path, "shared_args_path.json")
-    ) as shared_args_path_file:
+    test_files_path = os.path.join(git_path(), "demisto_sdk", "commands", "postman_codegen", "tests", "test_files")
+    with open(os.path.join(test_files_path, "shared_args_path.json")) as shared_args_path_file:
         shared_args_path_items = json.load(shared_args_path_file)
 
-    many_with_shared_paths = defaultdict(
-        int, {"name": 2, "description": 3, "url": 3, "method": 3}
-    )
+    many_with_shared_paths = defaultdict(int, {"name": 2, "description": 3, "url": 3, "method": 3})
     one_shared_for_each_paths = defaultdict(int, {"name": 1, "id": 1, "uid": 1})
     complicated_chars_in_paths = defaultdict(int, {"name": 1, "required": 5})
     same_path_at_the_end = defaultdict(int, {"name": 2})
@@ -271,12 +247,8 @@ class TestPostmanHelpers:
         (shared_args_path_items["same_path_at_the_end"], same_path_at_the_end),
     )
 
-    @pytest.mark.parametrize(
-        "flattened_json, shared_arg_to_split_position_dict", SHARED_ARGS_PATH
-    )
-    def test_find_shared_args_path(
-        self, flattened_json, shared_arg_to_split_position_dict
-    ):
+    @pytest.mark.parametrize("flattened_json, shared_arg_to_split_position_dict", SHARED_ARGS_PATH)
+    def test_find_shared_args_path(self, flattened_json, shared_arg_to_split_position_dict):
         """
         Given
         - Dictionary containing flattened json with raw body of a request
@@ -339,9 +311,7 @@ class TestPostmanHelpers:
         "split_path, other_args_split_paths, current_min_unique, new_min_unique",
         UPDATED_MAX_INPUT,
     )
-    def test_update_min_distinguish_path(
-        self, split_path, other_args_split_paths, current_min_unique, new_min_unique
-    ):
+    def test_update_min_distinguish_path(self, split_path, other_args_split_paths, current_min_unique, new_min_unique):
         """
         Given
         - A split path of an argument, a list of other arguments' splitted paths, and the minimum unique path until now
@@ -352,18 +322,11 @@ class TestPostmanHelpers:
         Then
         - Returns the minimum unique path of all arguments with the same name
         """
-        assert (
-            update_min_unique_path(
-                split_path, other_args_split_paths, current_min_unique
-            )
-            == new_min_unique
-        )
+        assert update_min_unique_path(split_path, other_args_split_paths, current_min_unique) == new_min_unique
 
 
 class TestPostmanCodeGen:
-    test_files_path = os.path.join(
-        git_path(), "demisto_sdk", "commands", "postman_codegen", "tests", "test_files"
-    )
+    test_files_path = os.path.join(git_path(), "demisto_sdk", "commands", "postman_codegen", "tests", "test_files")
     postman_collection_stream = None
     autogen_config_stream = None
     postman_collection: dict
@@ -372,15 +335,9 @@ class TestPostmanCodeGen:
 
     @classmethod
     def setup_class(cls):
-        collection_path = os.path.join(
-            cls.test_files_path, "VirusTotal.postman_collection.json"
-        )
-        autogen_config_path = os.path.join(
-            cls.test_files_path, "VirusTotal-autogen-config.json"
-        )
-        arguments_check_collection_path = os.path.join(
-            cls.test_files_path, "arguments_check_collection.json"
-        )
+        collection_path = os.path.join(cls.test_files_path, "VirusTotal.postman_collection.json")
+        autogen_config_path = os.path.join(cls.test_files_path, "VirusTotal-autogen-config.json")
+        arguments_check_collection_path = os.path.join(cls.test_files_path, "arguments_check_collection.json")
         with open(collection_path) as f:
             cls.postman_collection = json.load(f)
 
@@ -563,14 +520,8 @@ class TestPostmanCodeGen:
 
         assert "foo = args.get('foo')" in integration_code
         assert "virus_name = args.get('virus_name')" in integration_code
-        assert (
-            "def test_report_request(self, foo, virus_name, resource):"
-            in integration_code
-        )
-        assert (
-            "'GET', f'vtapi/v2/{virus_name}/test/{foo}', params=params, headers=headers)"
-            in integration_code
-        )
+        assert "def test_report_request(self, foo, virus_name, resource):" in integration_code
+        assert "'GET', f'vtapi/v2/{virus_name}/test/{foo}', params=params, headers=headers)" in integration_code
 
         assert "name: foo" in integration_yml
         assert "name: virus_name" in integration_yml
@@ -628,15 +579,9 @@ class TestPostmanCodeGen:
         integration_yml = yaml.dumps(integration_obj.to_dict())
 
         assert "foo_a = args.get('foo_a')" in integration_code
-        assert (
-            "def test_report_request(self, foo_a, resource_b, a, b, c)"
-            in integration_code
-        )
+        assert "def test_report_request(self, foo_a, resource_b, a, b, c)" in integration_code
         assert "assign_params(RESOURCE_B=resource_b" in integration_code
-        assert (
-            "('GET', f'vtapi/v2/test/{foo_a}', params=params, json_data=data, headers=headers)"
-            in integration_code
-        )
+        assert "('GET', f'vtapi/v2/test/{foo_a}', params=params, json_data=data, headers=headers)" in integration_code
 
         assert "name: foo_a" in integration_yml
         assert "name: resource_b" in integration_yml
@@ -715,10 +660,7 @@ class TestPostmanCodeGen:
 
         integration_code = config.generate_integration_python_code()
 
-        assert (
-            "headers['Authorization'] = f'SSWS {params[\"api_key\"]}'"
-            in integration_code
-        )
+        assert "headers['Authorization'] = f'SSWS {params[\"api_key\"]}'" in integration_code
 
     def test_post_body_to_arguments(self, tmpdir):
         """
@@ -801,10 +743,7 @@ class TestPostmanCodeGen:
         integration_obj = config.generate_integration_yml()
         integration_yml = yaml.dumps(integration_obj.to_dict())
 
-        assert (
-            "def test_create_group_request(self, test_name, test_id, test_key):"
-            in integration_code
-        )
+        assert "def test_create_group_request(self, test_name, test_id, test_key):" in integration_code
         assert (
             'data = {"test_filter": {"test_key": test_key}, "test_id": test_id, "test_name": test_name}'
             in integration_code
@@ -846,9 +785,7 @@ class TestPostmanCodeGen:
     ]
 
     @pytest.mark.parametrize("body, expected", GENERATE_COMMAND_OUTPUTS_INPUTS)
-    def test_generate_command_outputs(
-        self, body: Union[List, Dict], expected: List[IntegrationGeneratorOutput]
-    ):
+    def test_generate_command_outputs(self, body: Union[List, Dict], expected: List[IntegrationGeneratorOutput]):
         """
         Given:
         - Body of postman generator command.
@@ -877,9 +814,7 @@ class TestPostmanCodeGen:
         """
         package_path = os.path.join(self.test_files_path, "package")
         os.mkdir(package_path)
-        collection_path = os.path.join(
-            self.test_files_path, "VirusTotal.postman_collection.json"
-        )
+        collection_path = os.path.join(self.test_files_path, "VirusTotal.postman_collection.json")
         try:
             runner = CliRunner()
             runner.invoke(
@@ -887,19 +822,14 @@ class TestPostmanCodeGen:
                 ["postman-codegen", "-i", collection_path, "-o", package_path, "-p"],
                 catch_exceptions=False,
             )
-            assert all(
-                elem in os.listdir(package_path)
-                for elem in ["package.py", "README.md", "package.yml"]
-            )
+            assert all(elem in os.listdir(package_path) for elem in ["package.py", "README.md", "package.yml"])
         except Exception as e:
             raise e
         finally:
             shutil.rmtree(package_path)
 
 
-def _testutil_create_postman_collection(
-    dest_path, with_request: Optional[dict] = None, no_auth: bool = False
-):
+def _testutil_create_postman_collection(dest_path, with_request: Optional[dict] = None, no_auth: bool = False):
     default_collection_path = os.path.join(
         git_path(),
         "demisto_sdk",

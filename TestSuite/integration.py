@@ -14,9 +14,7 @@ yaml = YAML_Handler()
 
 
 class Integration:
-    def __init__(
-        self, tmpdir: Path, name, repo, create_unified: Optional[bool] = False
-    ):
+    def __init__(self, tmpdir: Path, name, repo, create_unified: Optional[bool] = False):
         # Save entities
         self.name = name
         self._repo = repo
@@ -30,23 +28,15 @@ class Integration:
         self.create_unified = create_unified
 
         self.path = str(self._tmpdir_integration_path)
-        self.code = File(
-            self._tmpdir_integration_path / f"{self.name}.py", self._repo.path
-        )
-        self.yml = YAML(
-            self._tmpdir_integration_path / f"{self.name}.yml", self._repo.path
-        )
+        self.code = File(self._tmpdir_integration_path / f"{self.name}.py", self._repo.path)
+        self.yml = YAML(self._tmpdir_integration_path / f"{self.name}.yml", self._repo.path)
         self.readme = File(self._tmpdir_integration_path / "README.md", self._repo.path)
         self.description = File(
             self._tmpdir_integration_path / f"{self.name}_description.md",
             self._repo.path,
         )
-        self.changelog = File(
-            self._tmpdir_integration_path / "CHANGELOG.md", self._repo.path
-        )
-        self.image = File(
-            self._tmpdir_integration_path / f"{self.name}_image.png", self._repo.path
-        )
+        self.changelog = File(self._tmpdir_integration_path / "CHANGELOG.md", self._repo.path)
+        self.image = File(self._tmpdir_integration_path / f"{self.name}_image.png", self._repo.path)
 
     def build(
         self,
@@ -84,17 +74,13 @@ class Integration:
                 IntegrationScriptUnifier.unify(Path(self.yml.path), yml),
             )
             self.readme = File(
-                output_yml_path.with_name(
-                    output_yml_path.name.replace(".yml", "_README.md")
-                ),
+                output_yml_path.with_name(output_yml_path.name.replace(".yml", "_README.md")),
                 self._repo.path,
             )
             self.path = str(output_yml_path)
             shutil.rmtree(self._tmpdir_integration_path)
 
-    def create_default_integration(
-        self, name: str = "Sample", commands: List[str] = None
-    ):
+    def create_default_integration(self, name: str = "Sample", commands: List[str] = None):
         """Creates a new integration with basic data
 
         Args:
@@ -111,20 +97,12 @@ class Integration:
             yml["name"] = yml["commonfields"]["id"] = name
             if commands:
                 for command in commands:
-                    yml["script"]["commands"].append(
-                        {"name": command, "description": f"{command}-description"}
-                    )
-        with open(
-            suite_join_path(default_integration_dir, "sample_image.png"), "rb"
-        ) as image_file:
+                    yml["script"]["commands"].append({"name": command, "description": f"{command}-description"})
+        with open(suite_join_path(default_integration_dir, "sample_image.png"), "rb") as image_file:
             image = image_file.read()
-        with open(
-            suite_join_path(default_integration_dir, "CHANGELOG.md")
-        ) as changelog_file:
+        with open(suite_join_path(default_integration_dir, "CHANGELOG.md")) as changelog_file:
             changelog = str(changelog_file.read())
-        with open(
-            suite_join_path(default_integration_dir, "sample_description.md")
-        ) as description_file:
+        with open(suite_join_path(default_integration_dir, "sample_description.md")) as description_file:
             description = str(description_file.read())
 
         self.build(

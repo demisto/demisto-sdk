@@ -48,9 +48,7 @@ class JSONContentObject(JSONObject):
         """
         if not self._change_log:
             change_log_file = next(
-                self.path.parent.glob(
-                    patterns=rf"{re.escape(self.path.stem)}_CHANGELOG.md"
-                ),
+                self.path.parent.glob(patterns=rf"{re.escape(self.path.stem)}_CHANGELOG.md"),
                 None,
             )
             if change_log_file:
@@ -67,9 +65,7 @@ class JSONContentObject(JSONObject):
         """
         if not self._readme:
             readme_file = next(
-                self.path.parent.glob(
-                    patterns=rf"{re.escape(self.path.stem)}_README.md"
-                ),
+                self.path.parent.glob(patterns=rf"{re.escape(self.path.stem)}_README.md"),
                 None,
             )
             if readme_file:
@@ -133,9 +129,7 @@ class JSONContentObject(JSONObject):
             )
             logger.debug(f"Successfully unified {self.path} {self.type()}")
         except Exception as e:
-            logger.debug(
-                f"Could not unify {self.path} {self.type()} because of error {e}, dumping without unifying"
-            )
+            logger.debug(f"Could not unify {self.path} {self.type()} because of error {e}, dumping without unifying")
             created_files.extend(super().dump(dest_dir=dest_dir))
 
         # Dump changelog if requested and available
@@ -154,9 +148,7 @@ class JSONContentObject(JSONObject):
         data = get_json(str(self.path))
         return isinstance(data, list)
 
-    def _unify(
-        self, dest_dir: Optional[Union[Path, str]] = None, output: str = ""
-    ) -> List[Path]:
+    def _unify(self, dest_dir: Optional[Union[Path, str]] = None, output: str = "") -> List[Path]:
         """Unify JSONBasedContentObject in destination dir.
 
         Args:

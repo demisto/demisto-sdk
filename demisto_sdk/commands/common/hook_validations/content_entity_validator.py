@@ -73,9 +73,7 @@ class ContentEntityValidator(BaseValidator):
         self.skip_docker_check = skip_docker_check
         self.prev_ver = structure_validator.prev_ver
         self.branch_name = structure_validator.branch_name
-        self.oldest_supported_version = (
-            oldest_supported_version or OLDEST_SUPPORTED_VERSION
-        )
+        self.oldest_supported_version = oldest_supported_version or OLDEST_SUPPORTED_VERSION
 
     def is_valid_file(self, validate_rn=True):
         tests = [
@@ -121,16 +119,10 @@ class ContentEntityValidator(BaseValidator):
         if not self.old_file:
             return True
 
-        old_version_id = self.structure_validator.get_file_id_from_loaded_file_data(
-            self.old_file
-        )
-        new_file_id = self.structure_validator.get_file_id_from_loaded_file_data(
-            self.current_file
-        )
+        old_version_id = self.structure_validator.get_file_id_from_loaded_file_data(self.old_file)
+        new_file_id = self.structure_validator.get_file_id_from_loaded_file_data(self.current_file)
         if not (new_file_id == old_version_id):
-            error_message, error_code = Errors.file_id_changed(
-                old_version_id, new_file_id
-            )
+            error_message, error_code = Errors.file_id_changed(old_version_id, new_file_id)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 
@@ -147,12 +139,8 @@ class ContentEntityValidator(BaseValidator):
         if not self.old_file:
             return True
 
-        from_version_new = self.current_file.get(
-            "fromversion"
-        ) or self.current_file.get("fromVersion")
-        from_version_old = self.old_file.get("fromversion") or self.old_file.get(
-            "fromVersion"
-        )
+        from_version_new = self.current_file.get("fromversion") or self.current_file.get("fromVersion")
+        from_version_old = self.old_file.get("fromversion") or self.old_file.get("fromVersion")
 
         # if in old file there was no fromversion ,format command will add from version key with 4.1.0
         if not from_version_old and from_version_new == OLD_FILE_DEFAULT_1_FROMVERSION:
@@ -196,13 +184,8 @@ class ContentEntityValidator(BaseValidator):
         if not name:
             return True
         lowercase_name = name.lower()
-        if any(
-            excluded_word in lowercase_name
-            for excluded_word in EXCLUDED_DISPLAY_NAME_WORDS
-        ):
-            error_message, error_code = Errors.entity_name_contains_excluded_word(
-                name, EXCLUDED_DISPLAY_NAME_WORDS
-            )
+        if any(excluded_word in lowercase_name for excluded_word in EXCLUDED_DISPLAY_NAME_WORDS):
+            error_message, error_code = Errors.entity_name_contains_excluded_word(name, EXCLUDED_DISPLAY_NAME_WORDS)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
@@ -219,9 +202,7 @@ class ContentEntityValidator(BaseValidator):
         if not main_branch.startswith("origin"):
             main_branch = "origin/" + main_branch
 
-        diff_string_config_yml = run_command(
-            f"git diff {main_branch} .circleci/config.yml"
-        )
+        diff_string_config_yml = run_command(f"git diff {main_branch} .circleci/config.yml")
         if re.search(r'[+-][ ]+CONTENT_VERSION: ".*', diff_string_config_yml):
             return True
         return False
@@ -262,9 +243,7 @@ class ContentEntityValidator(BaseValidator):
         id_ = _get_file_id(file_type, self.current_file)
         name = self.current_file.get("name", "")
         if id_ != name:
-            error_message, error_code = Errors.id_should_equal_name(
-                name, id_, self.file_path
-            )
+            error_message, error_code = Errors.id_should_equal_name(name, id_, self.file_path)
             if self.handle_error(
                 error_message,
                 error_code,
@@ -280,9 +259,7 @@ class ContentEntityValidator(BaseValidator):
             return json.load(data_file)
 
     @error_codes("CJ104,CJ102")
-    def are_tests_registered_in_conf_json_file_or_yml_file(
-        self, test_playbooks: list
-    ) -> bool:
+    def are_tests_registered_in_conf_json_file_or_yml_file(self, test_playbooks: list) -> bool:
         """
         If the file is a test playbook:
             Validates it is registered in conf.json file
@@ -294,9 +271,7 @@ class ContentEntityValidator(BaseValidator):
         Returns:
             True if all test playbooks are configured in conf.json
         """
-        no_tests_explicitly = any(
-            test for test in test_playbooks if "no test" in test.lower()
-        )
+        no_tests_explicitly = any(test for test in test_playbooks if "no test" in test.lower())
         if no_tests_explicitly:
             return True
         conf_json_tests = self._load_conf_file()["tests"]
@@ -314,9 +289,7 @@ class ContentEntityValidator(BaseValidator):
                 if is_test_config_match(test_config, test_playbook_id=content_item_id)
             )
             if not is_configured_test:
-                missing_test_playbook_configurations = json.dumps(
-                    {"playbookID": content_item_id}, indent=4
-                )
+                missing_test_playbook_configurations = json.dumps({"playbookID": content_item_id}, indent=4)
                 missing_integration_configurations = json.dumps(
                     {"integrations": "<integration ID>", "playbookID": content_item_id},
                     indent=4,
@@ -326,9 +299,7 @@ class ContentEntityValidator(BaseValidator):
                     missing_test_playbook_configurations,
                     missing_integration_configurations,
                 )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
         # Integration case
@@ -385,9 +356,7 @@ class ContentEntityValidator(BaseValidator):
                 error_message, error_code = Errors.integration_not_registered(
                     self.file_path, missing_test_playbook_configurations, no_tests_key
                 )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
         return True
@@ -405,9 +374,7 @@ class ContentEntityValidator(BaseValidator):
             True if tests are configured (not None and not an empty list) otherwise return False.
         """
         if not test_playbooks:
-            error_message, error_code = Errors.no_test_playbook(
-                self.file_path, file_type
-            )
+            error_message, error_code = Errors.no_test_playbook(self.file_path, file_type)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
@@ -416,10 +383,7 @@ class ContentEntityValidator(BaseValidator):
         # skip check if the comparison is to a feature branch or if you are on the feature branch itself.
         # also skip if the file in question is reputations.json
         if any(
-            (
-                feature_branch_name in self.prev_ver
-                or feature_branch_name in self.branch_name
-            )
+            (feature_branch_name in self.prev_ver or feature_branch_name in self.branch_name)
             for feature_branch_name in FEATURE_BRANCHES
         ) or self.file_path.endswith("reputations.json"):
             return False
@@ -430,23 +394,17 @@ class ContentEntityValidator(BaseValidator):
     def are_fromversion_and_toversion_in_correct_format(self) -> bool:
 
         if self.file_path.endswith(".json"):
-            from_version = (
-                self.current_file.get("fromVersion", "00.00.00") or "00.00.00"
-            )
+            from_version = self.current_file.get("fromVersion", "00.00.00") or "00.00.00"
             to_version = self.current_file.get("toVersion", "00.00.00") or "00.00.00"
         elif self.file_path.endswith(".yml"):
-            from_version = (
-                self.current_file.get("fromversion", "00.00.00") or "00.00.00"
-            )
+            from_version = self.current_file.get("fromversion", "00.00.00") or "00.00.00"
             to_version = self.current_file.get("toversion", "00.00.00") or "00.00.00"
         else:
             raise ValueError(f"{self.file_path} is not json or yml type")
 
         for field, name in ((from_version, "fromversion"), (to_version, "toversion")):
             if not FROM_TO_VERSION_REGEX.fullmatch(field):
-                error_message, error_code = Errors.incorrect_from_to_version_format(
-                    name
-                )
+                error_message, error_code = Errors.incorrect_from_to_version_format(name)
                 self.handle_error(error_message, error_code, file_path=self.file_path)
                 return False
         return True
@@ -464,9 +422,7 @@ class ContentEntityValidator(BaseValidator):
             raise ValueError(f"{self.file_path} is not json or yml type")
 
         if not from_version or not to_version:
-            logger.debug(
-                f"either not from_version or not to_version in {self.file_path}, considering them synced"
-            )
+            logger.debug(f"either not from_version or not to_version in {self.file_path}, considering them synced")
             return True
 
         if version.parse(to_version) < version.parse(from_version):
@@ -490,9 +446,9 @@ class ContentEntityValidator(BaseValidator):
         else:
             return True
 
-        if LooseVersion(
-            self.current_file.get(from_version_field, DEFAULT_CONTENT_ITEM_FROM_VERSION)
-        ) < LooseVersion(self.oldest_supported_version):
+        if LooseVersion(self.current_file.get(from_version_field, DEFAULT_CONTENT_ITEM_FROM_VERSION)) < LooseVersion(
+            self.oldest_supported_version
+        ):
             error_message, error_code = Errors.no_minimal_fromversion_in_file(
                 from_version_field, self.oldest_supported_version
             )
@@ -515,9 +471,9 @@ class ContentEntityValidator(BaseValidator):
         if not self.should_run_fromversion_validation():
             return True
 
-        if LooseVersion(
-            self.current_file.get("fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION)
-        ) < LooseVersion(GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION):
+        if LooseVersion(self.current_file.get("fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION)) < LooseVersion(
+            GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION
+        ):
             error_message, error_code = Errors.no_minimal_fromversion_in_file(
                 "fromVersion", GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION
             )
@@ -575,9 +531,7 @@ class ContentEntityValidator(BaseValidator):
         Returns:
            bool. Whether the file's id ends with spaces
         """
-        file_id = self.structure_validator.get_file_id_from_loaded_file_data(
-            self.current_file
-        )
+        file_id = self.structure_validator.get_file_id_from_loaded_file_data(self.current_file)
         if file_id and file_id != file_id.strip():
             error_message, error_code = Errors.spaces_in_the_end_of_id(file_id)
             if self.handle_error(

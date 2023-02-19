@@ -49,13 +49,9 @@ yaml = YAML_Handler()
 
 
 with open(SOURCE_FORMAT_INTEGRATION_COPY) as of:
-    SOURCE_FORMAT_INTEGRATION_YML = (
-        of.read()
-    )  # prevents overriding by other `format` calls.
+    SOURCE_FORMAT_INTEGRATION_YML = of.read()  # prevents overriding by other `format` calls.
 with open(SOURCE_FORMAT_PLAYBOOK_COPY) as of:
-    SOURCE_FORMAT_PLAYBOOK_YML = (
-        of.read()
-    )  # prevents overriding by other `format` calls.
+    SOURCE_FORMAT_PLAYBOOK_YML = of.read()  # prevents overriding by other `format` calls.
 BASIC_YML_CONTENTS = (SOURCE_FORMAT_INTEGRATION_YML, SOURCE_FORMAT_PLAYBOOK_YML)
 
 BASIC_YML_TEST_PACKS = [
@@ -117,9 +113,7 @@ def set_git_test_env(mocker):
 
 
 @pytest.mark.parametrize("source_yml", BASIC_YML_CONTENTS)
-def test_integration_format_yml_with_no_test_positive(
-    mocker, tmp_path: PosixPath, source_yml: str
-):
+def test_integration_format_yml_with_no_test_positive(mocker, tmp_path: PosixPath, source_yml: str):
     """
     Given
     - A yml file (integration, playbook or script) with no 'tests' configured
@@ -142,13 +136,8 @@ def test_integration_format_yml_with_no_test_positive(
     # Running format in the first time
     runner = CliRunner()
     with ChangeCWD(tmp_path):
-        result = runner.invoke(
-            main, [FORMAT_CMD, "-i", source_path, "-o", output_path, "-at"], input="Y"
-        )
-    prompt = (
-        f"The file {source_path} has no test playbooks configured. "
-        f'Do you want to configure it with "No tests"'
-    )
+        result = runner.invoke(main, [FORMAT_CMD, "-i", source_path, "-o", output_path, "-at"], input="Y")
+    prompt = f"The file {source_path} has no test playbooks configured. " f'Do you want to configure it with "No tests"'
     assert not result.exception
     assert prompt in result.output
     output_yml = get_dict_from_file(output_path)
@@ -161,9 +150,7 @@ def test_integration_format_yml_with_no_test_positive(
 
 
 @pytest.mark.parametrize("source_yml", BASIC_YML_CONTENTS)
-def test_integration_format_yml_with_no_test_negative(
-    mocker, tmp_path: PosixPath, source_yml: str
-):
+def test_integration_format_yml_with_no_test_negative(mocker, tmp_path: PosixPath, source_yml: str):
     """
     Given
     - A yml file (integration, playbook or script) with no 'tests' configured
@@ -184,9 +171,7 @@ def test_integration_format_yml_with_no_test_negative(
 
     runner = CliRunner()
     with ChangeCWD(tmp_path):
-        result = runner.invoke(
-            main, [FORMAT_CMD, "-i", source_path, "-o", output_path, "-at"], input="N"
-        )
+        result = runner.invoke(main, [FORMAT_CMD, "-i", source_path, "-o", output_path, "-at"], input="N")
     assert not result.exception
     prompt = f'The file {source_path} has no test playbooks configured. Do you want to configure it with "No tests"'
     assert prompt in result.output
@@ -195,9 +180,7 @@ def test_integration_format_yml_with_no_test_negative(
 
 
 @pytest.mark.parametrize("source_yml", BASIC_YML_CONTENTS)
-def test_integration_format_yml_with_no_test_no_interactive_positive(
-    tmp_path: PosixPath, source_yml: str
-):
+def test_integration_format_yml_with_no_test_no_interactive_positive(tmp_path: PosixPath, source_yml: str):
     """
     Given
     - A yml file (integration, playbook or script) with no 'tests' configured
@@ -216,9 +199,7 @@ def test_integration_format_yml_with_no_test_no_interactive_positive(
     runner = CliRunner()
     # Running format in the first time
     with ChangeCWD(tmp_path):
-        result = runner.invoke(
-            main, [FORMAT_CMD, "-i", source_path, "-o", output_path, "-y"]
-        )
+        result = runner.invoke(main, [FORMAT_CMD, "-i", source_path, "-o", output_path, "-y"])
     assert not result.exception
     yml_content = get_dict_from_file(output_path)
     assert yml_content[0].get("tests") == ["No tests (auto formatted)"]
@@ -254,9 +235,7 @@ def test_integration_format_configuring_conf_json_no_interactive_positive(
     """
     # Setting up conf.json
     conf_json_path = tmp_path / "conf.json"
-    mocker.patch(
-        "demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_json_path
-    )
+    mocker.patch("demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_json_path)
     with open(conf_json_path, "w") as file:
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
 
@@ -264,9 +243,7 @@ def test_integration_format_configuring_conf_json_no_interactive_positive(
     saved_file_path = str(tmp_path / os.path.basename(destination_path))
     runner = CliRunner()
     # Running format in the first time
-    result = runner.invoke(
-        main, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path, "-y"]
-    )
+    result = runner.invoke(main, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path, "-y"])
     assert not result.exception
     if file_type == "playbook":
         _verify_conf_json_modified(test_playbooks, "", conf_json_path)
@@ -306,9 +283,7 @@ def test_integration_format_configuring_conf_json_positive(
     """
     # Setting up conf.json
     conf_json_path = tmp_path / "conf.json"
-    mocker.patch(
-        "demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_json_path
-    )
+    mocker.patch("demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_json_path)
     with open(conf_json_path, "w") as file:
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
     mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
@@ -318,9 +293,7 @@ def test_integration_format_configuring_conf_json_positive(
     runner = CliRunner()
     # Running format in the first time
     with ChangeCWD(tmp_path):
-        result = runner.invoke(
-            main, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path], input="Y"
-        )
+        result = runner.invoke(main, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path], input="Y")
     prompt = "The following test playbooks are not configured in conf.json file"
     assert not result.exception
     assert prompt in result.output
@@ -362,9 +335,7 @@ def test_integration_format_configuring_conf_json_negative(
     """
     # Setting up conf.json
     conf_json_path = tmp_path / "conf.json"
-    mocker.patch(
-        "demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_json_path
-    )
+    mocker.patch("demisto_sdk.commands.format.update_generic_yml.CONF_PATH", conf_json_path)
 
     with open(conf_json_path, "w") as file:
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
@@ -372,9 +343,7 @@ def test_integration_format_configuring_conf_json_negative(
     saved_file_path = str(tmp_path / os.path.basename(destination_path))
     runner = CliRunner()
     # Running format in the first time
-    result = runner.invoke(
-        main, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path], input="N"
-    )
+    result = runner.invoke(main, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path], input="N")
     prompt = "The following test playbooks are not configured in conf.json file"
     assert not result.exception
     assert prompt in result.output
@@ -384,9 +353,7 @@ def test_integration_format_configuring_conf_json_negative(
     assert "Skipping test playbooks configuration" in result.output
 
 
-def _verify_conf_json_modified(
-    test_playbooks: List, yml_title: str, conf_json_path: str
-):
+def _verify_conf_json_modified(test_playbooks: List, yml_title: str, conf_json_path: str):
     """
     Verifying all test playbooks are configured in conf.json file
     """
@@ -432,7 +399,9 @@ def test_integration_format_remove_playbook_sourceplaybookid(mocker, tmp_path):
             [FORMAT_CMD, "-i", source_playbook_path, "-o", playbook_path, "-at"],
             input="N",
         )
-    prompt = f'The file {source_playbook_path} has no test playbooks configured. Do you want to configure it with "No tests"'
+    prompt = (
+        f'The file {source_playbook_path} has no test playbooks configured. Do you want to configure it with "No tests"'
+    )
     assert result.exit_code == 0
     assert prompt in result.output
     assert "======= Updating file " in result.stdout
@@ -455,9 +424,7 @@ def test_format_on_valid_py(mocker, repo):
     Then
     - Ensure format passes.
     """
-    mocker.patch.object(
-        update_generic, "is_file_from_content_repo", return_value=(False, "")
-    )
+    mocker.patch.object(update_generic, "is_file_from_content_repo", return_value=(False, ""))
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration")
     valid_py = "test\n"
@@ -487,9 +454,7 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
     Then
     - Ensure format passes.
     """
-    mocker.patch.object(
-        update_generic, "is_file_from_content_repo", return_value=(False, "")
-    )
+    mocker.patch.object(update_generic, "is_file_from_content_repo", return_value=(False, ""))
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration")
     invalid_py = "test\n\n\n\n"
@@ -519,9 +484,7 @@ def test_format_on_invalid_py_dict(mocker, repo):
     Then
     - Ensure format passes.
     """
-    mocker.patch.object(
-        update_generic, "is_file_from_content_repo", return_value=(False, "")
-    )
+    mocker.patch.object(update_generic, "is_file_from_content_repo", return_value=(False, ""))
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration")
     invalid_py = "{'test':'testing','test1':'testing1'}"
@@ -551,9 +514,7 @@ def test_format_on_invalid_py_long_dict(mocker, repo):
     Then
     - Ensure format passes.
     """
-    mocker.patch.object(
-        update_generic, "is_file_from_content_repo", return_value=(False, "")
-    )
+    mocker.patch.object(update_generic, "is_file_from_content_repo", return_value=(False, ""))
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration")
     invalid_py = (
@@ -587,9 +548,7 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo):
     Then
     - Ensure format passes and that the verbose is off
     """
-    mocker.patch.object(
-        update_generic, "is_file_from_content_repo", return_value=(False, "")
-    )
+    mocker.patch.object(update_generic, "is_file_from_content_repo", return_value=(False, ""))
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration")
     invalid_py = (
@@ -633,21 +592,15 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
         return_value=(True, f"{playbook.path}/playbook.yml"),
     )
     mocker.patch.object(PlaybookValidator, "is_script_id_valid", return_value=True)
-    mocker.patch.object(
-        PlaybookValidator, "name_not_contain_the_type", return_value=True
-    )
-    mocker.patch.object(
-        ContentEntityValidator, "validate_readme_exists", return_value=True
-    )
+    mocker.patch.object(PlaybookValidator, "name_not_contain_the_type", return_value=True)
+    mocker.patch.object(ContentEntityValidator, "validate_readme_exists", return_value=True)
 
     mocker.patch.object(tools, "is_external_repository", return_value=True)
     monkeypatch.setattr("builtins.input", lambda _: "N")
     success_reg = re.compile("Format Status .+?- Success\n")
     with ChangeCWD(playbook.path):
         runner = CliRunner(mix_stderr=False)
-        result_format = runner.invoke(
-            main, [FORMAT_CMD, "-i", "playbook.yml", "-v", "-y"], catch_exceptions=False
-        )
+        result_format = runner.invoke(main, [FORMAT_CMD, "-i", "playbook.yml", "-v", "-y"], catch_exceptions=False)
 
         with ChangeCWD(repo.path):
             result_validate = runner.invoke(
@@ -687,9 +640,7 @@ def test_format_integration_skipped_files(repo, mocker):
     mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
 
     runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(
-        main, [FORMAT_CMD, "-i", str(pack.path)], catch_exceptions=False
-    )
+    format_result = runner.invoke(main, [FORMAT_CMD, "-i", str(pack.path)], catch_exceptions=False)
 
     assert "======= Updating file" in format_result.stdout
     assert "Success" in format_result.stdout
@@ -714,9 +665,7 @@ def test_format_commonserver_skipped_files(repo, mocker):
     mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
 
     runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(
-        main, [FORMAT_CMD, "-i", str(pack.path), "-v"], catch_exceptions=False
-    )
+    format_result = runner.invoke(main, [FORMAT_CMD, "-i", str(pack.path), "-v"], catch_exceptions=False)
 
     assert "Success" in format_result.stdout
     assert "CommonServerPython.py" in format_result.stdout
@@ -749,9 +698,7 @@ def test_format_playbook_without_fromversion_no_preset_flag(repo):
 
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(
-        main, [FORMAT_CMD, "-i", str(playbook.yml.path), "--assume-yes", "-v"]
-    )
+    format_result = runner.invoke(main, [FORMAT_CMD, "-i", str(playbook.yml.path), "--assume-yes", "-v"])
     assert "Success" in format_result.stdout
     assert playbook.yml.read_dict().get("fromversion") == GENERAL_DEFAULT_FROMVERSION
 
@@ -849,9 +796,7 @@ def test_format_playbook_without_fromversion_without_preset_flag_manual(repo):
 
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(
-        main, [FORMAT_CMD, "-i", str(playbook.yml.path), "-v"], input="y"
-    )
+    format_result = runner.invoke(main, [FORMAT_CMD, "-i", str(playbook.yml.path), "-v"], input="y")
     assert "Success" in format_result.stdout
     assert playbook.yml.read_dict().get("fromversion") == GENERAL_DEFAULT_FROMVERSION
 
@@ -879,9 +824,7 @@ def test_format_playbook_copy_removed_from_name_and_id(repo):
 
     playbook.yml.write_dict(playbook_content)
     runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(
-        main, [FORMAT_CMD, "-i", str(playbook.yml.path), "-v"], input="y\n5.5.0"
-    )
+    format_result = runner.invoke(main, [FORMAT_CMD, "-i", str(playbook.yml.path), "-v"], input="y\n5.5.0")
     assert "Success" in format_result.stdout
     assert playbook.yml.read_dict().get("id") == playbook_id
     assert playbook.yml.read_dict().get("name") == playbook_name
@@ -970,9 +913,7 @@ def test_format_incident_type_layout_id(repo, mocker):
 
     runner = CliRunner(mix_stderr=False)
     with ChangeCWD(repo.path):
-        format_result = runner.invoke(
-            main, [FORMAT_CMD, "-i", str(pack.path), "-v", "-y"], catch_exceptions=False
-        )
+        format_result = runner.invoke(main, [FORMAT_CMD, "-i", str(pack.path), "-v", "-y"], catch_exceptions=False)
 
     assert format_result.exit_code == 0
     assert "Success" in format_result.stdout
@@ -1003,9 +944,7 @@ def test_format_incident_type_layout_id(repo, mocker):
         ("id", "asset_operatingsystem", "generic_asset_operatingsystem"),
     ],
 )
-def test_format_generic_field_wrong_values(
-    mocker, repo, field_to_test, invalid_value, expected_value_after_format
-):
+def test_format_generic_field_wrong_values(mocker, repo, field_to_test, invalid_value, expected_value_after_format):
     """
     Given
     - Invalid generic field.
@@ -1017,9 +956,7 @@ def test_format_generic_field_wrong_values(
     - Ensure Format fixed the invalid value of the given generic field.
     - Ensure success message is printed.
     """
-    mocker.patch.object(
-        update_generic, "is_file_from_content_repo", return_value=(False, "")
-    )
+    mocker.patch.object(update_generic, "is_file_from_content_repo", return_value=(False, ""))
     mocker.patch(
         "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
         "6.5.0",
@@ -1059,9 +996,7 @@ def test_format_generic_field_missing_from_version_key(mocker, repo):
     - Ensure Format fixed the given generic field - fromVersion field was added and it's value is 6.5.0
     - Ensure success message is printed.
     """
-    mocker.patch.object(
-        update_generic, "is_file_from_content_repo", return_value=(False, "")
-    )
+    mocker.patch.object(update_generic, "is_file_from_content_repo", return_value=(False, ""))
     mocker.patch(
         "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
         "6.5.0",
@@ -1102,9 +1037,7 @@ def test_format_generic_type_wrong_from_version(mocker, repo):
     - Ensure Format fixed the invalid value of the given generic type.
     - Ensure success message is printed.
     """
-    mocker.patch.object(
-        update_generic, "is_file_from_content_repo", return_value=(False, "")
-    )
+    mocker.patch.object(update_generic, "is_file_from_content_repo", return_value=(False, ""))
     mocker.patch(
         "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
         "6.5.0",
@@ -1145,9 +1078,7 @@ def test_format_generic_type_missing_from_version_key(mocker, repo):
     - Ensure Format fixed the given generic type - fromVersion field was added and it's value is 6.5.0
     - Ensure success message is printed.
     """
-    mocker.patch.object(
-        update_generic, "is_file_from_content_repo", return_value=(False, "")
-    )
+    mocker.patch.object(update_generic, "is_file_from_content_repo", return_value=(False, ""))
     mocker.patch(
         "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
         "6.2.0",
@@ -1188,9 +1119,7 @@ def test_format_generic_module_wrong_from_version(mocker, repo):
     - Ensure Format fixed the invalid value of the given generic module.
     - Ensure success message is printed.
     """
-    mocker.patch.object(
-        update_generic, "is_file_from_content_repo", return_value=(False, "")
-    )
+    mocker.patch.object(update_generic, "is_file_from_content_repo", return_value=(False, ""))
     mocker.patch(
         "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
         "6.2.0",
@@ -1230,9 +1159,7 @@ def test_format_generic_module_missing_from_version_key(mocker, repo):
     - Ensure Format fixed the given generic module - fromVersion field was added and it's value is 6.5.0
     - Ensure success message is printed.
     """
-    mocker.patch.object(
-        update_generic, "is_file_from_content_repo", return_value=(False, "")
-    )
+    mocker.patch.object(update_generic, "is_file_from_content_repo", return_value=(False, ""))
     mocker.patch(
         "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
         "6.2.0",
@@ -1273,9 +1200,7 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
     - Ensure Format fixed the invalid value of the given generic definition.
     - Ensure success message is printed.
     """
-    mocker.patch.object(
-        update_generic, "is_file_from_content_repo", return_value=(False, "")
-    )
+    mocker.patch.object(update_generic, "is_file_from_content_repo", return_value=(False, ""))
     mocker.patch(
         "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
         "6.2.0",
@@ -1300,10 +1225,7 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
         # check that sdk format did change the wrong fromVersion to '6.5.0':
         with open(generic_definition_path) as f:
             updated_generic_definition = json.load(f)
-        assert (
-            updated_generic_definition["fromVersion"]
-            == GENERIC_DEFINITION["fromVersion"]
-        )
+        assert updated_generic_definition["fromVersion"] == GENERIC_DEFINITION["fromVersion"]
 
 
 def test_format_generic_definition_missing_from_version_key(mocker, repo):
@@ -1318,9 +1240,7 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
     - Ensure Format fixed the given generic definition - fromVersion field was added and it's value is 6.5.0
     - Ensure success message is printed.
     """
-    mocker.patch.object(
-        update_generic, "is_file_from_content_repo", return_value=(False, "")
-    )
+    mocker.patch.object(update_generic, "is_file_from_content_repo", return_value=(False, ""))
     mocker.patch(
         "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
         "6.2.0",
@@ -1346,10 +1266,7 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
         # check that sdk format did add a fromVersion key with '6.5.0' as a value:
         with open(generic_definition_path) as f:
             updated_generic_definition = json.load(f)
-        assert (
-            updated_generic_definition["fromVersion"]
-            == GENERIC_DEFINITION["fromVersion"]
-        )
+        assert updated_generic_definition["fromVersion"] == GENERIC_DEFINITION["fromVersion"]
 
 
 class TestFormatWithoutAddTestsFlag:
@@ -1371,9 +1288,7 @@ class TestFormatWithoutAddTestsFlag:
         integration.yml.update({"fromversion": "5.5.0"})
         integration_path = integration.yml.path
         mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
-        mocker.patch.object(
-            IntegrationValidator, "is_valid_category", return_value=True
-        )
+        mocker.patch.object(IntegrationValidator, "is_valid_category", return_value=True)
 
         result = runner.invoke(main, [FORMAT_CMD, "-i", integration_path, "-at"])
         prompt = (
@@ -1403,9 +1318,7 @@ class TestFormatWithoutAddTestsFlag:
         integration = pack.create_integration()
         integration.create_default_integration()
         integration_path = integration.yml.path
-        mocker.patch.object(
-            IntegrationValidator, "is_valid_category", return_value=True
-        )
+        mocker.patch.object(IntegrationValidator, "is_valid_category", return_value=True)
         result = runner.invoke(main, [FORMAT_CMD, "-i", integration_path], input="Y")
         prompt = (
             f"The file {integration_path} has no test playbooks configured."
@@ -1439,8 +1352,7 @@ class TestFormatWithoutAddTestsFlag:
 
         result = runner.invoke(main, [FORMAT_CMD, "-i", script_path])
         prompt = (
-            f"The file {script_path} has no test playbooks configured."
-            f' Do you want to configure it with "No tests"?'
+            f"The file {script_path} has no test playbooks configured." f' Do you want to configure it with "No tests"?'
         )
         message = f'Formatting {script_path} with "No tests"'
         assert not result.exception
@@ -1531,9 +1443,7 @@ class TestFormatWithoutAddTestsFlag:
         test_playbook.yml.update({"fromversion": "5.5.0"})
         test_playbooks_path = test_playbook.yml.path
         test_playbook.yml.delete_key("tests")
-        result = runner.invoke(
-            main, [FORMAT_CMD, "-i", test_playbooks_path, "-at"], input="N"
-        )
+        result = runner.invoke(main, [FORMAT_CMD, "-i", test_playbooks_path, "-at"], input="N")
         prompt = (
             f"The file {test_playbooks_path} has no test playbooks configured."
             f' Do you want to configure it with "No tests"?'

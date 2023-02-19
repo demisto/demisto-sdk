@@ -41,16 +41,10 @@ class Neo4jImportHandler:
             os.remove(file)
 
     def get_nodes_files(self) -> List[str]:
-        return [
-            file.name for file in self.import_path.iterdir() if ".nodes." in file.name
-        ]
+        return [file.name for file in self.import_path.iterdir() if ".nodes." in file.name]
 
     def get_relationships_files(self) -> List[str]:
-        return [
-            file.name
-            for file in self.import_path.iterdir()
-            if ".relationships." in file.name
-        ]
+        return [file.name for file in self.import_path.iterdir() if ".relationships." in file.name]
 
     def ensure_data_uniqueness(self) -> None:
         if len(sources := self._get_import_sources()) > 1:
@@ -85,12 +79,6 @@ class Neo4jImportHandler:
                     writer.writerow(next(reader))  # skip headers row
                     for row in reader:
                         row[0] = f"{prefix}{row[0]}"
-                        row[1] = (
-                            f"{prefix}{row[1]}"
-                            if "relationships" in filename.name
-                            else row[1]
-                        )
+                        row[1] = f"{prefix}{row[1]}" if "relationships" in filename.name else row[1]
                         writer.writerow(row)
-                shutil.move(
-                    tempfile.name, (self.import_path / filename.name).as_posix()
-                )
+                shutil.move(tempfile.name, (self.import_path / filename.name).as_posix())

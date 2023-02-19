@@ -42,9 +42,7 @@ METADATA = {
 
 class TestIDSetCreator:
     def setup(self):
-        self.id_set_full_path = os.path.join(
-            TESTS_DIR, "test_files", "content_repo_example", "id_set.json"
-        )
+        self.id_set_full_path = os.path.join(TESTS_DIR, "test_files", "content_repo_example", "id_set.json")
         self._test_dir = mkdtemp()
         self.file_path = os.path.join(self._test_dir, "id_set.json")
 
@@ -127,8 +125,7 @@ class TestIDSetCreator:
         }
 
         assert keys == expected_keys, (
-            f"missing keys: {expected_keys.difference(keys)}\n"
-            f" unexpected keys: {keys.difference(expected_keys)}"
+            f"missing keys: {expected_keys.difference(keys)}\n" f" unexpected keys: {keys.difference(expected_keys)}"
         )
 
     def test_create_id_set_on_specific_pack(self, repo):
@@ -178,14 +175,9 @@ class TestIDSetCreator:
             private_id_set = json.load(id_set_file)
 
         assert len(private_id_set["integrations"]) == 1
-        assert (
-            private_id_set["integrations"][0].get("id1", {}).get("name", "")
-            == "integration to create id set"
-        )
+        assert private_id_set["integrations"][0].get("id1", {}).get("name", "") == "integration to create id set"
         assert private_id_set["integrations"][0].get("id2", {}).get("name", "") == ""
-        assert private_id_set["Packs"]["pack_to_create_id_set_on"]["ContentItems"][
-            "integrations"
-        ] == ["id1"]
+        assert private_id_set["Packs"]["pack_to_create_id_set_on"]["ContentItems"]["integrations"] == ["id1"]
 
     def test_create_id_set_on_specific_empty_pack(self, repo, mocker):
         """
@@ -285,9 +277,7 @@ def test_create_id_set_flow_xpanse(repo, mocker):
     )
 
     with ChangeCWD(repo.path):
-        id_set_creator = IDSetCreator(
-            output=repo.id_set.path, marketplace="xpanse", print_logs=False
-        )
+        id_set_creator = IDSetCreator(output=repo.id_set.path, marketplace="xpanse", print_logs=False)
         id_set_creator.create_id_set()
 
     id_set_content = repo.id_set.read_json_as_dict()
@@ -303,14 +293,10 @@ def test_create_id_set_flow_xpanse(repo, mocker):
 
 def setup_id_set():
     integration1 = {
-        "Integration1": OrderedDict(
-            [("name", "Integration1"), ("commands", ["test-command_1", "test-command"])]
-        )
+        "Integration1": OrderedDict([("name", "Integration1"), ("commands", ["test-command_1", "test-command"])])
     }
     integration2 = {
-        "Integration2": OrderedDict(
-            [("name", "Integration2"), ("commands", ["test-command", "test-command_2"])]
-        )
+        "Integration2": OrderedDict([("name", "Integration2"), ("commands", ["test-command", "test-command_2"])])
     }
 
     playbook1 = {
@@ -357,9 +343,7 @@ def test_create_command_to_implemented_integration_map(repo):
     }
     id_set_creator = setup_id_set()
 
-    command_to_implemented_integration_map = (
-        id_set_creator.create_command_to_implemented_integration_map()
-    )
+    command_to_implemented_integration_map = id_set_creator.create_command_to_implemented_integration_map()
     assert command_to_implemented_integration_map == expected_output_map
 
 
@@ -383,18 +367,16 @@ class TestAddCommandToImplementingIntegrationsMapping:
         id_set_creator.add_command_to_implementing_integrations_mapping()
 
         playbook_set = id_set_creator.id_set["playbooks"]
-        assert playbook_set[0]["Playbook1"]["command_to_integration"][
-            "test-command"
-        ] == ["Integration1", "Integration2"]
-        assert playbook_set[0]["Playbook1"]["command_to_integration"][
-            "test-command_1"
-        ] == ["Integration1"]
-        assert playbook_set[1]["Playbook2"]["command_to_integration"][
-            "test-command"
-        ] == ["Integration1", "Integration2"]
-        assert playbook_set[1]["Playbook2"]["command_to_integration"][
-            "test-command_2"
-        ] == ["Integration2"]
+        assert playbook_set[0]["Playbook1"]["command_to_integration"]["test-command"] == [
+            "Integration1",
+            "Integration2",
+        ]
+        assert playbook_set[0]["Playbook1"]["command_to_integration"]["test-command_1"] == ["Integration1"]
+        assert playbook_set[1]["Playbook2"]["command_to_integration"]["test-command"] == [
+            "Integration1",
+            "Integration2",
+        ]
+        assert playbook_set[1]["Playbook2"]["command_to_integration"]["test-command_2"] == ["Integration2"]
 
     @staticmethod
     def test_do_not_modify_specific_brand(repo):
@@ -467,9 +449,7 @@ class TestAddCommandToImplementingIntegrationsMapping:
 
         playbook1 = id_set_creator.id_set["playbooks"][0]["Playbook1"]
         playbook2 = id_set_creator.id_set["playbooks"][1]["Playbook2"]
-        assert playbook1["command_to_integration"]["specific-command"] == [
-            "SecondaryInteg"
-        ]
+        assert playbook1["command_to_integration"]["specific-command"] == ["SecondaryInteg"]
         assert playbook1["command_to_integration"]["generic-command"] == [
             "MainInteg",
             "SecondaryInteg",

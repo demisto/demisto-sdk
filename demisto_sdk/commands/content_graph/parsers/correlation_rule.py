@@ -8,12 +8,8 @@ from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
 )
 
 
-class CorrelationRuleParser(
-    YAMLContentItemParser, content_type=ContentType.CORRELATION_RULE
-):
-    def __init__(
-        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
-    ) -> None:
+class CorrelationRuleParser(YAMLContentItemParser, content_type=ContentType.CORRELATION_RULE):
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         super().__init__(path, pack_marketplaces)
 
     @property

@@ -83,9 +83,7 @@ class IndicatorFieldValidator(FieldBaseValidator):
             **kwargs,
         )
 
-    def is_valid_file(
-        self, validate_rn=True, is_new_file=False, use_git=False, is_added_file=False
-    ) -> bool:
+    def is_valid_file(self, validate_rn=True, is_new_file=False, use_git=False, is_added_file=False) -> bool:
         """
         Check whether the indicator field is valid.
         Args:
@@ -113,9 +111,5 @@ class IndicatorFieldValidator(FieldBaseValidator):
         indicator_field_type: Optional[str] = self.current_file.get("type")
         if indicator_field_type not in INDICATOR_FIELD_TYPE_TO_MIN_VERSION:
             return True
-        min_version: LooseVersion = INDICATOR_FIELD_TYPE_TO_MIN_VERSION[
-            indicator_field_type
-        ]
-        return self.is_valid_from_version_field(
-            min_version, f"Indicator field of type {indicator_field_type}."
-        )
+        min_version: LooseVersion = INDICATOR_FIELD_TYPE_TO_MIN_VERSION[indicator_field_type]
+        return self.is_valid_from_version_field(min_version, f"Indicator field of type {indicator_field_type}.")

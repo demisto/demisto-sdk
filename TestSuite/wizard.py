@@ -61,13 +61,9 @@ class Wizard(JSONBased):
                 "description": "description",
                 "dependency_packs": self.create_dependency_packs(),
                 "wizard": {
-                    "fetching_integrations": self.create_integrations(
-                        self.fetching_integrations
-                    ),
+                    "fetching_integrations": self.create_integrations(self.fetching_integrations),
                     "set_playbook": self.set_playbooks,
-                    "supporting_integrations": self.create_integrations(
-                        self.supporting_integrations
-                    ),
+                    "supporting_integrations": self.create_integrations(self.supporting_integrations),
                     "next": [
                         {
                             "name": "turn on use case",
@@ -86,10 +82,7 @@ class Wizard(JSONBased):
             {
                 "name": category,
                 "min_required": 1,
-                "packs": [
-                    {"name": pack["name"], "display_name": pack["display_name"]}
-                    for pack in packs
-                ],
+                "packs": [{"name": pack["name"], "display_name": pack["display_name"]} for pack in packs],
             }
             for category, packs in self.categories_to_packs.items()
         ]

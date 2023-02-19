@@ -28,21 +28,15 @@ class PackContentItems:
 
     def __init__(self) -> None:
         self.classifier = ContentItemsList(content_type=ContentType.CLASSIFIER)
-        self.correlation_rule = ContentItemsList(
-            content_type=ContentType.CORRELATION_RULE
-        )
+        self.correlation_rule = ContentItemsList(content_type=ContentType.CORRELATION_RULE)
         self.dashboard = ContentItemsList(content_type=ContentType.DASHBOARD)
-        self.generic_definition = ContentItemsList(
-            content_type=ContentType.GENERIC_DEFINITION
-        )
+        self.generic_definition = ContentItemsList(content_type=ContentType.GENERIC_DEFINITION)
         self.generic_field = ContentItemsList(content_type=ContentType.GENERIC_FIELD)
         self.generic_module = ContentItemsList(content_type=ContentType.GENERIC_MODULE)
         self.generic_type = ContentItemsList(content_type=ContentType.GENERIC_TYPE)
         self.incident_field = ContentItemsList(content_type=ContentType.INCIDENT_FIELD)
         self.incident_type = ContentItemsList(content_type=ContentType.INCIDENT_TYPE)
-        self.indicator_field = ContentItemsList(
-            content_type=ContentType.INDICATOR_FIELD
-        )
+        self.indicator_field = ContentItemsList(content_type=ContentType.INDICATOR_FIELD)
         self.indicator_type = ContentItemsList(content_type=ContentType.INDICATOR_TYPE)
         self.integration = ContentItemsList(content_type=ContentType.INTEGRATION)
         self.job = ContentItemsList(content_type=ContentType.JOB)
@@ -58,9 +52,7 @@ class PackContentItems:
         self.trigger = ContentItemsList(content_type=ContentType.TRIGGER)
         self.widget = ContentItemsList(content_type=ContentType.WIDGET)
         self.wizard = ContentItemsList(content_type=ContentType.WIZARD)
-        self.xsiam_dashboard = ContentItemsList(
-            content_type=ContentType.XSIAM_DASHBOARD
-        )
+        self.xsiam_dashboard = ContentItemsList(content_type=ContentType.XSIAM_DASHBOARD)
         self.xsiam_report = ContentItemsList(content_type=ContentType.XSIAM_REPORT)
         self.xdrc_template = ContentItemsList(content_type=ContentType.XDRC_TEMPLATE)
         self.layout_rule = ContentItemsList(content_type=ContentType.LAYOUT_RULE)
@@ -100,9 +92,7 @@ class PackMetadataParser:
         self.email: str = metadata.get("email", "")
         self.url: str = metadata["url"]
         self.author: str = metadata["author"]
-        self.certification: str = (
-            "certified" if self.support.lower() in ["xsoar", "partner"] else ""
-        )
+        self.certification: str = "certified" if self.support.lower() in ["xsoar", "partner"] else ""
         self.hidden: bool = metadata.get("hidden", False)
         self.server_min_version: str = metadata.get("serverMinVersion", "")
         self.current_version: str = metadata["currentVersion"]
@@ -115,9 +105,7 @@ class PackMetadataParser:
         self.vendor_id: Optional[str] = metadata.get("vendorId")
         self.vendor_name: Optional[str] = metadata.get("vendorName")
         self.preview_only: Optional[bool] = metadata.get("previewOnly")
-        self.marketplaces: List[MarketplaceVersions] = metadata.get(
-            "marketplaces", list(MarketplaceVersions)
-        )
+        self.marketplaces: List[MarketplaceVersions] = metadata.get("marketplaces", list(MarketplaceVersions))
         self.excluded_dependencies: List[str] = metadata.get("excludedDependencies", [])
 
 
@@ -169,9 +157,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
     def parse_pack_folders(self) -> None:
         """Parses all pack content items by iterating its folders."""
         for folder_path in ContentType.pack_folders(self.path):
-            for (
-                content_item_path
-            ) in folder_path.iterdir():  # todo: consider multiprocessing
+            for content_item_path in folder_path.iterdir():  # todo: consider multiprocessing
                 self.parse_content_item(content_item_path)
 
     def parse_content_item(self, content_item_path: Path) -> None:
@@ -180,9 +166,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         Args:
             content_item_path (Path): The content item path.
         """
-        if content_item := ContentItemParser.from_path(
-            content_item_path, self.marketplaces
-        ):
+        if content_item := ContentItemParser.from_path(content_item_path, self.marketplaces):
             content_item.add_to_pack(self.object_id)
             self.content_items.append(content_item)
             self.relationships.update(content_item.relationships)

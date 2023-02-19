@@ -61,12 +61,8 @@ class TestPlaybookValidator(ContentEntityValidator):
 
             if not is_valid_task:
                 is_valid = is_valid_task
-                error_message, error_code = Errors.invalid_uuid(
-                    task_key, taskid, inner_id
-                )
-                self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                )  # Does not break after one
+                error_message, error_code = Errors.invalid_uuid(task_key, taskid, inner_id)
+                self.handle_error(error_message, error_code, file_path=self.file_path)  # Does not break after one
                 # invalid task in order to raise error for all the invalid tasks at the file
 
         return is_valid
@@ -87,12 +83,8 @@ class TestPlaybookValidator(ContentEntityValidator):
 
             if not is_valid_task:
                 is_valid = is_valid_task
-                error_message, error_code = Errors.taskid_different_from_id(
-                    task_key, taskid, inner_id
-                )
-                self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                )  # Does not break after one
+                error_message, error_code = Errors.taskid_different_from_id(task_key, taskid, inner_id)
+                self.handle_error(error_message, error_code, file_path=self.file_path)  # Does not break after one
                 # invalid task in order to raise error for all the invalid tasks at the file
 
         return is_valid

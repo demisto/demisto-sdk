@@ -53,11 +53,7 @@ class ReleaseNotesConfigValidator(BaseValidator):
             (
                 error_message,
                 error_code,
-            ) = Errors.release_notes_config_file_missing_release_notes(
-                self.rn_config_path
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=self.rn_config_path
-            ):
+            ) = Errors.release_notes_config_file_missing_release_notes(self.rn_config_path)
+            if self.handle_error(error_message, error_code, file_path=self.rn_config_path):
                 return False
         return True

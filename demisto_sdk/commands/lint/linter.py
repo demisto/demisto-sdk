@@ -339,7 +339,6 @@ class Linter:
             if isinstance(yml_obj, dict)
             else ""
         )
-        self._facts["object_id"] = yml_obj_id
         if self._facts["docker_engine"]:
             logger.info(f"{log_prompt} - Collecting all docker images to pull")
             images = self._get_docker_images_for_lint(

@@ -207,7 +207,7 @@ class GraphValidator(BaseValidator):
     def is_file_using_unknown_content(self):
         """Validates that there is no usage of unknown content items.
         Note: if self.file_paths is empty, the validation runs on all files - in this case, returns a warning.
-        otherwise, returns a warning.
+        otherwise, returns an error.
         """
 
         is_valid = True

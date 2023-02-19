@@ -205,7 +205,10 @@ class GraphValidator(BaseValidator):
 
     @error_codes("GR103")
     def is_file_using_unknown_content(self):
-        """Validates that there is no usage of unknown content items."""
+        """Validates that there is no usage of unknown content items.
+        Note: if self.file_paths is empty, the validation runs on all files - in this case, returns a warning.
+        otherwise, returns a warning.
+        """
 
         is_valid = True
         content_item: ContentItem
@@ -221,7 +224,7 @@ class GraphValidator(BaseValidator):
                 error_message,
                 error_code,
                 content_item.path,
-                warning=bool(self.file_paths),
+                warning=not bool(self.file_paths),
             ):
                 is_valid = False
 

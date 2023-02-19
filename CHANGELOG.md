@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where running **format** would fail after running npm install.
 * Improved the graph validations in **validate** command.
 * Fixed an issue where in some occasions running of test-playbooks could receive session timeouts.
 * Fixed an issue where making a change in a module using an ApiModule would cause lint to run on the ApiModule unnecessarily.

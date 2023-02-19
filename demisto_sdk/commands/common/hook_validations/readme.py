@@ -413,7 +413,7 @@ class ReadMeValidator(BaseValidator):
             valid = False
             click.secho(
                 f"The npm modules: {missing_module} are not installed. To run the mdx server locally, use "
-                f"'npm install' to install all required node dependencies. Otherwise, if docker is installed the server"
+                f"'npm install' to install all required node dependencies. Otherwise, if docker is installed, the server"
                 f"will run in a docker container"
             )
         return valid

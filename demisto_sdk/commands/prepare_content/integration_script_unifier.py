@@ -11,6 +11,7 @@ from inflection import dasherize, underscore
 from ruamel.yaml.scalarstring import FoldedScalarString
 
 from demisto_sdk.commands.common.constants import (
+    API_MODULE_FILE_SUFFIX,
     DEFAULT_IMAGE_PREFIX,
     TYPE_TO_EXTENSION,
     FileType,
@@ -247,7 +248,7 @@ class IntegrationScriptUnifier(Unifier):
             return os.path.join(package_path, "CommonServerPowerShell.ps1")
         if package_path.endswith(os.path.join("Scripts", "CommonServerUserPowerShell")):
             return os.path.join(package_path, "CommonServerUserPowerShell.ps1")
-        if package_path.endswith("ApiModule"):
+        if package_path.endswith(API_MODULE_FILE_SUFFIX):
             return os.path.join(
                 package_path, os.path.basename(os.path.normpath(package_path)) + ".py"
             )

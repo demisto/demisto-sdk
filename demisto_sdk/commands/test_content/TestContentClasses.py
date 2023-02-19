@@ -2731,6 +2731,7 @@ class ServerContext:
             self.build_context.logging_module.info(
                 "Running mock-disabled tests", real_time=True
             )
+            self._configure_new_client()
             self._execute_unmockable_tests()
             if self.use_retries_mechanism:
                 self.build_context.logging_module.info(

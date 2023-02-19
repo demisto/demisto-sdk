@@ -138,7 +138,7 @@ def start_local_MDX_server(
     """
     click.secho("Starting local mdx server")
 
-    click.secho(subprocess.check_output(["npm", "list", "--json"]))
+    logging.info(subprocess.check_output(["npm", "list", "--json"]))
     process = subprocess.Popen(
         ["node", str(server_script_path())], stdout=subprocess.PIPE, text=True
     )

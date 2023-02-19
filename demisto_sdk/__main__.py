@@ -24,8 +24,8 @@ from demisto_sdk.commands.common.content_constant_paths import (
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
+from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_last_remote_release_version,
@@ -1261,7 +1261,6 @@ def format(
             no_validate=no_validate,
             update_docker=update_docker,
             assume_yes=assume_yes,
-            verbose=verbose,
             deprecate=deprecate,
             use_git=use_git,
             prev_ver=prev_ver,

@@ -461,7 +461,7 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "demisto-py"
-version = "3.2.8.dev2"
+version = "3.2.8.dev9"
 description = "A Python library for the Demisto API"
 category = "main"
 optional = false
@@ -480,7 +480,7 @@ urllib3 = ">=1.26.7"
 type = "git"
 url = "https://github.com/demisto/demisto-py.git"
 reference = "re_create_client_session_timeouts"
-resolved_reference = "b5f5472074886cfba68b3882569c317b497286a2"
+resolved_reference = "566dfb0e082bcb183a6c98f690fc2c753f65bba8"
 
 [[package]]
 name = "Deprecated"
@@ -2547,7 +2547,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-PyYAML"
-version = "6.0.12.6"
+version = "6.0.12.7"
 description = "Typing stubs for PyYAML"
 category = "main"
 optional = false
@@ -4934,8 +4934,8 @@ types-pyvmomi = [
     {file = "types_pyvmomi-8.0.0.0-py3-none-any.whl", hash = "sha256:8d4e2d8022c391e101953bad0d850fe1153f843788b167d8f1b36494743a3271"},
 ]
 types-PyYAML = [
-    {file = "types-PyYAML-6.0.12.6.tar.gz", hash = "sha256:24e76b938d58e68645271eeb149af6022d1da99788e481f959bd284b164f39a1"},
-    {file = "types_PyYAML-6.0.12.6-py3-none-any.whl", hash = "sha256:77b74d0874482f2b42dd566b7277b0a220068595e0fb42689d0c0560f3d1ae9e"},
+    {file = "types-PyYAML-6.0.12.7.tar.gz", hash = "sha256:ad40c99142b1812615bac08d5e240d35107a27ec285af501682c685957692f95"},
+    {file = "types_PyYAML-6.0.12.7-py3-none-any.whl", hash = "sha256:91c64379a9ae88471a473d1ce0abf6a09c285700a297621b2177163d506584b8"},
 ]
 types-requests = [
     {file = "types-requests-2.28.11.tar.gz", hash = "sha256:7ee827eb8ce611b02b5117cfec5da6455365b6a575f5e3ff19f655ba603e6b4e"},

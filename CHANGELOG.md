@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## 1.10.3
 * Fixed an issue where running **format** would fail after running npm install.
 * Improved the graph validations in **validate** command:
   - GR100 will now run on all content items of changed packs.

@@ -22,7 +22,6 @@ class PackMetadataJsonFormat(BaseUpdateJSON):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
         clear_cache: bool = False,
         **kwargs,
     ):
@@ -32,7 +31,6 @@ class PackMetadataJsonFormat(BaseUpdateJSON):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            verbose=verbose,
             clear_cache=clear_cache,
             **kwargs,
         )
@@ -58,11 +56,9 @@ class PackMetadataJsonFormat(BaseUpdateJSON):
             return SUCCESS_RETURN_CODE
 
         except Exception as err:
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.debug(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE
 
     def deprecate_pack(self):

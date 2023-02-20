@@ -71,6 +71,7 @@ outputs:
   description: ''
   type: String
 """
+import logging
 import os
 import sys
 from typing import Dict, Optional
@@ -79,6 +80,8 @@ import dateparser
 
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.tools import LOG_COLORS, print_color, print_error
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -210,8 +213,7 @@ def parse_json(
 
         arg_json.append(jsonise(key, value, description))
 
-    if verbose:
-        print(f"JSON before converting to YAML: {arg_json}")
+    logger.debug(f"JSON before converting to YAML: {arg_json}")
 
     outputs = {"name": command_name.lstrip("!"), "arguments": [], "outputs": arg_json}
 

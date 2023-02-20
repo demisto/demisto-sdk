@@ -65,7 +65,6 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
         clear_cache: bool = False,
         **kwargs,
     ):
@@ -75,7 +74,6 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            verbose=verbose,
             clear_cache=clear_cache,
             **kwargs,
         )
@@ -105,11 +103,9 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.debug(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE
 
     def arguments_to_remove(self):
@@ -171,8 +167,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 output_basename, new_output_basename
             )
 
-            if self.verbose:
-                click.echo(f"Renaming output file: {new_output_path}")
+            logger.debug(f"Renaming output file: {new_output_path}")
 
             # rename file if source and output are the same
             if self.output_file == self.source_file:
@@ -185,13 +180,11 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         """Removes keys that are in file but not in schema of file type"""
         arguments_to_remove, layout_kind_args_to_remove = self.arguments_to_remove()
         for key in arguments_to_remove:
-            if self.verbose:
-                click.echo(f"Removing unnecessary field: {key} from file")
+            logger.debug(f"Removing unnecessary field: {key} from file")
             self.data.pop(key, None)
 
         for kind in layout_kind_args_to_remove:
-            if self.verbose:
-                click.echo(f"Removing unnecessary fields from {kind} field")
+            logger.debug(f"Removing unnecessary fields from {kind} field")
             for field in layout_kind_args_to_remove[kind]:
                 self.data[kind].pop(field, None)
 

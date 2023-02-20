@@ -49,7 +49,6 @@ class BaseUpdate:
         data (dict): Dictionary of loaded file.
         file_type (str): Whether the file is yml or json.
         from_version_key (str): The fromVersion key in file, different between yml and json files.
-        verbose (bool): Whether to print a verbose log
         assume_yes (bool): Whether to assume "yes" as answer to all prompts and run non-interactively
         interactive (bool): Whether to run the format interactively or not (usually for contribution management)
     """
@@ -62,7 +61,6 @@ class BaseUpdate:
         from_version: str = "",
         prev_ver: str = "master",
         no_validate: bool = False,
-        verbose: bool = False,
         assume_yes: bool = False,
         interactive: bool = True,
         clear_cache: bool = False,
@@ -71,7 +69,6 @@ class BaseUpdate:
         self.source_file = input
         self.source_file_type = find_type(self.source_file)
         self.output_file = self.set_output_file_path(output)
-        self.verbose = verbose
         _, self.relative_content_path = is_file_from_content_repo(self.output_file)
         self.prev_ver = prev_ver
         self.old_file = self.is_old_file(
@@ -79,7 +76,6 @@ class BaseUpdate:
             if self.relative_content_path
             else self.output_file,
             self.prev_ver,
-            self.verbose,
         )
         self.schema_path = path
         self.schema = self.get_schema()
@@ -157,8 +153,7 @@ class BaseUpdate:
 
     def remove_unnecessary_keys(self):
         """Removes keys that are in file but not in schema of file type"""
-        if self.verbose:
-            print("Removing Unnecessary fields from file")
+        logger.debug("Removing Unnecessary fields from file")
         if isinstance(self.extended_schema, dict):
             self.recursive_remove_unnecessary_keys(
                 self.extended_schema.get("mapping", {}), self.data
@@ -242,8 +237,7 @@ class BaseUpdate:
                             data.get(field, {}),
                         )
                 else:
-                    if self.verbose:
-                        print(f"Removing {field} field")
+                    logger.debug(f"Removing {field} field")
                     data.pop(field, None)
             else:
                 mapping = schema.get(field, {}).get("mapping")
@@ -258,10 +252,9 @@ class BaseUpdate:
                     sequence = schema.get(field, {}).get("sequence", [])
                     if sequence and sequence[0].get("mapping"):
                         if data[field] is None:
-                            if self.verbose:
-                                print(
-                                    f"Adding an empty array - `[]` as the value of the `{field}` field"
-                                )
+                            logger.debug(
+                                f"Adding an empty array - `[]` as the value of the `{field}` field"
+                            )
                             data[field] = []
                         else:
                             for list_element in data[field]:
@@ -383,10 +376,10 @@ class BaseUpdate:
         return None
 
     @staticmethod
-    def is_old_file(path: str, prev_ver: str, verbose: bool = False) -> dict:
+    def is_old_file(path: str, prev_ver: str) -> dict:
         """Check whether the file is in git repo or new file."""
         if path:
-            data = get_remote_file(path, prev_ver, suppress_print=not verbose)
+            data = get_remote_file(path, prev_ver)
             if not data:
                 return {}
             else:

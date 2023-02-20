@@ -1,11 +1,11 @@
+import logging
 import traceback
-
-import click
 
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
     FileType,
 )
+from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
@@ -16,6 +16,8 @@ from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 SELECTED_FEEDS = "selectedFeeds"
 IS_ALL_FEEDS = "isAllFeeds"
 IS_FEED = "isFeed"
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class JobJSONFormat(BaseUpdateJSON):
@@ -57,7 +59,7 @@ class JobJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(
+            secho_and_info(
                 f"\n======= Updating file: {self.source_file} =======", fg="white"
             )
             super().update_json(
@@ -76,11 +78,9 @@ class JobJSONFormat(BaseUpdateJSON):
                     )
                 )
             )
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.debug(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE
 
     def format_file(self):

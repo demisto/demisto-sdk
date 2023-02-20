@@ -1,3 +1,4 @@
+import logging
 import traceback
 from typing import Tuple
 
@@ -13,6 +14,8 @@ from demisto_sdk.commands.format.format_constants import (
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class PreProcessRulesFormat(BaseUpdateJSON):
@@ -64,9 +67,7 @@ class PreProcessRulesFormat(BaseUpdateJSON):
                     )
                 )
             )
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.debug(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE

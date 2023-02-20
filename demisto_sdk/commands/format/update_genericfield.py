@@ -1,3 +1,4 @@
+import logging
 from typing import Tuple
 
 import click
@@ -14,6 +15,8 @@ from demisto_sdk.commands.format.format_constants import (
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class GenericFieldJSONFormat(BaseUpdateJSON):
@@ -62,11 +65,9 @@ class GenericFieldJSONFormat(BaseUpdateJSON):
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.debug(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:
@@ -82,14 +83,12 @@ class GenericFieldJSONFormat(BaseUpdateJSON):
         generic_field_id = str(self.data.get("id"))
         if not generic_field_id.startswith(GENERIC_FIELD_DEFAULT_ID_PREFIX):
             updated_id = f"{GENERIC_FIELD_DEFAULT_ID_PREFIX}{generic_field_id}"
-            if self.verbose:
-                click.echo(
-                    f"Adding to id field the default prefix: {GENERIC_FIELD_DEFAULT_ID_PREFIX}"
-                )
+            logger.debug(
+                f"Adding to id field the default prefix: {GENERIC_FIELD_DEFAULT_ID_PREFIX}"
+            )
             self.data["id"] = updated_id
 
     def update_group_field(self):
         """Changes 'group' field of a generic field object to default."""
-        if self.verbose:
-            click.echo(f"Setting group field to default: {GENERIC_FIELD_DEFAULT_GROUP}")
+        logger.debug(f"Setting group field to default: {GENERIC_FIELD_DEFAULT_GROUP}")
         self.data["group"] = GENERIC_FIELD_DEFAULT_GROUP

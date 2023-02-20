@@ -165,8 +165,7 @@ def build_description_with_probabilities(data):
 
 def write_desc(c_index, final_output, o_index, output_path, verbose, yml_data):
     """Write a description to disk"""
-    if verbose:
-        logger.debug(f"Writing: {final_output}\n---")
+    logger.debug(f"Writing: {final_output}\n---")
     yml_data["script"]["commands"][c_index]["outputs"][o_index][
         "description"
     ] = final_output
@@ -220,9 +219,6 @@ def generate_ai_descriptions(
     """
     print_experimental()
 
-    if verbose:
-        logger.setLevel(logging.DEBUG)
-
     try:
         similar_paths: Dict[str, str] = {}
         yml_data = get_yaml(input_path)
@@ -239,12 +235,12 @@ def generate_ai_descriptions(
         for c_index, command in enumerate(commands):
             command_name = command.get("name")
 
-            if interactive or verbose:
+            if interactive:
                 logger.debug(f"Command: {command_name}")
 
             outputs = command.get("outputs")
             if not outputs:
-                if interactive or verbose:
+                if interactive:
                     logger.debug("-- Skipping because no outputs for command")
                 continue
 
@@ -271,10 +267,10 @@ def generate_ai_descriptions(
                         print("Asking again...")
 
                 # Print the progress and current context path
-                if interactive or verbose:
-                    print(f"\n{o_index + 1}/{len(outputs)}")
-                    print(f"Command: {command_name}")
-                    print(f"Context path:\t\t{command_output_path}")
+                if interactive:
+                    logger.debug(f"\n{o_index + 1}/{len(outputs)}")
+                    logger.debug(f"Command: {command_name}")
+                    logger.debug(f"Context path:\t\t{command_output_path}")
 
                 output = "No result from GPT."
 

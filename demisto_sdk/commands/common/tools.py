@@ -463,7 +463,6 @@ def get_remote_file_from_api(
     git_content_config: Optional[GitContentConfig],
     tag: str = "master",
     return_content: bool = False,
-    suppress_print: bool = False,
 ):
     if not git_content_config:
         git_content_config = GitContentConfig()
@@ -510,25 +509,21 @@ def get_remote_file_from_api(
             str(exc).replace(github_token, "XXX") if github_token else str(exc)
         )
         err_msg = err_msg.replace(gitlab_token, "XXX") if gitlab_token else err_msg
-        if not suppress_print:
-            if is_external_repository():
-                click.secho(
-                    f'You are working in a private repository: "{git_content_config.current_repository}".\n'
-                    f"The github/gitlab token in your environment is undefined.\n"
-                    f"Getting file from local repository instead. \n"
-                    f"If you wish to get the file from the remote repository, \n"
-                    f"Please define your github or gitlab token in your environment.\n"
-                    f"`export {GitContentConfig.CREDENTIALS.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n"
-                    f"export {GitContentConfig.CREDENTIALS.ENV_GITLAB_TOKEN_NAME}=<TOKEN>",
-                    fg="yellow",
-                )
-
-            click.secho(
-                f'Could not find the old entity file under "{git_path}".\n'
-                "please make sure that you did not break backward compatibility.\n"
-                f"Reason: {err_msg}",
-                fg="yellow",
+        if is_external_repository():
+            logger.debug(
+                f'[yellow]You are working in a private repository: "{git_content_config.current_repository}".\n'
+                f"The github/gitlab token in your environment is undefined.\n"
+                f"Getting file from local repository instead. \n"
+                f"If you wish to get the file from the remote repository, \n"
+                f"Please define your github or gitlab token in your environment.\n"
+                f"`export {GitContentConfig.CREDENTIALS.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n"
+                f"export {GitContentConfig.CREDENTIALS.ENV_GITLAB_TOKEN_NAME}=<TOKEN>[/yellow]"
             )
+        logger.debug(
+            f'[yellow]Could not find the old entity file under "{git_path}".\n'
+            "please make sure that you did not break backward compatibility.\n"
+            f"Reason: {err_msg}[/yellow]"
+        )
         return {}
     file_content = res.content
     if return_content:
@@ -555,7 +550,6 @@ def get_remote_file(
     full_file_path: str,
     tag: str = "master",
     return_content: bool = False,
-    suppress_print: bool = False,
     git_content_config: Optional[GitContentConfig] = None,
 ):
     """
@@ -563,7 +557,6 @@ def get_remote_file(
         full_file_path:The full path of the file.
         tag: The branch name. default is 'master'
         return_content: Determines whether to return the file's raw content or the dict representation of it.
-        suppress_print: whether to suppress the warning message in case the file was not found.
         git_content_config: The content config to take the file from
     Returns:
         The file content in the required format.
@@ -574,13 +567,12 @@ def get_remote_file(
         try:
             return get_local_remote_file(full_file_path, tag, return_content)
         except Exception as e:
-            if not suppress_print:
-                click.secho(
-                    f"Could not get local remote file because of: {str(e)}\n"
-                    f"Searching the remote file content with the API."
-                )
+            logger.debug(
+                f"Could not get local remote file because of: {str(e)}\n"
+                f"Searching the remote file content with the API."
+            )
     return get_remote_file_from_api(
-        full_file_path, git_content_config, tag, return_content, suppress_print
+        full_file_path, git_content_config, tag, return_content
     )
 
 
@@ -3076,13 +3068,12 @@ def wait_futures_complete(futures: List[ProcessFuture], done_fn: Callable):
             raise
 
 
-def get_api_module_dependencies(pkgs, id_set_path, verbose):
+def get_api_module_dependencies(pkgs, id_set_path):
     """
     Get all paths to integrations and scripts dependent on api modules that are found in the modified files.
     Args:
         pkgs: the pkgs paths found as modified to run lint on (including the api module files)
         id_set_path: path to id set
-        verbose: print found dependencies or not
     Returns:
         a list of the paths to the scripts and integration found dependent on the modified api modules.
     """
@@ -3097,8 +3088,7 @@ def get_api_module_dependencies(pkgs, id_set_path, verbose):
         script_name = script_info.get("name")
         script_api_modules = script_info.get("api_modules", [])
         if intersection := changed_api_modules & set(script_api_modules):
-            if verbose:
-                print(f"found script {script_name} dependent on {intersection}")
+            logger.debug(f"found script {script_name} dependent on {intersection}")
             using_scripts.extend(list(script.values()))
 
     for integration in integrations:
@@ -3106,10 +3096,9 @@ def get_api_module_dependencies(pkgs, id_set_path, verbose):
         integration_name = integration_info.get("name")
         script_api_modules = integration_info.get("api_modules", [])
         if intersection := changed_api_modules & set(script_api_modules):
-            if verbose:
-                print(
-                    f"found integration {integration_name} dependent on {intersection}"
-                )
+            logger.debug(
+                f"found integration {integration_name} dependent on {intersection}"
+            )
             using_integrations.extend(list(integration.values()))
 
     using_scripts_pkg_paths = [

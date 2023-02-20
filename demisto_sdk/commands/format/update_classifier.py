@@ -1,3 +1,4 @@
+import logging
 from abc import ABC
 from typing import Tuple
 
@@ -11,6 +12,8 @@ from demisto_sdk.commands.format.format_constants import (
     VERSION_6_0_0,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class BaseClassifierJSONFormat(BaseUpdateJSON, ABC):
@@ -75,11 +78,9 @@ class OldClassifierJSONFormat(BaseClassifierJSONFormat):
             return SUCCESS_RETURN_CODE
 
         except Exception as err:
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.debug(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE
 
 
@@ -106,11 +107,9 @@ class ClassifierJSONFormat(BaseClassifierJSONFormat):
             return SUCCESS_RETURN_CODE
 
         except Exception as err:
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.debug(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE
 
     def set_keyTypeMap(self):

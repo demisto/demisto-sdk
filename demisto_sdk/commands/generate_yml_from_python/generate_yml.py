@@ -2,6 +2,7 @@
 import datetime
 import importlib.util
 import inspect
+import logging
 import os
 import re
 import traceback
@@ -21,6 +22,8 @@ from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import
     OutputArgument,
     YMLMetadataCollector,
 )
+
+logger = logging.getLogger("demisto-sdk")
 
 yaml = YAML_Handler()
 
@@ -85,10 +88,9 @@ class YMLGenerator:
                         spec.loader.exec_module(self.file_import)  # type: ignore[union-attr]
                         # Here we assume the details_collector object will be called 'metadata_collector'.
                         self.metadata_collector = self.file_import.metadata_collector
-                        if self.verbose:
-                            click.secho(
-                                f"Found the metadata collector in file {self.filename}"
-                            )
+                        logger.debug(
+                            f"Found the metadata collector in file {self.filename}"
+                        )
                         return True
                 else:
                     click.secho(f"Problem importing {self.filename}", fg="red")
@@ -136,10 +138,9 @@ class YMLGenerator:
         with open(self.filename, "r+") as code_file:
             content = code_file.read()
             if not content.startswith(self.IMPORT_COLLECTOR_LINE):
-                if self.verbose:
-                    click.secho(
-                        "Adding import lines, please do not remove while generating yml."
-                    )
+                logger.debug(
+                    "Adding import lines, please do not remove while generating yml."
+                )
                 code_file.seek(0, 0)
                 code_file.write(
                     f"{self.IMPORT_COLLECTOR_LINE}\n{self.EXPLICIT_DECLARATION_IMPORTS_LINE}\n\n{content}"
@@ -156,8 +157,7 @@ class YMLGenerator:
             clean_content = content
             collector_import_lines = f"{self.IMPORT_COLLECTOR_LINE}\n{self.EXPLICIT_DECLARATION_IMPORTS_LINE}\n\n"
             if content.startswith(collector_import_lines):
-                if self.verbose:
-                    click.secho("Removing added import lines.")
+                logger.debug("Removing added import lines.")
                 # Split the content to the parts before and after the collector_import_lines
                 content_parts = content.split(collector_import_lines)
                 # Restore content to previous form and ignore the first found import lines.
@@ -200,8 +200,7 @@ class YMLGenerator:
     def extract_metadata(self):
         """Collected details to MetadataToDict object."""
         if self.is_generatable_file:
-            if self.verbose:
-                click.secho("Converting collected details to dict..")
+            logger.debug("Converting collected details to dict..")
             if self.metadata_collector:
                 self.metadata = MetadataToDict(
                     metadata_collector=self.metadata_collector,
@@ -333,8 +332,7 @@ class MetadataToDict:
 
     def command_metadata_from_function(self, command: CommandMetadata) -> dict:
         """Build YML command metadata dictionary for the command."""
-        if self.verbose:
-            click.secho(f"Parsing metadata for command {command.name}...")
+        logger.debug(f"Parsing metadata for command {command.name}...")
 
         description, in_args, out_args = self.google_docstring_to_dict(
             command.function.__doc__, self.verbose, self.file_import
@@ -691,12 +689,10 @@ class MetadataToDict:
                 else:
                     input_type = eval(input_type_str)
             except Exception as err:
-                if verbose:
-                    click.secho(
-                        f"Problems parsing input type {input_type_str}, setting isArray=False."
-                        f"Error was: {err}",
-                        fg="yellow",
-                    )
+                logger.debug(
+                    f"[yellow]Problems parsing input type {input_type_str}, setting isArray=False."
+                    f"Error was: {err}[/yellow]"
+                )
                 input_type = None
 
             return InputArgument(name=name, description=description), input_type
@@ -717,11 +713,9 @@ class MetadataToDict:
         try:
             out_type = eval(output_type_str.lower())
         except Exception:
-            if verbose:
-                click.secho(
-                    f"Problems parsing output type {output_type_str}, setting as Unknown.",
-                    fg="yellow",
-                )
+            logger.debug(
+                f"[yellow]Problems parsing output type {output_type_str}, setting as Unknown.[/yellow]"
+            )
             out_type = dict
 
         description = argument_sections[0][3].strip()
@@ -742,8 +736,7 @@ class MetadataToDict:
 
     def save_dict_as_yaml_integration_file(self, output_file: str):
         """Save the dict to an output file."""
-        if self.verbose:
-            click.secho(f"Writing collected metadata to {output_file}.")
+        logger.debug(f"Writing collected metadata to {output_file}.")
 
         write_yml(output_file, self.metadata_dict)
         click.secho("Finished successfully.", fg="green")

@@ -1,5 +1,5 @@
 import glob
-import io
+import logging
 import os
 import sys
 
@@ -34,6 +34,8 @@ MDX_SKIP_NPM_MESSAGE = (
     'Required npm modules are not installed. To run this test you must run "npm install" '
     "in the root of the project."
 )
+
+logging.getLogger("demisto-sdk").propagate = True
 
 
 @pytest.mark.parametrize("current, answer", README_INPUTS)
@@ -106,7 +108,7 @@ def test_air_gapped_env(tmp_path, mocker):
     assert ReadMeValidator(r).is_mdx_file()
 
 
-def test_relative_url_not_valid():
+def test_relative_url_not_valid(caplog):
     """
     Given
         - A README file with invalid relative urls in it.
@@ -119,8 +121,6 @@ def test_relative_url_not_valid():
             - Valid url was not caught
             - Image url was not caught
     """
-    captured_output = io.StringIO()
-    sys.stdout = captured_output  # redirect stdout.
     absolute_urls = [
         "https://www.good.co.il",
         "https://example.com",
@@ -136,23 +136,21 @@ def test_relative_url_not_valid():
     ]
     readme_validator = ReadMeValidator(INVALID_MD)
     result = readme_validator.verify_readme_relative_urls()
-    sys.stdout = sys.__stdout__  # reset stdout.
     assert not result
-    output = captured_output.getvalue()
     for url in absolute_urls:
-        assert url not in output
+        assert url not in caplog.text
 
     for url in relative_urls:
-        assert url in output
+        assert url in caplog.text
 
     # no empty links found
     assert (
         "[RM112] - Relative urls are not supported within README. If this is not a relative url, please add an "
-        "https:// prefix:\n. " not in output
+        "https:// prefix:\n. " not in caplog.text
     )
 
 
-def test_is_image_path_valid():
+def test_is_image_path_valid(caplog):
     """
     Given
         - A README file with 2 invalid images paths in it.
@@ -165,8 +163,6 @@ def test_is_image_path_valid():
             - Valid image path was not caught
             - An alternative paths were suggested
     """
-    captured_output = io.StringIO()
-    sys.stdout = captured_output  # redirect stdout.
     images_paths = [
         "https://github.com/demisto/content/blob/123/Packs/AutoFocus/doc_files/AutoFocusPolling.png",
         "https://github.com/demisto/content/blob/123/Packs/FeedOffice365/doc_files/test.png",
@@ -180,9 +176,9 @@ def test_is_image_path_valid():
     result = readme_validator.is_image_path_valid()
     sys.stdout = sys.__stdout__  # reset stdout.
     assert not result
-    assert images_paths[0] and alternative_images_paths[0] in captured_output.getvalue()
-    assert images_paths[1] and alternative_images_paths[1] in captured_output.getvalue()
-    assert images_paths[2] not in captured_output.getvalue()
+    assert images_paths[0] and alternative_images_paths[0] in caplog.text
+    assert images_paths[1] and alternative_images_paths[1] in caplog.text
+    assert images_paths[2] not in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -197,7 +193,7 @@ def test_is_image_path_valid():
     ],
 )
 def test_unvalid_verify_no_empty_sections(
-    integration, capsys, file_input, missing_section
+    integration, capsys, file_input, missing_section, caplog
 ):
     """
     Given
@@ -215,13 +211,12 @@ def test_unvalid_verify_no_empty_sections(
         readme_validator = ReadMeValidator(readme_path)
         result = readme_validator.verify_no_empty_sections()
 
-        stdout, _ = capsys.readouterr()
         section_error = (
             f"{missing_section} is empty, please elaborate or delete the section."
         )
 
         assert not result
-        assert section_error in stdout
+        assert section_error in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -230,7 +225,7 @@ def test_unvalid_verify_no_empty_sections(
         "## Troubleshooting\n## OtherSection\n## Additional Information\n\n## OtherSection\n##"
     ],
 )
-def test_combined_unvalid_verify_no_empty_sections(integration, capsys, file_input):
+def test_combined_unvalid_verify_no_empty_sections(integration, caplog, file_input):
     """
     Given
         - Couple of empty sections
@@ -247,14 +242,13 @@ def test_combined_unvalid_verify_no_empty_sections(integration, capsys, file_inp
         readme_validator = ReadMeValidator(readme_path)
         result = readme_validator.verify_no_empty_sections()
 
-        stdout, _ = capsys.readouterr()
         error = (
             "Failed verifying README.md Error Message is: Troubleshooting is empty, please elaborate or delete the"
             " section.\nAdditional Information is empty, please elaborate or delete the section."
         )
 
         assert not result
-        assert error in stdout
+        assert error in caplog.text
 
 
 @pytest.mark.parametrize(
@@ -343,7 +337,7 @@ def test_copyright_sections(integration, file_input):
         ),
     ],
 )
-def test_verify_no_default_sections_left(integration, capsys, file_input, section):
+def test_verify_no_default_sections_left(integration, caplog, file_input, section):
     """
     Given
         - Readme that contains sections that are created as default and need to be changed
@@ -359,10 +353,9 @@ def test_verify_no_default_sections_left(integration, capsys, file_input, sectio
         readme_validator = ReadMeValidator(readme_path)
         result = readme_validator.verify_no_default_sections_left()
 
-        stdout, _ = capsys.readouterr()
         section_error = f'Replace "{section}" with a suitable info.'
         assert not result
-        assert section_error in stdout
+        assert section_error in caplog.text
 
 
 ERROR_FOUND_CASES = [
@@ -473,7 +466,7 @@ def test_context_difference_created_is_valid(mocker, difference_found, expected)
         handle_error_mock.assert_not_called()
 
 
-def test_invalid_short_file(capsys):
+def test_invalid_short_file(caplog):
     """
     Given
         - Non empty Readme with less than 30 chars.
@@ -484,14 +477,13 @@ def test_invalid_short_file(capsys):
     """
     readme_validator = ReadMeValidator(INVALID3_MD)
     result = readme_validator.verify_readme_is_not_too_short()
-    stdout, _ = capsys.readouterr()
     short_readme_error = (
         "Your Pack README is too small (29 chars). Please move its content to the pack "
         "description or add more useful information to the Pack README. "
         "Pack README files are expected to include a few sentences about the pack and/or images."
     )
     assert not result
-    assert short_readme_error in stdout
+    assert short_readme_error in caplog.text
 
 
 def test_demisto_in_integration_readme(repo):
@@ -608,7 +600,7 @@ def test_verify_template_not_in_readme(repo):
         assert not readme_validator.verify_template_not_in_readme()
 
 
-def test_verify_readme_image_paths(mocker):
+def test_verify_readme_image_paths(mocker, caplog):
     """
 
     Given
@@ -622,9 +614,6 @@ def test_verify_readme_image_paths(mocker):
                - Image paths were caught correctly
                - Valid paths are not caught
     """
-    captured_output = io.StringIO()
-    sys.stdout = captured_output  # redirect stdout.
-
     readme_validator = ReadMeValidator(IMAGES_MD)
     mocker.patch.object(
         GitUtil, "get_current_working_branch", return_value="branch_name"
@@ -647,23 +636,22 @@ def test_verify_readme_image_paths(mocker):
         is_valid = readme_validator.verify_readme_image_paths()
 
     sys.stdout = sys.__stdout__  # reset stdout.
-    captured_output = captured_output.getvalue()
     assert not is_valid
     assert (
         "The following image relative path is not valid, please recheck it:\n"
-        "![Identity with High Risk Score](../../default.png)" in captured_output
+        "![Identity with High Risk Score](../../default.png)" in caplog.text
     )
     assert (
         "The following image relative path is not valid, please recheck it:\n"
-        "![Identity with High Risk Score](default.png)" not in captured_output
+        "![Identity with High Risk Score](default.png)" not in caplog.text
     )
     assert (
         "Branch name was found in the URL, please change it to the commit hash:\n"
-        "![branch in url]" in captured_output
+        "![branch in url]" in caplog.text
     )
     assert (
         "Branch name was found in the URL, please change it to the commit hash:\n"
-        "![commit hash in url]" not in captured_output
+        "![commit hash in url]" not in caplog.text
     )
     assert (
         "\n".join(
@@ -673,7 +661,7 @@ def test_verify_readme_image_paths(mocker):
                 "![Identity with High Risk Score](https://github.com/demisto/test1.png)",
             )
         )
-        in captured_output
+        in caplog.text
     )
     assert (
         "\n".join(
@@ -683,12 +671,12 @@ def test_verify_readme_image_paths(mocker):
                 "(https://github.com/demisto/content/raw/test2.png)",
             )
         )
-        in captured_output
+        in caplog.text
     )
     assert (
         "please repair it:\n"
         "![Identity with High Risk Score](https://github.com/demisto/test3.png)"
-        not in captured_output
+        not in caplog.text
     )
 
 

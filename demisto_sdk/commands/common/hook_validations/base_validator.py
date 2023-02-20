@@ -270,7 +270,7 @@ class BaseValidator:
                 logger.debug("[red]" + suggested_fix + "[/red]\n")
 
         else:
-            logger.debug("[red]" + formatted_error + "[/[red]]")
+            logger.debug("[red]" + formatted_error + "[/[red]")
 
         self.json_output(file_path, error_code, error_message, warning)
         self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_ERRORS)

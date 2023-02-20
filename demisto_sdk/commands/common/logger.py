@@ -81,7 +81,8 @@ def _logging_setup(
         "disable_existing_loggers": True,
         "formatters": {
             "console-formatter": {
-                "format": "%(asctime)s [%(levelname)s]: %(message)s",
+                # "format": "%(asctime)s [%(levelname)s]: %(message)s",
+                "format": "%(message)s",
                 "datefmt": DATE_FORMAT,
             },
             "file-formatter": {

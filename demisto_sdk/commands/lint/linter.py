@@ -190,7 +190,7 @@ class Linter:
                     "Unable to find yml file in package"
                 )
 
-    def should_disable_network(self):
+    def should_disable_network(self) -> bool:
         pack_name = get_pack_name(str(self._pack_abs_dir))
         _pack_ignore_file_path = Path(
             f"Packs/{pack_name}/{PACKS_PACK_IGNORE_FILE_NAME}"
@@ -752,7 +752,7 @@ class Linter:
             keep_container(bool): Whether to keep the test container
             test_xml(str): Path for saving pytest xml results
             no_coverage(bool): Run pytest without coverage report
-            should_disable_network(bool): whether network is required when running pytest
+            should_disable_network(bool): whether network should not be disabled when running pytest, True to disable, False otherwise.
 
         """
         log_prompt = f"{self._pack_name} - Run Lint On Docker Image"
@@ -1089,7 +1089,11 @@ class Linter:
             int: 0 on successful, errors 1, need to retry 2
             str: Unit test json report
         """
-        log_prompt = f"{self._pack_name} - Pytest - Image {test_image}, docker network disabled = {should_disable_network}"
+        network_status = "disabled" if should_disable_network else "enabled"
+
+        log_prompt = (
+            f"{self._pack_name} - Pytest - Image {test_image},network: {network_status}"
+        )
         logger.info(f"{log_prompt} - Start")
         container_name = f"{self._pack_name}-pytest"
         # Check if previous run left container a live if it does, Remove it

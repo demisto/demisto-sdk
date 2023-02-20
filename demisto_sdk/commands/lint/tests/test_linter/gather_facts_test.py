@@ -8,6 +8,7 @@ from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.lint import linter
+from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
 
 logger = logging.getLogger("demisto-sdk")
@@ -721,7 +722,9 @@ def test_linter_pack_abs_dir():
         ("[tests_require_network]\ntest1\ntest2", True),
     ],
 )
-def test_should_use_network(pack_ignore_content, should_disable_network, pack):
+def test_should_use_network(
+    pack_ignore_content: str, should_disable_network: bool, pack: Pack
+):
     """
     This unit-test testing whether an integration/script needs to use docker network in order to run unit-tests.
 

@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.logger import secho_and_debug, secho_and_info
+from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import is_uuid, print_error
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES,
@@ -193,8 +193,7 @@ class BaseUpdateJSON(BaseUpdate):
                     )
                 )
             )
-            secho_and_debug(
-                f"\nFailed to update file {self.source_file}. Error: {err}",
-                fg="red",
+            logger.debug(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
             )
             return ERROR_RETURN_CODE

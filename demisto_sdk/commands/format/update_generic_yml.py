@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.logger import secho_and_debug, secho_and_info
+from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
@@ -115,7 +115,7 @@ class BaseUpdateYML(BaseUpdate):
         """
         updated_integration_id = {}
         if not self.old_file:
-            secho_and_debug("Updating YML ID to be the same as YML name")
+            logger.debug("Updating YML ID to be the same as YML name")
             if is_uuid(self.id_and_version_location["id"]):
                 updated_integration_id[self.id_and_version_location["id"]] = self.data[
                     "name"
@@ -136,9 +136,7 @@ class BaseUpdateYML(BaseUpdate):
     def save_yml_to_destination_file(self):
         """Safely saves formatted YML data to destination file."""
         if self.source_file != self.output_file:
-            secho_and_debug(
-                f"Saving output YML file to {self.output_file} \n", fg="white"
-            )
+            logger.debug(f"Saving output YML file to {self.output_file} \n")
         with open(self.output_file, "w") as f:
             yaml.dump(self.data, f)  # ruamel preservers multilines
 
@@ -378,7 +376,7 @@ class BaseUpdateYML(BaseUpdate):
     def remove_spaces_end_of_id_and_name(self):
         """Updates the id and name of the YML to have no spaces on its end"""
         if not self.old_file:
-            secho_and_debug("Updating YML ID and name to be without spaces at the end")
+            logger.debug("Updating YML ID and name to be without spaces at the end")
             self.data["name"] = self.data["name"].strip()
             if self.id_and_version_location:
                 self.id_and_version_location["id"] = self.id_and_version_location[
@@ -422,8 +420,7 @@ class BaseUpdateYML(BaseUpdate):
                     )
                 )
             )
-            secho_and_debug(
-                f"\nFailed to update file {self.source_file}. Error: {err}",
-                fg="red",
+            logger.debug(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
             )
             return ERROR_RETURN_CODE

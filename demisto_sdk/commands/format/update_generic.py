@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.constants import (
     VERSION_5_5_0,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.logger import secho_and_debug, secho_and_info
+from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_dict_from_file,
@@ -421,9 +421,8 @@ class BaseUpdate:
             int 2 in case of skip
         """
         if self.no_validate:
-            secho_and_debug(
-                f"Validator Skipped on file: {self.output_file} , no-validate flag was set.",
-                fg="yellow",
+            logger.debug(
+                f"[yellow]Validator Skipped on file: {self.output_file} , no-validate flag was set.[/yellow]"
             )
             return SKIP_RETURN_CODE
         else:

@@ -236,9 +236,7 @@ class ValidateManager:
             self.specific_validations = specific_validations.split(",")
 
         # Class constants
-        self.handle_error = BaseValidator(
-            print_as_warnings=print_ignored_errors, json_file_path=json_file_path
-        ).handle_error
+        self.handle_error = BaseValidator(json_file_path=json_file_path).handle_error
         self.should_run_validation = BaseValidator(
             specific_validations=specific_validations
         ).should_run_validation
@@ -254,7 +252,6 @@ class ValidateManager:
                 is_circle=self.is_circle,
                 configuration=Configuration(),
                 ignored_errors=None,
-                print_as_warnings=self.print_ignored_errors,
                 id_set_file=self.id_set_file,
                 json_file_path=json_file_path,
                 specific_validations=self.specific_validations,
@@ -818,7 +815,6 @@ class ValidateManager:
             file_path,
             predefined_scheme=file_type,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             tag=self.prev_ver,
             old_file_path=old_file_path,
             branch_name=self.branch_name,
@@ -1313,7 +1309,6 @@ class ValidateManager:
         description_validator = DescriptionValidator(
             file_path,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
             specific_validations=self.specific_validations,
         )
@@ -1323,7 +1318,6 @@ class ValidateManager:
         readme_validator = ReadMeValidator(
             file_path,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
             specific_validations=self.specific_validations,
         )
@@ -1333,7 +1327,6 @@ class ValidateManager:
         python_file_validator = PythonFileValidator(
             file_path,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
             specific_validations=self.specific_validations,
         )
@@ -1343,7 +1336,6 @@ class ValidateManager:
         test_playbook_validator = TestPlaybookValidator(
             structure_validator=structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return test_playbook_validator.is_valid_test_playbook(validate_rn=False)
@@ -1390,7 +1382,6 @@ class ValidateManager:
                 modified_files=modified_files,
                 added_files=added_files,
                 ignored_errors=pack_error_ignore_list,
-                print_as_warnings=self.print_ignored_errors,
                 json_file_path=self.json_file_path,
                 specific_validations=self.specific_validations,
             )
@@ -1416,7 +1407,6 @@ class ValidateManager:
         release_notes_config_validator = ReleaseNotesConfigValidator(
             file_path,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
             specific_validations=self.specific_validations,
         )
@@ -1428,7 +1418,6 @@ class ValidateManager:
         playbook_validator = PlaybookValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
             validate_all=self.validate_all,
             deprecation_validator=self.deprecation_validator,
@@ -1455,7 +1444,6 @@ class ValidateManager:
         integration_validator = IntegrationValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             skip_docker_check=self.skip_docker_checks,
             json_file_path=self.json_file_path,
             validate_all=self.validate_all,
@@ -1499,7 +1487,6 @@ class ValidateManager:
         script_validator = ScriptValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             skip_docker_check=self.skip_docker_checks,
             json_file_path=self.json_file_path,
             validate_all=self.validate_all,
@@ -1531,7 +1518,6 @@ class ValidateManager:
         integration_validator = IntegrationValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             skip_docker_check=self.skip_docker_checks,
             json_file_path=self.json_file_path,
             validate_all=self.validate_all,
@@ -1545,7 +1531,6 @@ class ValidateManager:
         image_validator = ImageValidator(
             file_path,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
             specific_validations=self.specific_validations,
         )
@@ -1555,7 +1540,6 @@ class ValidateManager:
         author_image_validator: AuthorImageValidator = AuthorImageValidator(
             file_path,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             specific_validations=self.specific_validations,
         )
         return author_image_validator.is_valid()
@@ -1564,7 +1548,6 @@ class ValidateManager:
         report_validator = ReportValidator(
             structure_validator=structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return report_validator.is_valid_file(validate_rn=False)
@@ -1575,7 +1558,6 @@ class ValidateManager:
         incident_field_validator = IncidentFieldValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
             id_set_file=self.id_set_file,
         )
@@ -1605,7 +1587,6 @@ class ValidateManager:
         indicator_field_validator = IndicatorFieldValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         if is_modified and self.is_backward_check:
@@ -1632,7 +1613,6 @@ class ValidateManager:
         reputation_validator = ReputationValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return reputation_validator.is_valid_file(validate_rn=False)
@@ -1641,7 +1621,6 @@ class ValidateManager:
         layout_validator = LayoutValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return layout_validator.is_valid_layout(
@@ -1652,7 +1631,6 @@ class ValidateManager:
         layout_validator = LayoutsContainerValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return layout_validator.is_valid_layout(
@@ -1663,7 +1641,6 @@ class ValidateManager:
         pre_process_rules_validator = PreProcessRuleValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return pre_process_rules_validator.is_valid_pre_process_rule(
@@ -1674,7 +1651,6 @@ class ValidateManager:
         lists_validator = ListsValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return lists_validator.is_valid_list()
@@ -1683,7 +1659,6 @@ class ValidateManager:
         dashboard_validator = DashboardValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return dashboard_validator.is_valid_dashboard(validate_rn=False)
@@ -1694,7 +1669,6 @@ class ValidateManager:
         incident_type_validator = IncidentTypeValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         if is_modified and self.is_backward_check:
@@ -1711,7 +1685,6 @@ class ValidateManager:
         mapper_validator = MapperValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         if is_modified and self.is_backward_check:
@@ -1743,7 +1716,6 @@ class ValidateManager:
             structure_validator,
             new_classifier_version=new_classifier_version,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return classifier_validator.is_valid_classifier(
@@ -1754,7 +1726,6 @@ class ValidateManager:
         widget_validator = WidgetValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return widget_validator.is_valid_file(validate_rn=False)
@@ -1763,7 +1734,6 @@ class ValidateManager:
         triggers_validator = TriggersValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return triggers_validator.is_valid_file(validate_rn=False)
@@ -1772,7 +1742,6 @@ class ValidateManager:
         layout_rules_validator = LayoutRuleValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return layout_rules_validator.is_valid_file(validate_rn=False)
@@ -1781,7 +1750,6 @@ class ValidateManager:
         xsiam_report_validator = XSIAMReportValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return xsiam_report_validator.is_valid_file(validate_rn=False)
@@ -1790,7 +1758,6 @@ class ValidateManager:
         xsiam_dashboard_validator = XSIAMDashboardValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return xsiam_dashboard_validator.is_valid_file(validate_rn=False)
@@ -1799,7 +1766,6 @@ class ValidateManager:
         xdrc_templates_validator = XDRCTemplatesValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return xdrc_templates_validator.is_valid_file(validate_rn=False)
@@ -1808,7 +1774,6 @@ class ValidateManager:
         parsing_rule_validator = ParsingRuleValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return parsing_rule_validator.is_valid_file(validate_rn=False)
@@ -1817,7 +1782,6 @@ class ValidateManager:
         correlation_rule_validator = CorrelationRuleValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return correlation_rule_validator.is_valid_file(validate_rn=False)
@@ -1826,7 +1790,6 @@ class ValidateManager:
         modeling_rule_validator = ModelingRuleValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return modeling_rule_validator.is_valid_file(validate_rn=False)
@@ -1835,7 +1798,6 @@ class ValidateManager:
         wizard_validator = WizardValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         return wizard_validator.is_valid_file(
@@ -1848,7 +1810,6 @@ class ValidateManager:
         generic_field_validator = GenericFieldValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
 
@@ -1860,7 +1821,6 @@ class ValidateManager:
         generic_type_validator = GenericTypeValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
 
@@ -1870,7 +1830,6 @@ class ValidateManager:
         generic_module_validator = GenericModuleValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
 
@@ -1880,7 +1839,6 @@ class ValidateManager:
         generic_definition_validator = GenericDefinitionValidator(
             structure_validator,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
 
@@ -1910,7 +1868,6 @@ class ValidateManager:
             pack=os.path.basename(pack_path),
             pack_path=pack_path,
             ignored_errors=pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             should_version_raise=should_version_raise,
             validate_dependencies=not self.skip_dependencies,
             id_set_path=self.id_set_path,
@@ -1941,7 +1898,6 @@ class ValidateManager:
         job_validator = JobValidator(
             structure_validator,
             pack_error_ignore_list,
-            print_as_warnings=self.print_ignored_errors,
             json_file_path=self.json_file_path,
         )
         is_valid = job_validator.is_valid_file()
@@ -2253,7 +2209,6 @@ class ValidateManager:
                     )
                 if not BaseValidator(
                     ignored_errors=ignored_errors_list,
-                    print_as_warnings=self.print_ignored_errors,
                     json_file_path=self.json_file_path,
                     specific_validations=self.specific_validations,
                 ).handle_error(

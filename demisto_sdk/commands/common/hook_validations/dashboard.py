@@ -74,7 +74,6 @@ class DashboardValidator(ContentEntityValidator):
                     error_message,
                     error_code,
                     file_path=self.file_path,
-                    should_print=False,
                 )
                 if formatted_message:
                     is_valid = False
@@ -90,7 +89,6 @@ class DashboardValidator(ContentEntityValidator):
                             error_message,
                             error_code,
                             file_path=self.file_path,
-                            should_print=False,
                         )
                         if formatted_message:
                             is_valid = False
@@ -119,7 +117,6 @@ class DashboardValidator(ContentEntityValidator):
                     error_message,
                     error_code,
                     file_path=self.file_path,
-                    should_print=False,
                 )
                 if formatted_message:
                     is_valid = False
@@ -136,7 +133,6 @@ class DashboardValidator(ContentEntityValidator):
                             error_message,
                             error_code,
                             file_path=self.file_path,
-                            should_print=False,
                         )
                         if formatted_message:
                             is_valid = False

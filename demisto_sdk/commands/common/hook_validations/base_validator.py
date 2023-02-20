@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 from typing import Optional
@@ -31,6 +32,8 @@ from demisto_sdk.commands.common.tools import (
     print_warning,
 )
 
+logger = logging.getLogger("demisto-sdk")
+
 json = JSON_Handler()
 
 
@@ -57,7 +60,6 @@ class BaseValidator:
         self,
         ignored_errors=None,
         print_as_warnings=False,
-        suppress_print: bool = False,
         json_file_path: Optional[str] = None,
         specific_validations: Optional[list] = None,
     ):
@@ -71,7 +73,6 @@ class BaseValidator:
         self.predefined_deprecated_ignored_errors = {}  # type: ignore[var-annotated]
         self.print_as_warnings = print_as_warnings
         self.checked_files = set()  # type: ignore
-        self.suppress_print = suppress_print
         self.json_file_path = json_file_path
         self.specific_validations = specific_validations
 
@@ -150,7 +151,6 @@ class BaseValidator:
         error_message,
         error_code,
         file_path,
-        should_print=True,
         suggested_fix=None,
         warning=False,
         drop_line=False,
@@ -166,7 +166,6 @@ class BaseValidator:
             error_message (str): The error message
             file_path (str): The file from which the error occurred
             error_code (str): The error code
-            should_print (bool): whether the command should be printed
             ignored_errors (dict): if there are any ignored_errors, will override the ignored_errors attribute.
 
         Returns:
@@ -257,23 +256,21 @@ class BaseValidator:
             return None
 
         formatted_error = formatted_error_str("ERROR")
-        if should_print and not self.suppress_print:
-            if suggested_fix and not is_error_not_allowed_in_pack_ignore:
-                click.secho(formatted_error[:-1], fg="bright_red")
-                if error_code == "ST109":
-                    click.secho("Please add to the root of the yml.\n", fg="bright_red")
-                elif error_code == "ST107":
-                    missing_field = error_message.split(" ")[3]
-                    path_to_add = error_message.split(":")[1]
-                    click.secho(
-                        f"Please add the field {missing_field} to the path: {path_to_add} in the yml.\n",
-                        fg="bright_red",
-                    )
-                else:
-                    click.secho(suggested_fix + "\n", fg="bright_red")
-
+        if suggested_fix and not is_error_not_allowed_in_pack_ignore:
+            logger.debug("[red]" + formatted_error[:-1] + "[/red]")
+            if error_code == "ST109":
+                logger.debug("[red]Please add to the root of the yml.[/red]\n")
+            elif error_code == "ST107":
+                missing_field = error_message.split(" ")[3]
+                path_to_add = error_message.split(":")[1]
+                logger.debug(
+                    f"[red]Please add the field {missing_field} to the path: {path_to_add} in the yml.[/red]\n"
+                )
             else:
-                click.secho(formatted_error, fg="bright_red")
+                logger.debug("[red]" + suggested_fix + "[/red]\n")
+
+        else:
+            logger.debug("[red]" + formatted_error + "[/[red]]")
 
         self.json_output(file_path, error_code, error_message, warning)
         self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_ERRORS)

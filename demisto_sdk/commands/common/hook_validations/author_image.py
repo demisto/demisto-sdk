@@ -21,8 +21,6 @@ class AuthorImageValidator(ImageValidator):
         self,
         file_path: str,
         ignored_errors=None,
-        print_as_warnings=False,
-        suppress_print=False,
         json_file_path=None,
         maximum_image_size: Optional[int] = None,
         specific_validations=None,
@@ -30,8 +28,6 @@ class AuthorImageValidator(ImageValidator):
         super().__init__(
             file_path=file_path,
             ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
-            suppress_print=suppress_print,
             json_file_path=json_file_path,
             specific_validations=specific_validations,
         )

@@ -81,7 +81,6 @@ class IntegrationValidator(ContentEntityValidator):
         self,
         structure_validator,
         ignored_errors=None,
-        print_as_warnings=False,
         skip_docker_check=False,
         json_file_path=None,
         validate_all=False,
@@ -90,7 +89,6 @@ class IntegrationValidator(ContentEntityValidator):
         super().__init__(
             structure_validator,
             ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
             json_file_path=json_file_path,
             skip_docker_check=skip_docker_check,
         )
@@ -366,7 +364,6 @@ class IntegrationValidator(ContentEntityValidator):
                         error_message,
                         error_code,
                         file_path=self.file_path,
-                        should_print=False,
                     )
                     if formatted_message:
                         err_msgs.append(formatted_message)
@@ -384,7 +381,6 @@ class IntegrationValidator(ContentEntityValidator):
                         error_message,
                         error_code,
                         file_path=self.file_path,
-                        should_print=False,
                     )
                     if formatted_message:
                         err_msgs.append(formatted_message)
@@ -395,7 +391,6 @@ class IntegrationValidator(ContentEntityValidator):
                         error_message,
                         error_code,
                         file_path=self.file_path,
-                        should_print=False,
                     )
                     if formatted_message:
                         err_msgs.append(formatted_message)
@@ -406,7 +401,6 @@ class IntegrationValidator(ContentEntityValidator):
                         error_message,
                         error_code,
                         file_path=self.file_path,
-                        should_print=False,
                     )
                     if formatted_message:
                         err_msgs.append(formatted_message)
@@ -1195,8 +1189,6 @@ class IntegrationValidator(ContentEntityValidator):
             is_modified_file=True,
             is_integration=True,
             ignored_errors=self.ignored_errors,
-            print_as_warnings=self.print_as_warnings,
-            suppress_print=self.suppress_print,
             json_file_path=self.json_file_path,
             is_iron_bank=is_iron_bank,
             specific_validations=self.specific_validations,
@@ -1552,7 +1544,6 @@ class IntegrationValidator(ContentEntityValidator):
         image_validator = ImageValidator(
             self.file_path,
             ignored_errors=self.ignored_errors,
-            print_as_warnings=self.print_as_warnings,
             json_file_path=self.json_file_path,
             specific_validations=self.specific_validations,
         )
@@ -1569,7 +1560,6 @@ class IntegrationValidator(ContentEntityValidator):
         description_validator = DescriptionValidator(
             self.file_path,
             ignored_errors=self.ignored_errors,
-            print_as_warnings=self.print_as_warnings,
             json_file_path=self.json_file_path,
             specific_validations=self.specific_validations,
         )

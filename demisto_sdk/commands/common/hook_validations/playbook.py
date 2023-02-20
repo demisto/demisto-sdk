@@ -22,7 +22,6 @@ class PlaybookValidator(ContentEntityValidator):
         self,
         structure_validator,
         ignored_errors=None,
-        print_as_warnings=False,
         json_file_path=None,
         validate_all=False,
         deprecation_validator=None,
@@ -30,7 +29,6 @@ class PlaybookValidator(ContentEntityValidator):
         super().__init__(
             structure_validator,
             ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
             json_file_path=json_file_path,
         )
         self.validate_all = validate_all

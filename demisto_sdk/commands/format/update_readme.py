@@ -1,3 +1,4 @@
+import logging
 from typing import Optional, Tuple
 
 import click
@@ -16,6 +17,8 @@ from demisto_sdk.commands.format.format_constants import (
 )
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
+logger = logging.getLogger("demisto-sdk")
+
 
 class ReadmeFormat(BaseUpdate):
     """ReadmeFormat class is designed to update README files according to Demisto's convention.
@@ -32,7 +35,6 @@ class ReadmeFormat(BaseUpdate):
         output: str = "",
         path: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
         **kwargs,
     ):
         super().__init__(
@@ -40,7 +42,6 @@ class ReadmeFormat(BaseUpdate):
             output=output,
             path=path,
             no_validate=no_validate,
-            verbose=verbose,
             **kwargs,
         )
         with open(self.source_file) as f:
@@ -111,10 +112,8 @@ class ReadmeFormat(BaseUpdate):
 
     def save_md_to_destination_file(self):
         """Safely saves formatted data to destination file."""
-        if self.source_file != self.output_file and self.verbose:
-            click.secho(
-                f"Saving output description file to {self.output_file} \n", fg="white"
-            )
+        if self.source_file != self.output_file:
+            logger.debug(f"Saving output description file to {self.output_file} \n")
         with open(self.output_file, "w") as f:
             f.write(self.readme_content)
         f.close()

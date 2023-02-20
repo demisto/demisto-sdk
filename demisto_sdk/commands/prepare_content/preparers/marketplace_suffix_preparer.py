@@ -42,6 +42,8 @@ class MarketplaceSuffixPreparer:
                     datum.keys()
                 ):  # deliberately not iterating over .items(), as the dict changes during iteration
                     value = datum[key]
+                    if not isinstance(key,str):
+                        logger.error(f"non-string {key=} in {datum}")
 
                     if key.casefold().endswith(suffix):
                         clean_key = key[:-suffix_len]  # without suffix

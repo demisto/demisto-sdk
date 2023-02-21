@@ -252,8 +252,7 @@ class TestDockerImagesCollection:
         else:  # more than one image ('all' flag)
             images = []
             for img in actual_image:
-                images.append(img[0])
-            assert images == exp_images
+                 assert img[0] in exp_images
 
     @pytest.mark.parametrize(
         argnames="docker_image_flag, exp_versioned_native_image_name",

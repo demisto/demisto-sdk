@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Any, Callable, Dict, List
 
@@ -24,6 +25,8 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_relationship,
     mock_test_playbook,
 )
+
+logging.getLogger("demisto-sdk").propagate = True
 
 GIT_PATH = Path(git_path())
 
@@ -424,7 +427,7 @@ def test_are_toversion_relationships_paths_valid(repository: ContentDTO):
     assert not is_valid
 
 
-def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, capsys):
+def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, caplog):
     """
     Given
     - A content repo
@@ -437,15 +440,14 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, capsy
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_fromversion_fields()
 
-    captured = capsys.readouterr().out
     assert not is_valid
     assert (
         "Content item 'SamplePlaybook' whose from_version is '6.5.0' uses the content"
-        " items: 'SamplePlaybook2' whose from_version is higher" in captured
+        " items: 'SamplePlaybook2' whose from_version is higher" in caplog.text
     )
 
 
-def test_is_file_using_unknown_content(repository: ContentDTO, capsys):
+def test_is_file_using_unknown_content(repository: ContentDTO, caplog):
     """
     Given
     - A content repo
@@ -458,15 +460,14 @@ def test_is_file_using_unknown_content(repository: ContentDTO, capsys):
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.is_file_using_unknown_content()
 
-    captured = capsys.readouterr().out
     assert is_valid
     assert (
         "Content item 'SampleIntegration' using content items: SampleClassifier which"
-        " cannot be found in the repository" in captured
+        " cannot be found in the repository" in caplog.text
     )
 
 
-def test_is_file_display_name_already_exists(repository: ContentDTO, capsys):
+def test_is_file_display_name_already_exists(repository: ContentDTO, caplog):
     """
     Given
     - A content repo
@@ -479,17 +480,16 @@ def test_is_file_display_name_already_exists(repository: ContentDTO, capsys):
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.is_file_display_name_already_exists()
 
-    captured = capsys.readouterr().out
     assert not is_valid
     for i in range(1, 4):
         assert (
             f"Pack 'SamplePack{i if i != 1 else ''}' has a duplicate display_name"
-            in captured
+            in caplog.text
         )
 
 
 def test_are_marketplaces_relationships_paths_valid(
-    repository: ContentDTO, capsys, mocker
+    repository: ContentDTO, caplog, mocker
 ):
     """
     Given
@@ -503,16 +503,15 @@ def test_are_marketplaces_relationships_paths_valid(
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_marketplaces_fields()
 
-    captured = capsys.readouterr().out
     assert not is_valid
     assert (
         "Content item 'SamplePlaybook' can be used in the 'xsoar, xpanse' marketplaces"
         ", however it uses content items: 'SamplePlaybook2' which are not supported in"
-        " all of the marketplaces of 'SamplePlaybook'" in captured
+        " all of the marketplaces of 'SamplePlaybook'" in caplog.text
     )
 
 
-def test_validate_dependencies(repository: ContentDTO, capsys, mocker):
+def test_validate_dependencies(repository: ContentDTO, caplog, mocker):
     """
     Given
     - A content repo
@@ -529,6 +528,5 @@ def test_validate_dependencies(repository: ContentDTO, capsys, mocker):
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_dependencies()
 
-    captured = capsys.readouterr().out
     assert not is_valid
-    assert "The core pack SamplePack cannot depend on non-core packs: " in captured
+    assert "The core pack SamplePack cannot depend on non-core packs: " in caplog.text

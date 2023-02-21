@@ -403,13 +403,7 @@ class TestPlaybook:
             server_context (ServerContext): The ServerContext instance in which the TestContext instance is created in
         """
         for integration in self.integrations:
-            try:
-                integration.disable_integration_instance(client)
-            except ApiException as err:
-                self.build_context.logging_module.info(
-                    f"inside disable integrations: {err=}, {err.status=}, {client.api_client._login_success=}",
-                    real_time=True,
-                )
+            integration.disable_integration_instance(client)
         updated_keys = False
         if not IS_XSIAM:
             updated_keys = self._set_prev_server_keys(client, server_context)
@@ -1728,9 +1722,9 @@ class Integration:
                 path="/settings/integration",
                 body=module_instance,
             )
-        except ApiException:
+        except ApiException as err:
             self.build_context.logging_module.exception(
-                "Failed to disable integration instance"
+                f"Failed to disable integration instance, {err=}, {err.status=}, {client.api_client._login_success=}"
             )
             return
 

@@ -2715,10 +2715,16 @@ class ServerContext:
 
     def _reset_containers(self):
         self.build_context.logging_module.info("Resetting containers\n", real_time=True)
-
-        body, status_code, _ = demisto_client.generic_request_func(
-            self=self.client, method="POST", path="/containers/reset"
-        )
+        try:
+            body, status_code, _ = demisto_client.generic_request_func(
+                self=self.client, method="POST", path="/containers/reset"
+            )
+        except ApiException as err:
+            self.build_context.logging_module.info(
+                f"when resetting containers: {self.client.api_client._login_success=}, {err=}, {err.status=}",
+                real_time=True,
+            )
+            raise err
         if status_code != 200:
             self.build_context.logging_module.critical(
                 f'Request to reset containers failed with status code "{status_code}"\n{body}',

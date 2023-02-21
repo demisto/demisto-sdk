@@ -331,7 +331,6 @@ def verify_pack_exists_on_tenant(
                     "insecure": False,
                     "input_config_file": None,
                     "skip_validation": False,
-                    "verbose": False,
                     "reattach": True,
                 }
                 upload_result = upload_cmd(**upload_kwargs)

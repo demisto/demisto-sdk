@@ -36,7 +36,6 @@ class PythonFileFormat(BaseUpdate):
         path: str = "",
         from_version: str = "",
         no_validate: bool = True,
-        verbose: bool = False,
         **kwargs,
     ):
         super().__init__(
@@ -45,12 +44,11 @@ class PythonFileFormat(BaseUpdate):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            verbose=verbose,
             **kwargs,
         )
 
     @staticmethod
-    def format_py_using_autopep(py_file_path, verbose: bool = False):
+    def format_py_using_autopep(py_file_path):
         """Run autopep8 formatter on python file.
         Args:
             py_file_path (str): The python file path.
@@ -92,7 +90,7 @@ class PythonFileFormat(BaseUpdate):
             self.create_output_file()
             py_file_path = self.output_file
 
-        is_autopep_passed = self.format_py_using_autopep(py_file_path, self.verbose)
+        is_autopep_passed = self.format_py_using_autopep(py_file_path)
         if is_autopep_passed:
             return SUCCESS_RETURN_CODE
         return ERROR_RETURN_CODE

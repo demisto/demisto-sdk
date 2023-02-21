@@ -28,12 +28,9 @@ class JobJSONFormat(BaseUpdateJSON):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
         **kwargs,
     ):
-        super().__init__(
-            input, output, path, from_version, no_validate, verbose, **kwargs
-        )
+        super().__init__(input, output, path, from_version, no_validate, **kwargs)
         self.is_feed_defined = IS_FEED in self.data
         self.selected_feeds_defined = SELECTED_FEEDS in self.data
         self.is_all_feeds_defined = IS_ALL_FEEDS in self.data

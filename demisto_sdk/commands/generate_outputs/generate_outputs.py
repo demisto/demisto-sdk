@@ -30,7 +30,6 @@ def json_to_outputs_flow(kwargs):
         kwargs.get("json"),
         kwargs.get("prefix"),
         kwargs.get("output"),
-        kwargs.get("verbose"),
         kwargs.get("interactive"),
         kwargs.get("descriptions"),
     ]
@@ -67,8 +66,7 @@ def generate_ai_descriptions_flow(kwargs):
         print("**AI Output set to out.yml**")
         output_path = "out.yml"
     insecure: bool = kwargs.get("insecure", False)
-    verbose: bool = kwargs.get("verbose", False)
-    generate_ai_descriptions(input_path, output_path, True, verbose, insecure)
+    generate_ai_descriptions(input_path, output_path, True, insecure)
 
 
 def validate_inputs_examples(input_path):

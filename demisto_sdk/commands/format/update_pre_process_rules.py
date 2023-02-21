@@ -26,7 +26,6 @@ class PreProcessRulesFormat(BaseUpdateJSON):
         path: str = "pre-process-rules",
         from_version: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
         **kwargs,
     ):
         super().__init__(
@@ -35,7 +34,6 @@ class PreProcessRulesFormat(BaseUpdateJSON):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            verbose=verbose,
             **kwargs,
         )
 

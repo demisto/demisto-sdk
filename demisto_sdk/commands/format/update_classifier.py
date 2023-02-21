@@ -24,7 +24,6 @@ class BaseClassifierJSONFormat(BaseUpdateJSON, ABC):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
         clear_cache: bool = False,
         old_classifier_type: bool = False,
         **kwargs,
@@ -35,7 +34,6 @@ class BaseClassifierJSONFormat(BaseUpdateJSON, ABC):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            verbose=verbose,
             clear_cache=clear_cache,
             **kwargs,
         )

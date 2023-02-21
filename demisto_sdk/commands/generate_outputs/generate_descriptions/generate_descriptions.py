@@ -91,19 +91,17 @@ def animate():
         time.sleep(0.1)
 
 
-def generate_desc_with_spinner(command_output_path, insecure, output, verbose):
+def generate_desc_with_spinner(command_output_path, insecure, output):
     global LOADING_DONE
     LOADING_DONE = False
     t = threading.Thread(target=animate)
     t.start()
-    output = generate_desc(
-        command_output_path, verbose=verbose, prob_check=True, insecure=insecure
-    )
+    output = generate_desc(command_output_path, prob_check=True, insecure=insecure)
     LOADING_DONE = True
     return output
 
 
-def generate_desc(input_ctx, verbose=False, prob_check=False, insecure=False):
+def generate_desc(input_ctx, prob_check=False, insecure=False):
     logger = logging.getLogger()
     logger.setLevel(logging.ERROR)
 
@@ -163,7 +161,7 @@ def build_description_with_probabilities(data):
     return output
 
 
-def write_desc(c_index, final_output, o_index, output_path, verbose, yml_data):
+def write_desc(c_index, final_output, o_index, output_path, yml_data):
     """Write a description to disk"""
     logger.debug(f"Writing: {final_output}\n---")
     yml_data["script"]["commands"][c_index]["outputs"][o_index][
@@ -205,7 +203,6 @@ def generate_ai_descriptions(
     input_path: str,
     output_path: str = "out.yml",
     interactive: bool = True,
-    verbose: bool = False,
     insecure: bool = False,
 ):
     """Generate integration command contexts.
@@ -214,7 +211,6 @@ def generate_ai_descriptions(
         input_path: path to the yaml integration input path
         output_path: path to the yaml integration output path
         interactive: interactivity (correct ai result mistakes)
-        verbose: verbose (debug mode)
         insecure: insecure https (debug mode)
     """
     print_experimental()
@@ -279,7 +275,7 @@ def generate_ai_descriptions(
                 for _exception in range(2):
                     try:
                         output = generate_desc_with_spinner(
-                            command_output_path, insecure, output, verbose
+                            command_output_path, insecure, output
                         )
                         break
                     except requests.exceptions.RequestException as e:
@@ -296,9 +292,7 @@ def generate_ai_descriptions(
                     )
 
                 # Write the final description to the file (backup)
-                write_desc(
-                    c_index, final_output, o_index, output_path, verbose, yml_data
-                )
+                write_desc(c_index, final_output, o_index, output_path, yml_data)
 
                 # Update the similar context paths
                 similar_paths[command_output_path] = str(final_output)

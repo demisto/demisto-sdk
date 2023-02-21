@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* added support for running **lint** in multiple native-docker images.
 
 ## 1.10.3
 * Fixed an issue where running **format** would fail after running npm install.

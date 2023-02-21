@@ -314,11 +314,15 @@ class Linter:
         )
         if self._facts["docker_engine"]:
             logger.info(f"{log_prompt} - Collecting all docker images to pull")
-            images = self._get_docker_images_for_lint(
-                script_obj=script_obj,
-                script_id=yml_obj_id,
-                docker_image_flag=self.docker_image_flag,
-            )
+            images = []
+            for docker_image in self.docker_image_flag.split(","):
+                temp_images = self._get_docker_images_for_lint(
+                    script_obj=script_obj,
+                    script_id=yml_obj_id,
+                    docker_image_flag=docker_image,
+                )
+                images.extend(temp_images)
+                images = list(set(images))
             if not images:
                 # If no docker images to run on - skip checks in both docker and host
                 logger.info(

@@ -63,6 +63,9 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
 )
 from TestSuite.test_tools import ChangeCWD
 
+mp = pytest.MonkeyPatch()
+mp.setenv("COLUMNS", "1000")
+
 VALIDATE_CMD = "validate"
 TEST_FILES_PATH = join(git_path(), "demisto_sdk", "tests", "test_files")
 AZURE_FEED_PACK_PATH = join(
@@ -2391,12 +2394,14 @@ class TestIncidentTypeValidation:
         assert "IT103" in result.stdout  # wrong format error
 
         # check all errors are listed
-        assert (
-            "The `mode` field under `extractSettings` should be one of the following:\n"
-            ' - "All" - To extract all indicator types regardless of auto-extraction settings.\n'
-            ' - "Specific" - To extract only the specific indicator types '
-            "set in the auto-extraction settings." in result.stdout
-        )
+        expected_errors_lines = [
+            "The `mode` field under `extractSettings` should be one of the following:",
+            ' - "All" - To extract all indicator types regardless of auto-extraction settings.',
+            ' - "Specific" - To extract only the specific indicator types ',
+            "set in the auto-extraction settings.",
+        ]
+        for current_expected_errors_line in expected_errors_lines:
+            assert current_expected_errors_line in result.stdout
         assert result.exit_code == 1
 
 

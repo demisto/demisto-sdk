@@ -108,7 +108,7 @@ def generate_playbook_doc(
         doc.extend(["## Playbook Image", "", "---", ""])
         doc.append(generate_image_path(_name, custom_image_path))
 
-        doc_text = "\n".join(doc)
+        doc_text = "\n".join(doc) + "\n"
 
         save_output(output, f"{playbook_filename}_README.md", doc_text)
 

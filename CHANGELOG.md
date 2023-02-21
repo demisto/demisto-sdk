@@ -2,7 +2,7 @@
 
 ## Unreleased
 * Added support for running **lint** in multiple native-docker images.
-* Added a newline at the end of playbooks README file.
+* Added a newline at the end of README files generated in **generate-docs**.
 
 ## 1.10.3
 * Fixed an issue where running **format** would fail after running npm install.

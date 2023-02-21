@@ -23,6 +23,7 @@ from demisto_sdk.commands.common.tools import (
     arg_to_list,
     find_type,
     get_mp_tag_parser,
+    get_pack_metadata,
     get_pack_name,
     get_yaml,
     get_yml_paths_in_dir,
@@ -292,6 +293,7 @@ class IntegrationScriptUnifier(Unifier):
             if "CommonServer" not in yml_data["name"]:
                 # CommonServerPython has those line hard-coded so there is no need to add them here.
                 clean_code = (
+                    f"### pack version: {get_pack_metadata(file_path=str(package_path)).get('currentVersion', '')}\n"
                     f"register_module_line('{yml_data['name']}', 'start', __line__())\n"
                     f"{clean_code}\n"
                     f"register_module_line('{yml_data['name']}', 'end', __line__())\n"

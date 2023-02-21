@@ -1,16 +1,18 @@
+import csv
 import logging
 import traceback
 from io import StringIO
-import csv
 from pathlib import Path
 from typing import List, Tuple
+
 import typer
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
     GENERAL_DEFAULT_FROMVERSION,
     FileType,
 )
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.logger import setup_rich_logging
 from demisto_sdk.commands.common.tools import get_max_version
 
@@ -19,9 +21,9 @@ logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
 yaml = YAML_Handler()
 
-SCHEMA_TYPE_STRING = 'String'
-SCHEMA_TYPE_NUMBER = 'Number'
-SCHEMA_TYPE_BOOLEAN = 'Boolean'
+SCHEMA_TYPE_STRING = "String"
+SCHEMA_TYPE_NUMBER = "Number"
+SCHEMA_TYPE_BOOLEAN = "Boolean"
 
 
 @app.command(no_args_is_help=True)
@@ -99,9 +101,9 @@ def generate_modeling_rules(
     try:
         setup_rich_logging(verbosity, quiet, log_path, log_file_name)
 
-        outputfile_schema = Path(output_path, (
-            f"{vendor}_{product}_modeling_rules.json"
-        ))
+        outputfile_schema = Path(
+            output_path, (f"{vendor}_{product}_modeling_rules.json")
+        )
         outputfile_xif = Path(output_path, (f"{vendor}_{product}_modeling_rules.xif"))
         outputfile_yml = Path(output_path, (f"{vendor}_{product}_modeling_rules.yml"))
         data_set_name = f"{vendor.lower()}_{product.lower()}_raw"
@@ -117,7 +119,11 @@ def generate_modeling_rules(
         )
 
         mapping_list = init_mapping_field_list(
-            name_columen, xdm_one_data_model, raw_event, xdm_rule_to_dtype, xdm_rule_to_dclass
+            name_columen,
+            xdm_one_data_model,
+            raw_event,
+            xdm_rule_to_dtype,
+            xdm_rule_to_dclass,
         )
 
         create_scheme_file(mapping_list, data_set_name, outputfile_schema)
@@ -232,7 +238,11 @@ def convert_raw_type_to_xdm_type(schema_type: str) -> str:
     """
     returns the xdm type convention
     """
-    converting_dict = {"string": SCHEMA_TYPE_STRING, "int": SCHEMA_TYPE_NUMBER, "boolean": SCHEMA_TYPE_BOOLEAN}
+    converting_dict = {
+        "string": SCHEMA_TYPE_STRING,
+        "int": SCHEMA_TYPE_NUMBER,
+        "boolean": SCHEMA_TYPE_BOOLEAN,
+    }
 
     return converting_dict.get(schema_type, SCHEMA_TYPE_STRING)
 
@@ -253,12 +263,14 @@ def read_mapping_file(mapping: Path):
     name_column = []
     xdm_one_data_model = []
 
-    with open(mapping, newline='') as csvfile:
-        reader = csv.DictReader(csvfile, delimiter='\t' if str(mapping).endswith('tsv') else ',')
+    with open(mapping, newline="") as csvfile:
+        reader = csv.DictReader(
+            csvfile, delimiter="\t" if str(mapping).endswith("tsv") else ","
+        )
 
         for row in reader:
-            name_column.append(row['Name'])
-            xdm_one_data_model.append(row['XDM Field One Data Model'])
+            name_column.append(row["Name"])
+            xdm_one_data_model.append(row["XDM Field One Data Model"])
 
     return (name_column, xdm_one_data_model)
 
@@ -310,7 +322,7 @@ def replace_last_char(s: str) -> str:
     """
     Replaces the second last char of the xif file to be ; instead of ,
     """
-    return f'{s[:-2]};{s[-1]}' if s else s
+    return f"{s[:-2]};{s[-1]}" if s else s
 
 
 def create_scheme_file(
@@ -398,7 +410,7 @@ def extract_raw_type_data(event: dict, path_to_dict_field: str) -> tuple:
     temp: dict = event
     for key in keys_split:
         if isinstance(temp, dict):
-            temp = temp.get(key)    # type: ignore[assignment]
+            temp = temp.get(key)  # type: ignore[assignment]
         else:
             # for example when we have an array inside of a dict
             logger.info(
@@ -426,18 +438,20 @@ def extract_data_from_all_xdm_schema(path: str) -> Tuple[dict, dict]:
     Returns:
         Tuple[dict, dict]: {xdf_rule: data_type}, {xdm_rule: data_class}
     """
-    with open(path, newline='') as csvfile:
+    with open(path, newline="") as csvfile:
         reader = csv.DictReader(csvfile)
 
         columns_to_keep = ["name", "datatype", "dataclass"]
         data = {
-            row['name']: {
-                col: row[col] for col in columns_to_keep if col in row
-            }
+            row["name"]: {col: row[col] for col in columns_to_keep if col in row}
             for row in reader
         }
-        xdm_rule_to_dtype = {k: v["datatype"] for k, v in data.items() if "datatype" in v}
-        xdm_rule_to_dclass = {k: v["dataclass"] for k, v in data.items() if "dataclass" in v}
+        xdm_rule_to_dtype = {
+            k: v["datatype"] for k, v in data.items() if "datatype" in v
+        }
+        xdm_rule_to_dclass = {
+            k: v["dataclass"] for k, v in data.items() if "dataclass" in v
+        }
 
         return xdm_rule_to_dtype, xdm_rule_to_dclass
 

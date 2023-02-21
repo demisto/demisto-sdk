@@ -1,7 +1,7 @@
 # `generate-modeling-rules`
 
-This command is used to help develope modeling rules. 
-It generates the .yml/.xif/.json files related to the modeling rules. 
+This command is used to help develope modeling rules.
+It generates the .yml/.xif/.json files related to the modeling rules.
 
 **Usage**:
 
@@ -42,13 +42,13 @@ This document must contain 2 columns.<br/>
 If the field is nested specify full path with `.` between hirarchy
 for example the field UTC
 `{'event' : 'time' : 'UTC' : 5}`
-will be specified by event.time.UTC in the mapping file. 
+will be specified by event.time.UTC in the mapping file.
 
 **Command capabilitys**
 
 This command parses the raw events and the one data model to extracts the fields types.
-The command will prepare a draft of the .xif file with the basic type conversion needed. 
-Now supports: 
+The command will prepare a draft of the .xif file with the basic type conversion needed.
+Now supports:
 - to_string
 - to_number
 - create_array

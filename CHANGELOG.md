@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* added support for multiple dockers separated by comma for native docker linter.
 
 ## 1.10.3
 * Fixed an issue where running **format** would fail after running npm install.

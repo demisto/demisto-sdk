@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## 1.10.4
 * added support for running **lint** in multiple native-docker images.
 
 ## 1.10.3

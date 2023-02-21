@@ -132,7 +132,7 @@ class DockerBase:
     def create_container(
         self,
         image: str,
-        command: Union[str, List[str]],
+        command: Union[str, List[str], None] = None,
         files_to_push: Optional[FILES_SRC_TARGET] = None,
         environment: Optional[Dict] = None,
         **kwargs,
@@ -227,7 +227,7 @@ class MountableDocker(DockerBase):
     def create_container(
         self,
         image: str,
-        command: Union[str, List[str]],
+        command: Union[str, List[str], None] = None,
         files_to_push: Optional[FILES_SRC_TARGET] = None,
         environment: Optional[Dict] = None,
         mount_files: bool = CAN_MOUNT_FILES,

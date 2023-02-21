@@ -57,6 +57,7 @@ from demisto_sdk.commands.common.constants import (
     LAYOUTS_DIR,
     LISTS_DIR,
     MARKETPLACE_KEY_PACK_METADATA,
+    MARKETPLACE_TO_CORE_PACKS_FILE,
     METADATA_FILE_NAME,
     MODELING_RULES_DIR,
     NON_LETTERS_OR_NUMBERS_PATTERN,
@@ -391,47 +392,52 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
-core_pack_list: Optional[
-    list
-] = None  # Initiated in get_core_pack_list function. Here to create a "cached" core_pack_list
-
-
-@lru_cache(maxsize=128)
-def get_core_pack_list() -> list:
-    """Getting the core pack list from Github content
+def get_marketplace_to_core_packs() -> Dict[MarketplaceVersions, Set[str]]:
+    """Getting the core pack from Github content
 
     Returns:
-        Core pack list
+        A mapping from marketplace versions to their core packs.
     """
-    global core_pack_list
-    if isinstance(core_pack_list, list):
-        return core_pack_list
-    if not is_external_repository():
-        core_pack_list = (
-            get_remote_file(
-                "Tests/Marketplace/core_packs_list.json",
-                git_content_config=GitContentConfig(
-                    repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
-                    git_provider=GitProvider.GitHub,
-                ),
-            )
-            or []
+    if is_external_repository():
+        return {}  # no core packs in external repos.
+
+    mp_to_core_packs: Dict[MarketplaceVersions, Set[str]] = {}
+    for mp in MarketplaceVersions:
+        # for backwards compatibility mp_core_packs can be a list, but we expect a dict.
+        mp_core_packs: Union[list, dict] = get_remote_file(
+            MARKETPLACE_TO_CORE_PACKS_FILE[mp],
+            git_content_config=GitContentConfig(
+                repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
+                git_provider=GitProvider.GitHub,
+            ),
         )
-        core_pack_list.extend(
-            get_remote_file(
-                "Tests/Marketplace/core_packs_mpv2_list.json",
-                git_content_config=GitContentConfig(
-                    repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
-                    git_provider=GitProvider.GitHub,
-                ),
-            )
-            or []
-        )
-        core_pack_list = list(set(core_pack_list))
-    else:
-        # no core packs in external repos.
-        core_pack_list = []
-    return core_pack_list
+        if isinstance(mp_core_packs, list):
+            mp_to_core_packs[mp] = set(mp_core_packs)
+        else:
+            mp_to_core_packs[mp] = set(mp_core_packs.get("core_packs_list", []))
+    return mp_to_core_packs
+
+
+def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
+    """Getting the core pack list from Github content
+
+    Arguments:
+        marketplaces: A list of the marketplaces to return core packs for.
+
+    Returns:
+        The core packs list.
+    """
+    result: Set[str] = set()
+    if is_external_repository():
+        return []  # no core packs in external repos.
+
+    if marketplaces is None:
+        marketplaces = list(MarketplaceVersions)
+
+    for mp, core_packs in get_marketplace_to_core_packs().items():
+        if mp in marketplaces:
+            result.update(core_packs)
+    return list(result)
 
 
 def get_local_remote_file(

@@ -74,6 +74,7 @@ def create_integration(mocker) -> Callable:
         image: bool = False,
         image_py_num: str = "3.7",
         test_reqs: bool = False,
+        api_module: bool = False,
     ) -> Path:
         """Creates tmp content repositry for integration test
 
@@ -94,6 +95,7 @@ def create_integration(mocker) -> Callable:
             image(str): Image to define in yml.
             image_py_num(str): Image python version.
             test_reqs(bool): True to include a test-requirements.txt file.
+            api_module (bool): True if ApiModule should be in the integration folder, False if not.
 
         Returns:
             Path: Path to tmp integration
@@ -106,6 +108,9 @@ def create_integration(mocker) -> Callable:
             if (ext == "_test.py" and no_tests) or (ext == ".py" and no_lint_file):
                 continue
             (integration_path / f"{integration_name}{ext}").touch()
+        if api_module:
+            (integration_path / "TestApiModule.py").touch()
+
         if test_reqs:
             (integration_path / "test-requirements.txt").touch()
             (integration_path / "test-requirements.txt").write_text(
@@ -137,7 +142,7 @@ def create_integration(mocker) -> Callable:
         if yml:
             yml_file.write_text("")
         else:
-            yml_dict = {}
+            yml_dict = {"commonfields": {"id": integration_name}}
             if js_type:
                 yml_dict["type"] = "javascript"
                 if type_script_key:

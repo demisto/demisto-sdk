@@ -1,7 +1,33 @@
 # Changelog
 
 ## Unreleased
-* **Breaking change**: Removed usage of `pipenv`, `isort` and `autopep8` in the **split** and **download** commands. Removed the `--no-pipenv` flag. Please see https://xsoar.pan.dev/docs/tutorials/tut-setup-dev-remote for the recommended environment setup.
+
+## 1.10.3
+* Fixed an issue where running **format** would fail after running npm install.
+* Improved the graph validations in the **validate** command:
+  - GR100 will now run on all content items of changed packs.
+  - GR101 and GR102 will now catch invalid fromversion/toversion of files **using** the changed items.
+  - GR103 errors will raise a warning when using the *-a* flag, but an error if using the *-i* or *g* flags.
+* Fixed an issue where test-playbooks timed out.
+* Fixed an issue where making a change in a module using an ApiModule would cause lint to run on the ApiModule unnecessarily.
+* Fixed an issue where the `marketplace` field was not used when dumping pack zips.
+* Fixed a typo in the README content generated with **update-release-notes** for updating integrations.
+* Fixed an issue in **validate**, where using the `-gr` and `-i` flags did not run properly.
+* Added the `sectionorder` field to integration scheme.
+* Fixed an issue where in some occasions running of test-playbooks could receive session timeouts.
+* Fixed an issue where **validate** command failed on core pack dependencies validation because of test dependencies.
+
+## 1.10.2
+* Added markdown lint formatting for README files in the **format** command.
+* Fixed an issue where **lint** failed when using the `-cdam` flag with changed dependant api modules.
+* Fixed an issue in the **upload** command, where `json`-based content items were not unified correctly when using the `--zip` argument.
+* Added XPANSE core packs validations.
+
+## 1.10.1
+* Fixed an issue where **update-content-graph** failed to execute.
+
+## 1.10.0
+* **Breaking change**: Removed usage of `pipenv`, `isort` and `autopep8` in the **split** and **download** commands. Removed the `--no-pipenv` and `--no-code-formatting` flags. Please see https://xsoar.pan.dev/docs/tutorials/tut-setup-dev-remote for the recommended environment setup.
 * Fixed an issue in **prepare-content** command where large code lines were broken.
 * Fixed an issue where git-*renamed_files* were not retrieved properly.
 * Fixed an issue where test dependencies were calculated in all level dependencies calculation.
@@ -13,7 +39,7 @@
 * Added support for the **Layout Rule** content type in the id-set and the content graph.
 * Updated the default general `fromVersion` value on **format** to `6.8.0`
 * Fixed an issue where **lint** sometimes failed when using the `-cdam` flag due to wrong file duplications filtering.
-* Updated **validate** to use the graph when running with `--graph` flag.
+* Added the content graph to **validate**, use with the `--graph` flag.
 
 
 ## 1.9.0

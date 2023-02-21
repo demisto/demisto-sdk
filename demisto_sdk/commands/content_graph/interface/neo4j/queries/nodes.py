@@ -113,10 +113,13 @@ DETACH DELETE n, p"""
 def return_preserved_relationships(
     tx: Transaction, rels_to_preserve: List[Dict[str, Any]]
 ) -> None:
-    query = """// Returns the preserved relationships
+    query = f"""// Returns the preserved relationships
 UNWIND $rels_data AS rel_data
 MATCH (s) WHERE id(s) = rel_data.source_id
-OPTIONAL MATCH (t{object_id: rel_data.target.object_id, content_type: rel_data.target.content_type})
+OPTIONAL MATCH (t:{ContentType.BASE_CONTENT}{{
+    object_id: rel_data.target.object_id,
+    content_type: rel_data.target.content_type
+}})
 WITH s, t, rel_data
 WHERE NOT t IS NULL
 CALL apoc.create.relationship(s, rel_data.r_type, rel_data.r_properties, t)

@@ -1,6 +1,5 @@
-import io
+import logging
 import os
-from contextlib import redirect_stdout
 from copy import deepcopy
 from typing import Any, Dict, List, Optional
 from unittest.mock import mock_open, patch
@@ -25,6 +24,8 @@ from demisto_sdk.commands.common.hook_validations.structure import StructureVali
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.integration import Integration
 from TestSuite.test_tools import ChangeCWD
+
+logging.getLogger("demisto-sdk").propagate = True
 
 default_additional_info = load_default_additional_info_dict()
 
@@ -305,18 +306,15 @@ class TestIntegrationValidator:
         "current, old, answer, changed_command_names", IS_CHANGED_CONTEXT_INPUTS
     )
     def test_no_change_to_context_path(
-        self, current, old, answer, changed_command_names
+        self, current, old, answer, changed_command_names, caplog
     ):
         current = {"script": {"commands": current}}
         old = {"script": {"commands": old}}
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
-        stdout_print = io.StringIO()
-        with redirect_stdout(stdout_print):
-            assert validator.no_change_to_context_path() is answer
-        printed_errors = stdout_print.getvalue()
+        assert validator.no_change_to_context_path() is answer
         for changed_command_name in changed_command_names:
-            assert changed_command_name in printed_errors
+            assert changed_command_name in caplog.text
         structure.quiet_bc = True
         assert (
             validator.no_change_to_context_path() is True
@@ -391,7 +389,7 @@ class TestIntegrationValidator:
         "current, old, expected_error_msg", CHANGED_COMMAND_OR_ARG_MST_TEST_INPUTS
     )
     def test_no_changed_command_name_or_arg_msg(
-        self, capsys, current, old, expected_error_msg
+        self, current, old, expected_error_msg, caplog
     ):
         """
         Given
@@ -414,8 +412,7 @@ class TestIntegrationValidator:
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
         validator.no_changed_command_name_or_arg()
-        stdout = capsys.readouterr().out
-        assert expected_error_msg == stdout.strip()
+        assert expected_error_msg in caplog.text
 
     WITHOUT_DUP = [{"name": "test"}, {"name": "test1"}]
     DUPLICATE_PARAMS_INPUTS = [(WITHOUT_DUP, True)]
@@ -494,7 +491,7 @@ class TestIntegrationValidator:
 
     @pytest.mark.parametrize("args, answer, expecting_warning", DEFAULT_INFO_INPUTS)
     def test_default_params_default_info(
-        self, capsys, args: List[Dict], answer: str, expecting_warning: bool
+        self, caplog, args: List[Dict], answer: str, expecting_warning: bool
     ):
         validator = IntegrationValidator(mock_structure("", {"configuration": args}))
         assert validator.default_params_have_default_additional_info() is answer
@@ -506,9 +503,7 @@ class TestIntegrationValidator:
                 ["API key"]
             )
             expected_warning = f"[WARNING]: : [{warning_code}] - {warning_message}"
-            captured = capsys.readouterr()
-            assert captured.out.lstrip('":').strip() == expected_warning
-            assert not captured.err
+            assert expected_warning in caplog.text
 
     NO_INCIDENT_INPUT = [
         (
@@ -1910,7 +1905,7 @@ class TestIsFetchParamsExist:
             self.validator.is_valid_fetch() is False
         ), "is_valid_fetch() returns True instead False"
 
-    def test_missing_max_fetch_text(self, capsys):
+    def test_missing_max_fetch_text(self, caplog):
         # missing param in configuration
         self.validator.current_file["configuration"] = [
             t
@@ -1918,13 +1913,10 @@ class TestIsFetchParamsExist:
             if t["name"] != "incidentType"
         ]
         assert self.validator.is_valid_fetch() is False
-        captured = capsys.readouterr()
-        out = captured.out
-        print(out)
-        assert "display: Incident type" not in out
+        assert "display: Incident type" not in caplog.text
         assert (
             """A required parameter "incidentType" is missing from the YAML file."""
-            in out
+            in caplog.text
         )
 
     def test_missing_field(self):
@@ -1937,7 +1929,7 @@ class TestIsFetchParamsExist:
             self.validator.is_valid_fetch() is False
         ), "is_valid_fetch() returns True instead False"
 
-    def test_malformed_field(self, capsys):
+    def test_malformed_field(self, caplog):
         # incorrect param
         config = self.validator.current_file["configuration"]
         self.validator.current_file["configuration"] = []
@@ -1949,16 +1941,13 @@ class TestIsFetchParamsExist:
         assert (
             self.validator.is_valid_fetch() is False
         ), "is_valid_fetch() returns True instead False"
-        captured = capsys.readouterr()
-        out = captured.out
-        print(out)
-        assert "display: Incident type" in out
-        assert "name: incidentType" in out
-        assert "required: false" in out
-        assert "type: 13" in out
+        assert "display: Incident type" in caplog.text
+        assert "name: incidentType" in caplog.text
+        assert "required: false" in caplog.text
+        assert "type: 13" in caplog.text
 
-    def test_not_fetch(self, capsys):
-        self.test_malformed_field(capsys)
+    def test_not_fetch(self, caplog):
+        self.test_malformed_field(caplog)
         self.validator.is_valid = True
         self.validator.current_file["script"]["isfetch"] = False
         assert (

@@ -64,6 +64,8 @@ from demisto_sdk.tests.constants_test import (
 )
 from TestSuite.test_tools import ChangeCWD
 
+logging.getLogger("demisto-sdk").propagate = True
+
 yaml = YAML_Handler()
 
 INTEGRATION_TEST_ARGS = (
@@ -369,7 +371,6 @@ class TestFormatting:
         - Validate isArray hasn't changed.
 
         """
-        logging.getLogger("demisto-sdk").propagate = True
         yml_contents = integration.yml.read_dict()
         yml_contents["script"]["commands"] = [
             {"name": "ip", "arguments": [{"isArray": False, "name": "ip"}]}
@@ -1223,7 +1224,6 @@ class TestFormatting:
             - Ensure a warning about the missing sub-schema is printed
         """
         monkeypatch.setenv("COLUMNS", "1000")
-        logging.getLogger("demisto-sdk").propagate = True
         mocker.patch("click.secho")
         from click import secho
 
@@ -1264,8 +1264,6 @@ class TestFormatting:
         Then
             - Ensure the error is printed.
         """
-        logging.getLogger("demisto-sdk").propagate = True
-
         formatter = format_object(input="my_file_path")
         mocker.patch.object(
             BaseUpdateYML, "update_yml", side_effect=self.exception_raise

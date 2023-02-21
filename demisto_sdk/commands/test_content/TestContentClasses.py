@@ -1918,6 +1918,10 @@ class TestContext:
                     f"{self.playbook} loop no. {number_of_attempts / DEFAULT_INTERVAL}, {playbook_state=}"
                 )
             number_of_attempts = number_of_attempts + 1
+            self.build_context.logging_module.info(
+                f"when querying playbook state {self.client.api_client._login_success=}",
+                real_time=True,
+            )
         return playbook_state
 
     def _run_incident_test(self) -> str:
@@ -1996,7 +2000,10 @@ class TestContext:
                 restore_external_playbook_configuration(
                     self.client, restore_path=restore_path, restore_values=default_vals
                 )
-
+            self.build_context.logging_module.info(
+                f"before disabling integrations: {self.client.api_client._login_success=}",
+                real_time=True,
+            )
             self.playbook.disable_integrations(self.client, self.server_context)
             self._clean_incident_if_successful(playbook_state)
             return playbook_state

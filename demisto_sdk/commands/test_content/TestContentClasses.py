@@ -407,7 +407,8 @@ class TestPlaybook:
                 integration.disable_integration_instance(client)
             except ApiException as err:
                 self.build_context.logging_module.info(
-                    f"inside disable integrations: {err=}, {err.status=}, {client.api_client._login_success=}"
+                    f"inside disable integrations: {err=}, {err.status=}, {client.api_client._login_success=}",
+                    real_time=True,
                 )
         updated_keys = False
         if not IS_XSIAM:

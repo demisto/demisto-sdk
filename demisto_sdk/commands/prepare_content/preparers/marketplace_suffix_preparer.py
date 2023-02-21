@@ -27,7 +27,9 @@ class MarketplaceSuffixPreparer:
 
         """
         if not (
-            suffix := MarketplaceSuffixPreparer.MARKETPLACE_TO_SUFFIX.get(marketplace)
+            suffix := MarketplaceSuffixPreparer.MARKETPLACE_TO_SUFFIX.get(
+                marketplace, ""
+            )
         ):
             return data
         suffix_len = len(suffix)
@@ -42,10 +44,7 @@ class MarketplaceSuffixPreparer:
                     datum.keys()
                 ):  # deliberately not iterating over .items(), as the dict changes during iteration
                     value = datum[key]
-                    if not isinstance(key,str):
-                        logger.error(f"non-string {key=} in {datum}")
-
-                    if key.casefold().endswith(suffix):
+                    if isinstance(key, str) and key.casefold().endswith(suffix):
                         clean_key = key[:-suffix_len]  # without suffix
                         logger.debug(
                             f"Replacing {clean_key}={datum[clean_key]} to {value}."

@@ -1,5 +1,6 @@
 import logging
 from multiprocessing import Pool
+import os
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
@@ -123,7 +124,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
         )
         if should_update:
-            update_content_graph(self, use_git=True)
+            output_path = None
+            if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
+                output_path = Path(artifacts_folder) / "content_graph"
+            update_content_graph(self, use_git=True, output_path=output_path)
 
     def __enter__(self) -> "Neo4jContentGraphInterface":
         return self

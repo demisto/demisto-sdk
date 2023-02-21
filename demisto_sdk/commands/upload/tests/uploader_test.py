@@ -48,6 +48,8 @@ from demisto_sdk.commands.upload.uploader import (
 )
 from TestSuite.test_tools import ChangeCWD
 
+logging.getLogger("demisto-sdk").propagate = True
+
 json = JSON_Handler()
 
 
@@ -85,7 +87,6 @@ def demisto_client_configure(mocker):
 
 
 def test_upload_integration_positive(demisto_client_configure, mocker):
-    logging.getLogger("demisto-sdk").propagate = True
     mocker.patch.object(demisto_client, "configure", return_value="object")
     mocker.patch.object(
         IntegrationScript, "get_supported_native_images", return_value=[]
@@ -788,7 +789,6 @@ def test_print_summary_successfully_uploaded_files(
         - Ensure uploaded successfully message is printed as expected
     """
     monkeypatch.setenv("COLUMNS", "1000")
-    logging.getLogger("demisto-sdk").propagate = True
 
     mocker.patch("click.secho")
     from click import secho
@@ -1462,7 +1462,6 @@ class TestZippedPackUpload:
 
 class TestItemDetacher:
     def test_detach_item(self, mocker):
-        logging.getLogger("demisto-sdk").propagate = True
         mocker.patch("click.secho")
         from click import secho
 

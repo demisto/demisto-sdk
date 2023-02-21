@@ -54,10 +54,10 @@ mapping:
     type: bool
   reputationCalc:
     type: int
-    enum: [0, 1, 2]
+    enum: [0, 1, 2, 3]
   onChangeRepAlg:
     type: int
-    enum: [0, 1, 2]
+    enum: [0, 1, 2, 3]
   detached:
     type: bool
   fromVersion:

@@ -41,7 +41,7 @@ def mock_is_external_repo(mocker, is_external_repo_return):
 
 
 class TestFindDependencies:  # Use classes to speed up test - multi threaded py pytest
-    def test_integration_find_dependencies_sanity(self, mocker, repo):
+    def test_integration_find_dependencies_sanity(self, mocker, repo, monkeypatch):
         """
         Given
         - Valid pack folder
@@ -54,6 +54,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         - Ensure no error occurs.
         - Ensure debug file is created.
         """
+        monkeypatch.setenv("COLUMNS", "1000")
         mock_is_external_repo(mocker, False)
         # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
         mocker.patch.dict(os.environ, {"DEMISTO_SDK_ID_SET_REFRESH_INTERVAL": "-1"})
@@ -63,8 +64,6 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         mocker.patch(
             "demisto_sdk.commands.find_dependencies.find_dependencies.update_pack_metadata_with_dependencies",
         )
-        mocker.patch("click.secho")
-        from click import secho
 
         # Change working dir to repo
         with ChangeCWD(integration.repo_path):
@@ -85,27 +84,25 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 ],
                 catch_exceptions=False,
             )
+        assert "# Pack ID: FindDependencyPack" in result.output
+        assert "### Scripts" in result.output
+        assert "### Playbooks" in result.output
+        assert "### Layouts" in result.output
+        assert "### Incident Fields" in result.output
+        assert "### Indicator Types" in result.output
+        assert "### Integrations" in result.output
+        assert "### Incident Types" in result.output
+        assert "### Classifiers" in result.output
+        assert "### Mappers" in result.output
+        assert "### Widgets" in result.output
+        assert "### Dashboards" in result.output
+        assert "### Reports" in result.output
+        assert "### Generic Types" in result.output
+        assert "### Generic Fields" in result.output
+        assert "### Generic Modules" in result.output
+        assert "### Jobs" in result.output
         assert (
-            secho.call_args_list[0][0][0] == "\n# Pack ID: FindDependencyPack"
-        )  # first log line is the pack name
-        assert secho.call_args_list[1][0][0] == "### Scripts"
-        assert secho.call_args_list[2][0][0] == "### Playbooks"
-        assert secho.call_args_list[3][0][0] == "### Layouts"
-        assert secho.call_args_list[4][0][0] == "### Incident Fields"
-        assert secho.call_args_list[5][0][0] == "### Indicator Types"
-        assert secho.call_args_list[6][0][0] == "### Integrations"
-        assert secho.call_args_list[7][0][0] == "### Incident Types"
-        assert secho.call_args_list[8][0][0] == "### Classifiers"
-        assert secho.call_args_list[9][0][0] == "### Mappers"
-        assert secho.call_args_list[10][0][0] == "### Widgets"
-        assert secho.call_args_list[11][0][0] == "### Dashboards"
-        assert secho.call_args_list[12][0][0] == "### Reports"
-        assert secho.call_args_list[13][0][0] == "### Generic Types"
-        assert secho.call_args_list[14][0][0] == "### Generic Fields"
-        assert secho.call_args_list[15][0][0] == "### Generic Modules"
-        assert secho.call_args_list[16][0][0] == "### Jobs"
-        assert (
-            secho.call_args_list[17][0][0] == "All level dependencies are: []"
+            "All level dependencies are: []" in result.output
         )  # last log is regarding all the deps
         assert result.exit_code == 0
         assert result.stderr == ""

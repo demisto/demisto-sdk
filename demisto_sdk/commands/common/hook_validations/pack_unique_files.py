@@ -51,6 +51,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     error_codes,
 )
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
+from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import (
     get_core_pack_list,
     get_json,
@@ -1057,12 +1058,10 @@ class PackUniqueFilesValidator(BaseValidator):
                 return True
 
             dependency_result = json.dumps(first_level_dependencies, indent=4)
-            click.echo(
-                click.style(
-                    f"Found dependencies result for {self.pack} pack:", bold=True
-                )
+            secho_and_info(
+                f"[bold]Found dependencies result for {self.pack} pack:[/bold]"
             )
-            click.echo(click.style(dependency_result, bold=True))
+            secho_and_info("[bold]" + dependency_result + "[/bold]")
 
             if self.pack in core_pack_list:
                 if not self.validate_core_pack_dependencies(first_level_dependencies):

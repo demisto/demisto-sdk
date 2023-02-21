@@ -8,7 +8,6 @@ import re
 import string
 from typing import List, Optional, Tuple
 
-import click
 from pykwalify.core import Core
 
 from demisto_sdk.commands.common.configuration import Configuration
@@ -27,6 +26,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     error_codes,
 )
 from demisto_sdk.commands.common.tools import get_remote_file, is_file_path_in_pack
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -167,7 +168,7 @@ class StructureValidator(BaseValidator):
         ):
             return True
 
-        click.secho(f"Validating scheme for {self.file_path}")
+        logger.info(f"Validating scheme for {self.file_path}")
 
         try:
             # disabling massages of level ERROR and beneath of pykwalify such as: INFO:pykwalify.core:validation.valid

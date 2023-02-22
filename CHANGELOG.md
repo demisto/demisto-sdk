@@ -2,6 +2,11 @@
 
 ## Unreleased
 * Fixed an issue where running **run-test-playbook** would not use the `verify` parameter correctly. @ajoga
+* Added a newline at the end of README files generated in **generate-docs**.
+* Added the value `3` (out of bounds) to the `onChangeRepAlg` and `reputationCalc` fields under the `IncidentType` and `GenericType` schemas. **validate** will allow using it now.
+
+## 1.10.4
+* Added support for running **lint** in multiple native-docker images.
 
 ## 1.10.3
 * Fixed an issue where running **format** would fail after running npm install.

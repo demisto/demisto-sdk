@@ -119,6 +119,7 @@ class ContentItem(BaseContent):
         self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
     ) -> dict:
         data = self.data
+        logger.debug(f"preparing {self.path}")
         return MarketplaceSuffixPreparer.prepare(data, marketplace)
 
     def summary(self, marketplace: Optional[MarketplaceVersions] = None) -> dict:

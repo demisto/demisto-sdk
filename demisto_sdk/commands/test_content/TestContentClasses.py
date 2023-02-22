@@ -716,9 +716,7 @@ class BuildContext:
         Returns:
             A dict containing the configuration for the integration if found else empty list
         """
-        if IS_XSIAM:
-            # in xsiam we dont use demisto username
-            os.environ.pop("DEMISTO_USERNAME", None)
+        os.environ.pop("DEMISTO_USERNAME", None)
         tmp_client = demisto_client.configure(
             base_url=server_url,
             auth_id=self.auth_id,
@@ -2578,10 +2576,10 @@ class ServerContext:
         self.build_context = build_context
         self.server_ip = server_private_ip
         self.tunnel_port = tunnel_port
+        # we use client without demisto username
+        os.environ.pop("DEMISTO_USERNAME", None)
         if IS_XSIAM:
             self.server_url = server_private_ip
-            # we use client without demisto username
-            os.environ.pop("DEMISTO_USERNAME", None)
         else:
             self.server_url = (
                 f"https://localhost:{tunnel_port}"

@@ -23,6 +23,7 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR,
     JOBS_DIR,
+    LAYOUT_RULES_DIR,
     LAYOUTS_DIR,
     LISTS_DIR,
     MODELING_RULES_DIR,
@@ -297,6 +298,7 @@ class Environment:
             XSIAM_DASHBOARDS_DIR: [],
             XSIAM_REPORTS_DIR: [],
             TRIGGER_DIR: [],
+            LAYOUT_RULES_DIR: [],
         }
 
         self.INTEGRATION_CUSTOM_CONTENT_OBJECT = {
@@ -776,7 +778,6 @@ class TestMergeExistingFile:
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
             downloader.log_verbose = False
-            downloader.no_code_formatting = False
             downloader.merge_and_extract_existing_file(
                 env.INTEGRATION_CUSTOM_CONTENT_OBJECT
             )
@@ -818,7 +819,6 @@ class TestMergeExistingFile:
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
             downloader.log_verbose = False
-            downloader.no_code_formatting = False
             downloader.merge_and_extract_existing_file(
                 env.INTEGRATION_CUSTOM_CONTENT_OBJECT
             )

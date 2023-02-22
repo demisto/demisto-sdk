@@ -86,11 +86,23 @@ class TestPythonPack:
         self, demisto_content: Callable, create_integration: Callable, mocker
     ):
         integration_path: Path = create_integration(
-            content_path=demisto_content, js_type=False
+            content_path=demisto_content, js_type=False, api_module=True
         )
         mocker.patch.object(linter.Linter, "_update_support_level")
         runner = initiate_linter(demisto_content, integration_path)
         assert not runner._gather_facts(modules={})
+        assert len(runner._facts["lint_files"]) == 1
+        assert "Sample_integration.py" == runner._facts["lint_files"][0].name
+
+    def test_package_is_python_pack_api_module_script(
+        self, demisto_content, pack, mocker
+    ):
+        script = pack.create_script(name="TestApiModule")
+        mocker.patch.object(linter.Linter, "_update_support_level")
+        runner = initiate_linter(demisto_content, script.path)
+        assert not runner._gather_facts(modules={})
+        assert len(runner._facts["lint_files"]) == 1
+        assert "TestApiModule.py" == runner._facts["lint_files"][0].name
 
     def test_package_is_not_python_pack(
         self, demisto_content: Callable, create_integration: Callable
@@ -238,10 +250,8 @@ class TestDockerImagesCollection:
         if len(actual_image) == 1:
             assert actual_image[0][0] == exp_images
         else:  # more than one image ('all' flag)
-            images = []
             for img in actual_image:
-                images.append(img[0])
-            assert images == exp_images
+                assert img[0] in exp_images
 
     @pytest.mark.parametrize(
         argnames="docker_image_flag, exp_versioned_native_image_name",

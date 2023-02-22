@@ -95,6 +95,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
     "trigger": BaseUpdateJSON,
     "xdrctemplate": BaseUpdateJSON,
     "xdrctemplateyml": BaseUpdateYML,
+    "layoutrule": BaseUpdateJSON,
 }
 
 UNFORMATTED_FILES = [

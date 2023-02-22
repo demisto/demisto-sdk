@@ -4,6 +4,7 @@ from typing import Dict, List, Optional
 from demisto_sdk.commands.common.constants import (
     CORRELATION_RULES_DIR,
     DEFAULT_IMAGE_BASE64,
+    LAYOUT_RULES_DIR,
     MODELING_RULES_DIR,
     PARSING_RULES_DIR,
     TRIGGER_DIR,
@@ -16,6 +17,7 @@ from TestSuite.file import File
 from TestSuite.integration import Integration
 from TestSuite.job import Job
 from TestSuite.json_based import JSONBased
+from TestSuite.layout_rule import LayoutRule
 from TestSuite.playbook import Playbook
 from TestSuite.rule import Rule
 from TestSuite.script import Script
@@ -84,6 +86,7 @@ class Pack:
         self.triggers: List[JSONBased] = list()
         self.wizards: List[Wizard] = list()
         self.xdrc_templates: List[XDRCTemplate] = list()
+        self.layout_rules: List[LayoutRule] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
@@ -189,6 +192,9 @@ class Pack:
 
         self._jobs_path = self._pack_path / "Jobs"
         self._jobs_path.mkdir()
+
+        self._xsiam_layout_rules_path = self._pack_path / LAYOUT_RULES_DIR
+        self._xsiam_layout_rules_path.mkdir()
 
         self.contributors: Optional[TextBased] = None
 
@@ -659,3 +665,8 @@ class Pack:
         )
         self.xdrc_templates.append(xdrc_template)
         return xdrc_template
+
+    def create_layout_rule(self, name, content: dict = None) -> LayoutRule:
+        layout_rule = LayoutRule(name, self._xsiam_layout_rules_path, content)
+        self.layout_rules.append(layout_rule)
+        return layout_rule

@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     LAYOUT_AND_MAPPER_BUILT_IN_FIELDS,
     LAYOUTS_CONTAINERS_OLDEST_SUPPORTED_VERSION,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
@@ -20,6 +21,7 @@ from demisto_sdk.commands.common.tools import (
     LAYOUT_CONTAINER_FIELDS,
     get_all_incident_and_indicator_fields_from_id_set,
     get_invalid_incident_fields_from_layout,
+    get_item_marketplaces,
 )
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 
@@ -168,6 +170,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
             [
                 super().is_valid_layout(),
                 self.is_id_equals_name(),
+                self.is_valid_mpv2_layout(),
             ]
         )
 
@@ -274,6 +277,53 @@ class LayoutsContainerValidator(LayoutBaseValidator):
             bool. Whether the file id equals to its name
         """
         return super()._is_id_equals_name("layoutscontainer")
+
+    @error_codes("LO107")
+    def is_valid_mpv2_layout(self):
+        invalid_sections = [
+            "evidence",
+            "childInv",
+            "linkedIncidents",
+            "team",
+            "droppedIncidents",
+            "todoTasks",
+            "invTimeline",
+        ]
+        invalid_tabs = ["canvas", "evidenceBoard", "relatedIncidents"]
+        invalid_types_contained = []
+
+        marketplace_versions = get_item_marketplaces(
+            self.file_path, item_data=self.current_file
+        )
+        if MarketplaceVersions.MarketplaceV2.value not in marketplace_versions:
+            return True
+
+        for key, val in self.current_file.items():
+            if isinstance(val, dict):
+                for tab in val.get("tabs", []):
+                    if "type" in tab.keys() and tab.get("type") in invalid_tabs:
+                        invalid_types_contained.append(tab.get("type"))
+                    sections = tab.get("sections", [])
+                    for section in sections:
+                        if "queryType" in section.keys() and "type" in section.keys():
+                            if (
+                                section.get("queryType") == "script"
+                                and section.get("type") == "dynamic"
+                            ):
+                                invalid_types_contained.append(section.get("type"))
+                        if (
+                            "type" in section.keys()
+                            and section.get("type") in invalid_sections
+                        ):
+                            invalid_types_contained.append(section.get("type"))
+
+        if invalid_types_contained:
+            error_message, error_code = Errors.layout_container_contains_invalid_types(
+                invalid_types_contained
+            )
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True
 
 
 class LayoutValidator(LayoutBaseValidator):

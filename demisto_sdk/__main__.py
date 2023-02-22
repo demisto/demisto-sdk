@@ -22,6 +22,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_last_remote_release_version,
@@ -206,12 +207,6 @@ def main(config, version, release_notes):
     show_default=True,
 )
 @click.option(
-    "--no-pipenv",
-    help="Don't auto create pipenv for requirements installation. (only for yml files)",
-    is_flag=True,
-    show_default=True,
-)
-@click.option(
     "--new-module-file",
     help="Create a new module file instead of editing the existing file. (only for json files)",
     is_flag=True,
@@ -307,6 +302,19 @@ def extract_code(config, **kwargs):
     type=click.Path(dir_okay=True),
 )
 @click.option(
+    "-g",
+    "--graph",
+    help="Whether use the content graph",
+    is_flag=True,
+    default=False,
+)
+@click.option(
+    "--skip-update",
+    help="Whether to skip updating the content graph (used only when graph is true)",
+    is_flag=True,
+    default=False,
+)
+@click.option(
     "-o", "--output", help="The output dir to write the unified yml to", required=False
 )
 @click.option(
@@ -338,12 +346,22 @@ def extract_code(config, **kwargs):
     default="xsoar",
     type=click.Choice(["xsoar", "marketplacev2", "v2"]),
 )
+@click.option(
+    "-v",
+    "--verbose",
+    help="Verbose output - mainly for debugging purposes",
+    is_flag=True,
+)
 def prepare_content(**kwargs):
     """
     This command is used to prepare the content to be used in the platform.
 
 
     """
+    from demisto_sdk.commands.common.logger import logging_setup
+
+    if kwargs.get("verbose"):
+        logging_setup(3)
     if click.get_current_context().info_name == "unify":
         kwargs["unify_only"] = True
 
@@ -457,6 +475,14 @@ def zip_packs(**kwargs) -> int:
     "--id-set-path",
     help="The path of the id-set.json used for validations.",
     type=click.Path(resolve_path=True),
+)
+@click.option(
+    "-gr",
+    "--graph",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Perform validations on content graph.",
 )
 @click.option(
     "--prev-ver", help="Previous branch or SHA1 commit to run checks against."
@@ -612,6 +638,7 @@ def validate(config, file_paths: str, **kwargs):
             file_path=file_path,
             validate_all=kwargs.get("validate_all"),
             validate_id_set=kwargs["id_set"],
+            validate_graph=kwargs.get("graph"),
             skip_pack_rn_validation=kwargs["skip_pack_release_notes"],
             print_ignored_errors=kwargs["print_ignored_errors"],
             is_external_repo=is_external_repo,
@@ -899,7 +926,7 @@ def secrets(config, **kwargs):
     "-di",
     "--docker-image",
     default="from-yml",
-    help="The docker image to check package on. Possible values: 'native:maintenance', 'native:ga', 'native:dev',"
+    help="The docker image to check package on. Can be a comma separated list of Possible values: 'native:maintenance', 'native:ga', 'native:dev',"
     " 'all', a specific docker image from Docker Hub (e.g devdemisto/python3:3.10.9.12345) or the default"
     " 'from-yml'.",
 )
@@ -1140,24 +1167,25 @@ def format(
     genericmodule/genericdefinition.
     """
     from demisto_sdk.commands.format.format_module import format_manager
-
     if file_paths:
         input = ",".join(file_paths)
-    return format_manager(
-        str(input) if input else None,
-        str(output) if output else None,
-        from_version=from_version,
-        no_validate=no_validate,
-        update_docker=update_docker,
-        assume_yes=assume_yes,
-        verbose=verbose,
-        deprecate=deprecate,
-        use_git=use_git,
-        prev_ver=prev_ver,
-        include_untracked=include_untracked,
-        add_tests=add_tests,
-        id_set_path=id_set_path,
-    )
+        
+    with ReadMeValidator.start_mdx_server():
+        return format_manager(
+            str(input) if input else None,
+            str(output) if output else None,
+            from_version=from_version,
+            no_validate=no_validate,
+            update_docker=update_docker,
+            assume_yes=assume_yes,
+            verbose=verbose,
+            deprecate=deprecate,
+            use_git=use_git,
+            prev_ver=prev_ver,
+            include_untracked=include_untracked,
+            add_tests=add_tests,
+            id_set_path=id_set_path,
+        )
 
 
 # ====================== upload ====================== #
@@ -1298,12 +1326,6 @@ def upload(**kwargs):
         ],
         case_sensitive=False,
     ),
-)
-@click.option(
-    "--no-code-formatting",
-    help="Use this flag to avoid running Autopep8 and isort on Python files.",
-    is_flag=True,
-    default=False,
 )
 def download(**kwargs):
     """Download custom content from Demisto instance.

@@ -24,6 +24,7 @@ from .indicator_type.indicator_type import IndicatorType, OldIndicatorType
 from .integration.integration import Integration
 from .job.job import Job
 from .layout.layout import Layout, LayoutObject, LayoutsContainer
+from .layout_rule.layout_rule import LayoutRule
 from .lists.lists import Lists
 from .modeling_rule.modeling_rule import ModelingRule
 from .pack_ignore.pack_ignore import PackIgnore

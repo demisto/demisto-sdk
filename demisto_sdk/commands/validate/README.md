@@ -74,6 +74,8 @@ Set backwards compatibility validation's errors as warnings.
 Don't fail on skipped integrations or when all test playbooks are skipped.
 * **-sv, --run-specific-validations**
 Validate only specific validations by error codes.
+* **--graph**
+Whether use the content graph
 
 **Examples**:
 `demisto-sdk validate -g --no-backwards-comp`

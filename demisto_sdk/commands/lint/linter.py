@@ -18,6 +18,7 @@ from packaging.version import parse
 from wcmatch.pathlib import NEGATE, Path
 
 from demisto_sdk.commands.common.constants import (
+    API_MODULE_FILE_SUFFIX,
     INTEGRATIONS_DIR,
     NATIVE_IMAGE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
@@ -306,18 +307,22 @@ class Linter:
             return True
 
         # Docker images
+        yml_obj_id = (
+            yml_obj.get("commonfields", {}).get("id", "")
+            if isinstance(yml_obj, dict)
+            else ""
+        )
         if self._facts["docker_engine"]:
             logger.info(f"{log_prompt} - Collecting all docker images to pull")
-            yml_obj_id = (
-                yml_obj.get("commonfields", {}).get("id", "")
-                if isinstance(yml_obj, dict)
-                else ""
-            )
-            images = self._get_docker_images_for_lint(
-                script_obj=script_obj,
-                script_id=yml_obj_id,
-                docker_image_flag=self.docker_image_flag,
-            )
+            images = []
+            for docker_image in self.docker_image_flag.split(","):
+                temp_images = self._get_docker_images_for_lint(
+                    script_obj=script_obj,
+                    script_id=yml_obj_id,
+                    docker_image_flag=docker_image,
+                )
+                images.extend(temp_images)
+                images = list(set(images))
             if not images:
                 # If no docker images to run on - skip checks in both docker and host
                 logger.info(
@@ -432,13 +437,20 @@ class Linter:
             self._facts["lint_files"] = list(lint_files)
 
         if self._facts["lint_files"]:
+            # Remove files that are in gitignore.
             self._remove_gitignore_files(log_prompt)
             for lint_file in self._facts["lint_files"]:
                 logger.info(f"{log_prompt} - Lint file {lint_file}")
         else:
             logger.info(f"{log_prompt} - Lint files not found")
 
-        # Remove files that are in gitignore
+        if not yml_obj_id.endswith(API_MODULE_FILE_SUFFIX):
+            # remove api module from lint files if the integration/script that we use is not an api module.
+            self._facts["lint_files"] = [
+                file
+                for file in self._facts["lint_files"]
+                if API_MODULE_FILE_SUFFIX not in file.name
+            ]
 
         self._split_lint_files()
 

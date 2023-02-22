@@ -17,7 +17,7 @@ from functools import lru_cache
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
-from typing import Callable, Dict, List, Match, Optional, Set, Tuple, Union
+from typing import Callable, Dict, Iterable, List, Match, Optional, Set, Tuple, Union
 
 import click
 import colorama
@@ -53,9 +53,11 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR,
     JOBS_DIR,
+    LAYOUT_RULES_DIR,
     LAYOUTS_DIR,
     LISTS_DIR,
     MARKETPLACE_KEY_PACK_METADATA,
+    MARKETPLACE_TO_CORE_PACKS_FILE,
     METADATA_FILE_NAME,
     MODELING_RULES_DIR,
     NON_LETTERS_OR_NUMBERS_PATTERN,
@@ -108,6 +110,9 @@ yaml = YAML_Handler()
 urllib3.disable_warnings()
 
 colorama.init()  # initialize color palette
+
+
+GRAPH_SUPPORTED_FILE_TYPES = ["yml", "json"]
 
 
 class LOG_COLORS:
@@ -309,6 +314,29 @@ def get_files_in_dir(
     return list(set(files) - set(excludes))
 
 
+def get_all_content_objects_paths_in_dir(project_dir_list: Optional[Iterable]):
+    """
+    Gets the project directory and returns the path of all yml, json and py files in it
+    Args:
+        project_dir_list: List or set with str paths
+    :return: list of content files in the current dir with str relative paths
+    """
+    files: list = []
+    if not project_dir_list:
+        return files
+
+    for file_path in project_dir_list:
+        files.extend(
+            get_files_in_dir(
+                file_path, GRAPH_SUPPORTED_FILE_TYPES, ignore_test_files=True
+            )
+        )
+
+    output = [get_relative_path_from_packs_dir(file) for file in files]
+
+    return output
+
+
 def src_root() -> Path:
     """Demisto-sdk absolute path from src root.
 
@@ -364,47 +392,52 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
-core_pack_list: Optional[
-    list
-] = None  # Initiated in get_core_pack_list function. Here to create a "cached" core_pack_list
-
-
-@lru_cache(maxsize=128)
-def get_core_pack_list() -> list:
-    """Getting the core pack list from Github content
+def get_marketplace_to_core_packs() -> Dict[MarketplaceVersions, Set[str]]:
+    """Getting the core pack from Github content
 
     Returns:
-        Core pack list
+        A mapping from marketplace versions to their core packs.
     """
-    global core_pack_list
-    if isinstance(core_pack_list, list):
-        return core_pack_list
-    if not is_external_repository():
-        core_pack_list = (
-            get_remote_file(
-                "Tests/Marketplace/core_packs_list.json",
-                git_content_config=GitContentConfig(
-                    repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
-                    git_provider=GitProvider.GitHub,
-                ),
-            )
-            or []
+    if is_external_repository():
+        return {}  # no core packs in external repos.
+
+    mp_to_core_packs: Dict[MarketplaceVersions, Set[str]] = {}
+    for mp in MarketplaceVersions:
+        # for backwards compatibility mp_core_packs can be a list, but we expect a dict.
+        mp_core_packs: Union[list, dict] = get_remote_file(
+            MARKETPLACE_TO_CORE_PACKS_FILE[mp],
+            git_content_config=GitContentConfig(
+                repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
+                git_provider=GitProvider.GitHub,
+            ),
         )
-        core_pack_list.extend(
-            get_remote_file(
-                "Tests/Marketplace/core_packs_mpv2_list.json",
-                git_content_config=GitContentConfig(
-                    repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
-                    git_provider=GitProvider.GitHub,
-                ),
-            )
-            or []
-        )
-        core_pack_list = list(set(core_pack_list))
-    else:
-        # no core packs in external repos.
-        core_pack_list = []
-    return core_pack_list
+        if isinstance(mp_core_packs, list):
+            mp_to_core_packs[mp] = set(mp_core_packs)
+        else:
+            mp_to_core_packs[mp] = set(mp_core_packs.get("core_packs_list", []))
+    return mp_to_core_packs
+
+
+def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
+    """Getting the core pack list from Github content
+
+    Arguments:
+        marketplaces: A list of the marketplaces to return core packs for.
+
+    Returns:
+        The core packs list.
+    """
+    result: Set[str] = set()
+    if is_external_repository():
+        return []  # no core packs in external repos.
+
+    if marketplaces is None:
+        marketplaces = list(MarketplaceVersions)
+
+    for mp, core_packs in get_marketplace_to_core_packs().items():
+        if mp in marketplaces:
+            result.update(core_packs)
+    return list(result)
 
 
 def get_local_remote_file(
@@ -1544,6 +1577,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             "_schema"
         ):
             return FileType.MODELING_RULE_SCHEMA
+        elif LAYOUT_RULES_DIR in path.parts:
+            return FileType.LAYOUT_RULE
 
     elif path.name.endswith("_image.png"):
         if path.name.endswith("Author_image.png"):
@@ -1803,6 +1838,9 @@ def find_type(
 
         if "profile_type" in _dict and "yaml_template" in _dict:
             return FileType.XDRC_TEMPLATE
+
+        if "rule_id" in _dict:
+            return FileType.LAYOUT_RULE
 
         # When using it for all files validation- sometimes 'id' can be integer
         if "id" in _dict:
@@ -2155,6 +2193,8 @@ def _get_file_id(file_type: str, file_content: Dict):
         return file_content.get("id", "")
     elif file_type in ID_IN_COMMONFIELDS:
         return file_content.get("commonfields", {}).get("id")
+    elif file_type == FileType.LAYOUT_RULE:
+        return file_content.get("rule_id", "")
     return file_content.get("trigger_id", "")
 
 
@@ -2378,6 +2418,7 @@ def item_type_to_content_items_header(item_type):
         "modelingrule": "modelingRule",
         "parsingrule": "parsingRule",
         "xdrctemplate": "XDRCTemplate",
+        "layoutrule": "layoutRule",
     }
 
     return f"{converter.get(item_type, item_type)}s"
@@ -3242,6 +3283,8 @@ def get_display_name(file_path, file_data={}) -> str:
         name = file_data.get("id", None)
     elif "trigger_name" in file_data:
         name = file_data.get("trigger_name")
+    elif "rule_name" in file_data:
+        name = file_data.get("rule_name")
 
     elif (
         "dashboards_data" in file_data
@@ -3421,3 +3464,9 @@ def field_to_cli_name(field_name: str) -> str:
         field_name (str): the incident/indicator field name.
     """
     return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, "", field_name).lower()
+
+
+def get_pack_paths_from_files(file_paths: Iterable[str]) -> list:
+    """Returns the pack paths from a list/set of files"""
+    pack_paths = {f"Packs/{get_pack_name(file_path)}" for file_path in file_paths}
+    return list(pack_paths)

@@ -1,6 +1,8 @@
+import logging
 import os
 import re
-import tempfile
+import socket
+from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -32,6 +34,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
+from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.MDXServer import (
     start_docker_MDX_server,
     start_local_MDX_server,
@@ -42,7 +45,6 @@ from demisto_sdk.commands.common.tools import (
     get_url_with_retries,
     get_yaml,
     get_yml_paths_in_dir,
-    print_warning,
     run_command_os,
 )
 
@@ -60,7 +62,13 @@ SECTIONS = [
 
 USER_FILL_SECTIONS = ["FILL IN REQUIRED PERMISSIONS HERE", "version xx"]
 
-REQUIRED_MDX_PACKS = ["@mdx-js/mdx", "fs-extra", "commander"]
+REQUIRED_MDX_PACKS = [
+    "@mdx-js/mdx",
+    "fs-extra",
+    "commander",
+    "markdownlint",
+    "markdownlint-rule-helpers",
+]
 
 PACKS_TO_IGNORE = ["HelloWorld", "HelloWorldPremium"]
 
@@ -122,6 +130,21 @@ def get_relative_urls(content: str) -> Set[ReadmeUrl]:
     )
 
 
+def mdx_server_is_up() -> bool:
+    """
+    Will ping the node server to check if it is already up
+
+    Returns: a boolean value indicating if the server is up
+
+    """
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
+        return sock.connect_ex(("localhost", 6161)) == 0
+    except Exception:
+        return False
+
+
 class ReadMeValidator(BaseValidator):
     """ReadMeValidator is a validator for readme.md files
     In order to run the validator correctly please make sure:
@@ -155,6 +178,7 @@ class ReadMeValidator(BaseValidator):
             specific_validations=specific_validations,
         )
         self.content_path = get_content_path()
+        self.file_path_str = file_path
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
         self.node_modules_path = self.content_path / Path("node_modules")  # type: ignore
@@ -180,29 +204,12 @@ class ReadMeValidator(BaseValidator):
                 self.verify_demisto_in_readme_content(),
                 self.verify_template_not_in_readme(),
                 self.verify_copyright_section_in_readme_content(),
+                # self.has_no_markdown_lint_errors(),
             ]
         )
 
-    def mdx_verify(self) -> bool:
-        mdx_parse = Path(__file__).parent.parent / "mdx-parse.js"
-        readme_content = self.fix_mdx()
-        with tempfile.NamedTemporaryFile("w+t") as fp:
-            fp.write(readme_content)
-            fp.flush()
-            # run the javascript mdx parse validator
-            _, stderr, is_not_valid = run_command_os(
-                f"node {mdx_parse} -f {fp.name}", cwd=self.content_path, env=os.environ  # type: ignore
-            )
-        if is_not_valid:
-            error_message, error_code = Errors.readme_error(stderr)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                return False
-        return True
-
     def mdx_verify_server(self) -> bool:
-        server_started = ReadMeValidator.start_mdx_server(
-            handle_error=self.handle_error, file_path=str(self.file_path)
-        )
+        server_started = mdx_server_is_up()
         if not server_started:
             return False
         readme_content = self.fix_mdx()
@@ -225,15 +232,14 @@ class ReadMeValidator(BaseValidator):
     def is_mdx_file(self) -> bool:
         html = self.is_html_doc()
         valid = self.should_run_mdx_validation()
+
         if valid and not html:
             # add to env var the directory of node modules
+
             os.environ["NODE_PATH"] = (
                 str(self.node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
             )
-            if os.getenv("DEMISTO_MDX_CMD_VERIFY"):
-                return self.mdx_verify()
-            else:
-                return self.mdx_verify_server()
+            return self.mdx_verify_server()
         return True
 
     def should_run_mdx_validation(self):
@@ -387,7 +393,7 @@ class ReadMeValidator(BaseValidator):
         # Check node exist
         stdout, stderr, exit_code = run_command_os("node -v", cwd=content_path)
         if exit_code:
-            print_warning(
+            click.secho(
                 f"There is no node installed on the machine, error - {stderr}, {stdout}"
             )
             valid = False
@@ -405,9 +411,10 @@ class ReadMeValidator(BaseValidator):
                         missing_module.append(pack)
         if missing_module:
             valid = False
-            print_warning(
-                f"The npm modules: {missing_module} are not installed. Use "
-                f"'npm install' to install all required node dependencies"
+            click.secho(
+                f"The npm modules: {missing_module} are not installed. To run the mdx server locally, use "
+                f"'npm install' to install all required node dependencies. Otherwise, if docker is installed, the server"
+                f"will run in a docker container"
             )
         return valid
 
@@ -786,6 +793,27 @@ class ReadMeValidator(BaseValidator):
 
         return is_valid
 
+    # @error_codes("RM114")
+    def has_no_markdown_lint_errors(self):
+        """
+        Will check if the readme has markdownlint.
+        Returns: a boolean to fail the validations according to markdownlint
+
+        """
+        if mdx_server_is_up():
+            markdown_response = run_markdownlint(self.readme_content)
+            if markdown_response.has_errors:
+                error_message, error_code = Errors.readme_lint_errors(
+                    self.file_path_str
+                )
+                if self.handle_error(
+                    error_message, error_code, file_path=self.file_path
+                ):
+                    return False
+        else:
+            return self.should_run_mdx_validation()
+        return True
+
     @error_codes("RM107")
     def verify_template_not_in_readme(self):
         """
@@ -836,6 +864,7 @@ class ReadMeValidator(BaseValidator):
     ):
         """
         This function will either start a local server or a server in docker depending on the dependencies installed
+        If the server is already up a contextmanager yieling true will be returned without restarting the server
         Args:
             handle_error:
             file_path:
@@ -844,12 +873,21 @@ class ReadMeValidator(BaseValidator):
             A ContextManager
 
         """
+
+        @contextmanager
+        def empty_context_mgr(bool):
+            yield bool
+
         with ReadMeValidator._MDX_SERVER_LOCK:
+            if mdx_server_is_up():  # this allows for this context to be reentrant
+                logging.debug("server is already up. Not restarting")
+                return empty_context_mgr(True)
             if ReadMeValidator.are_modules_installed_for_verify(get_content_path()):  # type: ignore
+                ReadMeValidator.add_node_env_vars()
                 return start_local_MDX_server(handle_error, file_path)
             elif ReadMeValidator.is_docker_available():
                 return start_docker_MDX_server(handle_error, file_path)
-        return False
+        return empty_context_mgr(False)
 
     @staticmethod
     def add_node_env_vars():

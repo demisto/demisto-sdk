@@ -44,6 +44,13 @@ def generate_modeling_rules(
         show_default=False,
         help=("The path to a raw event from the api call in a json format."),
     ),
+    one_data_model_path: Path = typer.Argument(
+        ...,
+        exists=True,
+        resolve_path=True,
+        show_default=False,
+        help=("The path to The one data model schema."),
+    ),
     output_path: Path = typer.Argument(
         ...,
         exists=True,
@@ -113,9 +120,8 @@ def generate_modeling_rules(
         with open(raw_event_path) as f:
             raw_event = json.load(f)
 
-        schema_path = "/Users/okarkkatz/dev/demisto/test_folder/Schema.csv"  # @TODO: handle taking this from the Yaron noiman
         xdm_rule_to_dtype, xdm_rule_to_dclass = extract_data_from_all_xdm_schema(
-            schema_path
+            one_data_model_path
         )
 
         mapping_list = init_mapping_field_list(
@@ -281,7 +287,7 @@ def create_xif_file(
     """
     Created the xif file for the modeling rules
     """
-    logger.info("Generating xif file\n")
+    logger.info("Generating xif file")
     xif_rule = create_xif_header(dataset_name)
     for mapping_rule in mapping_list:
         logger.info(
@@ -317,6 +323,8 @@ def create_xif_file(
     with open(outputfile_xif, "w") as f:
         f.write(xif_rule)
 
+    logger.info("Finished generating xif file\n")
+
 
 def replace_last_char(s: str) -> str:
     """
@@ -331,7 +339,7 @@ def create_scheme_file(
     """
     Creates the .json schema file
     """
-    logger.info("creating modeling rules schema\n")
+    logger.info("creating modeling rules schema")
     name_type_dict = {}
     for mapping_rule in mapping_list:
         keys_list = mapping_rule.field_path_raw.split(".")
@@ -342,6 +350,7 @@ def create_scheme_file(
 
     with open(outputfile_schema, "w") as f:
         json.dump(modeling_rules_json, f, indent=4)
+    logger.info("Finished creating modeling rules schema\n")
 
 
 def process_yml_name(product: str, vendor: str) -> str:
@@ -359,24 +368,26 @@ def create_yml_file(outputfile_yml: Path, vendor: str, product: str) -> None:
     """
     Creates the yml file of the modeling rules
     """
-    logger.info("creating modeing rules yml file\n")
+    logger.info("creating modeing rules yml file")
     max_version = get_max_version(
         [
             GENERAL_DEFAULT_FROMVERSION,
             FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.MODELING_RULE, "6.10.0"),
         ]
     )
-    yml_file = (
-        f"fromversion: {max_version}\n"
-        f"id: {product}_{vendor}_modeling_rule\n"
-        f"name: {process_yml_name(product, vendor)}\n"
-        "rules: ''\n"
-        "schema: ''\n"
-        f"tags: {product}\n"
-    )
+    yml_file = {
+        "fromversion": f"{max_version}",
+        "id": f"{product}_{vendor}_modeling_rule",
+        "name": f"{process_yml_name(product, vendor)}",
+        "rules": "",
+        "schema": "",
+        "tags": f"{product}",
+    }
 
     with open(outputfile_yml, "w") as f:
         yaml.dump(yml_file, f)
+
+    logger.info("Finished creating modeing rules yml file\n")
 
 
 def discover_type(value) -> str:
@@ -408,7 +419,7 @@ def extract_raw_type_data(event: dict, path_to_dict_field: str) -> tuple:
 
     keys_split = path_to_dict_field.split(".")
     temp: dict = event
-    for key in keys_split:
+    for key in keys_split[:-1]:
         if isinstance(temp, dict):
             temp = temp.get(key)  # type: ignore[assignment]
         else:
@@ -430,7 +441,7 @@ def extract_raw_type_data(event: dict, path_to_dict_field: str) -> tuple:
     # return discovered, False
 
 
-def extract_data_from_all_xdm_schema(path: str) -> Tuple[dict, dict]:
+def extract_data_from_all_xdm_schema(path: Path) -> Tuple[dict, dict]:
     """
     Extracts from the XDM full schema the columns of the xdm rule, datatype, and data class
     Args:

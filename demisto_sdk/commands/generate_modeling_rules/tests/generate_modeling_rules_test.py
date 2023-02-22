@@ -1,12 +1,15 @@
+import tempfile
 from pathlib import Path
 
 import pytest
 
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.generate_modeling_rules.generate_modeling_rules import (
     array_create_wrap,
     convert_raw_type_to_xdm_type,
     convert_to_xdm_type,
     create_xif_header,
+    create_yml_file,
     extract_data_from_all_xdm_schema,
     extract_raw_type_data,
     json_extract_array_wrap,
@@ -16,6 +19,8 @@ from demisto_sdk.commands.generate_modeling_rules.generate_modeling_rules import
     to_number_wrap,
     to_string_wrap,
 )
+
+yaml = YAML_Handler()
 
 
 @pytest.mark.parametrize("s, res", (["hello,\n", "hello;\n"], ["", ""]))
@@ -220,3 +225,18 @@ def test_read_mapping_file():
         "xdm.target.host.ipv4_addresses",
     ]
     assert read_mapping_file(mapping_file_path) == (name_columen, xdm_one_data_model)
+
+
+def test_create_yml_file():
+    result_yml_path = Path(__file__).parent / "test_data/result_create_yml_file.yml"
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        created_yml_path = Path(tmpdirname, "test_test_modeling_rules.yml")
+        create_yml_file(created_yml_path, "test", "test")
+        with open(created_yml_path) as f:
+            yml_created = yaml.load(f)
+
+    with open(result_yml_path) as f:
+        yml_result = yaml.load(result_yml_path)
+
+    assert yml_created == yml_result

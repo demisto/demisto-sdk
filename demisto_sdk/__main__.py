@@ -954,7 +954,6 @@ def lint(**kwargs):
     """
     from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.lint.lint_manager import LintManager
-    print(kwargs.get("verbose", 1))
     logging_setup(
         verbose=kwargs.get("verbose"),  # type: ignore[arg-type]
         quiet=kwargs.get("quiet"),  # type: ignore[arg-type]
@@ -2839,7 +2838,7 @@ def convert(config, **kwargs):
     "--verbose",
     count=True,
     help="Verbosity level -v / -vv / .. / -vvv",
-    type=click.IntRange(0, 3, clamp=True),
+    type=click.IntRange(1, 4, clamp=True),
     default=1,
     show_default=True,
 )
@@ -2959,8 +2958,8 @@ def error_code(config, **kwargs):
     "--verbose",
     count=True,
     help="Verbosity level -v / -vv / .. / -vvv",
-    type=click.IntRange(0, 3, clamp=True),
-    default=2,
+    type=click.IntRange(1, 4, clamp=True),
+    default=3,
     show_default=True,
 )
 @click.option(
@@ -3060,8 +3059,8 @@ def create_content_graph(
     "--verbose",
     count=True,
     help="Verbosity level -v / -vv / .. / -vvv",
-    type=click.IntRange(0, 3, clamp=True),
-    default=2,
+    type=click.IntRange(1, 4, clamp=True),
+    default=3,
     show_default=True,
 )
 @click.option(

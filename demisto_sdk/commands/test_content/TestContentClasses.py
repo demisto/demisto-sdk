@@ -2650,16 +2650,14 @@ class ServerContext:
         if not IS_XSIAM:
             self.proxy.configure_proxy_in_demisto(  # type: ignore[union-attr]
                 proxy=self.proxy.ami.internal_ip + ":" + self.proxy.PROXY_PORT,  # type: ignore[union-attr]
-                username=self.build_context.secret_conf.server_username,
-                password=self.build_context.secret_conf.server_password,
+                api_key=self.build_context.api_key,
                 server=self.server_url,
             )
         self._execute_tests(self.build_context.mockable_tests_to_run)
         if not IS_XSIAM:
             self.proxy.configure_proxy_in_demisto(  # type: ignore[union-attr]
                 proxy="",
-                username=self.build_context.secret_conf.server_username,
-                password=self.build_context.secret_conf.server_password,
+                api_key=self.build_context.api_key,
                 server=self.server_url,
             )
 

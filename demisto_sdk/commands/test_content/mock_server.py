@@ -252,7 +252,13 @@ class MITMProxy:
             self.content_data_lock.release()
 
     def configure_proxy_in_demisto(
-        self, username, password, server, api_key=None, auth_id=None, proxy=""
+        self,
+        username=None,
+        password=None,
+        server=None,
+        api_key=None,
+        auth_id=None,
+        proxy="",
     ):
         client = demisto_client.configure(
             base_url=server,

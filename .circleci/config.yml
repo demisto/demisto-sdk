@@ -309,7 +309,7 @@ jobs:
               while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
 
               ./Tests/scripts/validate.sh
-
+              
         - store_artifacts:
             path: /home/circleci/project/artifacts
 

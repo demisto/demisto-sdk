@@ -7,6 +7,7 @@ from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import PLAYBOOK, FileType
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_yaml,
@@ -253,7 +254,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
 
     def run_format(self) -> int:
         try:
-            logger.info(
+            secho_and_info(
                 f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             self.update_tests()
@@ -288,7 +289,7 @@ class TestPlaybookYMLFormat(BasePlaybookYMLFormat):
 
     def run_format(self) -> int:
         try:
-            logger.info(
+            secho_and_info(
                 f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             return super().run_format()

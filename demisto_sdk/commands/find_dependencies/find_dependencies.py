@@ -2344,7 +2344,7 @@ class PackDependencies:
             dict: found {pack, (item_type, item_id)} ids of mandatory dependent items.
 
         """
-        logger.debug(f"\n# Pack ID: {pack_id}")
+        secho_and_info(f"\n# Pack ID: {pack_id}")
         pack_items = PackDependencies._collect_pack_items(pack_id, id_set)
 
         (

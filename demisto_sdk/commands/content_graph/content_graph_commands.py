@@ -28,16 +28,15 @@ def create_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
-    with FileLock("content_graph.lock"):
-        ContentGraphBuilder(content_graph_interface).create_graph()
-        if dependencies:
-            content_graph_interface.create_pack_dependencies()
-        if output_path:
-            output_path = output_path / marketplace.value
-        content_graph_interface.export_graph(output_path)
-        logger.info(
-            f"Successfully created the content graph. UI representation is available at {NEO4J_DATABASE_HTTP}"
-        )
+    ContentGraphBuilder(content_graph_interface).create_graph()
+    if dependencies:
+        content_graph_interface.create_pack_dependencies()
+    if output_path:
+        output_path = output_path / marketplace.value
+    content_graph_interface.export_graph(output_path)
+    logger.info(
+        f"Successfully created the content graph. UI representation is available at {NEO4J_DATABASE_HTTP}"
+    )
 
 
 def update_content_graph(

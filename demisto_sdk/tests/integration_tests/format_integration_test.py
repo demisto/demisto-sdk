@@ -638,7 +638,7 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo, monkeypatch):
                 "-i",
                 integration.code.path,
                 "--console_log_threshold",
-                "INFO",
+                "DEBUG",
             ],
             catch_exceptions=False,
         )

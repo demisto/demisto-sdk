@@ -103,7 +103,7 @@ def parse_for_pack_metadata(
         n for n in dependency_graph.nodes if dependency_graph.in_degree(n) > 0
     ]
 
-    logger.debug(f"All level dependencies are: {all_level_dependencies}")
+    secho_and_info(f"All level dependencies are: {all_level_dependencies}")
 
     return first_level_dependencies, all_level_dependencies
 
@@ -571,7 +571,7 @@ class PackDependencies:
         dependencies_packs: set = set()
         items_dependencies: dict = {}
         pack_dependencies_data = []
-        logger.debug("### Scripts")
+        secho_and_info("### Scripts")
 
         for script_mapping in pack_scripts:
             script_id = list(script_mapping.keys())[0]

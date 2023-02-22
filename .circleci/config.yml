@@ -398,7 +398,7 @@ jobs:
             # poll for neo4j status until available
             while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
 
-            mkdir neo4j-data/databases/update.db
+            mkdir -p /var/lib/neo4j/data/databases/update.db
             sudo echo "dbms.active_database = update.db" >> /etc/neo4j/neo4j.conf
             # we run the update graph command twice to make sure the graph is updated correctly
             demisto-sdk create-content-graph            

@@ -3142,11 +3142,6 @@ def update_content_graph(
     default=False,
 )
 @click.option(
-    "--fix",
-    help="Whether to skip fixing code files",
-    is_flag=True,
-)
-@click.option(
     "-t",
     "--test",
     help="Whether to run unit tests",
@@ -3200,7 +3195,6 @@ def pre_commit(
     native_images: bool,
     verbose: bool,
     show_diff_on_failure: bool,
-    fix: bool,
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
@@ -3219,7 +3213,6 @@ def pre_commit(
             native_images,
             verbose,
             show_diff_on_failure,
-            fix,
         )
     )
 

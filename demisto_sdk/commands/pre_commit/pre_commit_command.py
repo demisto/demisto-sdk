@@ -70,12 +70,11 @@ class PreCommitRunner:
         self,
         pre_commit_config: dict,
         python_version: str,
-        fix: bool,
         native_images: bool,
     ) -> None:
         hooks = self.hooks(pre_commit_config)
         PyclnHook(hooks["pycln"]).prepare_hook(PYTHONPATH)
-        RuffHook(hooks["ruff"]).prepare_hook(python_version, fix, GITHUB_ACTIONS)
+        RuffHook(hooks["ruff"]).prepare_hook(python_version, GITHUB_ACTIONS)
         MypyHook(hooks["mypy"]).prepare_hook(python_version)
         RunUnitTestHook(hooks["run-unit-tests"]).prepare_hook(native_images)
 
@@ -88,7 +87,6 @@ class PreCommitRunner:
         native_images: bool = False,
         verbose: bool = False,
         show_diff_on_failure: bool = False,
-        fix: bool = False,
     ) -> int:
         # handle skipped hooks
         ret_val = 0
@@ -133,7 +131,7 @@ class PreCommitRunner:
                     if response.returncode:
                         ret_val = response.returncode
                 continue
-            self.prepare_hooks(precommit_config, python_version, fix, native_images)
+            self.prepare_hooks(precommit_config, python_version, native_images)
             with open(PRECOMMIT_PATH, "w") as f:
                 yaml.dump(precommit_config, f)
             # use chunks because OS does not support such large comments
@@ -224,7 +222,6 @@ def pre_commit_manager(
     native_images: bool = False,
     verbose: bool = False,
     show_diff_on_failure: bool = False,
-    fix: bool = False,
 ) -> int:
     """Run pre-commit hooks .
 
@@ -238,7 +235,6 @@ def pre_commit_manager(
         force_run_hooks (Optional[List[str]], optional): List for hooks to force run. Defaults to None.
         verbose (bool, optional): Whether run pre-commit in verbose mode. Defaults to False.
         show_diff_on_failure (bool, optional): Whether show git diff after pre-commit failure. Defaults to False.
-        fix (bool, optional): Whether fixing code file. Defaults to False.
 
     Returns:
         int: Return code of pre-commit.
@@ -260,7 +256,6 @@ def pre_commit_manager(
         native_images,
         verbose,
         show_diff_on_failure,
-        fix,
     )
 
 

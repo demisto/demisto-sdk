@@ -9,6 +9,7 @@ repos:
       - id: check-json
       - id: check-yaml
       - id: check-ast
+      - id: check-merge-conflict
       - id: debug-statements
         language_version: python3
       - id: name-tests-test

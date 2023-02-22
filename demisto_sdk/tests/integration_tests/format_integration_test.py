@@ -559,7 +559,7 @@ def test_format_on_invalid_py_dict(mocker, repo):
     assert invalid_py != integration.code.read()
 
 
-def test_format_on_invalid_py_long_dict(mocker, repo, monkeypatch):
+def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
     """
     Given
     - Invalid python file - long dict.
@@ -591,12 +591,13 @@ def test_format_on_invalid_py_long_dict(mocker, repo, monkeypatch):
                 "-nv",
                 "-i",
                 integration.code.path,
-                "--console_log_threshold",
-                "DEBUG",
+                # "--console_log_threshold",
+                # "DEBUG",
             ],
             catch_exceptions=False,
         )
 
+    print(f"*** {caplog.text=}")
     print(f"*** {result.stdout=}")
     assert "======= Updating file" in result.stdout
     assert "Running autopep8 on file" in result.stdout

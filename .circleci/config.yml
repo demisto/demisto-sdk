@@ -312,6 +312,9 @@ jobs:
               
         - store_artifacts:
             path: /home/circleci/project/artifacts
+        
+        - store_artifacts:
+            path: /home/circleci/project/content/lint_debug_log.log
 
   test-lint:
       docker:

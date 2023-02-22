@@ -740,7 +740,7 @@ class PackDependencies:
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
         packs_and_items_dict: dict = dict()
-        logger.debug("### Playbooks")
+        secho_and_info("### Playbooks")
 
         for playbook in pack_playbooks:
             playbook_id = list(playbook.keys())[0]
@@ -963,7 +963,7 @@ class PackDependencies:
         """
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
-        logger.debug("### Layouts")
+        secho_and_info("### Layouts")
 
         for layout in pack_layouts:
             layout_id = list(layout.keys())[0]
@@ -1071,7 +1071,7 @@ class PackDependencies:
         """
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
-        logger.debug("### Incident Fields")
+        secho_and_info("### Incident Fields")
 
         for incident_field in pack_incidents_fields:
             incident_field_id = list(incident_field.keys())[0]
@@ -1148,7 +1148,7 @@ class PackDependencies:
         """
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
-        logger.debug("### Indicator Types")
+        secho_and_info("### Indicator Types")
 
         for indicator_type in pack_indicators_types:
             indicator_type_id = list(indicator_type.keys())[0]
@@ -1234,7 +1234,7 @@ class PackDependencies:
         """
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
-        logger.debug("### Integrations")
+        secho_and_info("### Integrations")
 
         for integration in pack_integrations:
             integration_id = list(integration.keys())[0]
@@ -1365,7 +1365,7 @@ class PackDependencies:
         """
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
-        logger.debug("### Incident Types")
+        secho_and_info("### Incident Types")
 
         for incident_type in pack_incidents_types:
             incident_type_id = list(incident_type.keys())[0]
@@ -1461,7 +1461,7 @@ class PackDependencies:
         """
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
-        logger.debug("### Classifiers")
+        secho_and_info("### Classifiers")
 
         for classifier in pack_classifiers:
             classifier_id = list(classifier.keys())[0]
@@ -1594,7 +1594,7 @@ class PackDependencies:
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
 
-        logger.debug("### Mappers")
+        secho_and_info("### Mappers")
         for mapper in pack_mappers:
             mapper_id = list(mapper.keys())[0]
             mapper_data = next(iter(mapper.values()))
@@ -1851,7 +1851,7 @@ class PackDependencies:
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
 
-        logger.debug("### Generic Types")
+        secho_and_info("### Generic Types")
 
         for generic_type in pack_generic_types:
             generic_type_id = list(generic_type.keys())[0]
@@ -1973,7 +1973,7 @@ class PackDependencies:
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
 
-        logger.debug("### Generic Fields")
+        secho_and_info("### Generic Fields")
 
         for generic_field in pack_generic_fields:
             generic_field_id = list(generic_field.keys())[0]
@@ -2095,7 +2095,7 @@ class PackDependencies:
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
 
-        logger.debug("### Generic Modules")
+        secho_and_info("### Generic Modules")
 
         for generic_module in pack_generic_modules:
             generic_module_id = list(generic_module.keys())[0]
@@ -2194,7 +2194,7 @@ class PackDependencies:
         all_job_dependencies: set = set()
         items_dependencies: dict = dict()
 
-        logger.debug("### Jobs")
+        secho_and_info("### Jobs")
 
         for job in pack_jobs:
             job_id = list(job.keys())[0]

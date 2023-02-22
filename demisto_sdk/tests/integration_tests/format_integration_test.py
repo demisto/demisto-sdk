@@ -605,7 +605,7 @@ def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
 
 def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo, monkeypatch):
     """
-    (This is the same test as the previous one only not using the '-v' argument)
+    (This is the same test as the previous one only without verbose output)
     Given
     - Invalid python file - long dict.
 
@@ -638,7 +638,7 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo, monkeypatch):
                 "-i",
                 integration.code.path,
                 "--console_log_threshold",
-                "DEBUG",
+                "INFO",
             ],
             catch_exceptions=False,
         )

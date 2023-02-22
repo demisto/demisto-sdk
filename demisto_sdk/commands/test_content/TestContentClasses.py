@@ -512,6 +512,7 @@ class TestPlaybook:
         found_incidents = 0
         # poll the incidents queue for a max time of 300 seconds
         timeout = time.time() + 300
+        start_time = time.time()
         while found_incidents < 1:
             try:
                 incidents = client.search_incidents(filter=search_filter)
@@ -544,6 +545,9 @@ class TestPlaybook:
 
             time.sleep(10)
 
+        self.build_context.logging_module.info(
+            f"Took { (time.time() - start_time):.2f} seconds to find the incident"
+        )
         return incidents.data[0]
 
     def delete_incident(self, client: DefaultApi, incident_id: str) -> bool:

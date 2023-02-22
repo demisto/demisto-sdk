@@ -153,7 +153,7 @@ class PreCommitRunner:
                 if response.returncode:
                     ret_val = 1
         # remove the config file in the end of the file
-        shutil.rmtree(CONTENT_PATH / ".pre-commit-config.yaml", ignore_errors=True)
+        shutil.rmtree(PRECOMMIT_PATH, ignore_errors=True)
         return ret_val
 
 

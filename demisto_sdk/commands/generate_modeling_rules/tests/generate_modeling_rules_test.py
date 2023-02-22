@@ -18,6 +18,7 @@ from demisto_sdk.commands.generate_modeling_rules.generate_modeling_rules import
     replace_last_char,
     to_number_wrap,
     to_string_wrap,
+    snake_to_camel_case,
 )
 
 yaml = YAML_Handler()
@@ -240,3 +241,9 @@ def test_create_yml_file():
         yml_result = yaml.load(result_yml_path)
 
     assert yml_created == yml_result
+
+
+def test_snake_to_camel_case():
+    assert snake_to_camel_case('hello_world') == 'HelloWorld'
+    assert snake_to_camel_case('this_is_a_long_string') == 'ThisIsALongString'
+    assert snake_to_camel_case('') == ''

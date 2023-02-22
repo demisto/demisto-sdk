@@ -63,12 +63,12 @@ def generate_modeling_rules(
     vendor: str = typer.Argument(
         default="test",
         show_default=False,
-        help=("The vendor name of the product"),
+        help=("The vendor name of the product in snake_case"),
     ),
     product: str = typer.Argument(
         default="test",
         show_default=False,
-        help=("The name of the product"),
+        help=("The name of the product in snake_case"),
     ),
     verbosity: int = typer.Option(
         0,
@@ -107,12 +107,12 @@ def generate_modeling_rules(
     errors = False
     try:
         setup_rich_logging(verbosity, quiet, log_path, log_file_name)
-
+        path_prefix = snake_to_camel_case(vendor)
         outputfile_schema = Path(
-            output_path, (f"{vendor}_{product}_modeling_rules.json")
+            output_path, (f"{path_prefix}ModelingRules.json")
         )
-        outputfile_xif = Path(output_path, (f"{vendor}_{product}_modeling_rules.xif"))
-        outputfile_yml = Path(output_path, (f"{vendor}_{product}_modeling_rules.yml"))
+        outputfile_xif = Path(output_path, (f"{path_prefix}ModelingRules.xif"))
+        outputfile_yml = Path(output_path, (f"{path_prefix}ModelingRules.yml"))
         data_set_name = f"{vendor.lower()}_{product.lower()}_raw"
 
         name_columen, xdm_one_data_model = read_mapping_file(mapping)
@@ -208,6 +208,17 @@ def create_xif_header(dataset_name: str) -> str:
     xif_rule += f"[MODEL: dataset={dataset_name}]\n"
     xif_rule += "| alter\n"
     return xif_rule
+
+
+def snake_to_camel_case(snake_str) -> str:
+    """
+    Args:
+        snake_str(str): a string in snake_case
+    Returns:
+        The same string in CameCase
+    """
+    components = snake_str.split('_')
+    return ''.join([name.capitalize() for name in components])
 
 
 def init_mapping_field_list(

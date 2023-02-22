@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import List, Optional
-import lockfile
+from filelock import FileLock
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -28,7 +28,7 @@ def create_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
-    with lockfile.FileLock("content_graph.lock"):
+    with FileLock("content_graph.lock"):
         ContentGraphBuilder(content_graph_interface).create_graph()
         if dependencies:
             content_graph_interface.create_pack_dependencies()
@@ -61,7 +61,7 @@ def update_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
-    with lockfile.FileLock("content_graph.lock"):
+    with FileLock("content_graph.lock"):
         if packs_to_update is None:
             packs_to_update = []
         builder = ContentGraphBuilder(content_graph_interface)

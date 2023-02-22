@@ -3,8 +3,7 @@ import subprocess
 from shutil import copy
 from typing import Tuple
 
-import click
-
+from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
@@ -55,7 +54,7 @@ class PythonFileFormat(BaseUpdate):
         Returns:
             bool. True if succeed to run autopep8 on file, False otherwise.
         """
-        logger.debug(f"\nRunning autopep8 on file: {py_file_path}\n")
+        secho_and_info(f"\nRunning autopep8 on file: {py_file_path}\n")
         try:
             subprocess.call(
                 [
@@ -81,7 +80,7 @@ class PythonFileFormat(BaseUpdate):
         copy(str(self.source_file), str(self.output_file))
 
     def run_format(self) -> int:
-        click.secho(
+        secho_and_info(
             f"\n================= Updating file {self.source_file} =================",
             fg="bright_blue",
         )

@@ -597,8 +597,6 @@ def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
             catch_exceptions=False,
         )
 
-    print(f"*** {caplog.text=}")
-    print(f"*** {result.stdout=}")
     assert "======= Updating file" in result.stdout
     assert "Running autopep8 on file" in result.stdout
     assert "Success" in result.stdout

@@ -277,7 +277,7 @@ def preprocess_files(
     elif staged_only:
         raw_files = staged_files
     elif use_git:
-        raw_files = staged_files | git_util._get_all_changed_files()
+        raw_files = git_util._get_all_changed_files()
     elif all_files:
         raw_files = git_util.get_all_files()
     else:

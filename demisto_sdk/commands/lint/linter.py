@@ -1092,7 +1092,7 @@ class Linter:
         network_status = "disabled" if should_disable_network else "enabled"
 
         log_prompt = (
-            f"{self._pack_name} - Pytest - Image {test_image},network: {network_status}"
+            f"{self._pack_name} - Pytest - Image {test_image}, network: {network_status}"
         )
         logger.info(f"{log_prompt} - Start")
         container_name = f"{self._pack_name}-pytest"

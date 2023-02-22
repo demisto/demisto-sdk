@@ -464,91 +464,101 @@ class TestPlaybook:
             - The created incident or None
         """
         # Preparing the incident request
-
-        incident_name = (
-            f"inc-{self.configuration.playbook_id}--build_number:"
-            f"{self.build_context.build_number}--{uuid.uuid4()}"
-        )
-        create_incident_request = demisto_client.demisto_api.CreateIncidentRequest()
-        create_incident_request.create_investigation = True
-        create_incident_request.playbook_id = self.configuration.playbook_id
-        create_incident_request.name = incident_name
-
-        try:
-            response = client.create_incident(
-                create_incident_request=create_incident_request
+        incidents_created = 0
+        start_before_all = time.time()
+        while incidents_created < 3:
+            self.build_context.logging_module.info(
+                f"Starting to create incident, try number {incidents_created + 1}"
             )
-        except ApiException:
-            self.build_context.logging_module.exception(
-                f"Failed to create incident with name {incident_name} for playbook {self}"
+            incident_name = (
+                f"inc-{self.configuration.playbook_id}--build_number:"
+                f"{self.build_context.build_number}--{uuid.uuid4()}"
             )
-        try:
-            inc_id = response.id
-        except Exception:
-            inc_id = "incCreateErr"
-        # inc_id = response_json.get('id', 'incCreateErr')
-        if inc_id == "incCreateErr":
-            error_message = (
-                f"Failed to create incident for playbookID: {self}."
-                "Possible reasons are:\nMismatch between playbookID in conf.json and "
-                "the id of the real playbook you were trying to use,"
-                "or schema problems in the TestPlaybook."
-            )
-            self.build_context.logging_module.error(error_message)
-            return None
+            create_incident_request = demisto_client.demisto_api.CreateIncidentRequest()
+            create_incident_request.create_investigation = True
+            create_incident_request.playbook_id = self.configuration.playbook_id
+            create_incident_request.name = incident_name
 
-        # get incident
-        search_filter = demisto_client.demisto_api.SearchIncidentsData()
-        inc_filter = demisto_client.demisto_api.IncidentFilter()
-        inc_filter.query = f"id: {inc_id}"
-        if IS_XSIAM:
-            # in xsiam `create_incident` response don`t return created incident id.
-            inc_filter.query = f'name:"{incident_name}"'
-        # inc_filter.query
-        search_filter.filter = inc_filter
-
-        incident_search_responses = []
-
-        found_incidents = 0
-        # poll the incidents queue for a max time of 300 seconds
-        timeout = time.time() + 300
-        start_time = time.time()
-        while found_incidents < 1:
             try:
-                incidents = client.search_incidents(filter=search_filter)
-                found_incidents = incidents.total
-                incident_search_responses.append(incidents)
-            except ApiException:
-                if IS_XSIAM:
-                    self.build_context.logging_module.exception(
-                        f"Searching incident with name {incident_name} failed"
-                    )
-                else:
-                    self.build_context.logging_module.exception(
-                        f"Searching incident with id {inc_id} failed"
-                    )
-            if time.time() > timeout:
-                if IS_XSIAM:
-                    self.build_context.logging_module.error(
-                        f"Got timeout for searching incident with name "
-                        f"{incident_name}"
-                    )
-                else:
-                    self.build_context.logging_module.error(
-                        f"Got timeout for searching incident id {inc_id}"
-                    )
-
-                self.build_context.logging_module.error(
-                    f"Incident search responses: {incident_search_responses}"
+                response = client.create_incident(
+                    create_incident_request=create_incident_request
                 )
-                return None
+                incidents_created += 1
+            except ApiException:
+                self.build_context.logging_module.exception(
+                    f"Failed to create incident with name {incident_name} for playbook {self}"
+                )
+            try:
+                inc_id = response.id
+            except Exception:
+                inc_id = "incCreateErr"
+            # inc_id = response_json.get('id', 'incCreateErr')
+            if inc_id == "incCreateErr":
+                error_message = (
+                    f"Failed to create incident for playbookID: {self}."
+                    "Possible reasons are:\nMismatch between playbookID in conf.json and "
+                    "the id of the real playbook you were trying to use,"
+                    "or schema problems in the TestPlaybook."
+                )
+                self.build_context.logging_module.error(error_message)
+                continue
 
-            time.sleep(10)
+            # get incident
+            search_filter = demisto_client.demisto_api.SearchIncidentsData()
+            inc_filter = demisto_client.demisto_api.IncidentFilter()
+            inc_filter.query = f"id: {inc_id}"
+            if IS_XSIAM:
+                # in xsiam `create_incident` response don`t return created incident id.
+                inc_filter.query = f'name:"{incident_name}"'
+            # inc_filter.query
+            search_filter.filter = inc_filter
 
+            incident_search_responses = []
+
+            found_incidents = 0
+            # poll the incidents queue for a max time of 300 seconds
+            timeout = time.time() + 120
+            start_time = time.time()
+            while found_incidents < 1:
+                try:
+                    incidents = client.search_incidents(filter=search_filter)
+                    found_incidents = incidents.total
+                    incident_search_responses.append(incidents)
+                except ApiException:
+                    if IS_XSIAM:
+                        self.build_context.logging_module.exception(
+                            f"Searching incident with name {incident_name} failed"
+                        )
+                    else:
+                        self.build_context.logging_module.exception(
+                            f"Searching incident with id {inc_id} failed"
+                        )
+                if time.time() > timeout:
+                    if IS_XSIAM:
+                        self.build_context.logging_module.error(
+                            f"Got timeout for searching incident with name "
+                            f"{incident_name}"
+                        )
+                    else:
+                        self.build_context.logging_module.error(
+                            f"Got timeout for searching incident id {inc_id}"
+                        )
+
+                    self.build_context.logging_module.error(
+                        f"Incident search responses: {incident_search_responses}"
+                    )
+                    continue
+
+                time.sleep(10)
+
+            self.build_context.logging_module.info(
+                f"Took { (time.time() - start_time):.2f} seconds to find the incident"
+            )
+            return incidents.data[0]
         self.build_context.logging_module.info(
-            f"Took { (time.time() - start_time):.2f} seconds to find the incident"
+            f"Took {(time.time() - start_before_all):.2f} total time to create incident"
         )
-        return incidents.data[0]
+        return None
 
     def delete_incident(self, client: DefaultApi, incident_id: str) -> bool:
         """

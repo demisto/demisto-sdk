@@ -4,7 +4,6 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
 from typing import Callable, List, Optional, Set, Tuple
 
-import click
 import pebble
 from colorama import Fore
 from git import InvalidGitRepositoryError
@@ -137,6 +136,7 @@ from demisto_sdk.commands.common.hook_validations.xsiam_report import (
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import (
     XSOARConfigJsonValidator,
 )
+from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
@@ -271,7 +271,7 @@ class ValidateManager:
                 raise
             # if we are not using git - simply move on.
             else:
-                click.echo("Unable to connect to git")
+                secho_and_info("Unable to connect to git")
                 self.git_util = None  # type: ignore[assignment]
                 self.branch_name = ""
 
@@ -307,7 +307,7 @@ class ValidateManager:
         self.is_external_repo = is_external_repo
         if is_external_repo:
             if not self.no_configuration_prints:
-                click.echo("Running in a private repository")
+                secho_and_info("Running in a private repository")
             self.skip_conf_json = True
 
         self.print_percent = False
@@ -352,23 +352,23 @@ class ValidateManager:
         self.print_ignored_errors_report(self.print_ignored_errors)
 
         if valid:
-            click.secho("\nThe files are valid", fg="green")
+            secho_and_info("\nThe files are valid", fg="green")
             return 0
 
         else:
             all_failing_files = "\n".join(set(FOUND_FILES_AND_ERRORS))
-            click.secho(
+            secho_and_info(
                 f"\n=========== Found errors in the following files ===========\n\n{all_failing_files}\n",
                 fg="bright_red",
             )
 
             if self.always_valid:
-                click.secho(
+                secho_and_info(
                     "Found the errors above, but not failing build", fg="yellow"
                 )
                 return 0
 
-            click.secho(
+            secho_and_info(
                 "The files were found as invalid, the exact error message can be located above",
                 fg="red",
             )
@@ -430,7 +430,7 @@ class ValidateManager:
             file_level = self.detect_file_level(path)
 
             if file_level == PathLevel.FILE:
-                click.secho(
+                secho_and_info(
                     f"\n================= Validating file {path} =================",
                     fg="bright_cyan",
                 )
@@ -439,7 +439,7 @@ class ValidateManager:
                 )
 
             elif file_level == PathLevel.CONTENT_ENTITY_DIR:
-                click.secho(
+                secho_and_info(
                     f"\n================= Validating content directory {path} =================",
                     fg="bright_cyan",
                 )
@@ -448,7 +448,7 @@ class ValidateManager:
                 )
 
             elif file_level == PathLevel.CONTENT_GENERIC_ENTITY_DIR:
-                click.secho(
+                secho_and_info(
                     f"\n================= Validating content directory {path} =================",
                     fg="bright_cyan",
                 )
@@ -457,14 +457,14 @@ class ValidateManager:
                 )
 
             elif file_level == PathLevel.PACK:
-                click.secho(
+                secho_and_info(
                     f"\n================= Validating pack {path} =================",
                     fg="bright_cyan",
                 )
                 files_validation_result.add(self.run_validations_on_pack(path)[0])
 
             else:
-                click.secho(
+                secho_and_info(
                     f"\n================= Validating package {path} =================",
                     fg="bright_cyan",
                 )
@@ -487,7 +487,7 @@ class ValidateManager:
                 result = future.result()
                 done_fn(result[0], result[1])
             except Exception as e:
-                click.secho(
+                secho_and_info(
                     f"An error occurred while tried to collect result, Error: {e}",
                     fg="bright_red",
                 )
@@ -499,14 +499,14 @@ class ValidateManager:
         Returns:
             bool. true if all files are valid, false otherwise.
         """
-        click.secho(
+        secho_and_info(
             "\n================= Validating all files =================",
             fg="bright_cyan",
         )
         all_packs_valid = set()
 
         if self.validate_graph:
-            click.secho(
+            secho_and_info(
                 f"\n================= Validating graph =================",
                 fg="bright_cyan",
             )
@@ -809,7 +809,7 @@ class ValidateManager:
                         f" {Fore.GREEN}[{self.completion_percentage}%]{Fore.RESET}"
                     )
 
-            click.echo(validation_print)
+            secho_and_info(validation_print)
 
         structure_validator = StructureValidator(
             file_path,
@@ -883,7 +883,7 @@ class ValidateManager:
                     pack_error_ignore_list,
                 )
             else:
-                click.secho("Skipping release notes validation", fg="yellow")
+                secho_and_info("Skipping release notes validation", fg="yellow")
 
         elif file_type == FileType.RELEASE_NOTES_CONFIG:
             return self.validate_release_notes_config(file_path, pack_error_ignore_list)
@@ -1261,7 +1261,7 @@ class ValidateManager:
         validation_results = {valid_git_setup, valid_types}
 
         if self.validate_graph:
-            click.secho(
+            secho_and_info(
                 f"\n================= Validating graph =================",
                 fg="bright_cyan",
             )
@@ -1285,7 +1285,7 @@ class ValidateManager:
         validation_results.add(self.validate_deleted_files(deleted_files, added_files))
 
         if old_format_files:
-            click.secho(
+            secho_and_info(
                 f"\n================= Running validation on old format files =================",
                 fg="bright_cyan",
             )
@@ -1863,7 +1863,7 @@ class ValidateManager:
         files_valid = True
         author_valid = True
 
-        click.echo(f"\nValidating {pack_path} unique pack files")
+        secho_and_info(f"\nValidating {pack_path} unique pack files")
         pack_unique_files_validator = PackUniqueFilesValidator(
             pack=os.path.basename(pack_path),
             pack_path=pack_path,
@@ -1881,13 +1881,13 @@ class ValidateManager:
             self.id_set_validations
         )
         if pack_errors:
-            click.secho(pack_errors, fg="bright_red")
+            secho_and_info(pack_errors, fg="bright_red")
             files_valid = False
 
         # check author image
         author_image_path = os.path.join(pack_path, AUTHOR_IMAGE_FILE_NAME)
         if os.path.exists(author_image_path):
-            click.echo("Validating pack author image")
+            secho_and_info("Validating pack author image")
             author_valid = self.validate_author_image(
                 author_image_path, pack_error_ignore_list
             )
@@ -1902,12 +1902,12 @@ class ValidateManager:
         )
         is_valid = job_validator.is_valid_file()
         if not is_valid:
-            click.secho(job_validator.get_errors(), fg="bright_red")
+            secho_and_info(job_validator.get_errors(), fg="bright_red")
 
         return is_valid
 
     def validate_modified_files(self, modified_files):
-        click.secho(
+        secho_and_info(
             f"\n================= Running validation on modified files =================",
             fg="bright_cyan",
         )
@@ -1933,7 +1933,7 @@ class ValidateManager:
         return all(valid_files)
 
     def validate_added_files(self, added_files, modified_files):
-        click.secho(
+        secho_and_info(
             f"\n================= Running validation on newly added files =================",
             fg="bright_cyan",
         )
@@ -2010,7 +2010,7 @@ class ValidateManager:
 
     @error_codes("BA115")
     def validate_deleted_files(self, deleted_files: set, added_files: set) -> bool:
-        click.secho(
+        secho_and_info(
             f"\n================= Checking for prohibited deleted files =================",
             fg="bright_cyan",
         )
@@ -2050,7 +2050,7 @@ class ValidateManager:
     def validate_changed_packs_unique_files(
         self, modified_files, added_files, old_format_files, changed_meta_files
     ):
-        click.secho(
+        secho_and_info(
             f"\n================= Running validation on changed pack unique files =================",
             fg="bright_cyan",
         )
@@ -2095,7 +2095,7 @@ class ValidateManager:
         """
         handle_error = True
         for file_path in old_format_files:
-            click.echo(f"Validating old-format file {file_path}")
+            secho_and_info(f"Validating old-format file {file_path}")
             yaml_data = get_yaml(file_path)
             # we only fail on old format if no toversion (meaning it is latest) or if the ynl is not deprecated.
             if "toversion" not in yaml_data and not yaml_data.get("deprecated"):
@@ -2120,7 +2120,7 @@ class ValidateManager:
         Returns:
             bool. True if no duplications found, false otherwise
         """
-        click.secho(
+        secho_and_info(
             f"\n================= Verifying no duplicated release notes =================",
             fg="bright_cyan",
         )
@@ -2141,7 +2141,7 @@ class ValidateManager:
                     ):
                         return False
 
-        click.secho("\nNo duplicated release notes found.\n", fg="bright_green")
+        secho_and_info("\nNo duplicated release notes found.\n", fg="bright_green")
         return True
 
     @error_codes("RN106")
@@ -2158,7 +2158,7 @@ class ValidateManager:
         Returns:
             bool. True if no missing RN found, False otherwise
         """
-        click.secho(
+        secho_and_info(
             "\n================= Checking for missing release notes =================\n",
             fg="bright_cyan",
         )
@@ -2226,7 +2226,7 @@ class ValidateManager:
             return all(is_valid)
 
         else:
-            click.secho("No missing release notes found.\n", fg="bright_green")
+            secho_and_info("No missing release notes found.\n", fg="bright_green")
             return True
 
     """ ######################################## Git Tools and filtering ####################################### """
@@ -2263,7 +2263,7 @@ class ValidateManager:
             self.prev_ver
         ):
             non_existing_remote = self.prev_ver.split("/")[0]
-            click.secho(
+            secho_and_info(
                 f"Could not find remote {non_existing_remote} reverting to "
                 f"{str(self.git_util.repo.remote())}",
                 fg="bright_red",
@@ -2296,39 +2296,39 @@ class ValidateManager:
         return True
 
     def print_git_config(self):
-        click.secho(
+        secho_and_info(
             f"\n================= Running validation on branch {self.branch_name} =================",
             fg="bright_cyan",
         )
         if not self.no_configuration_prints:
-            click.echo(f"Validating against {self.prev_ver}")
+            secho_and_info(f"Validating against {self.prev_ver}")
 
             if self.branch_name in [
                 self.prev_ver,
                 self.prev_ver.replace("origin/", ""),
             ]:  # pragma: no cover
-                click.echo("Running only on last commit")
+                secho_and_info("Running only on last commit")
 
             elif self.is_circle:
-                click.echo("Running only on committed files")
+                secho_and_info("Running only on committed files")
 
             elif self.staged:
-                click.echo("Running only on staged files")
+                secho_and_info("Running only on staged files")
 
             else:
-                click.echo("Running on committed and staged files")
+                secho_and_info("Running on committed and staged files")
 
             if self.skip_pack_rn_validation:
-                click.echo("Skipping release notes validation")
+                secho_and_info("Skipping release notes validation")
 
             if self.skip_docker_checks:
-                click.echo("Skipping Docker checks")
+                secho_and_info("Skipping Docker checks")
 
             if not self.is_backward_check:
-                click.echo("Skipping backwards compatibility checks")
+                secho_and_info("Skipping backwards compatibility checks")
 
             if self.skip_dependencies:
-                click.echo("Skipping pack dependencies check")
+                secho_and_info("Skipping pack dependencies check")
 
     def get_unfiltered_changed_files_from_git(self) -> Tuple[Set, Set, Set]:
         """
@@ -2471,7 +2471,7 @@ class ValidateManager:
             except FileNotFoundError:
                 if file_path not in self.ignored_files:
                     if self.print_ignored_files:
-                        click.secho(f"ignoring file {file_path}", fg="yellow")
+                        secho_and_info(f"ignoring file {file_path}", fg="yellow")
                     self.ignored_files.add(file_path)
 
         return filtered_set, old_format_files, all(valid_types)
@@ -2608,7 +2608,7 @@ class ValidateManager:
 
     def ignore_file(self, file_path: str) -> None:
         if self.print_ignored_files:
-            click.secho(f"ignoring file {file_path}", fg="yellow")
+            secho_and_info(f"ignoring file {file_path}", fg="yellow")
         self.ignored_files.add(file_path)
 
     """ ######################################## Validate Tools ############################################### """
@@ -2660,7 +2660,7 @@ class ValidateManager:
                 except MissingSectionHeaderError:
                     pass
             else:
-                click.secho(
+                secho_and_info(
                     f"Could not find pack-ignore file at path {pack_ignore_path}",
                     fg="bright_red",
                 )
@@ -2700,7 +2700,7 @@ class ValidateManager:
     def print_ignored_errors_report(self, print_ignored_errors):
         if print_ignored_errors:
             all_ignored_errors = "\n".join(FOUND_FILES_AND_IGNORED_ERRORS)
-            click.secho(
+            secho_and_info(
                 f"\n=========== Found ignored errors "
                 f"in the following files ===========\n\n{all_ignored_errors}",
                 fg="yellow",
@@ -2709,7 +2709,7 @@ class ValidateManager:
     def print_ignored_files_report(self, print_ignored_files):
         if print_ignored_files:
             all_ignored_files = "\n".join(list(self.ignored_files))
-            click.secho(
+            secho_and_info(
                 f"\n=========== Ignored the following files ===========\n\n{all_ignored_files}",
                 fg="yellow",
             )
@@ -2830,7 +2830,7 @@ class ValidateManager:
         ) < version.parse(OLDEST_SUPPORTED_VERSION)
 
         if is_deprecated or toversion_is_old:
-            click.echo(f"Validating deprecated file: {file_path}")
+            secho_and_info(f"Validating deprecated file: {file_path}")
 
             is_valid_as_deprecated = True
             if hasattr(validator, "is_valid_as_deprecated"):
@@ -2841,7 +2841,7 @@ class ValidateManager:
 
             self.ignored_files.add(file_path)
             if self.print_ignored_files:
-                click.echo(f"Skipping validation for: {file_path}")
+                secho_and_info(f"Skipping validation for: {file_path}")
 
             return is_valid_as_deprecated
         return None

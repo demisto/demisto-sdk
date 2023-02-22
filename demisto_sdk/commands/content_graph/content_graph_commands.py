@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import List, Optional
-
+import lockfile
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -28,15 +28,16 @@ def create_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
-    ContentGraphBuilder(content_graph_interface).create_graph()
-    if dependencies:
-        content_graph_interface.create_pack_dependencies()
-    if output_path:
-        output_path = output_path / marketplace.value
-    content_graph_interface.export_graph(output_path)
-    logger.info(
-        f"Successfully created the content graph. UI representation is available at {NEO4J_DATABASE_HTTP}"
-    )
+    with lockfile.FileLock("content_graph.lock"):
+        ContentGraphBuilder(content_graph_interface).create_graph()
+        if dependencies:
+            content_graph_interface.create_pack_dependencies()
+        if output_path:
+            output_path = output_path / marketplace.value
+        content_graph_interface.export_graph(output_path)
+        logger.info(
+            f"Successfully created the content graph. UI representation is available at {NEO4J_DATABASE_HTTP}"
+        )
 
 
 def update_content_graph(
@@ -60,31 +61,32 @@ def update_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
-    if packs_to_update is None:
-        packs_to_update = []
-    builder = ContentGraphBuilder(content_graph_interface)
-    if not use_current:
-        content_graph_interface.clean_import_dir()
-        if not imported_path:
-            # getting the graph from remote, so we need to clean the import dir
-            extract_remote_import_files(content_graph_interface, builder)
+    with lockfile.FileLock("content_graph.lock"):
+        if packs_to_update is None:
+            packs_to_update = []
+        builder = ContentGraphBuilder(content_graph_interface)
+        if not use_current:
+            content_graph_interface.clean_import_dir()
+            if not imported_path:
+                # getting the graph from remote, so we need to clean the import dir
+                extract_remote_import_files(content_graph_interface, builder)
 
-    if use_git and (commit := content_graph_interface.commit):
-        packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
+        if use_git and (commit := content_graph_interface.commit):
+            packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
 
-    content_graph_interface.import_graph(imported_path)
+        content_graph_interface.import_graph(imported_path)
 
-    packs_str = "\n".join([f"- {p}" for p in packs_to_update])
-    logger.info(f"Updating the following packs:\n{packs_str}")
-    builder.update_graph(packs_to_update)
-    if dependencies:
-        content_graph_interface.create_pack_dependencies()
-    if output_path:
-        output_path = output_path / marketplace.value
-    content_graph_interface.export_graph(output_path)
-    logger.info(
-        f"Successfully updated the content graph. UI representation is available at {NEO4J_DATABASE_HTTP}"
-    )
+        packs_str = "\n".join([f"- {p}" for p in packs_to_update])
+        logger.info(f"Updating the following packs:\n{packs_str}")
+        builder.update_graph(packs_to_update)
+        if dependencies:
+            content_graph_interface.create_pack_dependencies()
+        if output_path:
+            output_path = output_path / marketplace.value
+        content_graph_interface.export_graph(output_path)
+        logger.info(
+            f"Successfully updated the content graph. UI representation is available at {NEO4J_DATABASE_HTTP}"
+        )
 
 
 def extract_remote_import_files(

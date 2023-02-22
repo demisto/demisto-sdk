@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.errors import (
     get_error_object,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_file_displayed_name,
@@ -256,20 +257,20 @@ class BaseValidator:
 
         formatted_error = formatted_error_str("ERROR")
         if suggested_fix and not is_error_not_allowed_in_pack_ignore:
-            logger.debug("[red]" + formatted_error[:-1] + "[/red]")
+            secho_and_info("[red]" + formatted_error[:-1] + "[/red]")
             if error_code == "ST109":
-                logger.debug("[red]Please add to the root of the yml.[/red]\n")
+                secho_and_info("[red]Please add to the root of the yml.[/red]\n")
             elif error_code == "ST107":
                 missing_field = error_message.split(" ")[3]
                 path_to_add = error_message.split(":")[1]
-                logger.debug(
+                secho_and_info(
                     f"[red]Please add the field {missing_field} to the path: {path_to_add} in the yml.[/red]\n"
                 )
             else:
-                logger.debug("[red]" + suggested_fix + "[/red]\n")
+                secho_and_info("[red]" + suggested_fix + "[/red]\n")
 
         else:
-            logger.debug("[red]" + formatted_error + "[/[red]")
+            secho_and_info("[red]" + formatted_error + "[/[red]")
 
         self.json_output(file_path, error_code, error_message, warning)
         self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_ERRORS)

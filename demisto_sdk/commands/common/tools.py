@@ -1957,7 +1957,9 @@ def get_content_path() -> Union[str, PathLike, None]:
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
         if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
             print_warning("Please run demisto-sdk in content repository!")
-            os.environ["DEMISTO_SDK_IGNORE_CONTENT_WARNING"] = "true"  # set temporarily, to avoid repeated messages
+            os.environ[
+                "DEMISTO_SDK_IGNORE_CONTENT_WARNING"
+            ] = "true"  # set temporarily, to avoid repeated messages
     return ""
 
 

@@ -398,8 +398,19 @@ jobs:
             # poll for neo4j status until available
             while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
 
+            mkdir neo4j-data/databases/update.db
+            sudo echo "dbms.active_database = update.db" >> /etc/neo4j/neo4j.conf
             # we run the update graph command twice to make sure the graph is updated correctly
+            demisto-sdk create-content-graph            
+            neo4j stop
+            neo4j start
+            
+            # poll for neo4j status until available
+            while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
+
             demisto-sdk update-content-graph -g -o ./tmp/content_graph
+
+            cypher-shell -a bolt://localhost:7687 -u neo4j -p test 'CALL apoc.diff.graphs("MATCH (n)-[r]-(m) RETURN n, r, m", "MATCH (n)-[r]-(m) RETURN n, r, m", {dest: {target: {type: "DATABASE", value: "neo4j"}}})'
 
             demisto-sdk update-content-graph -i ./tmp/content_graph/xsoar.zip -o ./tmp/content_graph
       - store_artifacts:

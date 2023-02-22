@@ -1913,7 +1913,7 @@ def download_content_graph(
     if output_path.is_dir():
         output_path = output_path / f"{marketplace.value}.zip"
     output_path.write_bytes(
-        requests.get(f"{OFFICIAL_CONTENT_GRAPH_PATH}/{marketplace.value}.zip").content
+        requests.get(f"{OFFICIAL_CONTENT_GRAPH_PATH}/test/{marketplace.value}.zip").content
     )
     return output_path
 

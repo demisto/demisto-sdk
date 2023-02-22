@@ -12,7 +12,7 @@ class RuffHook(Hook):
         fix: bool = False,
         github_actions: bool = False,
         **kwargs,
-    ):
+    ) -> None:
         self.hook["args"] = [
             f"--target-version={self._python_version_to_ruff(python_version)}"
         ]

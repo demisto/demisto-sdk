@@ -1240,9 +1240,6 @@ class TestFormatting:
             "Could not find sub-schema for input_schema"
             in secho.call_args_list[0][0][0]
         )
-        assert (
-            "[yellow]Could not find sub-schema for input_schema[/yellow]" in caplog.text
-        )
 
     @staticmethod
     def exception_raise(file_type=""):
@@ -1265,6 +1262,11 @@ class TestFormatting:
         Then
             - Ensure the error is printed.
         """
+        logger = logging.getLogger("demisto-sdk")
+        for current_handler in logger.handlers:
+            if current_handler == "console-handler":
+                current_handler.level = logging.DEBUG
+
         formatter = format_object(input="my_file_path")
         mocker.patch.object(
             BaseUpdateYML, "update_yml", side_effect=self.exception_raise

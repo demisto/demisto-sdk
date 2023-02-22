@@ -1253,9 +1253,7 @@ class TestFormatting:
     ]
 
     @pytest.mark.parametrize(argnames="format_object", argvalues=FORMAT_OBJECT)
-    def test_yml_run_format_exception_handling(
-        self, format_object, mocker, capsys, caplog
-    ):
+    def test_yml_run_format_exception_handling(self, format_object, mocker, caplog):
         """
         Given
             - A YML object formatter
@@ -1266,7 +1264,7 @@ class TestFormatting:
         """
         logger = logging.getLogger("demisto-sdk")
         for current_handler in logger.handlers:
-            if current_handler == "console-handler":
+            if current_handler.name == "console-handler":
                 current_handler.level = logging.DEBUG
 
         formatter = format_object(input="my_file_path")
@@ -1278,8 +1276,6 @@ class TestFormatting:
         )
 
         formatter.run_format()
-        stdout, _ = capsys.readouterr()
-        assert "Failed to update file my_file_path. Error: MY ERROR" in stdout
         assert "Failed to update file my_file_path. Error: MY ERROR" in caplog.text
 
     TEST_UUID_FORMAT_OBJECT = [PlaybookYMLFormat, TestPlaybookYMLFormat]

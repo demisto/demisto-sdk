@@ -358,7 +358,7 @@ class TestFormatting:
                         for verification in verifications:
                             assert argument[verification[0]] == verification[1]
 
-    def test_isarray_false(self, integration, caplog):
+    def test_isarray_false(self, integration, capsys):
         """
         Given:
         - An integration with IP command and ip argument when isArray is False
@@ -378,7 +378,8 @@ class TestFormatting:
         integration.yml.write_dict(yml_contents)
         base_yml = IntegrationYMLFormat(integration.yml.path)
         base_yml.set_reputation_commands_basic_argument_as_needed()
-        assert "Array field in ip command is set to False." in caplog.text
+        captured = capsys.readouterr()
+        assert "Array field in ip command is set to False." in captured.out
         assert (
             integration.yml.read_dict()["script"]["commands"][0]["arguments"][0][
                 "isArray"

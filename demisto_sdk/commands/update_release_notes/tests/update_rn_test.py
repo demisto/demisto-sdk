@@ -74,25 +74,25 @@ class TestRNUpdate:
             - return a markdown string
         """
         expected_result = (
-            "\n#### Classifiers\n##### Hello World Classifier\n- %%UPDATE_RN%%"
+            "\n#### Classifiers\n##### Hello World Classifier\n- %%UPDATE_RN%%\n"
             "\n#### Connections\n- **Hello World Connection**\n"
-            "\n#### Dashboards\n##### Hello World Dashboard\n\n- %%UPDATE_RN%%"
+            "\n#### Dashboards\n##### Hello World Dashboard\n- %%UPDATE_RN%%\n"
             "\n#### Incident Fields\n- **Hello World IncidentField**\n"
             "\n#### Incident Types\n- **Hello World Incident Type**\n"
             "\n#### Indicator Fields\n- **Hello World Indicator Field**\n"
             "\n#### Indicator Types\n- **Hello World Indicator Type**\n"
-            "\n#### Integrations\n##### Hello World Integration\n- %%UPDATE_RN%%"
-            "\n#### Jobs\n##### Hello World Job #1\n- %%UPDATE_RN%%"
-            "##### Hello World Job #2\n- %%UPDATE_RN%%"
-            "\n#### Layouts\n- **Hello World Layout**"
+            "\n#### Integrations\n##### Hello World Integration\n- %%UPDATE_RN%%\n"
+            "\n#### Jobs\n##### Hello World Job #1\n- %%UPDATE_RN%%\n"
+            "##### Hello World Job #2\n- %%UPDATE_RN%%\n"
+            "\n#### Layouts\n- **Hello World Layout**\n"
             "- **Second Hello World Layout**\n"
             "\n#### Modules\n- **Hello World Generic Module**\n"
             "\n#### Objects\n- **Hello World Generic Definition**\n"
-            "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%"
-            "\n#### Reports\n##### Hello World Report\n- %%UPDATE_RN%%"
-            "\n#### Scripts\n##### Hello World Script\n- %%UPDATE_RN%%"
-            "\n#### Widgets\n##### Hello World Widget\n- %%UPDATE_RN%%"
-            "\n#### Wizards\n##### Hello World Wizard\n- %%UPDATE_RN%%"
+            "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n"
+            "\n#### Reports\n##### Hello World Report\n- %%UPDATE_RN%%\n"
+            "\n#### Scripts\n##### Hello World Script\n- %%UPDATE_RN%%\n"
+            "\n#### Widgets\n##### Hello World Widget\n- %%UPDATE_RN%%\n"
+            "\n#### Wizards\n##### Hello World Wizard\n- %%UPDATE_RN%%\n"
         )
         mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
         mocker.patch(
@@ -1357,19 +1357,15 @@ class TestRNUpdateUnit:
     )
     CURRENT_RN = """
 #### Incident Types
-
 - **Cortex XDR Incident**
 
 #### Incident Fields
-
 - **XDR Alerts**
 
 #### Object Types
-
 - **Sample GenericType**
 
 #### Object Fields
-
 - **Sample GenericField**
 """
     CHANGED_FILES = {
@@ -1404,31 +1400,23 @@ class TestRNUpdateUnit:
     }
     EXPECTED_RN_RES = """
 #### Incident Types
-
 - **Cortex XDR Incident**
 
 #### Incident Fields
-
 - **Sample IncidentField**
-
 - **XDR Alerts**
 
 #### Object Types
-
 - **Sample GenericType**
 
 #### Object Fields
-
 - **Sample GenericField**
 
 #### Integrations
-
 ##### Cortex XDR - IR
-
 - %%UPDATE_RN%%
 
 ##### Sample
-
 - %%UPDATE_RN%%
 
 """
@@ -2557,7 +2545,7 @@ def test_handle_existing_rn_with_docker_image(
 
 @pytest.mark.parametrize(
     "text, expected_rn_string",
-    [("Testing the upload", "##### PackName\n\n- Testing the upload\n")],
+    [("Testing the upload", "##### PackName\n- Testing the upload\n")],
 )
 def test_force_and_text_update_rn(repo, text, expected_rn_string):
     """

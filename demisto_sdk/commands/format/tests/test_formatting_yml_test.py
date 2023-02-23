@@ -1262,11 +1262,6 @@ class TestFormatting:
         Then
             - Ensure the error is printed.
         """
-        logger = logging.getLogger("demisto-sdk")
-        for current_handler in logger.handlers:
-            if current_handler.name == "console-handler":
-                current_handler.level = logging.DEBUG
-
         formatter = format_object(input="my_file_path")
         mocker.patch.object(
             BaseUpdateYML, "update_yml", side_effect=self.exception_raise
@@ -1275,11 +1270,18 @@ class TestFormatting:
             PlaybookYMLFormat, "update_tests", side_effect=self.exception_raise
         )
 
+        logger = logging.getLogger("demisto-sdk")
+        for current_handler in logger.handlers:
+            if current_handler.name == "console-handler":
+                current_handler.level = logging.DEBUG
+        logger.propagate = True
+
         caplog.set_level(logging.DEBUG)
         caplog.set_level(logging.DEBUG, logger="demisto-sdk")
         with caplog.at_level(logging.DEBUG):
             formatter.run_format()
         print(f"*** {logger.handlers=}, {logger.handlers[0].level=}")
+        print(f"*** {caplog.text=}, {caplog=}")
         assert "Failed to update file my_file_path. Error: MY ERROR" in caplog.text
 
     TEST_UUID_FORMAT_OBJECT = [PlaybookYMLFormat, TestPlaybookYMLFormat]

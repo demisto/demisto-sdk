@@ -519,7 +519,7 @@ class TestPlaybook:
             # poll the incidents queue for a max time of 300 seconds
             timeout = time.time() + 120
             start_time = time.time()
-            while found_incidents < 1:
+            while found_incidents < 1 and time.time() < timeout:
                 try:
                     incidents = client.search_incidents(filter=search_filter)
                     found_incidents = incidents.total
@@ -533,29 +533,26 @@ class TestPlaybook:
                         self.build_context.logging_module.exception(
                             f"Searching incident with id {inc_id} failed"
                         )
-                if time.time() > timeout:
-                    if IS_XSIAM:
-                        self.build_context.logging_module.error(
-                            f"Got timeout for searching incident with name "
-                            f"{incident_name}"
-                        )
-                    else:
-                        self.build_context.logging_module.error(
-                            f"Got timeout for searching incident id {inc_id}"
-                        )
-
+            if found_incidents:
+                self.build_context.logging_module.info(
+                    f"Took { (time.time() - start_time):.2f} seconds to find the incident "
+                    f"and {(time.time() - start_before_all):.2f} total time to create incident"
+                )
+                return incidents.data[0]
+            else:
+                if IS_XSIAM:
                     self.build_context.logging_module.error(
-                        f"Incident search responses: {incident_search_responses}"
+                        f"Got timeout for searching incident with name "
+                        f"{incident_name}"
                     )
-                    break
+                else:
+                    self.build_context.logging_module.error(
+                        f"Got timeout for searching incident id {inc_id}"
+                    )
 
-                time.sleep(10)
-
-            self.build_context.logging_module.info(
-                f"Took { (time.time() - start_time):.2f} seconds to find the incident "
-                f"and {(time.time() - start_before_all):.2f} total time to create incident"
-            )
-            return incidents.data[0]
+                self.build_context.logging_module.error(
+                    f"Incident search responses: {incident_search_responses}"
+                )
 
         return None
 

@@ -1275,7 +1275,8 @@ class TestFormatting:
             PlaybookYMLFormat, "update_tests", side_effect=self.exception_raise
         )
 
-        formatter.run_format()
+        with caplog.at_level(logging.DEBUG):
+            formatter.run_format()
         print(f"*** {logger.handlers=}, {logger.handlers[0].level=}")
         assert "Failed to update file my_file_path. Error: MY ERROR" in caplog.text
 

@@ -175,6 +175,11 @@ def test_is_image_path_valid(caplog):
     readme_validator = ReadMeValidator(INVALID_MD)
     result = readme_validator.is_image_path_valid()
     sys.stdout = sys.__stdout__  # reset stdout.
+
+    logger = logging.getLogger("demisto-sdk")
+    print(f"*** test_is_image_path_valid, {logger.handlers=}, {logger.propagate=}")
+    print(f"*** {caplog.text=}")
+    assert 1 == 0
     assert not result
     assert images_paths[0] and alternative_images_paths[0] in caplog.text
     assert images_paths[1] and alternative_images_paths[1] in caplog.text

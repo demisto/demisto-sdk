@@ -113,7 +113,9 @@ def _logging_setup(
     return l
 
 
-logger: logging.Logger = logging_setup()
+# logger: logging.Logger = logging_setup()
+logging_setup()
+logger = logging.getLogger("demisto-sdk")
 
 
 def debug_color(msg, color: str):

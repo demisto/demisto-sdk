@@ -54,8 +54,8 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
 
     expected_rn = (
         "\n"
-        + "#### Integrations\n\n"
-        + "##### New: Azure Feed\n\n"
+        + "#### Integrations\n"
+        + "##### New: Azure Feed\n"
         + "- Azure.CloudIPs Feed Integration. (Available from Cortex XSOAR 5.5.0).\n"
     )
     added_files = {
@@ -121,7 +121,7 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
     """
 
     expected_rn = (
-        "\n" + "#### Integrations\n\n" + "##### Azure Feed\n\n" + "- %%UPDATE_RN%%\n"
+        "\n" + "#### Integrations\n" + "##### Azure Feed\n" + "- %%UPDATE_RN%%\n"
     )
 
     modified_files = {
@@ -190,7 +190,7 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
     - Ensure the release motes content is valid and as expected.
     """
 
-    expected_rn = "\n" + "#### Incident Fields\n\n" + "- **City**\n"
+    expected_rn = "\n" + "#### Incident Fields\n" + "- **City**\n"
 
     runner = CliRunner(mix_stderr=False)
     modified_files = {
@@ -251,7 +251,7 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
     """
 
     expected_rn = (
-        "\n" + "#### Integrations\n\n" + "##### VMware\n\n" + "- %%UPDATE_RN%%\n"
+        "\n" + "#### Integrations\n" + "##### VMware\n" + "- %%UPDATE_RN%%\n"
     )
 
     runner = CliRunner(mix_stderr=False)
@@ -343,18 +343,18 @@ def test_update_release_notes_existing(demisto_client, mocker):
     """
     expected_rn = (
         "\n"
-        + "#### Integrations\n\n"
-        + "##### New: Azure Feed\n\n"
+        + "#### Integrations\n"
+        + "##### New: Azure Feed\n"
         + "- Azure.CloudIPs Feed Integration.\n"
         + "\n"
-        + "#### Incident Fields\n\n"
-        + "- **City**\n\n"
+        + "#### Incident Fields\n"
+        + "- **City**\n"
     )
 
     input_rn = (
         "\n"
-        + "#### Integrations\n\n"
-        + "##### New: Azure Feed\n\n"
+        + "#### Integrations\n"
+        + "##### New: Azure Feed\n"
         + "- Azure.CloudIPs Feed Integration.\n"
     )
 
@@ -795,4 +795,4 @@ def test_force_update_release(demisto_client, mocker, repo):
 
     with open(rn_path) as f:
         rn = f.read()
-    assert "##### ThinkCanary\n\n- %%UPDATE_RN%%\n" == rn
+    assert "##### ThinkCanary\n- %%UPDATE_RN%%\n" == rn

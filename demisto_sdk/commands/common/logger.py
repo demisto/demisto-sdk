@@ -3,7 +3,8 @@ import logging.config
 from logging.handlers import RotatingFileHandler
 
 import click
-from rich.logging import RichHandler
+
+# from rich.logging import RichHandler
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
@@ -72,10 +73,12 @@ def _logging_setup(
         logging.Logger: logger object
     """
 
-    console_handler = RichHandler(
-        level=console_log_threshold,
-        rich_tracebacks=True,
+    # console_handler = RichHandler(
+    console_handler = logging.StreamHandler(
+        # level=console_log_threshold,
+        # rich_tracebacks=True,
     )
+    console_handler.setLevel(console_log_threshold)
     console_formatter = logging.Formatter(
         fmt="%(message)s",
         datefmt=DATE_FORMAT,

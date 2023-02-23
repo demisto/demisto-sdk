@@ -275,7 +275,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             print(
                 f"*** PlaybookYMLFormat.run_format, {logger.handlers=}, {logger.propagate=}"
             )
-            logger.info(
+            logger.debug(
                 f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
             )
             return ERROR_RETURN_CODE
@@ -310,7 +310,7 @@ class TestPlaybookYMLFormat(BasePlaybookYMLFormat):
             print(
                 f"*** TestPlaybookYMLFormat.run_format, {logger.handlers=}, {logger.propagate=}"
             )
-            logger.info(
+            logger.debug(
                 f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
             )
             return ERROR_RETURN_CODE

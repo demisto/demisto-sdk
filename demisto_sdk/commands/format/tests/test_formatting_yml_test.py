@@ -1275,6 +1275,8 @@ class TestFormatting:
             PlaybookYMLFormat, "update_tests", side_effect=self.exception_raise
         )
 
+        caplog.set_level(logging.DEBUG)
+        caplog.set_level(logging.DEBUG, logger="demisto-sdk")
         with caplog.at_level(logging.DEBUG):
             formatter.run_format()
         print(f"*** {logger.handlers=}, {logger.handlers[0].level=}")

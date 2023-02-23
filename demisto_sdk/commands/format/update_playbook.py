@@ -267,6 +267,11 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             super().run_format()
             return SUCCESS_RETURN_CODE
         except Exception as err:
+            logger = logging.getLogger("demisto-sdk")
+            for current_handler in logger.handlers:
+                if current_handler.name == "console-handler":
+                    current_handler.level = logging.DEBUG
+            logger.propagate = True
             logger.debug(
                 f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
             )
@@ -294,6 +299,11 @@ class TestPlaybookYMLFormat(BasePlaybookYMLFormat):
             )
             return super().run_format()
         except Exception as err:
+            logger = logging.getLogger("demisto-sdk")
+            for current_handler in logger.handlers:
+                if current_handler.name == "console-handler":
+                    current_handler.level = logging.DEBUG
+            logger.propagate = True
             logger.debug(
                 f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
             )

@@ -287,13 +287,18 @@ class IntegrationScriptUnifier(Unifier):
         script_code = IntegrationScriptUnifier.insert_module_code(
             script_code, imports_to_names
         )
+        if pack_version := get_pack_metadata(file_path=str(package_path)).get(
+            "currentVersion", ""
+        ):
+            script_code = IntegrationScriptUnifier.insert_pack_version(
+                script_code, pack_version
+            )
 
         if script_type == ".py":
             clean_code = IntegrationScriptUnifier.clean_python_code(script_code)
             if "CommonServer" not in yml_data["name"]:
                 # CommonServerPython has those line hard-coded so there is no need to add them here.
                 clean_code = (
-                    f"### pack version: {get_pack_metadata(file_path=str(package_path)).get('currentVersion', '')}\n"
                     f"register_module_line('{yml_data['name']}', 'start', __line__())\n"
                     f"{clean_code}\n"
                     f"register_module_line('{yml_data['name']}', 'end', __line__())\n"
@@ -396,6 +401,18 @@ class IntegrationScriptUnifier(Unifier):
 
             script_code = script_code.replace(module_import, module_code)
         return script_code
+
+    @staticmethod
+    def insert_pack_version(script_code: str, pack_version: str) -> str:
+        """
+        Inserts the pack version to the script so it will be easy to know what was the contribution original pack version.
+        :param script_code: The integration code
+        :param pack_version: The pack version
+        :return: The integration script with the pack version appended
+        """
+
+        pack_version_str = f"\n### pack version: {pack_version}\n"
+        return pack_version_str + script_code
 
     @staticmethod
     def _get_api_module_code(module_name, module_path):

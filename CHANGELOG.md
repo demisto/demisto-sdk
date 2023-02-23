@@ -4,6 +4,7 @@
 * Added a newline at the end of README files generated in **generate-docs**.
 * Added the value `3` (out of bounds) to the `onChangeRepAlg` and `reputationCalc` fields under the `IncidentType` and `GenericType` schemas. **validate** will allow using it now.
 * Added support for running **lint** in multiple native-docker images.
+* Fixed an issue where **update-release-notes** command added extra new lines.
 
 ## 1.10.4
 * Added support for running **lint** in multiple native-docker images.

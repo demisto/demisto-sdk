@@ -857,19 +857,17 @@ class TestParsersAndModels:
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
 
+    @pytest.mark.parametrize("override_group", ("incident", "indicator"))
     @pytest.mark.parametrize(
-        "marketplace,expected_name",
+        "marketplace",
         (
-            (MarketplaceVersions.XSOAR, "Related Incidents"),
-            (MarketplaceVersions.MarketplaceV2, "Related Alerts"),
-            (MarketplaceVersions.XPANSE, "Related Incidents"),
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.MarketplaceV2,
+            MarketplaceVersions.XPANSE,
         ),
     )
     def test_layoutscontainer_parser_fixes(
-        self,
-        pack: Pack,
-        marketplace: MarketplaceVersions,
-        expected_name: str,
+        self, pack: Pack, marketplace: MarketplaceVersions, override_group: str
     ):
         """
         Given:
@@ -879,7 +877,7 @@ class TestParsersAndModels:
             - Preparing for upload.
         Then:
             - Verify a `Related Incidents` field's name is changed to `Related Alerts`
-                if and only if marketpalce == marketplacev2
+                if and only if marketpalce==marketplacev2 and group=="indicator"
         """
         from demisto_sdk.commands.content_graph.objects.layout import Layout
         from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
@@ -890,13 +888,17 @@ class TestParsersAndModels:
         model = Layout.from_orm(
             LayoutParser(Path(layout.path), list(MarketplaceVersions))
         )
+        model.group = override_group
         ready_for_upload = model.prepare_for_upload(marketplace=marketplace)
         checked_dict = ready_for_upload["detailsV2"]["tabs"][5]
 
         # these two are for sanity, to make sure we're checking the right value (and the test file hasn't been changed)
         assert checked_dict["id"] == "relatedIncidents"
         assert checked_dict["type"] == "relatedIncidents"
-        assert checked_dict["name"] == expected_name
+        assert ("Alerts" in checked_dict["name"]) == (
+            override_group == "indicator"
+            and marketplace == MarketplaceVersions.MarketplaceV2
+        )
 
     def test_list_parser(self, pack: Pack):
         """
@@ -1539,200 +1541,27 @@ class TestParsersAndModels:
 
 
 @pytest.mark.parametrize(
-    "incident_data,expected_output",
-    [
-        ({}, {}),
+    "name,type_,expected_change",
+    (
+        ("Child Incidents", "childInv", True),
+        ("Child Incident", "childInv", False),  # name should be Child Incidents
+        ("", "childInv", False),
+        ("Incidents", "", False),
+        ("Linked Incidents", "linkedIncidents", True),
         (
-            {  # classic case - Related Incidents should be changed to Related alerts
-                "id": "relatedIncidents",
-                "name": "Related Incidents",
-                "type": "relatedIncidents",
-            },
-            {
-                "id": "relatedIncidents",
-                "name": "Related Alerts",
-                "type": "relatedIncidents",
-            },
-        ),
-        (
-            {  # classic case with name_x2 = None (equivalent to missing name_x2)
-                "id": "relatedIncidents",
-                "name": "Related Incidents",
-                "name_x2": None,
-                "type": "relatedIncidents",
-            },
-            {
-                "id": "relatedIncidents",
-                "name": "Related Alerts",
-                "name_x2": None,
-                "type": "relatedIncidents",
-            },
-        ),
-        (
-            {
-                "id": "relatedIncidents",
-                "name": "not the name we expect, should not be changed",
-                "type": "relatedIncidents",
-            },
-            {
-                "id": "relatedIncidents",
-                "name": "not the name we expect, should not be changed",
-                "type": "relatedIncidents",
-            },
-        ),
-        (
-            {
-                "id": "relatedIncidents",
-                "name": "Related Incidents",
-                "name_x2": "Some other name - should be fixed in the parent function, not here",
-                "type": "relatedIncidents",
-            },
-            {
-                "id": "relatedIncidents",
-                "name": "Related Incidents",
-                "name_x2": "Some other name - should be fixed in the parent function, not here",
-                "type": "relatedIncidents",
-            },
-        ),
-        (
-            {  # Layout container section
-                "columns": [
-                    {"displayed": True, "isDefault": False, "key": "id", "width": 110},
-                ],
-                "displayType": "ROW",
-                "h": 3,
-                "hideName": False,
-                "i": "main-c1f3f0d0-a09d-11e9-8956-390f602b039a",
-                "isVisible": True,
-                "items": None,
-                "maxW": 3,
-                "minH": 1,
-                "moved": False,
-                "name": "Related Incidents",
-                "readOnly": True,
-                "static": False,
-                "type": "relatedIncidents",
-                "w": 3,
-                "x": 0,
-                "y": 6,
-            },
-            {
-                "columns": [
-                    {"displayed": True, "isDefault": False, "key": "id", "width": 110},
-                ],
-                "displayType": "ROW",
-                "h": 3,
-                "hideName": False,
-                "i": "main-c1f3f0d0-a09d-11e9-8956-390f602b039a",
-                "isVisible": True,
-                "items": None,
-                "maxW": 3,
-                "minH": 1,
-                "moved": False,
-                "name": "Related Alerts",
-                "readOnly": True,
-                "static": False,
-                "type": "relatedIncidents",
-                "w": 3,
-                "x": 0,
-                "y": 6,
-            },
-        ),
-        (
-            {  # Layout container section, child incidents
-                "columns": [
-                    {"displayed": True, "isDefault": False, "key": "id", "width": 110},
-                ],
-                "displayType": "ROW",
-                "h": 3,
-                "hideName": False,
-                "i": "main-c1f3f0d0-a09d-11e9-8956-390f602b039a",
-                "isVisible": True,
-                "items": None,
-                "maxW": 3,
-                "minH": 1,
-                "moved": False,
-                "name": "Child Incidents",
-                "readOnly": True,
-                "static": False,
-                "type": "childInv",
-                "w": 3,
-                "x": 0,
-                "y": 6,
-            },
-            {
-                "columns": [
-                    {"displayed": True, "isDefault": False, "key": "id", "width": 110},
-                ],
-                "displayType": "ROW",
-                "h": 3,
-                "hideName": False,
-                "i": "main-c1f3f0d0-a09d-11e9-8956-390f602b039a",
-                "isVisible": True,
-                "items": None,
-                "maxW": 3,
-                "minH": 1,
-                "moved": False,
-                "name": "Child Alerts",
-                "readOnly": True,
-                "static": False,
-                "type": "childInv",
-                "w": 3,
-                "x": 0,
-                "y": 6,
-            },
-        ),
-        (
-            {  # Layout container section with _x2
-                "columns": [
-                    {"displayed": True, "isDefault": False, "key": "id", "width": 110},
-                ],
-                "displayType": "ROW",
-                "h": 3,
-                "hideName": False,
-                "i": "main-c1f3f0d0-a09d-11e9-8956-390f602b039a",
-                "isVisible": True,
-                "items": None,
-                "maxW": 3,
-                "minH": 1,
-                "moved": False,
-                "name": "Related Incidents",
-                "name_x2": "Related Incidents 1",
-                "readOnly": True,
-                "static": False,
-                "type": "relatedIncidents",
-                "w": 3,
-                "x": 0,
-                "y": 6,
-            },
-            {
-                "columns": [
-                    {"displayed": True, "isDefault": False, "key": "id", "width": 110},
-                ],
-                "displayType": "ROW",
-                "h": 3,
-                "hideName": False,
-                "i": "main-c1f3f0d0-a09d-11e9-8956-390f602b039a",
-                "isVisible": True,
-                "items": None,
-                "maxW": 3,
-                "minH": 1,
-                "moved": False,
-                "name": "Related Incidents",
-                "name_x2": "Related Incidents 1",
-                "readOnly": True,
-                "static": False,
-                "type": "relatedIncidents",
-                "w": 3,
-                "x": 0,
-                "y": 6,
-            },
-        ),
-    ],
+            "Related Incidents",
+            "linkedIncidents",
+            False,
+        ),  # type should be relatedIncidents
+        ("Related Incidents", "relatedIncidents", True),
+        ("Related Incidents", "", False),
+        ("Related Incident", "relatedIncidents", False),
+    ),
 )
-def test_fix_layout_widget_incident_to_alert(
-    incident_data: dict,
-    expected_output: dict,
+def test_fix_layout_incident_to_alert(
+    name: str,
+    type_: str,
+    expected_change: bool,
 ):
     """
     Given:
@@ -1743,7 +1572,12 @@ def test_fix_layout_widget_incident_to_alert(
         - Make sure it replaces values as expected
     """
     from demisto_sdk.commands.content_graph.objects.layout import (
-        change_incident_to_alert,
+        replace_incident_with_alert,
     )
 
-    assert change_incident_to_alert(incident_data) == expected_output
+    expected_name = name.replace("Incident", "Alert") if expected_change else name
+
+    assert replace_incident_with_alert({"name": name, "type": type_}) == {
+        "name": expected_name,
+        "type": type_,
+    }

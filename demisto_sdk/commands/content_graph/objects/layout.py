@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.prepare_content.preparers.replace_incident_alert import (
-    change_incident_to_alert,
+    replace_incident_with_alert,
 )
 
 
@@ -34,8 +34,11 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
         data = super().prepare_for_upload(marketplace, **kwargs)
         data = self._fix_from_and_to_server_version(data)
 
-        if marketplace == MarketplaceVersions.MarketplaceV2:
-            data = change_incident_to_alert(data)
+        if (
+            marketplace == MarketplaceVersions.MarketplaceV2
+            and self.group == "indicator"
+        ):
+            data = replace_incident_with_alert(data)
 
         return data
 

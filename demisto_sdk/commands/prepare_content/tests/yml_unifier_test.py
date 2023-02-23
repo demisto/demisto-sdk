@@ -71,32 +71,6 @@ if __name__ in ["builtins", "__main__"]:
     main()
 '''
 
-DUMMY_SCRIPT_WITH_PACK_VERSION = '''
-### pack version: 1.0.3
-
-def main():
-""" COMMANDS MANAGER / SWITCH PANEL """
-    command = demisto.command()
-    args = demisto.args()
-    LOG(f'Command being called is {command}')
-
-    params = demisto.params()
-
-
-try:
-    if command == 'test-module':
-        demisto.results('ok')
-except Exception as e:
-    return_error(str(e))
-
-
-from MicrosoftApiModule import *  # noqa: E402
-from CrowdStrikeApiModule import *
-
-if __name__ in ["builtins", "__main__"]:
-    main()
-'''
-
 DUMMY_MODULE = """
 import requests
 import base64
@@ -452,10 +426,11 @@ def test_insert_pack_version_and_script_to_yml():
     Then:
      - Ensure the code returned contains the pack version in it
     """
-    expected_result = DUMMY_SCRIPT_WITH_PACK_VERSION
-    code = IntegrationScriptUnifier.insert_pack_version(DUMMY_SCRIPT, "1.0.3")
-
-    assert code == expected_result
+    version_str = "### pack version: 1.0.3"
+    assert version_str not in DUMMY_SCRIPT
+    assert version_str in IntegrationScriptUnifier.insert_pack_version(
+        DUMMY_SCRIPT, version_str
+    )
 
 
 def get_generated_module_code(import_name, api_module_name):

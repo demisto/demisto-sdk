@@ -408,9 +408,10 @@ class IntegrationScriptUnifier(Unifier):
         Inserts the pack version to the script so it will be easy to know what was the contribution original pack version.
         :param script_code: The integration code
         :param pack_version: The pack version
-        :return: The integration script with the pack version appended
+        :return: The integration script with the pack version appended if needed, otherwise returns the original script
         """
-
+        if "### pack version:" in script_code:
+            return script_code
         pack_version_str = f"\n### pack version: {pack_version}\n"
         return pack_version_str + script_code
 

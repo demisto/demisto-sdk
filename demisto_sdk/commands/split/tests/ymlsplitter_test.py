@@ -258,6 +258,9 @@ def test_extract_code(tmpdir):
         output=str(tmpdir.join("temp_code.py")),
         file_type="integration",
     )
+    with open(extractor.input, "rb") as input_code:
+        file_data = input_code.read().decode("utf-8")
+        assert "### pack version: 1.0.3" in yaml.load(file_data)["script"]["script"]
 
     extractor.extract_code(extractor.output)
     with open(extractor.output, "rb") as temp_code:
@@ -266,7 +269,7 @@ def test_extract_code(tmpdir):
         assert "from CommonServerPython import *  #" in file_data
         assert file_data[-1] == "\n"
         assert "register_module_line" not in file_data
-        assert "### pack version 1.0.3" not in file_data
+        assert "### pack version: 1.0.3" not in file_data
     os.remove(extractor.output)
 
     extractor.common_server = False
@@ -277,7 +280,7 @@ def test_extract_code(tmpdir):
         assert "import demistomock as demisto  #" not in file_data
         assert "from CommonServerPython import *  #" not in file_data
         assert "register_module_line" not in file_data
-        assert "### pack version 1.0.3" not in file_data
+        assert "### pack version: 1.0.3" not in file_data
         assert file_data[-1] == "\n"
 
 

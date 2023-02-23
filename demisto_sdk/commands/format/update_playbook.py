@@ -278,6 +278,12 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             logger.info(
                 f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
             )
+            logging.getLogger().debug(
+                f"\n*** PlaybookYMLFormat ROOT LOGGER DEBUG [red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
+            logging.getLogger().info(
+                f"\n*** PlaybookYMLFormat ROOT LOGGER INFO [red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE
 
 
@@ -312,5 +318,11 @@ class TestPlaybookYMLFormat(BasePlaybookYMLFormat):
             )
             logger.info(
                 f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
+            logging.getLogger().debug(
+                f"\n*** TestPlaybookYMLFormat ROOT LOGGER DEBUG [red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
+            logging.getLogger().info(
+                f"\n*** TestPlaybookYMLFormat ROOT LOGGER INFO [red]Failed to update file {self.source_file}. Error: {err}[/red]"
             )
             return ERROR_RETURN_CODE

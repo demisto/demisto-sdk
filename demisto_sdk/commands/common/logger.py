@@ -1,10 +1,12 @@
 import logging
 import logging.config
-
-# from logging import Handler
-from typing import Optional
+from logging.handlers import RotatingFileHandler
 
 import click
+from rich.logging import RichHandler
+
+# from logging import Handler
+
 
 # from rich.logging import RichHandler
 
@@ -33,10 +35,10 @@ def handle_deprecated_args(input_args):
 
 # TODO Remove this method and expose _logging_setup as logging_setup
 def logging_setup(
-    console_log_threshold: Optional[int] = logging.INFO,
-    file_log_threshold: Optional[int] = logging.DEBUG,
-    log_file_name: Optional[str] = "demisto_sdk_debug_log.log",
-    log_file: Optional[str] = "./demisto_sdk_debug_log.log",
+    console_log_threshold: int = logging.INFO,
+    file_log_threshold: int = logging.DEBUG,
+    log_file_name: str = "demisto_sdk_debug_log.log",
+    log_file: str = "./demisto_sdk_debug_log.log",
 ) -> logging.Logger:
     """Init logger object for logging in demisto-sdk
         For more info - https://docs.python.org/3/library/logging.html
@@ -59,9 +61,9 @@ def logging_setup(
 
 
 def _logging_setup(
-    console_log_threshold: Optional[int] = logging.INFO,
-    file_log_threshold: Optional[int] = logging.DEBUG,
-    log_file: Optional[str] = "./demisto_sdk_debug_log.log",
+    console_log_threshold: int = logging.INFO,
+    file_log_threshold: int = logging.DEBUG,
+    log_file: str = "./demisto_sdk_debug_log.log",
 ) -> logging.Logger:
     """Init logger object for logging in demisto-sdk
         For more info - https://docs.python.org/3/library/logging.html
@@ -74,52 +76,82 @@ def _logging_setup(
     Returns:
         logging.Logger: logger object
     """
-    # logging.basicConfig()
+    print(f"{file_log_threshold=}")
+    console_handler = RichHandler(
+        level=console_log_threshold,
+        rich_tracebacks=True,
+    )
+    console_formatter = logging.Formatter(
+        fmt="%(message)s",
+        datefmt=DATE_FORMAT,
+    )
+    console_handler.set_name("console-handler")
+    console_handler.setFormatter(fmt=console_formatter)
 
-    logging_config = {
-        "version": 1,
-        "disable_existing_loggers": True,
-        "formatters": {
-            "console-formatter": {
-                # "format": "%(asctime)s [%(levelname)s]: %(message)s",
-                "format": "%(message)s",
-                "datefmt": DATE_FORMAT,
-            },
-            "file-formatter": {
-                "format": "[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(message)s",
-                "datefmt": DATE_FORMAT,
-            },
-        },
-        "handlers": {
-            "console-handler": {
-                "level": console_log_threshold,
-                "formatter": "console-formatter",
-                # "class": "logging.StreamHandler",
-                "class": "rich.logging.RichHandler",
-                "rich_tracebacks": True,
-            },
-            "file-handler": {
-                "level": file_log_threshold,
-                "formatter": "file-formatter",
-                "class": "logging.handlers.RotatingFileHandler",
-                "filename": log_file,
-                "mode": "a",
-                "maxBytes": 1048576,
-                "backupCount": 10,
-            },
-        },
-        "loggers": {
-            "demisto-sdk": {
-                "handlers": ["console-handler", "file-handler"],
-                "level": "DEBUG",
-                "propagate": False,
-            },
-        },
-    }
+    file_handler = RotatingFileHandler(
+        # level=file_log_threshold,
+        filename=log_file,
+        mode="a",
+        maxBytes=1048576,
+        backupCount=10,
+    )
+    file_formatter = logging.Formatter(
+        fmt="[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(message)s",
+        datefmt=DATE_FORMAT,
+    )
+    file_handler.set_name("file-handler")
+    file_handler.setFormatter(fmt=file_formatter)
 
-    logging.config.dictConfig(logging_config)
+    # logging_config = {
+    #     "version": 1,
+    #     "disable_existing_loggers": True,
+    #     "formatters": {
+    #         "console-formatter": {
+    #             # "format": "%(asctime)s [%(levelname)s]: %(message)s",
+    #             "format": "%(message)s",
+    #             "datefmt": DATE_FORMAT,
+    #         },
+    #         "file-formatter": {
+    #             "format": "[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(message)s",
+    #             "datefmt": DATE_FORMAT,
+    #         },
+    #     },
+    #     "handlers": {
+    #         "console-handler": {
+    #             "level": console_log_threshold,
+    #             "formatter": "console-formatter",
+    #             # "class": "logging.StreamHandler",
+    #             "class": "rich.logging.RichHandler",
+    #             "rich_tracebacks": True,
+    #         },
+    #         "file-handler": {
+    #             "level": file_log_threshold,
+    #             "formatter": "file-formatter",
+    #             "class": "logging.handlers.RotatingFileHandler",
+    #             "filename": log_file,
+    #             "mode": "a",
+    #             "maxBytes": 1048576,
+    #             "backupCount": 10,
+    #         },
+    #     },
+    #     "loggers": {
+    #         "demisto-sdk": {
+    #             "handlers": ["console-handler", "file-handler"],
+    #             "level": "DEBUG",
+    #             "propagate": False,
+    #         },
+    #     },
+    # }
+
+    # logging.config.dictConfig(logging_config)
+
+    logging.basicConfig(
+        handlers=[console_handler, file_handler],
+    )
 
     l: logging.Logger = logging.getLogger("demisto-sdk")
+    l.level = logging.DEBUG
+    l.propagate = False
 
     return l
 

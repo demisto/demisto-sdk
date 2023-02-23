@@ -1285,6 +1285,8 @@ class TestFormatting:
         print(f"*** {caplog.text=}, {caplog=}")
         capsys_captured = capsys.readouterr()
         print(f"*** {capsys_captured.out=}")
+        capsys_stdout, _ = capsys.readouterr()
+        print(f"*** {capsys_stdout=}")
         assert "Failed to update file my_file_path. Error: MY ERROR" in caplog.text
 
     TEST_UUID_FORMAT_OBJECT = [PlaybookYMLFormat, TestPlaybookYMLFormat]

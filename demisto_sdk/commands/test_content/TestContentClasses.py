@@ -483,7 +483,6 @@ class TestPlaybook:
                 response = client.create_incident(
                     create_incident_request=create_incident_request
                 )
-                incidents_created += 1
             except ApiException:
                 self.build_context.logging_module.exception(
                     f"Failed to create incident with name {incident_name} for playbook {self}"
@@ -493,6 +492,7 @@ class TestPlaybook:
             except Exception:
                 inc_id = "incCreateErr"
             # inc_id = response_json.get('id', 'incCreateErr')
+            incidents_created += 1
             if inc_id == "incCreateErr":
                 error_message = (
                     f"Failed to create incident for playbookID: {self}."
@@ -547,17 +547,16 @@ class TestPlaybook:
                     self.build_context.logging_module.error(
                         f"Incident search responses: {incident_search_responses}"
                     )
-                    continue
+                    break
 
                 time.sleep(10)
 
             self.build_context.logging_module.info(
-                f"Took { (time.time() - start_time):.2f} seconds to find the incident"
+                f"Took { (time.time() - start_time):.2f} seconds to find the incident "
+                f"and {(time.time() - start_before_all):.2f} total time to create incident"
             )
             return incidents.data[0]
-        self.build_context.logging_module.info(
-            f"Took {(time.time() - start_before_all):.2f} total time to create incident"
-        )
+
         return None
 
     def delete_incident(self, client: DefaultApi, incident_id: str) -> bool:

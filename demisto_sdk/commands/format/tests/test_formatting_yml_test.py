@@ -1280,7 +1280,6 @@ class TestFormatting:
         caplog.set_level(logging.DEBUG, logger="demisto-sdk")
         with caplog.at_level(logging.DEBUG):
             formatter.run_format()
-        print(f"*** {logger.handlers=}, {logger.handlers[0].level=}")
         print(f"*** {caplog.text=}, {caplog=}")
         assert "Failed to update file my_file_path. Error: MY ERROR" in caplog.text
 

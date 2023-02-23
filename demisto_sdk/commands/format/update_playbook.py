@@ -272,7 +272,6 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
                 if current_handler.name == "console-handler":
                     current_handler.level = logging.DEBUG
             logger.propagate = True
-            print(f"*** playbook 1 {logger.handlers=}, {logger.handlers[0].level=}")
             logger.debug(
                 f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
             )
@@ -305,7 +304,6 @@ class TestPlaybookYMLFormat(BasePlaybookYMLFormat):
                 if current_handler.name == "console-handler":
                     current_handler.level = logging.DEBUG
             logger.propagate = True
-            print(f"*** playbook 2 {logger.handlers=}, {logger.handlers[0].level=}")
             logger.debug(
                 f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
             )

@@ -676,7 +676,7 @@ class UpdateRN:
         rn_string = ""
 
         if self.pack_metadata_only:
-            rn_string += f"\n#### Integrations\n\n##### {self.pack}\n\n- Documentation and metadata improvements.\n"
+            rn_string += f"\n#### Integrations\n##### {self.pack}\n- Documentation and metadata improvements.\n"
             return rn_string
         rn_template_as_dict: dict = {}
         if self.is_force:
@@ -747,7 +747,7 @@ class UpdateRN:
                 rn_desc = f"- **{content_name}**\n"
         else:
             if is_new_file:
-                rn_desc = f"##### New: {content_name}\n\n"
+                rn_desc = f"##### New: {content_name}\n"
                 if desc:
                     rn_desc += f"- {desc}"
                 if from_version:

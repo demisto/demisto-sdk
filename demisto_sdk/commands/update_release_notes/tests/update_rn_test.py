@@ -74,25 +74,25 @@ class TestRNUpdate:
             - return a markdown string
         """
         expected_result = (
-            "\n#### Classifiers\n\n##### Hello World Classifier\n\n- %%UPDATE_RN%%\n"
-            "\n#### Connections\n\n- **Hello World Connection**\n"
-            "\n#### Dashboards\n\n##### Hello World Dashboard\n\n- %%UPDATE_RN%%\n"
-            "\n#### Incident Fields\n\n- **Hello World IncidentField**\n"
-            "\n#### Incident Types\n\n- **Hello World Incident Type**\n"
-            "\n#### Indicator Fields\n\n- **Hello World Indicator Field**\n"
-            "\n#### Indicator Types\n\n- **Hello World Indicator Type**\n"
-            "\n#### Integrations\n\n##### Hello World Integration\n\n- %%UPDATE_RN%%\n"
-            "\n#### Jobs\n\n##### Hello World Job #1\n\n- %%UPDATE_RN%%\n"
-            "##### Hello World Job #2\n\n- %%UPDATE_RN%%\n"
-            "\n#### Layouts\n\n- **Hello World Layout**\n"
+            "\n#### Classifiers\n##### Hello World Classifier\n- %%UPDATE_RN%%"
+            "\n#### Connections\n- **Hello World Connection**\n"
+            "\n#### Dashboards\n##### Hello World Dashboard\n\n- %%UPDATE_RN%%"
+            "\n#### Incident Fields\n- **Hello World IncidentField**\n"
+            "\n#### Incident Types\n- **Hello World Incident Type**\n"
+            "\n#### Indicator Fields\n- **Hello World Indicator Field**\n"
+            "\n#### Indicator Types\n- **Hello World Indicator Type**\n"
+            "\n#### Integrations\n##### Hello World Integration\n- %%UPDATE_RN%%"
+            "\n#### Jobs\n##### Hello World Job #1\n- %%UPDATE_RN%%"
+            "##### Hello World Job #2\n- %%UPDATE_RN%%"
+            "\n#### Layouts\n- **Hello World Layout**"
             "- **Second Hello World Layout**\n"
-            "\n#### Modules\n\n- **Hello World Generic Module**\n"
-            "\n#### Objects\n\n- **Hello World Generic Definition**\n"
-            "\n#### Playbooks\n\n##### Hello World Playbook\n\n- %%UPDATE_RN%%\n"
-            "\n#### Reports\n\n##### Hello World Report\n\n- %%UPDATE_RN%%\n"
-            "\n#### Scripts\n\n##### Hello World Script\n\n- %%UPDATE_RN%%\n"
-            "\n#### Widgets\n\n##### Hello World Widget\n\n- %%UPDATE_RN%%\n"
-            "\n#### Wizards\n\n##### Hello World Wizard\n\n- %%UPDATE_RN%%\n"
+            "\n#### Modules\n- **Hello World Generic Module**\n"
+            "\n#### Objects\n- **Hello World Generic Definition**\n"
+            "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%"
+            "\n#### Reports\n##### Hello World Report\n- %%UPDATE_RN%%"
+            "\n#### Scripts\n##### Hello World Script\n- %%UPDATE_RN%%"
+            "\n#### Widgets\n##### Hello World Widget\n- %%UPDATE_RN%%"
+            "\n#### Wizards\n##### Hello World Wizard\n- %%UPDATE_RN%%"
         )
         mocker.patch.object(UpdateRN, "get_master_version", return_value="1.0.0")
         mocker.patch(
@@ -199,8 +199,8 @@ class TestRNUpdate:
             - return a markdown string
         """
         expected_result = (
-            "\n#### Object Fields\n\n- **Sample Generic Field**\n"
-            "\n#### Object Types\n\n- **Sample Generic Type**\n"
+            "\n#### Object Fields\n- **Sample Generic Field**\n"
+            "\n#### Object Types\n- **Sample Generic Type**\n"
         )
 
         pack_path = TestRNUpdate.FILES_PATH + "/generic_testing"
@@ -236,7 +236,7 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = "\n#### Playbooks\n\n##### New: Hello World Playbook\n\n- Hello World Playbook description\n"
+        expected_result = "\n#### Playbooks\n##### New: Hello World Playbook\n- Hello World Playbook description\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         mock_master.return_value = "1.0.0"
@@ -309,7 +309,7 @@ class TestRNUpdate:
             - return a markdown string
         """
         expected_result = (
-            "\n#### Playbooks\n\n##### Hello World Playbook\n\n- %%UPDATE_RN%%\n"
+            "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n"
         )
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
@@ -344,7 +344,7 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = "\n#### Incident Fields\n\n- **Hello World IncidentField**\n"
+        expected_result = "\n#### Incident Fields\n- **Hello World IncidentField**\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         mock_master.return_value = "1.0.0"
@@ -375,7 +375,7 @@ class TestRNUpdate:
             - return a markdown string
         """
         expected_result = (
-            "\n#### Integrations\n\n##### Hello World Integration\n\n"
+            "\n#### Integrations\n##### Hello World Integration\n"
             "- Documentation and metadata improvements.\n"
         )
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
@@ -406,7 +406,7 @@ class TestRNUpdate:
         Then:
             - return a markdown string
         """
-        expected_result = "\n#### Integrations\n\n##### HelloWorld\n\n- Documentation and metadata improvements.\n"
+        expected_result = "\n#### Integrations\n##### HelloWorld\n- Documentation and metadata improvements.\n"
         from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
         mock_master.return_value = "1.0.0"
@@ -1226,7 +1226,7 @@ class TestRNUpdate:
 
         assert (
             desc
-            == "##### Integration test\n\n- text for test\n- Command ***xdr-get-incidents*** is deprecated. Use "
+            == "##### Integration test\n- text for test\n- Command ***xdr-get-incidents*** is deprecated. Use "
             "%%% instead.\n"
         )
 

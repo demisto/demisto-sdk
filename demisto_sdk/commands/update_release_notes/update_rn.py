@@ -707,7 +707,7 @@ class UpdateRN:
                 path=path,
             )
 
-            header = f"\n#### {RN_HEADER_BY_FILE_TYPE[_type]}\n\n"
+            header = f"\n#### {RN_HEADER_BY_FILE_TYPE[_type]}\n"
             rn_template_as_dict[header] = rn_template_as_dict.get(header, "") + rn_desc
 
         for key, val in rn_template_as_dict.items():
@@ -754,7 +754,7 @@ class UpdateRN:
                     rn_desc += f" (Available from Cortex XSOAR {from_version})."
                 rn_desc += "\n"
             else:
-                rn_desc = f"##### {content_name}\n\n"
+                rn_desc = f"##### {content_name}\n"
                 if self.update_type == "documentation":
                     rn_desc += "- Documentation and metadata improvements.\n"
                 else:
@@ -773,7 +773,7 @@ class UpdateRN:
                         rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
 
         if docker_image:
-            rn_desc += f"- Updated the Docker image to: *{docker_image}*.\n"
+            rn_desc += f"- Updated the Docker image to: *{docker_image}*."
         return rn_desc
 
     def does_content_item_header_exist_in_rns(
@@ -826,7 +826,7 @@ class UpdateRN:
                 continue
 
             _header_by_type = RN_HEADER_BY_FILE_TYPE.get(_type)
-            rn_desc += "\n\n" + self.build_rn_desc(
+            rn_desc += "\n" + self.build_rn_desc(
                 _type=_type,
                 content_name=content_name,
                 desc=desc,

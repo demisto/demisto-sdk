@@ -1415,7 +1415,6 @@ class TestRNUpdateUnit:
 #### Integrations
 ##### Cortex XDR - IR
 - %%UPDATE_RN%%
-
 ##### Sample
 - %%UPDATE_RN%%
 

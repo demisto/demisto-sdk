@@ -250,9 +250,7 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
     - Ensure the release motes content is valid and as expected.
     """
 
-    expected_rn = (
-        "\n" + "#### Integrations\n" + "##### VMware\n" + "- %%UPDATE_RN%%\n"
-    )
+    expected_rn = "\n" + "#### Integrations\n" + "##### VMware\n" + "- %%UPDATE_RN%%\n"
 
     runner = CliRunner(mix_stderr=False)
     old_files = {join(VMWARE_PACK_PATH, "Integrations", "integration-VMware.yml")}
@@ -346,9 +344,9 @@ def test_update_release_notes_existing(demisto_client, mocker):
         + "#### Integrations\n"
         + "##### New: Azure Feed\n"
         + "- Azure.CloudIPs Feed Integration."
-        + "\n"
+        + "\n\n"
         + "#### Incident Fields\n"
-        + "- **City**\n"
+        + "- **City**\n\n"
     )
 
     input_rn = (

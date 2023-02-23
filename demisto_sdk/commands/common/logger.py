@@ -97,6 +97,11 @@ def _logging_setup(
     file_handler.set_name("file-handler")
     file_handler.setFormatter(fmt=file_formatter)
 
+    logging.basicConfig(
+        handlers=[console_handler, file_handler],
+        level=min(console_handler.level, file_handler.level),
+    )
+
     l: logging.Logger = logging.getLogger("demisto-sdk")
     for current_handler in l.handlers:
         l.removeHandler(current_handler)

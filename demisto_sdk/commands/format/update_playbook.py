@@ -278,6 +278,9 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             logger.info(
                 f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
             )
+            secho_and_info(
+                f"\n*** secho_and_info [red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             logging.getLogger().debug(
                 f"\n*** PlaybookYMLFormat ROOT LOGGER DEBUG [red]Failed to update file {self.source_file}. Error: {err}[/red]"
             )

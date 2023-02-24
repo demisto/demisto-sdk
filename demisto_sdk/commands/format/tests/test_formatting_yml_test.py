@@ -2,6 +2,7 @@ import logging
 import os
 import shutil
 import sys
+import unittest
 import uuid
 from collections import OrderedDict
 from pathlib import Path
@@ -93,7 +94,11 @@ PLAYBOOK_TEST_ARGS = (
 BASIC_YML_TEST_PACKS = [INTEGRATION_TEST_ARGS, SCRIPT_TEST_ARGS, PLAYBOOK_TEST_ARGS]
 
 
-class TestFormatting:
+class TestFormatting(unittest.TestCase):
+    @pytest.fixture(autouse=True)
+    def inject_fixtures(self, caplog):
+        self._caplog = caplog
+
     @pytest.mark.parametrize(
         "source_path, destination_path, formatter, yml_title, file_type",
         BASIC_YML_TEST_PACKS,
@@ -1254,7 +1259,7 @@ class TestFormatting:
 
     @pytest.mark.parametrize(argnames="format_object", argvalues=FORMAT_OBJECT)
     def test_yml_run_format_exception_handling(
-        self, format_object, mocker, capsys, caplog
+        self, format_object, mocker, capsys
     ):
         """
         Given
@@ -1278,16 +1283,16 @@ class TestFormatting:
                 current_handler.level = logging.DEBUG
         logger.propagate = True
 
-        caplog.set_level(logging.DEBUG)
-        caplog.set_level(logging.DEBUG, logger="demisto-sdk")
-        with caplog.at_level(logging.DEBUG):
+        # caplog.set_level(logging.DEBUG)
+        # caplog.set_level(logging.DEBUG, logger="demisto-sdk")
+        with self._caplog.at_level(logging.DEBUG):
             formatter.run_format()
-        print(f"*** {caplog.text=}, {caplog=}")
+        print(f"*** {self._caplog.text=}")
         capsys_captured = capsys.readouterr()
         print(f"*** {capsys_captured.out=}")
         capsys_stdout, _ = capsys.readouterr()
         print(f"*** {capsys_stdout=}")
-        assert "Failed to update file my_file_path. Error: MY ERROR" in caplog.text
+        assert "Failed to update file my_file_path. Error: MY ERROR" in self._caplog.text
 
     TEST_UUID_FORMAT_OBJECT = [PlaybookYMLFormat, TestPlaybookYMLFormat]
 

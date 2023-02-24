@@ -1809,11 +1809,11 @@ FORMAT_OBJECT = [
 @pytest.fixture
 def caplog(caplog: pytest.LogCaptureFixture):
     logger = logging.getLogger("demisto-sdk")
-    # caplog_formatter = logging.Formatter(
-    #     fmt="%(message)s",
-    #     datefmt="%Y-%m-%dT%H:%M:%SZ",
-    # )
-    # caplog.handler.format = caplog_formatter
+    caplog_formatter = logging.Formatter(
+        fmt="%(message)s",
+        datefmt="%Y-%m-%dT%H:%M:%SZ",
+    )
+    caplog.handler.formatter = caplog_formatter
     logger.handlers.append(caplog.handler)
     yield caplog
     logger.handlers.remove(caplog.handler)

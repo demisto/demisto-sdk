@@ -94,7 +94,7 @@ PLAYBOOK_TEST_ARGS = (
 BASIC_YML_TEST_PACKS = [INTEGRATION_TEST_ARGS, SCRIPT_TEST_ARGS, PLAYBOOK_TEST_ARGS]
 
 
-class TestFormatting(unittest.TestCase):
+class TestFormatting():
     @pytest.fixture(autouse=True)
     def inject_fixtures(self, caplog):
         self._caplog = caplog

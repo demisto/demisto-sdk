@@ -1260,7 +1260,7 @@ class TestFormatting():
 
     @pytest.mark.parametrize(argnames="format_object", argvalues=FORMAT_OBJECT)
     def test_yml_run_format_exception_handling(
-        self, format_object, mocker
+        format_object, mocker, caplog
     ):
         """
         Given
@@ -1285,10 +1285,13 @@ class TestFormatting():
         logger.propagate = True
 
         self._caplog.set_level(logging.DEBUG)
+        caplog.set_level(logging.DEBUG)
         formatter.run_format()
-        print(f"*** {self._caplog.text=}")
-        assert "Failed to update file my_file_path. Error: MY ERROR" in self._caplog.text
+        # print(f"*** {self._caplog.text=}")
+        print(f"*** {caplog.text=}")
+        # assert "Failed to update file my_file_path. Error: MY ERROR" in caplog.text
         # assert "Failed to update file my_file_path. Error: MY ERROR" in self._caplog.text
+        assert "Failed to update file my_file_path. Error: MY ERROR" in caplog.text
 
     TEST_UUID_FORMAT_OBJECT = [PlaybookYMLFormat, TestPlaybookYMLFormat]
 

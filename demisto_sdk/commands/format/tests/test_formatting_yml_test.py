@@ -2,7 +2,6 @@ import logging
 import os
 import shutil
 import sys
-import unittest
 import uuid
 from collections import OrderedDict
 from pathlib import Path
@@ -94,11 +93,11 @@ PLAYBOOK_TEST_ARGS = (
 BASIC_YML_TEST_PACKS = [INTEGRATION_TEST_ARGS, SCRIPT_TEST_ARGS, PLAYBOOK_TEST_ARGS]
 
 
-class TestFormatting():
-    @pytest.fixture(autouse=True)
-    def inject_fixtures(self, caplog):
-        print(f'*** Saving caplog')
-        self._caplog = caplog
+class TestFormatting:
+    # @pytest.fixture(autouse=True)
+    # def inject_fixtures(self, caplog):
+    #     print("*** Saving caplog")
+    #     self._caplog = caplog
 
     @pytest.mark.parametrize(
         "source_path, destination_path, formatter, yml_title, file_type",
@@ -1251,48 +1250,6 @@ class TestFormatting():
     def exception_raise(file_type=""):
         raise ValueError("MY ERROR")
 
-    FORMAT_OBJECT = [
-        PlaybookYMLFormat,
-        IntegrationYMLFormat,
-        TestPlaybookYMLFormat,
-        ScriptYMLFormat,
-    ]
-
-    @pytest.mark.parametrize(argnames="format_object", argvalues=FORMAT_OBJECT)
-    def test_yml_run_format_exception_handling(
-        format_object, mocker, caplog
-    ):
-        """
-        Given
-            - A YML object formatter
-        When
-            - Run run_format command and exception is raised.
-        Then
-            - Ensure the error is printed.
-        """
-        formatter = format_object(input="my_file_path")
-        mocker.patch.object(
-            BaseUpdateYML, "update_yml", side_effect=self.exception_raise
-        )
-        mocker.patch.object(
-            PlaybookYMLFormat, "update_tests", side_effect=self.exception_raise
-        )
-
-        logger = logging.getLogger("demisto-sdk")
-        for current_handler in logger.handlers:
-            if current_handler.name == "console-handler":
-                current_handler.level = logging.DEBUG
-        logger.propagate = True
-
-        self._caplog.set_level(logging.DEBUG)
-        caplog.set_level(logging.DEBUG)
-        formatter.run_format()
-        # print(f"*** {self._caplog.text=}")
-        print(f"*** {caplog.text=}")
-        # assert "Failed to update file my_file_path. Error: MY ERROR" in caplog.text
-        # assert "Failed to update file my_file_path. Error: MY ERROR" in self._caplog.text
-        assert "Failed to update file my_file_path. Error: MY ERROR" in caplog.text
-
     TEST_UUID_FORMAT_OBJECT = [PlaybookYMLFormat, TestPlaybookYMLFormat]
 
     @pytest.mark.parametrize("format_object", TEST_UUID_FORMAT_OBJECT)
@@ -1839,3 +1796,48 @@ class TestFormatting():
 
         script_yml_format.remove_nativeimage_tag_if_exist()
         assert "nativeimage" not in script_yml_format.data
+
+
+FORMAT_OBJECT = [
+    PlaybookYMLFormat,
+    IntegrationYMLFormat,
+    TestPlaybookYMLFormat,
+    ScriptYMLFormat,
+]
+
+
+@pytest.mark.parametrize(
+    argnames="format_object",
+    argvalues=FORMAT_OBJECT,
+)
+def test_yml_run_format_exception_handling(format_object, mocker, caplog):
+    """
+    Given
+        - A YML object formatter
+    When
+        - Run run_format command and exception is raised.
+    Then
+        - Ensure the error is printed.
+    """
+    formatter = format_object(input="my_file_path")
+    mocker.patch.object(
+        BaseUpdateYML, "update_yml", side_effect=TestFormatting.exception_raise
+    )
+    mocker.patch.object(
+        PlaybookYMLFormat, "update_tests", side_effect=TestFormatting.exception_raise
+    )
+
+    logger = logging.getLogger("demisto-sdk")
+    for current_handler in logger.handlers:
+        if current_handler.name == "console-handler":
+            current_handler.level = logging.DEBUG
+    logger.propagate = True
+
+    # self._caplog.set_level(logging.DEBUG)
+    caplog.set_level(logging.DEBUG)
+    formatter.run_format()
+    # print(f"*** {self._caplog.text=}")
+    print(f"*** {caplog.text=}")
+    # assert "Failed to update file my_file_path. Error: MY ERROR" in caplog.text
+    # assert "Failed to update file my_file_path. Error: MY ERROR" in self._caplog.text
+    assert "Failed to update file my_file_path. Error: MY ERROR" in caplog.text

@@ -97,6 +97,7 @@ BASIC_YML_TEST_PACKS = [INTEGRATION_TEST_ARGS, SCRIPT_TEST_ARGS, PLAYBOOK_TEST_A
 class TestFormatting():
     @pytest.fixture(autouse=True)
     def inject_fixtures(self, caplog):
+        print(f'*** Saving caplog')
         self._caplog = caplog
 
     @pytest.mark.parametrize(
@@ -1283,10 +1284,10 @@ class TestFormatting():
                 current_handler.level = logging.DEBUG
         logger.propagate = True
 
-        with self._caplog.at_level(logging.DEBUG):
-            formatter.run_format()
-            print(f"*** {self._caplog.text=}")
-            assert "Failed to update file my_file_path. Error: MY ERROR" in self._caplog.text
+        self._caplog.set_level(logging.DEBUG)
+        formatter.run_format()
+        print(f"*** {self._caplog.text=}")
+        assert "Failed to update file my_file_path. Error: MY ERROR" in self._caplog.text
         # assert "Failed to update file my_file_path. Error: MY ERROR" in self._caplog.text
 
     TEST_UUID_FORMAT_OBJECT = [PlaybookYMLFormat, TestPlaybookYMLFormat]

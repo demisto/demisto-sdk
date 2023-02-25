@@ -275,7 +275,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            logger.debug(
+            secho_and_info(
                 f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
             )
             return ERROR_RETURN_CODE

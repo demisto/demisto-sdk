@@ -1840,20 +1840,13 @@ def test_yml_run_format_exception_handling(format_object, mocker, capsys, caplog
         PlaybookYMLFormat, "update_tests", side_effect=TestFormatting.exception_raise
     )
 
-    logger = logging.getLogger("demisto-sdk")
-    for current_handler in logger.handlers:
-        current_handler.level = logging.DEBUG
-    logger.propagate = True
+    # logger = logging.getLogger("demisto-sdk")
+    # for current_handler in logger.handlers:
+    #     current_handler.level = logging.DEBUG
+    # logger.propagate = True
 
     # self._caplog.set_level(logging.DEBUG)
     with caplog.at_level(logging.DEBUG):
-        # import pdb; pdb.set_trace()
         formatter.run_format()
-        # print(f"*** {self._caplog.text=}")
-        print(f"*** {caplog.text=}")
         captured = capsys.readouterr().out
-        # print(f"*** {captured=}")
-        # assert "Failed to update file my_file_path. Error: MY ERROR" in caplog.text
-        # assert "Failed to update file my_file_path. Error: MY ERROR" in self._caplog.text
-        # assert 1 == 0
         assert "Failed to update file my_file_path. Error: MY ERROR" in captured

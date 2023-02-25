@@ -5,6 +5,7 @@ import click
 
 from demisto_sdk.commands.common.constants import TYPE_JS, TYPE_PWSH
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS,
     is_iron_bank_pack,
@@ -130,7 +131,7 @@ class ScriptYMLFormat(BaseUpdateYML):
             self.save_yml_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            logger.debug(
+            secho_and_info(
                 f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
             )
             return ERROR_RETURN_CODE

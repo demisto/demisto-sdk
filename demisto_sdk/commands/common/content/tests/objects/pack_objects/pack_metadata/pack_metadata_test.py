@@ -292,7 +292,7 @@ def test_load_user_metadata_advanced(repo):
     assert pack_1_metadata.tags == ["tag1", "Use Case"]
 
 
-def test_load_user_metadata_no_metadata_file(repo, capsys, monkeypatch):
+def test_load_user_metadata_no_metadata_file(repo, monkeypatch, caplog):
     """
     When:
         - Dumping a pack with no pack_metadata file.
@@ -305,6 +305,8 @@ def test_load_user_metadata_no_metadata_file(repo, capsys, monkeypatch):
 
     """
     import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata.pack_metadata as metadata_class
+
+    logger.propagate = True
 
     metadata_class.logger = logger
     monkeypatch.setenv("COLUMNS", "1000")
@@ -326,11 +328,10 @@ def test_load_user_metadata_no_metadata_file(repo, capsys, monkeypatch):
     pack_1_metadata = content_object_pack.metadata
     pack_1_metadata.load_user_metadata("Pack1", "Pack Number 1", pack_1.path, logger)
 
-    captured = capsys.readouterr()
-    assert "Pack Number 1 pack is missing pack_metadata.json file." in captured.out
+    assert "Pack Number 1 pack is missing pack_metadata.json file." in caplog.text
 
 
-def test_load_user_metadata_invalid_price(repo, capsys, monkeypatch):
+def test_load_user_metadata_invalid_price(repo, monkeypatch, caplog):
     """
     When:
         - Dumping a pack with invalid price in pack_metadata file.
@@ -343,6 +344,8 @@ def test_load_user_metadata_invalid_price(repo, capsys, monkeypatch):
 
     """
     import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata.pack_metadata as metadata_class
+
+    logger.propagate = True
 
     metadata_class.logger = logger
     monkeypatch.setenv("COLUMNS", "1000")
@@ -362,14 +365,13 @@ def test_load_user_metadata_invalid_price(repo, capsys, monkeypatch):
     content_object_pack = Pack(pack_1.path)
     pack_1_metadata = content_object_pack.metadata
     pack_1_metadata.load_user_metadata("Pack1", "Pack Number 1", pack_1.path, logger)
-    captured = capsys.readouterr()
 
     assert (
-        "Pack Number 1 pack price is not valid. The price was set to 0." in captured.out
+        "Pack Number 1 pack price is not valid. The price was set to 0." in caplog.text
     )
 
 
-def test_load_user_metadata_bad_pack_metadata_file(repo, capsys, monkeypatch):
+def test_load_user_metadata_bad_pack_metadata_file(repo, monkeypatch, caplog):
     """
     When:
         - Dumping a pack with invalid pack_metadata file.
@@ -383,6 +385,8 @@ def test_load_user_metadata_bad_pack_metadata_file(repo, capsys, monkeypatch):
     """
     import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata.pack_metadata as metadata_class
 
+    logger.propagate = True
+
     metadata_class.logger = logger
     monkeypatch.setenv("COLUMNS", "1000")
 
@@ -393,5 +397,4 @@ def test_load_user_metadata_bad_pack_metadata_file(repo, capsys, monkeypatch):
     pack_1_metadata = content_object_pack.metadata
     pack_1_metadata.load_user_metadata("Pack1", "Pack Number 1", pack_1.path, logger)
 
-    captured = capsys.readouterr()
-    assert "Failed loading Pack Number 1 user metadata." in captured.out
+    assert "Failed loading Pack Number 1 user metadata." in caplog.text

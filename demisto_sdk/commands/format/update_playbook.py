@@ -267,25 +267,8 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             super().run_format()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            # logger = logging.getLogger("demisto-sdk")
-            # for current_handler in logger.handlers:
-            #     if current_handler.name == "console-handler":
-            #         current_handler.level = logging.DEBUG
-            # logger.propagate = True
-            print(
-                f"*** PlaybookYMLFormat.run_format, {logger.handlers=}, {logger.propagate=}"
-            )
-            logger.info(
-                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
-            )
             secho_and_info(
-                f"\n*** secho_and_info [red]Failed to update file {self.source_file}. Error: {err}[/red]"
-            )
-            logging.getLogger().debug(
-                f"\n*** PlaybookYMLFormat ROOT LOGGER DEBUG [red]Failed to update file {self.source_file}. Error: {err}[/red]"
-            )
-            logging.getLogger().info(
-                f"\n*** PlaybookYMLFormat ROOT LOGGER INFO [red]Failed to update file {self.source_file}. Error: {err}[/red]"
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
             )
             return ERROR_RETURN_CODE
 

@@ -104,7 +104,7 @@ def generate_integration_context(
     input_path: str,
     examples: Optional[str] = None,
     insecure: bool = False,
-    output_path: Optional[str] = None,
+    verbose:bool = False,
     output_path: Optional[str] = None,
 ):
     """Generate integration command contexts in-place.

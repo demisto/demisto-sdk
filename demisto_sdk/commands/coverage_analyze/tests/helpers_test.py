@@ -136,7 +136,7 @@ class TestParseReportType:
 
 class TestExportReport:
     def setup(self):
-        logging_setup(3).propagate = True
+        logging.getLogger("demisto-sdk").propagate = True
 
     def foo(self):
         pass
@@ -342,7 +342,7 @@ class TestFixFilePath:
 
     @pytest.mark.parametrize("cov_file_names", data_test_with_two_files)
     def test_with_two_files(self, caplog, tmpdir, cov_file_names):
-        logging_setup(3).propagate = True
+        logging.getLogger("demisto-sdk").propagate = True
         cov_files_paths = []
         for cov_file_name in cov_file_names:
             named_coverage_path = tmpdir.join(cov_file_name)
@@ -428,15 +428,23 @@ class TestGetCoverageObj:
         )
 
 
+LOGGING_LEVELS = [
+    (logging.DEBUG, 10),
+    (logging.INFO, 20),
+    (logging.WARNING, 30),
+    (logging.ERROR, 40),
+    (logging.CRITICAL, 50),
+    ("DEBUG", 10),
+    ("INFO", 20),
+    ("WARNING", 30),
+    ("ERROR", 40),
+    ("CRITICAL", 50),
+]
+
+
 @pytest.mark.parametrize(
     "console_log_threshold, threshold_value",
-    [
-        (logging.DEBUG, 10),
-        (logging.INFO, 20),
-        (logging.WARNING, 30),
-        (logging.ERROR, 40),
-        (logging.CRITICAL, 50),
-    ],
+    LOGGING_LEVELS,
 )
 def test_console_log_threshold(console_log_threshold: int, threshold_value: int):
     logger = logging_setup(console_log_threshold=console_log_threshold)
@@ -447,13 +455,7 @@ def test_console_log_threshold(console_log_threshold: int, threshold_value: int)
 
 @pytest.mark.parametrize(
     "file_log_threshold, threshold_value",
-    [
-        (logging.DEBUG, 10),
-        (logging.INFO, 20),
-        (logging.WARNING, 30),
-        (logging.ERROR, 40),
-        (logging.CRITICAL, 50),
-    ],
+    LOGGING_LEVELS,
 )
 def test_file_log_threshold(file_log_threshold: int, threshold_value: int):
     logger = logging_setup(file_log_threshold=file_log_threshold)

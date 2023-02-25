@@ -78,12 +78,12 @@ def _logging_setup(
         # level=console_log_threshold,
         # rich_tracebacks=True,
     )
+    console_handler.set_name("console-handler")
     console_handler.setLevel(console_log_threshold)
     console_formatter = logging.Formatter(
         fmt="%(message)s",
         datefmt=DATE_FORMAT,
     )
-    console_handler.set_name("console-handler")
     console_handler.setFormatter(fmt=console_formatter)
 
     file_handler = RotatingFileHandler(
@@ -92,12 +92,12 @@ def _logging_setup(
         maxBytes=1048576,
         backupCount=10,
     )
+    file_handler.set_name("file-handler")
     file_handler.setLevel(file_log_threshold)
     file_formatter = logging.Formatter(
         fmt="[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(message)s",
         datefmt=DATE_FORMAT,
     )
-    file_handler.set_name("file-handler")
     file_handler.setFormatter(fmt=file_formatter)
 
     logging.basicConfig(
@@ -105,15 +105,15 @@ def _logging_setup(
         level=min(console_handler.level, file_handler.level),
     )
 
-    l: logging.Logger = logging.getLogger("demisto-sdk")
-    for current_handler in l.handlers:
-        l.removeHandler(current_handler)
-    l.addHandler(console_handler)
-    l.addHandler(file_handler)
-    l.level = min(console_handler.level, file_handler.level)
-    l.propagate = False
+    ret_value: logging.Logger = logging.getLogger("demisto-sdk")
+    while ret_value.handlers:
+        ret_value.removeHandler(ret_value.handlers[0])
+    ret_value.addHandler(console_handler)
+    ret_value.addHandler(file_handler)
+    ret_value.level = min(console_handler.level, file_handler.level)
+    ret_value.propagate = False
 
-    return l
+    return ret_value
 
 
 # logger: logging.Logger = logging_setup()

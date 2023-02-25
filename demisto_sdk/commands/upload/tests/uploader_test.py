@@ -805,15 +805,16 @@ def test_print_summary_successfully_uploaded_files(
         "│ SomeIntegrationName │ Integration │",
         "╘═════════════════════╧═════════════╛",
     ]
-    assert expected_upload_summary_title in caplog.text
-    assert expected_successfully_uploaded_files_title in caplog.text
-    for current_line in expected_successfully_uploaded_files_array:
-        assert current_line in caplog.text
+    # TODO Uncomment when changing secho_and_info to logger.debug
+    # assert expected_upload_summary_title in caplog.text
+    # assert expected_successfully_uploaded_files_title in caplog.text
+    # for current_line in expected_successfully_uploaded_files_array:
+    #     assert current_line in caplog.text
 
-    expected_successfully_uploaded_files = "\n".join(
-        expected_successfully_uploaded_files_array
-    )
-    assert expected_successfully_uploaded_files in caplog.text
+    # expected_successfully_uploaded_files = "\n".join(
+    #     expected_successfully_uploaded_files_array
+    # )
+    # assert expected_successfully_uploaded_files in caplog.text
     # verify exactly 3 calls to print_color
     assert secho.call_count == 3
     assert secho.call_args_list[0][0][0] == expected_upload_summary_title

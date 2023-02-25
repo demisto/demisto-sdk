@@ -87,32 +87,29 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 ],
                 catch_exceptions=False,
             )
-        assert "# Pack ID: FindDependencyPack" in result.output
-        assert "### Scripts" in result.output
-        assert "### Playbooks" in result.output
-        assert "### Layouts" in result.output
-        assert "### Incident Fields" in result.output
-        assert "### Indicator Types" in result.output
-        assert "### Integrations" in result.output
-        assert "### Incident Types" in result.output
-        assert "### Classifiers" in result.output
-        assert "### Mappers" in result.output
-        assert "### Widgets" in result.output
-        assert "### Dashboards" in result.output
-        assert "### Reports" in result.output
-        assert "### Generic Types" in result.output
-        assert "### Generic Fields" in result.output
-        assert "### Generic Modules" in result.output
-        assert "### Jobs" in result.output
+        assert "# Pack ID: FindDependencyPack" in result.outerr
+        assert "### Scripts" in result.outerr
+        assert "### Playbooks" in result.outerr
+        assert "### Layouts" in result.outerr
+        assert "### Incident Fields" in result.outerr
+        assert "### Indicator Types" in result.outerr
+        assert "### Integrations" in result.outerr
+        assert "### Incident Types" in result.outerr
+        assert "### Classifiers" in result.outerr
+        assert "### Mappers" in result.outerr
+        assert "### Widgets" in result.outerr
+        assert "### Dashboards" in result.outerr
+        assert "### Reports" in result.outerr
+        assert "### Generic Types" in result.outerr
+        assert "### Generic Fields" in result.outerr
+        assert "### Generic Modules" in result.outerr
+        assert "### Jobs" in result.outerr
         assert (
-            "All level dependencies are: []" in result.output
+            "All level dependencies are: []" in result.outerr
         )  # last log is regarding all the deps
         assert result.exit_code == 0
-        assert result.stderr == ""
 
-    def test_integration_find_dependencies_sanity_with_id_set(
-        self, repo, mocker, caplog
-    ):
+    def test_integration_find_dependencies_sanity_with_id_set(self, repo, mocker):
         """
         Given
         - Valid pack folder
@@ -142,29 +139,27 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         )
         repo.id_set.write_json(id_set)
 
-        with caplog.at_level(logging.DEBUG):
-            # Change working dir to repo
-            with ChangeCWD(integration.repo_path):
-                logger.propagate = True
-                runner = CliRunner(mix_stderr=False)
-                result = runner.invoke(
-                    main,
-                    [
-                        FIND_DEPENDENCIES_CMD,
-                        "-i",
-                        "Packs/" + os.path.basename(repo.packs[0].path),
-                        "-idp",
-                        repo.id_set.path,
-                        "--no-update",
-                    ],
-                )
+        with ChangeCWD(integration.repo_path):
+            logger.propagate = True
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(
+                main,
+                [
+                    FIND_DEPENDENCIES_CMD,
+                    "-i",
+                    "Packs/" + os.path.basename(repo.packs[0].path),
+                    "-idp",
+                    repo.id_set.path,
+                    "--no-update",
+                ],
+            )
 
             assert (
-                "Found dependencies result for FindDependencyPack pack:" in caplog.text
+                "Found dependencies result for FindDependencyPack pack:"
+                in result.stderr
             )
-            assert "{}" in caplog.text
+            assert "{}" in result.stderr
             assert result.exit_code == 0
-            assert result.stderr == ""
 
     def test_integration_find_dependencies_not_a_pack(self, repo):
         """
@@ -260,8 +255,6 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         )
 
         repo.id_set.write_json(id_set)
-        # mocker.patch("click.secho")
-        # from click import secho
         monkeypatch.setenv("COLUMNS", "1000")
 
         # Change working dir to repo
@@ -280,16 +273,13 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 ],
             )
 
-        # assert secho.call_args_list[0][0][0] == "\n# Pack ID: FindDependencyPack2"
-        assert "# Pack ID: FindDependencyPack2" in result.stdout
-        # assert "All level dependencies are:" in secho.call_args_list[-1][0][0]
-        assert "All level dependencies are:" in result.stdout
+        assert "# Pack ID: FindDependencyPack2" in result.stderr
+        assert "All level dependencies are:" in result.stderr
         assert (
-            "Found dependencies result for FindDependencyPack2 pack:" in result.output
+            "Found dependencies result for FindDependencyPack2 pack:" in result.stderr
         )
-        assert '"display_name": "FindDependencyPack1"' in result.output
+        assert '"display_name": "FindDependencyPack1"' in result.stderr
         assert result.exit_code == 0
-        assert result.stderr == ""
 
     def test_wrong_path(self, pack):
         with ChangeCWD(pack.repo_path):

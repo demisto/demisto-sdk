@@ -2947,13 +2947,10 @@ class PackDependencies:
         if update_pack_metadata:
             update_pack_metadata_with_dependencies(pack_name, first_level_dependencies)
 
-        if not silent_mode:
-            # print the found pack dependency results
-            secho_and_info(
-                f"[bold]Found dependencies result for {pack_name} pack:[/bold]"
-            )
-            dependency_result = json.dumps(first_level_dependencies, indent=4)
-            secho_and_info(f"[bold]{dependency_result}[/bold]")
+        # print the found pack dependency results
+        secho_and_info(f"[bold]Found dependencies result for {pack_name} pack:[/bold]")
+        dependency_result = json.dumps(first_level_dependencies, indent=4)
+        secho_and_info(f"[bold]{dependency_result}[/bold]")
 
         return first_level_dependencies
 

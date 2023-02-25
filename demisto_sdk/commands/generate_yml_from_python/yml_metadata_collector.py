@@ -178,10 +178,6 @@ class YMLMetadataCollector:
         """A setter for collect_data."""
         self.collect_data = value
 
-    def set_verbose(self, value: bool):
-        """A setter for collect_data."""
-        self.verbose = value
-
     def command(
         self,
         command_name: str,

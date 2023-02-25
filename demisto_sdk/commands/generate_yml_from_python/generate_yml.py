@@ -45,13 +45,12 @@ class YMLGenerator:
         "from CommonServerPython import BaseClient, CommandResults, datetime"
     )
 
-    def __init__(self, filename: str, verbose: bool = False, force: bool = False):
+    def __init__(self, filename: str, force: bool = False):
         self.functions: list = []
         self.filename = os.path.abspath(filename)
         self.metadata_collector: Optional[YMLMetadataCollector] = None
         self.file_import: Optional[Any] = None
         self.metadata: Optional[MetadataToDict] = None
-        self.verbose = verbose
         self.force = force
         self.is_generatable_file: bool = self.import_the_metadata_collector()
 
@@ -116,12 +115,9 @@ class YMLGenerator:
             return
         # Collect the wrapped functions with the details.
         self.collect_functions()
-        previous_verbose_setting = False
         # Make sure when they are ran, only collecting data will be performed.
         if self.metadata_collector:
             self.metadata_collector.set_collect_data(True)
-            previous_verbose_setting = self.metadata_collector.verbose
-            self.metadata_collector.set_verbose(self.verbose)
         # Run the functions and by that, collect the data.
         self.run_functions()
         # Write the yml file according to the collected details.
@@ -129,7 +125,6 @@ class YMLGenerator:
         # Make sure the functions are back to normal running state.
         if self.metadata_collector:
             self.metadata_collector.set_collect_data(False)
-            self.metadata_collector.set_verbose(previous_verbose_setting)
         # Remove imports from file
         self.remove_collector_imports()
 
@@ -204,7 +199,6 @@ class YMLGenerator:
             if self.metadata_collector:
                 self.metadata = MetadataToDict(
                     metadata_collector=self.metadata_collector,
-                    verbose=self.verbose,
                     file_import=self.file_import,
                 )
                 self.metadata.build_integration_dict()
@@ -239,12 +233,10 @@ class MetadataToDict:
     def __init__(
         self,
         metadata_collector: YMLMetadataCollector,
-        verbose: bool = False,
         file_import: Optional[Any] = None,
     ):
         self.mc = metadata_collector
         self.metadata_dict: dict = {}
-        self.verbose = verbose
         self.file_import = file_import
 
     def build_integration_dict(self):
@@ -335,7 +327,7 @@ class MetadataToDict:
         logger.debug(f"Parsing metadata for command {command.name}...")
 
         description, in_args, out_args = self.google_docstring_to_dict(
-            command.function.__doc__, self.verbose, self.file_import
+            command.function.__doc__, self.file_import
         )
 
         command_dict: dict = {
@@ -378,8 +370,7 @@ class MetadataToDict:
         if command.execution is not None:
             command_dict["execution"] = command.execution
 
-        if self.verbose:
-            click.secho(f"Completed parsing metadata for command {command.name}.")
+        loger.debug(f"Completed parsing metadata for command {command.name}.")
 
         return command_dict
 
@@ -611,7 +602,6 @@ class MetadataToDict:
     @staticmethod
     def google_docstring_to_dict(
         docstring: Optional[str],
-        verbose: bool = False,
         file_import: Optional[Any] = None,
     ) -> Tuple[str, list, list]:
         """Parse google style docstring."""
@@ -641,7 +631,7 @@ class MetadataToDict:
                     arg_lines = section[1].split(f'\n{spaces_num*" "}')
                     for arg_line in arg_lines:
                         in_arg, in_arg_type = MetadataToDict.parse_in_argument_lines(
-                            arg_line, verbose, file_import
+                            arg_line, file_import
                         )
                         if in_arg:
                             input_list.append((in_arg, in_arg_type))
@@ -652,7 +642,7 @@ class MetadataToDict:
                     out_lines = section[1].split(f'\n{spaces_num*" "}')
                     for out_line in out_lines:
                         out_arg = MetadataToDict.parse_out_argument_lines(
-                            out_line, verbose
+                            out_line,
                         )
                         if out_arg:
                             output_list.append(out_arg)
@@ -661,7 +651,7 @@ class MetadataToDict:
 
     @staticmethod
     def parse_in_argument_lines(
-        argument_line: str, verbose: bool = False, file_import: Optional[Any] = None
+        argument_line: str, file_import: Optional[Any] = None
     ) -> Tuple[Optional[InputArgument], Any]:
         """Parse input argument line from docstring."""
         regex_args_with_type = r"^(?: *|\t)(?P<name>\*{0,4}(\w+|\w+\s|\w+\.\w+\s)\((?P<type>.*)\)):(?P<desc>(\s|\S)*)"
@@ -699,7 +689,7 @@ class MetadataToDict:
 
     @staticmethod
     def parse_out_argument_lines(
-        argument_line: str, verbose: bool = False
+        argument_line: str,
     ) -> Optional[OutputArgument]:
         """Parse output argument line from docstring."""
         regex_arguments = r"^(?: *|\t)(?P<name>\*{0,4}(\w+|\w+\s|\w+\.\w+\s)\((?P<type>.*)\)):(?P<desc>(\s|\S)*)"

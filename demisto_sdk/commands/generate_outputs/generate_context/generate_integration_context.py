@@ -18,15 +18,14 @@ from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs impor
 logger = logging.getLogger("demisto-sdk")
 
 
-def dict_from_outputs_str(command: str, outputs: str, verbose=False):
+def dict_from_outputs_str(command: str, outputs: str):
     """Create a pythonic dict from the yml outputs string.
 
     Args:
         command: the command to parse.
         outputs: the json outputs to parse into a dict.
-        verbose: whether to run in verbose mode or not.
     """
-    dict_output = parse_json(outputs, command, "", verbose, return_object=True)
+    dict_output = parse_json(outputs, command, "", return_object=True)
     return dict_output
 
 
@@ -105,7 +104,7 @@ def generate_integration_context(
     input_path: str,
     examples: Optional[str] = None,
     insecure: bool = False,
-    verbose: bool = False,
+    output_path: Optional[str] = None,
     output_path: Optional[str] = None,
 ):
     """Generate integration command contexts in-place.
@@ -132,7 +131,7 @@ def generate_integration_context(
             # Generate the examples with a local server
             for _, _, outputs in example:
                 output_with_contexts = dict_from_outputs_str(
-                    command, outputs, verbose=verbose
+                    command, outputs
                 )
                 output_contexts = output_with_contexts.get("outputs")
                 yml_data = insert_outputs(yml_data, command, output_contexts)
@@ -142,6 +141,7 @@ def generate_integration_context(
         write_yml(output_path, yml_data)
     except ValueError as ex:
         if verbose:
+            # TODO Handle this verbose
             raise
         else:
             print_error(f"Error: {str(ex)}")

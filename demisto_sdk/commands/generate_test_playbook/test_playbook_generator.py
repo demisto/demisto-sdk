@@ -367,6 +367,7 @@ class PlaybookTestsGenerator:
                 fg="bright_red",
             )
             if self.verbose:
+                # TODO Handle this verbose
                 raise FileNotFoundError()
             else:
                 return

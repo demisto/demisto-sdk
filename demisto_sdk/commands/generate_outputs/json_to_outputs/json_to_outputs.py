@@ -182,6 +182,7 @@ def parse_json(
         data = json.loads(data)
     except ValueError as ex:
         if verbose:
+            # TODO Handle this verbose
             print_error(str(ex))
 
         raise ValueError("Invalid input JSON")

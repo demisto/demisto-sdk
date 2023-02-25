@@ -168,6 +168,7 @@ def generate_script_doc(
 
     except Exception as ex:
         if verbose:
+            # TODO Handle this verbose
             raise
         else:
             print_error(f"Error: {str(ex)}")

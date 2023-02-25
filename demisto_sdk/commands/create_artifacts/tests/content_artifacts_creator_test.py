@@ -1,3 +1,4 @@
+import logging
 from contextlib import contextmanager
 from filecmp import dircmp
 from pathlib import Path
@@ -12,12 +13,13 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
 from TestSuite.test_tools import ChangeCWD
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -169,7 +171,7 @@ def test_dump_pack(mock_git):
         dump_pack,
     )
 
-    cca.logger = logging_setup(0)
+    cca.logger = logger
 
     with temp_dir() as temp:
         config = ArtifactsManager(
@@ -207,7 +209,7 @@ def test_contains_indicator_type():
     import demisto_sdk.commands.create_artifacts.content_artifacts_creator as cca
     from demisto_sdk.commands.zip_packs.packs_zipper import PacksZipper
 
-    cca.logger = logging_setup(0)
+    cca.logger = logger
 
     with temp_dir() as temp:
         packs_zipper = PacksZipper(
@@ -353,7 +355,7 @@ def test_duplicate_file_failure(mock_git):
 
 
 @pytest.mark.parametrize("key, tool", [("some_key", False), ("", True)])
-def test_sign_packs_failure(repo, capsys, key, tool, monkeypatch):
+def test_sign_packs_failure(repo, caplog, key, tool, monkeypatch):
     """
     When:
         - Signing a pack.
@@ -366,13 +368,15 @@ def test_sign_packs_failure(repo, capsys, key, tool, monkeypatch):
         - Verify that exceptions are written to the logger.
 
     """
+    logger.propagate = True
+
     import demisto_sdk.commands.create_artifacts.content_artifacts_creator as cca
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
         ArtifactsManager,
         sign_packs,
     )
 
-    cca.logger = logging_setup(2)
+    cca.logger = logger
     monkeypatch.setenv("COLUMNS", "1000")
 
     with ChangeCWD(repo.path):
@@ -395,10 +399,9 @@ def test_sign_packs_failure(repo, capsys, key, tool, monkeypatch):
 
     sign_packs(artifact_manager)
 
-    captured = capsys.readouterr()
     assert (
         "Failed to sign packs. In order to do so, you need to provide both signature_key and "
-        "sign_directory arguments." in captured.out
+        "sign_directory arguments." in caplog.text
     )
 
 

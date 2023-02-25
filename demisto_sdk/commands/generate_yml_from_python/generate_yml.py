@@ -370,7 +370,7 @@ class MetadataToDict:
         if command.execution is not None:
             command_dict["execution"] = command.execution
 
-        loger.debug(f"Completed parsing metadata for command {command.name}.")
+        logger.debug(f"Completed parsing metadata for command {command.name}.")
 
         return command_dict
 

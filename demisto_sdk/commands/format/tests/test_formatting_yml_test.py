@@ -94,11 +94,6 @@ BASIC_YML_TEST_PACKS = [INTEGRATION_TEST_ARGS, SCRIPT_TEST_ARGS, PLAYBOOK_TEST_A
 
 
 class TestFormatting:
-    # @pytest.fixture(autouse=True)
-    # def inject_fixtures(self, caplog):
-    #     print("*** Saving caplog")
-    #     self._caplog = caplog
-
     @pytest.mark.parametrize(
         "source_path, destination_path, formatter, yml_title, file_type",
         BASIC_YML_TEST_PACKS,
@@ -1806,24 +1801,11 @@ FORMAT_OBJECT = [
 ]
 
 
-# @pytest.fixture
-# def caplog(caplog: pytest.LogCaptureFixture):
-#     logger = logging.getLogger("demisto-sdk")
-#     caplog_formatter = logging.Formatter(
-#         fmt="%(message)s",
-#         datefmt="%Y-%m-%dT%H:%M:%SZ",
-#     )
-#     caplog.handler.formatter = caplog_formatter
-#     logger.handlers.append(caplog.handler)
-#     yield caplog
-#     logger.handlers.remove(caplog.handler)
-
-# TODO Uncomment
 @pytest.mark.parametrize(
     argnames="format_object",
     argvalues=FORMAT_OBJECT,
 )
-def test_yml_run_format_exception_handling(format_object, mocker, capsys, caplog):
+def test_yml_run_format_exception_handling(format_object, mocker, capsys):
     """
     Given
         - A YML object formatter
@@ -1840,13 +1822,6 @@ def test_yml_run_format_exception_handling(format_object, mocker, capsys, caplog
         PlaybookYMLFormat, "update_tests", side_effect=TestFormatting.exception_raise
     )
 
-    # logger = logging.getLogger("demisto-sdk")
-    # for current_handler in logger.handlers:
-    #     current_handler.level = logging.DEBUG
-    # logger.propagate = True
-
-    # self._caplog.set_level(logging.DEBUG)
-    with caplog.at_level(logging.DEBUG):
-        formatter.run_format()
-        captured = capsys.readouterr().out
-        assert "Failed to update file my_file_path. Error: MY ERROR" in captured
+    formatter.run_format()
+    captured = capsys.readouterr().out
+    assert "Failed to update file my_file_path. Error: MY ERROR" in captured

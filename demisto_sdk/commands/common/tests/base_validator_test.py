@@ -1,3 +1,4 @@
+import logging
 import os
 from os.path import join
 
@@ -80,7 +81,7 @@ def test_handle_error_on_unignorable_error_codes(mocker, ignored_errors, error_c
     assert f"file_name - [{error_code}]" not in FOUND_FILES_AND_IGNORED_ERRORS
 
 
-def test_handle_error(mocker):
+def test_handle_error(mocker, caplog):
     """
     Given
     - An ignore errors list associated with a file.
@@ -95,7 +96,7 @@ def test_handle_error(mocker):
     - Ensure non ignored errors are in FOUND_FILES_AND_ERRORS list.
     - Ensure ignored error are not in FOUND_FILES_AND_ERRORS and in FOUND_FILES_AND_IGNORED_ERRORS
     """
-    import click
+    logging.getLogger("demisto-sdk").propagate = True
 
     base_validator = BaseValidator(
         ignored_errors={"file_name": ["BA101"]}, print_as_warnings=True
@@ -117,7 +118,6 @@ def test_handle_error(mocker):
     )
     assert "path/to/file_name - [IN101]" in FOUND_FILES_AND_ERRORS
 
-    click_mock = mocker.patch.object(click, "secho")
     formatted_error = base_validator.handle_error(
         "ignore-file-specific", "BA101", "path/to/file_name"
     )
@@ -125,8 +125,7 @@ def test_handle_error(mocker):
     assert "path/to/file_name - [BA101]" not in FOUND_FILES_AND_ERRORS
     assert "path/to/file_name - [BA101]" in FOUND_FILES_AND_IGNORED_ERRORS
     assert (
-        click_mock.call_args_list[0][0][0]
-        == "[WARNING]: path/to/file_name: [BA101] - ignore-file-specific\n"
+        "[WARNING]: path/to/file_name: [BA101] - ignore-file-specific\n" in caplog.text
     )
 
     formatted_error = base_validator.handle_error(

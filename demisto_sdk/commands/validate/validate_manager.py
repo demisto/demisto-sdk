@@ -739,6 +739,9 @@ class ValidateManager:
             bool. true if file is in SKIPPED_FILES list, false otherwise.
         """
         path = Path(file_path)
+        # TODO Use the current configured log file
+        if 'demisto_sdk_debug_log.log' in file_path:
+            return true
         return path.name in SKIPPED_FILES or (
             path.name == "CommonServerPython.py" and path.parent.parent.name != "Base"
         )

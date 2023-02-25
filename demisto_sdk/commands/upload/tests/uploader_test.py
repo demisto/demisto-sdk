@@ -811,9 +811,9 @@ def test_print_summary_successfully_uploaded_files(
     # for current_line in expected_successfully_uploaded_files_array:
     #     assert current_line in caplog.text
 
-    # expected_successfully_uploaded_files = "\n".join(
-    #     expected_successfully_uploaded_files_array
-    # )
+    expected_successfully_uploaded_files = "\n".join(
+        expected_successfully_uploaded_files_array
+    )
     # assert expected_successfully_uploaded_files in caplog.text
     # verify exactly 3 calls to print_color
     assert secho.call_count == 3

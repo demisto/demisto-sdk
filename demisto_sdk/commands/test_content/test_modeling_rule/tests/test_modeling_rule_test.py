@@ -195,7 +195,7 @@ class TestVerifyResults:
 
 
 class TestTheTestModelingRuleCommandSingleRule:
-    def test_the_test_modeling_rule_command_pack_not_on_tenant(self, pack, monkeypatch):
+    def test_the_test_modeling_rule_command_pack_not_on_tenant(self, pack, monkeypatch, caplog):
         """
         Given:
             - A test data file.
@@ -243,7 +243,7 @@ class TestTheTestModelingRuleCommandSingleRule:
                     )
                     # Assert
                     assert result.exit_code == 1
-                    assert f"Pack {pack.name} was not found" in result.stdout
+                    assert f"Pack {pack.name} was not found" in caplog.text
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 

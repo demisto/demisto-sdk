@@ -476,11 +476,13 @@ def test_format_on_valid_py(mocker, repo):
                 "-nv",
                 "-i",
                 integration.code.path,
+                "--console_log_threshold",
+                "DEBUG",
             ],
             catch_exceptions=True,
         )
     assert "======= Updating file" in result.stdout
-    assert "Running autopep8 on file" in result.stdout
+    assert "Running autopep8 on file" in result.stderr
     assert "Success" in result.stdout
     assert valid_py == integration.code.read()
 
@@ -512,12 +514,14 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
                 "-nv",
                 "-i",
                 integration.code.path,
+                "--console_log_threshold",
+                "DEBUG",
             ],
             catch_exceptions=False,
         )
 
     assert "======= Updating file" in result.stdout
-    assert "Running autopep8 on file" in result.stdout
+    assert "Running autopep8 on file" in result.stderr
     assert "Success" in result.stdout
     assert invalid_py != integration.code.read()
 
@@ -549,12 +553,14 @@ def test_format_on_invalid_py_dict(mocker, repo):
                 "-nv",
                 "-i",
                 integration.code.path,
+                "--console_log_threshold",
+                "DEBUG",
             ],
             catch_exceptions=False,
         )
 
     assert "======= Updating file" in result.stdout
-    assert "Running autopep8 on file" in result.stdout
+    assert "Running autopep8 on file" in result.stderr
     assert "Success" in result.stdout
     assert invalid_py != integration.code.read()
 
@@ -591,14 +597,14 @@ def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
                 "-nv",
                 "-i",
                 integration.code.path,
-                # "--console_log_threshold",
-                # "DEBUG",
+                "--console_log_threshold",
+                "DEBUG",
             ],
             catch_exceptions=False,
         )
 
     assert "======= Updating file" in result.stdout
-    assert "Running autopep8 on file" in result.stdout
+    assert "Running autopep8 on file" in result.stderr
     assert "Success" in result.stdout
     assert invalid_py != integration.code.read()
 

@@ -40,7 +40,6 @@ def logging_setup(
         For more info - https://docs.python.org/3/library/logging.html
 
     Args:
-        verbose(int) verosity level - 1-3
         quiet(bool): Whether to output a quiet response.
         log_path(str): Path to save log of all levels. Defaults to ".".
         log_file_name(str): Basename of file to save logs to. Defaults to "demisto_sdk_debug_log.log".

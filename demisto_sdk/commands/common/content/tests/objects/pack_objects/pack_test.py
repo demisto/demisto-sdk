@@ -1,3 +1,4 @@
+import logging
 from contextlib import contextmanager
 from pathlib import Path
 from shutil import rmtree
@@ -30,8 +31,9 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     SecretIgnore,
     Widget,
 )
-from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import src_root
+
+logger = logging.getLogger("demisto-sdk")
 
 TEST_DATA = src_root() / "tests" / "test_files"
 TEST_CONTENT_REPO = TEST_DATA / "content_slim"
@@ -104,7 +106,7 @@ def test_detection(attribute: str, content_type: type):
     assert isinstance(pack.__getattribute__(attribute), content_type)
 
 
-def test_sign_pack_exception_thrown(repo, capsys, mocker, monkeypatch):
+def test_sign_pack_exception_thrown(repo, caplog, mocker, monkeypatch):
     """
     When:
         - Signing a pack.
@@ -117,6 +119,8 @@ def test_sign_pack_exception_thrown(repo, capsys, mocker, monkeypatch):
         - Verify that exceptions are written to the logger.
 
     """
+    logger.propagate = True
+
     import subprocess
 
     import demisto_sdk.commands.common.content.objects.pack_objects.pack as pack_class
@@ -124,21 +128,18 @@ def test_sign_pack_exception_thrown(repo, capsys, mocker, monkeypatch):
 
     mocker.patch.object(subprocess, "Popen", autospec=True)
 
-    pack_class.logger = logging_setup(3)
+    pack_class.logger = logger
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("Pack1")
     content_object_pack = Pack(pack.path)
     signer_path = Path("./signer")
 
-    content_object_pack.sign_pack(
-        pack_class.logger, content_object_pack.path, signer_path
-    )
-    captured = capsys.readouterr()
-    assert "Error while trying to sign pack Pack1" in captured.out
+    content_object_pack.sign_pack(logger, content_object_pack.path, signer_path)
+    assert "Error while trying to sign pack Pack1" in caplog.text
 
 
-def test_sign_pack_error_from_subprocess(repo, capsys, fake_process, monkeypatch):
+def test_sign_pack_error_from_subprocess(repo, caplog, fake_process, monkeypatch):
     """
     When:
         - Signing a pack.
@@ -151,10 +152,12 @@ def test_sign_pack_error_from_subprocess(repo, capsys, fake_process, monkeypatch
         - Verify that exceptions are written to the logger.
 
     """
+    logger.propagate = True
+
     import demisto_sdk.commands.common.content.objects.pack_objects.pack as pack_class
     from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 
-    pack_class.logger = logging_setup(3)
+    pack_class.logger = logger
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("Pack1")
@@ -165,15 +168,12 @@ def test_sign_pack_error_from_subprocess(repo, capsys, fake_process, monkeypatch
         f"{signer_path} {pack.path} keyfile base64", stderr=["error"]
     )
 
-    content_object_pack.sign_pack(
-        pack_class.logger, content_object_pack.path, signer_path
-    )
+    content_object_pack.sign_pack(logger, content_object_pack.path, signer_path)
 
-    captured = capsys.readouterr()
-    assert "Failed to sign pack for Pack1 -" in captured.out
+    assert "Failed to sign pack for Pack1 -" in caplog.text
 
 
-def test_sign_pack_success(repo, capsys, fake_process, monkeypatch):
+def test_sign_pack_success(repo, caplog, fake_process, monkeypatch):
     """
     When:
         - Signing a pack.
@@ -185,10 +185,12 @@ def test_sign_pack_success(repo, capsys, fake_process, monkeypatch):
         - Verify that success is written to the logger.
 
     """
+    logger.propagate = True
+
     import demisto_sdk.commands.common.content.objects.pack_objects.pack as pack_class
     from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 
-    pack_class.logger = logging_setup(3)
+    pack_class.logger = logger
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("Pack1")
@@ -199,9 +201,6 @@ def test_sign_pack_success(repo, capsys, fake_process, monkeypatch):
         f"{signer_path} {pack.path} keyfile base64", stdout=["success"]
     )
 
-    content_object_pack.sign_pack(
-        pack_class.logger, content_object_pack.path, signer_path
-    )
+    content_object_pack.sign_pack(logger, content_object_pack.path, signer_path)
 
-    captured = capsys.readouterr()
-    assert f"Signed {content_object_pack.path.name} pack successfully" in captured.out
+    assert f"Signed {content_object_pack.path.name} pack successfully" in caplog.text

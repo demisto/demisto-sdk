@@ -73,9 +73,9 @@ def test_handle_error_on_unignorable_error_codes(mocker, ignored_errors, error_c
         file_path="file_name",
         suggested_fix="fix",
     )
-    assert result == expected_error
+    assert expected_error in result
     assert click_mock.called
-    assert click_mock.call_args.args[0] == expected_error
+    assert expected_error in click_mock.call_args.args[0]
     assert f"file_name - [{error_code}]" in FOUND_FILES_AND_ERRORS
     assert f"file_name - [{error_code}]" not in FOUND_FILES_AND_IGNORED_ERRORS
 

@@ -1,7 +1,7 @@
+import logging
 import os
 from contextlib import nullcontext as does_not_raise
 
-import click
 import pytest
 import requests_mock
 from click.testing import CliRunner
@@ -27,6 +27,8 @@ from demisto_sdk.commands.common.hook_validations.pack_unique_files import (
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from TestSuite.test_tools import ChangeCWD
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -405,7 +407,7 @@ class TestPackUniqueFilesValidator:
             in self.validator.get_errors()
         )
 
-    def test_validate_pack_dependencies_skip_id_set_creation(self, capsys):
+    def test_validate_pack_dependencies_skip_id_set_creation(self, caplog):
         """
         Given
         -  skip_id_set_creation flag set to true.
@@ -417,14 +419,19 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure that the validation passes and that the skipping message is printed.
         """
+        # for current_handler in logger.handlers:
+        #     current_handler.setLevel(logging.DEBUG)
+        logger.propagate = True
+
         self.restart_validator()
         self.validator.skip_id_set_creation = True
-        res = self.validator.validate_pack_dependencies()
-        self.validator.skip_id_set_creation = (
-            False  # reverting to default for next tests
-        )
-        assert res
-        assert "No first level dependencies found" in capsys.readouterr().out
+        with caplog.at_level(logging.DEBUG, logger="demisto-sdk"):
+            res = self.validator.validate_pack_dependencies()
+            self.validator.skip_id_set_creation = (
+                False  # reverting to default for next tests
+            )
+            assert res
+            assert "No first level dependencies found" in caplog.text
 
     @pytest.mark.parametrize(
         "usecases, is_valid, branch_usecases",
@@ -720,7 +727,7 @@ class TestPackUniqueFilesValidator:
                 )
 
     def test_get_master_private_repo_meta_file_running_on_master(
-        self, mocker, repo, capsys
+        self, mocker, repo, caplog
     ):
         """
         Given:
@@ -732,6 +739,9 @@ class TestPackUniqueFilesValidator:
         Then:
             - Ensure result is None and the appropriate skipping message is printed.
         """
+        for current_handler in logger.handlers:
+            current_handler.setLevel(logging.DEBUG)
+
         self.restart_validator()
         pack_name = "PackName"
         pack = repo.create_pack(pack_name)
@@ -749,12 +759,11 @@ class TestPackUniqueFilesValidator:
         )
         assert not res
         assert (
-            "Running on master branch - skipping price change validation"
-            in capsys.readouterr().out
+            "Running on master branch - skipping price change validation" in caplog.text
         )
 
     def test_get_master_private_repo_meta_file_getting_git_error(
-        self, repo, capsys, mocker
+        self, repo, caplog, mocker
     ):
         """
         Given:
@@ -767,6 +776,9 @@ class TestPackUniqueFilesValidator:
         Then:
             - Ensure result is None and the appropriate skipping message is printed.
         """
+        for current_handler in logger.handlers:
+            current_handler.setLevel(logging.DEBUG)
+
         self.restart_validator()
         pack_name = "PackName"
         pack = repo.create_pack(pack_name)
@@ -799,12 +811,10 @@ class TestPackUniqueFilesValidator:
                 str(pack.pack_metadata.path)
             )
             assert not res
-            assert (
-                "Got an error while trying to connect to git" in capsys.readouterr().out
-            )
+            assert "Got an error while trying to connect to git" in caplog.text
 
     def test_get_master_private_repo_meta_file_file_not_found(
-        self, mocker, repo, capsys
+        self, mocker, repo, caplog
     ):
         """
         Given:
@@ -817,6 +827,9 @@ class TestPackUniqueFilesValidator:
         Then:
             - Ensure result is None and the appropriate skipping message is printed.
         """
+        for current_handler in logger.handlers:
+            current_handler.setLevel(logging.DEBUG)
+
         self.restart_validator()
         pack_name = "PackName"
         pack = repo.create_pack(pack_name)
@@ -851,7 +864,7 @@ class TestPackUniqueFilesValidator:
             assert not res
             assert (
                 "Unable to find previous pack_metadata.json file - skipping price change validation"
-                in capsys.readouterr().out
+                in caplog.text
             )
 
     def test_get_master_private_repo_meta_file_relative_path(self, mocker, repo):
@@ -1244,7 +1257,7 @@ class TestPackUniqueFilesValidator:
         pack_description = "Hey there, just testing"
         assert self.validator.is_pack_metadata_desc_too_long(pack_description) is True
 
-    def test_invalid_is_pack_metadata_desc_too_long(self, mocker, repo):
+    def test_invalid_is_pack_metadata_desc_too_long(self, caplog):
         """
         Given:
             - Invalid description length - higher than 130
@@ -1256,6 +1269,8 @@ class TestPackUniqueFilesValidator:
             - Ensure validation passes although description field length is higher than 130
             - Ensure warning will be printed.
         """
+        logger.propagate = True
+
         pack_description = (
             "This is will fail cause the description here is too long."
             "test test test test test test test test test test test test test test test test test"
@@ -1263,10 +1278,8 @@ class TestPackUniqueFilesValidator:
         )
         error_desc = "The description field of the pack_metadata.json file is longer than 130 characters."
 
-        mocker.patch("click.secho")
-
         assert self.validator.is_pack_metadata_desc_too_long(pack_description) is True
-        assert error_desc in click.secho.call_args_list[0][0][0]
+        assert error_desc in caplog.text
 
     def test_validate_author_image_exists_valid(self, repo):
         """

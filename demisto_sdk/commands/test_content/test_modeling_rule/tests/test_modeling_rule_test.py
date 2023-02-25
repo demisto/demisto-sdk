@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 from uuid import UUID
@@ -6,6 +7,8 @@ import pytest
 import requests_mock
 import typer
 from typer.testing import CliRunner
+
+logger = logging.getLogger("demisto-sdk")
 
 ONE_MODEL_RULE_TEXT = """
 [MODEL: dataset=fake_fakerson_raw]
@@ -208,6 +211,8 @@ class TestTheTestModelingRuleCommandSingleRule:
             - Verify we get a message saying the pack is not on the tenant.
             - The command returns with a non-zero exit code.
         """
+        logger.propagate = True
+
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )
@@ -856,6 +861,8 @@ class TestTheTestModelingRuleCommandMultipleRules:
             - Verify we get a message that the second modeling test passed.
             - The command returns with a non-zero exit code.
         """
+        logger.propagate = True
+
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )
@@ -991,6 +998,8 @@ class TestTheTestModelingRuleCommandInteractive:
             - Ensure the test data file was created.
             - Ensure that the log output from creating the testdata file is not duplicated.
         """
+        logger.propagate = True
+
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )

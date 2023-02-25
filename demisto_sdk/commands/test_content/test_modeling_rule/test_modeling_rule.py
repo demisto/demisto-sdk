@@ -26,6 +26,8 @@ from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
 from demisto_sdk.commands.upload.upload import upload_content_entity as upload_cmd
 from demisto_sdk.utils.utils import get_containing_pack
 
+logger = logging.getLogger("demisto-sdk")
+
 custom_theme = Theme(
     {
         "info": "cyan",
@@ -41,7 +43,6 @@ console = Console(theme=custom_theme)
 
 
 app = typer.Typer()
-logger = logging.getLogger("demisto-sdk")
 
 
 def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:

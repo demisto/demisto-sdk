@@ -3170,8 +3170,7 @@ def generate_unit_tests(
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
     )
 
-    klara_logger = logging.getLogger("PYSCA")
-    klara_logger.propagate = False
+    logging.getLogger("PYSCA").propagate = False
     from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import (
         run_generate_unit_tests,
     )

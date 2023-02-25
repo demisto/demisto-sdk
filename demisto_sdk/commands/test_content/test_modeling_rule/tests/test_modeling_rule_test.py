@@ -198,7 +198,9 @@ class TestVerifyResults:
 
 
 class TestTheTestModelingRuleCommandSingleRule:
-    def test_the_test_modeling_rule_command_pack_not_on_tenant(self, pack, monkeypatch, caplog):
+    def test_the_test_modeling_rule_command_pack_not_on_tenant(
+        self, pack, monkeypatch, caplog
+    ):
         """
         Given:
             - A test data file.
@@ -253,7 +255,7 @@ class TestTheTestModelingRuleCommandSingleRule:
             assert False, "No exception should be raised in this scenario."
 
     def test_the_test_modeling_rule_command_fail_to_push_test_data(
-        self, pack, monkeypatch
+        self, pack, monkeypatch, caplog
     ):
         """
         Given:
@@ -272,6 +274,8 @@ class TestTheTestModelingRuleCommandSingleRule:
             app as test_modeling_rule_cmd,
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
+
+        logger.propagate = True
 
         # so the logged output when running the command will be printed with a width of 120 characters
         monkeypatch.setenv("COLUMNS", "1000")
@@ -307,12 +311,12 @@ class TestTheTestModelingRuleCommandSingleRule:
                     )
                     # Assert
                     assert result.exit_code == 1
-                    assert "Failed pushing test data" in result.stdout
+                    assert "Failed pushing test data" in caplog.text
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
     def test_the_test_modeling_rule_command_fail_to_check_dataset_exists(
-        self, pack, monkeypatch
+        self, pack, monkeypatch, caplog
     ):
         """
         Given:
@@ -333,6 +337,8 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             check_dataset_exists,
         )
+
+        logger.propagate = True
 
         func_path = (
             "demisto_sdk.commands.test_content.test_modeling_rule."
@@ -390,13 +396,13 @@ class TestTheTestModelingRuleCommandSingleRule:
                     assert result.exit_code == 1
                     assert (
                         f"Dataset {fake_test_data.data[0].dataset} does not exist"
-                        in result.stdout
+                        in caplog.text
                     )
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
     def test_the_test_modeling_rule_command_fail_to_start_xql_query(
-        self, pack, monkeypatch
+        self, pack, monkeypatch, caplog
     ):
         """
         Given:
@@ -418,6 +424,8 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             check_dataset_exists,
         )
+
+        logger.propagate = True
 
         func_path = (
             "demisto_sdk.commands.test_content.test_modeling_rule."
@@ -487,12 +495,12 @@ class TestTheTestModelingRuleCommandSingleRule:
                     )
                     # Assert
                     assert result.exit_code == 1
-                    assert "Error executing XQL query" in result.stdout
+                    assert "Error executing XQL query" in caplog.text
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
     def test_the_test_modeling_rule_command_fail_to_get_xql_query_results(
-        self, pack, monkeypatch
+        self, pack, monkeypatch, caplog
     ):
         """
         Given:
@@ -515,6 +523,8 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             check_dataset_exists,
         )
+
+        logger.propagate = True
 
         func_path = (
             "demisto_sdk.commands.test_content.test_modeling_rule."
@@ -589,12 +599,12 @@ class TestTheTestModelingRuleCommandSingleRule:
                     )
                     # Assert
                     assert result.exit_code == 1
-                    assert "Error executing XQL query" in result.stdout
+                    assert "Error executing XQL query" in caplog.text
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
     def test_the_test_modeling_rule_command_results_match_expectations(
-        self, pack, monkeypatch
+        self, pack, monkeypatch, caplog
     ):
         """
         Given:
@@ -618,6 +628,8 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             check_dataset_exists,
         )
+
+        logger.propagate = True
 
         func_path = (
             "demisto_sdk.commands.test_content.test_modeling_rule."
@@ -714,12 +726,12 @@ class TestTheTestModelingRuleCommandSingleRule:
                     )
                     # Assert
                     assert result.exit_code == 0
-                    assert "Mappings validated successfully" in result.stdout
+                    assert "Mappings validated successfully" in caplog.text
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
     def test_the_test_modeling_rule_command_results_do_not_match_expectations(
-        self, pack, monkeypatch
+        self, pack, monkeypatch, caplog
     ):
         """
         Given:
@@ -743,6 +755,8 @@ class TestTheTestModelingRuleCommandSingleRule:
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             check_dataset_exists,
         )
+
+        logger.propagate = True
 
         func_path = (
             "demisto_sdk.commands.test_content.test_modeling_rule."
@@ -836,16 +850,14 @@ class TestTheTestModelingRuleCommandSingleRule:
                     )
                     # Assert
                     assert result.exit_code == 1
-                    assert (
-                        'xdm.event.outcome_reason --- "DisAllowed" != "Allowed"'
-                        in result.stdout
-                    )
+                    assert "xdm.event.outcome_reason" in caplog.text
+                    assert '"DisAllowed" != "Allowed"' in caplog.text
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
 
 class TestTheTestModelingRuleCommandMultipleRules:
-    def test_fail_one_pass_second(self, repo, monkeypatch):
+    def test_fail_one_pass_second(self, repo, monkeypatch, caplog):
         """
         Given:
             - Two modeling rules with test data files.
@@ -861,12 +873,12 @@ class TestTheTestModelingRuleCommandMultipleRules:
             - Verify we get a message that the second modeling test passed.
             - The command returns with a non-zero exit code.
         """
-        logger.propagate = True
-
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
+
+        logger.propagate = True
 
         # so the logged output when running the command will be printed with a width of 120 characters
         monkeypatch.setenv("COLUMNS", "1000")
@@ -976,14 +988,14 @@ class TestTheTestModelingRuleCommandMultipleRules:
                     )
                     # Assert
                     assert result.exit_code == 1
-                    assert f"Pack {pack_1.name} was not found" in result.stdout
-                    assert "Mappings validated successfully" in result.stdout
+                    assert f"Pack {pack_1.name} was not found" in caplog.text
+                    assert "Mappings validated successfully" in caplog.text
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
 
 class TestTheTestModelingRuleCommandInteractive:
-    def test_no_testdata_file_exists(self, repo, monkeypatch, mocker):
+    def test_no_testdata_file_exists(self, repo, monkeypatch, mocker, caplog):
         """
         Given:
             - A modeling rule with no test data file.
@@ -998,11 +1010,11 @@ class TestTheTestModelingRuleCommandInteractive:
             - Ensure the test data file was created.
             - Ensure that the log output from creating the testdata file is not duplicated.
         """
-        logger.propagate = True
-
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )
+
+        logger.propagate = True
 
         # need to override this because when running this way the command name is 'test-modeling-rule' (taken from the
         # module name from which it is imported) but the logic in 'init-test-data' command looks to see if the parent
@@ -1044,9 +1056,9 @@ class TestTheTestModelingRuleCommandInteractive:
                 expected_log_count = 1
                 assert result.exit_code == 0
                 assert test_data_file.exists()
-                assert " No test data file found for" in result.stdout
+                assert "No test data file found for" in caplog.text
                 assert (
-                    result.stdout.count("Creating test data file for: ")
+                    caplog.text.count("Creating test data file for: ")
                     == expected_log_count
                 )
 

@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 from pathlib import PosixPath
@@ -448,7 +449,7 @@ def test_integration_format_remove_playbook_sourceplaybookid(
     assert not result.exception
 
 
-def test_format_on_valid_py(mocker, repo):
+def test_format_on_valid_py(mocker, repo, capsys, caplog):
     """
     Given
     - A valid python file.
@@ -459,6 +460,8 @@ def test_format_on_valid_py(mocker, repo):
     Then
     - Ensure format passes.
     """
+    logging.getLogger("demisto-sdk").propagate = True
+    caplog.set_level(logging.DEBUG)
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -481,8 +484,13 @@ def test_format_on_valid_py(mocker, repo):
             ],
             catch_exceptions=True,
         )
+    captured = capsys.readouterr().out
+    print(f"*** {captured=}")
+    print(f"*** {caplog.text=}")
+    print(f"*** {result.stdout=}")
+    print(f"*** {result.stderr=}")
     assert "======= Updating file" in result.stdout
-    assert "Running autopep8 on file" in result.stderr
+    assert "Running autopep8 on file" in captured
     assert "Success" in result.stdout
     assert valid_py == integration.code.read()
 

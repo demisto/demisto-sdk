@@ -52,7 +52,7 @@ class PythonFileFormat(BaseUpdate):
         Args:
             py_file_path (str): The python file path.
         Returns:
-            bool. True if succeed to run autopep8 on file, False otherwise.
+            bool. True if succeeded to run autopep8 on file, False otherwise.
         """
         logger.debug(f"\nRunning autopep8 on file: {py_file_path}\n")
         try:

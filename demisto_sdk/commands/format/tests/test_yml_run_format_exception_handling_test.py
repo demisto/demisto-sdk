@@ -1,3 +1,4 @@
+import logging
 from unittest.mock import Mock, patch
 
 from demisto_sdk.commands.common.constants import (

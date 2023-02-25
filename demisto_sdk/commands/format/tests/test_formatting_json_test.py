@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 from typing import Optional
@@ -1709,7 +1710,7 @@ class TestFormattingReport:
     ]
 
     @pytest.mark.parametrize(argnames="format_object", argvalues=FORMAT_OBJECT)
-    def test_json_run_format_exception_handling(self, format_object, mocker, capsys):
+    def test_json_run_format_exception_handling(self, format_object, mocker, caplog):
         """
         Given
             - A JSON object formatter
@@ -1718,6 +1719,8 @@ class TestFormattingReport:
         Then
             - Ensure the error is printed.
         """
+        logging.getLogger("demisto-sdk").propagate = True
+
         formatter = format_object(input="my_file_path")
         mocker.patch.object(
             BaseUpdateJSON, "update_json", side_effect=self.exception_raise
@@ -1733,8 +1736,7 @@ class TestFormattingReport:
         )
 
         formatter.run_format()
-        stdout, _ = capsys.readouterr()
-        assert "Failed to update file my_file_path. Error: MY ERROR" in stdout
+        assert "Failed to update file my_file_path. Error: MY ERROR" in caplog.text
 
     def test_set_fromversion_six_new_contributor_pack_no_fromversion(self, pack):
         """

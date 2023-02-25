@@ -149,8 +149,8 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                     "-i",
                     "Packs/" + os.path.basename(repo.packs[0].path),
                     "-idp",
-                    # repo.id_set.path,
-                    # "--no-update",
+                    repo.id_set.path,
+                    "--no-update",
                 ],
             )
 
@@ -268,6 +268,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                     "Packs/" + os.path.basename(pack2.path),
                     "-idp",
                     repo.id_set.path,
+                    # TODO Remove
                     # "--console_log_threshold",
                     # "DEBUG",
                 ],

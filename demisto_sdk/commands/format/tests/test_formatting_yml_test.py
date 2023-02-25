@@ -1851,9 +1851,9 @@ def test_yml_run_format_exception_handling(format_object, mocker, capsys, caplog
         formatter.run_format()
         # print(f"*** {self._caplog.text=}")
         print(f"*** {caplog.text=}")
-        capsys_output = capsys.readouterr().out
-        print(f"*** {capsys_output=}")
+        captured = capsys.readouterr().out
+        # print(f"*** {captured=}")
         # assert "Failed to update file my_file_path. Error: MY ERROR" in caplog.text
         # assert "Failed to update file my_file_path. Error: MY ERROR" in self._caplog.text
         # assert 1 == 0
-        assert "Failed to update file my_file_path. Error: MY ERROR" in caplog.text
+        assert "Failed to update file my_file_path. Error: MY ERROR" in captured

@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 
@@ -5,6 +6,8 @@ from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from TestSuite.test_tools import ChangeCWD
+
+logger = logging.getLogger("demisto-sdk")
 
 FIND_DEPENDENCIES_CMD = "find-dependencies"
 
@@ -107,7 +110,9 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         assert result.exit_code == 0
         assert result.stderr == ""
 
-    def test_integration_find_dependencies_sanity_with_id_set(self, repo, mocker):
+    def test_integration_find_dependencies_sanity_with_id_set(
+        self, repo, mocker, caplog
+    ):
         """
         Given
         - Valid pack folder
@@ -137,25 +142,29 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         )
         repo.id_set.write_json(id_set)
 
-        # Change working dir to repo
-        with ChangeCWD(integration.repo_path):
-            runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
-                main,
-                [
-                    FIND_DEPENDENCIES_CMD,
-                    "-i",
-                    "Packs/" + os.path.basename(repo.packs[0].path),
-                    "-idp",
-                    repo.id_set.path,
-                    "--no-update",
-                ],
-            )
+        with caplog.at_level(logging.DEBUG):
+            # Change working dir to repo
+            with ChangeCWD(integration.repo_path):
+                logger.propagate = True
+                runner = CliRunner(mix_stderr=False)
+                result = runner.invoke(
+                    main,
+                    [
+                        FIND_DEPENDENCIES_CMD,
+                        "-i",
+                        "Packs/" + os.path.basename(repo.packs[0].path),
+                        "-idp",
+                        repo.id_set.path,
+                        "--no-update",
+                    ],
+                )
 
-        assert "Found dependencies result for FindDependencyPack pack:" in result.output
-        assert "{}" in result.output
-        assert result.exit_code == 0
-        assert result.stderr == ""
+            assert (
+                "Found dependencies result for FindDependencyPack pack:" in caplog.text
+            )
+            assert "{}" in caplog.text
+            assert result.exit_code == 0
+            assert result.stderr == ""
 
     def test_integration_find_dependencies_not_a_pack(self, repo):
         """

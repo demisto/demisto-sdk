@@ -1782,7 +1782,7 @@ class PackDependencies:
         dependencies_packs: set = set()
         items_dependencies: dict = dict()
 
-        logger.debug(f"### {header}")
+        secho_and_info(f"### {header}")
 
         for widget in pack_widgets:
             widget_id = list(widget.keys())[0]

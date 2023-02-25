@@ -19,7 +19,7 @@ CREDENTIALS = 9
 
 old_merge_environment_settings = requests.Session.merge_environment_settings
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("demisto-sdk")
 
 # Globals
 STOP_SEQS = ["\n", "\ncontextPath:"]
@@ -102,8 +102,8 @@ def generate_desc_with_spinner(command_output_path, insecure, output):
 
 
 def generate_desc(input_ctx, prob_check=False, insecure=False):
-    logger = logging.getLogger()
-    logger.setLevel(logging.ERROR)
+    # logger = logging.getLogger("demisto-sdk")
+    # logger.setLevel(logging.ERROR)
 
     prompt = get_current_prompt()
     prompt += f"contextPath: {input_ctx}\ndescriptionMessage:"

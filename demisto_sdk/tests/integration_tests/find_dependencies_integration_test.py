@@ -87,25 +87,25 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 ],
                 catch_exceptions=False,
             )
-        assert "# Pack ID: FindDependencyPack" in result.outerr
-        assert "### Scripts" in result.outerr
-        assert "### Playbooks" in result.outerr
-        assert "### Layouts" in result.outerr
-        assert "### Incident Fields" in result.outerr
-        assert "### Indicator Types" in result.outerr
-        assert "### Integrations" in result.outerr
-        assert "### Incident Types" in result.outerr
-        assert "### Classifiers" in result.outerr
-        assert "### Mappers" in result.outerr
-        assert "### Widgets" in result.outerr
-        assert "### Dashboards" in result.outerr
-        assert "### Reports" in result.outerr
-        assert "### Generic Types" in result.outerr
-        assert "### Generic Fields" in result.outerr
-        assert "### Generic Modules" in result.outerr
-        assert "### Jobs" in result.outerr
+        assert "# Pack ID: FindDependencyPack" in result.stderr
+        assert "### Scripts" in result.stderr
+        assert "### Playbooks" in result.stderr
+        assert "### Layouts" in result.stderr
+        assert "### Incident Fields" in result.stderr
+        assert "### Indicator Types" in result.stderr
+        assert "### Integrations" in result.stderr
+        assert "### Incident Types" in result.stderr
+        assert "### Classifiers" in result.stderr
+        assert "### Mappers" in result.stderr
+        assert "### Widgets" in result.stderr
+        assert "### Dashboards" in result.stderr
+        assert "### Reports" in result.stderr
+        assert "### Generic Types" in result.stderr
+        assert "### Generic Fields" in result.stderr
+        assert "### Generic Modules" in result.stderr
+        assert "### Jobs" in result.stderr
         assert (
-            "All level dependencies are: []" in result.outerr
+            "All level dependencies are: []" in result.stderr
         )  # last log is regarding all the deps
         assert result.exit_code == 0
 

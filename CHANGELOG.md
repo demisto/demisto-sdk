@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where running **validate** with the `-g` flag would skip some validations for old format files.
 * Fixed an issue where running **run-test-playbook** would not use the `verify` parameter correctly. @ajoga
 * Added a newline at the end of README files generated in **generate-docs**.
 * Added the value `3` (out of bounds) to the `onChangeRepAlg` and `reputationCalc` fields under the `IncidentType` and `GenericType` schemas. **validate** will allow using it now.

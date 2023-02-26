@@ -1332,7 +1332,6 @@ def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # 
 
 def get_pack_ignore_content(pack_name: str) -> Union[ConfigParser, None]:
     """
-
     Args:
         pack_name: a pack name from which to get the pack ignore config.
 

@@ -43,21 +43,11 @@ def mock_is_external_repo(mocker, is_external_repo_return):
     )
 
 
-info_side_effect_calls = []
-
-
-def info_side_effect(*args, **kwargs):
-    if args:
-        if args[0]:
-            info_side_effect_calls.append(args[0])
-        else:
-            info_side_effect_calls.append(args)
-
-
-def str_in_side_effect_calls(side_effect_calls, required_str):
-    for current_side_effect_calls in side_effect_calls:
-        if required_str in current_side_effect_calls:
-            return True
+def str_in_call_args_list(call_args_list, required_str):
+    for current_call in call_args_list:
+        if type(current_call[0]) == tuple:
+            if required_str in current_call[0][0]:
+                return True
     return False
 
 
@@ -77,8 +67,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         """
         monkeypatch.setenv("COLUMNS", "1000")
 
-        info_side_effect_calls = []
-        mocker.patch.object(logger, "debug", side_effect=info_side_effect)
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         mock_is_external_repo(mocker, False)
         # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
@@ -109,30 +98,29 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 ],
                 catch_exceptions=False,
             )
-        # assert "# Pack ID: FindDependencyPack" in result.stderr
-        assert str_in_side_effect_calls(
-            info_side_effect_calls, "# Pack ID: FindDependencyPack"
+        assert str_in_call_args_list(
+            logger_info.call_args_list, "# Pack ID: FindDependencyPack"
         )
-        # assert "### Scripts" in result.stderr
-        assert str_in_side_effect_calls(info_side_effect_calls, "### Scripts")
-        assert "### Playbooks" in result.stderr
-        assert "### Layouts" in result.stderr
-        assert "### Incident Fields" in result.stderr
-        assert "### Indicator Types" in result.stderr
-        assert "### Integrations" in result.stderr
-        assert "### Incident Types" in result.stderr
-        assert "### Classifiers" in result.stderr
-        assert "### Mappers" in result.stderr
-        assert "### Widgets" in result.stderr
-        assert "### Dashboards" in result.stderr
-        assert "### Reports" in result.stderr
-        assert "### Generic Types" in result.stderr
-        assert "### Generic Fields" in result.stderr
-        assert "### Generic Modules" in result.stderr
-        assert "### Jobs" in result.stderr
-        assert (
-            "All level dependencies are: []" in result.stderr
-        )  # last log is regarding all the deps
+        assert str_in_call_args_list(logger_info.call_args_list, "### Scripts")
+        assert str_in_call_args_list(logger_info.call_args_list, "### Playbooks")
+        assert str_in_call_args_list(logger_info.call_args_list, "### Layouts")
+        assert str_in_call_args_list(logger_info.call_args_list, "### Incident Fields")
+        assert str_in_call_args_list(logger_info.call_args_list, "### Indicator Types")
+        assert str_in_call_args_list(logger_info.call_args_list, "### Integrations")
+        assert str_in_call_args_list(logger_info.call_args_list, "### Incident Types")
+        assert str_in_call_args_list(logger_info.call_args_list, "### Classifiers")
+        assert str_in_call_args_list(logger_info.call_args_list, "### Mappers")
+        assert str_in_call_args_list(logger_info.call_args_list, "### Widgets")
+        assert str_in_call_args_list(logger_info.call_args_list, "### Dashboards")
+        assert str_in_call_args_list(logger_info.call_args_list, "### Reports")
+        assert str_in_call_args_list(logger_info.call_args_list, "### Generic Types")
+        assert str_in_call_args_list(logger_info.call_args_list, "### Generic Fields")
+        assert str_in_call_args_list(logger_info.call_args_list, "### Generic Modules")
+        assert str_in_call_args_list(logger_info.call_args_list, "### Jobs")
+        # last log is regarding all the deps
+        assert str_in_call_args_list(
+            logger_info.call_args_list, "All level dependencies are: []"
+        )
         assert result.exit_code == 0
 
     def test_integration_find_dependencies_sanity_with_id_set(self, repo, mocker):
@@ -147,6 +135,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         - Ensure find-dependencies passes.
         - Ensure no error occurs.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mock_is_external_repo(mocker, False)
         pack = repo.create_pack("FindDependencyPack")
         integration = pack.create_integration("integration")
@@ -180,11 +169,11 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 ],
             )
 
-            assert (
-                "Found dependencies result for FindDependencyPack pack:"
-                in result.stderr
+            assert str_in_call_args_list(
+                logger_info.call_args_list,
+                "Found dependencies result for FindDependencyPack pack:",
             )
-            assert "{}" in result.stderr
+            assert str_in_call_args_list(logger_info.call_args_list, "{}")
             assert result.exit_code == 0
 
     def test_integration_find_dependencies_not_a_pack(self, repo):
@@ -248,6 +237,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         - Ensure find-dependencies passes.
         - Ensure dependency is printed.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mock_is_external_repo(mocker, False)
         pack1 = repo.create_pack("FindDependencyPack1")
         integration = pack1.create_integration("integration1")
@@ -300,12 +290,20 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 ],
             )
 
-        assert "# Pack ID: FindDependencyPack2" in result.stderr
-        assert "All level dependencies are:" in result.stderr
-        assert (
-            "Found dependencies result for FindDependencyPack2 pack:" in result.stderr
+        assert str_in_call_args_list(
+            logger_info.call_args_list, "# Pack ID: FindDependencyPack2"
         )
-        assert '"display_name": "FindDependencyPack1"' in result.stderr
+
+        assert str_in_call_args_list(
+            logger_info.call_args_list, "All level dependencies are:"
+        )
+        assert str_in_call_args_list(
+            logger_info.call_args_list,
+            "Found dependencies result for FindDependencyPack2 pack:",
+        )
+        assert str_in_call_args_list(
+            logger_info.call_args_list, '"display_name": "FindDependencyPack1"'
+        )
         assert result.exit_code == 0
 
     def test_wrong_path(self, pack):

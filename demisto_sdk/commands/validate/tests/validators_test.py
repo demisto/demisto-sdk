@@ -2846,7 +2846,7 @@ def test_run_validation_using_git_validation_calls(mocker):
 
     validate_manager.run_validation_using_git()
 
-    modified_files_validation.assert_called_once_with(modified_files.union(old_format_files))
+    modified_files_validation.assert_called_once_with(modified_files | old_format_files)
     added_files_validation.assert_called_once_with(added_files, modified_files)
     no_old_format_validation.assert_called_once_with(old_format_files)
     deleted_files_validation.assert_called_once_with(deleted_files, added_files)

@@ -480,7 +480,11 @@ def test_format_on_valid_py(mocker, repo, capsys, caplog):
         runner = CliRunner(mix_stderr=False)
 
         with mocker.patch.object(demisto_logger, "set_propagate"):
+            propagate = logging.getLogger("demisto-sdk").propagate
+            print(f"*** test, in mock, before setting propagate, {propagate=}")
             logging.getLogger("demisto-sdk").propagate = True
+            propagate = logging.getLogger("demisto-sdk").propagate
+            print(f"*** test, in mock, after setting propagate, {propagate=}")
 
             result = runner.invoke(
                 main,
@@ -494,6 +498,8 @@ def test_format_on_valid_py(mocker, repo, capsys, caplog):
                 ],
                 catch_exceptions=True,
             )
+            propagate = logging.getLogger("demisto-sdk").propagate
+            print(f"*** test, in mock, after invoke, {propagate=}")
 
     captured = capsys.readouterr().out
     print(f"*** {captured=}")

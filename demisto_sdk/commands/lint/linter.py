@@ -39,6 +39,7 @@ from demisto_sdk.commands.common.native_image import (
 from demisto_sdk.commands.common.timers import timer
 from demisto_sdk.commands.common.tools import (
     get_docker_images_from_yml,
+    get_id,
     get_pack_ignore_content,
     get_pack_name,
     get_yaml,
@@ -195,7 +196,7 @@ class Linter:
                 ignored_integrations_scripts_ids = config[
                     TESTS_REQUIRE_NETWORK_PACK_IGNORE
                 ]
-                _id = self._yml_file_content.get("commonfields", {}).get("id")
+                _id = get_id(self._yml_file_content)
                 if _id in ignored_integrations_scripts_ids:
                     return False
         return True

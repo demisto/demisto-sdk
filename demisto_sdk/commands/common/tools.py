@@ -3485,3 +3485,31 @@ def get_pack_paths_from_files(file_paths: Iterable[str]) -> list:
     """Returns the pack paths from a list/set of files"""
     pack_paths = {f"Packs/{get_pack_name(file_path)}" for file_path in file_paths}
     return list(pack_paths)
+
+
+def get_id(file_content: Dict) -> Union[str, None]:
+    """
+    Get ID from a dict based content object.
+
+    Args:
+        file_content: the content of the file.
+
+    Returns:
+        str: the ID of the content item in case found, None otherwise.
+    """
+    if "commonfields" in file_content.keys():
+        return file_content.get("commonfields", {}).get("id")
+    elif "dashboards_data" in file_content.keys():
+        return file_content.get("dashboards_data", [{}])[0].get("global_id")
+    elif "templates_data" in file_content.keys():
+        return file_content.get("templates_data", [{}])[0].get("global_id")
+    elif "global_rule_id" in file_content.keys():
+        return file_content.get("global_rule_id")
+    elif "trigger_id" in file_content.keys():
+        return file_content.get("trigger_id")
+    elif "content_global_id" in file_content.keys():
+        return file_content.get("content_global_id")
+    elif "rule_id" in file_content.keys():
+        return file_content.get("rule_id")
+    else:
+        return file_content.get("id")

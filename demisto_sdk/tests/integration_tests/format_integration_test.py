@@ -512,8 +512,9 @@ def test_format_on_valid_py(mocker, repo, capsys, caplog):
                 handlers = logging.getLogger("demisto-sdk").handlers
                 print(f"*** test, in mock, after invoke, {propagate=}, {handlers=}")
 
-    captured = capsys.readouterr().out
-    print(f"*** {captured=}")
+    captured = capsys.readouterr()
+    print(f"*** {captured.out=}")
+    print(f"*** {captured.err=}")
     print(f"*** {caplog.text=}")
     print(f"*** {result.stdout=}")
     print(f"*** {result.stderr=}")

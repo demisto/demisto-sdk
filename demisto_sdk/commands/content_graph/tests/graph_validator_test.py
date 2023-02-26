@@ -471,10 +471,10 @@ def test_is_file_using_unknown_content(
         assert graph_validator.is_file_using_unknown_content() == is_valid
 
     assert "[warning]" in caplog.text.lower() if is_valid else "[error]"
-    # assert (
-    #     "Content item 'SampleIntegration' using content items: SampleClassifier which"
-    #     " cannot be found in the repository" in caplog.text
-    # )
+    assert (
+        "Content item 'SampleIntegration' using content items: SampleClassifier which"
+        " cannot be found in the repository" in caplog.text
+    )
 
 
 def test_is_file_display_name_already_exists(repository: ContentDTO, caplog):

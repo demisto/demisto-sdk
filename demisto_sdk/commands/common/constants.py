@@ -47,6 +47,7 @@ XSIAM_REPORTS_DIR = "XSIAMReports"
 TRIGGER_DIR = "Triggers"
 WIZARDS_DIR = "Wizards"
 XDRC_TEMPLATE_DIR = "XDRCTemplates"
+LAYOUT_RULES_DIR = "LayoutRules"
 
 FIRST_LEVEL_FOLDERS = {
     # "Classifier",
@@ -154,6 +155,7 @@ XSIAM_REPORT = "xsiamreport"
 TRIGGER = "trigger"
 WIZARD = "wizard"
 XDRC_TEMPLATE = "xdrctemplate"
+LAYOUT_RULE = "layoutrule"
 MARKETPLACE_KEY_PACK_METADATA = "marketplaces"
 
 # ENV VARIABLES
@@ -229,6 +231,7 @@ class FileType(str, Enum):
     INDICATOR_TYPE = "indicatortype"
     TOOL = "tools"
     PACK_METADATA = "packmetadata"
+    LAYOUT_RULE = "layoutrule"
     PIPFILE = "pipfile"
     TXT = "txt"
     PIPFILE_LOCK = "pipfilelock"
@@ -273,6 +276,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.TRIGGER: "Triggers Recommendations",  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
     FileType.WIZARD: "Wizards",
     FileType.XDRC_TEMPLATE: "XDRC Templates",
+    FileType.LAYOUT_RULE: "Layout Rules",
 }
 
 FILE_TYPE_BY_RN_HEADER = {
@@ -313,6 +317,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.XSIAM_DASHBOARD.value: XSIAM_DASHBOARDS_DIR,
     FileType.TRIGGER.value: TRIGGER_DIR,
     FileType.OLD_CLASSIFIER.value: CLASSIFIERS_DIR,
+    FileType.LAYOUT_RULE.value: LAYOUT_RULES_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -323,6 +328,7 @@ SIEM_ONLY_ENTITIES = [
     FileType.XSIAM_REPORT.value,
     FileType.TRIGGER.value,
     FileType.XDRC_TEMPLATE.value,
+    FileType.LAYOUT_RULE.value,
 ]
 
 CONTENT_FILE_ENDINGS = ["py", "yml", "png", "json", "md"]
@@ -363,6 +369,7 @@ CONTENT_ENTITIES_DIRS = [
     MODELING_RULES_DIR,
     XDRC_TEMPLATE_DIR,
     PARSING_RULES_DIR,
+    LAYOUT_RULES_DIR,
     CORRELATION_RULES_DIR,
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
@@ -622,6 +629,9 @@ PACKS_LAYOUTS_CONTAINER_JSON_REGEX = (
     rf"{PACKS_LAYOUTS_DIR_REGEX}\/layoutscontainer([^/]+)\.json"
 )
 
+PACK_LAYOUT_RULES_DIR_REGEX = rf"{PACK_DIR_REGEX}\/{LAYOUT_RULES_DIR}"
+PACK_LAYOUT_RULE_JSON_REGEX = rf"{PACK_LAYOUT_RULES_DIR_REGEX}\/([^/]+)\.json"
+
 PACKS_PRE_PROCESS_RULES_DIR_REGEX = rf"{PACK_DIR_REGEX}/{PRE_PROCESS_RULES_DIR}"
 PACKS_PRE_PROCESS_RULES_JSON_REGEX = (
     rf"{PACKS_PRE_PROCESS_RULES_DIR_REGEX}/(?:preprocessrule-)?([^/]+)\.json"
@@ -818,6 +828,7 @@ PACK_METADATA_FIELDS = (
     PACK_METADATA_KEYWORDS,
 )
 API_MODULES_PACK = "ApiModules"
+API_MODULE_FILE_SUFFIX = "ApiModule"
 API_MODULE_PY_REGEX = r"{}{}/{}/{}/([^/]+)/([^.]+)\.py".format(
     CAN_START_WITH_DOT_SLASH, PACKS_DIR, API_MODULES_PACK, SCRIPTS_DIR
 )
@@ -849,6 +860,7 @@ SCRIPT_PREFIX = "script"
 PARSING_RULE_PREFIX = "parsingrule"
 MODELING_RULE_PREFIX = "modelingrule"
 XDRC_TEMPLATE_PREFIX = "xdrctemplate"
+LAYOUT_RULE_PREFIX = "layoutrule"
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = ".secrets-ignore"
@@ -946,6 +958,8 @@ JSON_ALL_LAYOUT_REGEXES = [
 JSON_ALL_LAYOUTS_CONTAINER_REGEXES = [
     PACKS_LAYOUTS_CONTAINER_JSON_REGEX,
 ]
+
+JSON_ALL_LAYOUT_RULES_REGEXES = [PACK_LAYOUT_RULE_JSON_REGEX]
 
 JSON_ALL_PRE_PROCESS_RULES_REGEXES = [
     PACKS_PRE_PROCESS_RULES_JSON_REGEX,
@@ -1297,12 +1311,13 @@ SCHEMA_TO_REGEX = {
     "xsiamreport": [XSIAM_REPORT_JSON_REGEX],
     "trigger": [TRIGGER_JSON_REGEX],
     "xdrctemplate": [XDRC_TEMPLATE_JSON_REGEX],
+    LAYOUT_RULE: JSON_ALL_LAYOUT_RULES_REGEXES,
 }
 
 EXTERNAL_PR_REGEX = r"^pull/(\d+)$"
 
 FILE_TYPES_PATHS_TO_VALIDATE = {"reports": JSON_ALL_REPORTS_REGEXES}
-DEPENDENCIES_DOCKER = "demisto/demisto-sdk-dependencies:1.0.0.36679"
+MDX_SERVER_DOCKER_IMAGE = "devdemisto/mdx_node_server:1.0.0.48264"
 DEF_DOCKER = "demisto/python:1.3-alpine"
 DEF_DOCKER_PWSH = "demisto/powershell:6.2.3.5563"
 
@@ -1404,9 +1419,10 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.CORRELATION_RULE: "6.10.0",
     FileType.PARSING_RULE: "6.10.0",
     FileType.MODELING_RULE: "6.10.0",
+    FileType.LAYOUT_RULE: "6.10.0",
 }
 # This constant below should always be two versions before the latest server version
-GENERAL_DEFAULT_FROMVERSION = "6.5.0"
+GENERAL_DEFAULT_FROMVERSION = "6.8.0"
 VERSION_5_5_0 = "5.5.0"
 DEFAULT_CONTENT_ITEM_FROM_VERSION = "0.0.0"
 DEFAULT_CONTENT_ITEM_TO_VERSION = "99.99.99"
@@ -1670,6 +1686,7 @@ class ContentItems(Enum):
     TRIGGERS = ("trigger",)
     WIZARDS = ("wizard",)
     XDRC_TEMPLATE = "xdrctemplate"
+    LAYOUT_RULES = "layoutrule"
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
@@ -1696,6 +1713,7 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     TRIGGER_DIR,
     WIZARDS_DIR,
     XDRC_TEMPLATE_DIR,
+    LAYOUT_RULES_DIR,
 }
 
 
@@ -1722,6 +1740,13 @@ class MarketplaceVersions(str, Enum):
     XSOAR = "xsoar"
     MarketplaceV2 = "marketplacev2"
     XPANSE = "xpanse"
+
+
+MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
+    MarketplaceVersions.XSOAR: "Tests/Marketplace/core_packs_list.json",
+    MarketplaceVersions.MarketplaceV2: "Tests/Marketplace/core_packs_mpv2_list.json",
+    MarketplaceVersions.XPANSE: "Tests/Marketplace/core_packs_xpanse_list.json",
+}
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {

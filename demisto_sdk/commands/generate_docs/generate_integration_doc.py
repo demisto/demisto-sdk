@@ -171,7 +171,7 @@ def generate_integration_doc(
                 docs.extend(
                     [
                         "Some changes have been made that might affect your existing content. "
-                        "\nIf you are upgrading from a previous of this integration, see [Breaking Changes]"
+                        "\nIf you are upgrading from a previous version of this integration, see [Breaking Changes]"
                         "(#breaking-changes-from-the-previous-version-of-this-integration-"
                         f'{yml_data.get("display", "").replace(" ", "-").lower()}).',
                         "",
@@ -213,6 +213,8 @@ def generate_integration_doc(
                 docs.extend(generate_numbered_section("Known Limitations", limitations))
 
             doc_text = "\n".join(docs)
+            if not doc_text.endswith("\n"):
+                doc_text += "\n"
 
         save_output(output, "README.md", doc_text)
 
@@ -277,6 +279,7 @@ def generate_setup_section(yaml_data: dict):
         )
     )
     section.append("4. Click **Test** to validate the URLs, token, and connection.")
+    section.append("")
 
     return section
 
@@ -428,8 +431,10 @@ def generate_commands_section(
     errors: list = []
     section = [
         "## Commands",
+        "",
         "You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.",
         "After you successfully execute a command, a DBot message appears in the War Room with the command details.",
+        "",
     ]
     commands = filter(
         lambda cmd: not cmd.get("deprecated", False), yaml_data["script"]["commands"]
@@ -466,7 +471,9 @@ def generate_single_command_section(
         if command_permissions_dict.get(cmd["name"]):
             cmd_permission_example = [
                 "#### Required Permissions",
+                "",
                 command_permissions_dict.get(cmd["name"]),
+                "",
             ]
         else:
             errors.append(
@@ -476,23 +483,32 @@ def generate_single_command_section(
     elif isinstance(command_permissions_dict, dict) and not command_permissions_dict:
         cmd_permission_example = [
             "#### Required Permissions",
+            "",
             "**FILL IN REQUIRED PERMISSIONS HERE**",
+            "",
         ]
     else:  # no permissions for this command
-        cmd_permission_example = ["", ""]
+        cmd_permission_example = []
 
     section = [
         "### {}".format(cmd["name"]),
+        "",
         "***",
-        cmd.get("description", " "),
-        cmd_permission_example[0],
-        cmd_permission_example[1],
-        "#### Base Command",
-        "",
-        "`{}`".format(cmd["name"]),
-        "#### Input",
-        "",
     ]
+    if desc := cmd.get("description"):
+        section.append(desc)
+    section.extend(
+        [
+            "",
+            *cmd_permission_example,
+            "#### Base Command",
+            "",
+            "`{}`".format(cmd["name"]),
+            "",
+            "#### Input",
+            "",
+        ]
+    )
 
     # Inputs
     arguments = cmd.get("arguments")
@@ -534,12 +550,11 @@ def generate_single_command_section(
                     required_status,
                 )
             )
-        section.append("")
+    section.append("")
 
     # Context output
     section.extend(
         [
-            "",
             "#### Context Output",
             "",
         ]

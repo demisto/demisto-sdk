@@ -13,8 +13,9 @@ from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import MarketplaceTagParser, get_content_path
+from demisto_sdk.commands.common.tools import MarketplaceTagParser
 from demisto_sdk.commands.content_graph.common import (
     PACK_METADATA_FILENAME,
     ContentType,
@@ -40,6 +41,7 @@ from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorT
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.job import Job
 from demisto_sdk.commands.content_graph.objects.layout import Layout
+from demisto_sdk.commands.content_graph.objects.layout_rule import LayoutRule
 from demisto_sdk.commands.content_graph.objects.list import List as ListObject
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
 from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
@@ -106,6 +108,7 @@ class PackContentItems(BaseModel):
     )
     xsiam_report: List[XSIAMReport] = Field([], alias=ContentType.XSIAM_REPORT.value)
     xdrc_template: List[XDRCTemplate] = Field([], alias=ContentType.XDRC_TEMPLATE.value)
+    layout_rule: List[LayoutRule] = Field([], alias=ContentType.LAYOUT_RULE.value)
 
     def __iter__(self) -> Generator[ContentItem, Any, Any]:  # type: ignore
         """Defines the iteration of the object. Each iteration yields a single content item."""
@@ -144,6 +147,7 @@ class PackMetadata(BaseModel):
     vendor_id: Optional[str] = Field(None, alias="vendorId")
     vendor_name: Optional[str] = Field(None, alias="vendorName")
     preview_only: Optional[bool] = Field(None, alias="previewOnly")
+    excluded_dependencies: Optional[List[str]]
 
 
 class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: ignore[call-arg]
@@ -159,7 +163,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     def validate_path(cls, v: Path) -> Path:
         if v.is_absolute():
             return v
-        return Path(get_content_path()) / v  # type: ignore
+        return CONTENT_PATH / v
 
     @property
     def depends_on(self) -> List["RelationshipData"]:
@@ -187,14 +191,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         return [
             r
             for r in self.relationships_data[RelationshipType.DEPENDS_ON]
-            if r.content_item == r.target
+            if r.content_item_to.database_id == r.target_id
         ]
 
     def set_content_items(self):
         content_items: List[ContentItem] = [
-            r.content_item  # type: ignore[misc]
+            r.content_item_to  # type: ignore[misc]
             for r in self.relationships_data[RelationshipType.IN_PACK]
-            if r.content_item == r.source
+            if r.content_item_to.database_id == r.source_id
         ]
         content_item_dct = defaultdict(list)
         for c in content_items:
@@ -210,7 +214,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         self.content_items = PackContentItems(**content_item_dct)
 
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
-        metadata = self.dict(exclude={"path", "node_id", "content_type"})
+        metadata = self.dict(
+            exclude={"path", "node_id", "content_type", "excluded_dependencies"}
+        )
         metadata["contentItems"] = {}
         for content_item in self.content_items:
             try:
@@ -245,6 +251,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 logger.error(f"Failed dumping readme: {e}")
 
     def dump(self, path: Path, marketplace: MarketplaceVersions):
+        if not self.path.exists():
+            logger.warning(f"Pack {self.name} does not exist in {self.path}")
+            return
         try:
             path.mkdir(exist_ok=True, parents=True)
             for content_item in self.content_items:
@@ -263,22 +272,23 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             try:
                 shutil.copytree(self.path / "ReleaseNotes", path / "ReleaseNotes")
             except FileNotFoundError:
-                logger.info(f'No such file {self.path / "ReleaseNotes"}')
+                logger.debug(f'No such file {self.path / "ReleaseNotes"}')
             try:
                 shutil.copy(self.path / "Author_image.png", path / "Author_image.png")
             except FileNotFoundError:
-                logger.info(f'No such file {self.path / "Author_image.png"}')
+                logger.debug(f'No such file {self.path / "Author_image.png"}')
             if self.object_id == BASE_PACK:
                 self.handle_base_pack(path)
 
-            logger.info(f"Dumped pack {self.name}. Files: {list(path.iterdir())}")
+            pack_files = "\n".join([str(f) for f in path.iterdir()])
+            logger.info(f"Dumped pack {self.name}.")
+            logger.debug(f"Pack {self.name} files:\n{pack_files}")
         except Exception as e:
             logger.error(f"Failed dumping pack {self.name}: {e}")
             raise
 
     def handle_base_pack(self, path: Path):
-        content_path = Path(get_content_path())  # type: ignore
-        documentation_path = content_path / "Documentation"
+        documentation_path = CONTENT_PATH / "Documentation"
         documentation_output = path / "Documentation"
         documentation_output.mkdir(exist_ok=True, parents=True)
         shutil.copy(

@@ -906,6 +906,28 @@ class NodeMock:
             False,
             id="single api module change with dependency, no cdam flag",
         ),
+        pytest.param(
+            [
+                PosixPath("Packs/ApiModules/Scripts/SomeApiModule"),
+                PosixPath("Packs/SomePack/Scripts/SomeScript"),
+            ],
+            [
+                [
+                    NodeMock(
+                        imported_by=[
+                            NodeDependencyMock(
+                                path="Packs/SomePack/Scripts/SomeScript/SomeScript.py"
+                            )
+                        ]
+                    )
+                ],
+                [None],
+            ],
+            ["Packs/SomePack/Scripts/SomeScript/SomeScript.py"],
+            [PosixPath("Packs/SomePack/Scripts/SomeScript")],
+            True,
+            id="single api module change with dependency also changed",
+        ),
     ],
 )
 def test_get_api_module_dependent_items(
@@ -953,6 +975,97 @@ def test_get_api_module_dependent_items(
         check_dependent_api_module=cdam_flag,
     )
 
+    # Asserts sets are equal
     assert set(lint_manager._pkgs) == set(packages_of_dependent_items + changed_files)
+    # Assert no duplicates
+    assert len(lint_manager._pkgs) == len(
+        set(packages_of_dependent_items + changed_files)
+    )
+    if packages_of_dependent_items:
+        get_packages_mock.assert_called_with(content_repo="", input=dependent_items)
+
+
+@pytest.mark.parametrize(
+    "changed_files, api_module_nodes, dependent_items, packages_of_dependent_items_returned, "
+    "packages_of_dependent_items, cdam_flag",
+    [
+        pytest.param(
+            [
+                PosixPath("Packs/ApiModules/Scripts/SomeApiModule"),
+                PosixPath("Packs/SomePack/Scripts/SomeScript"),
+            ],
+            [
+                [
+                    NodeMock(
+                        imported_by=[
+                            NodeDependencyMock(
+                                path="Packs/SomePack/Scripts/SomeScript/SomeScript.py"
+                            )
+                        ]
+                    )
+                ],
+                [None],
+            ],
+            ["Packs/SomePack/Scripts/SomeScript/SomeScript.py"],
+            ["Packs/SomePack/Scripts/SomeScript/SomeScript.py"],
+            [PosixPath("Packs/SomePack/Scripts/SomeScript")],
+            True,
+            id="single api module change with dependency also changed",
+        ),
+    ],
+)
+def test_get_api_module_dependent_items_which_were_changed(
+    mocker,
+    changed_files,
+    api_module_nodes,
+    dependent_items,
+    packages_of_dependent_items_returned,
+    packages_of_dependent_items,
+    cdam_flag,
+):
+    """
+    Given:
+        - Changed API modules with changed dependencies and dependencies.
+        - get_pack_path returning file path instead of pack path.
+
+    When:
+        - Running lint on API modules and changed dependencies.
+
+    Then:
+        - Ensure that lint runs on all relevant dependencies and collects them once.
+    """
+    get_packages_mock = mocker.patch.object(
+        LintManager,
+        "_get_packages",
+        side_effect=[changed_files, packages_of_dependent_items_returned],
+    )
+    mocker.patch.object(LintManager, "_gather_facts", return_value={"content_repo": ""})
+
+    mocker.patch.object(Neo4jContentGraphInterface, "__init__", return_value=None)
+    mocker.patch.object(
+        Neo4jContentGraphInterface, "__enter__", return_value=Neo4jContentGraphInterface
+    )
+    mocker.patch.object(Neo4jContentGraphInterface, "__exit__", return_value=None)
+    mocker.patch("demisto_sdk.commands.lint.lint_manager.update_content_graph")
+    mocker.patch.object(
+        Neo4jContentGraphInterface, "search", side_effect=api_module_nodes
+    )
+    lint_manager = LintManager(
+        input="",
+        git=False,
+        all_packs=False,
+        quiet=False,
+        verbose=False,
+        prev_ver="master",
+        json_file_path="path",
+        check_dependent_api_module=cdam_flag,
+    )
+
+    # Asserts sets are equal
+    assert set(lint_manager._pkgs) == set(packages_of_dependent_items + changed_files)
+    # Assert no duplicates
+    assert len(lint_manager._pkgs) == len(
+        set(packages_of_dependent_items + changed_files)
+    )
     if packages_of_dependent_items:
         get_packages_mock.assert_called_with(content_repo="", input=dependent_items)

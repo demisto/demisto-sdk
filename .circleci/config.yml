@@ -136,7 +136,6 @@ jobs:
             no_output_timeout: 15m
             command: |
               shopt -u globstar
-
               # The first sed expression is to remove test files from under the demisto_sdk/commands/init/templates
               # directory from the globbed list of files. Need to manually remove them since the pytest 'ignore'
               # argument in pytest.ini is itself ignored when explicitly passing tests to pytest. The second is to
@@ -150,9 +149,20 @@ jobs:
               TEST_FILES=$(echo "$TEST_FILES" | circleci tests split --split-by=timings)
 
               mkdir test-results
+              
+              
+              echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
+              
+              # Due to race conditions in the tests bringing up and down the node server, have the server available 
+              # For all the tests. 
+              node demisto_sdk/commands/common/markdown_server/mdx-parse-server.js &
+              node_pid=$!
               poetry run pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
+              kill $node_pid
         - store_test_results:
             path: test-results
+        - store_artifacts:
+            path: node_versions_info.json
         - store_artifacts:
             path: coverage_html_report
         - store_artifacts:
@@ -195,7 +205,8 @@ jobs:
               mkdir graph-test-results
               neo4j start
               # poll for neo4j status until available
-              while ! neo4j status; do sleep 1; done
+              while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
+
               poetry run pytest -v --junitxml=graph-test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: graph-test-results
@@ -207,10 +218,13 @@ jobs:
               TEST_FILES=$(circleci tests glob "demisto_sdk/tests/integration_tests/**/*_test.py")
 
               mkdir integration-test-results
+              
+              echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}') > node_versions_info.json
               poetry run pytest -v --junitxml=integration-test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: integration-test-results
-
+        - store_artifacts:
+            path: node_versions_info.json
 
 
   precommit-checks:
@@ -254,7 +268,7 @@ jobs:
         - run:
             name: Checkout the Content Repo
             command: |
-              git clone --depth 1 https://github.com/demisto/content.git
+              git clone https://github.com/demisto/content.git
               cd content
               git config diff.renameLimit 5000
               git --no-pager log -1
@@ -265,9 +279,11 @@ jobs:
   validate-files:
       docker:
         - image: << pipeline.parameters.global-docker-image >>
+      resource_class: large
       steps:
         - checkout
         - <<: *install_poetry
+        - <<: *install_neo4j
         - attach_workspace:
             at: ~/project
         - <<: *install_build_dependencies
@@ -275,40 +291,27 @@ jobs:
             cache-version: << pipeline.parameters.cache-version >>
             app-dir: content
         - run:
-            name: Set Up & Create Id Set
-            when: always
-            environment:
-              CI_COMMIT_BRANCH: "master"
-            command: |
-              source $(poetry env info --path)/bin/activate
-              cd content
-              demisto-sdk -v
-              demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
-        - run:
-            name: Merge Id Set
-            when: always
-            environment:
-              CI_COMMIT_BRANCH: "master"
-            command: |
-              source $(poetry env info --path)/bin/activate
-              cd content
-              demisto-sdk -v
-              export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
-
-              gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
-              demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json --fail-duplicates
-        - run:
             name: Test validate files and yaml
             when: always
             environment:
               CI_COMMIT_BRANCH: "master"
             command: |
               source $(poetry env info --path)/bin/activate
+
               cd content
               demisto-sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
+              echo $(echo '{"node_version": "'$(node --version)'","npm_list":'$(npm list --json)'}')
+
+              neo4j start
+              # poll for neo4j status until available
+              while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
 
               ./Tests/scripts/validate.sh
+              
+        - store_artifacts:
+            path: /home/circleci/project/artifacts
+
   test-lint:
       docker:
         - image: << pipeline.parameters.global-docker-image >>
@@ -372,6 +375,36 @@ jobs:
               demisto-sdk create-content-artifacts -a ./tmp
         - store_artifacts:
             path: content/tmp
+  test-update-graph:
+    docker:
+      - image: << pipeline.parameters.global-docker-image >>
+    resource_class: large
+    steps:
+      - checkout
+      - <<: *install_poetry
+      - <<: *install_neo4j
+      - attach_workspace:
+          at: ~/project
+      - <<: *install_demisto_sdk
+      - run:
+          name: Run Update Graph Twice
+          when: always
+          command: |
+            source $(poetry env info --path)/bin/activate
+            cd content
+            demisto-sdk -v
+            mkdir ./tmp
+            neo4j start
+            # poll for neo4j status until available
+            while ! curl --fail http://127.0.0.1:7474 &> /dev/null; do sleep 1; done
+
+            # we run the update graph command twice to make sure the graph is updated correctly
+            demisto-sdk update-content-graph -g -o ./tmp/content_graph
+
+            demisto-sdk update-content-graph -i ./tmp/content_graph/xsoar.zip -o ./tmp/content_graph
+      - store_artifacts:
+          path: content/tmp
+
   build:
       docker:
         - image: << pipeline.parameters.global-docker-image >>
@@ -454,6 +487,10 @@ workflows:
       - create-content-artifacts:
           <<: *tag_filter
           <<: *reqs_content_checkout
+      - test-update-graph:
+          <<: *tag_filter
+          <<: *reqs_content_checkout
+
       - build:
           <<: *tag_filter
       - deploy:

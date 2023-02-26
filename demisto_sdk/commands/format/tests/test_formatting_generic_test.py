@@ -105,8 +105,8 @@ class TestFormattingFromVersionKey:
         mocker.patch.object(BaseUpdate, "__init__", return_value=None)
         mocker.patch.object(BaseUpdate, "is_key_in_schema_root", return_value=True)
         mocker.patch(
-            "demisto_sdk.commands.common.constants.GENERAL_DEFAULT_FROMVERSION",
-            return_value="6.2.0",
+            "demisto_sdk.commands.format.update_generic.GENERAL_DEFAULT_FROMVERSION",
+            "6.2.0",
         )
 
         base_update = BaseUpdate()

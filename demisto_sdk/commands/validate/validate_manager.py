@@ -74,6 +74,7 @@ from demisto_sdk.commands.common.hook_validations.generic_module import (
 from demisto_sdk.commands.common.hook_validations.generic_type import (
     GenericTypeValidator,
 )
+from demisto_sdk.commands.common.hook_validations.graph_validator import GraphValidator
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.hook_validations.incident_field import (
@@ -93,6 +94,7 @@ from demisto_sdk.commands.common.hook_validations.layout import (
     LayoutsContainerValidator,
     LayoutValidator,
 )
+from demisto_sdk.commands.common.hook_validations.layout_rule import LayoutRuleValidator
 from demisto_sdk.commands.common.hook_validations.lists import ListsValidator
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
 from demisto_sdk.commands.common.hook_validations.modeling_rule import (
@@ -172,6 +174,7 @@ class ValidateManager:
         only_committed_files=False,
         print_ignored_files=False,
         skip_conf_json=True,
+        validate_graph=False,
         validate_id_set=False,
         file_path=None,
         validate_all=False,
@@ -207,6 +210,7 @@ class ValidateManager:
         self.print_ignored_errors = print_ignored_errors
         self.skip_dependencies = skip_dependencies or not use_git
         self.skip_id_set_creation = not create_id_set or skip_dependencies
+        self.validate_graph = validate_graph
         self.compare_type = "..."
         self.staged = staged
         self.skip_schema_check = skip_schema_check
@@ -426,8 +430,20 @@ class ValidateManager:
         """Run validations only on specific files"""
         files_validation_result = set()
         self.setup_git_params()
+        files_to_validate = self.file_path.split(",")
 
-        for path in self.file_path.split(","):
+        if self.validate_graph:
+            click.secho(
+                f"\n================= Validating graph =================",
+                fg="bright_cyan",
+            )
+            with GraphValidator(
+                specific_validations=self.specific_validations,
+                input_files=files_to_validate,
+            ) as graph_validator:
+                files_validation_result.add(graph_validator.is_valid_content_graph())
+
+        for path in files_to_validate:
             error_ignore_list = self.get_error_ignore_list(get_pack_name(path))
             file_level = self.detect_file_level(path)
 
@@ -506,6 +522,16 @@ class ValidateManager:
             fg="bright_cyan",
         )
         all_packs_valid = set()
+
+        if self.validate_graph:
+            click.secho(
+                f"\n================= Validating graph =================",
+                fg="bright_cyan",
+            )
+            with GraphValidator(
+                specific_validations=self.specific_validations
+            ) as graph_validator:
+                all_packs_valid.add(graph_validator.is_valid_content_graph())
 
         if not self.skip_conf_json:
             all_packs_valid.add(self.conf_json_validator.is_valid_conf_json())
@@ -1082,6 +1108,11 @@ class ValidateManager:
         elif file_type == FileType.JOB:
             return self.validate_job(structure_validator, pack_error_ignore_list)
 
+        elif file_type == FileType.LAYOUT_RULE:
+            return self.validate_layout_rules(
+                structure_validator, pack_error_ignore_list
+            )
+
         elif file_type == FileType.CONTRIBUTORS:
             # This is temporarily - need to add a proper contributors validations
             return True
@@ -1250,6 +1281,21 @@ class ValidateManager:
         )
 
         validation_results = {valid_git_setup, valid_types}
+
+        if self.validate_graph:
+            click.secho(
+                f"\n================= Validating graph =================",
+                fg="bright_cyan",
+            )
+            all_files_set = list(
+                set().union(modified_files, added_files, old_format_files)
+            )
+            if all_files_set:
+                with GraphValidator(
+                    specific_validations=self.specific_validations,
+                    git_files=all_files_set,
+                ) as graph_validator:
+                    validation_results.add(graph_validator.is_valid_content_graph())
 
         validation_results.add(self.validate_modified_files(modified_files))
         validation_results.add(self.validate_added_files(added_files, modified_files))
@@ -1740,6 +1786,15 @@ class ValidateManager:
         )
         return triggers_validator.is_valid_file(validate_rn=False)
 
+    def validate_layout_rules(self, structure_validator, pack_error_ignore_list):
+        layout_rules_validator = LayoutRuleValidator(
+            structure_validator,
+            ignored_errors=pack_error_ignore_list,
+            print_as_warnings=self.print_ignored_errors,
+            json_file_path=self.json_file_path,
+        )
+        return layout_rules_validator.is_valid_file(validate_rn=False)
+
     def validate_xsiam_report(self, structure_validator, pack_error_ignore_list):
         xsiam_report_validator = XSIAMReportValidator(
             structure_validator,
@@ -2006,9 +2061,13 @@ class ValidateManager:
                     for file in added_files:
                         file = str(file)
                         file_type = find_type(file)
-                        file_dict = get_file(file, file_type.value)
-                        if deleted_file_id == _get_file_id(file_type.value, file_dict):
-                            return True
+                        if file_type == deleted_file_type:
+                            file_suffix = Path(deleted_file_path).suffix
+                            file_dict = get_file(file, file_suffix)
+                            if deleted_file_id == _get_file_id(
+                                file_type.value, file_dict
+                            ):
+                                return True
         return False
 
     @error_codes("BA115")

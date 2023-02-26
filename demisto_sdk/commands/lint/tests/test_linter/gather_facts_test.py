@@ -540,7 +540,7 @@ class TestDockerImagesCollection:
         # Verify docker images:
         expected_err_msg = (
             f"The requested native image: '{docker_image_flag}' is not supported. "
-            f"The possible options are: 'native:ga', 'native:maintenance' and 'native:dev'. "
+            f"The possible options are: 'native:ga', 'native:maintenance', 'native:dev' and 'native:target'. "
             f"For supported native image versions please see: 'Tests/docker_native_image_config.json'"
         )
         assert runner._facts["images"] == []

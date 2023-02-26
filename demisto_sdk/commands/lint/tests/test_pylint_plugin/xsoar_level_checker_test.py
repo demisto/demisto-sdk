@@ -80,6 +80,10 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="missing-arg-type-annoation",
                 node=node_b,
+                line=7,
+                col_offset=0,
+                end_line=7,
+                end_col_offset=13,
             ),
         ):
             self.checker.visit_functiondef(node_a)
@@ -110,10 +114,18 @@ class TestTypeAnnotationsChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="missing-arg-type-annoation",
                 node=node_a,
+                line=2,
+                col_offset=0,
+                end_line=2,
+                end_col_offset=13
             ),
             pylint.testutils.MessageTest(
                 msg_id="missing-arg-type-annoation",
                 node=node_b,
+                line=7,
+                col_offset=0,
+                end_line=7,
+                end_col_offset=13
             ),
         ):
             self.checker.visit_functiondef(node_a)

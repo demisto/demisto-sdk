@@ -28,7 +28,7 @@ import requests
 import urllib3
 from bs4.dammit import UnicodeDammit
 from git.types import PathLike
-from packaging.version import LegacyVersion, Version, parse
+from packaging.version import Version, parse
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
 from ruamel.yaml.comments import CommentedSeq
@@ -2320,7 +2320,7 @@ def open_id_set_file(id_set_path):
         return id_set
 
 
-def get_demisto_version(client: demisto_client) -> Union[Version, LegacyVersion]:
+def get_demisto_version(client: demisto_client) -> Version:
     """
     Args:
         demisto_client: A configured demisto_client instance

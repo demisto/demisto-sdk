@@ -2,7 +2,7 @@ import logging
 import re
 from typing import List, Optional, Union
 
-from packaging.version import LegacyVersion, Version, parse
+from packaging.version import Version, parse
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
@@ -78,7 +78,7 @@ class JSONContentObject(JSONObject):
         return self._readme
 
     @property
-    def from_version(self) -> Union[Version, LegacyVersion]:
+    def from_version(self) -> Version:
         """Object from_version attribute.
 
         Returns:
@@ -91,7 +91,7 @@ class JSONContentObject(JSONObject):
         return parse(self.get("fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION))
 
     @property
-    def to_version(self) -> Union[Version, LegacyVersion]:
+    def to_version(self) -> Version:
         """Object to_version attribute.
 
         Returns:

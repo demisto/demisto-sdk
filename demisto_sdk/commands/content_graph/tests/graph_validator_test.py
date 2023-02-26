@@ -447,6 +447,21 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, caplo
     )
 
 
+@pytest.mark.parametrize(
+    "should_provide_integration_path, is_valid",
+    [
+        pytest.param(
+            False,
+            True,
+            id="Not providing git_files - should be valid (raised a warning)",
+        ),
+        pytest.param(
+            True,
+            False,
+            id="providing git_files - should be invalid",
+        ),
+    ],
+)
 def test_is_file_using_unknown_content(
     caplog,
     repository: ContentDTO,

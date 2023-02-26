@@ -931,7 +931,7 @@ def secrets(config, **kwargs):
     "--docker-image-target",
     default="",
     help="The docker image to lint native supported content with. Should only be used with "
-    "--docker-image native:target. Will be ignored otherwise.",
+    "--docker-image native:target. An error will be raised otherwise.",
 )
 @click.option(
     "-cdam",

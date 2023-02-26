@@ -404,7 +404,6 @@ class TestDockerImagesCollection:
             runner._gather_facts(modules={})
 
         # Verify docker images:
-        print(f"log error {log_error.call_args_list}")
         assert runner._facts["images"][0][0] == invalid_docker_image
         assert (
             f"Get python version from image {invalid_docker_image} - Failed detecting Python version for image"

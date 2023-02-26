@@ -6,7 +6,7 @@ import os
 import platform
 import traceback
 from enum import Enum
-from typing import Any, Dict, List, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import docker
 import docker.errors
@@ -1381,8 +1381,8 @@ class Linter:
 
     def _check_native_image_flag(self, docker_image_flag):
         """
-        Gets a native docker image flag and verify that it is one of the following: 'native:ga', 'native:maintenance'
-        or 'native:dev'.
+        Gets a native docker image flag and verify that it is one of the following: 'native:ga', 'native:maintenance',
+        'native:dev' or 'native:target'.
         If it isn't, raises a suitable exception.
         Args:
             docker_image_flag (str): Requested docker image flag.
@@ -1397,7 +1397,7 @@ class Linter:
         ):
             err_msg = (
                 f"The requested native image: '{docker_image_flag}' is not supported. The possible options are: "
-                f"'native:ga', 'native:maintenance' and 'native:dev'. For supported native image"
+                f"'native:ga', 'native:maintenance', 'native:dev' and 'native:target'. For supported native image"
                 f" versions please see: 'Tests/{NATIVE_IMAGE_FILE_NAME}'"
             )
             logger.error(
@@ -1539,7 +1539,7 @@ class Linter:
         script_obj: Dict,
         script_id: str,
         docker_image_flag: str,
-        docker_image_target: Union[str, None],
+        docker_image_target: Optional[str],
     ) -> List[str]:
         """Gets a yml as dict of the current integration/script that lint runs on, and a flag indicates on which docker
          images lint should run.
@@ -1612,19 +1612,18 @@ class Linter:
 
             self._check_native_image_flag(docker_image_flag)
 
-            supported_section = docker_image_flag
+            image_support = docker_image_flag
             if docker_image_flag == DockerImageFlagOption.NATIVE_TARGET.value:
-                supported_section = DockerImageFlagOption.NATIVE_DEV.value
+                image_support = DockerImageFlagOption.NATIVE_DEV.value
 
-            native_image = self._get_native_image_name_from_config_file(
-                supported_section
-            )
-            if native_image:
+            if native_image := self._get_native_image_name_from_config_file(
+                image_support
+            ):
 
                 if self._is_native_image_support_script(
                     native_image, supported_native_images, script_id
                 ):  # Integration/Script is supported by the requested native image
-                    native_image_ref: Union[str, None] = ""
+                    native_image_ref: Optional[str] = ""
 
                     if (
                         docker_image_flag == DockerImageFlagOption.NATIVE_TARGET.value

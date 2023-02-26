@@ -88,7 +88,7 @@ class JSONContentObject(JSONObject):
             1. Version object - https://github.com/pypa/packaging
             2. Attribute info - https://xsoar.pan.dev/docs/integrations/yaml-file#version-and-tests
         """
-        return parse(self.get("fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION))
+        return parse(self.get("fromVersion") or DEFAULT_CONTENT_ITEM_FROM_VERSION)
 
     @property
     def to_version(self) -> Version:

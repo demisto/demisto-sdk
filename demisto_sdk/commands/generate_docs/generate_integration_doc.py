@@ -171,7 +171,7 @@ def generate_integration_doc(
                 docs.extend(
                     [
                         "Some changes have been made that might affect your existing content. "
-                        "\nIf you are upgrading from a previous of this integration, see [Breaking Changes]"
+                        "\nIf you are upgrading from a previous version of this integration, see [Breaking Changes]"
                         "(#breaking-changes-from-the-previous-version-of-this-integration-"
                         f'{yml_data.get("display", "").replace(" ", "-").lower()}).',
                         "",
@@ -213,6 +213,8 @@ def generate_integration_doc(
                 docs.extend(generate_numbered_section("Known Limitations", limitations))
 
             doc_text = "\n".join(docs)
+            if not doc_text.endswith("\n"):
+                doc_text += "\n"
 
         save_output(output, "README.md", doc_text)
 

@@ -449,6 +449,19 @@ def test_integration_format_remove_playbook_sourceplaybookid(
     assert not result.exception
 
 
+debug_side_effect_calls = []
+
+
+def debug_side_effect(*args, **kwargs):
+    print(f"*** my_side_effect, {args=}")
+    print(f"*** my_side_effect, {kwargs=}")
+    if args:
+        if args[0]:
+            debug_side_effect_calls.append(args[0])
+        else:
+            debug_side_effect_calls.append(args)
+
+
 def test_format_on_valid_py(mocker, repo, caplog, capfd):
     """
     Given
@@ -464,6 +477,9 @@ def test_format_on_valid_py(mocker, repo, caplog, capfd):
     for current_handler in logger.handlers:
         current_handler.setLevel(logging.DEBUG)
     logger.propagate = True
+
+    # from logging.logger import debug
+    mocker.patch.object(logger, "debug", side_effect=debug_side_effect)
 
     # from demisto_sdk.commands.common import logger as demisto_logger
 
@@ -521,9 +537,14 @@ def test_format_on_valid_py(mocker, repo, caplog, capfd):
     print(f"*** {caplog.text=}")
     print(f"*** {result.stdout=}")
     print(f"*** {result.stderr=}")
-    assert 1 == 0
     assert "======= Updating file" in result.stdout
-    assert "Running autopep8 on file" in result.stderr
+    found_running_autopep8_on_file = False
+    # assert "Running autopep8 on file" in result.stderr
+    for current_debug_side_effect_call in debug_side_effect_calls:
+        if "Running autopep8 on file" in current_debug_side_effect_call:
+            found_running_autopep8_on_file = True
+            break
+    assert found_running_autopep8_on_file
     assert "Success" in result.stdout
     assert valid_py == integration.code.read()
 

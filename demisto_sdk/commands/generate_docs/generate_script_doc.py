@@ -158,6 +158,8 @@ def generate_script_doc(
             doc.extend(generate_numbered_section("Known Limitations", limitations))
 
         doc_text = "\n".join(doc)
+        if not doc_text.endswith("\n"):
+            doc_text += "\n"
 
         save_output(output, "README.md", doc_text)
 

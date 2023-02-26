@@ -54,6 +54,9 @@ class PythonFileFormat(BaseUpdate):
         Returns:
             bool. True if succeeded to run autopep8 on file, False otherwise.
         """
+        # TODO Remove
+        handlers = logger.handlers
+        print(f"*** format_py_using_autopep, {logger.propagate=}, {handlers=}")
         logger.debug(f"\nRunning autopep8 on file: {py_file_path}\n")
         try:
             subprocess.call(

@@ -101,7 +101,7 @@ class JSONContentObject(JSONObject):
             1. Version object - https://github.com/pypa/packaging
             2. Attribute info - https://xsoar.pan.dev/docs/integrations/yaml-file#version-and-tests
         """
-        return parse(self.get("toVersion", DEFAULT_CONTENT_ITEM_TO_VERSION))
+        return parse(self.get("toVersion") or DEFAULT_CONTENT_ITEM_TO_VERSION)
 
     def dump(
         self,

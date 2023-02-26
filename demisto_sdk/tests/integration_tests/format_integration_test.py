@@ -521,6 +521,7 @@ def test_format_on_valid_py(mocker, repo, capsys, caplog, capfd):
     print(f"*** {caplog.text=}")
     print(f"*** {result.stdout=}")
     print(f"*** {result.stderr=}")
+    assert 1 == 0
     assert "======= Updating file" in result.stdout
     assert "Running autopep8 on file" in result.stderr
     assert "Success" in result.stdout

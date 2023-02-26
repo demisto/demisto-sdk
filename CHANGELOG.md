@@ -6,6 +6,7 @@
 * Added the value `3` (out of bounds) to the `onChangeRepAlg` and `reputationCalc` fields under the `IncidentType` and `GenericType` schemas. **validate** will allow using it now.
 * Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
 * Fixed an issue where using **postman-codegen** failed converting strings containing digits to kebab-case.
+* Fixed an issue where the ***error-code*** command could not parse List[str] parameter.
 
 ## 1.10.4
 * Added support for running **lint** in multiple native-docker images.

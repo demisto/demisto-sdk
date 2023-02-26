@@ -54,6 +54,7 @@ class PythonFileFormat(BaseUpdate):
         Returns:
             bool. True if succeeded to run autopep8 on file, False otherwise.
         """
+        logger.debug(f"\nRunning autopep8 on file: {py_file_path}\n")
         try:
             subprocess.call(
                 [

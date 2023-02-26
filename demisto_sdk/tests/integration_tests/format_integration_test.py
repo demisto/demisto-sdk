@@ -449,21 +449,11 @@ def test_integration_format_remove_playbook_sourceplaybookid(
     assert not result.exception
 
 
-debug_side_effect_calls = []
-
-
-def debug_side_effect(*args, **kwargs):
-    if args:
-        if args[0]:
-            debug_side_effect_calls.append(args[0])
-        else:
-            debug_side_effect_calls.append(args)
-
-
-def str_in_side_effect_calls(side_effect_calls, required_str):
-    for current_side_effect_calls in side_effect_calls:
-        if required_str in current_side_effect_calls:
-            return True
+def str_in_call_args_list(call_args_list, required_str):
+    for current_call in call_args_list:
+        if type(current_call[0]) == tuple:
+            if required_str in current_call[0][0]:
+                return True
     return False
 
 
@@ -478,13 +468,7 @@ def test_format_on_valid_py(mocker, repo):
     Then
     - Ensure format passes.
     """
-    logger = logging.getLogger("demisto-sdk")
-    for current_handler in logger.handlers:
-        current_handler.setLevel(logging.DEBUG)
-    logger.propagate = True
-
-    debug_side_effect_calls = []
-    mocker.patch.object(logger, "debug", side_effect=debug_side_effect)
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
 
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
@@ -495,22 +479,25 @@ def test_format_on_valid_py(mocker, repo):
     integration.code.write(valid_py)
 
     with ChangeCWD(pack.repo_path):
-        runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(
-            main,
-            [
-                FORMAT_CMD,
-                "-nv",
-                "-i",
-                integration.code.path,
-                "--console_log_threshold",
-                "DEBUG",
-            ],
-            catch_exceptions=True,
-        )
+        with mocker.patch("demisto_sdk.commands.common.logger.set_propagate"):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(
+                main,
+                [
+                    FORMAT_CMD,
+                    "-nv",
+                    "-i",
+                    integration.code.path,
+                    "--console_log_threshold",
+                    "DEBUG",
+                ],
+                catch_exceptions=True,
+            )
 
     assert "======= Updating file" in result.stdout
-    assert str_in_side_effect_calls(debug_side_effect_calls, "Running autopep8 on file")
+    assert str_in_call_args_list(
+        logger_debug.call_args_list, "Running autopep8 on file"
+    )
     assert "Success" in result.stdout
     assert valid_py == integration.code.read()
 
@@ -526,13 +513,7 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
     Then
     - Ensure format passes.
     """
-    logger = logging.getLogger("demisto-sdk")
-    for current_handler in logger.handlers:
-        current_handler.setLevel(logging.DEBUG)
-    logger.propagate = True
-
-    debug_side_effect_calls = []
-    mocker.patch.object(logger, "debug", side_effect=debug_side_effect)
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
 
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
@@ -557,7 +538,9 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
         )
 
     assert "======= Updating file" in result.stdout
-    assert str_in_side_effect_calls(debug_side_effect_calls, "Running autopep8 on file")
+    assert str_in_call_args_list(
+        logger_debug.call_args_list, "Running autopep8 on file"
+    )
     assert "Success" in result.stdout
     assert invalid_py != integration.code.read()
 
@@ -573,13 +556,7 @@ def test_format_on_invalid_py_dict(mocker, repo):
     Then
     - Ensure format passes.
     """
-    logger = logging.getLogger("demisto-sdk")
-    for current_handler in logger.handlers:
-        current_handler.setLevel(logging.DEBUG)
-    logger.propagate = True
-
-    debug_side_effect_calls = []
-    mocker.patch.object(logger, "debug", side_effect=debug_side_effect)
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
 
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
@@ -604,7 +581,9 @@ def test_format_on_invalid_py_dict(mocker, repo):
         )
 
     assert "======= Updating file" in result.stdout
-    assert str_in_side_effect_calls(debug_side_effect_calls, "Running autopep8 on file")
+    assert str_in_call_args_list(
+        logger_debug.call_args_list, "Running autopep8 on file"
+    )
     assert "Success" in result.stdout
     assert invalid_py != integration.code.read()
 
@@ -622,13 +601,7 @@ def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
     """
     monkeypatch.setenv("COLUMNS", "1000")
 
-    logger = logging.getLogger("demisto-sdk")
-    for current_handler in logger.handlers:
-        current_handler.setLevel(logging.DEBUG)
-    logger.propagate = True
-
-    debug_side_effect_calls = []
-    mocker.patch.object(logger, "debug", side_effect=debug_side_effect)
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
 
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
@@ -656,7 +629,9 @@ def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
         )
 
     assert "======= Updating file" in result.stdout
-    assert str_in_side_effect_calls(debug_side_effect_calls, "Running autopep8 on file")
+    assert str_in_call_args_list(
+        logger_debug.call_args_list, "Running autopep8 on file"
+    )
     assert "Success" in result.stdout
     assert invalid_py != integration.code.read()
 

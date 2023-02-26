@@ -1379,27 +1379,19 @@ def get_ignore_pack_skipped_tests(
     file_name_to_ignore_dict: Dict[str, List[str]] = {}
     test_playbooks = id_set.get("TestPlaybooks", {})
 
-    pack_ignore_path = get_pack_ignore_file_path(pack_name)
-    if pack_name in modified_packs:
-        if os.path.isfile(pack_ignore_path):
-            try:
-                # read pack_ignore using ConfigParser
-                config = ConfigParser(allow_no_value=True)
-                config.read(pack_ignore_path)
-
-                # go over every file in the config
-                for section in config.sections():
-                    if section.startswith("file:"):
-                        # given section is of type file
-                        file_name: str = section[5:]
-                        for key in config[section]:
-                            if key == "ignore":
-                                # group ignore codes to a list
-                                file_name_to_ignore_dict[file_name] = str(
-                                    config[section][key]
-                                ).split(",")
-            except MissingSectionHeaderError:
-                pass
+    # pack_ignore_path = get_pack_ignore_file_path(pack_name)
+    if pack_name in modified_packs and (config := get_pack_ignore_content(pack_name)):
+        # go over every file in the config
+        for section in config.sections():
+            if section.startswith("file:"):
+                # given section is of type file
+                file_name: str = section[5:]
+                for key in config[section]:
+                    if key == "ignore":
+                        # group ignore codes to a list
+                        file_name_to_ignore_dict[file_name] = str(
+                            config[section][key]
+                        ).split(",")
 
     for file_name, ignore_list in file_name_to_ignore_dict.items():
         if any(ignore_code == "auto-test" for ignore_code in ignore_list):

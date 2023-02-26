@@ -463,7 +463,9 @@ def test_format_on_valid_py(mocker, repo, capsys, caplog):
     logger = logging.getLogger("demisto-sdk")
     logger.propagate = True
 
-    mocker.patch.object(logger, "set_propagate")
+    from demisto_sdk.commands.common import logger as demisto_logger
+
+    mocker.patch.object(demisto_logger, "set_propagate")
 
     caplog.set_level(logging.DEBUG)
     mocker.patch.object(
@@ -494,7 +496,7 @@ def test_format_on_valid_py(mocker, repo, capsys, caplog):
     print(f"*** {result.stdout=}")
     print(f"*** {result.stderr=}")
     assert "======= Updating file" in result.stdout
-    assert "Running autopep8 on file" in captured
+    assert "Running autopep8 on file" in caplog.text
     assert "Success" in result.stdout
     assert valid_py == integration.code.read()
 

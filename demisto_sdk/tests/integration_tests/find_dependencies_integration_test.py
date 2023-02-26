@@ -43,6 +43,24 @@ def mock_is_external_repo(mocker, is_external_repo_return):
     )
 
 
+info_side_effect_calls = []
+
+
+def info_side_effect(*args, **kwargs):
+    if args:
+        if args[0]:
+            info_side_effect_calls.append(args[0])
+        else:
+            info_side_effect_calls.append(args)
+
+
+def str_in_side_effect_calls(side_effect_calls, required_str):
+    for current_side_effect_calls in side_effect_calls:
+        if required_str in current_side_effect_calls:
+            return True
+    return False
+
+
 class TestFindDependencies:  # Use classes to speed up test - multi threaded py pytest
     def test_integration_find_dependencies_sanity(self, mocker, repo, monkeypatch):
         """
@@ -58,6 +76,10 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         - Ensure debug file is created.
         """
         monkeypatch.setenv("COLUMNS", "1000")
+
+        info_side_effect_calls = []
+        mocker.patch.object(logger, "debug", side_effect=info_side_effect)
+
         mock_is_external_repo(mocker, False)
         # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
         mocker.patch.dict(os.environ, {"DEMISTO_SDK_ID_SET_REFRESH_INTERVAL": "-1"})
@@ -87,8 +109,12 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 ],
                 catch_exceptions=False,
             )
-        assert "# Pack ID: FindDependencyPack" in result.stderr
-        assert "### Scripts" in result.stderr
+        # assert "# Pack ID: FindDependencyPack" in result.stderr
+        assert str_in_side_effect_calls(
+            info_side_effect_calls, "# Pack ID: FindDependencyPack"
+        )
+        # assert "### Scripts" in result.stderr
+        assert str_in_side_effect_calls(info_side_effect_calls, "### Scripts")
         assert "### Playbooks" in result.stderr
         assert "### Layouts" in result.stderr
         assert "### Incident Fields" in result.stderr

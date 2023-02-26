@@ -1330,6 +1330,30 @@ def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # 
     return None, None
 
 
+def get_pack_ignore_content(pack_name: str) -> Union[ConfigParser, None]:
+    """
+
+    Args:
+        pack_name: a pack name from which to get the pack ignore config.
+
+    Returns:
+        ConfigParser | None: config parser object in case of success, None otherwise.
+    """
+    _pack_ignore_file_path = Path(get_pack_ignore_file_path(pack_name))
+    if _pack_ignore_file_path.exists():
+        try:
+            config = ConfigParser(allow_no_value=True)
+            config.read(_pack_ignore_file_path)
+            return config
+        except MissingSectionHeaderError as err:
+            logger.error(
+                f"Error when retrieving the content of {_pack_ignore_file_path}\n{err=}"
+            )
+            return None
+    click.secho(f"{_pack_ignore_file_path} does not exist for pack {pack_name}")
+    return None
+
+
 def get_ignore_pack_skipped_tests(
     pack_name: str, modified_packs: set, id_set: dict
 ) -> set:

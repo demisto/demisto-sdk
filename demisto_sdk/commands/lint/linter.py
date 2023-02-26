@@ -5,7 +5,6 @@ import logging
 import os
 import platform
 import traceback
-from configparser import ConfigParser
 from enum import Enum
 from typing import Any, Dict, List, Set, Tuple, Union
 
@@ -22,7 +21,6 @@ from demisto_sdk.commands.common.constants import (
     API_MODULE_FILE_SUFFIX,
     INTEGRATIONS_DIR,
     NATIVE_IMAGE_FILE_NAME,
-    PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME,
     TESTS_REQUIRE_NETWORK_PACK_IGNORE,
     TYPE_PWSH,
@@ -41,6 +39,7 @@ from demisto_sdk.commands.common.native_image import (
 from demisto_sdk.commands.common.timers import timer
 from demisto_sdk.commands.common.tools import (
     get_docker_images_from_yml,
+    get_pack_ignore_content,
     get_pack_name,
     get_yaml,
     run_command_os,
@@ -191,13 +190,7 @@ class Linter:
                 )
 
     def should_disable_network(self) -> bool:
-        pack_name = get_pack_name(str(self._pack_abs_dir))
-        _pack_ignore_file_path = Path(
-            f"Packs/{pack_name}/{PACKS_PACK_IGNORE_FILE_NAME}"
-        )
-        if _pack_ignore_file_path.exists():
-            config = ConfigParser(allow_no_value=True)
-            config.read(_pack_ignore_file_path)
+        if config := get_pack_ignore_content(get_pack_name(str(self._pack_abs_dir))):
             if TESTS_REQUIRE_NETWORK_PACK_IGNORE in config.sections():
                 ignored_integrations_scripts_ids = config[
                     TESTS_REQUIRE_NETWORK_PACK_IGNORE
@@ -1095,9 +1088,7 @@ class Linter:
         """
         network_status = "disabled" if should_disable_network else "enabled"
 
-        log_prompt = (
-            f"{self._pack_name} - Pytest - Image {test_image}, network: {network_status}"
-        )
+        log_prompt = f"{self._pack_name} - Pytest - Image {test_image}, network: {network_status}"
         logger.info(f"{log_prompt} - Start")
         container_name = f"{self._pack_name}-pytest"
         # Check if previous run left container a live if it does, Remove it

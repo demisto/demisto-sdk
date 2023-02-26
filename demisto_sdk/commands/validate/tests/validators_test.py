@@ -2816,3 +2816,37 @@ def test_run_validation_using_git_on_metadata_with_invalid_tags(
     captured_stdout = std_output.getvalue()
     assert "[PA123]" in captured_stdout, captured_stdout
     assert not res
+
+
+def test_run_validation_using_git_validation_calls(mocker):
+    """
+    Given: Some changed files were detected.
+
+    When: Running validations on using git.
+
+    Then: Ensure the correct validations are called on the correct files.
+    """
+    modified_files = {'modified_files'}
+    added_files = {'added_files'}
+    changed_meta_files = {'changed_meta_files'}
+    old_format_files = {'old_format_files'}
+    deleted_files = {'deleted_files'}
+
+    validate_manager = ValidateManager()
+
+    mocker.patch.object(validate_manager, "setup_git_params", return_value=True)
+    mocker.patch.object(validate_manager, "get_changed_files_from_git",
+                        return_value=(modified_files, added_files, changed_meta_files, old_format_files, True))
+    mocker.patch.object(GitUtil, "deleted_files", return_value=deleted_files)
+
+    modified_files_validation = mocker.patch.object(validate_manager, "validate_modified_files", return_value=True)
+    added_files_validation = mocker.patch.object(validate_manager, "validate_added_files", return_value=True)
+    no_old_format_validation = mocker.patch.object(validate_manager, "validate_no_old_format", return_value=True)
+    deleted_files_validation = mocker.patch.object(validate_manager, "validate_deleted_files", return_value=True)
+
+    validate_manager.run_validation_using_git()
+
+    modified_files_validation.assert_called_once_with(modified_files.union(old_format_files))
+    added_files_validation.assert_called_once_with(added_files, modified_files)
+    no_old_format_validation.assert_called_once_with(old_format_files)
+    deleted_files_validation.assert_called_once_with(deleted_files, added_files)

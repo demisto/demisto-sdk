@@ -461,6 +461,8 @@ def test_format_on_valid_py(mocker, repo, capsys, caplog):
     - Ensure format passes.
     """
     logger = logging.getLogger("demisto-sdk")
+    for current_handler in logger.handlers:
+        current_handler.setLevel(logging.DEBUG)
     logger.propagate = True
 
     # from demisto_sdk.commands.common import logger as demisto_logger

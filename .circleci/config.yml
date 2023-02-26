@@ -477,7 +477,7 @@ workflows:
           <<: *tag_filter
           matrix:
             parameters:
-              pythonversion: ["3.8", "3.9", "3.10"]   
+              pythonversion: ["3.8", "3.9", "3.10", "3.11"]   
           name: run-integration-tests-<< matrix.pythonversion >>
       - validate-files:
           <<: *tag_filter

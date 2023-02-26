@@ -427,7 +427,7 @@ class ValidateManager:
         files_to_validate = self.file_path.split(",")
 
         if self.validate_graph:
-            click.secho(
+            secho_and_info(
                 f"\n================= Validating graph =================",
                 fg="bright_cyan",
             )

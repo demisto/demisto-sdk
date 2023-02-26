@@ -110,9 +110,13 @@ def _logging_setup(
     ret_value.addHandler(console_handler)
     ret_value.addHandler(file_handler)
     ret_value.level = min(console_handler.level, file_handler.level)
-    ret_value.propagate = False
+    set_propagate(ret_value, False)
 
     return ret_value
+
+
+def set_propagate(logger_to_update: logging.Logger, propagate: bool = False):
+    logger_to_update.propagate = propagate
 
 
 # logger: logging.Logger = logging_setup()

@@ -460,7 +460,11 @@ def test_format_on_valid_py(mocker, repo, capsys, caplog):
     Then
     - Ensure format passes.
     """
-    logging.getLogger("demisto-sdk").propagate = True
+    logger = logging.getLogger("demisto-sdk")
+    logger.propagate = True
+
+    mocker.patch.object(logger, "set_propagate")
+
     caplog.set_level(logging.DEBUG)
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")

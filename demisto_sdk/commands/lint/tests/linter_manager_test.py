@@ -1029,7 +1029,7 @@ def test_get_api_module_dependent_items_which_were_changed(
         - get_pack_path returning file path instead of pack path.
 
     When:
-        - Running lint on API modules and changed dependecies.
+        - Running lint on API modules and changed dependencies.
 
     Then:
         - Ensure that lint runs on all relevant dependencies and collects them once.

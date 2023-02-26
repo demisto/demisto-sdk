@@ -158,6 +158,8 @@ def generate_script_doc(
             doc.extend(generate_numbered_section("Known Limitations", limitations))
 
         doc_text = "\n".join(doc)
+        if not doc_text.endswith("\n"):
+            doc_text += "\n"
 
         save_output(output, "README.md", doc_text)
 
@@ -299,13 +301,15 @@ def generate_script_example(script_name, example=None):
             return "", [
                 f"did not get any example for {script_name}. please add it manually."
             ]
-        results.extend(["", "## Script Examples"])
+        results.extend(["## Script Examples", ""])
         for script_example, md_example, context_example in examples:
-            results.extend(["### Example command", f"```{script_example}```"])
+            results.extend(["### Example command", "", f"```{script_example}```"])
             if context_example:
                 results.extend(
                     [
+                        "",
                         "### Context Example",
+                        "",
                         "```json",
                         f"{context_example}",
                         "```",

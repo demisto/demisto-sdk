@@ -5,7 +5,9 @@ from typing import Dict, List
 import pytest
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import get_json, get_yaml
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
@@ -18,6 +20,9 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     generate_single_command_section,
     get_command_examples,
 )
+from demisto_sdk.commands.generate_docs.generate_playbook_doc import (
+    generate_playbook_doc,
+)
 from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
 from TestSuite.pack import Pack
 
@@ -28,6 +33,7 @@ FILES_PATH = os.path.normpath(
 )
 FAKE_ID_SET = get_json(os.path.join(FILES_PATH, "fake_id_set.json"))
 TEST_PLAYBOOK_PATH = os.path.join(FILES_PATH, "playbook-Test_playbook.yml")
+PLAYBOOK_PATH = os.path.join(FILES_PATH, "beta-playbook-valid.yml")
 TEST_SCRIPT_PATH = os.path.join(FILES_PATH, "script-test_script.yml")
 TEST_INTEGRATION_PATH = os.path.join(
     FILES_PATH, "fake_integration/fake_integration.yml"
@@ -128,7 +134,7 @@ def test_generate_list_section_empty():
 
     section = generate_list_section("Inputs", [], empty_message="No inputs found.")
 
-    expected_section = ["## Inputs", "No inputs found.", ""]
+    expected_section = ["## Inputs", "", "No inputs found.", ""]
 
     assert section == expected_section
 
@@ -138,7 +144,7 @@ def test_generate_numbered_section():
 
     section = generate_numbered_section("Use Cases", "* Drink coffee. * Write code.")
 
-    expected_section = ["## Use Cases", "1. Drink coffee.", "2. Write code."]
+    expected_section = ["## Use Cases", "", "1. Drink coffee.", "2. Write code.", ""]
 
     assert section == expected_section
 
@@ -150,7 +156,7 @@ def test_generate_list_section():
         "Inputs", ["item1", "item2"], False, "No inputs found."
     )
 
-    expected_section = ["## Inputs", "* item1", "* item2", ""]
+    expected_section = ["## Inputs", "", "* item1", "* item2", ""]
 
     assert section == expected_section
 
@@ -162,7 +168,16 @@ def test_generate_list_with_text_section():
         "Inputs", ["item1", "item2"], True, "No inputs found.", "some text"
     )
 
-    expected_section = ["## Inputs", "---", "some text", "* item1", "* item2", ""]
+    expected_section = [
+        "## Inputs",
+        "",
+        "---",
+        "some text",
+        "",
+        "* item1",
+        "* item2",
+        "",
+    ]
 
     assert section == expected_section
 
@@ -173,7 +188,7 @@ TEST_TABLE_SECTION_EMPTY = [
         "Script Data",
         "No data found.",
         "This is the metadata of the script.",
-        ["## Script Data", "---", "No data found.", ""],
+        ["## Script Data", "", "---", "No data found.", ""],
     ),
     ([], "Script Data", "", "", [""]),
     ([], "Script Data", "", "This is the metadata of the script.", [""]),
@@ -229,6 +244,7 @@ def test_generate_table_section():
 
     expected_section = [
         "## Script Data",
+        "",
         "---",
         "This is the metadata of the script.",
         "| **Type** | **Docker Image** |",
@@ -300,6 +316,7 @@ def test_generate_table_section_with_newlines():
 
     expected_section = [
         "## Playbook Inputs",
+        "",
         "---",
         "",
         "| **Name** | **Description** | **Default Value** | **Required** |",
@@ -530,16 +547,22 @@ def test_generate_commands_section():
 
     expected_section = [
         "## Commands",
+        "",
         "You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.",
         "After you successfully execute a command, a DBot message appears in the War Room with the command details.",
+        "",
         "### non-deprecated-cmd",
+        "",
         "***",
-        " ",
+        "",
         "#### Required Permissions",
+        "",
         "**FILL IN REQUIRED PERMISSIONS HERE**",
+        "",
         "#### Base Command",
         "",
         "`non-deprecated-cmd`",
+        "",
         "#### Input",
         "",
         "There are no input arguments for this command.",
@@ -636,13 +659,17 @@ def test_generate_command_section_with_empty_cotext_example():
 
     expected_section = [
         "### test1",
+        "",
         "***",
-        " ",
+        "",
         "#### Required Permissions",
+        "",
         "**FILL IN REQUIRED PERMISSIONS HERE**",
+        "",
         "#### Base Command",
         "",
         "`test1`",
+        "",
         "#### Input",
         "",
         "There are no input arguments for this command.",
@@ -687,13 +714,17 @@ def test_generate_command_section_with_empty_cotext_list():
 
     expected_section = [
         "### test1",
+        "",
         "***",
-        " ",
+        "",
         "#### Required Permissions",
+        "",
         "**FILL IN REQUIRED PERMISSIONS HERE**",
+        "",
         "#### Base Command",
         "",
         "`test1`",
+        "",
         "#### Input",
         "",
         "There are no input arguments for this command.",
@@ -757,16 +788,23 @@ def test_generate_commands_with_permissions_section():
 
     expected_section = [
         "## Commands",
+        "",
         "You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.",
-        "After you successfully execute a command, a DBot message appears in the War Room with the command details.",
+        "After you successfully execute a command"
+        ", a DBot message appears in the War Room with the command details.",
+        "",
         "### non-deprecated-cmd",
+        "",
         "***",
-        " ",
+        "",
         "#### Required Permissions",
+        "",
         "SUPERUSER",
+        "",
         "#### Base Command",
         "",
         "`non-deprecated-cmd`",
+        "",
         "#### Input",
         "",
         "There are no input arguments for this command.",
@@ -806,16 +844,20 @@ def test_generate_commands_with_permissions_section_command_doesnt_exist():
 
     expected_section = [
         "## Commands",
+        "",
         "You can execute these commands from the Cortex XSOAR CLI, as part of an automation, or in a playbook.",
         "After you successfully execute a command, a DBot message appears in the War Room with the command details.",
+        "",
         "### non-deprecated-cmd",
+        "",
         "***",
-        " ",
+        "",
         "#### Required Permissions",
         "",
         "#### Base Command",
         "",
         "`non-deprecated-cmd`",
+        "",
         "#### Input",
         "",
         "There are no input arguments for this command.",
@@ -845,6 +887,54 @@ def handle_example(example, insecure):
     values = " | ".join(context.values())
     human_readable = "\n".join([headers, sep, values])
     return name, human_readable, context, []
+
+
+def test_generate_playbook_doc_passes_markdownlint(tmp_path):
+    """
+    Given: A playbook
+    When: Generating a readme for the playbook
+    Then: The generated readme will have no markdown errors
+
+    """
+    generate_playbook_doc(PLAYBOOK_PATH, str(tmp_path), "admin", "a limitation", False)
+    with ReadMeValidator.start_mdx_server():
+        with open(tmp_path / "beta-playbook-valid_README.md") as file:
+            content = file.read()
+            markdownlint = run_markdownlint(content)
+            assert not markdownlint.has_errors, markdownlint.validations
+
+
+def test_generate_script_doc_passes_markdownlint(tmp_path, mocker):
+    """
+    Given: A script
+    When: Generating a readme for the script
+    Then: The generated readme will have no markdown errors
+
+    """
+    import demisto_sdk.commands.generate_docs.common as common
+
+    d = tmp_path / "script_doc_out"
+    d.mkdir()
+    in_script = os.path.join(FILES_PATH, "docs_test", "script-Set.yml")
+    id_set_file = os.path.join(FILES_PATH, "docs_test", "id_set.json")
+    with open(id_set_file) as f:
+        id_set = json.load(f)
+    mocker.patch.object(IDSetCreator, "create_id_set", return_value=[id_set, {}, {}])
+    mocker.patch.object(common, "execute_command", side_effect=handle_example)
+    mocker.patch(
+        "demisto_sdk.commands.generate_docs.generate_script_doc.get_used_in",
+        return_value=[],
+    )
+    generate_script_doc(
+        in_script,
+        "!Set key=k1 value=v1,!Set key=k2 value=v2 append=true",
+        str(d),
+        verbose=True,
+    )
+    readme = d / "README.md"
+    with ReadMeValidator.start_mdx_server():
+        with open(readme) as file:
+            assert not run_markdownlint(file.read()).has_errors
 
 
 def test_generate_script_doc(tmp_path, mocker):
@@ -996,6 +1086,22 @@ class TestGenerateIntegrationDoc:
                     "This integration was integrated and tested with version xx of"
                     not in fake_data
                 )
+
+    def test_generate_integration_doc_passes_markdownlint(self):
+        """
+        Given: An integrations
+        When: Generating a readme for the integration
+        Then: The generated readme will have no markdown errors
+
+        """
+        generate_integration_doc(TEST_INTEGRATION_PATH, is_contribution=False)
+        # Generate doc
+        with ReadMeValidator.start_mdx_server():
+            with open(
+                os.path.join(os.path.dirname(TEST_INTEGRATION_PATH), "README.md")
+            ) as real_readme_file:
+                markdownlint = run_markdownlint(real_readme_file.read())
+                assert not markdownlint.has_errors, markdownlint.validations
 
     def test_integration_doc_credentials_display_missing(self):
         """
@@ -1177,6 +1283,7 @@ yml_data_cases = [
             "    | test2 | True |",
             "",
             "4. Click **Test** to validate the URLs, token, and connection.",
+            "",
         ],  # expected
     ),
     (
@@ -1205,6 +1312,7 @@ yml_data_cases = [
             "    | test2 |  | True |",
             "",
             "4. Click **Test** to validate the URLs, token, and connection.",
+            "",
         ],  # expected
     ),
     (
@@ -1239,6 +1347,7 @@ yml_data_cases = [
             "    | test2 | Some more data | True |",
             "",
             "4. Click **Test** to validate the URLs, token, and connection.",
+            "",
         ],  # expected
     ),
     (
@@ -1267,6 +1376,7 @@ yml_data_cases = [
             "    | password |  | True |",
             "",
             "4. Click **Test** to validate the URLs, token, and connection.",
+            "",
         ],  # expected
     ),
     (
@@ -1294,6 +1404,7 @@ yml_data_cases = [
             "    | Password |  | True |",
             "",
             "4. Click **Test** to validate the URLs, token, and connection.",
+            "",
         ],  # expected
     ),
     (
@@ -1336,6 +1447,7 @@ yml_data_cases = [
             "    | Proxy | non-default info. | True |",
             "",
             "4. Click **Test** to validate the URLs, token, and connection.",
+            "",
         ],  # expected
     ),
 ]
@@ -1601,6 +1713,7 @@ TEST_EMPTY_SCRIPTDATA_SECTION = [
         {"subtype": "python2", "tags": []},
         [
             "## Script data",
+            "",
             "---",
             "",
             "| **Name** | **Description** |",
@@ -1614,6 +1727,7 @@ TEST_EMPTY_SCRIPTDATA_SECTION = [
         {"fromversion": "0.0.0"},
         [
             "## Script data",
+            "",
             "---",
             "",
             "| **Name** | **Description** |",

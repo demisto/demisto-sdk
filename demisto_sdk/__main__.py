@@ -22,6 +22,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_last_remote_release_version,
@@ -921,7 +922,7 @@ def secrets(config, **kwargs):
     "-di",
     "--docker-image",
     default="from-yml",
-    help="The docker image to check package on. Possible values: 'native:maintenance', 'native:ga', 'native:dev',"
+    help="The docker image to check package on. Can be a comma separated list of Possible values: 'native:maintenance', 'native:ga', 'native:dev',"
     " 'all', a specific docker image from Docker Hub (e.g devdemisto/python3:3.10.9.12345) or the default"
     " 'from-yml', 'native:target'. To run lint only on native supported content with a specific image,"
     " use 'native:target' with --docker-image-target <specific-image>.",
@@ -1170,21 +1171,22 @@ def format(
     """
     from demisto_sdk.commands.format.format_module import format_manager
 
-    return format_manager(
-        str(input) if input else None,
-        str(output) if output else None,
-        from_version=from_version,
-        no_validate=no_validate,
-        update_docker=update_docker,
-        assume_yes=assume_yes,
-        verbose=verbose,
-        deprecate=deprecate,
-        use_git=use_git,
-        prev_ver=prev_ver,
-        include_untracked=include_untracked,
-        add_tests=add_tests,
-        id_set_path=id_set_path,
-    )
+    with ReadMeValidator.start_mdx_server():
+        return format_manager(
+            str(input) if input else None,
+            str(output) if output else None,
+            from_version=from_version,
+            no_validate=no_validate,
+            update_docker=update_docker,
+            assume_yes=assume_yes,
+            verbose=verbose,
+            deprecate=deprecate,
+            use_git=use_git,
+            prev_ver=prev_ver,
+            include_untracked=include_untracked,
+            add_tests=add_tests,
+            id_set_path=id_set_path,
+        )
 
 
 # ====================== upload ====================== #

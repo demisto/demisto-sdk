@@ -1,8 +1,36 @@
 # Changelog
 
 ## Unreleased
-* Fixed an issue where **lint** failed when using the `-cdam` flag with changed dependant api modules due to partial file duplications filtering.
+* Added a newline at the end of README files generated in **generate-docs**.
+* Added the value `3` (out of bounds) to the `onChangeRepAlg` and `reputationCalc` fields under the `IncidentType` and `GenericType` schemas. **validate** will allow using it now.
+* Added support for running **lint** in multiple native-docker images.
+* Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
 * Added the `--docker-image-target` flag to **lint** for testing native supported content with new images.
+
+
+## 1.10.4
+* Added support for running **lint** in multiple native-docker images.
+
+## 1.10.3
+* Fixed an issue where running **format** would fail after running npm install.
+* Improved the graph validations in the **validate** command:
+  - GR100 will now run on all content items of changed packs.
+  - GR101 and GR102 will now catch invalid fromversion/toversion of files **using** the changed items.
+  - GR103 errors will raise a warning when using the *-a* flag, but an error if using the *-i* or *g* flags.
+* Fixed an issue where test-playbooks timed out.
+* Fixed an issue where making a change in a module using an ApiModule would cause lint to run on the ApiModule unnecessarily.
+* Fixed an issue where the `marketplace` field was not used when dumping pack zips.
+* Fixed a typo in the README content generated with **update-release-notes** for updating integrations.
+* Fixed an issue in **validate**, where using the `-gr` and `-i` flags did not run properly.
+* Added the `sectionorder` field to integration scheme.
+* Fixed an issue where in some occasions running of test-playbooks could receive session timeouts.
+* Fixed an issue where **validate** command failed on core pack dependencies validation because of test dependencies.
+
+## 1.10.2
+* Added markdown lint formatting for README files in the **format** command.
+* Fixed an issue where **lint** failed when using the `-cdam` flag with changed dependant api modules.
+* Fixed an issue in the **upload** command, where `json`-based content items were not unified correctly when using the `--zip` argument.
+* Added XPANSE core packs validations.
 
 ## 1.10.1
 * Fixed an issue where **update-content-graph** failed to execute.

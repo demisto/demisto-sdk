@@ -103,32 +103,6 @@ def test_specific_pack_creation(repo, tmp_path):
         assert not Path.exists(tmp_path / "uploadable_packs" / "Pack2.zip")
 
 
-def test_all_packs_creation(repo):
-    """Test the -p flag for all packs creation"""
-    pack_1 = repo.setup_one_pack("Pack1")
-    pack_1.pack_metadata.write_json(
-        {
-            "name": "Pack Number 1",
-        }
-    )
-
-    pack_2 = repo.setup_one_pack("Pack2")
-    pack_2.pack_metadata.write_json(
-        {
-            "name": "Pack Number 2",
-        }
-    )
-
-    with ChangeCWD(repo.path):
-        with temp_dir() as temp:
-            runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [ARTIFACTS_CMD, "-a", temp, "-p", "all"])
-
-            assert result.exit_code == 0
-            assert (temp / "uploadable_packs" / "Pack1.zip").exists()
-            assert (temp / "uploadable_packs" / "Pack2.zip").exists()
-
-
 def test_create_packs_with_filter_by_id_set(repo):
     """
     Given

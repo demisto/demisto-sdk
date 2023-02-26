@@ -2216,7 +2216,6 @@ class Errors:
         )
 
     @staticmethod
-    @error_code_decorator
     def error_starting_docker_mdx_server(line):
         return (
             f"Failed starting docker mdx server. stdout: {line}.\n"
@@ -3597,6 +3596,34 @@ class Errors:
     @error_code_decorator
     def wrong_version_reputations(object_id, version):
         return f"Reputation object with id {object_id} must have version {version}"
+
+    @staticmethod
+    @error_code_decorator
+    def readme_lint_errors(file, validations):
+        message_to_return = (
+            f"The {file} readme file is not linted properly. See the validations below"
+            f"\n{validations}"
+        )
+        return message_to_return
+
+    @staticmethod
+    @error_code_decorator
+    def description_lint_errors(rn_file_name, validations):
+        message_to_return = (
+            f"The {rn_file_name} description file is not linted properly. See the validations below"
+            f"\n{validations}"
+        )
+
+        return message_to_return
+
+    @staticmethod
+    @error_code_decorator
+    def release_notes_lint_errors(file_name, validations):
+        message_to_return = (
+            f"The {file_name} release notes file is not linted properly See the validations below"
+            f"\n{validations}"
+        )
+        return message_to_return
 
     @staticmethod
     @error_code_decorator

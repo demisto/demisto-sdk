@@ -144,7 +144,7 @@ class MyRepo:
         return "remote_path"
 
 
-@pytest.fixture(autouse=False)
+@pytest.fixture(autouse=True)
 def set_git_test_env(mocker):
     mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
     mocker.patch.object(Content, "git", return_value=MyRepo())

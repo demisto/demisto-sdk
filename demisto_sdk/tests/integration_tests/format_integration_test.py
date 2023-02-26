@@ -495,21 +495,22 @@ def test_format_on_valid_py(mocker, repo, capsys, caplog):
                 f"*** test, in mock, after setting propagate, {propagate=}, {handlers=}"
             )
 
-            result = runner.invoke(
-                main,
-                [
-                    FORMAT_CMD,
-                    "-nv",
-                    "-i",
-                    integration.code.path,
-                    "--console_log_threshold",
-                    "DEBUG",
-                ],
-                catch_exceptions=True,
-            )
-            propagate = logging.getLogger("demisto-sdk").propagate
-            handlers = logging.getLogger("demisto-sdk").handlers
-            print(f"*** test, in mock, after invoke, {propagate=}, {handlers=}")
+            with caplog.at_level(logging.DEBUG):
+                result = runner.invoke(
+                    main,
+                    [
+                        FORMAT_CMD,
+                        "-nv",
+                        "-i",
+                        integration.code.path,
+                        "--console_log_threshold",
+                        "DEBUG",
+                    ],
+                    catch_exceptions=True,
+                )
+                propagate = logging.getLogger("demisto-sdk").propagate
+                handlers = logging.getLogger("demisto-sdk").handlers
+                print(f"*** test, in mock, after invoke, {propagate=}, {handlers=}")
 
     captured = capsys.readouterr().out
     print(f"*** {captured=}")

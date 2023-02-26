@@ -463,7 +463,7 @@ def test_format_on_valid_py(mocker, repo, capsys, caplog):
     logger = logging.getLogger("demisto-sdk")
     logger.propagate = True
 
-    from demisto_sdk.commands.common import logger as demisto_logger
+    # from demisto_sdk.commands.common import logger as demisto_logger
 
     # mocker.patch.object(demisto_logger, "set_propagate")
 
@@ -479,12 +479,19 @@ def test_format_on_valid_py(mocker, repo, capsys, caplog):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
 
-        with mocker.patch.object(demisto_logger, "set_propagate"):
+        # with mocker.patch.object(demisto_logger, "set_propagate"):
+        with mocker.patch("demisto_sdk.commands.common.logger.set_propagate"):
             propagate = logging.getLogger("demisto-sdk").propagate
-            print(f"*** test, in mock, before setting propagate, {propagate=}")
+            handlers = logging.getLogger("demisto-sdk").handlers
+            print(
+                f"*** test, in mock, before setting propagate, {propagate=}, {handlers=}"
+            )
             logging.getLogger("demisto-sdk").propagate = True
             propagate = logging.getLogger("demisto-sdk").propagate
-            print(f"*** test, in mock, after setting propagate, {propagate=}")
+            handlers = logging.getLogger("demisto-sdk").handlers
+            print(
+                f"*** test, in mock, after setting propagate, {propagate=}, {handlers=}"
+            )
 
             result = runner.invoke(
                 main,
@@ -499,7 +506,8 @@ def test_format_on_valid_py(mocker, repo, capsys, caplog):
                 catch_exceptions=True,
             )
             propagate = logging.getLogger("demisto-sdk").propagate
-            print(f"*** test, in mock, after invoke, {propagate=}")
+            handlers = logging.getLogger("demisto-sdk").handlers
+            print(f"*** test, in mock, after invoke, {propagate=}, {handlers=}")
 
     captured = capsys.readouterr().out
     print(f"*** {captured=}")

@@ -1,5 +1,5 @@
 import inspect
-from typing import Any, Dict, Optional, Union, get_args, get_origin
+from typing import Any, Dict, List, Optional, Union, get_args, get_origin
 
 import click
 from colorama import Fore
@@ -21,6 +21,7 @@ TYPE_FILLER_MAPPING = {
     dict: {"key1": "value1", "key2": "value2"},
     Dict: {"key1": "value1", "key2": "value2"},
     list: ["element1", "element2"],
+    List[str]: ["element1", "element2"],
     constants.FileType: constants.FileType.INTEGRATION,
 }
 

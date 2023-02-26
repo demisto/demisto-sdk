@@ -449,7 +449,7 @@ def test_integration_format_remove_playbook_sourceplaybookid(
     assert not result.exception
 
 
-def test_format_on_valid_py(mocker, repo, capsys, caplog):
+def test_format_on_valid_py(mocker, repo, capsys, caplog, capfd):
     """
     Given
     - A valid python file.
@@ -515,6 +515,9 @@ def test_format_on_valid_py(mocker, repo, capsys, caplog):
     captured = capsys.readouterr()
     print(f"*** {captured.out=}")
     print(f"*** {captured.err=}")
+    capfd_out, capfd_err = capfd.readouterr()
+    print(f"*** {capfd_out=}")
+    print(f"*** {capfd_err=}")
     print(f"*** {caplog.text=}")
     print(f"*** {result.stdout=}")
     print(f"*** {result.stderr=}")

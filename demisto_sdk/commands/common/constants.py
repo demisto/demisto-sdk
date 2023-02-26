@@ -1676,6 +1676,9 @@ class MarketplaceVersions(str, Enum):
     MarketplaceV2 = "marketplacev2"
     XPANSE = "xpanse"
 
+    def __str__(self) -> str:
+        return self.value
+
 
 MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
     MarketplaceVersions.XSOAR: "Tests/Marketplace/core_packs_list.json",

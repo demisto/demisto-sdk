@@ -32,6 +32,7 @@ FEED_REQUIRED_PARAMS_STRUCTURE = [
     dict(
         required_param.get("must_equal"),
         **required_param.get("must_contain"),
+        **required_param.get("may_contain"),
         name=required_param.get("name"),
     )
     for required_param in FEED_REQUIRED_PARAMS

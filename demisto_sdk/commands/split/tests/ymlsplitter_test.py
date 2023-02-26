@@ -258,9 +258,10 @@ def test_extract_code(tmpdir):
         output=str(tmpdir.join("temp_code.py")),
         file_type="integration",
     )
-    with open(extractor.input, "rb") as input_code:
-        file_data = input_code.read().decode("utf-8")
-        assert "### pack version: 1.0.3" in yaml.load(file_data)["script"]["script"]
+    assert (
+        "### pack version: 1.0.3"
+        in yaml.load(Path(extractor.input).read_text())["script"]["script"]
+    )
 
     extractor.extract_code(extractor.output)
     with open(extractor.output, "rb") as temp_code:

@@ -449,7 +449,7 @@ def test_integration_format_remove_playbook_sourceplaybookid(
     assert not result.exception
 
 
-def test_format_on_valid_py(mocker, repo, capsys, caplog, capfd):
+def test_format_on_valid_py(mocker, repo, caplog, capfd):
     """
     Given
     - A valid python file.
@@ -512,9 +512,9 @@ def test_format_on_valid_py(mocker, repo, capsys, caplog, capfd):
                 handlers = logging.getLogger("demisto-sdk").handlers
                 print(f"*** test, in mock, after invoke, {propagate=}, {handlers=}")
 
-    captured = capsys.readouterr()
-    print(f"*** {captured.out=}")
-    print(f"*** {captured.err=}")
+    # captured = capsys.readouterr()
+    # print(f"*** {captured.out=}")
+    # print(f"*** {captured.err=}")
     capfd_out, capfd_err = capfd.readouterr()
     print(f"*** {capfd_out=}")
     print(f"*** {capfd_err=}")

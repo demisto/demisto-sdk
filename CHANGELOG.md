@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Added a **validate** step checking for misplaced files (i.e. directly under `Integrations`, or under mistyped folder name)
 * Fixed an issue where running **run-test-playbook** would not use the `verify` parameter correctly. @ajoga
 * Added a newline at the end of README files generated in **generate-docs**.
 * Added the value `3` (out of bounds) to the `onChangeRepAlg` and `reputationCalc` fields under the `IncidentType` and `GenericType` schemas. **validate** will allow using it now.
@@ -37,8 +38,7 @@
 ## 1.10.0
 * **Breaking change**: Removed usage of `pipenv`, `isort` and `autopep8` in the **split** and **download** commands. Removed the `--no-pipenv` and `--no-code-formatting` flags. Please see https://xsoar.pan.dev/docs/tutorials/tut-setup-dev-remote for the recommended environment setup.
 * Fixed an issue in **prepare-content** command where large code lines were broken.
-* Fixed an issue where git-*renamed_files* were not retrieved properly.
-* Added a **validate** step checking for misplaced files (i.e. directly under `Integrations`, or under mistyped folder name)
+* Fixed an issue where git-*renamed_files* were not retrieved properl
 * Fixed an issue where test dependencies were calculated in all level dependencies calculation.
 * Added formatting and validation to XSIAM content types.
 * Fixed an issue where several XSIAM content types were not validated when passing the `-a` flag.

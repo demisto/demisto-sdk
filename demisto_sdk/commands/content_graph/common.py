@@ -42,6 +42,9 @@ class RelationshipType(str, enum.Enum):
     USES_COMMAND_OR_SCRIPT = "USES_COMMAND_OR_SCRIPT"
     USES_PLAYBOOK = "USES_PLAYBOOK"
 
+    def __str__(self) -> str:
+        return self.value
+
 
 class ContentType(str, enum.Enum):
     BASE_CONTENT = "BaseContent"
@@ -79,6 +82,9 @@ class ContentType(str, enum.Enum):
     WIZARD = "Wizard"
     XDRC_TEMPLATE = "XDRCTemplate"
     LAYOUT_RULE = "LayoutRule"
+
+    def __str__(self) -> str:
+        return self.value
 
     @property
     def labels(self) -> List[str]:

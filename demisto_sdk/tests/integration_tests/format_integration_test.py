@@ -465,7 +465,7 @@ def test_format_on_valid_py(mocker, repo, capsys, caplog):
 
     from demisto_sdk.commands.common import logger as demisto_logger
 
-    mocker.patch.object(demisto_logger, "set_propagate")
+    # mocker.patch.object(demisto_logger, "set_propagate")
 
     caplog.set_level(logging.DEBUG)
     mocker.patch.object(
@@ -478,18 +478,23 @@ def test_format_on_valid_py(mocker, repo, capsys, caplog):
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(
-            main,
-            [
-                FORMAT_CMD,
-                "-nv",
-                "-i",
-                integration.code.path,
-                "--console_log_threshold",
-                "DEBUG",
-            ],
-            catch_exceptions=True,
-        )
+
+        with mocker.patch.object(demisto_logger, "set_propagate"):
+            logging.getLogger("demisto-sdk").propagate = True
+
+            result = runner.invoke(
+                main,
+                [
+                    FORMAT_CMD,
+                    "-nv",
+                    "-i",
+                    integration.code.path,
+                    "--console_log_threshold",
+                    "DEBUG",
+                ],
+                catch_exceptions=True,
+            )
+
     captured = capsys.readouterr().out
     print(f"*** {captured=}")
     print(f"*** {caplog.text=}")

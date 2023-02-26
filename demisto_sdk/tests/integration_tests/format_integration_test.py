@@ -453,8 +453,6 @@ debug_side_effect_calls = []
 
 
 def debug_side_effect(*args, **kwargs):
-    print(f"*** my_side_effect, {args=}")
-    print(f"*** my_side_effect, {kwargs=}")
     if args:
         if args[0]:
             debug_side_effect_calls.append(args[0])
@@ -462,7 +460,14 @@ def debug_side_effect(*args, **kwargs):
             debug_side_effect_calls.append(args)
 
 
-def test_format_on_valid_py(mocker, repo, caplog, capfd):
+def str_in_side_effect_calls(side_effect_calls, required_str):
+    for current_side_effect_calls in side_effect_calls:
+        if required_str in current_side_effect_calls:
+            return True
+    return False
+
+
+def test_format_on_valid_py(mocker, repo):
     """
     Given
     - A valid python file.
@@ -478,14 +483,9 @@ def test_format_on_valid_py(mocker, repo, caplog, capfd):
         current_handler.setLevel(logging.DEBUG)
     logger.propagate = True
 
-    # from logging.logger import debug
+    debug_side_effect_calls = []
     mocker.patch.object(logger, "debug", side_effect=debug_side_effect)
 
-    # from demisto_sdk.commands.common import logger as demisto_logger
-
-    # mocker.patch.object(demisto_logger, "set_propagate")
-
-    caplog.set_level(logging.DEBUG)
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -496,55 +496,21 @@ def test_format_on_valid_py(mocker, repo, caplog, capfd):
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(
+            main,
+            [
+                FORMAT_CMD,
+                "-nv",
+                "-i",
+                integration.code.path,
+                "--console_log_threshold",
+                "DEBUG",
+            ],
+            catch_exceptions=True,
+        )
 
-        # with mocker.patch.object(demisto_logger, "set_propagate"):
-        with mocker.patch("demisto_sdk.commands.common.logger.set_propagate"):
-            propagate = logging.getLogger("demisto-sdk").propagate
-            handlers = logging.getLogger("demisto-sdk").handlers
-            print(
-                f"*** test, in mock, before setting propagate, {propagate=}, {handlers=}"
-            )
-            logging.getLogger("demisto-sdk").propagate = True
-            propagate = logging.getLogger("demisto-sdk").propagate
-            handlers = logging.getLogger("demisto-sdk").handlers
-            print(
-                f"*** test, in mock, after setting propagate, {propagate=}, {handlers=}"
-            )
-
-            with caplog.at_level(logging.DEBUG):
-                result = runner.invoke(
-                    main,
-                    [
-                        FORMAT_CMD,
-                        "-nv",
-                        "-i",
-                        integration.code.path,
-                        "--console_log_threshold",
-                        "DEBUG",
-                    ],
-                    catch_exceptions=True,
-                )
-                propagate = logging.getLogger("demisto-sdk").propagate
-                handlers = logging.getLogger("demisto-sdk").handlers
-                print(f"*** test, in mock, after invoke, {propagate=}, {handlers=}")
-
-    # captured = capsys.readouterr()
-    # print(f"*** {captured.out=}")
-    # print(f"*** {captured.err=}")
-    capfd_out, capfd_err = capfd.readouterr()
-    print(f"*** {capfd_out=}")
-    print(f"*** {capfd_err=}")
-    print(f"*** {caplog.text=}")
-    print(f"*** {result.stdout=}")
-    print(f"*** {result.stderr=}")
     assert "======= Updating file" in result.stdout
-    found_running_autopep8_on_file = False
-    # assert "Running autopep8 on file" in result.stderr
-    for current_debug_side_effect_call in debug_side_effect_calls:
-        if "Running autopep8 on file" in current_debug_side_effect_call:
-            found_running_autopep8_on_file = True
-            break
-    assert found_running_autopep8_on_file
+    assert str_in_side_effect_calls(debug_side_effect_calls, "Running autopep8 on file")
     assert "Success" in result.stdout
     assert valid_py == integration.code.read()
 
@@ -560,6 +526,14 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
     Then
     - Ensure format passes.
     """
+    logger = logging.getLogger("demisto-sdk")
+    for current_handler in logger.handlers:
+        current_handler.setLevel(logging.DEBUG)
+    logger.propagate = True
+
+    debug_side_effect_calls = []
+    mocker.patch.object(logger, "debug", side_effect=debug_side_effect)
+
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -583,7 +557,7 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
         )
 
     assert "======= Updating file" in result.stdout
-    assert "Running autopep8 on file" in result.stderr
+    assert str_in_side_effect_calls(debug_side_effect_calls, "Running autopep8 on file")
     assert "Success" in result.stdout
     assert invalid_py != integration.code.read()
 
@@ -599,6 +573,14 @@ def test_format_on_invalid_py_dict(mocker, repo):
     Then
     - Ensure format passes.
     """
+    logger = logging.getLogger("demisto-sdk")
+    for current_handler in logger.handlers:
+        current_handler.setLevel(logging.DEBUG)
+    logger.propagate = True
+
+    debug_side_effect_calls = []
+    mocker.patch.object(logger, "debug", side_effect=debug_side_effect)
+
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -622,7 +604,7 @@ def test_format_on_invalid_py_dict(mocker, repo):
         )
 
     assert "======= Updating file" in result.stdout
-    assert "Running autopep8 on file" in result.stderr
+    assert str_in_side_effect_calls(debug_side_effect_calls, "Running autopep8 on file")
     assert "Success" in result.stdout
     assert invalid_py != integration.code.read()
 
@@ -639,6 +621,14 @@ def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
     - Ensure format passes.
     """
     monkeypatch.setenv("COLUMNS", "1000")
+
+    logger = logging.getLogger("demisto-sdk")
+    for current_handler in logger.handlers:
+        current_handler.setLevel(logging.DEBUG)
+    logger.propagate = True
+
+    debug_side_effect_calls = []
+    mocker.patch.object(logger, "debug", side_effect=debug_side_effect)
 
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
@@ -666,7 +656,7 @@ def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
         )
 
     assert "======= Updating file" in result.stdout
-    assert "Running autopep8 on file" in result.stderr
+    assert str_in_side_effect_calls(debug_side_effect_calls, "Running autopep8 on file")
     assert "Success" in result.stdout
     assert invalid_py != integration.code.read()
 

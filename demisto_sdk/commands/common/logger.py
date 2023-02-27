@@ -2,7 +2,7 @@ import logging
 import logging.config
 from logging.handlers import RotatingFileHandler
 
-# from rich.logging import RichHandler
+from rich.logging import RichHandler
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
@@ -70,10 +70,9 @@ def _logging_setup(
         logging.Logger: logger object
     """
 
-    # console_handler = RichHandler(
-    console_handler = logging.StreamHandler(
-        # level=console_log_threshold,
-        # rich_tracebacks=True,
+    console_handler = RichHandler(
+        level=console_log_threshold,
+        rich_tracebacks=True,
     )
     console_handler.set_name("console-handler")
     console_handler.setLevel(console_log_threshold)
@@ -121,7 +120,6 @@ def set_propagate(logger_to_update: logging.Logger, propagate: bool = False):
     logger_to_update.propagate = propagate
 
 
-# logger: logging.Logger = logging_setup()
 logging_setup()
 logger = logging.getLogger("demisto-sdk")
 
@@ -135,7 +133,6 @@ def info_color(msg, color: str):
 
 
 def secho_and_info(message, fg="white"):
-    # click.secho(message, fg=fg)
     logger.info(f"[{fg}]{message}[/{fg}]")
 
 

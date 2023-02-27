@@ -502,6 +502,7 @@ class ContributionConverter:
                     child_file_name = os.path.basename(child_file)
                     click.echo(f"Debug in {child_file_name}")
                     if source_mapping and child_file_name in source_mapping.keys():
+                        click.echo(f"Debug in if")
                         child_file_mapping = source_mapping.get(child_file_name, {})
                         base_name = child_file_mapping.get("base_name", "")
                         containing_dir_name = child_file_mapping.get(
@@ -530,11 +531,13 @@ class ContributionConverter:
                         )
 
                     else:
+                        click.echo(f"Debug in else")
                         extractor = YmlSplitter(
                             input=content_item_file_path,
                             file_type=file_type,
                             output=content_item_dir,
                         )
+                    click.echo(f"out")
                     script = get_yaml(content_item_file_path).get("script", {})
                     pack_version = self.extract_pack_version(script)
                     click.echo(f"pack_version {pack_version}")

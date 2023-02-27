@@ -2841,9 +2841,7 @@ def test_content_entities_dir_length():
 
 
 folders_not_allowed_to_contain_files = tuple(
-    frozenset(CONTENT_ENTITIES_DIRS).difference(
-        FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES
-    )
+    set(CONTENT_ENTITIES_DIRS).difference(FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES)
 )
 
 
@@ -2868,10 +2866,7 @@ def test_is_file_allowed_in_path__fail(mocker, repo, folder: str):
             assert not validate_manager.is_valid_path(file)
 
     captured_stdout = std_output.getvalue()
-    assert (
-        f"{file.name} is not allowed directly under the {file.parent.name} folder"
-        in captured_stdout
-    )
+    assert "[BA120]" in captured_stdout
 
 
 @pytest.mark.parametrize("folder", FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES)

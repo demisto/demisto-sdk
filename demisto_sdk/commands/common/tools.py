@@ -3466,39 +3466,25 @@ def field_to_cli_name(field_name: str) -> str:
     return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, "", field_name).lower()
 
 
-def extract_field_from_simple_mapping(simple_value: str) -> str:
-    """Given a simple outgoing-mapping value, returns the incident/indicator field used for the mapping.
-    If simple_value is surrounded by quotes ("<>"), it means the simple value is a string and no field
+def extract_field_from_mapping(mapping_value: str) -> str:
+    """Given an outgoing-mapping value, returns the incident/indicator field used for the mapping.
+    If mapping_value is surrounded by quotes ("<>"), it means the mapping value is a string and no field
     should be returned.
 
     Args:
-        simple_value (str): A simple outgoing-mapping value, which may contain an incident/indicator field.
+        mapping_value (str): An outgoing-mapping value, which may contain an incident/indicator field.
 
     Returns:
         str: An incident/indicator field, or an empty string if not a field.
     """
-    if re.match(r"\"([^.]+).*\"", simple_value):  # not a field
+    if not mapping_value or re.match(r"\"([^.]+).*\"", mapping_value):  # not a field
         return ""
-    if field_name := re.match(r"\$\{([^.]*)[^}]*\}|([^$.]*).*", simple_value):
+    if field_name := re.match(r"\$\{([^.]*)[^}]*\}|([^$.]*).*", mapping_value):
         if field_name.groups()[0] is not None:
             return field_name.groups()[0]
         if len(field_name.groups()) > 1:
             return field_name.groups()[1]
-    return simple_value
-
-
-def extract_field_from_complex_mapping(complex_root: str) -> str:
-    """Given a complex outgoing-mapping root value, returns the incident/indicator field used for the mapping.
-
-    Args:
-        complex_root (str): A complex outgoing-mapping root value, which contains an incident/indicator field.
-
-    Returns:
-        str: An incident/indicator field.
-    """
-    if not isinstance(complex_root, str):
-        return ""
-    return complex_root.split(".")[0]
+    return mapping_value
 
 
 def get_pack_paths_from_files(file_paths: Iterable[str]) -> list:

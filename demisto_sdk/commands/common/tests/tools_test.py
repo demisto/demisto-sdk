@@ -47,8 +47,7 @@ from demisto_sdk.commands.common.tools import (
     TagParser,
     arg_to_list,
     compare_context_path_in_yml_and_readme,
-    extract_field_from_complex_mapping,
-    extract_field_from_simple_mapping,
+    extract_field_from_mapping,
     field_to_cli_name,
     filter_files_by_type,
     filter_files_on_pack,
@@ -2519,7 +2518,7 @@ def test_get_core_packs(mocker):
 
 
 @pytest.mark.parametrize(
-    "simple_value, expected_output",
+    "mapping_value, expected_output",
     [
         ("employeeid", "employeeid"),
         ("${employeeid}", "employeeid"),
@@ -2532,18 +2531,5 @@ def test_get_core_packs(mocker):
         ('"not a field"', ""),
     ],
 )
-def test_extract_field_from_simple_mapping(simple_value, expected_output):
-    assert extract_field_from_simple_mapping(simple_value) == expected_output
-
-
-@pytest.mark.parametrize(
-    "complex_value, expected_output",
-    [
-        ("employeeid", "employeeid"),
-        ("employeeid.hello", "employeeid"),
-        (".", ""),
-        ("${employeeid.[0]}", "${employeeid"),  # indicates malformed complex value
-    ],
-)
-def test_extract_field_from_complex_mapping(complex_value, expected_output):
-    assert extract_field_from_complex_mapping(complex_value) == expected_output
+def test_extract_field_from_mapping(mapping_value, expected_output):
+    assert extract_field_from_mapping(mapping_value) == expected_output

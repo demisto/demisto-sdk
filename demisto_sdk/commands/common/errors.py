@@ -95,6 +95,7 @@ ALLOWED_IGNORE_ERRORS = [
     "RN115",
     "MR104",
     "MR105",
+    "LO107",
 ]
 
 # predefined errors to be ignored in partner/community supported packs even if they do not appear in .pack-ignore
@@ -3593,7 +3594,10 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def file_not_allowed_outside_pack(file_path: Path):
-        return f"The {file_path.name} file is saved directly under the Packs folder, Please move it into a pack. See https://github.com/demisto/content as reference."
+        return (
+            f"{file_path.name} is saved directly under the Packs folder, "
+            "Please move it into a pack. See https://github.com/demisto/content as reference."
+        )
 
     @staticmethod
     def pack_readme_image_relative_path_error(path):

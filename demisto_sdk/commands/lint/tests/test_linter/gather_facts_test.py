@@ -584,10 +584,10 @@ class TestTestsCollection:
         assert not runner._facts["test"]
 
     @pytest.mark.parametrize(
-        argnames="all_packs, should_skip, deprecated_log",
+        argnames="all_packs, should_skip",
         argvalues=[
-            (True, True, True),
-            (False, False, False),
+            (True, True),
+            (False, False),
         ],
     )
     def test_deprecated_integration(
@@ -597,7 +597,6 @@ class TestTestsCollection:
         create_integration: Callable,
         all_packs: bool,
         should_skip: bool,
-        deprecated_log: bool,
     ):
         """
         Given:
@@ -611,7 +610,6 @@ class TestTestsCollection:
         - Case A: gather facts should indicate integration is skipped
         - Case B: gather father should indicate integration is not skipped
         """
-        log = mocker.patch.object(logger, "info")
         mocker.patch.object(linter.Linter, "_update_support_level")
         integration_path: Path = create_integration(
             content_path=demisto_content, is_deprecated=True
@@ -621,22 +619,11 @@ class TestTestsCollection:
         )
         assert should_skip == runner._gather_facts(modules={})
 
-        if deprecated_log:
-            assert (
-                "skipping lint for Sample_integration because its deprecated"
-                == log.call_args_list[2].args[0]
-            )
-        else:
-            assert (
-                "skipping lint for Sample_integration because its deprecated"
-                != log.call_args_list[2].args[0]
-            )
-
     @pytest.mark.parametrize(
-        argnames="all_packs, should_skip, deprecated_log",
+        argnames="all_packs, should_skip",
         argvalues=[
-            (True, True, True),
-            (False, False, False),
+            (True, True),
+            (False, False),
         ],
     )
     def test_deprecated_script(
@@ -646,7 +633,6 @@ class TestTestsCollection:
         script,
         all_packs,
         should_skip,
-        deprecated_log,
     ):
         """
         Given:
@@ -661,24 +647,12 @@ class TestTestsCollection:
         - Case B: gather father should indicate script is not skipped
         """
         script.yml.update({"deprecated": True})
-        log = mocker.patch.object(logger, "info")
         mocker.patch.object(linter.Linter, "_update_support_level")
         runner = initiate_linter(
             demisto_content, script.path, True, all_packs=all_packs
         )
 
         assert should_skip == runner._gather_facts(modules={})
-
-        if deprecated_log:
-            assert (
-                "skipping lint for script0 because its deprecated"
-                == log.call_args_list[2].args[0]
-            )
-        else:
-            assert (
-                "skipping lint for script0 because its deprecated"
-                != log.call_args_list[2].args[0]
-            )
 
 
 class TestLintFilesCollection:

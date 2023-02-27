@@ -8,6 +8,8 @@ from collections import defaultdict
 from datetime import datetime
 from string import punctuation
 from typing import Dict, List, Optional, Union
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 
 import click
 
@@ -538,13 +540,15 @@ class ContributionConverter:
                             output=content_item_dir,
                         )
                     click.echo("out")
-                    script = get_yaml(content_item_file_path).get("script", {}).get("script", {})
-                    click.echo("script")
-                    click.echo(script)
-                    pack_version = self.extract_pack_version(script)
-                    click.echo(f"pack_version {pack_version}")
-                    self.pack_versions += f"{child_file_name}: {pack_version}\n"
-                    click.echo(f"pack_versions {self.pack_versions}")
+                    content_item = BaseContent.from_path(content_item_file_path)
+                    if isinstance(content_item, IntegrationScript):
+                        script = content_item.code
+                        click.echo(script)
+                        pack_version = self.extract_pack_version(script)
+                        click.echo(f"pack_version {pack_version}")
+                        self.pack_versions += f"{child_file_name}: {pack_version}\n"
+                        click.echo(f"pack_versions {self.pack_versions}")
+
                     extractor.extract_to_package_format(
                         executed_from_contrib_converter=True
                     )

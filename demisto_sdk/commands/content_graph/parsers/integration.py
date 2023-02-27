@@ -90,7 +90,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                     default_incident_type, ContentType.INCIDENT_TYPE, is_mandatory=False
                 )
 
-    def get_code(self) -> Optional[str]:
+    def code(self) -> Optional[str]:
         """Gets the integration code.
         If the integration is unified, then it is taken from the yml file.
         Otherwise, uses the Unifier object to get it.
@@ -106,7 +106,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
 
     def connect_to_api_modules(self) -> None:
         """Creates IMPORTS relationships with the API modules used in the integration."""
-        code = self.get_code()
+        code = self.code()
         if not code:
             raise ValueError("Integration code is not available")
         api_modules = IntegrationScriptUnifier.check_api_module_imports(code).values()

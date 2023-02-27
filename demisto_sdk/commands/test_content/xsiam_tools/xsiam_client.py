@@ -132,6 +132,18 @@ class XsiamApiClient(XsiamApiInterface):
         response.raise_for_status()
         return response.json()
 
+    def search_marketplace(self, filter):
+        endpoint = urljoin(self.base_url, "xsoar/contentpacks/marketplace/search")
+        response = self._session.post(endpoint, json=filter)
+        response.raise_for_status()
+        return response.json()
+
+    def search_data_sources(self, filter):
+        endpoint = urljoin(self.base_url, "xsoar/settings/datasourcepack/search")
+        response = self._session.post(endpoint, json=filter)
+        response.raise_for_status()
+        return response.json()
+
     def search_pack(self, pack_id):
         endpoint = urljoin(self.base_url, f"xsoar/contentpacks/marketplace/{pack_id}")
         response = self._session.get(endpoint)

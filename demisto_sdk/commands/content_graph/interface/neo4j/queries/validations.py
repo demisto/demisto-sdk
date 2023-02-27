@@ -18,13 +18,13 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
 )
 
 
-def validate_unknown_content(tx: Transaction, file_paths: List[str]):
-    file_paths_filter = (
-        f"WHERE content_item_from.path in {file_paths}" if file_paths else ""
-    )
+def validate_unknown_content(
+    tx: Transaction, file_paths: List[str], raises_error: bool
+):
     query = f"""// Returns USES relationships to content items not in the repository
-MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}]->(n{{not_in_repository:true}})
-{file_paths_filter}
+MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}]->(n{{not_in_repository: true}})
+WHERE{' NOT' if raises_error else ''} (n.is_test OR NOT r.mandatorily)
+{f'AND content_item_from.path in {file_paths}' if file_paths else ''}
 RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
 """
     return {

@@ -772,12 +772,10 @@ class TestMergeExistingFile:
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader("", "")
             downloader.output_pack_path = env.PACK_INSTANCE_PATH
-            downloader.log_verbose = False
             downloader.pack_content = env.PACK_CONTENT
             downloader.run_format = False
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
-            downloader.log_verbose = False
             downloader.merge_and_extract_existing_file(
                 env.INTEGRATION_CUSTOM_CONTENT_OBJECT
             )
@@ -787,10 +785,8 @@ class TestMergeExistingFile:
     def test_merge_and_extract_existing_file_js(self, tmp_path):
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader("", "")
-            downloader.log_verbose = False
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
-            downloader.log_verbose = False
             downloader.files_not_downloaded = []
             downloader.pack_content = {
                 entity: list() for entity in CONTENT_ENTITIES_DIRS
@@ -813,12 +809,10 @@ class TestMergeExistingFile:
 
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader("", "")
-            downloader.log_verbose = False
             downloader.pack_content = env.PACK_CONTENT
             downloader.run_format = False
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
-            downloader.log_verbose = False
             downloader.merge_and_extract_existing_file(
                 env.INTEGRATION_CUSTOM_CONTENT_OBJECT
             )
@@ -877,7 +871,6 @@ class TestMergeExistingFile:
             downloader.run_format = False
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
-            downloader.log_verbose = False
             for param in parameters:
                 downloader.merge_existing_file(
                     param["custom_content_object"], param["ending"]

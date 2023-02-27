@@ -218,8 +218,6 @@ class MarketplaceTagParser:
 
 MARKETPLACE_TAG_PARSER = None
 
-LOG_VERBOSE = False
-
 LAYOUT_CONTAINER_FIELDS = {
     "details",
     "detailsV2",
@@ -242,15 +240,6 @@ def generate_xsiam_normalized_name(file_name, prefix):
         return file_name.replace(f"{prefix}-", f"external-{prefix}-")
     else:
         return f"external-{prefix}-{file_name}"
-
-
-def set_log_verbose(verbose: bool):
-    global LOG_VERBOSE
-    LOG_VERBOSE = verbose
-
-
-def get_log_verbose() -> bool:
-    return LOG_VERBOSE
 
 
 def get_mp_tag_parser():
@@ -1406,7 +1395,7 @@ def get_docker_images_from_yml(script_obj) -> List[str]:
     return imgs
 
 
-def get_python_version(docker_image, log_verbose=None, no_prints=False):
+def get_python_version(docker_image):
     """
     Get the python version of a docker image
     Arguments:
@@ -1416,9 +1405,6 @@ def get_python_version(docker_image, log_verbose=None, no_prints=False):
     Raises:
         ValueError -- if version is not supported
     """
-    if log_verbose is None:
-        log_verbose = LOG_VERBOSE
-    stderr_out = None if log_verbose else DEVNULL
     py_ver = check_output(
         [
             "docker",
@@ -1430,10 +1416,11 @@ def get_python_version(docker_image, log_verbose=None, no_prints=False):
             "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))",
         ],
         text=True,
-        stderr=stderr_out,
+        stderr=DEVNULL,
     ).strip()
-    if not no_prints:
-        print(f"Detected python version: [{py_ver}] for docker image: {docker_image}")
+    logger.debug(
+        f"Detected python version: [{py_ver}] for docker image: {docker_image}"
+    )
 
     py_num = float(py_ver)
     if py_num < 2.7 or (3 < py_num < 3.4):  # pylint can only work on python 3.4 and up
@@ -1471,9 +1458,8 @@ def get_dev_requirements(py_version, envs_dirs_base):
         string -- requirement required for the project
     """
     env_dir = get_pipenv_dir(py_version, envs_dirs_base)
-    stderr_out = None if LOG_VERBOSE else DEVNULL
     requirements = check_output(
-        ["pipenv", "lock", "-r", "-d"], cwd=env_dir, text=True, stderr=stderr_out
+        ["pipenv", "lock", "-r", "-d"], cwd=env_dir, text=True, stderr=DEVNULL
     )
     logger.debug(f"dev requirements:\n{requirements}")
     return requirements

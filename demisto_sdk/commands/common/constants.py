@@ -1390,7 +1390,6 @@ FEED_REQUIRED_PARAMS = [
             "required": False,
         },
         "must_contain": {},
-        "may_contain": {"section": "Collect"},
     },
     {
         "name": "feedReputation",
@@ -1403,7 +1402,6 @@ FEED_REQUIRED_PARAMS = [
         "must_contain": {
             "additionalinfo": "Indicators from this integration instance will be marked with this reputation"
         },
-        "may_contain": {"section": "Collect"},
     },
     {
         "name": "feedReliability",
@@ -1423,7 +1421,6 @@ FEED_REQUIRED_PARAMS = [
         "must_contain": {
             "additionalinfo": "Reliability of the source providing the intelligence data"
         },
-        "may_contain": {"section": "Collect"},
     },
     {
         "name": "feedExpirationPolicy",
@@ -1434,19 +1431,16 @@ FEED_REQUIRED_PARAMS = [
             "options": ["never", "interval", "indicatorType", "suddenDeath"],
         },
         "must_contain": {},
-        "may_contain": {"section": "Collect"},
     },
     {
         "name": "feedExpirationInterval",
         "must_equal": {"display": "", "type": 1, "required": False},
         "must_contain": {},
-        "may_contain": {"section": "Collect"},
     },
     {
         "name": "feedFetchInterval",
         "must_equal": {"display": "Feed Fetch Interval", "type": 19, "required": False},
         "must_contain": {},
-        "may_contain": {"section": "Collect"},
     },
     {
         "name": "feedBypassExclusionList",
@@ -1460,13 +1454,11 @@ FEED_REQUIRED_PARAMS = [
             " This means that if an indicator from this feed is on the exclusion list,"
             " the indicator might still be added to the system."
         },
-        "may_contain": {"section": "Collect"},
     },
     {
         "name": "feedTags",
         "must_equal": {"display": "Tags", "required": False, "type": 0},
         "must_contain": {"additionalinfo": "Supports CSV values."},
-        "may_contain": {"section": "Collect"},
     },
     {
         "name": "tlp_color",
@@ -1480,7 +1472,6 @@ FEED_REQUIRED_PARAMS = [
             "additionalinfo": "The Traffic Light Protocol (TLP) designation to apply to indicators fetched from the "
             "feed"
         },
-        "may_contain": {"section": "Collect"},
     },
 ]
 

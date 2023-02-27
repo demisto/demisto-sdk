@@ -1385,20 +1385,19 @@ class IntegrationValidator(ContentEntityValidator):
                 param_details.pop("defaultvalue")
             if "hidden" in param_details:
                 param_details.pop("hidden")
+            if "section" in param_details:
+                param_details.pop("section")
 
         for required_param in FEED_REQUIRED_PARAMS:
             is_valid = False
             param_details = params.get(required_param.get("name"))  # type: ignore
             equal_key_values: Dict = required_param.get("must_equal", dict())  # type: ignore
             contained_key_values: Dict = required_param.get("must_contain", dict())  # type: ignore
-            may_contain_key_value: Dict = required_param.get("may_contain", dict())  # type: ignore
+            # may_contain_key_value: Dict = required_param.get("may_contain", dict())  # type: ignore
             if param_details:
                 # Check length to see no unexpected key exists in the config. Add +1 for the 'name' key.
                 is_valid = (
-                    len(equal_key_values)
-                    + len(contained_key_values)
-                    + len(may_contain_key_value)
-                    + 1
+                    len(equal_key_values) + len(contained_key_values) + 1
                     == len(param_details)
                     and all(
                         k in param_details and param_details[k] == v
@@ -1408,16 +1407,12 @@ class IntegrationValidator(ContentEntityValidator):
                         k in param_details and v in param_details[k]
                         for k, v in contained_key_values.items()
                     )
-                    and all(
-                        k in param_details and v in param_details[k]
-                        for k, v in may_contain_key_value.items()
-                    )
+                    # and all(k in param_details and v in param_details[k] for k, v in may_contain_key_value.items())
                 )
             if not is_valid:
                 param_structure = dict(
                     equal_key_values,
                     **contained_key_values,
-                    **may_contain_key_value,
                     name=required_param.get("name"),
                 )
                 error_message, error_code = Errors.parameter_missing_for_feed(

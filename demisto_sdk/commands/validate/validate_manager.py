@@ -3001,7 +3001,7 @@ class ValidateManager:
                 return False
 
         else:  # Packs/MyPack/SomeFolder/<modified file> OR DEEPER
-            first_level_folder = path.parts[-depth + 1]  # TODO test
+            first_level_folder = path.parts[-depth + 1]
             if (
                 first_level_folder not in FIRST_LEVEL_FOLDERS
                 and _handle_invalid_first_level_folder()

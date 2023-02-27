@@ -113,10 +113,6 @@ def _logging_setup(
 
 
 def set_propagate(logger_to_update: logging.Logger, propagate: bool = False):
-    previos_propagate = logger_to_update.propagate
-    print(
-        f"*** logger.set_propagate, {previos_propagate=}, {propagate=}, {logger_to_update.handlers=}"
-    )
     logger_to_update.propagate = propagate
 
 

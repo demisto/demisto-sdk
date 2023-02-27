@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## 1.10.5
 * Fixed an issue where running **run-test-playbook** would not use the `verify` parameter correctly. @ajoga
 * Added a newline at the end of README files generated in **generate-docs**.
 * Added the value `3` (out of bounds) to the `onChangeRepAlg` and `reputationCalc` fields under the `IncidentType` and `GenericType` schemas. **validate** will allow using it now.

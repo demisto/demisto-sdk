@@ -498,9 +498,9 @@ class ContributionConverter:
                 content_item_file_path = child_file
                 file_type = find_type(content_item_file_path)
                 file_type = file_type.value if file_type else file_type
-                click.echo(f"Debug in {child_file_name}")
                 try:
                     child_file_name = os.path.basename(child_file)
+                    click.echo(f"Debug in {child_file_name}")
                     if source_mapping and child_file_name in source_mapping.keys():
                         child_file_mapping = source_mapping.get(child_file_name, {})
                         base_name = child_file_mapping.get("base_name", "")

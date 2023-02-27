@@ -5,7 +5,11 @@ from pathlib import Path
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import (
+    ChangeCWD,
+    assert_strs_in_call_args_list,
+    str_in_call_args_list,
+)
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -90,29 +94,30 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 ],
                 catch_exceptions=False,
             )
-        assert str_in_call_args_list(
-            logger_info.call_args_list, "# Pack ID: FindDependencyPack"
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "# Pack ID: FindDependencyPack",
+                "### Scripts",
+                "### Playbooks",
+                "### Layouts",
+                "### Incident Fields",
+                "### Indicator Types",
+                "### Integrations",
+                "### Incident Types",
+                "### Classifiers",
+                "### Mappers",
+                "### Widgets",
+                "### Dashboards",
+                "### Reports",
+                "### Generic Types",
+                "### Generic Fields",
+                "### Generic Modules",
+                "### Jobs",
+                "All level dependencies are: []",
+            ],
         )
-        assert str_in_call_args_list(logger_info.call_args_list, "### Scripts")
-        assert str_in_call_args_list(logger_info.call_args_list, "### Playbooks")
-        assert str_in_call_args_list(logger_info.call_args_list, "### Layouts")
-        assert str_in_call_args_list(logger_info.call_args_list, "### Incident Fields")
-        assert str_in_call_args_list(logger_info.call_args_list, "### Indicator Types")
-        assert str_in_call_args_list(logger_info.call_args_list, "### Integrations")
-        assert str_in_call_args_list(logger_info.call_args_list, "### Incident Types")
-        assert str_in_call_args_list(logger_info.call_args_list, "### Classifiers")
-        assert str_in_call_args_list(logger_info.call_args_list, "### Mappers")
-        assert str_in_call_args_list(logger_info.call_args_list, "### Widgets")
-        assert str_in_call_args_list(logger_info.call_args_list, "### Dashboards")
-        assert str_in_call_args_list(logger_info.call_args_list, "### Reports")
-        assert str_in_call_args_list(logger_info.call_args_list, "### Generic Types")
-        assert str_in_call_args_list(logger_info.call_args_list, "### Generic Fields")
-        assert str_in_call_args_list(logger_info.call_args_list, "### Generic Modules")
-        assert str_in_call_args_list(logger_info.call_args_list, "### Jobs")
         # last log is regarding all the deps
-        assert str_in_call_args_list(
-            logger_info.call_args_list, "All level dependencies are: []"
-        )
         assert result.exit_code == 0
 
     def test_integration_find_dependencies_sanity_with_id_set(self, repo, mocker):
@@ -161,11 +166,10 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 ],
             )
 
-            assert str_in_call_args_list(
+            assert_strs_in_call_args_list(
                 logger_info.call_args_list,
-                "Found dependencies result for FindDependencyPack pack:",
+                ["Found dependencies result for FindDependencyPack pack:", "{}"],
             )
-            assert str_in_call_args_list(logger_info.call_args_list, "{}")
             assert result.exit_code == 0
 
     def test_integration_find_dependencies_not_a_pack(self, repo):

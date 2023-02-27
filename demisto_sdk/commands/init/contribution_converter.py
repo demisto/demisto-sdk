@@ -125,6 +125,7 @@ class ContributionConverter:
         self.gh_user = gh_user
         self.contrib_conversion_errs: List[str] = []
         self.create_new = create_new
+        self.pack_versions = ""
         base_dir = base_dir or get_content_path()  # type: ignore
         self.packs_dir_path = os.path.join(base_dir, "Packs")  # type: ignore
         if not os.path.isdir(self.packs_dir_path):
@@ -478,6 +479,7 @@ class ContributionConverter:
                 what already exists in the repo.
         """
         child_files = get_child_files(content_item_dir)
+        self.pack_versions += "ATTENTION!!!!!\n"
         for child_file in child_files:
             cf_name_lower = os.path.basename(child_file).lower()
             if cf_name_lower.startswith(
@@ -522,6 +524,7 @@ class ContributionConverter:
                             file_type=file_type,
                             output=content_item_dir,
                         )
+                    self.pack_versions += f'{extractor.base_name}: {extractor.extract_pack_version(extractor.yml_data.get("script", {}))}\n'
                     extractor.extract_to_package_format(
                         executed_from_contrib_converter=True
                     )

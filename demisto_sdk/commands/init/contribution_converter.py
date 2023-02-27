@@ -538,7 +538,7 @@ class ContributionConverter:
                             output=content_item_dir,
                         )
                     click.echo("out")
-                    script = get_yaml(content_item_file_path).get("script", {})
+                    script = get_yaml(content_item_file_path).get("script", {}).get("script", {})
                     click.echo("script")
                     click.echo(script)
                     pack_version = self.extract_pack_version(script)

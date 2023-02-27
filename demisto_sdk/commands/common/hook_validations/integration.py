@@ -1393,7 +1393,6 @@ class IntegrationValidator(ContentEntityValidator):
             param_details = params.get(required_param.get("name"))  # type: ignore
             equal_key_values: Dict = required_param.get("must_equal", dict())  # type: ignore
             contained_key_values: Dict = required_param.get("must_contain", dict())  # type: ignore
-            # may_contain_key_value: Dict = required_param.get("may_contain", dict())  # type: ignore
             if param_details:
                 # Check length to see no unexpected key exists in the config. Add +1 for the 'name' key.
                 is_valid = (
@@ -1407,7 +1406,6 @@ class IntegrationValidator(ContentEntityValidator):
                         k in param_details and v in param_details[k]
                         for k, v in contained_key_values.items()
                     )
-                    # and all(k in param_details and v in param_details[k] for k, v in may_contain_key_value.items())
                 )
             if not is_valid:
                 param_structure = dict(

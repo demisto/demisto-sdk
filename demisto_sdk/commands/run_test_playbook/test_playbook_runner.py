@@ -5,7 +5,8 @@ import time
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 
-from demisto_sdk.commands.common.tools import LOG_COLORS, get_yaml, print_color
+from demisto_sdk.commands.common.logger import secho_and_info
+from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.upload.uploader import Uploader
 
 SUCCESS_RETURN_CODE = 0
@@ -90,16 +91,16 @@ class TestPlaybookRunner:
         is_path_valid = True
         if not self.all_test_playbooks:
             if not self.test_playbook_path:
-                print_color(
+                secho_and_info(
                     "Error: Missing option '-tpb' / '--test-playbook-path'.",
-                    LOG_COLORS.RED,
+                    "red",
                 )
                 is_path_valid = False
 
             elif not os.path.exists(self.test_playbook_path):
-                print_color(
+                secho_and_info(
                     f"Error: Given input path: {self.test_playbook_path} does not exist",
-                    LOG_COLORS.RED,
+                    "red",
                 )
                 is_path_valid = False
 
@@ -148,7 +149,7 @@ class TestPlaybookRunner:
                 test_playbook_id=test_playbook_id,
             )
         except ApiException as a:
-            print_color(str(a), LOG_COLORS.RED)
+            secho_and_info(str(a), "red")
             status_code = ERROR_RETURN_CODE
 
         work_plan_link = self.base_link_to_workplan + str(incident_id)
@@ -158,18 +159,16 @@ class TestPlaybookRunner:
             )
 
         else:
-            print_color(
-                f"To see results please go to : {work_plan_link}", LOG_COLORS.NATIVE
-            )
+            secho_and_info(f"To see results please go to : {work_plan_link}")
 
         return status_code
 
     def run_and_check_tpb_status(self, test_playbook_id, work_plan_link, incident_id):
         status_code = SUCCESS_RETURN_CODE
-        print_color(
+        secho_and_info(
             f"Waiting for the test playbook to finish running.. \n"
             f"To see the test playbook run in real-time please go to : {work_plan_link}",
-            LOG_COLORS.GREEN,
+            "green",
         )
 
         elapsed_time = 0
@@ -185,23 +184,23 @@ class TestPlaybookRunner:
 
         # Ended the loop because of timeout
         if elapsed_time >= self.timeout:
-            print_color(
+            secho_and_info(
                 f"The command had timed out while the playbook is in progress.\n"
                 f"To keep tracking the test playbook please go to : {work_plan_link}",
-                LOG_COLORS.RED,
+                "red",
             )
         else:
             if test_playbook_result["state"] == "failed":
                 self.print_tpb_error_details(test_playbook_result, test_playbook_id)
-                print_color(
+                secho_and_info(
                     "The test playbook finished running with status: FAILED",
-                    LOG_COLORS.RED,
+                    "red",
                 )
                 status_code = ERROR_RETURN_CODE
             else:
-                print_color(
+                secho_and_info(
                     "The test playbook has completed its run successfully",
-                    LOG_COLORS.GREEN,
+                    "green",
                 )
 
         return status_code
@@ -232,19 +231,19 @@ class TestPlaybookRunner:
                 create_incident_request=create_incident_request
             )
         except ApiException as e:
-            print_color(
+            secho_and_info(
                 f'Failed to create incident with playbook id : "{test_playbook_id}", '
                 "possible reasons are:\n"
                 "1. This playbook name does not exist \n"
                 "2. Schema problems in the playbook \n"
                 "3. Unauthorized api key",
-                LOG_COLORS.RED,
+                "red",
             )
             raise e
 
-        print_color(
+        secho_and_info(
             f"The test playbook: {self.test_playbook_path} was triggered successfully.",
-            LOG_COLORS.GREEN,
+            "green",
         )
         return response.id
 
@@ -257,18 +256,18 @@ class TestPlaybookRunner:
     def print_tpb_error_details(self, tpb_res, tpb_id):
         entries = tpb_res.get("entries")
         if entries:
-            print_color(f"Test Playbook {tpb_id} has failed:", LOG_COLORS.RED)
+            secho_and_info(f"Test Playbook {tpb_id} has failed:", "red")
             for entry in entries:
                 if entry["type"] == ENTRY_TYPE_ERROR and entry["parentContent"]:
-                    print_color(f'- Task ID: {entry["taskId"]}', LOG_COLORS.RED)
+                    secho_and_info(f'- Task ID: {entry["taskId"]}', "red")
                     # Checks for passwords and replaces them with "******"
                     parent_content = re.sub(
                         r' (P|p)assword="[^";]*"',
                         " password=******",
                         entry["parentContent"],
                     )
-                    print_color(f"  Command: {parent_content}", LOG_COLORS.RED)
-                    print_color(f'  Body:\n{entry["contents"]}', LOG_COLORS.RED)
+                    secho_and_info(f"  Command: {parent_content}", "red")
+                    secho_and_info(f'  Body:\n{entry["contents"]}', "red")
 
     def get_base_link_to_workplan(self):
         """Create a base link to the workplan in the specified xsoar instance

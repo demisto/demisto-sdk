@@ -11,13 +11,8 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.tools import (
-    find_type,
-    get_files_in_dir,
-    print_error,
-    print_success,
-    print_warning,
-)
+from demisto_sdk.commands.common.logger import secho_and_info
+from demisto_sdk.commands.common.tools import find_type, get_files_in_dir
 from demisto_sdk.commands.format.format_constants import SCHEMAS_PATH
 from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat,
@@ -204,11 +199,11 @@ def format_manager(
                     id_set_path=id_set_path,
                 )
                 if err_res:
-                    log_list.extend([(err_res, print_error)])
+                    log_list.extend([(err_res, "red")])
                 if info_res:
-                    log_list.extend([(info_res, print_success)])
+                    log_list.extend([(info_res, "green")])
                 if skip_res:
-                    log_list.extend([(skip_res, print_warning)])
+                    log_list.extend([(skip_res, "yellow")])
             elif file_type:
                 log_list.append(
                     (
@@ -216,7 +211,7 @@ def format_manager(
                             f"Ignoring format for {file_path} as {file_type.value} is currently not "
                             f"supported by format command"
                         ],
-                        print_warning,
+                        "yellow",
                     )
                 )
             else:
@@ -225,7 +220,7 @@ def format_manager(
                         [
                             f"Was unable to identify the file type for the following file: {file_path}"
                         ],
-                        print_error,
+                        "red",
                     )
                 )
 
@@ -236,14 +231,14 @@ def format_manager(
             log_list.append(
                 (
                     [f"Failed format file {input}." + "No such file or directory"],
-                    print_error,
+                    "red",
                 )
             )
         return 1
 
     print("")  # Just adding a new line before summary
-    for string, print_func in log_list:
-        print_func("\n".join(string))
+    for string, print_color in log_list:
+        secho_and_info("\n".join(string), print_color)
 
     if error_list:
         return 1
@@ -355,7 +350,9 @@ def run_format_on_file(
         del kwargs["id_set_path"]
     updater_class = FILE_TYPE_AND_LINKED_CLASS.get(file_type)
     if not updater_class:  # fail format so long as xsiam entities dont have formatters
-        print_warning(f"No  updater_class was found for file type {file_type}")
+        secho_and_info(
+            f"No updater_class was found for file type {file_type}", "yellow"
+        )
         return format_output(input, 1, VALIDATE_RES_SKIPPED_CODE)
 
     update_object = updater_class(

@@ -27,9 +27,6 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name,
     is_external_repository,
     item_type_to_content_items_header,
-    print_error,
-    print_success,
-    print_warning,
     wait_futures_complete,
 )
 from demisto_sdk.commands.common.update_id_set import (
@@ -169,8 +166,9 @@ def update_pack_metadata_with_dependencies(
     found_path_results = find_pack_path(pack_folder_name)
 
     if not found_path_results:
-        print_error(
-            f"{pack_folder_name} {constants.PACKS_PACK_META_FILE_NAME} was not found"
+        secho_and_info(
+            f"{pack_folder_name} {constants.PACKS_PACK_META_FILE_NAME} was not found",
+            "red",
         )
         sys.exit(1)
 
@@ -2763,15 +2761,17 @@ class PackDependencies:
         input_paths, all_packs_dependencies, output_path, get_dependent_on
     ):
         if output_path and not all_packs_dependencies and not get_dependent_on:
-            print_warning(
+            secho_and_info(
                 "You used the '--output-path' argument, which only works when using either the"
-                " '--all-packs-dependencies' or '--get-dependent-on' flags. Ignoring this argument."
+                " '--all-packs-dependencies' or '--get-dependent-on' flags. Ignoring this argument.",
+                "yellow",
             )
         if not input_paths:
             if not all_packs_dependencies:
-                print_error(
+                secho_and_info(
                     "Please provide an input path. The path should be formatted as 'Packs/<some pack name>'. "
-                    "For example, Packs/HelloWorld."
+                    "For example, Packs/HelloWorld.",
+                    "red",
                 )
                 sys.exit(1)
 
@@ -2779,35 +2779,39 @@ class PackDependencies:
             input_paths = [Path(path) for path in list(input_paths)]
 
             if input_paths and all_packs_dependencies:
-                print_warning(
+                secho_and_info(
                     "You used the '--input/-i' argument, which is not relevant for when using the"
-                    " '--all-packs-dependencies'. Ignoring this argument."
+                    " '--all-packs-dependencies'. Ignoring this argument.",
+                    "yellow",
                 )
                 return
 
             elif len(input_paths) > 1 and not get_dependent_on:
-                print_error(
+                secho_and_info(
                     "Please supply only one pack path to calculate its dependencies. Multiple inputs in only "
-                    "supported when using the --get-dependent-on flag."
+                    "supported when using the --get-dependent-on flag.",
+                    "red",
                 )
                 sys.exit(1)
 
             for path in input_paths:
                 if len(path.parts) != 2 or path.parts[-2] != "Packs":
-                    print_error(
+                    secho_and_info(
                         f"Input path ({path}) must be formatted as 'Packs/<some pack name>'. "
-                        f"For example, Packs/HelloWorld."
+                        f"For example, Packs/HelloWorld.",
+                        "red",
                     )
                     sys.exit(1)
                 if get_dependent_on:
                     if path.parts[-1] in IGNORED_PACKS_IN_DEPENDENCY_CALC:
-                        print_error(
-                            f"Finding all packs dependent on {path.parts[-1]} pack is not supported."
+                        secho_and_info(
+                            f"Finding all packs dependent on {path.parts[-1]} pack is not supported.",
+                            "red",
                         )
                         sys.exit(1)
         if all_packs_dependencies and not output_path:
-            print_error(
-                "Please insert path for the generated output using --output-path"
+            secho_and_info(
+                "Please insert path for the generated output using --output-path", "red"
             )
             sys.exit(1)
 
@@ -2844,7 +2848,7 @@ class PackDependencies:
             dependent_packs, _ = get_packs_dependent_on_given_packs(
                 input_paths, id_set_path, output_path  # type: ignore[arg-type]
             )
-            print_success("Found the following dependent packs:")
+            secho_and_info("Found the following dependent packs:", "green")
             dependent_packs = json.dumps(dependent_packs, indent=4)
             secho_and_info(f"[bold]{dependent_packs}[/bold]")
 
@@ -2857,20 +2861,23 @@ class PackDependencies:
                 input_paths, output_path, dependency, id_set_path
             )
             if dependencies:
-                print_success(
+                secho_and_info(
                     f'The pack "{input_pack_name}" depends on "{dependency_pack_name}" '
-                    f"with the following items:"
+                    f"with the following items:",
+                    "green",
                 )
                 logger.info(f"[bold]{dependencies}[/bold]")
             else:
-                print_warning(
-                    f"Could not find dependencies between the two packs: {input_pack_name} and {dependency}"
+                secho_and_info(
+                    f"Could not find dependencies between the two packs: {input_pack_name} and {dependency}",
+                    "yellow",
                 )
 
         elif all_packs_dependencies:
             calculate_all_packs_dependencies(id_set_path, output_path)  # type: ignore[arg-type]
-            print_success(
-                f"The packs dependencies json was successfully saved to {output_path}"
+            secho_and_info(
+                f"The packs dependencies json was successfully saved to {output_path}",
+                "green",
             )
 
         else:
@@ -2920,8 +2927,9 @@ class PackDependencies:
             id_set, _, _ = IDSetCreator(print_logs=False).create_id_set()
 
         if is_external_repository():
-            print_warning(
-                "Running in a private repository, will download the id set from official content"
+            secho_and_info(
+                "Running in a private repository, will download the id set from official content",
+                "yellow",
             )
             id_set = get_merged_official_and_local_id_set(
                 id_set, silent_mode=silent_mode
@@ -3033,7 +3041,7 @@ def calculate_single_pack_depends_on(
                                 (item, dep_item)
                             ]  # type:ignore
     except Exception as e:
-        print_error(f"Failed calculating {pack} pack dependencies: {e}")
+        secho_and_info(f"Failed calculating {pack} pack dependencies: {e}", "red")
         raise
 
     return first_level_dependencies, pack
@@ -3082,7 +3090,7 @@ def calculate_single_pack_dependencies(
             subgraph, pack
         )
     except Exception:
-        print_error(f"Failed calculating {pack} pack dependencies")
+        secho_and_info(f"Failed calculating {pack} pack dependencies", "red")
         raise
 
     return first_level_dependencies, all_level_dependencies, pack
@@ -3105,7 +3113,7 @@ def get_all_packs_dependency_graph(id_set: dict, packs: list) -> Iterable:
     )
     return dependency_graph
     # except Exception as e:
-    #     print_error(f"Failed calculating dependencies graph: {e}")
+    #     secho_and_info(f"Failed calculating dependencies graph: {e}", "red")
     #     exit(2)
 
 
@@ -3118,7 +3126,9 @@ def select_packs_for_calculation() -> list:
     packs = []
     for pack in os.scandir(PACKS_FULL_PATH):
         if not pack.is_dir() or pack.name in IGNORED_PACKS_IN_DEPENDENCY_CALC:
-            print_warning(f"Skipping dependency calculation of {pack.name} pack.")
+            secho_and_info(
+                f"Skipping dependency calculation of {pack.name} pack.", "yellow"
+            )
             continue  # skipping ignored packs
         packs.append(pack.name)
     return packs
@@ -3153,7 +3163,7 @@ def calculate_all_packs_dependencies(id_set_path: str, output_path: str) -> dict
                 "fullPath": os.path.abspath(os.path.join(PACKS_DIR, pack_name)),
             }
         except Exception:
-            print_error("Failed to collect pack dependencies results")
+            secho_and_info("Failed to collect pack dependencies results", "red")
             raise
 
     pack_dependencies_result: dict = {}
@@ -3177,7 +3187,7 @@ def calculate_all_packs_dependencies(id_set_path: str, output_path: str) -> dict
             f"Number of created pack dependencies entries: {len(pack_dependencies_result.keys())}"
         )
         # finished iteration over pack folders
-        print_success("Finished dependencies calculation")
+        secho_and_info("Finished dependencies calculation", "green")
 
         with open(output_path, "w") as pack_dependencies_file:
             json.dump(pack_dependencies_result, pack_dependencies_file, indent=4)
@@ -3218,7 +3228,9 @@ def get_packs_dependent_on_given_packs(
             dependent_packs_list.extend(first_level_dependencies.keys())
 
         except Exception:
-            print_error("Failed to collect the packs dependent on given packs")
+            secho_and_info(
+                "Failed to collect the packs dependent on given packs", "red"
+            )
             raise
 
     dependent_on_results: dict = {}
@@ -3243,7 +3255,9 @@ def get_packs_dependent_on_given_packs(
             )
         wait_futures_complete(futures=futures, done_fn=collect_dependent_packs)
         # finished iteration over pack folders
-        print_success("Finished calculating the dependencies on the given packs.")
+        secho_and_info(
+            "Finished calculating the dependencies on the given packs.", "green"
+        )
 
         if output_path:
             with open(output_path, "w") as pack_dependencies_file:
@@ -3355,7 +3369,9 @@ def remove_dependencies_from_id_set(
 
     save_dict_of_sets("items_removed_manually_from_id_set.json", excluded_items_by_pack)
 
-    print_success("Starting to remove dependencies of excluded items from id_set")
+    secho_and_info(
+        "Starting to remove dependencies of excluded items from id_set", "green"
+    )
 
     unfiltered_id_set = get_id_set(
         id_set_path=""
@@ -3367,8 +3383,9 @@ def remove_dependencies_from_id_set(
             additional_items_to_exclude, unfiltered_id_set, marketplace
         )
         if additional_items_to_exclude:
-            print_success(
-                f"Adding the following packs to the exclusion list: {list(additional_items_to_exclude.keys())}"
+            secho_and_info(
+                f"Adding the following packs to the exclusion list: {list(additional_items_to_exclude.keys())}",
+                "green",
             )
             update_excluded_items_dict(
                 excluded_items_by_pack,

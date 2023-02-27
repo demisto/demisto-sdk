@@ -6,12 +6,7 @@ import click
 from demisto_sdk.commands.common.constants import TYPE_JS, TYPE_PWSH
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.logger import secho_and_info
-from demisto_sdk.commands.common.tools import (
-    LOG_COLORS,
-    is_iron_bank_pack,
-    print_color,
-    server_version_compare,
-)
+from demisto_sdk.commands.common.tools import is_iron_bank_pack, server_version_compare
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
@@ -66,16 +61,16 @@ class ScriptYMLFormat(BaseUpdateYML):
             script_obj (dict): script object
         """
         if script_obj.get("type") == TYPE_JS:
-            print_color(
+            secho_and_info(
                 "Skipping docker image update as this is a Javascript automation.",
-                LOG_COLORS.YELLOW,
+                "yellow",
             )
             return
         dockerimage = script_obj.get("dockerimage")
         if not dockerimage:  # default image -> nothing to do
-            print_color(
+            secho_and_info(
                 "Skipping docker image update as default docker image is being used.",
-                LOG_COLORS.YELLOW,
+                "yellow",
             )
             return
         image_name = dockerimage.split(":")[0]

@@ -12,7 +12,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import error_co
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
-from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
+from demisto_sdk.commands.common.logger import secho_and_info
+from demisto_sdk.commands.common.tools import is_string_uuid
 
 
 class PlaybookValidator(ContentEntityValidator):
@@ -49,9 +50,9 @@ class PlaybookValidator(ContentEntityValidator):
             bool. Whether the playbook is valid or not
         """
         if "TestPlaybooks" in self.file_path:
-            click.echo(
+            secho_and_info(
                 f"Skipping validation for Test Playbook {self.file_path}",
-                color=LOG_COLORS.YELLOW,
+                "yellow",
             )
             return True
         playbook_checks = [

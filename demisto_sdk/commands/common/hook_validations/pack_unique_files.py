@@ -58,7 +58,6 @@ from demisto_sdk.commands.common.tools import (
     get_local_remote_file,
     get_remote_file,
     pack_name_to_path,
-    print_warning,
 )
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 
@@ -840,9 +839,10 @@ class PackUniqueFilesValidator(BaseValidator):
                     for tag_marketplace in tag_marketplaces:
                         pack_tags[tag_marketplace].append(tag_data[1])
                 except KeyError:
-                    print_warning(
+                    secho_and_info(
                         "You have non-approved tag prefix in the pack metadata tags, cannot validate all tags until it is fixed."
-                        f' Valid tag prefixes are: { ", ".join(marketplaces)}.'
+                        f' Valid tag prefixes are: { ", ".join(marketplaces)}.',
+                        "yellow",
                     )
                     is_valid = False
 

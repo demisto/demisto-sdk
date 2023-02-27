@@ -11,14 +11,12 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import (
     LAYOUT_CONTAINER_FIELDS,
-    LOG_COLORS,
     get_all_incident_and_indicator_fields_from_id_set,
     get_invalid_incident_fields_from_layout,
     normalize_field_name,
-    print_color,
-    print_error,
     remove_copy_and_dev_suffixes_from_str,
 )
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
@@ -210,12 +208,12 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             user_answer = input()
             # Checks if the user input is no
             if user_answer in ["n", "N", "No", "no"]:
-                print_error("Moving forward without updating group field")
+                secho_and_info("Moving forward without updating group field", "red")
                 return
 
-            print_color(
+            secho_and_info(
                 "Please specify the desired group: incident or indicator",
-                LOG_COLORS.YELLOW,
+                "yellow",
             )
             user_desired_group = input()
             if re.match(r"(^incident$)", user_desired_group, re.IGNORECASE):
@@ -223,7 +221,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             elif re.match(r"(^indicator$)", user_desired_group, re.IGNORECASE):
                 self.data["group"] = "indicator"
             else:
-                print_error("Group is not valid")
+                secho_and_info("Group is not valid", "red")
 
     def layout__arguments_to_remove(self):
         """Finds diff between keys in file and schema of file type

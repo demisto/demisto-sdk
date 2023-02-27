@@ -116,9 +116,7 @@ class TestUpdateRNManager:
         """
         mng = UpdateReleaseNotesManager(user_input=user_input)
         mng.changed_packs_from_git = git_changed_packs
-        err = mocker.patch(
-            "demisto_sdk.commands.update_release_notes.update_rn_manager.print_warning"
-        )
+        err = mocker.patch("demisto_sdk.commands.common.logger.secho_and_info")
         mock_func = mocker.patch.object(
             UpdateReleaseNotesManager, "create_pack_release_notes"
         )
@@ -161,9 +159,7 @@ class TestUpdateRNManager:
             - a warning should be printed which says that no RN is needed here.
         """
         mng = UpdateReleaseNotesManager()
-        err = mocker.patch(
-            "demisto_sdk.commands.update_release_notes.update_rn_manager.print_warning"
-        )
+        err = mocker.patch("demisto_sdk.commands.common.logger.secho_and_info")
         mng.create_pack_release_notes(
             "test1", {"Packs/test2", "Packs/test3"}, set(), set()
         )

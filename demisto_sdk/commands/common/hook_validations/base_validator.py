@@ -29,7 +29,6 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name,
     get_relative_path_from_packs_dir,
     get_yaml,
-    print_warning,
 )
 
 logger = logging.getLogger("demisto-sdk")
@@ -208,8 +207,9 @@ class BaseValidator:
             try:
                 self.check_file_flags(file_name, file_path)
             except FileNotFoundError:
-                print_warning(
-                    f"File {file_path} not found, cannot check its flags (deprecated, etc)"
+                secho_and_info(
+                    f"File {file_path} not found, cannot check its flags (deprecated, etc)",
+                    "yellow",
                 )
 
             rel_file_path = get_relative_path_from_packs_dir(file_path)

@@ -1,12 +1,8 @@
 import logging
 from typing import Dict, List, Optional
 
-from demisto_sdk.commands.common.tools import (
-    get_yaml,
-    print_error,
-    print_success,
-    write_yml,
-)
+from demisto_sdk.commands.common.logger import secho_and_info
+from demisto_sdk.commands.common.tools import get_yaml, write_yml
 from demisto_sdk.commands.generate_docs.common import build_example_dict
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     get_command_examples,
@@ -104,7 +100,7 @@ def generate_integration_context(
     input_path: str,
     examples: Optional[str] = None,
     insecure: bool = False,
-    verbose:bool = False,
+    verbose: bool = False,
     output_path: Optional[str] = None,
 ):
     """Generate integration command contexts in-place.
@@ -130,20 +126,18 @@ def generate_integration_context(
 
             # Generate the examples with a local server
             for _, _, outputs in example:
-                output_with_contexts = dict_from_outputs_str(
-                    command, outputs
-                )
+                output_with_contexts = dict_from_outputs_str(command, outputs)
                 output_contexts = output_with_contexts.get("outputs")
                 yml_data = insert_outputs(yml_data, command, output_contexts)
 
         # Make the changes in place the input yml
-        print_success(f"Writing outputs to {output_path}")
+        secho_and_info(f"Writing outputs to {output_path}", "green")
         write_yml(output_path, yml_data)
     except ValueError as ex:
         if verbose:
             # TODO Handle this verbose
             raise
         else:
-            print_error(f"Error: {str(ex)}")
+            secho_and_info(f"Error: {str(ex)}", "red")
             return 1
     return 0

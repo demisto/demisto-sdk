@@ -1,7 +1,7 @@
 import click
 
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.tools import print_error
+from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.convert.dir_convert_managers import *  # lgtm [py/polluting-import]
 
 
@@ -46,7 +46,7 @@ class ConvertManager:
         for dir_converter in relevant_dir_converters:
             exit_code = max(dir_converter.convert(), exit_code)
         if exit_code:
-            print_error("Error occurred during convert command.")
+            secho_and_info("Error occurred during convert command.", "red")
         else:
             click.secho(
                 f"Finished convert for given path successfully:\n{self.input_path}",

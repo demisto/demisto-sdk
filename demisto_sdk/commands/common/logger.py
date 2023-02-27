@@ -2,8 +2,6 @@ import logging
 import logging.config
 from logging.handlers import RotatingFileHandler
 
-import click
-
 # from rich.logging import RichHandler
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
@@ -137,7 +135,7 @@ def info_color(msg, color: str):
 
 
 def secho_and_info(message, fg="white"):
-    click.secho(message, fg=fg)
+    # click.secho(message, fg=fg)
     logger.info(f"[{fg}]{message}[/{fg}]")
 
 

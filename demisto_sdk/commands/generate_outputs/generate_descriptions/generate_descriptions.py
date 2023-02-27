@@ -10,7 +10,8 @@ from typing import Dict
 import requests
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import get_yaml, print_error, write_yml
+from demisto_sdk.commands.common.logger import secho_and_info
+from demisto_sdk.commands.common.tools import get_yaml, write_yml
 
 json = JSON_Handler()
 
@@ -114,7 +115,7 @@ def generate_desc(input_ctx, prob_check=False, insecure=False):
 def ai21_api_request(prompt, options={}):
     ai21_key = os.environ.get("AI21_KEY")
     if not ai21_key:
-        print_error("No ai21 key provided, see docs and obtain one.")
+        secho_and_info("No ai21 key provided, see docs and obtain one.", "red")
         return
 
     res = requests.post(
@@ -303,7 +304,7 @@ def generate_ai_descriptions(
                     f.write(get_current_prompt())
 
     except Exception as ex:
-        print_error(f"Error: {str(ex)}")
+        secho_and_info(f"Error: {str(ex)}", "red")
 
     # backup all of the prompts (without truncating)
     if DEBUG_PROMPT:

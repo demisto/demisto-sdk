@@ -1,6 +1,7 @@
 import os
 
-from demisto_sdk.commands.common.tools import FileType, find_type, print_error
+from demisto_sdk.commands.common.logger import secho_and_info
+from demisto_sdk.commands.common.tools import FileType, find_type
 from demisto_sdk.commands.generate_outputs.generate_context.generate_integration_context import (
     generate_integration_context,
 )
@@ -14,14 +15,16 @@ from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs impor
 
 def json_to_outputs_flow(kwargs):
     if not kwargs.get("command"):
-        print_error(
-            "To use the json-to-outputs version of this command please include a `command` argument."
+        secho_and_info(
+            "To use the json-to-outputs version of this command please include a `command` argument.",
+            "red",
         )
         return 1
 
     if not kwargs.get("prefix"):
-        print_error(
-            "To use the json-to-outputs version of this command please include a `prefix` argument."
+        secho_and_info(
+            "To use the json-to-outputs version of this command please include a `prefix` argument.",
+            "red",
         )
         return 1
 
@@ -71,22 +74,23 @@ def generate_ai_descriptions_flow(kwargs):
 
 def validate_inputs_examples(input_path):
     if not input_path:
-        print_error(
-            "To use the generate_integration_context version of this command please include an `input` argument"
+        secho_and_info(
+            "To use the generate_integration_context version of this command please include an `input` argument",
+            "red",
         )
         return 1
 
     if input_path and not os.path.isfile(input_path):
-        print_error(f"Input file {input_path} was not found.")
+        secho_and_info(f"Input file {input_path} was not found.", "red")
         return 1
 
     if not input_path.lower().endswith(".yml"):
-        print_error(f"Input {input_path} is not a valid yml file.")
+        secho_and_info(f"Input {input_path} is not a valid yml file.", "red")
         return 1
 
     file_type = find_type(input_path, ignore_sub_categories=True)
     if file_type is not FileType.INTEGRATION:
-        print_error("File is not an Integration.")
+        secho_and_info("File is not an Integration.", "red")
         return 1
 
 

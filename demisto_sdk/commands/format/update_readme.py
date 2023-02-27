@@ -8,8 +8,8 @@ from demisto_sdk.commands.common.hook_validations.readme import (
     get_relative_urls,
     mdx_server_is_up,
 )
+from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
-from demisto_sdk.commands.common.tools import print_error, print_warning
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
@@ -129,7 +129,9 @@ class ReadmeFormat(BaseUpdate):
             self.save_md_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            print_error(f"\nFailed to update file {self.source_file}. Error: {err}")
+            secho_and_info(
+                f"\nFailed to update file {self.source_file}. Error: {err}", "red"
+            )
             return ERROR_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:
@@ -150,9 +152,10 @@ class ReadmeFormat(BaseUpdate):
                     fix=True,
                 )
                 if response.validations:
-                    print_warning(
+                    secho_and_info(
                         f"Markdown lint was not able to fix the following "
-                        f"markdown validations for file {self.source_file}.\n{response.validations}"
+                        f"markdown validations for file {self.source_file}.\n{response.validations}",
+                        "yellow",
                     )
                 if response.fixed_text and response.fixed_text != self.readme_content:
                     click.secho(f"Received markdown fixes for file {self.source_file}")

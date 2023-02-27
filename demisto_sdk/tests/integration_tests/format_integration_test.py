@@ -43,7 +43,7 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     GENERIC_MODULE,
     GENERIC_TYPE,
 )
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -447,14 +447,6 @@ def test_integration_format_remove_playbook_sourceplaybookid(
         assert "sourceplaybookid" not in yaml_content
 
     assert not result.exception
-
-
-def str_in_call_args_list(call_args_list, required_str):
-    for current_call in call_args_list:
-        if type(current_call[0]) == tuple:
-            if required_str in current_call[0][0]:
-                return True
-    return False
 
 
 def test_format_on_valid_py(mocker, repo):

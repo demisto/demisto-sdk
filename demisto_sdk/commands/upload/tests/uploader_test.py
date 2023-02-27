@@ -814,8 +814,7 @@ def test_print_summary_successfully_uploaded_files(
     expected_successfully_uploaded_files = "\n".join(
         expected_successfully_uploaded_files_array
     )
-    # assert expected_successfully_uploaded_files in caplog.text
-    # verify exactly 3 calls to print_color
+    # verify exactly 3 calls to secho
     assert secho.call_count == 3
     assert secho.call_args_list[0][0][0] == expected_upload_summary_title
     assert secho.call_args_list[1][0][0] == expected_successfully_uploaded_files_title
@@ -846,7 +845,7 @@ def test_print_summary_failed_uploaded_files(demisto_client_configure, mocker):
 │ SomeScriptName │ Script │ Some Error │
 ╘════════════════╧════════╧════════════╛
 """
-    # verify exactly 3 calls to print_color
+    # verify exactly 3 calls to secho
     assert secho.call_count == 3
     assert secho.call_args_list[0][0][0] == expected_upload_summary_title
     assert secho.call_args_list[1][0][0] == expected_failed_uploaded_files_title
@@ -877,7 +876,7 @@ def test_print_summary_unuploaded_files(demisto_client_configure, mocker):
 │ SomeScriptName │ Script │ 6.0.0           │ 0.0.0               │ 5.0.0             │
 ╘════════════════╧════════╧═════════════════╧═════════════════════╧═══════════════════╛
 """
-    # verify exactly 3 calls to print_color
+    # verify exactly 3 calls to secho
     assert secho.call_count == 3
     assert secho.call_args_list[0][0][0] == expected_upload_summary_title
     assert secho.call_args_list[1][0][0] == expected_failed_uploaded_files_title

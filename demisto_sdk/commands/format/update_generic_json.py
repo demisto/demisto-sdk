@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.logger import secho_and_info
-from demisto_sdk.commands.common.tools import is_uuid, print_error
+from demisto_sdk.commands.common.tools import is_uuid
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES,
     ERROR_RETURN_CODE,
@@ -144,8 +144,9 @@ class BaseUpdateJSON(BaseUpdate):
         else:
             logger.debug("Updating ID to be the same as JSON name")
             if field not in self.data:
-                print_error(
-                    f"Missing {field} field in file {self.source_file} - add this field manually"
+                secho_and_info(
+                    f"Missing {field} field in file {self.source_file} - add this field manually",
+                    "red",
                 )
                 return None
             if "id" in self.data and is_uuid(

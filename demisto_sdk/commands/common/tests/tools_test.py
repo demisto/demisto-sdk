@@ -42,7 +42,6 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
-    LOG_COLORS,
     MarketplaceTagParser,
     TagParser,
     arg_to_list,
@@ -587,18 +586,6 @@ def test_capital_case():
     assert res == "Good_life-here V2"
     res = tools.capital_case("")
     assert res == ""
-
-
-class TestPrintColor:
-    def test_print_color(self, mocker):
-        mocker.patch("builtins.print")
-
-        tools.print_color("test", LOG_COLORS.GREEN)
-
-        print_args = print.call_args[0][0]
-        assert print_args == "{}{}{}".format(
-            LOG_COLORS.GREEN, "test", LOG_COLORS.NATIVE
-        )
 
 
 class TestReleaseVersion:

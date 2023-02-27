@@ -438,9 +438,6 @@ class TestIntegrationValidator:
         - it should return True (there are duplicate params)
         - it should print an error message that contains the duplicated param name
         """
-        # from demisto_sdk.commands.common.tools import print_error
-        # mocker.patch(tools, 'print_error')
-
         current = {"configuration": [{"name": "test"}, {"name": "test"}]}
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)

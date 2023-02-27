@@ -25,7 +25,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import Colors
+from demisto_sdk.commands.common.logger import Colors, secho_and_info
 from demisto_sdk.commands.common.timers import report_time_measurements
 from demisto_sdk.commands.common.tools import (
     find_file,
@@ -34,8 +34,6 @@ from demisto_sdk.commands.common.tools import (
     get_file_displayed_name,
     get_json,
     is_external_repository,
-    print_error,
-    print_warning,
     retrieve_file_ending,
 )
 from demisto_sdk.commands.content_graph.content_graph_commands import (
@@ -200,7 +198,9 @@ class LintManager:
             facts["content_repo"] = git_repo  # type: ignore
             logger.debug(f"Content path {git_repo.working_dir}")
         except (git.InvalidGitRepositoryError, git.NoSuchPathError) as e:
-            print_warning("You are running demisto-sdk lint not in content repository!")
+            secho_and_info(
+                "You are running demisto-sdk lint not in content repository!", "yellow"
+            )
             logger.warning(f"can't locate content repo {e}")
         # Get global requirements file
         pipfile_dir = Path(__file__).parent / "resources"
@@ -219,7 +219,7 @@ class LintManager:
             python2_requirements = pipfile_dir / "pipfile_python2/dev-requirements.txt"
             facts["requirements_2"] = python2_requirements.read_text().strip().split("\n")  # type: ignore
         except (json.JSONDecodeError, OSError, FileNotFoundError, KeyError) as e:
-            print_error("Can't parse pipfile.lock - Aborting!")
+            secho_and_info("Can't parse pipfile.lock - Aborting!", "red")
             logger.critical(f"demisto-sdk-can't parse pipfile.lock {e}")
             sys.exit(1)
         # ￿Get mandatory modulestest modules and Internet connection for docker usage
@@ -231,14 +231,16 @@ class LintManager:
             logger.debug("Test mandatory modules successfully collected")
         except (git.GitCommandError, DemistoException) as e:
             if is_external_repo:
-                print_error(
+                secho_and_info(
                     "You are running on an external repo - "
                     "run `.hooks/bootstrap` before running the demisto-sdk lint command\n"
-                    "See here for additional information: https://xsoar.pan.dev/docs/concepts/dev-setup"
+                    "See here for additional information: https://xsoar.pan.dev/docs/concepts/dev-setup",
+                    "red",
                 )
             else:
-                print_error(
-                    "Unable to get test-modules demisto-mock.py etc - Aborting! corrupt repository or pull from master"
+                secho_and_info(
+                    "Unable to get test-modules demisto-mock.py etc - Aborting! corrupt repository or pull from master",
+                    "red",
                 )
             logger.error(
                 f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}"
@@ -248,9 +250,10 @@ class LintManager:
             requests.exceptions.ConnectionError,
             urllib3.exceptions.NewConnectionError,
         ) as e:
-            print_error(
+            secho_and_info(
                 "Unable to get mandatory test-modules demisto-mock.py etc - Aborting! (Check your internet "
-                "connection)"
+                "connection)",
+                "red",
             )
             logger.error(
                 f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}"
@@ -275,9 +278,10 @@ class LintManager:
                     "Docker engine not available and we are in content CI env. Can not run lint!!"
                 ) from ex
             facts["docker_engine"] = False
-            print_warning(
+            secho_and_info(
                 "Can't communicate with Docker daemon - check your docker Engine is ON - Skipping lint, "
-                "test which require docker!"
+                "test which require docker!",
+                "yellow",
             )
             logger.info("can not communicate with Docker daemon")
         logger.debug("Docker daemon test passed")
@@ -551,7 +555,7 @@ class LintManager:
                 return return_exit_code, return_warning_code
         except KeyboardInterrupt:
             msg = "Stop demisto-sdk lint - Due to 'Ctrl C' signal"
-            print_warning(msg)
+            secho_and_info(msg, "yellow")
             logger.warning(msg)
             executor.shutdown(
                 wait=False
@@ -559,8 +563,7 @@ class LintManager:
             return 1, 0
         except Exception as e:
             msg = f"Stop demisto-sdk lint - Due to Exception {e}"
-            print_warning(msg)
-            logger.error(msg)
+            logger.error("[yellow]" + msg + "[/yellow]")
 
             if Version(platform.python_version()) > Version("3.9"):
                 executor.shutdown(wait=True, cancel_futures=True)  # type: ignore[call-arg]

@@ -59,7 +59,6 @@ from demisto_sdk.commands.common.tools import (
     get_item_marketplaces,
     get_pack_name,
     is_iron_bank_pack,
-    print_error,
     server_version_compare,
     string_to_bool,
 )
@@ -406,13 +405,14 @@ class IntegrationValidator(ContentEntityValidator):
                         err_msgs.append(formatted_message)
 
         if err_msgs:
-            print_error(
+            server_version_compare(
                 "{} Received the following error for {} validation:\n{}\n {}\n".format(
                     self.file_path,
                     param_name,
                     "\n".join(err_msgs),
                     Errors.suggest_fix(file_path=self.file_path),
-                )
+                ),
+                "red",
             )
             self.is_valid = False
             return False
@@ -533,7 +533,7 @@ class IntegrationValidator(ContentEntityValidator):
                         flag = False
 
         if not flag:
-            print_error(Errors.suggest_fix(self.file_path))
+            server_version_compare(Errors.suggest_fix(self.file_path), "red")
         return flag
 
     @error_codes("IN134")

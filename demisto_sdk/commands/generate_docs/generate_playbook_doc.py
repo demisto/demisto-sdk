@@ -1,7 +1,8 @@
 import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from demisto_sdk.commands.common.tools import get_yaml, print_error, print_warning
+from demisto_sdk.commands.common.logger import secho_and_info
+from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.generate_docs.common import (
     HEADER_TYPE,
     generate_list_section,
@@ -114,12 +115,12 @@ def generate_playbook_doc(
         save_output(output, f"{playbook_filename}_README.md", doc_text)
 
         if errors:
-            print_warning("Possible Errors:")
+            secho_and_info("Possible Errors:", "yellow")
             for error in errors:
-                print_warning(error)
+                secho_and_info(error, "yellow")
 
     except Exception as ex:
-        print_error(f"Error: {str(ex)}")
+        secho_and_info(f"Error: {str(ex)}", "red")
         raise
 
 

@@ -5,7 +5,7 @@ from pathlib import Path
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -41,14 +41,6 @@ def mock_is_external_repo(mocker, is_external_repo_return):
         "demisto_sdk.commands.find_dependencies.find_dependencies.is_external_repository",
         return_value=is_external_repo_return,
     )
-
-
-def str_in_call_args_list(call_args_list, required_str):
-    for current_call in call_args_list:
-        if type(current_call[0]) == tuple:
-            if required_str in current_call[0][0]:
-                return True
-    return False
 
 
 class TestFindDependencies:  # Use classes to speed up test - multi threaded py pytest

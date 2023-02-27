@@ -47,6 +47,8 @@ from demisto_sdk.commands.common.tools import (
     TagParser,
     arg_to_list,
     compare_context_path_in_yml_and_readme,
+    extract_field_from_complex_mapping,
+    extract_field_from_simple_mapping,
     field_to_cli_name,
     filter_files_by_type,
     filter_files_on_pack,
@@ -2514,3 +2516,34 @@ def test_get_core_packs(mocker):
     assert len(mp_to_core_packs) == len(MarketplaceVersions)
     for mp_core_packs in mp_to_core_packs.values():
         assert "Base" in mp_core_packs
+
+
+@pytest.mark.parametrize(
+    "simple_value, expected_output",
+    [
+        ("employeeid", "employeeid"),
+        ("${employeeid}", "employeeid"),
+        ("employeeid.hello", "employeeid"),
+        ("employeeid.[0].hi", "employeeid"),
+        ("${employeeid.hello}", "employeeid"),
+        ("${employeeid.[0]}", "employeeid"),
+        ("${.=1}", ""),
+        (".", ""),
+        ('"not a field"', ""),
+    ],
+)
+def test_extract_field_from_simple_mapping(simple_value, expected_output):
+    assert extract_field_from_simple_mapping(simple_value) == expected_output
+
+
+@pytest.mark.parametrize(
+    "complex_value, expected_output",
+    [
+        ("employeeid", "employeeid"),
+        ("employeeid.hello", "employeeid"),
+        (".", ""),
+        ("${employeeid.[0]}", "${employeeid"),  # indicates malformed complex value
+    ],
+)
+def test_extract_field_from_complex_mapping(complex_value, expected_output):
+    assert extract_field_from_complex_mapping(complex_value) == expected_output

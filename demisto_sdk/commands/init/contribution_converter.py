@@ -36,6 +36,7 @@ from demisto_sdk.commands.common.tools import (
     get_child_files,
     get_content_path,
     get_display_name,
+    get_yaml,
 )
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
@@ -457,6 +458,15 @@ class ContributionConverter:
                     textwrap.indent("\n".join(self.contrib_conversion_errs), "\t")
                 )
 
+    def extract_pack_version(self, script):
+        """
+        extract pack version from script if exists.
+        """
+        if script:
+            pack_version = re.match(r"### pack version: \d+\.\d+\.\d+", "", script)
+            return pack_version or "TEST TEST pack version: 1.4.5"
+        return "TEST TEST pack version: 1.4.5"
+
     def content_item_to_package_format(
         self,
         content_item_dir: str,
@@ -488,6 +498,7 @@ class ContributionConverter:
                 content_item_file_path = child_file
                 file_type = find_type(content_item_file_path)
                 file_type = file_type.value if file_type else file_type
+                click.echo(f"Debug in {child_file_name}")
                 try:
                     child_file_name = os.path.basename(child_file)
                     if source_mapping and child_file_name in source_mapping.keys():
@@ -524,7 +535,11 @@ class ContributionConverter:
                             file_type=file_type,
                             output=content_item_dir,
                         )
-                    self.pack_versions += f'{extractor.base_name}: {extractor.extract_pack_version(extractor.yml_data.get("script", {}))}\n'
+                    script = get_yaml(content_item_file_path).get("script", {})
+                    pack_version = self.extract_pack_version(script)
+                    click.echo(f"pack_version {pack_version}")
+                    self.pack_versions += f"{child_file_name}: {pack_version}\n"
+                    click.echo(f"pack_versions {self.pack_versions}")
                     extractor.extract_to_package_format(
                         executed_from_contrib_converter=True
                     )

@@ -391,15 +391,6 @@ class YmlSplitter:
                 script = script.replace(match.group(), imported_line)
         return script
 
-    def extract_pack_version(self, script):
-        """
-        extract pack version from script if exists.
-        """
-        if script:
-            pack_version = re.match(r"### pack version: \d+\.\d+\.\d+", "", script)
-            return pack_version or "TEST TEST pack version: 1.4.5"
-        return "TEST TEST pack version: 1.4.5"
-
     def replace_section_headers_code(self, script):
         """
         remove the auto-generated section headers if they exist.

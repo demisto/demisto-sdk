@@ -46,6 +46,12 @@ def get_playbook(
     return playbook
 
 
+def get_script(request: FixtureRequest, tmp_path_factory: TempPathFactory):
+    script = get_pack(request, tmp_path_factory).create_script()
+    script.create_default_script()
+    return script
+
+
 # Fixtures
 
 
@@ -53,6 +59,11 @@ def get_playbook(
 def pack(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Pack:
     """Mocking tmp_path"""
     return get_pack(request, tmp_path_factory)
+
+
+@pytest.fixture()
+def script(request: FixtureRequest, tmp_path_factory: TempPathFactory):
+    return get_script(request, tmp_path_factory)
 
 
 @pytest.fixture

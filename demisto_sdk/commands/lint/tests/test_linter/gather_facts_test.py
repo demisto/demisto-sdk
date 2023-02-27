@@ -18,6 +18,7 @@ def initiate_linter(
     integration_path,
     docker_engine=False,
     docker_image_flag=linter.DockerImageFlagOption.FROM_YML.value,
+    all_packs=False,
 ):
     return linter.Linter(
         content_repo=demisto_content,
@@ -27,6 +28,7 @@ def initiate_linter(
         docker_engine=docker_engine,
         docker_timeout=60,
         docker_image_flag=docker_image_flag,
+        all_packs=all_packs,
     )
 
 
@@ -580,6 +582,103 @@ class TestTestsCollection:
         runner = initiate_linter(demisto_content, integration_path, True)
         runner._gather_facts(modules={})
         assert not runner._facts["test"]
+
+    @pytest.mark.parametrize(
+        argnames="all_packs, should_skip, deprecated_log",
+        argvalues=[
+            (True, True, True),
+            (False, False, False),
+        ],
+    )
+    def test_deprecated_integration(
+        self,
+        mocker,
+        demisto_content: Callable,
+        create_integration: Callable,
+        all_packs: bool,
+        should_skip: bool,
+        deprecated_log: bool,
+    ):
+        """
+        Given:
+        - Case A: run all packs flag and deprecated integration
+        - Case B: do not run on all packs and deprecated integration
+
+        When:
+        - calling gather facts
+
+        Then:
+        - Case A: gather facts should indicate integration is skipped
+        - Case B: gather father should indicate integration is not skipped
+        """
+        log = mocker.patch.object(logger, "info")
+        mocker.patch.object(linter.Linter, "_update_support_level")
+        integration_path: Path = create_integration(
+            content_path=demisto_content, is_deprecated=True
+        )
+        runner = initiate_linter(
+            demisto_content, integration_path, True, all_packs=all_packs
+        )
+        assert should_skip == runner._gather_facts(modules={})
+
+        if deprecated_log:
+            assert (
+                "skipping lint for Sample_integration because its deprecated"
+                == log.call_args_list[2].args[0]
+            )
+        else:
+            assert (
+                "skipping lint for Sample_integration because its deprecated"
+                != log.call_args_list[2].args[0]
+            )
+
+    @pytest.mark.parametrize(
+        argnames="all_packs, should_skip, deprecated_log",
+        argvalues=[
+            (True, True, True),
+            (False, False, False),
+        ],
+    )
+    def test_deprecated_script(
+        self,
+        mocker,
+        demisto_content: Callable,
+        script,
+        all_packs,
+        should_skip,
+        deprecated_log,
+    ):
+        """
+        Given:
+        - Case A: run all packs flag and deprecated script
+        - Case B: do not run on all packs and deprecated script
+
+        When:
+        - calling gather facts
+
+        Then:
+        - Case A: gather facts should indicate script is skipped
+        - Case B: gather father should indicate script is not skipped
+        """
+        script.yml.update({"deprecated": True})
+        log = mocker.patch.object(logger, "info")
+        mocker.patch.object(linter.Linter, "_update_support_level")
+        runner = initiate_linter(
+            demisto_content, script.path, True, all_packs=all_packs
+        )
+
+        assert should_skip == runner._gather_facts(modules={})
+
+        if deprecated_log:
+            assert (
+                "skipping lint for script0 because its deprecated"
+                == log.call_args_list[2].args[0]
+            )
+        else:
+            assert (
+                "skipping lint for script0 because its deprecated"
+                != log.call_args_list[2].args[0]
+            )
 
 
 class TestLintFilesCollection:

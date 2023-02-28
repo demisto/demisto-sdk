@@ -4082,8 +4082,6 @@ class TestValidationUsingGit:
             }
         )
 
-        test = old_integration.yml.read()
-
         modified_files = {integration.yml.rel_path, incident_field.get_path_from_pack()}
         added_files = {dashboard.get_path_from_pack(), script.yml.rel_path}
         old_files = {old_integration.yml.rel_path}

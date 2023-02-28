@@ -537,7 +537,7 @@ def zip_packs(**kwargs) -> int:
 @click.option(
     "-i",
     "--input",
-    type=PathsParamType(exists=True, resolve_path=True),
+    type=PathsParamType(exists=True, resolve_path=True),  # PathsParamType allows passing a list of paths
     help="The path of the content pack/file to validate specifically.",
 )
 @click.option(

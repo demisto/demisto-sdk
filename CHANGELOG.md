@@ -63,7 +63,7 @@
 * Fixed an issue in **prepare-content** command where large code lines were broken.
 * Added a logger warning to **get_demisto_version**, the task will now fail with a more informative message.
 * Fixed an issue where the **upload** and **prepare-content** commands didn't add `fromServerVersion` and `toServerVersion` to layouts.
-* * Updated **lint** to use graph instead of id_set when running with `--check-dependent-api-module` flag.
+* Updated **lint** to use graph instead of id_set when running with `--check-dependent-api-module` flag.
 * Added the marketplaces field to all schemas.
 * Added the flag `--xsoar-only` to the **doc-review** command which enables reviewing documents that belong to XSOAR-supported Packs.
 * Fixed an issue in **update-release-notes** command where an error occurred when executing the same command a second time.

@@ -71,7 +71,6 @@
 * Fixed an issue where running **validate** on a specific pack didn't test all the relevant entities.
 * Fixed an issue where fields ending with `_x2` where not replaced in the appropriate Marketplace.
 
-
 ## 1.8.3
 * Changed **validate** to allow hiding parameters of type 0, 4, 12 and 14 when replacing with type 9 (credentials) with the same name.
 * Fixed an issue where **update-release-notes** fails to update *MicrosoftApiModule* dependent integrations.

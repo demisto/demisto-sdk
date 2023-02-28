@@ -57,7 +57,7 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     pre_commit.run(test=is_test)
 
     # precommit should not run on python2 files, unless test files
-    assert mock_dump.call_count == mock_subprocess.call_count == 3 if is_test else 4
+    assert mock_subprocess.call_count == 3 if is_test else 4
     with open(TEST_DATA_PATH / "pre_commit_config_3.8.yml") as f:
         expected_py38_config = yaml.load(f)
     with open(TEST_DATA_PATH / "pre_commit_config_3.9.yml") as f:

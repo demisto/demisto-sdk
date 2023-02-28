@@ -10,6 +10,7 @@
 * Fixed an issue where using **postman-codegen** failed converting strings containing digits to kebab-case.
 * Fixed an issue where the ***error-code*** command could not parse List[str] parameter.
 * Updated validation *LO107* to support more section types in XSIAM layouts.
+* Deprecated integrations and scripts will not run anymore when providing the **--all-packs** to the **lint** command.
 
 ## 1.10.4
 * Added support for running **lint** in multiple native-docker images.

@@ -224,6 +224,7 @@ class Pack:
                     "script": "",
                     "commands": [],
                 },
+                "configuration": []
             }
         if image is None:
             with open(

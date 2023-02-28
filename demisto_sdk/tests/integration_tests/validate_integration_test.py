@@ -3419,8 +3419,13 @@ class TestPlaybookValidateDeprecated:
                 [VALIDATE_CMD, "-i", playbook.yml.rel_path, "--print-ignored-files"],
                 catch_exceptions=False,
             )
-        assert f"{playbook.yml.path} as playbook" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"{playbook.yml.path} as playbook",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_modified_invalid_bc_deprecated_playbook(self, mocker, repo):
@@ -3475,8 +3480,13 @@ class TestPlaybookValidateDeprecated:
                 ],
                 catch_exceptions=False,
             )
-        assert f"Validating {playbook.yml.rel_path} as playbook" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {playbook.yml.rel_path} as playbook",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_invalid_bc_unsupported_toversion_playbook(self, mocker, repo):
@@ -3506,8 +3516,13 @@ class TestPlaybookValidateDeprecated:
                 [VALIDATE_CMD, "-i", playbook.yml.rel_path, "--print-ignored-files"],
                 catch_exceptions=False,
             )
-        assert f"{playbook.yml.path} as playbook" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"{playbook.yml.path} as playbook",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_modified_invalid_bc_unsupported_toversion_playbook(self, mocker, repo):
@@ -3563,8 +3578,13 @@ class TestPlaybookValidateDeprecated:
                 ],
                 catch_exceptions=False,
             )
-        assert f"Validating {playbook.yml.rel_path} as playbook" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {playbook.yml.rel_path} as playbook",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
 
@@ -3589,8 +3609,13 @@ class TestReportValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", report.path], catch_exceptions=False
             )
-        assert f"Validating {report.path} as report" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {report.path} as report",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_invalid_report(self, mocker, repo):
@@ -3615,8 +3640,13 @@ class TestReportValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", report.path], catch_exceptions=False
             )
-        assert f"Validating {report.path} as report" in result.stdout
-        assert "The value \"bla\" in 'orientation' is invalid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {report.path} as report",
+                "The value \"bla\" in 'orientation' is invalid",
+            ],
+        )
         assert result.exit_code == 1
 
 
@@ -3643,8 +3673,13 @@ class TestReputationValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", reputation.path], catch_exceptions=False
             )
-        assert f"Validating {reputation.path} as reputation" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {reputation.path} as reputation",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_invalid_reputation(self, mocker, repo):
@@ -3671,9 +3706,14 @@ class TestReputationValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", reputation.path], catch_exceptions=False
             )
-        assert f"Validating {reputation.path} as reputation" in result.stdout
-        assert "RP101" in result.stdout
-        assert "Expiration field should have a positive numeric value." in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {reputation.path} as reputation",
+                "RP101",
+                "Expiration field should have a positive numeric value.",
+            ],
+        )
         assert result.exit_code == 1
 
 
@@ -3701,8 +3741,13 @@ class TestScriptValidation:
                 [VALIDATE_CMD, "-i", script.yml.rel_path, "--no-docker-checks"],
                 catch_exceptions=False,
             )
-        assert f"{script.yml.path} as script" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"{script.yml.path} as script",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_invalid_script(self, mocker, repo):

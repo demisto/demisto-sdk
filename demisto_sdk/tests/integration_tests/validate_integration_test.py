@@ -4072,14 +4072,15 @@ class TestValidationUsingGit:
         script = pack2.create_script(yml=valid_script_yml)
 
         old_integration = pack2.create_integration(
-            name="OldIntegration",
-            description="Deprecated. No available replacement."
+            name="OldIntegration", description="Deprecated. No available replacement."
         )
-        old_integration.yml.update({
-            "display": "OldIntegration (Deprecated)",
-            "toversion": "5.0.0",
-            "deprecated": True,
-        })
+        old_integration.yml.update(
+            {
+                "display": "OldIntegration (Deprecated)",
+                "toversion": "5.0.0",
+                "deprecated": True,
+            }
+        )
 
         test = old_integration.yml.read()
 

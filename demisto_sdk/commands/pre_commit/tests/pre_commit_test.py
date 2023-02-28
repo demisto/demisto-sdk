@@ -4,15 +4,14 @@ import pytest
 
 import demisto_sdk.commands.pre_commit.pre_commit_command as pre_commit_command
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
+from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
 from demisto_sdk.commands.pre_commit.pre_commit_command import (
     YAML_Handler,
     categorize_files,
     preprocess_files,
     subprocess,
 )
-from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
-from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
-
 from TestSuite.repo import Repo
 
 TEST_DATA_PATH = (
@@ -28,10 +27,10 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     """
     Given:
         A repository with different scripts and integration of different python versions
-    
+
     When:
         Calling demisto-sdk pre-commit
-    
+
     Then:
         Categorize the scripts and integration by python version, and make sure that pre-commit configuration is created for each
     """
@@ -70,22 +69,33 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
 
     # precommit should not run on python2 files, unless test files
     assert mock_subprocess.call_count == 3 if not is_test else 4
-    
+
     should_skip = {"format", "validate"}
     if not is_test:
         should_skip.add("run-unit-tests")
     for m in mock_subprocess.call_args_list:
         assert set(m.kwargs["env"]["SKIP"].split(",")) == should_skip
 
+
 @pytest.mark.parametrize("python_version", ["3.8", "3.9", "3.10"])
 def test_mypy_hooks(python_version):
     """
     Testing mypy hook created successfully (the python version is correct)
     """
-    mypy_hook = {'args': ['--ignore-missing-imports', '--check-untyped-defs', '--show-error-codes', '--follow-imports=silent', '--allow-redefinition', '--python-version=3.10']}
+    mypy_hook = {
+        "args": [
+            "--ignore-missing-imports",
+            "--check-untyped-defs",
+            "--show-error-codes",
+            "--follow-imports=silent",
+            "--allow-redefinition",
+            "--python-version=3.10",
+        ]
+    }
 
     MypyHook(mypy_hook).prepare_hook(python_version)
     assert mypy_hook["args"][-1] == f"--python-version={python_version}"
+
 
 @pytest.mark.parametrize("python_version", ["3.8", "3.9", "3.10"])
 @pytest.mark.parametrize("github_actions", [True, False])
@@ -95,12 +105,11 @@ def test_ruff_hook(python_version, github_actions):
     """
     ruff_hook = {}
     RuffHook(ruff_hook).prepare_hook(python_version, github_actions)
-    python_version_to_ruff = {
-        '3.8': 'py38',
-        '3.9': 'py39',
-        '3.10': 'py310'
-    }
-    assert ruff_hook['args'][0] == f'--target-version={python_version_to_ruff[python_version]}'
-    assert ruff_hook["args"][1] == '--fix'
+    python_version_to_ruff = {"3.8": "py38", "3.9": "py39", "3.10": "py310"}
+    assert (
+        ruff_hook["args"][0]
+        == f"--target-version={python_version_to_ruff[python_version]}"
+    )
+    assert ruff_hook["args"][1] == "--fix"
     if github_actions:
-        assert ruff_hook["args"][2] == '--format=github'
+        assert ruff_hook["args"][2] == "--format=github"

@@ -20,7 +20,7 @@ PYTHONPATH = [
     Path(CONTENT_PATH),
     Path(CONTENT_PATH / "Packs" / "Base" / "Scripts" / "CommonServerPython"),
     Path(CONTENT_PATH / "Tests" / "demistomock"),
-    Path(__file__).parent.parent / 'lint' / 'resources' / 'pylint_plugins'
+    Path(__file__).parent.parent / "lint" / "resources" / "pylint_plugins",
 ]
 try:
     PYTHONPATH.extend(Path(CONTENT_PATH / "Packs" / "ApiModules" / "Scripts").iterdir())

@@ -3228,8 +3228,7 @@ def run_unit_tests(file_paths: Tuple[str, ...], native_images: bool, verbose: bo
     from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.run_unit_tests.unit_tests_runner import unit_test_runner
 
-    if verbose:
-        logging_setup(2)
+    logging_setup(2)  # fix logging to handle verbose
     sys.exit(unit_test_runner(file_paths, native_images))
 
 

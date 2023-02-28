@@ -19,7 +19,9 @@ logger = logging.getLogger("demisto-sdk")
 
 
 DOCKER_PYTHONPATH = [
-    f"/content/{path.relative_to(CONTENT_PATH)}" for path in PYTHONPATH
+    f"/content/{path.relative_to(CONTENT_PATH)}"
+    for path in PYTHONPATH
+    if path.is_relative_to(CONTENT_PATH)
 ]
 
 DEFAULT_DOCKER_IMAGE = "demisto/python:1.3-alpine"

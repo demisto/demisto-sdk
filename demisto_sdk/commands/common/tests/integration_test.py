@@ -2131,14 +2131,14 @@ class TestIsFeedParamsExist:
     def test_section_field_feed(self):
         """
         Given:
-        - Parameters of feed integration.
-        - One param with the section field
+        - Parameters of feed integration, where one parameter as a 'section: collect' property.
 
         When:
-        - Integration has all feed required params, and validation won't fail on the section field.
+        - Integration has all feed required params and running all_feed_params_exist on it.
 
         Then:
-        - Ensure that all_feed_params_exists() returns true.
+        - Ensure that all_feed_params_exists() returns true,
+            which means validation did not fail on the additional section field.
         """
         configuration = self.validator.current_file["configuration"]
         for item in configuration:

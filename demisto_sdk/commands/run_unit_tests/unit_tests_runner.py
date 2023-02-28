@@ -90,6 +90,7 @@ def unit_test_runner(file_paths: List[Path], native_images: bool = False) -> int
                     working_dir=working_dir,
                     detach=True,
                 )
+                logger.debug(f"Running test in container {container.id}")
                 stream_docker_container_output(
                     container.logs(stream=True), logger.debug
                 )

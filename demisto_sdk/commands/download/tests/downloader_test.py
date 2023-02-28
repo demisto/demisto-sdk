@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 from pathlib import Path
@@ -43,6 +44,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import get_child_files, get_json, get_yaml
 from demisto_sdk.commands.download.downloader import Downloader
+from TestSuite.test_tools import assert_str_in_call_args_list
 
 yaml = YAML_Handler()
 
@@ -529,7 +531,8 @@ class TestFlagHandlers:
             (False, False, False, False, True, False, "Some Regex", True, ""),
         ],
     )
-    def test_verify_flags(self, system, it, lf, a, o, i, r, res, err, capsys):
+    def test_verify_flags(self, system, it, lf, a, o, i, r, res, err, mocker):
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         with patch.object(Downloader, "__init__", lambda x, y, z: None):
             downloader = Downloader("", "")
             downloader.list_files = lf
@@ -540,9 +543,8 @@ class TestFlagHandlers:
             downloader.download_system_item = system
             downloader.system_item_type = it
             answer = downloader.verify_flags()
-            stdout, _ = capsys.readouterr()
             if err:
-                assert err in stdout
+                assert_str_in_call_args_list(logger_info.call_args_list, err)
             assert answer is res
 
     def test_handle_all_custom_content_flag(self, tmp_path):
@@ -751,9 +753,7 @@ class TestPackHierarchy:
 
 
 class TestMergeExistingFile:
-    def test_merge_and_extract_existing_file_corrupted_dir(
-        self, tmp_path, mocker, capsys
-    ):
+    def test_merge_and_extract_existing_file_corrupted_dir(self, tmp_path, mocker):
         """
         Given
             - The integration exist in output pack, the directory is corrupted
@@ -765,6 +765,7 @@ class TestMergeExistingFile:
         Then
             - Ensure integration is downloaded successfully
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         env = Environment(tmp_path)
         mocker.patch.object(
             Downloader, "get_corresponding_pack_file_object", return_value={}
@@ -779,8 +780,7 @@ class TestMergeExistingFile:
             downloader.merge_and_extract_existing_file(
                 env.INTEGRATION_CUSTOM_CONTENT_OBJECT
             )
-            stdout, _ = capsys.readouterr()
-            assert "Merged" in stdout
+            assert_str_in_call_args_list(logger_info.call_args_list, "Merged")
 
     def test_merge_and_extract_existing_file_js(self, tmp_path):
         with patch.object(Downloader, "__init__", lambda a, b, c: None):

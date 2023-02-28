@@ -424,8 +424,7 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.has_no_duplicate_params() is answer
 
-    @patch("demisto_sdk.commands.common.hook_validations.integration.print_error")
-    def test_with_duplicate_params(self, print_error):
+    def test_with_duplicate_params(self):
         """
         Given
         - integration configuration contains duplicate parameter (called test)

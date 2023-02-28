@@ -1890,6 +1890,10 @@ KEBAB_CASES = [
     ("Scan-File", "scan-file"),
     ("Scan- File", "scan-file"),
     ("Scan -File", "scan-file"),
+    ("Audit - 'X509 Sessions'", "audit-x509-sessions"),
+    ("Scan IPs", "scan-ips"),
+    ("URL Finder", "url-finder"),
+    ("1URL2 3Finder4 5", "1url2-3finder4-5"),
 ]
 
 

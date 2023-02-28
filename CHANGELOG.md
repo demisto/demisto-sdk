@@ -8,6 +8,7 @@
 * Added a newline at the end of README files generated in **generate-docs**.
 * Added the value `3` (out of bounds) to the `onChangeRepAlg` and `reputationCalc` fields under the `IncidentType` and `GenericType` schemas. **validate** will allow using it now.
 * Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
+* Fixed an issue where **validate** failed on Feed Integrations after adding the new *Collect/Connect* section field.
 * Fixed an issue where using **postman-codegen** failed converting strings containing digits to kebab-case.
 * Fixed an issue where the ***error-code*** command could not parse List[str] parameter.
 * Updated validation *LO107* to support more section types in XSIAM layouts.

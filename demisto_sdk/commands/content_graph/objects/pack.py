@@ -204,7 +204,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         for c in content_items:
             content_item_dct[c.content_type.value].append(c)
 
-        # If there is no server_min_version, set it to the maximum of its content items fromversion
+        # If there is no server_min_version, set it to the minimum of its content items fromversion
         min_content_items_version = MARKETPLACE_MIN_VERSION
         if content_items:
             min_content_items_version = str(

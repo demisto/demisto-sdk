@@ -59,7 +59,7 @@ def unit_test_runner(file_paths: List[Path], native_images: bool = False) -> int
             ]
         logger.info(docker_images)
         for docker_image in docker_images:
-            logger.info(f"Running test for {filename} with docker image {docker_image}")
+            logger.info(f"Running test for {filename} using {docker_image=}")
             try:
                 docker_client.images.pull(docker_image)
                 shutil.copy(

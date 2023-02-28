@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where a pack `serverMinVersion` is calculated by its content items to be the minimum fromVersion.
 * Added the **pre-commit** command, to run pre-commit hooks on XSOAR content.
 * Added the **run-unit-tests** command, to run unit tests of given content items inside their respective docker images.
 * Added support for filepath arguments in the **validate** and **format** commands.
@@ -14,6 +15,7 @@
 * Fixed an issue where using **postman-codegen** failed converting strings containing digits to kebab-case.
 * Fixed an issue where the ***error-code*** command could not parse List[str] parameter.
 * Updated validation *LO107* to support more section types in XSIAM layouts.
+* Deprecated integrations and scripts will not run anymore when providing the **--all-packs** to the **lint** command.
 
 ## 1.10.4
 * Added support for running **lint** in multiple native-docker images.

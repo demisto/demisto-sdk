@@ -510,6 +510,7 @@ class LintManager:
                         docker_engine=self._facts["docker_engine"],
                         docker_timeout=docker_timeout,
                         docker_image_flag=docker_image_flag,
+                        all_packs=self._all_packs,
                     )
                     results.append(
                         executor.submit(

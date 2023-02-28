@@ -32,9 +32,9 @@ def logging_setup(
     logging.basicConfig()
     l: logging.Logger = logging.getLogger("demisto-sdk")
 
-    levels = {1: logging.INFO, 2: logging.WARNING, 3: logging.DEBUG}
+    levels = {0: logging.INFO, 1: logging.WARNING, 2: logging.DEBUG}
 
-    log_level: int = levels.get(verbose, levels[1])
+    log_level: int = levels.get(verbose, levels[2])
     l.setLevel(log_level)
     fmt = logging.Formatter(
         "%(asctime)s [%(levelname)s]: %(message)s", datefmt=DATE_FORMAT

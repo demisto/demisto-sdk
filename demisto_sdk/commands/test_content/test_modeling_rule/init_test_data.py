@@ -37,11 +37,15 @@ def init_test_data(
         show_default=True,
         help="The number of events to initialize the test data file for.",
     ),
-    verbosity: bool = typer.Option(
-        False,
+    verbosity: int = typer.Option(
+        0,
         "-v",
         "--verbose",
-        help="Verbose output.",
+        count=True,
+        clamp=True,
+        max=3,
+        show_default=True,
+        help="Verbosity level -v / -vv / .. / -vvv",
         rich_help_panel="Logging Configuration",
     ),
     quiet: bool = typer.Option(

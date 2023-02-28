@@ -66,6 +66,7 @@ from TestSuite.test_tools import (
     ChangeCWD,
     assert_str_in_call_args_list,
     assert_strs_in_call_args_list,
+    str_in_call_args_list,
 )
 
 mp = pytest.MonkeyPatch()
@@ -149,7 +150,6 @@ class TestGenericFieldValidation:
         - Ensure success validation message is printed.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         pack.create_generic_field("generic-field", GENERIC_FIELD)
@@ -176,7 +176,6 @@ class TestGenericFieldValidation:
         Then
         - Ensure validation fails on ST108 - a field which doesn't defined in the scheme.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
@@ -221,7 +220,6 @@ class TestGenericFieldValidation:
         - Ensure validation fails with the right error code.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         generic_field_copy = GENERIC_FIELD.copy()
@@ -259,7 +257,6 @@ class TestGenericTypeValidation:
         - Ensure success validation message is printed.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
         pack.create_generic_type("generic-type", GENERIC_TYPE)
@@ -286,7 +283,6 @@ class TestGenericTypeValidation:
         Then
         - Ensure validation fails on ST108 - a field which doesn't defined in the scheme.
         """
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
@@ -959,8 +955,6 @@ class TestDeprecatedIntegration:
                 ],
                 catch_exceptions=False,
             )
-        assert f"{integration.yml.path} as integration" in result.stdout
-        assert "The files are valid" in result.stdout
         assert_strs_in_call_args_list(
             logger_info.call_args_list,
             [f"{integration.yml.path} as integration", "The files are valid"],
@@ -1249,10 +1243,13 @@ class TestIntegrationValidation:
                 catch_exceptions=False,
             )
 
-        assert (
-            "The required field of the test parameter should be False" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "The required field of the test parameter should be False",
+                "IN102",
+            ],
         )
-        assert_str_in_call_args_list(logger_info.call_args_list, "IN102")
         assert result.exit_code == 1
 
     def test_invalid_integration(self, mocker, repo):
@@ -1352,6 +1349,7 @@ class TestIntegrationValidation:
         - Ensure validation fails.
         - Ensure failure message on hidden params.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mocker.patch.object(
             IntegrationValidator,
             "has_no_fromlicense_key_in_contributions_integration",
@@ -1374,10 +1372,12 @@ class TestIntegrationValidation:
             [VALIDATE_CMD, "-i", integration_path, "--no-conf-json", "--allow-skipped"],
         )
         assert result.exit_code == 1
-        assert f"Validating {integration_path} as integration" in result.stdout
-        assert (
-            '[IN124] - Parameter: "credentials" can\'t be hidden in all marketplaces'
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {integration_path} as integration",
+                '[IN124] - Parameter: "credentials" can\'t be hidden in all marketplaces',
+            ],
         )
 
     def test_positive_hidden_param(self, mocker):
@@ -1507,6 +1507,7 @@ class TestIntegrationValidation:
     def test_empty_default_descriptions(
         self, mocker, repo, field: str, description: str, should_pass: bool
     ):
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mocker.patch.object(
             IntegrationValidator, "is_valid_category", return_value=True
         )
@@ -1533,12 +1534,14 @@ class TestIntegrationValidation:
         )
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
+            runner.invoke(
                 main,
                 [VALIDATE_CMD, "-i", integration.yml.rel_path, "--no-docker-checks"],
                 catch_exceptions=False,
             )
-            assert should_pass == ("IN149" not in result.stdout)
+            assert should_pass != str_in_call_args_list(
+                logger_info.call_args_list, "IN149"
+            )
 
 
 class TestPackValidation:
@@ -1553,6 +1556,7 @@ class TestPackValidation:
         Then
         - See that the validation succeed.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mocker.patch.object(
             ContentEntityValidator, "_load_conf_file", return_value=CONF_JSON_MOCK
         )
@@ -1586,20 +1590,20 @@ class TestPackValidation:
             return_value={},
         )
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(
+        runner.invoke(
             main,
             [VALIDATE_CMD, "-i", VALID_PACK_PATH, "--no-conf-json", "--allow-skipped"],
         )
-        assert f"{VALID_PACK_PATH} unique pack files" in result.stdout
-        assert f"Validating pack {VALID_PACK_PATH}" in result.stdout
-        assert (
-            f"{VALID_PACK_PATH}/Integrations/FeedAzureValid/FeedAzureValid.yml"
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"{VALID_PACK_PATH} unique pack files",
+                f"Validating pack {VALID_PACK_PATH}",
+                f"{VALID_PACK_PATH}/Integrations/FeedAzureValid/FeedAzureValid.yml",
+                f"{VALID_PACK_PATH}/IncidentFields/incidentfield-city.json",
+                "The files are valid",
+            ],
         )
-        assert (
-            f"{VALID_PACK_PATH}/IncidentFields/incidentfield-city.json" in result.stdout
-        )
-        assert "The files are valid" in result.stdout
 
     def test_integration_validate_pack_negative(self, mocker):
         """
@@ -1613,6 +1617,7 @@ class TestPackValidation:
         - Ensure validation fails.
         - Ensure error message regarding unhandled conditional task in playbook.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mocker.patch.object(
             ContentEntityValidator, "_load_conf_file", return_value=CONF_JSON_MOCK
         )
@@ -1630,7 +1635,7 @@ class TestPackValidation:
             return_value={},
         )
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(
+        runner.invoke(
             main,
             [
                 VALIDATE_CMD,
@@ -1641,22 +1646,15 @@ class TestPackValidation:
             ],
         )
 
-        assert f"{AZURE_FEED_PACK_PATH}" in result.output
-        assert (
-            f"{AZURE_FEED_PACK_PATH}/IncidentFields/incidentfield-city.json"
-            in result.output
-        )
-        assert (
-            f"{AZURE_FEED_PACK_PATH}/Integrations/FeedAzure/FeedAzure.yml"
-            in result.output
-        )
-        assert (
-            "Playbook conditional task with id:15 has an unhandled condition: MAYBE"
-            in result.output
-        )
-        assert (
-            "The files were found as invalid, the exact error message can be located above"
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"{AZURE_FEED_PACK_PATH}",
+                f"{AZURE_FEED_PACK_PATH}/IncidentFields/incidentfield-city.json",
+                f"{AZURE_FEED_PACK_PATH}/Integrations/FeedAzure/FeedAzure.yml",
+                "Playbook conditional task with id:15 has an unhandled condition: MAYBE",
+                "The files were found as invalid, the exact error message can be located above",
+            ],
         )
 
     def test_integration_validate_invalid_pack_path(self):
@@ -1697,8 +1695,13 @@ class TestClassifierValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert f"Validating {classifier.path} as classifier" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {classifier.path} as classifier",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_invalid_from_version_in_new_classifiers(self, mocker, repo):
@@ -1724,10 +1727,12 @@ class TestClassifierValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert f"Validating {classifier.path} as classifier" in result.stdout
-        assert (
-            "fromVersion field in new classifiers needs to be higher or equal to 6.0.0"
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {classifier.path} as classifier",
+                "fromVersion field in new classifiers needs to be higher or equal to 6.0.0",
+            ],
         )
         assert result.exit_code == 1
 
@@ -1753,10 +1758,12 @@ class TestClassifierValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert f"Validating {classifier.path} as classifier" in result.stdout
-        assert (
-            "toVersion field in new classifiers needs to be higher than 6.0.0"
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {classifier.path} as classifier",
+                "toVersion field in new classifiers needs to be higher than 6.0.0",
+            ],
         )
         assert result.exit_code == 1
 
@@ -1783,10 +1790,12 @@ class TestClassifierValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert f"Validating {classifier.path} as classifier" in result.stdout
-        assert (
-            "The `fromVersion` field cannot be higher or equal to the `toVersion` field."
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {classifier.path} as classifier",
+                "The `fromVersion` field cannot be higher or equal to the `toVersion` field.",
+            ],
         )
         assert result.exit_code == 1
 
@@ -1812,8 +1821,13 @@ class TestClassifierValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert f"Validating {classifier.path} as classifier" in result.stdout
-        assert 'Missing the field "id" in root' in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {classifier.path} as classifier",
+                'Missing the field "id" in root',
+            ],
+        )
         assert result.exit_code == 1
 
     def test_missing_fromversion_field_in_new_classifier(self, mocker, repo):
@@ -1835,11 +1849,16 @@ class TestClassifierValidation:
         classifier = pack.create_classifier("new_classifier", new_classifier_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
+            runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert f"Validating {classifier.path} as classifier" in result.stdout
-        assert "Must have fromVersion field in new classifiers" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {classifier.path} as classifier",
+                "Must have fromVersion field in new classifiers",
+            ],
+        )
 
     def test_invalid_type_in_new_classifier(self, mocker, repo):
         """
@@ -1863,9 +1882,9 @@ class TestClassifierValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert (
-            "[BA102] - File PackName/Classifiers/classifier-new_classifier.json"
-            in result.stdout
+        assert_str_in_call_args_list(
+            logger_info.call_args_list,
+            "[BA102] - File PackName/Classifiers/classifier-new_classifier.json",
         )
         assert result.exit_code == 1
 
@@ -1893,8 +1912,13 @@ class TestClassifierValidation:
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
         assert result.exit_code == 0
-        assert f"Validating {classifier.path} as classifier_5_9_9" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {classifier.path} as classifier_5_9_9",
+                "The files are valid",
+            ],
+        )
 
     def test_invalid_from_version_in_old_classifiers(self, mocker, repo):
         """
@@ -1915,13 +1939,15 @@ class TestClassifierValidation:
         classifier = pack.create_classifier("old_classifier", old_classifier_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
+            runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert f"Validating {classifier.path} as classifier_5_9_9" in result.stdout
-        assert (
-            "fromVersion field in old classifiers needs to be lower than 6.0.0"
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {classifier.path} as classifier_5_9_9",
+                "fromVersion field in old classifiers needs to be lower than 6.0.0",
+            ],
         )
 
     def test_invalid_to_version_in_old_classifiers(self, mocker, repo):
@@ -1946,10 +1972,12 @@ class TestClassifierValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert f"Validating {classifier.path} as classifier_5_9_9" in result.stdout
-        assert (
-            "toVersion field in old classifiers needs to be lower than 6.0.0"
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {classifier.path} as classifier_5_9_9",
+                f"Validating {classifier.path} as classifier_5_9_9",
+            ],
         )
         assert result.exit_code == 1
 
@@ -1975,8 +2003,13 @@ class TestClassifierValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert f"Validating {classifier.path} as classifier_5_9_9" in result.stdout
-        assert 'Missing the field "id" in root' in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {classifier.path} as classifier_5_9_9",
+                'Missing the field "id" in root',
+            ],
+        )
         assert result.exit_code == 1
 
     def test_missing_toversion_field_in_old_classifier(self, mocker, repo):
@@ -2001,8 +2034,13 @@ class TestClassifierValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert f"Validating {classifier.path} as classifier_5_9_9" in result.stdout
-        assert "Must have toVersion field in old classifiers" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {classifier.path} as classifier_5_9_9",
+                "Must have toVersion field in old classifiers",
+            ],
+        )
         assert result.exit_code == 1
 
 
@@ -2030,8 +2068,13 @@ class TestMapperValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", mapper.path], catch_exceptions=False
             )
-        assert f"Validating {mapper.path} as mapper" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {mapper.path} as mapper",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_invalid_from_version_in_mapper(self, mocker, repo):

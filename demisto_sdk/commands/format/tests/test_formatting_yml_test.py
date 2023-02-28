@@ -62,7 +62,7 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_TEST_PLAYBOOK,
     TEST_PLAYBOOK_PATH,
 )
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, assert_str_in_call_args_list
 
 logging.getLogger("demisto-sdk").propagate = True
 
@@ -358,7 +358,7 @@ class TestFormatting:
                         for verification in verifications:
                             assert argument[verification[0]] == verification[1]
 
-    def test_isarray_false(self, integration, capsys):
+    def test_isarray_false(self, integration, mocker):
         """
         Given:
         - An integration with IP command and ip argument when isArray is False
@@ -371,6 +371,7 @@ class TestFormatting:
         - Validate isArray hasn't changed.
 
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         yml_contents = integration.yml.read_dict()
         yml_contents["script"]["commands"] = [
             {"name": "ip", "arguments": [{"isArray": False, "name": "ip"}]}
@@ -378,8 +379,9 @@ class TestFormatting:
         integration.yml.write_dict(yml_contents)
         base_yml = IntegrationYMLFormat(integration.yml.path)
         base_yml.set_reputation_commands_basic_argument_as_needed()
-        captured = capsys.readouterr()
-        assert "Array field in ip command is set to False." in captured.out
+        assert_str_in_call_args_list(
+            logger_info.call_args_list, "Array field in ip command is set to False."
+        )
         assert (
             integration.yml.read_dict()["script"]["commands"][0]["arguments"][0][
                 "isArray"
@@ -1805,7 +1807,7 @@ FORMAT_OBJECT = [
     argnames="format_object",
     argvalues=FORMAT_OBJECT,
 )
-def test_yml_run_format_exception_handling(format_object, mocker, capsys):
+def test_yml_run_format_exception_handling(format_object, mocker):
     """
     Given
         - A YML object formatter
@@ -1814,6 +1816,7 @@ def test_yml_run_format_exception_handling(format_object, mocker, capsys):
     Then
         - Ensure the error is printed.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     formatter = format_object(input="my_file_path")
     mocker.patch.object(
         BaseUpdateYML, "update_yml", side_effect=TestFormatting.exception_raise
@@ -1823,5 +1826,7 @@ def test_yml_run_format_exception_handling(format_object, mocker, capsys):
     )
 
     formatter.run_format()
-    captured = capsys.readouterr().out
-    assert "Failed to update file my_file_path. Error: MY ERROR" in captured
+    assert_str_in_call_args_list(
+        logger_info.call_args_list,
+        "Failed to update file my_file_path. Error: MY ERROR",
+    )

@@ -2099,10 +2099,12 @@ class TestMapperValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", mapper.path], catch_exceptions=False
             )
-        assert f"Validating {mapper.path} as mapper" in result.stdout
-        assert (
-            "fromVersion field in mapper needs to be higher or equal to 6.0.0"
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {mapper.path} as mapper",
+                "fromVersion field in mapper needs to be higher or equal to 6.0.0",
+            ],
         )
         assert result.exit_code == 1
 
@@ -2128,9 +2130,12 @@ class TestMapperValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", mapper.path], catch_exceptions=False
             )
-        assert f"Validating {mapper.path} as mapper" in result.stdout
-        assert (
-            "toVersion field in mapper needs to be higher than 6.0.0" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {mapper.path} as mapper",
+                "toVersion field in mapper needs to be higher than 6.0.0",
+            ],
         )
         assert result.exit_code == 1
 
@@ -2156,8 +2161,13 @@ class TestMapperValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", mapper.path], catch_exceptions=False
             )
-        assert f"Validating {mapper.path} as mapper" in result.stdout
-        assert 'Missing the field "id" in root' in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {mapper.path} as mapper",
+                'Missing the field "id" in root',
+            ],
+        )
         assert result.exit_code == 1
 
     def test_mapper_from_version_higher_to_version(self, mocker, repo):
@@ -2183,10 +2193,12 @@ class TestMapperValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", mapper.path], catch_exceptions=False
             )
-        assert f"Validating {mapper.path} as mapper" in result.stdout
-        assert (
-            "The `fromVersion` field cannot be higher or equal to the `toVersion` field."
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {mapper.path} as mapper",
+                "The `fromVersion` field cannot be higher or equal to the `toVersion` field.",
+            ],
         )
         assert result.exit_code == 1
 
@@ -2212,9 +2224,9 @@ class TestMapperValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", mapper.path], catch_exceptions=False
             )
-        assert (
-            "[BA102] - File PackName/Classifiers/classifier-mapper-mapper.json is not supported"
-            in result.stdout
+        str_in_call_args_list(
+            logger_info.call_args_list,
+            "[BA102] - File PackName/Classifiers/classifier-mapper-mapper.json is not supported",
         )
         assert result.exit_code == 1
 
@@ -2240,8 +2252,13 @@ class TestDashboardValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", dashboard.path], catch_exceptions=False
             )
-        assert f"Validating {dashboard.path} as dashboard" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {dashboard.path} as dashboard",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_invalid_dashboard(self, mocker, repo):
@@ -2266,11 +2283,13 @@ class TestDashboardValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", dashboard.path], catch_exceptions=False
             )
-        assert f"Validating {dashboard.path} as dashboard" in result.stdout
-        assert "BA100" in result.stdout
-        assert (
-            "The version for our files should always be -1, please update the file."
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {dashboard.path} as dashboard",
+                "BA100",
+                "The version for our files should always be -1, please update the file.",
+            ],
         )
         assert result.exit_code == 1
 
@@ -2298,11 +2317,13 @@ class TestConnectionValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", connection.path], catch_exceptions=False
             )
-        assert (
-            f"Validating {connection.path} as canvas-context-connections"
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {connection.path} as canvas-context-connections",
+                "The files are valid",
+            ],
         )
-        assert "The files are valid" in result.stdout
         assert result.exit_code == 0
 
     def test_invalid_connection(self, mocker, repo):
@@ -2329,11 +2350,13 @@ class TestConnectionValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", connection.path], catch_exceptions=False
             )
-        assert (
-            f"Validating {connection.path} as canvas-context-connections"
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {connection.path} as canvas-context-connections",
+                'Missing the field "contextKey1"',
+            ],
         )
-        assert 'Missing the field "contextKey1"' in result.stdout
         assert result.exit_code == 1
 
 
@@ -2359,8 +2382,13 @@ class TestIndicatorFieldValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", indicator_field_path], catch_exceptions=False
             )
-        assert f"Validating {indicator_field_path} as indicatorfield" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {indicator_field_path} as indicatorfield",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_invalid_indicator_field(self, mocker, repo):
@@ -2386,9 +2414,14 @@ class TestIndicatorFieldValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", indicator_field_path], catch_exceptions=False
             )
-        assert f"Validating {indicator_field_path} as indicatorfield" in result.stdout
-        assert "IF101" in result.stdout
-        assert "The content key must be set to True." in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {indicator_field_path} as indicatorfield",
+                "IF101",
+                "The content key must be set to True.",
+            ],
+        )
         assert result.exit_code == 1
 
 
@@ -2413,8 +2446,13 @@ class TestIncidentTypeValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", incident_type.path], catch_exceptions=False
             )
-        assert f"Validating {incident_type.path} as incidenttype" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {incident_type.path} as incidenttype",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_invalid_incident_type(self, mocker, repo):
@@ -2439,9 +2477,14 @@ class TestIncidentTypeValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", incident_type.path], catch_exceptions=False
             )
-        assert f"Validating {incident_type.path} as incidenttype" in result.stdout
-        assert "IT100" in result.stdout
-        assert "The field days needs to be a positive integer" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {incident_type.path} as incidenttype",
+                "IT100",
+                "The field days needs to be a positive integer",
+            ],
+        )
         assert result.exit_code == 1
 
     def test_valid_incident_type_with_extract_fields(self, mocker, repo):
@@ -2490,8 +2533,13 @@ class TestIncidentTypeValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", incident_type.path], catch_exceptions=False
             )
-        assert f"Validating {incident_type.path} as incidenttype" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {incident_type.path} as incidenttype",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_invalid_incident_type_with_extract_fields_wrong_field_formats(
@@ -2544,19 +2592,20 @@ class TestIncidentTypeValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", incident_type.path], catch_exceptions=False
             )
-        assert f"Validating {incident_type.path} as incidenttype" in result.stdout
-        assert "IT102" in result.stdout
 
-        # check all errors are listed
-        assert all(
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
             [
-                field in result.stdout
-                for field in {"attachment", "category", "closenotes"}
-            ]
+                f"Validating {incident_type.path} as incidenttype",
+                "IT102",
+                "attachment",
+                "category",
+                "closenotes",
+                str,
+            ],
         )
-
         # sanity check
-        assert "closinguserid" not in result.stdout
+        assert not str_in_call_args_list(logger_info.call_args_list, "closinguserid")
         assert result.exit_code == 1
 
     def test_invalid_incident_type_with_extract_fields_invalid_mode(self, mocker, repo):
@@ -2605,18 +2654,18 @@ class TestIncidentTypeValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", incident_type.path], catch_exceptions=False
             )
-        assert f"Validating {incident_type.path} as incidenttype" in result.stdout
-        assert "IT103" in result.stdout  # wrong format error
 
-        # check all errors are listed
-        expected_errors_lines = [
-            "The `mode` field under `extractSettings` should be one of the following:",
-            ' - "All" - To extract all indicator types regardless of auto-extraction settings.',
-            ' - "Specific" - To extract only the specific indicator types ',
-            "set in the auto-extraction settings.",
-        ]
-        for current_expected_errors_line in expected_errors_lines:
-            assert current_expected_errors_line in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {incident_type.path} as incidenttype",
+                "IT103",
+                "The `mode` field under `extractSettings` should be one of the following:",
+                ' - "All" - To extract all indicator types regardless of auto-extraction settings.',
+                ' - "Specific" - To extract only the specific indicator types ',
+                "set in the auto-extraction settings.",
+            ],
+        )
         assert result.exit_code == 1
 
 
@@ -2694,8 +2743,13 @@ class TestLayoutValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", layout.path], catch_exceptions=False
             )
-        assert f"Validating {layout.path} as layout" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {layout.path} as layout",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_invalid_layout__version(self, mocker, repo):
@@ -2722,11 +2776,13 @@ class TestLayoutValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", layout.path], catch_exceptions=False
             )
-        assert f"Validating {layout.path} as layout" in result.stdout
-        assert "BA100" in result.stdout
-        assert (
-            "The version for our files should always be -1, please update the file."
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {layout.path} as layout",
+                "BA100",
+                "The version for our files should always be -1, please update the file.",
+            ],
         )
         assert result.exit_code == 1
 
@@ -2754,9 +2810,14 @@ class TestLayoutValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", layout.path], catch_exceptions=False
             )
-        assert f"Validating {layout.path} as layout" in result.stdout
-        assert "LO102" in result.stdout
-        assert 'layout file name should start with "layout-" prefix.' in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {layout.path} as layout",
+                "LO102",
+                'layout file name should start with "layout-" prefix.',
+            ],
+        )
         assert result.exit_code == 1
 
     def test_valid_layoutscontainer(self, mocker, repo):
@@ -2781,8 +2842,13 @@ class TestLayoutValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", layout.path], catch_exceptions=False
             )
-        assert f"Validating {layout.path} as layoutscontainer" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {layout.path} as layoutscontainer",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_invalid_layoutscontainer__version(self, mocker, repo):
@@ -2809,11 +2875,13 @@ class TestLayoutValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", layout.path], catch_exceptions=False
             )
-        assert f"Validating {layout.path} as layoutscontainer" in result.stdout
-        assert "BA100" in result.stdout
-        assert (
-            "The version for our files should always be -1, please update the file."
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {layout.path} as layoutscontainer",
+                "BA100",
+                "The version for our files should always be -1, please update the file.",
+            ],
         )
         assert result.exit_code == 1
 
@@ -2839,11 +2907,13 @@ class TestLayoutValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", layout.path], catch_exceptions=False
             )
-        assert f"Validating {layout.path} as layoutscontainer" in result.stdout
-        assert "LO103" in result.stdout
-        assert (
-            'layoutscontainer file name should start with "layoutscontainer-" prefix.'
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {layout.path} as layoutscontainer",
+                "LO103",
+                'layoutscontainer file name should start with "layoutscontainer-" prefix.',
+            ],
         )
         assert result.exit_code == 1
 
@@ -2874,12 +2944,12 @@ class TestLayoutValidation:
                 [VALIDATE_CMD, "-i", layoutscontainer.path],
                 catch_exceptions=False,
             )
-        assert (
-            f"Validating {layoutscontainer.path} as layoutscontainer" in result.stdout
-        )
-        assert (
-            "fromVersion field in layoutscontainer needs to be higher or equal to 6.0.0"
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {layoutscontainer.path} as layoutscontainer",
+                "fromVersion field in layoutscontainer needs to be higher or equal to 6.0.0",
+            ],
         )
         assert result.exit_code == 1
 
@@ -2906,8 +2976,13 @@ class TestLayoutValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", layout.path], catch_exceptions=False
             )
-        assert f"Validating {layout.path} as layout" in result.stdout
-        assert "toVersion field in layout needs to be lower than 6.0.0" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {layout.path} as layout",
+                "toVersion field in layout needs to be lower than 6.0.0",
+            ],
+        )
         assert result.exit_code == 1
 
     @pytest.mark.parametrize(
@@ -2966,10 +3041,13 @@ class TestLayoutValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert (
-            f"Validating {layoutscontainer.path} as layoutscontainer" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {layoutscontainer.path} as layoutscontainer",
+                "The files are valid",
+            ],
         )
-        assert "The files are valid" in result.stdout
         assert result.exit_code == 0
 
     @pytest.mark.parametrize(
@@ -3030,12 +3108,13 @@ class TestLayoutValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert (
-            f"Validating {layoutscontainer.path} as layoutscontainer" in result.stdout
-        )
-        assert "LO105" in result.stdout
-        assert (
-            "the following scripts were not found in the id_set.json" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {layoutscontainer.path} as layoutscontainer",
+                "LO105",
+                "the following scripts were not found in the id_set.json",
+            ],
         )
         assert result.exit_code == 1
 
@@ -3093,8 +3172,13 @@ class TestLayoutValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert f"Validating {layout.path} as layout" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {layout.path} as layout",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     @pytest.mark.parametrize(
@@ -3150,10 +3234,13 @@ class TestLayoutValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert f"Validating {layout.path} as layout" in result.stdout
-        assert "LO106" in result.stdout
-        assert (
-            "the following scripts were not found in the id_set.json" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {layout.path} as layout",
+                "LO106",
+                "the following scripts were not found in the id_set.json",
+            ],
         )
         assert result.exit_code == 1
 
@@ -3188,8 +3275,13 @@ class TestPlaybookValidation:
             ],
             catch_exceptions=False,
         )
-        assert f"Validating {VALID_PLAYBOOK_FILE_PATH} as playbook" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {VALID_PLAYBOOK_FILE_PATH} as playbook",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_invalid_playbook(self, mocker):
@@ -3218,9 +3310,14 @@ class TestPlaybookValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert f"Validating {INVALID_PLAYBOOK_FILE_PATH} as playbook" in result.stdout
-        assert "PB103" in result.stdout
-        assert "The following tasks ids have no previous tasks: {'5'}" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {INVALID_PLAYBOOK_FILE_PATH} as playbook",
+                "PB103",
+                "The following tasks ids have no previous tasks: {'5'}",
+            ],
+        )
         assert result.exit_code == 1
 
 
@@ -3251,11 +3348,13 @@ class TestPlaybookValidateDeprecated:
             ],
             catch_exceptions=False,
         )
-        assert (
-            f"Validating {VALID_DEPRECATED_PLAYBOOK_FILE_PATH} as playbook"
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {VALID_DEPRECATED_PLAYBOOK_FILE_PATH} as playbook",
+                "The files are valid",
+            ],
         )
-        assert "The files are valid" in result.stdout
         assert result.exit_code == 0
 
     def test_invalid_deprecated_playbook(self, mocker):
@@ -3284,12 +3383,14 @@ class TestPlaybookValidateDeprecated:
                 ],
                 catch_exceptions=False,
             )
-        assert (
-            f"Validating {INVALID_DEPRECATED_PLAYBOOK_FILE_PATH} as playbook"
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {INVALID_DEPRECATED_PLAYBOOK_FILE_PATH} as playbook",
+                "PB104",
+                "Deprecated.",
+            ],
         )
-        assert "PB104" in result.stdout
-        assert "Deprecated." in result.stdout
         assert result.exit_code == 1
 
     def test_invalid_bc_deprecated_playbook(self, mocker, repo):

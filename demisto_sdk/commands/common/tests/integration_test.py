@@ -1201,9 +1201,6 @@ class TestIntegrationValidator:
             "fromversion": fromversion,
             "configuration": deepcopy(FEED_REQUIRED_PARAMS_STRUCTURE),
         }
-        # print(current)
-        # for item in current:
-        #     print(item)
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         assert validator.is_valid_feed()

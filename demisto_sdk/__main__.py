@@ -1087,7 +1087,7 @@ def coverage_analyze(**kwargs):
     "--input",
     help="The path of the script yml file or a comma separated list\n"
     "If no input is specified, the format will be executed on all new/changed files.",
-    type=PathsParamType(exists=True, resolve_path=True),
+    type=PathsParamType(exists=True, resolve_path=True),  # PathsParamType allows passing a list of paths
 )
 @click.option(
     "-o",

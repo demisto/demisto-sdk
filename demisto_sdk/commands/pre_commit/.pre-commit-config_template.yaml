@@ -67,7 +67,7 @@ repos:
 
   - repo: https://github.com/demisto/demisto-sdk
     # Replace with the latest release version or master
-    rev: 5947813cde42afb3909c7ab9259f10968312600f
+    rev: master
     hooks:
       # enable with --test
       - id: run-unit-tests

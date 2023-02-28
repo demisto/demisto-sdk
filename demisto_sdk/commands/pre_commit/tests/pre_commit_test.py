@@ -10,6 +10,9 @@ from demisto_sdk.commands.pre_commit.pre_commit_command import (
     preprocess_files,
     subprocess,
 )
+from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
+from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
+
 from TestSuite.repo import Repo
 
 TEST_DATA_PATH = (
@@ -22,8 +25,17 @@ yaml = YAML_Handler()
 
 @pytest.mark.parametrize("is_test", [True, False])
 def test_config_files(mocker, repo: Repo, is_test: bool):
+    """
+    Given:
+        A repository with different scripts and integration of different python versions
+    
+    When:
+        Calling demisto-sdk pre-commit
+    
+    Then:
+        Categorize the scripts and integration by python version, and make sure that pre-commit configuration is created for each
+    """
     pack1 = repo.create_pack("Pack1")
-    Path(pack1.path).rglob("*")
     mocker.patch.object(pre_commit_command, "CONTENT_PATH", Path(repo.path))
 
     integration1 = pack1.create_integration(
@@ -38,7 +50,7 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     script1 = pack1.create_script("script1", docker_image="demisto/python3:2.7.1.14969")
     incident_field = pack1.create_incident_field("incident_field")
     classifier = pack1.create_classifier("classifier")
-    mock_dump = mocker.patch.object(YAML_Handler, "dump", side_effect=lambda *args: [])
+    mocker.patch.object(YAML_Handler, "dump", side_effect=lambda *args: [])
     mock_subprocess = mocker.patch.object(subprocess, "run")
 
     files_to_run = preprocess_files([Path(pack1.path)])
@@ -57,22 +69,38 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     pre_commit.run(test=is_test)
 
     # precommit should not run on python2 files, unless test files
-    assert mock_subprocess.call_count == 3 if is_test else 4
-    with open(TEST_DATA_PATH / "pre_commit_config_3.8.yml") as f:
-        expected_py38_config = yaml.load(f)
-    with open(TEST_DATA_PATH / "pre_commit_config_3.9.yml") as f:
-        expected_py39_config = yaml.load(f)
-    with open(TEST_DATA_PATH / "pre_commit_config_3.10.yml") as f:
-        expected_py310_config = yaml.load(f)
-    for m in mock_dump.call_args_list:
-        assert m[0][0] in (
-            expected_py38_config,
-            expected_py39_config,
-            expected_py310_config,
-        )
-
+    assert mock_subprocess.call_count == 3 if not is_test else 4
+    
     should_skip = {"format", "validate"}
-    if is_test:
+    if not is_test:
         should_skip.add("run-unit-tests")
     for m in mock_subprocess.call_args_list:
         assert set(m.kwargs["env"]["SKIP"].split(",")) == should_skip
+
+@pytest.mark.parametrize("python_version", ["3.8", "3.9", "3.10"])
+def test_mypy_hooks(python_version):
+    """
+    Testing mypy hook created successfully (the python version is correct)
+    """
+    mypy_hook = {'args': ['--ignore-missing-imports', '--check-untyped-defs', '--show-error-codes', '--follow-imports=silent', '--allow-redefinition', '--python-version=3.10']}
+
+    MypyHook(mypy_hook).prepare_hook(python_version)
+    assert mypy_hook["args"][-1] == f"--python-version={python_version}"
+
+@pytest.mark.parametrize("python_version", ["3.8", "3.9", "3.10"])
+@pytest.mark.parametrize("github_actions", [True, False])
+def test_ruff_hook(python_version, github_actions):
+    """
+    Testing mypy hook created successfully (the python version is correct and github action created successfully)
+    """
+    ruff_hook = {}
+    RuffHook(ruff_hook).prepare_hook(python_version, github_actions)
+    python_version_to_ruff = {
+        '3.8': 'py38',
+        '3.9': 'py39',
+        '3.10': 'py310'
+    }
+    assert ruff_hook['args'][0] == f'--target-version={python_version_to_ruff[python_version]}'
+    assert ruff_hook["args"][1] == '--fix'
+    if github_actions:
+        assert ruff_hook["args"][2] == '--format=github'

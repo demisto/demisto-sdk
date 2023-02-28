@@ -46,7 +46,7 @@ from demisto_sdk.commands.upload.uploader import (
     print_summary,
     sort_directories_based_on_dependencies,
 )
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, assert_strs_in_call_args_list
 
 logging.getLogger("demisto-sdk").propagate = True
 
@@ -790,8 +790,7 @@ def test_print_summary_successfully_uploaded_files(
     """
     monkeypatch.setenv("COLUMNS", "1000")
 
-    mocker.patch("click.secho")
-    from click import secho
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     successfully_uploaded_files = [("SomeIntegrationName", "Integration")]
 
@@ -805,20 +804,20 @@ def test_print_summary_successfully_uploaded_files(
         "│ SomeIntegrationName │ Integration │",
         "╘═════════════════════╧═════════════╛",
     ]
-    # TODO Uncomment when changing secho_and_info to logger.debug
-    # assert expected_upload_summary_title in caplog.text
-    # assert expected_successfully_uploaded_files_title in caplog.text
-    # for current_line in expected_successfully_uploaded_files_array:
-    #     assert current_line in caplog.text
 
     expected_successfully_uploaded_files = "\n".join(
         expected_successfully_uploaded_files_array
     )
     # verify exactly 3 calls to secho
-    assert secho.call_count == 3
-    assert secho.call_args_list[0][0][0] == expected_upload_summary_title
-    assert secho.call_args_list[1][0][0] == expected_successfully_uploaded_files_title
-    assert expected_successfully_uploaded_files in secho.call_args_list[2][0][0]
+    assert logger_info.call_count == 3
+    assert_strs_in_call_args_list(
+        logger_info.call_args_list,
+        [
+            expected_upload_summary_title,
+            expected_successfully_uploaded_files_title,
+            expected_successfully_uploaded_files,
+        ],
+    )
 
 
 def test_print_summary_failed_uploaded_files(demisto_client_configure, mocker):
@@ -832,8 +831,7 @@ def test_print_summary_failed_uploaded_files(demisto_client_configure, mocker):
     Then
         - Ensure uploaded failure message is printed as expected
     """
-    mocker.patch("click.secho")
-    from click import secho
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     failed_uploaded_files = [("SomeScriptName", "Script", "Some Error")]
     print_summary([], [], failed_uploaded_files)
@@ -846,10 +844,15 @@ def test_print_summary_failed_uploaded_files(demisto_client_configure, mocker):
 ╘════════════════╧════════╧════════════╛
 """
     # verify exactly 3 calls to secho
-    assert secho.call_count == 3
-    assert secho.call_args_list[0][0][0] == expected_upload_summary_title
-    assert secho.call_args_list[1][0][0] == expected_failed_uploaded_files_title
-    assert secho.call_args_list[2][0][0] == expected_failed_uploaded_files
+    assert logger_info.call_count == 3
+    assert_strs_in_call_args_list(
+        logger_info.call_args_list,
+        [
+            expected_upload_summary_title,
+            expected_failed_uploaded_files_title,
+            expected_failed_uploaded_files,
+        ],
+    )
 
 
 def test_print_summary_unuploaded_files(demisto_client_configure, mocker):
@@ -863,8 +866,7 @@ def test_print_summary_unuploaded_files(demisto_client_configure, mocker):
     Then
         - Ensure uploaded unuploaded message is printed as expected
     """
-    mocker.patch("click.secho")
-    from click import secho
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     unploaded_files = [("SomeScriptName", "Script", "6.0.0", "0.0.0", "5.0.0")]
     print_summary([], unploaded_files, [])
@@ -877,10 +879,15 @@ def test_print_summary_unuploaded_files(demisto_client_configure, mocker):
 ╘════════════════╧════════╧═════════════════╧═════════════════════╧═══════════════════╛
 """
     # verify exactly 3 calls to secho
-    assert secho.call_count == 3
-    assert secho.call_args_list[0][0][0] == expected_upload_summary_title
-    assert secho.call_args_list[1][0][0] == expected_failed_uploaded_files_title
-    assert secho.call_args_list[2][0][0] == expected_failed_uploaded_files
+    assert logger_info.call_count == 3
+    assert_strs_in_call_args_list(
+        logger_info.call_args_list,
+        [
+            expected_upload_summary_title,
+            expected_failed_uploaded_files_title,
+            expected_failed_uploaded_files,
+        ],
+    )
 
 
 TEST_DATA = src_root() / "commands" / "upload" / "tests" / "data"
@@ -1040,15 +1047,14 @@ class TestZippedPackUpload:
             - validate the error msg
         """
         # prepare
-        mock_api_client(mocker)
-        mocker.patch("click.secho")
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         # run
         status = click.Context(command=upload).invoke(upload, input=input)
 
         # validate
         status == 1
-        click.secho.call_args_list[1].args == INVALID_ZIP_ERROR.format(path=input)
+        logger_info.call_args_list[1].args == INVALID_ZIP_ERROR.format(path=input)
 
     def test_error_in_disable_pack_verification(self, mocker):
         """

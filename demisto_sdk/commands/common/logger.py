@@ -27,33 +27,7 @@ def handle_deprecated_args(input_args):
             )
 
 
-# TODO Remove this method and expose _logging_setup as logging_setup
 def logging_setup(
-    console_log_threshold=logging.INFO,
-    file_log_threshold=logging.DEBUG,
-    log_file_name: str = "demisto_sdk_debug_log.log",
-    log_file: str = "./demisto_sdk_debug_log.log",
-) -> logging.Logger:
-    """Init logger object for logging in demisto-sdk
-        For more info - https://docs.python.org/3/library/logging.html
-
-    Args:
-        quiet(bool): Whether to output a quiet response.
-        log_path(str): Path to save log of all levels. Defaults to ".".
-        log_file_name(str): Basename of file to save logs to. Defaults to "demisto_sdk_debug_log.log".
-
-    Returns:
-        logging.Logger: logger object
-    """
-    # TODO Translate to the input params of _logging_setup
-    return _logging_setup(
-        console_log_threshold=console_log_threshold,
-        file_log_threshold=file_log_threshold,
-        log_file=log_file,
-    )
-
-
-def _logging_setup(
     console_log_threshold=logging.INFO,
     file_log_threshold=logging.DEBUG,
     log_file: str = "./demisto_sdk_debug_log.log",

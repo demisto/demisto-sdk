@@ -26,6 +26,8 @@ DOCKER_PYTHONPATH = [
 
 DEFAULT_DOCKER_IMAGE = "demisto/python:1.3-alpine"
 
+PYTEST_RUNNER = f"{(Path(__file__).parent / 'pytest_runner.sh')}"
+POWERSHELL_RUNNER = f"{(Path(__file__).parent / 'pwsh_test_runner.sh')}"
 
 def unit_test_runner(file_paths: List[Path], native_images: bool = False) -> int:
     docker_client = docker_helper.init_global_docker_client()
@@ -39,9 +41,7 @@ def unit_test_runner(file_paths: List[Path], native_images: bool = False) -> int
         working_dir = (
             f"/content/{integration_script.path.parent.relative_to(CONTENT_PATH)}"
         )
-        runner = f"{(Path(__file__).parent / 'pytest_runner.sh')}"
-        if integration_script.type == "powershell":
-            runner = f"{(Path(__file__).parent / 'pwsh_test_runner.sh')}"
+        runner = POWERSHELL_RUNNER if integration_script.type == "powershell" else PYTEST_RUNNER
         shutil.copy(runner, integration_script.path.parent / "test_runner.sh")
         docker_images = [integration_script.docker_image or DEFAULT_DOCKER_IMAGE]
         if native_images:

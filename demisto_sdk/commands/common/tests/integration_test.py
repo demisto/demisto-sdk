@@ -1201,6 +1201,9 @@ class TestIntegrationValidator:
             "fromversion": fromversion,
             "configuration": deepcopy(FEED_REQUIRED_PARAMS_STRUCTURE),
         }
+        # print(current)
+        # for item in current:
+        #     print(item)
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         assert validator.is_valid_feed()
@@ -2124,6 +2127,26 @@ class TestIsFeedParamsExist:
         for item in configuration:
             if item.get("name") == "feedReputation":
                 item["hidden"] = True
+        assert (
+            self.validator.all_feed_params_exist() is True
+        ), "all_feed_params_exist() returns False instead True for feedReputation param"
+
+    def test_section_field_feed(self):
+        """
+        Given:
+        - Parameters of feed integration.
+        - One param with the section field
+
+        When:
+        - Integration has all feed required params, and validation won't fail on the section field.
+
+        Then:
+        - Ensure that all_feed_params_exists() returns true.
+        """
+        configuration = self.validator.current_file["configuration"]
+        for item in configuration:
+            if item.get("name") == "feedReputation":
+                item["section"] = "Collect"
         assert (
             self.validator.all_feed_params_exist() is True
         ), "all_feed_params_exist() returns False instead True for feedReputation param"

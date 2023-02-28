@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+* Added the **pre-commit** command, to run pre-commit hooks on XSOAR content.
+* Added the **run-unit-tests** command, to run unit tests of given content items inside their respective docker images.
+* Added support for filepath arguments in the **validate** and **format** commands.
+* Added pre-commit hooks for `validate`, `format`, `run-unit-tests` and `update-docker-image` commands.
 
 ## 1.10.5
 * Fixed an issue where running **run-test-playbook** would not use the `verify` parameter correctly. @ajoga
@@ -52,12 +56,6 @@
 * Updated the default general `fromVersion` value on **format** to `6.8.0`
 * Fixed an issue where **lint** sometimes failed when using the `-cdam` flag due to wrong file duplications filtering.
 * Added the content graph to **validate**, use with the `--graph` flag.
-
-* Added the **pre-commit** command, to run pre-commit hooks on XSOAR content.
-* Added the **run-unit-tests** command, to run unit tests of given content items inside their respective docker images.
-* Added support for filepath arguments in the **validate** and **format** commands.
-* Added pre-commit hooks for `validate`, `format`, `run-unit-tests` and `update-docker-image` commands.
-
 
 ## 1.9.0
 * Fixed an issue where the Slack notifier was using a deprecated argument.

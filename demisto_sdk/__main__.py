@@ -1167,9 +1167,10 @@ def format(
     genericmodule/genericdefinition.
     """
     from demisto_sdk.commands.format.format_module import format_manager
+
     if file_paths:
         input = ",".join(file_paths)
-        
+
     with ReadMeValidator.start_mdx_server():
         return format_manager(
             str(input) if input else None,
@@ -3060,8 +3061,8 @@ def create_content_graph(
     "--verbose",
     count=True,
     help="Verbosity level -v / -vv / .. / -vvv",
-    type=click.IntRange(1, 4, clamp=True),
-    default=3,
+    type=click.IntRange(0, 3, clamp=True),
+    default=2,
     show_default=True,
 )
 @click.option(

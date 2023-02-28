@@ -518,6 +518,7 @@ class GitUtil:
         """
         remote, branch = self.handle_prev_ver(prev_ver)
         current_branch_or_hash = self.get_current_git_branch_or_hash()
+
         if remote:
             return {
                 Path(os.path.join(item))

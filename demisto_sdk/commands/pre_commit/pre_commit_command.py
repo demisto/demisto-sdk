@@ -57,8 +57,10 @@ class PreCommitRunner:
         """
         We initialize the hooks and all files for later use.
         """
-        self.all_files = set(itertools.chain.from_iterable(self.python_version_to_files.values()))
-        
+        self.all_files = set(
+            itertools.chain.from_iterable(self.python_version_to_files.values())
+        )
+
     def hooks(self, pre_commit_config: dict) -> dict:
         hooks = {}
         for repo in pre_commit_config["repos"]:
@@ -200,7 +202,9 @@ def categorize_files(files: Set[Path]) -> PreCommitRunner:
         if python_version_string := integration_script.python_version:
             version = Version(python_version_string)
             python_version_string = f"{version.major}.{version.minor}"
-        python_versions_to_files[python_version_string or DEFAULT_PYTHON2_VERSION].update(
+        python_versions_to_files[
+            python_version_string or DEFAULT_PYTHON2_VERSION
+        ].update(
             integrations_scripts_mapping[integration_script_path]
             | {integration_script.path}
         )

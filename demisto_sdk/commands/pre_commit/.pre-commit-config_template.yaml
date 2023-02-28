@@ -76,5 +76,5 @@ repos:
       - id: format
         # update docker image to latest version
         args: ["-ud"]
-        
+
       - id: validate

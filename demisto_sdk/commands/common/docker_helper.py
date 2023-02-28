@@ -294,7 +294,7 @@ def _get_image_env(repo: str, digest: str, token: str) -> List[str]:
 @functools.lru_cache
 def get_python_version_from_image(image: Optional[str]) -> Optional[Version]:
     if not image:
-        # The default image is a python2 image
+        # When no docker_image is specified, we use the default python version which is Python 2.7.18
         return Version("2.7.18")
     if match := PYTHON_IMAGE_REGEX.match(image):
         return Version(match.group("python_version"))

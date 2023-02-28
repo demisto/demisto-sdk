@@ -128,9 +128,6 @@ ipykernel = "^6.16.1"
 [tool.poetry.extras]
 build = ["gsutil"]
 
-[tool.ruff]
-line-length = 120
-
 [tool.mypy]
 check_untyped_defs = true
 ignore_missing_imports = true

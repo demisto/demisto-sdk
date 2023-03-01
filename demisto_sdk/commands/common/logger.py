@@ -94,23 +94,6 @@ logging_setup()
 logger = logging.getLogger("demisto-sdk")
 
 
-def debug_color(msg, color: str):
-    logger.debug(f"[{color}]{msg}[/{color}]")
-
-
-def info_color(msg, color: str):
-    logger.info(f"[{color}]{msg}[/{color}]")
-
-
-def secho_and_info(message, fg="white"):
-    logger.info(f"[{fg}]{message}[/{fg}]")
-
-
-def print_and_info(msg):
-    print(f"{msg}")
-    logger.info(f"{msg}")
-
-
 # Python program to print
 # colored text and background
 class Colors:

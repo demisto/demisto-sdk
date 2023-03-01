@@ -15,7 +15,6 @@ from demisto_sdk.commands.common.constants import (
     TYPE_TO_EXTENSION,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.logger import info_color
 from demisto_sdk.commands.common.tools import get_yaml, pascal_case
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
@@ -100,7 +99,7 @@ class YmlSplitter:
         try:
             output_path = self.get_output_path()
         except ValueError as ex:
-            info_color(str(ex), "red")
+            logger.info("[red]" + str(ex) + "[/red]")
             return 1
         logger.debug(f"Starting migration of: {self.input} to dir: {output_path}")
         output_path.mkdir(parents=True, exist_ok=True)

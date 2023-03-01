@@ -212,12 +212,11 @@ class GraphValidator(BaseValidator):
             or if the dependency is optional.
         2. Cases where an error should be raised - the complementary case.
         """
-        return all(
-            [
-                self._find_unknown_content_uses(raises_error=False),
-                self._find_unknown_content_uses(raises_error=True),
-            ]
-        )
+        is_valid = [
+            self._find_unknown_content_uses(raises_error=False),
+            self._find_unknown_content_uses(raises_error=True),
+        ]
+        return all(is_valid)
 
     def _find_unknown_content_uses(self, raises_error: bool) -> bool:
         """Validates that there is no usage of unknown content items.

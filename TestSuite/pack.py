@@ -216,9 +216,7 @@ class Pack:
                 "commonfields": {"id": name, "version": -1},
                 "name": name,
                 "display": name,
-                "description": description
-                if description is not None
-                else f"this is an integration {name}",
+                "description": description or f"this is an integration {name}",
                 "category": "category",
                 "script": {
                     "type": "python",

@@ -4,6 +4,8 @@ from logging.handlers import RotatingFileHandler
 
 from rich.logging import RichHandler
 
+LOG_FILE: str = "./demisto_sdk_debug_log.log"
+
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 DEPRECATED_PARAMETERS = {
@@ -30,7 +32,6 @@ def handle_deprecated_args(input_args):
 def logging_setup(
     console_log_threshold=logging.INFO,
     file_log_threshold=logging.DEBUG,
-    log_file: str = "./demisto_sdk_debug_log.log",
 ) -> logging.Logger:
     """Init logger object for logging in demisto-sdk
         For more info - https://docs.python.org/3/library/logging.html
@@ -38,7 +39,6 @@ def logging_setup(
     Args:
         console_log_threshold(int): Minimum console log threshold. Defaults to logging.INFO
         file_log_threshold(int): Minimum console log threshold. Defaults to logging.INFO
-        log_file(str): Path to the log file. Defaults to "./demisto_sdk_debug_log.log".
 
     Returns:
         logging.Logger: logger object
@@ -57,7 +57,7 @@ def logging_setup(
     console_handler.setFormatter(fmt=console_formatter)
 
     file_handler = RotatingFileHandler(
-        filename=log_file,
+        filename=LOG_FILE,
         mode="a",
         maxBytes=1048576,
         backupCount=10,

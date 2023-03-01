@@ -97,6 +97,7 @@ class Linter:
         docker_engine(bool):  Whether docker engine detected by docker-sdk.
         docker_timeout(int): Timeout for docker requests.
         docker_image_flag(str): Indicates the desirable docker image to run lint on (default value is 'from-yml).
+        all_packs (bool): Indicates whether all the packs should go through lint
     """
 
     def __init__(
@@ -108,6 +109,7 @@ class Linter:
         docker_engine: bool,
         docker_timeout: int,
         docker_image_flag: str = DockerImageFlagOption.FROM_YML.value,
+        all_packs: bool = False,
     ):
         self._req_3 = req_3
         self._req_2 = req_2
@@ -180,6 +182,7 @@ class Linter:
                 self._pkg_lint_status["errors"].append(
                     "Unable to find yml file in package"
                 )
+        self._all_packs = all_packs
 
     @timer(group_name="lint")
     def run_pack(
@@ -289,6 +292,12 @@ class Linter:
                     if isinstance(yml_obj.get("script"), dict)
                     else yml_obj
                 )
+            # if the script/integration is deprecated and the -a flag
+            if self._all_packs and yml_obj.get("deprecated"):
+                logger.info(
+                    f"skipping lint for {self._pack_name} because its deprecated"
+                )
+                return True
             self._facts["is_script"] = (
                 True if "Scripts" in self._yml_file.parts else False
             )

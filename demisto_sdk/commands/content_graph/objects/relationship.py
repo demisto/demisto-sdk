@@ -8,16 +8,21 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 
 class RelationshipData(BaseModel):
     relationship_type: RelationshipType
-    source: BaseContent
-    target: BaseContent
+
+    # These are the database ids of the relationships
+    source_id: int
+    target_id: int
 
     # this is the attribute we're interested in when querying
-    content_item: BaseContent
+    content_item_to: BaseContent
 
     is_direct: bool = True
 
     # USES, DEPENDS_ON relationship properties
     mandatorily: bool = False
+
+    # DEPENDS_ON relationship properties
+    is_test: bool = False
 
     # HAS_COMMAND relationship properties
     description: Optional[str] = None
@@ -25,9 +30,13 @@ class RelationshipData(BaseModel):
 
     def __hash__(self):
         """This is the unique identifier of the relationship"""
+
         return hash(
-            (self.source.object_id, self.target.object_id, self.relationship_type,
-             self.source.content_type, self.target.content_type)
+            (
+                self.source_id,
+                self.target_id,
+                self.relationship_type,
+            )
         )
 
     def __eq__(self, __o: object) -> bool:

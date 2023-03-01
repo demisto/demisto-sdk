@@ -1,5 +1,9 @@
 {
-  "fromVersion": "3.5.1",
-  "toVersion": "4.0.0",
-  "id": "incident"
+    "fromVersion": "3.5.1",
+    "toVersion": "4.0.0",
+    "id": "incident",
+    "name": "test",
+    "cliName": "actor",
+    "type": "multiSelect",
+    "associatedToAll": true
 }

@@ -1,6 +1,113 @@
 # Changelog
+
 ## Unreleased
+* Fixed an issue where running **validate** with the `-g` flag would skip some validations for old format files.
+* Deprecated integrations and scripts will not run anymore when providing the **--all-packs** to the **lint** command.
+* Fixed an issue where a pack `serverMinVersion` is calculated by its content items to be the minimum fromVersion.
+
+## 1.10.5
+* Fixed an issue where running **run-test-playbook** would not use the `verify` parameter correctly. @ajoga
+* Added a newline at the end of README files generated in **generate-docs**.
+* Added the value `3` (out of bounds) to the `onChangeRepAlg` and `reputationCalc` fields under the `IncidentType` and `GenericType` schemas. **validate** will allow using it now.
+* Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
+* Fixed an issue where **validate** failed on Feed Integrations after adding the new *Collect/Connect* section field.
+* Fixed an issue where using **postman-codegen** failed converting strings containing digits to kebab-case.
+* Fixed an issue where the ***error-code*** command could not parse List[str] parameter.
+* Updated validation *LO107* to support more section types in XSIAM layouts.
+
+## 1.10.4
+* Added support for running **lint** in multiple native-docker images.
+
+## 1.10.3
+* Fixed an issue where running **format** would fail after running npm install.
+* Improved the graph validations in the **validate** command:
+  - GR100 will now run on all content items of changed packs.
+  - GR101 and GR102 will now catch invalid fromversion/toversion of files **using** the changed items.
+  - GR103 errors will raise a warning when using the *-a* flag, but an error if using the *-i* or *g* flags.
+* Fixed an issue where test-playbooks timed out.
+* Fixed an issue where making a change in a module using an ApiModule would cause lint to run on the ApiModule unnecessarily.
+* Fixed an issue where the `marketplace` field was not used when dumping pack zips.
+* Fixed a typo in the README content generated with **update-release-notes** for updating integrations.
+* Fixed an issue in **validate**, where using the `-gr` and `-i` flags did not run properly.
+* Added the `sectionorder` field to integration scheme.
+* Fixed an issue where in some occasions running of test-playbooks could receive session timeouts.
+* Fixed an issue where **validate** command failed on core pack dependencies validation because of test dependencies.
+
+## 1.10.2
+* Added markdown lint formatting for README files in the **format** command.
+* Fixed an issue where **lint** failed when using the `-cdam` flag with changed dependant api modules.
+* Fixed an issue in the **upload** command, where `json`-based content items were not unified correctly when using the `--zip` argument.
+* Added XPANSE core packs validations.
+
+## 1.10.1
+* Fixed an issue where **update-content-graph** failed to execute.
+
+## 1.10.0
+* **Breaking change**: Removed usage of `pipenv`, `isort` and `autopep8` in the **split** and **download** commands. Removed the `--no-pipenv` and `--no-code-formatting` flags. Please see https://xsoar.pan.dev/docs/tutorials/tut-setup-dev-remote for the recommended environment setup.
+* Fixed an issue in **prepare-content** command where large code lines were broken.
+* Fixed an issue where git-*renamed_files* were not retrieved properly.
+* Fixed an issue where test dependencies were calculated in all level dependencies calculation.
+* Added formatting and validation to XSIAM content types.
+* Fixed an issue where several XSIAM content types were not validated when passing the `-a` flag.
+* Added a UUID to name mapper for **download** it replaces UUIDs with names on all downloaded files.
+* Updated the demisto-py to v3.2.6 which now supports basic proxy authentication.
+* Improved the message shown when using **upload** and overwriting packs.
+* Added support for the **Layout Rule** content type in the id-set and the content graph.
+* Updated the default general `fromVersion` value on **format** to `6.8.0`
+* Fixed an issue where **lint** sometimes failed when using the `-cdam` flag due to wrong file duplications filtering.
+* Added the content graph to **validate**, use with the `--graph` flag.
+
+
+## 1.9.0
+* Fixed an issue where the Slack notifier was using a deprecated argument.
+* Added the `--docker-image` argument to the **lint** command, which allows determining the docker image to run lint on. Possible options are: `'native:ga'`, `'native:maintenance'`, `'native:dev'`, `'all'`, a specific docker image (from Docker Hub) or, the default `'from-yml'`.
+* Fixed an issue in **prepare-content** command where large code lines were broken.
+* Added a logger warning to **get_demisto_version**, the task will now fail with a more informative message.
+* Fixed an issue where the **upload** and **prepare-content** commands didn't add `fromServerVersion` and `toServerVersion` to layouts.
+* Updated **lint** to use graph instead of id_set when running with `--check-dependent-api-module` flag.
+* Added the marketplaces field to all schemas.
+* Added the flag `--xsoar-only` to the **doc-review** command which enables reviewing documents that belong to XSOAR-supported Packs.
+* Fixed an issue in **update-release-notes** command where an error occurred when executing the same command a second time.
+* Fixed an issue where **validate** would not always ignore errors listed under `.pack-ignore`.
+* Fixed an issue where running **validate** on a specific pack didn't test all the relevant entities.
+* Fixed an issue where fields ending with `_x2` where not replaced in the appropriate Marketplace.
+
+## 1.8.3
+* Changed **validate** to allow hiding parameters of type 0, 4, 12 and 14 when replacing with type 9 (credentials) with the same name.
+* Fixed an issue where **update-release-notes** fails to update *MicrosoftApiModule* dependent integrations.
+* Fixed an issue where the **upload** command failed because `docker_native_image_config.json` file could not be found.
+* Added a metadata file to the content graph zip, to be used in the **update-content-graph** command.
+* Updated the **validate** and **update-release-notes** commands to unskip the *Triggers Recommendations* content type.
+
+
+## 1.8.2
+* Fixed an issue where demisto-py failed to upload content to XSIAM when `DEMISTO_USERNAME` environment variable is set.
+* Fixed an issue where the **prepare-content** command output invalid automation name when used with the --*custom* argument.
+* Fixed an issue where modeling rules with arbitrary whitespace characters were not parsed correctly.
+* Added support for the **nativeImage** key for an integration/script in the **prepare-content** command.
+* Added **validate** checks for integrations declared deprecated (display name, description) but missing the `deprecated` flag.
+* Changed the **validate** command to fail on the IN145 error code only when the parameter with type 4 is not hidden.
+* Fixed an issue where downloading content layouts with `detailsV2=None` resulted in an error.
+* Fixed an issue where **xdrctemplate** was missing 'external' prefix.
+* Fixed an issue in **prepare-content** command providing output path.
+* Updated the **validate** and **update-release-notes** commands to skip the *Triggers Recommendations* content type.
+* Added a new validation to the **validate** command to verify that the release notes headers are in the correct format.
+* Changed the **validate** command to fail on the IN140 error code only when the skipped integration has no unit tests.
+* Changed **validate** to allow hiding parameters of type 4 (secret) when replacing with type 9 (credentials) with the same name.
+* Fixed an issue where the **update-release-notes** command didn't add release-notes properly to some *new* content items.
+* Added validation that checks that the `nativeimage` key is not defined in script/integration yml.
+* Added to the **format** command the ability to remove `nativeimage` key in case defined in script/integration yml.
+* Enhanced the **update-content-graph** command to support `--use-git`, `--imported_path` and `--output-path` arguments.
+* Fixed an issue where **doc-review** failed when reviewing command name in some cases.
+* Fixed an issue where **download** didn't identify playbooks properly, and downloaded files with UUIDs instead of file/script names.
+
+## 1.8.1
 * Fixed an issue where **format** created duplicate configuration parameters.
+* Added hidden properties to integration command argument and script argument.
+* Added `--override-existing` to **upload** that skips the confirmation prompt for overriding existing content packs. @mattbibbydw
+* Fixed an issue where **validate** failed in private repos when attempting to read from a nonexisting `approved_categories.json`.
+* Fixed an issue where **validate** used absolute paths when getting remote `pack_metadata.json` files in private repos.
+* Fixed an issue in **download**, where names of custom scripts were replaced with UUIDs in IncidentFields and Layouts.
 
 ## 1.8.0
 * Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.
@@ -23,6 +130,10 @@
 * Fixed an issue where **validate** only printed errors for one change of context path, rather than print all.
 * Fixed an issue where **download** did not suggest using a username/password when authenticating with XSOAR and using invalid arguments.
 * Fixed an issue where **download** failed when listing or downloading content items that are not unicode-encoded.
+* Added support for fromversion/toversion in XSIAM content items (correlation rules, XSIAM dashboards, XSIAM reports and triggers).
+* Updated the supported python versions, as `>=3.8,<3.11`, as some of the dependencies are not supported on `3.11` yet.
+* Added **prepare-content** command which will prepare the pack or content item for the platform.
+* Patched an issue where deprecated `packaging.version.LegacyVersion`, locking packaging version to `<22`.
 
 ## 1.7.9
 * Fixed an issue where an error message in **validate** would not include the suggested fix.

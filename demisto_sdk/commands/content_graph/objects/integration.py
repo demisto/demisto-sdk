@@ -1,3 +1,4 @@
+import logging
 from typing import TYPE_CHECKING, List
 
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -8,8 +9,13 @@ if TYPE_CHECKING:
 
 from pydantic import Field
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
+from demisto_sdk.commands.content_graph.objects.integration_script import (
+    IntegrationScript,
+)
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
@@ -26,9 +32,9 @@ class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[ca
     @property
     def integrations(self) -> List["Integration"]:
         return [
-            r.content_item  # type: ignore[misc]
+            r.content_item_to  # type: ignore[misc]
             for r in self.relationships_data[RelationshipType.HAS_COMMAND]
-            if r.content_item == r.source
+            if r.content_item_to.database_id == r.source_id
         ]
 
     def dump(self, *args) -> None:
@@ -40,21 +46,21 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     is_fetch_events: bool = False
     is_feed: bool = False
     category: str
-    commands: List[Command] = Field([], exclude=True)
+    commands: List[Command] = []
 
     @property
     def imports(self) -> List["Script"]:
         return [
-            r.content_item  # type: ignore[misc]
+            r.content_item_to  # type: ignore[misc]
             for r in self.relationships_data[RelationshipType.IMPORTS]
-            if r.content_item == r.target
+            if r.content_item_to.database_id == r.target_id
         ]
 
     def set_commands(self):
         commands = [
             Command(
                 # the related to has to be a command
-                name=r.content_item.name,  # type: ignore[union-attr,attr-defined]
+                name=r.content_item_to.name,  # type: ignore[union-attr,attr-defined]
                 marketplaces=self.marketplaces,
                 deprecated=r.deprecated,
                 description=r.description,
@@ -68,5 +74,23 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             "name": True,
             "description": True,
             "category": True,
-            "commands": {"name": True, "description": True},
+            "commands": {
+                "__all__": {"name": True, "description": True}
+            },  # for all commands, keep the name and description
         }
+
+    def prepare_for_upload(
+        self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
+    ) -> dict:
+        data = super().prepare_for_upload(marketplace, **kwargs)
+
+        if supported_native_images := self.get_supported_native_images(
+            marketplace=marketplace,
+            ignore_native_image=kwargs.get("ignore_native_image") or False,
+        ):
+            logger.debug(
+                f"Adding the following native images {supported_native_images} to integration {self.object_id}"
+            )
+            data["script"]["nativeimage"] = supported_native_images
+
+        return data

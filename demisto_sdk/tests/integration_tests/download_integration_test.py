@@ -11,15 +11,19 @@ DOWNLOAD_COMMAND = "download"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 
 
-def match_request_text(client, url, method, response_type='text'):
-    if url == '/content/bundle':
-        with open('demisto_sdk/tests/test_files/download_command/demisto_api_response') as f:
+def match_request_text(client, url, method, response_type="text"):
+    if url == "/content/bundle":
+        with open(
+            "demisto_sdk/tests/test_files/download_command/demisto_api_response"
+        ) as f:
             api_response = f.read()
 
         return (api_response, 200, None)
-    elif url.startswith('/playbook') and url.endswith('/yaml'):
-        filename = url.replace('/playbook/', '').replace('/yaml', '')
-        with open(f'demisto_sdk/tests/test_files/download_command/playbook-{filename}.yml') as f2:
+    elif url.startswith("/playbook") and url.endswith("/yaml"):
+        filename = url.replace("/playbook/", "").replace("/yaml", "")
+        with open(
+            f"demisto_sdk/tests/test_files/download_command/playbook-{filename}.yml"
+        ) as f2:
             api_response = f2.read()
 
             return (api_response, 200, None)
@@ -29,12 +33,12 @@ def match_request_text(client, url, method, response_type='text'):
 def demisto_client(mocker):
     mocker.patch(
         "demisto_sdk.commands.download.downloader.demisto_client",
-        return_valure="object"
+        return_valure="object",
     )
 
     mocker.patch(
         "demisto_sdk.commands.download.downloader.demisto_client.generic_request_func",
-        side_effect=match_request_text
+        side_effect=match_request_text,
     )
 
 
@@ -53,7 +57,10 @@ def test_integration_download_no_force(demisto_client, tmp_path):
     env = Environment(tmp_path)
     pack_path = join(DEMISTO_SDK_PATH, env.PACK_INSTANCE_PATH)
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, [DOWNLOAD_COMMAND, "-o", pack_path, "-i", "TestScript", "-i", "DummyPlaybook"])
+    result = runner.invoke(
+        main,
+        [DOWNLOAD_COMMAND, "-o", pack_path, "-i", "TestScript", "-i", "DummyPlaybook"],
+    )
     assert "Demisto instance: Enumerating objects: 2, done." in result.output
     assert "Demisto instance: Receiving objects: 100% (2/2), done." in result.output
     assert "Failed to download the following files:" in result.output
@@ -81,7 +88,19 @@ def test_integration_download_with_force(demisto_client, tmp_path):
     env = Environment(tmp_path)
     pack_path = join(DEMISTO_SDK_PATH, env.PACK_INSTANCE_PATH)
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, [DOWNLOAD_COMMAND, "-o", pack_path, "-i", "TestScript", "-i", "DummyPlaybook", "-f"])
+    result = runner.invoke(
+        main,
+        [
+            DOWNLOAD_COMMAND,
+            "-o",
+            pack_path,
+            "-i",
+            "TestScript",
+            "-i",
+            "DummyPlaybook",
+            "-f",
+        ],
+    )
     assert "Demisto instance: Enumerating objects: 2, done." in result.output
     assert "Demisto instance: Receiving objects: 100% (2/2), done." in result.output
     assert '- Merged Script "TestScript"' in result.output
@@ -105,7 +124,10 @@ def test_integration_download_list_files(demisto_client):
     """
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [DOWNLOAD_COMMAND, "-lf"])
-    assert "The following files are available to be downloaded from Demisto instance:" in result.output
+    assert (
+        "The following files are available to be downloaded from Demisto instance:"
+        in result.output
+    )
     assert "FILE NAME                          FILE TYPE" in result.output
     assert "---------------------------------  ------------" in result.output
     assert "Handle Hello World Alert Test      playbook" in result.output
@@ -142,7 +164,19 @@ def test_integration_download_fail(demisto_client, tmp_path):
     env = Environment(tmp_path)
     pack_path = join(DEMISTO_SDK_PATH, env.PACK_INSTANCE_PATH)
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, [DOWNLOAD_COMMAND, "-o", pack_path, "-i", "TestScript", "-i", "DummyPlaybook1", "-f"])
+    result = runner.invoke(
+        main,
+        [
+            DOWNLOAD_COMMAND,
+            "-o",
+            pack_path,
+            "-i",
+            "TestScript",
+            "-i",
+            "DummyPlaybook1",
+            "-f",
+        ],
+    )
     assert "-----------  ---------------------------------------" in result.output
-    assert 'DummyPlaybook1  File does not exist in Demisto instance' in result.output
+    assert "DummyPlaybook1  File does not exist in Demisto instance" in result.output
     assert result.exit_code == 1

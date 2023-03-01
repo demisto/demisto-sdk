@@ -31,6 +31,10 @@ mapping:
     type: seq
     sequence:
     - type: str
+  sectionorder:
+    type: seq
+    sequence:
+    - type: str
   fromversion:
     type: str
   toversion:
@@ -73,6 +77,10 @@ mapping:
       dockerimage45:
         type: str
       alt_dockerimages:
+        type: seq
+        sequence:
+        - type: str
+      nativeImage:
         type: seq
         sequence:
         - type: str
@@ -241,6 +249,8 @@ schema;argument_schema:
       type: bool
     type:
       type: str
+    hidden:
+      type: bool
 
 
 # integration->script->command->outputs

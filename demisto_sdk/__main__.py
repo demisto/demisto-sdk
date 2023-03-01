@@ -627,7 +627,7 @@ def validate(config, **kwargs):
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
     logging_setup(
-        2,  # type: ignore[arg-type]
+        0,  # type: ignore[arg-type]
         log_path=os.getenv("ARTIFACTS_FOLDER"),
         log_file_name="validate.log",
     )  # type: ignore[arg-type]

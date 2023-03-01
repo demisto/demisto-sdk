@@ -384,6 +384,10 @@ class TestDirectAccessDictChecker(pylint.testutils.CheckerTestCase):
             pylint.testutils.MessageTest(
                 msg_id="direct-access-args-params-dict-exist",
                 node=node_b,
+                line=2,
+                col_offset=4,
+                end_line=2,
+                end_col_offset=27
             ),
         ):
             self.checker.visit_subscript(node_b)

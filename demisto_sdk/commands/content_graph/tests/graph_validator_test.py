@@ -25,6 +25,7 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_relationship,
     mock_test_playbook,
 )
+from TestSuite.test_tools import assert_str_in_call_args_list
 
 logging.getLogger("demisto-sdk").propagate = True
 
@@ -427,7 +428,7 @@ def test_are_toversion_relationships_paths_valid(repository: ContentDTO):
     assert not is_valid
 
 
-def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, caplog):
+def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, mocker):
     """
     Given
     - A content repo
@@ -436,14 +437,16 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, caplo
     Then
     - Validate the existance of invalid from_version relationships
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     with GraphValidator(should_update=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_fromversion_fields()
 
     assert not is_valid
-    assert (
+    assert_str_in_call_args_list(
+        logger_info.call_args_list,
         "Content item 'SamplePlaybook' whose from_version is '6.5.0' uses the content"
-        " items: 'SamplePlaybook2' whose from_version is higher" in caplog.text
+        " items: 'SamplePlaybook2' whose from_version is higher",
     )
 
 
@@ -463,7 +466,7 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, caplo
     ],
 )
 def test_is_file_using_unknown_content(
-    caplog,
+    mocker,
     repository: ContentDTO,
     should_provide_integration_path: bool,
     is_valid: bool,
@@ -477,6 +480,7 @@ def test_is_file_using_unknown_content(
     Then
     - Check whether the graph is valid or not, based on whether the integration file path was provided
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     if should_provide_integration_path:
         git_files = [repository.packs[0].content_items.integration[0].path.as_posix()]
     else:
@@ -485,14 +489,27 @@ def test_is_file_using_unknown_content(
         create_content_graph(graph_validator.graph)
         assert graph_validator.is_file_using_unknown_content() == is_valid
 
-    assert "[warning]" in caplog.text.lower() if is_valid else "[error]"
-    assert (
+    # *** TODO Uncomment
+    # assert "[warning]" in caplog.text.lower() if is_valid else "[error]"
+    found_level = False
+    str_to_search = "[warning]" if is_valid else "[error]"
+    for current_call in logger_info.call_args_list:
+        if (
+            type(current_call[0]) == tuple
+            and str_to_search in current_call[0][0].lower()
+        ):
+            found_level = True
+            break
+    assert found_level
+
+    assert_str_in_call_args_list(
+        logger_info.call_args_list,
         "Content item 'SampleIntegration' using content items: SampleClassifier which"
-        " cannot be found in the repository" in caplog.text
+        " cannot be found in the repository",
     )
 
 
-def test_is_file_display_name_already_exists(repository: ContentDTO, caplog):
+def test_is_file_display_name_already_exists(repository: ContentDTO, mocker):
     """
     Given
     - A content repo
@@ -501,15 +518,16 @@ def test_is_file_display_name_already_exists(repository: ContentDTO, caplog):
     Then
     - Validate the existance of duplicate display names
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     with GraphValidator(should_update=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.is_file_display_name_already_exists()
 
     assert not is_valid
     for i in range(1, 4):
-        assert (
-            f"Pack 'SamplePack{i if i != 1 else ''}' has a duplicate display_name"
-            in caplog.text
+        assert_str_in_call_args_list(
+            logger_info.call_args_list,
+            f"Pack 'SamplePack{i if i != 1 else ''}' has a duplicate display_name",
         )
 
 
@@ -524,15 +542,17 @@ def test_are_marketplaces_relationships_paths_valid(
     Then
     - Validate the existence invalid marketplaces uses
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     with GraphValidator(should_update=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_marketplaces_fields()
 
     assert not is_valid
-    assert (
+    assert_str_in_call_args_list(
+        logger_info.call_args_list,
         "Content item 'SamplePlaybook' can be used in the 'xsoar, xpanse' marketplaces"
         ", however it uses content items: 'SamplePlaybook2' which are not supported in"
-        " all of the marketplaces of 'SamplePlaybook'" in caplog.text
+        " all of the marketplaces of 'SamplePlaybook'",
     )
 
 
@@ -545,6 +565,7 @@ def test_validate_dependencies(repository: ContentDTO, caplog, mocker):
     Then
     - Validate the existance invalid core pack dependency
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     mocker.patch(
         "demisto_sdk.commands.common.hook_validations.graph_validator.get_marketplace_to_core_packs",
         return_value={MarketplaceVersions.XSOAR: {"SamplePack"}},
@@ -554,4 +575,7 @@ def test_validate_dependencies(repository: ContentDTO, caplog, mocker):
         is_valid = graph_validator.validate_dependencies()
 
     assert not is_valid
-    assert "The core pack SamplePack cannot depend on non-core packs: " in caplog.text
+    assert_str_in_call_args_list(
+        logger_info.call_args_list,
+        "The core pack SamplePack cannot depend on non-core packs: ",
+    )

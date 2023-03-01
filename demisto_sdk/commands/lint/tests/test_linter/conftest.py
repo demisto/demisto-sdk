@@ -75,6 +75,7 @@ def create_integration(mocker) -> Callable:
         image_py_num: str = "3.7",
         test_reqs: bool = False,
         api_module: bool = False,
+        is_deprecated: bool = False,
     ) -> Path:
         """Creates tmp content repositry for integration test
 
@@ -96,6 +97,7 @@ def create_integration(mocker) -> Callable:
             image_py_num(str): Image python version.
             test_reqs(bool): True to include a test-requirements.txt file.
             api_module (bool): True if ApiModule should be in the integration folder, False if not.
+            is_deprecated (bool): True if integration is deprecated or not.
 
         Returns:
             Path: Path to tmp integration
@@ -142,7 +144,10 @@ def create_integration(mocker) -> Callable:
         if yml:
             yml_file.write_text("")
         else:
-            yml_dict = {"commonfields": {"id": integration_name}}
+            yml_dict = {
+                "commonfields": {"id": integration_name},
+                "deprecated": is_deprecated,
+            }
             if js_type:
                 yml_dict["type"] = "javascript"
                 if type_script_key:

@@ -3124,7 +3124,7 @@ def update_content_graph(
 )
 @click.option(
     "-g",
-    "--use-git",
+    "--git-diff",
     help="Whether to use git to determine which files to run the command on",
     is_flag=True,
     default=False,

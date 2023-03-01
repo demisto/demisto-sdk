@@ -16,7 +16,6 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
@@ -125,7 +124,7 @@ class BaseUpdateYML(BaseUpdate):
             current_id = self.id_and_version_location.get("id")
             old_id = self.get_id_and_version_for_data(self.old_file).get("id")
             if current_id != old_id:
-                secho_and_info(
+                logger.info(
                     f"The modified YML file corresponding to the path: {self.relative_content_path} ID does not match the ID in remote YML file."
                     f" Changing the YML ID from {current_id} back to {old_id}."
                 )
@@ -255,7 +254,7 @@ class BaseUpdateYML(BaseUpdate):
                         f'configured. Do you want to configure it with "No tests"?'
                     )
                 if should_modify_yml_tests:
-                    secho_and_info(f'Formatting {self.output_file} with "No tests"')
+                    logger.info(f'Formatting {self.output_file} with "No tests"')
                     self.data["tests"] = ["No tests (auto formatted)"]
 
     def update_conf_json(self, file_type: str) -> None:
@@ -276,8 +275,8 @@ class BaseUpdateYML(BaseUpdate):
         try:
             conf_json_content = self._load_conf_file()
         except FileNotFoundError:
-            secho_and_info(
-                f"Unable to find {CONF_PATH} - skipping update.", fg="yellow"
+            logger.info(
+                f"[yellow]Unable to find {CONF_PATH} - skipping update.[/yellow]"
             )
             return
         conf_json_test_configuration = conf_json_content["tests"]
@@ -302,9 +301,9 @@ class BaseUpdateYML(BaseUpdate):
                     )
                 )
                 self._save_to_conf_json(conf_json_content)
-                secho_and_info("Added test playbooks to conf.json successfully")
+                logger.info("Added test playbooks to conf.json successfully")
             else:
-                secho_and_info("Skipping test playbooks configuration")
+                logger.info("Skipping test playbooks configuration")
 
     def _save_to_conf_json(self, conf_json_content: Dict) -> None:
         """Save formatted JSON data to destination file."""
@@ -402,9 +401,7 @@ class BaseUpdateYML(BaseUpdate):
 
     def run_format(self) -> int:
         try:
-            secho_and_info(
-                f"\n======= Updating file: {self.source_file} =======", fg="white"
-            )
+            logger.info(f"\n======= Updating file: {self.source_file} =======")
             self.update_yml(
                 default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(
                     self.source_file_type  # type: ignore
@@ -413,7 +410,7 @@ class BaseUpdateYML(BaseUpdate):
             self.save_yml_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            secho_and_info(
+            logger.info(
                 "".join(
                     traceback.format_exception(
                         type(err), value=err, tb=err.__traceback__

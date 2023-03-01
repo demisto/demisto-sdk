@@ -1,6 +1,7 @@
 import base64
 import copy
 import glob
+import logging
 import os
 import re
 from pathlib import Path
@@ -18,7 +19,6 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import (
     arg_to_list,
     find_type,
@@ -28,6 +28,8 @@ from demisto_sdk.commands.common.tools import (
     get_yml_paths_in_dir,
 )
 from demisto_sdk.commands.prepare_content.unifier import Unifier
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -80,9 +82,8 @@ class IntegrationScriptUnifier(Unifier):
         try:
             IntegrationScriptUnifier.get_code_file(package_path, script_type)
         except ValueError:
-            secho_and_info(
-                f"No code file found for {path}, assuming it is already unified",
-                "yellow",
+            logger.info(
+                f"[yellow]No code file found for {path}, assuming it is already unifiedyellow[/yellow]"
             )
             return data
         yml_unified = copy.deepcopy(data)
@@ -121,7 +122,7 @@ class IntegrationScriptUnifier(Unifier):
                 yml_unified, custom, is_script_package
             )
 
-        secho_and_info(f"Created unified yml: {path.name}", "green")
+        logger.info(f"[green]Created unified yml: {path.name}[/green]")
         return yml_unified
 
     @staticmethod
@@ -303,20 +304,18 @@ class IntegrationScriptUnifier(Unifier):
 
         if is_script_package:
             if yml_data.get("script", "") not in ("", "-"):
-                secho_and_info(
-                    f"Script section is not empty in package {package_path}."
-                    f"It should be blank or a dash(-).",
-                    "yellow",
+                logger.info(
+                    f"[yellow]Script section is not empty in package {package_path}."
+                    f"It should be blank or a dash(-).[/yellow]"
                 )
 
             yml_unified["script"] = FoldedScalarString(clean_code)
 
         else:
             if yml_data["script"].get("script", "") not in ("", "-"):
-                secho_and_info(
-                    f"Script section is not empty in package {package_path}."
-                    f"It should be blank or a dash(-).",
-                    "yellow",
+                logger.info(
+                    f"[yellow]Script section is not empty in package {package_path}."
+                    f"It should be blank or a dash(-).[/yellow]"
                 )
 
             yml_unified["script"]["script"] = FoldedScalarString(clean_code)

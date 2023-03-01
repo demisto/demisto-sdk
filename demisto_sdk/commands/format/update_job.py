@@ -5,7 +5,6 @@ from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
     FileType,
 )
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
@@ -56,9 +55,7 @@ class JobJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            secho_and_info(
-                f"\n======= Updating file: {self.source_file} =======", fg="white"
-            )
+            logger.info(f"\n======= Updating file: {self.source_file} =======")
             super().update_json(
                 default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)
             )

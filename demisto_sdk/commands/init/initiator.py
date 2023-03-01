@@ -42,7 +42,6 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import (
     get_common_server_path,
     get_pack_name,
@@ -367,9 +366,8 @@ class Initiator:
             os.mkdir(path=path)
 
         self.create_pack_base_files()
-        secho_and_info(
-            f"Successfully created the pack {self.dir_name} in: {self.full_output_path}",
-            "green",
+        logger.info(
+            f"[green]Successfully created the pack {self.dir_name} in: {self.full_output_path}[/green]"
         )
 
         metadata_path = os.path.join(self.full_output_path, "pack_metadata.json")
@@ -387,9 +385,8 @@ class Initiator:
             )
             json.dump(pack_metadata, fp, indent=4)
 
-            secho_and_info(
-                f"Created pack metadata at path : {metadata_path}",
-                "green",
+            logger.info(
+                f"[green]Created pack metadata at path : {metadata_path}[/green]"
             )
 
         create_integration = str(
@@ -423,7 +420,7 @@ class Initiator:
         Create empty 'README.md', '.secrets-ignore', '.pack-ignore' and 'Author_image.png' files that are expected
         to be in the base directory of a pack
         """
-        secho_and_info("Creating pack base files")
+        logger.info("Creating pack base files")
         fp = open(os.path.join(self.full_output_path, "README.md"), "a")
         fp.close()
 
@@ -603,9 +600,8 @@ class Initiator:
                     f.write(secret)
                     f.write("\n")
         except FileNotFoundError:
-            secho_and_info(
-                "Could not find the .secrets-ignore file - make sure your path is correct",
-                "yellow",
+            logger.info(
+                "[yellow]Could not find the .secrets-ignore file - make sure your path is correct[/yellow]"
             )
 
     def integration_init(self) -> bool:
@@ -653,10 +649,9 @@ class Initiator:
             secrets = self.find_secrets()
             if secrets:
                 new_line = "\n"
-                secho_and_info(
-                    f"\nThe following secrets were detected:\n"
-                    f"{new_line.join(secret for secret in secrets)}",
-                    "green",
+                logger.info(
+                    f"\n[green]The following secrets were detected:\n"
+                    f"{new_line.join(secret for secret in secrets)}[/green]"
                 )
 
                 ignore_secrets = input(
@@ -665,9 +660,8 @@ class Initiator:
                 if ignore_secrets in ["y", "yes"]:
                     self.ignore_secrets(secrets)
 
-        secho_and_info(
-            f"Finished creating integration: {self.full_output_path}.",
-            "green",
+        logger.info(
+            f"[green]Finished creating integration: {self.full_output_path}.[/green]"
         )
 
         return True
@@ -716,10 +710,9 @@ class Initiator:
         secrets = self.find_secrets()
         if secrets:
             new_line = "\n"
-            secho_and_info(
-                f"\nThe following secrets were detected in the pack:\n"
-                f"{new_line.join(secret for secret in secrets)}",
-                "green",
+            logger.info(
+                f"\n[green]The following secrets were detected in the pack:\n"
+                f"{new_line.join(secret for secret in secrets)}[/green]"
             )
 
             ignore_secrets = input(
@@ -728,7 +721,7 @@ class Initiator:
             if ignore_secrets in ["y", "yes"]:
                 self.ignore_secrets(secrets)
 
-        secho_and_info(f"Finished creating script: {self.full_output_path}", "green")
+        logger.info(f"[green]Finished creating script: {self.full_output_path}[/green]")
 
         return True
 
@@ -844,7 +837,7 @@ class Initiator:
                 os.mkdir(self.full_output_path)
 
             else:
-                secho_and_info(f"Pack not created in {self.full_output_path}", "red")
+                logger.info(f"[red]Pack not created in {self.full_output_path}[/red]")
                 return False
 
         return True
@@ -978,9 +971,8 @@ class Initiator:
                 with open(os.path.join(self.full_output_path, file), "wb") as f:
                     f.write(file_content)
             except Exception:
-                secho_and_info(
-                    f"Could not fetch remote template - {file}. Using local templates instead.",
-                    "yellow",
+                logger.info(
+                    f"[yellow]Could not fetch remote template - {file}. Using local templates instead.[/yellow]"
                 )
                 return False
 

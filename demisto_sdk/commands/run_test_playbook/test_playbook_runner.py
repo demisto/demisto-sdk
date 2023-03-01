@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import time
@@ -5,9 +6,10 @@ import time
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.upload.uploader import Uploader
+
+logger = logging.getLogger("demisto-sdk")
 
 SUCCESS_RETURN_CODE = 0
 ERROR_RETURN_CODE = 1
@@ -91,16 +93,14 @@ class TestPlaybookRunner:
         is_path_valid = True
         if not self.all_test_playbooks:
             if not self.test_playbook_path:
-                secho_and_info(
-                    "Error: Missing option '-tpb' / '--test-playbook-path'.",
-                    "red",
+                logger.info(
+                    "[red]Error: Missing option '-tpb' / '--test-playbook-path'.[/red]"
                 )
                 is_path_valid = False
 
             elif not os.path.exists(self.test_playbook_path):
-                secho_and_info(
-                    f"Error: Given input path: {self.test_playbook_path} does not exist",
-                    "red",
+                logger.info(
+                    f"[red]Error: Given input path: {self.test_playbook_path} does not exist[/red]"
                 )
                 is_path_valid = False
 
@@ -149,7 +149,7 @@ class TestPlaybookRunner:
                 test_playbook_id=test_playbook_id,
             )
         except ApiException as a:
-            secho_and_info(str(a), "red")
+            logger.info(f"[red]{a}[/red]")
             status_code = ERROR_RETURN_CODE
 
         work_plan_link = self.base_link_to_workplan + str(incident_id)
@@ -159,16 +159,15 @@ class TestPlaybookRunner:
             )
 
         else:
-            secho_and_info(f"To see results please go to : {work_plan_link}")
+            logger.info(f"To see results please go to : {work_plan_link}")
 
         return status_code
 
     def run_and_check_tpb_status(self, test_playbook_id, work_plan_link, incident_id):
         status_code = SUCCESS_RETURN_CODE
-        secho_and_info(
-            f"Waiting for the test playbook to finish running.. \n"
-            f"To see the test playbook run in real-time please go to : {work_plan_link}",
-            "green",
+        logger.info(
+            f"[green]Waiting for the test playbook to finish running.. \n"
+            f"To see the test playbook run in real-time please go to : {work_plan_link}[/green]"
         )
 
         elapsed_time = 0
@@ -184,23 +183,20 @@ class TestPlaybookRunner:
 
         # Ended the loop because of timeout
         if elapsed_time >= self.timeout:
-            secho_and_info(
-                f"The command had timed out while the playbook is in progress.\n"
-                f"To keep tracking the test playbook please go to : {work_plan_link}",
-                "red",
+            logger.info(
+                f"[red]The command had timed out while the playbook is in progress.\n"
+                f"To keep tracking the test playbook please go to : {work_plan_link}[/red]"
             )
         else:
             if test_playbook_result["state"] == "failed":
                 self.print_tpb_error_details(test_playbook_result, test_playbook_id)
-                secho_and_info(
-                    "The test playbook finished running with status: FAILED",
-                    "red",
+                logger.info(
+                    "[red]The test playbook finished running with status: FAILED[/red]"
                 )
                 status_code = ERROR_RETURN_CODE
             else:
-                secho_and_info(
-                    "The test playbook has completed its run successfully",
-                    "green",
+                logger.info(
+                    "[green]The test playbook has completed its run successfully[/green]"
                 )
 
         return status_code
@@ -231,19 +227,17 @@ class TestPlaybookRunner:
                 create_incident_request=create_incident_request
             )
         except ApiException as e:
-            secho_and_info(
-                f'Failed to create incident with playbook id : "{test_playbook_id}", '
+            logger.info(
+                f'[red]Failed to create incident with playbook id : "{test_playbook_id}", '
                 "possible reasons are:\n"
                 "1. This playbook name does not exist \n"
                 "2. Schema problems in the playbook \n"
-                "3. Unauthorized api key",
-                "red",
+                "3. Unauthorized api key[/red]"
             )
             raise e
 
-        secho_and_info(
-            f"The test playbook: {self.test_playbook_path} was triggered successfully.",
-            "green",
+        logger.info(
+            f"[green]The test playbook: {self.test_playbook_path} was triggered successfully.[/green]"
         )
         return response.id
 
@@ -256,18 +250,18 @@ class TestPlaybookRunner:
     def print_tpb_error_details(self, tpb_res, tpb_id):
         entries = tpb_res.get("entries")
         if entries:
-            secho_and_info(f"Test Playbook {tpb_id} has failed:", "red")
+            logger.info(f"[red]Test Playbook {tpb_id} has failed:[/red]")
             for entry in entries:
                 if entry["type"] == ENTRY_TYPE_ERROR and entry["parentContent"]:
-                    secho_and_info(f'- Task ID: {entry["taskId"]}', "red")
+                    logger.info(f'[red]- Task ID: {entry["taskId"]}[/red]')
                     # Checks for passwords and replaces them with "******"
                     parent_content = re.sub(
                         r' (P|p)assword="[^";]*"',
                         " password=******",
                         entry["parentContent"],
                     )
-                    secho_and_info(f"  Command: {parent_content}", "red")
-                    secho_and_info(f'  Body:\n{entry["contents"]}', "red")
+                    logger.info(f"[red]  Command: {parent_content}[/red]")
+                    logger.info(f'[red]  Body:\n{entry["contents"]}[/red]')
 
     def get_base_link_to_workplan(self):
         """Create a base link to the workplan in the specified xsoar instance

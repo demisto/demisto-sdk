@@ -11,7 +11,6 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import find_type, get_files_in_dir
 from demisto_sdk.commands.format.format_constants import SCHEMAS_PATH
 from demisto_sdk.commands.format.update_classifier import (
@@ -238,7 +237,7 @@ def format_manager(
 
     print("")  # Just adding a new line before summary
     for string, print_color in log_list:
-        secho_and_info("\n".join(string), print_color)
+        logger.info("\n".join(string), print_color)
 
     if error_list:
         return 1
@@ -350,8 +349,8 @@ def run_format_on_file(
         del kwargs["id_set_path"]
     updater_class = FILE_TYPE_AND_LINKED_CLASS.get(file_type)
     if not updater_class:  # fail format so long as xsiam entities dont have formatters
-        secho_and_info(
-            f"No updater_class was found for file type {file_type}", "yellow"
+        logger.info(
+            f"[yellow]No updater_class was found for file type {file_type}[/yellow]"
         )
         return format_output(input, 1, VALIDATE_RES_SKIPPED_CODE)
 

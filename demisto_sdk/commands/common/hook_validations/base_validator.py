@@ -21,7 +21,6 @@ from demisto_sdk.commands.common.errors import (
     get_error_object,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_file_displayed_name,
@@ -207,9 +206,8 @@ class BaseValidator:
             try:
                 self.check_file_flags(file_name, file_path)
             except FileNotFoundError:
-                secho_and_info(
-                    f"File {file_path} not found, cannot check its flags (deprecated, etc)",
-                    "yellow",
+                logger.info(
+                    f"[yellow]File {file_path} not found, cannot check its flags (deprecated, etc)[/yellow]"
                 )
 
             rel_file_path = get_relative_path_from_packs_dir(file_path)
@@ -259,20 +257,20 @@ class BaseValidator:
 
         formatted_error = formatted_error_str("ERROR")
         if suggested_fix and not is_error_not_allowed_in_pack_ignore:
-            secho_and_info("[red]" + formatted_error[:-1] + "[/red]")
+            logger.info("[red]" + formatted_error[:-1] + "[/red]")
             if error_code == "ST109":
-                secho_and_info("[red]Please add to the root of the yml.[/red]\n")
+                logger.info("[red]Please add to the root of the yml.[/red]\n")
             elif error_code == "ST107":
                 missing_field = error_message.split(" ")[3]
                 path_to_add = error_message.split(":")[1]
-                secho_and_info(
+                logger.info(
                     f"[red]Please add the field {missing_field} to the path: {path_to_add} in the yml.[/red]\n"
                 )
             else:
-                secho_and_info("[red]" + suggested_fix + "[/red]\n")
+                logger.info("[red]" + suggested_fix + "[/red]\n")
 
         else:
-            secho_and_info("[red]" + formatted_error + "[/[red]")
+            logger.info("[red]" + formatted_error + "[/red]")
 
         self.json_output(file_path, error_code, error_message, warning)
         self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_ERRORS)

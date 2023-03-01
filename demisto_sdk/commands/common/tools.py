@@ -99,11 +99,10 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.logger import secho_and_info
-
-json = JSON_Handler()
 
 logger = logging.getLogger("demisto-sdk")
+
+json = JSON_Handler()
 yaml = YAML_Handler()
 
 urllib3.disable_warnings()
@@ -343,8 +342,8 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     output, err = p.communicate()
     if err:
         if exit_on_error:
-            secho_and_info(
-                f"Failed to run command {command}\nerror details:\n{err}", "red"
+            logger.info(
+                f"[red]Failed to run command {command}\nerror details:\n{err}[/red]"
             )
             sys.exit(1)
         else:
@@ -691,9 +690,8 @@ def get_last_remote_release_version():
                     f'{exc_msg[exc_msg.find(">") + 3:-3]}.\n'
                     f"This may happen if you are not connected to the internet."
                 )
-            secho_and_info(
-                f"Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}",
-                "yellow",
+            logger.info(
+                f"[yellow]Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}[/yellow]"
             )
 
     return ""
@@ -976,22 +974,21 @@ def get_release_notes_file_path(file_path):
     :return: file_path: str - Validated release notes path.
     """
     if file_path is None:
-        secho_and_info("Release notes were not found.", "yellow")
+        logger.info("[yellow]Release notes were not found.[/yellow]")
         return None
     else:
         if bool(re.search(r"\d{1,2}_\d{1,2}_\d{1,2}\.md", file_path)):
             return file_path
         else:
-            secho_and_info(
-                f"Unsupported file type found in ReleaseNotes directory - {file_path}",
-                "yellow",
+            logger.info(
+                f"[yellow]Unsupported file type found in ReleaseNotes directory - {file_path}[/yellow]"
             )
             return None
 
 
 def get_latest_release_notes_text(rn_path):
     if rn_path is None:
-        secho_and_info("Path to release notes not found.", "yellow")
+        logger.info("[yellow]Path to release notes not found.[/yellow]")
         rn = None
     else:
         try:
@@ -999,9 +996,8 @@ def get_latest_release_notes_text(rn_path):
                 rn = f.read()
 
             if not rn:
-                secho_and_info(
-                    f"Release Notes may not be empty. Please fill out correctly. - {rn_path}",
-                    "red",
+                logger.info(
+                    f"[red]Release Notes may not be empty. Please fill out correctly. - {rn_path}[/red]"
                 )
                 return None
         except OSError:
@@ -1904,7 +1900,9 @@ def get_content_path() -> Union[str, PathLike, None]:
         return git_repo.working_dir
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
         if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
-            secho_and_info("Please run demisto-sdk in content repository!", "yellow")
+            logger.info(
+                "[yellow]Please run demisto-sdk in content repository![/yellow]"
+            )
     return ""
 
 
@@ -2007,7 +2005,7 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
             return False, ""
 
     except Exception as e:
-        secho_and_info(f"Unable to identify the repository: {e}")
+        logger.info(f"Unable to identify the repository: {e}")
         return False, ""
 
 
@@ -2262,7 +2260,7 @@ def open_id_set_file(id_set_path):
         with open(id_set_path) as id_set_file:
             id_set = json.load(id_set_file)
     except OSError:
-        secho_and_info("Could not open id_set file", "yellow")
+        logger.info("[yellow]Could not open id_set file[/yellow]")
         raise
     finally:
         return id_set
@@ -2753,10 +2751,9 @@ def get_approved_tags_from_branch() -> Dict[str, List[str]]:
             "Tests/Marketplace/approved_tags.json"
         )
         if isinstance(approved_tags_json.get("approved_list"), list):
-            secho_and_info(
-                "You are using a deprecated version of the file aproved_tags.json, consider pulling from master"
-                " to update it.",
-                "yellow",
+            logger.info(
+                "[yellow]You are using a deprecated version of the file aproved_tags.json, consider pulling from master"
+                " to update it.[/yellow]"
             )
             return {
                 "common": approved_tags_json.get("approved_list", []),
@@ -2901,7 +2898,7 @@ def get_current_repo() -> Tuple[str, str, str]:
             host = host.split("@")[1]
         return host, parsed_git.owner, parsed_git.repo
     except git.InvalidGitRepositoryError:
-        secho_and_info("git repo is not found", "yellow")
+        logger.info("[yellow]git repo is not found[/yellow]")
         return "Unknown source", "", ""
 
 
@@ -3007,7 +3004,7 @@ def ProcessPoolHandler() -> ProcessPool:
         try:
             yield pool
         except Exception:
-            secho_and_info("Gracefully release all resources due to Error...", "red")
+            logger.info("[red]Gracefully release all resources due to Error...[/red]")
             raise
         finally:
             pool.close()
@@ -3028,7 +3025,7 @@ def wait_futures_complete(futures: List[ProcessFuture], done_fn: Callable):
             result = future.result()
             done_fn(result)
         except Exception as e:
-            secho_and_info(e, "red")
+            logger.info(f"[red]{e}[/red]")
             raise
 
 

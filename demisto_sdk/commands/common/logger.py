@@ -4,7 +4,7 @@ from logging.handlers import RotatingFileHandler
 
 from rich.logging import RichHandler
 
-LOG_FILE: str = "./demisto_sdk_debug_log.log"
+LOG_FILE: str = "./demisto_sdk_debug.log"
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 

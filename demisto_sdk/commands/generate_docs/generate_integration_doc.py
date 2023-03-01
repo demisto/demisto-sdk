@@ -1,3 +1,4 @@
+import logging
 import os.path
 import re
 from pathlib import Path
@@ -13,7 +14,6 @@ from demisto_sdk.commands.common.default_additional_info_loader import (
     load_default_additional_info_dict,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.generate_docs.common import (
     add_lines,
@@ -27,6 +27,8 @@ from demisto_sdk.commands.generate_docs.common import (
 from demisto_sdk.commands.integration_diff.integration_diff_detector import (
     IntegrationDiffDetector,
 )
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -51,7 +53,7 @@ def append_or_replace_command_in_docs(
     errs = list()
     if re.findall(regexp, old_docs, flags=re.DOTALL):
         new_docs = re.sub(regexp, new_doc_section, old_docs, flags=re.DOTALL)
-        secho_and_info("New command docs has been replaced in README.md.", "green")
+        logger.info("[green]New command docs has been replaced in README.md.[/green]")
     else:
         if command_name in old_docs:
             errs.append(
@@ -63,7 +65,7 @@ def append_or_replace_command_in_docs(
             # Remove trailing '\n'
             old_docs = old_docs[:-1]
         new_docs = f"{old_docs}\n{new_doc_section}"
-        secho_and_info("New command docs has been added to the README.md.", "green")
+        logger.info("[green]New command docs has been added to the README.md.[/green]")
     return new_docs, errs
 
 
@@ -208,12 +210,12 @@ def generate_integration_doc(
         save_output(output, "README.md", doc_text)
 
         if errors:
-            secho_and_info("Possible Errors:", "yellow")
+            logger.info("[yellow]Possible Errors:[/yellow]")
             for error in errors:
-                secho_and_info(error, "yellow")
+                logger.info(f"[yellow]{error}[/yellow]")
 
     except Exception as ex:
-        secho_and_info(f"Error: {str(ex)}", "red")
+        logger.info(f"[red]Error: {str(ex)}[/red]")
         raise
 
 
@@ -432,7 +434,7 @@ def generate_commands_section(
             command_dict = list(filter(lambda cmd: cmd["name"] == command, commands))[0]
         except IndexError:
             err = f"Could not find the command `{command}` in the .yml file."
-            secho_and_info(err, "red")
+            logger.info("[red]{err}[/red]")
             raise IndexError(err)
         return generate_single_command_section(
             command_dict, example_dict, command_permissions_dict
@@ -767,9 +769,8 @@ def get_command_examples(commands_examples_input, specific_commands):
         with open(commands_examples_input) as examples_file:
             command_examples = examples_file.read().splitlines()
     else:
-        secho_and_info(
-            "failed to open commands file, using commands as comma seperated list",
-            "yellow",
+        logger.info(
+            "[yellow]failed to open commands file, using commands as comma seperated list[/yellow]"
         )
         command_examples = commands_examples_input.split(",")
 

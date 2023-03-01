@@ -36,7 +36,6 @@ from demisto_sdk.commands.common.constants import (
     UUID_REGEX,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_child_directories,
@@ -53,6 +52,8 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -202,26 +203,24 @@ class Downloader:
             output_flag, input_flag = True, True
             if not self.output_pack_path:
                 output_flag = False
-                secho_and_info("Error: Missing option '-o' / '--output'.", "red")
+                logger.info("[red]Error: Missing option '-o' / '--output'.[/red]")
             if not self.input_files:
                 if not self.all_custom_content and not self.regex:
                     input_flag = False
-                    secho_and_info("Error: Missing option '-i' / '--input'.", "red")
+                    logger.info("[red]Error: Missing option '-i' / '--input'.[/red]")
             if not input_flag or not output_flag:
                 is_valid = False
 
         if self.download_system_item and not self.system_item_type:
-            secho_and_info(
-                "Error: Missing option '-it' / '--item-type', "
-                "you should specify the system item type to download.",
-                "red",
+            logger.info(
+                "[red]Error: Missing option '-it' / '--item-type', "
+                "you should specify the system item type to download.[/red]"
             )
             is_valid = False
 
         if self.system_item_type and not self.download_system_item:
-            secho_and_info(
-                "The item type option is just for downloading system items.",
-                "red",
+            logger.info(
+                "[red]The item type option is just for downloading system items.[/red]"
             )
             is_valid = False
 
@@ -229,22 +228,17 @@ class Downloader:
 
     def handle_api_exception(self, e):
         if e.status == 401:
-            secho_and_info(
-                "\nAuthentication error: please verify that the appropriate environment variables "
-                "(either DEMISTO_USERNAME and DEMISTO_PASSWORD, or just DEMISTO_API_KEY) are properly configured.\n",
-                "red",
+            logger.info(
+                "\n[red]Authentication error: please verify that the appropriate environment variables "
+                "(either DEMISTO_USERNAME and DEMISTO_PASSWORD, or just DEMISTO_API_KEY) are properly configured.[/red]\n"
             )
-        secho_and_info(
-            f"Exception raised when fetching custom content:\nStatus: {e}",
-            "white",
-        )
+        logger.info(f"Exception raised when fetching custom content:\nStatus: {e}")
 
     def handle_max_retry_error(self, e):
-        secho_and_info(
-            "\nVerify that the environment variable DEMISTO_BASE_URL is configured properly.\n",
-            "red",
+        logger.info(
+            "\n[red]Verify that the environment variable DEMISTO_BASE_URL is configured properly.[/red]\n"
         )
-        secho_and_info(f"Exception raised when fetching custom content:\n{e}", "white")
+        logger.info(f"Exception raised when fetching custom content:\n{e}")
 
     def download_playbook_yaml(self, playbook_string) -> str:
         """
@@ -429,10 +423,7 @@ class Downloader:
             self.handle_max_retry_error(e)
             return False
         except Exception as e:
-            secho_and_info(
-                f"Exception raised when fetching custom content:\n{e}",
-                "white",
-            )
+            logger.info(f"Exception raised when fetching custom content:\n{e}")
             return False
 
     def build_req_params(self):
@@ -513,10 +504,7 @@ class Downloader:
             self.handle_max_retry_error(e)
             return False
         except Exception as e:
-            secho_and_info(
-                f"Exception raised when fetching system content:\n{e}",
-                "white",
-            )
+            logger.info(f"Exception raised when fetching system content:\n{e}")
             return False
 
     def get_custom_content_objects(self) -> List[dict]:
@@ -536,8 +524,8 @@ class Downloader:
                     custom_content_objects.append(custom_content_object)
             # Do not add file to custom_content_objects if it has an invalid format
             except ValueError as e:
-                secho_and_info(f"Error when loading {file_path}, skipping", "red")
-                secho_and_info(f"{e}", "red")
+                logger.info(f"[red]Error when loading {file_path}, skipping[/red]")
+                logger.info(f"[red]{e}[/red]")
         return custom_content_objects
 
     def get_system_content_objects(self) -> List[dict]:
@@ -555,8 +543,8 @@ class Downloader:
                 system_content_objects.append(system_content_object)
             # Do not add file to custom_content_objects if it has an invalid format
             except ValueError as e:
-                secho_and_info(f"Error when loading {file_path}, skipping", "red")
-                secho_and_info(f"{e}", "red")
+                logger.info(f"[red]Error when loading {file_path}, skipping[/red]")
+                logger.info(f"[red]{e}[/red]")
         return system_content_objects
 
     def handle_list_files_flag(self) -> bool:
@@ -571,9 +559,8 @@ class Downloader:
                 for cco in self.all_custom_content_objects
                 if cco.get("name")
             ]
-            secho_and_info(
-                "\nThe following files are available to be downloaded from Demisto instance:\n",
-                "white",
+            logger.info(
+                "\nThe following files are available to be downloaded from Demisto instance:\n"
             )
             print(tabulate(list_files, headers=["FILE NAME", "FILE TYPE"]))
             return True
@@ -616,10 +603,9 @@ class Downloader:
             and os.path.basename(os.path.dirname(os.path.abspath(output_pack_path)))
             == "Packs"
         ):
-            secho_and_info(
-                f"Path {output_pack_path} is not a valid Path pack. The designated output pack's path is"
-                f" of format ~/.../Packs/$PACK_NAME",
-                "red",
+            logger.info(
+                f"[red]Path {output_pack_path} is not a valid Path pack. The designated output pack's path is"
+                f" of format ~/.../Packs/$PACK_NAME[/red]"
             )
             return False
         return True
@@ -767,14 +753,12 @@ class Downloader:
                 )
 
         number_of_files = len(self.custom_content)
-        secho_and_info(
-            f"\nDemisto instance: Enumerating objects: {number_of_files}, done.",
-            "white",
+        logger.info(
+            f"\nDemisto instance: Enumerating objects: {number_of_files}, done."
         )
-        secho_and_info(
+        logger.info(
             f"Demisto instance: Receiving objects: 100% ({number_of_files}/{number_of_files}),"
-            f" done.\n",
-            "white",
+            f" done.\n"
         )
 
     def build_system_content(self) -> None:
@@ -800,14 +784,12 @@ class Downloader:
                 )
 
         number_of_files = len(self.custom_content)
-        secho_and_info(
-            f"\nDemisto instance: Enumerating objects: {number_of_files}, done.",
-            "white",
+        logger.info(
+            f"\nDemisto instance: Enumerating objects: {number_of_files}, done."
         )
-        secho_and_info(
+        logger.info(
             f"Demisto instance: Receiving objects: 100% ({number_of_files}/{number_of_files}),"
-            f" done.\n",
-            "white",
+            f" done.\n"
         )
 
     def exist_in_pack_content(self, custom_content_object: dict) -> bool:
@@ -1034,14 +1016,14 @@ class Downloader:
             try:
                 shutil.move(src=ex_file_path, dst=corresponding_pack_file_path)
             except shutil.Error as e:
-                secho_and_info(e, "red")
+                logger.info(f"[red]{e}[/red]")
                 raise
             self.format_file(corresponding_pack_file_path, ex_file_ending)
 
         try:
             shutil.rmtree(temp_dir, ignore_errors=True)
         except shutil.Error as e:
-            secho_and_info(e, "red")
+            logger.info(f"[red]{e}[/red]")
             raise
 
         self.num_merged_files += 1
@@ -1073,7 +1055,7 @@ class Downloader:
         try:
             shutil.move(src=file_path, dst=corresponding_pack_file_path)
         except shutil.Error as e:
-            secho_and_info(e, "red")
+            logger.info(f"[red]{e}[/red]")
             raise
 
         self.format_file(
@@ -1133,7 +1115,7 @@ class Downloader:
         try:
             shutil.move(src=file_path, dst=file_output_path)
         except shutil.Error as e:
-            secho_and_info(e, "red")
+            logger.info(f"[red]{e}[/red]")
             raise
 
         self.format_file(file_output_path, file_ending)
@@ -1148,9 +1130,9 @@ class Downloader:
         :param file_type: The file type
         :return: None
         """
-        secho_and_info(f'- {action} {file_type} "{file_name}"', "white")
+        logger.info(f'- {action} {file_type} "{file_name}"')
         if self.run_format:  # TODO: Refactored after format had verbose arg
-            secho_and_info("", "white")
+            logger.info("")
 
     def get_corresponding_pack_content_object(
         self, custom_content_object: dict
@@ -1279,7 +1261,7 @@ class Downloader:
             shutil.rmtree(self.custom_content_temp_dir, ignore_errors=True)
             shutil.rmtree(self.system_content_temp_dir, ignore_errors=True)
         except shutil.Error as e:
-            secho_and_info(e, "red")
+            logger.info(f"[red]{e}[/red]")
             raise
 
     def log_files_downloaded(self) -> None:
@@ -1302,7 +1284,7 @@ class Downloader:
         elif merged_msg:
             log_msg = f"\n{merged_msg}."
         if log_msg:
-            secho_and_info(log_msg, "white")
+            logger.info(log_msg)
 
     def log_files_not_downloaded(self) -> None:
         """
@@ -1310,14 +1292,14 @@ class Downloader:
         :return: None
         """
         if self.files_not_downloaded:
-            secho_and_info("\nFailed to download the following files:\n", "red")
-            secho_and_info(
-                tabulate(self.files_not_downloaded, headers=["FILE NAME", "REASON"]),
-                "red",
+            logger.info("\n[red]Failed to download the following files:\n[/red]")
+            logger.info(
+                "[red]"
+                + tabulate(self.files_not_downloaded, headers=["FILE NAME", "REASON"])
+                + "[/red]"
             )
             reasons: list = [file[1] for file in self.files_not_downloaded]
             if FILE_EXIST_REASON in reasons:
-                secho_and_info(
-                    "\nTo merge existing files use the download command with -f.",
-                    "white",
+                logger.info(
+                    "\nTo merge existing files use the download command with -f."
                 )

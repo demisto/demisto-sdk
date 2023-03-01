@@ -6,7 +6,6 @@ import tempfile
 import demisto_client
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import (
     json_to_outputs,
 )
@@ -73,19 +72,18 @@ class Runner:
             log_ids = self._run_query(playground_id)
         except DemistoRunTimeError as err:
             log_ids = None
-            secho_and_info(str(err), "red")
+            logger.info(f"[red]{err}[/red]")
 
         if self.debug:
             if not log_ids:
-                secho_and_info("Entry with debug log not found", "yellow")
+                logger.info("[yellow]Entry with debug log not found[/yellow]")
             else:
                 self._export_debug_log(log_ids)
 
         if self.json2outputs:
             if not self.prefix:
-                secho_and_info(
-                    "A prefix for the outputs is needed for this command. Please provide one",
-                    "red",
+                logger.info(
+                    "[red]A prefix for the outputs is needed for this command. Please provide one[/red]"
                 )
                 return 1
             else:
@@ -101,8 +99,8 @@ class Runner:
                         command = self.query.split(" ")[0]
                         json_to_outputs(command, json=file_path, prefix=self.prefix)
                 else:
-                    secho_and_info(
-                        "Could not extract raw output as JSON from command", "red"
+                    logger.info(
+                        "[red]Could not extract raw output as JSON from command[/red]"
                     )
                     return 1
 
@@ -163,11 +161,11 @@ class Runner:
         for entry in answer:
             # answer should have entries with `contents` - the readable output of the command
             if entry.parent_content:
-                secho_and_info("### Command:", "yellow")
+                logger.info("[yellow]### Command:[/yellow]")
             if entry.contents:
-                secho_and_info("## Readable Output", "yellow")
+                logger.info("[yellow]## Readable Output[/yellow]")
                 if entry.type == self.ERROR_ENTRY_TYPE:
-                    secho_and_info(f"{entry.contents}\n", "red")
+                    logger.info(f"[red]{entry.contents}[/red]\n")
                 else:
                     print(f"{entry.contents}\n")
 
@@ -190,20 +188,19 @@ class Runner:
                     with open(result, "r+") as log_info:
                         for line in log_info:
                             output_file.write(line.encode("utf-8"))
-            secho_and_info(
-                f"Debug Log successfully exported to {self.debug_path}",
-                "green",
+            logger.info(
+                f"[green]Debug Log successfully exported to {self.debug_path}[/green]"
             )
         else:
-            secho_and_info("## Detailed Log", "yellow")
+            logger.info("[yellow]## Detailed Log[/yellow]")
             for log_id in log_ids:
                 result = self.client.download_file(log_id)
                 with open(result, "r+") as log_info:
                     for line in log_info:
                         if self.SECTIONS_HEADER_REGEX.match(line):
-                            secho_and_info(line, "yellow")
+                            logger.info(f"[yellow]{line}[/yello]")
                         elif self.FULL_LOG_REGEX.match(line):
-                            secho_and_info("Full Integration Log:", "yellow")
+                            logger.info("[yellow]Full Integration Log:[/yellow]")
                         else:
                             print(line)
 
@@ -272,9 +269,8 @@ class Runner:
                                 except Exception:
                                     pass
                             output_file.write(line.encode("utf-8"))
-            secho_and_info(
-                f"Debug Log successfully exported to {self.debug_path}",
-                "green",
+            logger.info(
+                f"[green]Debug Log successfully exported to {self.debug_path}[/green]"
             )
             return temp_dict
 

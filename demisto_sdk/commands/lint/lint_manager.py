@@ -25,7 +25,6 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import Colors, secho_and_info
 from demisto_sdk.commands.common.timers import report_time_measurements
 from demisto_sdk.commands.common.tools import (
     find_file,
@@ -158,7 +157,7 @@ class LintManager:
 
             if dependent_on_api_module:
                 print(
-                    f"Found {Colors.Fg.cyan}{len(dependent_on_api_module)}{Colors.reset} dependent packages. "
+                    f"Found [cyan]{len(dependent_on_api_module)}[/cyan] dependent packages. "
                     f"Executing lint and test on those as well."
                 )
                 return dependent_on_api_module
@@ -198,8 +197,8 @@ class LintManager:
             facts["content_repo"] = git_repo  # type: ignore
             logger.debug(f"Content path {git_repo.working_dir}")
         except (git.InvalidGitRepositoryError, git.NoSuchPathError) as e:
-            secho_and_info(
-                "You are running demisto-sdk lint not in content repository!", "yellow"
+            logger.info(
+                "[yellow]You are running demisto-sdk lint not in content repository![yellow]"
             )
             logger.warning(f"can't locate content repo {e}")
         # Get global requirements file
@@ -219,7 +218,7 @@ class LintManager:
             python2_requirements = pipfile_dir / "pipfile_python2/dev-requirements.txt"
             facts["requirements_2"] = python2_requirements.read_text().strip().split("\n")  # type: ignore
         except (json.JSONDecodeError, OSError, FileNotFoundError, KeyError) as e:
-            secho_and_info("Can't parse pipfile.lock - Aborting!", "red")
+            logger.info("[red]Can't parse pipfile.lock - Aborting![/red]")
             logger.critical(f"demisto-sdk-can't parse pipfile.lock {e}")
             sys.exit(1)
         # ￿Get mandatory modulestest modules and Internet connection for docker usage
@@ -231,16 +230,14 @@ class LintManager:
             logger.debug("Test mandatory modules successfully collected")
         except (git.GitCommandError, DemistoException) as e:
             if is_external_repo:
-                secho_and_info(
-                    "You are running on an external repo - "
+                logger.info(
+                    "[red]You are running on an external repo - "
                     "run `.hooks/bootstrap` before running the demisto-sdk lint command\n"
-                    "See here for additional information: https://xsoar.pan.dev/docs/concepts/dev-setup",
-                    "red",
+                    "See here for additional information: https://xsoar.pan.dev/docs/concepts/dev-setup[/red]"
                 )
             else:
-                secho_and_info(
-                    "Unable to get test-modules demisto-mock.py etc - Aborting! corrupt repository or pull from master",
-                    "red",
+                logger.info(
+                    "[red]Unable to get test-modules demisto-mock.py etc - Aborting! corrupt repository or pull from master[/red]"
                 )
             logger.error(
                 f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}"
@@ -250,10 +247,9 @@ class LintManager:
             requests.exceptions.ConnectionError,
             urllib3.exceptions.NewConnectionError,
         ) as e:
-            secho_and_info(
-                "Unable to get mandatory test-modules demisto-mock.py etc - Aborting! (Check your internet "
-                "connection)",
-                "red",
+            logger.info(
+                "[red]Unable to get mandatory test-modules demisto-mock.py etc - Aborting! (Check your internet "
+                "connection)[/red]"
             )
             logger.error(
                 f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}"
@@ -278,10 +274,9 @@ class LintManager:
                     "Docker engine not available and we are in content CI env. Can not run lint!!"
                 ) from ex
             facts["docker_engine"] = False
-            secho_and_info(
-                "Can't communicate with Docker daemon - check your docker Engine is ON - Skipping lint, "
-                "test which require docker!",
-                "yellow",
+            logger.info(
+                "[yellow]Can't communicate with Docker daemon - check your docker Engine is ON - Skipping lint, "
+                "test which require docker![yellow]"
             )
             logger.info("can not communicate with Docker daemon")
         logger.debug("Docker daemon test passed")
@@ -327,13 +322,11 @@ class LintManager:
                 content_repo=content_repo, pkgs=pkgs, base_branch=base_branch
             )
             for pkg in pkgs:
-                logger.debug(
-                    f"Found changed package {Colors.Fg.cyan}{pkg}{Colors.reset}"
-                )
+                logger.debug(f"Found changed package [cyan]{pkg}[/cyan]")
         if pkgs:
             pkgs_str = ", ".join(map(str, pkgs))
             print(
-                f"Executing lint and test on integrations and scripts in {Colors.Fg.cyan}{pkgs_str}{Colors.reset}"
+                f"Executing lint and test on integrations and scripts in [cyan]{pkgs_str}[/cyan]"
             )
 
         return pkgs
@@ -408,8 +401,8 @@ class LintManager:
             # case 1: comparing master against the latest previous commit
             last_common_commit = content_repo.remote().refs.master.commit.parents[0]
             print(
-                f"Comparing {Colors.Fg.cyan}master{Colors.reset} to its {Colors.Fg.cyan}previous commit: "
-                f"{last_common_commit} {Colors.reset}"
+                f"Comparing [cyan]master[/cyan] to its [cyan]previous commit: "
+                f"{last_common_commit}"
             )
 
         else:
@@ -424,8 +417,8 @@ class LintManager:
                     f"{content_repo.remote()}/{base_branch}",
                 )[0]
             print(
-                f"Comparing {Colors.Fg.cyan}{content_repo.active_branch}{Colors.reset} to"
-                f" last common commit with {Colors.Fg.cyan}{last_common_commit}{Colors.reset}"
+                f"Comparing [cyan]{content_repo.active_branch}[/cyan] to"
+                f" last common commit with [cyan]{last_common_commit}[/cyan]"
             )
 
         changed_from_base = {
@@ -555,7 +548,7 @@ class LintManager:
                 return return_exit_code, return_warning_code
         except KeyboardInterrupt:
             msg = "Stop demisto-sdk lint - Due to 'Ctrl C' signal"
-            secho_and_info(msg, "yellow")
+            logger.info(f"[yellow]{msg}[/yellow]")
             logger.warning(msg)
             executor.shutdown(
                 wait=False
@@ -563,7 +556,7 @@ class LintManager:
             return 1, 0
         except Exception as e:
             msg = f"Stop demisto-sdk lint - Due to Exception {e}"
-            logger.error("[yellow]" + msg + "[/yellow]")
+            logger.error(f"[yellow]{msg}[/yellow]")
 
             if Version(platform.python_version()) > Version("3.9"):
                 executor.shutdown(wait=True, cancel_futures=True)  # type: ignore[call-arg]
@@ -802,21 +795,13 @@ class LintManager:
                 check in PWSH_CHECKS and TYPE_PWSH in pkgs_type
             ):
                 if code & skipped_code:
-                    print(
-                        f"{check_str} {' ' * spacing}- {Colors.Fg.cyan}[SKIPPED]{Colors.reset}"
-                    )
+                    print(f"{check_str} {' ' * spacing}- [cyan][SKIPPED][/cyan]")
                 elif code & return_exit_code:
-                    print(
-                        f"{check_str} {' ' * spacing}- {Colors.Fg.red}[FAIL]{Colors.reset}"
-                    )
+                    print(f"{check_str} {' ' * spacing}- [red][FAIL][/red]")
                 else:
-                    print(
-                        f"{check_str} {' ' * spacing}- {Colors.Fg.green}[PASS]{Colors.reset}"
-                    )
+                    print(f"{check_str} {' ' * spacing}- [green][PASS][/red]")
             elif check != "image":
-                print(
-                    f"{check_str} {' ' * spacing}- {Colors.Fg.cyan}[SKIPPED]{Colors.reset}"
-                )
+                print(f"{check_str} {' ' * spacing}- [cyan][SKIPPED][/cyan]")
 
     def report_failed_lint_checks(
         self, lint_status: dict, pkgs_status: dict, return_exit_code: int
@@ -831,13 +816,11 @@ class LintManager:
         for check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
             if EXIT_CODES[check] & return_exit_code:
                 sentence = f" {check.capitalize()} errors "
-                print(f"\n{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}")
-                print(f"{Colors.Fg.red}{sentence}{Colors.reset}")
-                print(f"{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}\n")
+                print(f"\n[red]{'#' * len(sentence)}[/red]")
+                print(f"[red]{sentence}[/red]")
+                print(f"[red]{'#' * len(sentence)}[/red]\n")
                 for fail_pack in lint_status[f"fail_packs_{check}"]:
-                    print(
-                        f"{Colors.Fg.red}{pkgs_status[fail_pack]['pkg']}{Colors.reset}"
-                    )
+                    print(f"[red]{pkgs_status[fail_pack]['pkg']}[/red]")
                     print(pkgs_status[fail_pack][f"{check}_errors"])
                     self.linters_error_list.append(
                         {
@@ -852,11 +835,11 @@ class LintManager:
             check_str = check.capitalize().replace("_", " ")
             if EXIT_CODES[check] & return_exit_code:
                 sentence = f" {check_str} errors "
-                print(f"\n{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}")
-                print(f"{Colors.Fg.red}{sentence}{Colors.reset}")
-                print(f"{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}\n")
+                print(f"\n[red]{'#' * len(sentence)}[/red]")
+                print(f"[red]{sentence}[/red]")
+                print(f"[red]{'#' * len(sentence)}[/red]\n")
                 for fail_pack in lint_status[f"fail_packs_{check}"]:
-                    print(f"{Colors.Fg.red}{fail_pack}{Colors.reset}")
+                    print(f"[red]{fail_pack}[/red]")
                     for image in pkgs_status[fail_pack]["images"]:
                         print(image[f"{check}_errors"])
 
@@ -879,13 +862,11 @@ class LintManager:
             for check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
                 if EXIT_CODES[check] & return_warning_code:
                     sentence = f" {check.capitalize()} warnings "
-                    print(f"\n{Colors.Fg.orange}{'#' * len(sentence)}{Colors.reset}")
-                    print(f"{Colors.Fg.orange}{sentence}{Colors.reset}")
-                    print(f"{Colors.Fg.orange}{'#' * len(sentence)}{Colors.reset}\n")
+                    print(f"\n[orange]{'#' * len(sentence)}[/orange]")
+                    print(f"[orange]{sentence}[/orange]")
+                    print(f"[orange]{'#' * len(sentence)}[/orange]\n")
                     for fail_pack in lint_status[f"warning_packs_{check}"]:
-                        print(
-                            f"{Colors.Fg.orange}{pkgs_status[fail_pack]['pkg']}{Colors.reset}"
-                        )
+                        print(f"[orange]{pkgs_status[fail_pack]['pkg']}[/orange]")
                         print(pkgs_status[fail_pack][f"{check}_warnings"])
                         self.linters_error_list.append(
                             {
@@ -959,18 +940,14 @@ class LintManager:
                     ):
                         # Log unit-tests
                         sentence = " Unit Tests "
-                        logger.debug(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
+                        logger.debug(f"\n[cyan]{'#' * len(sentence)}")
                         logger.debug(f"{sentence}")
-                        logger.debug(f"{'#' * len(sentence)}{Colors.reset}")
+                        logger.debug(f"{'#' * len(sentence)}")
                         headline_printed = True
                     if not passed_printed:
-                        logger.debug(
-                            f"\n{Colors.Fg.green}Passed Unit-tests:{Colors.reset}"
-                        )
+                        logger.debug("\n[green]Passed Unit-tests:[/green]")
                         passed_printed = True
-                    logger.debug(
-                        wrapper_pack.fill(f"{Colors.Fg.green}{pkg}{Colors.reset}")
-                    )
+                    logger.debug(wrapper_pack.fill(f"[green]{pkg}[/green]"))
                     for image in status["images"]:
                         if not image.get("image_errors"):
                             tests = (
@@ -997,12 +974,12 @@ class LintManager:
             if not headline_printed:
                 # Log unit-tests
                 sentence = " Unit Tests "
-                print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
+                print(f"\n[cyan]{'#' * len(sentence)}")
                 print(f"{sentence}")
-                print(f"{'#' * len(sentence)}{Colors.reset}")
-            print(f"\n{Colors.Fg.red}Failed Unit-tests:{Colors.reset}")
+                print(f"{'#' * len(sentence)}")
+            print("\n[red]Failed Unit-tests:[/red]")
             for fail_pack in lint_status["fail_packs_pytest"]:
-                print(wrapper_pack.fill(f"{Colors.Fg.red}{fail_pack}{Colors.reset}"))
+                print(wrapper_pack.fill(f"[red]{fail_pack}[/red]"))
                 for image in pkgs_status[fail_pack]["images"]:
                     tests = image.get("pytest_json", {}).get("report", {}).get("tests")
                     if tests:
@@ -1078,11 +1055,11 @@ class LintManager:
         # Log failed images creation
         if EXIT_CODES["image"] & return_exit_code:
             sentence = " Image creation errors "
-            print(f"\n{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}")
-            print(f"{Colors.Fg.red}{sentence}{Colors.reset}")
-            print(f"{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}")
+            print(f"\n[red]{'#' * len(sentence)}[/red]")
+            print(f"[red]{sentence}[/red]")
+            print(f"[red]{'#' * len(sentence)}[/red]")
             for fail_pack in lint_status["fail_packs_image"]:
-                print(wrapper_pack.fill(f"{Colors.Fg.cyan}{fail_pack}{Colors.reset}"))
+                print(wrapper_pack.fill(f"[cyan]{fail_pack}[/cyan]"))
                 for image in pkgs_status[fail_pack]["images"]:
                     print(wrapper_image.fill(image["image"]))
                     print(wrapper_error.fill(image["image_errors"]))
@@ -1141,28 +1118,26 @@ class LintManager:
             )
         # Log unit-tests summary
         sentence = " Summary "
-        print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
+        print(f"\n[cyan]{'#' * len(sentence)}")
         print(f"{sentence}")
-        print(f"{'#' * len(sentence)}{Colors.reset}")
+        print(f"{'#' * len(sentence)}")
         print(f"Packages: {len(pkg)}")
-        print(f"Packages PASS: {Colors.Fg.green}{num_passed}{Colors.reset}")
-        print(f"Packages FAIL: {Colors.Fg.red}{len(failed)}{Colors.reset}")
+        print(f"Packages PASS: [green]{num_passed}[/green]")
+        print(f"Packages FAIL: [red]{len(failed)}[/red]")
         print(
-            f"Packages WARNING (can either PASS or FAIL): {Colors.Fg.orange}{len(warnings)}{Colors.reset}\n"
+            f"Packages WARNING (can either PASS or FAIL): [orange]{len(warnings)}[/orange]\n"
         )
 
         if not all_packs:
             if warnings:
                 print("Warning packages:")
             for warning in warnings:
-                print(
-                    f"{Colors.Fg.orange}{wrapper_fail_pack.fill(warning)}{Colors.reset}"
-                )
+                print(f"[orange]{wrapper_fail_pack.fill(warning)}[/orange]")
 
         if failed:
             print("Failed packages:")
         for fail_pack in failed:
-            print(f"{Colors.Fg.red}{wrapper_fail_pack.fill(fail_pack)}{Colors.reset}")
+            print(f"[red]{wrapper_fail_pack.fill(fail_pack)}[/red]")
 
     @staticmethod
     def _create_failed_packs_report(lint_status: dict, path: str):

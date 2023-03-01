@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import shutil
@@ -26,7 +27,6 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import (
     capital_case,
     find_type,
@@ -47,6 +47,8 @@ from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.update_release_notes.update_rn_manager import (
     UpdateReleaseNotesManager,
 )
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -203,9 +205,8 @@ class ContributionConverter:
             str: A unique pack directory name
         """
         while os.path.exists(os.path.join(self.packs_dir_path, pack_dir)):
-            secho_and_info(
-                f"Modifying pack name because pack {pack_dir} already exists in the content repo",
-                "white",
+            logger.info(
+                f"Modifying pack name because pack {pack_dir} already exists in the content repo"
             )
             if (
                 len(pack_dir) >= 2
@@ -216,7 +217,7 @@ class ContributionConverter:
                 pack_dir = pack_dir[:-1] + str(int(pack_dir[-1]) + 1)
             else:
                 pack_dir += "V2"
-            secho_and_info(f'New pack name is "{pack_dir}"', "white")
+            logger.info(f'New pack name is "{pack_dir}"')
         return pack_dir
 
     def unpack_contribution_to_dst_pack_directory(self) -> None:
@@ -292,7 +293,7 @@ class ContributionConverter:
 
     def format_converted_pack(self) -> None:
         """Runs the demisto-sdk's format command on the pack converted from the contribution zipfile"""
-        secho_and_info(
+        logger.info(
             f"Executing 'format' on the restructured contribution zip new/modified files at {self.pack_dir_path}"
         )
         from_version = "6.0.0" if self.create_new else ""
@@ -407,9 +408,8 @@ class ContributionConverter:
                     # create pack metadata file
                     with zipfile.ZipFile(self.contribution) as zipped_contrib:
                         with zipped_contrib.open("metadata.json") as metadata_file:
-                            secho_and_info(
-                                f"Pulling relevant information from {metadata_file.name}",
-                                "white",
+                            logger.info(
+                                f"Pulling relevant information from {metadata_file.name}"
                             )
                             metadata = json.loads(metadata_file.read())
                             self.create_metadata_file(metadata)
@@ -440,16 +440,16 @@ class ContributionConverter:
             # format
             self.format_converted_pack()
         except Exception as e:
-            secho_and_info(
+            logger.info(
                 f"Creating a Pack from the contribution zip failed with error: {e}\n {traceback.format_exc()}",
                 "red",
             )
         finally:
             if self.contrib_conversion_errs:
-                secho_and_info(
+                logger.info(
                     "The following errors occurred while converting unified content YAMLs to package structure:"
                 )
-                secho_and_info(
+                logger.info(
                     textwrap.indent("\n".join(self.contrib_conversion_errs), "\t")
                 )
 
@@ -546,7 +546,7 @@ class ContributionConverter:
         Create empty 'README.md', '.secrets-ignore', and '.pack-ignore' files that are expected
         to be in the base directory of a pack
         """
-        secho_and_info("Creating pack base files", "white")
+        logger.info("Creating pack base files")
         fp = open(os.path.join(self.pack_dir_path, "README.md"), "a")
         fp.close()
 

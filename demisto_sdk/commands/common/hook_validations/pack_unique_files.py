@@ -51,7 +51,6 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     error_codes,
 )
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import (
     get_core_pack_list,
     get_json,
@@ -839,10 +838,9 @@ class PackUniqueFilesValidator(BaseValidator):
                     for tag_marketplace in tag_marketplaces:
                         pack_tags[tag_marketplace].append(tag_data[1])
                 except KeyError:
-                    secho_and_info(
-                        "You have non-approved tag prefix in the pack metadata tags, cannot validate all tags until it is fixed."
-                        f' Valid tag prefixes are: { ", ".join(marketplaces)}.',
-                        "yellow",
+                    logger.info(
+                        "[yellow]You have non-approved tag prefix in the pack metadata tags, cannot validate all tags until it is fixed."
+                        f' Valid tag prefixes are: { ", ".join(marketplaces)}.[/yellow]'
                     )
                     is_valid = False
 
@@ -1058,10 +1056,8 @@ class PackUniqueFilesValidator(BaseValidator):
                 return True
 
             dependency_result = json.dumps(first_level_dependencies, indent=4)
-            secho_and_info(
-                f"[bold]Found dependencies result for {self.pack} pack:[/bold]"
-            )
-            secho_and_info("[bold]" + dependency_result + "[/bold]")
+            logger.info(f"[bold]Found dependencies result for {self.pack} pack:[/bold]")
+            logger.info("[bold]" + dependency_result + "[/bold]")
 
             if self.pack in core_pack_list:
                 if not self.validate_core_pack_dependencies(first_level_dependencies):

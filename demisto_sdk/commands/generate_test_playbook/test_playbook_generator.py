@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -5,9 +6,10 @@ import click
 
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.upload.uploader import Uploader
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -362,9 +364,8 @@ class PlaybookTestsGenerator:
 
         """
         if not Path(self.integration_yml_path).exists():
-            secho_and_info(
-                f"File {self.integration_yml_path} was not found when trying to generate a test playbook",
-                fg="bright_red",
+            logger.info(
+                f"[red]File {self.integration_yml_path} was not found when trying to generate a test playbook[/red]"
             )
             if self.verbose:
                 # TODO Handle this verbose

@@ -1,9 +1,12 @@
+import logging
+
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
-from demisto_sdk.commands.common.logger import secho_and_info
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class DashboardValidator(ContentEntityValidator):
@@ -94,7 +97,7 @@ class DashboardValidator(ContentEntityValidator):
                             is_valid = False
                             error_msg += formatted_message
         if error_msg:
-            secho_and_info(error_msg, "red")
+            logger.info("[red]" + error_msg + "[/red]")
         return is_valid
 
     @error_codes("DA101,WD101")
@@ -138,5 +141,5 @@ class DashboardValidator(ContentEntityValidator):
                             is_valid = False
                             error_msg += formatted_message
         if error_msg:
-            secho_and_info(error_msg, "red")
+            logger.info("[red]" + error_msg + "[/red]")
         return is_valid

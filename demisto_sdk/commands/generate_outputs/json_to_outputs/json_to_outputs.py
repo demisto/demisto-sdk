@@ -79,7 +79,6 @@ from typing import Dict, Optional
 import dateparser
 
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.logger import secho_and_info
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -183,7 +182,7 @@ def parse_json(
     except ValueError as ex:
         if verbose:
             # TODO Handle this verbose
-            secho_and_info(str(ex), "red")
+            logger.info(f"[red]{ex}[/red]")
 
         raise ValueError("Invalid input JSON")
 
@@ -269,16 +268,16 @@ def json_to_outputs(
             with open(output, "w") as yf:
                 yf.write(yaml_output)
 
-                secho_and_info(f"Outputs file was saved to :\n{output}", "green")
+                logger.info(f"[green]Outputs file was saved to :\n{output}[/green]")
         else:
-            secho_and_info("YAML Outputs\n\n", "green")
+            logger.info("[green]YAML Outputs[/green]\n\n")
             print(yaml_output)
 
     except Exception as ex:
         if verbose:
             raise
         else:
-            secho_and_info(f"Error: {str(ex)}", "red")
+            logger.info(f"[red]Error: {str(ex)}[/red]")
             sys.exit(1)
 
 

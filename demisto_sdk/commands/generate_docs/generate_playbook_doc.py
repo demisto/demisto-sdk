@@ -1,7 +1,7 @@
+import logging
 import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.generate_docs.common import (
     HEADER_TYPE,
@@ -12,6 +12,8 @@ from demisto_sdk.commands.generate_docs.common import (
     save_output,
     string_escape_md,
 )
+
+logger = logging.getLogger("demisto-sdk")
 
 
 def generate_playbook_doc(
@@ -115,12 +117,12 @@ def generate_playbook_doc(
         save_output(output, f"{playbook_filename}_README.md", doc_text)
 
         if errors:
-            secho_and_info("Possible Errors:", "yellow")
+            logger.info("[yellow]Possible Errors:[yellow]")
             for error in errors:
-                secho_and_info(error, "yellow")
+                logger.info(f"[yellow]{error}[/yellow]")
 
     except Exception as ex:
-        secho_and_info(f"Error: {str(ex)}", "red")
+        logger.info(f"[red]Error: {str(ex)}[/red]")
         raise
 
 

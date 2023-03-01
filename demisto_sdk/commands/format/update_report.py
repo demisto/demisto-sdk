@@ -3,7 +3,6 @@ from typing import Tuple
 
 import click
 
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
@@ -82,17 +81,17 @@ class ReportJSONFormat(BaseUpdateJSON):
                 user_answer = "n"
             # Checks if the user input is no
             if user_answer in ["n", "N", "No", "no"]:
-                secho_and_info("Moving forward without updating type field", "red")
+                logger.info("[red]Moving forward without updating type field[/red]")
                 return
 
-            secho_and_info(
-                "Please specify the desired type: pdf | csv | docx", "yellow"
+            logger.info(
+                "[yellow]Please specify the desired type: pdf | csv | docx[/yellow]"
             )
             user_desired_type = input()
             if user_desired_type.lower() in ("pdf", "csv", "docx"):
                 self.data["type"] = user_desired_type.lower()
             else:
-                secho_and_info("type is not valid", "red")
+                logger.info("[red]type is not valid[/red]")
 
     def set_orientation(self):
         """
@@ -108,8 +107,8 @@ class ReportJSONFormat(BaseUpdateJSON):
             user_answer = input()
             # Checks if the user input is no
             if user_answer in ["n", "N", "No", "no"]:
-                secho_and_info(
-                    "Moving forward without updating orientation field", "red"
+                logger.info(
+                    "[red]Moving forward without updating orientation field[/red]"
                 )
                 return
 

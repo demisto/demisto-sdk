@@ -11,7 +11,6 @@ from demisto_sdk.commands.common.constants import (
     VERSION_5_5_0,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_dict_from_file,
@@ -141,7 +140,7 @@ class BaseUpdate:
 
     def set_default_value(self, key: str, value: Any, location=None):
         """Replaces the version to default."""
-        secho_and_info(
+        logger.info(
             f"Setting {key} to default={value}" + " in custom location"
             if location
             else ""
@@ -202,8 +201,8 @@ class BaseUpdate:
                 if isinstance(value, str) and key == "include":
                     extended_schema: dict = full_schema.get(f"schema;{value}")  # type: ignore
                     if extended_schema is None:
-                        secho_and_info(
-                            f"Could not find sub-schema for {value}", fg="yellow"
+                        logger.info(
+                            f"[yellow]Could not find sub-schema for {value}[/yellow]"
                         )
                     # sometimes the sub-schema can have it's own sub-schemas so we need to unify that too
                     return BaseUpdate.recursive_extend_schema(
@@ -280,7 +279,7 @@ class BaseUpdate:
 
     @staticmethod
     def get_answer(promote):
-        secho_and_info(promote, fg="red")
+        logger.info(f"[red]{promote}[/red]")
         return input()
 
     def ask_user(self, preserve_from_version_question=False):
@@ -299,7 +298,7 @@ class BaseUpdate:
         if not user_answer or user_answer.lower() in ["y", "yes"]:
             return True
         else:
-            secho_and_info("Skipping update of fromVersion", fg="yellow")
+            logger.info("[yellow]Skipping update of fromVersion[/yellow]")
             return False
 
     def set_default_from_version(
@@ -342,7 +341,7 @@ class BaseUpdate:
         ):
             return  # nothing to set
         current_fromversion_value = self.data.get(self.from_version_key, "")
-        secho_and_info("Setting fromVersion field")
+        logger.info("Setting fromVersion field")
 
         if self.from_version:
             self.data[self.from_version_key] = self.from_version
@@ -390,9 +389,7 @@ class BaseUpdate:
         """Removes any _dev and _copy suffixes in the file.
         When developer clones playbook/integration/script it will automatically add _copy or _dev suffix.
         """
-        secho_and_info(
-            "Removing _dev and _copy suffixes from name, id and display tags"
-        )
+        logger.info("Removing _dev and _copy suffixes from name, id and display tags")
         if self.data["name"]:
             self.data["name"] = (
                 self.data.get("name", "").replace("_copy", "").replace("_dev", "")

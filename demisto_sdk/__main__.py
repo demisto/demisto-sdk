@@ -23,7 +23,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.logger import logging_setup, secho_and_info
+from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_last_remote_release_version,
@@ -43,6 +43,8 @@ from demisto_sdk.commands.test_content.test_modeling_rule import (
 )
 from demisto_sdk.commands.upload.upload import upload_content_entity
 from demisto_sdk.utils.utils import check_configuration_file
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -163,33 +165,31 @@ def main(config, version, release_notes, **kwargs):
             __version__ = get_distribution("demisto-sdk").version
         except DistributionNotFound:
             __version__ = "dev"
-            secho_and_info(
-                "Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.",
-                "yellow",
+            logger.info(
+                "[yellow]Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.[/yellow]"
             )
         else:
             last_release = get_last_remote_release_version()
-            secho_and_info(f"You are using demisto-sdk {__version__}.", "yellow")
+            logger.info(f"[yellow]You are using demisto-sdk {__version__}.[/yellow]")
             if last_release and __version__ != last_release:
-                secho_and_info(
-                    f"however version {last_release} is available.\n"
-                    f"To update, run pip3 install --upgrade demisto-sdk",
-                    "yellow",
+                logger.info(
+                    f"[yellow]however version {last_release} is available.\n"
+                    f"To update, run pip3 install --upgrade demisto-sdk[/yellow]"
                 )
             if release_notes:
                 rn_entries = get_release_note_entries(__version__)
 
                 if not rn_entries:
-                    secho_and_info(
-                        "\nCould not get the release notes for this version.", "yellow"
+                    logger.info(
+                        "\n[yellow]Could not get the release notes for this version.[/yellow]"
                     )
                 else:
-                    click.echo(
+                    logger.info(
                         "\nThe following are the release note entries for the current version:\n"
                     )
                     for rn in rn_entries:
-                        click.echo(rn)
-                    click.echo("")
+                        logger.info(rn)
+                    logger.info("")
 
 
 # ====================== split ====================== #
@@ -254,9 +254,8 @@ def split(config, **kwargs):
         FileType.MODELING_RULE,
         FileType.PARSING_RULE,
     ]:
-        secho_and_info(
-            "File is not an Integration, Script, Generic Module, Modeling Rule or Parsing Rule.",
-            "red",
+        logger.info(
+            "[red]File is not an Integration, Script, Generic Module, Modeling Rule or Parsing Rule.[/red]"
         )
         return 1
 
@@ -322,7 +321,7 @@ def extract_code(config, **kwargs):
     check_configuration_file("extract-code", kwargs)
     file_type: FileType = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
-        secho_and_info("File is not an Integration or Script.", "red")
+        logger.info("[red]File is not an Integration or Script.[/red]")
         return 1
     extractor = YmlSplitter(
         configuration=config.configuration, file_type=file_type.value, **kwargs
@@ -678,8 +677,8 @@ def validate(config, **kwargs):
     file_path = kwargs["input"]
 
     if kwargs["post_commit"] and kwargs["staged"]:
-        secho_and_info(
-            "Could not supply the staged flag with the post-commit flag", "red"
+        logger.info(
+            "[red]Could not supply the staged flag with the post-commit flag[/red]"
         )
         sys.exit(1)
     try:
@@ -719,11 +718,10 @@ def validate(config, **kwargs):
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
-        secho_and_info(e, "red")
-        secho_and_info(
-            "\nYou may not be running `demisto-sdk validate` command in the content directory.\n"
-            "Please run the command from content directory",
-            "red",
+        logger.info(f"[red]{e}[/red]")
+        logger.info(
+            "\n[red]You may not be running `demisto-sdk validate` command in the content directory.\n"
+            "Please run the command from content directory[red]"
         )
         sys.exit(1)
 
@@ -1842,9 +1840,8 @@ def generate_test_playbook(**kwargs):
     check_configuration_file("generate-test-playbook", kwargs)
     file_type: FileType = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
-        secho_and_info(
-            "Generating test playbook is possible only for an Integration or a Script.",
-            "red",
+        logger.info(
+            "[red]Generating test playbook is possible only for an Integration or a Script.[/red]"
         )
         return 1
 
@@ -1854,7 +1851,7 @@ def generate_test_playbook(**kwargs):
             sys.exit(0)
         sys.exit(1)
     except PlaybookTestsGenerator.InvalidOutputPathError as e:
-        secho_and_info(str(e), "red")
+        logger.info("[red]" + str(e) + "[/red]")
         return 1
 
 
@@ -2017,16 +2014,16 @@ def generate_docs(**kwargs):
     check_configuration_file("generate-docs", kwargs)
     input_path_str: str = kwargs.get("input", "")
     if not (input_path := Path(input_path_str)).exists():
-        secho_and_info(f"input {input_path_str} does not exist", "red")
+        logger.info(f"[red]input {input_path_str} does not exist[/red][/red]")
         return 1
 
     if (output_path := kwargs.get("output")) and not Path(output_path).is_dir():
-        secho_and_info(f"Output directory {output_path} is not a directory.", "red")
+        logger.info(f"[red]Output directory {output_path} is not a directory.[/red]")
         return 1
 
     if input_path.is_file():
         if input_path.suffix.lower() != ".yml":
-            secho_and_info(f"input {input_path} is not a valid yml file.", "red")
+            logger.info(f"[red]input {input_path} is not a valid yml file.[/red]")
             return 1
         _generate_docs_for_file(kwargs)
 
@@ -2038,9 +2035,8 @@ def generate_docs(**kwargs):
             _generate_docs_for_file(file_kwargs)
 
     else:
-        secho_and_info(
-            f"Input {input_path} is neither a valid yml file, nor a folder named Playbooks.",
-            "red",
+        logger.info(
+            f"[red]Input {input_path} is neither a valid yml file, nor a folder named Playbooks."
         )
         return 1
 
@@ -2085,24 +2081,23 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
                 )
             )
         ):
-            secho_and_info(
-                "The `command` argument must be presented with existing `README.md` docs.",
-                "red",
+            logger.info(
+                "[red]The `command` argument must be presented with existing `README.md` docs."
             )
             return 1
 
     file_type = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK]:
-        secho_and_info("File is not an Integration, Script or a Playbook.", "red")
+        logger.info("[red]File is not an Integration, Script or a Playbook.[/red]")
         return 1
 
     if old_version and not os.path.isfile(old_version):
-        secho_and_info(f"Input old version file {old_version} was not found.", "red")
+        logger.info(f"[red]Input old version file {old_version} was not found.[/red]")
         return 1
 
     if old_version and not old_version.lower().endswith(".yml"):
-        secho_and_info(
-            f"Input old version {old_version} is not a valid yml file.", "red"
+        logger.info(
+            f"[red]Input old version {old_version} is not a valid yml file.[/red]"
         )
         return 1
 
@@ -2143,7 +2138,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
             custom_image_path=custom_image_path,
         )
     else:
-        secho_and_info(f"File type {file_type.value} is not supported.", "red")
+        logger.info(f"[red]File type {file_type.value} is not supported.[/red]")
         return 1
 
 
@@ -2251,10 +2246,9 @@ def merge_id_sets(**kwargs):
         first_id_set_path=first, second_id_set_path=second, output_id_set_path=output
     )
     if duplicates:
-        secho_and_info(
-            f"Failed to merge ID sets: {first} with {second}, "
-            f"there are entities with ID: {duplicates} that exist in both ID sets",
-            "red",
+        logger.info(
+            f"[red]Failed to merge ID sets: {first} with {second}, "
+            f"there are entities with ID: {duplicates} that exist in both ID sets"
         )
         if fail_duplicates:
             sys.exit(1)
@@ -2333,9 +2327,8 @@ def update_release_notes(**kwargs):
 
     check_configuration_file("update-release-notes", kwargs)
     if kwargs.get("force") and not kwargs.get("input"):
-        secho_and_info(
-            "Please add a specific pack in order to force a release notes update.",
-            "red",
+        logger.info(
+            "[red]Please add a specific pack in order to force a release notes update."
         )
         sys.exit(0)
 
@@ -2361,8 +2354,8 @@ def update_release_notes(**kwargs):
         rn_mng.manage_rn_update()
         sys.exit(0)
     except Exception as e:
-        secho_and_info(
-            f"An error occurred while updating the release notes: {str(e)}", "red"
+        logger.info(
+            f"[red]An error occurred while updating the release notes: {str(e)}[/red]"
         )
         sys.exit(1)
 
@@ -2468,7 +2461,7 @@ def find_dependencies(**kwargs):
         )
 
     except ValueError as exp:
-        secho_and_info(str(exp), "red")
+        logger.info("[red]" + str(exp) + "[/red]")
 
 
 # ====================== postman-codegen ====================== #
@@ -2563,12 +2556,12 @@ def postman_codegen(
                 output=str(output),
             )
             yml_splitter.extract_to_package_format()
-            secho_and_info(
+            logger.info(
                 f"Package generated at {str(Path(output).absolute())} successfully",
                 "green",
             )
         else:
-            secho_and_info(
+            logger.info(
                 f"Integration generated at {str(yml_path.absolute())} successfully",
                 "green",
             )
@@ -2702,12 +2695,10 @@ def openapi_codegen(**kwargs):
         try:
             os.mkdir(output_dir)
         except Exception as err:
-            secho_and_info(f"Error creating directory {output_dir} - {err}", "red")
+            logger.info(f"[red]Error creating directory {output_dir} - {err}[/red]")
             sys.exit(1)
     if not os.path.isdir(output_dir):
-        secho_and_info(
-            f'The directory provided "{output_dir}" is not a directory', "red"
-        )
+        logger.info(f'[red]The directory provided "{output_dir}" is not a directory')
         sys.exit(1)
 
     input_file = kwargs["input_file"]
@@ -2739,7 +2730,7 @@ def openapi_codegen(**kwargs):
             with open(kwargs["config_file"]) as config_file:
                 configuration = json.load(config_file)
         except Exception as e:
-            secho_and_info(f"Failed to load configuration file: {e}", "red")
+            logger.info(f"[red]Failed to load configuration file: {e}[/red]")
 
     click.echo("Processing swagger file...")
     integration = OpenAPIIntegration(
@@ -2756,7 +2747,7 @@ def openapi_codegen(**kwargs):
     integration.load_file()
     if not kwargs.get("config_file"):
         integration.save_config(integration.configuration, output_dir)
-        secho_and_info(f"Created configuration file in {output_dir}", "green")
+        logger.info(f"Created configuration file in {output_dir}", "green")
         if not kwargs.get("use_default", False):
             config_path = os.path.join(output_dir, f"{base_name}_config.json")
             command_to_run = (
@@ -2782,13 +2773,13 @@ def openapi_codegen(**kwargs):
             sys.exit(0)
 
     if integration.save_package(output_dir):
-        secho_and_info(
+        logger.info(
             f"Successfully finished generating integration code and saved it in {output_dir}",
             "green",
         )
     else:
-        secho_and_info(
-            f"There was an error creating the package in {output_dir}", "red"
+        logger.info(
+            f"[red]There was an error creating the package in {output_dir}[/red]"
         )
         sys.exit(1)
 

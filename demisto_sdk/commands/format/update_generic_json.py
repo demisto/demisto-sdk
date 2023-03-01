@@ -8,7 +8,6 @@ from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import is_uuid
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES,
@@ -69,7 +68,7 @@ class BaseUpdateJSON(BaseUpdate):
     ):
         """Save formatted JSON data to destination file."""
         if self.source_file != self.output_file:
-            secho_and_info(f"Saving output JSON file to {self.output_file}", fg="white")
+            logger.info(f"Saving output JSON file to {self.output_file}")
         with open(self.output_file, "w") as file:
             json.dump(
                 self.data,
@@ -134,19 +133,17 @@ class BaseUpdateJSON(BaseUpdate):
             current_id = self.data.get("id")
             old_id = self.old_file.get("id")
             if current_id != old_id:
-                secho_and_info(
-                    f"The modified JSON file corresponding to the path: {self.relative_content_path} contains an "
+                logger.info(
+                    f"[yellow]The modified JSON file corresponding to the path: {self.relative_content_path} contains an "
                     f"ID which does not match the ID in remote file. Changing the ID from {current_id} back "
-                    f"to {old_id}.",
-                    fg="yellow",
+                    f"to {old_id}.[/yellow]"
                 )
                 self.data["id"] = old_id
         else:
             logger.debug("Updating ID to be the same as JSON name")
             if field not in self.data:
-                secho_and_info(
-                    f"Missing {field} field in file {self.source_file} - add this field manually",
-                    "red",
+                logger.info(
+                    f"[red]Missing {field} field in file {self.source_file} - add this field manually[/red]"
                 )
                 return None
             if "id" in self.data and is_uuid(
@@ -176,9 +173,7 @@ class BaseUpdateJSON(BaseUpdate):
 
     def run_format(self) -> int:
         try:
-            secho_and_info(
-                f"\n======= Updating file: {self.source_file} =======", fg="white"
-            )
+            logger.info(f"\n======= Updating file: {self.source_file} =======")
             self.update_json(
                 default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(
                     self.source_file_type  # type: ignore

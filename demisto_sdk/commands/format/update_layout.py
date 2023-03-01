@@ -11,7 +11,6 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import (
     LAYOUT_CONTAINER_FIELDS,
     get_all_incident_and_indicator_fields_from_id_set,
@@ -29,6 +28,8 @@ from demisto_sdk.commands.format.format_constants import (
     VERSION_6_0_0,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
+
+logger = logging.getLogger("demisto-sdk")
 
 yaml = YAML_Handler()
 
@@ -50,9 +51,6 @@ LAYOUTS_CONTAINER_CHECK_SCRIPTS = ("indicatorsDetails", "detailsV2")
 LAYOUT_KIND = "layout"
 LAYOUTS_CONTAINER_PREFIX = "layoutscontainer-"
 LAYOUT_PREFIX = "layout-"
-
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class LayoutBaseFormat(BaseUpdateJSON, ABC):
@@ -208,12 +206,11 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             user_answer = input()
             # Checks if the user input is no
             if user_answer in ["n", "N", "No", "no"]:
-                secho_and_info("Moving forward without updating group field", "red")
+                logger.info("[red]Moving forward without updating group field[/red]")
                 return
 
-            secho_and_info(
-                "Please specify the desired group: incident or indicator",
-                "yellow",
+            logger.info(
+                "[yellow]Please specify the desired group: incident or indicator[/yellow]"
             )
             user_desired_group = input()
             if re.match(r"(^incident$)", user_desired_group, re.IGNORECASE):
@@ -221,7 +218,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             elif re.match(r"(^indicator$)", user_desired_group, re.IGNORECASE):
                 self.data["group"] = "indicator"
             else:
-                secho_and_info("Group is not valid", "red")
+                logger.info("[red]Group is not valid[/red]")
 
     def layout__arguments_to_remove(self):
         """Finds diff between keys in file and schema of file type

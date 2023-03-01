@@ -1,3 +1,4 @@
+import logging
 import re
 from typing import Dict, Set
 
@@ -12,8 +13,9 @@ from demisto_sdk.commands.common.hook_validations.base_validator import error_co
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
     ContentEntityValidator,
 )
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import is_string_uuid
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class PlaybookValidator(ContentEntityValidator):
@@ -50,9 +52,8 @@ class PlaybookValidator(ContentEntityValidator):
             bool. Whether the playbook is valid or not
         """
         if "TestPlaybooks" in self.file_path:
-            secho_and_info(
-                f"Skipping validation for Test Playbook {self.file_path}",
-                "yellow",
+            logger.info(
+                f"[yellow]Skipping validation for Test Playbook {self.file_path}[/yellow]"
             )
             return True
         playbook_checks = [

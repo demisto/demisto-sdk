@@ -1,10 +1,11 @@
+import logging
 import os
 import time
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 
-from demisto_sdk.commands.common.logger import secho_and_info
+logger = logging.getLogger("demisto-sdk")
 
 
 class PlaybookRunner:
@@ -49,15 +50,14 @@ class PlaybookRunner:
                 incident_name=f"inc_{self.playbook_id}", playbook_id=self.playbook_id
             )
         except ApiException as a:
-            secho_and_info(str(a), "red")
+            logger.info(f"[red]{a}[/red]")
             return 1
 
         work_plan_link = self.base_link_to_workplan + str(incident_id)
         if self.should_wait:
-            secho_and_info(
-                f"Waiting for the playbook to finish running.. \n"
-                f"To see the playbook run in real-time please go to : {work_plan_link}",
-                "green",
+            logger.info(
+                f"[green]Waiting for the playbook to finish running.. \n"
+                f"To see the playbook run in real-time please go to : {work_plan_link}[/green]"
             )
 
             elasped_time = 0
@@ -73,20 +73,18 @@ class PlaybookRunner:
 
             # Ended the loop because of timeout
             if elasped_time >= self.timeout:
-                secho_and_info(
-                    f"The command had timed out while the playbook is in progress.\n"
-                    f"To keep tracking the playbook please go to : {work_plan_link}",
-                    "red",
+                logger.info(
+                    f"[red]The command had timed out while the playbook is in progress.\n"
+                    f"To keep tracking the playbook please go to : {work_plan_link}[/red]"
                 )
             else:
                 if playbook_results["state"] == "failed":
-                    secho_and_info(
-                        "The playbook finished running with status: FAILED", "red"
+                    logger.info(
+                        "[red]The playbook finished running with status: FAILED[/red]"
                     )
                 else:
-                    secho_and_info(
-                        "The playbook has completed its run successfully",
-                        "green",
+                    logger.info(
+                        "[green]The playbook has completed its run successfully[/green]"
                     )
 
         # The command does not wait for the playbook to finish running
@@ -121,19 +119,17 @@ class PlaybookRunner:
                 create_incident_request=create_incident_request
             )
         except ApiException as e:
-            secho_and_info(
-                f'Failed to create incident with playbook id : "{playbook_id}", '
+            logger.info(
+                f'[red]Failed to create incident with playbook id : "{playbook_id}", '
                 "possible reasons are:\n"
                 "1. This playbook name does not exist \n"
                 "2. Schema problems in the playbook \n"
-                "3. Unauthorized api key",
-                "red",
+                "3. Unauthorized api key[/red]"
             )
             raise e
 
-        secho_and_info(
-            f"The playbook: {self.playbook_id} was triggered successfully.",
-            "green",
+        logger.info(
+            f"[green]The playbook: {self.playbook_id} was triggered successfully.[/green]"
         )
         return response.id
 

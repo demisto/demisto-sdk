@@ -1,6 +1,6 @@
+import logging
 import os
 
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import FileType, find_type
 from demisto_sdk.commands.generate_outputs.generate_context.generate_integration_context import (
     generate_integration_context,
@@ -12,19 +12,19 @@ from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs impor
     json_to_outputs,
 )
 
+logger = logging.getLogger("demisto-sdk")
+
 
 def json_to_outputs_flow(kwargs):
     if not kwargs.get("command"):
-        secho_and_info(
-            "To use the json-to-outputs version of this command please include a `command` argument.",
-            "red",
+        logger.info(
+            "[red]To use the json-to-outputs version of this command please include a `command` argument.[/red]"
         )
         return 1
 
     if not kwargs.get("prefix"):
-        secho_and_info(
-            "To use the json-to-outputs version of this command please include a `prefix` argument.",
-            "red",
+        logger.info(
+            "[red]To use the json-to-outputs version of this command please include a `prefix` argument.[/red]"
         )
         return 1
 
@@ -74,23 +74,22 @@ def generate_ai_descriptions_flow(kwargs):
 
 def validate_inputs_examples(input_path):
     if not input_path:
-        secho_and_info(
-            "To use the generate_integration_context version of this command please include an `input` argument",
-            "red",
+        logger.info(
+            "[red]To use the generate_integration_context version of this command please include an `input` argument[/red]"
         )
         return 1
 
     if input_path and not os.path.isfile(input_path):
-        secho_and_info(f"Input file {input_path} was not found.", "red")
+        logger.info(f"[red]Input file {input_path} was not found.[/red]")
         return 1
 
     if not input_path.lower().endswith(".yml"):
-        secho_and_info(f"Input {input_path} is not a valid yml file.", "red")
+        logger.info(f"[red]Input {input_path} is not a valid yml file.[/red]")
         return 1
 
     file_type = find_type(input_path, ignore_sub_categories=True)
     if file_type is not FileType.INTEGRATION:
-        secho_and_info("File is not an Integration.", "red")
+        logger.info("[red]File is not an Integration.[/red]")
         return 1
 
 

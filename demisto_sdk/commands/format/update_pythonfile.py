@@ -3,7 +3,6 @@ import subprocess
 from shutil import copy
 from typing import Tuple
 
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_VALIDATE_PY_RETURN_CODE,
@@ -65,11 +64,10 @@ class PythonFileFormat(BaseUpdate):
                 ]
             )
         except FileNotFoundError:
-            secho_and_info(
-                "autopep8 skipped! It doesn't seem you have autopep8 installed.\n "
+            logger.info(
+                "[yellow]autopep8 skipped! It doesn't seem you have autopep8 installed.\n "
                 "Make sure to install it with: pip install autopep8.\n "
-                "Then run: autopep8 -i {}".format(py_file_path),
-                "yellow",
+                "Then run: autopep8 -i {}[/yellow]".format(py_file_path)
             )
             return False
         return True
@@ -79,9 +77,8 @@ class PythonFileFormat(BaseUpdate):
         copy(str(self.source_file), str(self.output_file))
 
     def run_format(self) -> int:
-        secho_and_info(
-            f"\n================= Updating file {self.source_file} =================",
-            fg="bright_blue",
+        logger.info(
+            f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
         )
         py_file_path = self.source_file
         if self.output_file != self.source_file:

@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 from typing import Optional, Tuple
@@ -8,7 +9,6 @@ from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     SKIP_RELEASE_NOTES_FOR_TYPES,
 )
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import (
     filter_files_by_type,
     filter_files_on_pack,
@@ -22,6 +22,8 @@ from demisto_sdk.commands.update_release_notes.update_rn import (
     update_api_modules_dependents_rn,
 )
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class UpdateReleaseNotesManager:
@@ -61,7 +63,7 @@ class UpdateReleaseNotesManager:
         """
         Manages the entire update release notes process.
         """
-        secho_and_info("Starting to update release notes.")
+        logger.info("Starting to update release notes.")
         # The given_pack can be both path or pack name thus, we extract the pack name from the path if needed.
         if self.given_pack and "/" in self.given_pack:
             self.given_pack = get_pack_name(self.given_pack)  # extract pack from path
@@ -79,10 +81,10 @@ class UpdateReleaseNotesManager:
         self.handle_api_module_change(modified_files, added_files)
         self.create_release_notes(modified_files, added_files, old_format_files)
         if len(self.total_updated_packs) > 1:
-            secho_and_info(
-                "\nSuccessfully updated the following packs:\n"
-                + "\n".join(self.total_updated_packs),
-                "green",
+            logger.info(
+                "\n[green]Successfully updated the following packs:\n"
+                + "\n".join(self.total_updated_packs)
+                + "[/green]"
             )
 
     def filter_to_relevant_files(
@@ -264,10 +266,9 @@ class UpdateReleaseNotesManager:
                     old_format_files,
                 )
         else:
-            secho_and_info(
-                "No changes that require release notes were detected. If such changes were made, "
-                "please commit the changes and rerun the command.",
-                "yellow",
+            logger.info(
+                "[yellow]No changes that require release notes were detected. If such changes were made, "
+                "please commit the changes and rerun the command.[/yellow]"
             )
 
     def create_pack_release_notes(
@@ -325,11 +326,10 @@ class UpdateReleaseNotesManager:
                 if update_pack_rn.should_delete_existing_rn:
                     os.unlink(self.packs_existing_rn[pack])
         else:
-            secho_and_info(
-                f"Either no changes were found in {pack} pack "
+            logger.info(
+                f"[yellow]Either no changes were found in {pack} pack "
                 f"or the changes found should not be documented in the release notes file.\n"
-                f"If relevant changes were made, please commit the changes and rerun the command.",
-                "yellow",
+                f"If relevant changes were made, please commit the changes and rerun the command.[/yellow]"
             )
 
     def get_existing_rn(self, pack) -> Optional[str]:

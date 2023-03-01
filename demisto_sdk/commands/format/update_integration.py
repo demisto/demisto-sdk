@@ -14,7 +14,6 @@ from demisto_sdk.commands.common.constants import (
     ParameterType,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.logger import secho_and_info
 from demisto_sdk.commands.common.tools import find_type, get_item_marketplaces, get_json
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
@@ -145,7 +144,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
                     if name == command_name:
                         is_array = argument.get("isArray", False)
                         if not is_array:
-                            secho_and_info(
+                            logger.info(
                                 f"isArray field in {name} command is set to False. Fix the command to support that function and set it to True."
                             )
                         argument.update(
@@ -161,7 +160,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
                         "required": True,
                         "secret": False,
                     }
-                    secho_and_info(
+                    logger.info(
                         f"Command {command_name} has no arguemnts. Setting them: {json.dumps(default_bang_args, indent=4)}"
                     )
                     argument_list: list = command.get("arguments", [])
@@ -251,7 +250,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
     def run_format(self) -> int:
         try:
-            secho_and_info(
+            logger.info(
                 f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             super().update_yml(
@@ -275,7 +274,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            secho_and_info(
+            logger.info(
                 f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
             )
             return ERROR_RETURN_CODE

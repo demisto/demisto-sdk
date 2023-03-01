@@ -72,7 +72,6 @@ def logging_setup(
             )
         )
         file_handler.name = "file-handler"
-        file_handler.setLevel(level=logging.DEBUG)
 
         if file_handler_index == -1:
             l.addHandler(file_handler)

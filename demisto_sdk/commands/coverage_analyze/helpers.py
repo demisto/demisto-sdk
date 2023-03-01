@@ -14,7 +14,10 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 json = JSON_Handler()
 
 
-EXCLUDED_LINES = ["pragma: no cover", r"if __name__ in (\(|\[)[\W\w]+(\)|\]):"]
+EXCLUDED_LINES = ["pragma: no cover", r"if __name__ in (\(|\[)[\W\w]+(\)|\]):",
+                  r"\"{3}([\s\S]*?)\"{3}", r"'{3}([\s\S]*?)'{3}"]
+
+
 logger = logging.getLogger("demisto-sdk")
 
 

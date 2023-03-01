@@ -21,7 +21,7 @@ exclude = ["TestSuite/**", "*/tests/*", "tests"]
 demisto-sdk = "demisto_sdk.__main__:main"
 
 [tool.poetry.dependencies]
-python = "^3.8,<=3.11"
+python = "^3.8,<3.12"
 autopep8 = "^1.6.0"
 bandit = "^1.7.4"
 mypy = "^0.982"

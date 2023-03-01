@@ -2,8 +2,6 @@ import logging
 import traceback
 from typing import Tuple
 
-import click
-
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
     FileType,
@@ -47,9 +45,7 @@ class PreProcessRulesFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n======= Updating file: {self.source_file} =======", fg="white"
-            )
+            logger.info(f"\n======= Updating file: {self.source_file} =======")
             super().update_json(
                 default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(
                     FileType.PRE_PROCESS_RULES

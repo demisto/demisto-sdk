@@ -1217,7 +1217,7 @@ class TestFormatting:
         # Asserting some non related keys are not being deleted
         assert "some-other-key" in modified_schema
 
-    def test_recursive_extend_schema_prints_warning(self, mocker, caplog, monkeypatch):
+    def test_recursive_extend_schema_prints_warning(self, mocker, monkeypatch):
         """
         Given
             - A dict that represents a schema with sub-schema reference that has no actual sub-schema
@@ -1226,9 +1226,8 @@ class TestFormatting:
         Then
             - Ensure a warning about the missing sub-schema is printed
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         monkeypatch.setenv("COLUMNS", "1000")
-        mocker.patch("click.secho")
-        from click import secho
 
         schema = {
             "mapping": {
@@ -1237,10 +1236,10 @@ class TestFormatting:
         }
         mocker.patch("click.echo")
         BaseUpdate.recursive_extend_schema(schema, schema)
-        assert secho.call_count == 1
+        assert logger_info.call_count == 1
         assert (
             "Could not find sub-schema for input_schema"
-            in secho.call_args_list[0][0][0]
+            in logger_info.call_args_list[0][0][0]
         )
 
     @staticmethod

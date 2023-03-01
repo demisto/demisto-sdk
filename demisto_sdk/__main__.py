@@ -627,9 +627,8 @@ def validate(config, **kwargs):
     from demisto_sdk.commands.common.logger import logging_setup
 
     logging_setup(
-        verbose=kwargs.get("verbose"),  # type: ignore[arg-type]
-        quiet=kwargs.get("quiet"),  # type: ignore[arg-type]
-        log_path=kwargs.get("log_path"),
+        1,  # type: ignore[arg-type]
+        log_path=os.getenv("ARTIFACTS_FOLDER"),
     )  # type: ignore[arg-type]
 
     run_with_mp = not kwargs.pop("no_multiprocessing")
@@ -1117,7 +1116,6 @@ def coverage_analyze(**kwargs):
 @click.option(
     "-nv", "--no-validate", help="Set when validate on file is not wanted", is_flag=True
 )
-@click.optio
 @click.option(
     "-ud",
     "--update-docker",

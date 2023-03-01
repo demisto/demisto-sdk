@@ -605,21 +605,6 @@ def zip_packs(**kwargs) -> int:
     help="Run specific validations by stating the error codes.",
     is_flag=False,
 )
-@click.option(
-    "-v",
-    "--verbose",
-    count=True,
-    help="Verbosity level -v / -vv / .. / -vvv",
-    type=click.IntRange(0, 3, clamp=True),
-    default=2,
-    show_default=True,
-)
-@click.option(
-    "-lp",
-    "--log-path",
-    help="Path to store all levels of logs",
-    type=click.Path(resolve_path=True),
-)
 @pass_config
 def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""

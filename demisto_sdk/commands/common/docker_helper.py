@@ -12,6 +12,7 @@ import docker
 import requests
 from docker.types import Mount
 from packaging.version import Version
+from requests import JSONDecodeError
 
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 
@@ -28,6 +29,7 @@ CAN_MOUNT_FILES = bool(os.getenv("GITLAB_CI", False)) or (
 )
 
 PYTHON_IMAGE_REGEX = re.compile(r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+)")
+DEFAULT_PYTHON_VERSION = "2.7.18"
 
 
 class DockerException(Exception):
@@ -282,7 +284,10 @@ def _get_docker_hub_token(repo: str) -> str:
     )
     if not response.ok:
         raise RuntimeError(f"Failed to get docker hub token: {response.text}")
-    return response.json()["token"]
+    try:
+        return response.json()["token"]
+    except (JSONDecodeError, KeyError) as e:
+        raise RuntimeError(f"Failed to get docker hub token: {response.text}") from e
 
 
 def _get_image_digest(repo: str, tag: str, token: str) -> str:
@@ -295,8 +300,10 @@ def _get_image_digest(repo: str, tag: str, token: str) -> str:
     )
     if not response.ok:
         raise RuntimeError(f"Failed to get docker image digest: {response.text}")
-    return response.json()["config"]["digest"]
-
+    try:
+        return response.json()["config"]["digest"]
+    except (JSONDecodeError, KeyError) as e:
+        raise RuntimeError(f"Failed to get docker image digest: {response.text}") from e
 
 @functools.lru_cache
 def _get_image_env(repo: str, digest: str, token: str) -> List[str]:
@@ -309,20 +316,25 @@ def _get_image_env(repo: str, digest: str, token: str) -> List[str]:
     )
     if not response.ok:
         raise RuntimeError(f"Failed to get docker image env: {response.text}")
-    return response.json()["config"]["Env"]
+    try:
+        return response.json()["config"]["Env"]
+    except (JSONDecodeError, KeyError) as e:
+        raise RuntimeError(f"Failed to get docker image env: {response.text}") from e
 
 
 @functools.lru_cache
 def get_python_version_from_image(image: Optional[str]) -> Optional[Version]:
     if not image:
         # When no docker_image is specified, we use the default python version which is Python 2.7.18
-        return Version("2.7.18")
+        return Version(DEFAULT_PYTHON_VERSION)
     if match := PYTHON_IMAGE_REGEX.match(image):
         return Version(match.group("python_version"))
     if ":" not in image:
         repo = image
         tag = "latest"
     else:
+        if image.count(":") > 1:
+            raise ValueError(f"Invalid docker image: {image}")
         repo, tag = image.split(":")
     try:
         token = _get_docker_hub_token(repo)
@@ -334,4 +346,4 @@ def get_python_version_from_image(image: Optional[str]) -> Optional[Version]:
         return Version(python_version_envs[0].split("=")[1])
     except Exception as e:
         logger.error(f"Failed to get python version from docker hub: {e}")
-        return None
+        raise RuntimeError(f"Failed to get python version from docker hub: {e}")

@@ -25,5 +25,5 @@ PYTHONPATH = [
 try:
     PYTHONPATH.extend(Path(CONTENT_PATH / "Packs" / "ApiModules" / "Scripts").iterdir())
 except FileNotFoundError:
-    logger.debug("ApiModules not found, skipping adding to PYTHONPATH")
+    logger.info("ApiModules not found, skipping adding to PYTHONPATH")
     pass

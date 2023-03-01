@@ -159,7 +159,7 @@ class TestGenericFieldValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", generic_field_path], catch_exceptions=False
             )
-        assert_str_in_call_args_list(
+        assert_strs_in_call_args_list(
             logger_info.call_args_list,
             [f"Validating {generic_field_path} as genericfield", "The files are valid"],
         )
@@ -1404,8 +1404,10 @@ class TestIntegrationValidation:
             logger_info.call_args_list,
             [
                 f"Validating {integration_path} as integration",
-                "can't be hidden. Please remove this field",
             ],
+        )
+        assert not str_in_call_args_list(
+            logger_info.call_args_list, "can't be hidden. Please remove this field"
         )
 
     def test_duplicate_param_and_argument_invalid(self, mocker, repo):
@@ -2601,7 +2603,6 @@ class TestIncidentTypeValidation:
                 "attachment",
                 "category",
                 "closenotes",
-                str,
             ],
         )
         # sanity check
@@ -3775,9 +3776,14 @@ class TestScriptValidation:
                 [VALIDATE_CMD, "-i", script.yml.rel_path, "--no-docker-checks"],
                 catch_exceptions=False,
             )
-        assert f"{script.yml.path} as script" in result.stdout
-        assert "SC100" in result.stdout
-        assert "The name of this v2 script is incorrect" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"{script.yml.path} as script",
+                "SC100",
+                "The name of this v2 script is incorrect",
+            ],
+        )
         assert result.exit_code == 1
 
 
@@ -3809,8 +3815,13 @@ class TestScriptDeprecatedValidation:
                 [VALIDATE_CMD, "-i", script.yml.rel_path, "--no-docker-checks"],
                 catch_exceptions=False,
             )
-        assert f"{script.yml.path} as script" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"{script.yml.path} as script",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_invalid_deprecated_script(self, mocker, repo):
@@ -3838,9 +3849,14 @@ class TestScriptDeprecatedValidation:
                 [VALIDATE_CMD, "-i", script.yml.rel_path, "--no-docker-checks"],
                 catch_exceptions=False,
             )
-        assert f"{script.yml.path} as script" in result.stdout
-        assert "SC101" in result.stdout
-        assert "Deprecated." in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"{script.yml.path} as script",
+                "SC101",
+                "Deprecated.",
+            ],
+        )
         assert result.exit_code == 1
 
     def test_invalid_bc_deprecated_script(self, mocker, repo):
@@ -3877,8 +3893,13 @@ class TestScriptDeprecatedValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert f"{script.yml.path} as script" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"{script.yml.path} as script",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_modified_invalid_bc_deprecated_script(self, mocker, repo):
@@ -3939,8 +3960,13 @@ class TestScriptDeprecatedValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert f"Validating {script.yml.rel_path} as script" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {script.yml.rel_path} as script",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_invalid_bc_unsupported_toversion_script(self, mocker, repo):
@@ -3974,8 +4000,13 @@ class TestScriptDeprecatedValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert f"{script.yml.path} as script" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"{script.yml.path} as script",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_modified_invalid_bc_unsupported_toversion_script(self, mocker, repo):
@@ -4031,8 +4062,13 @@ class TestScriptDeprecatedValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert f"Validating {script.yml.rel_path} as script" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {script.yml.rel_path} as script",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
 
@@ -4057,8 +4093,13 @@ class TestWidgetValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", widget.path], catch_exceptions=False
             )
-        assert f"Validating {widget.path} as widget" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {widget.path} as widget",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_invalid_widget(self, mocker, repo):
@@ -4083,11 +4124,13 @@ class TestWidgetValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", widget.path], catch_exceptions=False
             )
-        assert f"Validating {widget.path} as widget" in result.stdout
-        assert "BA100" in result.stdout
-        assert (
-            "The version for our files should always be -1, please update the file."
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {widget.path} as widget",
+                "BA100",
+                "The version for our files should always be -1, please update the file.",
+            ],
         )
         assert result.exit_code == 1
 
@@ -4114,8 +4157,13 @@ class TestImageValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", image_path], catch_exceptions=False
             )
-        assert f"Validating {image_path} as image" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {image_path} as image",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_invalid_image(self, mocker, repo):
@@ -4143,11 +4191,13 @@ class TestImageValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", image_path], catch_exceptions=False
             )
-        assert f"Validating {image_path} as image" in result.stdout
-        assert "IM106" in result.stdout
-        assert (
-            "This is the default image, please change to the integration image."
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {image_path} as image",
+                "IM106",
+                "This is the default image, please change to the integration image.",
+            ],
         )
         assert result.exit_code == 1
 
@@ -4171,10 +4221,15 @@ class TestImageValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", NOT_VALID_IMAGE_PATH], catch_exceptions=False
             )
-        assert "The image file name or location is invalid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "The image file name or location is invalid",
+            ],
+        )
         assert result.exit_code == 1
 
-    def test_invalid_image_size(self, repo):
+    def test_invalid_image_size(self, repo, mocker):
         """
         Given
         - An image with bad dimensions and bad size.
@@ -4185,6 +4240,7 @@ class TestImageValidation:
         Then
         - Ensure validate fails on dimensions error and asks to change the image.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         pack = repo.create_pack("PackName")
         with open(
             f"{git_path()}/demisto_sdk/tests/integration_tests/Tests/invalid_integration_image.png",
@@ -4198,11 +4254,16 @@ class TestImageValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", image_path], catch_exceptions=False
             )
-        assert f"Validating {image_path} as image" in result.stdout
-        assert "IM111" in result.stdout
-        assert "IM101" in result.stdout
-        assert "120x50" in result.stdout
-        assert "10kB" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {image_path} as image",
+                "IM111",
+                "IM101",
+                "120x50",
+                "10kB",
+            ],
+        )
         assert result.exit_code == 1
 
 
@@ -4247,7 +4308,12 @@ class TestAuthorImageValidation:
                 catch_exceptions=False,
             )
 
-        assert f"Validating {pack.author_image.path} as author_image" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {pack.author_image.path} as author_image",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_author_image_invalid(self, repo, mocker):
@@ -4289,8 +4355,13 @@ class TestAuthorImageValidation:
                 main, [VALIDATE_CMD, "-i", author_image_path], catch_exceptions=False
             )
 
-        assert f"Validating {author_image_path} as author_image" in result.stdout
-        assert "IM108" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {author_image_path} as author_image",
+                "IM108",
+            ],
+        )
         assert result.exit_code == 1
 
 
@@ -4306,6 +4377,7 @@ class TestAllFilesValidator:
         Then
         - Ensure validate passes on all files.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(
             PackUniqueFilesValidator, "are_valid_files", return_value=""
@@ -4351,20 +4423,20 @@ class TestAllFilesValidator:
             )
             print(result.stdout)
 
-        assert "Validating all files" in result.stdout
-        assert "Validating Packs/PackName1 unique pack files" in result.stdout
-        assert "Validating Packs/PackName2 unique pack files" in result.stdout
-        assert f"Validating {integration.yml.rel_path} as integration" in result.stdout
-        assert (
-            f"Validating {incident_field.get_path_from_pack()} as incidentfield"
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "Validating all files",
+                "Validating Packs/PackName1 unique pack files",
+                "Validating Packs/PackName2 unique pack files",
+                f"Validating {integration.yml.rel_path} as integration",
+                f"Validating {incident_field.get_path_from_pack()} as incidentfield",
+                f"Validating {dashboard.get_path_from_pack()} as dashboard",
+                f"Validating {script.yml.rel_path} as script",
+                "Validating pack author image",
+                "The files are valid",
+            ],
         )
-        assert (
-            f"Validating {dashboard.get_path_from_pack()} as dashboard" in result.stdout
-        )
-        assert f"Validating {script.yml.rel_path} as script" in result.stdout
-        assert "Validating pack author image" in result.stdout
-        assert "The files are valid" in result.stdout
         assert result.exit_code == 0
 
     def test_not_all_files_valid(self, mocker, repo):
@@ -4378,6 +4450,7 @@ class TestAllFilesValidator:
         Then
         - Ensure validate fails.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(
             PackUniqueFilesValidator, "are_valid_files", return_value=""
@@ -4421,24 +4494,24 @@ class TestAllFilesValidator:
                 catch_exceptions=False,
             )
 
-        assert "Validating all files" in result.stdout
-        assert "Validating Packs/PackName1 unique pack files" in result.stdout
-        assert "Validating Packs/PackName2 unique pack files" in result.stdout
-        assert f"Validating {integration.yml.rel_path} as integration" in result.stdout
-        assert (
-            f"Validating {incident_field.get_path_from_pack()} as incidentfield"
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "Validating all files",
+                "Validating Packs/PackName1 unique pack files",
+                "Validating Packs/PackName2 unique pack files",
+                f"Validating {integration.yml.rel_path} as integration",
+                f"Validating {incident_field.get_path_from_pack()} as incidentfield",
+                f"Validating {dashboard.get_path_from_pack()} as dashboard",
+                f"Validating {script.yml.rel_path} as script",
+                "Validating pack author image",
+                "IF101",
+                "The content key must be set to True.",
+                "SC100",
+                "The name of this v2 script is incorrect",
+                "RM111",
+            ],
         )
-        assert (
-            f"Validating {dashboard.get_path_from_pack()} as dashboard" in result.stdout
-        )
-        assert f"Validating {script.yml.rel_path} as script" in result.stdout
-        assert "Validating pack author image" in result.stdout
-        assert "IF101" in result.stdout
-        assert "The content key must be set to True." in result.stdout
-        assert "SC100" in result.stdout
-        assert "The name of this v2 script is incorrect" in result.stdout
-        assert "RM111" in result.stdout
         assert result.exit_code == 1
 
 
@@ -4454,6 +4527,7 @@ class TestValidationUsingGit:
         Then
         - Ensure validate passes on all files.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(
             PackUniqueFilesValidator, "are_valid_files", return_value=""
@@ -4514,23 +4588,23 @@ class TestValidationUsingGit:
                 ],
                 catch_exceptions=False,
             )
-        assert "Running validation on branch" in result.stdout
-        assert "Running validation on modified files" in result.stdout
-        assert "Running validation on newly added files" in result.stdout
-        assert "Running validation on changed pack unique files" in result.stdout
-        assert "Validating Packs/PackName1 unique pack files" in result.stdout
-        assert "Validating Packs/PackName2 unique pack files" in result.stdout
-        assert f"Validating {integration.yml.rel_path} as integration" in result.stdout
-        assert (
-            f"Validating {incident_field.get_path_from_pack()} as incidentfield"
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "Running validation on branch",
+                "Running validation on modified files",
+                "Running validation on newly added files",
+                "Running validation on changed pack unique files",
+                "Validating Packs/PackName1 unique pack files",
+                "Validating Packs/PackName2 unique pack files",
+                f"Validating {integration.yml.rel_path} as integration",
+                f"Validating {incident_field.get_path_from_pack()} as incidentfield",
+                f"Validating {dashboard.get_path_from_pack()} as dashboard",
+                f"Validating {script.yml.rel_path} as script",
+                f"Validating old-format file {old_integration.yml.rel_path}",
+                "The files are valid",
+            ],
         )
-        assert (
-            f"Validating {dashboard.get_path_from_pack()} as dashboard" in result.stdout
-        )
-        assert f"Validating {script.yml.rel_path} as script" in result.stdout
-        assert f"Validating old-format file {old_integration.yml.rel_path}"
-        assert "The files are valid" in result.stdout
         assert result.exit_code == 0
 
     def test_failing_validation_using_git(self, mocker, repo):
@@ -4544,6 +4618,7 @@ class TestValidationUsingGit:
         Then
         - Ensure validate fails.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(
             PackUniqueFilesValidator, "are_valid_files", return_value=""
@@ -4602,25 +4677,25 @@ class TestValidationUsingGit:
                 catch_exceptions=False,
             )
 
-        assert "Running validation on branch" in result.stdout
-        assert "Running validation on modified files" in result.stdout
-        assert "Running validation on newly added files" in result.stdout
-        assert "Running validation on changed pack unique files" in result.stdout
-        assert "Validating Packs/PackName1 unique pack files" in result.stdout
-        assert "Validating Packs/PackName2 unique pack files" in result.stdout
-        assert f"Validating {integration.yml.rel_path} as integration" in result.stdout
-        assert (
-            f"Validating {incident_field.get_path_from_pack()} as incidentfield"
-            in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "Running validation on branch",
+                "Running validation on modified files",
+                "Running validation on newly added files",
+                "Running validation on changed pack unique files",
+                "Validating Packs/PackName1 unique pack files",
+                "Validating Packs/PackName2 unique pack files",
+                f"Validating {integration.yml.rel_path} as integration",
+                f"Validating {incident_field.get_path_from_pack()} as incidentfield",
+                f"Validating {dashboard.get_path_from_pack()} as dashboard",
+                f"Validating {script.yml.rel_path} as script",
+                "IF101",
+                "The content key must be set to True.",
+                "SC100",
+                "The name of this v2 script is incorrect",
+            ],
         )
-        assert (
-            f"Validating {dashboard.get_path_from_pack()} as dashboard" in result.stdout
-        )
-        assert f"Validating {script.yml.rel_path} as script" in result.stdout
-        assert "IF101" in result.stdout
-        assert "The content key must be set to True." in result.stdout
-        assert "SC100" in result.stdout
-        assert "The name of this v2 script is incorrect" in result.stdout
         assert result.exit_code == 1
 
     def test_validation_using_git_without_pack_dependencies(self, mocker, repo):
@@ -4635,6 +4710,7 @@ class TestValidationUsingGit:
         - Ensure validate fails.
         - Ensure pack dependencies check doesnt happen.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         pack = repo.create_pack("FeedAzure")
         integration = pack.create_integration(
             name="FeedAzure",
@@ -4678,12 +4754,19 @@ class TestValidationUsingGit:
                 ],
                 catch_exceptions=False,
             )
-        assert "Running validation on branch" in result.stdout
-        assert "Running validation on modified files" in result.stdout
-        assert "Running validation on newly added files" in result.stdout
-        assert "Running validation on changed pack unique files" in result.stdout
-        assert "Validating Packs/FeedAzure unique pack files" in result.stdout
-        assert "Running pack dependencies validation on" not in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "Running validation on branch",
+                "Running validation on modified files",
+                "Running validation on newly added files",
+                "Running validation on changed pack unique files",
+                "Validating Packs/FeedAzure unique pack files",
+            ],
+        )
+        assert not str_in_call_args_list(
+            logger_info.call_args_list, "Running pack dependencies validation on"
+        )
         assert result.exit_code == 1
 
     def test_validation_using_git_with_pack_dependencies(self, mocker, repo):
@@ -4698,6 +4781,7 @@ class TestValidationUsingGit:
         - Ensure validate fails.
         - Ensure pack dependencies check happens.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         pack = repo.create_pack("FeedAzure")
         integration = pack.create_integration(
             name="FeedAzure",
@@ -4742,7 +4826,12 @@ class TestValidationUsingGit:
                 ],
                 catch_exceptions=False,
             )
-        assert "Running pack dependencies validation on" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "Running pack dependencies validation on",
+            ],
+        )
         assert result.exit_code == 1
 
     def test_validation_non_content_path(self):
@@ -4785,6 +4874,7 @@ class TestValidationUsingGit:
         Then
         - Ensure an error is raised on the non found file
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mocker.patch.object(tools, "is_external_repository", return_value=False)
         mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
         mocker.patch.object(PackDependencies, "find_dependencies", return_value={})
@@ -4812,7 +4902,13 @@ class TestValidationUsingGit:
             )
 
         assert result.exit_code == 1
-        assert "You may not be running" in result.stdout  # check error str is in stdout
+        # check error str is in stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "You may not be running",
+            ],
+        )
 
     def test_validation_using_git_on_specific_file(self, mocker, repo):
         """
@@ -4826,6 +4922,7 @@ class TestValidationUsingGit:
         - Ensure the integration is validated.
         - Ensure the script is not validated.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         pack = repo.create_pack("FeedAzure")
         integration = pack.create_integration()
         integration.create_default_integration()
@@ -4860,7 +4957,7 @@ class TestValidationUsingGit:
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
+            runner.invoke(
                 main,
                 [
                     VALIDATE_CMD,
@@ -4874,9 +4971,16 @@ class TestValidationUsingGit:
                 catch_exceptions=False,
             )
 
-        assert "Running on committed and staged files" in result.stdout
-        assert f"Validating {integration.yml.rel_path}" in result.stdout
-        assert f"Validating {script.yml.rel_path}" not in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "Running on committed and staged files",
+                f"Validating {integration.yml.rel_path}",
+            ],
+        )
+        assert not str_in_call_args_list(
+            logger_info.call_args_list, f"Validating {script.yml.rel_path}"
+        )
 
     def test_validation_using_git_on_specific_file_renamed(self, mocker, repo):
         """
@@ -4890,6 +4994,7 @@ class TestValidationUsingGit:
         - Ensure the integration is validated.
         - Ensure the script is not validated.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         pack = repo.create_pack("FeedAzure")
         integration = pack.create_integration()
         integration.create_default_integration()
@@ -4927,7 +5032,7 @@ class TestValidationUsingGit:
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
+            runner.invoke(
                 main,
                 [
                     VALIDATE_CMD,
@@ -4941,9 +5046,16 @@ class TestValidationUsingGit:
                 catch_exceptions=False,
             )
 
-        assert "Running on committed and staged files" in result.stdout
-        assert f"Validating {integration.yml.rel_path}" in result.stdout
-        assert f"Validating {script.yml.rel_path}" not in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "Running on committed and staged files",
+                f"Validating {integration.yml.rel_path}",
+            ],
+        )
+        assert not str_in_call_args_list(
+            logger_info.call_args_list, f"Validating {script.yml.rel_path}"
+        )
 
     def test_validation_using_git_on_specific_pack(self, mocker, repo):
         """
@@ -4957,6 +5069,7 @@ class TestValidationUsingGit:
         - Ensure the entities in pack 1 are validated
         - Ensure the entities in pack 2 are not validated.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         pack_1 = repo.create_pack("Pack1")
         integration = pack_1.create_integration()
         integration.create_default_integration()
@@ -5005,7 +5118,7 @@ class TestValidationUsingGit:
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
+            runner.invoke(
                 main,
                 [
                     VALIDATE_CMD,
@@ -5019,11 +5132,20 @@ class TestValidationUsingGit:
                 catch_exceptions=False,
             )
 
-        assert "Running on committed and staged files" in result.stdout
-        assert f"Validating {integration.yml.rel_path}" in result.stdout
-        assert f"Validating {script.yml.rel_path}" in result.stdout
-        assert f"Validating {integration_2.yml.rel_path}" not in result.stdout
-        assert f"Validating {script_2.yml.rel_path}" not in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "Running on committed and staged files",
+                f"Validating {integration.yml.rel_path}",
+                f"Validating {script.yml.rel_path}",
+            ],
+        )
+        str_in_call_args_list(
+            logger_info.call_args_list, f"Validating {integration_2.yml.rel_path}"
+        )
+        str_in_call_args_list(
+            logger_info.call_args_list, f"Validating {script_2.yml.rel_path}"
+        )
 
 
 class TestSpecificValidations:
@@ -5060,8 +5182,13 @@ class TestSpecificValidations:
                 ],
                 catch_exceptions=False,
             )
-        assert f"Validating {reputation.path} as reputation" in result.stdout
-        assert "The files are valid" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {reputation.path} as reputation",
+                "The files are valid",
+            ],
+        )
         assert result.exit_code == 0
 
     def test_validate_with_flag_specific_validation(self, mocker, repo):
@@ -5097,9 +5224,14 @@ class TestSpecificValidations:
                 ],
                 catch_exceptions=False,
             )
-        assert f"Validating {reputation.path} as reputation" in result.stdout
-        assert "RP101" in result.stdout
-        assert "Expiration field should have a positive numeric value." in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {reputation.path} as reputation",
+                "RP101",
+                "Expiration field should have a positive numeric value.",
+            ],
+        )
         assert result.exit_code == 1
 
     def test_validate_with_flag_specific_validation_entire_code_section(
@@ -5137,11 +5269,16 @@ class TestSpecificValidations:
                 ],
                 catch_exceptions=False,
             )
-        assert f"Validating {reputation.path} as reputation" in result.stdout
-        assert "RP101" in result.stdout
-        assert "Expiration field should have a positive numeric value." in result.stdout
-        assert "RP102" in result.stdout
-        assert "id and details fields are not equal." in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                f"Validating {reputation.path} as reputation",
+                "RP101",
+                "Expiration field should have a positive numeric value.",
+                "RP102",
+                "id and details fields are not equal.",
+            ],
+        )
         assert result.exit_code == 1
 
 

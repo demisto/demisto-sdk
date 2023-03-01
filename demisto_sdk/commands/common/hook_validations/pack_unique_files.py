@@ -10,7 +10,6 @@ from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
-import click
 from dateutil import parser
 from git import GitCommandError, Repo
 from packaging.version import parse
@@ -1027,9 +1026,8 @@ class PackUniqueFilesValidator(BaseValidator):
     # pack dependencies validation
     def validate_pack_dependencies(self):
         try:
-            click.secho(
-                f"\nRunning pack dependencies validation on {self.pack}\n",
-                fg="bright_cyan",
+            logger.info(
+                f"\n[cyan]Running pack dependencies validation on {self.pack}[/cyan]\n"
             )
             core_pack_list = get_core_pack_list()
 

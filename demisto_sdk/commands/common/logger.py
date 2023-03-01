@@ -66,6 +66,7 @@ def logging_setup(
         file_handler = logging.FileHandler(
             filename=os.path.join(log_path, log_file_name)
         )
+        l.setLevel(logging.DEBUG)
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(
             logging.Formatter(

@@ -62,6 +62,7 @@ def logging_setup(
 
     # Setting debug log file if in circleci
     if log_path:
+        Path(log_path).mkdir(parents=True, exist_ok=True)
         file_handler = logging.FileHandler(
             filename=os.path.join(log_path, log_file_name)
         )
@@ -70,8 +71,8 @@ def logging_setup(
                 "[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(message)s"
             )
         )
+        file_handler.setLevel(logging.DEBUG)
         file_handler.name = "file-handler"
-        file_handler.setLevel(level=logging.DEBUG)
 
         if file_handler_index == -1:
             l.addHandler(file_handler)

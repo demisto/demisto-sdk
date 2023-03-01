@@ -2886,4 +2886,7 @@ def test_run_validation_using_git_validation_calls(
     if old_format_files:
         no_old_format_validation.assert_called_once_with(old_format_files)
 
+    else:
+        assert not no_old_format_validation.called
+
     deleted_files_validation.assert_called_once_with(deleted_files, added_files)

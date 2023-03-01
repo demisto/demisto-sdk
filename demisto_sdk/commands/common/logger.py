@@ -65,6 +65,7 @@ def logging_setup(
         Path(log_path).mkdir(parents=True, exist_ok=True)
         file_handler = logging.FileHandler(
             filename=os.path.join(log_path, log_file_name)
+            
         )
         file_handler.setFormatter(
             logging.Formatter(

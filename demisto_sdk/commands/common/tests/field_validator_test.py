@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.hook_validations.field_base_validator import (
     GroupFieldTypes,
 )
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from TestSuite.test_tools import str_in_call_args_list
 
 logging.getLogger("demisto-sdk").propagate = True
 
@@ -65,7 +66,8 @@ class TestFieldValidator:
     ]
 
     @pytest.mark.parametrize("current_file, answer", INPUTS_NAMES)
-    def test_is_valid_name_sanity(self, current_file, answer, caplog):
+    def test_is_valid_name_sanity(self, current_file, answer, mocker):
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         with patch.object(StructureValidator, "__init__", lambda a, b: None):
             structure = StructureValidator("")
@@ -81,7 +83,7 @@ class TestFieldValidator:
 
             validator.is_valid_name()
 
-            assert ("IF100" in str(caplog.text)) is answer
+            assert str_in_call_args_list(logger_info.call_args_list, "IF100") is answer
 
     CONTENT_1 = {"content": True}
 

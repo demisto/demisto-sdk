@@ -10,7 +10,12 @@ import demisto_sdk
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import (
+    ChangeCWD,
+    assert_str_in_call_args_list,
+    assert_strs_in_call_args_list,
+    str_in_call_args_list,
+)
 
 VALID_MD = f"{git_path()}/demisto_sdk/tests/test_files/README-valid.md"
 INVALID_MD = f"{git_path()}/demisto_sdk/tests/test_files/README-invalid.md"
@@ -108,7 +113,7 @@ def test_air_gapped_env(tmp_path, mocker):
     assert ReadMeValidator(r).is_mdx_file()
 
 
-def test_relative_url_not_valid(caplog):
+def test_relative_url_not_valid(mocker):
     """
     Given
         - A README file with invalid relative urls in it.
@@ -121,6 +126,7 @@ def test_relative_url_not_valid(caplog):
             - Valid url was not caught
             - Image url was not caught
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     absolute_urls = [
         "https://www.good.co.il",
         "https://example.com",
@@ -138,19 +144,20 @@ def test_relative_url_not_valid(caplog):
     result = readme_validator.verify_readme_relative_urls()
     assert not result
     for url in absolute_urls:
-        assert url not in caplog.text
+        assert not str_in_call_args_list(logger_info.call_args_list, url)
 
     for url in relative_urls:
-        assert url in caplog.text
+        assert str_in_call_args_list(logger_info.call_args_list, url)
 
     # no empty links found
-    assert (
+    assert not str_in_call_args_list(
+        logger_info.call_args_list,
         "[RM112] - Relative urls are not supported within README. If this is not a relative url, please add an "
-        "https:// prefix:\n. " not in caplog.text
+        "https:// prefix:\n. ",
     )
 
 
-def test_is_image_path_valid(caplog):
+def test_is_image_path_valid(mocker):
     """
     Given
         - A README file with 2 invalid images paths in it.
@@ -163,26 +170,27 @@ def test_is_image_path_valid(caplog):
             - Valid image path was not caught
             - An alternative paths were suggested
     """
-    images_paths = [
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    blob_images_paths = [
         "https://github.com/demisto/content/blob/123/Packs/AutoFocus/doc_files/AutoFocusPolling.png",
         "https://github.com/demisto/content/blob/123/Packs/FeedOffice365/doc_files/test.png",
-        "https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test.png",
     ]
-    alternative_images_paths = [
+    raw_image_path = (
+        "https://github.com/demisto/content/raw/123/Packs/valid/doc_files/test.png"
+    )
+    raw_images_paths = [
         "https://github.com/demisto/content/raw/123/Packs/AutoFocus/doc_files/AutoFocusPolling.png",
         "https://github.com/demisto/content/raw/123/Packs/FeedOffice365/doc_files/test.png",
     ]
     readme_validator = ReadMeValidator(INVALID_MD)
     result = readme_validator.is_image_path_valid()
-    sys.stdout = sys.__stdout__  # reset stdout.
 
-    logger = logging.getLogger("demisto-sdk")
-    print(f"*** test_is_image_path_valid, {logger.handlers=}, {logger.propagate=}")
-    print(f"*** {caplog.text=}")
     assert not result
-    assert images_paths[0] and alternative_images_paths[0] in caplog.text
-    assert images_paths[1] and alternative_images_paths[1] in caplog.text
-    assert images_paths[2] not in caplog.text
+    assert_strs_in_call_args_list(
+        logger_info.call_args_list,
+        blob_images_paths + raw_images_paths,
+    )
+    assert not str_in_call_args_list(logger_info.call_args_list, raw_image_path)
 
 
 @pytest.mark.parametrize(
@@ -197,7 +205,7 @@ def test_is_image_path_valid(caplog):
     ],
 )
 def test_unvalid_verify_no_empty_sections(
-    integration, capsys, file_input, missing_section, caplog
+    integration, file_input, missing_section, mocker
 ):
     """
     Given
@@ -207,6 +215,7 @@ def test_unvalid_verify_no_empty_sections(
     Then
         - Ensure no empty sections from the SECTIONS list
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     integration.readme.write(file_input)
     readme_path = integration.readme.path
@@ -220,7 +229,7 @@ def test_unvalid_verify_no_empty_sections(
         )
 
         assert not result
-        assert section_error in caplog.text
+        assert_str_in_call_args_list(logger_info.call_args_list, section_error)
 
 
 @pytest.mark.parametrize(
@@ -229,7 +238,7 @@ def test_unvalid_verify_no_empty_sections(
         "## Troubleshooting\n## OtherSection\n## Additional Information\n\n## OtherSection\n##"
     ],
 )
-def test_combined_unvalid_verify_no_empty_sections(integration, caplog, file_input):
+def test_combined_unvalid_verify_no_empty_sections(integration, mocker, file_input):
     """
     Given
         - Couple of empty sections
@@ -238,6 +247,7 @@ def test_combined_unvalid_verify_no_empty_sections(integration, caplog, file_inp
     Then
         - Ensure no empty sections from the SECTIONS list
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     integration.readme.write(file_input)
     readme_path = integration.readme.path
@@ -252,7 +262,7 @@ def test_combined_unvalid_verify_no_empty_sections(integration, caplog, file_inp
         )
 
         assert not result
-        assert error in caplog.text
+        assert_str_in_call_args_list(logger_info.call_args_list, error)
 
 
 @pytest.mark.parametrize(
@@ -341,7 +351,7 @@ def test_copyright_sections(integration, file_input):
         ),
     ],
 )
-def test_verify_no_default_sections_left(integration, caplog, file_input, section):
+def test_verify_no_default_sections_left(integration, mocker, file_input, section):
     """
     Given
         - Readme that contains sections that are created as default and need to be changed
@@ -350,6 +360,7 @@ def test_verify_no_default_sections_left(integration, caplog, file_input, sectio
     Then
         - Ensure no default sections in the readme file
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     integration.readme.write(file_input)
     readme_path = integration.readme.path
 
@@ -359,7 +370,7 @@ def test_verify_no_default_sections_left(integration, caplog, file_input, sectio
 
         section_error = f'Replace "{section}" with a suitable info.'
         assert not result
-        assert section_error in caplog.text
+        assert_str_in_call_args_list(logger_info.call_args_list, section_error)
 
 
 ERROR_FOUND_CASES = [
@@ -470,7 +481,7 @@ def test_context_difference_created_is_valid(mocker, difference_found, expected)
         handle_error_mock.assert_not_called()
 
 
-def test_invalid_short_file(caplog):
+def test_invalid_short_file(mocker):
     """
     Given
         - Non empty Readme with less than 30 chars.
@@ -479,6 +490,7 @@ def test_invalid_short_file(caplog):
     Then
         - Ensure verify on Readme fails
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     readme_validator = ReadMeValidator(INVALID3_MD)
     result = readme_validator.verify_readme_is_not_too_short()
     short_readme_error = (
@@ -487,7 +499,7 @@ def test_invalid_short_file(caplog):
         "Pack README files are expected to include a few sentences about the pack and/or images."
     )
     assert not result
-    assert short_readme_error in caplog.text
+    assert_str_in_call_args_list(logger_info.call_args_list, short_readme_error)
 
 
 def test_demisto_in_integration_readme(repo):
@@ -604,7 +616,7 @@ def test_verify_template_not_in_readme(repo):
         assert not readme_validator.verify_template_not_in_readme()
 
 
-def test_verify_readme_image_paths(mocker, caplog):
+def test_verify_readme_image_paths(mocker):
     """
 
     Given
@@ -618,6 +630,7 @@ def test_verify_readme_image_paths(mocker, caplog):
                - Image paths were caught correctly
                - Valid paths are not caught
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     readme_validator = ReadMeValidator(IMAGES_MD)
     mocker.patch.object(
         GitUtil, "get_current_working_branch", return_value="branch_name"
@@ -641,46 +654,44 @@ def test_verify_readme_image_paths(mocker, caplog):
 
     sys.stdout = sys.__stdout__  # reset stdout.
     assert not is_valid
-    assert (
+    assert_strs_in_call_args_list(
+        logger_info.call_args_list,
+        [
+            "The following image relative path is not valid, please recheck it:\n"
+            "![Identity with High Risk Score](../../default.png)",
+            "Branch name was found in the URL, please change it to the commit hash:\n"
+            "![branch in url]",
+            "\n".join(
+                (
+                    "[RM108] - Error in readme image: got HTTP response code 404, reason = just because",
+                    "The following image link seems to be broken, please repair it:",
+                    "![Identity with High Risk Score](https://github.com/demisto/test1.png)",
+                )
+            ),
+            "\n".join(
+                (
+                    "[RM108] - Error in readme image: got HTTP response code 404 ",
+                    "The following image link seems to be broken, please repair it:",
+                    "(https://github.com/demisto/content/raw/test2.png)",
+                )
+            ),
+        ],
+    )
+
+    assert not str_in_call_args_list(
+        logger_info.call_args_list,
         "The following image relative path is not valid, please recheck it:\n"
-        "![Identity with High Risk Score](../../default.png)" in caplog.text
+        "![Identity with High Risk Score](default.png)",
     )
-    assert (
-        "The following image relative path is not valid, please recheck it:\n"
-        "![Identity with High Risk Score](default.png)" not in caplog.text
-    )
-    assert (
+    assert not str_in_call_args_list(
+        logger_info.call_args_list,
         "Branch name was found in the URL, please change it to the commit hash:\n"
-        "![branch in url]" in caplog.text
+        "![commit hash in url]",
     )
-    assert (
-        "Branch name was found in the URL, please change it to the commit hash:\n"
-        "![commit hash in url]" not in caplog.text
-    )
-    assert (
-        "\n".join(
-            (
-                "[RM108] - Error in readme image: got HTTP response code 404, reason = just because",
-                "The following image link seems to be broken, please repair it:",
-                "![Identity with High Risk Score](https://github.com/demisto/test1.png)",
-            )
-        )
-        in caplog.text
-    )
-    assert (
-        "\n".join(
-            (
-                "[RM108] - Error in readme image: got HTTP response code 404 ",
-                "The following image link seems to be broken, please repair it:",
-                "(https://github.com/demisto/content/raw/test2.png)",
-            )
-        )
-        in caplog.text
-    )
-    assert (
+    assert not str_in_call_args_list(
+        logger_info.call_args_list,
         "please repair it:\n"
-        "![Identity with High Risk Score](https://github.com/demisto/test3.png)"
-        not in caplog.text
+        "![Identity with High Risk Score](https://github.com/demisto/test3.png)",
     )
 
 

@@ -26,7 +26,7 @@ NEO4J_PLUGINS_FOLDER = "plugins"
 
 # When updating the APOC version, make sure to update the checksum as well
 APOC_URL_VERSIONS = (
-    "https://neo4j-contrib.github.io/neo4j-apoc-procedures/versions.json"
+    "https://neo4j.github.io/apoc/versions.json"
 )
 
 logger = logging.getLogger("demisto-sdk")

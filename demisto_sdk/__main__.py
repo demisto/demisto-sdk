@@ -1005,7 +1005,7 @@ def lint(**kwargs):
     "--input",
     help="The .coverage file to analyze.",
     default=os.path.join("coverage_report", ".coverage"),
-    type=PathsParamType(exists=True, resolve_path=True),
+    type=PathsParamType(resolve_path=True),
 )
 @click.option(
     "--default-min-coverage",

@@ -294,6 +294,7 @@ SERVER_CONTENT_ITEMS = {
         "dbotMirrorTags",
         "dbotMirrorLastSync",
         "timestamp",
+        "slaField",
     ],
     ContentType.INDICATOR_FIELD: [
         "name",
@@ -330,6 +331,10 @@ SERVER_CONTENT_ITEMS = {
         "indicatortype",
         "aggregatedReliability",
         "starttime",
+        "indicatorIDs",
+        "indicatorsValues",
+        "verdict",
+        "reputation",
     ],
     ContentType.SCRIPT: [
         "getAPIKeyFromLicense",
@@ -526,6 +531,17 @@ SERVER_CONTENT_ITEMS = {
         "Stringify",
         "append",
         "ConvertKeysToTableFieldFormat",
+        # XSIAM scripts aliases
+        "setAlert",
+        "setAlertReminder",
+        "createNewAlert",
+        "getAlerts",
+        "associateIndicatorToAlert",
+        "unAssociateIndicatorToAlert",
+        "linkAlerts",
+        "relatedAlerts",
+        "associateIndicatorsToAlert",
+        "unAssociateIndicatorsFromAlert",
     ],
     ContentType.COMMAND: [
         # activedir-login integration commands

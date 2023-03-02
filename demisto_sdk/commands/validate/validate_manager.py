@@ -137,6 +137,7 @@ from demisto_sdk.commands.common.hook_validations.xsiam_report import (
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import (
     XSOARConfigJsonValidator,
 )
+from demisto_sdk.commands.common.logger import get_log_file
 from demisto_sdk.commands.common.tools import (
     _get_file_id,
     find_type,
@@ -743,8 +744,7 @@ class ValidateManager:
         """
         path = Path(file_path)
         # TODO Use the current configured log file
-        if "demisto_sdk_debug_log.log" in file_path:
-            print("*** Skipping validation of log file demisto_sdk_debug_log.log")
+        if get_log_file() in file_path:
             return True
         return path.name in SKIPPED_FILES or (
             path.name == "CommonServerPython.py" and path.parent.parent.name != "Base"
@@ -2141,7 +2141,7 @@ class ValidateManager:
                     ):
                         return False
 
-        logger.info("\n[green]No duplicated release notes found.[/green\n")
+        logger.info("\n[green]No duplicated release notes found.[/green]\n")
         return True
 
     @error_codes("RN106")

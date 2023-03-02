@@ -86,6 +86,11 @@ def logging_setup(
     return ret_value
 
 
+def get_log_file():
+    # TODO Return the actual (if overridden) log file
+    return LOG_FILE
+
+
 def set_propagate(logger_to_update: logging.Logger, propagate: bool = False):
     logger_to_update.propagate = propagate
 

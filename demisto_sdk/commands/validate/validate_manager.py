@@ -1291,6 +1291,9 @@ class ValidateManager:
         validation_results.add(self.validate_deleted_files(deleted_files, added_files))
         logger.info(f"*** after adding validate_deleted_files")
 
+        logger.info(
+            f"*** Before ifs, {old_format_files=}, {self.skip_pack_rn_validation=}"
+        )
         if old_format_files:
             logger.info(
                 f"\n[bright_cyan]================= Running validation on old format files =================[/bright_cyan]"
@@ -1311,6 +1314,7 @@ class ValidateManager:
             )
             logger.info(f"*** after adding validate_no_missing_release_notes")
 
+        logger.info(f"*** Before all(validation_results)")
         return all(validation_results)
 
     """ ######################################## Unique Validations ####################################### """

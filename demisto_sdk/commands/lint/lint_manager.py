@@ -55,7 +55,7 @@ from demisto_sdk.commands.lint.helpers import (
     generate_coverage_report,
     get_test_modules,
 )
-from demisto_sdk.commands.lint.linter import Linter
+from demisto_sdk.commands.lint.linter import DockerImageFlagOption, Linter
 
 json = JSON_Handler()
 
@@ -460,6 +460,7 @@ class LintManager:
         test_xml: str,
         docker_timeout: int,
         docker_image_flag: str,
+        docker_image_target: str,
         lint_status: dict,
         pkgs_status: dict,
         pkgs_type: list,
@@ -482,6 +483,7 @@ class LintManager:
             test_xml(str): Path for saving pytest xml results
             docker_timeout(int): timeout for docker requests
             docker_image_flag(str): indicates the desirable docker image to run lint on
+            docker_image_target(str): The docker image to lint native supported content with
             pkgs_type: List of the pack types
             pkgs_status: Dictionary for pack status (keys are packs, the values are their status)
             lint_status: Dictionary for the lint status  (the keys are the linters, the values are a list of packs)
@@ -510,6 +512,7 @@ class LintManager:
                         docker_engine=self._facts["docker_engine"],
                         docker_timeout=docker_timeout,
                         docker_image_flag=docker_image_flag,
+                        docker_image_target=docker_image_target,
                         all_packs=self._all_packs,
                     )
                     results.append(
@@ -601,6 +604,7 @@ class LintManager:
         failure_report: str,
         docker_timeout: int,
         docker_image_flag: str,
+        docker_image_target: str,
         time_measurements_dir: str = None,
     ) -> int:
         """Runs the Lint command on all given packages.
@@ -623,6 +627,7 @@ class LintManager:
             failure_report(str): Path for store failed packs report
             docker_timeout(int): timeout for docker requests
             docker_image_flag(str): indicates the desirable docker image to run lint on
+            docker_image_target(str): The docker image to lint native supported content with
             time_measurements_dir(str): the directory fo exporting the time measurements info
             total_timeout (int): amount of seconds for the task
 
@@ -658,6 +663,16 @@ class LintManager:
         # Detailed packages status
         pkgs_status: dict = {}
 
+        # Check docker image flags are in order
+        if (
+            docker_image_target
+            and docker_image_flag != DockerImageFlagOption.NATIVE_TARGET.value
+        ):
+            raise ValueError(
+                f"Recieved docker image target {docker_image_target} without docker "
+                f"image flag {DockerImageFlagOption.NATIVE_TARGET.value}. Aborting."
+            )
+
         # Skipped lint and test codes
         skipped_code = build_skipped_exit_code(
             no_flake8=no_flake8,
@@ -687,6 +702,7 @@ class LintManager:
             test_xml=test_xml,
             docker_timeout=docker_timeout,
             docker_image_flag=docker_image_flag,
+            docker_image_target=docker_image_target,
             no_pwsh_analyze=no_pwsh_analyze,
             lint_status=lint_status,
             pkgs_status=pkgs_status,

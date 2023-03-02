@@ -502,8 +502,10 @@ def test_is_file_using_unknown_content(
             print(f"*** ERROR *** {current_call[0][0]=}")
 
     found_level = False
-    str_to_search = "[warning]" if is_valid else "[error]"
-    for current_call in logger_warning.call_args_list:
+    str_to_search, logger_to_search = (
+        ("[warning]", logger_warning) if is_valid else ("[error]", logger_info)
+    )
+    for current_call in logger_to_search.call_args_list:
         if (
             type(current_call[0]) == tuple
             and str_to_search in current_call[0][0].lower()
@@ -513,7 +515,7 @@ def test_is_file_using_unknown_content(
     assert found_level
 
     assert_str_in_call_args_list(
-        logger_info.call_args_list,
+        logger_to_search.call_args_list,
         "Content item 'SampleIntegration' using content items: SampleClassifier which"
         " cannot be found in the repository",
     )

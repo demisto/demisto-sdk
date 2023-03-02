@@ -302,12 +302,17 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         )
         assert result.exit_code == 0
 
-    def test_wrong_path(self, pack):
+    def test_wrong_path(self, pack, mocker):
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             pack.create_integration()
             path = os.path.join("Packs", os.path.basename(pack.path), "Integrations")
             result = runner.invoke(main, [FIND_DEPENDENCIES_CMD, "-i", path])
             assert result.exit_code == 1
-            assert "must be formatted as 'Packs/<some pack name>" in result.stdout
-            assert result.stderr == ""
+            assert_strs_in_call_args_list(
+                logger_info.call_args_list,
+                [
+                    "must be formatted as 'Packs/<some pack name>",
+                ],
+            )

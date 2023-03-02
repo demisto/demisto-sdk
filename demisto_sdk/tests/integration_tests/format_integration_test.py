@@ -43,7 +43,11 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     GENERIC_MODULE,
     GENERIC_TYPE,
 )
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import (
+    ChangeCWD,
+    assert_strs_in_call_args_list,
+    str_in_call_args_list,
+)
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -119,7 +123,7 @@ def set_git_test_env(mocker):
 
 @pytest.mark.parametrize("source_yml", BASIC_YML_CONTENTS)
 def test_integration_format_yml_with_no_test_positive(
-    mocker, tmp_path: PosixPath, source_yml: str
+    mocker, monkeypatch, tmp_path: PosixPath, source_yml: str
 ):
     """
     Given
@@ -135,6 +139,8 @@ def test_integration_format_yml_with_no_test_positive(
     -  Ensure 'No tests' is added in the first time
     -  Ensure message is not prompt in the second time
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
 
     source_file, output_file = tmp_path / "source.yml", tmp_path / "output.yml"
     source_path, output_path = str(source_file), str(output_file)
@@ -146,19 +152,24 @@ def test_integration_format_yml_with_no_test_positive(
         result = runner.invoke(
             main, [FORMAT_CMD, "-i", source_path, "-o", output_path, "-at"], input="Y"
         )
-    prompt = (
-        f"The file {source_path} has no test playbooks configured. "
-        f'Do you want to configure it with "No tests"'
-    )
     assert not result.exception
-    assert prompt in result.output
     output_yml = get_dict_from_file(output_path)
     assert output_yml[0].get("tests") == ["No tests (auto formatted)"]
+    message = f'Formatting {output_file} with "No tests"'
+    assert_strs_in_call_args_list(
+        logger_info.call_args_list,
+        [
+            message,
+        ],
+    )
 
     # Running format for the second time should raise no exception and should raise no prompt to the user
     result = runner.invoke(main, [FORMAT_CMD, "-i", output_path, "-y"], input="Y")
     assert not result.exception
-    assert prompt not in result.output
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        message,
+    )
 
 
 @pytest.mark.parametrize("source_yml", BASIC_YML_CONTENTS)
@@ -424,6 +435,7 @@ def test_integration_format_remove_playbook_sourceplaybookid(
     Then
     - Ensure 'sourceplaybookid' was deleted from the yml file.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     monkeypatch.setenv("COLUMNS", "1000")
 
     source_playbook_path = SOURCE_FORMAT_PLAYBOOK_COPY
@@ -440,8 +452,13 @@ def test_integration_format_remove_playbook_sourceplaybookid(
     prompt = f'The file {source_playbook_path} has no test playbooks configured. Do you want to configure it with "No tests"'
     assert result.exit_code == 0
     assert prompt in result.output
-    assert "======= Updating file " in result.stdout
-    assert f"Format Status   on file: {source_playbook_path} - Success" in result.stdout
+    assert_strs_in_call_args_list(
+        logger_info.call_args_list,
+        [
+            "======= Updating file ",
+            f"Format Status   on file: {source_playbook_path} - Success",
+        ],
+    )
     with open(playbook_path) as f:
         yaml_content = yaml.load(f)
         assert "sourceplaybookid" not in yaml_content
@@ -460,7 +477,7 @@ def test_format_on_valid_py(mocker, repo):
     Then
     - Ensure format passes.
     """
-    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
@@ -473,7 +490,7 @@ def test_format_on_valid_py(mocker, repo):
     with ChangeCWD(pack.repo_path):
         with mocker.patch("demisto_sdk.commands.common.logger.set_propagate"):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
+            runner.invoke(
                 main,
                 [
                     FORMAT_CMD,
@@ -486,11 +503,14 @@ def test_format_on_valid_py(mocker, repo):
                 catch_exceptions=True,
             )
 
-    assert "======= Updating file" in result.stdout
-    assert str_in_call_args_list(
-        logger_debug.call_args_list, "Running autopep8 on file"
+    assert_strs_in_call_args_list(
+        logger_info.call_args_list,
+        [
+            "======= Updating file",
+            "Running autopep8 on file",
+            "Success",
+        ],
     )
-    assert "Success" in result.stdout
     assert valid_py == integration.code.read()
 
 
@@ -505,7 +525,7 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
     Then
     - Ensure format passes.
     """
-    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
@@ -516,7 +536,7 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(
+        runner.invoke(
             main,
             [
                 FORMAT_CMD,
@@ -529,11 +549,14 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
             catch_exceptions=False,
         )
 
-    assert "======= Updating file" in result.stdout
-    assert str_in_call_args_list(
-        logger_debug.call_args_list, "Running autopep8 on file"
+    assert_strs_in_call_args_list(
+        logger_info.call_args_list,
+        [
+            "======= Updating file",
+            "Running autopep8 on file",
+            "Success",
+        ],
     )
-    assert "Success" in result.stdout
     assert invalid_py != integration.code.read()
 
 
@@ -548,7 +571,7 @@ def test_format_on_invalid_py_dict(mocker, repo):
     Then
     - Ensure format passes.
     """
-    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
@@ -559,7 +582,7 @@ def test_format_on_invalid_py_dict(mocker, repo):
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(
+        runner.invoke(
             main,
             [
                 FORMAT_CMD,
@@ -572,11 +595,14 @@ def test_format_on_invalid_py_dict(mocker, repo):
             catch_exceptions=False,
         )
 
-    assert "======= Updating file" in result.stdout
-    assert str_in_call_args_list(
-        logger_debug.call_args_list, "Running autopep8 on file"
+    assert_strs_in_call_args_list(
+        logger_info.call_args_list,
+        [
+            "======= Updating file",
+            "Running autopep8 on file",
+            "Success",
+        ],
     )
-    assert "Success" in result.stdout
     assert invalid_py != integration.code.read()
 
 
@@ -591,10 +617,8 @@ def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
     Then
     - Ensure format passes.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     monkeypatch.setenv("COLUMNS", "1000")
-
-    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
-
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -607,7 +631,7 @@ def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(
+        runner.invoke(
             main,
             [
                 FORMAT_CMD,
@@ -620,11 +644,14 @@ def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
             catch_exceptions=False,
         )
 
-    assert "======= Updating file" in result.stdout
-    assert str_in_call_args_list(
-        logger_debug.call_args_list, "Running autopep8 on file"
+    assert_strs_in_call_args_list(
+        logger_info.call_args_list,
+        [
+            "======= Updating file",
+            "Running autopep8 on file",
+            "Success",
+        ],
     )
-    assert "Success" in result.stdout
     assert invalid_py != integration.code.read()
 
 
@@ -640,7 +667,7 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo, monkeypatch):
     Then
     - Ensure format passes and that the verbose is off
     """
-
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     monkeypatch.setenv("COLUMNS", "1000")
 
     mocker.patch.object(
@@ -655,7 +682,7 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo, monkeypatch):
     integration.code.write(invalid_py)
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(
+        runner.invoke(
             main,
             [
                 FORMAT_CMD,
@@ -668,9 +695,14 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo, monkeypatch):
             catch_exceptions=False,
         )
 
-    assert "======= Updating file" in result.stdout
-    assert "Running autopep8 on file" not in result.stdout
-    assert "Success" in result.stdout
+    assert_strs_in_call_args_list(
+        logger_info.call_args_list,
+        [
+            "======= Updating file",
+            "Running autopep8 on file",
+            "Success",
+        ],
+    )
     assert invalid_py != integration.code.read()
 
 
@@ -1133,6 +1165,7 @@ def test_format_generic_field_wrong_values(
     - Ensure Format fixed the invalid value of the given generic field.
     - Ensure success message is printed.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -1157,9 +1190,14 @@ def test_format_generic_field_wrong_values(
             ],
             catch_exceptions=False,
         )
-        assert "Setting fromVersion field" in result.stdout
-        assert "Success" in result.stdout
-        assert f"======= Updating file {generic_field_path}" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "Setting fromVersion field",
+                f"======= Updating file {generic_field_path}",
+                "Success",
+            ],
+        )
         assert result.exit_code == 0
 
         # check that sdk format did change the wrong fromVersion to '6.5.0':
@@ -1180,6 +1218,7 @@ def test_format_generic_field_missing_from_version_key(mocker, repo):
     - Ensure Format fixed the given generic field - fromVersion field was added and it's value is 6.5.0
     - Ensure success message is printed.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -1205,9 +1244,14 @@ def test_format_generic_field_missing_from_version_key(mocker, repo):
             ],
             catch_exceptions=False,
         )
-        assert "Setting fromVersion field" in result.stdout
-        assert "Success" in result.stdout
-        assert f"======= Updating file {generic_field_path}" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "Setting fromVersion field",
+                "Success",
+                f"======= Updating file {generic_field_path}",
+            ],
+        )
         assert result.exit_code == 0
 
         # check that sdk format did add a fromVersion key with '6.5.0' as a value:
@@ -1228,6 +1272,7 @@ def test_format_generic_type_wrong_from_version(mocker, repo):
     - Ensure Format fixed the invalid value of the given generic type.
     - Ensure success message is printed.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -1253,9 +1298,14 @@ def test_format_generic_type_wrong_from_version(mocker, repo):
             ],
             catch_exceptions=False,
         )
-        assert "Setting fromVersion field" in result.stdout
-        assert "Success" in result.stdout
-        assert f"======= Updating file {generic_type_path}" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "Setting fromVersion field",
+                "Success",
+                f"======= Updating file {generic_type_path}",
+            ],
+        )
         assert result.exit_code == 0
 
         # check that sdk format did change the wrong fromVersion to '6.5.0':
@@ -1276,6 +1326,7 @@ def test_format_generic_type_missing_from_version_key(mocker, repo):
     - Ensure Format fixed the given generic type - fromVersion field was added and it's value is 6.5.0
     - Ensure success message is printed.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -1301,9 +1352,14 @@ def test_format_generic_type_missing_from_version_key(mocker, repo):
             ],
             catch_exceptions=False,
         )
-        assert "Setting fromVersion field" in result.stdout
-        assert "Success" in result.stdout
-        assert f"======= Updating file {generic_type_path}" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "Setting fromVersion field",
+                "Success",
+                f"======= Updating file {generic_type_path}",
+            ],
+        )
         assert result.exit_code == 0
 
         # check that sdk format did add a fromVersion key with '6.5.0' as a value:
@@ -1324,6 +1380,7 @@ def test_format_generic_module_wrong_from_version(mocker, repo):
     - Ensure Format fixed the invalid value of the given generic module.
     - Ensure success message is printed.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -1348,9 +1405,14 @@ def test_format_generic_module_wrong_from_version(mocker, repo):
             ],
             catch_exceptions=False,
         )
-        assert "Setting fromVersion field" in result.stdout
-        assert "Success" in result.stdout
-        assert f"======= Updating file {generic_module_path}" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "Setting fromVersion field",
+                "Success",
+                f"======= Updating file {generic_module_path}",
+            ],
+        )
         assert result.exit_code == 0
 
         # check that sdk format did change the wrong fromVersion to '6.5.0':
@@ -1371,6 +1433,7 @@ def test_format_generic_module_missing_from_version_key(mocker, repo):
     - Ensure Format fixed the given generic module - fromVersion field was added and it's value is 6.5.0
     - Ensure success message is printed.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -1396,9 +1459,14 @@ def test_format_generic_module_missing_from_version_key(mocker, repo):
             ],
             catch_exceptions=False,
         )
-        assert "Setting fromVersion field" in result.stdout
-        assert "Success" in result.stdout
-        assert f"======= Updating file {generic_module_path}" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "Setting fromVersion field",
+                "Success",
+                f"======= Updating file {generic_module_path}",
+            ],
+        )
         assert result.exit_code == 0
 
         # check that sdk format did add a fromVersion key with '6.5.0' as a value:
@@ -1419,6 +1487,7 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
     - Ensure Format fixed the invalid value of the given generic definition.
     - Ensure success message is printed.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -1443,9 +1512,14 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
             ],
             catch_exceptions=False,
         )
-        assert "Setting fromVersion field" in result.stdout
-        assert "Success" in result.stdout
-        assert f"======= Updating file {generic_definition_path}" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "Setting fromVersion field",
+                "Success",
+                f"======= Updating file {generic_definition_path}",
+            ],
+        )
         assert result.exit_code == 0
 
         # check that sdk format did change the wrong fromVersion to '6.5.0':
@@ -1469,6 +1543,7 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
     - Ensure Format fixed the given generic definition - fromVersion field was added and it's value is 6.5.0
     - Ensure success message is printed.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -1494,9 +1569,14 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
             ],
             catch_exceptions=False,
         )
-        assert "Setting fromVersion field" in result.stdout
-        assert "Success" in result.stdout
-        assert f"======= Updating file {generic_definition_path}" in result.stdout
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "Setting fromVersion field",
+                "Success",
+                f"======= Updating file {generic_definition_path}",
+            ],
+        )
         assert result.exit_code == 0
 
         # check that sdk format did add a fromVersion key with '6.5.0' as a value:

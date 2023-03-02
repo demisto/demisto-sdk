@@ -35,7 +35,9 @@ def set_environment_variables(monkeypatch):
     monkeypatch.delenv("DEMISTO_PASSWORD", raising=False)
 
 
-def test_integration_run_non_existing_command(mocker, set_environment_variables):
+def test_integration_run_non_existing_command(
+    mocker, monkeypatch, set_environment_variables
+):
     """
     Given
     - Non-existing command to run.
@@ -47,6 +49,7 @@ def test_integration_run_non_existing_command(mocker, set_environment_variables)
     Then
     - Ensure output is the appropriate error.
     """
+    monkeypatch.setenv("COLUMNS", "1000")
     mocker.patch.object(DefaultApi, "investigation_add_entries_sync", return_value=None)
     mocker.patch.object(Runner, "_get_playground_id", return_value="pg_id")
     result = CliRunner(mix_stderr=False,).invoke(
@@ -64,7 +67,7 @@ def test_integration_run_non_existing_command(mocker, set_environment_variables)
     assert not result.stderr
 
 
-def test_json_to_outputs_flag(mocker, set_environment_variables):
+def test_json_to_outputs_flag(mocker, monkeypatch, set_environment_variables):
     """
     Given
     - kl-get-components command
@@ -75,6 +78,7 @@ def test_json_to_outputs_flag(mocker, set_environment_variables):
     Then
     - Ensure the json_to_outputs command is running correctly
     """
+    monkeypatch.setenv("COLUMNS", "1000")
     # mocks to allow the command to run locally
     mocker.patch.object(Runner, "_get_playground_id", return_value="pg_id")
     mocker.patch.object(Runner, "_run_query", return_value=["123"])
@@ -92,7 +96,9 @@ def test_json_to_outputs_flag(mocker, set_environment_variables):
     assert not run_result.stderr
 
 
-def test_json_to_outputs_flag_fail_no_prefix(mocker, set_environment_variables):
+def test_json_to_outputs_flag_fail_no_prefix(
+    mocker, monkeypatch, set_environment_variables
+):
     """
     Given
     - kl-get-components command
@@ -103,6 +109,7 @@ def test_json_to_outputs_flag_fail_no_prefix(mocker, set_environment_variables):
     Then
     - Ensure the json_to_outputs command is failing due to no prefix argument provided.
     """
+    monkeypatch.setenv("COLUMNS", "1000")
     # mocks to allow the command to run locally
     mocker.patch.object(Runner, "_get_playground_id", return_value="pg_id")
     mocker.patch.object(Runner, "_run_query", return_value=["123"])

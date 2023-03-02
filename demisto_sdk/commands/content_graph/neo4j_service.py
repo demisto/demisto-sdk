@@ -133,7 +133,7 @@ def start():
     try:
         _docker_start()
     except Exception as e:
-        logger.debug(f"Could not start neo4j container, deleting data folder and trying again. {e}")
+        logger.debug(f"Could not start neo4j container, delete data folder and trying again. {e}")
         shutil.rmtree(REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER)
         _docker_start()
 

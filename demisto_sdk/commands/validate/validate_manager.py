@@ -1315,7 +1315,9 @@ class ValidateManager:
             logger.info(f"*** after adding validate_no_missing_release_notes")
 
         logger.info(f"*** Before all(validation_results)")
-        return all(validation_results)
+        ret_value = all(validation_results)
+        logger.info(f"*** After all(validation_results)")
+        return ret_value
 
     """ ######################################## Unique Validations ####################################### """
 

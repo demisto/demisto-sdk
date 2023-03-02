@@ -562,7 +562,7 @@ class Downloader:
             logger.info(
                 "\nThe following files are available to be downloaded from Demisto instance:\n"
             )
-            print(tabulate(list_files, headers=["FILE NAME", "FILE TYPE"]))
+            logger.info(tabulate(list_files, headers=["FILE NAME", "FILE TYPE"]))
             return True
         return False
 

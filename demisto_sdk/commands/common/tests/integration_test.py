@@ -2128,6 +2128,26 @@ class TestIsFeedParamsExist:
             self.validator.all_feed_params_exist() is True
         ), "all_feed_params_exist() returns False instead True for feedReputation param"
 
+    def test_section_field_feed(self):
+        """
+        Given:
+        - Parameters of feed integration, where one parameter as a 'section: collect' property.
+
+        When:
+        - Integration has all feed required params and running all_feed_params_exist on it.
+
+        Then:
+        - Ensure that all_feed_params_exists() returns true,
+            which means validation did not fail on the additional section field.
+        """
+        configuration = self.validator.current_file["configuration"]
+        for item in configuration:
+            if item.get("name") == "feedReputation":
+                item["section"] = "Collect"
+        assert (
+            self.validator.all_feed_params_exist() is True
+        ), "all_feed_params_exist() returns False instead True for feedReputation param"
+
     def test_additional_info_contained(self):
         """
         Given:

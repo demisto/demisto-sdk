@@ -609,7 +609,14 @@ def zip_packs(**kwargs) -> int:
 @pass_config
 def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
+    from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
+
+    logging_setup(
+        1,  # type: ignore[arg-type]
+        log_path=os.getenv("ARTIFACTS_FOLDER"),
+        log_file_name="validate.log",
+    )  # type: ignore[arg-type]
 
     run_with_mp = not kwargs.pop("no_multiprocessing")
     check_configuration_file("validate", kwargs)

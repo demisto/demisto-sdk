@@ -237,7 +237,8 @@ def format_manager(
 
     print("")  # Just adding a new line before summary
     for string, print_color in log_list:
-        logger.info("\n".join(string), print_color)
+        joined_string = "\n".join(string)
+        logger.info(f"[{print_color}]{joined_string}[/{print_color}]")
 
     if error_list:
         return 1

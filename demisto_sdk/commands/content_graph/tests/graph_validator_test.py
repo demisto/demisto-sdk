@@ -481,6 +481,7 @@ def test_is_file_using_unknown_content(
     - Check whether the graph is valid or not, based on whether the integration file path was provided
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
     if should_provide_integration_path:
         git_files = [repository.packs[0].content_items.integration[0].path.as_posix()]
     else:
@@ -493,7 +494,7 @@ def test_is_file_using_unknown_content(
     # assert "[warning]" in caplog.text.lower() if is_valid else "[error]"
     found_level = False
     str_to_search = "[warning]" if is_valid else "[error]"
-    for current_call in logger_info.call_args_list:
+    for current_call in logger_warning.call_args_list:
         if (
             type(current_call[0]) == tuple
             and str_to_search in current_call[0][0].lower()

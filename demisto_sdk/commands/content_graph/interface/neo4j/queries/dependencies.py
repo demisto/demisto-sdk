@@ -74,14 +74,13 @@ def delete_deprecatedcontent_relationship(tx: Transaction) -> None:
 MATCH (source) - [r:{RelationshipType.USES}] -> (target) - [:{RelationshipType.IN_PACK}] ->
 (:{ContentType.PACK}{{object_id: "{DEPRECATED_CONTENT_PACK}"}})
 DELETE r
-RETURN source.node_id AS source, target.node_id AS target, type(r) AS r"""
+RETURN source.node_id AS source, target.node_id AS target"""
     result = run_query(tx, query).data()
     for row in result:
         source = row["source"]
         target = row["target"]
-        relationship = row["r"]
         logger.debug(
-            f"Deleted relationship {relationship} between {source} and {target}"
+            f"Deleted relationship USES between {source} and {target}"
         )
 
 

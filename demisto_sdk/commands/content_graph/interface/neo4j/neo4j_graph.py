@@ -341,10 +341,12 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.write_transaction(create_nodes, nodes)
             session.write_transaction(remove_empty_properties)
 
-    def get_unknown_content_uses(self, file_paths: List[str]) -> List[BaseContent]:
+    def get_unknown_content_uses(
+        self, file_paths: List[str], raises_error: bool
+    ) -> List[BaseContent]:
         with self.driver.session() as session:
             results: Dict[int, Neo4jRelationshipResult] = session.read_transaction(
-                validate_unknown_content, file_paths
+                validate_unknown_content, file_paths, raises_error
             )
             self._add_nodes_to_mapping(result.node_from for result in results.values())
             self._add_relationships_to_objects(session, results)

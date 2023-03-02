@@ -513,6 +513,7 @@ class LintManager:
                         docker_timeout=docker_timeout,
                         docker_image_flag=docker_image_flag,
                         docker_image_target=docker_image_target,
+                        all_packs=self._all_packs,
                     )
                     results.append(
                         executor.submit(

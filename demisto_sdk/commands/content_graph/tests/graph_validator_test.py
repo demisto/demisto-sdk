@@ -482,6 +482,7 @@ def test_is_file_using_unknown_content(
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     if should_provide_integration_path:
         git_files = [repository.packs[0].content_items.integration[0].path.as_posix()]
     else:
@@ -489,6 +490,16 @@ def test_is_file_using_unknown_content(
     with GraphValidator(should_update=False, git_files=git_files) as graph_validator:
         create_content_graph(graph_validator.graph)
         assert graph_validator.is_file_using_unknown_content() == is_valid
+
+    for current_call in logger_info.call_args_list:
+        if type(current_call[0]) == tuple:
+            print(f"*** INFO *** {current_call[0][0]=}")
+    for current_call in logger_warning.call_args_list:
+        if type(current_call[0]) == tuple:
+            print(f"*** WARNING *** {current_call[0][0]=}")
+    for current_call in logger_error.call_args_list:
+        if type(current_call[0]) == tuple:
+            print(f"*** ERROR *** {current_call[0][0]=}")
 
     found_level = False
     str_to_search = "[warning]" if is_valid else "[error]"

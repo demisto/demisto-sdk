@@ -4,7 +4,7 @@ from multiprocessing import Pool
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
-from neo4j import GraphDatabase, Driver, Session, graph
+from neo4j import Driver, GraphDatabase, Session, graph
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions

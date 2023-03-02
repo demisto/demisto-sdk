@@ -4,7 +4,7 @@ from multiprocessing import Pool
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
-from neo4j import GraphDatabase, Neo4jDriver, Session, graph
+from neo4j import GraphDatabase, Driver, Session, graph
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -119,7 +119,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             neo4j_service.start()
         self._rels_to_preserve: List[Dict[str, Any]] = []  # used for graph updates
 
-        self.driver: Neo4jDriver = GraphDatabase.driver(
+        self.driver: Driver = GraphDatabase.driver(
             NEO4J_DATABASE_URL,
             auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
         )
@@ -212,8 +212,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             nodes_to (List[graph.Node]): The list of nodes of the target
         """
         for node_to, rel in zip(nodes_to, relationships):
+            if not rel.start_node or not rel.end_node:
+                raise ValueError("Relationships must have start and end nodes")
             obj.add_relationship(
-                rel.type,
+                RelationshipType(rel.type),
                 RelationshipData(
                     relationship_type=rel.type,
                     source_id=rel.start_node.id,
@@ -228,7 +230,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self,
         session: Session,
         marketplace: MarketplaceVersions,
-        pack_nodes: Iterable[graph.Node],
+        pack_node_ids: Iterable[int],
     ):
         """Helper method to add all level dependencies
 
@@ -240,7 +242,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         mandatorily_dependencies: Dict[
             int, Neo4jRelationshipResult
         ] = session.execute_read(
-            get_all_level_packs_dependencies, pack_nodes, marketplace, True
+            get_all_level_packs_dependencies, pack_node_ids, marketplace, True
         )
         nodes_to = []
         for pack_depends_on_relationship in mandatorily_dependencies.values():
@@ -533,7 +535,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             try:
                 tx = session.begin_transaction()
-                tx.run(tx, query, **kwargs)
+                tx.run(query, **kwargs)
                 tx.commit()
                 tx.close()
             except Exception as e:

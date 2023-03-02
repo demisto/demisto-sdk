@@ -246,9 +246,7 @@ class BaseValidator:
             or warning
         ):
             if self.print_as_warnings or warning:
-                logger.warning(
-                    "[yellow]" + formatted_error_str("WARNING") + "[/yellow]"
-                )
+                logger.warning('[yellow]{formatted_error_str("WARNING")}[/yellow]')
                 self.json_output(file_path, error_code, error_message, warning)
                 self.add_to_report_error_list(
                     error_code, file_path, FOUND_FILES_AND_IGNORED_ERRORS
@@ -257,7 +255,7 @@ class BaseValidator:
 
         formatted_error = formatted_error_str("ERROR")
         if suggested_fix and not is_error_not_allowed_in_pack_ignore:
-            logger.info("[red]" + formatted_error[:-1] + "[/red]")
+            logger.info(f"[red]{formatted_error[:-1]}[/red]")
             if error_code == "ST109":
                 logger.info("[red]Please add to the root of the yml.[/red]\n")
             elif error_code == "ST107":
@@ -267,10 +265,10 @@ class BaseValidator:
                     f"[red]Please add the field {missing_field} to the path: {path_to_add} in the yml.[/red]\n"
                 )
             else:
-                logger.info("[red]" + suggested_fix + "[/red]\n")
+                logger.info(f"[red]{suggested_fix}[/red]\n")
 
         else:
-            logger.info("[red]" + formatted_error + "[/red]")
+            logger.info(f"[red]{formatted_error}[/red]")
 
         self.json_output(file_path, error_code, error_message, warning)
         self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_ERRORS)

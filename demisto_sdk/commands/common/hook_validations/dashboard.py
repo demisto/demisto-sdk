@@ -97,7 +97,7 @@ class DashboardValidator(ContentEntityValidator):
                             is_valid = False
                             error_msg += formatted_message
         if error_msg:
-            logger.info("[red]" + error_msg + "[/red]")
+            logger.info(f"[red]{error_msg}[/red]")
         return is_valid
 
     @error_codes("DA101,WD101")
@@ -141,5 +141,5 @@ class DashboardValidator(ContentEntityValidator):
                             is_valid = False
                             error_msg += formatted_message
         if error_msg:
-            logger.info("[red]" + error_msg + "[/red]")
+            logger.info(f"[red]{error_msg}[/red]")
         return is_valid

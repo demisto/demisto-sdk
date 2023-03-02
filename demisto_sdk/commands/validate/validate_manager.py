@@ -1897,7 +1897,7 @@ class ValidateManager:
             self.id_set_validations
         )
         if pack_errors:
-            logger.info("[red]" + pack_errors + "[/red]")
+            logger.info(f"[red]{pack_errors}[/red]")
             files_valid = False
 
         # check author image
@@ -1918,7 +1918,8 @@ class ValidateManager:
         )
         is_valid = job_validator.is_valid_file()
         if not is_valid:
-            logger.info("[red]" + job_validator.get_errors() + "[/red]")
+            job_validator_errors = job_validator.get_errors()
+            logger.info(f"[red]{job_validator_errors}[/red]")
 
         return is_valid
 

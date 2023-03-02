@@ -99,7 +99,7 @@ class YmlSplitter:
         try:
             output_path = self.get_output_path()
         except ValueError as ex:
-            logger.info("[red]" + str(ex) + "[/red]")
+            logger.info(f"[red]{ex}[/red]")
             return 1
         logger.debug(f"Starting migration of: {self.input} to dir: {output_path}")
         output_path.mkdir(parents=True, exist_ok=True)

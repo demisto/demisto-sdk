@@ -1851,7 +1851,7 @@ def generate_test_playbook(**kwargs):
             sys.exit(0)
         sys.exit(1)
     except PlaybookTestsGenerator.InvalidOutputPathError as e:
-        logger.info("[red]" + str(e) + "[/red]")
+        logger.info(f"[red]{e}[/red]")
         return 1
 
 
@@ -2461,7 +2461,7 @@ def find_dependencies(**kwargs):
         )
 
     except ValueError as exp:
-        logger.info("[red]" + str(exp) + "[/red]")
+        logger.info(f"[red]{exp}[/red]")
 
 
 # ====================== postman-codegen ====================== #

@@ -1055,7 +1055,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
             dependency_result = json.dumps(first_level_dependencies, indent=4)
             logger.info(f"[bold]Found dependencies result for {self.pack} pack:[/bold]")
-            logger.info("[bold]" + dependency_result + "[/bold]")
+            logger.info(f"[bold]{dependency_result}[/bold]")
 
             if self.pack in core_pack_list:
                 if not self.validate_core_pack_dependencies(first_level_dependencies):

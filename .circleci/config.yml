@@ -52,7 +52,7 @@ references:
           sudo rm -fv /etc/apt/sources.list.d/github_git-lfs.list.save
 
           wget -O - https://debian.neo4j.com/neotechnology.gpg.key | sudo apt-key add -
-          echo 'deb https://debian.neo4j.com stable 5.5' | sudo tee /etc/apt/sources.list.d/neo4j.list
+          echo 'deb https://debian.neo4j.com stable 5' | sudo tee /etc/apt/sources.list.d/neo4j.list
           sudo apt-get update
           apt list -a neo4j
           sudo apt-get install neo4j

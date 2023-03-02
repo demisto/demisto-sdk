@@ -1,7 +1,7 @@
 import hashlib
 import logging
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 import docker
 import requests
@@ -26,9 +26,7 @@ NEO4J_DATA_FOLDER = "data"
 NEO4J_PLUGINS_FOLDER = "plugins"
 
 # When updating the APOC version, make sure to update the checksum as well
-APOC_URL_VERSIONS = (
-    "https://neo4j.github.io/apoc/versions.json"
-)
+APOC_URL_VERSIONS = "https://neo4j.github.io/apoc/versions.json"
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -87,34 +85,36 @@ def _download_apoc():
     with open(plugins_folder / "apoc.jar", "wb") as f:
         f.write(response.content)
 
+
 def _docker_start():
-        docker_client = init_global_docker_client()
-        _stop_neo4j_service_docker(docker_client)
-        docker_client.containers.run(
-            image=NEO4J_SERVICE_IMAGE,
-            name="neo4j-content",
-            ports={"7474/tcp": 7474, "7687/tcp": 7687, "7473/tcp": 7473},
-            volumes=[
-                f"{REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER}:/{NEO4J_DATA_FOLDER}",
-                f"{REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER}:{LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER}",
-                f"{REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER}:/{NEO4J_PLUGINS_FOLDER}",
-            ],
-            detach=True,
-            environment={
-                "NEO4J_AUTH": f"neo4j/{NEO4J_PASSWORD}",
-                "NEO4J_apoc_export_file_enabled": "true",
-                "NEO4J_apoc_import_file_enabled": "true",
-                "NEO4J_apoc_import_file_use__neo4j__config": "true",
-                "NEO4J_dbms_security_procedures_unrestricted": "apoc.*",
-                "NEO4J_dbms_security_procedures_allowlist": "apoc.*",
-            },
-            healthcheck={
-                "test": f"curl --fail {NEO4J_DATABASE_HTTP} || exit 1",
-                "interval": 5 * 1000000000,
-                "timeout": 15 * 1000000000,
-                "retries": 10,
-            }
-            )
+    docker_client = init_global_docker_client()
+    _stop_neo4j_service_docker(docker_client)
+    docker_client.containers.run(
+        image=NEO4J_SERVICE_IMAGE,
+        name="neo4j-content",
+        ports={"7474/tcp": 7474, "7687/tcp": 7687, "7473/tcp": 7473},
+        volumes=[
+            f"{REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER}:/{NEO4J_DATA_FOLDER}",
+            f"{REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER}:{LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER}",
+            f"{REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER}:/{NEO4J_PLUGINS_FOLDER}",
+        ],
+        detach=True,
+        environment={
+            "NEO4J_AUTH": f"neo4j/{NEO4J_PASSWORD}",
+            "NEO4J_apoc_export_file_enabled": "true",
+            "NEO4J_apoc_import_file_enabled": "true",
+            "NEO4J_apoc_import_file_use__neo4j__config": "true",
+            "NEO4J_dbms_security_procedures_unrestricted": "apoc.*",
+            "NEO4J_dbms_security_procedures_allowlist": "apoc.*",
+        },
+        healthcheck={
+            "test": f"curl --fail {NEO4J_DATABASE_HTTP} || exit 1",
+            "interval": 5 * 1000000000,
+            "timeout": 15 * 1000000000,
+            "retries": 10,
+        },
+    )
+
 
 def start():
     """Starting the neo4j service
@@ -128,12 +128,12 @@ def start():
     # we download apoc only if we are running on docker
     # if the user is running locally he needs to setup apoc manually
     _download_apoc()
-    docker_client = init_global_docker_client()
-    _stop_neo4j_service_docker(docker_client)
     try:
         _docker_start()
     except Exception as e:
-        logger.debug(f"Could not start neo4j container, deleting data folder and trying again. {e}")
+        logger.debug(
+            f"Could not start neo4j container, deleting data folder and try again. {e}"
+        )
         shutil.rmtree(REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER)
         _docker_start()
 

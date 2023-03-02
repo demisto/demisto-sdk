@@ -79,9 +79,7 @@ RETURN source.node_id AS source, target.node_id AS target"""
     for row in result:
         source = row["source"]
         target = row["target"]
-        logger.debug(
-            f"Deleted relationship USES between {source} and {target}"
-        )
+        logger.debug(f"Deleted relationship USES between {source} and {target}")
 
 
 def remove_existing_depends_on_relationships(tx: Transaction) -> None:

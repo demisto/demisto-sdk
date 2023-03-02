@@ -308,9 +308,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 if not self._id_to_obj[result.id].relationships_data
             }
 
-            relationships: Dict[
-                int, Neo4jRelationshipResult
-            ] = session.execute_read(
+            relationships: Dict[int, Neo4jRelationshipResult] = session.execute_read(
                 _match_relationships, nodes_without_relationships, marketplace
             )
             self._add_relationships_to_objects(session, relationships, marketplace)

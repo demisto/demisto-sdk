@@ -796,7 +796,7 @@ def test_print_summary_successfully_uploaded_files(
 
     print_summary(successfully_uploaded_files, [], [])
     expected_upload_summary_title = "\n\nUPLOAD SUMMARY:"
-    expected_successfully_uploaded_files_title = "\nSUCCESSFUL UPLOADS:"
+    expected_successfully_uploaded_files_title = "SUCCESSFUL UPLOADS:"
     expected_successfully_uploaded_files_array = [
         "╒═════════════════════╤═════════════╕",
         "│ NAME                │ TYPE        │",
@@ -836,13 +836,12 @@ def test_print_summary_failed_uploaded_files(demisto_client_configure, mocker):
     failed_uploaded_files = [("SomeScriptName", "Script", "Some Error")]
     print_summary([], [], failed_uploaded_files)
     expected_upload_summary_title = "\n\nUPLOAD SUMMARY:"
-    expected_failed_uploaded_files_title = "\nFAILED UPLOADS:"
+    expected_failed_uploaded_files_title = "FAILED UPLOADS:"
     expected_failed_uploaded_files = """╒════════════════╤════════╤════════════╕
 │ NAME           │ TYPE   │ ERROR      │
 ╞════════════════╪════════╪════════════╡
 │ SomeScriptName │ Script │ Some Error │
-╘════════════════╧════════╧════════════╛
-"""
+╘════════════════╧════════╧════════════╛"""
     # verify exactly 3 calls to secho
     assert logger_info.call_count == 3
     assert_strs_in_call_args_list(
@@ -871,13 +870,12 @@ def test_print_summary_unuploaded_files(demisto_client_configure, mocker):
     unploaded_files = [("SomeScriptName", "Script", "6.0.0", "0.0.0", "5.0.0")]
     print_summary([], unploaded_files, [])
     expected_upload_summary_title = "\n\nUPLOAD SUMMARY:"
-    expected_failed_uploaded_files_title = "\nNOT UPLOADED DUE TO VERSION MISMATCH:"
+    expected_failed_uploaded_files_title = "NOT UPLOADED DUE TO VERSION MISMATCH:"
     expected_failed_uploaded_files = """╒════════════════╤════════╤═════════════════╤═════════════════════╤═══════════════════╕
 │ NAME           │ TYPE   │ XSOAR Version   │ FILE_FROM_VERSION   │ FILE_TO_VERSION   │
 ╞════════════════╪════════╪═════════════════╪═════════════════════╪═══════════════════╡
 │ SomeScriptName │ Script │ 6.0.0           │ 0.0.0               │ 5.0.0             │
-╘════════════════╧════════╧═════════════════╧═════════════════════╧═══════════════════╛
-"""
+╘════════════════╧════════╧═════════════════╧═════════════════════╧═══════════════════╛"""
     # verify exactly 3 calls to secho
     assert logger_info.call_count == 3
     assert_strs_in_call_args_list(
@@ -1053,8 +1051,13 @@ class TestZippedPackUpload:
         status = click.Context(command=upload).invoke(upload, input=input)
 
         # validate
-        status == 1
-        logger_info.call_args_list[1].args == INVALID_ZIP_ERROR.format(path=input)
+        assert status == 1
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                INVALID_ZIP_ERROR.format(path=input),
+            ],
+        )
 
     def test_error_in_disable_pack_verification(self, mocker):
         """
@@ -1468,8 +1471,7 @@ class TestZippedPackUpload:
 
 class TestItemDetacher:
     def test_detach_item(self, mocker):
-        mocker.patch("click.secho")
-        from click import secho
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         mock_api_client(mocker)
         mocker.patch.object(
@@ -1482,8 +1484,13 @@ class TestItemDetacher:
             ItemDetacher(API_CLIENT), file_id="file", file_path="Scripts/file_path"
         )
 
-        assert secho.call_count == 1
-        assert secho.call_args_list[0][0][0] == "\nFile: file was detached"
+        assert logger_info.call_count == 1
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "File: file was detached",
+            ],
+        )
 
     def test_extract_items_from_dir(self, mocker, repo):
         repo = repo.setup_one_pack(name="Pack")

@@ -1034,8 +1034,10 @@ class TestZippedPackUpload:
             == "prev_val"
         )
 
-    @pytest.mark.parametrize(argnames="input", argvalues=[INVALID_ZIP, None])
-    def test_upload_invalid_zip_path(self, mocker, input):
+    @pytest.mark.parametrize(
+        argnames="input, expected_ret_value", argvalues=[(INVALID_ZIP, 1), (None, 1)]
+    )
+    def test_upload_invalid_zip_path(self, mocker, input, expected_ret_value):
         """
         Given:
             - invalid path in the input argument
@@ -1046,13 +1048,13 @@ class TestZippedPackUpload:
         """
         # prepare
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        mock_api_client(mocker)
 
         # run
-        runner = CliRunner()
-        result = runner.invoke(main, ["upload", "-i", INVALID_ZIP])
+        status = click.Context(command=upload).invoke(upload, input=input)
 
         # validate
-        assert result.exit_code == 2
+        assert status == expected_ret_value
         assert_strs_in_call_args_list(
             logger_info.call_args_list,
             [

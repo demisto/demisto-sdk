@@ -5,8 +5,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from shutil import make_archive
 
-import click
-
 from demisto_sdk.commands.common.constants import PACKS_DIR, MarketplaceVersions
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.tools import arg_to_list
@@ -108,9 +106,8 @@ class PacksManager(ArtifactsManager):
                 path = self.content.path / path
 
             if not os.path.exists(path):
-                click.secho(
-                    f"Error: Given input path: {path} does not exist, ignored",
-                    fg="bright_red",
+                logger.info(
+                    f"[bright_red]Error: Given input path: {path} does not exist, ignored[/bright_red]"
                 )
                 continue
 

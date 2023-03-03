@@ -44,7 +44,10 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import get_child_files, get_json, get_yaml
 from demisto_sdk.commands.download.downloader import Downloader
-from TestSuite.test_tools import assert_str_in_call_args_list
+from TestSuite.test_tools import (
+    assert_str_in_call_args_list,
+    assert_strs_in_call_args_list,
+)
 
 yaml = YAML_Handler()
 
@@ -557,18 +560,23 @@ class TestFlagHandlers:
             custom_content_names = [cco["name"] for cco in env.CUSTOM_CONTENT]
             assert ordered(custom_content_names) == ordered(downloader.input_files)
 
-    def test_handle_list_files_flag(self, capsys, tmp_path):
+    def test_handle_list_files_flag(self, tmp_path, mocker):
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         env = Environment(tmp_path)
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader("", "")
             downloader.custom_content_temp_dir = env.CUSTOM_CONTENT_BASE_PATH
             downloader.list_files = True
             answer = downloader.handle_list_files_flag()
-            stdout, _ = capsys.readouterr()
             list_files = [[cco["name"], cco["type"]] for cco in env.CUSTOM_CONTENT]
             for file in list_files:
-                assert file[0] in stdout
-                assert file[1] in stdout
+                assert_strs_in_call_args_list(
+                    logger_info.call_args_list,
+                    [
+                        file[0],
+                        file[1],
+                    ],
+                )
             assert answer
 
     def test_handle_list_files_flag_error(self, mocker, tmp_path):

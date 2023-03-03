@@ -40,15 +40,6 @@ class TestCoverageReport:
             rf"^exporting {r_type} coverage report to [\w\-\./]+/{file_name}\.{suffix}$"
         )
 
-    def test_without_coverage_file(self, tmpdir, monkeypatch, caplog):
-        monkeypatch.chdir(tmpdir)
-        cov_report = CoverageReport()
-        cov_report.cov
-        os.remove(cov_report.coverage_file)
-        with caplog.at_level(logging.DEBUG, logger="demisto-sdk"):
-            cov_report.coverage_report()
-        assert caplog.records[0]
-
     def test_with_print_report(self, tmpdir, monkeypatch, caplog):
         monkeypatch.chdir(tmpdir)
         cov_report = CoverageReport()

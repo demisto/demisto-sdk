@@ -355,7 +355,7 @@ class ValidateManager:
         self.print_ignored_errors_report(self.print_ignored_errors)
 
         if valid:
-            logger.info("[green]\nThe files are valid[/green]")
+            logger.info("\n[green]The files are valid[/green]")
             return 0
 
         else:

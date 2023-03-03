@@ -670,12 +670,6 @@ def validate(config, **kwargs):
     )
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
-    logging_setup(
-        1,  # type: ignore[arg-type]
-        log_path=os.getenv("ARTIFACTS_FOLDER"),
-        log_file_name="validate.log",
-    )  # type: ignore[arg-type]
-
     run_with_mp = not kwargs.pop("no_multiprocessing")
     check_configuration_file("validate", kwargs)
     sys.path.append(config.configuration.env_dir)

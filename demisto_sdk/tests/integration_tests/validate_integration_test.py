@@ -5305,7 +5305,6 @@ class TestBasicValidation:
         - make sure the files are valid and that the errors can be ignored successfully.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         mocker.patch.object(BaseValidator, "check_file_flags", return_value="")
         mocker.patch.object(

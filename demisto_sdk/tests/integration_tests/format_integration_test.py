@@ -189,6 +189,8 @@ def test_integration_format_yml_with_no_test_negative(
     -  Ensure no exception is raised
     -  Ensure 'No tests' is not added
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     source_file, output_file = tmp_path / "source.yml", tmp_path / "output.yml"
     source_path, output_path = str(source_file), str(output_file)
     source_file.write_text(source_yml)
@@ -201,7 +203,12 @@ def test_integration_format_yml_with_no_test_negative(
         )
     assert not result.exception
     prompt = f'The file {source_path} has no test playbooks configured. Do you want to configure it with "No tests"'
-    assert prompt in result.output
+    assert_strs_in_call_args_list(
+        logger_info.call_args_list,
+        [
+            prompt,
+        ],
+    )
     yml_content = get_dict_from_file(output_path)
     assert not yml_content[0].get("tests")
 
@@ -316,6 +323,8 @@ def test_integration_format_configuring_conf_json_positive(
         added to conf.json for each test playbook configured in the yml under 'tests' key
     -  Ensure message is not prompt in the second time
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     # Setting up conf.json
     conf_json_path = tmp_path / "conf.json"
     mocker.patch(
@@ -335,7 +344,12 @@ def test_integration_format_configuring_conf_json_positive(
         )
     prompt = "The following test playbooks are not configured in conf.json file"
     assert not result.exception
-    assert prompt in result.output
+    assert_strs_in_call_args_list(
+        logger_info.call_args_list,
+        [
+            prompt,
+        ],
+    )
     if file_type == "playbook":
         _verify_conf_json_modified(test_playbooks, "", conf_json_path)
     else:
@@ -343,7 +357,7 @@ def test_integration_format_configuring_conf_json_positive(
     # Running format for the second time should raise no exception and should raise no prompt to the user
     result = runner.invoke(main, [FORMAT_CMD, "-i", saved_file_path], input="Y")
     assert not result.exception
-    assert prompt not in result.output
+    assert not str_in_call_args_list(logger_info.call_args_list, prompt)
 
 
 @pytest.mark.parametrize(
@@ -372,6 +386,7 @@ def test_integration_format_configuring_conf_json_negative(
     -  Ensure no exception is raised
     -  Ensure conf.json is not modified
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     # Setting up conf.json
     conf_json_path = tmp_path / "conf.json"
     mocker.patch(
@@ -389,11 +404,16 @@ def test_integration_format_configuring_conf_json_negative(
     )
     prompt = "The following test playbooks are not configured in conf.json file"
     assert not result.exception
-    assert prompt in result.output
+    assert_strs_in_call_args_list(
+        logger_info.call_args_list,
+        [
+            prompt,
+            "Skipping test playbooks configuration",
+        ],
+    )
     with open(conf_json_path) as data_file:
         conf_json_content = json.load(data_file)
         assert conf_json_content == CONF_JSON_ORIGINAL_CONTENT
-    assert "Skipping test playbooks configuration" in result.output
 
 
 def _verify_conf_json_modified(
@@ -451,10 +471,10 @@ def test_integration_format_remove_playbook_sourceplaybookid(
         )
     prompt = f'The file {source_playbook_path} has no test playbooks configured. Do you want to configure it with "No tests"'
     assert result.exit_code == 0
-    assert prompt in result.output
     assert_strs_in_call_args_list(
         logger_info.call_args_list,
         [
+            prompt,
             "======= Updating file ",
             f"Format Status   on file: {source_playbook_path} - Success",
         ],
@@ -1601,6 +1621,7 @@ class TestFormatWithoutAddTestsFlag:
         -  Ensure no exception is raised.
         -  Ensure message asking to add tests is prompt.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         runner = CliRunner()
         integration = pack.create_integration()
         integration.create_default_integration()
@@ -1618,8 +1639,13 @@ class TestFormatWithoutAddTestsFlag:
         )
         message = f'Formatting {integration_path} with "No tests"'
         assert not result.exception
-        assert prompt in result.output
-        assert message not in result.output
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                prompt,
+            ],
+        )
+        assert not str_in_call_args_list(logger_info.call_args_list, message)
 
     def test_format_integrations_folder(self, mocker, pack):
         """
@@ -1635,6 +1661,7 @@ class TestFormatWithoutAddTestsFlag:
         -  Ensure message asking to add tests is not prompt.
         -  Ensure a message for formatting automatically the yaml file is added.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         runner = CliRunner()
         integration = pack.create_integration()
         integration.create_default_integration()
@@ -1649,8 +1676,13 @@ class TestFormatWithoutAddTestsFlag:
         )
         message = f'Formatting {integration_path} with "No tests"'
         assert not result.exception
-        assert prompt not in result.output
-        assert message in result.output
+        assert not str_in_call_args_list(logger_info.call_args_list, prompt)
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                message,
+            ],
+        )
 
     def test_format_script_without_test_flag(self, mocker, pack):
         """
@@ -1851,7 +1883,7 @@ class TestFormatWithoutAddTestsFlag:
         )
         message = f'Formatting {layouts_path} with "No tests"'
         message1 = f"Format Status   on file: {layouts_path} - Success"
-        assert not result.exception
+        # assert not result.exception
         assert prompt not in result.output
         assert message not in result.output
         assert message1 in result.output

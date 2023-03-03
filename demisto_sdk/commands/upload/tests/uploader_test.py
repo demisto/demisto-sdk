@@ -1048,10 +1048,11 @@ class TestZippedPackUpload:
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         # run
-        status = click.Context(command=upload).invoke(upload, input=input)
+        runner = CliRunner()
+        result = runner.invoke(main, ["upload", "-i", INVALID_ZIP])
 
         # validate
-        assert status == 1
+        assert result.exit_code == 2
         assert_strs_in_call_args_list(
             logger_info.call_args_list,
             [

@@ -1,6 +1,5 @@
 import logging
 import os
-import re
 from pathlib import PosixPath
 from typing import List
 
@@ -174,7 +173,7 @@ def test_integration_format_yml_with_no_test_positive(
 
 @pytest.mark.parametrize("source_yml", BASIC_YML_CONTENTS)
 def test_integration_format_yml_with_no_test_negative(
-    mocker, tmp_path: PosixPath, source_yml: str
+    mocker, monkeypatch, tmp_path: PosixPath, source_yml: str
 ):
     """
     Given
@@ -189,7 +188,8 @@ def test_integration_format_yml_with_no_test_negative(
     -  Ensure no exception is raised
     -  Ensure 'No tests' is not added
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+    monkeypatch.setenv("COLUMNS", "1000")
 
     source_file, output_file = tmp_path / "source.yml", tmp_path / "output.yml"
     source_path, output_path = str(source_file), str(output_file)
@@ -202,11 +202,10 @@ def test_integration_format_yml_with_no_test_negative(
             main, [FORMAT_CMD, "-i", source_path, "-o", output_path, "-at"], input="N"
         )
     assert not result.exception
-    prompt = f'The file {source_path} has no test playbooks configured. Do you want to configure it with "No tests"'
     assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+        logger_debug.call_args_list,
         [
-            prompt,
+            f'Not formatting {source_path} with "No tests"',
         ],
     )
     yml_content = get_dict_from_file(output_path)
@@ -323,6 +322,7 @@ def test_integration_format_configuring_conf_json_positive(
         added to conf.json for each test playbook configured in the yml under 'tests' key
     -  Ensure message is not prompt in the second time
     """
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     # Setting up conf.json
@@ -342,13 +342,15 @@ def test_integration_format_configuring_conf_json_positive(
         result = runner.invoke(
             main, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path], input="Y"
         )
-    prompt = "The following test playbooks are not configured in conf.json file"
     assert not result.exception
     assert_strs_in_call_args_list(
         logger_info.call_args_list,
         [
-            prompt,
+            "Added test playbooks to conf.json successfully",
         ],
+    )
+    assert not str_in_call_args_list(
+        logger_debug.call_args_list, "No unconfigured test playbooks"
     )
     if file_type == "playbook":
         _verify_conf_json_modified(test_playbooks, "", conf_json_path)
@@ -357,7 +359,9 @@ def test_integration_format_configuring_conf_json_positive(
     # Running format for the second time should raise no exception and should raise no prompt to the user
     result = runner.invoke(main, [FORMAT_CMD, "-i", saved_file_path], input="Y")
     assert not result.exception
-    assert not str_in_call_args_list(logger_info.call_args_list, prompt)
+    assert str_in_call_args_list(
+        logger_debug.call_args_list, "No unconfigured test playbooks"
+    )
 
 
 @pytest.mark.parametrize(
@@ -402,12 +406,10 @@ def test_integration_format_configuring_conf_json_negative(
     result = runner.invoke(
         main, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path], input="N"
     )
-    prompt = "The following test playbooks are not configured in conf.json file"
     assert not result.exception
     assert_strs_in_call_args_list(
         logger_info.call_args_list,
         [
-            prompt,
             "Skipping test playbooks configuration",
         ],
     )
@@ -455,6 +457,7 @@ def test_integration_format_remove_playbook_sourceplaybookid(
     Then
     - Ensure 'sourceplaybookid' was deleted from the yml file.
     """
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     monkeypatch.setenv("COLUMNS", "1000")
 
@@ -469,14 +472,19 @@ def test_integration_format_remove_playbook_sourceplaybookid(
             [FORMAT_CMD, "-i", source_playbook_path, "-o", playbook_path, "-at"],
             input="N",
         )
-    prompt = f'The file {source_playbook_path} has no test playbooks configured. Do you want to configure it with "No tests"'
+    # prompt = f'The file {source_playbook_path} has no test playbooks configured. Do you want to configure it with "No tests"'
     assert result.exit_code == 0
     assert_strs_in_call_args_list(
         logger_info.call_args_list,
         [
-            prompt,
             "======= Updating file ",
             f"Format Status   on file: {source_playbook_path} - Success",
+        ],
+    )
+    assert_strs_in_call_args_list(
+        logger_debug.call_args_list,
+        [
+            f'Not formatting {source_playbook_path} with "No tests"',
         ],
     )
     with open(playbook_path) as f:
@@ -497,6 +505,7 @@ def test_format_on_valid_py(mocker, repo):
     Then
     - Ensure format passes.
     """
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     mocker.patch.object(
@@ -524,10 +533,15 @@ def test_format_on_valid_py(mocker, repo):
             )
 
     assert_strs_in_call_args_list(
+        logger_debug.call_args_list,
+        [
+            "Running autopep8 on file",
+        ],
+    )
+    assert_strs_in_call_args_list(
         logger_info.call_args_list,
         [
             "======= Updating file",
-            "Running autopep8 on file",
             "Success",
         ],
     )
@@ -545,6 +559,7 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
     Then
     - Ensure format passes.
     """
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     mocker.patch.object(
@@ -573,8 +588,13 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
         logger_info.call_args_list,
         [
             "======= Updating file",
-            "Running autopep8 on file",
             "Success",
+        ],
+    )
+    assert_strs_in_call_args_list(
+        logger_debug.call_args_list,
+        [
+            "Running autopep8 on file",
         ],
     )
     assert invalid_py != integration.code.read()
@@ -591,6 +611,7 @@ def test_format_on_invalid_py_dict(mocker, repo):
     Then
     - Ensure format passes.
     """
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     mocker.patch.object(
@@ -619,8 +640,13 @@ def test_format_on_invalid_py_dict(mocker, repo):
         logger_info.call_args_list,
         [
             "======= Updating file",
-            "Running autopep8 on file",
             "Success",
+        ],
+    )
+    assert_strs_in_call_args_list(
+        logger_debug.call_args_list,
+        [
+            "Running autopep8 on file",
         ],
     )
     assert invalid_py != integration.code.read()
@@ -637,8 +663,10 @@ def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
     Then
     - Ensure format passes.
     """
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     monkeypatch.setenv("COLUMNS", "1000")
+
     mocker.patch.object(
         update_generic, "is_file_from_content_repo", return_value=(False, "")
     )
@@ -668,8 +696,13 @@ def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
         logger_info.call_args_list,
         [
             "======= Updating file",
-            "Running autopep8 on file",
             "Success",
+        ],
+    )
+    assert_strs_in_call_args_list(
+        logger_debug.call_args_list,
+        [
+            "Running autopep8 on file",
         ],
     )
     assert invalid_py != integration.code.read()
@@ -687,6 +720,7 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo, monkeypatch):
     Then
     - Ensure format passes and that the verbose is off
     """
+    logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     monkeypatch.setenv("COLUMNS", "1000")
 
@@ -719,8 +753,13 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo, monkeypatch):
         logger_info.call_args_list,
         [
             "======= Updating file",
-            "Running autopep8 on file",
             "Success",
+        ],
+    )
+    assert_strs_in_call_args_list(
+        logger_debug.call_args_list,
+        [
+            "Running autopep8 on file",
         ],
     )
     assert invalid_py != integration.code.read()
@@ -739,6 +778,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
     - Ensure format passes.
     - Ensure validate passes.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("PackName")
@@ -759,10 +799,9 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
 
     mocker.patch.object(tools, "is_external_repository", return_value=True)
     monkeypatch.setattr("builtins.input", lambda _: "N")
-    success_reg = re.compile("Format Status .+?- Success\n")
     with ChangeCWD(playbook.path):
         runner = CliRunner(mix_stderr=False)
-        result_format = runner.invoke(
+        runner.invoke(
             main,
             [
                 FORMAT_CMD,
@@ -774,7 +813,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
         )
 
         with ChangeCWD(repo.path):
-            result_validate = runner.invoke(
+            runner.invoke(
                 main,
                 [
                     "validate",
@@ -787,12 +826,17 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
                 catch_exceptions=False,
             )
 
-    assert "======= Updating file" in result_format.stdout
-    assert success_reg.search(result_format.stdout)
-    assert "The files are valid" in result_validate.stdout
+    assert_strs_in_call_args_list(
+        logger_info.call_args_list,
+        [
+            "======= Updating file",
+            f"Format Status   on file: {playbook.path}/playbook.yml - Success",
+            "The files are valid",
+        ],
+    )
 
 
-def test_format_integration_skipped_files(repo, mocker):
+def test_format_integration_skipped_files(repo, mocker, monkeypatch):
     """
     Given:
         - Content pack with integration and doc files
@@ -805,23 +849,29 @@ def test_format_integration_skipped_files(repo, mocker):
         - Ensure format runs successfully
         - Ensure format does not run files to be skipped
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+
     pack = repo.create_pack("PackName")
     pack.create_integration("integration")
     pack.create_doc_file()
     mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
 
     runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(
-        main, [FORMAT_CMD, "-i", str(pack.path)], catch_exceptions=False
+    runner.invoke(main, [FORMAT_CMD, "-i", str(pack.path)], catch_exceptions=False)
+
+    assert_strs_in_call_args_list(
+        logger_info.call_args_list,
+        [
+            "======= Updating file",
+            "Success",
+        ],
     )
-
-    assert "======= Updating file" in format_result.stdout
-    assert "Success" in format_result.stdout
     for excluded_file in excluded_files:
-        assert excluded_file not in format_result.stdout
+        assert not str_in_call_args_list(logger_info.call_args_list, excluded_file)
 
 
-def test_format_commonserver_skipped_files(repo, mocker):
+def test_format_commonserver_skipped_files(repo, mocker, monkeypatch):
     """
     Given:
         - Base content pack with CommonServerPython script
@@ -833,12 +883,15 @@ def test_format_commonserver_skipped_files(repo, mocker):
         - Ensure format runs successfully
         - Ensure format does not run files to be skipped
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+
     pack = repo.create_pack("Base")
     pack.create_script("CommonServerPython")
     mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
 
     runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(
+    runner.invoke(
         main,
         [
             FORMAT_CMD,
@@ -848,12 +901,18 @@ def test_format_commonserver_skipped_files(repo, mocker):
         catch_exceptions=False,
     )
 
-    assert "Success" in format_result.stdout
-    assert "CommonServerPython.py" in format_result.stdout
+    assert_strs_in_call_args_list(
+        logger_info.call_args_list,
+        [
+            "Success",
+            "CommonServerPython.py",
+        ],
+    )
+
     commonserver_excluded_files = excluded_files[:]
     commonserver_excluded_files.remove("CommonServerPython.py")
     for excluded_file in commonserver_excluded_files:
-        assert excluded_file not in format_result.stdout
+        assert not str_in_call_args_list(logger_info.call_args_list, excluded_file)
 
 
 def test_format_playbook_without_fromversion_no_preset_flag(repo):
@@ -1096,6 +1155,7 @@ def test_format_incident_type_layout_id(repo, mocker, monkeypatch):
         - Verify layout ID is updated
         - Verify the updated layout ID is also updated in the incident type
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     monkeypatch.setenv("COLUMNS", "1000")
 
     mocker.patch.object(ReadMeValidator, "is_docker_available", return_value=False)
@@ -1143,11 +1203,16 @@ def test_format_incident_type_layout_id(repo, mocker, monkeypatch):
         )
 
     assert format_result.exit_code == 0
-    assert "Success" in format_result.stdout
-    assert f"======= Updating file {pack.path}" in format_result.stdout
-    assert f"======= Updating file {layout.path}" in format_result.stdout
-    assert f"======= Updating file {incident_type.path}" in format_result.stdout
-    assert f"======= Updating file {playbook.yml.path}" in format_result.stdout
+    assert_strs_in_call_args_list(
+        logger_info.call_args_list,
+        [
+            "Success",
+            f"======= Updating file {pack.path}",
+            f"======= Updating file {layout.path}",
+            f"======= Updating file {incident_type.path}",
+            f"======= Updating file {playbook.yml.path}",
+        ],
+    )
 
     with open(layout.path) as layout_file:
         layout_content = json.loads(layout_file.read())
@@ -1621,7 +1686,9 @@ class TestFormatWithoutAddTestsFlag:
         -  Ensure no exception is raised.
         -  Ensure message asking to add tests is prompt.
         """
+        logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
         runner = CliRunner()
         integration = pack.create_integration()
         integration.create_default_integration()
@@ -1633,16 +1700,12 @@ class TestFormatWithoutAddTestsFlag:
         )
 
         result = runner.invoke(main, [FORMAT_CMD, "-i", integration_path, "-at"])
-        prompt = (
-            f"The file {integration_path} has no test playbooks configured."
-            f' Do you want to configure it with "No tests"?'
-        )
         message = f'Formatting {integration_path} with "No tests"'
         assert not result.exception
         assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+            logger_debug.call_args_list,
             [
-                prompt,
+                f'Not formatting {integration_path} with "No tests"',
             ],
         )
         assert not str_in_call_args_list(logger_info.call_args_list, message)
@@ -1684,7 +1747,7 @@ class TestFormatWithoutAddTestsFlag:
             ],
         )
 
-    def test_format_script_without_test_flag(self, mocker, pack):
+    def test_format_script_without_test_flag(self, mocker, monkeypatch, pack):
         """
         Given
         - An script folder.
@@ -1698,6 +1761,9 @@ class TestFormatWithoutAddTestsFlag:
         -  Ensure message asking to add tests is not prompt.
         -  Ensure a message for formatting automatically the yaml file is added.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         runner = CliRunner()
         script = pack.create_script()
         script.create_default_script()
@@ -1706,16 +1772,16 @@ class TestFormatWithoutAddTestsFlag:
         mocker.patch.object(BaseUpdate, "set_default_from_version", return_value=None)
 
         result = runner.invoke(main, [FORMAT_CMD, "-i", script_path])
-        prompt = (
-            f"The file {script_path} has no test playbooks configured."
-            f' Do you want to configure it with "No tests"?'
-        )
         message = f'Formatting {script_path} with "No tests"'
         assert not result.exception
-        assert prompt not in result.output
-        assert message in result.output
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                message,
+            ],
+        )
 
-    def test_format_playbooks_folder(self, pack):
+    def test_format_playbooks_folder(self, mocker, monkeypatch, pack):
         """
         Given
         - A playbooks folder.
@@ -1729,6 +1795,9 @@ class TestFormatWithoutAddTestsFlag:
         -  Ensure message asking to add tests is not prompt.
         -  Ensure a message for formatting automatically the yaml file is added.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         runner = CliRunner()
         playbook = pack.create_playbook()
         playbook.create_default_playbook()
@@ -1736,14 +1805,14 @@ class TestFormatWithoutAddTestsFlag:
         playbooks_path = playbook.yml.path
         playbook.yml.delete_key("tests")
         result = runner.invoke(main, [FORMAT_CMD, "-i", playbooks_path], input="N")
-        prompt = (
-            f"The file {playbooks_path} has no test playbooks configured."
-            f' Do you want to configure it with "No tests"?'
-        )
         message = f'Formatting {playbooks_path} with "No tests"'
         assert not result.exception
-        assert prompt not in result.output
-        assert message in result.output
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                message,
+            ],
+        )
 
         assert playbook.yml.read_dict().get("tests")[0] == "No tests (auto formatted)"
 
@@ -1813,7 +1882,9 @@ class TestFormatWithoutAddTestsFlag:
 
         assert not test_playbook.yml.read_dict().get("tests")
 
-    def test_format_layouts_folder_without_add_tests_flag(self, repo):
+    def test_format_layouts_folder_without_add_tests_flag(
+        self, mocker, monkeypatch, repo
+    ):
         """
         Given
         - An Layouts folder.
@@ -1826,6 +1897,9 @@ class TestFormatWithoutAddTestsFlag:
         -  Ensure 'No tests' is NOT added to the yaml file.
         -  Ensure NO message for formatting automatically the yaml file is added.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         runner = CliRunner()
         pack = repo.create_pack("PackName")
         layout = pack.create_layoutcontainer(
@@ -1839,19 +1913,19 @@ class TestFormatWithoutAddTestsFlag:
         )
         layouts_path = layout.path
         result = runner.invoke(main, [FORMAT_CMD, "-i", layouts_path, "-y"])
-        prompt = (
-            f"The file {layouts_path} has no test playbooks configured."
-            f' Do you want to configure it with "No tests" '
-        )
         message = f'Formatting {layouts_path} with "No tests"'
         message1 = f"Format Status   on file: {layouts_path} - Success"
 
         assert not result.exception
-        assert prompt not in result.output
-        assert message not in result.output
-        assert message1 in result.output
+        assert not str_in_call_args_list(logger_info.call_args_list, message)
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                message1,
+            ],
+        )
 
-    def test_format_layouts_folder_with_add_tests_flag(self, repo):
+    def test_format_layouts_folder_with_add_tests_flag(self, mocker, monkeypatch, repo):
         """
         Given
         - An Layouts folder.
@@ -1864,6 +1938,9 @@ class TestFormatWithoutAddTestsFlag:
         -  Ensure 'No tests' is NOT added to the yaml file.
         -  Ensure NO message for formatting automatically the yaml file is added.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         runner = CliRunner()
         pack = repo.create_pack("PackName")
         layout = pack.create_layoutcontainer(
@@ -1877,13 +1954,13 @@ class TestFormatWithoutAddTestsFlag:
         )
         layouts_path = layout.path
         result = runner.invoke(main, [FORMAT_CMD, "-i", layouts_path, "-at", "-y"])
-        prompt = (
-            f"The file {layouts_path} has no test playbooks configured."
-            f' Do you want to configure it with "No tests" '
-        )
         message = f'Formatting {layouts_path} with "No tests"'
         message1 = f"Format Status   on file: {layouts_path} - Success"
-        # assert not result.exception
-        assert prompt not in result.output
-        assert message not in result.output
-        assert message1 in result.output
+        assert not result.exception
+        assert not str_in_call_args_list(logger_info.call_args_list, message)
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                message1,
+            ],
+        )

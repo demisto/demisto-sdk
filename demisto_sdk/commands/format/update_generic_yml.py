@@ -256,6 +256,8 @@ class BaseUpdateYML(BaseUpdate):
                 if should_modify_yml_tests:
                     logger.info(f'Formatting {self.output_file} with "No tests"')
                     self.data["tests"] = ["No tests (auto formatted)"]
+                else:
+                    logger.debug(f'Not formatting {self.source_file} with "No tests"')
 
     def update_conf_json(self, file_type: str) -> None:
         """
@@ -304,6 +306,8 @@ class BaseUpdateYML(BaseUpdate):
                 logger.info("Added test playbooks to conf.json successfully")
             else:
                 logger.info("Skipping test playbooks configuration")
+        else:
+            logger.debug("No unconfigured test playbooks")
 
     def _save_to_conf_json(self, conf_json_content: Dict) -> None:
         """Save formatted JSON data to destination file."""

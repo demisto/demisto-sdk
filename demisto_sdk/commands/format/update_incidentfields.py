@@ -50,9 +50,8 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[bright_blue]================= Updating file {self.source_file} =================[/bright_blue]"
             )
             super().update_json()
             self.format_marketplaces_field_of_aliases()
@@ -90,9 +89,8 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
 
                 if len(marketplaces) != 1 or marketplaces[0] != "xsoar":
                     alias_field["marketplaces"] = ["xsoar"]
-                    click.secho(
-                        f"\n================= Updating file {alias_field_file_path} =================",
-                        fg="bright_blue",
+                    logger.info(
+                        f"\n[bright_blue]================= Updating file {alias_field_file_path} =================[/bright_blue]"
                     )
                     self._save_alias_field_file(
                         dest_file_path=alias_field_file_path, field_data=alias_field

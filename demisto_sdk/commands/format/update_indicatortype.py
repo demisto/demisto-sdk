@@ -1,8 +1,6 @@
 import logging
 from typing import Tuple
 
-import click
-
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
@@ -41,9 +39,8 @@ class IndicatorTypeJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[bright_blue]================= Updating file {self.source_file} =================[/bright_blue]"
             )
             super().update_json()
             self.set_default_values_as_needed()

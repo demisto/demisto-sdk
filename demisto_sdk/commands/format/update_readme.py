@@ -1,8 +1,6 @@
 import logging
 from typing import Optional, Tuple
 
-import click
-
 from demisto_sdk.commands.common.hook_validations.readme import (
     ReadmeUrl,
     get_relative_urls,
@@ -52,7 +50,7 @@ class ReadmeFormat(BaseUpdate):
         old_link = relative_url.get_full_link()
         new_link = relative_url.get_new_link(new_url)
         self.readme_content = str.replace(self.readme_content, old_link, new_link)
-        click.secho(f"Replaced {relative_url.get_url()} with {new_url}")
+        logger.info(f"Replaced {relative_url.get_url()} with {new_url}")
 
     def get_new_url_from_user(self, readme_url: ReadmeUrl) -> Optional[str]:
         """Given we found a relative url, the user has the following options-
@@ -71,18 +69,16 @@ class ReadmeFormat(BaseUpdate):
         if self.assume_yes:
             return f"https://{old_url}"
         else:
-            click.secho(
-                f"Should https:// be added to the following address? [Y/n]\n {readme_url.get_url()}",
-                fg="red",
+            logger.info(
+                f"[red]Should https:// be added to the following address? [Y/n]\n {readme_url.get_url()}[/red]"
             )
             user_answer = input()
             if user_answer.lower()[0] == "y":
                 new_address = f"https://{old_url}"
             else:
-                click.secho(
-                    "Would you like to change the relative address to something else?\n"
-                    " Enter the new address or leave empty to skip:",
-                    fg="red",
+                logger.info(
+                    "[red]Would you like to change the relative address to something else?\n"
+                    " Enter the new address or leave empty to skip:[/red]"
                 )
                 user_answer = input()
                 if user_answer and user_answer.lower() not in ["n", "no"]:
@@ -100,9 +96,8 @@ class ReadmeFormat(BaseUpdate):
         relative_urls = get_relative_urls(self.readme_content)
 
         if relative_urls:
-            click.secho(
-                "Relative urls were found and are not supported within README.",
-                fg="red",
+            logger.info(
+                "[red]Relative urls were found and are not supported within README.[/red]"
             )
         for url in relative_urls:
             new_address = self.get_new_url_from_user(url)
@@ -119,9 +114,8 @@ class ReadmeFormat(BaseUpdate):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} ================= ",
-                fg="bright_blue",
+            logger.info(
+                f"\n[bright_blue]================= Updating file {self.source_file} =================[/bright_blue]"
             )
             self.relative_url_format()
             self.fix_lint_markdown()
@@ -156,9 +150,9 @@ class ReadmeFormat(BaseUpdate):
                         f"markdown validations for file {self.source_file}.\n{response.validations}[/yellow]"
                     )
                 if response.fixed_text and response.fixed_text != self.readme_content:
-                    click.secho(f"Received markdown fixes for file {self.source_file}")
+                    logger.info(f"Received markdown fixes for file {self.source_file}")
                     self.readme_content = response.fixed_text
             else:
-                click.secho(f"Markdownlint skipping {self.source_file} with no content")
+                logger.info(f"Markdownlint skipping {self.source_file} with no content")
         else:
-            click.secho("Skipping markdownlint as node server is not up")
+            logger.info("Skipping markdownlint as node server is not up")

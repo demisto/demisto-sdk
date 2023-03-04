@@ -42,9 +42,8 @@ class IncidentTypesJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[bright_blue]================= Updating file {self.source_file} =================[/bright_blue]"
             )
             super().update_json()
             self.format_auto_extract_mode()

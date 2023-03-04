@@ -2,8 +2,6 @@ import logging
 import re
 from typing import Tuple
 
-import click
-
 from demisto_sdk.commands.common.constants import BETA_INTEGRATION_DISCLAIMER
 from demisto_sdk.commands.common.tools import find_type
 from demisto_sdk.commands.format.format_constants import (
@@ -78,9 +76,8 @@ class DescriptionFormat(BaseUpdate):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} ================= ",
-                fg="bright_blue",
+            logger.info(
+                f"\n[bright_blue]================= Updating file {self.source_file} =================[/bright_blue]"
             )
             self.remove_community_partner_details()
             if self.is_beta:

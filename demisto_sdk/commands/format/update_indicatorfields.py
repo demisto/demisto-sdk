@@ -1,8 +1,6 @@
 import logging
 from typing import Tuple
 
-import click
-
 from demisto_sdk.commands.common.constants import INDICATOR_FIELD_TYPE_TO_MIN_VERSION
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
@@ -35,9 +33,8 @@ class IndicatorFieldJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[bright_blue]================= Updating file {self.source_file} =================[/bright_blue]"
             )
             self.update_from_version()
             super().update_json()

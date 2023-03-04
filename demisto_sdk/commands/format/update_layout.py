@@ -87,9 +87,8 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[bright_blue]================= Updating file {self.source_file} =================[/bright_blue]"
             )
             if self.is_container:
                 self.layoutscontainer__run_format()

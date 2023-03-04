@@ -1,8 +1,6 @@
 import logging
 from typing import Tuple
 
-import click
-
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
@@ -41,9 +39,8 @@ class ReportJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[bright_blue]================= Updating file {self.source_file} =================[/bright_blue]"
             )
             self.update_json()
             self.set_description()
@@ -72,9 +69,8 @@ class ReportJSONFormat(BaseUpdateJSON):
         """
         if not self.data.get("type"):
             if self.interactive:
-                click.secho(
-                    "No type is specified for this report, would you like me to update for you? [Y/n]",
-                    fg="red",
+                logger.info(
+                    "[red]No type is specified for this report, would you like me to update for you? [Y/n][/red]"
                 )
                 user_answer = input()
             else:
@@ -100,9 +96,8 @@ class ReportJSONFormat(BaseUpdateJSON):
         ['landscape', 'portrait', '']
         """
         if not self.data.get("orientation"):
-            click.secho(
-                "No orientation is specified for this report, would you like me to update for you? [Y/n]",
-                fg="red",
+            logger.info(
+                "[red]No orientation is specified for this report, would you like me to update for you? [Y/n][/red]"
             )
             user_answer = input()
             # Checks if the user input is no
@@ -112,9 +107,8 @@ class ReportJSONFormat(BaseUpdateJSON):
                 )
                 return
 
-            click.secho(
-                "Please specify the desired orientation: landscape | portrait ",
-                fg="yellow",
+            logger.info(
+                "[yellow]Please specify the desired orientation: landscape | portrait [/yellow]"
             )
             user_desired_orientation = input()
             if user_desired_orientation.lower() in ("landscape", "portrait"):

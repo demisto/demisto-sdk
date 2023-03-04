@@ -1,8 +1,6 @@
 import logging
 from typing import Tuple
 
-import click
-
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
     FileType,
@@ -45,9 +43,8 @@ class GenericTypeJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[bright_blue]================= Updating file {self.source_file} =================[/bright_blue]"
             )
             super().update_json(
                 default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(

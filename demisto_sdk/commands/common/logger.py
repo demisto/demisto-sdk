@@ -2,7 +2,7 @@ import logging
 import logging.config
 from logging.handlers import RotatingFileHandler
 
-from rich.logging import RichHandler
+# from rich.logging import RichHandler
 
 LOG_FILE: str = "./demisto_sdk_debug.log"
 
@@ -29,6 +29,52 @@ def handle_deprecated_args(input_args):
             )
 
 
+escapes = {
+    "[bold]": "\033[0m",
+    "[disable]": "\033[0m",
+    "[underline]": "\033[0m",
+    "[reverse]": "\033[0m",
+    "[strikethrough]": "\033[0m",
+    "[invisible]": "\033[0m",
+    "[/bold]": "\033[01m",
+    "[/disable]": "\033[02m",
+    "[/underline]": "\033[04m",
+    "[/reverse]": "\033[07m",
+    "[/strikethrough]": "\033[09m",
+    "[/invisible]": "\033[08m",
+    "[black]": "\033[30m",
+    "[red]": "\033[31m",
+    "[green]": "\033[32m",
+    "[orange]": "\033[33m",
+    "[blue]": "\033[34m",
+    "[purple]": "\033[35m",
+    "[cyan]": "\033[36m",
+    "[lightgrey]": "\033[37m",
+    "[darkgrey]": "\033[90m",
+    "[lightred]": "\033[91m",
+    "[lightgreen]": "\033[92m",
+    "[yellow]": "\033[93m",
+    "[lightblue]": "\033[94m",
+    "[pink]": "\033[95m",
+    "[lightcyan]": "\033[96m",
+    "[/black]": "\033[0m",
+    "[/red]": "\033[0m",
+    "[/green]": "\033[0m",
+    "[/orange]": "\033[0m",
+    "[/blue]": "\033[0m",
+    "[/purple]": "\033[0m",
+    "[/cyan]": "\033[0m",
+    "[/lightgrey]": "\033[0m",
+    "[/darkgrey]": "\033[0m",
+    "[/lightred]": "\033[0m",
+    "[/lightgreen]": "\033[0m",
+    "[/yellow]": "\033[0m",
+    "[/lightblue]": "\033[0m",
+    "[/pink]": "\033[0m",
+    "[/lightcyan]": "\033[0m",
+}
+
+
 def logging_setup(
     console_log_threshold=logging.INFO,
     file_log_threshold=logging.DEBUG,
@@ -44,16 +90,34 @@ def logging_setup(
         logging.Logger: logger object
     """
 
-    console_handler = RichHandler(
-        level=console_log_threshold,
-        rich_tracebacks=True,
-    )
+    # console_handler = RichHandler(
+    #     level=console_log_threshold,
+    #     rich_tracebacks=True,
+    # )
+    console_handler = logging.StreamHandler()
     console_handler.set_name("console-handler")
     console_handler.setLevel(console_log_threshold)
-    console_formatter = logging.Formatter(
-        fmt="%(message)s",
-        datefmt=DATE_FORMAT,
-    )
+
+    class ColorConsoleFormatter(logging.Formatter):
+        def __init__(
+            self,
+        ):
+            super().__init__(
+                fmt="%(message)s",
+                datefmt=DATE_FORMAT,
+            )
+
+        def format(self, record):
+            message = logging.Formatter.format(self, record)
+            message = self.replace_escapes(message)
+            return message
+
+        def replace_escapes(self, message):
+            for key in escapes:
+                message = message.replace(key, escapes[key])
+            return message
+
+    console_formatter = ColorConsoleFormatter()
     console_handler.setFormatter(fmt=console_formatter)
 
     file_handler = RotatingFileHandler(

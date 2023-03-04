@@ -2566,13 +2566,11 @@ def postman_codegen(
             )
             yml_splitter.extract_to_package_format()
             logger.info(
-                f"Package generated at {str(Path(output).absolute())} successfully",
-                "green",
+                f"[green]Package generated at {str(Path(output).absolute())} successfully[/green]"
             )
         else:
             logger.info(
-                f"Integration generated at {str(yml_path.absolute())} successfully",
-                "green",
+                f"[green]Integration generated at {str(yml_path.absolute())} successfully[/green]"
             )
 
 

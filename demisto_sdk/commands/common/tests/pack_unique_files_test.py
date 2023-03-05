@@ -26,7 +26,11 @@ from demisto_sdk.commands.common.hook_validations.pack_unique_files import (
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import (
+    ChangeCWD,
+    assert_strs_in_call_args_list,
+    str_in_call_args_list,
+)
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -172,7 +176,7 @@ class TestPackUniqueFilesValidator:
         assert fake_validator.are_valid_files(id_set_validations=False)
 
     def test_validate_partner_contribute_pack_metadata_no_mail_and_url(
-        self, mocker, repo
+        self, mocker, monkeypatch, repo
     ):
         """
         Given
@@ -184,6 +188,9 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure validate found errors.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         pack_metadata_no_email_and_url = PACK_METADATA_PARTNER.copy()
         mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
         pack_metadata_no_email_and_url["email"] = ""
@@ -213,10 +220,13 @@ class TestPackUniqueFilesValidator:
         pack.pack_metadata.write_json(pack_metadata_no_email_and_url)
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False
-            )
-        assert "Contributed packs must include email or url" in result.stdout
+            runner.invoke(main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False)
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "Contributed packs must include email or url",
+            ],
+        )
 
     @pytest.mark.parametrize(
         "url, is_valid",
@@ -226,7 +236,9 @@ class TestPackUniqueFilesValidator:
             ("https://github.com/pont_to_repo/issues", True),
         ],
     )
-    def test_validate_partner_pack_metadata_url(self, mocker, repo, url, is_valid):
+    def test_validate_partner_pack_metadata_url(
+        self, mocker, monkeypatch, repo, url, is_valid
+    ):
         """
         Given
         - Partner contributed pack with an is_valid url.
@@ -237,6 +249,9 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure validate finds errors accordingly.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         pack_metadata_changed_url = PACK_METADATA_PARTNER.copy()
         pack_metadata_changed_url["url"] = url
         mocker.patch.object(tools, "is_external_repository", return_value=True)
@@ -265,19 +280,24 @@ class TestPackUniqueFilesValidator:
         pack.pack_metadata.write_json(pack_metadata_changed_url)
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False
-            )
+            runner.invoke(main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False)
 
         error_text = (
             "The metadata URL leads to a GitHub repo instead of a support page."
         )
         if is_valid:
-            assert error_text not in result.stdout
+            assert not str_in_call_args_list(logger_info.call_args_list, error_text)
         else:
-            assert error_text in result.stdout
+            assert_strs_in_call_args_list(
+                logger_info.call_args_list,
+                [
+                    error_text,
+                ],
+            )
 
-    def test_validate_partner_contribute_pack_metadata_price_change(self, mocker, repo):
+    def test_validate_partner_contribute_pack_metadata_price_change(
+        self, mocker, monkeypatch, repo
+    ):
         """
         Given
         - Partner contributed pack where price has changed.
@@ -288,6 +308,9 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure validate found errors.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         pack_metadata_price_changed = PACK_METADATA_PARTNER.copy()
         pack_metadata_price_changed["price"] = 3
         mocker.patch.object(tools, "is_external_repository", return_value=True)
@@ -316,12 +339,12 @@ class TestPackUniqueFilesValidator:
         pack.pack_metadata.write_json(pack_metadata_price_changed)
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(
-                main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False
-            )
-        assert (
-            "The pack price was changed from 2 to 3 - revert the change"
-            in result.stdout
+            runner.invoke(main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False)
+        assert_strs_in_call_args_list(
+            logger_info.call_args_list,
+            [
+                "The pack price was changed from 2 to 3 - revert the change",
+            ],
         )
 
     def test_check_timestamp_format(self):

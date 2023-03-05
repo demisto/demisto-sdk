@@ -2023,7 +2023,7 @@ def generate_docs(**kwargs):
     check_configuration_file("generate-docs", kwargs)
     input_path_str: str = kwargs.get("input", "")
     if not (input_path := Path(input_path_str)).exists():
-        logger.info(f"[red]input {input_path_str} does not exist[/red][/red]")
+        logger.info(f"[red]input {input_path_str} does not exist[/red]")
         return 1
 
     if (output_path := kwargs.get("output")) and not Path(output_path).is_dir():

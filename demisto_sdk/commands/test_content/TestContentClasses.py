@@ -1010,28 +1010,6 @@ class BuildContext:
 
         return res.json()
 
-    def _retrieve_slack_user_id(self):
-        """
-        Gets the user id of the circle user who triggered the current build
-        """
-        user_id = ""
-        try:
-            user_name = (
-                os.getenv("GITLAB_USER_LOGIN") or self._get_user_name_from_circle()
-            )
-            res = self.slack_client.api_call("users.list")
-
-            user_list = res.get("members", [])  # type: ignore
-            for user in user_list:
-                profile = user.get("profile", {})
-                name = profile.get("real_name_normalized", "")
-                if name == user_name:
-                    user_id = user.get("id", "")
-        except Exception as exc:
-            logging.debug(f"failed to retrieve the slack user ID.\nError: {exc}")
-
-        return user_id
-
 
 class TestResults:
     def __init__(self, unmockable_integrations):
@@ -2062,36 +2040,6 @@ class TestContext:
             )
             pid_threshold = max(Docker.DEFAULT_PWSH_CONTAINER_PIDS_USAGE, pid_threshold)
         return memory_threshold, pid_threshold
-
-    def _send_slack_message(self, channel, text, user_name, as_user):
-        self.build_context.slack_client.api_call(
-            "chat.postMessage",
-            json={
-                "channel": channel,
-                "username": user_name,
-                "as_user": as_user,
-                "text": text,
-                "mrkdwn": "true",
-            },
-        )
-
-    def _notify_failed_test(self):
-        text = (
-            f"{self.build_context.build_name} - {self.playbook} Failed\n"
-            f"for more details run: `{self.tunnel_command}` and browse into the following link\n"
-            f"{get_ui_url(self.client.api_client.configuration.host)}"
-        )
-        text += f"/#/WorkPlan/{self.incident_id}" if self.incident_id else ""
-        if self.build_context.slack_user_id:
-            self.build_context.slack_client.api_call(
-                "chat.postMessage",
-                json={
-                    "channel": self.build_context.slack_user_id,
-                    "username": "Content CircleCI",
-                    "as_user": "False",
-                    "text": text,
-                },
-            )
 
     def _add_to_succeeded_playbooks(self) -> None:
         """

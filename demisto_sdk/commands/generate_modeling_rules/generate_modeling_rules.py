@@ -145,33 +145,44 @@ def generate_modeling_rules(
         raise typer.Exit(1)
 
 
-class MappingField:
+class RawEventData:
     def __init__(
-        self,
-        xdm_rule,
-        field_path_raw,
-        xdm_field_type,
-        xdm_class_type,
-        is_array_raw,
-        type_raw,
+            self,
+            field_path_raw,
+            is_array_raw,
+            type_raw,
     ):
         """
-        xdm_rule - The xdm rule
         field_path_raw - the path to the field in the raw event
-        field_type - the field type in the schema.
-        xdm_class_type - xdm rule type
         is_array_raw - is the raw event of type array.
         type_raw - the type of the raw event field.
         """
-        self.xdm_rule = xdm_rule
         self.field_path_raw = field_path_raw
-        self.xdm_field_type = xdm_field_type
-        self.xdm_class_type = xdm_class_type
         self.is_array_raw = is_array_raw
         self.type_raw = type_raw
 
     def create_schema_types(self) -> dict:
         return {"type": self.type_raw, "is_array": self.is_array_raw}
+
+
+class MappingField:
+
+    def __init__(
+        self,
+        xdm_rule,
+        xdm_field_type,
+        xdm_class_type,
+        mapped_to_raw: List[RawEventData]
+    ):
+        """
+        xdm_rule - The xdm rule
+        field_type - the field type in the schema.
+        xdm_class_type - xdm rule type
+        """
+        self.xdm_rule = xdm_rule
+        self.xdm_field_type = xdm_field_type
+        self.xdm_class_type = xdm_class_type
+        self.mapped_to_raw = mapped_to_raw
 
 
 def to_string_wrap(s: str) -> str:
@@ -221,6 +232,17 @@ def snake_to_camel_case(snake_str) -> str:
     return ''.join([name.capitalize() for name in components])
 
 
+def handle_raw_evnet_data(field_paths: str, raw_event: dict) -> List[RawEventData]:
+    field_paths = field_paths.split('|')
+    raw_event_data_list: List[RawEventData] = []
+    for field_path in field_paths:
+        type_raw, is_array_raw = extract_raw_type_data(raw_event, field_path)
+        raw_event_data_list.append(RawEventData(field_path_raw=field_path,
+                                                is_array_raw=is_array_raw, type_raw=type_raw))
+
+    return raw_event_data_list
+
+
 def init_mapping_field_list(
     name_columen: list,
     xdm_one_data_model: list,
@@ -233,18 +255,17 @@ def init_mapping_field_list(
     """
     mapping_list = []
     for (field_name, xdm_field_name) in zip(name_columen, xdm_one_data_model):
-        type_raw, is_array_raw = extract_raw_type_data(raw_event, field_name)
+        raw_event_data_list: List[RawEventData] = handle_raw_evnet_data(field_name, raw_event)
+
         xdm_field_type = xdm_rule_to_dtype.get(xdm_field_name)
         xdm_class_type = xdm_rule_to_dclass.get(xdm_field_name)
 
         mapping_list.append(
             MappingField(
                 xdm_rule=xdm_field_name,
-                field_path_raw=field_name,
                 xdm_field_type=xdm_field_type,
                 xdm_class_type=xdm_class_type,
-                is_array_raw=is_array_raw,
-                type_raw=type_raw,
+                mapped_to_raw=raw_event_data_list
             )
         )
 

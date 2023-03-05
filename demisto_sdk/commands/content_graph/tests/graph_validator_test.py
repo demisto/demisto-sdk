@@ -445,21 +445,46 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, capsy
     )
 
 
-def test_is_file_using_unknown_content(repository: ContentDTO, capsys):
+@pytest.mark.parametrize(
+    "should_provide_integration_path, is_valid",
+    [
+        pytest.param(
+            False,
+            True,
+            id="Not providing git_files - should be valid (raised a warning)",
+        ),
+        pytest.param(
+            True,
+            False,
+            id="providing git_files - should be invalid",
+        ),
+    ],
+)
+def test_is_file_using_unknown_content(
+    capsys,
+    repository: ContentDTO,
+    should_provide_integration_path: bool,
+    is_valid: bool,
+):
     """
     Given
     - A content repo
+    - An integration SampleIntegration's default classifier is set to "SampleClassifier" which does not exist
     When
     - running the vaidation "is_file_using_unknown_content"
     Then
-    - Validate the use of unknown content (Warning)
+    - Check whether the graph is valid or not, based on whether the integration file path was provided
     """
-    with GraphValidator(should_update=False) as graph_validator:
+    if should_provide_integration_path:
+        git_files = [repository.packs[0].content_items.integration[0].path.as_posix()]
+    else:
+        git_files = []
+    with GraphValidator(should_update=False, git_files=git_files) as graph_validator:
         create_content_graph(graph_validator.graph)
-        is_valid = graph_validator.is_file_using_unknown_content()
+        assert graph_validator.is_file_using_unknown_content() == is_valid
 
-    captured = capsys.readouterr().out
-    assert is_valid
+    captured: str = capsys.readouterr().out
+    assert "[warning]" in captured.lower() if is_valid else "[error]"
     assert (
         "Content item 'SampleIntegration' using content items: SampleClassifier which"
         " cannot be found in the repository" in captured

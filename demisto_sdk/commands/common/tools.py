@@ -2657,7 +2657,7 @@ def to_kebab_case(s: str):
         new_s = s.lower()
         new_s = re.sub("[ ,.-]+", "-", new_s)
         new_s = re.sub("[^A-Za-z0-9-]+", "", new_s)
-        m = re.search("[a-z0-9]+(-[a-z]+)*", new_s)
+        m = re.search("[a-z0-9]+(-[a-z0-9]+)*", new_s)
         if m:
             return m.group(0)
         else:
@@ -3496,6 +3496,27 @@ def field_to_cli_name(field_name: str) -> str:
         field_name (str): the incident/indicator field name.
     """
     return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, "", field_name).lower()
+
+
+def extract_field_from_mapping(mapping_value: str) -> str:
+    """Given an outgoing-mapping value, returns the incident/indicator field used for the mapping.
+    If mapping_value is surrounded by quotes ("<>"), it means the mapping value is a string and no field
+    should be returned.
+
+    Args:
+        mapping_value (str): An outgoing-mapping value, which may contain an incident/indicator field.
+
+    Returns:
+        str: An incident/indicator field, or an empty string if not a field.
+    """
+    if not mapping_value or re.match(r"\"([^.]+).*\"", mapping_value):  # not a field
+        return ""
+    if field_name := re.match(r"\$\{([^.]*)[^}]*\}|([^$.]*).*", mapping_value):
+        if field_name.groups()[0] is not None:
+            return field_name.groups()[0]
+        if len(field_name.groups()) > 1:
+            return field_name.groups()[1]
+    return mapping_value
 
 
 def get_pack_paths_from_files(file_paths: Iterable[str]) -> list:

@@ -18,13 +18,13 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
 )
 
 
-def validate_unknown_content(tx: Transaction, file_paths: List[str]):
-    file_paths_filter = (
-        f"WHERE content_item_from.path in {file_paths}" if file_paths else ""
-    )
+def validate_unknown_content(
+    tx: Transaction, file_paths: List[str], raises_error: bool
+):
     query = f"""// Returns USES relationships to content items not in the repository
-MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}]->(n{{not_in_repository:true}})
-{file_paths_filter}
+MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}]->(n{{not_in_repository: true}})
+WHERE{' NOT' if raises_error else ''} (content_item_from.is_test OR NOT r.mandatorily)
+{f'AND content_item_from.path in {file_paths}' if file_paths else ''}
 RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
 """
     return {
@@ -48,7 +48,9 @@ AND {versioned('n.fromversion')} {op} {versioned(GENERAL_DEFAULT_FROMVERSION)}
 AND n.fromversion <> "{DEFAULT_CONTENT_ITEM_FROM_VERSION}"  // skips types with no "fromversion"
 """
     if file_paths:
-        query += f"AND content_item_from.path in {file_paths}"
+        query += (
+            f"AND (content_item_from.path in {file_paths} OR n.path in {file_paths})"
+        )
     query += f"""
 OPTIONAL MATCH (n2{{object_id: n.object_id, content_type: n.content_type}})
 WHERE id(n) <> id(n2)
@@ -77,7 +79,9 @@ WHERE {versioned('content_item_from.toversion')} > {versioned('n.toversion')}
 AND {versioned('content_item_from.toversion')} {op} {versioned(GENERAL_DEFAULT_FROMVERSION)}
 """
     if file_paths:
-        query += f"AND content_item_from.path in {file_paths}"
+        query += (
+            f"AND (content_item_from.path in {file_paths} OR n.path in {file_paths})"
+        )
     query += f"""
 OPTIONAL MATCH (n2{{object_id: n.object_id, content_type: n.content_type}})
 WHERE id(n) <> id(n2)
@@ -96,13 +100,16 @@ RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to"""
     }
 
 
-def validate_marketplaces(tx: Transaction, file_paths: List[str]):
+def validate_marketplaces(tx: Transaction, pack_ids: List[str]):
     query = f"""// Returns all the USES relationships with where the target's marketplaces doesn't include all of the source's marketplaces
-MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}{{mandatorily:true}}]->(n)
+MATCH
+(p1)<-[:{RelationshipType.IN_PACK}]-(content_item_from{{deprecated: false}})
+    -[r:{RelationshipType.USES}{{mandatorily:true}}]->
+        (n)-[:{RelationshipType.IN_PACK}]->(p2)
 WHERE not all(elem IN content_item_from.marketplaces WHERE elem IN n.marketplaces)
 """
-    if file_paths:
-        query += f"AND content_item_from.path in {file_paths}"
+    if pack_ids:
+        query += f"AND (p1.object_id in {pack_ids} OR p2.object_id in {pack_ids})"
     query += f"""
 OPTIONAL MATCH (n2{{object_id: n.object_id, content_type: n.content_type}})
 WHERE id(n) <> id(n2)

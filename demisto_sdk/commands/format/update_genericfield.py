@@ -47,7 +47,7 @@ class GenericFieldJSONFormat(BaseUpdateJSON):
     def run_format(self) -> int:
         try:
             logger.info(
-                f"\n[bright_blue]================= Updating file {self.source_file} =================[/bright_blue]"
+                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             super().update_json(
                 default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(

@@ -34,7 +34,7 @@ class IndicatorFieldJSONFormat(BaseUpdateJSON):
     def run_format(self) -> int:
         try:
             logger.info(
-                f"\n[bright_blue]================= Updating file {self.source_file} =================[/bright_blue]"
+                f"\n[blue]================= Updating file {self.source_file} =================[/bright_blue]"
             )
             self.update_from_version()
             super().update_json()

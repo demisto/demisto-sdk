@@ -115,7 +115,7 @@ class ReadmeFormat(BaseUpdate):
     def run_format(self) -> int:
         try:
             logger.info(
-                f"\n[bright_blue]================= Updating file {self.source_file} =================[/bright_blue]"
+                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             self.relative_url_format()
             self.fix_lint_markdown()

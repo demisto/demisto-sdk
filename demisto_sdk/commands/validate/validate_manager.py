@@ -429,7 +429,7 @@ class ValidateManager:
 
         if self.validate_graph:
             logger.info(
-                f"\n[bright_cyan]================= Validating graph =================[/bright_cyan]"
+                f"\n[cyan]================= Validating graph =================[/cyan]"
             )
             with GraphValidator(
                 specific_validations=self.specific_validations,
@@ -443,7 +443,7 @@ class ValidateManager:
 
             if file_level == PathLevel.FILE:
                 logger.info(
-                    f"\n[bright_cyan]================= Validating file {path} =================[/bright_cyan]"
+                    f"\n[cyan]================= Validating file {path} =================[/cyan]"
                 )
                 files_validation_result.add(
                     self.run_validations_on_file(path, error_ignore_list)
@@ -451,7 +451,7 @@ class ValidateManager:
 
             elif file_level == PathLevel.CONTENT_ENTITY_DIR:
                 logger.info(
-                    f"\n[bright_cyan]================= Validating content directory {path} =================[/bright_cyan]"
+                    f"\n[cyan]================= Validating content directory {path} =================[/cyan]"
                 )
                 files_validation_result.add(
                     self.run_validation_on_content_entities(path, error_ignore_list)
@@ -459,7 +459,7 @@ class ValidateManager:
 
             elif file_level == PathLevel.CONTENT_GENERIC_ENTITY_DIR:
                 logger.info(
-                    f"\n[bright_cyan]================= Validating content directory {path} =================[/bright_cyan]"
+                    f"\n[cyan]================= Validating content directory {path} =================[/cyan]"
                 )
                 files_validation_result.add(
                     self.run_validation_on_generic_entities(path, error_ignore_list)
@@ -467,13 +467,13 @@ class ValidateManager:
 
             elif file_level == PathLevel.PACK:
                 logger.info(
-                    f"\n[bright_cyan]================= Validating pack {path} =================[/bright_cyan]"
+                    f"\n[cyan]================= Validating pack {path} =================[/cyan]"
                 )
                 files_validation_result.add(self.run_validations_on_pack(path)[0])
 
             else:
                 logger.info(
-                    f"\n[bright_cyan]================= Validating package {path} =================[/bright_cyan]"
+                    f"\n[cyan]================= Validating package {path} =================[/cyan]"
                 )
                 files_validation_result.add(
                     self.run_validation_on_package(path, error_ignore_list)
@@ -506,13 +506,13 @@ class ValidateManager:
             bool. true if all files are valid, false otherwise.
         """
         logger.info(
-            "\n[bright_cyan]================= Validating all files =================[/bright_cyan]"
+            "\n[cyan]================= Validating all files =================[/cyan]"
         )
         all_packs_valid = set()
 
         if self.validate_graph:
             logger.info(
-                f"\n[bright_cyan]================= Validating graph =================[/bright_cyan]"
+                f"\n[cyan]================= Validating graph =================[/cyan]"
             )
             with GraphValidator(
                 specific_validations=self.specific_validations
@@ -1269,7 +1269,7 @@ class ValidateManager:
 
         if self.validate_graph:
             logger.info(
-                f"\n[bright_cyan]================= Validating graph =================[/bright_cyan]"
+                f"\n[cyan]================= Validating graph =================[/cyan]"
             )
             all_files_set = list(
                 set().union(modified_files, added_files, old_format_files)
@@ -1298,7 +1298,7 @@ class ValidateManager:
         )
         if old_format_files:
             logger.info(
-                f"\n[bright_cyan]================= Running validation on old format files =================[/bright_cyan]"
+                f"\n[cyan]================= Running validation on old format files =================[/cyan]"
             )
             validation_results.add(self.validate_no_old_format(old_format_files))
             logger.info(f"*** after adding validate_no_old_format")
@@ -1933,7 +1933,7 @@ class ValidateManager:
 
     def validate_modified_files(self, modified_files):
         logger.info(
-            f"\n[bright_cyan]================= Running validation on modified files =================[/bright_cyan]"
+            f"\n[cyan]================= Running validation on modified files =================[/cyan]"
         )
         valid_files = set()
         for file_path in modified_files:
@@ -1958,7 +1958,7 @@ class ValidateManager:
 
     def validate_added_files(self, added_files, modified_files):
         logger.info(
-            f"\n[bright_cyan]================= Running validation on newly added files =================[/bright_cyan]"
+            f"\n[cyan]================= Running validation on newly added files =================[/cyan]"
         )
 
         valid_files = set()
@@ -2034,7 +2034,7 @@ class ValidateManager:
     @error_codes("BA115")
     def validate_deleted_files(self, deleted_files: set, added_files: set) -> bool:
         logger.info(
-            f"\n[bright_cyan]================= Checking for prohibited deleted files =================[/bright_cyan]"
+            f"\n[cyan]================= Checking for prohibited deleted files =================[/cyan]"
         )
 
         is_valid = True
@@ -2073,7 +2073,7 @@ class ValidateManager:
         self, modified_files, added_files, old_format_files, changed_meta_files
     ):
         logger.info(
-            f"\n[bright_cyan]================= Running validation on changed pack unique files =================[/bright_cyan]"
+            f"\n[cyan]================= Running validation on changed pack unique files =================[/cyan]"
         )
         valid_pack_files = set()
 
@@ -2142,7 +2142,7 @@ class ValidateManager:
             bool. True if no duplications found, false otherwise
         """
         logger.info(
-            f"\n[bright_cyan]================= Verifying no duplicated release notes =================[/bright_cyan]"
+            f"\n[cyan]================= Verifying no duplicated release notes =================[/cyan]"
         )
         added_rn = set()
         for file in added_files:
@@ -2179,7 +2179,7 @@ class ValidateManager:
             bool. True if no missing RN found, False otherwise
         """
         logger.info(
-            "\n[bright_cyan]================= Checking for missing release notes =================[/bright_cyan]\n"
+            "\n[cyan]================= Checking for missing release notes =================[/cyan]\n"
         )
         packs_that_should_have_new_rn_api_module_related: set = set()
         # existing packs that have files changed (which are not RN, README nor test files) - should have new RN
@@ -2315,7 +2315,7 @@ class ValidateManager:
 
     def print_git_config(self):
         logger.info(
-            f"\n[bright_cyan]================= Running validation on branch {self.branch_name} =================[/bright_cyan]"
+            f"\n[cyan]================= Running validation on branch {self.branch_name} =================[/cyan]"
         )
         if not self.no_configuration_prints:
             logger.info(f"Validating against {self.prev_ver}")

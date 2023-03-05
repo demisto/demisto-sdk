@@ -63,7 +63,7 @@ class OldClassifierJSONFormat(BaseClassifierJSONFormat):
     def run_format(self) -> int:
         try:
             logger.info(
-                f"\n[bright_blue]================= Updating file {self.source_file} =================[/bright_blue]"
+                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             self.old_classifier_type = True
             super().run_format()
@@ -90,7 +90,7 @@ class ClassifierJSONFormat(BaseClassifierJSONFormat):
     def run_format(self) -> int:
         try:
             logger.info(
-                f"\n[bright_blue]================= Updating file {self.source_file} =================[/bright_blue]"
+                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             super().run_format()
             self.update_id()

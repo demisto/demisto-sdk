@@ -91,7 +91,8 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
     errors = False
     for i, result in enumerate(results):
         logger.info(
-            f"\n[cyan underline]Result {i + 1}[/cyan underline]", extra={"markup": True}
+            f"\n[cyan][underline]Result {i + 1}[/underline][/cyan]",
+            extra={"markup": True},
         )
 
         # get expected_values for the given query result
@@ -321,7 +322,7 @@ def verify_pack_exists_on_tenant(
             )
             if upload:
                 logger.info(
-                    f'[cyan underline]Upload "{containing_pack_id}"[/cyan underline]',
+                    f'[cyan][underline]Upload "{containing_pack_id}"[/underline][/cyan]',
                     extra={"markup": True},
                 )
                 upload_kwargs = {
@@ -417,7 +418,7 @@ def validate_modeling_rule(
             )
             if generate:
                 logger.info(
-                    "[cyan underline]Generate Test Data File[/cyan underline]",
+                    "[cyan][underline]Generate Test Data File[/underline][/cyan]",
                     extra={"markup": True},
                 )
                 events_count = typer.prompt(

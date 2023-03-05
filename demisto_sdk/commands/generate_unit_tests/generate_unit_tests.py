@@ -233,7 +233,7 @@ class CustomContactSolver(ContractSolver):
             if command_name not in generator.commands_to_generate:
                 continue
             logger.info(
-                f"[cyan]Analyzing function: {func} at line: {getattr(func, 'lineno', -1)}[[/cyan]]"
+                f"[cyan]Analyzing function: {func} at line: {getattr(func, 'lineno', -1)}[/cyan]"
             )
             try:
                 ast_func = self.solve_function(func, client_ast, generator)

@@ -816,7 +816,7 @@ class LintManager:
                 elif code & return_exit_code:
                     logger.info(f"{check_str} {' ' * spacing}- [red][FAIL][/red]")
                 else:
-                    logger.info(f"{check_str} {' ' * spacing}- [green][PASS][/red]")
+                    logger.info(f"{check_str} {' ' * spacing}- [green][PASS][/green]")
             elif check != "image":
                 logger.info(f"{check_str} {' ' * spacing}- [cyan][SKIPPED][/cyan]")
 

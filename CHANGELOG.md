@@ -1,9 +1,11 @@
 # Changelog
 
 ## Unreleased
-* Fixed an issue where running **validate** with the `-g` flag would skip some validations for old format files.
+
+## 1.10.6
+* Fixed an issue where running **validate** with the `-g` flag would skip some validations for old-formatted (unified) integration/script files.
 * Deprecated integrations and scripts will not run anymore when providing the **--all-packs** to the **lint** command.
-* Fixed an issue where a pack `serverMinVersion` is calculated by its content items to be the minimum fromVersion.
+* Fixed an issue where a pack `serverMinVersion` would be calculated by the minimal fromVersion of its content items.
 * Added the `--docker-image-target` flag to **lint** for testing native supported content with new images.
 
 ## 1.10.5

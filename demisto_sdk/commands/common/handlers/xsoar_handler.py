@@ -3,7 +3,7 @@ abstract class for xsoar handlers (yaml, json, etc...)
 """
 
 from abc import ABC, abstractmethod
-from typing import IO, Any, Type
+from typing import IO, Any
 
 
 class XSOAR_Handler(ABC):

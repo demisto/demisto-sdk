@@ -1,3 +1,4 @@
+import logging
 import os
 from unittest import mock
 
@@ -7,7 +8,7 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, assert_strs_in_call_args_list
 
 RETURN_ERROR_TARGET = "GetDockerImageLatestTag.return_error"
 
@@ -375,7 +376,9 @@ class TestDockerImage:
 
         assert docker_image_validator.is_docker_image_valid() is True
 
-    def test_non_existing_docker(self, integration, capsys, requests_mock, mocker):
+    def test_non_existing_docker(self, integration, requests_mock, mocker, monkeypatch):
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
         docker_image = "demisto/nonexistingdocker:1.4.0"
         integration.yml.write_dict(
             {
@@ -405,10 +408,14 @@ class TestDockerImage:
         with ChangeCWD(integration.repo_path):
             validator = DockerImageValidator(integration.yml.path, True, True)
             assert validator.is_docker_image_valid() is False
-            captured = capsys.readouterr()
             assert validator.is_valid is False
-            assert error in captured.out
-            assert code in captured.out
+            assert_strs_in_call_args_list(
+                logger_info.call_args_list,
+                [
+                    error,
+                    code,
+                ],
+            )
 
     class TestIronBankDockerParse:
         def test_get_latest_commit(self, integration, requests_mock):

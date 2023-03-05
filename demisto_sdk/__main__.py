@@ -146,11 +146,16 @@ pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 @pass_config
 def main(config, version, release_notes, **kwargs):
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path"),
     )
     config.configuration = Configuration()
     import dotenv
@@ -234,6 +239,10 @@ def main(config, version, release_notes, **kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 @pass_config
 def split(config, **kwargs):
     """Split the code, image and description files from a Demisto integration or script yaml file
@@ -242,6 +251,7 @@ def split(config, **kwargs):
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
 
@@ -309,12 +319,17 @@ def split(config, **kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 @pass_config
 def extract_code(config, **kwargs):
     """Extract code from a Demisto integration or script yaml file."""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
@@ -392,6 +407,10 @@ def extract_code(config, **kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def prepare_content(**kwargs):
     """
     This command is used to prepare the content to be used in the platform.
@@ -399,6 +418,7 @@ def prepare_content(**kwargs):
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     if click.get_current_context().info_name == "unify":
         kwargs["unify_only"] = True
@@ -467,11 +487,16 @@ main.add_command(prepare_content, name="unify")
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def zip_packs(**kwargs) -> int:
     """Generating zipped packs that are ready to be uploaded to Cortex XSOAR machine."""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.upload.uploader import Uploader
     from demisto_sdk.commands.zip_packs.packs_zipper import (
@@ -661,12 +686,17 @@ def zip_packs(**kwargs) -> int:
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 @pass_config
 def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
@@ -835,6 +865,10 @@ def validate(config, **kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def create_content_artifacts(**kwargs) -> int:
     """Generating the following artifacts:
     1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)
@@ -846,6 +880,7 @@ def create_content_artifacts(**kwargs) -> int:
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
         ArtifactsManager,
@@ -893,6 +928,10 @@ def create_content_artifacts(**kwargs) -> int:
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 @pass_config
 def secrets(config, **kwargs):
     """Run Secrets validator to catch sensitive data before exposing your code to public repository.
@@ -901,6 +940,7 @@ def secrets(config, **kwargs):
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
@@ -1022,6 +1062,10 @@ def secrets(config, **kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def lint(**kwargs):
     """Lint command will perform:
     1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -1033,6 +1077,7 @@ def lint(**kwargs):
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.lint.lint_manager import LintManager
 
@@ -1126,10 +1171,15 @@ def lint(**kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def coverage_analyze(**kwargs):
     logger = logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
 
@@ -1238,6 +1288,10 @@ def coverage_analyze(**kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def format(
     input: Path,
     output: Path,
@@ -1260,6 +1314,7 @@ def format(
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.format.format_module import format_manager
 
@@ -1348,6 +1403,10 @@ def format(
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def upload(**kwargs):
     """Upload integration or pack to Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
@@ -1357,6 +1416,7 @@ def upload(**kwargs):
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     return upload_content_entity(**kwargs)
 
@@ -1437,6 +1497,10 @@ def upload(**kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def download(**kwargs):
     """Download custom content from Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
@@ -1445,6 +1509,7 @@ def download(**kwargs):
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.download.downloader import Downloader
 
@@ -1504,6 +1569,10 @@ def download(**kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def xsoar_config_file_update(**kwargs):
     """Handle your XSOAR Configuration File.
     Add automatically all the installed MarketPlace Packs to the marketplace_packs section in XSOAR Configuration File.
@@ -1512,6 +1581,7 @@ def xsoar_config_file_update(**kwargs):
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import (
         XSOARConfigFileUpdater,
@@ -1566,6 +1636,10 @@ def xsoar_config_file_update(**kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def run(**kwargs):
     """Run integration command on remote Demisto instance in the playground.
     DEMISTO_BASE_URL environment variable should contain the Demisto base URL.
@@ -1574,6 +1648,7 @@ def run(**kwargs):
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.run_cmd.runner import Runner
 
@@ -1613,6 +1688,10 @@ def run(**kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def run_playbook(**kwargs):
     """Run a playbook in Demisto.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
@@ -1622,6 +1701,7 @@ def run_playbook(**kwargs):
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 
@@ -1666,11 +1746,16 @@ def run_playbook(**kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def run_test_playbook(**kwargs):
     """Run a test playbooks in your instance."""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.run_test_playbook.test_playbook_runner import (
         TestPlaybookRunner,
@@ -1750,6 +1835,10 @@ def run_test_playbook(**kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def generate_outputs(**kwargs):
     """Demisto integrations/scripts have a YAML file that defines them.
     Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the
@@ -1759,6 +1848,7 @@ def generate_outputs(**kwargs):
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.generate_outputs.generate_outputs import (
         run_generate_outputs,
@@ -1836,11 +1926,16 @@ def generate_outputs(**kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def generate_test_playbook(**kwargs):
     """Generate test playbook from integration or script"""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import (
         PlaybookTestsGenerator,
@@ -1919,6 +2014,10 @@ def generate_test_playbook(**kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def init(**kwargs):
     """Initialize a new Pack, Integration or Script.
     If the script/integration flags are not present, we will create a pack with the given name.
@@ -1927,6 +2026,7 @@ def init(**kwargs):
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.init.initiator import Initiator
 
@@ -2013,11 +2113,16 @@ def init(**kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def generate_docs(**kwargs):
     """Generate documentation for integration, playbook or script from yaml file."""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
 
     check_configuration_file("generate-docs", kwargs)
@@ -2188,11 +2293,16 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def create_id_set(**kwargs):
     """Create the content dependency tree by ids."""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
     from demisto_sdk.commands.find_dependencies.find_dependencies import (
@@ -2237,11 +2347,16 @@ def create_id_set(**kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def merge_id_sets(**kwargs):
     """Merge two id_sets"""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 
@@ -2324,11 +2439,16 @@ def merge_id_sets(**kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def update_release_notes(**kwargs):
     """Auto-increment pack version and generate release notes template."""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.update_release_notes.update_rn_manager import (
         UpdateReleaseNotesManager,
@@ -2437,11 +2557,16 @@ def update_release_notes(**kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def find_dependencies(**kwargs):
     """Find pack dependencies and update pack metadata."""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.find_dependencies.find_dependencies import (
         PackDependencies,
@@ -2521,6 +2646,10 @@ def find_dependencies(**kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 @pass_config
 def postman_codegen(
     config,
@@ -2537,6 +2666,7 @@ def postman_codegen(
     logger = logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.postman_codegen.postman_codegen import (
         postman_to_autogen_configuration,
@@ -2599,6 +2729,10 @@ def postman_codegen(
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def generate_integration(input: IO, output: Path, **kwargs):
     """Generates a Cortex XSOAR integration from a config json file,
     which is generated by commands like postman-codegen
@@ -2606,6 +2740,7 @@ def generate_integration(input: IO, output: Path, **kwargs):
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.generate_integration.code_generator import (
         IntegrationGeneratorConfig,
@@ -2680,6 +2815,10 @@ def generate_integration(input: IO, output: Path, **kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def openapi_codegen(**kwargs):
     """Generates a Cortex XSOAR integration given an OpenAPI specification file.
     In the first run of the command, an integration configuration file is created, which can be modified.
@@ -2688,6 +2827,7 @@ def openapi_codegen(**kwargs):
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.openapi_codegen.openapi_codegen import OpenAPIIntegration
 
@@ -2851,6 +2991,10 @@ def openapi_codegen(**kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def test_content(**kwargs):
     """Configure instances for the integration needed to run tests_to_run tests.
     Run test module on each integration.
@@ -2861,6 +3005,7 @@ def test_content(**kwargs):
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.test_content.execute_test_content import (
         execute_test_content,
@@ -2942,11 +3087,16 @@ def test_content(**kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def doc_review(**kwargs):
     """Check the spelling in .md and .yml files as well as review release notes"""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 
@@ -3004,6 +3154,10 @@ def doc_review(**kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def integration_diff(**kwargs):
     """
     Checks for differences between two versions of an integration, and verified that the new version covered the old version.
@@ -3011,6 +3165,7 @@ def integration_diff(**kwargs):
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.integration_diff.integration_diff_detector import (
         IntegrationDiffDetector,
@@ -3061,6 +3216,10 @@ def integration_diff(**kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def generate_yml_from_python(**kwargs):
     """
     Checks for differences between two versions of an integration, and verified that the new version covered the old version.
@@ -3068,6 +3227,7 @@ def generate_yml_from_python(**kwargs):
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.generate_yml_from_python.generate_yml import YMLGenerator
 
@@ -3100,6 +3260,10 @@ def generate_yml_from_python(**kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 @pass_config
 def convert(config, **kwargs):
     """
@@ -3109,6 +3273,7 @@ def convert(config, **kwargs):
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.convert.convert_manager import ConvertManager
 
@@ -3168,6 +3333,10 @@ def convert(config, **kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def generate_unit_tests(
     input_path: str = "",
     commands: list = [],
@@ -3185,6 +3354,7 @@ def generate_unit_tests(
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
 
     logging.getLogger("PYSCA").propagate = False
@@ -3216,6 +3386,10 @@ def generate_unit_tests(
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 @pass_config
 def error_code(config, **kwargs):
     from demisto_sdk.commands.error_code_info.error_code_info import (
@@ -3225,6 +3399,7 @@ def error_code(config, **kwargs):
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
 
     check_configuration_file("error-code-info", kwargs)
@@ -3269,6 +3444,10 @@ def error_code(config, **kwargs):
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def create_content_graph(
     marketplace: str = MarketplaceVersions.XSOAR,
     no_dependencies: bool = False,
@@ -3278,6 +3457,7 @@ def create_content_graph(
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.content_graph.content_graph_commands import (
         create_content_graph as create_content_graph_command,
@@ -3358,6 +3538,10 @@ def create_content_graph(
     "--file_log_threshold",
     help="Minimum logging threshold for the file logger.",
 )
+@click.option(
+    "--log_file_path",
+    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+)
 def update_content_graph(
     use_git: bool = False,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
@@ -3371,6 +3555,7 @@ def update_content_graph(
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.content_graph.content_graph_commands import (
         update_content_graph as update_content_graph_command,

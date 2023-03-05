@@ -1,10 +1,13 @@
 import logging
 import logging.config
+import os.path
 from logging.handlers import RotatingFileHandler
 
 # from rich.logging import RichHandler
 
-LOG_FILE: str = "./demisto_sdk_debug.log"
+LOG_FILE_NAME: str = "demisto_sdk_debug.log"
+LOG_FILE_PATH: str = f"./{LOG_FILE_NAME}"
+current_log_file_path: str = LOG_FILE_PATH
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
@@ -13,10 +16,8 @@ DEPRECATED_PARAMETERS = {
     "--verbose": "--console-log-threshold or --file-log-threshold",
     "-q": "--console-log-threshold or --file-log-threshold",
     "--quiet": "--console-log-threshold or --file-log-threshold",
-    "-lp": "--log-file",
-    "--log-path": "--log-file",
-    "-ln": "--log-file",
-    "--log-name": "--log-file",
+    "-ln": "--log-path",
+    "--log-name": "--log-path",
 }
 
 
@@ -30,18 +31,18 @@ def handle_deprecated_args(input_args):
 
 
 escapes = {
-    "[bold]": "\033[0m",
-    "[disable]": "\033[0m",
-    "[underline]": "\033[0m",
-    "[reverse]": "\033[0m",
-    "[strikethrough]": "\033[0m",
-    "[invisible]": "\033[0m",
-    "[/bold]": "\033[01m",
-    "[/disable]": "\033[02m",
-    "[/underline]": "\033[04m",
-    "[/reverse]": "\033[07m",
-    "[/strikethrough]": "\033[09m",
-    "[/invisible]": "\033[08m",
+    "[bold]": "\033[01m",
+    "[disable]": "\033[02m",
+    "[underline]": "\033[04m",
+    "[reverse]": "\033[07m",
+    "[strikethrough]": "\033[09m",
+    "[invisible]": "\033[08m",
+    "[/bold]": "\033[0m",
+    "[/disable]": "\033[0m",
+    "[/underline]": "\033[0m",
+    "[/reverse]": "\033[0m",
+    "[/strikethrough]": "\033[0m",
+    "[/invisible]": "\033[0m",
     "[black]": "\033[30m",
     "[red]": "\033[31m",
     "[green]": "\033[32m",
@@ -78,6 +79,7 @@ escapes = {
 def logging_setup(
     console_log_threshold=logging.INFO,
     file_log_threshold=logging.DEBUG,
+    log_file_path=LOG_FILE_PATH,
 ) -> logging.Logger:
     """Init logger object for logging in demisto-sdk
         For more info - https://docs.python.org/3/library/logging.html
@@ -90,10 +92,6 @@ def logging_setup(
         logging.Logger: logger object
     """
 
-    # console_handler = RichHandler(
-    #     level=console_log_threshold,
-    #     rich_tracebacks=True,
-    # )
     console_handler = logging.StreamHandler()
     console_handler.set_name("console-handler")
     console_handler.setLevel(console_log_threshold)
@@ -120,8 +118,13 @@ def logging_setup(
     console_formatter = ColorConsoleFormatter()
     console_handler.setFormatter(fmt=console_formatter)
 
+    global current_log_file_path
+    current_log_file_path = log_file_path if log_file_path else LOG_FILE_PATH
+    # import pdb; pdb.set_trace()
+    if os.path.isdir(current_log_file_path):
+        current_log_file_path += f"/{LOG_FILE_NAME}"
     file_handler = RotatingFileHandler(
-        filename=LOG_FILE,
+        filename=current_log_file_path,
         mode="a",
         maxBytes=1048576,
         backupCount=10,
@@ -129,7 +132,7 @@ def logging_setup(
     file_handler.set_name("file-handler")
     file_handler.setLevel(file_log_threshold)
     file_formatter = logging.Formatter(
-        fmt="[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(message)s",
+        fmt="[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(filename)s - %(lineno)d - %(message)s",
         datefmt=DATE_FORMAT,
     )
     file_handler.setFormatter(fmt=file_formatter)
@@ -151,8 +154,7 @@ def logging_setup(
 
 
 def get_log_file():
-    # TODO Return the actual (if overridden) log file
-    return LOG_FILE
+    return current_log_file_path
 
 
 def set_propagate(logger_to_update: logging.Logger, propagate: bool = False):

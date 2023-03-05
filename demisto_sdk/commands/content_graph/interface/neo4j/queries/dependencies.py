@@ -40,7 +40,7 @@ def get_all_level_packs_dependencies(
 
     query = f"""
         UNWIND $ids_list AS pack_id
-        MATCH path = (shortestPath((p1:{ContentType.PACK}{params_str})-[r:{RelationshipType.DEPENDS_ON}*..{MAX_DEPTH}]->(p2:{ContentType.PACK})))
+        MATCH path = shortestPath((p1:{ContentType.PACK}{params_str})-[r:{RelationshipType.DEPENDS_ON}*..{MAX_DEPTH}]->(p2:{ContentType.PACK}))
         WHERE id(p1) = pack_id AND id(p1) <> id(p2)
         AND all(n IN nodes(path) WHERE "{marketplace}" IN n.marketplaces)
         AND all(r IN relationships(path) WHERE NOT r.is_test {"AND r.mandatorily = true)" if mandatorily else ""}
@@ -74,15 +74,12 @@ def delete_deprecatedcontent_relationship(tx: Transaction) -> None:
 MATCH (source) - [r:{RelationshipType.USES}] -> (target) - [:{RelationshipType.IN_PACK}] ->
 (:{ContentType.PACK}{{object_id: "{DEPRECATED_CONTENT_PACK}"}})
 DELETE r
-RETURN source.node_id AS source, target.node_id AS target, type(r) AS r"""
+RETURN source.node_id AS source, target.node_id AS target"""
     result = run_query(tx, query).data()
     for row in result:
         source = row["source"]
         target = row["target"]
-        relationship = row["r"]
-        logger.debug(
-            f"Deleted relationship {relationship} between {source} and {target}"
-        )
+        logger.debug(f"Deleted relationship USES between {source} and {target}")
 
 
 def remove_existing_depends_on_relationships(tx: Transaction) -> None:

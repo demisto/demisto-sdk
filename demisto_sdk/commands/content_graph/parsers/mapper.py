@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import extract_field_from_mapping
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import (
     JSONContentItemParser,
@@ -69,17 +70,12 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
                 # incident fields are in the simple / complex.root key of each key
                 for fields_mapper in internal_mapping.values():
                     if isinstance(fields_mapper, dict):
-                        if incident_field_simple := fields_mapper.get("simple"):
+                        mapping_value = fields_mapper.get(
+                            "simple"
+                        ) or fields_mapper.get("complex", {}).get("root")
+                        if field := extract_field_from_mapping(mapping_value):
                             self.add_dependency_by_id(
-                                incident_field_simple,
-                                fields_content_type,
-                                is_mandatory=False,
-                            )
-                        elif incident_field_complex := fields_mapper.get(
-                            "complex", {}
-                        ).get("root"):
-                            self.add_dependency_by_id(
-                                incident_field_complex,
+                                field,
                                 fields_content_type,
                                 is_mandatory=False,
                             )

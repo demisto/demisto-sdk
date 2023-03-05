@@ -279,5 +279,5 @@ class TestPlaybookRunner:
         return f"{base_url}/#/WorkPlan/"
 
     def upload_tpb(self, tpb_file):
-        uploader = Uploader(input=tpb_file, insecure=self.verify)  # type: ignore
+        uploader = Uploader(input=tpb_file, insecure=not self.verify)  # type: ignore
         uploader.upload()

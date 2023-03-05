@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where downloading non-unicode content into existing files caused an error.
 * Fixed an issue where running **validate** with the `-g` flag would skip some validations for old format files.
 * Deprecated integrations and scripts will not run anymore when providing the **--all-packs** to the **lint** command.
 * Fixed an issue where a pack `serverMinVersion` is calculated by its content items to be the minimum fromVersion.
@@ -26,8 +27,6 @@
   - GR101 and GR102 will now catch invalid fromversion/toversion of files **using** the changed items.
   - GR103 errors will raise a warning when using the *-a* flag, but an error if using the *-i* or *g* flags.
 * Fixed an issue where test-playbooks timed out.
-* Fixed an issue where downloading non-unicode content into existing files caused an error.
-* Fixed an issue where in some occasions running test-playbooks could time-out.
 * Fixed an issue where making a change in a module using an ApiModule would cause lint to run on the ApiModule unnecessarily.
 * Fixed an issue where the `marketplace` field was not used when dumping pack zips.
 * Fixed a typo in the README content generated with **update-release-notes** for updating integrations.

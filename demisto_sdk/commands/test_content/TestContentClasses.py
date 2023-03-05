@@ -20,7 +20,6 @@ import requests
 import urllib3
 from demisto_client.demisto_api import DefaultApi, Incident
 from demisto_client.demisto_api.rest import ApiException
-from slack import WebClient as SlackClient
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -663,7 +662,6 @@ class BuildContext:
             self.auth_id = None
             self.xsiam_ui_path = None
         self.is_nightly = kwargs["nightly"]
-        self.slack_client = SlackClient(kwargs["slack"])
         self.circleci_token = kwargs["circleci"]
         self.build_number = kwargs["build_number"]
         self.build_name = kwargs["branch_name"]

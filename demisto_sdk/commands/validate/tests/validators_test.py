@@ -2832,7 +2832,7 @@ pack_metadata_invalid_tags = {
 
 @pytest.mark.parametrize("pack_metadata_info", [pack_metadata_invalid_tags])
 def test_run_validation_using_git_on_metadata_with_invalid_tags(
-    mocker, repo, pack_metadata_info
+    mocker, monkeypatch, repo, pack_metadata_info
 ):
     """
     Given
@@ -2843,6 +2843,9 @@ def test_run_validation_using_git_on_metadata_with_invalid_tags(
     Then
         - Assert validation fails and the right error number is shown.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+
     pack = repo.create_pack()
     pack.pack_metadata.write_json(pack_metadata_info)
     mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
@@ -2862,8 +2865,12 @@ def test_run_validation_using_git_on_metadata_with_invalid_tags(
     with contextlib.redirect_stdout(std_output):
         with ChangeCWD(repo.path):
             res = validate_manager.run_validation_using_git()
-    captured_stdout = std_output.getvalue()
-    assert "[PA123]" in captured_stdout, captured_stdout
+    assert_strs_in_call_args_list(
+        logger_info.call_args_list,
+        [
+            "[PA123]",
+        ],
+    )
     assert not res
 
 

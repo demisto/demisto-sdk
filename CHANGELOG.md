@@ -1,7 +1,8 @@
 # Changelog
 
 ## Unreleased
-* Fixed an issue where downloading non-unicode content into existing files caused an error.
+* Fixed an issue where using **download** on non-unicode content, merging them into existing files caused an error.
+* Changed an internal setting to allow writing non-ascii content (unicode) using `YAMLHandler` and `JSONHandler`.
 
 ## 1.10.6
 * Fixed an issue where running **validate** with the `-g` flag would skip some validations for old-formatted (unified) integration/script files.

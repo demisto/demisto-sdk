@@ -27,7 +27,6 @@ from typing import (
     Optional,
     Set,
     Tuple,
-    Type,
     Union,
 )
 
@@ -780,7 +779,6 @@ def _read_file(file_path: Path) -> str:
 def safe_write_unicode(
     write_method: Callable[[io.TextIOWrapper], Any],
     path: Path,
-    decode_error: Type[BaseException],
 ):
     def _write():
         with open(path, "w") as f:
@@ -791,7 +789,7 @@ def safe_write_unicode(
     try:
         _write()
 
-    except decode_error:
+    except UnicodeError:
         if UnicodeDammit(path.read_bytes()).original_encoding == "utf-8":
             raise  # already a unicode file, the following code cannot fix it.
 

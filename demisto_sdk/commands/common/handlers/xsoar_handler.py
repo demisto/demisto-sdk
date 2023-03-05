@@ -18,11 +18,3 @@ class XSOAR_Handler(ABC):
     @abstractmethod
     def dumps(self, obj: Any, indent=0, sort_keys=False, **kwargs) -> str:
         pass
-
-    @staticmethod
-    @abstractmethod
-    def decode_error(self) -> Type[BaseException]:
-        """
-        Returns the exception raised when failing to read the file.
-        """
-        pass

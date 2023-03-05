@@ -1319,7 +1319,7 @@ def test_safe_write_unicode_to_non_unicode(
     fields: Tuple[
         str, str
     ],  # not all field names are merged, and they depend on the file type
-):
+) -> None:
     """
     Given: A format to check (yaml/json), with its writing method
     When: Calling Downloader.update_data
@@ -1332,15 +1332,15 @@ def test_safe_write_unicode_to_non_unicode(
     non_unicode_path = (tmp_path / "non_unicode").with_suffix(suffix)
     with non_unicode_path.open("wb") as f:
         f.write(
-            dumps_method({fields[0]: SENTENCE_WITH_UMLAUTS}, ensure_ascii=False).encode(
-                "latin-1"
-            )
+            dumps_method({fields[0]: SENTENCE_WITH_UMLAUTS}).encode('latin-1', 'backslashreplace')
         )
+    assert 'ü' in non_unicode_path.read_text(encoding='latin-1')  # assert it was written as latin-1
 
     unicode_path = (tmp_path / "unicode").with_suffix(suffix)
     with open(unicode_path, "w") as f:
         write_method(f, {fields[1]: SENTENCE_WITH_UMLAUTS})
-
+    assert 'ü' in unicode_path.read_text(encoding='utf-8')  # assert the content was written as unicode
+    
     source, dest = (
         (unicode_path, non_unicode_path)
         if source_is_unicode

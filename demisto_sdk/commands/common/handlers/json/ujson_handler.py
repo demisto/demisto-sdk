@@ -1,4 +1,4 @@
-from typing import IO, Any, AnyStr, Type
+from typing import IO, Any, AnyStr
 
 import ujson
 
@@ -41,7 +41,7 @@ class UJSON_Handler(XSOAR_Handler):
                 sort_keys=sort_keys,
                 escape_forward_slashes=kwargs.get("escape_forward_slashes", False),
                 encode_html_chars=kwargs.get("encode_html_chars", False),
-                ensure_ascii=kwargs.get("ensure_ascii", True),
+                ensure_ascii=kwargs.get("ensure_ascii", False),
             )
         except ValueError as e:
             raise JSONDecodeError(e)
@@ -53,10 +53,7 @@ class UJSON_Handler(XSOAR_Handler):
                 indent=indent,
                 sort_keys=sort_keys,
                 escape_forward_slashes=kwargs.get("escape_forward_slashes", False),
+                ensure_ascii=kwargs.get("ensure_ascii", False),
             )
         except ValueError as e:
             raise JSONDecodeError(e)
-
-    @staticmethod
-    def decode_error(self) -> Type[BaseException]:
-        return JSONDecodeError

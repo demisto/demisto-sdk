@@ -1223,25 +1223,18 @@ class Downloader:
             splitter="dot",
         )
 
-        if file_ending not in {"yml", "json"}:
-            logging.warning(f"trying to merge an non-supported file {output_path}")
-            return
-
         file_data = get_file(output_path, type_of_file=file_ending, clear_cache=True)
         if pack_obj_data:
             merge(file_data, preserved_data)
 
-        write_method, decode_error_type = {
-            "yml": (lambda f: yaml.dump(file_data, f), yaml.decode_error),
-            "json": (
-                lambda f: json.dump(data=file_data, fp=f, indent=4),
-                json.decode_error,
-            ),
-        }[file_ending]
-
-        safe_write_unicode(
-            write_method, path=Path(output_path), decode_error=decode_error_type
-        )
+        if file_ending == "yml":
+            safe_write_unicode(lambda f: yaml.dump(file_data, f), Path(output_path))
+        elif file_ending == "json":
+            safe_write_unicode(
+                lambda f: json.dump(data=file_data, fp=f, indent=4), Path(output_path)
+            )
+        else:
+            raise RuntimeError(f"cannot merge file extension {file_ending}")
 
     @staticmethod
     def get_extracted_file_detail(file_ending: str) -> str:

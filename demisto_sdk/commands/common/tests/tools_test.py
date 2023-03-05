@@ -166,6 +166,7 @@ class TestGenericFunctions:
                 "latin-1"
             )
         )
+        assert "ü" in path.read_text(encoding='latin-1')
         assert get_file(path, suffix) == {"text": SENTENCE_WITH_UMLAUTS}
 
     @pytest.mark.parametrize(

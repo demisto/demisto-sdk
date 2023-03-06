@@ -3658,7 +3658,7 @@ class TestWidgetValidation:
         """
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
-        widget = pack._create_json_based(name="widget", prefix="", content=WIDGET)
+        widget = pack.create_widget(name="widget", prefix="", content=WIDGET)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
@@ -3683,7 +3683,7 @@ class TestWidgetValidation:
         pack = repo.create_pack("PackName")
         widget_copy = WIDGET.copy()
         widget_copy["version"] = 1
-        widget = pack._create_json_based(name="widget", prefix="", content=widget_copy)
+        widget = pack.create_widget(name="widget", prefix="", content=widget_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(

@@ -367,7 +367,7 @@ class Pack:
         return indicator_field
 
     def create_indicator_type(
-        self, name, prefix=INDICATOR_TYPE_PREFIX, content: dict = None
+        self, name, content: dict = None, prefix=INDICATOR_TYPE_PREFIX
     ) -> JSONBased:
         indicator_type = self._create_json_based(
             name, prefix, content, dir_path=self._indicator_types
@@ -432,8 +432,8 @@ class Pack:
     def create_layout(
         self,
         name,
-        prefix: str = LAYOUT_PREFIX,
         content: dict = None,
+        prefix: str = LAYOUT_PREFIX,
     ) -> JSONBased:
         layout = self._create_json_based(
             name, prefix, content, dir_path=self._layout_path
@@ -442,7 +442,7 @@ class Pack:
         return layout
 
     def create_layoutcontainer(
-        self, name, prefix: str = LAYOUT_CONTAINER_PREFIX, content: dict = None
+        self, name, content: dict = None, prefix: str = LAYOUT_CONTAINER_PREFIX
     ) -> JSONBased:
         layoutcontainer = self._create_json_based(
             name, prefix, content, dir_path=self._layout_path
@@ -451,7 +451,7 @@ class Pack:
         return layoutcontainer
 
     def create_report(
-        self, name, prefix=REPORT_PREFIX, content: dict = None
+        self, name, content: dict = None, prefix=REPORT_PREFIX
     ) -> JSONBased:
         report = self._create_json_based(
             name, prefix, content, dir_path=self._report_path
@@ -460,7 +460,10 @@ class Pack:
         return report
 
     def create_widget(
-        self, name, prefix: str = WIDGET_PREFIX, content: dict = None
+        self,
+        name,
+        content: dict = None,
+        prefix: str = WIDGET_PREFIX,
     ) -> JSONBased:
         widget = self._create_json_based(
             name, prefix, content, dir_path=self._widget_path

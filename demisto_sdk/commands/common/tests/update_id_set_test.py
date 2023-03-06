@@ -1576,7 +1576,7 @@ class TestLayouts:
         pack = repo.create_pack(name=f"DummyPack-{layout_type}")
         layout = pack.create_layoutcontainer(
             "Reut",
-            {
+            content={
                 "id": "Reut",
                 "group": layout_type,
                 "detailsV2": {},
@@ -1611,7 +1611,7 @@ class TestLayouts:
         pack = repo.create_pack(name="DummyPack")
         layout = pack.create_layoutcontainer(
             "Itay",
-            {
+            content={
                 "id": "Itay",
                 "group": "indicator",
                 "detailsV2": {},

@@ -559,7 +559,6 @@ class ValidateManager:
     def validate_packs(
         self, all_packs: list, all_packs_valid: set, count: int, num_of_packs: int
     ) -> bool:
-
         if self.run_with_multiprocessing:
             with pebble.ProcessPool(max_workers=4) as executor:
                 futures = []
@@ -3002,19 +3001,23 @@ class ValidateManager:
             ) and _handle_directly_under_pack():
                 return False
 
-        else:  # Packs/MyPack/SomeFolder/<modified file> OR DEEPER
-            first_level_folder = path.parts[-depth + 1]
-            if (
-                first_level_folder not in FIRST_LEVEL_FOLDERS
-                and _handle_invalid_first_level_folder()
-            ):
-                return False
+        # Packs/MyPack/SomeFolder/<modified file> OR DEEPER
+        first_level_folder = path.parts[-depth + 1]
 
-            if (
-                first_level_folder not in FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES
-                and _handle_first_level_folder_does_not_allow_files()
-            ):
-                return False
+        # checked for depth == 3 only
+        if (
+            depth == 3
+            and first_level_folder not in FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES
+            and _handle_first_level_folder_does_not_allow_files()
+        ):
+            return False
+
+        # checked for depth >=3
+        if (
+            first_level_folder not in FIRST_LEVEL_FOLDERS
+            and _handle_invalid_first_level_folder()
+        ):
+            return False
 
         return True  # this part is reached when a _hanlde method returns False
 

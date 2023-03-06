@@ -49,7 +49,7 @@
 ## 1.10.0
 * **Breaking change**: Removed usage of `pipenv`, `isort` and `autopep8` in the **split** and **download** commands. Removed the `--no-pipenv` and `--no-code-formatting` flags. Please see https://xsoar.pan.dev/docs/tutorials/tut-setup-dev-remote for the recommended environment setup.
 * Fixed an issue in **prepare-content** command where large code lines were broken.
-* Fixed an issue where git-*renamed_files* were not retrieved properl
+* Fixed an issue where git-*renamed_files* were not retrieved properly.
 * Fixed an issue where test dependencies were calculated in all level dependencies calculation.
 * Added formatting and validation to XSIAM content types.
 * Fixed an issue where several XSIAM content types were not validated when passing the `-a` flag.

@@ -1,6 +1,7 @@
 import copy
 from copy import deepcopy
 from os.path import join
+from pathlib import Path
 from time import sleep
 
 import pytest
@@ -36,7 +37,10 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.MDXServer import start_local_MDX_server
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
-from demisto_sdk.commands.validate.validate_manager import ValidateManager
+from demisto_sdk.commands.validate.validate_manager import (
+    ValidateManager,
+    depth_from_packs,
+)
 from demisto_sdk.tests.constants_test import (
     CONTENT_REPO_EXAMPLE_ROOT,
     NOT_VALID_IMAGE_PATH,
@@ -4828,7 +4832,6 @@ def test_local_node_server_up_and_down():
 
     assert not mdx_server_is_up()
     with start_local_MDX_server():
-
         assert mdx_server_is_up()
         assert_successful_mdx_call()
     sleep(1)
@@ -4844,3 +4847,34 @@ def assert_successful_mdx_call():
         "POST", "http://localhost:6161", data="## Hello", timeout=20
     )
     assert response.status_code == 200
+
+
+@pytest.mark.parametrize(
+    "path,expected_depth",
+    (
+        ("Packs", 0),
+        ("Packs/directly_under_packs.json", 1),
+        ("Packs/mypack", 1),
+        ("Packs/mypack/pack_metadata.json", 2),
+        ("Packs/mypack/Integrations/myIntegration", 3),
+        ("Packs/mypack/Integrations/myIntegration.yml", 3),
+        ("Packs/mypack/Integrations/myIntegration/myIntegration.yml", 4),
+        ("Packs/mypack/Integrations/test_data/dummy.json", 4),
+    ),
+)
+def test_depth_from_packs(path: str, expected_depth: int):
+    assert depth_from_packs(Path(path)) == expected_depth
+
+
+@pytest.mark.parametrize(
+    "invalid_path",
+    (
+        "packs",
+        "PACKS",
+        "myPack/Integrations/myIntegration/myIntegration.yml",
+        "not_Packs",
+    ),
+)
+def test_depth_from_packs__invalid(invalid_path: str):
+    with pytest.raises(ValueError):
+        depth_from_packs(Path(invalid_path))

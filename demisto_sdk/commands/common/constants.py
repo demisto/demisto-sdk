@@ -1854,4 +1854,5 @@ PACK_ROOT_FILE_NAMES = {
     "Pipfile.lock",
     "README.md",
     "pack_metadata.json",
+    "connection.json",
 }

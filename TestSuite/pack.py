@@ -500,7 +500,7 @@ class Pack:
         self.wizards.append(wizard)
         return wizard
 
-    def create_list(self, name, prefix="list", content: dict = None) -> JSONBased:
+    def create_list(self, name, content: dict = None, prefix="list") -> JSONBased:
         list_item = self._create_json_based(
             name, prefix, content, dir_path=self._lists_path
         )

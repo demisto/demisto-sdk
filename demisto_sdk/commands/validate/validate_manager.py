@@ -3001,23 +3001,23 @@ class ValidateManager:
             ) and _handle_directly_under_pack():
                 return False
 
-        # Packs/MyPack/SomeFolder/<modified file> OR DEEPER
-        first_level_folder = path.parts[-depth + 1]
+        elif depth >= 3:
+            # Packs/MyPack/SomeFolder/<modified file> OR DEEPER
+            first_level_folder = path.parts[-depth + 1]
 
-        # checked for depth == 3 only
-        if (
-            depth == 3
-            and first_level_folder not in FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES
-            and _handle_first_level_folder_does_not_allow_files()
-        ):
-            return False
+            if (
+                depth == 3
+                and first_level_folder
+                not in FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES
+                and _handle_first_level_folder_does_not_allow_files()
+            ):
+                return False
 
-        # checked for depth >=3
-        if (
-            first_level_folder not in FIRST_LEVEL_FOLDERS
-            and _handle_invalid_first_level_folder()
-        ):
-            return False
+            if (
+                first_level_folder not in FIRST_LEVEL_FOLDERS
+                and _handle_invalid_first_level_folder()
+            ):
+                return False
 
         return True  # this part is reached when a _hanlde method returns False
 

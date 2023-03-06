@@ -61,8 +61,10 @@ Options:
 *  **-dt, --docker-timeout**
     The timeout (in seconds) for requests done by the docker client
 *  **-di, --docker-image**
-    The docker image to check package on. Can be a comma separated list of Possible values: 'native:maintenance', 'native:ga', 'native:dev', 'all', a specific docker image from Docker Hub (e.g devdemisto/python3:3.10.9.12345) or the default 'from-yml'.
-
+    The docker image to check package on. Can be a comma separated list of Possible values: 'native:maintenance', 'native:ga', 'native:dev', 'native:target', 'all', a specific docker image from Docker Hub (e.g devdemisto/python3:3.10.9.12345) or the default 'from-yml'.
+*  **-dit --docker-image-target**
+    The docker image to lint native supported content with. Should only be used with
+    --docker-image native:target. An error will be raised otherwise.
 
 
 **Examples**:

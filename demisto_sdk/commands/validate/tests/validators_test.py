@@ -2820,6 +2820,80 @@ def test_run_validation_using_git_on_metadata_with_invalid_tags(
     assert not res
 
 
+@pytest.mark.parametrize(
+    "modified_files, added_files, changed_meta_files, old_format_files, deleted_files",
+    [
+        (
+            {"modified_files"},
+            {"added_files"},
+            {"changed_meta_files"},
+            {"old_format_files"},
+            {"deleted_files"},
+        ),
+        (set(), {"added_files"}, set(), set(), set()),
+        (set(), set(), {"changed_meta_files"}, set(), set()),
+        (set(), set(), set(), {"old_format_files"}, set()),
+        (set(), set(), set(), set(), {"deleted_files"}),
+    ],
+)
+def test_run_validation_using_git_validation_calls(
+    mocker,
+    modified_files: set,
+    added_files: set,
+    changed_meta_files: set,
+    old_format_files: set,
+    deleted_files: set,
+):
+    """
+    Given: Some changed files were detected.
+
+    When: Running validations on using git.
+
+    Then: Ensure the correct validations are called on the correct files.
+    """
+    validate_manager = ValidateManager()
+
+    mocker.patch.object(validate_manager, "setup_git_params", return_value=True)
+    mocker.patch.object(
+        validate_manager,
+        "get_changed_files_from_git",
+        return_value=(
+            modified_files,
+            added_files,
+            changed_meta_files,
+            old_format_files,
+            True,
+        ),
+    )
+    mocker.patch.object(GitUtil, "deleted_files", return_value=deleted_files)
+
+    modified_files_validation = mocker.patch.object(
+        validate_manager, "validate_modified_files", return_value=True
+    )
+    added_files_validation = mocker.patch.object(
+        validate_manager, "validate_added_files", return_value=True
+    )
+    no_old_format_validation = mocker.patch.object(
+        validate_manager, "validate_no_old_format", return_value=True
+    )
+    deleted_files_validation = mocker.patch.object(
+        validate_manager, "validate_deleted_files", return_value=True
+    )
+
+    validate_manager.run_validation_using_git()
+
+    modified_files_validation.assert_called_once_with(modified_files | old_format_files)
+    added_files_validation.assert_called_once_with(added_files, modified_files)
+
+    if old_format_files:
+        no_old_format_validation.assert_called_once_with(old_format_files)
+
+    else:
+        assert not no_old_format_validation.called
+
+    deleted_files_validation.assert_called_once_with(deleted_files, added_files)
+
+
 def test_content_entities_dir_length():
     """
     This test is here so we don't forget to update FOLDERS_ALLOWED_TO_CONTAIN_FILES when adding/removing content types.

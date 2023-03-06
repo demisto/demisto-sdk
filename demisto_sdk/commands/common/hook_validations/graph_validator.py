@@ -207,13 +207,28 @@ class GraphValidator(BaseValidator):
     @error_codes("GR103")
     def is_file_using_unknown_content(self):
         """Validates that there is no usage of unknown content items.
+        The validation runs twice:
+        1. Cases where a warning should be raised - if the using content item is a test playbook/test script,
+            or if the dependency is optional.
+        2. Cases where an error should be raised - the complementary case.
+        """
+        is_valid = [
+            self._find_unknown_content_uses(raises_error=False),
+            self._find_unknown_content_uses(raises_error=True),
+        ]
+        return all(is_valid)
+
+    def _find_unknown_content_uses(self, raises_error: bool) -> bool:
+        """Validates that there is no usage of unknown content items.
         Note: if self.file_paths is empty, the validation runs on all files - in this case, returns a warning.
-        otherwise, returns an error.
+        otherwise, returns an error iff raises_error is True.
         """
 
         is_valid = True
         content_item: ContentItem
-        for content_item in self.graph.get_unknown_content_uses(self.file_paths):
+        for content_item in self.graph.get_unknown_content_uses(
+            self.file_paths, raises_error=raises_error
+        ):
             unknown_content_names = [
                 relationship.content_item_to.object_id or relationship.content_item_to.name  # type: ignore
                 for relationship in content_item.uses
@@ -225,7 +240,7 @@ class GraphValidator(BaseValidator):
                 error_message,
                 error_code,
                 content_item.path,
-                warning=not bool(self.file_paths),
+                warning=not bool(self.file_paths) or not raises_error,
             ):
                 is_valid = False
 

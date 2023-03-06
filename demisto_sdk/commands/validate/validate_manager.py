@@ -1297,7 +1297,9 @@ class ValidateManager:
                 ) as graph_validator:
                     validation_results.add(graph_validator.is_valid_content_graph())
 
-        validation_results.add(self.validate_modified_files(modified_files))
+        validation_results.add(
+            self.validate_modified_files(modified_files | old_format_files)
+        )
         validation_results.add(self.validate_added_files(added_files, modified_files))
         validation_results.add(
             self.validate_changed_packs_unique_files(

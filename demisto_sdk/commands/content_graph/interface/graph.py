@@ -85,7 +85,9 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def get_unknown_content_uses(self, file_paths: List[str]) -> List[BaseContent]:
+    def get_unknown_content_uses(
+        self, file_paths: List[str], raises_error: bool
+    ) -> List[BaseContent]:
         pass
 
     @abstractmethod

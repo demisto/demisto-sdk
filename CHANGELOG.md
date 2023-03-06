@@ -3,11 +3,18 @@
 ## Unreleased
 * Added a **validate** step checking for misplaced files (i.e. directly under `Integrations`, or under mistyped folder name)
 
+## 1.10.6
+* Fixed an issue where running **validate** with the `-g` flag would skip some validations for old-formatted (unified) integration/script files.
+* Deprecated integrations and scripts will not run anymore when providing the **--all-packs** to the **lint** command.
+* Fixed an issue where a pack `serverMinVersion` would be calculated by the minimal fromVersion of its content items.
+* Added the `--docker-image-target` flag to **lint** for testing native supported content with new images.
+
 ## 1.10.5
 * Fixed an issue where running **run-test-playbook** would not use the `verify` parameter correctly. @ajoga
 * Added a newline at the end of README files generated in **generate-docs**.
 * Added the value `3` (out of bounds) to the `onChangeRepAlg` and `reputationCalc` fields under the `IncidentType` and `GenericType` schemas. **validate** will allow using it now.
 * Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
+* Fixed an issue where **validate** failed on Feed Integrations after adding the new *Collect/Connect* section field.
 * Fixed an issue where using **postman-codegen** failed converting strings containing digits to kebab-case.
 * Fixed an issue where the ***error-code*** command could not parse List[str] parameter.
 * Updated validation *LO107* to support more section types in XSIAM layouts.

@@ -62,7 +62,7 @@ from demisto_sdk.commands.common.update_id_set import (
     re_create_id_set,
     should_skip_item_by_mp,
 )
-from TestSuite.test_tools import assert_str_in_call_args_list
+from TestSuite.test_tools import str_in_call_args_list
 from TestSuite.utils import IsEqualFunctions
 
 json = JSON_Handler()
@@ -222,7 +222,7 @@ class TestPacksMetadata:
         with pytest.raises(FileNotFoundError):
             get_pack_metadata_data("Pack_Path", True)
 
-        assert_str_in_call_args_list(
+        assert str_in_call_args_list(
             logger_info.call_args_list, "Failed to process Pack_Path, Error:"
         )
 
@@ -3365,7 +3365,7 @@ class TestJob:
                 MarketplaceVersions.XSOAR.value,
                 print_logs,
             )
-        assert_str_in_call_args_list(
+        assert str_in_call_args_list(
             logger_info.call_args_list, f"failed to process job {job_json_path}"
         )
 

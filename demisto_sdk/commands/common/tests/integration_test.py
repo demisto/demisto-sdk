@@ -25,7 +25,6 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.integration import Integration
 from TestSuite.test_tools import (
     ChangeCWD,
-    assert_str_in_call_args_list,
     assert_strs_in_call_args_list,
     str_in_call_args_list,
 )
@@ -320,7 +319,7 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.no_change_to_context_path() is answer
         for changed_command_name in changed_command_names:
-            assert_str_in_call_args_list(
+            assert str_in_call_args_list(
                 logger_info.call_args_list, changed_command_name
             )
         structure.quiet_bc = True
@@ -421,7 +420,7 @@ class TestIntegrationValidator:
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
         validator.no_changed_command_name_or_arg()
-        assert_str_in_call_args_list(logger_info.call_args_list, expected_error_msg)
+        assert str_in_call_args_list(logger_info.call_args_list, expected_error_msg)
 
     WITHOUT_DUP = [{"name": "test"}, {"name": "test1"}]
     DUPLICATE_PARAMS_INPUTS = [(WITHOUT_DUP, True)]
@@ -511,7 +510,7 @@ class TestIntegrationValidator:
                 ["API key"]
             )
             expected_warning = f"[WARNING]: : [{warning_code}] - {warning_message}"
-            assert_str_in_call_args_list(
+            assert str_in_call_args_list(
                 logger_warning.call_args_list, expected_warning
             )
 

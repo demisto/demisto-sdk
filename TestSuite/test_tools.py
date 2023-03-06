@@ -52,22 +52,6 @@ def str_in_call_args_list(call_args_list, required_str):
     return False
 
 
-def assert_str_in_call_args_list(call_args_list, required_str):
-    """
-    Checks whether required_str is in any of the call_args in call_args_list
-    Args:
-        call_args_list: From a mocker
-        required_str: String to search in any of the call_args_list
-    :return: True is required_str was found, False otherwise
-    """
-    ret_value = False
-    for current_call in call_args_list:
-        if type(current_call[0]) == tuple:
-            if required_str in current_call[0][0]:
-                ret_value = True
-    assert ret_value
-
-
 def assert_strs_in_call_args_list(call_args_list, required_strs):
     """
     Checks whether required_str is in any of the call_args in call_args_list
@@ -77,4 +61,4 @@ def assert_strs_in_call_args_list(call_args_list, required_strs):
     :return: True is required_str was found, False otherwise
     """
     for current_required_str in required_strs:
-        assert_str_in_call_args_list(call_args_list, current_required_str)
+        assert str_in_call_args_list(call_args_list, current_required_str)

@@ -25,7 +25,7 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
     mock_relationship,
     mock_test_playbook,
 )
-from TestSuite.test_tools import assert_str_in_call_args_list
+from TestSuite.test_tools import str_in_call_args_list
 
 logging.getLogger("demisto-sdk").propagate = True
 
@@ -443,7 +443,7 @@ def test_are_fromversion_relationships_paths_valid(repository: ContentDTO, mocke
         is_valid = graph_validator.validate_fromversion_fields()
 
     assert not is_valid
-    assert_str_in_call_args_list(
+    assert str_in_call_args_list(
         logger_info.call_args_list,
         "Content item 'SamplePlaybook' whose from_version is '6.5.0' uses the content"
         " items: 'SamplePlaybook2' whose from_version is higher",
@@ -503,7 +503,7 @@ def test_is_file_using_unknown_content(
             break
     assert found_level
 
-    assert_str_in_call_args_list(
+    assert str_in_call_args_list(
         logger_to_search.call_args_list,
         "Content item 'SampleIntegration' using content items: SampleClassifier which"
         " cannot be found in the repository",
@@ -526,7 +526,7 @@ def test_is_file_display_name_already_exists(repository: ContentDTO, mocker):
 
     assert not is_valid
     for i in range(1, 4):
-        assert_str_in_call_args_list(
+        assert str_in_call_args_list(
             logger_info.call_args_list,
             f"Pack 'SamplePack{i if i != 1 else ''}' has a duplicate display_name",
         )
@@ -549,7 +549,7 @@ def test_are_marketplaces_relationships_paths_valid(
         is_valid = graph_validator.validate_marketplaces_fields()
 
     assert not is_valid
-    assert_str_in_call_args_list(
+    assert str_in_call_args_list(
         logger_info.call_args_list,
         "Content item 'SamplePlaybook' can be used in the 'xsoar, xpanse' marketplaces"
         ", however it uses content items: 'SamplePlaybook2' which are not supported in"
@@ -576,7 +576,7 @@ def test_validate_dependencies(repository: ContentDTO, caplog, mocker):
         is_valid = graph_validator.validate_dependencies()
 
     assert not is_valid
-    assert_str_in_call_args_list(
+    assert str_in_call_args_list(
         logger_info.call_args_list,
         "The core pack SamplePack cannot depend on non-core packs: ",
     )

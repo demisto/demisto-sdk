@@ -64,7 +64,6 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
 )
 from TestSuite.test_tools import (
     ChangeCWD,
-    assert_str_in_call_args_list,
     assert_strs_in_call_args_list,
     str_in_call_args_list,
 )
@@ -836,7 +835,7 @@ class TestDeprecatedIntegration:
                 [VALIDATE_CMD, "-i", integration.yml.rel_path, "--no-docker-checks"],
                 catch_exceptions=False,
             )
-        assert_str_in_call_args_list(logger_info.call_args_list, "IN157")
+        assert str_in_call_args_list(logger_info.call_args_list, "IN157")
         assert result.exit_code == 1
 
     @pytest.mark.parametrize(
@@ -876,7 +875,7 @@ class TestDeprecatedIntegration:
                 [VALIDATE_CMD, "-i", integration.yml.rel_path, "--no-docker-checks"],
                 catch_exceptions=False,
             )
-        assert_str_in_call_args_list(logger_info.call_args_list, "IN158")
+        assert str_in_call_args_list(logger_info.call_args_list, "IN158")
         assert result.exit_code == 1
 
     def test_invalid_deprecated_integration_description(self, mocker, repo):
@@ -1496,7 +1495,7 @@ class TestIntegrationValidation:
                 [VALIDATE_CMD, "-i", integration.yml.rel_path, "--no-docker-checks"],
                 catch_exceptions=False,
             )
-        assert_str_in_call_args_list(logger_info.call_args_list, "ST107")
+        assert str_in_call_args_list(logger_info.call_args_list, "ST107")
         assert 'Please add the field "description" to the path'
 
     @pytest.mark.parametrize(
@@ -1884,7 +1883,7 @@ class TestClassifierValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert_str_in_call_args_list(
+        assert str_in_call_args_list(
             logger_info.call_args_list,
             "[BA102] - File PackName/Classifiers/classifier-new_classifier.json",
         )
@@ -5356,7 +5355,7 @@ class TestBasicValidation:
                     "--no-conf-json",
                 ],
             )
-        assert_str_in_call_args_list(logger_info.call_args_list, "The files are valid")
+        assert str_in_call_args_list(logger_info.call_args_list, "The files are valid")
         assert result.exit_code == 0
 
 

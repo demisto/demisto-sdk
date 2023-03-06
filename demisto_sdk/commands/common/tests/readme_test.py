@@ -12,7 +12,6 @@ from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.test_tools import (
     ChangeCWD,
-    assert_str_in_call_args_list,
     assert_strs_in_call_args_list,
     str_in_call_args_list,
 )
@@ -229,7 +228,7 @@ def test_unvalid_verify_no_empty_sections(
         )
 
         assert not result
-        assert_str_in_call_args_list(logger_info.call_args_list, section_error)
+        assert str_in_call_args_list(logger_info.call_args_list, section_error)
 
 
 @pytest.mark.parametrize(
@@ -262,7 +261,7 @@ def test_combined_unvalid_verify_no_empty_sections(integration, mocker, file_inp
         )
 
         assert not result
-        assert_str_in_call_args_list(logger_info.call_args_list, error)
+        assert str_in_call_args_list(logger_info.call_args_list, error)
 
 
 @pytest.mark.parametrize(
@@ -370,7 +369,7 @@ def test_verify_no_default_sections_left(integration, mocker, file_input, sectio
 
         section_error = f'Replace "{section}" with a suitable info.'
         assert not result
-        assert_str_in_call_args_list(logger_info.call_args_list, section_error)
+        assert str_in_call_args_list(logger_info.call_args_list, section_error)
 
 
 ERROR_FOUND_CASES = [
@@ -499,7 +498,7 @@ def test_invalid_short_file(mocker):
         "Pack README files are expected to include a few sentences about the pack and/or images."
     )
     assert not result
-    assert_str_in_call_args_list(logger_info.call_args_list, short_readme_error)
+    assert str_in_call_args_list(logger_info.call_args_list, short_readme_error)
 
 
 def test_demisto_in_integration_readme(repo):

@@ -44,10 +44,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import get_child_files, get_json, get_yaml
 from demisto_sdk.commands.download.downloader import Downloader
-from TestSuite.test_tools import (
-    assert_str_in_call_args_list,
-    assert_strs_in_call_args_list,
-)
+from TestSuite.test_tools import assert_strs_in_call_args_list, str_in_call_args_list
 
 yaml = YAML_Handler()
 
@@ -547,7 +544,7 @@ class TestFlagHandlers:
             downloader.system_item_type = it
             answer = downloader.verify_flags()
             if err:
-                assert_str_in_call_args_list(logger_info.call_args_list, err)
+                assert str_in_call_args_list(logger_info.call_args_list, err)
             assert answer is res
 
     def test_handle_all_custom_content_flag(self, tmp_path):
@@ -788,7 +785,7 @@ class TestMergeExistingFile:
             downloader.merge_and_extract_existing_file(
                 env.INTEGRATION_CUSTOM_CONTENT_OBJECT
             )
-            assert_str_in_call_args_list(logger_info.call_args_list, "Merged")
+            assert str_in_call_args_list(logger_info.call_args_list, "Merged")
 
     def test_merge_and_extract_existing_file_js(self, tmp_path):
         with patch.object(Downloader, "__init__", lambda a, b, c: None):

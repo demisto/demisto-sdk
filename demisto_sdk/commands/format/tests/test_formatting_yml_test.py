@@ -62,7 +62,7 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_TEST_PLAYBOOK,
     TEST_PLAYBOOK_PATH,
 )
-from TestSuite.test_tools import ChangeCWD, assert_str_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 logging.getLogger("demisto-sdk").propagate = True
 
@@ -379,7 +379,7 @@ class TestFormatting:
         integration.yml.write_dict(yml_contents)
         base_yml = IntegrationYMLFormat(integration.yml.path)
         base_yml.set_reputation_commands_basic_argument_as_needed()
-        assert_str_in_call_args_list(
+        assert str_in_call_args_list(
             logger_info.call_args_list, "Array field in ip command is set to False."
         )
         assert (
@@ -1825,7 +1825,7 @@ def test_yml_run_format_exception_handling(format_object, mocker):
     )
 
     formatter.run_format()
-    assert_str_in_call_args_list(
+    assert str_in_call_args_list(
         logger_info.call_args_list,
         "Failed to update file my_file_path. Error: MY ERROR",
     )

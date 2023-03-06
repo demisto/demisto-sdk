@@ -25,7 +25,7 @@ def handle_deprecated_args(input_args):
     for current_arg in input_args:
         if current_arg in DEPRECATED_PARAMETERS.keys():
             substitute = DEPRECATED_PARAMETERS[current_arg]
-            logger.error(
+            logging.getLogger("demisto-sdk").error(
                 f"[red]Argument {current_arg} is deprecated. Please use {substitute} instead.[/red]"
             )
 
@@ -120,7 +120,6 @@ def logging_setup(
 
     global current_log_file_path
     current_log_file_path = log_file_path if log_file_path else LOG_FILE_PATH
-    # import pdb; pdb.set_trace()
     if os.path.isdir(current_log_file_path):
         current_log_file_path += f"/{LOG_FILE_NAME}"
     file_handler = RotatingFileHandler(
@@ -131,10 +130,27 @@ def logging_setup(
     )
     file_handler.set_name("file-handler")
     file_handler.setLevel(file_log_threshold)
-    file_formatter = logging.Formatter(
-        fmt="[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(filename)s - %(lineno)d - %(message)s",
-        datefmt=DATE_FORMAT,
-    )
+
+    class NoColorFileFormatter(logging.Formatter):
+        def __init__(
+            self,
+        ):
+            super().__init__(
+                fmt="[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(filename)s:%(lineno)d - %(message)s",
+                datefmt=DATE_FORMAT,
+            )
+
+        def format(self, record):
+            message = logging.Formatter.format(self, record)
+            message = self.replace_escapes(message)
+            return message
+
+        def replace_escapes(self, message):
+            for key in escapes:
+                message = message.replace(key, "")
+            return message
+
+    file_formatter = NoColorFileFormatter()
     file_handler.setFormatter(fmt=file_formatter)
 
     logging.basicConfig(
@@ -142,15 +158,24 @@ def logging_setup(
         level=min(console_handler.level, file_handler.level),
     )
 
-    ret_value: logging.Logger = logging.getLogger("demisto-sdk")
-    while ret_value.handlers:
-        ret_value.removeHandler(ret_value.handlers[0])
-    ret_value.addHandler(console_handler)
-    ret_value.addHandler(file_handler)
-    ret_value.level = min(console_handler.level, file_handler.level)
-    set_propagate(ret_value, False)
+    root_logger: logging.Logger = logging.getLogger("")
+    set_demisto_handlers_to_logger(root_logger, console_handler, file_handler)
 
-    return ret_value
+    demisto_logger: logging.Logger = logging.getLogger("demisto-sdk")
+    set_demisto_handlers_to_logger(demisto_logger, console_handler, file_handler)
+    set_propagate(demisto_logger, False)
+
+    return demisto_logger
+
+
+def set_demisto_handlers_to_logger(
+    logger: logging.Logger, console_handler, file_handler
+):
+    while logger.handlers:
+        logger.removeHandler(logger.handlers[0])
+    logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
+    logger.level = min(console_handler.level, file_handler.level)
 
 
 def get_log_file():
@@ -159,10 +184,6 @@ def get_log_file():
 
 def set_propagate(logger_to_update: logging.Logger, propagate: bool = False):
     logger_to_update.propagate = propagate
-
-
-logging_setup()
-logger = logging.getLogger("demisto-sdk")
 
 
 # Python program to print

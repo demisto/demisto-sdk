@@ -3001,7 +3001,7 @@ class ValidateManager:
             ) and _handle_directly_under_pack():
                 return False
 
-        elif depth >= 3:
+        else:
             # Packs/MyPack/SomeFolder/<modified file> OR DEEPER
             first_level_folder = path.parts[-depth + 1]
 

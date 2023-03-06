@@ -2471,7 +2471,7 @@ class TestLayoutValidation:
         """
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
-        layout = pack._create_json_based(name="layout-name", prefix="", content=LAYOUT)
+        layout = pack.create_layout(name="layout-name", prefix="", content=LAYOUT)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
@@ -2496,8 +2496,10 @@ class TestLayoutValidation:
         pack = repo.create_pack("PackName")
         layout_copy = LAYOUT.copy()
         layout_copy["version"] = 2
-        layout = pack._create_json_based(
-            name="layout-name", prefix="", content=layout_copy
+        layout = pack.create_layout(
+            name="layout-name",
+            prefix="",
+            content=layout_copy,
         )
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -2527,8 +2529,10 @@ class TestLayoutValidation:
         pack = repo.create_pack("PackName")
         layout_copy = LAYOUT.copy()
         layout_copy["version"] = 2
-        layout = pack._create_json_based(
-            name="wrongpath", prefix="", content=layout_copy
+        layout = pack.create_layout(
+            name="wrongpath",
+            prefix="",
+            content=layout_copy,
         )
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -2553,7 +2557,7 @@ class TestLayoutValidation:
         """
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
-        layout = pack._create_json_based(
+        layout = pack.create_layoutcontainer(
             name="layoutscontainer-test", prefix="", content=LAYOUTS_CONTAINER
         )
         with ChangeCWD(pack.repo_path):
@@ -2580,7 +2584,7 @@ class TestLayoutValidation:
         pack = repo.create_pack("PackName")
         layout_copy = LAYOUTS_CONTAINER.copy()
         layout_copy["version"] = 2
-        layout = pack._create_json_based(
+        layout = pack.create_layoutcontainer(
             name="layoutscontainer", prefix="", content=layout_copy
         )
         with ChangeCWD(pack.repo_path):
@@ -2609,8 +2613,10 @@ class TestLayoutValidation:
         """
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
-        layout = pack._create_json_based(
-            name="wrongname", prefix="", content=LAYOUTS_CONTAINER
+        layout = pack.create_layoutcontainer(
+            name="wrongname",
+            prefix="",
+            content=LAYOUTS_CONTAINER,
         )
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -2676,7 +2682,7 @@ class TestLayoutValidation:
         layout_copy = LAYOUT.copy()
         layout_copy["toVersion"] = "6.0.0"
 
-        layout = pack._create_json_based(name="layout", prefix="", content=layout_copy)
+        layout = pack.create_layout(name="layout", prefix="", content=layout_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
@@ -2709,7 +2715,7 @@ class TestLayoutValidation:
         layoutscontainer_copy["detailsV2"]["tabs"][0]["sections"] = [
             tab_section_to_test
         ]
-        layoutscontainer = pack._create_json_based(
+        layoutscontainer = pack.create_layoutcontainer(
             name="layoutscontainer-test", prefix="", content=layoutscontainer_copy
         )
 
@@ -2772,7 +2778,7 @@ class TestLayoutValidation:
         layoutscontainer_copy["detailsV2"]["tabs"][0]["sections"] = [
             tab_section_to_test
         ]
-        layoutscontainer = pack._create_json_based(
+        layoutscontainer = pack.create_layoutcontainer(
             name="layoutscontainer-test", prefix="", content=layoutscontainer_copy
         )
 
@@ -2834,9 +2840,7 @@ class TestLayoutValidation:
         pack = repo.create_pack("PackName")
         layout_copy = LAYOUT.copy()
         layout_copy["layout"]["tabs"][0]["sections"] = [tab_section_to_test]
-        layout = pack._create_json_based(
-            name="layout-test", prefix="", content=layout_copy
-        )
+        layout = pack.create_layout(name="layout-test", prefix="", content=layout_copy)
 
         id_set = copy.deepcopy(EMPTY_ID_SET)
         id_set["scripts"].append(
@@ -2890,9 +2894,7 @@ class TestLayoutValidation:
         pack = repo.create_pack("PackName")
         layout_copy = LAYOUT.copy()
         layout_copy["layout"]["tabs"][0]["sections"] = [tab_section_to_test]
-        layout = pack._create_json_based(
-            name="layout-test", prefix="", content=layout_copy
-        )
+        layout = pack.create_layout(name="layout-test", prefix="", content=layout_copy)
 
         id_set = copy.deepcopy(EMPTY_ID_SET)
         id_set["scripts"].append(
@@ -3245,7 +3247,7 @@ class TestReportValidation:
         """
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
-        report = pack._create_json_based(name="report", prefix="", content=REPORT)
+        report = pack.create_report(name="report", prefix="", content=REPORT)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
@@ -3270,7 +3272,7 @@ class TestReportValidation:
         pack = repo.create_pack("PackName")
         report_copy = REPORT.copy()
         report_copy["orientation"] = "bla"
-        report = pack._create_json_based(name="report", prefix="", content=report_copy)
+        report = pack.create_report(name="report", prefix="", content=report_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
@@ -3295,7 +3297,7 @@ class TestReputationValidation:
         """
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
-        reputation = pack._create_json_based(
+        reputation = pack.create_indicator_type(
             name="reputation", prefix="", content=REPUTATION
         )
         with ChangeCWD(pack.repo_path):
@@ -3322,7 +3324,7 @@ class TestReputationValidation:
         pack = repo.create_pack("PackName")
         reputation_copy = REPUTATION.copy()
         reputation_copy["expiration"] = -1
-        reputation = pack._create_json_based(
+        reputation = pack.create_indicator_type(
             name="reputation", prefix="", content=reputation_copy
         )
         with ChangeCWD(pack.repo_path):
@@ -4650,7 +4652,7 @@ class TestSpecificValidations:
         pack = repo.create_pack("PackName")
         reputation_copy = REPUTATION.copy()
         reputation_copy["expiration"] = -1
-        reputation = pack._create_json_based(
+        reputation = pack.create_indicator_type(
             name="reputation", prefix="", content=reputation_copy
         )
         with ChangeCWD(pack.repo_path):
@@ -4686,7 +4688,7 @@ class TestSpecificValidations:
         reputation_copy = REPUTATION.copy()
         reputation_copy["expiration"] = -1
         reputation_copy["details"] = "reputationn"
-        reputation = pack._create_json_based(
+        reputation = pack.create_indicator_type(
             name="reputation", prefix="", content=reputation_copy
         )
         with ChangeCWD(pack.repo_path):
@@ -4725,7 +4727,7 @@ class TestSpecificValidations:
         reputation_copy = REPUTATION.copy()
         reputation_copy["expiration"] = -1
         reputation_copy["details"] = "reputationn"
-        reputation = pack._create_json_based(
+        reputation = pack.create_indicator_type(
             name="reputation", prefix="", content=reputation_copy
         )
         with ChangeCWD(pack.repo_path):

@@ -4,10 +4,15 @@ from typing import Dict, List, Optional
 from demisto_sdk.commands.common.constants import (
     CORRELATION_RULES_DIR,
     DEFAULT_IMAGE_BASE64,
+    INDICATOR_TYPE_PREFIX,
+    LAYOUT_CONTAINER_PREFIX,
+    LAYOUT_PREFIX,
     LAYOUT_RULES_DIR,
     MODELING_RULES_DIR,
     PARSING_RULES_DIR,
+    REPORT_PREFIX,
     TRIGGER_DIR,
+    WIDGET_PREFIX,
     XDRC_TEMPLATE_DIR,
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
@@ -361,8 +366,9 @@ class Pack:
         self.indicator_fields.append(indicator_field)
         return indicator_field
 
-    def create_indicator_type(self, name, content: dict = None) -> JSONBased:
-        prefix = "reputation"
+    def create_indicator_type(
+        self, name, prefix=INDICATOR_TYPE_PREFIX, content: dict = None
+    ) -> JSONBased:
         indicator_type = self._create_json_based(
             name, prefix, content, dir_path=self._indicator_types
         )
@@ -423,32 +429,39 @@ class Pack:
         self.jobs.append(job)
         return job
 
-    def create_layout(self, name, content: dict = None) -> JSONBased:
-        prefix = "layout"
+    def create_layout(
+        self,
+        name,
+        prefix: str = LAYOUT_PREFIX,
+        content: dict = None,
+    ) -> JSONBased:
         layout = self._create_json_based(
             name, prefix, content, dir_path=self._layout_path
         )
         self.layouts.append(layout)
         return layout
 
-    def create_layoutcontainer(self, name, content: dict = None) -> JSONBased:
-        prefix = "layoutscontainer"
+    def create_layoutcontainer(
+        self, name, prefix: str = LAYOUT_CONTAINER_PREFIX, content: dict = None
+    ) -> JSONBased:
         layoutcontainer = self._create_json_based(
             name, prefix, content, dir_path=self._layout_path
         )
         self.layoutcontainers.append(layoutcontainer)
         return layoutcontainer
 
-    def create_report(self, name, content: dict = None) -> JSONBased:
-        prefix = "report"
+    def create_report(
+        self, name, prefix=REPORT_PREFIX, content: dict = None
+    ) -> JSONBased:
         report = self._create_json_based(
             name, prefix, content, dir_path=self._report_path
         )
         self.reports.append(report)
         return report
 
-    def create_widget(self, name, content: dict = None) -> JSONBased:
-        prefix = "widget"
+    def create_widget(
+        self, name, prefix: str = WIDGET_PREFIX, content: dict = None
+    ) -> JSONBased:
         widget = self._create_json_based(
             name, prefix, content, dir_path=self._widget_path
         )
@@ -484,8 +497,7 @@ class Pack:
         self.wizards.append(wizard)
         return wizard
 
-    def create_list(self, name, content: dict = None) -> JSONBased:
-        prefix = "list"
+    def create_list(self, name, prefix="list", content: dict = None) -> JSONBased:
         list_item = self._create_json_based(
             name, prefix, content, dir_path=self._lists_path
         )

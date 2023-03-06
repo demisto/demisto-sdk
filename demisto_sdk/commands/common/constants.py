@@ -863,6 +863,11 @@ PARSING_RULE_PREFIX = "parsingrule"
 MODELING_RULE_PREFIX = "modelingrule"
 XDRC_TEMPLATE_PREFIX = "xdrctemplate"
 LAYOUT_RULE_PREFIX = "layoutrule"
+LAYOUT_CONTAINER_PREFIX = "layoutscontainer"
+INDICATOR_TYPE_PREFIX = "reputation"
+REPORT_PREFIX = "report"
+LAYOUT_PREFIX = "layout"
+WIDGET_PREFIX = "widget"
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = ".secrets-ignore"

@@ -8,6 +8,8 @@ import requests_mock
 import typer
 from typer.testing import CliRunner
 
+from TestSuite.test_tools import str_in_call_args_list
+
 logger = logging.getLogger("demisto-sdk")
 
 ONE_MODEL_RULE_TEXT = """
@@ -604,7 +606,7 @@ class TestTheTestModelingRuleCommandSingleRule:
             assert False, "No exception should be raised in this scenario."
 
     def test_the_test_modeling_rule_command_results_match_expectations(
-        self, pack, monkeypatch, caplog
+        self, pack, monkeypatch, mocker
     ):
         """
         Given:
@@ -623,6 +625,9 @@ class TestTheTestModelingRuleCommandSingleRule:
             - Verify we get a message saying the results match the expectations.
             - The command returns with a zero exit code.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         from functools import partial
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
@@ -726,7 +731,9 @@ class TestTheTestModelingRuleCommandSingleRule:
                     )
                     # Assert
                     assert result.exit_code == 0
-                    assert "Mappings validated successfully" in caplog.text
+                    assert str_in_call_args_list(
+                        logger_info.call_args_list, "Mappings validated successfully"
+                    )
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
@@ -857,7 +864,7 @@ class TestTheTestModelingRuleCommandSingleRule:
 
 
 class TestTheTestModelingRuleCommandMultipleRules:
-    def test_fail_one_pass_second(self, repo, monkeypatch, caplog):
+    def test_fail_one_pass_second(self, repo, monkeypatch, mocker):
         """
         Given:
             - Two modeling rules with test data files.
@@ -873,6 +880,10 @@ class TestTheTestModelingRuleCommandMultipleRules:
             - Verify we get a message that the second modeling test passed.
             - The command returns with a non-zero exit code.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )
@@ -988,14 +999,18 @@ class TestTheTestModelingRuleCommandMultipleRules:
                     )
                     # Assert
                     assert result.exit_code == 1
-                    assert f"Pack {pack_1.name} was not found" in caplog.text
-                    assert "Mappings validated successfully" in caplog.text
+                    assert str_in_call_args_list(
+                        logger_error.call_args_list, f"Pack {pack_1.name} was not found"
+                    )
+                    assert str_in_call_args_list(
+                        logger_info.call_args_list, "Mappings validated successfully"
+                    )
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
 
 class TestTheTestModelingRuleCommandInteractive:
-    def test_no_testdata_file_exists(self, repo, monkeypatch, mocker, caplog):
+    def test_no_testdata_file_exists(self, repo, monkeypatch, mocker):
         """
         Given:
             - A modeling rule with no test data file.
@@ -1010,6 +1025,12 @@ class TestTheTestModelingRuleCommandInteractive:
             - Ensure the test data file was created.
             - Ensure that the log output from creating the testdata file is not duplicated.
         """
+        logger_warning = mocker.patch.object(
+            logging.getLogger("demisto-sdk"), "warning"
+        )
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )
@@ -1056,11 +1077,15 @@ class TestTheTestModelingRuleCommandInteractive:
                 expected_log_count = 1
                 assert result.exit_code == 0
                 assert test_data_file.exists()
-                assert "No test data file found for" in caplog.text
-                assert (
-                    caplog.text.count("Creating test data file for: ")
-                    == expected_log_count
+                assert str_in_call_args_list(
+                    logger_warning.call_args_list, "No test data file found for"
                 )
+                call_counter = 0
+                for current_call in logger_info.call_args_list:
+                    if current_call and isinstance(current_call[0], tuple):
+                        if "Creating test data file for: " in current_call[0][0]:
+                            call_counter += 1
+                assert call_counter == expected_log_count
 
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."

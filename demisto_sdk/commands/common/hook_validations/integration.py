@@ -1720,7 +1720,7 @@ class IntegrationValidator(ContentEntityValidator):
             "CommonServerPython.py",
             "CommonServerUserPython.py",
             ".vulture_whitelist.py",
-            "MicrosoftApiModule.py",
+            "MicrosoftApiModule.py",  # won't affect the actual API module since it's a script not an integration.
         ]
         files_to_check = get_files_in_dir(
             os.path.dirname(self.file_path), ["py"], False

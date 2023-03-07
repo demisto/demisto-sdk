@@ -127,7 +127,9 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             )
 
         if not content_item_parser:  # if we still can't parse the content item
-            logger.error(f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path.")
+            logger.error(
+                f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
+            )
             return None
 
         model = content_type_to_model.get(content_item_parser.content_type)

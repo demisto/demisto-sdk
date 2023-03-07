@@ -97,6 +97,7 @@ from demisto_sdk.tests.constants_test import (
     WIDGET_SCHEMA_PATH,
 )
 from TestSuite.json_based import JSONBased
+from TestSuite.test_tools import str_in_call_args_list
 
 json = JSON_Handler()
 
@@ -1710,7 +1711,9 @@ class TestFormattingReport:
     ]
 
     @pytest.mark.parametrize(argnames="format_object", argvalues=FORMAT_OBJECT)
-    def test_json_run_format_exception_handling(self, format_object, mocker, caplog):
+    def test_json_run_format_exception_handling(
+        self, format_object, mocker, monkeypatch
+    ):
         """
         Given
             - A JSON object formatter
@@ -1719,7 +1722,8 @@ class TestFormattingReport:
         Then
             - Ensure the error is printed.
         """
-        logging.getLogger("demisto-sdk").propagate = True
+        logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+        monkeypatch.setenv("COLUMNS", "1000")
 
         formatter = format_object(input="my_file_path")
         mocker.patch.object(
@@ -1736,7 +1740,10 @@ class TestFormattingReport:
         )
 
         formatter.run_format()
-        assert "Failed to update file my_file_path. Error: MY ERROR" in caplog.text
+        assert str_in_call_args_list(
+            logger_debug.call_args_list,
+            "Failed to update file my_file_path. Error: MY ERROR",
+        )
 
     def test_set_fromversion_six_new_contributor_pack_no_fromversion(self, pack):
         """

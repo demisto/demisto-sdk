@@ -23,9 +23,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-
-# from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
-from demisto_sdk.commands.common.logger import logging_setup
+from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_last_remote_release_version,
@@ -153,7 +151,8 @@ pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
 @pass_config
-def main(config, version, release_notes, **kwargs):
+@click.pass_context
+def main(ctx, config, version, release_notes, **kwargs):
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
@@ -161,7 +160,7 @@ def main(config, version, release_notes, **kwargs):
     )
     global logger
     logger = logging.getLogger("demisto-sdk")
-    # handle_deprecated_args(ctx.args)
+    handle_deprecated_args(ctx.args)
 
     config.configuration = Configuration()
     import dotenv
@@ -204,7 +203,12 @@ def main(config, version, release_notes, **kwargs):
 
 
 # ====================== split ====================== #
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option("-i", "--input", help="The yml/json file to extract from", required=True)
 @click.option(
@@ -250,7 +254,8 @@ def main(config, version, release_notes, **kwargs):
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
 @pass_config
-def split(config, **kwargs):
+@click.pass_context
+def split(ctx, config, **kwargs):
     """Split the code, image and description files from a Demisto integration or script yaml file
     to multiple files(To a package format - https://demisto.pan.dev/docs/package-dir).
     """
@@ -259,6 +264,7 @@ def split(config, **kwargs):
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
 
     check_configuration_file("split", kwargs)
@@ -330,13 +336,15 @@ def split(config, **kwargs):
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
 @pass_config
-def extract_code(config, **kwargs):
+@click.pass_context
+def extract_code(ctx, config, **kwargs):
     """Extract code from a Demisto integration or script yaml file."""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
     check_configuration_file("extract-code", kwargs)
@@ -417,7 +425,8 @@ def extract_code(config, **kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def prepare_content(**kwargs):
+@click.pass_context
+def prepare_content(ctx, **kwargs):
     """
     This command is used to prepare the content to be used in the platform.
     """
@@ -426,6 +435,7 @@ def prepare_content(**kwargs):
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     if click.get_current_context().info_name == "unify":
         kwargs["unify_only"] = True
 
@@ -453,7 +463,12 @@ main.add_command(prepare_content, name="unify")
 # ====================== zip-packs ====================== #
 
 
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option(
     "-i",
@@ -497,13 +512,15 @@ main.add_command(prepare_content, name="unify")
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def zip_packs(**kwargs) -> int:
+@click.pass_context
+def zip_packs(ctx, **kwargs) -> int:
     """Generating zipped packs that are ready to be uploaded to Cortex XSOAR machine."""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.upload.uploader import Uploader
     from demisto_sdk.commands.zip_packs.packs_zipper import (
         EX_FAIL,
@@ -532,7 +549,12 @@ def zip_packs(**kwargs) -> int:
 
 
 # ====================== validate ====================== #
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option(
     "--no-conf-json",
@@ -697,13 +719,16 @@ def zip_packs(**kwargs) -> int:
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
 @pass_config
-def validate(config, **kwargs):
+@click.pass_context
+def validate(ctx, config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
+
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
     run_with_mp = not kwargs.pop("no_multiprocessing")
@@ -875,7 +900,8 @@ def validate(config, **kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def create_content_artifacts(**kwargs) -> int:
+@click.pass_context
+def create_content_artifacts(ctx, **kwargs) -> int:
     """Generating the following artifacts:
     1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)
     2. content_packs - Contains all packs from Packs - Ignoring internal files (to_version >= 6.0.0).
@@ -888,6 +914,7 @@ def create_content_artifacts(**kwargs) -> int:
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
         ArtifactsManager,
     )
@@ -900,7 +927,12 @@ def create_content_artifacts(**kwargs) -> int:
 
 
 # ====================== secrets ====================== #
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option("-i", "--input", help="Specify file of to check secret on.")
 @click.option(
@@ -939,7 +971,8 @@ def create_content_artifacts(**kwargs) -> int:
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
 @pass_config
-def secrets(config, **kwargs):
+@click.pass_context
+def secrets(ctx, config, **kwargs):
     """Run Secrets validator to catch sensitive data before exposing your code to public repository.
     Attach path to whitelist to allow manual whitelists.
     """
@@ -948,6 +981,7 @@ def secrets(config, **kwargs):
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
     check_configuration_file("secrets", kwargs)
@@ -963,7 +997,12 @@ def secrets(config, **kwargs):
 
 
 # ====================== lint ====================== #
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option(
     "-i",
@@ -1072,7 +1111,8 @@ def secrets(config, **kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def lint(**kwargs):
+@click.pass_context
+def lint(ctx, **kwargs):
     """Lint command will perform:
     1. Package in host checks - flake8, bandit, mypy, vulture.
     2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.
@@ -1085,6 +1125,7 @@ def lint(**kwargs):
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.lint.lint_manager import LintManager
 
     check_configuration_file("lint", kwargs)
@@ -1120,7 +1161,12 @@ def lint(**kwargs):
 
 
 # ====================== coverage-analyze ====================== #
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option(
     "-i",
@@ -1181,7 +1227,8 @@ def lint(**kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def coverage_analyze(**kwargs):
+@click.pass_context
+def coverage_analyze(ctx, **kwargs):
     logger = logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
@@ -1222,7 +1269,12 @@ def coverage_analyze(**kwargs):
 
 
 # ====================== format ====================== #
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option(
     "-i",
@@ -1298,7 +1350,9 @@ def coverage_analyze(**kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
+@click.pass_context
 def format(
+    ctx,
     input: Path,
     output: Path,
     from_version: str,
@@ -1322,6 +1376,7 @@ def format(
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.format.format_module import format_manager
 
     with ReadMeValidator.start_mdx_server():
@@ -1342,7 +1397,12 @@ def format(
 
 
 # ====================== upload ====================== #
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option(
     "-i",
@@ -1413,7 +1473,8 @@ def format(
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def upload(**kwargs):
+@click.pass_context
+def upload(ctx, **kwargs):
     """Upload integration or pack to Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
@@ -1424,13 +1485,19 @@ def upload(**kwargs):
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     return upload_content_entity(**kwargs)
 
 
 # ====================== download ====================== #
 
 
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option(
     "-o",
@@ -1507,7 +1574,8 @@ def upload(**kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def download(**kwargs):
+@click.pass_context
+def download(ctx, **kwargs):
     """Download custom content from Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
@@ -1517,6 +1585,7 @@ def download(**kwargs):
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.download.downloader import Downloader
 
     check_configuration_file("download", kwargs)
@@ -1525,7 +1594,12 @@ def download(**kwargs):
 
 
 # ====================== update-xsoar-config-file ====================== #
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option(
     "-pi",
@@ -1579,7 +1653,8 @@ def download(**kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def xsoar_config_file_update(**kwargs):
+@click.pass_context
+def xsoar_config_file_update(ctx, **kwargs):
     """Handle your XSOAR Configuration File.
     Add automatically all the installed MarketPlace Packs to the marketplace_packs section in XSOAR Configuration File.
     Add a Pack to both marketplace_packs and custom_packs sections in the Configuration File.
@@ -1589,6 +1664,7 @@ def xsoar_config_file_update(**kwargs):
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import (
         XSOARConfigFileUpdater,
     )
@@ -1598,7 +1674,12 @@ def xsoar_config_file_update(**kwargs):
 
 
 # ====================== run ====================== #
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option("-q", "--query", help="The query to run", required=True)
 @click.option("--insecure", help="Skip certificate validation", is_flag=True)
@@ -1646,7 +1727,8 @@ def xsoar_config_file_update(**kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def run(**kwargs):
+@click.pass_context
+def run(ctx, **kwargs):
     """Run integration command on remote Demisto instance in the playground.
     DEMISTO_BASE_URL environment variable should contain the Demisto base URL.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
@@ -1656,6 +1738,7 @@ def run(**kwargs):
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.run_cmd.runner import Runner
 
     check_configuration_file("run", kwargs)
@@ -1664,7 +1747,12 @@ def run(**kwargs):
 
 
 # ====================== run-playbook ====================== #
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option(
     "--url",
@@ -1698,7 +1786,8 @@ def run(**kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def run_playbook(**kwargs):
+@click.pass_context
+def run_playbook(ctx, **kwargs):
     """Run a playbook in Demisto.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     Example: DEMISTO_API_KEY=<API KEY> demisto-sdk run-playbook -p 'p_name' -u
@@ -1709,6 +1798,7 @@ def run_playbook(**kwargs):
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 
     check_configuration_file("run-playbook", kwargs)
@@ -1717,7 +1807,12 @@ def run_playbook(**kwargs):
 
 
 # ====================== run-test-playbook ====================== #
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option(
     "-tpb",
@@ -1756,13 +1851,15 @@ def run_playbook(**kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def run_test_playbook(**kwargs):
+@click.pass_context
+def run_test_playbook(ctx, **kwargs):
     """Run a test playbooks in your instance."""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.run_test_playbook.test_playbook_runner import (
         TestPlaybookRunner,
     )
@@ -1845,7 +1942,8 @@ def run_test_playbook(**kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def generate_outputs(**kwargs):
+@click.pass_context
+def generate_outputs(ctx, **kwargs):
     """Demisto integrations/scripts have a YAML file that defines them.
     Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the
     file/UI/PyCharm. This script auto generates the YAML for a command from the JSON result of the relevant API call
@@ -1856,6 +1954,7 @@ def generate_outputs(**kwargs):
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.generate_outputs.generate_outputs import (
         run_generate_outputs,
     )
@@ -1865,7 +1964,12 @@ def generate_outputs(**kwargs):
 
 
 # ====================== generate-test-playbook ====================== #
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option(
     "-i", "--input", required=True, help="Specify integration/script yml path"
@@ -1936,13 +2040,15 @@ def generate_outputs(**kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def generate_test_playbook(**kwargs):
+@click.pass_context
+def generate_test_playbook(ctx, **kwargs):
     """Generate test playbook from integration or script"""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import (
         PlaybookTestsGenerator,
     )
@@ -1968,7 +2074,12 @@ def generate_test_playbook(**kwargs):
 # ====================== init ====================== #
 
 
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option(
     "-n", "--name", help="The name of the directory and file you want to create"
@@ -2024,7 +2135,8 @@ def generate_test_playbook(**kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def init(**kwargs):
+@click.pass_context
+def init(ctx, **kwargs):
     """Initialize a new Pack, Integration or Script.
     If the script/integration flags are not present, we will create a pack with the given name.
     Otherwise when using the flags we will generate a script/integration based on your selection.
@@ -2034,6 +2146,7 @@ def init(**kwargs):
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.init.initiator import Initiator
 
     check_configuration_file("init", kwargs)
@@ -2043,7 +2156,12 @@ def init(**kwargs):
 
 
 # ====================== generate-docs ====================== #
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option("-i", "--input", help="Path of the yml file.", required=True)
 @click.option(
@@ -2123,13 +2241,15 @@ def init(**kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def generate_docs(**kwargs):
+@click.pass_context
+def generate_docs(ctx, **kwargs):
     """Generate documentation for integration, playbook or script from yaml file."""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
 
     check_configuration_file("generate-docs", kwargs)
     input_path_str: str = kwargs.get("input", "")
@@ -2303,13 +2423,15 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def create_id_set(**kwargs):
+@click.pass_context
+def create_id_set(ctx, **kwargs):
     """Create the content dependency tree by ids."""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
     from demisto_sdk.commands.find_dependencies.find_dependencies import (
         remove_dependencies_from_id_set,
@@ -2357,13 +2479,15 @@ def create_id_set(**kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def merge_id_sets(**kwargs):
+@click.pass_context
+def merge_id_sets(ctx, **kwargs):
     """Merge two id_sets"""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 
     check_configuration_file("merge-id-sets", kwargs)
@@ -2385,7 +2509,12 @@ def merge_id_sets(**kwargs):
 
 
 # ====================== update-release-notes =================== #
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option(
     "-i",
@@ -2449,13 +2578,15 @@ def merge_id_sets(**kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def update_release_notes(**kwargs):
+@click.pass_context
+def update_release_notes(ctx, **kwargs):
     """Auto-increment pack version and generate release notes template."""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.update_release_notes.update_rn_manager import (
         UpdateReleaseNotesManager,
     )
@@ -2496,7 +2627,12 @@ def update_release_notes(**kwargs):
 
 
 # ====================== find-dependencies ====================== #
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option(
     "-i",
@@ -2567,13 +2703,15 @@ def update_release_notes(**kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def find_dependencies(**kwargs):
+@click.pass_context
+def find_dependencies(ctx, **kwargs):
     """Find pack dependencies and update pack metadata."""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.find_dependencies.find_dependencies import (
         PackDependencies,
     )
@@ -2605,7 +2743,12 @@ def find_dependencies(**kwargs):
 
 
 # ====================== postman-codegen ====================== #
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option(
     "-i",
@@ -2657,7 +2800,9 @@ def find_dependencies(**kwargs):
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
 @pass_config
+@click.pass_context
 def postman_codegen(
+    ctx,
     config,
     input: IO,
     output: Path,
@@ -2711,7 +2856,12 @@ def postman_codegen(
 
 
 # ====================== generate-integration ====================== #
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option(
     "-i",
@@ -2739,7 +2889,8 @@ def postman_codegen(
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def generate_integration(input: IO, output: Path, **kwargs):
+@click.pass_context
+def generate_integration(ctx, input: IO, output: Path, **kwargs):
     """Generates a Cortex XSOAR integration from a config json file,
     which is generated by commands like postman-codegen
     """
@@ -2748,6 +2899,7 @@ def generate_integration(input: IO, output: Path, **kwargs):
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.generate_integration.code_generator import (
         IntegrationGeneratorConfig,
     )
@@ -2825,7 +2977,8 @@ def generate_integration(input: IO, output: Path, **kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def openapi_codegen(**kwargs):
+@click.pass_context
+def openapi_codegen(ctx, **kwargs):
     """Generates a Cortex XSOAR integration given an OpenAPI specification file.
     In the first run of the command, an integration configuration file is created, which can be modified.
     Then, the command is run a second time with the integration configuration to generate the actual integration files.
@@ -2835,6 +2988,7 @@ def openapi_codegen(**kwargs):
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.openapi_codegen.openapi_codegen import OpenAPIIntegration
 
     check_configuration_file("openapi-codegen", kwargs)
@@ -3001,7 +3155,8 @@ def openapi_codegen(**kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def test_content(**kwargs):
+@click.pass_context
+def test_content(ctx, **kwargs):
     """Configure instances for the integration needed to run tests_to_run tests.
     Run test module on each integration.
     create an investigation for each test.
@@ -3013,6 +3168,7 @@ def test_content(**kwargs):
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.test_content.execute_test_content import (
         execute_test_content,
     )
@@ -3022,7 +3178,12 @@ def test_content(**kwargs):
 
 
 # ====================== doc-review ====================== #
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option(
     "-i", "--input", type=str, help="The path to the file to check", multiple=True
@@ -3097,13 +3258,15 @@ def test_content(**kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def doc_review(**kwargs):
+@click.pass_context
+def doc_review(ctx, **kwargs):
     """Check the spelling in .md and .yml files as well as review release notes"""
     logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 
     doc_reviewer = DocReviewer(
@@ -3164,7 +3327,8 @@ def doc_review(**kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def integration_diff(**kwargs):
+@click.pass_context
+def integration_diff(ctx, **kwargs):
     """
     Checks for differences between two versions of an integration, and verified that the new version covered the old version.
     """
@@ -3173,6 +3337,7 @@ def integration_diff(**kwargs):
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.integration_diff.integration_diff_detector import (
         IntegrationDiffDetector,
     )
@@ -3226,7 +3391,8 @@ def integration_diff(**kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
-def generate_yml_from_python(**kwargs):
+@click.pass_context
+def generate_yml_from_python(ctx, **kwargs):
     """
     Checks for differences between two versions of an integration, and verified that the new version covered the old version.
     """
@@ -3235,6 +3401,7 @@ def generate_yml_from_python(**kwargs):
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.generate_yml_from_python.generate_yml import YMLGenerator
 
     yml_generator = YMLGenerator(
@@ -3246,7 +3413,12 @@ def generate_yml_from_python(**kwargs):
 
 
 # ====================== convert ====================== #
-@main.command()
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True,
+    )
+)
 @click.help_option("-h", "--help")
 @click.option(
     "-i",
@@ -3271,7 +3443,8 @@ def generate_yml_from_python(**kwargs):
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
 @pass_config
-def convert(config, **kwargs):
+@click.pass_context
+def convert(ctx, config, **kwargs):
     """
     Convert the content of the pack/directory in the given input to be compatible with the version given by
     version command.
@@ -3281,6 +3454,7 @@ def convert(config, **kwargs):
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.convert.convert_manager import ConvertManager
 
     check_configuration_file("convert", kwargs)
@@ -3343,7 +3517,9 @@ def convert(config, **kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
+@click.pass_context
 def generate_unit_tests(
+    ctx,
     input_path: str = "",
     commands: list = [],
     output_dir: str = "",
@@ -3362,6 +3538,7 @@ def generate_unit_tests(
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
 
     logging.getLogger("PYSCA").propagate = False
     from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import (
@@ -3397,7 +3574,8 @@ def generate_unit_tests(
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
 @pass_config
-def error_code(config, **kwargs):
+@click.pass_context
+def error_code(ctx, config, **kwargs):
     from demisto_sdk.commands.error_code_info.error_code_info import (
         generate_error_code_information,
     )
@@ -3407,6 +3585,7 @@ def error_code(config, **kwargs):
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
 
     check_configuration_file("error-code-info", kwargs)
     sys.path.append(config.configuration.env_dir)
@@ -3454,7 +3633,9 @@ def error_code(config, **kwargs):
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
+@click.pass_context
 def create_content_graph(
+    ctx,
     marketplace: str = MarketplaceVersions.XSOAR,
     no_dependencies: bool = False,
     output_path: Path = None,
@@ -3465,6 +3646,7 @@ def create_content_graph(
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.content_graph.content_graph_commands import (
         create_content_graph as create_content_graph_command,
     )
@@ -3548,7 +3730,9 @@ def create_content_graph(
     "--log_file_path",
     help="Path to the log file. Default: ./demisto_sdk_debug.log.",
 )
+@click.pass_context
 def update_content_graph(
+    ctx,
     use_git: bool = False,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
     use_current: bool = False,
@@ -3563,6 +3747,7 @@ def update_content_graph(
         file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
         log_file_path=kwargs.get("log_file_path") or None,
     )
+    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.content_graph.content_graph_commands import (
         update_content_graph as update_content_graph_command,
     )

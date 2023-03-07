@@ -121,7 +121,7 @@ class ContentType(str, enum.Enum):
         for idx, folder in enumerate(path.parts):
             if folder == PACKS_FOLDER:
                 if len(path.parts) <= idx + 2:
-                    raise ValueError(f"Invalid content path.")
+                    raise ValueError("Invalid content path.")
                 content_type_dir = path.parts[idx + 2]
                 break
         else:

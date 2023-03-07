@@ -5,20 +5,26 @@ import pytest
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.generate_modeling_rules.generate_modeling_rules import (
+    MappingField,
+    RawEventData,
     array_create_wrap,
+    coalesce_wrap,
     convert_raw_type_to_xdm_type,
     convert_to_xdm_type,
+    create_xif_file,
     create_xif_header,
     create_yml_file,
     extract_data_from_all_xdm_schema,
     extract_raw_type_data,
+    handle_raw_evnet_data,
+    init_mapping_field_list,
     json_extract_array_wrap,
     json_extract_scalar_wrap,
     read_mapping_file,
     replace_last_char,
+    snake_to_camel_case,
     to_number_wrap,
     to_string_wrap,
-    snake_to_camel_case,
 )
 
 yaml = YAML_Handler()
@@ -39,7 +45,7 @@ def test_replace_last_char(s, res):
     assert replace_last_char(s) == res
 
 
-def test_create_xif_header(mocker):
+def test_create_xif_header():
     """
     Given:
         A dataset name
@@ -244,6 +250,136 @@ def test_create_yml_file():
 
 
 def test_snake_to_camel_case():
-    assert snake_to_camel_case('hello_world') == 'HelloWorld'
-    assert snake_to_camel_case('this_is_a_long_string') == 'ThisIsALongString'
-    assert snake_to_camel_case('') == ''
+    assert snake_to_camel_case("hello_world") == "HelloWorld"
+    assert snake_to_camel_case("this_is_a_long_string") == "ThisIsALongString"
+    assert snake_to_camel_case("") == ""
+
+
+def test_coalesce_wrap():
+    """
+    Given:
+        - A list of data on raw event fields
+    When:
+        - More than one field is assigned to an XDM rule coalesce
+    Then:
+        - Make and return a coalesce expression"""
+    list_of_mapping = ["hello", "how", "are", "you"]
+    assert coalesce_wrap(list_of_mapping) == "coalesce(hello, how, are, you)"
+
+
+def test_handle_raw_evnet_data():
+    """
+    Given:
+        - A '|' seperated str of raw event paths.
+    When:
+        - parsing the modeling rule schema file.
+    Then:
+        - Return a list of RawEventData objects
+    """
+    event = {
+        "hello": "hello",
+        "test": {"bla": 3, "gg": {"hh": [5, 6]}},
+        "arr": [True, False, False],
+        "y": {"j": {"h": "k"}},
+        "t": None,
+    }
+    res = handle_raw_evnet_data("test.gg.hh | hello", event)
+    assert res == [
+        RawEventData("test.gg.hh", is_array_raw=True, type_raw="string"),
+        RawEventData("hello", is_array_raw=False, type_raw="string"),
+    ]
+
+
+def test_create_xif_file():
+    """
+    Given:
+        - A mapping that.
+    When:
+        - Creating an xif file.
+    Then:
+        - Make sure that the xif file is generated correctlly.
+    """
+    result_xif_path = Path(__file__).parent / "test_data/test1_create_xif_file.xif"
+    mf = MappingField(
+        "xdm.event.type",
+        "String",
+        "Scalar",
+        [RawEventData("test.bla", is_array_raw=True, type_raw="int")],
+    )
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        created_xif_path = Path(tmpdirname, "test_test_xif_file.xif")
+        create_xif_file([mf], created_xif_path, "test_test")
+        created_xif_file_res = Path(created_xif_path).read_text()
+    xif_result = Path(result_xif_path).read_text()
+    assert xif_result == created_xif_file_res
+
+
+def test_create_xif_file_coalesce():
+    """
+    Given:
+        - A mapping that.
+    When:
+        - The mapping contains 2 raw paths to the same xdm rule.
+    Then:
+        - Make sure that the generated xif file if correct and has the coalesce
+    """
+    result_xif_path = Path(__file__).parent / "test_data/test2_create_xif_file.xif"
+    mf = MappingField(
+        "xdm.event.type",
+        "String",
+        "Scalar",
+        [
+            RawEventData("test.bla", is_array_raw=True, type_raw="int"),
+            RawEventData("check", is_array_raw=False, type_raw="string"),
+        ],
+    )
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        created_xif_path = Path(tmpdirname, "test_test_xif_file.xif")
+        create_xif_file([mf], created_xif_path, "test_test")
+        created_xif_file_res = Path(created_xif_path).read_text()
+    xif_result = Path(result_xif_path).read_text()
+    assert xif_result == created_xif_file_res
+
+
+def test_init_mapping_field_list(mocker):
+    """
+    Given:
+        - All the data to generate the Mapping field object
+    When:
+        - One of the specified xdm field in the mapping does not exist in the xdm onedata model
+    Then:
+        - Make sure the user gets an informative message
+    """
+    name_columen = ["ip", "address", "domain"]
+    xdm_one_data_model = ["xdm_rule1", "xdm_rule4", "xdm_rule3"]
+    raw_event: dict = {}
+    xdm_rule_to_dtype = {
+        "xdm_rule1": "type1",
+        "xdm_rule2": "type2",
+        "xdm_rule3": "type3",
+    }
+    xdm_rule_to_dclass = {
+        "xdm_rule1": "Sclar",
+        "xdm_rule2": "Array",
+        "xdm_rule3": "Scalar",
+    }
+    handle_raw_evnet_data_mock = mocker.patch(
+        "demisto_sdk.commands.generate_modeling_rules.generate_modeling_rules.handle_raw_evnet_data"
+    )
+    handle_raw_evnet_data_mock.return_value = [
+        RawEventData("test.bla", is_array_raw=True, type_raw="int"),
+        RawEventData("check", is_array_raw=False, type_raw="string"),
+    ]
+    with pytest.raises(ValueError) as e:
+        init_mapping_field_list(
+            name_columen,
+            xdm_one_data_model,
+            raw_event,
+            xdm_rule_to_dtype,
+            xdm_rule_to_dclass,
+        )
+
+    assert (
+        str(e)
+        == "No XDM field xdm_rule4 exists in the onedata model. Please check your modelling rules file."
+    )

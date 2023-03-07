@@ -108,9 +108,7 @@ def generate_modeling_rules(
     try:
         setup_rich_logging(verbosity, quiet, log_path, log_file_name)
         path_prefix = snake_to_camel_case(vendor)
-        outputfile_schema = Path(
-            output_path, (f"{path_prefix}ModelingRules.json")
-        )
+        outputfile_schema = Path(output_path, (f"{path_prefix}ModelingRules.json"))
         outputfile_xif = Path(output_path, (f"{path_prefix}ModelingRules.xif"))
         outputfile_yml = Path(output_path, (f"{path_prefix}ModelingRules.yml"))
         data_set_name = f"{vendor.lower()}_{product.lower()}_raw"
@@ -147,10 +145,10 @@ def generate_modeling_rules(
 
 class RawEventData:
     def __init__(
-            self,
-            field_path_raw,
-            is_array_raw,
-            type_raw,
+        self,
+        field_path_raw,
+        is_array_raw,
+        type_raw,
     ):
         """
         field_path_raw - the path to the field in the raw event
@@ -164,15 +162,23 @@ class RawEventData:
     def create_schema_types(self) -> dict:
         return {"type": self.type_raw, "is_array": self.is_array_raw}
 
+    def __eq__(self, other) -> bool:
+        if isinstance(other, RawEventData):
+            return (
+                self.field_path_raw == other.field_path_raw
+                and self.is_array_raw == other.is_array_raw
+                and self.type_raw == other.type_raw
+            )
+        return False
+
 
 class MappingField:
-
     def __init__(
         self,
         xdm_rule,
         xdm_field_type,
         xdm_class_type,
-        mapped_to_raw: List[RawEventData]
+        mapped_to_raw: List[RawEventData],
     ):
         """
         xdm_rule - The xdm rule
@@ -183,6 +189,9 @@ class MappingField:
         self.xdm_field_type = xdm_field_type
         self.xdm_class_type = xdm_class_type
         self.mapped_to_raw = mapped_to_raw
+
+    def get_mapped_to_raw_list(self) -> List[RawEventData]:
+        return self.mapped_to_raw
 
 
 def to_string_wrap(s: str) -> str:
@@ -211,6 +220,10 @@ def array_create_wrap(s: str) -> str:
     return f"arraycreate({s})"
 
 
+def coalesce_wrap(raw_event_data_list: List[str]) -> str:
+    return f'coalesce({", ".join(raw_event_data_list)})'
+
+
 def create_xif_header(dataset_name: str) -> str:
     """
     Creates the xif header
@@ -228,17 +241,27 @@ def snake_to_camel_case(snake_str) -> str:
     Returns:
         The same string in CameCase
     """
-    components = snake_str.split('_')
-    return ''.join([name.capitalize() for name in components])
+    components = snake_str.split("_")
+    return "".join([name.capitalize() for name in components])
 
 
 def handle_raw_evnet_data(field_paths: str, raw_event: dict) -> List[RawEventData]:
-    field_paths = field_paths.split('|')
+    """
+    Args:
+        field_paths (str): A '|' seperated string of raw event field paths.
+    Returns:
+        (List[RawEventData]): A list of RawEventData objects
+    """
+    field_paths = field_paths.split("|")
+    field_paths = list(map(lambda path: path.strip(), field_paths))
     raw_event_data_list: List[RawEventData] = []
     for field_path in field_paths:
         type_raw, is_array_raw = extract_raw_type_data(raw_event, field_path)
-        raw_event_data_list.append(RawEventData(field_path_raw=field_path,
-                                                is_array_raw=is_array_raw, type_raw=type_raw))
+        raw_event_data_list.append(
+            RawEventData(
+                field_path_raw=field_path, is_array_raw=is_array_raw, type_raw=type_raw
+            )
+        )
 
     return raw_event_data_list
 
@@ -254,8 +277,16 @@ def init_mapping_field_list(
     This function takes all the data gathered and generates the list of MappingFields
     """
     mapping_list = []
+    xdm_onedata_model_names = xdm_rule_to_dclass.keys()
     for (field_name, xdm_field_name) in zip(name_columen, xdm_one_data_model):
-        raw_event_data_list: List[RawEventData] = handle_raw_evnet_data(field_name, raw_event)
+        raw_event_data_list: List[RawEventData] = handle_raw_evnet_data(
+            field_name, raw_event
+        )
+
+        if xdm_field_name not in xdm_onedata_model_names:
+            raise ValueError(
+                f"No XDM field {xdm_field_name} exists in the onedata model. Please check your modelling rules file."
+            )
 
         xdm_field_type = xdm_rule_to_dtype.get(xdm_field_name)
         xdm_class_type = xdm_rule_to_dclass.get(xdm_field_name)
@@ -265,7 +296,7 @@ def init_mapping_field_list(
                 xdm_rule=xdm_field_name,
                 xdm_field_type=xdm_field_type,
                 xdm_class_type=xdm_class_type,
-                mapped_to_raw=raw_event_data_list
+                mapped_to_raw=raw_event_data_list,
             )
         )
 
@@ -297,7 +328,10 @@ def convert_to_xdm_type(name: str, xdm_type: str) -> str:
     return name
 
 
-def read_mapping_file(mapping: Path):
+def read_mapping_file(mapping: Path) -> Tuple:
+    """
+    Reads the security mapping file and extracts the raw_path and the Coresponding xdm field.
+    """
     name_column = []
     xdm_one_data_model = []
 
@@ -313,6 +347,38 @@ def read_mapping_file(mapping: Path):
     return (name_column, xdm_one_data_model)
 
 
+def create_xif_for_raw_data(
+    xdm_rule, xdm_field_type, xdm_class_type, field_path_raw, type_raw
+) -> str:
+    """
+    Creates the raw data part of the xif file.
+    """
+    logger.info(
+        f'field name: "{field_path_raw}" - xdm type: {xdm_field_type} - raw type {type_raw}'
+    )
+    name = field_path_raw
+
+    if "." in field_path_raw:
+        dict_keys = field_path_raw.split(".")
+        prefix = dict_keys[0]
+        suffix = ".".join(dict_keys[1:])
+        if xdm_class_type == "Array":
+            name = json_extract_array_wrap(prefix, suffix)
+            return name
+        else:
+            name = json_extract_scalar_wrap(prefix, suffix)
+
+    if xdm_field_type != convert_raw_type_to_xdm_type(type_raw):
+        # Type casting
+        name = convert_to_xdm_type(name, xdm_field_type)
+
+    if xdm_class_type == "Array":
+        # convert a scalar into an array
+        name = array_create_wrap(name)
+
+    return name
+
+
 def create_xif_file(
     mapping_list: List[MappingField], outputfile_xif: Path, dataset_name: str
 ) -> None:
@@ -322,33 +388,38 @@ def create_xif_file(
     logger.info("Generating xif file")
     xif_rule = create_xif_header(dataset_name)
     for mapping_rule in mapping_list:
-        logger.info(
-            f'field name: "{mapping_rule.field_path_raw}" - xdm type: {mapping_rule.xdm_field_type} - raw type {mapping_rule.type_raw}'
-        )
-        name = mapping_rule.field_path_raw
+        xdm_rule = mapping_rule.xdm_rule
+        xdm_field_type = mapping_rule.xdm_field_type
+        xdm_class_type = mapping_rule.xdm_class_type
 
-        if "." in mapping_rule.field_path_raw:
-            dict_keys = mapping_rule.field_path_raw.split(".")
-            prefix = dict_keys[0]
-            suffix = ".".join(dict_keys[1:])
-            if mapping_rule.xdm_class_type == "Array":
-                name = json_extract_array_wrap(prefix, suffix)
-                xif_rule += f"\t{mapping_rule.xdm_rule} = {name},\n"
-                continue
-            else:
-                name = json_extract_scalar_wrap(prefix, suffix)
+        if not mapping_rule:
+            raise ValueError(f"No raw field path was given for {xdm_rule}")
 
-        if mapping_rule.xdm_field_type != convert_raw_type_to_xdm_type(
-            mapping_rule.type_raw
-        ):
-            # Type casting
-            name = convert_to_xdm_type(name, mapping_rule.xdm_field_type)
+        raw_event_data: RawEventData = mapping_rule.get_mapped_to_raw_list()[0]
+        field_path_raw = raw_event_data.field_path_raw
+        type_raw = raw_event_data.type_raw
+        if len(mapping_rule.get_mapped_to_raw_list()) > 1:
+            coales_list: List[str] = []
+            for raw_event_data in mapping_rule.get_mapped_to_raw_list():
+                raw_event_data = raw_event_data
+                field_path_raw = raw_event_data.field_path_raw
+                type_raw = raw_event_data.type_raw
+                coales_list.append(
+                    create_xif_for_raw_data(
+                        xdm_rule,
+                        xdm_field_type,
+                        xdm_class_type,
+                        field_path_raw,
+                        type_raw,
+                    )
+                )
+                rule = coalesce_wrap(coales_list)
+        else:
+            rule = create_xif_for_raw_data(
+                xdm_rule, xdm_field_type, xdm_class_type, field_path_raw, type_raw
+            )
 
-        if mapping_rule.xdm_class_type == "Array":
-            # convert a scalar into an array
-            name = array_create_wrap(name)
-
-        xif_rule += f"\t{mapping_rule.xdm_rule} = {name},\n"
+        xif_rule += f"\t{xdm_rule} = {rule},\n"
 
     xif_rule = replace_last_char(xif_rule)
 
@@ -374,10 +445,11 @@ def create_scheme_file(
     logger.info("creating modeling rules schema")
     name_type_dict = {}
     for mapping_rule in mapping_list:
-        keys_list = mapping_rule.field_path_raw.split(".")
-        name = keys_list[0]
-        if name not in name_type_dict:
-            name_type_dict[name] = mapping_rule.create_schema_types()
+        for raw_event_data in mapping_rule.get_mapped_to_raw_list():
+            keys_list = raw_event_data.field_path_raw.split(".")
+            name = keys_list[0]
+            if name not in name_type_dict:
+                name_type_dict[name] = raw_event_data.create_schema_types()
     modeling_rules_json = {dataset_name: name_type_dict}
 
     with open(outputfile_schema, "w") as f:
@@ -451,7 +523,7 @@ def extract_raw_type_data(event: dict, path_to_dict_field: str) -> tuple:
 
     keys_split = path_to_dict_field.split(".")
     temp: dict = event
-    for key in keys_split[:-1]:
+    for key in keys_split:
         if isinstance(temp, dict):
             temp = temp.get(key)  # type: ignore[assignment]
         else:
@@ -462,15 +534,6 @@ def extract_raw_type_data(event: dict, path_to_dict_field: str) -> tuple:
 
     discovered = discover_type(temp)
     return ("string", True) if discovered == "array" else (discovered, False)
-
-    # if discovered == 'array':
-    # The value is array and we want to check what is the type in the array
-    # return 'string', True
-    # Security team said in the schema if its array we put type string.
-    # if temp:
-    #     inner_array_type = discover_type(temp[0])
-    #     return inner_array_type, True
-    # return discovered, False
 
 
 def extract_data_from_all_xdm_schema(path: Path) -> Tuple[dict, dict]:

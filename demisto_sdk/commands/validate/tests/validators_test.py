@@ -14,6 +14,7 @@ from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     CONTENT_ENTITIES_DIRS,
     FILETYPE_TO_DEFAULT_FROMVERSION,
+    FIRST_LEVEL_FOLDERS,
     FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES,
     PACKS_PACK_META_FILE_NAME,
     TEST_PLAYBOOK,
@@ -2920,7 +2921,7 @@ folders_not_allowed_to_contain_files = tuple(
 
 
 @pytest.mark.parametrize("folder", folders_not_allowed_to_contain_files)
-def test_is_file_allowed_in_path__fail(mocker, repo, folder: str):
+def test_is_file_allowed_in_path__fail(repo, folder: str):
     """
     Given
             A name of a folder, which may not contain files directly
@@ -2941,6 +2942,10 @@ def test_is_file_allowed_in_path__fail(mocker, repo, folder: str):
 
     captured_stdout = std_output.getvalue()
     assert "[BA120]" in captured_stdout
+
+
+def test_first_level_folders_subset():
+    assert FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES.issubset(FIRST_LEVEL_FOLDERS)
 
 
 @pytest.mark.parametrize("folder", FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES)

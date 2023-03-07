@@ -2084,9 +2084,7 @@ class TestConnectionValidation:
         """
         mocker.patch.object(tools, "is_external_repository", return_value=True)
         pack = repo.create_pack("PackName")
-        connection = pack._create_json_based(
-            name="connection", prefix="", content=CONNECTION
-        )
+        connection = pack.create_connection(name="connection", content=CONNECTION)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
@@ -2114,9 +2112,7 @@ class TestConnectionValidation:
         pack = repo.create_pack("PackName")
         connection_copy = CONNECTION.copy()
         del connection_copy["canvasContextConnections"][0]["contextKey1"]
-        connection = pack._create_json_based(
-            name="connection", prefix="", content=connection_copy
-        )
+        connection = pack.create_connection(name="connection", content=connection_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
@@ -2647,7 +2643,7 @@ class TestLayoutValidation:
         layoutscontainer_copy = LAYOUTS_CONTAINER.copy()
         layoutscontainer_copy["fromVersion"] = "5.0.0"
 
-        layoutscontainer = pack._create_json_based(
+        layoutscontainer = pack.create_layoutcontainer(
             name="layoutscontainer", prefix="", content=layoutscontainer_copy
         )
         with ChangeCWD(pack.repo_path):

@@ -92,6 +92,7 @@ class Pack:
         self.wizards: List[Wizard] = list()
         self.xdrc_templates: List[XDRCTemplate] = list()
         self.layout_rules: List[LayoutRule] = list()
+        self.connections: List[JSONBased] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
@@ -160,6 +161,9 @@ class Pack:
 
         self._lists_path = self._pack_path / "Lists"
         self._lists_path.mkdir()
+
+        self._connections_path = self._pack_path / "Connections"
+        self._connections_path.mkdir()
 
         self._parsing_rules_path = self._pack_path / PARSING_RULES_DIR
         self._parsing_rules_path.mkdir()
@@ -506,6 +510,13 @@ class Pack:
         )
         self.lists.append(list_item)
         return list_item
+
+    def create_connection(self, name: str, content: dict = None) -> JSONBased:
+        connection = self._create_json_based(
+            name, "", content, dir_path=self._connections_path
+        )
+        self.connections.append(connection)
+        return connection
 
     def create_playbook(
         self,

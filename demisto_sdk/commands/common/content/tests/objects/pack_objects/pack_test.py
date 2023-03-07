@@ -32,6 +32,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     Widget,
 )
 from demisto_sdk.commands.common.tools import src_root
+from TestSuite.test_tools import str_in_call_args_list
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -173,7 +174,7 @@ def test_sign_pack_error_from_subprocess(repo, caplog, fake_process, monkeypatch
     assert "Failed to sign pack for Pack1 -" in caplog.text
 
 
-def test_sign_pack_success(repo, caplog, fake_process, monkeypatch):
+def test_sign_pack_success(repo, mocker, fake_process, monkeypatch):
     """
     When:
         - Signing a pack.
@@ -185,7 +186,8 @@ def test_sign_pack_success(repo, caplog, fake_process, monkeypatch):
         - Verify that success is written to the logger.
 
     """
-    logger.propagate = True
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
 
     import demisto_sdk.commands.common.content.objects.pack_objects.pack as pack_class
     from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
@@ -203,4 +205,7 @@ def test_sign_pack_success(repo, caplog, fake_process, monkeypatch):
 
     content_object_pack.sign_pack(logger, content_object_pack.path, signer_path)
 
-    assert f"Signed {content_object_pack.path.name} pack successfully" in caplog.text
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        f"Signed {content_object_pack.path.name} pack successfully",
+    )

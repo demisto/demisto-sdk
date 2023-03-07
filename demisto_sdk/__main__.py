@@ -609,7 +609,14 @@ def zip_packs(**kwargs) -> int:
 @pass_config
 def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
+    from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
+
+    logging_setup(
+        1,  # type: ignore[arg-type]
+        log_path=os.getenv("ARTIFACTS_FOLDER"),
+        log_file_name="validate.log",
+    )  # type: ignore[arg-type]
 
     run_with_mp = not kwargs.pop("no_multiprocessing")
     check_configuration_file("validate", kwargs)
@@ -923,9 +930,17 @@ def secrets(config, **kwargs):
     "-di",
     "--docker-image",
     default="from-yml",
-    help="The docker image to check package on. Possible values: 'native:maintenance', 'native:ga', 'native:dev',"
+    help="The docker image to check package on. Can be a comma separated list of Possible values: 'native:maintenance', 'native:ga', 'native:dev',"
     " 'all', a specific docker image from Docker Hub (e.g devdemisto/python3:3.10.9.12345) or the default"
-    " 'from-yml'.",
+    " 'from-yml', 'native:target'. To run lint only on native supported content with a specific image,"
+    " use 'native:target' with --docker-image-target <specific-image>.",
+)
+@click.option(
+    "-dit",
+    "--docker-image-target",
+    default="",
+    help="The docker image to lint native supported content with. Should only be used with "
+    "--docker-image native:target. An error will be raised otherwise.",
 )
 @click.option(
     "-cdam",
@@ -987,6 +1002,7 @@ def lint(**kwargs):
         coverage_report=kwargs.get("coverage_report"),  # type: ignore[arg-type]
         docker_timeout=kwargs.get("docker_timeout"),  # type: ignore[arg-type]
         docker_image_flag=kwargs.get("docker_image"),  # type: ignore[arg-type]
+        docker_image_target=kwargs.get("docker_image_target"),  # type: ignore[arg-type]
         time_measurements_dir=kwargs.get("time_measurements_dir"),  # type: ignore[arg-type]
     )
 
@@ -999,7 +1015,7 @@ def lint(**kwargs):
     "--input",
     help="The .coverage file to analyze.",
     default=os.path.join("coverage_report", ".coverage"),
-    type=PathsParamType(exists=True, resolve_path=True),
+    type=PathsParamType(resolve_path=True),
 )
 @click.option(
     "--default-min-coverage",

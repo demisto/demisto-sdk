@@ -118,7 +118,9 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         try:
             content_item_parser = ContentItemParser.from_path(path)
         except ValueError as e:
-            raise ValueError(f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path.") from e
+            raise ValueError(
+                f"Invalid content path provided: {str(path)}. Please provide a valid content item or pack path."
+            ) from e
         if not content_item_parser:
             # This is a workaround because `create-content-artifacts` still creates deprecated content items
             demisto_sdk.commands.content_graph.parsers.content_item.MARKETPLACE_MIN_VERSION = (

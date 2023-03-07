@@ -2916,12 +2916,15 @@ def test_content_entities_dir_length():
 
 
 folders_not_allowed_to_contain_files = tuple(
-    set(CONTENT_ENTITIES_DIRS).difference(FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES)
+    (set(CONTENT_ENTITIES_DIRS).union(FIRST_LEVEL_FOLDERS)).difference(
+        FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES
+    )
 )
 
 
+@pytest.mark.parametrize("nested", (True, False))
 @pytest.mark.parametrize("folder", folders_not_allowed_to_contain_files)
-def test_is_file_allowed_in_path__fail(repo, folder: str):
+def test_is_path_allowed__fail(repo, folder: str, nested: bool):
     """
     Given
             A name of a folder, which may not contain files directly
@@ -2933,7 +2936,8 @@ def test_is_file_allowed_in_path__fail(repo, folder: str):
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
 
     pack = repo.create_pack()
-    file = Path(pack.path, folder, "file")
+    mid_path = (folder, "foo", "bar") if nested else (folder,)
+    file = Path(pack.path, *mid_path, "file")
 
     std_output = StringIO()
     with contextlib.redirect_stdout(std_output):
@@ -2949,7 +2953,7 @@ def test_first_level_folders_subset():
 
 
 @pytest.mark.parametrize("folder", FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES)
-def test_is_file_allowed_in_path__pass(repo, folder: str):
+def test_is_path_allowed__pass(repo, folder: str):
     """
     Given
             A name of a folder, which may contain files directly
@@ -2967,6 +2971,32 @@ def test_is_file_allowed_in_path__pass(repo, folder: str):
         assert validate_manager.is_valid_path(file)
 
 
+def test_is_path_allowed__fail_file_in_pack_root(tmpdir):
+    """
+    Given
+            A repo-like file structure
+    When
+            Calling ValidateManager.is_valid_path on a file outside the Packs folder
+    Then
+            Make sure it fails with an appropriate error
+    """
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+
+    pack = tmpdir / "Packs" / "myPack"
+    pack.mkdir()
+
+    file_path = Path(pack, "file")
+    file_path.touch()
+
+    std_output = StringIO()
+    with contextlib.redirect_stdout(std_output):
+        with ChangeCWD(tmpdir):
+            assert not validate_manager.is_valid_path(file_path)
+
+    captured_stdout = std_output.getvalue()
+    assert "[BA122]" in captured_stdout
+
+
 @pytest.mark.parametrize(
     "folder",
     [
@@ -2974,10 +3004,10 @@ def test_is_file_allowed_in_path__pass(repo, folder: str):
         tuple(FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES)[0],
     ],
 )
-def test_is_file_allowed_in_path__second_level(repo, folder: str):
+def test_is_path_allowed__second_level(folder: str):
     """
     Given
-            A name of a folder, which may OR NOT may contain files directly
+            A name of a folder, which may OR MAY NOT contain files directly
     When
             Running validate on a file created in a folder under that folder second-level
     Then
@@ -2987,3 +3017,48 @@ def test_is_file_allowed_in_path__second_level(repo, folder: str):
     assert ValidateManager(check_is_unskipped=False, skip_conf_json=True).is_valid_path(
         file
     )
+
+
+def test_is_path_allowed__dir(repo):
+    """
+    Given
+            A repo
+    When
+            Calling ValidateManager.is_valid_path on a folder
+    Then
+            Make sure it fails with an appropriate error
+    """
+    pack = repo.create_pack("myPack")
+    integration = pack.create_integration()
+    for folder in (pack.path, integration.path):
+        with pytest.raises(ValueError) as e:
+            ValidateManager(
+                check_is_unskipped=False, skip_conf_json=True
+            ).is_valid_path(Path(folder))
+        assert "should not be run on folders" in e.value.args[0]
+
+
+def test_is_path_allowed__outside_pack(tmpdir):
+    """
+    Given
+            A repo-like file structure
+    When
+            Calling ValidateManager.is_valid_path on a file outside the Packs folder
+    Then
+            Make sure it fails with an appropriate error
+    """
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+
+    packs = tmpdir / "Packs"
+    packs.mkdir()
+
+    file_path = Path(packs, "file")
+    file_path.touch()
+
+    std_output = StringIO()
+    with contextlib.redirect_stdout(std_output):
+        with ChangeCWD(tmpdir):
+            assert not validate_manager.is_valid_path(file_path)
+
+    captured_stdout = std_output.getvalue()
+    assert "[BA123]" in captured_stdout

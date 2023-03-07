@@ -1854,13 +1854,12 @@ NATIVE_IMAGE_FILE_NAME = "docker_native_image_config.json"
 
 PACK_ROOT_FILE_NAMES = {
     ".gitignore",
-    ".pack-ignore",
-    ".secrets-ignore",
-    "Author_image.png",
-    "CONTRIBUTORS.json",
+    PACKS_PACK_IGNORE_FILE_NAME,
+    PACKS_WHITELIST_FILE_NAME,
+    AUTHOR_IMAGE_FILE_NAME,
+    PACKS_CONTRIBUTORS_FILE_NAME,
     "Pipfile",
     "Pipfile.lock",
-    "README.md",
-    "pack_metadata.json",
-    "connection.json",
+    PACKS_README_FILE_NAME,
+    PACKS_PACK_META_FILE_NAME,
 }

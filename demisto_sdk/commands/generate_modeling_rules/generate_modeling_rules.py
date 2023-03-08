@@ -28,8 +28,10 @@ SCHEMA_TYPE_BOOLEAN = "Boolean"
 
 @app.command(no_args_is_help=True)
 def generate_modeling_rules(
-    mapping: Path = typer.Argument(
+    mapping: Path = typer.Option(
         ...,
+        "-m",
+        "--mapping",
         exists=True,
         resolve_path=True,
         show_default=False,
@@ -37,36 +39,46 @@ def generate_modeling_rules(
             "The Path to a csv or tsv file containing the mapping for the modeling rules."
         ),
     ),
-    raw_event_path: Path = typer.Argument(
+    raw_event_path: Path = typer.Option(
         ...,
+        "-re",
+        "--raw_event",
         exists=True,
         resolve_path=True,
         show_default=False,
         help=("The path to a raw event from the api call in a json format."),
     ),
-    one_data_model_path: Path = typer.Argument(
+    one_data_model_path: Path = typer.Option(
         ...,
+        "-dm",
+        "--data_model",
         exists=True,
         resolve_path=True,
         show_default=False,
         help=("The path to The one data model schema."),
     ),
-    output_path: Path = typer.Argument(
+    output_path: Path = typer.Option(
         ...,
+        "-o",
+        "--output",
         exists=True,
         resolve_path=True,
         show_default=False,
         help=(
-            "A path to the pack you want to generate the modeling rules in. Best practice to put the working pack path"
+            "A path to the folder you want to generate the modeling rules in. Best practice to put the working pack path"
         ),
     ),
-    vendor: str = typer.Argument(
-        default="test",
+    vendor: str = typer.Option(
+        "test",
+        "-v",
+        "--vendor",
         show_default=False,
         help=("The vendor name of the product in snake_case"),
     ),
-    product: str = typer.Argument(
-        default="test",
+    product: str = typer.Option(
+        "test",
+        "-p",
+        "--product",
         show_default=False,
         help=("The name of the product in snake_case"),
     ),
@@ -340,9 +352,20 @@ def read_mapping_file(mapping: Path) -> Tuple:
             csvfile, delimiter="\t" if str(mapping).endswith("tsv") else ","
         )
 
+        for header in ["One Data Model", "Raw Event Path"]:
+            if not reader.fieldnames:
+                raise ValueError(
+                    f"The mapping file {mapping} does not have proper headers."
+                )
+            if header not in reader.fieldnames:
+                raise NameError(
+                    f'The mapping file {mapping} must contain "One Data Model" and "Raw Event Path" columns'
+                    f"This mapping file is missing the {header=}"
+                )
+
         for row in reader:
-            name_column.append(row["Name"])
-            xdm_one_data_model.append(row["XDM Field One Data Model"])
+            name_column.append(row["Raw Event Path"])
+            xdm_one_data_model.append(row["One Data Model"])
 
     return (name_column, xdm_one_data_model)
 
@@ -542,7 +565,7 @@ def extract_data_from_all_xdm_schema(path: Path) -> Tuple[dict, dict]:
     Args:
         path (str): The path to the location of the all xdm rules schema
     Returns:
-        Tuple[dict, dict]: {xdf_rule: data_type}, {xdm_rule: data_class}
+        Tuple[dict, dict]: {xdm_rule: data_type}, {xdm_rule: data_class}
     """
     with open(path, newline="") as csvfile:
         reader = csv.DictReader(csvfile)

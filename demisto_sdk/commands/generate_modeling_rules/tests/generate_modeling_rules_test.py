@@ -234,6 +234,13 @@ def test_read_mapping_file():
     assert read_mapping_file(mapping_file_path) == (name_columen, xdm_one_data_model)
 
 
+def test_read_mapping_file_invalid_header_names():
+    mapping_file_path = Path(__file__).parent / "test_data/mapping_invalid_headers.csv"
+    with pytest.raises(NameError):
+        read_mapping_file(mapping_file_path)
+    assert mapping_file_path
+
+
 def test_create_yml_file():
     result_yml_path = Path(__file__).parent / "test_data/result_create_yml_file.yml"
 

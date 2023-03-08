@@ -1,4 +1,4 @@
-Name,Type,Description,XDM Field One Data Model,XDM Field - Old Data Model
+Raw Event Path,Type,Description,One Data Model,XDM Field - Old Data Model
 id,string,Resource Id,xdm.observer.unique_identifier,XDM.Endpoint.Observer.unique_identifier
 name,string,Resource name,xdm.observer.name,XDM.Endpoint.Observer.name
 properties.alertDisplayName,string,The display name of the alert.,xdm.alert.name,XDM.Endpoint.threat.name

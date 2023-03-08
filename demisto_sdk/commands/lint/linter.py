@@ -1543,15 +1543,11 @@ class Linter:
             if self._is_native_image_support_script(
                 native_image, supported_native_images, script_id
             ):
-
-                if native_image == DockerImageFlagOption.NATIVE_DEV.value:
-                    #  Get native latest from Docker Hub
-                    native_image_ref = self._get_dev_native_image(script_id)
-                else:  # versioned native image
+                # When running lint --di all, do not run native:dev
+                if native_image != DockerImageFlagOption.NATIVE_DEV.value:
                     native_image_ref = self._get_versioned_native_image(native_image)
-
-                if native_image_ref:
-                    imgs.append(native_image_ref)
+                    if native_image_ref:
+                        imgs.append(native_image_ref)
 
         return imgs
 

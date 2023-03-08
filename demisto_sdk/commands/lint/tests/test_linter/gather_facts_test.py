@@ -182,7 +182,6 @@ class TestDockerImagesCollection:
                     "demisto/py3-tools:1.0.0.42258",
                     "demisto/py3-native:8.1.0.12345",
                     "demisto/py3-native:8.2.0.12345",
-                    "demisto/py3-native:8.3.0.12345",
                 ],
                 "",
             ),
@@ -269,6 +268,7 @@ class TestDockerImagesCollection:
         else:  # more than one image ('all' flag)
             for img in actual_image:
                 assert img[0] in exp_images
+            assert len(actual_image) == len(exp_images)
 
     @pytest.mark.parametrize(
         argnames="docker_image_flag, exp_versioned_native_image_name",

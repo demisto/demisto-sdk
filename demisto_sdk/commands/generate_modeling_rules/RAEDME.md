@@ -35,7 +35,7 @@ for example the field UTC
 will be specified by event.time.UTC in the mapping file.
 
 ***Coalesce***
-To specify 2 fields that map to the same xdm one data model rule uses the `|`. 
+To specify 2 fields that map to the same xdm one data model rule uses the `|`.
 for example under the `Raw Event Path` column, with ipv4 and ip mapped the same xdm field `ipv4 | ip`.
 
 
@@ -50,7 +50,3 @@ Now supports:
 - json_extract_array
 - json_extract_scalar
 - coalesce
-
-
-
-

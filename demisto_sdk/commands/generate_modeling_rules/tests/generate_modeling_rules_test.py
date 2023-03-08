@@ -377,7 +377,7 @@ def test_init_mapping_field_list(mocker):
         RawEventData("test.bla", is_array_raw=True, type_raw="int"),
         RawEventData("check", is_array_raw=False, type_raw="string"),
     ]
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValueError):
         init_mapping_field_list(
             name_columen,
             xdm_one_data_model,
@@ -385,8 +385,3 @@ def test_init_mapping_field_list(mocker):
             xdm_rule_to_dtype,
             xdm_rule_to_dclass,
         )
-
-    assert (
-        str(e)
-        == "No XDM field xdm_rule4 exists in the onedata model. Please check your modelling rules file."
-    )

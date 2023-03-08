@@ -70,7 +70,7 @@ def generate_modeling_rules(
     ),
     vendor: str = typer.Option(
         "test",
-        "-v",
+        "-ve",
         "--vendor",
         show_default=False,
         help=("The vendor name of the product in snake_case"),

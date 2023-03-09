@@ -44,7 +44,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import get_child_files, get_json, get_yaml
 from demisto_sdk.commands.download.downloader import Downloader
-from TestSuite.test_tools import assert_strs_in_call_args_list, str_in_call_args_list
+from TestSuite.test_tools import str_in_call_args_list
 
 yaml = YAML_Handler()
 
@@ -567,12 +567,11 @@ class TestFlagHandlers:
             answer = downloader.handle_list_files_flag()
             list_files = [[cco["name"], cco["type"]] for cco in env.CUSTOM_CONTENT]
             for file in list_files:
-                assert_strs_in_call_args_list(
-                    logger_info.call_args_list,
+                assert all(
                     [
-                        file[0],
-                        file[1],
-                    ],
+                        str_in_call_args_list(logger_info.call_args_list, file[0]),
+                        str_in_call_args_list(logger_info.call_args_list, file[1]),
+                    ]
                 )
             assert answer
 

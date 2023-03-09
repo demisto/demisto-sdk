@@ -6,7 +6,7 @@ from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from TestSuite.test_tools import assert_strs_in_call_args_list
+from TestSuite.test_tools import str_in_call_args_list
 
 json = JSON_Handler()
 
@@ -78,13 +78,15 @@ def test_integration_init_integration_positive(monkeypatch, tmp_path, mocker):
         main, [INIT_CMD, "-o", tmp_dir_path, "-n", pack_name], input="\n".join(inputs)
     )
 
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            f"Successfully created the pack SuperPack in: {tmp_pack_path}",
-            f"Created pack metadata at path : {tmp_pack_metadata_path}",
-            f"Finished creating integration: {tmp_integration_path}.",
-        ],
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                f"Successfully created the pack SuperPack in: {tmp_pack_path}",
+                f"Created pack metadata at path : {tmp_pack_metadata_path}",
+                f"Finished creating integration: {tmp_integration_path}.",
+            ]
+        ]
     )
     assert result.stderr == ""
 
@@ -191,13 +193,15 @@ def test_integration_init_integration_positive_no_inline_pack_name(
     )
 
     assert result.exit_code == 0
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            f"Successfully created the pack SuperPack in: {tmp_pack_path}",
-            f"Created pack metadata at path : {tmp_pack_metadata_path}",
-            f"Finished creating integration: {tmp_integration_path}.",
-        ],
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                f"Successfully created the pack SuperPack in: {tmp_pack_path}",
+                f"Created pack metadata at path : {tmp_pack_metadata_path}",
+                f"Finished creating integration: {tmp_integration_path}.",
+            ]
+        ]
     )
 
     with open(tmp_pack_metadata_path) as f:

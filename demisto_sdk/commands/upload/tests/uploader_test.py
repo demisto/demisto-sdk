@@ -46,7 +46,7 @@ from demisto_sdk.commands.upload.uploader import (
     print_summary,
     sort_directories_based_on_dependencies,
 )
-from TestSuite.test_tools import ChangeCWD, assert_strs_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 logging.getLogger("demisto-sdk").propagate = True
 
@@ -810,13 +810,18 @@ def test_print_summary_successfully_uploaded_files(
     )
     # verify exactly 3 calls to secho
     assert logger_info.call_count == 3
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            expected_upload_summary_title,
-            expected_successfully_uploaded_files_title,
-            expected_successfully_uploaded_files,
-        ],
+            str_in_call_args_list(
+                logger_info.call_args_list, expected_upload_summary_title
+            ),
+            str_in_call_args_list(
+                logger_info.call_args_list, expected_successfully_uploaded_files_title
+            ),
+            str_in_call_args_list(
+                logger_info.call_args_list, expected_successfully_uploaded_files
+            ),
+        ]
     )
 
 
@@ -844,13 +849,18 @@ def test_print_summary_failed_uploaded_files(demisto_client_configure, mocker):
 ╘════════════════╧════════╧════════════╛"""
     # verify exactly 3 calls to secho
     assert logger_info.call_count == 3
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            expected_upload_summary_title,
-            expected_failed_uploaded_files_title,
-            expected_failed_uploaded_files,
-        ],
+            str_in_call_args_list(
+                logger_info.call_args_list, expected_upload_summary_title
+            ),
+            str_in_call_args_list(
+                logger_info.call_args_list, expected_failed_uploaded_files_title
+            ),
+            str_in_call_args_list(
+                logger_info.call_args_list, expected_failed_uploaded_files
+            ),
+        ]
     )
 
 
@@ -878,13 +888,18 @@ def test_print_summary_unuploaded_files(demisto_client_configure, mocker):
 ╘════════════════╧════════╧═════════════════╧═════════════════════╧═══════════════════╛"""
     # verify exactly 3 calls to secho
     assert logger_info.call_count == 3
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            expected_upload_summary_title,
-            expected_failed_uploaded_files_title,
-            expected_failed_uploaded_files,
-        ],
+            str_in_call_args_list(
+                logger_info.call_args_list, expected_upload_summary_title
+            ),
+            str_in_call_args_list(
+                logger_info.call_args_list, expected_failed_uploaded_files_title
+            ),
+            str_in_call_args_list(
+                logger_info.call_args_list, expected_failed_uploaded_files
+            ),
+        ]
     )
 
 
@@ -1055,11 +1070,8 @@ class TestZippedPackUpload:
 
         # validate
         assert status == expected_ret_value
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
-            [
-                INVALID_ZIP_ERROR.format(path=input),
-            ],
+        assert str_in_call_args_list(
+            logger_info.call_args_list, INVALID_ZIP_ERROR.format(path=input)
         )
 
     def test_error_in_disable_pack_verification(self, mocker):
@@ -1488,11 +1500,9 @@ class TestItemDetacher:
         )
 
         assert logger_info.call_count == 1
-        assert_strs_in_call_args_list(
+        assert str_in_call_args_list(
             logger_info.call_args_list,
-            [
-                "File: file was detached",
-            ],
+            "File: file was detached",
         )
 
     def test_extract_items_from_dir(self, mocker, repo):

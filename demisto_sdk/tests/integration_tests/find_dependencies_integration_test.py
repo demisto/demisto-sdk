@@ -5,11 +5,7 @@ from pathlib import Path
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
-from TestSuite.test_tools import (
-    ChangeCWD,
-    assert_strs_in_call_args_list,
-    str_in_call_args_list,
-)
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -94,28 +90,30 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "# Pack ID: FindDependencyPack",
-                "### Scripts",
-                "### Playbooks",
-                "### Layouts",
-                "### Incident Fields",
-                "### Indicator Types",
-                "### Integrations",
-                "### Incident Types",
-                "### Classifiers",
-                "### Mappers",
-                "### Widgets",
-                "### Dashboards",
-                "### Reports",
-                "### Generic Types",
-                "### Generic Fields",
-                "### Generic Modules",
-                "### Jobs",
-                "All level dependencies are: []",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "# Pack ID: FindDependencyPack",
+                    "### Scripts",
+                    "### Playbooks",
+                    "### Layouts",
+                    "### Incident Fields",
+                    "### Indicator Types",
+                    "### Integrations",
+                    "### Incident Types",
+                    "### Classifiers",
+                    "### Mappers",
+                    "### Widgets",
+                    "### Dashboards",
+                    "### Reports",
+                    "### Generic Types",
+                    "### Generic Fields",
+                    "### Generic Modules",
+                    "### Jobs",
+                    "All level dependencies are: []",
+                ]
+            ]
         )
         # last log is regarding all the deps
         assert result.exit_code == 0
@@ -166,9 +164,10 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 ],
             )
 
-            assert_strs_in_call_args_list(
+            assert str_in_call_args_list(
                 logger_info.call_args_list,
-                ["Found dependencies result for FindDependencyPack pack:", "{}"],
+                "Found dependencies result for FindDependencyPack pack:",
+                "{}",
             )
             assert result.exit_code == 0
 
@@ -310,9 +309,7 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
             path = os.path.join("Packs", os.path.basename(pack.path), "Integrations")
             result = runner.invoke(main, [FIND_DEPENDENCIES_CMD, "-i", path])
             assert result.exit_code == 1
-            assert_strs_in_call_args_list(
+            assert str_in_call_args_list(
                 logger_info.call_args_list,
-                [
-                    "must be formatted as 'Packs/<some pack name>",
-                ],
+                "must be formatted as 'Packs/<some pack name>",
             )

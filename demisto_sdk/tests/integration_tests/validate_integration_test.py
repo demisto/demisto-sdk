@@ -62,11 +62,7 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     REPUTATION,
     WIDGET,
 )
-from TestSuite.test_tools import (
-    ChangeCWD,
-    assert_strs_in_call_args_list,
-    str_in_call_args_list,
-)
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 mp = pytest.MonkeyPatch()
 mp.setenv("COLUMNS", "1000")
@@ -158,9 +154,14 @@ class TestGenericFieldValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", generic_field_path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
-            [f"Validating {generic_field_path} as genericfield", "The files are valid"],
+        assert all(
+            [
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {generic_field_path} as genericfield",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -188,13 +189,15 @@ class TestGenericFieldValidation:
                 main, [VALIDATE_CMD, "-i", generic_field_path], catch_exceptions=False
             )
         assert result.exit_code == 1
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {generic_field_path} as genericfield",
-                "ST108",
-                "The files were found as invalid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {generic_field_path} as genericfield",
+                    "ST108",
+                    "The files were found as invalid",
+                ]
+            ]
         )
 
     @pytest.mark.parametrize(
@@ -232,13 +235,15 @@ class TestGenericFieldValidation:
             )
         assert result.exit_code == 1
 
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {generic_field_path} as genericfield",
-                expected_error_code,
-                "The files were found as invalid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {generic_field_path} as genericfield",
+                    expected_error_code,
+                    "The files were found as invalid",
+                ]
+            ]
         )
 
 
@@ -265,9 +270,14 @@ class TestGenericTypeValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", generic_type_path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
-            [f"Validating {generic_type_path} as generictype", "The files are valid"],
+        assert all(
+            [
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {generic_type_path} as generictype",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -295,13 +305,15 @@ class TestGenericTypeValidation:
                 main, [VALIDATE_CMD, "-i", generic_type_path], catch_exceptions=False
             )
         assert result.exit_code == 1
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {generic_type_path} as generictype",
-                "ST108",
-                "The files were found as invalid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {generic_type_path} as generictype",
+                    "ST108",
+                    "The files were found as invalid",
+                ]
+            ]
         )
 
     def test_invalid_from_version_generic_type(self, mocker, repo):
@@ -328,13 +340,15 @@ class TestGenericTypeValidation:
                 main, [VALIDATE_CMD, "-i", generic_type_path], catch_exceptions=False
             )
         assert result.exit_code == 1
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {generic_type_path} as generictype",
-                "BA106",
-                "The files were found as invalid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {generic_type_path} as generictype",
+                    "BA106",
+                    "The files were found as invalid",
+                ]
+            ]
         )
 
 
@@ -361,12 +375,14 @@ class TestGenericModuleValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", generic_module_path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {generic_module_path} as genericmodule",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {generic_module_path} as genericmodule",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -394,13 +410,15 @@ class TestGenericModuleValidation:
                 main, [VALIDATE_CMD, "-i", generic_module_path], catch_exceptions=False
             )
         assert result.exit_code == 1
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {generic_module_path} as genericmodule",
-                "ST108",
-                "The files were found as invalid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {generic_module_path} as genericmodule",
+                    "ST108",
+                    "The files were found as invalid",
+                ]
+            ]
         )
 
     def test_invalid_fromversion_generic_module(self, mocker, repo):
@@ -427,13 +445,15 @@ class TestGenericModuleValidation:
                 main, [VALIDATE_CMD, "-i", generic_module_path], catch_exceptions=False
             )
         assert result.exit_code == 1
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {generic_module_path} as genericmodule",
-                "BA106",
-                "The files were found as invalid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {generic_module_path} as genericmodule",
+                    "BA106",
+                    "The files were found as invalid",
+                ]
+            ]
         )
 
 
@@ -462,12 +482,14 @@ class TestGenericDefinitionValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", genefic_def.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {genefic_def.path} as genericdefinition",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {genefic_def.path} as genericdefinition",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -496,13 +518,15 @@ class TestGenericDefinitionValidation:
                 main, [VALIDATE_CMD, "-i", genefic_def.path], catch_exceptions=False
             )
         assert result.exit_code == 1
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {genefic_def.path} as genericdefinition",
-                "ST108",
-                "The files were found as invalid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {genefic_def.path} as genericdefinition",
+                    "ST108",
+                    "The files were found as invalid",
+                ]
+            ]
         )
 
     def test_invalid_fromversion_generic_definition(self, mocker, repo):
@@ -530,13 +554,15 @@ class TestGenericDefinitionValidation:
                 main, [VALIDATE_CMD, "-i", genefic_def.path], catch_exceptions=False
             )
         assert result.exit_code == 1
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {genefic_def.path} as genericdefinition",
-                "BA106",
-                "The files were found as invalid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {genefic_def.path} as genericdefinition",
+                    "BA106",
+                    "The files were found as invalid",
+                ]
+            ]
         )
 
 
@@ -563,12 +589,14 @@ class TestIncidentFieldValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", incident_field_path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {incident_field_path} as incidentfield",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {incident_field_path} as incidentfield",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -596,13 +624,15 @@ class TestIncidentFieldValidation:
                 main, [VALIDATE_CMD, "-i", incident_field_path], catch_exceptions=False
             )
         assert result.exit_code == 1
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {incident_field_path} as incidentfield",
-                "IF102",
-                "The system key must be set to False",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {incident_field_path} as incidentfield",
+                    "IF102",
+                    "The system key must be set to False",
+                ]
+            ]
         )
 
     def test_valid_scripts_in_incident_field(self, mocker, repo):
@@ -664,12 +694,14 @@ class TestIncidentFieldValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {incident_field_path} as incidentfield",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {incident_field_path} as incidentfield",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -721,13 +753,15 @@ class TestIncidentFieldValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {incident_field_path} as incidentfield",
-                "IF114",
-                "the following scripts were not found in the id_set.json",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {incident_field_path} as incidentfield",
+                    "IF114",
+                    "the following scripts were not found in the id_set.json",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -766,9 +800,14 @@ class TestDeprecatedIntegration:
                 [VALIDATE_CMD, "-i", integration.yml.rel_path, "--no-docker-checks"],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
-            [f"{integration.yml.path} as integration", "The files are valid"],
+        assert all(
+            [
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"{integration.yml.path} as integration",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -800,8 +839,11 @@ class TestDeprecatedIntegration:
                 [VALIDATE_CMD, "-i", integration.yml.rel_path, "--no-docker-checks"],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list, ["IN127", "Deprecated"]
+        assert all(
+            [
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in ["IN127", "Deprecated"]
+            ]
         )
         assert result.exit_code == 1
 
@@ -908,9 +950,15 @@ class TestDeprecatedIntegration:
                 [VALIDATE_CMD, "-i", integration.yml.rel_path, "--no-docker-checks"],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
-            [f"{integration.yml.path} as integration", "IN128", "Deprecated"],
+        assert all(
+            [
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"{integration.yml.path} as integration",
+                    "IN128",
+                    "Deprecated",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -954,9 +1002,14 @@ class TestDeprecatedIntegration:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
-            [f"{integration.yml.path} as integration", "The files are valid"],
+        assert all(
+            [
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"{integration.yml.path} as integration",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -1022,12 +1075,14 @@ class TestDeprecatedIntegration:
                 catch_exceptions=False,
             )
 
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {integration.yml.rel_path} as integration",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {integration.yml.rel_path} as integration",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -1067,9 +1122,14 @@ class TestDeprecatedIntegration:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
-            [f"{integration.yml.path} as integration", "The files are valid"],
+        assert all(
+            [
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"{integration.yml.path} as integration",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -1131,12 +1191,14 @@ class TestDeprecatedIntegration:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {integration.yml.rel_path} as integration",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {integration.yml.rel_path} as integration",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -1172,9 +1234,14 @@ class TestIntegrationValidation:
                 [VALIDATE_CMD, "-i", integration.yml.rel_path, "--no-docker-checks"],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
-            [f"{integration.yml.path} as integration", "The files are valid"],
+        assert all(
+            [
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"{integration.yml.path} as integration",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -1242,12 +1309,14 @@ class TestIntegrationValidation:
                 catch_exceptions=False,
             )
 
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "The required field of the test parameter should be False",
-                "IN102",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "The required field of the test parameter should be False",
+                    "IN102",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -1282,13 +1351,15 @@ class TestIntegrationValidation:
                 [VALIDATE_CMD, "-i", integration.yml.rel_path, "--no-docker-checks"],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"{integration.yml.path} as integration",
-                "IN119",
-                "This is a feed and has wrong fromversion.",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"{integration.yml.path} as integration",
+                    "IN119",
+                    "This is a feed and has wrong fromversion.",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -1326,13 +1397,15 @@ class TestIntegrationValidation:
                 ],
             )
 
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {pack_integration_path} as integration",
-                "The docker image tag is not the latest numeric tag, please update it",
-                "You can check for the most updated version of demisto/python3 here:",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {pack_integration_path} as integration",
+                    "The docker image tag is not the latest numeric tag, please update it",
+                    "You can check for the most updated version of demisto/python3 here:",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -1371,12 +1444,14 @@ class TestIntegrationValidation:
             [VALIDATE_CMD, "-i", integration_path, "--no-conf-json", "--allow-skipped"],
         )
         assert result.exit_code == 1
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {integration_path} as integration",
-                '[IN124] - Parameter: "credentials" can\'t be hidden in all marketplaces',
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {integration_path} as integration",
+                    '[IN124] - Parameter: "credentials" can\'t be hidden in all marketplaces',
+                ]
+            ]
         )
 
     def test_positive_hidden_param(self, mocker):
@@ -1399,11 +1474,13 @@ class TestIntegrationValidation:
             main,
             [VALIDATE_CMD, "-i", integration_path, "--no-conf-json", "--allow-skipped"],
         )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {integration_path} as integration",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {integration_path} as integration",
+                ]
+            ]
         )
         assert not str_in_call_args_list(
             logger_info.call_args_list, "can't be hidden. Please remove this field"
@@ -1453,15 +1530,17 @@ class TestIntegrationValidation:
                 [VALIDATE_CMD, "-i", integration.yml.rel_path, "--no-docker-checks"],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"{integration.yml.rel_path} as integration",
-                "IN113",
-                "IN114",
-                """The parameter 'feedTags' of the file is duplicated""",
-                f"""The argument '{first_command_args[0]['name']}' is duplicated""",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"{integration.yml.rel_path} as integration",
+                    "IN113",
+                    "IN114",
+                    """The parameter 'feedTags' of the file is duplicated""",
+                    f"""The argument '{first_command_args[0]['name']}' is duplicated""",
+                ]
+            ]
         )
 
     def test_missing_mandatory_field_in_yml(self, mocker, repo):
@@ -1595,15 +1674,17 @@ class TestPackValidation:
             main,
             [VALIDATE_CMD, "-i", VALID_PACK_PATH, "--no-conf-json", "--allow-skipped"],
         )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"{VALID_PACK_PATH} unique pack files",
-                f"Validating pack {VALID_PACK_PATH}",
-                f"{VALID_PACK_PATH}/Integrations/FeedAzureValid/FeedAzureValid.yml",
-                f"{VALID_PACK_PATH}/IncidentFields/incidentfield-city.json",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"{VALID_PACK_PATH} unique pack files",
+                    f"Validating pack {VALID_PACK_PATH}",
+                    f"{VALID_PACK_PATH}/Integrations/FeedAzureValid/FeedAzureValid.yml",
+                    f"{VALID_PACK_PATH}/IncidentFields/incidentfield-city.json",
+                    "The files are valid",
+                ]
+            ]
         )
 
     def test_integration_validate_pack_negative(self, mocker):
@@ -1647,15 +1728,17 @@ class TestPackValidation:
             ],
         )
 
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"{AZURE_FEED_PACK_PATH}",
-                f"{AZURE_FEED_PACK_PATH}/IncidentFields/incidentfield-city.json",
-                f"{AZURE_FEED_PACK_PATH}/Integrations/FeedAzure/FeedAzure.yml",
-                "Playbook conditional task with id:15 has an unhandled condition: MAYBE",
-                "The files were found as invalid, the exact error message can be located above",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"{AZURE_FEED_PACK_PATH}",
+                    f"{AZURE_FEED_PACK_PATH}/IncidentFields/incidentfield-city.json",
+                    f"{AZURE_FEED_PACK_PATH}/Integrations/FeedAzure/FeedAzure.yml",
+                    "Playbook conditional task with id:15 has an unhandled condition: MAYBE",
+                    "The files were found as invalid, the exact error message can be located above",
+                ]
+            ]
         )
 
     def test_integration_validate_invalid_pack_path(self):
@@ -1696,12 +1779,14 @@ class TestClassifierValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {classifier.path} as classifier",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {classifier.path} as classifier",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -1728,12 +1813,14 @@ class TestClassifierValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {classifier.path} as classifier",
-                "fromVersion field in new classifiers needs to be higher or equal to 6.0.0",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {classifier.path} as classifier",
+                    "fromVersion field in new classifiers needs to be higher or equal to 6.0.0",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -1759,12 +1846,14 @@ class TestClassifierValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {classifier.path} as classifier",
-                "toVersion field in new classifiers needs to be higher than 6.0.0",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {classifier.path} as classifier",
+                    "toVersion field in new classifiers needs to be higher than 6.0.0",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -1791,12 +1880,14 @@ class TestClassifierValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {classifier.path} as classifier",
-                "The `fromVersion` field cannot be higher or equal to the `toVersion` field.",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {classifier.path} as classifier",
+                    "The `fromVersion` field cannot be higher or equal to the `toVersion` field.",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -1822,12 +1913,14 @@ class TestClassifierValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {classifier.path} as classifier",
-                'Missing the field "id" in root',
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {classifier.path} as classifier",
+                    'Missing the field "id" in root',
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -1853,12 +1946,14 @@ class TestClassifierValidation:
             runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {classifier.path} as classifier",
-                "Must have fromVersion field in new classifiers",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {classifier.path} as classifier",
+                    "Must have fromVersion field in new classifiers",
+                ]
+            ]
         )
 
     def test_invalid_type_in_new_classifier(self, mocker, repo):
@@ -1913,12 +2008,14 @@ class TestClassifierValidation:
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
         assert result.exit_code == 0
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {classifier.path} as classifier_5_9_9",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {classifier.path} as classifier_5_9_9",
+                    "The files are valid",
+                ]
+            ]
         )
 
     def test_invalid_from_version_in_old_classifiers(self, mocker, repo):
@@ -1943,12 +2040,14 @@ class TestClassifierValidation:
             runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {classifier.path} as classifier_5_9_9",
-                "fromVersion field in old classifiers needs to be lower than 6.0.0",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {classifier.path} as classifier_5_9_9",
+                    "fromVersion field in old classifiers needs to be lower than 6.0.0",
+                ]
+            ]
         )
 
     def test_invalid_to_version_in_old_classifiers(self, mocker, repo):
@@ -1973,12 +2072,14 @@ class TestClassifierValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {classifier.path} as classifier_5_9_9",
-                f"Validating {classifier.path} as classifier_5_9_9",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {classifier.path} as classifier_5_9_9",
+                    f"Validating {classifier.path} as classifier_5_9_9",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -2004,12 +2105,14 @@ class TestClassifierValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {classifier.path} as classifier_5_9_9",
-                'Missing the field "id" in root',
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {classifier.path} as classifier_5_9_9",
+                    'Missing the field "id" in root',
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -2035,12 +2138,14 @@ class TestClassifierValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", classifier.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {classifier.path} as classifier_5_9_9",
-                "Must have toVersion field in old classifiers",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {classifier.path} as classifier_5_9_9",
+                    "Must have toVersion field in old classifiers",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -2069,12 +2174,14 @@ class TestMapperValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", mapper.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {mapper.path} as mapper",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {mapper.path} as mapper",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -2100,12 +2207,14 @@ class TestMapperValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", mapper.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {mapper.path} as mapper",
-                "fromVersion field in mapper needs to be higher or equal to 6.0.0",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {mapper.path} as mapper",
+                    "fromVersion field in mapper needs to be higher or equal to 6.0.0",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -2131,12 +2240,14 @@ class TestMapperValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", mapper.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {mapper.path} as mapper",
-                "toVersion field in mapper needs to be higher than 6.0.0",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {mapper.path} as mapper",
+                    "toVersion field in mapper needs to be higher than 6.0.0",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -2162,12 +2273,14 @@ class TestMapperValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", mapper.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {mapper.path} as mapper",
-                'Missing the field "id" in root',
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {mapper.path} as mapper",
+                    'Missing the field "id" in root',
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -2194,12 +2307,14 @@ class TestMapperValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", mapper.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {mapper.path} as mapper",
-                "The `fromVersion` field cannot be higher or equal to the `toVersion` field.",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {mapper.path} as mapper",
+                    "The `fromVersion` field cannot be higher or equal to the `toVersion` field.",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -2253,12 +2368,14 @@ class TestDashboardValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", dashboard.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {dashboard.path} as dashboard",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {dashboard.path} as dashboard",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -2284,13 +2401,15 @@ class TestDashboardValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", dashboard.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {dashboard.path} as dashboard",
-                "BA100",
-                "The version for our files should always be -1, please update the file.",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {dashboard.path} as dashboard",
+                    "BA100",
+                    "The version for our files should always be -1, please update the file.",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -2318,12 +2437,14 @@ class TestConnectionValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", connection.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {connection.path} as canvas-context-connections",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {connection.path} as canvas-context-connections",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -2351,12 +2472,14 @@ class TestConnectionValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", connection.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {connection.path} as canvas-context-connections",
-                'Missing the field "contextKey1"',
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {connection.path} as canvas-context-connections",
+                    'Missing the field "contextKey1"',
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -2383,12 +2506,14 @@ class TestIndicatorFieldValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", indicator_field_path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {indicator_field_path} as indicatorfield",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {indicator_field_path} as indicatorfield",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -2415,13 +2540,15 @@ class TestIndicatorFieldValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", indicator_field_path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {indicator_field_path} as indicatorfield",
-                "IF101",
-                "The content key must be set to True.",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {indicator_field_path} as indicatorfield",
+                    "IF101",
+                    "The content key must be set to True.",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -2447,12 +2574,14 @@ class TestIncidentTypeValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", incident_type.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {incident_type.path} as incidenttype",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {incident_type.path} as incidenttype",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -2478,13 +2607,15 @@ class TestIncidentTypeValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", incident_type.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {incident_type.path} as incidenttype",
-                "IT100",
-                "The field days needs to be a positive integer",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {incident_type.path} as incidenttype",
+                    "IT100",
+                    "The field days needs to be a positive integer",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -2534,12 +2665,14 @@ class TestIncidentTypeValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", incident_type.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {incident_type.path} as incidenttype",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {incident_type.path} as incidenttype",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -2594,15 +2727,17 @@ class TestIncidentTypeValidation:
                 main, [VALIDATE_CMD, "-i", incident_type.path], catch_exceptions=False
             )
 
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {incident_type.path} as incidenttype",
-                "IT102",
-                "attachment",
-                "category",
-                "closenotes",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {incident_type.path} as incidenttype",
+                    "IT102",
+                    "attachment",
+                    "category",
+                    "closenotes",
+                ]
+            ]
         )
         # sanity check
         assert not str_in_call_args_list(logger_info.call_args_list, "closinguserid")
@@ -2655,16 +2790,18 @@ class TestIncidentTypeValidation:
                 main, [VALIDATE_CMD, "-i", incident_type.path], catch_exceptions=False
             )
 
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {incident_type.path} as incidenttype",
-                "IT103",
-                "The `mode` field under `extractSettings` should be one of the following:",
-                ' - "All" - To extract all indicator types regardless of auto-extraction settings.',
-                ' - "Specific" - To extract only the specific indicator types ',
-                "set in the auto-extraction settings.",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {incident_type.path} as incidenttype",
+                    "IT103",
+                    "The `mode` field under `extractSettings` should be one of the following:",
+                    ' - "All" - To extract all indicator types regardless of auto-extraction settings.',
+                    ' - "Specific" - To extract only the specific indicator types ',
+                    "set in the auto-extraction settings.",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -2743,12 +2880,14 @@ class TestLayoutValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", layout.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {layout.path} as layout",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {layout.path} as layout",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -2776,13 +2915,15 @@ class TestLayoutValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", layout.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {layout.path} as layout",
-                "BA100",
-                "The version for our files should always be -1, please update the file.",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {layout.path} as layout",
+                    "BA100",
+                    "The version for our files should always be -1, please update the file.",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -2810,13 +2951,15 @@ class TestLayoutValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", layout.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {layout.path} as layout",
-                "LO102",
-                'layout file name should start with "layout-" prefix.',
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {layout.path} as layout",
+                    "LO102",
+                    'layout file name should start with "layout-" prefix.',
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -2842,12 +2985,14 @@ class TestLayoutValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", layout.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {layout.path} as layoutscontainer",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {layout.path} as layoutscontainer",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -2875,13 +3020,15 @@ class TestLayoutValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", layout.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {layout.path} as layoutscontainer",
-                "BA100",
-                "The version for our files should always be -1, please update the file.",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {layout.path} as layoutscontainer",
+                    "BA100",
+                    "The version for our files should always be -1, please update the file.",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -2907,13 +3054,15 @@ class TestLayoutValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", layout.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {layout.path} as layoutscontainer",
-                "LO103",
-                'layoutscontainer file name should start with "layoutscontainer-" prefix.',
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {layout.path} as layoutscontainer",
+                    "LO103",
+                    'layoutscontainer file name should start with "layoutscontainer-" prefix.',
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -2944,12 +3093,14 @@ class TestLayoutValidation:
                 [VALIDATE_CMD, "-i", layoutscontainer.path],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {layoutscontainer.path} as layoutscontainer",
-                "fromVersion field in layoutscontainer needs to be higher or equal to 6.0.0",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {layoutscontainer.path} as layoutscontainer",
+                    "fromVersion field in layoutscontainer needs to be higher or equal to 6.0.0",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -2976,12 +3127,14 @@ class TestLayoutValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", layout.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {layout.path} as layout",
-                "toVersion field in layout needs to be lower than 6.0.0",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {layout.path} as layout",
+                    "toVersion field in layout needs to be lower than 6.0.0",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -3041,12 +3194,14 @@ class TestLayoutValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {layoutscontainer.path} as layoutscontainer",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {layoutscontainer.path} as layoutscontainer",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -3108,13 +3263,15 @@ class TestLayoutValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {layoutscontainer.path} as layoutscontainer",
-                "LO105",
-                "the following scripts were not found in the id_set.json",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {layoutscontainer.path} as layoutscontainer",
+                    "LO105",
+                    "the following scripts were not found in the id_set.json",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -3172,12 +3329,14 @@ class TestLayoutValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {layout.path} as layout",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {layout.path} as layout",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -3234,13 +3393,15 @@ class TestLayoutValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {layout.path} as layout",
-                "LO106",
-                "the following scripts were not found in the id_set.json",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {layout.path} as layout",
+                    "LO106",
+                    "the following scripts were not found in the id_set.json",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -3275,12 +3436,14 @@ class TestPlaybookValidation:
             ],
             catch_exceptions=False,
         )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {VALID_PLAYBOOK_FILE_PATH} as playbook",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {VALID_PLAYBOOK_FILE_PATH} as playbook",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -3310,13 +3473,15 @@ class TestPlaybookValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {INVALID_PLAYBOOK_FILE_PATH} as playbook",
-                "PB103",
-                "The following tasks ids have no previous tasks: {'5'}",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {INVALID_PLAYBOOK_FILE_PATH} as playbook",
+                    "PB103",
+                    "The following tasks ids have no previous tasks: {'5'}",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -3348,12 +3513,14 @@ class TestPlaybookValidateDeprecated:
             ],
             catch_exceptions=False,
         )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {VALID_DEPRECATED_PLAYBOOK_FILE_PATH} as playbook",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {VALID_DEPRECATED_PLAYBOOK_FILE_PATH} as playbook",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -3383,13 +3550,15 @@ class TestPlaybookValidateDeprecated:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {INVALID_DEPRECATED_PLAYBOOK_FILE_PATH} as playbook",
-                "PB104",
-                "Deprecated.",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {INVALID_DEPRECATED_PLAYBOOK_FILE_PATH} as playbook",
+                    "PB104",
+                    "Deprecated.",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -3419,12 +3588,14 @@ class TestPlaybookValidateDeprecated:
                 [VALIDATE_CMD, "-i", playbook.yml.rel_path, "--print-ignored-files"],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"{playbook.yml.path} as playbook",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"{playbook.yml.path} as playbook",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -3480,12 +3651,14 @@ class TestPlaybookValidateDeprecated:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {playbook.yml.rel_path} as playbook",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {playbook.yml.rel_path} as playbook",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -3516,12 +3689,14 @@ class TestPlaybookValidateDeprecated:
                 [VALIDATE_CMD, "-i", playbook.yml.rel_path, "--print-ignored-files"],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"{playbook.yml.path} as playbook",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"{playbook.yml.path} as playbook",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -3578,12 +3753,14 @@ class TestPlaybookValidateDeprecated:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {playbook.yml.rel_path} as playbook",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {playbook.yml.rel_path} as playbook",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -3609,12 +3786,14 @@ class TestReportValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", report.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {report.path} as report",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {report.path} as report",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -3640,12 +3819,14 @@ class TestReportValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", report.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {report.path} as report",
-                "The value \"bla\" in 'orientation' is invalid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {report.path} as report",
+                    "The value \"bla\" in 'orientation' is invalid",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -3673,12 +3854,14 @@ class TestReputationValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", reputation.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {reputation.path} as reputation",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {reputation.path} as reputation",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -3706,13 +3889,15 @@ class TestReputationValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", reputation.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {reputation.path} as reputation",
-                "RP101",
-                "Expiration field should have a positive numeric value.",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {reputation.path} as reputation",
+                    "RP101",
+                    "Expiration field should have a positive numeric value.",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -3741,12 +3926,14 @@ class TestScriptValidation:
                 [VALIDATE_CMD, "-i", script.yml.rel_path, "--no-docker-checks"],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"{script.yml.path} as script",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"{script.yml.path} as script",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -3775,13 +3962,15 @@ class TestScriptValidation:
                 [VALIDATE_CMD, "-i", script.yml.rel_path, "--no-docker-checks"],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"{script.yml.path} as script",
-                "SC100",
-                "The name of this v2 script is incorrect",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"{script.yml.path} as script",
+                    "SC100",
+                    "The name of this v2 script is incorrect",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -3814,12 +4003,14 @@ class TestScriptDeprecatedValidation:
                 [VALIDATE_CMD, "-i", script.yml.rel_path, "--no-docker-checks"],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"{script.yml.path} as script",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"{script.yml.path} as script",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -3848,13 +4039,15 @@ class TestScriptDeprecatedValidation:
                 [VALIDATE_CMD, "-i", script.yml.rel_path, "--no-docker-checks"],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"{script.yml.path} as script",
-                "SC101",
-                "Deprecated.",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"{script.yml.path} as script",
+                    "SC101",
+                    "Deprecated.",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -3892,12 +4085,14 @@ class TestScriptDeprecatedValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"{script.yml.path} as script",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"{script.yml.path} as script",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -3959,12 +4154,14 @@ class TestScriptDeprecatedValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {script.yml.rel_path} as script",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {script.yml.rel_path} as script",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -3999,12 +4196,14 @@ class TestScriptDeprecatedValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"{script.yml.path} as script",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"{script.yml.path} as script",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -4061,12 +4260,14 @@ class TestScriptDeprecatedValidation:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {script.yml.rel_path} as script",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {script.yml.rel_path} as script",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -4092,12 +4293,14 @@ class TestWidgetValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", widget.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {widget.path} as widget",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {widget.path} as widget",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -4123,13 +4326,15 @@ class TestWidgetValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", widget.path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {widget.path} as widget",
-                "BA100",
-                "The version for our files should always be -1, please update the file.",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {widget.path} as widget",
+                    "BA100",
+                    "The version for our files should always be -1, please update the file.",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -4156,12 +4361,14 @@ class TestImageValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", image_path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {image_path} as image",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {image_path} as image",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -4190,13 +4397,15 @@ class TestImageValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", image_path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {image_path} as image",
-                "IM106",
-                "This is the default image, please change to the integration image.",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {image_path} as image",
+                    "IM106",
+                    "This is the default image, please change to the integration image.",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -4220,11 +4429,13 @@ class TestImageValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", NOT_VALID_IMAGE_PATH], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "The image file name or location is invalid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "The image file name or location is invalid",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -4253,15 +4464,17 @@ class TestImageValidation:
             result = runner.invoke(
                 main, [VALIDATE_CMD, "-i", image_path], catch_exceptions=False
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {image_path} as image",
-                "IM111",
-                "IM101",
-                "120x50",
-                "10kB",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {image_path} as image",
+                    "IM111",
+                    "IM101",
+                    "120x50",
+                    "10kB",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -4307,11 +4520,13 @@ class TestAuthorImageValidation:
                 catch_exceptions=False,
             )
 
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {pack.author_image.path} as author_image",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {pack.author_image.path} as author_image",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -4354,12 +4569,14 @@ class TestAuthorImageValidation:
                 main, [VALIDATE_CMD, "-i", author_image_path], catch_exceptions=False
             )
 
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {author_image_path} as author_image",
-                "IM108",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {author_image_path} as author_image",
+                    "IM108",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -4422,19 +4639,21 @@ class TestAllFilesValidator:
             )
             print(result.stdout)
 
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "Validating all files",
-                "Validating Packs/PackName1 unique pack files",
-                "Validating Packs/PackName2 unique pack files",
-                f"Validating {integration.yml.rel_path} as integration",
-                f"Validating {incident_field.get_path_from_pack()} as incidentfield",
-                f"Validating {dashboard.get_path_from_pack()} as dashboard",
-                f"Validating {script.yml.rel_path} as script",
-                "Validating pack author image",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Validating all files",
+                    "Validating Packs/PackName1 unique pack files",
+                    "Validating Packs/PackName2 unique pack files",
+                    f"Validating {integration.yml.rel_path} as integration",
+                    f"Validating {incident_field.get_path_from_pack()} as incidentfield",
+                    f"Validating {dashboard.get_path_from_pack()} as dashboard",
+                    f"Validating {script.yml.rel_path} as script",
+                    "Validating pack author image",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -4493,23 +4712,25 @@ class TestAllFilesValidator:
                 catch_exceptions=False,
             )
 
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "Validating all files",
-                "Validating Packs/PackName1 unique pack files",
-                "Validating Packs/PackName2 unique pack files",
-                f"Validating {integration.yml.rel_path} as integration",
-                f"Validating {incident_field.get_path_from_pack()} as incidentfield",
-                f"Validating {dashboard.get_path_from_pack()} as dashboard",
-                f"Validating {script.yml.rel_path} as script",
-                "Validating pack author image",
-                "IF101",
-                "The content key must be set to True.",
-                "SC100",
-                "The name of this v2 script is incorrect",
-                "RM111",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Validating all files",
+                    "Validating Packs/PackName1 unique pack files",
+                    "Validating Packs/PackName2 unique pack files",
+                    f"Validating {integration.yml.rel_path} as integration",
+                    f"Validating {incident_field.get_path_from_pack()} as incidentfield",
+                    f"Validating {dashboard.get_path_from_pack()} as dashboard",
+                    f"Validating {script.yml.rel_path} as script",
+                    "Validating pack author image",
+                    "IF101",
+                    "The content key must be set to True.",
+                    "SC100",
+                    "The name of this v2 script is incorrect",
+                    "RM111",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -4595,22 +4816,24 @@ class TestValidationUsingGit:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "Running validation on branch",
-                "Running validation on modified files",
-                "Running validation on newly added files",
-                "Running validation on changed pack unique files",
-                "Validating Packs/PackName1 unique pack files",
-                "Validating Packs/PackName2 unique pack files",
-                f"Validating {integration.yml.rel_path} as integration",
-                f"Validating {incident_field.get_path_from_pack()} as incidentfield",
-                f"Validating {dashboard.get_path_from_pack()} as dashboard",
-                f"Validating {script.yml.rel_path} as script",
-                f"Validating old-format file {old_integration.yml.rel_path}",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Running validation on branch",
+                    "Running validation on modified files",
+                    "Running validation on newly added files",
+                    "Running validation on changed pack unique files",
+                    "Validating Packs/PackName1 unique pack files",
+                    "Validating Packs/PackName2 unique pack files",
+                    f"Validating {integration.yml.rel_path} as integration",
+                    f"Validating {incident_field.get_path_from_pack()} as incidentfield",
+                    f"Validating {dashboard.get_path_from_pack()} as dashboard",
+                    f"Validating {script.yml.rel_path} as script",
+                    f"Validating old-format file {old_integration.yml.rel_path}",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -4684,24 +4907,26 @@ class TestValidationUsingGit:
                 catch_exceptions=False,
             )
 
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "Running validation on branch",
-                "Running validation on modified files",
-                "Running validation on newly added files",
-                "Running validation on changed pack unique files",
-                "Validating Packs/PackName1 unique pack files",
-                "Validating Packs/PackName2 unique pack files",
-                f"Validating {integration.yml.rel_path} as integration",
-                f"Validating {incident_field.get_path_from_pack()} as incidentfield",
-                f"Validating {dashboard.get_path_from_pack()} as dashboard",
-                f"Validating {script.yml.rel_path} as script",
-                "IF101",
-                "The content key must be set to True.",
-                "SC100",
-                "The name of this v2 script is incorrect",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Running validation on branch",
+                    "Running validation on modified files",
+                    "Running validation on newly added files",
+                    "Running validation on changed pack unique files",
+                    "Validating Packs/PackName1 unique pack files",
+                    "Validating Packs/PackName2 unique pack files",
+                    f"Validating {integration.yml.rel_path} as integration",
+                    f"Validating {incident_field.get_path_from_pack()} as incidentfield",
+                    f"Validating {dashboard.get_path_from_pack()} as dashboard",
+                    f"Validating {script.yml.rel_path} as script",
+                    "IF101",
+                    "The content key must be set to True.",
+                    "SC100",
+                    "The name of this v2 script is incorrect",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -4761,15 +4986,17 @@ class TestValidationUsingGit:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "Running validation on branch",
-                "Running validation on modified files",
-                "Running validation on newly added files",
-                "Running validation on changed pack unique files",
-                "Validating Packs/FeedAzure unique pack files",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Running validation on branch",
+                    "Running validation on modified files",
+                    "Running validation on newly added files",
+                    "Running validation on changed pack unique files",
+                    "Validating Packs/FeedAzure unique pack files",
+                ]
+            ]
         )
         assert not str_in_call_args_list(
             logger_info.call_args_list, "Running pack dependencies validation on"
@@ -4833,11 +5060,13 @@ class TestValidationUsingGit:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "Running pack dependencies validation on",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Running pack dependencies validation on",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -4910,11 +5139,13 @@ class TestValidationUsingGit:
 
         assert result.exit_code == 1
         # check error str is in stdout
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "You may not be running",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "You may not be running",
+                ]
+            ]
         )
 
     def test_validation_using_git_on_specific_file(self, mocker, repo):
@@ -4978,12 +5209,14 @@ class TestValidationUsingGit:
                 catch_exceptions=False,
             )
 
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "Running on committed and staged files",
-                f"Validating {integration.yml.rel_path}",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Running on committed and staged files",
+                    f"Validating {integration.yml.rel_path}",
+                ]
+            ]
         )
         assert not str_in_call_args_list(
             logger_info.call_args_list, f"Validating {script.yml.rel_path}"
@@ -5053,12 +5286,14 @@ class TestValidationUsingGit:
                 catch_exceptions=False,
             )
 
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "Running on committed and staged files",
-                f"Validating {integration.yml.rel_path}",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Running on committed and staged files",
+                    f"Validating {integration.yml.rel_path}",
+                ]
+            ]
         )
         assert not str_in_call_args_list(
             logger_info.call_args_list, f"Validating {script.yml.rel_path}"
@@ -5139,13 +5374,15 @@ class TestValidationUsingGit:
                 catch_exceptions=False,
             )
 
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "Running on committed and staged files",
-                f"Validating {integration.yml.rel_path}",
-                f"Validating {script.yml.rel_path}",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Running on committed and staged files",
+                    f"Validating {integration.yml.rel_path}",
+                    f"Validating {script.yml.rel_path}",
+                ]
+            ]
         )
         str_in_call_args_list(
             logger_info.call_args_list, f"Validating {integration_2.yml.rel_path}"
@@ -5189,12 +5426,14 @@ class TestSpecificValidations:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {reputation.path} as reputation",
-                "The files are valid",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {reputation.path} as reputation",
+                    "The files are valid",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -5231,13 +5470,15 @@ class TestSpecificValidations:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {reputation.path} as reputation",
-                "RP101",
-                "Expiration field should have a positive numeric value.",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {reputation.path} as reputation",
+                    "RP101",
+                    "Expiration field should have a positive numeric value.",
+                ]
+            ]
         )
         assert result.exit_code == 1
 
@@ -5276,15 +5517,17 @@ class TestSpecificValidations:
                 ],
                 catch_exceptions=False,
             )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                f"Validating {reputation.path} as reputation",
-                "RP101",
-                "Expiration field should have a positive numeric value.",
-                "RP102",
-                "id and details fields are not equal.",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    f"Validating {reputation.path} as reputation",
+                    "RP101",
+                    "Expiration field should have a positive numeric value.",
+                    "RP102",
+                    "id and details fields are not equal.",
+                ]
+            ]
         )
         assert result.exit_code == 1
 

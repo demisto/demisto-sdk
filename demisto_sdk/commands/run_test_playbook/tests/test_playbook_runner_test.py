@@ -14,20 +14,16 @@ from demisto_sdk.tests.constants_test import (
     TEST_PLAYBOOK,
     VALID_PACK,
 )
-from TestSuite.test_tools import ChangeCWD, assert_strs_in_call_args_list
+from TestSuite.test_tools import (
+    ChangeCWD,
+    count_str_in_call_args_list,
+    str_in_call_args_list,
+)
 
 WAITING_MESSAGE = "Waiting for the test playbook to finish running.."
 LINK_MESSAGE = "To see the test playbook run in real-time please go to :"
 SUCCESS_MESSAGE = "The test playbook has completed its run successfully"
 FAILED_MESSAGE = "The test playbook finished running with status: FAILED"
-
-
-def count_str_in_call_args_list(call_args_list, search_str):
-    search_str_count = 0
-    for current_call in call_args_list:
-        if type(current_call[0]) == tuple and search_str in current_call[0][0]:
-            search_str_count += 1
-    return search_str_count
 
 
 class TestTestPlaybookRunner:
@@ -209,11 +205,9 @@ class TestTestPlaybookRunner:
         assert error_code == exit_code
 
         if err:
-            assert_strs_in_call_args_list(
+            assert str_in_call_args_list(
                 logger_info.call_args_list,
-                [
-                    err,
-                ],
+                err,
             )
 
     @pytest.mark.parametrize(
@@ -256,12 +250,20 @@ class TestTestPlaybookRunner:
 
         assert res == exit_code
 
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                WAITING_MESSAGE,
-                LINK_MESSAGE,
-                SUCCESS_MESSAGE,
+                str_in_call_args_list(
+                    logger_info.call_args_list,
+                    WAITING_MESSAGE,
+                ),
+                str_in_call_args_list(
+                    logger_info.call_args_list,
+                    LINK_MESSAGE,
+                ),
+                str_in_call_args_list(
+                    logger_info.call_args_list,
+                    SUCCESS_MESSAGE,
+                ),
             ],
         )
 
@@ -305,11 +307,19 @@ class TestTestPlaybookRunner:
 
         assert res == exit_code
 
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                WAITING_MESSAGE,
-                LINK_MESSAGE,
-                FAILED_MESSAGE,
+                str_in_call_args_list(
+                    logger_info.call_args_list,
+                    WAITING_MESSAGE,
+                ),
+                str_in_call_args_list(
+                    logger_info.call_args_list,
+                    LINK_MESSAGE,
+                ),
+                str_in_call_args_list(
+                    logger_info.call_args_list,
+                    FAILED_MESSAGE,
+                ),
             ],
         )

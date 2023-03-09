@@ -11,7 +11,7 @@ from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from TestSuite.test_tools import ChangeCWD, assert_strs_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 UPLOAD_CMD = "upload"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
@@ -61,18 +61,20 @@ def test_integration_upload_pack_positive(demisto_client, repo, mocker):
     result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
     assert result.exit_code == 0
 
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "SUCCESSFUL UPLOADS:",
-            "│ FeedAzure.yml                              │ integration   │",
-            "│ FeedAzure_test.yml                         │ playbook      │",
-            "│ just_a_test_script.yml                     │ testscript    │",
-            "│ playbook-FeedAzure_test_copy_no_prefix.yml │ testplaybook  │",
-            "│ script-prefixed_automation.yml             │ testscript    │",
-            "│ FeedAzure_test.yml                         │ testplaybook  │",
-            "│ incidentfield-city.json                    │ incidentfield │",
-        ],
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "SUCCESSFUL UPLOADS:",
+                "│ FeedAzure.yml                              │ integration   │",
+                "│ FeedAzure_test.yml                         │ playbook      │",
+                "│ just_a_test_script.yml                     │ testscript    │",
+                "│ playbook-FeedAzure_test_copy_no_prefix.yml │ testplaybook  │",
+                "│ script-prefixed_automation.yml             │ testscript    │",
+                "│ FeedAzure_test.yml                         │ testplaybook  │",
+                "│ incidentfield-city.json                    │ incidentfield │",
+            ]
+        ]
     )
 
 
@@ -130,12 +132,14 @@ def test_zipped_pack_upload_positive(repo, mocker, demisto_client):
 
     assert result.exit_code == 0
 
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "SUCCESSFUL UPLOADS:",
-            "╒═══════════╤════════╕\n│ NAME      │ TYPE   │\n╞═══════════╪════════╡\n│ test-pack │ pack   │\n╘═══════════╧════════╛",
-        ],
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "SUCCESSFUL UPLOADS:",
+                "╒═══════════╤════════╕\n│ NAME      │ TYPE   │\n╞═══════════╪════════╡\n│ test-pack │ pack   │\n╘═══════════╧════════╛",
+            ]
+        ]
     )
 
 
@@ -187,14 +191,12 @@ def test_integration_upload_script_invalid_path(demisto_client, tmp_path, mocker
     for current_call in logger_info.call_args_list:
         if type(current_call[0]) == tuple:
             print(f"*** INFO *** {current_call[0][0]=}")
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_info.call_args_list,
-        [
-            f"""Error: Given input path: {str(invalid_scripts_dir)} is not uploadable. Input path should point to one of the following:
+        f"""Error: Given input path: {str(invalid_scripts_dir)} is not uploadable. Input path should point to one of the following:
   1. Pack
   2. A content entity directory that is inside a pack. For example: an Integrations directory or a Layouts directory
   3. Valid file that can be imported to Cortex XSOAR manually. For example a playbook: helloWorld.yml""",
-        ],
     )
 
 
@@ -223,7 +225,7 @@ def test_integration_upload_pack_invalid_connection_params(mocker):
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
     assert result.exit_code == 1
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_info.call_args_list,
         [
             "Could not connect to XSOAR server. Try checking your connection configurations.",

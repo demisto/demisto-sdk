@@ -52,13 +52,17 @@ def str_in_call_args_list(call_args_list, required_str):
     return False
 
 
-def assert_strs_in_call_args_list(call_args_list, required_strs):
+def count_str_in_call_args_list(call_args_list, search_str):
     """
-    Checks whether required_str is in any of the call_args in call_args_list
+    Countes the number of times search_str appears in any of the call_args in call_args_list.
+    Several appearances in a single call_args_list counts as 1.
     Args:
         call_args_list: From a mocker
-        required_str: String to search in any of the call_args_list
-    :return: True is required_str was found, False otherwise
+        search_str: String to search in any of the call_args_list
+    :return: The number of times search_str appears in any of the call_args in call_args_list
     """
-    for current_required_str in required_strs:
-        assert str_in_call_args_list(call_args_list, current_required_str)
+    search_str_count = 0
+    for current_call in call_args_list:
+        if type(current_call[0]) == tuple and search_str in current_call[0][0]:
+            search_str_count += 1
+    return search_str_count

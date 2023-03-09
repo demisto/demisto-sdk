@@ -5,7 +5,7 @@ from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
-from TestSuite.test_tools import ChangeCWD, assert_strs_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 SECRETS_CMD = "secrets"
 
@@ -43,12 +43,14 @@ def test_integration_secrets_incident_field_positive(mocker, repo):
     with ChangeCWD(integration.repo_path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [SECRETS_CMD, "-wl", repo.secrets.path])
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "Starting secrets detection",
-            "Finished validating secrets, no secrets were found.",
-        ],
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "Starting secrets detection",
+                "Finished validating secrets, no secrets were found.",
+            ]
+        ]
     )
     assert result.exit_code == 0
 
@@ -82,16 +84,18 @@ def test_integration_secrets_integration_negative(mocker, repo):
     with ChangeCWD(repo.path):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [SECRETS_CMD, "-wl", repo.secrets.path])
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "Starting secrets detection",
-            "Secrets were found in the following files:",
-            f"In File: {integration.yml.rel_path}",
-            "The following expressions were marked as secrets:",
-            secret_string,
-            "Remove or whitelist secrets in order to proceed, then re-commit",
-        ],
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "Starting secrets detection",
+                "Secrets were found in the following files:",
+                f"In File: {integration.yml.rel_path}",
+                "The following expressions were marked as secrets:",
+                secret_string,
+                "Remove or whitelist secrets in order to proceed, then re-commit",
+            ]
+        ]
     )
     assert result.exit_code == 1
 
@@ -127,7 +131,7 @@ def test_integration_secrets_integration_positive(mocker, repo):
             main, [SECRETS_CMD, "-wl", repo.secrets.path], catch_exceptions=False
         )
     assert 0 == result.exit_code
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_info.call_args_list,
         [
             "no secrets were found",
@@ -165,7 +169,7 @@ def test_integration_secrets_integration_global_whitelist_positive_using_git(
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [SECRETS_CMD], catch_exceptions=False)
     assert result.exit_code == 0
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_info.call_args_list,
         [
             "no secrets were found",
@@ -207,7 +211,7 @@ def test_integration_secrets_integration_with_regex_expression(mocker, pack):
             catch_exceptions=False,
         )
     assert result.exit_code == 0
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_info.call_args_list,
         [
             "no secrets were found",
@@ -240,7 +244,7 @@ def test_integration_secrets_integration_positive_with_input_option(mocker, repo
         CliRunner(mix_stderr=False).invoke(
             main, [SECRETS_CMD, "--input", integration.code.rel_path]
         )
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_info.call_args_list,
         [
             "Finished validating secrets, no secrets were found",
@@ -271,7 +275,7 @@ def test_integration_secrets_integration_negative_with_input_option(mocker, repo
         CliRunner(mix_stderr=False).invoke(
             main, [SECRETS_CMD, "--input", integration.code.rel_path]
         )
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_info.call_args_list,
         [
             "Secrets were found in the following files",
@@ -312,7 +316,7 @@ def test_integration_secrets_integration_negative_with_input_option_and_whitelis
             ],
         )
     assert 1 == result.exit_code
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_info.call_args_list,
         [
             "Secrets were found in the following files",
@@ -340,7 +344,7 @@ def test_secrets_for_file_name_with_space_in_it(mocker, repo):
             ],
         )
     assert 1 == result.exit_code
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_info.call_args_list,
         [
             "Secrets were found in the following files",

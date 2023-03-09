@@ -24,7 +24,7 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
-from TestSuite.test_tools import ChangeCWD, assert_strs_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -1057,12 +1057,11 @@ def test_unify_partner_contributed_pack(mocker, monkeypatch, repo):
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "Unifying package:",
-            "Created unified yml:",
-        ],
+            str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
+            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
+        ]
     )
 
     # Verifying the unified file data
@@ -1116,12 +1115,11 @@ def test_unify_partner_contributed_pack_no_email(mocker, monkeypatch, repo):
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "Unifying package:",
-            "Created unified yml:",
-        ],
+            str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
+            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
+        ]
     )
 
     # Verifying the unified file data
@@ -1225,12 +1223,11 @@ def test_unify_partner_contributed_pack_no_url(mocker, monkeypatch, repo):
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "Unifying package:",
-            "Created unified yml:",
-        ],
+            str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
+            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
+        ]
     )
 
     # Verifying the unified file data
@@ -1280,12 +1277,11 @@ def test_unify_not_partner_contributed_pack(mocker, monkeypatch, repo):
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "Unifying package:",
-            "Created unified yml:",
-        ],
+            str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
+            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
+        ]
     )
 
     # Verifying the unified file data
@@ -1337,12 +1333,11 @@ def test_unify_community_contributed(mocker, monkeypatch, repo):
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "Unifying package:",
-            "Created unified yml:",
-        ],
+            str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
+            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
+        ]
     )
 
     # Verifying the unified file data

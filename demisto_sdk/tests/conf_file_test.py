@@ -10,7 +10,7 @@ from demisto_sdk.commands.common.hook_validations.integration import (
     IntegrationValidator,
 )
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
-from TestSuite.test_tools import ChangeCWD, assert_strs_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 
 class MyRepo:
@@ -53,12 +53,17 @@ def test_conf_file_custom(mocker, monkeypatch, repo):
         runner = CliRunner(mix_stderr=False)
         # pre-conf file - see validate fail on docker related issue
         runner.invoke(main, f"validate -i {integration.yml.path}")
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "================= Validating file ",
-                "DO106",
-            ],
+                str_in_call_args_list(
+                    logger_info.call_args_list,
+                    "================= Validating file ",
+                ),
+                str_in_call_args_list(
+                    logger_info.call_args_list,
+                    "DO106",
+                ),
+            ]
         )
 
     repo.make_file(".demisto-sdk-conf", "[validate]\nno_docker_checks=True")
@@ -66,10 +71,15 @@ def test_conf_file_custom(mocker, monkeypatch, repo):
         runner = CliRunner(mix_stderr=False)
         # post-conf file - see validate not fail on docker related issue as we are skipping
         runner.invoke(main, f"validate -i {integration.yml.path}")
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "================= Validating file ",
-                "DO106",
-            ],
+                str_in_call_args_list(
+                    logger_info.call_args_list,
+                    "================= Validating file ",
+                ),
+                str_in_call_args_list(
+                    logger_info.call_args_list,
+                    "DO106",
+                ),
+            ]
         )

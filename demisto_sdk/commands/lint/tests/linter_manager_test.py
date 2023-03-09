@@ -12,7 +12,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
 )
 from demisto_sdk.commands.lint.lint_manager import LintManager
 from demisto_sdk.commands.lint.linter import DockerImageFlagOption
-from TestSuite.test_tools import ChangeCWD, assert_strs_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 
 def mock_lint_manager(mocker):
@@ -256,14 +256,23 @@ def test_report_warning_lint_checks_not_packages_tests(mocker):
         pkgs_status=pkgs_status,
         all_packs=False,
     )
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "Maltiverse.py:511:0: W9010: try and except statements were not found in main function. Please add them ("
-            "try-except-main-doesnt-exists)",
-            "Maltiverse.py:511:0: W9012: return_error should be used in main function. Please add it. ("
-            "return-error-does-not-exist-in-main)",
-            "Xsoar_linter warnings",
+            str_in_call_args_list(
+                logger_info.call_args_list,
+                "Maltiverse.py:511:0: W9010: try and except statements were not found in main function. Please add them (",
+            ),
+            str_in_call_args_list(
+                logger_info.call_args_list, "try-except-main-doesnt-exists)"
+            ),
+            str_in_call_args_list(
+                logger_info.call_args_list,
+                "Maltiverse.py:511:0: W9012: return_error should be used in main function. Please add it. (",
+            ),
+            str_in_call_args_list(
+                logger_info.call_args_list, "return-error-does-not-exist-in-main)"
+            ),
+            str_in_call_args_list(logger_info.call_args_list, "Xsoar_linter warnings"),
         ],
     )
 
@@ -442,12 +451,14 @@ def test_report_summary_with_warnings(mocker):
     lint_manager.LintManager.report_summary(
         pkg=pkg, pkgs_status=pkgs_status, lint_status=lint_status
     )
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "Packages PASS: ",
-            "Packages WARNING (can either PASS or FAIL): ",
-            "Packages FAIL: ",
+            str_in_call_args_list(logger_info.call_args_list, "Packages PASS: "),
+            str_in_call_args_list(
+                logger_info.call_args_list,
+                "Packages WARNING (can either PASS or FAIL): ",
+            ),
+            str_in_call_args_list(logger_info.call_args_list, "Packages FAIL: "),
         ],
     )
 
@@ -497,12 +508,14 @@ def test_report_summary_no_warnings(mocker):
     lint_manager.LintManager.report_summary(
         pkg=pkg, lint_status=lint_status, pkgs_status=pkgs_status
     )
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "Packages PASS: ",
-            "Packages WARNING (can either PASS or FAIL): ",
-            "Packages FAIL: ",
+            str_in_call_args_list(logger_info.call_args_list, "Packages PASS: "),
+            str_in_call_args_list(
+                logger_info.call_args_list,
+                "Packages WARNING (can either PASS or FAIL): ",
+            ),
+            str_in_call_args_list(logger_info.call_args_list, "Packages FAIL: "),
         ],
     )
 

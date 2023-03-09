@@ -84,7 +84,7 @@ from demisto_sdk.tests.constants_test import (
 )
 from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
-from TestSuite.test_tools import ChangeCWD, assert_strs_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -390,11 +390,9 @@ class TestStructureValidator:
         validator = StructureValidator(job.path, is_new_file=True)
         with ChangeCWD(repo.path):
             assert not validator.is_valid_file()
-        assert_strs_in_call_args_list(
+        assert str_in_call_args_list(
             logger_info.call_args_list,
-            [
-                f'Missing the field "{missing_field}" in root',
-            ],
+            f'Missing the field "{missing_field}" in root',
         )
 
     @pytest.mark.parametrize(
@@ -419,11 +417,9 @@ class TestStructureValidator:
         validator = StructureValidator(wizard.path, is_new_file=True)
         with ChangeCWD(repo.path):
             assert not validator.is_valid_file()
-        assert_strs_in_call_args_list(
+        assert str_in_call_args_list(
             logger_info.call_args_list,
-            [
-                f'Missing the field "{missing_field}" in root',
-            ],
+            f'Missing the field "{missing_field}" in root',
         )
 
     def test_validate_field_with_aliases__valid(self, pack: Pack):

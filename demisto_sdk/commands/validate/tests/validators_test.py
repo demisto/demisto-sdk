@@ -133,11 +133,7 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     INCIDENT_FIELD,
 )
 from TestSuite.pack import Pack
-from TestSuite.test_tools import (
-    ChangeCWD,
-    assert_strs_in_call_args_list,
-    str_in_call_args_list,
-)
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 json = JSON_Handler()
 
@@ -777,12 +773,11 @@ class TestValidators:
         validate_manager.validate_pack_unique_files(
             pack.path, pack_error_ignore_list={}
         )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                err_msg,
-                err_code,
-            ],
+                str_in_call_args_list(logger_info.call_args_list, err_msg),
+                str_in_call_args_list(logger_info.call_args_list, err_code),
+            ]
         )
 
     def test_validate_pack_dependencies(self, mocker):
@@ -2446,11 +2441,9 @@ def test_job_from_version(
             StructureValidator(job.path, is_new_file=True),
             pack_error_ignore_list=list(),
         )
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_info.call_args_list,
-        [
-            f"fromVersion field in Job needs to be at least {FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)} (found {version})"
-        ],
+        f"fromVersion field in Job needs to be at least {FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)} (found {version})",
     )
 
 
@@ -2476,11 +2469,9 @@ def test_job_non_feed_with_selected_feeds(repo, mocker, monkeypatch):
             StructureValidator(job.path, is_new_file=True),
             pack_error_ignore_list=list(),
         )
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_info.call_args_list,
-        [
-            "Job objects cannot have non-empty selectedFeeds when isFeed is set to false",
-        ],
+        "Job objects cannot have non-empty selectedFeeds when isFeed is set to false",
     )
 
 
@@ -2507,11 +2498,9 @@ def test_job_both_selected_and_all_feeds_in_job(repo, mocker, monkeypatch):
             StructureValidator(job.path, is_new_file=True),
             pack_error_ignore_list=list(),
         )
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_info.call_args_list,
-        [
-            "Job cannot have non-empty selectedFeeds values when isAllFields is set to true",
-        ],
+        "Job cannot have non-empty selectedFeeds values when isAllFields is set to true",
     )
 
 
@@ -2544,12 +2533,11 @@ def test_job_blank_name(repo, mocker, name: str, is_feed: bool, monkeypatch):
             pack_error_ignore_list=list(),
         )
     expected_string, expected_code = Errors.empty_or_missing_job_name()
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            expected_string,
-            expected_code,
-        ],
+            str_in_call_args_list(logger_info.call_args_list, expected_string),
+            str_in_call_args_list(logger_info.call_args_list, expected_code),
+        ]
     )
 
 
@@ -2581,12 +2569,11 @@ def test_job_missing_name(repo, mocker, monkeypatch, is_feed: bool):
             pack_error_ignore_list=list(),
         )
     expected_string, expected_code = Errors.empty_or_missing_job_name()
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            expected_string,
-            expected_code,
-        ],
+            str_in_call_args_list(logger_info.call_args_list, expected_string),
+            str_in_call_args_list(logger_info.call_args_list, expected_code),
+        ]
     )
 
 
@@ -2619,11 +2606,9 @@ def test_job_unexpected_field_values_in_non_feed_job(
             StructureValidator(job.path, is_new_file=True),
             pack_error_ignore_list=list(),
         )
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_info.call_args_list,
-        [
-            "Job must either have non-empty selectedFeeds OR have isAllFields set to true when isFeed is set to true",
-        ],
+        "Job must either have non-empty selectedFeeds OR have isAllFields set to true when isFeed is set to true",
     )
 
 
@@ -2675,12 +2660,7 @@ def test_validate_deleted_files(
     result = validate_manager.validate_deleted_files(file_set, added_files)
 
     assert expected_result is result
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
-        [
-            expected_output,
-        ],
-    )
+    assert str_in_call_args_list(logger_info.call_args_list, expected_output)
 
 
 def test_was_file_renamed_but_labeled_as_deleted(mocker):
@@ -2766,12 +2746,11 @@ def test_image_error(set_git_test_env, mocker, monkeypatch):
     validate_manager = ValidateManager()
     validate_manager.run_validations_on_file(IGNORED_PNG, None)
     expected_string, expected_code = Errors.invalid_image_name_or_location()
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            expected_string,
-            expected_code,
-        ],
+            str_in_call_args_list(logger_info.call_args_list, expected_string),
+            str_in_call_args_list(logger_info.call_args_list, expected_code),
+        ]
     )
 
 
@@ -2865,12 +2844,7 @@ def test_run_validation_using_git_on_metadata_with_invalid_tags(
     with contextlib.redirect_stdout(std_output):
         with ChangeCWD(repo.path):
             res = validate_manager.run_validation_using_git()
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
-        [
-            "[PA123]",
-        ],
-    )
+    assert str_in_call_args_list(logger_info.call_args_list, "[PA123]")
     assert not res
 
 

@@ -7,7 +7,7 @@ from demisto_client.demisto_api import DefaultApi
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.run_cmd.runner import Runner
-from TestSuite.test_tools import assert_strs_in_call_args_list
+from TestSuite.test_tools import str_in_call_args_list
 
 DEBUG_FILE_PATH = (
     f"{git_path()}/demisto_sdk/commands/run_cmd/tests/test_data/kl-get-component.txt"
@@ -67,7 +67,7 @@ def test_integration_run_non_existing_command(
     )
     assert 0 == result.exit_code
     assert not result.exception
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_info.call_args_list,
         [
             "Command did not run, make sure it was written correctly.",
@@ -131,7 +131,7 @@ def test_json_to_outputs_flag_fail_no_prefix(
         mix_stderr=False,
     ).invoke(main, ["run", "-q", command, "--json-to-outputs"])
     assert 1 == run_result.exit_code
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_info.call_args_list,
         [
             "A prefix for the outputs is needed for this command. Please provide one",

@@ -42,11 +42,7 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     GENERIC_MODULE,
     GENERIC_TYPE,
 )
-from TestSuite.test_tools import (
-    ChangeCWD,
-    assert_strs_in_call_args_list,
-    str_in_call_args_list,
-)
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -155,12 +151,7 @@ def test_integration_format_yml_with_no_test_positive(
     output_yml = get_dict_from_file(output_path)
     assert output_yml[0].get("tests") == ["No tests (auto formatted)"]
     message = f'Formatting {output_file} with "No tests"'
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
-        [
-            message,
-        ],
-    )
+    assert str_in_call_args_list(logger_info.call_args_list, message)
 
     # Running format for the second time should raise no exception and should raise no prompt to the user
     result = runner.invoke(main, [FORMAT_CMD, "-i", output_path, "-y"], input="Y")
@@ -202,11 +193,9 @@ def test_integration_format_yml_with_no_test_negative(
             main, [FORMAT_CMD, "-i", source_path, "-o", output_path, "-at"], input="N"
         )
     assert not result.exception
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_debug.call_args_list,
-        [
-            f'Not formatting {source_path} with "No tests"',
-        ],
+        f'Not formatting {source_path} with "No tests"',
     )
     yml_content = get_dict_from_file(output_path)
     assert not yml_content[0].get("tests")
@@ -343,11 +332,9 @@ def test_integration_format_configuring_conf_json_positive(
             main, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path], input="Y"
         )
     assert not result.exception
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_info.call_args_list,
-        [
-            "Added test playbooks to conf.json successfully",
-        ],
+        "Added test playbooks to conf.json successfully",
     )
     assert not str_in_call_args_list(
         logger_debug.call_args_list, "No unconfigured test playbooks"
@@ -407,11 +394,9 @@ def test_integration_format_configuring_conf_json_negative(
         main, [FORMAT_CMD, "-i", source_path, "-o", saved_file_path], input="N"
     )
     assert not result.exception
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_info.call_args_list,
-        [
-            "Skipping test playbooks configuration",
-        ],
+        "Skipping test playbooks configuration",
     )
     with open(conf_json_path) as data_file:
         conf_json_content = json.load(data_file)
@@ -473,15 +458,16 @@ def test_integration_format_remove_playbook_sourceplaybookid(
             input="N",
         )
     # prompt = f'The file {source_playbook_path} has no test playbooks configured. Do you want to configure it with "No tests"'
-    assert result.exit_code == 0
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "======= Updating file ",
-            f"Format Status   on file: {source_playbook_path} - Success",
-        ],
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "======= Updating file ",
+                f"Format Status   on file: {source_playbook_path} - Success",
+            ]
+        ]
     )
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_debug.call_args_list,
         [
             f'Not formatting {source_playbook_path} with "No tests"',
@@ -532,18 +518,18 @@ def test_format_on_valid_py(mocker, repo):
                 catch_exceptions=True,
             )
 
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_debug.call_args_list,
-        [
-            "Running autopep8 on file",
-        ],
+        "Running autopep8 on file",
     )
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "======= Updating file",
-            "Success",
-        ],
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "======= Updating file",
+                "Success",
+            ]
+        ]
     )
     assert valid_py == integration.code.read()
 
@@ -584,18 +570,18 @@ def test_format_on_invalid_py_empty_lines(mocker, repo):
             catch_exceptions=False,
         )
 
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "======= Updating file",
-            "Success",
-        ],
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "======= Updating file",
+                "Success",
+            ]
+        ]
     )
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_debug.call_args_list,
-        [
-            "Running autopep8 on file",
-        ],
+        "Running autopep8 on file",
     )
     assert invalid_py != integration.code.read()
 
@@ -636,18 +622,18 @@ def test_format_on_invalid_py_dict(mocker, repo):
             catch_exceptions=False,
         )
 
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "======= Updating file",
-            "Success",
-        ],
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "======= Updating file",
+                "Success",
+            ]
+        ]
     )
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_debug.call_args_list,
-        [
-            "Running autopep8 on file",
-        ],
+        "Running autopep8 on file",
     )
     assert invalid_py != integration.code.read()
 
@@ -692,18 +678,18 @@ def test_format_on_invalid_py_long_dict(mocker, repo, caplog, monkeypatch):
             catch_exceptions=False,
         )
 
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "======= Updating file",
-            "Success",
-        ],
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "======= Updating file",
+                "Success",
+            ]
+        ]
     )
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_debug.call_args_list,
-        [
-            "Running autopep8 on file",
-        ],
+        "Running autopep8 on file",
     )
     assert invalid_py != integration.code.read()
 
@@ -749,14 +735,16 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo, monkeypatch):
             catch_exceptions=False,
         )
 
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "======= Updating file",
-            "Success",
-        ],
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "======= Updating file",
+                "Success",
+            ]
+        ]
     )
-    assert_strs_in_call_args_list(
+    assert str_in_call_args_list(
         logger_debug.call_args_list,
         [
             "Running autopep8 on file",
@@ -826,13 +814,15 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
                 catch_exceptions=False,
             )
 
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "======= Updating file",
-            f"Format Status   on file: {playbook.path}/playbook.yml - Success",
-            "The files are valid",
-        ],
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "======= Updating file",
+                f"Format Status   on file: {playbook.path}/playbook.yml - Success",
+                "The files are valid",
+            ]
+        ]
     )
 
 
@@ -860,12 +850,14 @@ def test_format_integration_skipped_files(repo, mocker, monkeypatch):
     runner = CliRunner(mix_stderr=False)
     runner.invoke(main, [FORMAT_CMD, "-i", str(pack.path)], catch_exceptions=False)
 
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "======= Updating file",
-            "Success",
-        ],
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "======= Updating file",
+                "Success",
+            ]
+        ]
     )
     for excluded_file in excluded_files:
         assert not str_in_call_args_list(logger_info.call_args_list, excluded_file)
@@ -901,12 +893,14 @@ def test_format_commonserver_skipped_files(repo, mocker, monkeypatch):
         catch_exceptions=False,
     )
 
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "Success",
-            "CommonServerPython.py",
-        ],
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "Success",
+                "CommonServerPython.py",
+            ]
+        ]
     )
 
     commonserver_excluded_files = excluded_files[:]
@@ -1203,15 +1197,17 @@ def test_format_incident_type_layout_id(repo, mocker, monkeypatch):
         )
 
     assert format_result.exit_code == 0
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "Success",
-            f"======= Updating file {pack.path}",
-            f"======= Updating file {layout.path}",
-            f"======= Updating file {incident_type.path}",
-            f"======= Updating file {playbook.yml.path}",
-        ],
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "Success",
+                f"======= Updating file {pack.path}",
+                f"======= Updating file {layout.path}",
+                f"======= Updating file {incident_type.path}",
+                f"======= Updating file {playbook.yml.path}",
+            ]
+        ]
     )
 
     with open(layout.path) as layout_file:
@@ -1275,13 +1271,15 @@ def test_format_generic_field_wrong_values(
             ],
             catch_exceptions=False,
         )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "Setting fromVersion field",
-                f"======= Updating file {generic_field_path}",
-                "Success",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Setting fromVersion field",
+                    f"======= Updating file {generic_field_path}",
+                    "Success",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -1329,13 +1327,15 @@ def test_format_generic_field_missing_from_version_key(mocker, repo):
             ],
             catch_exceptions=False,
         )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "Setting fromVersion field",
-                "Success",
-                f"======= Updating file {generic_field_path}",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Setting fromVersion field",
+                    "Success",
+                    f"======= Updating file {generic_field_path}",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -1383,13 +1383,15 @@ def test_format_generic_type_wrong_from_version(mocker, repo):
             ],
             catch_exceptions=False,
         )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "Setting fromVersion field",
-                "Success",
-                f"======= Updating file {generic_type_path}",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Setting fromVersion field",
+                    "Success",
+                    f"======= Updating file {generic_type_path}",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -1437,13 +1439,15 @@ def test_format_generic_type_missing_from_version_key(mocker, repo):
             ],
             catch_exceptions=False,
         )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "Setting fromVersion field",
-                "Success",
-                f"======= Updating file {generic_type_path}",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Setting fromVersion field",
+                    "Success",
+                    f"======= Updating file {generic_type_path}",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -1490,13 +1494,15 @@ def test_format_generic_module_wrong_from_version(mocker, repo):
             ],
             catch_exceptions=False,
         )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "Setting fromVersion field",
-                "Success",
-                f"======= Updating file {generic_module_path}",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Setting fromVersion field",
+                    "Success",
+                    f"======= Updating file {generic_module_path}",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -1544,13 +1550,15 @@ def test_format_generic_module_missing_from_version_key(mocker, repo):
             ],
             catch_exceptions=False,
         )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "Setting fromVersion field",
-                "Success",
-                f"======= Updating file {generic_module_path}",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Setting fromVersion field",
+                    "Success",
+                    f"======= Updating file {generic_module_path}",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -1597,13 +1605,15 @@ def test_format_generic_definition_wrong_from_version(mocker, repo):
             ],
             catch_exceptions=False,
         )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "Setting fromVersion field",
-                "Success",
-                f"======= Updating file {generic_definition_path}",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Setting fromVersion field",
+                    "Success",
+                    f"======= Updating file {generic_definition_path}",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -1654,13 +1664,15 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
             ],
             catch_exceptions=False,
         )
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "Setting fromVersion field",
-                "Success",
-                f"======= Updating file {generic_definition_path}",
-            ],
+                str_in_call_args_list(logger_info.call_args_list, current_str)
+                for current_str in [
+                    "Setting fromVersion field",
+                    "Success",
+                    f"======= Updating file {generic_definition_path}",
+                ]
+            ]
         )
         assert result.exit_code == 0
 
@@ -1702,11 +1714,13 @@ class TestFormatWithoutAddTestsFlag:
         result = runner.invoke(main, [FORMAT_CMD, "-i", integration_path, "-at"])
         message = f'Formatting {integration_path} with "No tests"'
         assert not result.exception
-        assert_strs_in_call_args_list(
-            logger_debug.call_args_list,
+        assert all(
             [
-                f'Not formatting {integration_path} with "No tests"',
-            ],
+                str_in_call_args_list(logger_debug.call_args_list, current_str)
+                for current_str in [
+                    f'Not formatting {integration_path} with "No tests"',
+                ]
+            ]
         )
         assert not str_in_call_args_list(logger_info.call_args_list, message)
 
@@ -1740,7 +1754,7 @@ class TestFormatWithoutAddTestsFlag:
         message = f'Formatting {integration_path} with "No tests"'
         assert not result.exception
         assert not str_in_call_args_list(logger_info.call_args_list, prompt)
-        assert_strs_in_call_args_list(
+        assert str_in_call_args_list(
             logger_info.call_args_list,
             [
                 message,
@@ -1774,7 +1788,7 @@ class TestFormatWithoutAddTestsFlag:
         result = runner.invoke(main, [FORMAT_CMD, "-i", script_path])
         message = f'Formatting {script_path} with "No tests"'
         assert not result.exception
-        assert_strs_in_call_args_list(
+        assert str_in_call_args_list(
             logger_info.call_args_list,
             [
                 message,
@@ -1807,7 +1821,7 @@ class TestFormatWithoutAddTestsFlag:
         result = runner.invoke(main, [FORMAT_CMD, "-i", playbooks_path], input="N")
         message = f'Formatting {playbooks_path} with "No tests"'
         assert not result.exception
-        assert_strs_in_call_args_list(
+        assert str_in_call_args_list(
             logger_info.call_args_list,
             [
                 message,
@@ -1918,7 +1932,7 @@ class TestFormatWithoutAddTestsFlag:
 
         assert not result.exception
         assert not str_in_call_args_list(logger_info.call_args_list, message)
-        assert_strs_in_call_args_list(
+        assert str_in_call_args_list(
             logger_info.call_args_list,
             [
                 message1,
@@ -1958,7 +1972,7 @@ class TestFormatWithoutAddTestsFlag:
         message1 = f"Format Status   on file: {layouts_path} - Success"
         assert not result.exception
         assert not str_in_call_args_list(logger_info.call_args_list, message)
-        assert_strs_in_call_args_list(
+        assert str_in_call_args_list(
             logger_info.call_args_list,
             [
                 message1,

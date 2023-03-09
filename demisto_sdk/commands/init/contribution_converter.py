@@ -499,8 +499,11 @@ class ContributionConverter:
             ) and cf_name_lower.endswith("yml"):
                 content_item_file_path = child_file
                 file_type = find_type(content_item_file_path)
+                click.echo(f'file_type {file_type}')
                 file_type = file_type.value if file_type else file_type
+                click.echo(f'file_type {file_type}')
                 try:
+                    click.echo(f'child {child_file}')
                     child_file_name = os.path.basename(child_file)
                     click.echo(f"Debug in {child_file_name}")
                     if source_mapping and child_file_name in source_mapping.keys():
@@ -540,6 +543,7 @@ class ContributionConverter:
                             output=content_item_dir,
                         )
                     click.echo("out")
+                    click.echo(f'content_item_file_path {content_item_file_path}')
                     content_item = BaseContent.from_path(content_item_file_path)
                     click.echo("content_item")
                     click.echo(content_item)

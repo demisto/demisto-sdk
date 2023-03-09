@@ -352,11 +352,12 @@ def read_mapping_file(mapping: Path) -> Tuple:
             csvfile, delimiter="\t" if str(mapping).endswith("tsv") else ","
         )
 
+        if not reader.fieldnames:
+            raise ValueError(
+                f"The mapping file {mapping} does not have proper headers."
+            )
+
         for header in ["One Data Model", "Raw Event Path"]:
-            if not reader.fieldnames:
-                raise ValueError(
-                    f"The mapping file {mapping} does not have proper headers."
-                )
             if header not in reader.fieldnames:
                 raise NameError(
                     f'The mapping file {mapping} must contain "One Data Model" and "Raw Event Path" columns'

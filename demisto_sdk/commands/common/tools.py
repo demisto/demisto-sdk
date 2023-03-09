@@ -790,10 +790,15 @@ def safe_write_unicode(
         _write()
 
     except UnicodeError:
-        if UnicodeDammit(path.read_bytes()).original_encoding == "utf-8":
+        encoding = UnicodeDammit(path.read_bytes()).original_encoding
+        
+        print(f"caught unicode error, {encoding=}")
+        if encoding == "utf-8":
             raise  # already a unicode file, the following code cannot fix it.
-
+        
+        print(f"deleting {path}")
         path.unlink()  # deletes the file
+        print("rewriting")
         _write()  # recreates the file
 
 

@@ -123,7 +123,7 @@ def generate_modeling_rules(
         outputfile_schema = Path(output_path, (f"{path_prefix}ModelingRules.json"))
         outputfile_xif = Path(output_path, (f"{path_prefix}ModelingRules.xif"))
         outputfile_yml = Path(output_path, (f"{path_prefix}ModelingRules.yml"))
-        data_set_name = f"{vendor.lower()}_{product.lower()}_raw"
+        data_set_name = f"{vendor}_{product}_raw".lower()
 
         name_columen, xdm_one_data_model = read_mapping_file(mapping)
 
@@ -422,9 +422,9 @@ def create_xif_file(
         raw_event_data: RawEventData = mapping_rule.get_mapped_to_raw_list()[0]
         field_path_raw = raw_event_data.field_path_raw
         type_raw = raw_event_data.type_raw
-        if len(mapping_rule.get_mapped_to_raw_list()) > 1:
+        if len(mapped_to_raw := mapping_rule.get_mapped_to_raw_list()) > 1:
             coales_list: List[str] = []
-            for raw_event_data in mapping_rule.get_mapped_to_raw_list():
+            for raw_event_data in mapped_to_raw:
                 raw_event_data = raw_event_data
                 field_path_raw = raw_event_data.field_path_raw
                 type_raw = raw_event_data.type_raw

@@ -289,14 +289,15 @@ class Linter:
         try:
             script_obj: Dict = {}
             yml_obj: Dict = YAML_Handler().load(self._yml_file)
+            self._facts["deprecated"] = yml_obj.get("deprecated")
             if isinstance(yml_obj, dict):
                 script_obj = (
                     yml_obj.get("script", {})
                     if isinstance(yml_obj.get("script"), dict)
                     else yml_obj
                 )
-            # if the script/integration is deprecated
-            if yml_obj.get("deprecated"):
+            # if the script/integration is deprecated and the -a flag
+            if self._all_packs and yml_obj.get("deprecated"):
                 logger.info(
                     f"skipping lint for {self._pack_name} because its deprecated"
                 )
@@ -1077,6 +1078,7 @@ class Linter:
         """
         log_prompt = f"{self._pack_name} - Pytest - Image {test_image}"
         logger.info(f"{log_prompt} - Start")
+        no_coverage = no_coverage or self._facts.get("deprecated")
         container_name = f"{self._pack_name}-pytest"
         # Check if previous run left container a live if it does, Remove it
         self._docker_remove_container(container_name)

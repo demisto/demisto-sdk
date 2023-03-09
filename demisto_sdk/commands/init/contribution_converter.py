@@ -6,10 +6,9 @@ import traceback
 import zipfile
 from collections import defaultdict
 from datetime import datetime
+from pathlib import Path
 from string import punctuation
 from typing import Dict, List, Optional, Union
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 
 import click
 
@@ -39,6 +38,10 @@ from demisto_sdk.commands.common.tools import (
     get_content_path,
     get_display_name,
     get_yaml,
+)
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.integration_script import (
+    IntegrationScript,
 )
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
@@ -499,11 +502,11 @@ class ContributionConverter:
             ) and cf_name_lower.endswith("yml"):
                 content_item_file_path = child_file
                 file_type = find_type(content_item_file_path)
-                click.echo(f'file_type {file_type}')
+                click.echo(f"file_type {file_type}")
                 file_type = file_type.value if file_type else file_type
-                click.echo(f'file_type {file_type}')
+                click.echo(f"file_type {file_type}")
                 try:
-                    click.echo(f'child {child_file}')
+                    click.echo(f"child {child_file}")
                     child_file_name = os.path.basename(child_file)
                     click.echo(f"Debug in {child_file_name}")
                     if source_mapping and child_file_name in source_mapping.keys():
@@ -543,8 +546,8 @@ class ContributionConverter:
                             output=content_item_dir,
                         )
                     click.echo("out")
-                    click.echo(f'content_item_file_path {content_item_file_path}')
-                    content_item = BaseContent.from_path(content_item_file_path)
+                    click.echo(f"content_item_file_path {content_item_file_path}")
+                    content_item = BaseContent.from_path(Path(content_item_file_path))
                     click.echo("content_item")
                     click.echo(content_item)
                     click.echo(isinstance(content_item, IntegrationScript))

@@ -346,4 +346,4 @@ def get_python_version_from_image(image: Optional[str]) -> Optional[Version]:
         return Version(python_version_envs[0].split("=")[1])
     except Exception as e:
         logger.error(f"Failed to get python version from docker hub: {e}")
-        raise RuntimeError(f"Failed to get python version from docker hub: {e}")
+        return None

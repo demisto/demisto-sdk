@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where an error message in **unify** was unclear for invalid input.
+* Fixed an issue where **validate** failed with **is_valid_integration_file_path_in_folder** on integrations that use the `MSAPIModule`.
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.
 
 ## 1.10.6

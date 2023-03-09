@@ -353,9 +353,7 @@ def test_update_release_notes_non_content_path(demisto_client, mocker):
     assert result.exception
     assert str_in_call_args_list(
         logger_info.call_args_list,
-        [
-            "You are not running",
-        ],
+        "You are not running",
     )
 
 
@@ -430,9 +428,7 @@ def test_update_release_notes_existing(demisto_client, mocker):
     assert not result.exception
     assert str_in_call_args_list(
         logger_info.call_args_list,
-        [
-            "Finished updating release notes for FeedAzureValid.",
-        ],
+        "Finished updating release notes for FeedAzureValid.",
     )
 
     with open(rn_path) as f:
@@ -739,9 +735,7 @@ def test_force_update_release_no_pack_given(demisto_client, repo, mocker):
     runner.invoke(main, [UPDATE_RN_COMMAND, "--force"])
     assert str_in_call_args_list(
         logger_info.call_args_list,
-        [
-            "Please add a specific pack in order to force",
-        ],
+        "Please add a specific pack in order to force",
     )
 
 

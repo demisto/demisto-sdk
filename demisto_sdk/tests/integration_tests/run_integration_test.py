@@ -69,9 +69,7 @@ def test_integration_run_non_existing_command(
     assert not result.exception
     assert str_in_call_args_list(
         logger_info.call_args_list,
-        [
-            "Command did not run, make sure it was written correctly.",
-        ],
+        "Command did not run, make sure it was written correctly.",
     )
 
 
@@ -133,7 +131,5 @@ def test_json_to_outputs_flag_fail_no_prefix(
     assert 1 == run_result.exit_code
     assert str_in_call_args_list(
         logger_info.call_args_list,
-        [
-            "A prefix for the outputs is needed for this command. Please provide one",
-        ],
+        "A prefix for the outputs is needed for this command. Please provide one",
     )

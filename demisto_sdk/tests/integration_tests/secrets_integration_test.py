@@ -133,9 +133,7 @@ def test_integration_secrets_integration_positive(mocker, repo):
     assert 0 == result.exit_code
     assert str_in_call_args_list(
         logger_info.call_args_list,
-        [
-            "no secrets were found",
-        ],
+        "no secrets were found",
     )
 
 
@@ -171,9 +169,7 @@ def test_integration_secrets_integration_global_whitelist_positive_using_git(
     assert result.exit_code == 0
     assert str_in_call_args_list(
         logger_info.call_args_list,
-        [
-            "no secrets were found",
-        ],
+        "no secrets were found",
     )
 
 
@@ -213,9 +209,7 @@ def test_integration_secrets_integration_with_regex_expression(mocker, pack):
     assert result.exit_code == 0
     assert str_in_call_args_list(
         logger_info.call_args_list,
-        [
-            "no secrets were found",
-        ],
+        "no secrets were found",
     )
 
 
@@ -246,9 +240,7 @@ def test_integration_secrets_integration_positive_with_input_option(mocker, repo
         )
     assert str_in_call_args_list(
         logger_info.call_args_list,
-        [
-            "Finished validating secrets, no secrets were found",
-        ],
+        "Finished validating secrets, no secrets were found",
     )
 
 
@@ -277,9 +269,7 @@ def test_integration_secrets_integration_negative_with_input_option(mocker, repo
         )
     assert str_in_call_args_list(
         logger_info.call_args_list,
-        [
-            "Secrets were found in the following files",
-        ],
+        "Secrets were found in the following files",
     )
 
 
@@ -318,9 +308,7 @@ def test_integration_secrets_integration_negative_with_input_option_and_whitelis
     assert 1 == result.exit_code
     assert str_in_call_args_list(
         logger_info.call_args_list,
-        [
-            "Secrets were found in the following files",
-        ],
+        "Secrets were found in the following files",
     )
 
 
@@ -346,7 +334,5 @@ def test_secrets_for_file_name_with_space_in_it(mocker, repo):
     assert 1 == result.exit_code
     assert str_in_call_args_list(
         logger_info.call_args_list,
-        [
-            "Secrets were found in the following files",
-        ],
+        "Secrets were found in the following files",
     )

@@ -469,9 +469,7 @@ def test_integration_format_remove_playbook_sourceplaybookid(
     )
     assert str_in_call_args_list(
         logger_debug.call_args_list,
-        [
-            f'Not formatting {source_playbook_path} with "No tests"',
-        ],
+        f'Not formatting {source_playbook_path} with "No tests"',
     )
     with open(playbook_path) as f:
         yaml_content = yaml.load(f)
@@ -746,9 +744,7 @@ def test_format_on_invalid_py_long_dict_no_verbose(mocker, repo, monkeypatch):
     )
     assert str_in_call_args_list(
         logger_debug.call_args_list,
-        [
-            "Running autopep8 on file",
-        ],
+        "Running autopep8 on file",
     )
     assert invalid_py != integration.code.read()
 
@@ -1756,9 +1752,7 @@ class TestFormatWithoutAddTestsFlag:
         assert not str_in_call_args_list(logger_info.call_args_list, prompt)
         assert str_in_call_args_list(
             logger_info.call_args_list,
-            [
-                message,
-            ],
+            message,
         )
 
     def test_format_script_without_test_flag(self, mocker, monkeypatch, pack):
@@ -1790,9 +1784,7 @@ class TestFormatWithoutAddTestsFlag:
         assert not result.exception
         assert str_in_call_args_list(
             logger_info.call_args_list,
-            [
-                message,
-            ],
+            message,
         )
 
     def test_format_playbooks_folder(self, mocker, monkeypatch, pack):
@@ -1823,9 +1815,7 @@ class TestFormatWithoutAddTestsFlag:
         assert not result.exception
         assert str_in_call_args_list(
             logger_info.call_args_list,
-            [
-                message,
-            ],
+            message,
         )
 
         assert playbook.yml.read_dict().get("tests")[0] == "No tests (auto formatted)"
@@ -1934,9 +1924,7 @@ class TestFormatWithoutAddTestsFlag:
         assert not str_in_call_args_list(logger_info.call_args_list, message)
         assert str_in_call_args_list(
             logger_info.call_args_list,
-            [
-                message1,
-            ],
+            message1,
         )
 
     def test_format_layouts_folder_with_add_tests_flag(self, mocker, monkeypatch, repo):
@@ -1974,7 +1962,5 @@ class TestFormatWithoutAddTestsFlag:
         assert not str_in_call_args_list(logger_info.call_args_list, message)
         assert str_in_call_args_list(
             logger_info.call_args_list,
-            [
-                message1,
-            ],
+            message1,
         )

@@ -164,10 +164,14 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
                 ],
             )
 
-            assert str_in_call_args_list(
-                logger_info.call_args_list,
-                "Found dependencies result for FindDependencyPack pack:",
-                "{}",
+            assert all(
+                [
+                    str_in_call_args_list(logger_info.call_args_list, current_str)
+                    for current_str in [
+                        "Found dependencies result for FindDependencyPack pack:",
+                        "{}",
+                    ]
+                ]
             )
             assert result.exit_code == 0
 

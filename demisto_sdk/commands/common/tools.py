@@ -781,7 +781,7 @@ def safe_write_unicode(
     path: Path,
 ):
     def _write():
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             write_method(f)
 
     # write unicode content into a file which may not be unicode-encoded

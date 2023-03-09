@@ -46,7 +46,7 @@ def str_in_call_args_list(call_args_list, required_str):
     :return: True is required_str was found, False otherwise
     """
     for current_call in call_args_list:
-        if current_call and isinstance (current_call[0], tuple):
+        if current_call and isinstance(current_call[0], tuple):
             if required_str in current_call[0][0]:
                 return True
     return False

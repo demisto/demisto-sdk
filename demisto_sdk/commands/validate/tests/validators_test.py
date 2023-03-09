@@ -2922,9 +2922,8 @@ folders_not_allowed_to_contain_files = tuple(
 )
 
 
-@pytest.mark.parametrize("nested", (True, False))
 @pytest.mark.parametrize("folder", folders_not_allowed_to_contain_files)
-def test_is_path_allowed__fail(repo, folder: str, nested: bool):
+def test_file_not_allowed_contain_folder__fail(repo, folder: str):
     """
     Given
             A name of a folder, which may not contain files directly
@@ -2936,21 +2935,45 @@ def test_is_path_allowed__fail(repo, folder: str, nested: bool):
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
 
     pack = repo.create_pack()
-    mid_path = (folder, "foo", "bar") if nested else (folder,)
-    file = Path(pack.path, *mid_path, "file")
 
     std_output = StringIO()
     with contextlib.redirect_stdout(std_output):
         with ChangeCWD(pack.path):
-            assert not validate_manager.is_valid_path(file)
+            assert not validate_manager.is_valid_path(Path(pack.path, folder, "file"))
 
     captured_stdout = std_output.getvalue()
     assert "[BA120]" in captured_stdout
 
 
+@pytest.mark.parametrize("nested", (True, False))
+def test_is_path_allowed__invalid_first_level(repo, nested: bool):
+    """
+    Given
+            A name of a folder, which is not allowed as a first-level folder
+    When
+            Running validate on a file created directly under the folder
+    Then
+            Make sure the validation fails, and a proper message is shown
+    """
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+
+    folder_name = "folder_name"
+    assert folder_name not in FIRST_LEVEL_FOLDERS
+
+    pack = repo.create_pack()
+    mid_path = (folder_name, "foo", "bar") if nested else (folder_name)
+
+    std_output = StringIO()
+    with contextlib.redirect_stdout(std_output):
+        with ChangeCWD(pack.path):
+            assert not validate_manager.is_valid_path(Path(pack.path, *mid_path, "file"))
+
+    captured_stdout = std_output.getvalue()
+    assert "[BA121]" in captured_stdout
+
+
 def test_first_level_folders_subset():
     assert FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES.issubset(FIRST_LEVEL_FOLDERS)
-
 
 @pytest.mark.parametrize("folder", FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES)
 def test_is_path_allowed__pass(repo, folder: str):

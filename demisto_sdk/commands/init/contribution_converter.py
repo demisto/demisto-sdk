@@ -541,6 +541,9 @@ class ContributionConverter:
                         )
                     click.echo("out")
                     content_item = BaseContent.from_path(content_item_file_path)
+                    click.echo("content_item")
+                    click.echo(content_item)
+                    click.echo(isinstance(content_item, IntegrationScript))
                     if isinstance(content_item, IntegrationScript):
                         script = content_item.code
                         click.echo(script)
@@ -548,23 +551,29 @@ class ContributionConverter:
                         click.echo(f"pack_version {pack_version}")
                         self.pack_versions += f"{child_file_name}: {pack_version}\n"
                         click.echo(f"pack_versions {self.pack_versions}")
-
+                    click.echo("out of if")
                     extractor.extract_to_package_format(
                         executed_from_contrib_converter=True
                     )
                     self.api_module_path = extractor.api_module_path
                 except Exception as e:
+                    click.echo("got exception")
+                    click.echo(e)
                     err_msg = (
                         f'Error occurred while trying to split the unified YAML "{content_item_file_path}" '
                         f'into its component parts.\nError: "{e}"'
                     )
                     self.contrib_conversion_errs.append(err_msg)
                 finally:
+                    click.echo("in finally")
                     output_path = extractor.get_output_path()
+                    click.echo(f"output_path: {output_path}")
                     if self.create_new:
+                        click.echo("create new")
                         # Moving the unified file to its package.
                         shutil.move(content_item_file_path, output_path)
                     if del_unified:
+                        click.echo("del_unified")
                         if os.path.exists(content_item_file_path):
                             os.remove(content_item_file_path)
                         moved_unified_dst = os.path.join(output_path, child_file_name)

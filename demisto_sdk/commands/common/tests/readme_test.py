@@ -10,11 +10,7 @@ import demisto_sdk
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from TestSuite.test_tools import (
-    ChangeCWD,
-    assert_strs_in_call_args_list,
-    str_in_call_args_list,
-)
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 VALID_MD = f"{git_path()}/demisto_sdk/tests/test_files/README-valid.md"
 INVALID_MD = f"{git_path()}/demisto_sdk/tests/test_files/README-invalid.md"
@@ -185,9 +181,15 @@ def test_is_image_path_valid(mocker):
     result = readme_validator.is_image_path_valid()
 
     assert not result
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
-        blob_images_paths + raw_images_paths,
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in blob_images_paths
+        ]
+        + [
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in raw_images_paths
+        ]
     )
     assert not str_in_call_args_list(logger_info.call_args_list, raw_image_path)
 
@@ -653,28 +655,42 @@ def test_verify_readme_image_paths(mocker):
 
     sys.stdout = sys.__stdout__  # reset stdout.
     assert not is_valid
-    assert_strs_in_call_args_list(
-        logger_info.call_args_list,
+    assert all(
         [
-            "The following image relative path is not valid, please recheck it:\n"
-            "![Identity with High Risk Score](../../default.png)",
-            "Branch name was found in the URL, please change it to the commit hash:\n"
-            "![branch in url]",
-            "\n".join(
-                (
-                    "[RM108] - Error in readme image: got HTTP response code 404, reason = just because",
-                    "The following image link seems to be broken, please repair it:",
-                    "![Identity with High Risk Score](https://github.com/demisto/test1.png)",
-                )
+            str_in_call_args_list(
+                logger_info.call_args_list,
+                "The following image relative path is not valid, please recheck it:\n",
             ),
-            "\n".join(
-                (
-                    "[RM108] - Error in readme image: got HTTP response code 404 ",
-                    "The following image link seems to be broken, please repair it:",
-                    "(https://github.com/demisto/content/raw/test2.png)",
-                )
+            str_in_call_args_list(
+                logger_info.call_args_list,
+                "![Identity with High Risk Score](../../default.png)",
             ),
-        ],
+            str_in_call_args_list(
+                logger_info.call_args_list,
+                "Branch name was found in the URL, please change it to the commit hash:\n",
+            ),
+            str_in_call_args_list(logger_info.call_args_list, "![branch in url]"),
+            str_in_call_args_list(
+                logger_info.call_args_list,
+                "\n".join(
+                    (
+                        "[RM108] - Error in readme image: got HTTP response code 404, reason = just because",
+                        "The following image link seems to be broken, please repair it:",
+                        "![Identity with High Risk Score](https://github.com/demisto/test1.png)",
+                    )
+                ),
+            ),
+            str_in_call_args_list(
+                logger_info.call_args_list,
+                "\n".join(
+                    (
+                        "[RM108] - Error in readme image: got HTTP response code 404 ",
+                        "The following image link seems to be broken, please repair it:",
+                        "(https://github.com/demisto/content/raw/test2.png)",
+                    )
+                ),
+            ),
+        ]
     )
 
     assert not str_in_call_args_list(

@@ -23,11 +23,7 @@ from demisto_sdk.commands.common.hook_validations.integration import (
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.integration import Integration
-from TestSuite.test_tools import (
-    ChangeCWD,
-    assert_strs_in_call_args_list,
-    str_in_call_args_list,
-)
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 logging.getLogger("demisto-sdk").propagate = True
 
@@ -1926,9 +1922,9 @@ class TestIsFetchParamsExist:
         assert not str_in_call_args_list(
             logger_info.call_args_list, "display: Incident type"
         )
-        assert_strs_in_call_args_list(
+        assert str_in_call_args_list(
             logger_info.call_args_list,
-            ["""A required parameter "incidentType" is missing from the YAML file."""],
+            """A required parameter "incidentType" is missing from the YAML file.""",
         )
 
     def test_missing_field(self):
@@ -1954,14 +1950,15 @@ class TestIsFetchParamsExist:
         assert (
             self.validator.is_valid_fetch() is False
         ), "is_valid_fetch() returns True instead False"
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
+        assert all(
             [
-                "display: Incident type",
-                "name: incidentType",
-                "required: false",
-                "type: 13",
-            ],
+                str_in_call_args_list(
+                    logger_info.call_args_list, "display: Incident type"
+                ),
+                str_in_call_args_list(logger_info.call_args_list, "name: incidentType"),
+                str_in_call_args_list(logger_info.call_args_list, "required: false"),
+                str_in_call_args_list(logger_info.call_args_list, "required: false"),
+            ]
         )
 
     def test_not_fetch(self, mocker):

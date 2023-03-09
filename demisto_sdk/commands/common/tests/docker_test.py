@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
-from TestSuite.test_tools import ChangeCWD, assert_strs_in_call_args_list
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 RETURN_ERROR_TARGET = "GetDockerImageLatestTag.return_error"
 
@@ -409,12 +409,11 @@ class TestDockerImage:
             validator = DockerImageValidator(integration.yml.path, True, True)
             assert validator.is_docker_image_valid() is False
             assert validator.is_valid is False
-            assert_strs_in_call_args_list(
-                logger_info.call_args_list,
+            assert all(
                 [
-                    error,
-                    code,
-                ],
+                    str_in_call_args_list(logger_info.call_args_list, error),
+                    str_in_call_args_list(logger_info.call_args_list, code),
+                ]
             )
 
     class TestIronBankDockerParse:

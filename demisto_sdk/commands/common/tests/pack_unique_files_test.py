@@ -26,11 +26,7 @@ from demisto_sdk.commands.common.hook_validations.pack_unique_files import (
 )
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
-from TestSuite.test_tools import (
-    ChangeCWD,
-    assert_strs_in_call_args_list,
-    str_in_call_args_list,
-)
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -221,11 +217,9 @@ class TestPackUniqueFilesValidator:
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             runner.invoke(main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False)
-        assert_strs_in_call_args_list(
+        assert str_in_call_args_list(
             logger_info.call_args_list,
-            [
-                "Contributed packs must include email or url",
-            ],
+            "Contributed packs must include email or url",
         )
 
     @pytest.mark.parametrize(
@@ -288,12 +282,7 @@ class TestPackUniqueFilesValidator:
         if is_valid:
             assert not str_in_call_args_list(logger_info.call_args_list, error_text)
         else:
-            assert_strs_in_call_args_list(
-                logger_info.call_args_list,
-                [
-                    error_text,
-                ],
-            )
+            assert str_in_call_args_list(logger_info.call_args_list, error_text)
 
     def test_validate_partner_contribute_pack_metadata_price_change(
         self, mocker, monkeypatch, repo
@@ -340,11 +329,9 @@ class TestPackUniqueFilesValidator:
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             runner.invoke(main, [VALIDATE_CMD, "-i", pack.path], catch_exceptions=False)
-        assert_strs_in_call_args_list(
+        assert str_in_call_args_list(
             logger_info.call_args_list,
-            [
-                "The pack price was changed from 2 to 3 - revert the change",
-            ],
+            "The pack price was changed from 2 to 3 - revert the change",
         )
 
     def test_check_timestamp_format(self):

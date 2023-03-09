@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.hook_validations.integration import (
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.tests.integration_test import mock_structure
-from TestSuite.test_tools import assert_strs_in_call_args_list, str_in_call_args_list
+from TestSuite.test_tools import str_in_call_args_list
 
 logging.getLogger("demisto-sdk").propagate = True
 
@@ -235,12 +235,7 @@ class TestDeprecationValidator:
         bool_result = validator.is_integration_deprecated_and_used()
         assert bool_result == expected_bool_results
         for command in expected_commands_in_errors_ls:
-            assert_strs_in_call_args_list(
-                logger_info.call_args_list,
-                [
-                    command,
-                ],
-            )
+            assert str_in_call_args_list(logger_info.call_args_list, command)
         for command in expected_commands_not_in_errors_ls:
             assert not str_in_call_args_list(logger_info.call_args_list, command)
 
@@ -297,7 +292,7 @@ class TestDeprecationValidator:
         validator.deprecation_validator = mock_deprecation_manager()
         validator.is_integration_deprecated_and_used()
         for current_expected_results in expected_results:
-            assert_strs_in_call_args_list(
+            assert str_in_call_args_list(
                 logger_info.call_args_list, current_expected_results
             )
 
@@ -362,12 +357,7 @@ class TestDeprecationValidator:
         validator = ScriptValidator(structure)
         validator.deprecation_validator = mock_deprecation_manager()
         validator.is_script_deprecated_and_used()
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
-            [
-                expected_results,
-            ],
-        )
+        assert str_in_call_args_list(logger_info.call_args_list, expected_results)
 
     PLAYBOOKS_VALIDATIONS_LS = [
         ({"name": "playbook_case_1", "deprecated": True}, True),
@@ -427,9 +417,4 @@ class TestDeprecationValidator:
         validator = PlaybookValidator(structure)
         validator.deprecation_validator = mock_deprecation_manager()
         validator.is_playbook_deprecated_and_used()
-        assert_strs_in_call_args_list(
-            logger_info.call_args_list,
-            [
-                expected_results,
-            ],
-        )
+        assert str_in_call_args_list(logger_info.call_args_list, expected_results)

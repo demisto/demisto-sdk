@@ -2966,7 +2966,9 @@ def test_is_path_allowed__invalid_first_level(repo, nested: bool):
     std_output = StringIO()
     with contextlib.redirect_stdout(std_output):
         with ChangeCWD(pack.path):
-            assert not validate_manager.is_valid_path(Path(pack.path, *mid_path, "file"))
+            assert not validate_manager.is_valid_path(
+                Path(pack.path, *mid_path, "file")
+            )
 
     captured_stdout = std_output.getvalue()
     assert "[BA121]" in captured_stdout
@@ -2974,6 +2976,7 @@ def test_is_path_allowed__invalid_first_level(repo, nested: bool):
 
 def test_first_level_folders_subset():
     assert FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES.issubset(FIRST_LEVEL_FOLDERS)
+
 
 @pytest.mark.parametrize("folder", FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES)
 def test_is_path_allowed__pass(repo, folder: str):

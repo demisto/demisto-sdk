@@ -297,7 +297,7 @@ def init_mapping_field_list(
 
         if xdm_field_name not in xdm_onedata_model_names:
             if not xdm_field_name:
-                logger.info(f"No xdm rule was specified for {field_name}")
+                logger.warning(f"No xdm rule was specified for {field_name}")
             else:
                 raise ValueError(
                     f"No XDM field {xdm_field_name} exists in the onedata model. Please check your modelling rules file."
@@ -555,7 +555,7 @@ def extract_raw_type_data(event: dict, path_to_dict_field: str) -> tuple:
             temp = temp.get(key)  # type: ignore[assignment]
         else:
             # for example when we have an array inside of a dict
-            logger.info(
+            logger.warning(
                 f"{path_to_dict_field=} \nWas not found in the event you provided, or is not of type dict. Please check the Raw event"
             )
 

@@ -469,10 +469,14 @@ class ContributionConverter:
         extract pack version from script if exists.
         """
         if script:
-            pack_version = re.search(r"### pack version: \d+\.\d+\.\d+", script)
+            try:
+                pack_version = re.search(r"### pack version: \d+\.\d+\.\d+", script)
 
-            if pack_version:
-                return pack_version.group().split(" ")[3]
+                if pack_version:
+                    return pack_version.group().split(" ")[3]
+            except Exception as e:
+                click.echo(f"Failed extracting pack version from script: {e}")
+                pass
         return ""
 
     def content_item_to_package_format(

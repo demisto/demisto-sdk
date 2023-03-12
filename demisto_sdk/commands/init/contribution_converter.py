@@ -601,10 +601,10 @@ class ContributionConverter:
                 " pack versions \n"
             )
             self.contribution_items_version_note = (
-                "> | **Item Name** | **Contribution Pack Version** |"
+                "> | **Item Name** | **Contribution Pack Version** |\n"
             )
             self.contribution_items_version_note = (
-                "> | --------- | ------------------------- |"
+                "> | --------- | ------------------------- |\n"
             )
 
             for item_name, item_version in contribution_items_version.items():

@@ -472,7 +472,7 @@ class ContributionConverter:
             pack_version = re.search(r"### pack version: \d+\.\d+\.\d+", script)
 
             if pack_version:
-                return pack_version.group().split(" ")[2]
+                return pack_version.group().split(" ")[3]
         return ""
 
     def content_item_to_package_format(

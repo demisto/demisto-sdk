@@ -3,7 +3,7 @@
 ## Unreleased
 * Fixed an issue where an error message in **unify** was unclear for invalid input.
 * Fixed an issue where **validate** failed with **is_valid_integration_file_path_in_folder** on integrations that use the `MSAPIModule`.
-* Fixed an issue where **lint** ran on `native:dev` supported content when passing the `--docker-image all` flag.
+* Fixed an issue where the **lint** command ran on `native:dev` supported content when passing the `--docker-image all` flag, instead it will run on `native:candidate`.
 * Added support for `native:candidate` as a docker image flag for **lint**.
 
 ## 1.10.6

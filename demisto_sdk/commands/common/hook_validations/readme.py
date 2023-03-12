@@ -457,11 +457,11 @@ class ReadMeValidator(BaseValidator):
                 error_message, error_code = Errors.invalid_readme_image_error(
                     prefix + f"({relative_path})", error_type="insert_image_link_error"
                 )
-            elif is_pack_readme:
-                error_message, error_code = Errors.invalid_readme_image_error(
-                    prefix + f"({relative_path})",
-                    error_type="pack_readme_relative_error",
-                )
+            # elif is_pack_readme:
+            #     error_message, error_code = Errors.invalid_readme_image_error(
+            #         prefix + f"({relative_path})",
+            #         error_type="pack_readme_relative_error",
+            #     )
             else:
                 # generates absolute path from relative and checks for the file existence.
                 if not os.path.isfile(

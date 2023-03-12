@@ -560,7 +560,7 @@ class ContributionConverter:
                             click.echo(f"current_pack_version {current_pack_version}")
                             if current_pack_version > contributor_item_version:
                                 contribution_items_version[
-                                    base_name
+                                    content_item.name
                                 ] = contributor_item_version
 
                     except Exception as e:

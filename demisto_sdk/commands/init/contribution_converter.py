@@ -37,7 +37,7 @@ from demisto_sdk.commands.common.tools import (
     get_child_files,
     get_content_path,
     get_display_name,
-    get_yaml,
+    get_pack_metadata,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -131,7 +131,7 @@ class ContributionConverter:
         self.gh_user = gh_user
         self.contrib_conversion_errs: List[str] = []
         self.create_new = create_new
-        self.pack_versions = ""
+        self.contribution_items_version_note = ""
         base_dir = base_dir or get_content_path()  # type: ignore
         self.packs_dir_path = os.path.join(base_dir, "Packs")  # type: ignore
         if not os.path.isdir(self.packs_dir_path):
@@ -463,14 +463,17 @@ class ContributionConverter:
                     textwrap.indent("\n".join(self.contrib_conversion_errs), "\t")
                 )
 
-    def extract_pack_version(self, script):
+    @staticmethod
+    def extract_pack_version(script):
         """
         extract pack version from script if exists.
         """
         if script:
             pack_version = re.search(r"### pack version: \d+\.\d+\.\d+", script)
-            return pack_version.group() or "TEST TEST pack version: 1.4.5"
-        return "TEST TEST pack version: 1.4.5"
+
+            if pack_version:
+                return pack_version.group()
+        return ""
 
     def content_item_to_package_format(
         self,
@@ -494,7 +497,7 @@ class ContributionConverter:
                 what already exists in the repo.
         """
         child_files = get_child_files(content_item_dir)
-        self.pack_versions += "ATTENTION!!!!!\n"
+        contribution_items_version = {}
         for child_file in child_files:
             cf_name_lower = os.path.basename(child_file).lower()
             if cf_name_lower.startswith(
@@ -502,15 +505,10 @@ class ContributionConverter:
             ) and cf_name_lower.endswith("yml"):
                 content_item_file_path = child_file
                 file_type = find_type(content_item_file_path)
-                click.echo(f"file_type {file_type}")
                 file_type = file_type.value if file_type else file_type
-                click.echo(f"file_type {file_type}")
                 try:
-                    click.echo(f"child {child_file}")
                     child_file_name = os.path.basename(child_file)
-                    click.echo(f"Debug in {child_file_name}")
                     if source_mapping and child_file_name in source_mapping.keys():
-                        click.echo(f"Debug in if")
                         child_file_mapping = source_mapping.get(child_file_name, {})
                         base_name = child_file_mapping.get("base_name", "")
                         containing_dir_name = child_file_mapping.get(
@@ -539,53 +537,68 @@ class ContributionConverter:
                         )
 
                     else:
-                        click.echo(f"Debug in else")
                         extractor = YmlSplitter(
                             input=content_item_file_path,
                             file_type=file_type,
                             output=content_item_dir,
                         )
-                    click.echo("out")
-                    click.echo(f"content_item_file_path {content_item_file_path}")
-                    content_item = BaseContent.from_path(Path(content_item_file_path))
-                    click.echo("content_item")
-                    click.echo(content_item)
-                    click.echo(isinstance(content_item, IntegrationScript))
-                    if isinstance(content_item, IntegrationScript):
-                        script = content_item.code
-                        click.echo(script)
-                        pack_version = self.extract_pack_version(script)
-                        click.echo(f"pack_version {pack_version}")
-                        self.pack_versions += f"{child_file_name}: {pack_version}\n"
-                        click.echo(f"pack_versions {self.pack_versions}")
-                    click.echo("out of if")
+                    try:
+                        click.echo("In TEST *********")
+                        content_item = BaseContent.from_path(
+                            Path(content_item_file_path)
+                        )
+                        click.echo(f"content_item {content_item}")
+                        if isinstance(content_item, IntegrationScript):
+                            script = content_item.code
+                            contributor_item_version = self.extract_pack_version(script)
+                            click.echo(
+                                f"contributor_item_version {contributor_item_version}"
+                            )
+                            current_pack_version = get_pack_metadata(
+                                file_path=content_item_file_path
+                            ).get("currentVersion", "")
+                            click.echo(f"current_pack_version {current_pack_version}")
+                            if current_pack_version > contributor_item_version:
+                                contribution_items_version[
+                                    base_name
+                                ] = contributor_item_version
+
+                    except Exception as e:
+                        click.echo(
+                            f"Could not parse {content_item_file_path} contribution item version: {e}.",
+                        )
                     extractor.extract_to_package_format(
                         executed_from_contrib_converter=True
                     )
                     self.api_module_path = extractor.api_module_path
                 except Exception as e:
-                    click.echo("got exception")
-                    click.echo(e)
                     err_msg = (
                         f'Error occurred while trying to split the unified YAML "{content_item_file_path}" '
                         f'into its component parts.\nError: "{e}"'
                     )
                     self.contrib_conversion_errs.append(err_msg)
                 finally:
-                    click.echo("in finally")
                     output_path = extractor.get_output_path()
-                    click.echo(f"output_path: {output_path}")
                     if self.create_new:
-                        click.echo("create new")
                         # Moving the unified file to its package.
                         shutil.move(content_item_file_path, output_path)
                     if del_unified:
-                        click.echo("del_unified")
                         if os.path.exists(content_item_file_path):
                             os.remove(content_item_file_path)
                         moved_unified_dst = os.path.join(output_path, child_file_name)
                         if os.path.exists(moved_unified_dst):
                             os.remove(moved_unified_dst)
+
+        click.echo(f"contribution_items_version {contribution_items_version}")
+        if contribution_items_version:
+            self.contribution_items_version_note = "> ** Warning **\n"
+            for item_name, item_version in contribution_items_version.items():
+                self.contribution_items_version_note += (
+                    f"> *{item_name}: {item_version}*\n"
+                )
+        click.echo(
+            f"contribution_items_version_note {self.contribution_items_version_note}"
+        )
 
     def create_pack_base_files(self):
         """

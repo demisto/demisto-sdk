@@ -472,7 +472,7 @@ class ContributionConverter:
             pack_version = re.search(r"### pack version: \d+\.\d+\.\d+", script)
 
             if pack_version:
-                return pack_version.group()
+                return pack_version.group().split(" ")[2]
         return ""
 
     def content_item_to_package_format(
@@ -591,10 +591,21 @@ class ContributionConverter:
 
         click.echo(f"contribution_items_version {contribution_items_version}")
         if contribution_items_version:
-            self.contribution_items_version_note = "> ** Warning **\n"
+            self.contribution_items_version_note = "> **Warning**\n"
+            self.contribution_items_version_note = (
+                "> The changes in the contributed files were made on the following"
+                " pack versions \n"
+            )
+            self.contribution_items_version_note = (
+                "> | **Item Name** | **Contribution Pack Version** |"
+            )
+            self.contribution_items_version_note = (
+                "> | --------- | ------------------------- |"
+            )
+
             for item_name, item_version in contribution_items_version.items():
                 self.contribution_items_version_note += (
-                    f"> *{item_name}: {item_version}*\n"
+                    f"> | {item_name} | {item_version} |\n"
                 )
         click.echo(
             f"contribution_items_version_note {self.contribution_items_version_note}"

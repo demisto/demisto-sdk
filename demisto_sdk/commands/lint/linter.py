@@ -85,6 +85,7 @@ class DockerImageFlagOption(Enum):
     NATIVE_MAINTENANCE = "native:maintenance"
     ALL_IMAGES = "all"
     NATIVE_TARGET = "native:target"
+    NATIVE_CANDIDATE = "native:candidate"
 
 
 class Linter:
@@ -1415,6 +1416,7 @@ class Linter:
             DockerImageFlagOption.NATIVE_GA.value,
             DockerImageFlagOption.NATIVE_MAINTENANCE.value,
             DockerImageFlagOption.NATIVE_TARGET.value,
+            DockerImageFlagOption.NATIVE_CANDIDATE.value,
         ):
             err_msg = (
                 f"The requested native image: '{docker_image_flag}' is not supported. The possible options are: "
@@ -1578,7 +1580,7 @@ class Linter:
             - If docker_image_flag is 'all', lint will run on:
                 1. Native GA - the native image of the current server version.
                 2. Native Maintenance - the native image of the previous server version.
-                3. Native Dev - The latest tag of the native image for Docker Hub.
+                3. Native Candidate - the candidate of the next GA version (the last dev version that was checked).
                 4. The docker images that appear in the YML file of the integration/script that lint runs on.
 
             - If the docker_image_flag is a specific docker image tag, lint will try to run on it.

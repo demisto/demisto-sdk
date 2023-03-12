@@ -479,6 +479,25 @@ class ContributionConverter:
                 pass
         return ""
 
+    def create_contribution_items_version_note(self, contribution_items_version: dict):
+        if contribution_items_version:
+            self.contribution_items_version_note = "> **Warning**\n"
+            self.contribution_items_version_note += (
+                "> The changes in the contributed files were made on the following"
+                " pack versions \n"
+            )
+            self.contribution_items_version_note += (
+                "> | **Item Name** | **Contribution Pack Version** |\n"
+            )
+            self.contribution_items_version_note += (
+                "> | --------- | ------------------------- |\n"
+            )
+
+            for item_name, item_version in contribution_items_version.items():
+                self.contribution_items_version_note += (
+                    f"> | {item_name} | {item_version} |\n"
+                )
+
     def content_item_to_package_format(
         self,
         content_item_dir: str,
@@ -547,17 +566,12 @@ class ContributionConverter:
                             output=content_item_dir,
                         )
                     try:
-                        click.echo("In TEST *********")
                         content_item = BaseContent.from_path(
                             Path(content_item_file_path)
                         )
-                        click.echo(f"content_item {content_item}")
                         if isinstance(content_item, IntegrationScript):
                             script = content_item.code
                             contributor_item_version = self.extract_pack_version(script)
-                            click.echo(
-                                f"contributor_item_version {contributor_item_version}"
-                            )
                             current_pack_version = get_pack_metadata(
                                 file_path=content_item_file_path
                             ).get("currentVersion", "")
@@ -593,27 +607,7 @@ class ContributionConverter:
                         if os.path.exists(moved_unified_dst):
                             os.remove(moved_unified_dst)
 
-        click.echo(f"contribution_items_version {contribution_items_version}")
-        if contribution_items_version:
-            self.contribution_items_version_note = "> **Warning**\n"
-            self.contribution_items_version_note = (
-                "> The changes in the contributed files were made on the following"
-                " pack versions \n"
-            )
-            self.contribution_items_version_note = (
-                "> | **Item Name** | **Contribution Pack Version** |\n"
-            )
-            self.contribution_items_version_note = (
-                "> | --------- | ------------------------- |\n"
-            )
-
-            for item_name, item_version in contribution_items_version.items():
-                self.contribution_items_version_note += (
-                    f"> | {item_name} | {item_version} |\n"
-                )
-        click.echo(
-            f"contribution_items_version_note {self.contribution_items_version_note}"
-        )
+        self.create_contribution_items_version_note(contribution_items_version)
 
     def create_pack_base_files(self):
         """

@@ -242,7 +242,7 @@ def create_xif_header(dataset_name: str) -> str:
     """
     xif_rule = ""
     xif_rule += f"[MODEL: dataset={dataset_name}]\n"
-    xif_rule += "| alter\n"
+    xif_rule += "alter\n"
     return xif_rule
 
 
@@ -296,9 +296,12 @@ def init_mapping_field_list(
         )
 
         if xdm_field_name not in xdm_onedata_model_names:
-            raise ValueError(
-                f"No XDM field {xdm_field_name} exists in the onedata model. Please check your modelling rules file."
-            )
+            if not xdm_field_name:
+                logger.info(f"No xdm rule was specified for {field_name}")
+            else:
+                raise ValueError(
+                    f"No XDM field {xdm_field_name} exists in the onedata model. Please check your modelling rules file."
+                )
 
         xdm_field_type = xdm_rule_to_dtype.get(xdm_field_name)
         xdm_class_type = xdm_rule_to_dclass.get(xdm_field_name)
@@ -553,7 +556,7 @@ def extract_raw_type_data(event: dict, path_to_dict_field: str) -> tuple:
         else:
             # for example when we have an array inside of a dict
             logger.info(
-                f"{key=} is not of type dict, or was not found in the event you provided. Please check the Raw event"
+                f"{path_to_dict_field=} \nWas not found in the event you provided, or is not of type dict. Please check the Raw event"
             )
 
     discovered = discover_type(temp)

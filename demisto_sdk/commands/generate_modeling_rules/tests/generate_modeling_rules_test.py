@@ -56,7 +56,7 @@ def test_create_xif_header():
     Then:
         check that the header is formed corectlly.
     """
-    res = "[MODEL: dataset=fake_dataset_name]\n" "| alter\n"
+    res = "[MODEL: dataset=fake_dataset_name]\nalter\n"
     assert create_xif_header("fake_dataset_name") == res
 
 

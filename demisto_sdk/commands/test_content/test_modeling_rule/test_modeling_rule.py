@@ -17,7 +17,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.mode
     ModelingRule,
     SingleModelingRule,
 )
-from demisto_sdk.commands.common.logger import handle_deprecated_args
+from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
 from demisto_sdk.commands.test_content.xsiam_tools.xsiam_client import (
     XsiamApiClient,
@@ -649,10 +649,33 @@ def test_modeling_rule(
         rich_help_panel="Interactive Configuration",
         hidden=True,
     ),
+    console_log_threshold: str = typer.Option(
+        "INFO",
+        "-clt",
+        "--console_log_threshold",
+        help=("Minimum logging threshold for the console logger."),
+    ),
+    file_log_threshold: str = typer.Option(
+        "DEBUG",
+        "-flt",
+        "--file_log_threshold",
+        help=("Minimum logging threshold for the file logger."),
+    ),
+    log_file_path: str = typer.Option(
+        "demisto_sdk_debug.log",
+        "-lp",
+        "--log_file_path",
+        help=("Path to the log file. Default: ./demisto_sdk_debug.log."),
+    ),
 ):
     """
     Test a modeling rule against an XSIAM tenant
     """
+    logging_setup(
+        console_log_threshold=console_log_threshold,
+        file_log_threshold=file_log_threshold,
+        log_file_path=log_file_path,
+    )
     handle_deprecated_args(ctx.args)
 
     logger.info(

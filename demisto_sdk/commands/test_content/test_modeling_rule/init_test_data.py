@@ -9,7 +9,7 @@ import typer
 from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
     ModelingRule,
 )
-from demisto_sdk.commands.common.logger import handle_deprecated_args
+from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
 from demisto_sdk.commands.test_content.xsiam_tools.test_data import EventLog, TestData
 
 app = typer.Typer()
@@ -41,10 +41,33 @@ def init_test_data(
         show_default=True,
         help="The number of events to initialize the test data file for.",
     ),
+    console_log_threshold: str = typer.Option(
+        "INFO",
+        "-clt",
+        "--console_log_threshold",
+        help=("Minimum logging threshold for the console logger."),
+    ),
+    file_log_threshold: str = typer.Option(
+        "DEBUG",
+        "-flt",
+        "--file_log_threshold",
+        help=("Minimum logging threshold for the file logger."),
+    ),
+    log_file_path: str = typer.Option(
+        "demisto_sdk_debug.log",
+        "-lp",
+        "--log_file_path",
+        help=("Path to the log file. Default: ./demisto_sdk_debug.log."),
+    ),
 ):
     """
     Initialize or update a test data file for a modeling rule
     """
+    logging_setup(
+        console_log_threshold=console_log_threshold,
+        file_log_threshold=file_log_threshold,
+        log_file_path=log_file_path,
+    )
     handle_deprecated_args(ctx.args)
 
     errors = False

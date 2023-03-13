@@ -1724,7 +1724,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         # Files that will be excluded from the check if they end with the given suffix (str.endswith).
         excluded_file_suffix = [
-            "ApiModule.py",
+            "ApiModule.py",  # won't affect the actual API module since it's a script not an integration.
         ]
 
         # Gets the all integration .py files from the integration folder.

@@ -20,6 +20,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     EXCLUDED_DISPLAY_NAME_WORDS,
     INTEGRATIONS_DIR,
     PACK_METADATA_CATEGORIES,
+    PACK_METADATA_MODULES,
     PACK_METADATA_CERTIFICATION,
     PACK_METADATA_CREATED,
     PACK_METADATA_CURR_VERSION,
@@ -39,6 +40,8 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACKS_WHITELIST_FILE_NAME,
     VERSION_REGEX,
     MarketplaceVersions,
+    MARKETPLACE_KEY_PACK_METADATA,
+    MODULES,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
@@ -518,7 +521,7 @@ class PackUniqueFilesValidator(BaseValidator):
             dir_path=integration_dir
         )
 
-    @error_codes("PA105,PA106,PA107,PA109,PA110,PA115,PA111,PA129,PA118,PA112")
+    @error_codes("PA105,PA106,PA107,PA109,PA110,PA115,PA111,PA129,PA118,PA112,PA135,PA136")
     def _is_pack_meta_file_structure_valid(self):
         """Check if pack_metadata.json structure is json parse-able and valid"""
         try:
@@ -605,6 +608,22 @@ class PackUniqueFilesValidator(BaseValidator):
                 if not metadata[PACK_METADATA_CATEGORIES]:
                     if self._add_error(
                         Errors.pack_metadata_missing_categories(self.pack_meta_file),
+                        self.pack_meta_file,
+                    ):
+                        return False
+
+            # check modules field is used only for XSIAM and contains valid values
+            if modules := metadata.get(PACK_METADATA_MODULES, []):
+                if MarketplaceVersions.MarketplaceV2 not in metadata.get(MARKETPLACE_KEY_PACK_METADATA, []):
+                    if self._add_error(
+                        Errors.pack_metadata_modules_for_non_xsiam(),
+                        self.pack_meta_file,
+                    ):
+                        return False
+
+                if not set(modules).issubset(MODULES):
+                    if self._add_error(
+                        Errors.pack_metadata_invalid_modules(),
                         self.pack_meta_file,
                     ):
                         return False

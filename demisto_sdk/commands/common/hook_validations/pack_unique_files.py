@@ -19,8 +19,9 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     API_MODULES_PACK,
     EXCLUDED_DISPLAY_NAME_WORDS,
     INTEGRATIONS_DIR,
+    MARKETPLACE_KEY_PACK_METADATA,
+    MODULES,
     PACK_METADATA_CATEGORIES,
-    PACK_METADATA_MODULES,
     PACK_METADATA_CERTIFICATION,
     PACK_METADATA_CREATED,
     PACK_METADATA_CURR_VERSION,
@@ -29,6 +30,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACK_METADATA_EMAIL,
     PACK_METADATA_FIELDS,
     PACK_METADATA_KEYWORDS,
+    PACK_METADATA_MODULES,
     PACK_METADATA_NAME,
     PACK_METADATA_SUPPORT,
     PACK_METADATA_TAGS,
@@ -40,8 +42,6 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACKS_WHITELIST_FILE_NAME,
     VERSION_REGEX,
     MarketplaceVersions,
-    MARKETPLACE_KEY_PACK_METADATA,
-    MODULES,
 )
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
@@ -614,7 +614,9 @@ class PackUniqueFilesValidator(BaseValidator):
 
             # check modules field is used only for XSIAM and contains valid values
             if modules := metadata.get(PACK_METADATA_MODULES, []):
-                if MarketplaceVersions.MarketplaceV2 not in metadata.get(MARKETPLACE_KEY_PACK_METADATA, []):
+                if MarketplaceVersions.MarketplaceV2 not in metadata.get(
+                    MARKETPLACE_KEY_PACK_METADATA, []
+                ):
                     if self._add_error(
                         Errors.pack_metadata_modules_for_non_xsiam(),
                         self.pack_meta_file,

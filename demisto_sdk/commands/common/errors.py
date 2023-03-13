@@ -9,13 +9,13 @@ from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER,
     FILETYPE_TO_DEFAULT_FROMVERSION,
     INTEGRATION_CATEGORIES,
+    MODULES,
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
     RN_CONTENT_ENTITY_WITH_STARS,
     RN_HEADER_BY_FILE_TYPE,
     FileType,
     MarketplaceVersions,
-    MODULES,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 
@@ -3446,7 +3446,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_metadata_invalid_modules():
-        return f"Module field should be one of the following: {', '.join(MODULES)}."
+        return f"Module field should hold a list of the following: {', '.join(MODULES)}."
 
     @staticmethod
     @error_code_decorator

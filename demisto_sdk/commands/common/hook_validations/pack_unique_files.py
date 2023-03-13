@@ -550,7 +550,7 @@ class PackUniqueFilesValidator(BaseValidator):
                 raise BlockingValidationFailureException()
 
             description_name = metadata.get(PACK_METADATA_DESC, "").lower()
-            if not description_name or "fill mandatory field" in description_name:
+            if "fill mandatory field" in description_name:
                 if self._add_error(
                     Errors.pack_metadata_field_invalid(), self.pack_meta_file
                 ):

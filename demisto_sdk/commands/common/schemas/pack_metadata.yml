@@ -1,0 +1,64 @@
+type: map
+mapping:
+  name:
+    type: str
+    required: true
+  description:
+    type: str
+    required: true
+  support:
+    type: str
+    enum: ['xsoar', 'partner', 'community', 'developer']
+    required: true
+  currentVersion:
+    type: str
+    required: true
+  author:
+    type: str
+    required: true
+  serverMinVersion:
+    type: str
+    required: false
+  url:
+    type: str
+    required: true
+  email:
+    type: str
+    required: true
+  created:
+    type: str
+    required: true
+  tags:
+    type: seq
+    sequence:
+      - type: str
+    required: true
+  categories:
+    type: seq
+    sequence:
+      - type: str
+    required: true
+  useCases:
+    type: seq
+    sequence:
+      - type: str
+    required: true
+  keywords:
+    type: seq
+    sequence:
+      - type: str
+    required: true
+  dependencies:
+    type: map
+    required: true
+  marketplaces:
+    type: seq
+    required: true
+    sequence:
+      - type: str
+        enum: ['xsoar', 'marketplacev2', 'xpanse']
+
+
+
+
+  

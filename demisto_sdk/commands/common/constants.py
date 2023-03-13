@@ -1246,6 +1246,7 @@ SCHEMA_TO_REGEX = {
     "trigger": [TRIGGER_JSON_REGEX],
     "xdrctemplate": [XDRC_TEMPLATE_JSON_REGEX],
     LAYOUT_RULE: JSON_ALL_LAYOUT_RULES_REGEXES,
+    "pack-metadata": 
 }
 
 EXTERNAL_PR_REGEX = r"^pull/(\d+)$"

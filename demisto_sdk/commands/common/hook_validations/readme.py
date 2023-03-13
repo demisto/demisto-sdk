@@ -421,7 +421,7 @@ class ReadMeValidator(BaseValidator):
     def is_relative_image_paths_on_readme_pack_valid(self) -> bool:
         """
         Validate readme images relative paths (only readme pack).
-        Check if there is image paths,
+        Check if there are image paths,
         if so, check if the beginning of the path is binary_files.
         """
         error_list = []

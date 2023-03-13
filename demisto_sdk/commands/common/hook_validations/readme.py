@@ -432,7 +432,7 @@ class ReadMeValidator(BaseValidator):
             self.readme_content,
             re.IGNORECASE | re.MULTILINE,
         )
-        images = re.findall(  # HTML image tag
+        images += re.findall(  # HTML image tag
             r'(<img.*?src\s*=\s*"((.*).*?)")',
             self.readme_content,
             re.IGNORECASE | re.MULTILINE,
@@ -499,12 +499,6 @@ class ReadMeValidator(BaseValidator):
                 error_message, error_code = Errors.invalid_readme_image_error(
                     prefix + f"({relative_path})", error_type="insert_image_link_error"
                 )
-            # if is_pack_readme:
-            #     if not self.is_relative_image_paths_on_readme_pack_valid():
-            #         error_message, error_code = Errors.invalid_readme_image_error(
-            #             prefix + f"({relative_path})",
-            #             error_type="pack_readme_relative_error",
-            #         )
             else:
                 # generates absolute path from relative and checks for the file existence.
                 if not os.path.isfile(

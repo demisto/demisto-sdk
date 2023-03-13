@@ -441,7 +441,7 @@ class ReadMeValidator(BaseValidator):
             prefix = "" if "src" in img[0] else img[0].strip()
             relative_path = img[1].strip()
             if not re.match(
-                r'binery_files/.+\.png$',
+                r'binary_files/.+\.png$',
                 img[1]
             ):
                 error_message, error_code = Errors.invalid_readme_image_error(

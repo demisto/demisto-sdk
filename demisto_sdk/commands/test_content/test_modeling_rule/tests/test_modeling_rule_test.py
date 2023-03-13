@@ -201,7 +201,7 @@ class TestVerifyResults:
 
 class TestTheTestModelingRuleCommandSingleRule:
     def test_the_test_modeling_rule_command_pack_not_on_tenant(
-        self, pack, monkeypatch, caplog
+        self, pack, monkeypatch, mocker
     ):
         """
         Given:
@@ -215,15 +215,13 @@ class TestTheTestModelingRuleCommandSingleRule:
             - Verify we get a message saying the pack is not on the tenant.
             - The command returns with a non-zero exit code.
         """
-        logger.propagate = True
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+        monkeypatch.setenv("COLUMNS", "1000")
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
-
-        # so the logged output when running the command will be printed with a width of 120 characters
-        monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
 
@@ -252,12 +250,14 @@ class TestTheTestModelingRuleCommandSingleRule:
                     )
                     # Assert
                     assert result.exit_code == 1
-                    assert f"Pack {pack.name} was not found" in caplog.text
+                    assert str_in_call_args_list(
+                        logger_error.call_args_list, f"Pack {pack.name} was not found"
+                    )
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
     def test_the_test_modeling_rule_command_fail_to_push_test_data(
-        self, pack, monkeypatch, caplog
+        self, pack, monkeypatch, mocker
     ):
         """
         Given:
@@ -272,15 +272,15 @@ class TestTheTestModelingRuleCommandSingleRule:
             - Verify we get a message saying the push of the test data failed.
             - The command returns with a non-zero exit code.
         """
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
         logger.propagate = True
-
-        # so the logged output when running the command will be printed with a width of 120 characters
-        monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
 
@@ -313,12 +313,14 @@ class TestTheTestModelingRuleCommandSingleRule:
                     )
                     # Assert
                     assert result.exit_code == 1
-                    assert "Failed pushing test data" in caplog.text
+                    assert str_in_call_args_list(
+                        logger_error.call_args_list, "Failed pushing test data"
+                    )
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
     def test_the_test_modeling_rule_command_fail_to_check_dataset_exists(
-        self, pack, monkeypatch, caplog
+        self, pack, monkeypatch, mocker
     ):
         """
         Given:
@@ -334,13 +336,14 @@ class TestTheTestModelingRuleCommandSingleRule:
             - Verify we get a message saying the dataset was not found.
             - The command returns with a non-zero exit code.
         """
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         from functools import partial
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             check_dataset_exists,
         )
-
-        logger.propagate = True
 
         func_path = (
             "demisto_sdk.commands.test_content.test_modeling_rule."
@@ -354,9 +357,6 @@ class TestTheTestModelingRuleCommandSingleRule:
             app as test_modeling_rule_cmd,
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
-
-        # so the logged output when running the command will be printed with a width of 120 characters
-        monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
 
@@ -396,15 +396,15 @@ class TestTheTestModelingRuleCommandSingleRule:
                     )
                     # Assert
                     assert result.exit_code == 1
-                    assert (
-                        f"Dataset {fake_test_data.data[0].dataset} does not exist"
-                        in caplog.text
+                    assert str_in_call_args_list(
+                        logger_error.call_args_list,
+                        f"Dataset {fake_test_data.data[0].dataset} does not exist",
                     )
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
     def test_the_test_modeling_rule_command_fail_to_start_xql_query(
-        self, pack, monkeypatch, caplog
+        self, pack, monkeypatch, mocker
     ):
         """
         Given:
@@ -421,13 +421,14 @@ class TestTheTestModelingRuleCommandSingleRule:
             - Verify we get a message saying XQL query failed.
             - The command returns with a non-zero exit code.
         """
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         from functools import partial
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             check_dataset_exists,
         )
-
-        logger.propagate = True
 
         func_path = (
             "demisto_sdk.commands.test_content.test_modeling_rule."
@@ -441,9 +442,6 @@ class TestTheTestModelingRuleCommandSingleRule:
             app as test_modeling_rule_cmd,
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
-
-        # so the logged output when running the command will be printed with a width of 120 characters
-        monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
 
@@ -497,12 +495,14 @@ class TestTheTestModelingRuleCommandSingleRule:
                     )
                     # Assert
                     assert result.exit_code == 1
-                    assert "Error executing XQL query" in caplog.text
+                    assert str_in_call_args_list(
+                        logger_error.call_args_list, "Error executing XQL query"
+                    )
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
     def test_the_test_modeling_rule_command_fail_to_get_xql_query_results(
-        self, pack, monkeypatch, caplog
+        self, pack, monkeypatch, mocker
     ):
         """
         Given:
@@ -520,13 +520,14 @@ class TestTheTestModelingRuleCommandSingleRule:
             - Verify we get a message saying XQL query failed.
             - The command returns with a non-zero exit code.
         """
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         from functools import partial
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             check_dataset_exists,
         )
-
-        logger.propagate = True
 
         func_path = (
             "demisto_sdk.commands.test_content.test_modeling_rule."
@@ -540,9 +541,6 @@ class TestTheTestModelingRuleCommandSingleRule:
             app as test_modeling_rule_cmd,
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
-
-        # so the logged output when running the command will be printed with a width of 120 characters
-        monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
 
@@ -601,7 +599,9 @@ class TestTheTestModelingRuleCommandSingleRule:
                     )
                     # Assert
                     assert result.exit_code == 1
-                    assert "Error executing XQL query" in caplog.text
+                    assert str_in_call_args_list(
+                        logger_error.call_args_list, "Error executing XQL query"
+                    )
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 
@@ -738,7 +738,7 @@ class TestTheTestModelingRuleCommandSingleRule:
             assert False, "No exception should be raised in this scenario."
 
     def test_the_test_modeling_rule_command_results_do_not_match_expectations(
-        self, pack, monkeypatch, caplog
+        self, pack, monkeypatch, mocker
     ):
         """
         Given:
@@ -757,13 +757,15 @@ class TestTheTestModelingRuleCommandSingleRule:
             - Verify we get a message saying the results do not match the expectations.
             - The command returns with a non-zero exit code.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         from functools import partial
 
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             check_dataset_exists,
         )
-
-        logger.propagate = True
 
         func_path = (
             "demisto_sdk.commands.test_content.test_modeling_rule."
@@ -777,9 +779,6 @@ class TestTheTestModelingRuleCommandSingleRule:
             app as test_modeling_rule_cmd,
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
-
-        # so the logged output when running the command will be printed with a width of 120 characters
-        monkeypatch.setenv("COLUMNS", "1000")
 
         runner = CliRunner()
 
@@ -857,8 +856,12 @@ class TestTheTestModelingRuleCommandSingleRule:
                     )
                     # Assert
                     assert result.exit_code == 1
-                    assert "xdm.event.outcome_reason" in caplog.text
-                    assert '"DisAllowed" != "Allowed"' in caplog.text
+                    assert str_in_call_args_list(
+                        logger_info.call_args_list, "xdm.event.outcome_reason"
+                    )
+                    assert str_in_call_args_list(
+                        logger_error.call_args_list, '"DisAllowed" != "Allowed"'
+                    )
         except typer.Exit:
             assert False, "No exception should be raised in this scenario."
 

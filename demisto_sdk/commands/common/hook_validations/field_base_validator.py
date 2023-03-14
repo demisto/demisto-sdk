@@ -496,7 +496,7 @@ class FieldBaseValidator(ContentEntityValidator):
         """
 
         if not self.id_set_file:
-            logger.info(
+            logger.warning(
                 "[yellow]Validate will skip since an id set file was not provided[/yellow]"
             )
             return True

@@ -141,5 +141,5 @@ class DashboardValidator(ContentEntityValidator):
                             is_valid = False
                             error_msg += formatted_message
         if error_msg:
-            logger.info(f"[red]{error_msg}[/red]")
+            logger.error(f"[red]{error_msg}[/red]")
         return is_valid

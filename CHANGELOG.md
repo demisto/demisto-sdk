@@ -3,6 +3,8 @@
 ## Unreleased
 * Fixed an issue where using **download** on non-unicode content, merging them into existing files caused an error.
 * Changed an internal setting to allow writing non-ascii content (unicode) using `YAMLHandler` and `JSONHandler`.
+* Fixed an issue where an error message in **unify** was unclear for invalid input.
+* Fixed an issue where running **validate** failed with **is_valid_integration_file_path_in_folder** on integrations that use API modules.
 
 ## 1.10.6
 * Fixed an issue where running **validate** with the `-g` flag would skip some validations for old-formatted (unified) integration/script files.

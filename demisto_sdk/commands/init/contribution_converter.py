@@ -131,6 +131,7 @@ class ContributionConverter:
         self.gh_user = gh_user
         self.contrib_conversion_errs: List[str] = []
         self.create_new = create_new
+        self.contribution_items_version: Dict[str, Dict[str, str]] = {}
         self.contribution_items_version_note = ""
         base_dir = base_dir or get_content_path()  # type: ignore
         self.packs_dir_path = os.path.join(base_dir, "Packs")  # type: ignore
@@ -444,6 +445,8 @@ class ContributionConverter:
                         source_mapping=files_to_source_mapping,
                     )
 
+            self.create_contribution_items_version_note()
+
             if self.create_new:
                 self.generate_readmes_for_new_content_pack(is_contribution=True)
 
@@ -479,8 +482,8 @@ class ContributionConverter:
                 pass
         return ""
 
-    def create_contribution_items_version_note(self, contribution_items_version: dict):
-        if contribution_items_version:
+    def create_contribution_items_version_note(self):
+        if self.contribution_items_version:
             self.contribution_items_version_note = "> **Warning**\n"
             self.contribution_items_version_note += (
                 "> The changes in the contributed files were not made on the "
@@ -491,7 +494,7 @@ class ContributionConverter:
                 "> | --------- | ------------------------- | -------------------\n"
             )
 
-            for item_name, item_versions in contribution_items_version.items():
+            for item_name, item_versions in self.contribution_items_version.items():
                 self.contribution_items_version_note += (
                     f"> | {item_name} | {item_versions.get('contribution_version', '')} | "
                     f"{item_versions.get('latest_version', '')}\n"
@@ -519,7 +522,6 @@ class ContributionConverter:
                 what already exists in the repo.
         """
         child_files = get_child_files(content_item_dir)
-        contribution_items_version = {}
         for child_file in child_files:
             cf_name_lower = os.path.basename(child_file).lower()
             if cf_name_lower.startswith(
@@ -580,7 +582,7 @@ class ContributionConverter:
                                 f"contribution_version {contributor_item_version}"
                             )
                             if current_pack_version > contributor_item_version:
-                                contribution_items_version[content_item.name] = {
+                                self.contribution_items_version[content_item.name] = {
                                     "contribution_version": contributor_item_version,
                                     "latest_version": current_pack_version,
                                 }
@@ -612,9 +614,7 @@ class ContributionConverter:
                             os.remove(moved_unified_dst)
 
         click.echo("contribution_items_version")
-        click.echo(contribution_items_version)
-
-        self.create_contribution_items_version_note(contribution_items_version)
+        click.echo(self.contribution_items_version)
 
     def create_pack_base_files(self):
         """

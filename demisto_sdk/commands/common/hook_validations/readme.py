@@ -428,7 +428,7 @@ class ReadMeValidator(BaseValidator):
         error_code: str = ""
         error_message: str = ""
         images = re.findall(
-            r"(\!\[.*?\])\((.*)\)$",
+            r"(\!\[.*?\])\(([a-zA-Z_/\.0-9\- :]*)\)((].*)?)$",
             self.readme_content,
             re.IGNORECASE | re.MULTILINE,
         )
@@ -441,7 +441,7 @@ class ReadMeValidator(BaseValidator):
             prefix = "" if "src" in img[0] else img[0].strip()
             relative_path = img[1].strip()
             if not re.match(
-                r'binary_files/.+\.png$',
+                r'binary_files/.+\..+$',
                 img[1]
             ):
                 error_message, error_code = Errors.invalid_readme_image_error(
@@ -478,7 +478,7 @@ class ReadMeValidator(BaseValidator):
         # class handles the errors and printing.
         should_print_error = not is_pack_readme
         relative_images = re.findall(
-            r"(\!\[.*?\])\(((?!http).*?)\)$",
+            r"(\!\[.*?\])\(((?!http)[a-zA-Z_/\.0-9\- :]*?)\)((].*)?)$",
             self.readme_content,
             re.IGNORECASE | re.MULTILINE,
         )

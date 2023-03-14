@@ -1825,7 +1825,6 @@ def get_not_registered_tests(conf_json_tests: list, content_item_id: str, file_t
 
 
 def _get_file_id(file_type: str, file_content: dict):
-    # this is left here to prevent sudden-deprecation-chaos by other scripts importing it
     # see https://github.com/demisto/demisto-sdk/pull/2345#discussion_r968060746
     return get_id(file_content)
 

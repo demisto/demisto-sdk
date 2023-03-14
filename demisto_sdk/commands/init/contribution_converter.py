@@ -482,10 +482,7 @@ class ContributionConverter:
     def create_contribution_items_version_note(self, contribution_items_version: dict):
         if contribution_items_version:
             self.contribution_items_version_note = "> **Warning**\n"
-            self.contribution_items_version_note += (
-                "> The changes in the contributed files were made on the following"
-                " pack versions \n"
-            )
+            self.contribution_items_version_note += "> The changes in the contributed files were not made on the most updated pack versions\n"
             self.contribution_items_version_note += (
                 "> | **Item Name** | **Contribution Pack Version** |\n"
             )

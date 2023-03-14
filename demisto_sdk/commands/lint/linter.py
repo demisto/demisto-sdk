@@ -289,13 +289,15 @@ class Linter:
         try:
             script_obj: Dict = {}
             yml_obj: Dict = YAML_Handler().load(self._yml_file)
+            if not isinstance(yml_obj, dict):
+                self._pkg_lint_status["errors"].append("Unable to parse package yml")
+                return True
             self._facts["deprecated"] = yml_obj.get("deprecated")
-            if isinstance(yml_obj, dict):
-                script_obj = (
-                    yml_obj.get("script", {})
-                    if isinstance(yml_obj.get("script"), dict)
-                    else yml_obj
-                )
+            script_obj = (
+                yml_obj.get("script", {})
+                if isinstance(yml_obj.get("script"), dict)
+                else yml_obj
+            )
             # if the script/integration is deprecated and the -a flag
             if self._all_packs and yml_obj.get("deprecated"):
                 logger.info(

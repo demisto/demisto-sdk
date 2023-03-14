@@ -112,6 +112,7 @@ class Linter:
         docker_image_flag: str = DockerImageFlagOption.FROM_YML.value,
         all_packs: bool = False,
         docker_image_target: str = "",
+        use_git: bool = False,
     ):
         self._req_3 = req_3
         self._req_2 = req_2
@@ -186,6 +187,7 @@ class Linter:
                     "Unable to find yml file in package"
                 )
         self._all_packs = all_packs
+        self._use_git = use_git
 
     @timer(group_name="lint")
     def run_pack(
@@ -292,14 +294,13 @@ class Linter:
             if not isinstance(yml_obj, dict):
                 self._pkg_lint_status["errors"].append("Unable to parse package yml")
                 return True
-            self._facts["deprecated"] = yml_obj.get("deprecated")
             script_obj = (
                 yml_obj.get("script", {})
                 if isinstance(yml_obj.get("script"), dict)
                 else yml_obj
             )
             # if the script/integration is deprecated and the -a flag
-            if self._all_packs and yml_obj.get("deprecated"):
+            if (self._all_packs or self._use_git) and yml_obj.get("deprecated"):
                 logger.info(
                     f"skipping lint for {self._pack_name} because its deprecated"
                 )
@@ -1080,7 +1081,6 @@ class Linter:
         """
         log_prompt = f"{self._pack_name} - Pytest - Image {test_image}"
         logger.info(f"{log_prompt} - Start")
-        no_coverage = no_coverage or self._facts.get("deprecated")
         container_name = f"{self._pack_name}-pytest"
         # Check if previous run left container a live if it does, Remove it
         self._docker_remove_container(container_name)

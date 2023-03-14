@@ -49,6 +49,7 @@ def str_in_call_args_list(call_args_list, required_str):
         if current_call and isinstance(current_call[0], tuple):
             if required_str in current_call[0][0]:
                 return True
+    print(f"Could not find {required_str=}")
     return False
 
 

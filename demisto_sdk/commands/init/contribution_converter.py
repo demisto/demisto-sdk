@@ -482,17 +482,19 @@ class ContributionConverter:
     def create_contribution_items_version_note(self, contribution_items_version: dict):
         if contribution_items_version:
             self.contribution_items_version_note = "> **Warning**\n"
-            self.contribution_items_version_note += "> The changes in the contributed files were not made on the most updated pack versions\n"
             self.contribution_items_version_note += (
-                "> | **Item Name** | **Contribution Pack Version** |\n"
+                "> The changes in the contributed files were not made on the "
+                "most updated pack versions\n"
             )
+            self.contribution_items_version_note += "> | **Item Name** | **Contribution Pack Version** | **Latest Pack Version**\n"
             self.contribution_items_version_note += (
-                "> | --------- | ------------------------- |\n"
+                "> | --------- | ------------------------- | -------------------\n"
             )
 
-            for item_name, item_version in contribution_items_version.items():
+            for item_name, item_versions in contribution_items_version.items():
                 self.contribution_items_version_note += (
-                    f"> | {item_name} | {item_version} |\n"
+                    f"> | {item_name} | {item_versions.get('contribution_version', '')} | "
+                    f"{item_versions.get('latest_version', '')}\n"
                 )
 
     def content_item_to_package_format(
@@ -574,9 +576,10 @@ class ContributionConverter:
                             ).get("currentVersion", "")
                             click.echo(f"current_pack_version {current_pack_version}")
                             if current_pack_version > contributor_item_version:
-                                contribution_items_version[
-                                    content_item.name
-                                ] = contributor_item_version
+                                contribution_items_version[content_item.name] = {
+                                    "contribution_version": contributor_item_version,
+                                    "latest_version": current_pack_version,
+                                }
 
                     except Exception as e:
                         click.echo(

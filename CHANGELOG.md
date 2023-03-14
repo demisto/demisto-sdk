@@ -4,7 +4,7 @@
 * Fixed an issue where an error message in **unify** was unclear for invalid input.
 * Fixed an issue where **validate** failed with **is_valid_integration_file_path_in_folder** on integrations that use the `MSAPIModule`.
 * Fixed an issue where running **validate** failed with **is_valid_integration_file_path_in_folder** on integrations that use API modules.
-* Running **lint** on a deprecated content item will no longer run with coverage report.
+* Deprecated integrations and scripts will not run anymore when providing the **--git** to the **lint** command.
 
 ## 1.10.6
 * Fixed an issue where running **validate** with the `-g` flag would skip some validations for old-formatted (unified) integration/script files.

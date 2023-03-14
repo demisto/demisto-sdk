@@ -1703,15 +1703,21 @@ class IntegrationValidator(ContentEntityValidator):
 
     @error_codes("IN137")
     def is_valid_py_file_names(self):
-        # Gets the all integration .py files from the integration folder.
+        # Files that will be excluded from the check.
         excluded_files = [
             "demistomock.py",
             "conftest.py",
             "CommonServerPython.py",
             "CommonServerUserPython.py",
             ".vulture_whitelist.py",
-            "MicrosoftApiModule.py",  # won't affect the actual API module since it's a script not an integration.
         ]
+
+        # Files that will be excluded from the check if they end with the given suffix (str.endswith).
+        excluded_file_suffixes = [
+            "ApiModule.py",  # won't affect the actual API module since it's a script not an integration.
+        ]
+
+        # Gets the all integration .py files from the integration folder.
         files_to_check = get_files_in_dir(
             os.path.dirname(self.file_path), ["py"], False
         )
@@ -1720,13 +1726,19 @@ class IntegrationValidator(ContentEntityValidator):
 
         for file_path in files_to_check:
             file_name = os.path.basename(file_path)
-            if file_name not in excluded_files:
-                # The unittest has _test.py suffix whereas the integration only has the .py suffix
-                splitter = "_" if file_name.endswith("_test.py") else "."
-                base_name = file_name.rsplit(splitter, 1)[0]
 
-                if integrations_folder != base_name:
-                    invalid_files.append(file_name)
+            # If the file is in an exclusion list, skip it.
+            if file_name in excluded_files or any(
+                file_name.endswith(suffix) for suffix in excluded_file_suffixes
+            ):
+                continue
+
+            # The unittest has _test.py suffix whereas the integration only has the .py suffix
+            splitter = "_" if file_name.endswith("_test.py") else "."
+            base_name = file_name.rsplit(splitter, 1)[0]
+
+            if integrations_folder != base_name:
+                invalid_files.append(file_name)
 
         if invalid_files:
             error_message, error_code = Errors.is_valid_integration_file_path_in_folder(

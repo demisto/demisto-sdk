@@ -17,7 +17,18 @@ from functools import lru_cache
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
-from typing import Callable, Dict, Iterable, List, Match, Optional, Set, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Match,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 import demisto_client
 import git
@@ -719,6 +730,36 @@ def _read_file(file_path: Path) -> str:
             raise
 
 
+def safe_write_unicode(
+    write_method: Callable[[io.TextIOWrapper], Any],
+    path: Path,
+):
+    # Write unicode content into a file.
+    # If the destination file is not unicode, delete and re-write the content as unicode.
+
+    def _write():
+        with open(path, "w", encoding="utf-8") as f:
+            write_method(f)
+
+    try:
+        _write()
+
+    except UnicodeError as e:
+        encoding = UnicodeDammit(path.read_bytes()).original_encoding
+        if encoding == "utf-8":
+            logger.error(
+                f"{path} is encoded as unicode, cannot handle the error, raising it"
+            )
+            raise  # already a unicode file, the following code cannot fix it.
+
+        logger.debug(
+            f"deleting {path} - it will be rewritten as unicode (was {encoding})"
+        )
+        path.unlink()  # deletes the file
+        logger.debug(f"rewriting {path} as")
+        _write()  # recreates the file
+
+
 @lru_cache
 def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool = False):
     if clear_cache:
@@ -732,7 +773,7 @@ def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool =
     if type_of_file in file_path.suffix:  # e.g. 'yml' in '.yml'
         file_content = _read_file(file_path)
         try:
-            if type_of_file in ("yml", ".yml"):
+            if type_of_file in {"yml", ".yml"}:
                 replaced = re.sub(
                     r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content
                 )

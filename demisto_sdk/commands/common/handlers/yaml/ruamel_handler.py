@@ -12,10 +12,17 @@ class RUAMEL_Handler(XSOAR_Handler):
     Use only this wrapper for yaml handling.
     """
 
-    def __init__(self, preserve_quotes=True, allow_duplicate_keys=False, width=5000):
+    def __init__(
+        self,
+        preserve_quotes=True,
+        allow_duplicate_keys=False,
+        width=5000,
+        ensure_ascii=False,
+    ):
         self._preserve_quotes = preserve_quotes
         self._allow_duplicate_keys = allow_duplicate_keys
         self._width = width
+        self._allow_unicode = not ensure_ascii
 
     @property
     def yaml(self) -> YAML:
@@ -24,6 +31,7 @@ class RUAMEL_Handler(XSOAR_Handler):
         yaml.allow_duplicate_keys = self._allow_duplicate_keys
         yaml.preserve_quotes = self._preserve_quotes
         yaml.width = self._width
+        yaml.allow_unicode = self._allow_unicode
         return yaml
 
     def load(self, stream):

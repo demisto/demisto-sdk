@@ -13,6 +13,8 @@ DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 DEPRECATED_PARAMETERS = {
     "-v": "--console-log-threshold or --file-log-threshold",
+    "-vv": "--console-log-threshold or --file-log-threshold",
+    "-vvv": "--console-log-threshold or --file-log-threshold",
     "--verbose": "--console-log-threshold or --file-log-threshold",
     "-q": "--console-log-threshold or --file-log-threshold",
     "--quiet": "--console-log-threshold or --file-log-threshold",

@@ -2,13 +2,16 @@ import logging
 import logging.config
 import os.path
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
+
+from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 
 # from rich.logging import RichHandler
 
 LOG_FILE_NAME: str = "demisto_sdk_debug.log"
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
-LOG_FILE_PATH: Path = CONTENT_PATH /  LOG_FILE_NAME
-current_log_file_path: str = LOG_FILE_PATH
+
+LOG_FILE_PATH: Path = CONTENT_PATH / LOG_FILE_NAME
+current_log_file_path: str = LOG_FILE_PATH.as_posix()
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
@@ -166,7 +169,7 @@ def logging_setup(
 
     demisto_logger: logging.Logger = logging.getLogger("demisto-sdk")
     set_demisto_handlers_to_logger(demisto_logger, console_handler, file_handler)
-    set_propagate(demisto_logger, False)
+    demisto_logger.propagate = False
 
     return demisto_logger
 
@@ -183,10 +186,6 @@ def set_demisto_handlers_to_logger(
 
 def get_log_file():
     return current_log_file_path
-
-
-def set_propagate(logger_to_update: logging.Logger, propagate: bool = False):
-    logger_to_update.propagate = propagate
 
 
 # Python program to print

@@ -97,8 +97,6 @@ def test_handle_error(mocker, caplog):
     - Ensure non ignored errors are in FOUND_FILES_AND_ERRORS list.
     - Ensure ignored error are not in FOUND_FILES_AND_ERRORS and in FOUND_FILES_AND_IGNORED_ERRORS
     """
-    logging.getLogger("demisto-sdk").propagate = True
-
     base_validator = BaseValidator(
         ignored_errors={"file_name": ["BA101"]}, print_as_warnings=True
     )

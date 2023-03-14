@@ -306,8 +306,6 @@ def test_load_user_metadata_no_metadata_file(repo, monkeypatch, caplog):
     """
     import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata.pack_metadata as metadata_class
 
-    logger.propagate = True
-
     metadata_class.logger = logger
     monkeypatch.setenv("COLUMNS", "1000")
 
@@ -344,8 +342,6 @@ def test_load_user_metadata_invalid_price(repo, monkeypatch, caplog):
 
     """
     import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata.pack_metadata as metadata_class
-
-    logger.propagate = True
 
     metadata_class.logger = logger
     monkeypatch.setenv("COLUMNS", "1000")
@@ -384,8 +380,6 @@ def test_load_user_metadata_bad_pack_metadata_file(repo, monkeypatch, caplog):
 
     """
     import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata.pack_metadata as metadata_class
-
-    logger.propagate = True
 
     metadata_class.logger = logger
     monkeypatch.setenv("COLUMNS", "1000")

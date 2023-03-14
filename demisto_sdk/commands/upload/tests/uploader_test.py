@@ -48,8 +48,6 @@ from demisto_sdk.commands.upload.uploader import (
 )
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
-logging.getLogger("demisto-sdk").propagate = True
-
 json = JSON_Handler()
 
 

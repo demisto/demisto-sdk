@@ -35,8 +35,6 @@ MDX_SKIP_NPM_MESSAGE = (
     "in the root of the project."
 )
 
-logging.getLogger("demisto-sdk").propagate = True
-
 
 @pytest.mark.parametrize("current, answer", README_INPUTS)
 def test_is_file_valid(mocker, current, answer):

@@ -13,8 +13,6 @@ from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.tests.integration_test import mock_structure
 from TestSuite.test_tools import str_in_call_args_list
 
-logging.getLogger("demisto-sdk").propagate = True
-
 mocked_id_set = {
     "scripts": [
         {

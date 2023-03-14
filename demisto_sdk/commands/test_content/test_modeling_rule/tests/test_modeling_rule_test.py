@@ -280,8 +280,6 @@ class TestTheTestModelingRuleCommandSingleRule:
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
-        logger.propagate = True
-
         runner = CliRunner()
 
         # Create Test Data File
@@ -634,8 +632,6 @@ class TestTheTestModelingRuleCommandSingleRule:
             check_dataset_exists,
         )
 
-        logger.propagate = True
-
         func_path = (
             "demisto_sdk.commands.test_content.test_modeling_rule."
             "test_modeling_rule.check_dataset_exists"
@@ -892,8 +888,6 @@ class TestTheTestModelingRuleCommandMultipleRules:
         )
         from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData
 
-        logger.propagate = True
-
         # so the logged output when running the command will be printed with a width of 120 characters
         monkeypatch.setenv("COLUMNS", "1000")
 
@@ -1037,8 +1031,6 @@ class TestTheTestModelingRuleCommandInteractive:
         from demisto_sdk.commands.test_content.test_modeling_rule.test_modeling_rule import (
             app as test_modeling_rule_cmd,
         )
-
-        logger.propagate = True
 
         # need to override this because when running this way the command name is 'test-modeling-rule' (taken from the
         # module name from which it is imported) but the logic in 'init-test-data' command looks to see if the parent

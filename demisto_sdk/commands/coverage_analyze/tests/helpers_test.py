@@ -135,9 +135,6 @@ class TestParseReportType:
 
 
 class TestExportReport:
-    def setup(self):
-        logging.getLogger("demisto-sdk").propagate = True
-
     def foo(self):
         pass
 
@@ -342,7 +339,6 @@ class TestFixFilePath:
 
     @pytest.mark.parametrize("cov_file_names", data_test_with_two_files)
     def test_with_two_files(self, caplog, tmpdir, cov_file_names):
-        logging.getLogger("demisto-sdk").propagate = True
         cov_files_paths = []
         for cov_file_name in cov_file_names:
             named_coverage_path = tmpdir.join(cov_file_name)

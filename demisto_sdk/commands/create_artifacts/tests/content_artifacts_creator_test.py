@@ -368,8 +368,6 @@ def test_sign_packs_failure(repo, caplog, key, tool, monkeypatch):
         - Verify that exceptions are written to the logger.
 
     """
-    logger.propagate = True
-
     import demisto_sdk.commands.create_artifacts.content_artifacts_creator as cca
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
         ArtifactsManager,

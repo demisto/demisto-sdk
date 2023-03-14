@@ -12,8 +12,6 @@ from demisto_sdk.commands.common.hook_validations.field_base_validator import (
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from TestSuite.test_tools import str_in_call_args_list
 
-logging.getLogger("demisto-sdk").propagate = True
-
 INDICATOR_GROUP_NUMBER = 2
 INCIDENT_GROUP_NUMBER = 0
 

@@ -25,8 +25,6 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.integration import Integration
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
-logging.getLogger("demisto-sdk").propagate = True
-
 default_additional_info = load_default_additional_info_dict()
 
 FEED_REQUIRED_PARAMS_STRUCTURE = [

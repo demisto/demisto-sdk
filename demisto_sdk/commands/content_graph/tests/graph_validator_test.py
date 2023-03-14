@@ -27,8 +27,6 @@ from demisto_sdk.commands.content_graph.tests.create_content_graph_test import (
 )
 from TestSuite.test_tools import str_in_call_args_list
 
-logging.getLogger("demisto-sdk").propagate = True
-
 GIT_PATH = Path(git_path())
 
 

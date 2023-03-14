@@ -64,8 +64,6 @@ from demisto_sdk.tests.constants_test import (
 )
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
-logging.getLogger("demisto-sdk").propagate = True
-
 yaml = YAML_Handler()
 
 INTEGRATION_TEST_ARGS = (

@@ -150,7 +150,6 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         repo.id_set.write_json(id_set)
 
         with ChangeCWD(integration.repo_path):
-            logger.propagate = True
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(
                 main,

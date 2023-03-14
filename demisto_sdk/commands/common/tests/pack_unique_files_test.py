@@ -417,7 +417,7 @@ class TestPackUniqueFilesValidator:
             in self.validator.get_errors()
         )
 
-    def test_validate_pack_dependencies_skip_id_set_creation(self, caplog):
+    def test_validate_pack_dependencies_skip_id_set_creation(self, mocker, monkeypatch):
         """
         Given
         -  skip_id_set_creation flag set to true.
@@ -429,19 +429,19 @@ class TestPackUniqueFilesValidator:
         Then
         - Ensure that the validation passes and that the skipping message is printed.
         """
-        # for current_handler in logger.handlers:
-        #     current_handler.setLevel(logging.DEBUG)
-        logger.propagate = True
+        logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+        monkeypatch.setenv("COLUMNS", "1000")
 
         self.restart_validator()
         self.validator.skip_id_set_creation = True
-        with caplog.at_level(logging.DEBUG, logger="demisto-sdk"):
-            res = self.validator.validate_pack_dependencies()
-            self.validator.skip_id_set_creation = (
-                False  # reverting to default for next tests
-            )
-            assert res
-            assert "No first level dependencies found" in caplog.text
+        res = self.validator.validate_pack_dependencies()
+        self.validator.skip_id_set_creation = (
+            False  # reverting to default for next tests
+        )
+        assert res
+        assert str_in_call_args_list(
+            logger_debug.call_args_list, "No first level dependencies found"
+        )
 
     @pytest.mark.parametrize(
         "usecases, is_valid, branch_usecases",
@@ -737,7 +737,7 @@ class TestPackUniqueFilesValidator:
                 )
 
     def test_get_master_private_repo_meta_file_running_on_master(
-        self, mocker, repo, caplog
+        self, mocker, repo, monkeypatch
     ):
         """
         Given:
@@ -749,8 +749,8 @@ class TestPackUniqueFilesValidator:
         Then:
             - Ensure result is None and the appropriate skipping message is printed.
         """
-        for current_handler in logger.handlers:
-            current_handler.setLevel(logging.DEBUG)
+        logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+        monkeypatch.setenv("COLUMNS", "1000")
 
         self.restart_validator()
         pack_name = "PackName"
@@ -768,12 +768,13 @@ class TestPackUniqueFilesValidator:
             str(pack.pack_metadata.path)
         )
         assert not res
-        assert (
-            "Running on master branch - skipping price change validation" in caplog.text
+        assert str_in_call_args_list(
+            logger_debug.call_args_list,
+            "Running on master branch - skipping price change validation",
         )
 
     def test_get_master_private_repo_meta_file_getting_git_error(
-        self, repo, caplog, mocker
+        self, repo, mocker, monkeypatch
     ):
         """
         Given:
@@ -786,8 +787,8 @@ class TestPackUniqueFilesValidator:
         Then:
             - Ensure result is None and the appropriate skipping message is printed.
         """
-        for current_handler in logger.handlers:
-            current_handler.setLevel(logging.DEBUG)
+        logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+        monkeypatch.setenv("COLUMNS", "1000")
 
         self.restart_validator()
         pack_name = "PackName"
@@ -821,10 +822,13 @@ class TestPackUniqueFilesValidator:
                 str(pack.pack_metadata.path)
             )
             assert not res
-            assert "Got an error while trying to connect to git" in caplog.text
+            assert str_in_call_args_list(
+                logger_debug.call_args_list,
+                "Got an error while trying to connect to git",
+            )
 
     def test_get_master_private_repo_meta_file_file_not_found(
-        self, mocker, repo, caplog
+        self, mocker, repo, monkeypatch
     ):
         """
         Given:
@@ -837,8 +841,8 @@ class TestPackUniqueFilesValidator:
         Then:
             - Ensure result is None and the appropriate skipping message is printed.
         """
-        for current_handler in logger.handlers:
-            current_handler.setLevel(logging.DEBUG)
+        logger_debug = mocker.patch.object(logging.getLogger("demisto-sdk"), "debug")
+        monkeypatch.setenv("COLUMNS", "1000")
 
         self.restart_validator()
         pack_name = "PackName"
@@ -872,9 +876,9 @@ class TestPackUniqueFilesValidator:
         )
         with ChangeCWD(repo.path):
             assert not res
-            assert (
-                "Unable to find previous pack_metadata.json file - skipping price change validation"
-                in caplog.text
+            assert str_in_call_args_list(
+                logger_debug.call_args_list,
+                "Unable to find previous pack_metadata.json file - skipping price change validation",
             )
 
     def test_get_master_private_repo_meta_file_relative_path(self, mocker, repo):
@@ -1267,7 +1271,7 @@ class TestPackUniqueFilesValidator:
         pack_description = "Hey there, just testing"
         assert self.validator.is_pack_metadata_desc_too_long(pack_description) is True
 
-    def test_invalid_is_pack_metadata_desc_too_long(self, caplog):
+    def test_invalid_is_pack_metadata_desc_too_long(self, mocker, monkeypatch):
         """
         Given:
             - Invalid description length - higher than 130
@@ -1279,17 +1283,20 @@ class TestPackUniqueFilesValidator:
             - Ensure validation passes although description field length is higher than 130
             - Ensure warning will be printed.
         """
-        logger.propagate = True
+        logger_warning = mocker.patch.object(
+            logging.getLogger("demisto-sdk"), "warning"
+        )
+        monkeypatch.setenv("COLUMNS", "1000")
 
         pack_description = (
             "This is will fail cause the description here is too long."
             "test test test test test test test test test test test test test test test test test"
             " test test test test test"
         )
-        error_desc = "The description field of the pack_metadata.json file is longer than 130 characters."
-
         assert self.validator.is_pack_metadata_desc_too_long(pack_description) is True
-        assert error_desc in caplog.text
+
+        error_desc = "The description field of the pack_metadata.json file is longer than 130 characters."
+        assert str_in_call_args_list(logger_warning.call_args_list, error_desc)
 
     def test_validate_author_image_exists_valid(self, repo):
         """

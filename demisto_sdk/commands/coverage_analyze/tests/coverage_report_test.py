@@ -31,9 +31,6 @@ REPORT_STR_FILE = os.path.join(TEST_DATA_DIR, "coverage.txt")
 
 
 class TestCoverageReport:
-    def setup(self):
-        logger.propagate = True
-
     @staticmethod
     def patern(r_type, file_name, suffix):
         return (
@@ -165,9 +162,6 @@ class TestCoverageReport:
 
 
 class TestFileMinCoverage:
-    def setup(self):
-        logger.propagate = True
-
     data_test_with_new_file = [
         ("test", 70.0),
         (
@@ -227,9 +221,6 @@ class TestFileMinCoverage:
 
 
 class TestCoverageDiffReport:
-    def setup(self):
-        logger.propagate = True
-
     @staticmethod
     def get_coverage_report_obj():
         cov_report = CoverageReport()

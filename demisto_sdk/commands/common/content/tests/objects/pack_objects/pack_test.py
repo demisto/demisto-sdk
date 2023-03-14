@@ -120,8 +120,6 @@ def test_sign_pack_exception_thrown(repo, caplog, mocker, monkeypatch):
         - Verify that exceptions are written to the logger.
 
     """
-    logger.propagate = True
-
     import subprocess
 
     import demisto_sdk.commands.common.content.objects.pack_objects.pack as pack_class
@@ -153,8 +151,6 @@ def test_sign_pack_error_from_subprocess(repo, caplog, fake_process, monkeypatch
         - Verify that exceptions are written to the logger.
 
     """
-    logger.propagate = True
-
     import demisto_sdk.commands.common.content.objects.pack_objects.pack as pack_class
     from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 

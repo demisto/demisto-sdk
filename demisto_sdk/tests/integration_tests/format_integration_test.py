@@ -501,20 +501,19 @@ def test_format_on_valid_py(mocker, repo):
     integration.code.write(valid_py)
 
     with ChangeCWD(pack.repo_path):
-        with mocker.patch("demisto_sdk.commands.common.logger.set_propagate"):
-            runner = CliRunner(mix_stderr=False)
-            runner.invoke(
-                main,
-                [
-                    FORMAT_CMD,
-                    "-nv",
-                    "-i",
-                    integration.code.path,
-                    "--console_log_threshold",
-                    "DEBUG",
-                ],
-                catch_exceptions=True,
-            )
+        runner = CliRunner(mix_stderr=False)
+        runner.invoke(
+            main,
+            [
+                FORMAT_CMD,
+                "-nv",
+                "-i",
+                integration.code.path,
+                "--console_log_threshold",
+                "DEBUG",
+            ],
+            catch_exceptions=True,
+        )
 
     assert str_in_call_args_list(
         logger_debug.call_args_list,

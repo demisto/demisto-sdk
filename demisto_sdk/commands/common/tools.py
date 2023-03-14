@@ -780,25 +780,29 @@ def safe_write_unicode(
     write_method: Callable[[io.TextIOWrapper], Any],
     path: Path,
 ):
+    # Write unicode content into a file.
+    # If the destination file is not unicode, delete and re-write the content as unicode.
+
     def _write():
         with open(path, "w", encoding="utf-8") as f:
             write_method(f)
 
-    # write unicode content into a file which may not be unicode-encoded
-
     try:
         _write()
 
-    except UnicodeError:
+    except UnicodeError as e:
         encoding = UnicodeDammit(path.read_bytes()).original_encoding
-        
-        print(f"caught unicode error, {encoding=}")
         if encoding == "utf-8":
+            logger.error(
+                f"{path} is encoded as unicode, cannot handle the error, raising it"
+            )
             raise  # already a unicode file, the following code cannot fix it.
-        
-        print(f"deleting {path}")
+
+        logger.debug(
+            f"deleting {path} - it will be rewritten as unicode (was {encoding})"
+        )
         path.unlink()  # deletes the file
-        print("rewriting")
+        logger.debug(f"rewriting {path} as")
         _write()  # recreates the file
 
 

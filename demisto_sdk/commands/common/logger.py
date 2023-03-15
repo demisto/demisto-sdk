@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 LOG_FILE_NAME: str = "demisto_sdk_debug.log"
 
 LOG_FILE_PATH: Path = CONTENT_PATH / LOG_FILE_NAME
-current_log_file_path: str = LOG_FILE_PATH.as_posix()
+current_log_file_path: Path = LOG_FILE_PATH
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
@@ -127,7 +127,7 @@ def logging_setup(
     global current_log_file_path
     current_log_file_path = log_file_path if log_file_path else LOG_FILE_PATH
     if os.path.isdir(current_log_file_path):
-        current_log_file_path += f"/{LOG_FILE_NAME}"
+        current_log_file_path = current_log_file_path / LOG_FILE_NAME
     file_handler = RotatingFileHandler(
         filename=current_log_file_path,
         mode="a",
@@ -184,7 +184,7 @@ def set_demisto_handlers_to_logger(
     logger.level = min(console_handler.level, file_handler.level)
 
 
-def get_log_file():
+def get_log_file() -> Path:
     return current_log_file_path
 
 

@@ -743,7 +743,7 @@ class ValidateManager:
             bool. true if file is in SKIPPED_FILES list, false otherwise.
         """
         path = Path(file_path)
-        if get_log_file() in file_path:
+        if get_log_file() == path:
             return True
         return path.name in SKIPPED_FILES or (
             path.name == "CommonServerPython.py" and path.parent.parent.name != "Base"

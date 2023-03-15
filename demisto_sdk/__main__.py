@@ -155,8 +155,8 @@ pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 @click.pass_context
 def main(ctx, config, version, release_notes, **kwargs):
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path"),
     )
     global logger
@@ -261,8 +261,8 @@ def split(ctx, config, **kwargs):
     to multiple files(To a package format - https://demisto.pan.dev/docs/package-dir).
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -341,8 +341,8 @@ def split(ctx, config, **kwargs):
 def extract_code(ctx, config, **kwargs):
     """Extract code from a Demisto integration or script yaml file."""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -432,8 +432,8 @@ def prepare_content(ctx, **kwargs):
     This command is used to prepare the content to be used in the platform.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -517,8 +517,8 @@ main.add_command(prepare_content, name="unify")
 def zip_packs(ctx, **kwargs) -> int:
     """Generating zipped packs that are ready to be uploaded to Cortex XSOAR machine."""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -724,8 +724,8 @@ def zip_packs(ctx, **kwargs) -> int:
 def validate(ctx, config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -911,8 +911,8 @@ def create_content_artifacts(ctx, **kwargs) -> int:
     5. uploadable_packs - Contains zipped packs that are ready to be uploaded to Cortex XSOAR machine.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -978,8 +978,8 @@ def secrets(ctx, config, **kwargs):
     Attach path to whitelist to allow manual whitelists.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -1122,8 +1122,8 @@ def lint(ctx, **kwargs):
     If no additional flags specifying the packs are given, will lint only changed files.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -1231,8 +1231,8 @@ def lint(ctx, **kwargs):
 @click.pass_context
 def coverage_analyze(ctx, **kwargs):
     logger = logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
@@ -1373,8 +1373,8 @@ def format(
     genericmodule/genericdefinition.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -1482,8 +1482,8 @@ def upload(ctx, **kwargs):
     * Note: Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up. *
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -1582,8 +1582,8 @@ def download(ctx, **kwargs):
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -1661,8 +1661,8 @@ def xsoar_config_file_update(ctx, **kwargs):
     Add a Pack to both marketplace_packs and custom_packs sections in the Configuration File.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -1735,8 +1735,8 @@ def run(ctx, **kwargs):
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -1795,8 +1795,8 @@ def run_playbook(ctx, **kwargs):
     'https://demisto.local'.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -1856,8 +1856,8 @@ def run_playbook(ctx, **kwargs):
 def run_test_playbook(ctx, **kwargs):
     """Run a test playbooks in your instance."""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -1951,8 +1951,8 @@ def generate_outputs(ctx, **kwargs):
     In addition you can supply examples files and generate the context description directly in the YML from those examples.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -2045,8 +2045,8 @@ def generate_outputs(ctx, **kwargs):
 def generate_test_playbook(ctx, **kwargs):
     """Generate test playbook from integration or script"""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -2143,8 +2143,8 @@ def init(ctx, **kwargs):
     Otherwise when using the flags we will generate a script/integration based on your selection.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -2246,8 +2246,8 @@ def init(ctx, **kwargs):
 def generate_docs(ctx, **kwargs):
     """Generate documentation for integration, playbook or script from yaml file."""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -2428,8 +2428,8 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
 def create_id_set(ctx, **kwargs):
     """Create the content dependency tree by ids."""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -2484,8 +2484,8 @@ def create_id_set(ctx, **kwargs):
 def merge_id_sets(ctx, **kwargs):
     """Merge two id_sets"""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -2583,8 +2583,8 @@ def merge_id_sets(ctx, **kwargs):
 def update_release_notes(ctx, **kwargs):
     """Auto-increment pack version and generate release notes template."""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -2708,8 +2708,8 @@ def update_release_notes(ctx, **kwargs):
 def find_dependencies(ctx, **kwargs):
     """Find pack dependencies and update pack metadata."""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -2816,8 +2816,8 @@ def postman_codegen(
 ):
     """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
     logger = logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     from demisto_sdk.commands.postman_codegen.postman_codegen import (
@@ -2896,8 +2896,8 @@ def generate_integration(ctx, input: IO, output: Path, **kwargs):
     which is generated by commands like postman-codegen
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -2985,8 +2985,8 @@ def openapi_codegen(ctx, **kwargs):
     Then, the command is run a second time with the integration configuration to generate the actual integration files.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -3165,8 +3165,8 @@ def test_content(ctx, **kwargs):
     Collect the result and give a report.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -3263,8 +3263,8 @@ def test_content(ctx, **kwargs):
 def doc_review(ctx, **kwargs):
     """Check the spelling in .md and .yml files as well as review release notes"""
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -3334,8 +3334,8 @@ def integration_diff(ctx, **kwargs):
     Checks for differences between two versions of an integration, and verified that the new version covered the old version.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -3398,8 +3398,8 @@ def generate_yml_from_python(ctx, **kwargs):
     Checks for differences between two versions of an integration, and verified that the new version covered the old version.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -3451,8 +3451,8 @@ def convert(ctx, config, **kwargs):
     version command.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -3535,8 +3535,8 @@ def generate_unit_tests(
     Also supports generating unit tests for specific commands.
     """
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -3582,8 +3582,8 @@ def error_code(ctx, config, **kwargs):
     )
 
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -3643,8 +3643,8 @@ def create_content_graph(
     **kwargs,
 ):
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)
@@ -3744,8 +3744,8 @@ def update_content_graph(
     **kwargs,
 ):
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or "INFO",
-        file_log_threshold=kwargs.get("file_log_threshold") or "DEBUG",
+        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
     )
     handle_deprecated_args(ctx.args)

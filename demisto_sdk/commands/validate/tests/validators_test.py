@@ -3008,8 +3008,8 @@ def test_is_path_allowed__fail_file_in_pack_root(tmpdir):
     """
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
 
-    pack = tmpdir / "Packs" / "myPack"
-    pack.mkdir()
+    pack = Path(tmpdir, "Packs", "myPack")
+    pack.mkdir(parents=True)
 
     file_path = Path(pack, "file")
     file_path.touch()

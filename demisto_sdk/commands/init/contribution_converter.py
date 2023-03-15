@@ -483,6 +483,10 @@ class ContributionConverter:
         return ""
 
     def create_contribution_items_version_note(self):
+        """
+        creates note that can be paste on the created PR containing the
+        contributed item versions.
+        """
         if self.contribution_items_version:
             self.contribution_items_version_note = "> **Warning**\n"
             self.contribution_items_version_note += (
@@ -576,11 +580,6 @@ class ContributionConverter:
                             current_pack_version = get_pack_metadata(
                                 file_path=content_item_file_path
                             ).get("currentVersion", "")
-                            click.echo(f"latest_version {current_pack_version}")
-                            click.echo(f"content_item {content_item.name}")
-                            click.echo(
-                                f"contribution_version {contributor_item_version}"
-                            )
                             if current_pack_version > contributor_item_version:
                                 self.contribution_items_version[content_item.name] = {
                                     "contribution_version": contributor_item_version,
@@ -612,9 +611,6 @@ class ContributionConverter:
                         moved_unified_dst = os.path.join(output_path, child_file_name)
                         if os.path.exists(moved_unified_dst):
                             os.remove(moved_unified_dst)
-
-        click.echo("contribution_items_version")
-        click.echo(self.contribution_items_version)
 
     def create_pack_base_files(self):
         """

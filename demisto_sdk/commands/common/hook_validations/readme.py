@@ -548,7 +548,7 @@ class ReadMeValidator(BaseValidator):
         )  # pack readme errors are handled and printed during the pack unique
         # files validation.
         absolute_links = re.findall(
-            r"(!\[.*\])\((https://.*)\)$",
+            r"(\[?!\[.*\])\((https://.*)\)$",
             self.readme_content,
             re.IGNORECASE | re.MULTILINE,
         )
@@ -564,7 +564,7 @@ class ReadMeValidator(BaseValidator):
             img_url = link[
                 1
             ].strip()  # striping in case there are whitespaces at the beginning/ending of url.
-            if is_pack_readme:
+            if is_pack_readme and link[0].startswith('!'):
                 error_message, error_code = Errors.invalid_readme_image_error(
                     prefix + f"({img_url})", error_type="pack_readme_absolute_error"
                 )

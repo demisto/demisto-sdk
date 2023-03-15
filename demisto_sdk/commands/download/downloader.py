@@ -45,12 +45,14 @@ from demisto_sdk.commands.common.tools import (
     get_dict_from_file,
     get_entity_id_by_entity_type,
     get_entity_name_by_entity_type,
+    get_file,
     get_files_in_dir,
     get_json,
     get_yaml,
     get_yml_paths_in_dir,
     print_color,
     retrieve_file_ending,
+    safe_write_unicode,
 )
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
@@ -261,9 +263,9 @@ class Downloader:
 
         If download will fail, then we will return the original playbook_string we received (probably from the bundle)
         """
-        file_yaml_object = yaml.load(playbook_string)
-        playbook_id = file_yaml_object.get("id")
-        playbook_name = file_yaml_object.get("name")
+        existing = yaml.load(playbook_string)
+        playbook_id = existing.get("id")
+        playbook_name = existing.get("name")
         if (
             playbook_id
             and playbook_name
@@ -838,23 +840,23 @@ class Downloader:
         Build the custom content object represents a custom content entity instance.
         For example: integration-HelloWorld.yml downloaded from Demisto.
         """
-        file_data, file_ending = get_dict_from_file(
+        existing, file_ending = get_dict_from_file(
             file_path
         )  # For example: yml, for integration files
         file_type = find_type(
-            path=file_path, _dict=file_data, file_type=file_ending
+            path=file_path, _dict=existing, file_type=file_ending
         )  # For example: integration
         if file_type:
             file_type = file_type.value
 
         file_entity = self.file_type_to_entity(
-            file_data, file_type
+            existing, file_type
         )  # For example: Integrations
-        file_id: str = get_entity_id_by_entity_type(file_data, file_entity)
-        file_name: str = get_entity_name_by_entity_type(file_data, file_entity)
+        file_id: str = get_entity_id_by_entity_type(existing, file_entity)
+        file_name: str = get_entity_name_by_entity_type(existing, file_entity)
 
         if not file_name:
-            file_name = file_data.get("id", "")
+            file_name = existing.get("id", "")
 
         custom_content_object: dict = {
             "id": file_id,
@@ -865,22 +867,22 @@ class Downloader:
             "file_ending": file_ending,
         }
 
-        file_code_language = get_code_lang(file_data, file_entity)
+        file_code_language = get_code_lang(existing, file_entity)
         if file_code_language:
             custom_content_object["code_lang"] = file_code_language
 
         return custom_content_object
 
     @staticmethod
-    def file_type_to_entity(file_data: dict, file_type: str) -> str:
+    def file_type_to_entity(existing: dict, file_type: str) -> str:
         """
         Given the file type returns the file entity
-        :param file_data: The file data
+        :param existing: The file data
         :param file_type: The file type, for example: integration
         :return: The file entity, for example: Integrations
         """
         if file_type and file_type == "playbook":
-            name: str = get_entity_name_by_entity_type(file_data, PLAYBOOKS_DIR)
+            name: str = get_entity_name_by_entity_type(existing, PLAYBOOKS_DIR)
             if name.endswith(
                 ("Test", "_test", "_Test", "-test", "-Test")
             ) or name.lower().startswith("test"):
@@ -1195,9 +1197,7 @@ class Downloader:
         return {}
 
     @staticmethod
-    def update_data(
-        file_path_to_write: str, file_path_to_read: str, file_ending: str
-    ) -> None:
+    def update_data(output_path: str, file_path_to_read: str, file_ending: str) -> None:
         """
         Collects special chosen fields from the file_path_to_read and writes them into the file_path_to_write.
         :param file_path_to_write: The output file path to add the special fields to.
@@ -1223,19 +1223,18 @@ class Downloader:
             splitter="dot",
         )
 
-        if file_ending == "yml":
-            file_yaml_object = get_yaml(file_path_to_write)
-            if pack_obj_data:
-                merge(file_yaml_object, preserved_data)
-            with open(file_path_to_write, "w") as yf:
-                yaml.dump(file_yaml_object, yf)
+        file_data = get_file(output_path, type_of_file=file_ending, clear_cache=True)
+        if pack_obj_data:
+            merge(file_data, preserved_data)
 
+        if file_ending == "yml":
+            safe_write_unicode(lambda f: yaml.dump(file_data, f), Path(output_path))
         elif file_ending == "json":
-            file_data: dict = get_json(file_path_to_write)
-            if pack_obj_data:
-                merge(file_data, preserved_data)
-            with open(file_path_to_write, "w") as jf:
-                json.dump(data=file_data, fp=jf, indent=4)
+            safe_write_unicode(
+                lambda f: json.dump(data=file_data, fp=f, indent=4), Path(output_path)
+            )
+        else:
+            raise RuntimeError(f"cannot merge file extension {file_ending}")
 
     @staticmethod
     def get_extracted_file_detail(file_ending: str) -> str:

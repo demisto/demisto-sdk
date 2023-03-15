@@ -1,9 +1,8 @@
 import glob
-import json
 import os
 import shutil
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import git
 import pytest
@@ -39,7 +38,7 @@ from demisto_sdk.commands.common.git_content_config import (
     GitCredentials,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS,
@@ -128,6 +127,9 @@ from TestSuite.test_tools import ChangeCWD
 
 GIT_ROOT = git_path()
 yaml = YAML_Handler()
+json = JSON_Handler()
+
+SENTENCE_WITH_UMLAUTS = "Nett hier. Aber waren Sie schon mal in Baden-Württemberg?"
 
 
 class TestGenericFunctions:
@@ -149,19 +151,23 @@ class TestGenericFunctions:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "suffix,dump_function", ((".json", json.dumps), (".yml", yaml.dumps))
+        "suffix,dumps_method", ((".json", json.dumps), (".yml", yaml.dumps))
     )
     def test_get_file_non_unicode(
-        tmp_path, suffix: str, dump_function: Callable[[Dict], Any]
+        tmp_path,
+        suffix: str,
+        dumps_method: Callable,
     ):
         """Tests reading a non-unicode file"""
-        text = "Nett hier. Aber waren Sie schon mal in Baden-Württemberg?"  # the umlaut is important
         path = (tmp_path / "non_unicode").with_suffix(suffix)
 
-        path.write_text(
-            dump_function({"text": text}, ensure_ascii=False), encoding="latin-1"
+        path.write_bytes(
+            dumps_method({"text": SENTENCE_WITH_UMLAUTS}, ensure_ascii=False).encode(
+                "latin-1"
+            )
         )
-        assert get_file(path, suffix) == {"text": text}
+        assert "ü" in path.read_text(encoding="latin-1")
+        assert get_file(path, suffix) == {"text": SENTENCE_WITH_UMLAUTS}
 
     @pytest.mark.parametrize(
         "file_name, prefix, result",

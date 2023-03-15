@@ -3542,9 +3542,9 @@ class Errors:
         )
 
     @staticmethod
-    def pack_readme_image_relative_path_error(path):
+    def pack_readme_image_absolute_path_error(path):
         return (
-            f"Detected the following image relative path: {path}.\nRelative paths are not supported in pack README files. See "
+            f"Detected the following image absolute path: {path}.\nAbsolute paths are not supported in pack README files. See "
             f"https://xsoar.pan.dev/docs/integrations/integration-docs#images for further info on how to "
             f"add images to pack README files."
         )
@@ -3552,6 +3552,13 @@ class Errors:
     @staticmethod
     def invalid_readme_image_relative_path_error(path):
         return f"The following image relative path is not valid, please recheck it:\n{path}."
+    
+    @staticmethod
+    def invalid_pack_readme_image_relative_path_error(path):
+        return (
+            f"The following image relative path is not valid for pack READNE file: {path},\n"
+            f"A relative path to the image in the pack readme file must be in this convention: 'binary _files/<file name>'"
+        )
 
     @staticmethod
     def invalid_readme_image_absolute_path_error(path):
@@ -3584,8 +3591,9 @@ class Errors:
             error += f", reason = {response.reason}" if response.reason else " "
 
         error_body = {
-            "pack_readme_relative_error": Errors.pack_readme_image_relative_path_error,
+            "pack_readme_absolute_error": Errors.pack_readme_image_absolute_path_error,
             "general_readme_relative_error": Errors.invalid_readme_image_relative_path_error,
+            "pack_readme_relative_error": Errors.invalid_pack_readme_image_relative_path_error,
             "general_readme_absolute_error": Errors.invalid_readme_image_absolute_path_error,
             "branch_name_readme_absolute_error": Errors.branch_name_in_readme_image_absolute_path_error,
             "insert_image_link_error": Errors.invalid_readme_insert_image_link_error,

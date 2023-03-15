@@ -418,7 +418,7 @@ class ReadMeValidator(BaseValidator):
             )
         return valid
 
-    def is_relative_image_paths_on_readme_pack_valid(self) -> bool:
+    '''def is_relative_image_paths_on_readme_pack_valid(self) -> bool:
         """
         Validate readme images relative paths (only readme pack).
         Check if there are image paths,
@@ -446,7 +446,7 @@ class ReadMeValidator(BaseValidator):
             ):
                 error_message, error_code = Errors.invalid_readme_image_error(
                         prefix + f"({relative_path})",
-                        error_type="pack_readme_relative_error",
+                        error_type="pack_readme_absolute_error",
                     )
             if error_code and error_message:  # error was found
                 formatted_error = self.handle_error(
@@ -458,7 +458,7 @@ class ReadMeValidator(BaseValidator):
                 # if error is None it should be ignored
                 if formatted_error:
                     error_list.append(formatted_error)
-        return error_list
+        return error_list'''
 
     def check_readme_relative_image_paths(self, is_pack_readme: bool = False) -> list:
         """Validate readme images relative paths.
@@ -492,7 +492,14 @@ class ReadMeValidator(BaseValidator):
             # striping in case there are whitespaces at the beginning/ending of url.
             prefix = "" if "src" in img[0] else img[0].strip()
             relative_path = img[1].strip()
-
+            if is_pack_readme:
+                if not re.match(
+                    r'binary_files/.+\..+$',
+                img[1]
+                ):
+                    error_message, error_code = Errors.invalid_readme_image_error(
+                        prefix + f"({relative_path})", error_type="pack_readme_relative_error"
+                    )
             if "Insert the link to your image here" in relative_path:
                 # the line is generated automatically in playbooks readme, the user should replace it with
                 # an image or remove the line.
@@ -557,6 +564,10 @@ class ReadMeValidator(BaseValidator):
             img_url = link[
                 1
             ].strip()  # striping in case there are whitespaces at the beginning/ending of url.
+            if is_pack_readme:
+                error_message, error_code = Errors.invalid_readme_image_error(
+                    prefix + f"({img_url})", error_type="pack_readme_absolute_error"
+                )
             try:
                 # a link that contains a branch name (other than master) is invalid since the branch will be deleted
                 # after merge to master. in the url path (after '.com'), the third element should be the branch name.

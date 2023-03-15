@@ -657,7 +657,7 @@ MODELING_RULE_SCHEMA_REGEX = rf"{MODELING_RULE_PACKAGE_REGEX}\/([^/]+)\.json"
 
 RELATIVE_HREF_URL_REGEX = r'(<.*?href\s*=\s*"((?!(?:https?:\/\/)|#|(?:mailto:)).*?)")'
 RELATIVE_MARKDOWN_URL_REGEX = (
-    r"(?<![!])(\[.*?\])\(((?!(?:https?:\/\/)|#|(?:mailto:)).*?)\)"
+    r"(?<![!])(\[[#_a-zA-Z0-9\(\) -]*?\])\(((?!(?:https?:\/\/)|#|(?:mailto:)).*?)\)"
 )
 
 # old classifier structure

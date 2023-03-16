@@ -299,7 +299,7 @@ class Linter:
                 if isinstance(yml_obj.get("script"), dict)
                 else yml_obj
             )
-            # if the script/integration is deprecated and the -a flag
+            # if the script/integration is deprecated and the -a or -g flag
             if (self._all_packs or self._use_git) and yml_obj.get("deprecated"):
                 logger.info(
                     f"skipping lint for {self._pack_name} because its deprecated"

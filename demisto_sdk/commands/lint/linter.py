@@ -302,7 +302,7 @@ class Linter:
             # if the script/integration is deprecated and the -a or -g flag
             if (self._all_packs or self._use_git) and yml_obj.get("deprecated"):
                 logger.info(
-                    f"skipping lint for {self._pack_name} because its deprecated"
+                    f"skipping lint for {self._pack_name} because its deprecated. To lint it, use the -i flag."
                 )
                 return True
             self._facts["is_script"] = (

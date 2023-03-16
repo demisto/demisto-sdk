@@ -3446,7 +3446,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_metadata_invalid_modules():
-        return f"Module field should hold a list of the following: {', '.join(MODULES)}."
+        return f"Module field should include some of the following options: {', '.join(MODULES)}."
 
     @staticmethod
     @error_code_decorator

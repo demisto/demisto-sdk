@@ -6,7 +6,7 @@
 * Fixed an issue where an error message in **unify** was unclear for invalid input.
 * Fixed an issue where running **validate** failed with **is_valid_integration_file_path_in_folder** on integrations that use API modules.
 * Fixed an issue where **validate** failed with **is_valid_integration_file_path_in_folder** on integrations that use the `MSAPIModule`.
-* Added validation in the `pack_metadata.json` file for the **modules** field, which holds an array of strings, and is used only for XSIAM.
+* Added **validate** check for the `modules` field in `pack_metadata.json` files.
 
 ## 1.10.6
 * Fixed an issue where running **validate** with the `-g` flag would skip some validations for old-formatted (unified) integration/script files.

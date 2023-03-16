@@ -521,7 +521,7 @@ class PackUniqueFilesValidator(BaseValidator):
             dir_path=integration_dir
         )
 
-    @error_codes("PA105,PA106,PA107,PA109,PA110,PA115,PA111,PA129,PA118,PA112,PA135,PA136")
+    @error_codes("PA105,PA106,PA107,PA109,PA110,PA115,PA111,PA129,PA118,PA112")
     def _is_pack_meta_file_structure_valid(self):
         """Check if pack_metadata.json structure is json parse-able and valid"""
         try:
@@ -613,22 +613,8 @@ class PackUniqueFilesValidator(BaseValidator):
                         return False
 
             # check modules field is used only for XSIAM and contains valid values
-            if modules := metadata.get(PACK_METADATA_MODULES, []):
-                if MarketplaceVersions.MarketplaceV2 not in metadata.get(
-                    MARKETPLACE_KEY_PACK_METADATA, []
-                ):
-                    if self._add_error(
-                        Errors.pack_metadata_modules_for_non_xsiam(),
-                        self.pack_meta_file,
-                    ):
-                        return False
-
-                if not set(modules).issubset(MODULES):
-                    if self._add_error(
-                        Errors.pack_metadata_invalid_modules(),
-                        self.pack_meta_file,
-                    ):
-                        return False
+            if not self.is_modules_field_valid(metadata):
+                return False
 
             # if the field 'certification' exists, check that its value is set to 'certified' or 'verified'
             certification = metadata.get(PACK_METADATA_CERTIFICATION)
@@ -650,6 +636,28 @@ class PackUniqueFilesValidator(BaseValidator):
             ):
                 raise BlockingValidationFailureException()
 
+        return True
+
+    @error_codes("PA135,PA136")
+    def is_modules_field_valid(self, metadata: Dict):
+        if modules := metadata.get(PACK_METADATA_MODULES, []):
+            # used only for XSIAM
+            if MarketplaceVersions.MarketplaceV2 not in metadata.get(
+                MARKETPLACE_KEY_PACK_METADATA, []
+            ):
+                if self._add_error(
+                    Errors.pack_metadata_modules_for_non_xsiam(),
+                    self.pack_meta_file,
+                ):
+                    return False
+
+            # contains valid values
+            if not set(modules).issubset(MODULES):
+                if self._add_error(
+                    Errors.pack_metadata_invalid_modules(),
+                    self.pack_meta_file,
+                ):
+                    return False
         return True
 
     @error_codes("PA126")

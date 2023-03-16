@@ -564,7 +564,7 @@ class ReadMeValidator(BaseValidator):
             img_url = link[
                 1
             ].strip()  # striping in case there are whitespaces at the beginning/ending of url.
-            if is_pack_readme and link[0].startswith('!') or link[0].startswith('<img'):
+            if is_pack_readme and (link[0].startswith('!') or link[0].startswith('<img')):
                 error_message, error_code = Errors.invalid_readme_image_error(
                     prefix + f"({img_url})", error_type="pack_readme_absolute_error"
                 )

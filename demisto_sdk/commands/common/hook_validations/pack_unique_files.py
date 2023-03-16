@@ -326,6 +326,9 @@ class PackUniqueFilesValidator(BaseValidator):
 
     @error_codes("RM112")
     def validate_pack_readme_relative_urls(self):
+        '''
+        Hi, it's me
+        '''
         readme_file_path = os.path.join(self.pack_path, self.readme_file)
         readme_validator = ReadMeValidator(
             readme_file_path,

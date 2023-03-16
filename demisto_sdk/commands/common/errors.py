@@ -3556,8 +3556,8 @@ class Errors:
     @staticmethod
     def invalid_pack_readme_image_relative_path_error(path):
         return (
-            f"The following image relative path is not valid for pack READNE file: {path},\n"
-            f"A relative path to the image in the pack readme file must be in this convention: 'binary _files/<file name>'"
+            f"The following image relative path is not valid for pack README file: {path},\n"
+            "A relative path to the image in the pack readme file must be in this convention: 'binary _files/<file name>'"
         )
 
     @staticmethod

@@ -12,13 +12,20 @@ test link- [invalid relative 1](relative1.com)
 <a href="hreftesting.com"> href tests </a>
 <a href="www.hreftesting.com"> www href tests </a>
 
-##### Invalid images relative paths in pack readme
+
+##### images relative paths valid
+[![Identity with High Risk Score](binary_files/0.png)](https://github.com/demisto/content/raw/test2.png)
+![Identity with High Risk Score](binary_files/0.png)
+    [![Identity with High Risk Score](binary_files/0.png)](https://github.com/demisto/content/raw/test1.png)
+
+
+#####  Invalid images relative paths in pack readme
 ![Identity with High Risk Score](doc_files/High_Risk_User.png)
 ![Identity with High Risk Score](home/test1/test2/doc_files/High_Risk_User.png)
 <img src="../../doc_files/Access_investigation_-_Generic_4_5.png"/>
 ![Account Enrichment](Insert the link to your image here)
 
-##### images absolute paths
+##### Invalid images absolute paths in pack readme
 ![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)
 ![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)
 <img src="https://raw.githubusercontent.com/demisto/content/raw/test1.jpg" width="757" height="54">

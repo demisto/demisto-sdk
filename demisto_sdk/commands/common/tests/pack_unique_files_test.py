@@ -982,64 +982,10 @@ class TestPackUniqueFilesValidator:
         )
         assert self.validator._is_pack_file_exists(self.validator.readme_file) is False
 
-    def test_validate_pack_readme_valid_images(self, mocker):
+    def test_validate_pack_readme_invalid_images(self, mocker):
         """
         Given
-            - A pack README file with valid absolute image paths in it.
-        When
-            - Run validate on pack README file
-        Then
-            - Ensure:
-                - Validation succeed
-                - Valid absolute image paths were not caught
-        """
-        from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-
-        self.validator = PackUniqueFilesValidator(
-            os.path.join(self.FILES_PATH, "DummyPack2")
-        )
-        mocker.patch.object(
-            ReadMeValidator, "check_readme_relative_image_paths", return_value=[]
-        )  # Test only absolute paths
-
-        with requests_mock.Mocker() as m:
-            # Mock get requests
-            m.get(
-                "https://github.com/demisto/content/raw/test1.png",
-                status_code=200,
-                text="Test1",
-            )
-            m.get(
-                "https://raw.githubusercontent.com/demisto/content/raw/test1.png",
-                status_code=200,
-                text="Test1",
-            )
-            m.get(
-                "https://raw.githubusercontent.com/demisto/content/raw/test1.jpg",
-                status_code=200,
-                text="Test1",
-            )
-
-            result = self.validator.validate_pack_readme_images()
-            errors = self.validator.get_errors()
-        assert result
-        assert (
-            "please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)"
-            not in errors
-        )
-        assert (
-            "please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)"
-            not in errors
-        )
-        assert (
-            "please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)"
-            not in errors
-        )
-
-    def test_validate_pack_readme_invalid_images(self):
-        """
-        Given
-            - A pack README file with invalid absolute and relative image paths in it.
+            - A pack README file with invalid image paths absolute and relative in it.
         When
             - Run validate on pack README file
         Then
@@ -1048,6 +994,7 @@ class TestPackUniqueFilesValidator:
                 - Invalid relative image paths were caught correctly
                 - Invalid absolute image paths were caught correctly
         """
+
         self.validator = PackUniqueFilesValidator(
             os.path.join(self.FILES_PATH, "DummyPack2")
         )
@@ -1055,18 +1002,23 @@ class TestPackUniqueFilesValidator:
         with requests_mock.Mocker() as m:
             # Mock get requests
             m.get(
-                "https://github.com/demisto/content/raw/test1.png",
+                "https://github.com/demisto/content/raw/test2.png",
                 status_code=404,
+                text="Test1",
+            )
+            m.get(
+                "https://github.com/demisto/content/raw/test1.png",
+                status_code=200,
                 text="Test1",
             )
             m.get(
                 "https://raw.githubusercontent.com/demisto/content/raw/test1.png",
-                status_code=404,
+                status_code=200,
                 text="Test1",
             )
             m.get(
                 "https://raw.githubusercontent.com/demisto/content/raw/test1.jpg",
-                status_code=404,
+                status_code=200,
                 text="Test1",
             )
 
@@ -1074,34 +1026,68 @@ class TestPackUniqueFilesValidator:
             errors = self.validator.get_errors()
         assert not result
         assert (
-            "Detected the following image relative path: ![Identity with High Risk Score](doc_files/High_Risk_User.png)"
+            "The following image relative path is not valid for pack README file: ![Identity with High Risk Score](doc_files/High_Risk_User.png),\n" \
+            "A relative path to the image in the pack readme file must be in this convention: 'binary _files/<file name>'"
             in errors
         )
         assert (
-            "Detected the following image relative path: ![Identity with High Risk Score](home/test1/test2/doc_files/High_Risk_User.png)"
+            "The following image relative path is not valid for pack README file: ![Identity with High Risk Score](home/test1/test2/doc_files/High_Risk_User.png),\n" \
+            "A relative path to the image in the pack readme file must be in this convention: 'binary _files/<file name>'"
             in errors
         )
         assert (
-            "Detected the following image relative path: (../../doc_files/Access_investigation_-_Generic_4_5.png)"
+            "The following image relative path is not valid for pack README file: (../../doc_files/Access_investigation_-_Generic_4_5.png),\n" \
+            "A relative path to the image in the pack readme file must be in this convention: 'binary _files/<file name>'"
+            in errors
+        )
+        assert (
+            "Detected the following image absolute path: ![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)"
+            in errors
+        )
+        assert (
+            "Detected the following image absolute path: ![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)"
             in errors
         )
         assert (
             "Image link was not found, either insert it or remove it:\n![Account Enrichment](Insert the link to your image here)"
             in errors
         )
+        assert (
+            "please repair it:\n[![Identity with High Risk Score](binary_files/0.png)](https://github.com/demisto/content/raw/test2.png)"
+            in errors
+        )
+        assert (
+            "Detected the following image absolute path: (https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)"
+            in errors
+        )
 
-        assert (
-            "please repair it:\n![Identity with High Risk Score](https://github.com/demisto/content/raw/test1.png)"
-            in errors
+    def test_validate_pack_readme_invalid_images(self, mocker):
+        """
+        Given
+            - A pack README file with valid absolute and relative image paths in it.
+        When
+            - Run validate on pack README file
+        Then
+            - Ensure:
+                - Validation succeed
+                - valid relative image paths were caught correctly
+                - valid absolute image paths were caught correctly
+        """
+        self.validator = PackUniqueFilesValidator(
+            os.path.join(self.FILES_PATH, "DummyPack2")
         )
-        assert (
-            "please repair it:\n![Identity with High Risk Score](https://raw.githubusercontent.com/demisto/content/raw/test1.png)"
-            in errors
-        )
-        assert (
-            "please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)"
-            in errors
-        )
+        self.validator.readme_file = 'README_valid_images.md'
+
+        with requests_mock.Mocker() as m:
+            # Mock get requests
+            m.get(
+                "https://github.com/demisto/content/raw/test2.png",
+                status_code=200,
+                text="Test1",
+            )
+            result = self.validator.validate_pack_readme_images()
+            errors = self.validator.get_errors()
+        assert result
         # this path is not an image path and should not be shown.
         assert "https://github.com/demisto/content/raw/test3.png" not in errors
 

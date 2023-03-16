@@ -492,14 +492,7 @@ class ReadMeValidator(BaseValidator):
             # striping in case there are whitespaces at the beginning/ending of url.
             prefix = "" if "src" in img[0] else img[0].strip()
             relative_path = img[1].strip()
-            if is_pack_readme:
-                if not re.match(
-                    r'binary_files/.+\..+$',
-                img[1]
-                ):
-                    error_message, error_code = Errors.invalid_readme_image_error(
-                        prefix + f"({relative_path})", error_type="pack_readme_relative_error"
-                    )
+
             if "Insert the link to your image here" in relative_path:
                 # the line is generated automatically in playbooks readme, the user should replace it with
                 # an image or remove the line.
@@ -507,8 +500,15 @@ class ReadMeValidator(BaseValidator):
                     prefix + f"({relative_path})", error_type="insert_image_link_error"
                 )
             else:
+                if is_pack_readme and not re.match(
+                        r'binary_files/.+\..+$',
+                    img[1]
+                    ):
+                        error_message, error_code = Errors.invalid_readme_image_error(
+                            prefix + f"({relative_path})", error_type="pack_readme_relative_error"
+                        )
                 # generates absolute path from relative and checks for the file existence.
-                if not os.path.isfile(
+                elif not os.path.isfile(
                     os.path.join(self.file_path.parent, relative_path)
                 ):
                     error_message, error_code = Errors.invalid_readme_image_error(
@@ -564,39 +564,40 @@ class ReadMeValidator(BaseValidator):
             img_url = link[
                 1
             ].strip()  # striping in case there are whitespaces at the beginning/ending of url.
-            if is_pack_readme and link[0].startswith('!'):
+            if is_pack_readme and link[0].startswith('!') or link[0].startswith('<img'):
                 error_message, error_code = Errors.invalid_readme_image_error(
                     prefix + f"({img_url})", error_type="pack_readme_absolute_error"
                 )
-            try:
-                # a link that contains a branch name (other than master) is invalid since the branch will be deleted
-                # after merge to master. in the url path (after '.com'), the third element should be the branch name.
-                # example 'https://raw.githubusercontent.com/demisto/content/<branch-name>/Packs/.../image.png'
-                url_path_elem_list = urlparse(img_url).path.split("/")[1:]
-                if len(url_path_elem_list) >= 3 and (
-                    url_path_elem_list[2] == working_branch_name
-                    and working_branch_name != "master"
-                ):
-                    error_message, error_code = Errors.invalid_readme_image_error(
-                        prefix + f"({img_url})",
-                        error_type="branch_name_readme_absolute_error",
-                    )
-                else:
-                    try:
-                        get_url_with_retries(
-                            img_url, retries=5, backoff_factor=1, timeout=10
-                        )
-                    except HTTPError as error:
+            else:
+                try:
+                    # a link that contains a branch name (other than master) is invalid since the branch will be deleted
+                    # after merge to master. in the url path (after '.com'), the third element should be the branch name.
+                    # example 'https://raw.githubusercontent.com/demisto/content/<branch-name>/Packs/.../image.png'
+                    url_path_elem_list = urlparse(img_url).path.split("/")[1:]
+                    if len(url_path_elem_list) >= 3 and (
+                        url_path_elem_list[2] == working_branch_name
+                        and working_branch_name != "master"
+                    ):
                         error_message, error_code = Errors.invalid_readme_image_error(
                             prefix + f"({img_url})",
-                            error_type="general_readme_absolute_error",
-                            response=error.response,
+                            error_type="branch_name_readme_absolute_error",
                         )
-            except Exception as ex:
-                click.secho(
-                    f"Could not validate the image link: {img_url}\n {ex}", fg="yellow"
-                )
-                continue
+                    else:
+                        try:
+                            get_url_with_retries(
+                                img_url, retries=5, backoff_factor=1, timeout=10
+                            )
+                        except HTTPError as error:
+                            error_message, error_code = Errors.invalid_readme_image_error(
+                                prefix + f"({img_url})",
+                                error_type="general_readme_absolute_error",
+                                response=error.response,
+                            )
+                except Exception as ex:
+                    click.secho(
+                        f"Could not validate the image link: {img_url}\n {ex}", fg="yellow"
+                    )
+                    continue
 
             if error_message and error_code:
                 formatted_error = self.handle_error(

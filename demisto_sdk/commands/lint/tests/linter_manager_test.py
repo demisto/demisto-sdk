@@ -10,6 +10,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface,
 )
 from demisto_sdk.commands.lint.lint_manager import LintManager
+from demisto_sdk.commands.lint.linter import DockerImageFlagOption
 from TestSuite.test_tools import ChangeCWD
 
 
@@ -1029,7 +1030,7 @@ def test_get_api_module_dependent_items_which_were_changed(
         - get_pack_path returning file path instead of pack path.
 
     When:
-        - Running lint on API modules and changed dependecies.
+        - Running lint on API modules and changed dependencies.
 
     Then:
         - Ensure that lint runs on all relevant dependencies and collects them once.
@@ -1069,3 +1070,57 @@ def test_get_api_module_dependent_items_which_were_changed(
     )
     if packages_of_dependent_items:
         get_packages_mock.assert_called_with(content_repo="", input=dependent_items)
+
+
+@pytest.mark.parametrize(
+    "docker_image_flag",
+    [
+        DockerImageFlagOption.FROM_YML.value,
+        DockerImageFlagOption.ALL_IMAGES.value,
+        DockerImageFlagOption.NATIVE_DEV.value,
+        DockerImageFlagOption.NATIVE.value,
+        DockerImageFlagOption.NATIVE_GA.value,
+        DockerImageFlagOption.NATIVE_MAINTENANCE.value,
+    ],
+)
+def test_invalid_docker_image_target_flag(mocker, docker_image_flag):
+    """
+    Given:
+        - docker_image_target but docker_image_flag is not native:target
+
+    When:
+        - Running lint with docker_image_target and the invalid docker_image_flag.
+
+    Then:
+        - Ensure the right error is raised.
+    """
+    mocked_lint_manager = mock_lint_manager(mocker)
+
+    with pytest.raises(ValueError) as err_info:
+        mocked_lint_manager.run(
+            parallel=False,
+            no_flake8=True,
+            no_bandit=True,
+            no_mypy=True,
+            no_vulture=True,
+            no_xsoar_linter=True,
+            no_pylint=True,
+            no_test=True,
+            no_pwsh_test=True,
+            no_pwsh_analyze=True,
+            no_coverage=True,
+            keep_container=False,
+            test_xml="",
+            failure_report="",
+            coverage_report="",
+            docker_timeout=60,
+            docker_image_flag=docker_image_flag,
+            docker_image_target="some_docker_image",
+        )
+
+    expected_err_str = (
+        "Recieved docker image target some_docker_image without docker image flag native:target. "
+        "Aborting."
+    )
+
+    assert expected_err_str in err_info.value.args[0]

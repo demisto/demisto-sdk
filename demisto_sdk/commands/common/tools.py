@@ -17,7 +17,18 @@ from functools import lru_cache
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
-from typing import Callable, Dict, Iterable, List, Match, Optional, Set, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Match,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 import click
 import colorama
@@ -57,6 +68,7 @@ from demisto_sdk.commands.common.constants import (
     LAYOUTS_DIR,
     LISTS_DIR,
     MARKETPLACE_KEY_PACK_METADATA,
+    MARKETPLACE_TO_CORE_PACKS_FILE,
     METADATA_FILE_NAME,
     MODELING_RULES_DIR,
     NON_LETTERS_OR_NUMBERS_PATTERN,
@@ -391,47 +403,52 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     return output
 
 
-core_pack_list: Optional[
-    list
-] = None  # Initiated in get_core_pack_list function. Here to create a "cached" core_pack_list
-
-
-@lru_cache(maxsize=128)
-def get_core_pack_list() -> list:
-    """Getting the core pack list from Github content
+def get_marketplace_to_core_packs() -> Dict[MarketplaceVersions, Set[str]]:
+    """Getting the core pack from Github content
 
     Returns:
-        Core pack list
+        A mapping from marketplace versions to their core packs.
     """
-    global core_pack_list
-    if isinstance(core_pack_list, list):
-        return core_pack_list
-    if not is_external_repository():
-        core_pack_list = (
-            get_remote_file(
-                "Tests/Marketplace/core_packs_list.json",
-                git_content_config=GitContentConfig(
-                    repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
-                    git_provider=GitProvider.GitHub,
-                ),
-            )
-            or []
+    if is_external_repository():
+        return {}  # no core packs in external repos.
+
+    mp_to_core_packs: Dict[MarketplaceVersions, Set[str]] = {}
+    for mp in MarketplaceVersions:
+        # for backwards compatibility mp_core_packs can be a list, but we expect a dict.
+        mp_core_packs: Union[list, dict] = get_remote_file(
+            MARKETPLACE_TO_CORE_PACKS_FILE[mp],
+            git_content_config=GitContentConfig(
+                repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
+                git_provider=GitProvider.GitHub,
+            ),
         )
-        core_pack_list.extend(
-            get_remote_file(
-                "Tests/Marketplace/core_packs_mpv2_list.json",
-                git_content_config=GitContentConfig(
-                    repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
-                    git_provider=GitProvider.GitHub,
-                ),
-            )
-            or []
-        )
-        core_pack_list = list(set(core_pack_list))
-    else:
-        # no core packs in external repos.
-        core_pack_list = []
-    return core_pack_list
+        if isinstance(mp_core_packs, list):
+            mp_to_core_packs[mp] = set(mp_core_packs)
+        else:
+            mp_to_core_packs[mp] = set(mp_core_packs.get("core_packs_list", []))
+    return mp_to_core_packs
+
+
+def get_core_pack_list(marketplaces: List[MarketplaceVersions] = None) -> list:
+    """Getting the core pack list from Github content
+
+    Arguments:
+        marketplaces: A list of the marketplaces to return core packs for.
+
+    Returns:
+        The core packs list.
+    """
+    result: Set[str] = set()
+    if is_external_repository():
+        return []  # no core packs in external repos.
+
+    if marketplaces is None:
+        marketplaces = list(MarketplaceVersions)
+
+    for mp, core_packs in get_marketplace_to_core_packs().items():
+        if mp in marketplaces:
+            result.update(core_packs)
+    return list(result)
 
 
 def get_local_remote_file(
@@ -759,6 +776,36 @@ def _read_file(file_path: Path) -> str:
             raise
 
 
+def safe_write_unicode(
+    write_method: Callable[[io.TextIOWrapper], Any],
+    path: Path,
+):
+    # Write unicode content into a file.
+    # If the destination file is not unicode, delete and re-write the content as unicode.
+
+    def _write():
+        with open(path, "w", encoding="utf-8") as f:
+            write_method(f)
+
+    try:
+        _write()
+
+    except UnicodeError as e:
+        encoding = UnicodeDammit(path.read_bytes()).original_encoding
+        if encoding == "utf-8":
+            logger.error(
+                f"{path} is encoded as unicode, cannot handle the error, raising it"
+            )
+            raise  # already a unicode file, the following code cannot fix it.
+
+        logger.debug(
+            f"deleting {path} - it will be rewritten as unicode (was {encoding})"
+        )
+        path.unlink()  # deletes the file
+        logger.debug(f"rewriting {path} as")
+        _write()  # recreates the file
+
+
 @lru_cache
 def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool = False):
     if clear_cache:
@@ -772,7 +819,7 @@ def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool =
     if type_of_file in file_path.suffix:  # e.g. 'yml' in '.yml'
         file_content = _read_file(file_path)
         try:
-            if type_of_file in ("yml", ".yml"):
+            if type_of_file in {"yml", ".yml"}:
                 replaced = re.sub(
                     r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content
                 )
@@ -2619,7 +2666,7 @@ def to_kebab_case(s: str):
         new_s = s.lower()
         new_s = re.sub("[ ,.-]+", "-", new_s)
         new_s = re.sub("[^A-Za-z0-9-]+", "", new_s)
-        m = re.search("[a-z0-9]+(-[a-z]+)*", new_s)
+        m = re.search("[a-z0-9]+(-[a-z0-9]+)*", new_s)
         if m:
             return m.group(0)
         else:
@@ -3458,6 +3505,27 @@ def field_to_cli_name(field_name: str) -> str:
         field_name (str): the incident/indicator field name.
     """
     return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, "", field_name).lower()
+
+
+def extract_field_from_mapping(mapping_value: str) -> str:
+    """Given an outgoing-mapping value, returns the incident/indicator field used for the mapping.
+    If mapping_value is surrounded by quotes ("<>"), it means the mapping value is a string and no field
+    should be returned.
+
+    Args:
+        mapping_value (str): An outgoing-mapping value, which may contain an incident/indicator field.
+
+    Returns:
+        str: An incident/indicator field, or an empty string if not a field.
+    """
+    if not mapping_value or re.match(r"\"([^.]+).*\"", mapping_value):  # not a field
+        return ""
+    if field_name := re.match(r"\$\{([^.]*)[^}]*\}|([^$.]*).*", mapping_value):
+        if field_name.groups()[0] is not None:
+            return field_name.groups()[0]
+        if len(field_name.groups()) > 1:
+            return field_name.groups()[1]
+    return mapping_value
 
 
 def get_pack_paths_from_files(file_paths: Iterable[str]) -> list:

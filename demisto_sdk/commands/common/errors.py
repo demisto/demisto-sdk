@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER,
     FILETYPE_TO_DEFAULT_FROMVERSION,
     INTEGRATION_CATEGORIES,
+    MODULES,
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
     RN_CONTENT_ENTITY_WITH_STARS,
@@ -92,6 +93,7 @@ ALLOWED_IGNORE_ERRORS = [
     "RN115",
     "MR104",
     "MR105",
+    "LO107",
 ]
 
 # predefined errors to be ignored in partner/community supported packs even if they do not appear in .pack-ignore
@@ -1200,6 +1202,16 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "pack_metadata_invalid_modules": {
+        "code": "PA135",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "pack_metadata_modules_for_non_xsiam": {
+        "code": "PA136",
+        "ui_applicable": False,
+        "related_field": "",
+    },
     # PB - Playbooks
     "playbook_cant_have_rolename": {
         "code": "PB100",
@@ -2216,7 +2228,6 @@ class Errors:
         )
 
     @staticmethod
-    @error_code_decorator
     def error_starting_docker_mdx_server(line):
         return (
             f"Failed starting docker mdx server. stdout: {line}.\n"
@@ -3434,6 +3445,16 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def pack_metadata_invalid_modules():
+        return f"Module field should include some of the following options: {', '.join(MODULES)}."
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_modules_for_non_xsiam():
+        return "Module field can be added only for XSIAM packs (marketplacev2)."
+
+    @staticmethod
+    @error_code_decorator
     def pack_name_is_not_in_xsoar_standards(
         reason, excluded_words: Optional[List[str]] = None
     ):
@@ -3597,6 +3618,34 @@ class Errors:
     @error_code_decorator
     def wrong_version_reputations(object_id, version):
         return f"Reputation object with id {object_id} must have version {version}"
+
+    @staticmethod
+    @error_code_decorator
+    def readme_lint_errors(file, validations):
+        message_to_return = (
+            f"The {file} readme file is not linted properly. See the validations below"
+            f"\n{validations}"
+        )
+        return message_to_return
+
+    @staticmethod
+    @error_code_decorator
+    def description_lint_errors(rn_file_name, validations):
+        message_to_return = (
+            f"The {rn_file_name} description file is not linted properly. See the validations below"
+            f"\n{validations}"
+        )
+
+        return message_to_return
+
+    @staticmethod
+    @error_code_decorator
+    def release_notes_lint_errors(file_name, validations):
+        message_to_return = (
+            f"The {file_name} release notes file is not linted properly See the validations below"
+            f"\n{validations}"
+        )
+        return message_to_return
 
     @staticmethod
     @error_code_decorator

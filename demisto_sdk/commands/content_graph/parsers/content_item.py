@@ -99,7 +99,11 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
                 path = path.parent
             else:
                 return None
-        content_type: ContentType = ContentType.by_path(path)
+        try:
+            content_type: ContentType = ContentType.by_path(path)
+        except ValueError as e:
+            logger.error(e)
+            return None
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:
                 return ContentItemParser.parse(

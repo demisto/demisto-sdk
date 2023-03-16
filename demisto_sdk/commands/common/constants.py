@@ -741,6 +741,7 @@ PACK_METADATA_AUTHOR = "author"
 PACK_METADATA_URL = "url"
 PACK_METADATA_EMAIL = "email"
 PACK_METADATA_CATEGORIES = "categories"
+PACK_METADATA_MODULES = "modules"
 PACK_METADATA_TAGS = "tags"
 PACK_METADATA_CREATED = "created"
 PACK_METADATA_CERTIFICATION = "certification"
@@ -763,6 +764,7 @@ PACK_METADATA_FIELDS = (
     PACK_METADATA_KEYWORDS,
 )
 API_MODULES_PACK = "ApiModules"
+API_MODULE_FILE_SUFFIX = "ApiModule"
 API_MODULE_PY_REGEX = r"{}{}/{}/{}/([^/]+)/([^.]+)\.py".format(
     CAN_START_WITH_DOT_SLASH, PACKS_DIR, API_MODULES_PACK, SCRIPTS_DIR
 )
@@ -1251,7 +1253,7 @@ SCHEMA_TO_REGEX = {
 EXTERNAL_PR_REGEX = r"^pull/(\d+)$"
 
 FILE_TYPES_PATHS_TO_VALIDATE = {"reports": JSON_ALL_REPORTS_REGEXES}
-DEPENDENCIES_DOCKER = "demisto/demisto-sdk-dependencies:1.0.0.36679"
+MDX_SERVER_DOCKER_IMAGE = "devdemisto/mdx_node_server:1.0.0.48264"
 DEF_DOCKER = "demisto/python:1.3-alpine"
 DEF_DOCKER_PWSH = "demisto/powershell:6.2.3.5563"
 
@@ -1339,6 +1341,7 @@ XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = "https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions"
 EXCLUDED_DISPLAY_NAME_WORDS = ["partner", "community"]
 MARKETPLACES = ["xsoar", "marketplacev2"]
+MODULES = ["compliance"]
 
 # From Version constants
 FILETYPE_TO_DEFAULT_FROMVERSION = {
@@ -1674,6 +1677,13 @@ class MarketplaceVersions(str, Enum):
     XSOAR = "xsoar"
     MarketplaceV2 = "marketplacev2"
     XPANSE = "xpanse"
+
+
+MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
+    MarketplaceVersions.XSOAR: "Tests/Marketplace/core_packs_list.json",
+    MarketplaceVersions.MarketplaceV2: "Tests/Marketplace/core_packs_mpv2_list.json",
+    MarketplaceVersions.XPANSE: "Tests/Marketplace/core_packs_xpanse_list.json",
+}
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {

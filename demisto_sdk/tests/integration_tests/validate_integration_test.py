@@ -1,9 +1,13 @@
 import copy
 from copy import deepcopy
 from os.path import join
+from time import sleep
 
 import pytest
+import requests
 from click.testing import CliRunner
+from requests.adapters import HTTPAdapter
+from urllib3 import Retry
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
@@ -24,8 +28,12 @@ from demisto_sdk.commands.common.hook_validations.pack_unique_files import (
     PackUniqueFilesValidator,
 )
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
-from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
+from demisto_sdk.commands.common.hook_validations.readme import (
+    ReadMeValidator,
+    mdx_server_is_up,
+)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.MDXServer import start_local_MDX_server
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
@@ -4062,8 +4070,16 @@ class TestValidationUsingGit:
         valid_script_yml = get_yaml(VALID_SCRIPT_PATH, cache_clear=True)
         pack2 = repo.create_pack("PackName2")
         script = pack2.create_script(yml=valid_script_yml)
+
         old_integration = pack2.create_integration(
-            "OldIntegration", yml={"toversion": "5.0.0", "deprecated": True}
+            name="OldIntegration", description="Deprecated. No available replacement."
+        )
+        old_integration.yml.update(
+            {
+                "display": "OldIntegration (Deprecated)",
+                "toversion": "5.0.0",
+                "deprecated": True,
+            }
         )
 
         modified_files = {integration.yml.rel_path, incident_field.get_path_from_pack()}
@@ -4796,3 +4812,35 @@ class TestBasicValidation:
             )
         assert "The files are valid" in result.stdout
         assert result.exit_code == 0
+
+
+def test_local_node_server_up_and_down():
+    """
+    Given:
+        - node dependencies installed
+        - a valid file for mdx
+    When:
+        starting a local server with an mdx server
+    Then:
+        - The server is started successfully.
+        - The call is successful.
+    """
+
+    assert not mdx_server_is_up()
+    with start_local_MDX_server():
+
+        assert mdx_server_is_up()
+        assert_successful_mdx_call()
+    sleep(1)
+    assert not mdx_server_is_up()
+
+
+def assert_successful_mdx_call():
+    session = requests.Session()
+    retry = Retry(total=2)
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("http://", adapter)
+    response = session.request(
+        "POST", "http://localhost:6161", data="## Hello", timeout=20
+    )
+    assert response.status_code == 200

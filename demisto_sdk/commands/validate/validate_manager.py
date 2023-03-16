@@ -427,8 +427,20 @@ class ValidateManager:
         """Run validations only on specific files"""
         files_validation_result = set()
         self.setup_git_params()
+        files_to_validate = self.file_path.split(",")
 
-        for path in self.file_path.split(","):
+        if self.validate_graph:
+            click.secho(
+                f"\n================= Validating graph =================",
+                fg="bright_cyan",
+            )
+            with GraphValidator(
+                specific_validations=self.specific_validations,
+                input_files=files_to_validate,
+            ) as graph_validator:
+                files_validation_result.add(graph_validator.is_valid_content_graph())
+
+        for path in files_to_validate:
             error_ignore_list = self.get_error_ignore_list(get_pack_name(path))
             file_level = self.detect_file_level(path)
 
@@ -1279,7 +1291,9 @@ class ValidateManager:
                 ) as graph_validator:
                     validation_results.add(graph_validator.is_valid_content_graph())
 
-        validation_results.add(self.validate_modified_files(modified_files))
+        validation_results.add(
+            self.validate_modified_files(modified_files | old_format_files)
+        )
         validation_results.add(self.validate_added_files(added_files, modified_files))
         validation_results.add(
             self.validate_changed_packs_unique_files(

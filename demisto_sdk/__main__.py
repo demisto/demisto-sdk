@@ -22,6 +22,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_last_remote_release_version,
@@ -34,6 +35,7 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface,
 )
+from demisto_sdk.commands.generate_modeling_rules import generate_modeling_rules
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
@@ -607,7 +609,14 @@ def zip_packs(**kwargs) -> int:
 @pass_config
 def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
+    from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
+
+    logging_setup(
+        1,  # type: ignore[arg-type]
+        log_path=os.getenv("ARTIFACTS_FOLDER"),
+        log_file_name="validate.log",
+    )  # type: ignore[arg-type]
 
     run_with_mp = not kwargs.pop("no_multiprocessing")
     check_configuration_file("validate", kwargs)
@@ -921,9 +930,17 @@ def secrets(config, **kwargs):
     "-di",
     "--docker-image",
     default="from-yml",
-    help="The docker image to check package on. Possible values: 'native:maintenance', 'native:ga', 'native:dev',"
+    help="The docker image to check package on. Can be a comma separated list of Possible values: 'native:maintenance', 'native:ga', 'native:dev',"
     " 'all', a specific docker image from Docker Hub (e.g devdemisto/python3:3.10.9.12345) or the default"
-    " 'from-yml'.",
+    " 'from-yml', 'native:target'. To run lint only on native supported content with a specific image,"
+    " use 'native:target' with --docker-image-target <specific-image>.",
+)
+@click.option(
+    "-dit",
+    "--docker-image-target",
+    default="",
+    help="The docker image to lint native supported content with. Should only be used with "
+    "--docker-image native:target. An error will be raised otherwise.",
 )
 @click.option(
     "-cdam",
@@ -985,6 +1002,7 @@ def lint(**kwargs):
         coverage_report=kwargs.get("coverage_report"),  # type: ignore[arg-type]
         docker_timeout=kwargs.get("docker_timeout"),  # type: ignore[arg-type]
         docker_image_flag=kwargs.get("docker_image"),  # type: ignore[arg-type]
+        docker_image_target=kwargs.get("docker_image_target"),  # type: ignore[arg-type]
         time_measurements_dir=kwargs.get("time_measurements_dir"),  # type: ignore[arg-type]
     )
 
@@ -997,7 +1015,7 @@ def lint(**kwargs):
     "--input",
     help="The .coverage file to analyze.",
     default=os.path.join("coverage_report", ".coverage"),
-    type=PathsParamType(exists=True, resolve_path=True),
+    type=PathsParamType(resolve_path=True),
 )
 @click.option(
     "--default-min-coverage",
@@ -1161,21 +1179,22 @@ def format(
     """
     from demisto_sdk.commands.format.format_module import format_manager
 
-    return format_manager(
-        str(input) if input else None,
-        str(output) if output else None,
-        from_version=from_version,
-        no_validate=no_validate,
-        update_docker=update_docker,
-        assume_yes=assume_yes,
-        verbose=verbose,
-        deprecate=deprecate,
-        use_git=use_git,
-        prev_ver=prev_ver,
-        include_untracked=include_untracked,
-        add_tests=add_tests,
-        id_set_path=id_set_path,
-    )
+    with ReadMeValidator.start_mdx_server():
+        return format_manager(
+            str(input) if input else None,
+            str(output) if output else None,
+            from_version=from_version,
+            no_validate=no_validate,
+            update_docker=update_docker,
+            assume_yes=assume_yes,
+            verbose=verbose,
+            deprecate=deprecate,
+            use_git=use_git,
+            prev_ver=prev_ver,
+            include_untracked=include_untracked,
+            add_tests=add_tests,
+            id_set_path=id_set_path,
+        )
 
 
 # ====================== upload ====================== #
@@ -3110,11 +3129,19 @@ def exit_from_program(result=0, **kwargs):
 app = typer.Typer(name="modeling-rules", hidden=True, no_args_is_help=True)
 app.command("test", no_args_is_help=True)(test_modeling_rule.test_modeling_rule)
 app.command("init-test-data", no_args_is_help=True)(init_test_data.init_test_data)
-
-
 typer_click_object = typer.main.get_command(app)
 main.add_command(typer_click_object, "modeling-rules")
 
+
+app_generate_modeling_rules = typer.Typer(
+    name="generate-modeling-rules", no_args_is_help=True
+)
+app_generate_modeling_rules.command("generate-modeling-rules", no_args_is_help=True)(
+    generate_modeling_rules.generate_modeling_rules
+)
+
+typer_click_object2 = typer.main.get_command(app_generate_modeling_rules)
+main.add_command(typer_click_object2, "generate-modeling-rules")
 
 if __name__ == "__main__":
     main()

@@ -132,7 +132,7 @@ class LintManager:
                 json_file_path = os.path.join(json_file_path, "lint_outputs.json")
         self.json_file_path = json_file_path
         self.linters_error_list: list = []
-        self._git = git
+        self._git_modified_files = git
 
     def _get_api_module_dependent_items(self) -> list:
         changed_api_modules = {
@@ -515,7 +515,7 @@ class LintManager:
                         docker_image_flag=docker_image_flag,
                         docker_image_target=docker_image_target,
                         all_packs=self._all_packs,
-                        use_git=self._git,
+                        use_git=self._git_modified_files,
                     )
                     results.append(
                         executor.submit(

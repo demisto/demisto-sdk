@@ -4861,6 +4861,14 @@ def assert_successful_mdx_call():
     ),
 )
 def test_depth_from_packs(path: str, expected_depth: int):
+    """
+    Given
+            A file path
+    When
+            Calling depth_from_packs
+    Then
+            Make sure the correct depth is returned
+    """
     assert depth_from_packs(Path(path)) == expected_depth
 
 
@@ -4868,11 +4876,22 @@ def test_depth_from_packs(path: str, expected_depth: int):
     "invalid_path",
     (
         "packs",
+        "packs/myPack",
         "PACKS",
+        "PACKS/myPack",
         "myPack/Integrations/myIntegration/myIntegration.yml",
         "not_Packs",
     ),
 )
 def test_depth_from_packs__invalid(invalid_path: str):
+    """
+    Given
+            A file path, which is not under the Packs folder
+    When
+            Calling depth_from_packs
+    Then
+            Make sure an appropriate exception is raised
+    """
+
     with pytest.raises(ValueError):
         depth_from_packs(Path(invalid_path))

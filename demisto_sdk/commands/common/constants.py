@@ -741,6 +741,7 @@ PACK_METADATA_AUTHOR = "author"
 PACK_METADATA_URL = "url"
 PACK_METADATA_EMAIL = "email"
 PACK_METADATA_CATEGORIES = "categories"
+PACK_METADATA_MODULES = "modules"
 PACK_METADATA_TAGS = "tags"
 PACK_METADATA_CREATED = "created"
 PACK_METADATA_CERTIFICATION = "certification"
@@ -1340,6 +1341,7 @@ XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = "https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions"
 EXCLUDED_DISPLAY_NAME_WORDS = ["partner", "community"]
 MARKETPLACES = ["xsoar", "marketplacev2"]
+MODULES = ["compliance"]
 
 # From Version constants
 FILETYPE_TO_DEFAULT_FROMVERSION = {

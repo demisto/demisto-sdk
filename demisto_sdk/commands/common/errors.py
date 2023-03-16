@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER,
     FILETYPE_TO_DEFAULT_FROMVERSION,
     INTEGRATION_CATEGORIES,
+    MODULES,
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
     PACK_ROOT_FILE_NAMES,
@@ -1221,6 +1222,16 @@ ERROR_CODE = {
     },
     "categories_field_does_not_match_standard": {
         "code": "PA134",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "pack_metadata_invalid_modules": {
+        "code": "PA135",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "pack_metadata_modules_for_non_xsiam": {
+        "code": "PA136",
         "ui_applicable": False,
         "related_field": "",
     },
@@ -3454,6 +3465,16 @@ class Errors:
     @error_code_decorator
     def is_wrong_usage_of_usecase_tag():
         return "pack_metadata.json file contains the Use Case tag, without having any PB, incidents Types or Layouts"
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_invalid_modules():
+        return f"Module field should include some of the following options: {', '.join(MODULES)}."
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_modules_for_non_xsiam():
+        return "Module field can be added only for XSIAM packs (marketplacev2)."
 
     @staticmethod
     @error_code_decorator

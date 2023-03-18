@@ -44,7 +44,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
     DOC_FILES_DIR,
-    BINARY_FILES_DIR,
+    # BINARY_FILES_DIR,
     ENV_DEMISTO_SDK_MARKETPLACE,
     ID_IN_COMMONFIELDS,
     ID_IN_ROOT,
@@ -1593,8 +1593,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.suffix == ".png" and DOC_FILES_DIR in path.parts:
         return FileType.DOC_IMAGE
 
-    elif path.suffix == ".png" and BINARY_FILES_DIR in path.parts:
-        return FileType.BINARY_FILE
+    # elif path.suffix == ".png" and BINARY_FILES_DIR in path.parts:
+    #     return FileType.BINARY_FILE
 
     elif path.suffix == ".ps1":
         return FileType.POWERSHELL_FILE
@@ -1648,8 +1648,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
     elif path.parent.name == DOC_FILES_DIR:
         return FileType.DOC_FILE
 
-    elif path.parent.name == BINARY_FILES_DIR:
-        return FileType.BINARY_FILE
+    # elif path.parent.name == BINARY_FILES_DIR:
+    #     return FileType.BINARY_FILE
 
     elif path.name.lower() == "pipfile":
         return FileType.PIPFILE

@@ -33,7 +33,7 @@ TOOLS_DIR = "Tools"
 RELEASE_NOTES_DIR = "ReleaseNotes"
 TESTS_DIR = "Tests"
 DOC_FILES_DIR = "doc_files"
-BINARY_FILES_DIR = "binary_files"
+# BINARY_FILES_DIR = "binary_files"
 DOCUMENTATION_DIR = "Documentation"
 JOBS_DIR = "Jobs"
 PRE_PROCESS_RULES_DIR = "PreProcessRules"
@@ -162,7 +162,7 @@ class FileType(str, Enum):
     PACK_IGNORE = ".pack-ignore"
     SECRET_IGNORE = ".secrets-ignore"
     DOC_FILE = "doc_files"
-    BINARY_FILE = 'binary_files'
+    # BINARY_FILE = 'binary_files'
     XDRC_TEMPLATE = "xdrctemplate"
     XDRC_TEMPLATE_YML = "xdrctemplateyml"
     INDICATOR_TYPE = "indicatortype"
@@ -1091,7 +1091,7 @@ TESTS_AND_DOC_DIRECTORIES = [
     "data_test",
     "tests_data",
     "doc_files",
-    "binary_files",
+    # "binary_files",
     "doc_imgs",
     "TestData",
 ]
@@ -1106,7 +1106,7 @@ VALIDATION_USING_GIT_IGNORABLE_DATA = (
     "data_test",
     "tests_data",
     "doc_files",
-    "binary_files",
+    # "binary_files",
     "doc_imgs",
     ".secrets-ignore",
     ".pack-ignore",

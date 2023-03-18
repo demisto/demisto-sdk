@@ -3545,7 +3545,7 @@ class Errors:
     def pack_readme_image_absolute_path_error(path):
         return (
             f"Detected the following image absolute path: {path}.\nAbsolute paths are not supported in pack README files. See "
-            f"https://xsoar.pan.dev/docs/integrations/integration-docs#images for further info on how to "
+            f"https://xsoar.pan.dev/docs/documentation/pack-docs#images for further info on how to "
             f"add images to pack README files."
         )
 

@@ -98,7 +98,9 @@ def logging_setup(
 
     console_handler = logging.StreamHandler()
     console_handler.set_name("console-handler")
-    console_handler.setLevel(console_log_threshold)
+    console_handler.setLevel(
+        console_log_threshold if console_log_threshold else logging.INFO
+    )
 
     class ColorConsoleFormatter(logging.Formatter):
         def __init__(
@@ -133,7 +135,7 @@ def logging_setup(
         backupCount=10,
     )
     file_handler.set_name("file-handler")
-    file_handler.setLevel(file_log_threshold)
+    file_handler.setLevel(file_log_threshold if file_log_threshold else logging.DEBUG)
 
     class NoColorFileFormatter(logging.Formatter):
         def __init__(

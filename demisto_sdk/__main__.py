@@ -141,11 +141,13 @@ pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -244,11 +246,13 @@ def main(ctx, config, version, release_notes, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -326,11 +330,13 @@ def split(ctx, config, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -416,11 +422,13 @@ def extract_code(ctx, config, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -503,11 +511,13 @@ main.add_command(prepare_content, name="unify")
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -709,11 +719,13 @@ def zip_packs(ctx, **kwargs) -> int:
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -891,11 +903,13 @@ def validate(ctx, config, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -961,11 +975,13 @@ def create_content_artifacts(ctx, **kwargs) -> int:
 @click.option("--prev-ver", help="The branch against which to run secrets validation.")
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -1102,11 +1118,13 @@ def secrets(ctx, config, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -1218,11 +1236,13 @@ def lint(ctx, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -1341,11 +1361,13 @@ def coverage_analyze(ctx, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -1464,11 +1486,13 @@ def format(
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -1565,11 +1589,13 @@ def upload(ctx, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -1644,11 +1670,13 @@ def download(ctx, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -1718,11 +1746,13 @@ def xsoar_config_file_update(ctx, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -1777,11 +1807,13 @@ def run(ctx, **kwargs):
 @click.option("--insecure", help="Skip certificate validation.", is_flag=True)
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -1842,11 +1874,13 @@ def run_playbook(ctx, **kwargs):
 @click.option("--insecure", help="Skip certificate validation.", is_flag=True)
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -1933,11 +1967,13 @@ def run_test_playbook(ctx, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -2031,11 +2067,13 @@ def generate_outputs(ctx, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -2126,11 +2164,13 @@ def generate_test_playbook(ctx, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -2232,11 +2272,13 @@ def init(ctx, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -2414,11 +2456,13 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -2470,11 +2514,13 @@ def create_id_set(ctx, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -2569,11 +2615,13 @@ def merge_id_sets(ctx, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -2694,11 +2742,13 @@ def update_release_notes(ctx, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -2790,11 +2840,13 @@ def find_dependencies(ctx, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -2880,11 +2932,13 @@ def postman_codegen(
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -2968,11 +3022,13 @@ def generate_integration(ctx, input: IO, output: Path, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -3146,11 +3202,13 @@ def openapi_codegen(ctx, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -3249,11 +3307,13 @@ def test_content(ctx, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -3318,11 +3378,13 @@ def doc_review(ctx, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -3382,11 +3444,13 @@ def integration_diff(ctx, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -3433,11 +3497,13 @@ def generate_yml_from_python(ctx, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -3508,11 +3574,13 @@ def convert(ctx, config, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -3564,11 +3632,13 @@ def generate_unit_tests(
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -3624,11 +3694,13 @@ def error_code(ctx, config, **kwargs):
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",
@@ -3721,11 +3793,13 @@ def create_content_graph(
 )
 @click.option(
     "--console_log_threshold",
-    help="Minimum logging threshold for the console logger.",
+    help="Minimum logging threshold for the console logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--file_log_threshold",
-    help="Minimum logging threshold for the file logger.",
+    help="Minimum logging threshold for the file logger."
+    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
 )
 @click.option(
     "--log_file_path",

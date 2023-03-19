@@ -1,5 +1,6 @@
 # Site packages
 import copy
+import functools
 import logging
 import os
 import sys
@@ -117,6 +118,44 @@ class DemistoSDK:
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 
 
+def logging_setup_decorator(func, *args, **kwargs):
+    def get_context_arg(args):
+        for arg in args:
+            if type(arg) == click.core.Context:
+                return arg
+        print(
+            "Error: Cannot find the Context arg. Is the command configured correctly?"
+        )
+        return None
+
+    @click.option(
+        "--console_log_threshold",
+        help="Minimum logging threshold for the console logger."
+        " Pssible values: DEBUG, INFO, WARNING, ERROR.",
+    )
+    @click.option(
+        "--file_log_threshold",
+        help="Minimum logging threshold for the file logger."
+        " Pssible values: DEBUG, INFO, WARNING, ERROR.",
+    )
+    @click.option(
+        "--log_file_path",
+        help="Path to the log file. Default: Content root path.",
+    )
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        logging_setup(
+            console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
+            file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
+            log_file_path=kwargs.get("log_file_path") or None,
+        )
+
+        handle_deprecated_args(get_context_arg(args).args)
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
 @click.group(
     invoke_without_command=True,
     no_args_is_help=True,
@@ -138,20 +177,6 @@ pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
     is_flag=True,
     default=False,
     show_default=True,
-)
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
 )
 @pass_config
 @click.pass_context
@@ -244,32 +269,13 @@ def main(ctx, config, version, release_notes, **kwargs):
     is_flag=True,
     show_default=True,
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @pass_config
 @click.pass_context
+@logging_setup_decorator
 def split(ctx, config, **kwargs):
     """Split the code, image and description files from a Demisto integration or script yaml file
     to multiple files(To a package format - https://demisto.pan.dev/docs/package-dir).
     """
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
 
     check_configuration_file("split", kwargs)
@@ -328,30 +334,11 @@ def split(ctx, config, **kwargs):
     is_flag=True,
     show_default=True,
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @pass_config
 @click.pass_context
+@logging_setup_decorator
 def extract_code(ctx, config, **kwargs):
     """Extract code from a Demisto integration or script yaml file."""
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
     check_configuration_file("extract-code", kwargs)
@@ -420,31 +407,12 @@ def extract_code(ctx, config, **kwargs):
     default="xsoar",
     type=click.Choice(["xsoar", "marketplacev2", "v2"]),
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def prepare_content(ctx, **kwargs):
     """
     This command is used to prepare the content to be used in the platform.
     """
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     if click.get_current_context().info_name == "unify":
         kwargs["unify_only"] = True
 
@@ -509,29 +477,10 @@ main.add_command(prepare_content, name="unify")
 @click.option(
     "--zip-all", is_flag=True, help="Zip all the packs in one zip file.", default=False
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def zip_packs(ctx, **kwargs) -> int:
     """Generating zipped packs that are ready to be uploaded to Cortex XSOAR machine."""
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.upload.uploader import Uploader
     from demisto_sdk.commands.zip_packs.packs_zipper import (
         EX_FAIL,
@@ -717,31 +666,11 @@ def zip_packs(ctx, **kwargs) -> int:
     help="Run specific validations by stating the error codes.",
     is_flag=False,
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @pass_config
 @click.pass_context
+@logging_setup_decorator
 def validate(ctx, config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
-
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
     run_with_mp = not kwargs.pop("no_multiprocessing")
@@ -901,21 +830,8 @@ def validate(ctx, config, **kwargs):
     default=False,
     hidden=True,
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def create_content_artifacts(ctx, **kwargs) -> int:
     """Generating the following artifacts:
     1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)
@@ -924,12 +840,6 @@ def create_content_artifacts(ctx, **kwargs) -> int:
     4. content_all - Contains all from content_new and content_test.
     5. uploadable_packs - Contains zipped packs that are ready to be uploaded to Cortex XSOAR machine.
     """
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
         ArtifactsManager,
     )
@@ -973,32 +883,13 @@ def create_content_artifacts(ctx, **kwargs) -> int:
     help='Full path to whitelist file, file name should be "secrets_white_list.json"',
 )
 @click.option("--prev-ver", help="The branch against which to run secrets validation.")
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @pass_config
 @click.pass_context
+@logging_setup_decorator
 def secrets(ctx, config, **kwargs):
     """Run Secrets validator to catch sensitive data before exposing your code to public repository.
     Attach path to whitelist to allow manual whitelists.
     """
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
     check_configuration_file("secrets", kwargs)
@@ -1116,21 +1007,8 @@ def secrets(ctx, config, **kwargs):
     help="Specify directory for the time measurements report file",
     type=PathsParamType(),
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def lint(ctx, **kwargs):
     """Lint command will perform:
     1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -1139,12 +1017,6 @@ def lint(ctx, **kwargs):
     Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
     If no additional flags specifying the packs are given, will lint only changed files.
     """
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.lint.lint_manager import LintManager
 
     check_configuration_file("lint", kwargs)
@@ -1233,20 +1105,6 @@ def lint(ctx, **kwargs):
     help="URL of the previous coverage report.",
     default="https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json",
     type=str,
-)
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def coverage_analyze(ctx, **kwargs):
@@ -1359,21 +1217,8 @@ def coverage_analyze(ctx, **kwargs):
     help="The path of the id_set json file.",
     type=click.Path(exists=True, resolve_path=True),
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def format(
     ctx,
     input: Path,
@@ -1394,12 +1239,6 @@ def format(
     incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file/genericfield/generictype/
     genericmodule/genericdefinition.
     """
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.format.format_module import format_manager
 
     with ReadMeValidator.start_mdx_server():
@@ -1484,33 +1323,14 @@ def format(
     is_flag=True,
     help="If true will skip override confirmation prompt while uploading packs.",
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def upload(ctx, **kwargs):
     """Upload integration or pack to Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     * Note: Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up. *
     """
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     return upload_content_entity(**kwargs)
 
 
@@ -1587,32 +1407,13 @@ def upload(ctx, **kwargs):
         case_sensitive=False,
     ),
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def download(ctx, **kwargs):
     """Download custom content from Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     """
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.download.downloader import Downloader
 
     check_configuration_file("download", kwargs)
@@ -1668,32 +1469,13 @@ def download(ctx, **kwargs):
     help="XSOAR Configuration File path, the default value is in the repo level",
     is_flag=False,
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def xsoar_config_file_update(ctx, **kwargs):
     """Handle your XSOAR Configuration File.
     Add automatically all the installed MarketPlace Packs to the marketplace_packs section in XSOAR Configuration File.
     Add a Pack to both marketplace_packs and custom_packs sections in the Configuration File.
     """
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import (
         XSOARConfigFileUpdater,
     )
@@ -1744,32 +1526,13 @@ def xsoar_config_file_update(ctx, **kwargs):
     " `json-to-outputs`",
     is_flag=True,
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def run(ctx, **kwargs):
     """Run integration command on remote Demisto instance in the playground.
     DEMISTO_BASE_URL environment variable should contain the Demisto base URL.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     """
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.run_cmd.runner import Runner
 
     check_configuration_file("run", kwargs)
@@ -1805,33 +1568,14 @@ def run(ctx, **kwargs):
     help="Timeout for the command. The playbook will continue to run in Demisto",
 )
 @click.option("--insecure", help="Skip certificate validation.", is_flag=True)
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def run_playbook(ctx, **kwargs):
     """Run a playbook in Demisto.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     Example: DEMISTO_API_KEY=<API KEY> demisto-sdk run-playbook -p 'p_name' -u
     'https://demisto.local'.
     """
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 
     check_configuration_file("run-playbook", kwargs)
@@ -1872,29 +1616,10 @@ def run_playbook(ctx, **kwargs):
     help="Timeout for the command. The test-playbook will continue to run in your instance",
 )
 @click.option("--insecure", help="Skip certificate validation.", is_flag=True)
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def run_test_playbook(ctx, **kwargs):
     """Run a test playbooks in your instance."""
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.run_test_playbook.test_playbook_runner import (
         TestPlaybookRunner,
     )
@@ -1965,33 +1690,14 @@ def run_test_playbook(ctx, **kwargs):
     help="Skip certificate validation to run the commands in order to generate the docs.",
     is_flag=True,
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def generate_outputs(ctx, **kwargs):
     """Demisto integrations/scripts have a YAML file that defines them.
     Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the
     file/UI/PyCharm. This script auto generates the YAML for a command from the JSON result of the relevant API call
     In addition you can supply examples files and generate the context description directly in the YML from those examples.
     """
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.generate_outputs.generate_outputs import (
         run_generate_outputs,
     )
@@ -2065,29 +1771,10 @@ def generate_outputs(ctx, **kwargs):
     help="Whether to upload the test playbook after the generation.",
     is_flag=True,
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def generate_test_playbook(ctx, **kwargs):
     """Generate test playbook from integration or script"""
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import (
         PlaybookTestsGenerator,
     )
@@ -2162,32 +1849,13 @@ def generate_test_playbook(ctx, **kwargs):
     is_flag=True,
     help="Copy the CommonServerPython. Relevant for initialization of Scripts and Integrations within a Pack.",
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def init(ctx, **kwargs):
     """Initialize a new Pack, Integration or Script.
     If the script/integration flags are not present, we will create a pack with the given name.
     Otherwise when using the flags we will generate a script/integration based on your selection.
     """
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.init.initiator import Initiator
 
     check_configuration_file("init", kwargs)
@@ -2270,30 +1938,10 @@ def init(ctx, **kwargs):
     "--custom-image-path",
     help="A custom path to a playbook image. If not stated, a default link will be added to the file.",
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def generate_docs(ctx, **kwargs):
     """Generate documentation for integration, playbook or script from yaml file."""
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
-
     check_configuration_file("generate-docs", kwargs)
     input_path_str: str = kwargs.get("input", "")
     if not (input_path := Path(input_path_str)).exists():
@@ -2454,29 +2102,10 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
     "each pack. Default is all packs exists in the content repository.",
     default="",
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def create_id_set(ctx, **kwargs):
     """Create the content dependency tree by ids."""
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
     from demisto_sdk.commands.find_dependencies.find_dependencies import (
         remove_dependencies_from_id_set,
@@ -2512,29 +2141,10 @@ def create_id_set(ctx, **kwargs):
     help="Fails the process if any duplicates are found.",
     is_flag=True,
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def merge_id_sets(ctx, **kwargs):
     """Merge two id_sets"""
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
 
     check_configuration_file("merge-id-sets", kwargs)
@@ -2613,29 +2223,10 @@ def merge_id_sets(ctx, **kwargs):
     help="If new version contains breaking changes.",
     is_flag=True,
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def update_release_notes(ctx, **kwargs):
     """Auto-increment pack version and generate release notes template."""
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.update_release_notes.update_rn_manager import (
         UpdateReleaseNotesManager,
     )
@@ -2740,29 +2331,10 @@ def update_release_notes(ctx, **kwargs):
     "dependency of the searched pack ",
     required=False,
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def find_dependencies(ctx, **kwargs):
     """Find pack dependencies and update pack metadata."""
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.find_dependencies.find_dependencies import (
         PackDependencies,
     )
@@ -2837,20 +2409,6 @@ def find_dependencies(ctx, **kwargs):
     "--package",
     help="Generated integration will be split to package format instead of a yml file.",
     is_flag=True,
-)
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
 )
 @pass_config
 @click.pass_context
@@ -2930,31 +2488,12 @@ def postman_codegen(
     type=click.Path(dir_okay=True, exists=True),
     default=Path("."),
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def generate_integration(ctx, input: IO, output: Path, **kwargs):
     """Generates a Cortex XSOAR integration from a config json file,
     which is generated by commands like postman-codegen
     """
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.generate_integration.code_generator import (
         IntegrationGeneratorConfig,
     )
@@ -3020,32 +2559,13 @@ def generate_integration(ctx, input: IO, output: Path, **kwargs):
     help="Use the automatically generated integration configuration"
     " (Skip the second run).",
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def openapi_codegen(ctx, **kwargs):
     """Generates a Cortex XSOAR integration given an OpenAPI specification file.
     In the first run of the command, an integration configuration file is created, which can be modified.
     Then, the command is run a second time with the integration configuration to generate the actual integration files.
     """
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.openapi_codegen.openapi_codegen import OpenAPIIntegration
 
     check_configuration_file("openapi-codegen", kwargs)
@@ -3200,21 +2720,8 @@ def openapi_codegen(ctx, **kwargs):
 @click.option(
     "--xsiam-servers-api-keys-path", help="Path to file with XSIAM Servers api keys."
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def test_content(ctx, **kwargs):
     """Configure instances for the integration needed to run tests_to_run tests.
     Run test module on each integration.
@@ -3222,12 +2729,6 @@ def test_content(ctx, **kwargs):
     run test playbook on the created investigation using mock if possible.
     Collect the result and give a report.
     """
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.test_content.execute_test_content import (
         execute_test_content,
     )
@@ -3305,29 +2806,10 @@ def test_content(ctx, **kwargs):
     "content directory.",
     default=False,
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def doc_review(ctx, **kwargs):
     """Check the spelling in .md and .yml files as well as review release notes"""
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 
     doc_reviewer = DocReviewer(
@@ -3376,31 +2858,12 @@ def doc_review(ctx, **kwargs):
     is_flag=True,
     help="Whether output should be in the format for the version differences section in README.",
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def integration_diff(ctx, **kwargs):
     """
     Checks for differences between two versions of an integration, and verified that the new version covered the old version.
     """
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.integration_diff.integration_diff_detector import (
         IntegrationDiffDetector,
     )
@@ -3442,31 +2905,12 @@ def integration_diff(ctx, **kwargs):
     help="Override existing yml file.",
     required=False,
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def generate_yml_from_python(ctx, **kwargs):
     """
     Checks for differences between two versions of an integration, and verified that the new version covered the old version.
     """
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.generate_yml_from_python.generate_yml import YMLGenerator
 
     yml_generator = YMLGenerator(
@@ -3495,33 +2939,14 @@ def generate_yml_from_python(ctx, **kwargs):
 @click.option(
     "-v", "--version", required=True, help="Version the input to be compatible with."
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @pass_config
 @click.pass_context
+@logging_setup_decorator
 def convert(ctx, config, **kwargs):
     """
     Convert the content of the pack/directory in the given input to be compatible with the version given by
     version command.
     """
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.convert.convert_manager import ConvertManager
 
     check_configuration_file("convert", kwargs)
@@ -3572,21 +2997,8 @@ def convert(ctx, config, **kwargs):
     help="Append generated test file to the existing <integration_name>_test.py. Else, overwriting existing UT",
     is_flag=True,
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def generate_unit_tests(
     ctx,
     input_path: str = "",
@@ -3602,13 +3014,6 @@ def generate_unit_tests(
     This command is used to generate unit tests automatically from an  integration python code.
     Also supports generating unit tests for specific commands.
     """
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
-
     logging.getLogger("PYSCA").propagate = False
     from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import (
         run_generate_unit_tests,
@@ -3630,33 +3035,13 @@ def generate_unit_tests(
     required=True,
     help="The error code to search for.",
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @pass_config
 @click.pass_context
+@logging_setup_decorator
 def error_code(ctx, config, **kwargs):
     from demisto_sdk.commands.error_code_info.error_code_info import (
         generate_error_code_information,
     )
-
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
 
     check_configuration_file("error-code-info", kwargs)
     sys.path.append(config.configuration.env_dir)
@@ -3692,21 +3077,8 @@ def error_code(ctx, config, **kwargs):
     help="Whether or not to include dependencies.",
     default=False,
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def create_content_graph(
     ctx,
     marketplace: str = MarketplaceVersions.XSOAR,
@@ -3714,12 +3086,6 @@ def create_content_graph(
     output_path: Path = None,
     **kwargs,
 ):
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.content_graph.content_graph_commands import (
         create_content_graph as create_content_graph_command,
     )
@@ -3791,21 +3157,8 @@ def create_content_graph(
     default=None,
     help="Output folder to place the zip file of the graph exported CSVs files",
 )
-@click.option(
-    "--console_log_threshold",
-    help="Minimum logging threshold for the console logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--file_log_threshold",
-    help="Minimum logging threshold for the file logger."
-    " Pssible values: DEBUG, INFO, WARNING, ERROR.",
-)
-@click.option(
-    "--log_file_path",
-    help="Path to the log file. Default: Content root path.",
-)
 @click.pass_context
+@logging_setup_decorator
 def update_content_graph(
     ctx,
     use_git: bool = False,
@@ -3817,12 +3170,6 @@ def update_content_graph(
     output_path: Path = None,
     **kwargs,
 ):
-    logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
-    handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.content_graph.content_graph_commands import (
         update_content_graph as update_content_graph_command,
     )

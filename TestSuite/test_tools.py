@@ -45,10 +45,7 @@ def str_in_call_args_list(call_args_list, required_str):
         required_str: String to search in any of the call_args_list
     :return: True is required_str was found, False otherwise
     """
-    for current_call in call_args_list:
-        if current_call and isinstance(current_call[0], tuple):
-            if required_str in current_call[0][0]:
-                return True
+    return any((isinstance(current_call[0], tuple) and required_str in current_call[0][0] for current_call in filter(None, call_args_list))
     print(f"Could not find {required_str=}")
     return False
 

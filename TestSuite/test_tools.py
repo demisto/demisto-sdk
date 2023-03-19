@@ -62,8 +62,4 @@ def count_str_in_call_args_list(call_args_list, search_str):
         search_str: String to search in any of the call_args_list
     :return: The number of times search_str appears in any of the call_args in call_args_list
     """
-    search_str_count = 0
-    for current_call in call_args_list:
-        if type(current_call[0]) == tuple and search_str in current_call[0][0]:
-            search_str_count += 1
-    return search_str_count
+    return sum(1 for call in filter(None, call_args_list) if call[0] and isinstance(call[0], tuple) and call[0][0] and search_str in call[0][0])

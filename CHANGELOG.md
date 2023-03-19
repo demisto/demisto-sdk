@@ -7,6 +7,7 @@
 * Fixed an issue where running **validate** failed with **is_valid_integration_file_path_in_folder** on integrations that use API modules.
 * Fixed an issue where **validate** failed with **is_valid_integration_file_path_in_folder** on integrations that use the `MSAPIModule`.
 * Added **validate** check for the `modules` field in `pack_metadata.json` files.
+* Changed **lint** to skip deprecated content, unless when using the `-i` flag.
 
 ## 1.10.6
 * Fixed an issue where running **validate** with the `-g` flag would skip some validations for old-formatted (unified) integration/script files.

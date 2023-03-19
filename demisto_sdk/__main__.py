@@ -155,8 +155,8 @@ pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 @click.pass_context
 def main(ctx, config, version, release_notes, **kwargs):
     logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
+        console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
+        file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
         log_file_path=kwargs.get("log_file_path"),
     )
     global logger

@@ -193,7 +193,7 @@ def main(ctx, config, version, release_notes, **kwargs):
                 rn_entries = get_release_note_entries(__version__)
 
                 if not rn_entries:
-                    logger.info(
+                    logger.warning(
                         "\n[yellow]Could not get the release notes for this version.[/yellow]"
                     )
                 else:

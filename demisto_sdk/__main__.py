@@ -151,7 +151,7 @@ pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @pass_config
 @click.pass_context
@@ -256,7 +256,7 @@ def main(ctx, config, version, release_notes, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @pass_config
 @click.pass_context
@@ -340,7 +340,7 @@ def split(ctx, config, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @pass_config
 @click.pass_context
@@ -432,7 +432,7 @@ def extract_code(ctx, config, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def prepare_content(ctx, **kwargs):
@@ -521,7 +521,7 @@ main.add_command(prepare_content, name="unify")
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def zip_packs(ctx, **kwargs) -> int:
@@ -729,7 +729,7 @@ def zip_packs(ctx, **kwargs) -> int:
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @pass_config
 @click.pass_context
@@ -913,7 +913,7 @@ def validate(ctx, config, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def create_content_artifacts(ctx, **kwargs) -> int:
@@ -985,7 +985,7 @@ def create_content_artifacts(ctx, **kwargs) -> int:
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @pass_config
 @click.pass_context
@@ -1128,7 +1128,7 @@ def secrets(ctx, config, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def lint(ctx, **kwargs):
@@ -1246,7 +1246,7 @@ def lint(ctx, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def coverage_analyze(ctx, **kwargs):
@@ -1371,7 +1371,7 @@ def coverage_analyze(ctx, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def format(
@@ -1496,7 +1496,7 @@ def format(
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def upload(ctx, **kwargs):
@@ -1599,7 +1599,7 @@ def upload(ctx, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def download(ctx, **kwargs):
@@ -1680,7 +1680,7 @@ def download(ctx, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def xsoar_config_file_update(ctx, **kwargs):
@@ -1756,7 +1756,7 @@ def xsoar_config_file_update(ctx, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def run(ctx, **kwargs):
@@ -1817,7 +1817,7 @@ def run(ctx, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def run_playbook(ctx, **kwargs):
@@ -1884,7 +1884,7 @@ def run_playbook(ctx, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def run_test_playbook(ctx, **kwargs):
@@ -1977,7 +1977,7 @@ def run_test_playbook(ctx, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def generate_outputs(ctx, **kwargs):
@@ -2077,7 +2077,7 @@ def generate_outputs(ctx, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def generate_test_playbook(ctx, **kwargs):
@@ -2174,7 +2174,7 @@ def generate_test_playbook(ctx, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def init(ctx, **kwargs):
@@ -2282,7 +2282,7 @@ def init(ctx, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def generate_docs(ctx, **kwargs):
@@ -2466,7 +2466,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def create_id_set(ctx, **kwargs):
@@ -2524,7 +2524,7 @@ def create_id_set(ctx, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def merge_id_sets(ctx, **kwargs):
@@ -2625,7 +2625,7 @@ def merge_id_sets(ctx, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def update_release_notes(ctx, **kwargs):
@@ -2752,7 +2752,7 @@ def update_release_notes(ctx, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def find_dependencies(ctx, **kwargs):
@@ -2850,7 +2850,7 @@ def find_dependencies(ctx, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @pass_config
 @click.pass_context
@@ -2942,7 +2942,7 @@ def postman_codegen(
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def generate_integration(ctx, input: IO, output: Path, **kwargs):
@@ -3032,7 +3032,7 @@ def generate_integration(ctx, input: IO, output: Path, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def openapi_codegen(ctx, **kwargs):
@@ -3212,7 +3212,7 @@ def openapi_codegen(ctx, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def test_content(ctx, **kwargs):
@@ -3317,7 +3317,7 @@ def test_content(ctx, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def doc_review(ctx, **kwargs):
@@ -3388,7 +3388,7 @@ def doc_review(ctx, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def integration_diff(ctx, **kwargs):
@@ -3454,7 +3454,7 @@ def integration_diff(ctx, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def generate_yml_from_python(ctx, **kwargs):
@@ -3507,7 +3507,7 @@ def generate_yml_from_python(ctx, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @pass_config
 @click.pass_context
@@ -3584,7 +3584,7 @@ def convert(ctx, config, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def generate_unit_tests(
@@ -3642,7 +3642,7 @@ def generate_unit_tests(
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @pass_config
 @click.pass_context
@@ -3704,7 +3704,7 @@ def error_code(ctx, config, **kwargs):
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def create_content_graph(
@@ -3803,7 +3803,7 @@ def create_content_graph(
 )
 @click.option(
     "--log_file_path",
-    help="Path to the log file. Default: ./demisto_sdk_debug.log.",
+    help="Path to the log file. Default: Content root path.",
 )
 @click.pass_context
 def update_content_graph(

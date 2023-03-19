@@ -38,7 +38,9 @@ class ChangeCWD:
         os.chdir(self.current)
 
 
-def str_in_call_args_list(call_args_list: List[Tuple[Tuple]], required_str: str):
+def str_in_call_args_list(
+    call_args_list: List[Tuple[Tuple[str], Tuple[str], Tuple[str]]], required_str: str
+):
     """
     Checks whether required_str is in any of the call_args in call_args_list
     Args:
@@ -55,7 +57,9 @@ def str_in_call_args_list(call_args_list: List[Tuple[Tuple]], required_str: str)
     return ret_value
 
 
-def count_str_in_call_args_list(call_args_list: List[Tuple[Tuple]], search_str: str):
+def count_str_in_call_args_list(
+    call_args_list: List[Tuple[Tuple[str], Tuple[str], Tuple[str]]], search_str: str
+):
     """
     Countes the number of times search_str appears in any of the call_args in call_args_list.
     Several appearances in a single call_args_list counts as 1.

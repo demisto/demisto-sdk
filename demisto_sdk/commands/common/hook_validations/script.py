@@ -47,6 +47,7 @@ class ScriptValidator(ContentEntityValidator):
         )
         self.validate_all = validate_all
         self.deprecation_validator = deprecation_validator
+        self.validate_unit_test_exists(),
 
     @error_codes("BA100")
     def is_valid_version(self) -> bool:

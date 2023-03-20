@@ -631,3 +631,26 @@ class ContentEntityValidator(BaseValidator):
             return False
 
         return True
+
+    @error_codes("BA124")
+    def validate_unit_test_exists(self) -> bool:
+        """
+        Validates if a Python file has an unittest.
+
+        Return:
+           True if the unittest file exits False with an error otherwise
+
+        """
+        if self.file_path.endswith(".py"):
+            test_file_path = self.file_path.split('.')[0]
+            test_file_path = f'{test_file_path}_test.py'
+            if not os.path.exists(test_file_path):
+                error_message, error_code = Errors.missing_unit_test_file(self.file_path)
+                if self.handle_error(
+                        error_message,
+                        error_code,
+                        file_path=self.file_path,
+                        suggested_fix=Errors.suggest_fix_missing_unittest(self.file_path),
+                ):
+                    return False
+        return True

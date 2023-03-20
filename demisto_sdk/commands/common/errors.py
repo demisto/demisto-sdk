@@ -216,6 +216,11 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "missing_unittest_file": {
+        "code": "BA124",
+        "ui_applicable": False,
+        "related_field": "",
+    },
     # BC - Backward Compatible
     "breaking_backwards_subtype": {
         "code": "BC100",
@@ -1824,6 +1829,10 @@ class Errors:
     @staticmethod
     def suggest_fix(file_path: str, *args: Any, cmd: str = "format") -> str:
         return f'To fix the problem, try running `demisto-sdk {cmd} -i {file_path} {" ".join(args)}`'
+
+    @staticmethod
+    def suggest_fix_missing_unittest(file_path: str) -> str:
+        return f'To fix the problem, add an unittest file for {file_path}'
 
     @staticmethod
     @error_code_decorator
@@ -4249,6 +4258,11 @@ class Errors:
     @error_code_decorator
     def missing_readme_file(location: FileType):
         return f"{location.name} is missing a README file"
+
+    @staticmethod
+    @error_code_decorator
+    def missing_unit_test_file(path: str):
+        return f"{path} is missing a unittest file"
 
     @staticmethod
     @error_code_decorator

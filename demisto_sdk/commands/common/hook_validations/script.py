@@ -47,7 +47,6 @@ class ScriptValidator(ContentEntityValidator):
         )
         self.validate_all = validate_all
         self.deprecation_validator = deprecation_validator
-        self.validate_unit_test_exists(),
 
     @error_codes("BA100")
     def is_valid_version(self) -> bool:
@@ -107,6 +106,7 @@ class ScriptValidator(ContentEntityValidator):
                 self.runas_is_not_dbtrole(),
                 self.is_script_deprecated_and_used(),
                 self.is_nativeimage_key_does_not_exist_in_yml(),
+                self.validate_unit_test_exists(),
             ]
         )
         # check only on added files

@@ -3,6 +3,7 @@ import os
 import re
 from abc import abstractmethod
 from distutils.version import LooseVersion
+from pathlib import Path
 from typing import Optional
 
 import click
@@ -635,16 +636,16 @@ class ContentEntityValidator(BaseValidator):
     @error_codes("BA124")
     def validate_unit_test_exists(self) -> bool:
         """
-        Validates if a Python file has an unittest.
+        Validates Python files have a matching unit-test file next to them.
 
         Return:
            True if the unittest file exits False with an error otherwise
 
         """
-        if self.file_path.endswith(".py"):
-            test_file_path = self.file_path.split('.')[0]
-            test_file_path = f'{test_file_path}_test.py'
-            if not os.path.exists(test_file_path):
+        path = Path(self.file_path)
+        if path.suffix == '.py':
+            unit_test_path = path.with_name(f'{path.stem}_test').with_suffix('.py')
+            if not unit_test_path.exists():
                 error_message, error_code = Errors.missing_unit_test_file(self.file_path)
                 if self.handle_error(
                         error_message,

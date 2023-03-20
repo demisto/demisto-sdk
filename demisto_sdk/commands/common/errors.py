@@ -454,7 +454,6 @@ ERROR_CODE = {
     # ID - ID Set
     "id_set_conflicts": {"code": "ID100", "ui_applicable": False, "related_field": ""},
     # missing 101
-    "duplicated_id": {"code": "ID102", "ui_applicable": False, "related_field": ""},
     "no_id_set_file": {"code": "ID103", "ui_applicable": False, "related_field": ""},
     # IF - Incident Fields
     "invalid_incident_field_name": {
@@ -1790,6 +1789,11 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "duplicated_id": {
+        "code": "GR105",
+        "ui_applicable": False,
+        "related_field": "",
+    },
 }
 
 
@@ -2583,10 +2587,9 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def duplicated_id(obj_id):
+    def duplicated_id(obj_id, file_path):
         return (
-            f"The ID {obj_id} already exists, please update the file or update the "
-            f"id_set.json toversion field of this id to match the old occurrence of this id"
+            f"The ID {obj_id} already exists in {file_path}. Please update the file to have a unique ID."
         )
 
     @staticmethod

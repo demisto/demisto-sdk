@@ -60,6 +60,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
     validate_core_packs_dependencies,
+    validate_duplicate_ids,
     validate_fromversion,
     validate_marketplaces,
     validate_multiple_packs_with_same_display_name,
@@ -444,6 +445,20 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             self._add_relationships_to_objects(session, results)
             return [self._id_to_obj[result] for result in results]
 
+    def validate_duplicate_ids(self, file_paths: List[str]) -> List[Tuple[BaseContent, List[BaseContent]]]:
+        with self.driver.session() as session:
+            duplicates = session.execute_read(validate_duplicate_ids, file_paths)
+            all_nodes = []
+            for content_item, duplicates in duplicates:
+                all_nodes.append(content_item)
+                all_nodes.extend(duplicates)
+            self._add_nodes_to_mapping(all_nodes)
+            duplicate_models = []
+            for content_item, duplicates in duplicates:
+                duplicates = [self._id_to_obj[duplicate.id] for duplicate in duplicates]
+                duplicate_models.append((self._id_to_obj[content_item.id], duplicates))
+            return duplicate_models
+            
     def create_relationships(
         self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]
     ) -> None:

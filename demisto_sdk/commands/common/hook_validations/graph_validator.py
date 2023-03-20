@@ -57,7 +57,17 @@ class GraphValidator(BaseValidator):
         is_valid = []
         is_valid.append(self.are_core_pack_dependencies_valid())
         return all(is_valid)
-
+    
+    @error_codes("GR105")
+    def are_duplicates_exist(self):
+        is_valid = True
+        for content_item, duplicates in self.graph.validate_duplicate_ids(self.file_paths):
+            for duplicate in duplicates:
+                error_message, error_code = Errors.duplicated_id(content_item.object_id, duplicate.path)
+                if self.handle_error(error_message, error_code, file_path=content_item.path, drop_line=True):
+                    is_valid = False
+        return is_valid            
+    
     @error_codes("PA124")
     def are_core_pack_dependencies_valid(self):
         """Validates, for each marketplace version, that its core packs don't depend on non-core packs.

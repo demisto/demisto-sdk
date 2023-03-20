@@ -197,7 +197,7 @@ def main(ctx, config, version, release_notes, **kwargs):
 
     if sys.version_info[:2] == (3, 8):
         logger.warning(
-            "Demisto-SDK will soon stop supporting Python 3.8. Please update your python environment."
+            "[red]Demisto-SDK will soon stop supporting Python 3.8. Please update your python environment.[/red]"
         )
 
     dotenv.load_dotenv(Path(get_content_path()) / ".env", override=True)  # type: ignore # load .env file from the cwd

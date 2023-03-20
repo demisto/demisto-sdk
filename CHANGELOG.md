@@ -9,6 +9,7 @@
 * Added **validate** check for the `modules` field in `pack_metadata.json` files.
 * Changed **lint** to skip deprecated content, unless when using the `-i` flag.
 * Refactored the logging framework. Demisto-SDK logs will now be written to `.demist_sdk_debug.log` under the content path (when detected) or the current directory.
+* Added a new validation to make sure every Python file has an unittest.
 
 ## 1.10.6
 * Fixed an issue where running **validate** with the `-g` flag would skip some validations for old-formatted (unified) integration/script files.

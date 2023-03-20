@@ -652,8 +652,8 @@ class ContentEntityValidator(BaseValidator):
                     error_code,
                     file_path=self.file_path,
                     suggested_fix="Write unit tests to ensure code quality and correctness."
-                                  " See https://xsoar.pan.dev/docs/integrations/unit-testing#write-your-unit-tests"
-                                  " for more information.",
+                    " See https://xsoar.pan.dev/docs/integrations/unit-testing#write-your-unit-tests"
+                    " for more information.",
                 ):
                     return False
         return True

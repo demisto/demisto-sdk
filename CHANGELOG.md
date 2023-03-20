@@ -9,7 +9,7 @@
 * Added **validate** check for the `modules` field in `pack_metadata.json` files.
 * Changed **lint** to skip deprecated content, unless when using the `-i` flag.
 * Refactored the logging framework. Demisto-SDK logs will now be written to `.demist_sdk_debug.log` under the content path (when detected) or the current directory.
-* Added support for inserting any ApiModule code imported by an ApiModule in the integration using the **unify** command.
+* Added support for API Modules imported in API modules in the **unify** command.
 
 ## 1.10.6
 * Fixed an issue where running **validate** with the `-g` flag would skip some validations for old-formatted (unified) integration/script files.

@@ -2339,10 +2339,10 @@ def test_check_file_relevance_and_format_path_file_to_format_parsing_rules(
 ):
     """
     Given
-    - file path to validate parsing rule
+    - parsing rule (xif) file path to validate
 
     When
-    - file should be formatted
+    - file should be formatted when checking file relevancy for new release notes
 
     Then
     - return the formatted file path

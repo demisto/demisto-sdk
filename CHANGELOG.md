@@ -5,7 +5,7 @@
 * Changed an internal setting to allow writing non-ascii content (unicode) using `YAMLHandler` and `JSONHandler`.
 * Fixed an issue where an error message in **unify** was unclear for invalid input.
 * Fixed an issue where running **validate** failed with **is_valid_integration_file_path_in_folder** on integrations that use API modules.
-* Fixed an issue where **update-release-notes** failed when new *Parsing Rules* were added to a pack.
+* Fixed an issue where **update-release-notes** failed when a new *Parsing Rule* was added to a pack.
 
 ## 1.10.6
 * Fixed an issue where running **validate** with the `-g` flag would skip some validations for old-formatted (unified) integration/script files.

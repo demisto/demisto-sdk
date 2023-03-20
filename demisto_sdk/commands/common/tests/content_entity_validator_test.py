@@ -278,7 +278,7 @@ def test_validate_unit_test_exists_for_script(repo, with_test, expected_result):
         script_path = Path(script.path)
         script_path.with_name(f"{script_path.stem}_test.py").touch()
     content_entity_validator = ContentEntityValidator(structure_validator)
-    assert content_entity_validator.validate_unit_test_exists() == expected_result
+    assert content_entity_validator.validate_unit_test_exists() == with_test
 
 
 @pytest.mark.parametrize("with_test, expected_result", [(True, True), (False, False)])

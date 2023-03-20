@@ -1832,7 +1832,7 @@ class Errors:
 
     @staticmethod
     def suggest_fix_missing_unittest(file_path: str) -> str:
-        return f'To fix the problem, add an unittest file for {file_path}'
+        return f"To fix the problem, add an unittest file for {file_path}"
 
     @staticmethod
     @error_code_decorator

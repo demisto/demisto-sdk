@@ -643,15 +643,17 @@ class ContentEntityValidator(BaseValidator):
 
         """
         path = Path(self.file_path)
-        if path.suffix == '.py':
-            unit_test_path = path.with_name(f'{path.stem}_test').with_suffix('.py')
+        if path.suffix == ".py":
+            unit_test_path = path.with_name(f"{path.stem}_test").with_suffix(".py")
             if not unit_test_path.exists():
-                error_message, error_code = Errors.missing_unit_test_file(self.file_path)
+                error_message, error_code = Errors.missing_unit_test_file(
+                    self.file_path
+                )
                 if self.handle_error(
-                        error_message,
-                        error_code,
-                        file_path=self.file_path,
-                        suggested_fix=Errors.suggest_fix_missing_unittest(self.file_path),
+                    error_message,
+                    error_code,
+                    file_path=self.file_path,
+                    suggested_fix=Errors.suggest_fix_missing_unittest(self.file_path),
                 ):
                     return False
         return True

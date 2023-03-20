@@ -228,6 +228,11 @@ def repository(mocker) -> ContentDTO:
             ),
         ],
     }
+    relationship_pack4 = {
+        RelationshipType.IN_PACK: [
+            mock_relationship("SamplePlaybook", ContentType.PLAYBOOK, "SamplePack4", ContentType.PACK)
+        ]
+    }
     pack1 = mock_pack(
         "SamplePack", [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
     )
@@ -240,9 +245,11 @@ def repository(mocker) -> ContentDTO:
             MarketplaceVersions.XPANSE,
         ],
     )
+    pack4 = mock_pack("SamplePack4", list(MarketplaceVersions))
     pack1.relationships = relationships
     pack2.relationships = relationship_pack2
     pack3.relationships = relationship_pack3
+    pack4.relationships = relationship_pack4
     pack1.content_items.integration.append(mock_integration())
     pack1.content_items.script.append(
         mock_script(
@@ -265,7 +272,8 @@ def repository(mocker) -> ContentDTO:
         mock_playbook("SamplePlaybook2", [MarketplaceVersions.XSOAR], "6.8.0", "6.5.0")
     )
     pack3.content_items.script.append(mock_script("SampleScript2"))
-    repository.packs.extend([pack1, pack2, pack3])
+    pack4.content_items.playbook.append(mock_playbook("SamplePlaybook"))
+    repository.packs.extend([pack1, pack2, pack3, pack4])
     mocker.patch(
         "demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_content_dto",
         return_value=repository,
@@ -557,3 +565,21 @@ def test_validate_dependencies(repository: ContentDTO, capsys, mocker):
     captured = capsys.readouterr().out
     assert not is_valid
     assert "The core pack SamplePack cannot depend on non-core packs: " in captured
+
+def test_validate_duplicate_id(repository: ContentDTO, capsys):
+    """
+    Given
+    - A content repo
+    When
+    - running the vaidation "validate_duplicate_id"
+    Then
+    - Validate the existance of duplicate ids
+    """
+    with GraphValidator(should_update=False) as graph_validator:
+        create_content_graph(graph_validator.graph)
+        is_valid = graph_validator.validate_duplicate_id()
+
+    captured = capsys.readouterr().out
+    assert not is_valid
+    assert "Already exists in" in captured
+    assert "GR105" in captured

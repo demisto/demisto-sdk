@@ -2589,7 +2589,7 @@ class Errors:
     @error_code_decorator
     def duplicated_id(obj_id, file_path):
         return (
-            f"The ID {obj_id} already exists in {file_path}. Please update the file to have a unique ID."
+            f"The ID '{obj_id}' already exists in {file_path}. Please update the file to have a unique ID."
         )
 
     @staticmethod

@@ -186,6 +186,6 @@ def validate_duplicate_ids(tx: Transaction, file_paths: List[str]) -> List[Tuple
     {f'AND content_item.path in {file_paths}' if file_paths else ''}
     RETURN content_item, collect(duplicate_content_item) AS duplicate_content_items
     """
-    return [(item.get("content_item"), item.get('duplicates_content_items')) for item in run_query(tx, query)]
+    return [(item.get("content_item"), item.get('duplicate_content_items')) for item in run_query(tx, query)]
 
 

@@ -49,6 +49,7 @@ class GraphValidator(BaseValidator):
             self.validate_toversion_fields(),
             self.is_file_using_unknown_content(),
             self.is_file_display_name_already_exists(),
+            self.are_duplicates_exist(),
         )
         return all(is_valid)
 

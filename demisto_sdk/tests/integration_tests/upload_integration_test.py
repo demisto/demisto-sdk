@@ -1,8 +1,8 @@
+import logging
 import shutil
 import tempfile
 from os.path import join
 
-import click
 import pytest
 from click.testing import CliRunner
 from packaging.version import parse
@@ -11,7 +11,7 @@ from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 UPLOAD_CMD = "upload"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
@@ -41,7 +41,7 @@ def demisto_client(mocker):
     mocker.patch("click.secho")
 
 
-def test_integration_upload_pack_positive(demisto_client, repo):
+def test_integration_upload_pack_positive(demisto_client, repo, mocker):
     """
     Given
     - Content pack named FeedAzure to upload.
@@ -53,43 +53,29 @@ def test_integration_upload_pack_positive(demisto_client, repo):
     - Ensure upload runs successfully.
     - Ensure success upload message is printed.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     pack_path = join(
         DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure"
     )
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
     assert result.exit_code == 0
-    assert "\nSUCCESSFUL UPLOADS:" in click.secho.call_args_list[4][0][0]
-    assert (
-        "│ FeedAzure.yml                              │ integration   │"
-        in click.secho.call_args_list[5][0][0]
-    )
-    assert (
-        "│ FeedAzure_test.yml                         │ playbook      │"
-        in click.secho.call_args_list[5][0][0]
-    )
-    assert (
-        "│ just_a_test_script.yml                     │ testscript    │"
-        in click.secho.call_args_list[5][0][0]
-    )
-    assert (
-        "│ playbook-FeedAzure_test_copy_no_prefix.yml │ testplaybook  │"
-        in click.secho.call_args_list[5][0][0]
-    )
-    assert (
-        "│ script-prefixed_automation.yml             │ testscript    │"
-        in click.secho.call_args_list[5][0][0]
-    )
-    assert (
-        "│ FeedAzure_test.yml                         │ testplaybook  │"
-        in click.secho.call_args_list[5][0][0]
-    )
-    assert (
-        "│ incidentfield-city.json                    │ incidentfield │"
-        in click.secho.call_args_list[5][0][0]
-    )
 
-    assert not result.stderr
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "SUCCESSFUL UPLOADS:",
+                "│ FeedAzure.yml                              │ integration   │",
+                "│ FeedAzure_test.yml                         │ playbook      │",
+                "│ just_a_test_script.yml                     │ testscript    │",
+                "│ playbook-FeedAzure_test_copy_no_prefix.yml │ testplaybook  │",
+                "│ script-prefixed_automation.yml             │ testscript    │",
+                "│ FeedAzure_test.yml                         │ testplaybook  │",
+                "│ incidentfield-city.json                    │ incidentfield │",
+            ]
+        ]
+    )
 
 
 def test_zipped_pack_upload_positive(repo, mocker, demisto_client):
@@ -105,6 +91,7 @@ def test_zipped_pack_upload_positive(repo, mocker, demisto_client):
     - Ensure success upload message is printed.
     - ensure yml / json content items inside the pack are getting unified.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     pack = repo.setup_one_pack(name="test-pack")
 
     mocker.patch(
@@ -145,10 +132,14 @@ def test_zipped_pack_upload_positive(repo, mocker, demisto_client):
 
     assert result.exit_code == 0
 
-    assert "SUCCESSFUL UPLOADS:" in click.secho.call_args_list[4][0][0]
-    assert (
-        "╒═══════════╤════════╕\n│ NAME      │ TYPE   │\n╞═══════════╪════════╡\n│ test-pack │ pack   │\n╘═══════════╧════════╛\n"
-        in click.secho.call_args_list[5][0][0]
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "SUCCESSFUL UPLOADS:",
+                "╒═══════════╤════════╕\n│ NAME      │ TYPE   │\n╞═══════════╪════════╡\n│ test-pack │ pack   │\n╘═══════════╧════════╛",
+            ]
+        ]
     )
 
 
@@ -177,7 +168,7 @@ def test_integration_upload_path_does_not_exist(demisto_client):
     )
 
 
-def test_integration_upload_script_invalid_path(demisto_client, tmp_path):
+def test_integration_upload_script_invalid_path(demisto_client, tmp_path, mocker):
     """
     Given
     - Directory with invalid path - "Script" instead of "Scripts".
@@ -189,6 +180,7 @@ def test_integration_upload_script_invalid_path(demisto_client, tmp_path):
     - Ensure upload fails due to invalid path.
     - Ensure failure upload message is printed.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     invalid_scripts_dir = tmp_path / "Script" / "InvalidScript"
     invalid_scripts_dir.mkdir(parents=True)
     runner = CliRunner(mix_stderr=False)
@@ -196,15 +188,16 @@ def test_integration_upload_script_invalid_path(demisto_client, tmp_path):
         main, [UPLOAD_CMD, "-i", str(invalid_scripts_dir), "--insecure"]
     )
     assert result.exit_code == 1
-    assert (
-        f"""
-Error: Given input path: {str(invalid_scripts_dir)} is not uploadable. Input path should point to one of the following:
+    for current_call in logger_info.call_args_list:
+        if type(current_call[0]) == tuple:
+            print(f"*** INFO *** {current_call[0][0]=}")
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        f"""Error: Given input path: {str(invalid_scripts_dir)} is not uploadable. Input path should point to one of the following:
   1. Pack
   2. A content entity directory that is inside a pack. For example: an Integrations directory or a Layouts directory
-  3. Valid file that can be imported to Cortex XSOAR manually. For example a playbook: helloWorld.yml"""
-        in click.secho.call_args_list[2][0][0]
+  3. Valid file that can be imported to Cortex XSOAR manually. For example a playbook: helloWorld.yml""",
     )
-    assert not result.stderr
 
 
 def test_integration_upload_pack_invalid_connection_params(mocker):
@@ -218,6 +211,7 @@ def test_integration_upload_pack_invalid_connection_params(mocker):
     Then
     - Ensure pack is not uploaded and correct error message is printed.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     pack_path = join(
         DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure"
@@ -231,7 +225,7 @@ def test_integration_upload_pack_invalid_connection_params(mocker):
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
     assert result.exit_code == 1
-    assert (
-        "Could not connect to XSOAR server. Try checking your connection configurations."
-        in result.stdout
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        "Could not connect to XSOAR server. Try checking your connection configurations.",
     )

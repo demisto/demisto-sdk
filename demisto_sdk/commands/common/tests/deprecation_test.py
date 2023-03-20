@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 
 from demisto_sdk.commands.common.hook_validations.deprecation import (
@@ -9,6 +11,7 @@ from demisto_sdk.commands.common.hook_validations.integration import (
 from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.tests.integration_test import mock_structure
+from TestSuite.test_tools import str_in_call_args_list
 
 mocked_id_set = {
     "scripts": [
@@ -186,7 +189,8 @@ class TestDeprecationValidator:
     )
     def test_validate_integration(
         self,
-        capsys,
+        mocker,
+        monkeypatch,
         integration_yml,
         expected_bool_results,
         expected_commands_in_errors_ls,
@@ -220,16 +224,18 @@ class TestDeprecationValidator:
         - Case 6: Should return False and that only one command name (out of the two deprecated commands) appears in the error massage.
         - Case 7: Should return True and that no command name appears in the error massage.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         structure = mock_structure(current_file=integration_yml)
         validator = IntegrationValidator(structure)
         validator.deprecation_validator = mock_deprecation_manager()
         bool_result = validator.is_integration_deprecated_and_used()
         assert bool_result == expected_bool_results
-        stdout = capsys.readouterr().out
         for command in expected_commands_in_errors_ls:
-            assert command in stdout
+            assert str_in_call_args_list(logger_info.call_args_list, command)
         for command in expected_commands_not_in_errors_ls:
-            assert command not in stdout
+            assert not str_in_call_args_list(logger_info.call_args_list, command)
 
     INTEGRATIONS_FORMAT_VALIDATIONS = [
         (
@@ -245,9 +251,11 @@ class TestDeprecationValidator:
                 },
                 "tests": ["testplaybook_1", "testplaybook_2"],
             },
-            "[IN155] - integration_format_case_1 integration contains deprecated commands that are being used by other entities:\n"
-            "ifc1_command1 is being used in the following locations:\nplaybook_2.yml\n"
-            "ifc1_command2 is being used in the following locations:\nscript_2.yml\n\n",
+            [
+                "[IN155] - integration_format_case_1 integration contains deprecated commands that are being used by other entities:\n"
+                "ifc1_command1 is being used in the following locations:\nplaybook_2.yml\n"
+                "ifc1_command2 is being used in the following locations:\nscript_2.yml\n",
+            ],
         )
     ]
 
@@ -255,7 +263,11 @@ class TestDeprecationValidator:
         "integration_yml, expected_results", INTEGRATIONS_FORMAT_VALIDATIONS
     )
     def test_validate_integration_error_format(
-        self, capsys, integration_yml, expected_results
+        self,
+        mocker,
+        monkeypatch,
+        integration_yml,
+        expected_results,
     ):
         """
         Given
@@ -270,12 +282,17 @@ class TestDeprecationValidator:
         - Case 1: Should print out the given integration and a list of each deprecated command that is being used,
           with a list of files paths of the none-deprecated entities that are using that command under that command.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         structure = mock_structure(current_file=integration_yml)
         validator = IntegrationValidator(structure)
         validator.deprecation_validator = mock_deprecation_manager()
         validator.is_integration_deprecated_and_used()
-        stdout = capsys.readouterr().out
-        assert expected_results in stdout
+        for current_expected_results in expected_results:
+            assert str_in_call_args_list(
+                logger_info.call_args_list, current_expected_results
+            )
 
     SCRIPTS_VALIDATIONS_LS = [
         ({"name": "script_case_1", "deprecated": True}, True),
@@ -313,12 +330,14 @@ class TestDeprecationValidator:
     SCRIPTS_FORMAT_VALIDATIONS = [
         (
             {"name": "script_format_case_1", "deprecated": True},
-            "[SC107] - script_format_case_1 script is deprecated and being used by the following entities:\nscript_2.yml\nplaybook_2.yml\n\n",
+            "[SC107] - script_format_case_1 script is deprecated and being used by the following entities:\nscript_2.yml\nplaybook_2.yml\n",
         )
     ]
 
     @pytest.mark.parametrize("script_yml, expected_results", SCRIPTS_FORMAT_VALIDATIONS)
-    def test_validate_script_error_format(self, capsys, script_yml, expected_results):
+    def test_validate_script_error_format(
+        self, mocker, monkeypatch, script_yml, expected_results
+    ):
         """
         Given
         - Case 1: deprecated script that is used in none-deprecated playbook, and both deprecated and none-deprecated scripts.
@@ -329,12 +348,14 @@ class TestDeprecationValidator:
         - Case 1: Should print out a list with the name of the given script,
                   and a list of the files paths of the none-deprecated script and playbooks that are using the given script.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         structure = mock_structure(current_file=script_yml)
         validator = ScriptValidator(structure)
         validator.deprecation_validator = mock_deprecation_manager()
         validator.is_script_deprecated_and_used()
-        stdout = capsys.readouterr().out
-        assert expected_results in stdout
+        assert str_in_call_args_list(logger_info.call_args_list, expected_results)
 
     PLAYBOOKS_VALIDATIONS_LS = [
         ({"name": "playbook_case_1", "deprecated": True}, True),
@@ -368,7 +389,7 @@ class TestDeprecationValidator:
     PLAYBOOKS_FORMAT_VALIDATIONS = [
         (
             {"name": "playbook_format_case_1", "deprecated": True},
-            "[PB120] - playbook_format_case_1 playbook is deprecated and being used by the following entities:\nplaybook_2.yml\n\n",
+            "[PB120] - playbook_format_case_1 playbook is deprecated and being used by the following entities:\nplaybook_2.yml\n",
         )
     ]
 
@@ -376,7 +397,7 @@ class TestDeprecationValidator:
         "playbook_yml, expected_results", PLAYBOOKS_FORMAT_VALIDATIONS
     )
     def test_validate_playbook_error_format(
-        self, capsys, playbook_yml, expected_results
+        self, mocker, monkeypatch, playbook_yml, expected_results
     ):
         """
         Given
@@ -387,9 +408,11 @@ class TestDeprecationValidator:
         - Ensure the format of the validation is printed out correctly.
         - Case 1: Should print out a list with the name of the given playbook and the file path of the none-deprecated playbook that use it.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         structure = mock_structure(current_file=playbook_yml)
         validator = PlaybookValidator(structure)
         validator.deprecation_validator = mock_deprecation_manager()
         validator.is_playbook_deprecated_and_used()
-        stdout = capsys.readouterr().out
-        assert expected_results in stdout
+        assert str_in_call_args_list(logger_info.call_args_list, expected_results)

@@ -52,16 +52,12 @@ class ContentEntityValidator(BaseValidator):
         self,
         structure_validator: StructureValidator,
         ignored_errors: Optional[dict] = None,
-        print_as_warnings: bool = False,
         skip_docker_check: bool = False,
-        suppress_print: bool = False,
         json_file_path: Optional[str] = None,
         oldest_supported_version: Optional[str] = None,
     ) -> None:
         super().__init__(
             ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
-            suppress_print=suppress_print,
             json_file_path=json_file_path,
             specific_validations=structure_validator.specific_validations,
         )

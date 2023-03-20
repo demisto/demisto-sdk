@@ -290,9 +290,7 @@ def test_validate_unit_test_exists_for_integration(repo):
     pack = repo.create_pack(name="Test_Pack")
     integration = pack.create_integration("Test_Integration")
     integration_code_path = Path(integration.code.path)
-    integration_code_path.with_name(f"{integration_code_path.stem}_test.py").write_text(
-        "## test"
-    )
+    integration_code_path.with_name(f"{integration_code_path.stem}_test.py").touch()
     structure_validator = StructureValidator(integration.code.path)
     content_entity_validator = ContentEntityValidator(structure_validator)
     assert content_entity_validator.validate_unit_test_exists()

@@ -577,7 +577,7 @@ def test_validate_duplicate_id(repository: ContentDTO, capsys):
     """
     with GraphValidator(should_update=False) as graph_validator:
         create_content_graph(graph_validator.graph)
-        is_valid = graph_validator.validate_duplicate_id()
+        is_valid = graph_validator.validate_duplicate_ids()
 
     captured = capsys.readouterr().out
     assert not is_valid

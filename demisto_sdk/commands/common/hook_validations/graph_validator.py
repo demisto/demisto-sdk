@@ -49,7 +49,7 @@ class GraphValidator(BaseValidator):
             self.validate_toversion_fields(),
             self.is_file_using_unknown_content(),
             self.is_file_display_name_already_exists(),
-            self.are_duplicates_exist(),
+            self.validate_duplicate_ids(),
         )
         return all(is_valid)
 
@@ -60,7 +60,7 @@ class GraphValidator(BaseValidator):
         return all(is_valid)
     
     @error_codes("GR105")
-    def are_duplicates_exist(self):
+    def validate_duplicate_ids(self):
         is_valid = True
         for content_item, duplicates in self.graph.validate_duplicate_ids(self.file_paths):
             for duplicate in duplicates:

@@ -37,7 +37,6 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.tools import (
-    LOG_COLORS,
     find_type,
     get_child_directories,
     get_child_files,
@@ -50,12 +49,13 @@ from demisto_sdk.commands.common.tools import (
     get_json,
     get_yaml,
     get_yml_paths_in_dir,
-    print_color,
     retrieve_file_ending,
     safe_write_unicode,
 )
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -105,7 +105,6 @@ class Downloader:
         regex (str): Regex Pattern, download all the custom content files that match this regex pattern
         force (bool): Indicates whether to merge existing files or not
         insecure (bool): Indicates whether to use insecure connection or not
-        log_verbose (bool): Indicates whether to use verbose logs or not
         client (Demisto client): The Demisto client to make API calls
         list_files (bool): Indicates whether to print the list of available custom content files and exit or not
         all_custom_content (bool): Indicates whether to download all available custom content or not
@@ -125,12 +124,12 @@ class Downloader:
         regex: str = "",
         force: bool = False,
         insecure: bool = False,
-        verbose: bool = False,
         list_files: bool = False,
         all_custom_content: bool = False,
         run_format: bool = False,
         system: bool = False,
         item_type: str = "",
+        **kwargs,
     ):
         logging.disable(logging.CRITICAL)
         self.output_pack_path = output
@@ -140,7 +139,6 @@ class Downloader:
         self.download_system_item = system
         self.system_item_type = item_type
         self.insecure = insecure
-        self.log_verbose = verbose
         self.list_files = list_files
         self.all_custom_content = all_custom_content
         self.run_format = run_format
@@ -207,28 +205,24 @@ class Downloader:
             output_flag, input_flag = True, True
             if not self.output_pack_path:
                 output_flag = False
-                print_color("Error: Missing option '-o' / '--output'.", LOG_COLORS.RED)
+                logger.info("[red]Error: Missing option '-o' / '--output'.[/red]")
             if not self.input_files:
                 if not self.all_custom_content and not self.regex:
                     input_flag = False
-                    print_color(
-                        "Error: Missing option '-i' / '--input'.", LOG_COLORS.RED
-                    )
+                    logger.info("[red]Error: Missing option '-i' / '--input'.[/red]")
             if not input_flag or not output_flag:
                 is_valid = False
 
         if self.download_system_item and not self.system_item_type:
-            print_color(
-                "Error: Missing option '-it' / '--item-type', "
-                "you should specify the system item type to download.",
-                LOG_COLORS.RED,
+            logger.info(
+                "[red]Error: Missing option '-it' / '--item-type', "
+                "you should specify the system item type to download.[/red]"
             )
             is_valid = False
 
         if self.system_item_type and not self.download_system_item:
-            print_color(
-                "The item type option is just for downloading system items.",
-                LOG_COLORS.RED,
+            logger.info(
+                "[red]The item type option is just for downloading system items.[/red]"
             )
             is_valid = False
 
@@ -236,24 +230,17 @@ class Downloader:
 
     def handle_api_exception(self, e):
         if e.status == 401:
-            print_color(
-                "\nAuthentication error: please verify that the appropriate environment variables "
-                "(either DEMISTO_USERNAME and DEMISTO_PASSWORD, or just DEMISTO_API_KEY) are properly configured.\n",
-                LOG_COLORS.RED,
+            logger.info(
+                "\n[red]Authentication error: please verify that the appropriate environment variables "
+                "(either DEMISTO_USERNAME and DEMISTO_PASSWORD, or just DEMISTO_API_KEY) are properly configured.[/red]\n"
             )
-        print_color(
-            f"Exception raised when fetching custom content:\nStatus: {e}",
-            LOG_COLORS.NATIVE,
-        )
+        logger.info(f"Exception raised when fetching custom content:\nStatus: {e}")
 
     def handle_max_retry_error(self, e):
-        print_color(
-            "\nVerify that the environment variable DEMISTO_BASE_URL is configured properly.\n",
-            LOG_COLORS.RED,
+        logger.info(
+            "\n[red]Verify that the environment variable DEMISTO_BASE_URL is configured properly.[/red]\n"
         )
-        print_color(
-            f"Exception raised when fetching custom content:\n{e}", LOG_COLORS.NATIVE
-        )
+        logger.info(f"Exception raised when fetching custom content:\n{e}")
 
     def download_playbook_yaml(self, playbook_string) -> str:
         """
@@ -438,10 +425,7 @@ class Downloader:
             self.handle_max_retry_error(e)
             return False
         except Exception as e:
-            print_color(
-                f"Exception raised when fetching custom content:\n{e}",
-                LOG_COLORS.NATIVE,
-            )
+            logger.info(f"Exception raised when fetching custom content:\n{e}")
             return False
 
     def build_req_params(self):
@@ -522,10 +506,7 @@ class Downloader:
             self.handle_max_retry_error(e)
             return False
         except Exception as e:
-            print_color(
-                f"Exception raised when fetching system content:\n{e}",
-                LOG_COLORS.NATIVE,
-            )
+            logger.info(f"Exception raised when fetching system content:\n{e}")
             return False
 
     def get_custom_content_objects(self) -> List[dict]:
@@ -545,8 +526,8 @@ class Downloader:
                     custom_content_objects.append(custom_content_object)
             # Do not add file to custom_content_objects if it has an invalid format
             except ValueError as e:
-                print_color(f"Error when loading {file_path}, skipping", LOG_COLORS.RED)
-                print_color(f"{e}", LOG_COLORS.RED)
+                logger.info(f"[red]Error when loading {file_path}, skipping[/red]")
+                logger.info(f"[red]{e}[/red]")
         return custom_content_objects
 
     def get_system_content_objects(self) -> List[dict]:
@@ -564,8 +545,8 @@ class Downloader:
                 system_content_objects.append(system_content_object)
             # Do not add file to custom_content_objects if it has an invalid format
             except ValueError as e:
-                print_color(f"Error when loading {file_path}, skipping", LOG_COLORS.RED)
-                print_color(f"{e}", LOG_COLORS.RED)
+                logger.info(f"[red]Error when loading {file_path}, skipping[/red]")
+                logger.info(f"[red]{e}[/red]")
         return system_content_objects
 
     def handle_list_files_flag(self) -> bool:
@@ -580,11 +561,10 @@ class Downloader:
                 for cco in self.all_custom_content_objects
                 if cco.get("name")
             ]
-            print_color(
-                "\nThe following files are available to be downloaded from Demisto instance:\n",
-                LOG_COLORS.NATIVE,
+            logger.info(
+                "\nThe following files are available to be downloaded from Demisto instance:\n"
             )
-            print(tabulate(list_files, headers=["FILE NAME", "FILE TYPE"]))
+            logger.info(tabulate(list_files, headers=["FILE NAME", "FILE TYPE"]))
             return True
         return False
 
@@ -625,10 +605,9 @@ class Downloader:
             and os.path.basename(os.path.dirname(os.path.abspath(output_pack_path)))
             == "Packs"
         ):
-            print_color(
-                f"Path {output_pack_path} is not a valid Path pack. The designated output pack's path is"
-                f" of format ~/.../Packs/$PACK_NAME",
-                LOG_COLORS.RED,
+            logger.info(
+                f"[red]Path {output_pack_path} is not a valid Path pack. The designated output pack's path is"
+                f" of format ~/.../Packs/$PACK_NAME[/red]"
             )
             return False
         return True
@@ -776,14 +755,12 @@ class Downloader:
                 )
 
         number_of_files = len(self.custom_content)
-        print_color(
-            f"\nDemisto instance: Enumerating objects: {number_of_files}, done.",
-            LOG_COLORS.NATIVE,
+        logger.info(
+            f"\nDemisto instance: Enumerating objects: {number_of_files}, done."
         )
-        print_color(
+        logger.info(
             f"Demisto instance: Receiving objects: 100% ({number_of_files}/{number_of_files}),"
-            f" done.\n",
-            LOG_COLORS.NATIVE,
+            f" done.\n"
         )
 
     def build_system_content(self) -> None:
@@ -809,14 +786,12 @@ class Downloader:
                 )
 
         number_of_files = len(self.custom_content)
-        print_color(
-            f"\nDemisto instance: Enumerating objects: {number_of_files}, done.",
-            LOG_COLORS.NATIVE,
+        logger.info(
+            f"\nDemisto instance: Enumerating objects: {number_of_files}, done."
         )
-        print_color(
+        logger.info(
             f"Demisto instance: Receiving objects: 100% ({number_of_files}/{number_of_files}),"
-            f" done.\n",
-            LOG_COLORS.NATIVE,
+            f" done.\n"
         )
 
     def exist_in_pack_content(self, custom_content_object: dict) -> bool:
@@ -1002,7 +977,6 @@ class Downloader:
             output=temp_dir,
             file_type=file_type,
             base_name=base_name,
-            no_logging=not self.log_verbose,
             no_readme=True,
             no_auto_create_dir=True,
         )
@@ -1044,14 +1018,14 @@ class Downloader:
             try:
                 shutil.move(src=ex_file_path, dst=corresponding_pack_file_path)
             except shutil.Error as e:
-                print_color(e, LOG_COLORS.RED)
+                logger.info(f"[red]{e}[/red]")
                 raise
             self.format_file(corresponding_pack_file_path, ex_file_ending)
 
         try:
             shutil.rmtree(temp_dir, ignore_errors=True)
         except shutil.Error as e:
-            print_color(e, LOG_COLORS.RED)
+            logger.info(f"[red]{e}[/red]")
             raise
 
         self.num_merged_files += 1
@@ -1083,7 +1057,7 @@ class Downloader:
         try:
             shutil.move(src=file_path, dst=corresponding_pack_file_path)
         except shutil.Error as e:
-            print_color(e, LOG_COLORS.RED)
+            logger.info(f"[red]{e}[/red]")
             raise
 
         self.format_file(
@@ -1118,7 +1092,6 @@ class Downloader:
             file_type=file_type,
             base_name=dir_name,
             no_auto_create_dir=True,
-            no_logging=not self.log_verbose,
         )
         extractor.extract_to_package_format()
 
@@ -1144,7 +1117,7 @@ class Downloader:
         try:
             shutil.move(src=file_path, dst=file_output_path)
         except shutil.Error as e:
-            print_color(e, LOG_COLORS.RED)
+            logger.info(f"[red]{e}[/red]")
             raise
 
         self.format_file(file_output_path, file_ending)
@@ -1159,9 +1132,9 @@ class Downloader:
         :param file_type: The file type
         :return: None
         """
-        print_color(f'- {action} {file_type} "{file_name}"', LOG_COLORS.NATIVE)
+        logger.info(f'- {action} {file_type} "{file_name}"')
         if self.run_format:  # TODO: Refactored after format had verbose arg
-            print_color("", LOG_COLORS.NATIVE)
+            logger.info("")
 
     def get_corresponding_pack_content_object(
         self, custom_content_object: dict
@@ -1287,7 +1260,7 @@ class Downloader:
             shutil.rmtree(self.custom_content_temp_dir, ignore_errors=True)
             shutil.rmtree(self.system_content_temp_dir, ignore_errors=True)
         except shutil.Error as e:
-            print_color(e, LOG_COLORS.RED)
+            logger.info(f"[red]{e}[/red]")
             raise
 
     def log_files_downloaded(self) -> None:
@@ -1310,7 +1283,7 @@ class Downloader:
         elif merged_msg:
             log_msg = f"\n{merged_msg}."
         if log_msg:
-            print_color(log_msg, LOG_COLORS.NATIVE)
+            logger.info(log_msg)
 
     def log_files_not_downloaded(self) -> None:
         """
@@ -1318,14 +1291,14 @@ class Downloader:
         :return: None
         """
         if self.files_not_downloaded:
-            print_color("\nFailed to download the following files:\n", LOG_COLORS.RED)
-            print_color(
-                tabulate(self.files_not_downloaded, headers=["FILE NAME", "REASON"]),
-                LOG_COLORS.RED,
+            logger.info("\n[red]Failed to download the following files:\n[/red]")
+            logger.info(
+                "[red]"
+                + tabulate(self.files_not_downloaded, headers=["FILE NAME", "REASON"])
+                + "[/red]"
             )
             reasons: list = [file[1] for file in self.files_not_downloaded]
             if FILE_EXIST_REASON in reasons:
-                print_color(
-                    "\nTo merge existing files use the download command with -f.",
-                    LOG_COLORS.NATIVE,
+                logger.info(
+                    "\nTo merge existing files use the download command with -f."
                 )

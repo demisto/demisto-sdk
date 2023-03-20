@@ -1,3 +1,4 @@
+import logging
 from distutils.version import LooseVersion
 from typing import Tuple
 
@@ -9,6 +10,8 @@ from demisto_sdk.commands.format.format_constants import (
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class WidgetJSONFormat(BaseUpdateJSON):
@@ -28,7 +31,6 @@ class WidgetJSONFormat(BaseUpdateJSON):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
         **kwargs,
     ):
         super().__init__(
@@ -37,7 +39,6 @@ class WidgetJSONFormat(BaseUpdateJSON):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            verbose=verbose,
             **kwargs,
         )
 
@@ -56,11 +57,9 @@ class WidgetJSONFormat(BaseUpdateJSON):
             return SUCCESS_RETURN_CODE
 
         except Exception as err:
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.debug(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:

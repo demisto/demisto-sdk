@@ -1,5 +1,6 @@
 import base64
 import copy
+import logging
 import os
 import re
 import shutil
@@ -23,7 +24,7 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -1040,7 +1041,7 @@ PARTNER_DETAILEDDESCRIPTION_NO_URL = (
 )
 
 
-def test_unify_partner_contributed_pack(mocker, repo):
+def test_unify_partner_contributed_pack(mocker, monkeypatch, repo):
     """
     Given
         - Partner contributed pack with email and url in the support details.
@@ -1049,6 +1050,9 @@ def test_unify_partner_contributed_pack(mocker, repo):
     Then
         - Ensure unify create unified file with partner support notes.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration", "bla", INTEGRATION_YAML)
     pack.pack_metadata.write_json(PACK_METADATA_PARTNER)
@@ -1075,14 +1079,19 @@ def test_unify_partner_contributed_pack(mocker, repo):
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(
+        runner.invoke(
             main,
             [UNIFY_CMD, "-i", integration.path, "-o", integration.path],
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert "Unifying package:" in result.stdout
-    assert "Created unified yml:" in result.stdout
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
+            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
+        ]
+    )
+
     # Verifying the unified file data
     assert PARTNER_UNIFY["display"] == PARTNER_DISPLAY_NAME
     assert "#### Integration Author:" in PARTNER_UNIFY["detaileddescription"]
@@ -1090,7 +1099,7 @@ def test_unify_partner_contributed_pack(mocker, repo):
     assert "URL" in PARTNER_UNIFY["detaileddescription"]
 
 
-def test_unify_partner_contributed_pack_no_email(mocker, repo):
+def test_unify_partner_contributed_pack_no_email(mocker, monkeypatch, repo):
     """
     Given
         - Partner contributed pack with url and without email in the support details.
@@ -1099,6 +1108,9 @@ def test_unify_partner_contributed_pack_no_email(mocker, repo):
     Then
         - Ensure unify create unified file with partner support notes.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration", "bla", INTEGRATION_YAML)
     pack.pack_metadata.write_json(PACK_METADATA_PARTNER_NO_EMAIL)
@@ -1125,14 +1137,19 @@ def test_unify_partner_contributed_pack_no_email(mocker, repo):
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(
+        runner.invoke(
             main,
             [UNIFY_CMD, "-i", integration.path, "-o", integration.path],
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert "Unifying package:" in result.stdout
-    assert "Created unified yml:" in result.stdout
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
+            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
+        ]
+    )
+
     # Verifying the unified file data
     assert PARTNER_UNIFY_NO_EMAIL["display"] == PARTNER_DISPLAY_NAME
     assert "#### Integration Author:" in PARTNER_UNIFY_NO_EMAIL["detaileddescription"]
@@ -1190,7 +1207,7 @@ def test_unify_contributor_emails_list(mocker, repo, pack_metadata):
     )
 
 
-def test_unify_partner_contributed_pack_no_url(mocker, repo):
+def test_unify_partner_contributed_pack_no_url(mocker, monkeypatch, repo):
     """
     Given
         - Partner contributed pack with email and without url in the support details
@@ -1199,6 +1216,9 @@ def test_unify_partner_contributed_pack_no_url(mocker, repo):
     Then
         - Ensure unify create unified file with partner support notes.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration", "bla", INTEGRATION_YAML)
     pack.pack_metadata.write_json(PACK_METADATA_PARTNER_NO_URL)
@@ -1225,14 +1245,19 @@ def test_unify_partner_contributed_pack_no_url(mocker, repo):
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(
+        runner.invoke(
             main,
             [UNIFY_CMD, "-i", integration.path, "-o", integration.path],
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert "Unifying package:" in result.stdout
-    assert "Created unified yml:" in result.stdout
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
+            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
+        ]
+    )
+
     # Verifying the unified file data
     assert PARTNER_UNIFY_NO_URL["display"] == PARTNER_DISPLAY_NAME
     assert "#### Integration Author:" in PARTNER_UNIFY_NO_URL["detaileddescription"]
@@ -1240,7 +1265,7 @@ def test_unify_partner_contributed_pack_no_url(mocker, repo):
     assert "URL" not in PARTNER_UNIFY_NO_URL["detaileddescription"]
 
 
-def test_unify_not_partner_contributed_pack(mocker, repo):
+def test_unify_not_partner_contributed_pack(mocker, monkeypatch, repo):
     """
     Given
         - XSOAR supported - not a partner contribution
@@ -1249,6 +1274,9 @@ def test_unify_not_partner_contributed_pack(mocker, repo):
     Then
         - Ensure unify create unified file without partner support notes.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration", "bla", INTEGRATION_YAML)
     pack.pack_metadata.write_json(PACK_METADATA_XSOAR)
@@ -1271,20 +1299,25 @@ def test_unify_not_partner_contributed_pack(mocker, repo):
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(
+        runner.invoke(
             main,
             [UNIFY_CMD, "-i", integration.path, "-o", integration.path],
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert "Unifying package:" in result.stdout
-    assert "Created unified yml:" in result.stdout
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
+            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
+        ]
+    )
+
     # Verifying the unified file data
     assert "Partner" not in XSOAR_UNIFY["display"]
     assert "partner" not in XSOAR_UNIFY["detaileddescription"]
 
 
-def test_unify_community_contributed(mocker, repo):
+def test_unify_community_contributed(mocker, monkeypatch, repo):
     """
     Given
         - Community contribution.
@@ -1293,6 +1326,8 @@ def test_unify_community_contributed(mocker, repo):
     Then
         - Ensure unify create unified file with community detailed description.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
 
     pack = repo.create_pack("PackName")
     integration = pack.create_integration("integration", "bla", INTEGRATION_YAML)
@@ -1320,14 +1355,19 @@ def test_unify_community_contributed(mocker, repo):
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(
+        runner.invoke(
             main,
             [UNIFY_CMD, "-i", integration.path, "-o", integration.path],
             catch_exceptions=True,
         )
     # Verifying unified process
-    assert "Unifying package:" in result.stdout
-    assert "Created unified yml:" in result.stdout
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, "Unifying package:"),
+            str_in_call_args_list(logger_info.call_args_list, "Created unified yml:"),
+        ]
+    )
+
     # Verifying the unified file data
     assert COMMUNITY_UNIFY["display"] == COMMUNITY_DISPLAY_NAME
     assert "#### Integration Author:" in COMMUNITY_UNIFY["detaileddescription"]

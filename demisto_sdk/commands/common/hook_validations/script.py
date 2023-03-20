@@ -34,7 +34,6 @@ class ScriptValidator(ContentEntityValidator):
         self,
         structure_validator,
         ignored_errors=None,
-        print_as_warnings=False,
         skip_docker_check=False,
         json_file_path=None,
         validate_all=False,
@@ -43,7 +42,6 @@ class ScriptValidator(ContentEntityValidator):
         super().__init__(
             structure_validator,
             ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
             skip_docker_check=skip_docker_check,
             json_file_path=json_file_path,
         )
@@ -285,8 +283,6 @@ class ScriptValidator(ContentEntityValidator):
             is_modified_file=True,
             is_integration=False,
             ignored_errors=self.ignored_errors,
-            print_as_warnings=self.print_as_warnings,
-            suppress_print=self.suppress_print,
             json_file_path=self.json_file_path,
             specific_validations=self.specific_validations,
         )

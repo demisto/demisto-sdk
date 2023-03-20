@@ -230,7 +230,9 @@ def repository(mocker) -> ContentDTO:
     }
     relationship_pack4 = {
         RelationshipType.IN_PACK: [
-            mock_relationship("SamplePlaybook", ContentType.PLAYBOOK, "SamplePack4", ContentType.PACK)
+            mock_relationship(
+                "SamplePlaybook", ContentType.PLAYBOOK, "SamplePack4", ContentType.PACK
+            )
         ]
     }
     pack1 = mock_pack(
@@ -566,6 +568,7 @@ def test_validate_dependencies(repository: ContentDTO, capsys, mocker):
     assert not is_valid
     assert "The core pack SamplePack cannot depend on non-core packs: " in captured
 
+
 def test_validate_duplicate_id(repository: ContentDTO, capsys):
     """
     Given
@@ -581,5 +584,4 @@ def test_validate_duplicate_id(repository: ContentDTO, capsys):
 
     captured = capsys.readouterr().out
     assert not is_valid
-    assert "Already exists in" in captured
-    assert "GR105" in captured
+    assert "[GR105] - The ID 'SamplePlaybook' already exists in" in captured

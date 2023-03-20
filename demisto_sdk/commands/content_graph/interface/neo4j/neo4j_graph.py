@@ -362,7 +362,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             )
             return results
 
-    def validate_duplicate_ids(self, file_paths: List[str]) -> List[Tuple[BaseContent, List[BaseContent]]]:
+    def validate_duplicate_ids(
+        self, file_paths: List[str]
+    ) -> List[Tuple[BaseContent, List[BaseContent]]]:
         with self.driver.session() as session:
             duplicates = session.execute_read(validate_duplicate_ids, file_paths)
             all_nodes = []

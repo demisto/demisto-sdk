@@ -259,49 +259,28 @@ def test_validate_readme_exists_not_checking_on_api_modules(repo):
 
 
 @pytest.mark.parametrize("with_test", (True, False))
-def test_validate_unit_test_exists_for_script(repo, with_test, expected_result):
+def test_validate_unit_test_exists(repo, with_test: bool):
     """
     Given:
-    - A 'test pack' which contains / does not contain a 'test script'
+    - A 'test pack' which contains / does not contain a 'test file'
 
     When:
     - Validating if an unittest file exists
 
     Then:
-    - Ensure that False is being returned since unittest for the Python script was not found,
-        or True is being returned since there's an unittest for the Python script.
+    - Ensure that False is being returned since unittest for the Python file was not found,
+        or True is being returned since there's an unittest for the Python file.
     """
     pack = repo.create_pack(name="Test_Pack")
     script = pack.create_script("Test_Script.py")
-    structure_validator = StructureValidator(script.path)
-    if with_test:
-        script_path = Path(script.path)
-        script_path.with_name(f"{script_path.stem}_test.py").touch()
-    content_entity_validator = ContentEntityValidator(structure_validator)
-    assert content_entity_validator.validate_unit_test_exists() == with_test
-
-
-@pytest.mark.parametrize("with_test, expected_result", [(True, True), (False, False)])
-def test_validate_unit_test_exists_for_integration(repo, with_test, expected_result):
-    """
-    Given:
-    - A 'test pack' which contains / does not contain a 'test integration'
-
-    When:
-    - Validating if an unittest file exists
-
-    Then:
-    - Ensure that True is being returned since there's an unittest for the Python file (the integration code),
-        or False is being returned since unittest for the Python file was not found.
-    """
-    pack = repo.create_pack(name="Test_Pack")
     integration = pack.create_integration("Test_Integration")
-    if with_test:
-        integration_code_path = Path(integration.code.path)
-        integration_code_path.with_name(f"{integration_code_path.stem}_test.py").touch()
-    structure_validator = StructureValidator(integration.code.path)
-    content_entity_validator = ContentEntityValidator(structure_validator)
-    assert content_entity_validator.validate_unit_test_exists() == expected_result
+    for code_file in (integration.code.path, script.path):
+        structure_validator = StructureValidator(code_file)
+        if with_test:
+            path = Path(code_file)
+            path.with_name(f"{path.stem}_test.py").touch()
+        content_entity_validator = ContentEntityValidator(structure_validator)
+        assert content_entity_validator.validate_unit_test_exists() == with_test
 
 
 FROM_AND_TO_VERSION_FOR_TEST = [

@@ -216,7 +216,7 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
-    "missing_unittest_file": {
+    "missing_unit_test_file": {
         "code": "BA124",
         "ui_applicable": False,
         "related_field": "",

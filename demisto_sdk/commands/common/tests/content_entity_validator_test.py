@@ -257,6 +257,24 @@ def test_validate_readme_exists_not_checking_on_api_modules(repo):
     assert content_entity_validator.validate_readme_exists()
 
 
+def test_validate_unit_test_exists(repo):
+    """
+    Given:
+    - A 'test pack' which contains a 'test script'
+
+    When:
+    - Validating if an unittest file exists
+
+    Then:
+    - Ensure that False is being returned since unittest for the Python script was not found.
+    """
+    pack = repo.create_pack(name="Test_Pack")
+    script = pack.create_script("Test_Script.py")
+    structure_validator = StructureValidator(script.path)
+    content_entity_validator = ContentEntityValidator(structure_validator)
+    assert not content_entity_validator.validate_unit_test_exists()
+
+
 FROM_AND_TO_VERSION_FOR_TEST = [
     ({}, "test.json", True),
     ({"fromVersion": "0.0.0"}, "test.json", True),

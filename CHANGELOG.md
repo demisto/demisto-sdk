@@ -8,6 +8,8 @@
 * Fixed an issue where **validate** failed with **is_valid_integration_file_path_in_folder** on integrations that use the `MSAPIModule`.
 * Added **validate** check for the `modules` field in `pack_metadata.json` files.
 * Changed **lint** to skip deprecated content, unless when using the `-i` flag.
+* Fixed an issue where **update-release-notes** failed when a new *Parsing Rule* was added to a pack.
+* Refactored the logging framework. Demisto-SDK logs will now be written to `.demist_sdk_debug.log` under the content path (when detected) or the current directory.
 
 ## 1.10.6
 * Fixed an issue where running **validate** with the `-g` flag would skip some validations for old-formatted (unified) integration/script files.

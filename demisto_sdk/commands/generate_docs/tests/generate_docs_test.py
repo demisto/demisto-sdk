@@ -929,7 +929,6 @@ def test_generate_script_doc_passes_markdownlint(tmp_path, mocker):
         in_script,
         "!Set key=k1 value=v1,!Set key=k2 value=v2 append=true",
         str(d),
-        verbose=True,
     )
     readme = d / "README.md"
     with ReadMeValidator.start_mdx_server():
@@ -960,7 +959,6 @@ def test_generate_script_doc(tmp_path, mocker):
         in_script,
         "!Set key=k1 value=v1,!Set key=k2 value=v2 append=true",
         str(d),
-        verbose=True,
     )
     patched.assert_called()
     readme = d / "README.md"
@@ -972,7 +970,7 @@ def test_generate_script_doc(tmp_path, mocker):
     command_examples = d / "command_examples.txt"
     with command_examples.open("w") as f:
         f.write("!Set key=k1 value=v1\n!Set key=k2 value=v2 append=true")
-    generate_script_doc(in_script, command_examples, str(d), verbose=True)
+    generate_script_doc(in_script, command_examples, str(d))
     with open(readme) as real_readme_file:
         with open(expected_readme) as expected_readme_file:
             assert real_readme_file.read() == expected_readme_file.read()

@@ -19,6 +19,8 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     API_MODULES_PACK,
     EXCLUDED_DISPLAY_NAME_WORDS,
     INTEGRATIONS_DIR,
+    MARKETPLACE_KEY_PACK_METADATA,
+    MODULES,
     PACK_METADATA_CATEGORIES,
     PACK_METADATA_CERTIFICATION,
     PACK_METADATA_CREATED,
@@ -28,6 +30,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACK_METADATA_EMAIL,
     PACK_METADATA_FIELDS,
     PACK_METADATA_KEYWORDS,
+    PACK_METADATA_MODULES,
     PACK_METADATA_NAME,
     PACK_METADATA_SUPPORT,
     PACK_METADATA_TAGS,
@@ -604,6 +607,10 @@ class PackUniqueFilesValidator(BaseValidator):
                     ):
                         return False
 
+            # check modules field is used only for XSIAM and contains valid values
+            if not self.is_modules_field_valid(metadata):
+                return False
+
             # if the field 'certification' exists, check that its value is set to 'certified' or 'verified'
             certification = metadata.get(PACK_METADATA_CERTIFICATION)
             if certification and certification not in ALLOWED_CERTIFICATION_VALUES:
@@ -624,6 +631,28 @@ class PackUniqueFilesValidator(BaseValidator):
             ):
                 raise BlockingValidationFailureException()
 
+        return True
+
+    @error_codes("PA135,PA136")
+    def is_modules_field_valid(self, metadata: Dict):
+        if modules := metadata.get(PACK_METADATA_MODULES, []):
+            # used only for XSIAM
+            if MarketplaceVersions.MarketplaceV2 not in metadata.get(
+                MARKETPLACE_KEY_PACK_METADATA, []
+            ):
+                if self._add_error(
+                    Errors.pack_metadata_modules_for_non_xsiam(),
+                    self.pack_meta_file,
+                ):
+                    return False
+
+            # contains valid values
+            if not set(modules).issubset(MODULES):
+                if self._add_error(
+                    Errors.pack_metadata_invalid_modules(),
+                    self.pack_meta_file,
+                ):
+                    return False
         return True
 
     @error_codes("PA126")

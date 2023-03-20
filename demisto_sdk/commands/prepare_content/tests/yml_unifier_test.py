@@ -419,13 +419,13 @@ def test_insert_module_code(mocker, import_to_module):
 def test_insert_hierarchy_api_module(mocker):
     """
     Given:
-     - Import statements of an sub ApiModule with the structore ApiModuleA -> import ApiModuleB
+     - An ApiModule which imports another ApiModule
 
     When:
      - calling insert_module_code
 
     Then:
-     - Ensure the code returned contains all of the ApiModules in the hierarchy
+     - Ensure the code returned contains both inner and outer api modules
     """
     def mocked_get_api_module_code(*args, **kwargs):
         if args[0] == 'SubApiModule':

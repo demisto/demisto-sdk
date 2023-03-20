@@ -381,7 +381,7 @@ class IntegrationScriptUnifier(Unifier):
                 module_name, module_path
             )
 
-            # check for the case of ApiModuleA -> import ApiModuleB
+            # handles cases where ApiModuleA imports ApiModuleB
             tmp_imports_to_names = IntegrationScriptUnifier.check_api_module_imports(
                 module_code
             )

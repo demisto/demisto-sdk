@@ -38,7 +38,6 @@ def demisto_client(mocker):
         "demisto_sdk.commands.common.content.objects.pack_objects.script.script.get_demisto_version",
         return_value=parse("6.0.0"),
     )
-    mocker.patch("click.secho")
 
 
 def test_integration_upload_pack_positive(demisto_client, repo, mocker):

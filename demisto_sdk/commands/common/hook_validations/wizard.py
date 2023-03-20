@@ -1,6 +1,5 @@
+import logging
 from typing import Optional
-
-import click
 
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
@@ -13,6 +12,8 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
     ContentEntityValidator,
 )
 from demisto_sdk.commands.common.tools import get_pack_name
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class WizardValidator(ContentEntityValidator):
@@ -66,9 +67,8 @@ class WizardValidator(ContentEntityValidator):
     @error_codes("WZ100")
     def are_dependency_packs_valid(self, id_set_file: Optional[dict]):
         if not id_set_file:
-            click.secho(
-                "Skipping wizard dependency pack validation. Could not read id_set.json.",
-                fg="yellow",
+            logger.info(
+                "[yellow]Skipping wizard dependency pack validation. Could not read id_set.json.[/yellow]"
             )
             return True
 
@@ -88,9 +88,8 @@ class WizardValidator(ContentEntityValidator):
     @error_codes("WZ101,WZ102")
     def are_integrations_in_dependency_packs(self, id_set_file: Optional[dict]):
         if not id_set_file:
-            click.secho(
-                "Skipping wizard integrations validation. Could not read id_set.json.",
-                fg="yellow",
+            logger.info(
+                "[yellow]Skipping wizard integrations validation. Could not read id_set.json.[/yellow]"
             )
             return True
 
@@ -138,9 +137,8 @@ class WizardValidator(ContentEntityValidator):
     @error_codes("WZ101,WZ103")
     def are_playbooks_in_dependency_packs(self, id_set_file: Optional[dict]):
         if not id_set_file:
-            click.secho(
-                "Skipping wizard playbooks validation. Could not read id_set.json.",
-                fg="yellow",
+            logger.info(
+                "[yellow]Skipping wizard playbooks validation. Could not read id_set.json.[/yellow]"
             )
             return True
 

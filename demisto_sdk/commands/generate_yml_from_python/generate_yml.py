@@ -11,8 +11,6 @@ from types import FunctionType
 from typing import Any, AnyStr, Callable, List, Optional, Tuple, Union
 from unittest import mock
 
-import click
-
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import write_yml
 from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
@@ -92,25 +90,26 @@ class YMLGenerator:
                         )
                         return True
                 else:
-                    click.secho(f"Problem importing {self.filename}", fg="red")
+                    logger.info(f"[red]Problem importing {self.filename}[/red]")
                     return False
             except Exception as err:
-                click.secho(f"No metadata collector found in {self.filename}", fg="red")
+                logger.info(
+                    f"[red]No metadata collector found in {self.filename}[/red]"
+                )
                 if (
                     not str(err)
                     == "module 'metadata_collector' has no attribute 'metadata_collector'"
                 ):
-                    click.secho(traceback.format_exc())
-                    click.secho(str(err), fg="red")
+                    logger.info(traceback.format_exc())
+                    logger.info(f"[red]{err}[/red]")
                 return False
 
     def generate(self):
         """The main method. Collect details and write the yml file."""
-        click.secho("Starting yml generation..")
+        logger.info("Starting yml generation..")
         if not self.is_generatable_file:
-            click.secho(
-                f"Not running file {self.filename} without metadata collector.",
-                fg="red",
+            logger.info(
+                f"[red]Not running file {self.filename} without metadata collector.[/red]"
             )
             return
         # Collect the wrapped functions with the details.
@@ -179,13 +178,12 @@ class YMLGenerator:
             try:
                 function()
             except Exception as err:
-                click.secho(
-                    f"Failed running and collecting data for function: {function.__name__}",
-                    fg="red",
+                logger.info(
+                    f"[red]Failed running and collecting data for function: {function.__name__}[/red]"
                 )
-                click.secho(traceback.format_exc())
-                click.secho(str(err), fg="red")
-                click.secho("Continuing..")
+                logger.info(traceback.format_exc())
+                logger.info(f"[red]{err}[/red]")
+                logger.info("Continuing..")
 
     def get_yml_filename(self) -> str:
         yml_filename_splitted = self.filename.split(".")[:-1] + ["yml"]
@@ -208,15 +206,13 @@ class YMLGenerator:
         yml_filename = self.get_yml_filename()
 
         if os.path.exists(yml_filename) and not self.force:
-            click.secho(
-                f"File {yml_filename} already exists, not writing. To override add --force.",
-                fg="red",
+            logger.info(
+                f"[red]File {yml_filename} already exists, not writing. To override add --force.[/red]"
             )
         else:
             if self.force:
-                click.secho(
-                    f"Force flag is used. Overriding {yml_filename} if it exists.",
-                    fg="yellow",
+                logger.info(
+                    f"[yellow]Force flag is used. Overriding {yml_filename} if it exists.[/yellow]"
                 )
             if self.metadata:
                 self.metadata.save_dict_as_yaml_integration_file(yml_filename)
@@ -729,4 +725,4 @@ class MetadataToDict:
         logger.debug(f"Writing collected metadata to {output_file}.")
 
         write_yml(output_file, self.metadata_dict)
-        click.secho("Finished successfully.", fg="green")
+        logger.info("[green]Finished successfully.[/green]")

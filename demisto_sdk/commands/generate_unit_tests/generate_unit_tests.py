@@ -4,7 +4,6 @@ from typing import List
 
 import astor
 import autopep8
-import click
 from klara.contract import solver
 from klara.contract.solver import MANAGER, ContractSolver, nodes
 
@@ -126,8 +125,8 @@ class UnitTestsGenerator:
                     {command_name_without_vendor: [command_dict]}
                 )
 
-        click.echo("Unit tests will be generated for the following commands:")
-        click.echo("\n".join(display_commands))
+        logger.info("Unit tests will be generated for the following commands:")
+        logger.info("\n".join(display_commands))
 
     def run_commands(self):
         """
@@ -260,7 +259,7 @@ def run_generate_unit_tests(
 ):
     global logger
 
-    click.echo("================= Running Unit Testing Generator ===================")
+    logger.info("================= Running Unit Testing Generator ===================")
     # validate inputs
     input_path_obj = Path(input_path)
     if not input_path:

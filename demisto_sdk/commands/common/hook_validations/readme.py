@@ -10,7 +10,6 @@ from threading import Lock
 from typing import Callable, List, Optional, Set
 from urllib.parse import urlparse
 
-import click
 import docker
 import requests
 from git import InvalidGitRepositoryError
@@ -47,6 +46,8 @@ from demisto_sdk.commands.common.tools import (
     get_yml_paths_in_dir,
     run_command_os,
 )
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -385,7 +386,7 @@ class ReadMeValidator(BaseValidator):
         # Check node exist
         stdout, stderr, exit_code = run_command_os("node -v", cwd=content_path)
         if exit_code:
-            click.secho(
+            logger.info(
                 f"There is no node installed on the machine, error - {stderr}, {stdout}"
             )
             valid = False
@@ -403,7 +404,7 @@ class ReadMeValidator(BaseValidator):
                         missing_module.append(pack)
         if missing_module:
             valid = False
-            click.secho(
+            logger.info(
                 f"The npm modules: {missing_module} are not installed. To run the mdx server locally, use "
                 f"'npm install' to install all required node dependencies. Otherwise, if docker is installed, the server"
                 f"will run in a docker container"
@@ -529,8 +530,8 @@ class ReadMeValidator(BaseValidator):
                             response=error.response,
                         )
             except Exception as ex:
-                click.secho(
-                    f"Could not validate the image link: {img_url}\n {ex}", fg="yellow"
+                logger.info(
+                    f"[yellow]Could not validate the image link: {img_url}\n {ex}[/yellow]"
                 )
                 continue
 
@@ -593,9 +594,8 @@ class ReadMeValidator(BaseValidator):
 
         current_pack_name = self.pack_path.name
         if ignore_packs and current_pack_name in ignore_packs:
-            click.secho(
-                f"Default sentences check - Pack {current_pack_name} is ignored.",
-                fg="yellow",
+            logger.info(
+                f"[yellow]Default sentences check - Pack {current_pack_name} is ignored.[/yellow]"
             )
             return errors  # returns empty string
 

@@ -1,10 +1,10 @@
 import inspect
+import logging
 from typing import Any, Dict, List, Optional, Union, get_args, get_origin
 
-import click
-from colorama import Fore
-
 from demisto_sdk.commands.common import constants, errors
+
+logger = logging.getLogger("demisto-sdk")
 
 TEMPLATE = """
 Error Code: {code}
@@ -49,8 +49,8 @@ def parse_function_parameters(sig: inspect.Signature):
 def print_error_information(func_name, error_data, func, sig: inspect.Signature):
     parameters = parse_function_parameters(sig)
 
-    click.secho(f"{Fore.GREEN}## Error Code Info ##{Fore.RESET}")
-    click.secho(
+    logger.info("[green]## Error Code Info ##[green]")
+    logger.info(
         TEMPLATE.format(
             code=error_data["code"],
             func=f"{func_name}{sig}",
@@ -71,7 +71,7 @@ def find_error(error_code):
 def generate_error_code_information(error_code):
     func_name, error_data = find_error(error_code)
     if not func_name:
-        click.secho(f"{Fore.RED}No such error")
+        logger.info("[red]No such error[/red]")
         return 1
 
     func = getattr(errors.Errors, func_name)

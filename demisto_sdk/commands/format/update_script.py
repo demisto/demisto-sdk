@@ -1,8 +1,6 @@
 import logging
 from typing import Optional, Tuple
 
-import click
-
 from demisto_sdk.commands.common.constants import TYPE_JS, TYPE_PWSH
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.tools import is_iron_bank_pack, server_version_compare
@@ -81,12 +79,11 @@ class ScriptYMLFormat(BaseUpdateYML):
                     image_name
                 )
             if not latest_tag:
-                click.secho("Failed getting docker image latest tag", fg="yellow")
+                logger.info("[yellow]Failed getting docker image latest tag[/yellow]")
                 return
         except Exception as e:
-            click.secho(
-                f"Failed getting docker image latest tag. {e} - Invalid docker image",
-                fg="yellow",
+            logger.info(
+                f"[yellow]Failed getting docker image latest tag. {e} - Invalid docker image[/yellow]"
             )
             return
         full_name = f"{image_name}:{latest_tag}"
@@ -113,9 +110,8 @@ class ScriptYMLFormat(BaseUpdateYML):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             super().update_yml()
             self.update_tests()

@@ -2,8 +2,6 @@ import logging
 from distutils.version import LooseVersion
 from typing import Tuple
 
-import click
-
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
@@ -44,9 +42,8 @@ class WidgetJSONFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             self.update_json()
             self.set_description()

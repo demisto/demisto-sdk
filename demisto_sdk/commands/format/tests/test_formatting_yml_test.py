@@ -1232,12 +1232,10 @@ class TestFormatting:
                 "inputs": {"sequence": [{"include": "input_schema"}], "type": "seq"}
             },
         }
-        mocker.patch("click.echo")
         BaseUpdate.recursive_extend_schema(schema, schema)
         assert logger_info.call_count == 1
-        assert (
-            "Could not find sub-schema for input_schema"
-            in logger_info.call_args_list[0][0][0]
+        assert str_in_call_args_list(
+            logger_info.call_args_list, "Could not find sub-schema for input_schema"
         )
 
     @staticmethod

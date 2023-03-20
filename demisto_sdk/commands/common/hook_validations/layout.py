@@ -1,9 +1,8 @@
+import logging
 import os
 from abc import ABC, abstractmethod
 from distutils.version import LooseVersion
 from typing import Dict, List
-
-import click
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -24,6 +23,8 @@ from demisto_sdk.commands.common.tools import (
     get_item_marketplaces,
 )
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
+
+logger = logging.getLogger("demisto-sdk")
 
 FROM_VERSION_LAYOUTS_CONTAINER = "6.0.0"
 
@@ -229,9 +230,8 @@ class LayoutsContainerValidator(LayoutBaseValidator):
             return True
 
         if not id_set_file:
-            click.secho(
-                "Skipping mapper incident field validation. Could not read id_set.json.",
-                fg="yellow",
+            logger.info(
+                "[yellow]Skipping mapper incident field validation. Could not read id_set.json.[/yellow]"
             )
             return True
 
@@ -374,9 +374,8 @@ class LayoutValidator(LayoutBaseValidator):
             return True
 
         if not id_set_file:
-            click.secho(
-                "Skipping mapper incident field validation. Could not read id_set.json.",
-                fg="yellow",
+            logger.info(
+                "[yellow]Skipping mapper incident field validation. Could not read id_set.json.[/yellow]"
             )
             return True
 

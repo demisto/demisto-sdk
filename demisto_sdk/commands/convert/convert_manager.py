@@ -1,7 +1,5 @@
 import logging
 
-import click
-
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.convert.dir_convert_managers import *  # lgtm [py/polluting-import]
 
@@ -22,10 +20,9 @@ class ConvertManager:
             (int): Returns 0 upon success, 1 if failure occurred.
         """
         if self.MIN_VERSION_SUPPORTED > self.server_version:
-            click.secho(
-                f"Version requested: {str(self.server_version)} should be higher or equal to "
-                f"{str(self.MIN_VERSION_SUPPORTED)}",
-                fg="red",
+            logger.info(
+                f"[red]Version requested: {str(self.server_version)} should be higher or equal to "
+                f"{str(self.MIN_VERSION_SUPPORTED)}[/red]"
             )
             return 1
         pack = self.create_pack_object()
@@ -39,10 +36,9 @@ class ConvertManager:
             if dir_converter.should_convert()
         ]
         if not relevant_dir_converters:
-            click.secho(
-                f"No entities were found to convert. Please validate your input path is "
-                f"valid: {self.input_path}",
-                fg="red",
+            logger.info(
+                f"[red]No entities were found to convert. Please validate your input path is "
+                f"valid: {self.input_path}[/red]"
             )
             return 1
         exit_code = 0
@@ -51,9 +47,8 @@ class ConvertManager:
         if exit_code:
             logger.info("[red]Error occurred during convert command.[/red]")
         else:
-            click.secho(
-                f"Finished convert for given path successfully:\n{self.input_path}",
-                fg="green",
+            logger.info(
+                f"[green]Finished convert for given path successfully:\n{self.input_path}[/green]"
             )
         return exit_code
 

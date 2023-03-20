@@ -1,10 +1,10 @@
+import logging
 import os
 import re
 from collections import OrderedDict
 from distutils.version import LooseVersion
 from typing import Dict, Optional, Tuple
 
-import click
 from packaging.version import Version
 
 import demisto_sdk.commands.common.constants as constants
@@ -35,6 +35,8 @@ from demisto_sdk.commands.common.update_id_set import (
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class IDSetValidations(BaseValidator):
@@ -826,7 +828,7 @@ class IDSetValidations(BaseValidator):
         if (
             self.is_circle
         ):  # No need to check on local env because the id_set will contain this info after the commit
-            click.echo(f"id set validations for: {file_path}")
+            logger.info(f"id set validations for: {file_path}")
 
             if re.match(constants.PACKS_SCRIPT_YML_REGEX, file_path, re.IGNORECASE):
                 (
@@ -915,7 +917,7 @@ class IDSetValidations(BaseValidator):
         is_valid = True
         error = None
         if self.is_circle:
-            click.echo(f"id set validations for: {pack_path}")
+            logger.info(f"id set validations for: {pack_path}")
 
             is_valid, error = self._is_pack_display_name_already_exist(
                 get_pack_metadata_data(f"{pack_path}/pack_metadata.json", False)

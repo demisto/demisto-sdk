@@ -4,7 +4,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Callable, Optional
 
-import click
 import docker
 import docker.errors
 import docker.models.containers
@@ -15,6 +14,8 @@ from demisto_sdk.commands.common.docker_helper import (
     init_global_docker_client,
 )
 from demisto_sdk.commands.common.errors import Errors
+
+logger = logging.getLogger("demisto-sdk")
 
 EXPECTED_SUCCESS_MESSAGE = "MDX server is listening on port"
 
@@ -55,7 +56,7 @@ def start_docker_MDX_server(
         A context manager
 
     """
-    logging.info("Starting docker mdx server")
+    logger.info("Starting docker mdx server")
     get_docker().pull_image(MDX_SERVER_DOCKER_IMAGE)
     iteration_num = 1
     while mdx_container := init_global_docker_client().containers.list(
@@ -93,10 +94,10 @@ def start_docker_MDX_server(
     if not raised_successfully:
         try:
             remove_container(container)
-            logging.error("Docker for MDX server was not started correctly")
-            logging.error(f'docker logs:\n{container.logs().decode("utf-8")}')
+            logger.error("Docker for MDX server was not started correctly")
+            logger.error(f'docker logs:\n{container.logs().decode("utf-8")}')
         except docker.errors.NotFound:
-            click.secho(line)
+            logger.info(line)
 
         error_message = Errors.error_starting_docker_mdx_server(line=line)
 
@@ -106,7 +107,7 @@ def start_docker_MDX_server(
         else:
             raise Exception(error_message)
     else:
-        click.secho("Successfully started node server in docker")
+        logger.info("Successfully started node server in docker")
 
     try:
         yield True
@@ -136,15 +137,15 @@ def start_local_MDX_server(
         A context manager
 
     """
-    click.secho("Starting local mdx server")
+    logger.info("Starting local mdx server")
 
-    logging.debug(subprocess.check_output(["npm", "list", "--json"]))
+    logger.debug(subprocess.check_output(["npm", "list", "--json"]))
     process = subprocess.Popen(
         ["node", str(server_script_path())], stdout=subprocess.PIPE, text=True
     )
     line = process.stdout.readline()  # type: ignore
     if EXPECTED_SUCCESS_MESSAGE not in line:
-        logging.error(f"MDX local server couldnt be started: {line}")
+        logger.error(f"MDX local server couldnt be started: {line}")
         terminate_process(process)
         error_message, error_code = Errors.error_starting_mdx_server(line=line)
         if handle_error and file_path:
@@ -161,5 +162,5 @@ def start_local_MDX_server(
 
 def terminate_process(process):
     if process:
-        click.secho("Stopping local mdx server")
+        logger.info("Stopping local mdx server")
         process.terminate()

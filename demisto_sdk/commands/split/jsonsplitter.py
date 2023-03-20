@@ -1,6 +1,5 @@
+import logging
 import os
-
-import click
 
 from demisto_sdk.commands.common.constants import (
     DASHBOARDS_DIR,
@@ -9,6 +8,8 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import get_pack_name, is_external_repository
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -46,9 +47,8 @@ class JsonSplitter:
 
     def split_json(self):
         if self.logging:
-            click.secho(
-                f"Starting dashboard extraction from generic module {self.module_json_data.get('name')}",
-                fg="bright_cyan",
+            logger.info(
+                f"[cyan]Starting dashboard extraction from generic module {self.module_json_data.get('name')}[/cyan]"
             )
         self.create_output_dirs()
         self.create_dashboards()
@@ -68,7 +68,7 @@ class JsonSplitter:
             if not is_external_repository() and self.autocreate_dir:
                 pack_name = get_pack_name(self.input)
                 if self.logging:
-                    click.echo(
+                    logger.info(
                         f"No output path given creating Dashboards and GenericModules "
                         f"directories in pack {pack_name}"
                     )
@@ -83,7 +83,7 @@ class JsonSplitter:
             # if not in content create the files locally
             else:
                 if self.logging:
-                    click.echo(
+                    logger.info(
                         "No output path given and not running in content repo, creating "
                         "files in the current working directory"
                     )
@@ -92,7 +92,7 @@ class JsonSplitter:
 
     def create_dashboards(self):
         if self.logging:
-            click.echo("Starting dashboard creation")
+            logger.info("Starting dashboard creation")
 
         for view in self.module_json_data.get("views", []):
             for tab in view.get("tabs", []):
@@ -107,7 +107,7 @@ class JsonSplitter:
                     )
 
                     if self.logging:
-                        click.echo(f"Creating dashboard: {full_dashboard_path}")
+                        logger.info(f"Creating dashboard: {full_dashboard_path}")
 
                     with open(full_dashboard_path, "w") as dashboard_file:
                         json.dump(dashboard_data, dashboard_file, indent=4)
@@ -117,18 +117,18 @@ class JsonSplitter:
     def create_module(self):
         if not self.new_module_file:
             if self.logging:
-                click.echo(f"Updating module file {self.input}")
+                logger.info(f"Updating module file {self.input}")
             module_file_path = self.input
 
         else:
             if self.logging:
-                click.echo("Creating new module file")
+                logger.info("Creating new module file")
 
             given_name = False
             while not given_name:
                 file_name = str(input("\nPlease enter a new module file name: "))
                 if not file_name or " " in file_name:
-                    click.echo("File name cannot be empty nor have spaces in it")
+                    logger.info("File name cannot be empty nor have spaces in it")
 
                 else:
                     given_name = True

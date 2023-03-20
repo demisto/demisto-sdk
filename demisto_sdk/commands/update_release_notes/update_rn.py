@@ -969,6 +969,7 @@ def get_file_description(path, file_type) -> str:
         FileType.INTEGRATION,
         FileType.CORRELATION_RULE,
         FileType.MODELING_RULE,
+        FileType.PARSING_RULE,
     ):
         yml_file = get_yaml(path)
         return yml_file.get("description", "")

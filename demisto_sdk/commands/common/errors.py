@@ -1831,10 +1831,6 @@ class Errors:
         return f'To fix the problem, try running `demisto-sdk {cmd} -i {file_path} {" ".join(args)}`'
 
     @staticmethod
-    def suggest_fix_missing_unittest(file_path: str) -> str:
-        return f"To fix the problem, add an unittest file for {file_path}"
-
-    @staticmethod
     @error_code_decorator
     def empty_command_arguments(command_name):
         return (
@@ -4261,8 +4257,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def missing_unit_test_file(path: str):
-        return f"{path} is missing a unittest file"
+    def missing_unit_test_file(path: Path):
+        return f"Missing {path.stem}_test.py unit test file for {path.name}."
 
     @staticmethod
     @error_code_decorator

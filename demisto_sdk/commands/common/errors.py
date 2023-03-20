@@ -3589,8 +3589,8 @@ class Errors:
     @error_code_decorator
     def files_not_allowed_directly_under_this_folder(file_path: Path):
         return (
-            f"Files are not allowed directly under the {file_path.parent.name} folder."
-            f"Please move {file_path.name} to a suitable folder.\n"
+            f"Files are not allowed directly under the {file_path.parent.name} folder. "
+            f"Please move {file_path.name} to a suitable folder. "
             "See https://github.com/demisto/content for reference."
         )
 

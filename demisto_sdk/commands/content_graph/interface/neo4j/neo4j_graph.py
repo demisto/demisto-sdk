@@ -129,7 +129,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             if artifacts_folder := os.getenv("ARTIFACTS_FOLDER"):
                 output_path = Path(artifacts_folder) / "content_graph"
                 output_path.mkdir(parents=True, exist_ok=True)
-            update_content_graph(self, use_current=True, output_path=output_path)
+            update_content_graph(self, use_git=True, output_path=output_path)
 
     def __enter__(self) -> "Neo4jContentGraphInterface":
         return self

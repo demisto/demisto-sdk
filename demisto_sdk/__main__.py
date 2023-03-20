@@ -196,7 +196,7 @@ def main(ctx, config, version, release_notes, **kwargs):
     from demisto_sdk.commands.common.tools import get_content_path
 
     if sys.version_info[:2] == (3, 8):
-        logger.warning(
+        logger.info(
             "[red]Demisto-SDK will soon stop supporting Python 3.8. Please update your python environment.[/red]"
         )
 

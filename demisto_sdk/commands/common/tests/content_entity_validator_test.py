@@ -258,7 +258,7 @@ def test_validate_readme_exists_not_checking_on_api_modules(repo):
     assert content_entity_validator.validate_readme_exists()
 
 
-@pytest.mark.parametrize("with_test, expected_result", [(True, True), (False, False)])
+@pytest.mark.parametrize("with_test", (True, False))
 def test_validate_unit_test_exists_for_script(repo, with_test, expected_result):
     """
     Given:

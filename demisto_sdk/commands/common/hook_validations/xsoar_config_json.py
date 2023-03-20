@@ -32,14 +32,10 @@ class XSOARConfigJsonValidator(BaseValidator):
         configuration_file_path,
         json_file_path=None,
         ignored_errors=None,
-        print_as_warnings=False,
-        suppress_print=False,
         specific_validations=None,
     ):
         super().__init__(
             ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
-            suppress_print=suppress_print,
             json_file_path=json_file_path,
             specific_validations=specific_validations,
         )

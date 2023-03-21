@@ -179,8 +179,8 @@ def validate_duplicate_ids(
     tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[graph.Node, List[graph.Node]]]:
     query = f"""// Returns duplicate content items with same id
-    MATCH (content_item{{deprecated: false}})
-    MATCH (duplicate_content_item{{deprecated: false}})
+    MATCH (content_item)
+    MATCH (duplicate_content_item)
     WHERE id(content_item) <> id(duplicate_content_item)
     AND content_item.object_id = duplicate_content_item.object_id
     AND content_item.content_type = duplicate_content_item.content_type

@@ -676,6 +676,25 @@ def test_rearranging_before_conversion(zip_path: str, expected_directories: set)
     assert expected_directories == results
 
 
+@pytest.mark.parametrize(
+    "input_script, output_version",
+    [
+        (
+            "This is a test script\n the script contains a pack version\n ### pack version: 3.4.5  TEST TEST",
+            "3.4.5",
+        ),
+        (
+            "This is a test script\n the script does not contain a pack version\n ### TEST TEST",
+            "0.0.0",
+        ),
+        ("", "0.0.0"),
+    ],
+)
+def test_extract_pack_version(input_script: str, output_version: str):
+    contribution_converter = ContributionConverter()
+    assert contribution_converter.extract_pack_version(input_script) == output_version
+
+
 def test_create_contribution_items_version_note():
     contribution_converter = ContributionConverter()
     contribution_converter.contribution_items_version = {

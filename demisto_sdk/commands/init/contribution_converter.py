@@ -11,6 +11,7 @@ from string import punctuation
 from typing import Dict, List, Optional, Union
 
 import click
+from packaging.version import Version
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
@@ -473,14 +474,15 @@ class ContributionConverter:
         """
         if script:
             try:
-                pack_version = re.search(r"### pack version: \d+\.\d+\.\d+", script)
-
-                if pack_version:
-                    return pack_version.group().split(" ")[3]
+                pack_version_reg = re.search(
+                    r"### pack version: (\d+\.\d+\.\d+)", script
+                )
+                if pack_version_reg:
+                    return pack_version_reg.groups()[0]
             except Exception as e:
                 click.echo(f"Failed extracting pack version from script: {e}")
                 pass
-        return ""
+        return "0.0.0"
 
     def create_contribution_items_version_note(self):
         """
@@ -579,8 +581,10 @@ class ContributionConverter:
                             contributor_item_version = self.extract_pack_version(script)
                             current_pack_version = get_pack_metadata(
                                 file_path=content_item_file_path
-                            ).get("currentVersion", "")
-                            if current_pack_version > contributor_item_version:
+                            ).get("currentVersion", "0.0.0")
+                            if Version(current_pack_version) > Version(
+                                contributor_item_version
+                            ):
                                 self.contribution_items_version[content_item.name] = {
                                     "contribution_version": contributor_item_version,
                                     "latest_version": current_pack_version,

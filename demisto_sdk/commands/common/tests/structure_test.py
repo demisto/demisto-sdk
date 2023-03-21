@@ -30,7 +30,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_SCRIPT_TEST_PY_REGEX,
     PACKS_SCRIPT_YML_REGEX,
     PACKS_WIDGET_JSON_REGEX,
-    PARSING_RULES_YML_REGEX,
+    PARSING_RULE_YML_REGEX,
     PLAYBOOK_README_REGEX,
     PLAYBOOK_YML_REGEX,
     TEST_PLAYBOOK_YML_REGEX,
@@ -649,7 +649,7 @@ class TestGetMatchingRegex:
         (
             ["Packs/Jira/ParsingRules/JiraParsingRules/JiraParsingRules.yml"],
             [],
-            [PARSING_RULES_YML_REGEX],
+            [PARSING_RULE_YML_REGEX],
         ),
         (
             [

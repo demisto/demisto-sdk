@@ -2336,6 +2336,36 @@ def test_check_file_relevance_and_format_path_file_to_format(
 
 
 @pytest.mark.parametrize(
+    "input_file_path, file_type",
+    [
+        ("Packs/PackName/ParsingRules/Name/some_file.xif", FileType.MODELING_RULE_XIF),
+    ],
+)
+def test_check_file_relevance_and_format_path_file_to_format_parsing_rules(
+    mocker, input_file_path, file_type
+):
+    """
+    Given
+    - parsing rule (xif) file path to validate
+
+    When
+    - file should be formatted when checking file relevancy for new release notes
+
+    Then
+    - return the formatted file path
+    """
+    validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
+    mocker.patch(
+        "demisto_sdk.commands.validate.validate_manager.find_type",
+        return_value=file_type,
+    )
+    mocker.patch.object(validator_obj, "is_old_file_format", return_value=False)
+    assert validator_obj.check_file_relevance_and_format_path(
+        input_file_path, None, set()
+    ) == ("Packs/PackName/ParsingRules/Name/some_file.yml", "", True)
+
+
+@pytest.mark.parametrize(
     "input_file_path, old_file_path, file_type",
     [
         ("Packs/some_file.py", "Packs/old_file_path.py", FileType.PYTHON_FILE),

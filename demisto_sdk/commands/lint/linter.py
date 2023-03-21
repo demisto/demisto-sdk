@@ -36,7 +36,7 @@ from demisto_sdk.commands.common.native_image import (
     ScriptIntegrationSupportedNativeImages,
 )
 from demisto_sdk.commands.common.timers import timer
-from demisto_sdk.commands.common.tools import get_docker_images_from_yml, get_script_or_integration_id, run_command_os
+from demisto_sdk.commands.common.tools import get_docker_images_from_yml, run_command_os
 from demisto_sdk.commands.lint.commands_builder import (
     build_bandit_command,
     build_flake8_command,
@@ -178,7 +178,6 @@ class Linter:
         else:
             try:
                 self._yml_file = next(yml_file)  # type: ignore
-                self._pack_name = get_script_or_integration_id(self._yml_file)
             except StopIteration:
                 logger.info(
                     f"{self._pack_abs_dir} - Skipping no yaml file found {yml_file}"
@@ -294,6 +293,8 @@ class Linter:
             if not isinstance(yml_obj, dict):
                 self._pkg_lint_status["errors"].append("Unable to parse package yml")
                 return True
+            self._pack_name = yml_obj.get("commonfields", {}).get("id")
+
             script_obj = (
                 yml_obj.get("script", {})
                 if isinstance(yml_obj.get("script"), dict)

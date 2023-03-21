@@ -416,6 +416,43 @@ def test_insert_module_code(mocker, import_to_module):
     assert code == expected_result
 
 
+def test_insert_hierarchy_api_module(mocker):
+    """
+    Given:
+     - An ApiModule which imports another ApiModule
+
+    When:
+     - calling insert_module_code
+
+    Then:
+     - Ensure the code returned contains both inner and outer api modules
+    """
+
+    def mocked_get_api_module_code(*args, **kwargs):
+        if args[0] == "SubApiModule":
+            return "from MicrosoftApiModule import *"
+        return get_dummy_module()
+
+    import_to_name = {"from SubApiModule import *": "SubApiModule"}
+    mocker.patch.object(
+        IntegrationScriptUnifier,
+        "_get_api_module_code",
+        side_effect=mocked_get_api_module_code,
+    )
+
+    code = IntegrationScriptUnifier.insert_module_code(
+        "from SubApiModule import *", import_to_name
+    )
+    assert (
+        "register_module_line('MicrosoftApiModule', 'start', __line__(), wrapper=-3)\n"
+        in code
+    )
+    assert (
+        "register_module_line('SubApiModule', 'start', __line__(), wrapper=-3)\n"
+        in code
+    )
+
+
 def get_generated_module_code(import_name, api_module_name):
     return (
         f"\n### GENERATED CODE ###"

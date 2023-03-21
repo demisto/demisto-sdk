@@ -49,6 +49,7 @@ class GraphValidator(BaseValidator):
             self.validate_toversion_fields(),
             self.is_file_using_unknown_content(),
             self.is_file_display_name_already_exists(),
+            self.validate_duplicate_ids(),
         )
         return all(is_valid)
 
@@ -57,6 +58,25 @@ class GraphValidator(BaseValidator):
         is_valid = []
         is_valid.append(self.are_core_pack_dependencies_valid())
         return all(is_valid)
+
+    @error_codes("GR105")
+    def validate_duplicate_ids(self):
+        is_valid = True
+        for content_item, duplicates in self.graph.validate_duplicate_ids(
+            self.file_paths
+        ):
+            for duplicate in duplicates:
+                error_message, error_code = Errors.duplicated_id(
+                    content_item.object_id, duplicate.path
+                )
+                if self.handle_error(
+                    error_message,
+                    error_code,
+                    file_path=content_item.path,
+                    drop_line=True,
+                ):
+                    is_valid = False
+        return is_valid
 
     @error_codes("PA124")
     def are_core_pack_dependencies_valid(self):

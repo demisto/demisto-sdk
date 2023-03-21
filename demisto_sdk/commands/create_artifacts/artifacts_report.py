@@ -12,7 +12,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     YAMLContentObject,
     YAMLContentUnifiedObject,
 )
-from demisto_sdk.commands.common.logger import Colors
 
 ContentObject = Union[
     YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject
@@ -117,4 +116,4 @@ class ArtifactsReport:
             values = [x.values() for x in objects]
             table = tabulate(headers=headers, tabular_data=values)
 
-        return Colors.Fg.cyan + f"\n{self._header}\n" + Colors.reset + table
+        return f"\n[cyan]{self._header}[/cyan]\n" + table

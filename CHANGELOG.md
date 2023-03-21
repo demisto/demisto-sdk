@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* **Note: Demisto-SDK will soon stop supporting Python 3.8**
 * Fixed an issue where using **download** on non-unicode content, merging them into existing files caused an error.
 * Changed an internal setting to allow writing non-ascii content (unicode) using `YAMLHandler` and `JSONHandler`.
 * Fixed an issue where an error message in **unify** was unclear for invalid input.

@@ -643,17 +643,21 @@ class ContentEntityValidator(BaseValidator):
 
         """
         path = Path(self.file_path)
-        if path.suffix == ".py":
-            unit_test_path = path.with_name(f"{path.stem}_test.py")
-            if not unit_test_path.exists():
-                error_message, error_code = Errors.missing_unit_test_file(path)
-                if self.handle_error(
-                    error_message,
-                    error_code,
-                    file_path=self.file_path,
-                    suggested_fix="Write unit tests to ensure code quality and correctness."
-                    " See https://xsoar.pan.dev/docs/integrations/unit-testing#write-your-unit-tests"
-                    " for more information.",
-                ):
-                    return False
+        python_file_path = path.with_name(f"{path.stem}.py")
+        unit_test_path = path.with_name(f"{path.stem}_test.py")
+        if (
+            path.suffix == ".yml"
+            and python_file_path.exists()
+            and not unit_test_path.exists()
+        ):
+            error_message, error_code = Errors.missing_unit_test_file(path)
+            if self.handle_error(
+                error_message,
+                error_code,
+                file_path=self.file_path,
+                suggested_fix="Write unit tests to ensure code quality and correctness."
+                " See https://xsoar.pan.dev/docs/integrations/unit-testing#write-your-unit-tests"
+                " for more information.",
+            ):
+                return False
         return True

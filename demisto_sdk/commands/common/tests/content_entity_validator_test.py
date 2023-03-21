@@ -272,12 +272,13 @@ def test_validate_unit_test_exists(repo, with_test: bool):
         or True is being returned since there's an unittest for the Python file.
     """
     pack = repo.create_pack(name="Test_Pack")
-    script = pack.create_script("Test_Script.py")
+    yml_file = pack.create_correlation_rule("Test_File")
     integration = pack.create_integration("Test_Integration")
-    for code_file in (integration.code.path, script.path):
+    for code_file in (integration.yml.path, yml_file.path):
         structure_validator = StructureValidator(code_file)
+        path = Path(code_file)
+        path.with_name(f"{path.stem}.py").touch()
         if with_test:
-            path = Path(code_file)
             path.with_name(f"{path.stem}_test.py").touch()
         content_entity_validator = ContentEntityValidator(structure_validator)
         assert content_entity_validator.validate_unit_test_exists() == with_test

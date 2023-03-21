@@ -51,6 +51,7 @@ class TestPackMetadataValidator:
         "metadata",
         [
             os.path.join(FILES_PATH, "pack_metadata__valid.json"),
+            os.path.join(FILES_PATH, "pack_metadata__valid_module.json"),
             os.path.join(FILES_PATH, "pack_metadata__valid__community.json"),
         ],
     )
@@ -85,6 +86,8 @@ class TestPackMetadataValidator:
             os.path.join(FILES_PATH, "pack_metadata_invalid_keywords.json"),
             os.path.join(FILES_PATH, "pack_metadata_invalid_tags.json"),
             os.path.join(FILES_PATH, "pack_metadata_invalid_format_version.json"),
+            os.path.join(FILES_PATH, "pack_metadata__invalid_module.json"),
+            os.path.join(FILES_PATH, "pack_metadata__module_non_xsiam.json"),
         ],
     )
     def test_metadata_validator_invalid__non_breaking(self, mocker, metadata):

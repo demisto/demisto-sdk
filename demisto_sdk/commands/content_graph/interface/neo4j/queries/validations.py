@@ -1,6 +1,6 @@
 from typing import List, Tuple
 
-from neo4j import Transaction
+from neo4j import Transaction, graph
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -13,18 +13,19 @@ from demisto_sdk.commands.content_graph.common import (
     RelationshipType,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
+    is_target_available,
     run_query,
     versioned,
 )
 
 
-def validate_unknown_content(tx: Transaction, file_paths: List[str]):
-    file_paths_filter = (
-        f"WHERE content_item_from.path in {file_paths}" if file_paths else ""
-    )
+def validate_unknown_content(
+    tx: Transaction, file_paths: List[str], raises_error: bool
+):
     query = f"""// Returns USES relationships to content items not in the repository
-MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}]->(n{{not_in_repository:true}})
-{file_paths_filter}
+MATCH (content_item_from{{deprecated: false}})-[r:{RelationshipType.USES}]->(n{{not_in_repository: true}})
+WHERE{' NOT' if raises_error else ''} (content_item_from.is_test OR NOT r.mandatorily)
+{f'AND content_item_from.path in {file_paths}' if file_paths else ''}
 RETURN content_item_from, collect(r) as relationships, collect(n) as nodes_to
 """
     return {
@@ -172,3 +173,22 @@ def validate_core_packs_dependencies(
         )
         for item in run_query(tx, query)
     }
+
+
+def validate_duplicate_ids(
+    tx: Transaction, file_paths: List[str]
+) -> List[Tuple[graph.Node, List[graph.Node]]]:
+    query = f"""// Returns duplicate content items with same id
+    MATCH (content_item)
+    MATCH (duplicate_content_item)
+    WHERE id(content_item) <> id(duplicate_content_item)
+    AND content_item.object_id = duplicate_content_item.object_id
+    AND content_item.content_type = duplicate_content_item.content_type
+    AND {is_target_available('content_item', 'duplicate_content_item')}
+    {f'AND content_item.path in {file_paths}' if file_paths else ''}
+    RETURN content_item, collect(duplicate_content_item) AS duplicate_content_items
+    """
+    return [
+        (item.get("content_item"), item.get("duplicate_content_items"))
+        for item in run_query(tx, query)
+    ]

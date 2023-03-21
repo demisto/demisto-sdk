@@ -17,10 +17,19 @@ from functools import lru_cache
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
-from typing import Callable, Dict, Iterable, List, Match, Optional, Set, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Match,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
-import click
-import colorama
 import demisto_client
 import git
 import giturlparse
@@ -102,25 +111,15 @@ from demisto_sdk.commands.common.git_content_config import GitContentConfig, Git
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 
-json = JSON_Handler()
-
 logger = logging.getLogger("demisto-sdk")
+
+json = JSON_Handler()
 yaml = YAML_Handler()
 
 urllib3.disable_warnings()
 
-colorama.init()  # initialize color palette
-
 
 GRAPH_SUPPORTED_FILE_TYPES = ["yml", "json"]
-
-
-class LOG_COLORS:
-    NATIVE = colorama.Style.RESET_ALL
-    RED = colorama.Fore.RED
-    GREEN = colorama.Fore.GREEN
-    YELLOW = colorama.Fore.YELLOW
-    WHITE = colorama.Fore.WHITE
 
 
 class TagParser:
@@ -218,8 +217,6 @@ class MarketplaceTagParser:
 
 MARKETPLACE_TAG_PARSER = None
 
-LOG_VERBOSE = False
-
 LAYOUT_CONTAINER_FIELDS = {
     "details",
     "detailsV2",
@@ -242,15 +239,6 @@ def generate_xsiam_normalized_name(file_name, prefix):
         return file_name.replace(f"{prefix}-", f"external-{prefix}-")
     else:
         return f"external-{prefix}-{file_name}"
-
-
-def set_log_verbose(verbose: bool):
-    global LOG_VERBOSE
-    LOG_VERBOSE = verbose
-
-
-def get_log_verbose() -> bool:
-    return LOG_VERBOSE
 
 
 def get_mp_tag_parser():
@@ -276,11 +264,6 @@ def get_yml_paths_in_dir(project_dir: str, error_msg: str = "") -> Tuple[list, s
             print(error_msg)
         return [], ""
     return yml_files, yml_files[0]
-
-
-# print srt in the given color
-def print_color(obj, color):
-    print(f"{color}{obj}{LOG_COLORS.NATIVE}")
 
 
 def get_files_in_dir(
@@ -348,18 +331,6 @@ def src_root() -> Path:
     return Path(git_dir) / "demisto_sdk"  # type: ignore
 
 
-def print_error(error_str):
-    print_color(error_str, LOG_COLORS.RED)
-
-
-def print_warning(warning_str):
-    print_color(warning_str, LOG_COLORS.YELLOW)
-
-
-def print_success(success_str):
-    print_color(success_str, LOG_COLORS.GREEN)
-
-
 def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     """Run a bash command in the shell.
 
@@ -382,7 +353,9 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
     output, err = p.communicate()
     if err:
         if exit_on_error:
-            print_error(f"Failed to run command {command}\nerror details:\n{err}")
+            logger.info(
+                f"[red]Failed to run command {command}\nerror details:\n{err}[/red]"
+            )
             sys.exit(1)
         else:
             raise RuntimeError(
@@ -463,7 +436,6 @@ def get_remote_file_from_api(
     git_content_config: Optional[GitContentConfig],
     tag: str = "master",
     return_content: bool = False,
-    suppress_print: bool = False,
 ):
     if not git_content_config:
         git_content_config = GitContentConfig()
@@ -510,25 +482,21 @@ def get_remote_file_from_api(
             str(exc).replace(github_token, "XXX") if github_token else str(exc)
         )
         err_msg = err_msg.replace(gitlab_token, "XXX") if gitlab_token else err_msg
-        if not suppress_print:
-            if is_external_repository():
-                click.secho(
-                    f'You are working in a private repository: "{git_content_config.current_repository}".\n'
-                    f"The github/gitlab token in your environment is undefined.\n"
-                    f"Getting file from local repository instead. \n"
-                    f"If you wish to get the file from the remote repository, \n"
-                    f"Please define your github or gitlab token in your environment.\n"
-                    f"`export {GitContentConfig.CREDENTIALS.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n"
-                    f"export {GitContentConfig.CREDENTIALS.ENV_GITLAB_TOKEN_NAME}=<TOKEN>",
-                    fg="yellow",
-                )
-
-            click.secho(
-                f'Could not find the old entity file under "{git_path}".\n'
-                "please make sure that you did not break backward compatibility.\n"
-                f"Reason: {err_msg}",
-                fg="yellow",
+        if is_external_repository():
+            logger.debug(
+                f'[yellow]You are working in a private repository: "{git_content_config.current_repository}".\n'
+                f"The github/gitlab token in your environment is undefined.\n"
+                f"Getting file from local repository instead. \n"
+                f"If you wish to get the file from the remote repository, \n"
+                f"Please define your github or gitlab token in your environment.\n"
+                f"`export {GitContentConfig.CREDENTIALS.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n"
+                f"export {GitContentConfig.CREDENTIALS.ENV_GITLAB_TOKEN_NAME}=<TOKEN>[/yellow]"
             )
+        logger.debug(
+            f'[yellow]Could not find the old entity file under "{git_path}".\n'
+            "please make sure that you did not break backward compatibility.\n"
+            f"Reason: {err_msg}[/yellow]"
+        )
         return {}
     file_content = res.content
     if return_content:
@@ -555,7 +523,6 @@ def get_remote_file(
     full_file_path: str,
     tag: str = "master",
     return_content: bool = False,
-    suppress_print: bool = False,
     git_content_config: Optional[GitContentConfig] = None,
 ):
     """
@@ -563,7 +530,6 @@ def get_remote_file(
         full_file_path:The full path of the file.
         tag: The branch name. default is 'master'
         return_content: Determines whether to return the file's raw content or the dict representation of it.
-        suppress_print: whether to suppress the warning message in case the file was not found.
         git_content_config: The content config to take the file from
     Returns:
         The file content in the required format.
@@ -574,13 +540,12 @@ def get_remote_file(
         try:
             return get_local_remote_file(full_file_path, tag, return_content)
         except Exception as e:
-            if not suppress_print:
-                click.secho(
-                    f"Could not get local remote file because of: {str(e)}\n"
-                    f"Searching the remote file content with the API."
-                )
+            logger.debug(
+                f"Could not get local remote file because of: {str(e)}\n"
+                f"Searching the remote file content with the API."
+            )
     return get_remote_file_from_api(
-        full_file_path, git_content_config, tag, return_content, suppress_print
+        full_file_path, git_content_config, tag, return_content
     )
 
 
@@ -736,8 +701,8 @@ def get_last_remote_release_version():
                     f'{exc_msg[exc_msg.find(">") + 3:-3]}.\n'
                     f"This may happen if you are not connected to the internet."
                 )
-            print_warning(
-                f"Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}"
+            logger.info(
+                f"[yellow]Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}[/yellow]"
             )
 
     return ""
@@ -765,6 +730,36 @@ def _read_file(file_path: Path) -> str:
             raise
 
 
+def safe_write_unicode(
+    write_method: Callable[[io.TextIOWrapper], Any],
+    path: Path,
+):
+    # Write unicode content into a file.
+    # If the destination file is not unicode, delete and re-write the content as unicode.
+
+    def _write():
+        with open(path, "w", encoding="utf-8") as f:
+            write_method(f)
+
+    try:
+        _write()
+
+    except UnicodeError as e:
+        encoding = UnicodeDammit(path.read_bytes()).original_encoding
+        if encoding == "utf-8":
+            logger.error(
+                f"{path} is encoded as unicode, cannot handle the error, raising it"
+            )
+            raise  # already a unicode file, the following code cannot fix it.
+
+        logger.debug(
+            f"deleting {path} - it will be rewritten as unicode (was {encoding})"
+        )
+        path.unlink()  # deletes the file
+        logger.debug(f"rewriting {path} as")
+        _write()  # recreates the file
+
+
 @lru_cache
 def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool = False):
     if clear_cache:
@@ -778,7 +773,7 @@ def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool =
     if type_of_file in file_path.suffix:  # e.g. 'yml' in '.yml'
         file_content = _read_file(file_path)
         try:
-            if type_of_file in ("yml", ".yml"):
+            if type_of_file in {"yml", ".yml"}:
                 replaced = re.sub(
                     r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content
                 )
@@ -1020,21 +1015,21 @@ def get_release_notes_file_path(file_path):
     :return: file_path: str - Validated release notes path.
     """
     if file_path is None:
-        print_warning("Release notes were not found.")
+        logger.info("[yellow]Release notes were not found.[/yellow]")
         return None
     else:
         if bool(re.search(r"\d{1,2}_\d{1,2}_\d{1,2}\.md", file_path)):
             return file_path
         else:
-            print_warning(
-                f"Unsupported file type found in ReleaseNotes directory - {file_path}"
+            logger.info(
+                f"[yellow]Unsupported file type found in ReleaseNotes directory - {file_path}[/yellow]"
             )
             return None
 
 
 def get_latest_release_notes_text(rn_path):
     if rn_path is None:
-        print_warning("Path to release notes not found.")
+        logger.info("[yellow]Path to release notes not found.[/yellow]")
         rn = None
     else:
         try:
@@ -1042,8 +1037,8 @@ def get_latest_release_notes_text(rn_path):
                 rn = f.read()
 
             if not rn:
-                print_error(
-                    f"Release Notes may not be empty. Please fill out correctly. - {rn_path}"
+                logger.info(
+                    f"[red]Release Notes may not be empty. Please fill out correctly. - {rn_path}[/red]"
                 )
                 return None
         except OSError:
@@ -1414,7 +1409,7 @@ def get_docker_images_from_yml(script_obj) -> List[str]:
     return imgs
 
 
-def get_python_version(docker_image, log_verbose=None, no_prints=False):
+def get_python_version(docker_image):
     """
     Get the python version of a docker image
     Arguments:
@@ -1424,9 +1419,6 @@ def get_python_version(docker_image, log_verbose=None, no_prints=False):
     Raises:
         ValueError -- if version is not supported
     """
-    if log_verbose is None:
-        log_verbose = LOG_VERBOSE
-    stderr_out = None if log_verbose else DEVNULL
     py_ver = check_output(
         [
             "docker",
@@ -1438,10 +1430,11 @@ def get_python_version(docker_image, log_verbose=None, no_prints=False):
             "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))",
         ],
         text=True,
-        stderr=stderr_out,
+        stderr=DEVNULL,
     ).strip()
-    if not no_prints:
-        print(f"Detected python version: [{py_ver}] for docker image: {docker_image}")
+    logger.debug(
+        f"Detected python version: [{py_ver}] for docker image: {docker_image}"
+    )
 
     py_num = float(py_ver)
     if py_num < 2.7 or (3 < py_num < 3.4):  # pylint can only work on python 3.4 and up
@@ -1465,13 +1458,6 @@ def get_pipenv_dir(py_version, envs_dirs_base):
     return f"{envs_dirs_base}{int(py_version)}"
 
 
-def print_v(msg, log_verbose=None):
-    if log_verbose is None:
-        log_verbose = LOG_VERBOSE
-    if log_verbose:
-        print(msg)
-
-
 def get_dev_requirements(py_version, envs_dirs_base):
     """
     Get the requirements for the specified py version.
@@ -1486,11 +1472,10 @@ def get_dev_requirements(py_version, envs_dirs_base):
         string -- requirement required for the project
     """
     env_dir = get_pipenv_dir(py_version, envs_dirs_base)
-    stderr_out = None if LOG_VERBOSE else DEVNULL
     requirements = check_output(
-        ["pipenv", "lock", "-r", "-d"], cwd=env_dir, text=True, stderr=stderr_out
+        ["pipenv", "lock", "-r", "-d"], cwd=env_dir, text=True, stderr=DEVNULL
     )
-    print_v(f"dev requirements:\n{requirements}")
+    logger.debug(f"dev requirements:\n{requirements}")
     return requirements
 
 
@@ -1956,7 +1941,9 @@ def get_content_path() -> Union[str, PathLike, None]:
         return git_repo.working_dir
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
         if not os.getenv("DEMISTO_SDK_IGNORE_CONTENT_WARNING"):
-            print_warning("Please run demisto-sdk in content repository!")
+            logger.info(
+                "[yellow]Please run demisto-sdk in content repository![/yellow]"
+            )
     return ""
 
 
@@ -2059,7 +2046,7 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
             return False, ""
 
     except Exception as e:
-        click.secho(f"Unable to identify the repository: {e}")
+        logger.info(f"Unable to identify the repository: {e}")
         return False, ""
 
 
@@ -2314,7 +2301,7 @@ def open_id_set_file(id_set_path):
         with open(id_set_path) as id_set_file:
             id_set = json.load(id_set_file)
     except OSError:
-        print_warning("Could not open id_set file")
+        logger.info("[yellow]Could not open id_set file[/yellow]")
         raise
     finally:
         return id_set
@@ -2713,7 +2700,6 @@ def is_pack_path(input_path: str) -> bool:
 
 
 def is_xsoar_supported_pack(file_path: str) -> bool:
-
     """
     Takes a path to a file and returns a boolean indicating
     whether this file belongs to an XSOAR-supported Pack.
@@ -2806,9 +2792,9 @@ def get_approved_tags_from_branch() -> Dict[str, List[str]]:
             "Tests/Marketplace/approved_tags.json"
         )
         if isinstance(approved_tags_json.get("approved_list"), list):
-            print_warning(
-                "You are using a deprecated version of the file aproved_tags.json, consider pulling from master"
-                " to update it."
+            logger.info(
+                "[yellow]You are using a deprecated version of the file aproved_tags.json, consider pulling from master"
+                " to update it.[/yellow]"
             )
             return {
                 "common": approved_tags_json.get("approved_list", []),
@@ -2953,7 +2939,7 @@ def get_current_repo() -> Tuple[str, str, str]:
             host = host.split("@")[1]
         return host, parsed_git.owner, parsed_git.repo
     except git.InvalidGitRepositoryError:
-        print_warning("git repo is not found")
+        logger.info("[yellow]git repo is not found[/yellow]")
         return "Unknown source", "", ""
 
 
@@ -3059,7 +3045,7 @@ def ProcessPoolHandler() -> ProcessPool:
         try:
             yield pool
         except Exception:
-            print_error("Gracefully release all resources due to Error...")
+            logger.info("[red]Gracefully release all resources due to Error...[/red]")
             raise
         finally:
             pool.close()
@@ -3080,17 +3066,16 @@ def wait_futures_complete(futures: List[ProcessFuture], done_fn: Callable):
             result = future.result()
             done_fn(result)
         except Exception as e:
-            print_error(e)
+            logger.info(f"[red]{e}[/red]")
             raise
 
 
-def get_api_module_dependencies(pkgs, id_set_path, verbose):
+def get_api_module_dependencies(pkgs, id_set_path):
     """
     Get all paths to integrations and scripts dependent on api modules that are found in the modified files.
     Args:
         pkgs: the pkgs paths found as modified to run lint on (including the api module files)
         id_set_path: path to id set
-        verbose: print found dependencies or not
     Returns:
         a list of the paths to the scripts and integration found dependent on the modified api modules.
     """
@@ -3105,8 +3090,7 @@ def get_api_module_dependencies(pkgs, id_set_path, verbose):
         script_name = script_info.get("name")
         script_api_modules = script_info.get("api_modules", [])
         if intersection := changed_api_modules & set(script_api_modules):
-            if verbose:
-                print(f"found script {script_name} dependent on {intersection}")
+            logger.debug(f"found script {script_name} dependent on {intersection}")
             using_scripts.extend(list(script.values()))
 
     for integration in integrations:
@@ -3114,10 +3098,9 @@ def get_api_module_dependencies(pkgs, id_set_path, verbose):
         integration_name = integration_info.get("name")
         script_api_modules = integration_info.get("api_modules", [])
         if intersection := changed_api_modules & set(script_api_modules):
-            if verbose:
-                print(
-                    f"found integration {integration_name} dependent on {intersection}"
-                )
+            logger.debug(
+                f"found integration {integration_name} dependent on {intersection}"
+            )
             using_integrations.extend(list(integration.values()))
 
     using_scripts_pkg_paths = [
@@ -3464,6 +3447,27 @@ def field_to_cli_name(field_name: str) -> str:
         field_name (str): the incident/indicator field name.
     """
     return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, "", field_name).lower()
+
+
+def extract_field_from_mapping(mapping_value: str) -> str:
+    """Given an outgoing-mapping value, returns the incident/indicator field used for the mapping.
+    If mapping_value is surrounded by quotes ("<>"), it means the mapping value is a string and no field
+    should be returned.
+
+    Args:
+        mapping_value (str): An outgoing-mapping value, which may contain an incident/indicator field.
+
+    Returns:
+        str: An incident/indicator field, or an empty string if not a field.
+    """
+    if not mapping_value or re.match(r"\"([^.]+).*\"", mapping_value):  # not a field
+        return ""
+    if field_name := re.match(r"\$\{([^.]*)[^}]*\}|([^$.]*).*", mapping_value):
+        if field_name.groups()[0] is not None:
+            return field_name.groups()[0]
+        if len(field_name.groups()) > 1:
+            return field_name.groups()[1]
+    return mapping_value
 
 
 def get_pack_paths_from_files(file_paths: Iterable[str]) -> list:

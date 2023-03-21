@@ -468,7 +468,7 @@ class ContributionConverter:
     @staticmethod
     def extract_pack_version(script):
         """
-        extract pack version from script if exists.
+        extract pack version from script if exists, returns 0.0.0 if version was not found.
         """
         if script:
             try:
@@ -580,7 +580,7 @@ class ContributionConverter:
                             current_pack_version = get_pack_metadata(
                                 file_path=content_item_file_path
                             ).get("currentVersion", "0.0.0")
-                            if Version(current_pack_version) > Version(
+                            if contributor_item_version != '0.0.0' and Version(current_pack_version) > Version(
                                 contributor_item_version
                             ):
                                 self.contribution_items_version[content_item.name] = {

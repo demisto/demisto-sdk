@@ -276,10 +276,9 @@ def test_validate_unit_test_exists(repo, with_test: bool):
     integration = pack.create_integration("Test_Integration")
     for code_file in (integration.yml.path, yml_file.path):
         structure_validator = StructureValidator(code_file)
-        path = Path(code_file)
-        path.with_name(f"{path.stem}.py").touch()
-        if with_test:
-            path.with_name(f"{path.stem}_test.py").touch()
+        path = Path(integration.code.path)
+        if not with_test:
+            path.with_name(f"{path.stem}_test.py").unlink(missing_ok=True)
         content_entity_validator = ContentEntityValidator(structure_validator)
         assert content_entity_validator.validate_unit_test_exists() == with_test
 

@@ -381,6 +381,14 @@ class IntegrationScriptUnifier(Unifier):
                 module_name, module_path
             )
 
+            # handles cases where ApiModuleA imports ApiModuleB
+            tmp_imports_to_names = IntegrationScriptUnifier.check_api_module_imports(
+                module_code
+            )
+            module_code = IntegrationScriptUnifier.insert_module_code(
+                module_code, tmp_imports_to_names
+            )
+
             # the wrapper numbers represents the number of generated lines added
             # before (negative) or after (positive) the registration line
             module_code = (

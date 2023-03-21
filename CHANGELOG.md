@@ -10,6 +10,7 @@
 * Changed **lint** to skip deprecated content, unless when using the `-i` flag.
 * Fixed an issue where **update-release-notes** failed when a new *Parsing Rule* was added to a pack.
 * Refactored the logging framework. Demisto-SDK logs will now be written to `.demist_sdk_debug.log` under the content path (when detected) or the current directory.
+* Added `GR105` validation to **validate** command to check that no duplicate IDs are used.
 * Added support for API Modules imported in API modules in the **unify** command.
 
 ## 1.10.6

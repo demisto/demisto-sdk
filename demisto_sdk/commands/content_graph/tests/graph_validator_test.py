@@ -590,14 +590,14 @@ def test_validate_dependencies(repository: ContentDTO, caplog, mocker):
     )
 
 
-def test_validate_duplicate_id(repository: ContentDTO, capsys):
+def test_validate_duplicate_id(repository: ContentDTO, mocker):
     """
     Given
     - A content repo
     When
-    - running the vaidation "validate_duplicate_id"
+    - running the validation "validate_duplicate_id", when there are duplicate ids of "SamplePlaybook" (configured on repository fixture)
     Then
-    - Validate the existance of duplicate ids
+    - Validate the existence of duplicate ids
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
@@ -605,7 +605,6 @@ def test_validate_duplicate_id(repository: ContentDTO, capsys):
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_duplicate_ids()
 
-    captured = capsys.readouterr().out
     assert not is_valid
     assert str_in_call_args_list(
         logger_info.call_args_list,

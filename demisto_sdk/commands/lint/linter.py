@@ -293,7 +293,7 @@ class Linter:
             if not isinstance(yml_obj, dict):
                 self._pkg_lint_status["errors"].append("Unable to parse package yml")
                 return True
-            self._pack_name = yml_obj.get("commonfields", {}).get("id")
+            self._pack_name = yml_obj.get("commonfields", {}).get("id") or self._yml_file.stem
 
             script_obj = (
                 yml_obj.get("script", {})

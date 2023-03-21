@@ -593,9 +593,9 @@ def test_validate_dependencies(repository: ContentDTO, caplog, mocker):
 def test_validate_duplicate_id(repository: ContentDTO, mocker):
     """
     Given
-    - A content repo
+    - A content repo with duplicate ids "SamplePlaybook" (configured on repository fixture)
     When
-    - running the validation "validate_duplicate_id", when there are duplicate ids of "SamplePlaybook" (configured on repository fixture)
+    - running the validation "validate_duplicate_id"
     Then
     - Validate the existence of duplicate ids
     """

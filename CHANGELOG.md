@@ -11,6 +11,7 @@
 * Fixed an issue where **update-release-notes** failed when a new *Parsing Rule* was added to a pack.
 * Refactored the logging framework. Demisto-SDK logs will now be written to `.demist_sdk_debug.log` under the content path (when detected) or the current directory.
 * Added `GR105` validation to **validate** command to check that no duplicate IDs are used.
+
 ## 1.10.6
 * Fixed an issue where running **validate** with the `-g` flag would skip some validations for old-formatted (unified) integration/script files.
 * Deprecated integrations and scripts will not run anymore when providing the **--all-packs** to the **lint** command.

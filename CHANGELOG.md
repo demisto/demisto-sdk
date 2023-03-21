@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## 1.11.0
 * Fixed an issue where using **download** on non-unicode content, merging them into existing files caused an error.
 * Changed an internal setting to allow writing non-ascii content (unicode) using `YAMLHandler` and `JSONHandler`.
 * Fixed an issue where an error message in **unify** was unclear for invalid input.

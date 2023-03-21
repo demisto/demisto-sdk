@@ -60,8 +60,8 @@ class PreCommitRunner:
         self.all_files = set(
             itertools.chain.from_iterable(self.python_version_to_files.values())
         )
-
-    def hooks(self, pre_commit_config: dict) -> dict:
+    @staticmethod
+    def hooks(pre_commit_config: dict) -> dict:
         hooks = {}
         for repo in pre_commit_config["repos"]:
             for hook in repo["hooks"]:
@@ -153,12 +153,12 @@ class PreCommitRunner:
                 if response.returncode:
                     ret_val = 1
         # remove the config file in the end of the file
-        shutil.rmtree(PRECOMMIT_PATH, ignore_errors=True)
+        PRECOMMIT_PATH.unlink(missing_ok=True)
         return ret_val
 
 
-def categorize_files(files: Set[Path]) -> PreCommitRunner:
-    """This function categorizes the files to run pre-commit on, and returns the PreCommitRunner object.
+def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
+    """This function groups the files to run pre-commit on by the python version.
 
     Args:
         files (Set[Path]): files to run pre-commit on.
@@ -167,10 +167,10 @@ def categorize_files(files: Set[Path]) -> PreCommitRunner:
         Exception: If invalid files were given.
 
     Returns:
-        PreCommitRunner: PreCommitRunner object.
+        Dict[str, set]: The files grouped by their python version.
     """
     integrations_scripts_mapping = defaultdict(set)
-    files_to_run = []
+    infra_files = []
     for file in files:
         if file.is_dir():
             continue
@@ -185,7 +185,7 @@ def categorize_files(files: Set[Path]) -> PreCommitRunner:
             integration_script_path = Path(*file.parts[: next(find_path_index) + 1])
             integrations_scripts_mapping[integration_script_path].add(file)
         else:
-            files_to_run.append(file)
+            infra_files.append(file)
 
     python_versions_to_files = defaultdict(set)
     with multiprocessing.Pool() as pool:
@@ -209,15 +209,14 @@ def categorize_files(files: Set[Path]) -> PreCommitRunner:
             | {integration_script.path}
         )
 
-    python_versions_to_files[DEFAULT_PYTHON_VERSION].update(files_to_run)
-
+    python_versions_to_files[DEFAULT_PYTHON_VERSION].update(infra_files)
+    return python_versions_to_files
     return PreCommitRunner(python_versions_to_files)
 
 
 def pre_commit_manager(
     input_files: Optional[Iterable[Path]] = None,
     use_git: bool = False,
-    staged_only: bool = False,
     all_files: bool = False,
     test: bool = False,
     skip_hooks: Optional[List[str]] = None,
@@ -232,7 +231,6 @@ def pre_commit_manager(
     Args:
         input_files (Iterable[Path], optional): Input files to run pre-commit on. Defaults to None.
         use_git (bool, optional): Whether use git to determine precommit files. Defaults to False.
-        staged_only (bool, optional): Whether to run only on staged filed. Defaults to False.
         all_files (bool, optional): Whether to run on all_files. Defaults to False.
         test (bool, optional): Whether to run unit-tests. Defaults to False.
         skip_hooks (Optional[List[str]], optional): List of hooks to skip. Defaults to None.
@@ -246,12 +244,11 @@ def pre_commit_manager(
     # We have imports to this module, however it does not exists in the repo.
     (CONTENT_PATH / "CommonServerUserPython.py").touch()
 
-    if not any((input_files, staged_only, use_git, all_files)):
-        logger.debug("No arguments were given, running on git changed files")
-        use_git = True
+    if not any((input_files, use_git, all_files)):
+        logger.debug("No input_files, use_git, all_files: running on staged files only")
 
-    files_to_run = preprocess_files(input_files, use_git, staged_only, all_files)
-    pre_commit_runner = categorize_files(files_to_run)
+    files_to_run = preprocess_files(input_files, use_git, all_files)
+    pre_commit_runner = PreCommitRunner(group_by_python_version(files_to_run))
     return pre_commit_runner.run(
         test,
         skip_hooks,
@@ -266,21 +263,18 @@ def pre_commit_manager(
 def preprocess_files(
     input_files: Optional[Iterable[Path]],
     use_git: bool = False,
-    staged_only: bool = False,
     all_files: bool = False,
 ) -> Set[Path]:
     git_util = GitUtil()
-    staged_files = git_util._get_staged_files()
     if input_files:
         raw_files = set(input_files)
-    elif staged_only:
-        raw_files = staged_files
     elif use_git:
         raw_files = git_util._get_all_changed_files()
     elif all_files:
         raw_files = git_util.get_all_files()
     else:
-        raw_files = set()
+        # default to staged files
+        raw_files = git_util._get_staged_files()
 
     files_to_run: Set[Path] = set()
     for file in raw_files:

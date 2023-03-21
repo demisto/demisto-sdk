@@ -1,10 +1,18 @@
 # Changelog
 
 ## Unreleased
+* **Note: Demisto-SDK will soon stop supporting Python 3.8**
 * Fixed an issue where using **download** on non-unicode content, merging them into existing files caused an error.
 * Changed an internal setting to allow writing non-ascii content (unicode) using `YAMLHandler` and `JSONHandler`.
 * Fixed an issue where an error message in **unify** was unclear for invalid input.
 * Fixed an issue where running **validate** failed with **is_valid_integration_file_path_in_folder** on integrations that use API modules.
+* Fixed an issue where **validate** failed with **is_valid_integration_file_path_in_folder** on integrations that use the `MSAPIModule`.
+* Added **validate** check for the `modules` field in `pack_metadata.json` files.
+* Changed **lint** to skip deprecated content, unless when using the `-i` flag.
+* Fixed an issue where **update-release-notes** failed when a new *Parsing Rule* was added to a pack.
+* Refactored the logging framework. Demisto-SDK logs will now be written to `.demist_sdk_debug.log` under the content path (when detected) or the current directory.
+* Added `GR105` validation to **validate** command to check that no duplicate IDs are used.
+* Added support for API Modules imported in API modules in the **unify** command.
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.
 * Contribution PRs that update outdated packs now display a warning message.
 

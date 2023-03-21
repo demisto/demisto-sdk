@@ -25,15 +25,11 @@ class MapperValidator(ContentEntityValidator):
         self,
         structure_validator,
         ignored_errors=None,
-        print_as_warnings=False,
-        suppress_print=False,
         json_file_path=None,
     ):
         super().__init__(
             structure_validator,
             ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
-            suppress_print=suppress_print,
             json_file_path=json_file_path,
         )
         self.from_version = ""

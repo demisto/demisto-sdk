@@ -274,7 +274,6 @@ def test_has_unittests(mocker, integration, has_tests):
     assert res == has_tests
 
 
-
 def test_get_test_path(mocker, integration):
     mocker.patch.object(ConfJsonValidator, "load_conf_file", return_value={})
     validator = ConfJsonValidator()

@@ -2527,6 +2527,7 @@ class ValidateManager:
             FileType.JAVASCRIPT_FILE,
             FileType.XIF_FILE,
             FileType.MODELING_RULE_XIF,
+            FileType.PARSING_RULE_XIF,
         ]:
             if not (
                 str(file_path).endswith("_test.py")

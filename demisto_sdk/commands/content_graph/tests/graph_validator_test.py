@@ -599,10 +599,15 @@ def test_validate_duplicate_id(repository: ContentDTO, capsys):
     Then
     - Validate the existance of duplicate ids
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     with GraphValidator(should_update=False) as graph_validator:
         create_content_graph(graph_validator.graph)
         is_valid = graph_validator.validate_duplicate_ids()
 
     captured = capsys.readouterr().out
     assert not is_valid
-    assert "[GR105] - The ID 'SamplePlaybook' already exists in" in captured
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        "[GR105] - The ID 'SamplePlaybook' already exists in",
+    )

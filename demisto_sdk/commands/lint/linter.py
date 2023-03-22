@@ -85,6 +85,7 @@ class DockerImageFlagOption(Enum):
     NATIVE_MAINTENANCE = "native:maintenance"
     ALL_IMAGES = "all"
     NATIVE_TARGET = "native:target"
+    NATIVE_CANDIDATE = "native:candidate"
 
 
 class Linter:
@@ -112,6 +113,7 @@ class Linter:
         docker_image_flag: str = DockerImageFlagOption.FROM_YML.value,
         all_packs: bool = False,
         docker_image_target: str = "",
+        use_git: bool = False,
     ):
         self._req_3 = req_3
         self._req_2 = req_2
@@ -186,6 +188,7 @@ class Linter:
                     "Unable to find yml file in package"
                 )
         self._all_packs = all_packs
+        self._use_git = use_git
 
     @timer(group_name="lint")
     def run_pack(
@@ -289,16 +292,18 @@ class Linter:
         try:
             script_obj: Dict = {}
             yml_obj: Dict = YAML_Handler().load(self._yml_file)
-            if isinstance(yml_obj, dict):
-                script_obj = (
-                    yml_obj.get("script", {})
-                    if isinstance(yml_obj.get("script"), dict)
-                    else yml_obj
-                )
-            # if the script/integration is deprecated and the -a flag
-            if self._all_packs and yml_obj.get("deprecated"):
+            if not isinstance(yml_obj, dict):
+                self._pkg_lint_status["errors"].append("Unable to parse package yml")
+                return True
+            script_obj = (
+                yml_obj.get("script", {})
+                if isinstance(yml_obj.get("script"), dict)
+                else yml_obj
+            )
+            # if the script/integration is deprecated and the -a or -g flag
+            if (self._all_packs or self._use_git) and yml_obj.get("deprecated"):
                 logger.info(
-                    f"skipping lint for {self._pack_name} because its deprecated"
+                    f"skipping lint for {self._pack_name} because its deprecated. To lint it, use the -i flag."
                 )
                 return True
             self._facts["is_script"] = (
@@ -1415,6 +1420,7 @@ class Linter:
             DockerImageFlagOption.NATIVE_GA.value,
             DockerImageFlagOption.NATIVE_MAINTENANCE.value,
             DockerImageFlagOption.NATIVE_TARGET.value,
+            DockerImageFlagOption.NATIVE_CANDIDATE.value,
         ):
             err_msg = (
                 f"The requested native image: '{docker_image_flag}' is not supported. The possible options are: "
@@ -1543,15 +1549,11 @@ class Linter:
             if self._is_native_image_support_script(
                 native_image, supported_native_images, script_id
             ):
-
-                if native_image == DockerImageFlagOption.NATIVE_DEV.value:
-                    #  Get native latest from Docker Hub
-                    native_image_ref = self._get_dev_native_image(script_id)
-                else:  # versioned native image
+                # When running lint --di all, do not run native:dev
+                if native_image != DockerImageFlagOption.NATIVE_DEV.value:
                     native_image_ref = self._get_versioned_native_image(native_image)
-
-                if native_image_ref:
-                    imgs.append(native_image_ref)
+                    if native_image_ref:
+                        imgs.append(native_image_ref)
 
         return imgs
 
@@ -1582,7 +1584,7 @@ class Linter:
             - If docker_image_flag is 'all', lint will run on:
                 1. Native GA - the native image of the current server version.
                 2. Native Maintenance - the native image of the previous server version.
-                3. Native Dev - The latest tag of the native image for Docker Hub.
+                3. Native Candidate - the candidate of the next GA version (the last dev version that was checked).
                 4. The docker images that appear in the YML file of the integration/script that lint runs on.
 
             - If the docker_image_flag is a specific docker image tag, lint will try to run on it.

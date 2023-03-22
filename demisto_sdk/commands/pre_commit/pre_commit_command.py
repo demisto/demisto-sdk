@@ -262,7 +262,8 @@ def pre_commit_manager(
 
     if not any((input_files, use_git, all_files)):
         logger.info("No arguments were given, running on staged files and git changes.")
-
+        use_git = True
+        
     files_to_run = preprocess_files(input_files, use_git, all_files)
     pre_commit_runner = PreCommitRunner(group_by_python_version(files_to_run))
     return pre_commit_runner.run(

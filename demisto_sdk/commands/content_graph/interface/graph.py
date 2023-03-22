@@ -124,6 +124,10 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
+    def validate_duplicate_ids(self, file_paths: List[str]) -> None:
+        pass
+
+    @abstractmethod
     def clean_graph(self):
         ...
 

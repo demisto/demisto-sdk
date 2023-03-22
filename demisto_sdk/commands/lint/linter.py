@@ -113,6 +113,7 @@ class Linter:
         docker_image_flag: str = DockerImageFlagOption.FROM_YML.value,
         all_packs: bool = False,
         docker_image_target: str = "",
+        use_git: bool = False,
     ):
         self._req_3 = req_3
         self._req_2 = req_2
@@ -187,6 +188,7 @@ class Linter:
                     "Unable to find yml file in package"
                 )
         self._all_packs = all_packs
+        self._use_git = use_git
 
     @timer(group_name="lint")
     def run_pack(
@@ -290,16 +292,18 @@ class Linter:
         try:
             script_obj: Dict = {}
             yml_obj: Dict = YAML_Handler().load(self._yml_file)
-            if isinstance(yml_obj, dict):
-                script_obj = (
-                    yml_obj.get("script", {})
-                    if isinstance(yml_obj.get("script"), dict)
-                    else yml_obj
-                )
-            # if the script/integration is deprecated and the -a flag
-            if self._all_packs and yml_obj.get("deprecated"):
+            if not isinstance(yml_obj, dict):
+                self._pkg_lint_status["errors"].append("Unable to parse package yml")
+                return True
+            script_obj = (
+                yml_obj.get("script", {})
+                if isinstance(yml_obj.get("script"), dict)
+                else yml_obj
+            )
+            # if the script/integration is deprecated and the -a or -g flag
+            if (self._all_packs or self._use_git) and yml_obj.get("deprecated"):
                 logger.info(
-                    f"skipping lint for {self._pack_name} because its deprecated"
+                    f"skipping lint for {self._pack_name} because its deprecated. To lint it, use the -i flag."
                 )
                 return True
             self._facts["is_script"] = (

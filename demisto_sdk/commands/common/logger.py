@@ -80,6 +80,59 @@ escapes = {
 }
 
 
+def _add_logging_level(
+    level_name: str, level_num: int, method_name: str = None
+) -> None:
+    """
+    Comprehensively adds a new logging level to the `logging` module and the
+    currently configured logging class.
+
+    `level_name` becomes an attribute of the `logging` module with the value
+    `level_num`. `method_name` becomes a convenience method for both `logging`
+    itself and the class returned by `logging.getLoggerClass()` (usually just
+    `logging.Logger`). If `method_name` is not specified, `level_name.lower()` is
+    used.
+
+    To avoid accidental clobberings of existing attributes, this method will
+    raise an `AttributeError` if the level name is already an attribute of the
+    `logging` module or if the method name is already present
+
+    Example
+    -------
+    >>> addLoggingLevel('TRACE', logging.DEBUG - 5)
+    >>> logging.getLogger(__name__).setLevel("TRACE")
+    >>> logging.getLogger(__name__).trace('that worked')
+    >>> logging.trace('so did this')
+    >>> logging.TRACE
+    5
+
+    """
+    if not method_name:
+        method_name = level_name.lower()
+
+    if hasattr(logging, level_name):
+        raise AttributeError(f"{level_name} already defined in logging module")
+    if hasattr(logging, method_name):
+        raise AttributeError(f"{method_name} already defined in logging module")
+    if hasattr(logging.getLoggerClass(), method_name):
+        raise AttributeError(f"{method_name} already defined in logger class")
+
+    # This method was inspired by the answers to Stack Overflow post
+    # http://stackoverflow.com/q/2183233/2988730, especially
+    # http://stackoverflow.com/a/13638084/2988730
+    def logForLevel(self, message, *args, **kwargs):
+        if self.isEnabledFor(level_num):
+            self._log(level_num, message, args, **kwargs)
+
+    def logToRoot(message, *args, **kwargs):
+        logging.log(level_num, message, *args, **kwargs)
+
+    logging.addLevelName(level_num, level_name)
+    setattr(logging, level_name, level_num)
+    setattr(logging.getLoggerClass(), method_name, logForLevel)
+    setattr(logging, method_name, logToRoot)
+
+
 def logging_setup(
     console_log_threshold=logging.INFO,
     file_log_threshold=logging.DEBUG,
@@ -95,6 +148,9 @@ def logging_setup(
     Returns:
         logging.Logger: logger object
     """
+    SUCCESS_LEVEL: int = 25
+    if not hasattr(logging.getLoggerClass(), "success"):
+        _add_logging_level("SUCCESS", SUCCESS_LEVEL)
 
     console_handler = logging.StreamHandler()
     console_handler.set_name("console-handler")
@@ -103,6 +159,15 @@ def logging_setup(
     )
 
     class ColorConsoleFormatter(logging.Formatter):
+        FORMATS = {
+            logging.DEBUG: "[lightgrey]%(message)s[/lightgrey]",
+            logging.INFO: "[lightgrey]%(message)s[/lightgrey]",
+            logging.WARNING: "[yellow]%(message)s[/yellow]",
+            logging.ERROR: "[red]%(message)s[/red]",
+            logging.CRITICAL: "[red][bold]%(message)s[/bold[/red]",
+            SUCCESS_LEVEL: "[green]%(message)s[/green]",
+        }
+
         def __init__(
             self,
         ):
@@ -111,8 +176,20 @@ def logging_setup(
                 datefmt=DATE_FORMAT,
             )
 
+        @staticmethod
+        def _record_contains_escapes(record):
+            message = record.getMessage()
+            for key in escapes:
+                if not key.startswith("[/]") and key in message:
+                    return True
+            return False
+
         def format(self, record):
-            message = logging.Formatter.format(self, record)
+            if ColorConsoleFormatter._record_contains_escapes(record):
+                message = logging.Formatter().format(record)
+            else:
+                log_fmt = self.FORMATS.get(record.levelno)
+                message = logging.Formatter(log_fmt).format(record)
             message = self.replace_escapes(message)
             return message
 

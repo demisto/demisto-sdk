@@ -603,7 +603,9 @@ def zip_packs(ctx, **kwargs) -> int:
 @click.option(
     "-i",
     "--input",
-    type=PathsParamType(exists=True, resolve_path=True),  # PathsParamType allows passing a list of paths
+    type=PathsParamType(
+        exists=True, resolve_path=True
+    ),  # PathsParamType allows passing a list of paths
     help="The path of the content pack/file to validate specifically.",
 )
 @click.option(
@@ -1169,7 +1171,9 @@ def coverage_analyze(ctx, **kwargs):
     "--input",
     help="The path of the script yml file or a comma separated list\n"
     "If no input is specified, the format will be executed on all new/changed files.",
-    type=PathsParamType(exists=True, resolve_path=True),  # PathsParamType allows passing a list of paths
+    type=PathsParamType(
+        exists=True, resolve_path=True
+    ),  # PathsParamType allows passing a list of paths
 )
 @click.option(
     "-o",
@@ -3322,6 +3326,7 @@ def pre_commit(
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 def run_unit_tests(file_paths: Tuple[str, ...], native_images: bool):
     from demisto_sdk.commands.run_unit_tests.unit_tests_runner import unit_test_runner
+
     sys.exit(unit_test_runner(file_paths, native_images))
 
 

@@ -3,7 +3,6 @@ import logging
 import multiprocessing
 import os
 import re
-import shutil
 import subprocess
 from collections import defaultdict
 from copy import deepcopy
@@ -60,6 +59,7 @@ class PreCommitRunner:
         self.all_files = set(
             itertools.chain.from_iterable(self.python_version_to_files.values())
         )
+
     @staticmethod
     def hooks(pre_commit_config: dict) -> dict:
         hooks = {}
@@ -211,7 +211,6 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
 
     python_versions_to_files[DEFAULT_PYTHON_VERSION].update(infra_files)
     return python_versions_to_files
-    return PreCommitRunner(python_versions_to_files)
 
 
 def pre_commit_manager(

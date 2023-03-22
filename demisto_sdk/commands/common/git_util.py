@@ -506,7 +506,6 @@ class GitUtil:
         return {
             Path(item)
             for item in self.repo.git.diff("--cached", "--name-only").split("\n")
-            if item
         }
 
     def _get_all_changed_files(self, prev_ver: str = "") -> Set[Path]:

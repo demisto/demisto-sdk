@@ -305,6 +305,7 @@ def _get_image_digest(repo: str, tag: str, token: str) -> str:
     except (JSONDecodeError, KeyError) as e:
         raise RuntimeError(f"Failed to get docker image digest: {response.text}") from e
 
+
 @functools.lru_cache
 def _get_image_env(repo: str, digest: str, token: str) -> List[str]:
     response = requests.get(

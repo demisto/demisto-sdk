@@ -24,6 +24,9 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
     MarketplaceSuffixPreparer,
 )
+from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_alert_prepare import (
+    MarketplaceIncidentToAlertPreparer,
+)
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -120,7 +123,8 @@ class ContentItem(BaseContent):
     ) -> dict:
         data = self.data
         logger.debug(f"preparing {self.path}")
-        return MarketplaceSuffixPreparer.prepare(data, marketplace)
+        data = MarketplaceSuffixPreparer.prepare(data, marketplace)
+        return MarketplaceIncidentToAlertPreparer.prepare(data, marketplace)
 
     def summary(self, marketplace: Optional[MarketplaceVersions] = None) -> dict:
         """Summary of a content item (the most important metadata fields)

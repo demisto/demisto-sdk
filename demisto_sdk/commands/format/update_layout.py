@@ -13,12 +13,9 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (
     LAYOUT_CONTAINER_FIELDS,
-    LOG_COLORS,
     get_all_incident_and_indicator_fields_from_id_set,
     get_invalid_incident_fields_from_layout,
     normalize_field_name,
-    print_color,
-    print_error,
     remove_copy_and_dev_suffixes_from_str,
 )
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
@@ -31,6 +28,8 @@ from demisto_sdk.commands.format.format_constants import (
     VERSION_6_0_0,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
+
+logger = logging.getLogger("demisto-sdk")
 
 yaml = YAML_Handler()
 
@@ -54,9 +53,6 @@ LAYOUTS_CONTAINER_PREFIX = "layoutscontainer-"
 LAYOUT_PREFIX = "layout-"
 
 
-logger = logging.getLogger("demisto-sdk")
-
-
 class LayoutBaseFormat(BaseUpdateJSON, ABC):
     def __init__(
         self,
@@ -65,7 +61,6 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
         clear_cache: bool = False,
         **kwargs,
     ):
@@ -75,7 +70,6 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            verbose=verbose,
             clear_cache=clear_cache,
             **kwargs,
         )
@@ -93,9 +87,8 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             if self.is_container:
                 self.layoutscontainer__run_format()
@@ -105,11 +98,9 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.debug(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE
 
     def arguments_to_remove(self):
@@ -171,8 +162,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 output_basename, new_output_basename
             )
 
-            if self.verbose:
-                click.echo(f"Renaming output file: {new_output_path}")
+            logger.debug(f"Renaming output file: {new_output_path}")
 
             # rename file if source and output are the same
             if self.output_file == self.source_file:
@@ -185,13 +175,11 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         """Removes keys that are in file but not in schema of file type"""
         arguments_to_remove, layout_kind_args_to_remove = self.arguments_to_remove()
         for key in arguments_to_remove:
-            if self.verbose:
-                click.echo(f"Removing unnecessary field: {key} from file")
+            logger.debug(f"Removing unnecessary field: {key} from file")
             self.data.pop(key, None)
 
         for kind in layout_kind_args_to_remove:
-            if self.verbose:
-                click.echo(f"Removing unnecessary fields from {kind} field")
+            logger.debug(f"Removing unnecessary fields from {kind} field")
             for field in layout_kind_args_to_remove[kind]:
                 self.data[kind].pop(field, None)
 
@@ -217,12 +205,11 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             user_answer = input()
             # Checks if the user input is no
             if user_answer in ["n", "N", "No", "no"]:
-                print_error("Moving forward without updating group field")
+                logger.info("[red]Moving forward without updating group field[/red]")
                 return
 
-            print_color(
-                "Please specify the desired group: incident or indicator",
-                LOG_COLORS.YELLOW,
+            logger.info(
+                "[yellow]Please specify the desired group: incident or indicator[/yellow]"
             )
             user_desired_group = input()
             if re.match(r"(^incident$)", user_desired_group, re.IGNORECASE):
@@ -230,7 +217,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             elif re.match(r"(^indicator$)", user_desired_group, re.IGNORECASE):
                 self.data["group"] = "indicator"
             else:
-                print_error("Group is not valid")
+                logger.info("[red]Group is not valid[/red]")
 
     def layout__arguments_to_remove(self):
         """Finds diff between keys in file and schema of file type

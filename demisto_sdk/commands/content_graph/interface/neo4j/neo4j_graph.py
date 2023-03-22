@@ -60,6 +60,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations import (
     validate_core_packs_dependencies,
+    validate_duplicate_ids,
     validate_fromversion,
     validate_marketplaces,
     validate_multiple_packs_with_same_display_name,
@@ -360,6 +361,22 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 validate_multiple_packs_with_same_display_name, file_paths
             )
             return results
+
+    def validate_duplicate_ids(
+        self, file_paths: List[str]
+    ) -> List[Tuple[BaseContent, List[BaseContent]]]:
+        with self.driver.session() as session:
+            duplicates = session.execute_read(validate_duplicate_ids, file_paths)
+        all_nodes = []
+        for content_item, dups in duplicates:
+            all_nodes.append(content_item)
+            all_nodes.extend(dups)
+        self._add_nodes_to_mapping(all_nodes)
+        duplicate_models = []
+        for content_item, dups in duplicates:
+            dups = [self._id_to_obj[duplicate.id] for duplicate in dups]
+            duplicate_models.append((self._id_to_obj[content_item.id], dups))
+        return duplicate_models
 
     def find_uses_paths_with_invalid_fromversion(
         self, file_paths: List[str], for_supported_versions=False

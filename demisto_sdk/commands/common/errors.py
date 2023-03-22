@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER,
     FILETYPE_TO_DEFAULT_FROMVERSION,
     INTEGRATION_CATEGORIES,
+    MODULES,
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
     RN_CONTENT_ENTITY_WITH_STARS,
@@ -453,7 +454,6 @@ ERROR_CODE = {
     # ID - ID Set
     "id_set_conflicts": {"code": "ID100", "ui_applicable": False, "related_field": ""},
     # missing 101
-    "duplicated_id": {"code": "ID102", "ui_applicable": False, "related_field": ""},
     "no_id_set_file": {"code": "ID103", "ui_applicable": False, "related_field": ""},
     # IF - Incident Fields
     "invalid_incident_field_name": {
@@ -1201,6 +1201,16 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "pack_metadata_invalid_modules": {
+        "code": "PA135",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "pack_metadata_modules_for_non_xsiam": {
+        "code": "PA136",
+        "ui_applicable": False,
+        "related_field": "",
+    },
     # PB - Playbooks
     "playbook_cant_have_rolename": {
         "code": "PB100",
@@ -1779,6 +1789,11 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "duplicated_id": {
+        "code": "GR105",
+        "ui_applicable": False,
+        "related_field": "",
+    },
 }
 
 
@@ -2329,11 +2344,11 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def integration_is_deprecated_and_used(integration_name: str, commands_dict: dict):
-        erorr_str = f"{integration_name} integration contains deprecated commands that are being used by other entities:\n"
+        error_str = f"{integration_name} integration contains deprecated commands that are being used by other entities:\n"
         for command_name, command_usage_list in commands_dict.items():
             current_command_usage = "\n".join(command_usage_list)
-            erorr_str += f"{command_name} is being used in the following locations:\n{current_command_usage}\n"
-        return erorr_str
+            error_str += f"{command_name} is being used in the following locations:\n{current_command_usage}\n"
+        return error_str
 
     @staticmethod
     @error_code_decorator
@@ -2572,11 +2587,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def duplicated_id(obj_id):
-        return (
-            f"The ID {obj_id} already exists, please update the file or update the "
-            f"id_set.json toversion field of this id to match the old occurrence of this id"
-        )
+    def duplicated_id(obj_id, file_path):
+        return f"The ID '{obj_id}' already exists in {file_path}. Please update the file to have a unique ID."
 
     @staticmethod
     @error_code_decorator
@@ -3431,6 +3443,16 @@ class Errors:
     @error_code_decorator
     def is_wrong_usage_of_usecase_tag():
         return "pack_metadata.json file contains the Use Case tag, without having any PB, incidents Types or Layouts"
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_invalid_modules():
+        return f"Module field should include some of the following options: {', '.join(MODULES)}."
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_modules_for_non_xsiam():
+        return "Module field can be added only for XSIAM packs (marketplacev2)."
 
     @staticmethod
     @error_code_decorator

@@ -46,7 +46,7 @@ SKIPPED_HOOKS = {"format", "validate"}
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
 
 # change to the latest demisto-sdk commit hash to debug
-LATEST_COMMIT_HASH_DEBUG = ""
+DEMISTO_SDK_COMMIT_HASH_DEBUG = "aaaacdf53d35ffeace8d8f46c10ab88762be3ed0"
 
 
 @dataclass
@@ -65,10 +65,11 @@ class PreCommitRunner:
         with open(PRECOMMIT_TEMPLATE_PATH) as f:
             self.precommit_template = yaml.load(f)
 
-        # change the demisto-sdk repo to the latest release version (or the debug commit hash)
+        # changes the demisto-sdk revision to the latest release version (or the debug commit hash)
+        # to debug, modify the DEMISTO_SDK_COMMIT_HASH_DEBUG variable to your demisto-sdk commit hash
         self.repos(self.precommit_template)["https://github.com/demisto/demisto-sdk"][
             "rev"
-        ] = (LATEST_COMMIT_HASH_DEBUG or f"v{get_last_remote_release_version()}")
+        ] = (DEMISTO_SDK_COMMIT_HASH_DEBUG or f"v{get_last_remote_release_version()}")
 
     @staticmethod
     def repos(pre_commit_config: dict) -> dict:
@@ -263,7 +264,7 @@ def pre_commit_manager(
     if not any((input_files, use_git, all_files)):
         logger.info("No arguments were given, running on staged files and git changes.")
         use_git = True
-        
+
     files_to_run = preprocess_files(input_files, use_git, all_files)
     pre_commit_runner = PreCommitRunner(group_by_python_version(files_to_run))
     return pre_commit_runner.run(

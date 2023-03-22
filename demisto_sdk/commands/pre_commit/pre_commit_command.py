@@ -46,7 +46,7 @@ SKIPPED_HOOKS = {"format", "validate"}
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
 
 # change to the latest demisto-sdk commit hash to debug
-DEMISTO_SDK_COMMIT_HASH_DEBUG = "aaaacdf53d35ffeace8d8f46c10ab88762be3ed0"
+DEMISTO_SDK_COMMIT_HASH_DEBUG = ""
 
 
 @dataclass

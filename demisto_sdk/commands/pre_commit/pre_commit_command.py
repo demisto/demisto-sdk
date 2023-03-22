@@ -13,10 +13,15 @@ from typing import Dict, Iterable, List, Optional, Set
 import more_itertools
 from packaging.version import Version
 
-from demisto_sdk.commands.common.constants import INTEGRATIONS_DIR, SCRIPTS_DIR
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_PYTHON_VERSION,
+    INTEGRATIONS_DIR,
+    SCRIPTS_DIR,
+)
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.tools import get_last_remote_release_version
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
@@ -30,8 +35,7 @@ logger = logging.getLogger("demisto-sdk")
 yaml = YAML_Handler()
 json = JSON_Handler()
 
-GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS")
-DEFAULT_PYTHON_VERSION = "3.10"
+IS_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS", False)
 DEFAULT_PYTHON2_VERSION = "2.7"
 
 PRECOMMIT_TEMPLATE_PATH = Path(__file__).parent / ".pre-commit-config_template.yaml"
@@ -41,9 +45,8 @@ SKIPPED_HOOKS = {"format", "validate"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
 
-
-with open(PRECOMMIT_TEMPLATE_PATH) as f:
-    PRECOMMIT_TEMPLATE = yaml.load(f)
+# change to the latest demisto-sdk commit hash to debug
+LATEST_COMMIT_HASH_DEBUG = ""
 
 
 @dataclass
@@ -54,11 +57,25 @@ class PreCommitRunner:
 
     def __post_init__(self):
         """
-        We initialize the hooks and all files for later use.
+        We initialize the hooks and all_files for later use.
         """
         self.all_files = set(
             itertools.chain.from_iterable(self.python_version_to_files.values())
         )
+        with open(PRECOMMIT_TEMPLATE_PATH) as f:
+            self.precommit_template = yaml.load(f)
+
+        # change the demisto-sdk repo to the latest release version (or the debug commit hash)
+        self.repos(self.precommit_template)["https://github.com/demisto/demisto-sdk"][
+            "rev"
+        ] = (LATEST_COMMIT_HASH_DEBUG or f"v{get_last_remote_release_version()}")
+
+    @staticmethod
+    def repos(pre_commit_config: dict) -> dict:
+        repos = {}
+        for repo in pre_commit_config["repos"]:
+            repos[repo["repo"]] = repo
+        return repos
 
     @staticmethod
     def hooks(pre_commit_config: dict) -> dict:
@@ -76,7 +93,7 @@ class PreCommitRunner:
     ) -> None:
         hooks = self.hooks(pre_commit_config)
         PyclnHook(hooks["pycln"]).prepare_hook(PYTHONPATH)
-        RuffHook(hooks["ruff"]).prepare_hook(python_version, GITHUB_ACTIONS)
+        RuffHook(hooks["ruff"]).prepare_hook(python_version, IS_GITHUB_ACTIONS)
         MypyHook(hooks["mypy"]).prepare_hook(python_version)
         RunUnitTestHook(hooks["run-unit-tests"]).prepare_hook(native_images)
 
@@ -96,7 +113,7 @@ class PreCommitRunner:
         skipped_hooks: set = SKIPPED_HOOKS
         skipped_hooks |= set(skip_hooks or [])
         if os.getenv("CI"):
-            # No reason to update the docker-image on CI?
+            # No reason to update the docker-image on CI, as we don't commit from the CI
             skipped_hooks.add("update-docker-image")
         if not test and not native_images:
             skipped_hooks.add("run-unit-tests")
@@ -110,7 +127,7 @@ class PreCommitRunner:
         precommit_env["MYPYPATH"] = ":".join(str(path) for path in PYTHONPATH)
 
         for python_version, changed_files in self.python_version_to_files.items():
-            precommit_config = deepcopy(PRECOMMIT_TEMPLATE)
+            precommit_config = deepcopy(self.precommit_template)
             logger.info(
                 f"Running pre-commit for {changed_files} with python version {python_version}"
             )
@@ -181,7 +198,7 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
                 if part in {INTEGRATIONS_DIR, SCRIPTS_DIR}
             )
             if not find_path_index:
-                raise Exception(f"Could not find integration/script path for {file}")
+                raise Exception(f"Could not find Integrations/Scripts path for {file}")
             integration_script_path = Path(*file.parts[: next(find_path_index) + 1])
             integrations_scripts_mapping[integration_script_path].add(file)
         else:
@@ -244,7 +261,7 @@ def pre_commit_manager(
     (CONTENT_PATH / "CommonServerUserPython.py").touch()
 
     if not any((input_files, use_git, all_files)):
-        logger.debug("No input_files, use_git, all_files: running on staged files only")
+        logger.info("No arguments were given, running on staged files and git changes.")
 
     files_to_run = preprocess_files(input_files, use_git, all_files)
     pre_commit_runner = PreCommitRunner(group_by_python_version(files_to_run))
@@ -265,16 +282,17 @@ def preprocess_files(
     all_files: bool = False,
 ) -> Set[Path]:
     git_util = GitUtil()
+    staged_files = git_util._get_staged_files()
     if input_files:
         raw_files = set(input_files)
     elif use_git:
-        raw_files = git_util._get_all_changed_files()
+        raw_files = git_util._get_all_changed_files() | staged_files
     elif all_files:
-        raw_files = git_util.get_all_files()
+        raw_files = git_util.get_all_files() | staged_files
     else:
-        # default to staged files
-        raw_files = git_util._get_staged_files()
-
+        raise ValueError(
+            "No files were given to run pre-commit on, and no flags were given."
+        )
     files_to_run: Set[Path] = set()
     for file in raw_files:
         if file.is_dir():
@@ -283,5 +301,4 @@ def preprocess_files(
             files_to_run.add(file)
 
     # Convert to absolute paths
-    files_to_run = {file.absolute() for file in files_to_run}
-    return files_to_run
+    return {file.absolute() for file in files_to_run}

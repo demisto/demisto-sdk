@@ -3222,15 +3222,8 @@ def update_content_graph(
 )
 @click.option(
     "-g",
-    "--git-diff",
+    "--use-git",
     help="Whether to use git to determine which files to run the command on",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "-s",
-    "--staged",
-    help="Whether to run on staged files only",
     is_flag=True,
     default=False,
 )
@@ -3244,13 +3237,13 @@ def update_content_graph(
 @click.option(
     "-t",
     "--test",
-    help="Whether to run unit tests",
+    help="Whether to run unit tests for content items",
     is_flag=True,
     default=False,
 )
 @click.option(
     "--skip",
-    help="A comma separated list of hooks of precommit hooks to skip",
+    help="A comma separated list of precommit hooks to skip",
 )
 @click.option(
     "--validate",
@@ -3273,7 +3266,7 @@ def update_content_graph(
 @click.option(
     "-v",
     "--verbose",
-    help="Verbose output",
+    help="Verbose output of pre-commit",
     is_flag=True,
     default=False,
 )
@@ -3289,7 +3282,6 @@ def pre_commit(
     ctx,
     input: Iterable[Path],
     use_git: bool,
-    staged: bool,
     all_files: bool,
     test: bool,
     skip: str,
@@ -3298,6 +3290,7 @@ def pre_commit(
     native_images: bool,
     verbose: bool,
     show_diff_on_failure: bool,
+    **kwargs,
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
 
@@ -3307,7 +3300,6 @@ def pre_commit(
         pre_commit_manager(
             input,
             use_git,
-            staged,
             all_files,
             test,
             skip,
@@ -3324,15 +3316,12 @@ def pre_commit(
 @click.help_option("-h", "--help")
 @click.option("--native-images", is_flag=True, help="Run unit tests in native images")
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
+@click.pass_context
+@logging_setup_decorator
 def run_unit_tests(file_paths: Tuple[str, ...], native_images: bool):
     from demisto_sdk.commands.run_unit_tests.unit_tests_runner import unit_test_runner
 
     sys.exit(unit_test_runner(file_paths, native_images))
-
-
-@main.result_callback()
-def exit_from_program(result=0, **kwargs):
-    sys.exit(result)
 
 
 app = typer.Typer(name="modeling-rules", hidden=True, no_args_is_help=True)

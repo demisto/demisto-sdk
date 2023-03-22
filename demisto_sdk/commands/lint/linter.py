@@ -135,7 +135,7 @@ class Linter:
         self._facts: Dict[str, Any] = {
             "images": [],
             "python_version": 0,
-            "env_vars": {},
+            "env_vars": {"PYTHONDONTWRITEBYTECODE": "1"},
             "test": False,
             "lint_files": [],
             "support_level": None,

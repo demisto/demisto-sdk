@@ -85,6 +85,7 @@ def unit_test_runner(file_paths: List[Path], native_images: bool = False) -> int
                     environment={
                         "PYTHONPATH": ":".join(DOCKER_PYTHONPATH),
                         "REQUESTS_CA_BUNDLE": "/etc/ssl/certs/ca-certificates.crt",
+                        "PYTHONDONTWRITEBYTECODE": "1",
                     },
                     volumes=[
                         f"{CONTENT_PATH}:/content",

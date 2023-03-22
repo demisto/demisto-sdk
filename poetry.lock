@@ -138,14 +138,14 @@ files = [
 
 [[package]]
 name = "argcomplete"
-version = "3.0.3"
+version = "3.0.4"
 description = "Bash tab completion for argparse"
 category = "main"
 optional = true
 python-versions = ">=3.6"
 files = [
-    {file = "argcomplete-3.0.3-py3-none-any.whl", hash = "sha256:54608afc0dcab4f4b60b5f881d013d4a9a4ed362f81c3e0191b5aec934dbdc21"},
-    {file = "argcomplete-3.0.3.tar.gz", hash = "sha256:10b932b66c039c8de16f98f4b2022822f4a60e64861b98719eafdd871ca11539"},
+    {file = "argcomplete-3.0.4-py3-none-any.whl", hash = "sha256:6884517851f1204cfef34d79a1ceb872562721931a007019312911ec23f88ed8"},
+    {file = "argcomplete-3.0.4.tar.gz", hash = "sha256:0424af827a5b1ee0177972e0d938b017448c79f3c82f4bee4219d412af77598c"},
 ]
 
 [package.extras]

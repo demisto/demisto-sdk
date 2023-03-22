@@ -477,7 +477,6 @@ ERROR_CODE = {
     # ID - ID Set
     "id_set_conflicts": {"code": "ID100", "ui_applicable": False, "related_field": ""},
     # missing 101
-    "duplicated_id": {"code": "ID102", "ui_applicable": False, "related_field": ""},
     "no_id_set_file": {"code": "ID103", "ui_applicable": False, "related_field": ""},
     # IF - Incident Fields
     "invalid_incident_field_name": {
@@ -1813,6 +1812,11 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "duplicated_id": {
+        "code": "GR105",
+        "ui_applicable": False,
+        "related_field": "",
+    },
 }
 
 
@@ -2363,11 +2367,11 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def integration_is_deprecated_and_used(integration_name: str, commands_dict: dict):
-        erorr_str = f"{integration_name} integration contains deprecated commands that are being used by other entities:\n"
+        error_str = f"{integration_name} integration contains deprecated commands that are being used by other entities:\n"
         for command_name, command_usage_list in commands_dict.items():
             current_command_usage = "\n".join(command_usage_list)
-            erorr_str += f"{command_name} is being used in the following locations:\n{current_command_usage}\n"
-        return erorr_str
+            error_str += f"{command_name} is being used in the following locations:\n{current_command_usage}\n"
+        return error_str
 
     @staticmethod
     @error_code_decorator
@@ -2606,11 +2610,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def duplicated_id(obj_id):
-        return (
-            f"The ID {obj_id} already exists, please update the file or update the "
-            f"id_set.json toversion field of this id to match the old occurrence of this id"
-        )
+    def duplicated_id(obj_id, file_path):
+        return f"The ID '{obj_id}' already exists in {file_path}. Please update the file to have a unique ID."
 
     @staticmethod
     @error_code_decorator

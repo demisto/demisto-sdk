@@ -1,3 +1,4 @@
+import logging
 import os
 import random
 
@@ -6,8 +7,6 @@ from demisto_sdk.commands.common.tools import (
     get_from_version,
     get_yaml,
     open_id_set_file,
-    print_error,
-    print_warning,
 )
 from demisto_sdk.commands.common.update_id_set import get_depends_on
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -20,6 +19,8 @@ from demisto_sdk.commands.generate_docs.common import (
     save_output,
     string_escape_md,
 )
+
+logger = logging.getLogger("demisto-sdk")
 
 
 def generate_script_doc(
@@ -120,9 +121,9 @@ def generate_script_doc(
                     )
                 )
             else:  # if we have more than 10 use a sample
-                print_warning(
-                    f'"Used In" section found too many scripts/playbooks ({len(used_in)}). Will use a sample of 10.'
-                    " Full list is available as a comment in the README file."
+                logger.info(
+                    f'[yellow]"Used In" section found too many scripts/playbooks ({len(used_in)}). Will use a sample of 10.'
+                    " Full list is available as a comment in the README file.[/yellow]"
                 )
                 sample_used_in = random.sample(used_in, 10)
                 doc.extend(
@@ -164,15 +165,16 @@ def generate_script_doc(
         save_output(output, "README.md", doc_text)
 
         if errors:
-            print_warning("Possible Errors:")
+            logger.info("[yellow]Possible Errors:[/yellow]")
             for error in errors:
-                print_warning(error)
+                logger.info(f"[yellow]{error}[/yellow]")
 
     except Exception as ex:
         if verbose:
+            # TODO Handle this verbose
             raise
         else:
-            print_error(f"Error: {str(ex)}")
+            logger.info(f"[yellow]Error: {str(ex)}[/yellow]")
             return
 
 

@@ -103,7 +103,7 @@ def test_generate_ai_descriptions(mocker, tmp_path):
         )
 
         generate_descriptions.generate_ai_descriptions(
-            str(input), str(output), interactive=False, verbose=False
+            str(input), str(output), interactive=False
         )
 
         output_dict = get_yaml(str(output))
@@ -144,7 +144,7 @@ def test_generate_ai_descriptions_interactive(mocker, tmp_path, monkeypatch):
         )
 
         generate_descriptions.generate_ai_descriptions(
-            str(input), str(output), interactive=True, verbose=False
+            str(input), str(output), interactive=True
         )
 
         output_dict = get_yaml(str(output))
@@ -191,7 +191,7 @@ def test_generate_ai_descriptions_interactive_similar_path(mocker, tmp_path):
         )
 
         generate_descriptions.generate_ai_descriptions(
-            str(input), str(output), interactive=True, verbose=False
+            str(input), str(output), interactive=True
         )
 
         output_dict = get_yaml(str(output))

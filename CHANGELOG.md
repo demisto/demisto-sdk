@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where the **lint** command ran on `native:dev` supported content when passing the `--docker-image all` flag, instead it will run on `native:candidate`.
+* Added support for `native:candidate` as a docker image flag for **lint** command.
+
+## 1.11.0
 * **Note: Demisto-SDK will soon stop supporting Python 3.8**
 * Fixed an issue where using **download** on non-unicode content, merging them into existing files caused an error.
 * Changed an internal setting to allow writing non-ascii content (unicode) using `YAMLHandler` and `JSONHandler`.

@@ -5,7 +5,6 @@ from pydantic import BaseModel
 
 from demisto_sdk.commands.common.constants import NATIVE_IMAGE_FILE_NAME
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.singleton import Singleton
 from demisto_sdk.commands.common.tools import (
     extract_docker_image_from_text,
@@ -14,8 +13,6 @@ from demisto_sdk.commands.common.tools import (
 
 json = JSON_Handler()
 logger = logging.getLogger("demisto-sdk")
-
-NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
 
 
 class NativeImage(BaseModel):
@@ -34,8 +31,6 @@ def _extract_native_image_version_for_server(native_image: str) -> str:
 
 
 class NativeImageConfig(Singleton, BaseModel):
-    NATIVE_DEV = "native:dev"
-
     native_images: Dict[str, NativeImage]
     ignored_content_items: List[IgnoredContentItem]
     flags_versions_mapping: Dict[str, str] = {}
@@ -86,7 +81,7 @@ class NativeImageConfig(Singleton, BaseModel):
         )
         return native_image_config_content
 
-    def get_native_image_reference(self, native_image: str) -> Optional[str]:
+    def get_native_image_reference(self, native_image) -> Optional[str]:
         """
         Gets the docker reference of the given native image
 
@@ -95,18 +90,6 @@ class NativeImageConfig(Singleton, BaseModel):
 
         Returns: The docker ref
         """
-        if native_image == self.NATIVE_DEV:
-            try:
-                latest_tag = DockerImageValidator.get_docker_image_latest_tag_request(
-                    NATIVE_IMAGE_DOCKER_NAME
-                )
-                if not latest_tag:
-                    raise ValueError("Could not find the latest tag")
-            except Exception as e:
-                logger.warning(f"Could not find the latest tag for {native_image}: {e}")
-                return None
-            return f"{NATIVE_IMAGE_DOCKER_NAME}:{latest_tag}"
-
         if native_image_obj := self.native_images.get(native_image):
             return native_image_obj.docker_ref
 
@@ -170,10 +153,7 @@ class ScriptIntegrationSupportedNativeImages:
         return []
 
     def get_supported_native_image_versions(
-        self,
-        get_raw_version: bool = False,
-        only_production_tags: bool = True,
-        get_image_reference: bool = False,
+        self, get_raw_version: bool = False, only_production_tags: bool = True
     ) -> List[str]:
         """
         Get the native-images that the integration/script supports. Disregards native-images that should be ignored.
@@ -182,7 +162,6 @@ class ScriptIntegrationSupportedNativeImages:
             get_raw_version (bool): whether to extract the raw server version from the native image name, for example:
                                     'native:8.2' will become '8.2' for each one of the native-images that are supported.
             only_production_tags (bool): whether to ignore the latest native image.
-            get_image_reference (bool): whether to get the docker reference of the native image.
         """
         if native_images := self.__docker_image_to_native_images_support():
             # in case there is a script/integration that should be ignored on a specific native image,
@@ -196,17 +175,6 @@ class ScriptIntegrationSupportedNativeImages:
 
             if only_production_tags and self.NATIVE_DEV in native_images:
                 native_images.remove(self.NATIVE_DEV)
-
-            if get_image_reference:
-                return list(
-                    filter(
-                        None,
-                        map(
-                            self.native_image_config.get_native_image_reference,
-                            native_images,
-                        ),
-                    )
-                )
 
             if get_raw_version:
                 return list(

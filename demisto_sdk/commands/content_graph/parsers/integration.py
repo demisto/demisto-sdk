@@ -43,8 +43,8 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         return self.yml_data.get("display")
 
     @property
-    def docker_image(self) -> Optional[str]:
-        return self.script_info.get("dockerimage")
+    def docker_image(self) -> str:
+        return self.script_info.get("dockerimage", "")
 
     def connect_to_commands(self) -> None:
         """Creates HAS_COMMAND relationships with the integration commands.

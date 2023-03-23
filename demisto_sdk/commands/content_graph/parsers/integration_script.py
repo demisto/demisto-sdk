@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.docker_helper import get_python_version_from_image
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
     YAMLContentItemParser,
 )
@@ -22,7 +21,7 @@ class IntegrationScriptParser(YAMLContentItemParser):
 
     @property
     @abstractmethod
-    def docker_image(self) -> Optional[str]:
+    def docker_image(self) -> str:
         ...
 
     @abstractmethod

@@ -41,11 +41,7 @@ class IntegrationScript(ContentItem):
         return data
 
     def get_supported_native_images(
-        self,
-        marketplace: MarketplaceVersions,
-        ignore_native_image: bool = False,
-        only_production_image: bool = True,
-        get_image_reference: bool = False,
+        self, marketplace: MarketplaceVersions, ignore_native_image: bool = False
     ) -> List[str]:
         if marketplace == MarketplaceVersions.XSOAR and not ignore_native_image:
             if not Path(f"Tests/{NATIVE_IMAGE_FILE_NAME}").exists():
@@ -55,9 +51,5 @@ class IntegrationScript(ContentItem):
                 _id=self.object_id,
                 docker_image=self.docker_image,
                 native_image_config=file_to_native_image_config(),
-            ).get_supported_native_image_versions(
-                get_raw_version=True,
-                only_production_tags=only_production_image,
-                get_image_reference=get_image_reference,
-            )
+            ).get_supported_native_image_versions(get_raw_version=True)
         return []

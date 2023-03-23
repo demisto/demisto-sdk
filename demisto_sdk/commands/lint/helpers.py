@@ -24,6 +24,7 @@ from packaging.version import parse
 
 # Local packages
 from demisto_sdk.commands.common.constants import (
+    DEFAULT_PYTHON_VERSION,
     TYPE_PWSH,
     TYPE_PYTHON,
     DemistoException,
@@ -317,7 +318,7 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
     """
     # skip pwoershell images
     if "pwsh" in image or "powershell" in image:
-        return "3.10"
+        return DEFAULT_PYTHON_VERSION
 
     match_group = re.match(r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+)", image)
     if match_group:
@@ -348,7 +349,7 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
             f"{log_prompt} - Failed detecting Python version for image {image}"
         )
     logger.info(f"{log_prompt} - End. Python version is {py_num}")
-    return py_num or "3.10"
+    return py_num or DEFAULT_PYTHON_VERSION
 
 
 def get_file_from_container(

@@ -169,7 +169,7 @@ def format_manager(
         )
     if output and input and "," in input:
         raise Exception(
-            "Could not use the output argument if provided a list of file paths"
+            "Cannot use the output argument when provided with a list of inputs. Remove the first or only provide a single file as input."
         )
 
     log_list = []

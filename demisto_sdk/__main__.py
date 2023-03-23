@@ -3222,8 +3222,8 @@ def update_content_graph(
 )
 @click.option(
     "-g",
-    "--use-git",
-    help="Whether to use git to determine which files to run the command on",
+    "--git-diff",
+    help="Whether to use git to determine which files to run on",
     is_flag=True,
     default=False,
 )
@@ -3235,8 +3235,8 @@ def update_content_graph(
     default=False,
 )
 @click.option(
-    "-t",
-    "--test",
+    "-ut",
+    "--unit-test",
     help="Whether to run unit tests for content items",
     is_flag=True,
     default=False,
@@ -3281,9 +3281,9 @@ def update_content_graph(
 def pre_commit(
     ctx,
     input: Iterable[Path],
-    use_git: bool,
+    git_diff: bool,
     all_files: bool,
-    test: bool,
+    unit_test: bool,
     skip: str,
     validate: bool,
     format: bool,
@@ -3299,9 +3299,9 @@ def pre_commit(
     sys.exit(
         pre_commit_manager(
             input,
-            use_git,
+            git_diff,
             all_files,
-            test,
+            unit_test,
             skip,
             validate,
             format,

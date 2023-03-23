@@ -101,7 +101,7 @@ class PreCommitRunner:
 
     def run(
         self,
-        test: bool = False,
+        unit_test: bool = False,
         skip_hooks: Optional[List[str]] = None,
         validate: bool = False,
         format: bool = False,
@@ -117,7 +117,7 @@ class PreCommitRunner:
         if os.getenv("CI"):
             # No reason to update the docker-image on CI, as we don't commit from the CI
             skipped_hooks.add("update-docker-image")
-        if not test and not native_images:
+        if not unit_test and not native_images:
             skipped_hooks.add("run-unit-tests")
         if validate:
             skipped_hooks.remove("validate")
@@ -136,7 +136,7 @@ class PreCommitRunner:
             if python_version.startswith("2"):
                 with open(PRECOMMIT_PATH, "w") as f:
                     yaml.dump(precommit_config, f)
-                if test:
+                if unit_test:
                     response = subprocess.run(
                         [
                             "pre-commit",
@@ -238,9 +238,9 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
 
 def pre_commit_manager(
     input_files: Optional[Iterable[Path]] = None,
-    use_git: bool = False,
+    git_diff: bool = False,
     all_files: bool = False,
-    test: bool = False,
+    unit_test: bool = False,
     skip_hooks: Optional[List[str]] = None,
     validate: bool = False,
     format: bool = False,
@@ -252,7 +252,7 @@ def pre_commit_manager(
 
     Args:
         input_files (Iterable[Path], optional): Input files to run pre-commit on. Defaults to None.
-        use_git (bool, optional): Whether use git to determine precommit files. Defaults to False.
+        git_diff (bool, optional): Whether use git to determine precommit files. Defaults to False.
         all_files (bool, optional): Whether to run on all_files. Defaults to False.
         test (bool, optional): Whether to run unit-tests. Defaults to False.
         skip_hooks (Optional[List[str]], optional): List of hooks to skip. Defaults to None.
@@ -266,14 +266,14 @@ def pre_commit_manager(
     # We have imports to this module, however it does not exists in the repo.
     (CONTENT_PATH / "CommonServerUserPython.py").touch()
 
-    if not any((input_files, use_git, all_files)):
+    if not any((input_files, git_diff, all_files)):
         logger.info("No arguments were given, running on staged files and git changes.")
-        use_git = True
+        git_diff = True
 
-    files_to_run = preprocess_files(input_files, use_git, all_files)
+    files_to_run = preprocess_files(input_files, git_diff, all_files)
     pre_commit_runner = PreCommitRunner(group_by_python_version(files_to_run))
     return pre_commit_runner.run(
-        test,
+        unit_test,
         skip_hooks,
         validate,
         format,

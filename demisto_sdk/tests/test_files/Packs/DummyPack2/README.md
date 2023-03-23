@@ -14,9 +14,9 @@ test link- [invalid relative 1](relative1.com)
 
 
 ##### images relative paths valid
-[![Identity with High Risk Score](binary_files/0.png)](https://github.com/demisto/content/raw/test2.png)
-![Identity with High Risk Score](binary_files/0.png)
-    [![Identity with High Risk Score](binary_files/0.png)](https://github.com/demisto/content/raw/test1.png)
+[![Identity with High Risk Score](readme_images/0.png)](https://github.com/demisto/content/raw/test2.png)
+![Identity with High Risk Score](readme_images/0.png)
+    [![Identity with High Risk Score](readme_images/0.png)](https://github.com/demisto/content/raw/test1.png)
 
 
 #####  Invalid images relative paths in pack readme

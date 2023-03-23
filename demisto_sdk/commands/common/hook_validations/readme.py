@@ -448,7 +448,7 @@ class ReadMeValidator(BaseValidator):
                 )
             else:
                 if is_pack_readme and not re.match(
-                        r'binary_files/.+\..+$',
+                        r'readme_images/.+\..+$',
                     img[1]
                     ):
                         error_message, error_code = Errors.invalid_readme_image_error(

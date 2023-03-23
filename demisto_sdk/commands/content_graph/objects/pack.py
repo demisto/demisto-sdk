@@ -278,9 +278,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             except FileNotFoundError:
                 logger.debug(f'No such file {self.path / "Author_image.png"}')
             try:
-                shutil.copytree(self.path / "binary_files", path / "binary_files")
+                shutil.copytree(self.path / "readme_images", path / "readme_images")
             except FileNotFoundError:
-                logger.debug(f'No such file {self.path / "binary_files"}')
+                logger.debug(f'No such file {self.path / "readme_images"}')
             if self.object_id == BASE_PACK:
                 self.handle_base_pack(path)
 

@@ -1080,7 +1080,7 @@ class TestPackUniqueFilesValidator:
             in errors
         )
         assert (
-            "please repair it:\n[![Identity with High Risk Score](binary_files/0.png)](https://github.com/demisto/content/raw/test2.png)"
+            "please repair it:\n[![Identity with High Risk Score](readme_images/0.png)](https://github.com/demisto/content/raw/test2.png)"
             in errors
         )
         assert (

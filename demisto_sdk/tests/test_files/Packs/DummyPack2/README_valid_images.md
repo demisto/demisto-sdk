@@ -14,10 +14,10 @@ test link- [invalid relative 1](relative1.com)
 
 
 ##### images relative paths valid
-[![Identity with High Risk Score](binary_files/0.jpg)](https://github.com/demisto/content/raw/test2.png)
-![Identity with High Risk Score](binary_files/0.jpg)
-    ![Identity with High Risk Score](binary_files/0.jpg)
-<img src="binary_files/0.jpg"/>
+[![Identity with High Risk Score](readme_images/0.jpg)](https://github.com/demisto/content/raw/test2.png)
+![Identity with High Risk Score](readme_images/0.jpg)
+    ![Identity with High Risk Score](readme_images/0.jpg)
+<img src="readme_images/0.jpg"/>
 
 #### paths that should not be caught
 !command host="ip" action="test" src="https://github.com/demisto/content/raw/test3.png" state="present"

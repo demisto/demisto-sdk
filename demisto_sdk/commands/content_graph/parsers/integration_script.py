@@ -21,12 +21,6 @@ class IntegrationScriptParser(YAMLContentItemParser):
         return self.yml_data.get("commonfields", {}).get("id")
 
     @property
-    def python_version(self) -> Optional[str]:
-        if version := get_python_version_from_image(self.docker_image):
-            return str(version)
-        return None
-
-    @property
     @abstractmethod
     def docker_image(self) -> Optional[str]:
         ...

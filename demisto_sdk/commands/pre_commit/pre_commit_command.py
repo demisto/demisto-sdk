@@ -19,6 +19,7 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
+from demisto_sdk.commands.common.docker_helper import get_python_version_from_image
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.tools import get_last_remote_release_version
@@ -174,6 +175,11 @@ class PreCommitRunner:
         PRECOMMIT_PATH.unlink(missing_ok=True)
         return ret_val
 
+    @property
+    def python_version() -> Optional[str]:
+        if version := get_python_version_from_image(self.docker_image):
+            return str(version)
+        return None
 
 def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
     """This function groups the files to run pre-commit on by the python version.
@@ -217,9 +223,8 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
         ):
             continue
         integration_script_path = integration_script.path.parent
-        if python_version_string := integration_script.python_version:
-            version = Version(python_version_string)
-            python_version_string = f"{version.major}.{version.minor}"
+        if python_version := get_python_version_from_image(integration_script.docker_image):
+            python_version_string = f"{python_version.major}.{python_version.minor}"
         python_versions_to_files[
             python_version_string or DEFAULT_PYTHON2_VERSION
         ].update(

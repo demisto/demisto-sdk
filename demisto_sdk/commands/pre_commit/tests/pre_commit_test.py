@@ -114,6 +114,7 @@ def test_ruff_hook(python_version, github_actions):
     if github_actions:
         assert ruff_hook["args"][2] == "--format=github"
 
+
 def test_empty_sdk_commit_hash():
     """
     This variable is used for debug purposes only, and should not be used in production.

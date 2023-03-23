@@ -3,6 +3,7 @@
 ## Unreleased
 * Fixed an issue where the **lint** command ran on `native:dev` supported content when passing the `--docker-image all` flag, instead it will run on `native:candidate`.
 * Added support for `native:candidate` as a docker image flag for **lint** command.
+* Added a modification for layouts in **prepare-content**, replacing `Related Incidents`, `Linked Incidents` and `Child Incidents` with the suitable `... Alerts` name when uploading to XSIAM.
 
 ## 1.11.0
 * **Note: Demisto-SDK will soon stop supporting Python 3.8**
@@ -45,7 +46,6 @@
   - GR103 errors will raise a warning when using the *-a* flag, but an error if using the *-i* or *g* flags.
 * Fixed an issue where test-playbooks timed out.
 * Fixed an issue where making a change in a module using an ApiModule would cause lint to run on the ApiModule unnecessarily.
-* Added a modification for layout and widget objects in **prepare-content**, where `Related Incidents`, `Linked Incidents` and `Child Incidents` are replaced with the suitable `... Alerts` name when uploading to `marketplacev2` (XSIAM).
 * Fixed an issue where the `marketplace` field was not used when dumping pack zips.
 * Fixed a typo in the README content generated with **update-release-notes** for updating integrations.
 * Fixed an issue in **validate**, where using the `-gr` and `-i` flags did not run properly.

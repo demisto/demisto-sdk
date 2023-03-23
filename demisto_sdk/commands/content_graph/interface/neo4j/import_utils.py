@@ -40,16 +40,11 @@ class Neo4jImportHandler:
         for file in self.import_path.iterdir():
             os.remove(file)
 
-    def get_nodes_files(self) -> List[str]:
-        return [
-            file.name for file in self.import_path.iterdir() if ".nodes." in file.name
-        ]
-
-    def get_relationships_files(self) -> List[str]:
+    def get_graphml_filenames(self) -> List[str]:
         return [
             file.name
             for file in self.import_path.iterdir()
-            if ".relationships." in file.name
+            if file.suffix == ".graphml"
         ]
 
     def ensure_data_uniqueness(self) -> None:

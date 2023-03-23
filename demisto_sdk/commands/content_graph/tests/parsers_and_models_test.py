@@ -1572,12 +1572,12 @@ def test_fix_layout_incident_to_alert(
         - Make sure it replaces values as expected
     """
     from demisto_sdk.commands.content_graph.objects.layout import (
-        replace_layout_widget_incident_alert,
+        replace_layout_incident_alert,
     )
 
     expected_name = name.replace("Incident", "Alert") if expected_change else name
 
-    assert replace_layout_widget_incident_alert({"name": name, "type": type_}) == {
+    assert replace_layout_incident_alert({"name": name, "type": type_}) == {
         "name": expected_name,
         "type": type_,
     }

@@ -9,11 +9,13 @@ from junitparser import JUnitXml
 import demisto_sdk.commands.common.docker_helper as docker_helper
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
+from demisto_sdk.commands.common.native_image import NativeImageConfig, ScriptIntegrationSupportedNativeImages
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.lint.helpers import stream_docker_container_output
+from demisto_sdk.commands.lint.linter import DockerImageFlagOption
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -30,7 +32,7 @@ PYTEST_RUNNER = f"{(Path(__file__).parent / 'pytest_runner.sh')}"
 POWERSHELL_RUNNER = f"{(Path(__file__).parent / 'pwsh_test_runner.sh')}"
 
 
-def unit_test_runner(file_paths: List[Path], native_images: bool = False) -> int:
+def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
     docker_client = docker_helper.init_global_docker_client()
 
     exit_code = 0
@@ -49,14 +51,6 @@ def unit_test_runner(file_paths: List[Path], native_images: bool = False) -> int
         )
         shutil.copy(runner, integration_script.path.parent / "test_runner.sh")
         docker_images = [integration_script.docker_image or DEFAULT_DOCKER_IMAGE]
-        if native_images:
-            docker_images.extend(
-                integration_script.get_supported_native_images(
-                    MarketplaceVersions.XSOAR,
-                    get_image_reference=True,
-                    only_production_image=False,
-                )
-            )
         if os.getenv("GITLAB_CI"):
             docker_images = [
                 f"docker-io.art.code.pan.run/{docker_image}"
@@ -98,7 +92,7 @@ def unit_test_runner(file_paths: List[Path], native_images: bool = False) -> int
                 )
                 logger.debug(f"Running test in container {container.id}")
                 stream_docker_container_output(
-                    container.logs(stream=True), logger.debug
+                    container.logs(stream=True), logger.info if verbose else logger.debug
                 )
                 # wait for container to finish
                 container_exit_code = container.wait()["StatusCode"]

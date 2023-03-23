@@ -68,19 +68,19 @@ class PreCommitRunner:
 
         # changes the demisto-sdk revision to the latest release version (or the debug commit hash)
         # to debug, modify the DEMISTO_SDK_COMMIT_HASH_DEBUG variable to your demisto-sdk commit hash
-        self.repos(self.precommit_template)["https://github.com/demisto/demisto-sdk"][
+        self._get_repos(self.precommit_template)["https://github.com/demisto/demisto-sdk"][
             "rev"
         ] = (DEMISTO_SDK_COMMIT_HASH_DEBUG or f"v{get_last_remote_release_version()}")
 
     @staticmethod
-    def repos(pre_commit_config: dict) -> dict:
+    def _get_repos(pre_commit_config: dict) -> dict:
         repos = {}
         for repo in pre_commit_config["repos"]:
             repos[repo["repo"]] = repo
         return repos
 
     @staticmethod
-    def hooks(pre_commit_config: dict) -> dict:
+    def _get_hooks(pre_commit_config: dict) -> dict:
         hooks = {}
         for repo in pre_commit_config["repos"]:
             for hook in repo["hooks"]:
@@ -93,7 +93,7 @@ class PreCommitRunner:
         python_version: str,
         native_images: bool,
     ) -> None:
-        hooks = self.hooks(pre_commit_config)
+        hooks = self._get_hooks(pre_commit_config)
         PyclnHook(hooks["pycln"]).prepare_hook(PYTHONPATH)
         RuffHook(hooks["ruff"]).prepare_hook(python_version, IS_GITHUB_ACTIONS)
         MypyHook(hooks["mypy"]).prepare_hook(python_version)

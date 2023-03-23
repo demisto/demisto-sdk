@@ -8,7 +8,7 @@ and `DEMISTO_API_KEY` environment variable should contain a valid Cortex XSOAR/X
 **Note:** Cortex XSIAM Base URL should be retrieved from XSIAM instance -> Settings -> Configurations -> API Keys -> `Copy URL` button on the top rigth corner, and not the browser URL.
 **Note:** Cortex XSIAM API key should be of a `standard` security level, and have the `Instance Administrator` role.
 
-To use the command on Cortex XSIAM the `XSIAM_AUTH_ID` environment variable should also be set.
+To use the command on Cortex XSIAM or Cortex XSOAR 8.1.x, the `XSIAM_AUTH_ID` environment variable should also be set.
 To set the environment variables, run the following shell commands:
 ```
 export DEMISTO_BASE_URL=<YOUR_DESMISTO_BASE_URL>

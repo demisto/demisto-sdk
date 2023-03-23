@@ -177,12 +177,17 @@ class TestDockerImagesCollection:
                 "",
             ),
             (
+                linter.DockerImageFlagOption.NATIVE_CANDIDATE.value,
+                "demisto/py3-native:8.2.1.12345",
+                "",
+            ),
+            (
                 linter.DockerImageFlagOption.ALL_IMAGES.value,
                 [
                     "demisto/py3-tools:1.0.0.42258",
                     "demisto/py3-native:8.1.0.12345",
                     "demisto/py3-native:8.2.0.12345",
-                    "demisto/py3-native:8.3.0.12345",
+                    "demisto/py3-native:8.2.1.12345",
                 ],
                 "",
             ),
@@ -269,6 +274,7 @@ class TestDockerImagesCollection:
         else:  # more than one image ('all' flag)
             for img in actual_image:
                 assert img[0] in exp_images
+            assert len(actual_image) == len(exp_images)
 
     @pytest.mark.parametrize(
         argnames="docker_image_flag, exp_versioned_native_image_name",
@@ -277,6 +283,7 @@ class TestDockerImagesCollection:
             (linter.DockerImageFlagOption.NATIVE_MAINTENANCE.value, "native:8.1"),
             (linter.DockerImageFlagOption.NATIVE_DEV.value, "native:dev"),
             (linter.DockerImageFlagOption.NATIVE_TARGET.value, "native:dev"),
+            (linter.DockerImageFlagOption.NATIVE_CANDIDATE.value, "native:candidate"),
         ],
     )
     def test_docker_images_key_not_exists_in_yml(
@@ -430,6 +437,7 @@ class TestDockerImagesCollection:
             (linter.DockerImageFlagOption.NATIVE_DEV.value, "native:dev"),
             (linter.DockerImageFlagOption.NATIVE_TARGET.value, "native:dev"),
             (linter.DockerImageFlagOption.ALL_IMAGES.value, "native:dev"),
+            (linter.DockerImageFlagOption.NATIVE_CANDIDATE.value, "native:candidate"),
         ],
     )
     def test_integration_not_supported_by_requested_native_image(
@@ -447,11 +455,12 @@ class TestDockerImagesCollection:
                 2. Docker image flag = "native:maintenance"
                 3. Docker image flag = "native:dev"
                 4. Docker image flag = "all"
+                5. Docker image flag = "native:candidate"
         When
             - running the linter.
         Then
             -
-                1-3. Ensure that the docker images list is empty, and suitable logs (skipping) were written.
+                1-3, 5. Ensure that the docker images list is empty, and suitable logs (skipping) were written.
                 4. Ensure that the docker image is only the docker image from the integration yml.
         """
         # Mock:

@@ -1,7 +1,7 @@
 from typing import Union
 
 
-def replace_incident_with_alert(data: dict) -> dict:
+def replace_layout_widget_incident_alert(data: dict) -> dict:
     """
     Changes {"name": "Related/Linked/Chiled Incidents", ... }
          to {"name": "Related/Linked/Chiled Alerts", ... }

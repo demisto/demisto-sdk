@@ -5,8 +5,8 @@ from pydantic import Field
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-from demisto_sdk.commands.prepare_content.preparers.replace_incident_alert import (
-    replace_incident_with_alert,
+from demisto_sdk.commands.prepare_content.preparers.replace_layout_widget_incident_alert import (
+    replace_layout_widget_incident_alert,
 )
 
 
@@ -38,7 +38,7 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
             marketplace == MarketplaceVersions.MarketplaceV2
             and self.group == "indicator"
         ):
-            data = replace_incident_with_alert(data)
+            data = replace_layout_widget_incident_alert(data)
 
         return data
 

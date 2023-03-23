@@ -2961,7 +2961,7 @@ def test_content_entities_dir_length():
     If this test failed, it's likely you modified either CONTENT_ENTITIES_DIRS or FOLDERS_ALLOWED_TO_CONTAIN_FILES.
     Update the test values accordingly.
     """
-    assert len(set(FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES)) == 27
+    assert len(set(FIRST_LEVEL_FOLDERS_ALLOWED_TO_CONTAIN_FILES)) == 28
     assert len(set(CONTENT_ENTITIES_DIRS)) == 30
 
     # change this one if you added a content item folder that can't have files directly under it
@@ -2971,7 +2971,7 @@ def test_content_entities_dir_length():
                 CONTENT_ENTITIES_DIRS
             )
         )
-        == 25
+        == 26
     )
 
 
@@ -2983,7 +2983,7 @@ folders_not_allowed_to_contain_files = tuple(
 
 
 @pytest.mark.parametrize("folder", folders_not_allowed_to_contain_files)
-def test_file_not_allowed_contain_folder__fail(repo, folder: str):
+def test_file_not_allowed_contain_folder__fail(repo, mocker, folder: str):
     """
     Given
             A name of a folder, which may not contain files directly
@@ -2992,6 +2992,7 @@ def test_file_not_allowed_contain_folder__fail(repo, folder: str):
     Then
             Make sure the validation fails, and a proper message is shown
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
 
     pack = repo.create_pack()
@@ -3001,12 +3002,11 @@ def test_file_not_allowed_contain_folder__fail(repo, folder: str):
         with ChangeCWD(pack.path):
             assert not validate_manager.is_valid_path(Path(pack.path, folder, "file"))
 
-    captured_stdout = std_output.getvalue()
-    assert "[BA120]" in captured_stdout
+    assert str_in_call_args_list(logger_info.call_args_list, "[BA120]")
 
 
 @pytest.mark.parametrize("nested", (True, False))
-def test_is_path_allowed__invalid_first_level(repo, nested: bool):
+def test_is_path_allowed__invalid_first_level(repo, mocker, nested: bool):
     """
     Given
             A name of a folder, which is not allowed as a first-level folder
@@ -3015,6 +3015,7 @@ def test_is_path_allowed__invalid_first_level(repo, nested: bool):
     Then
             Make sure the validation fails, and a proper message is shown
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
 
     folder_name = "folder_name"
@@ -3030,8 +3031,7 @@ def test_is_path_allowed__invalid_first_level(repo, nested: bool):
                 Path(pack.path, *mid_path, "file")
             )
 
-    captured_stdout = std_output.getvalue()
-    assert "[BA121]" in captured_stdout
+    assert str_in_call_args_list(logger_info.call_args_list, "[BA121]")
 
 
 def test_first_level_folders_subset():
@@ -3057,7 +3057,7 @@ def test_is_path_allowed__pass(repo, folder: str):
         assert validate_manager.is_valid_path(file)
 
 
-def test_is_path_allowed__fail_file_in_pack_root(tmpdir):
+def test_is_path_allowed__fail_file_in_pack_root(tmpdir, mocker):
     """
     Given
             A repo-like file structure
@@ -3066,6 +3066,7 @@ def test_is_path_allowed__fail_file_in_pack_root(tmpdir):
     Then
             Make sure it fails with an appropriate error
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
 
     pack = Path(tmpdir, "Packs", "myPack")
@@ -3078,9 +3079,7 @@ def test_is_path_allowed__fail_file_in_pack_root(tmpdir):
     with contextlib.redirect_stdout(std_output):
         with ChangeCWD(tmpdir):
             assert not validate_manager.is_valid_path(file_path)
-
-    captured_stdout = std_output.getvalue()
-    assert "[BA122]" in captured_stdout
+    assert str_in_call_args_list(logger_info.call_args_list, "[BA122]")
 
 
 @pytest.mark.parametrize(
@@ -3124,7 +3123,7 @@ def test_is_path_allowed__dir(repo):
         assert "should not be run on folders" in e.value.args[0]
 
 
-def test_is_path_allowed__outside_pack(tmpdir):
+def test_is_path_allowed__outside_pack(tmpdir, mocker):
     """
     Given
             A repo-like file structure
@@ -3133,6 +3132,7 @@ def test_is_path_allowed__outside_pack(tmpdir):
     Then
             Make sure it fails with an appropriate error
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
 
     packs = tmpdir / "Packs"
@@ -3145,6 +3145,4 @@ def test_is_path_allowed__outside_pack(tmpdir):
     with contextlib.redirect_stdout(std_output):
         with ChangeCWD(tmpdir):
             assert not validate_manager.is_valid_path(file_path)
-
-    captured_stdout = std_output.getvalue()
-    assert "[BA123]" in captured_stdout
+    assert str_in_call_args_list(logger_info.call_args_list, "[BA123]")

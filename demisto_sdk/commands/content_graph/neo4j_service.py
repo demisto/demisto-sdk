@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import shutil
 from pathlib import Path
 
 import docker
@@ -15,7 +16,7 @@ from demisto_sdk.commands.content_graph.common import (
 
 REPO_PATH = CONTENT_PATH
 
-NEO4J_VERSION = "4.4.12"
+NEO4J_VERSION = "5.5.0"
 
 NEO4J_SERVICE_IMAGE = f"neo4j:{NEO4J_VERSION}"
 
@@ -25,9 +26,7 @@ NEO4J_DATA_FOLDER = "data"
 NEO4J_PLUGINS_FOLDER = "plugins"
 
 # When updating the APOC version, make sure to update the checksum as well
-APOC_URL_VERSIONS = (
-    "https://neo4j-contrib.github.io/neo4j-apoc-procedures/versions.json"
-)
+APOC_URL_VERSIONS = "https://neo4j.github.io/apoc/versions.json"
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -87,18 +86,7 @@ def _download_apoc():
         f.write(response.content)
 
 
-def start():
-    """Starting the neo4j service
-
-    Args:
-    """
-    if is_alive():
-        return
-
-    Path.mkdir(REPO_PATH / NEO4J_FOLDER, exist_ok=True, parents=True)
-    # we download apoc only if we are running on docker
-    # if the user is running locally he needs to setup apoc manually
-    _download_apoc()
+def _docker_start():
     docker_client = init_global_docker_client()
     _stop_neo4j_service_docker(docker_client)
     docker_client.containers.run(
@@ -126,6 +114,28 @@ def start():
             "retries": 10,
         },
     )
+
+
+def start():
+    """Starting the neo4j service
+
+    Args:
+    """
+    if is_alive():
+        return
+
+    Path.mkdir(REPO_PATH / NEO4J_FOLDER, exist_ok=True, parents=True)
+    # we download apoc only if we are running on docker
+    # if the user is running locally he needs to setup apoc manually
+    _download_apoc()
+    try:
+        _docker_start()
+    except Exception as e:
+        logger.debug(
+            f"Could not start neo4j container, delete data folder and trying again. {e}"
+        )
+        shutil.rmtree(REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER)
+        _docker_start()
 
 
 def stop():

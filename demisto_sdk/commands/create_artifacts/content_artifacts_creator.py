@@ -189,6 +189,7 @@ class ArtifactsManager:
         remove_test_playbooks: bool = True,
         filter_by_id_set: bool = False,
         alternate_fields: bool = False,
+        **kwargs,
     ):
         """Content artifacts configuration
 

@@ -1912,16 +1912,15 @@ class TestRNUpdateUnit:
         Then:
             - Call print_error with the appropriate error message
         """
-        import demisto_sdk.commands.update_release_notes.update_rn
+        import logging
+
         from demisto_sdk.commands.update_release_notes.update_rn import (
             update_api_modules_dependents_rn,
         )
 
         if os.path.exists(DEFAULT_ID_SET_PATH):
             os.remove(DEFAULT_ID_SET_PATH)
-        print_error_mock = mocker.patch.object(
-            demisto_sdk.commands.update_release_notes.update_rn, "print_error"
-        )
+        print_error_mock = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         update_api_modules_dependents_rn(
             pre_release="", update_type="", added="", modified="", id_set_path=None
         )

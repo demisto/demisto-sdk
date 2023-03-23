@@ -1,0 +1,3 @@
+wrong_header_name,Type,Description,One Data Model
+id,string,Resource Id,xdm.observer.unique_identifier
+name,string,Resource name,xdm.observer.name

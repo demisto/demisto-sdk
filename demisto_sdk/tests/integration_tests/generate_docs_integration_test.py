@@ -33,6 +33,10 @@ class TestPlaybooks:
         - Ensure README.md has an outputs section.
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_warning = mocker.patch.object(
+            logging.getLogger("demisto-sdk"), "warning"
+        )
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         monkeypatch.setenv("COLUMNS", "1000")
 
         valid_playbook_with_io = join(
@@ -44,10 +48,12 @@ class TestPlaybooks:
         readme_path = join(tmpdir, "playbook-Test_playbook_README.md")
 
         assert result.exit_code == 0
+        assert not result.exception
         assert str_in_call_args_list(
             logger_info.call_args_list, "Generating playbook documentation"
         )
-        assert not result.exception
+        assert logger_warning.call_count == 0
+        assert logger_error.call_count == 0
         assert Path(readme_path).exists()
         with open(readme_path) as readme_file:
             contents = readme_file.read()
@@ -57,7 +63,9 @@ class TestPlaybooks:
             )
             assert "| **Path** | **Description** | **Type** |" in contents
 
-    def test_integration_generate_docs_playbook_positive_no_io(self, tmpdir):
+    def test_integration_generate_docs_playbook_positive_no_io(
+        self, tmpdir, mocker, monkeypatch
+    ):
         """
         Given
         - Path to valid playbook yml file to generate docs for.
@@ -73,6 +81,13 @@ class TestPlaybooks:
         - Ensure README.md does not have an inputs section.
         - Ensure README.md does not have an outputs section.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_warning = mocker.patch.object(
+            logging.getLogger("demisto-sdk"), "warning"
+        )
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         valid_playbook_no_io = join(
             DEMISTO_SDK_PATH, "tests/test_files/Playbooks.playbook-test.yml"
         )
@@ -80,10 +95,16 @@ class TestPlaybooks:
         arguments = [GENERATE_DOCS_CMD, "-i", valid_playbook_no_io, "-o", tmpdir]
         result = runner.invoke(main, arguments)
         readme_path = join(tmpdir, "Playbooks.playbook-test_README.md")
+
         assert result.exit_code == 0
-        assert "Generating playbook documentation" in result.stdout
         assert not result.stderr
         assert not result.exception
+
+        assert str_in_call_args_list(
+            logger_info.call_args_list, "Generating playbook documentation"
+        )
+        assert logger_warning.call_count == 0
+        assert logger_error.call_count == 0
         assert Path(readme_path).exists()
         with open(readme_path) as readme_file:
             contents = readme_file.read()
@@ -91,7 +112,7 @@ class TestPlaybooks:
             assert "There are no outputs for this playbook." in contents
 
     def test_integration_generate_docs_playbook_dependencies_old_integration(
-        self, tmpdir
+        self, tmpdir, mocker, monkeypatch
     ):
         """
         Given
@@ -106,6 +127,13 @@ class TestPlaybooks:
         - Ensure integration dependencies exists.
         - Ensure Builtin not in dependencies.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_warning = mocker.patch.object(
+            logging.getLogger("demisto-sdk"), "warning"
+        )
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         valid_playbook_with_dependencies = join(
             DEMISTO_SDK_PATH,
             "tests/test_files/Packs/DummyPack/Playbooks/DummyPlaybook.yml",
@@ -122,9 +150,15 @@ class TestPlaybooks:
         readme_path = join(tmpdir, "DummyPlaybook_README.md")
 
         assert result.exit_code == 0
-        assert "Generating playbook documentation" in result.stdout
         assert not result.stderr
         assert not result.exception
+
+        assert str_in_call_args_list(
+            logger_info.call_args_list, "Generating playbook documentation"
+        )
+        assert logger_warning.call_count == 0
+        assert logger_error.call_count == 0
+
         assert Path(readme_path).exists()
         with open(readme_path) as readme_file:
             contents = readme_file.read()

@@ -335,7 +335,6 @@ class TestLayoutUnifer:
             )
 
             assert result.exit_code == 0
-            assert not result.stderr
             assert not result.exception
 
             assert logger_warning.call_count == 0

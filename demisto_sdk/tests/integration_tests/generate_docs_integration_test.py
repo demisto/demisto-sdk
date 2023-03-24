@@ -1,3 +1,4 @@
+import logging
 from os.path import join
 from pathlib import Path
 
@@ -6,13 +7,16 @@ from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from TestSuite.test_tools import str_in_call_args_list
 
 GENERATE_DOCS_CMD = "generate-docs"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 
 
 class TestPlaybooks:
-    def test_integration_generate_docs_playbook_positive_with_io(self, tmpdir):
+    def test_integration_generate_docs_playbook_positive_with_io(
+        self, tmpdir, mocker, monkeypatch
+    ):
         """
         Given
         - Path to valid playbook yml file to generate docs for.
@@ -28,6 +32,9 @@ class TestPlaybooks:
         - Ensure README.md has an inputs section.
         - Ensure README.md has an outputs section.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
+
         valid_playbook_with_io = join(
             DEMISTO_SDK_PATH, "tests/test_files/playbook-Test_playbook.yml"
         )
@@ -37,8 +44,9 @@ class TestPlaybooks:
         readme_path = join(tmpdir, "playbook-Test_playbook_README.md")
 
         assert result.exit_code == 0
-        assert "Generating playbook documentation" in result.stdout
-        assert not result.stderr
+        assert str_in_call_args_list(
+            logger_info.call_args_list, "Generating playbook documentation"
+        )
         assert not result.exception
         assert Path(readme_path).exists()
         with open(readme_path) as readme_file:

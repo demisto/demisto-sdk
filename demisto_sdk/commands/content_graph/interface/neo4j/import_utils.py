@@ -46,7 +46,7 @@ class Neo4jImportHandler:
         ]
 
     def ensure_data_uniqueness(self) -> None:
-        if len(sources := self._get_import_sources()) == 1:
+        if len(sources := self._get_import_sources()) > 1:
             for idx, source in enumerate(sources, 1):
                 self._set_unique_ids_for_source(source, str(idx))
 

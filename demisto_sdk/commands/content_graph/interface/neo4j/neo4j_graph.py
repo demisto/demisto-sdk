@@ -24,16 +24,19 @@ from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInter
 from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import (
     Neo4jImportHandler,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import (  # drop_constraints,
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import (
     create_constraints,
+    drop_constraints,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
     create_pack_dependencies,
     get_all_level_packs_dependencies,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export import (  # merge_duplicate_commands,; merge_duplicate_content_items,
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export import (
     export_graphml,
     import_graphml,
+    merge_duplicate_commands,
+    merge_duplicate_content_items,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import (
     create_indexes,
@@ -482,19 +485,18 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             external_import_paths (List[Path]): A list of external repositories' import paths.
             imported_path (Path): The path to import the graph from.
         """
-        logger.info("Importing graph from graphml files...")
+        logger.info("Importing graph from GraphML files...")
         self._import_handler.extract_files_from_path(imported_path)
-        # self._import_handler.ensure_data_uniqueness()  # uncomment when merge is supported
+        self._import_handler.ensure_data_uniqueness()
         graphml_filenames = self._import_handler.get_graphml_filenames()
         if graphml_filenames:
             with self.driver.session() as session:
-                # session.execute_write(drop_constraints)  # uncomment when merge is supported
+                session.execute_write(drop_constraints)
                 session.execute_write(import_graphml, graphml_filenames)
-                # uncomment when merge is supported
-                # session.execute_write(merge_duplicate_commands)
-                # session.execute_write(merge_duplicate_content_items)
-                # session.execute_write(create_constraints)
-                # session.execute_write(remove_empty_properties)
+                session.execute_write(merge_duplicate_commands)
+                session.execute_write(merge_duplicate_content_items)
+                session.execute_write(create_constraints)
+                session.execute_write(remove_empty_properties)
 
     def export_graph(self, output_path: Optional[Path] = None) -> None:
         self.clean_import_dir()

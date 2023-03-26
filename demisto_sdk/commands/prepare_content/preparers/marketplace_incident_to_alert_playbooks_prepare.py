@@ -5,7 +5,7 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 logger = logging.getLogger("demisto-sdk")
 
 
-class MarketplaceIncidentToAlertPreparer:
+class MarketplaceIncidentToAlertPlaybooksPreparer:
 
     @staticmethod
     def prepare(

@@ -41,7 +41,6 @@ class XSOARConfigFileUpdater:
         file_path: str = XSOAR_CONFIG_FILE_JSON,
         **kwargs,
     ):
-        logging.disable(logging.CRITICAL)
         self.pack_id = pack_id
         self.pack_data = pack_data
         self.add_marketplace_pack = add_marketplace_pack

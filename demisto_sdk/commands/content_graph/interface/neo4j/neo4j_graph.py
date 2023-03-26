@@ -474,12 +474,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.execute_write(remove_server_nodes)
 
     def import_graph(self, imported_path: Optional[Path] = None) -> None:
-        """Imports CSV files to neo4j, by:
-        1. Dropping the constraints (we temporarily allow creating duplicate nodes from different repos)
-        2. Preparing the CSV files for import and importing them
-        3. Running serveral DB queries to fix the imported data
+        """Imports GraphML files to neo4j, by:
+        1. Preparing the GraphML files for import
+        2. Dropping the constraints (we temporarily allow creating duplicate nodes from different repos)
+        3. Import the GraphML files
         4. Merging duplicate nodes (conmmands/content items)
         5. Recreating the constraints
+        6. Remove empty properties
 
         Args:
             external_import_paths (List[Path]): A list of external repositories' import paths.
@@ -501,9 +502,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def export_graph(self, output_path: Optional[Path] = None) -> None:
         self.clean_import_dir()
         with self.driver.session() as session:
-            # session.execute_write(pre_export_write_queries)
-            # session.execute_write(export_to_csv, self.repo_path.name)
-            # session.execute_write(post_export_write_queries)
             session.execute_write(export_graphml, self.repo_path.name)
         self.dump_metadata()
         if output_path:

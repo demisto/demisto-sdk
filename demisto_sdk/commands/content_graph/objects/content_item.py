@@ -123,8 +123,7 @@ class ContentItem(BaseContent):
     ) -> dict:
         data = self.data
         logger.debug(f"preparing {self.path}")
-        data = MarketplaceSuffixPreparer.prepare(data, marketplace)
-        return MarketplaceIncidentToAlertPlaybooksPreparer.prepare(data, marketplace)
+        return MarketplaceSuffixPreparer.prepare(data, marketplace)
 
     def summary(self, marketplace: Optional[MarketplaceVersions] = None) -> dict:
         """Summary of a content item (the most important metadata fields)

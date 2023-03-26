@@ -466,7 +466,7 @@ def test_use_alternative_fields(artifact: str, keys_paths: List[str]):
         output_file = temp / filename
         PrepareUploadManager.prepare_for_upload(
             artifact,
-            output=output_file,
+            out_path=output_file,
             marketplace=MarketplaceVersions.MarketplaceV2,
             force=True,
         )

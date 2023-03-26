@@ -174,7 +174,7 @@ class JSONContentObject(JSONObject):
             Path(
                 str(
                     PrepareUploadManager.prepare_for_upload(
-                        input=self.path, output=Path(dest_dir, output)  # type: ignore[arg-type]
+                        in_path=self.path, out_path=Path(dest_dir, output)  # type: ignore[arg-type]
                     )
                 )
             )

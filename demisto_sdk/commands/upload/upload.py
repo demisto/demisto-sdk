@@ -16,20 +16,21 @@ def upload_content_entity(**kwargs):
     keep_zip = kwargs.pop("keep_zip")
     is_zip = kwargs.pop("zip", False)
     config_file_path = kwargs.pop("input_config_file")
-    is_xsiam = kwargs.pop("xsiam", False)
+
+    marketplace = (
+        MarketplaceVersions.MarketplaceV2
+        if kwargs.pop("is_xsiam", False)
+        else MarketplaceVersions.XSOAR
+    )
+    os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.value.lower()
+
     if is_zip or config_file_path:
         if is_zip:
             pack_path = kwargs["input"]
-
         else:
             config_file_to_parse = ConfigFileParser(config_file_path=config_file_path)
             pack_path = config_file_to_parse.parse_file()
             kwargs["detached_files"] = True
-        if is_xsiam:
-            marketplace = MarketplaceVersions.MarketplaceV2.value
-        else:
-            marketplace = MarketplaceVersions.XSOAR.value
-        os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
 
         output_zip_path = keep_zip or tempfile.mkdtemp()
         packs_unifier = PacksZipper(

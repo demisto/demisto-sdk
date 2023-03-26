@@ -88,12 +88,17 @@ class MarketplaceIncidentToAlertPlaybooksPreparer:
         name_or_description_field_content: str,
         key: str = None,
     ):
-        pattern_1, pattern_2 = r"(?<!<-)incident(?!->)", r"(?<!<-)incidents(?!->)"
-        replacement_1, replacement_2 = "alert", "alerts"
-        new_content = re.sub(
-            pattern_1, replacement_1, name_or_description_field_content
-        )
-        new_content = re.sub(pattern_2, replacement_2, new_content)
+        mapping = {r"(?<!<-)incident(?!->)": "alert",
+                   r"(?<!<-)Incident(?!->)": "Alert",
+                   r"(?<!<-)incidents(?!->)": "alerts",
+                   r"(?<!<-)Incidents(?!->)": "Alerts"}
+
+        new_content = name_or_description_field_content
+        for pattern in mapping:
+            new_content = re.sub(
+                pattern, mapping[pattern], new_content
+            )
+
         if key:
             data["tasks"][key]["task"][name_or_description_field] = new_content
         else:
@@ -106,12 +111,16 @@ class MarketplaceIncidentToAlertPlaybooksPreparer:
         name_or_description_field_content: str,
         key: str = None,
     ):
-        pattern_1, pattern_2 = r"<-incident->", r"<-incidents->"
-        replacement_1, replacement_2 = "incident", "incidents"
-        new_content = re.sub(
-            pattern_1, replacement_1, name_or_description_field_content
-        )
-        new_content = re.sub(pattern_2, replacement_2, new_content)
+        mapping = {r"<-incident->": "incident",
+                   r"<-Incident->": "Incident",
+                   r"<-incidents->": "incidents",
+                   r"<-Incidents->": "Incidents"}
+        new_content = name_or_description_field_content
+        for pattern in mapping:
+            new_content = re.sub(
+                pattern, mapping[pattern], new_content
+            )
+
         if key:
             data["tasks"][key]["task"][name_or_description_field] = new_content
         else:

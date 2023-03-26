@@ -13,7 +13,7 @@ def test_marketplace_version_is_xsiam():
     """
     Given:
         - A playbook which contains in its second task description the word incident, and in its third task name and
-         description the word <-incident->. Also in the external description, contains three time the word incident.
+         description the word <-incident->. Also in the external description, contains three times the word incident.
         - MarketplaceVersions.MarketplaceV2 (Which is XSIAM Marketplace version)
     When:
         - MarketplaceIncidentToAlertPlaybooksPreparer.prepare() command is executed
@@ -49,6 +49,35 @@ def test_marketplace_version_is_xsiam():
         data["tasks"]["7"]["task"]["description"]
         == "Review the incident to determine if the email that the user reported is malicious."
     )
+
+
+def test_marketplace_version_is_xsiam_2():
+    """
+    Given:
+        - A playbook which contains in the external description, contains five times the word incident/s with or without
+         the wrapper.
+        - MarketplaceVersions.MarketplaceV2 (Which is XSIAM Marketplace version)
+    When:
+        - MarketplaceIncidentToAlertPlaybooksPreparer.prepare() command is executed
+    Then:
+        - Ensure incident is converted to alert when needed.
+        - Ensure the wrapper is removed.
+    """
+
+    with open(
+        f"{GIT_ROOT}/demisto_sdk/commands/prepare_content/test_files/playbook_2.yml"
+    ) as yml_file:
+        data = yaml.safe_load(yml_file)
+
+    MarketplaceIncidentToAlertPlaybooksPreparer.prepare(
+        data, MarketplaceVersions.MarketplaceV2
+    )
+
+    # convert incident/s to alert/s for XSIAM when needed and remove the wrapper without replacing to alert/s
+    assert data["description"] ==\
+           "Use this playbook to investigate and remediate a potential phishing alert." \
+           " The playbook simultaneously engages with the user that triggered the alert," \
+           " while investigating the alert itself. Alerts incidents"
 
 
 def test_marketplace_version_is_xsoar():

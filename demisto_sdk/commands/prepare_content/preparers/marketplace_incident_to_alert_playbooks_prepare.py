@@ -1,7 +1,9 @@
 import logging
-from demisto_sdk.commands.prepare_content.preparers.incident_to_alert import prepare_descriptions_and_names
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.prepare_content.preparers.incident_to_alert import (
+    prepare_descriptions_and_names,
+)
 
 logger = logging.getLogger("demisto-sdk")
 

@@ -74,10 +74,12 @@ def test_marketplace_version_is_xsiam_2():
     )
 
     # convert incident/s to alert/s for XSIAM when needed and remove the wrapper without replacing to alert/s
-    assert data["description"] ==\
-           "Use this playbook to investigate and remediate a potential phishing alert." \
-           " The playbook simultaneously engages with the user that triggered the alert," \
-           " while investigating the alert itself. Alerts incidents"
+    assert (
+        data["description"]
+        == "Use this playbook to investigate and remediate a potential phishing alert."
+        " The playbook simultaneously engages with the user that triggered the alert,"
+        " while investigating the alert itself. Alerts incidents"
+    )
 
 
 def test_marketplace_version_is_xsoar():

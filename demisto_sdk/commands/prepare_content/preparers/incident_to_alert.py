@@ -2,15 +2,20 @@ import re
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
-INCIDENT_TO_ALERT = {r"(?<!<-)incident(?!->)": "alert",
-                     r"(?<!<-)Incident(?!->)": "Alert",
-                     r"(?<!<-)incidents(?!->)": "alerts",
-                     r"(?<!<-)Incidents(?!->)": "Alerts"}
+INCIDENT_TO_ALERT = {
+    fr"(?<!<-){key}(?!->)": value
+    for key, value in {
+        "incident": "alert",
+        "Incident": "Alert",
+        "incidents": "alerts",
+        "Incidents": "Alerts",
+        "INCIDENT": "ALERT",
+        "INCIDENTS": "ALERTS",
+    }.items()
+}
 
-REMOVE_WRAPPER_FROM_INCIDENT = {r"<-incident->": "incident",
-                                r"<-Incident->": "Incident",
-                                r"<-incidents->": "incidents",
-                                r"<-Incidents->": "Incidents"}
+REMOVE_WRAPPER_FROM_INCIDENT = {fr"<-{key}->": key for key in
+                                ("incident", "incidents", "Incident", "Incidents", "INCIDENT", "INCIDENTS")}
 
 
 def prepare_descriptions_and_names_helper(name_or_description_content: str, replace_incident_to_alert: bool):
@@ -28,7 +33,7 @@ def prepare_descriptions_and_names(data: dict, marketplace: MarketplaceVersions)
     for task_key, task_value in data.get("tasks", {}).items():
 
         if description := task_value.get("task", {}).get("description", ""):
-            data['tasks'][task_key]['task']['description'] =\
+            data['tasks'][task_key]['task']['description'] = \
                 prepare_descriptions_and_names_helper(description, replace_incident_to_alert)
 
         if name := task_value.get("task", {}).get("name", ""):

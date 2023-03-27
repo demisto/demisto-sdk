@@ -24,7 +24,7 @@ from demisto_sdk.commands.common.constants import (
     ABSOLUTE_IMAGES_URL_HTML_REGEX,
     ABSOLUTE_IMAGES_URL_MARKDOWN_REGEX,
     RELATIVE_IMAGE_PATH_MARKDOWN_REGEX,
-    RELATIVE_IMAGE_PATH_HTML_REGEX
+    RELATIVE_IMAGE_PATH_HTML_REGEX,
 )
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 from demisto_sdk.commands.common.errors import (

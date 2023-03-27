@@ -1021,7 +1021,6 @@ class TestPackUniqueFilesValidator:
                 - Invalid relative image paths were caught correctly
                 - Invalid absolute image paths were caught correctly
         """
-
         self.validator = PackUniqueFilesValidator(
             os.path.join(self.FILES_PATH, "DummyPack2")
         )
@@ -1054,17 +1053,17 @@ class TestPackUniqueFilesValidator:
         assert not result
         assert (
             "The following image relative path is not valid for pack README file: ![Identity with High Risk Score](doc_files/High_Risk_User.png),\n" \
-            "A relative path to the image in the pack readme file must be in this convention: 'binary _files/<file name>'"
+            "A relative path to the image in the pack readme file must be in this convention: 'readme_images/<file name>'"
             in errors
         )
         assert (
             "The following image relative path is not valid for pack README file: ![Identity with High Risk Score](home/test1/test2/doc_files/High_Risk_User.png),\n" \
-            "A relative path to the image in the pack readme file must be in this convention: 'binary _files/<file name>'"
+            "A relative path to the image in the pack readme file must be in this convention: 'readme_images/<file name>'"
             in errors
         )
         assert (
             "The following image relative path is not valid for pack README file: (../../doc_files/Access_investigation_-_Generic_4_5.png),\n" \
-            "A relative path to the image in the pack readme file must be in this convention: 'binary _files/<file name>'"
+            "A relative path to the image in the pack readme file must be in this convention: 'readme_images/<file name>'"
             in errors
         )
         assert (
@@ -1080,7 +1079,7 @@ class TestPackUniqueFilesValidator:
             in errors
         )
         assert (
-            "please repair it:\n[![Identity with High Risk Score](binary_files/0.png)](https://github.com/demisto/content/raw/test2.png)"
+            "please recheck it:\n![Identity with High Risk Score](readme_images/0.png)"
             in errors
         )
         assert (
@@ -1088,7 +1087,7 @@ class TestPackUniqueFilesValidator:
             in errors
         )
 
-    def test_validate_pack_readme_invalid_images(self, mocker):
+    def test_validate_pack_readme_valid_images(self, mocker):
         """
         Given
             - A pack README file with valid absolute and relative image paths in it.

@@ -665,7 +665,7 @@ ABSOLUTE_IMAGES_URL_HTML_REGEX = r'(<img.*?src\s*=\s*"(https://.*?)")'
 RELATIVE_HREF_URL_REGEX_WITHOUT_IMAGE_PATH = r'(<.*?href\s*=\s*"((?!(?:https?:\/\/)|#|(?:mailto:)).*?)")'
 
 # Extracting relative images paths in HTML
-RELATIVE_IMAGE_PATH_HTML_REGEX = r'(<img.*?src\s*=\s*"((?!http).*?)")',
+RELATIVE_IMAGE_PATH_HTML_REGEX = r'(<img.*?src\s*=\s*"((?!http).*?)")'
 
 # Markdown
 

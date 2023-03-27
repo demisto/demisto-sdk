@@ -88,15 +88,16 @@ class MarketplaceIncidentToAlertPlaybooksPreparer:
         name_or_description_field_content: str,
         key: str = None,
     ):
-        mapping = {r"(?<!<-)incident(?!->)": "alert",
+        replacements = {r"(?<!<-)incident(?!->)": "alert",
                    r"(?<!<-)Incident(?!->)": "Alert",
                    r"(?<!<-)incidents(?!->)": "alerts",
                    r"(?<!<-)Incidents(?!->)": "Alerts"}
 
         new_content = name_or_description_field_content
-        for pattern in mapping:
+
+            for pattern, replace_with in replacements.items():
             new_content = re.sub(
-                pattern, mapping[pattern], new_content
+                pattern, replace_with, new_content
             )
 
         if key:

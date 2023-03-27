@@ -13,9 +13,10 @@ class MarketplaceIncidentToAlertPlaybooksPreparer:
         marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
     ) -> dict:
         """
-        Iterate over all the given content item descriptions and name fields and if a description or name field contains
-        the word incident / incidents, then replace it with alert / alerts in case of XSIAM Marketplace.
-        In any case (for all Marketplaces) remove wrapper (<-incident-> to incident, <-incidents-> to incidents).
+        Iterate over all the given playbook's descriptions and names fields and if a description or a name field
+        contains the word incident / incidents (without the wrapper), then replace it with alert / alerts just in case
+        of XSIAM Marketplace.
+        In any case (for all Marketplaces) remove the wrapper (<-incident-> to incident, <-incidents-> to incidents).
         Args:
             data: content item data
             marketplace: Marketplace.

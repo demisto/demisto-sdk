@@ -314,7 +314,6 @@ class PackUniqueFilesValidator(BaseValidator):
         errors += readme_validator.check_readme_absolute_image_paths(
             is_pack_readme=True
         )
-        # errors += readme_validator.is_relative_image_paths_on_readme_pack_valid()
         if errors:
             self._errors.extend(errors)
             return False

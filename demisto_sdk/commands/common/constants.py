@@ -654,10 +654,34 @@ MODELING_RULE_YML_REGEX = rf"{MODELING_RULE_PACKAGE_REGEX}\/([^/]+)\.yml"
 MODELING_RULE_RULES_REGEX = rf"{MODELING_RULE_PACKAGE_REGEX}\/([^/]+)\.xif"
 MODELING_RULE_SCHEMA_REGEX = rf"{MODELING_RULE_PACKAGE_REGEX}\/([^/]+)\.json"
 
-RELATIVE_HREF_URL_REGEX = r'(<.*?href\s*=\s*"((?!(?:https?:\/\/)|#|(?:mailto:)).*?)")'
-RELATIVE_MARKDOWN_URL_REGEX = (
+
+'''--- Regex to extract absolute/relative paths from Markdown and HTML files ---'''
+# HTML
+
+# Extracting absolute paths of an image in HTML
+ABSOLUTE_IMAGES_URL_HTML_REGEX = r'(<img.*?src\s*=\s*"(https://.*?)")'
+
+# Extracting relative paths in HTML that are no image
+RELATIVE_HREF_URL_REGEX_WITHOUT_IMAGE_PATH = r'(<.*?href\s*=\s*"((?!(?:https?:\/\/)|#|(?:mailto:)).*?)")'
+
+# Extracting relative images paths in HTML
+RELATIVE_IMAGE_PATH_HTML_REGEX = r'(<img.*?src\s*=\s*"((?!http).*?)")',
+
+# Markdown
+
+# Extracting absolute paths of an image in Markdown
+ABSOLUTE_IMAGES_URL_MARKDOWN_REGEX = (
+    r"(\!\[[^\]]+\])\((https://.*?)\)((].*)?)"
+)
+
+# Extracting relative paths in Markdown that are no image
+RELATIVE_MARKDOWN_URL_REGEX_WITHOUT_IMAGE_PATH = (
     r"(?<![!])(\[[#_a-zA-Z0-9\(\) -]*?\])\(((?!(?:https?:\/\/)|#|(?:mailto:)).*?)\)"
 )
+
+# Extracting relative images paths in Markdown
+RELATIVE_IMAGE_PATH_MARKDOWN_REGEX = r"(\!\[[^\]]+\])\(((?!http)[a-zA-Z_/\.0-9\- :%]*?)\)((].*)?)"
+
 
 # old classifier structure
 _PACKS_CLASSIFIER_BASE_5_9_9_REGEX = (

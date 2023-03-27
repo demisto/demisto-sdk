@@ -19,8 +19,12 @@ from requests.exceptions import HTTPError
 from urllib3.util import Retry
 
 from demisto_sdk.commands.common.constants import (
-    RELATIVE_HREF_URL_REGEX,
-    RELATIVE_MARKDOWN_URL_REGEX,
+    RELATIVE_MARKDOWN_URL_REGEX_WITHOUT_IMAGE_PATH,
+    RELATIVE_HREF_URL_REGEX_WITHOUT_IMAGE_PATH,
+    ABSOLUTE_IMAGES_URL_HTML_REGEX,
+    ABSOLUTE_IMAGES_URL_MARKDOWN_REGEX,
+    RELATIVE_IMAGE_PATH_MARKDOWN_REGEX,
+    RELATIVE_IMAGE_PATH_HTML_REGEX
 )
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 from demisto_sdk.commands.common.errors import (
@@ -116,10 +120,10 @@ def get_relative_urls(content: str) -> Set[ReadmeUrl]:
     Returns: a set of ReadmeUrls objects.
     """
     relative_urls = re.findall(
-        RELATIVE_MARKDOWN_URL_REGEX, content, re.IGNORECASE | re.MULTILINE
+        RELATIVE_MARKDOWN_URL_REGEX_WITHOUT_IMAGE_PATH, content, re.IGNORECASE | re.MULTILINE
     )
     relative_html_urls = re.findall(
-        RELATIVE_HREF_URL_REGEX, content, re.IGNORECASE | re.MULTILINE
+        RELATIVE_HREF_URL_REGEX_WITHOUT_IMAGE_PATH, content, re.IGNORECASE | re.MULTILINE
     )
 
     def get_not_empty_urls(urls, is_markdown):
@@ -425,12 +429,12 @@ class ReadMeValidator(BaseValidator):
         error_code: str = ""
         error_message: str = ""
         relative_images = re.findall(
-            r"(\!\[.*?\])\(((?!http)[a-zA-Z_/\.0-9\- :]*?)\)((].*)?)$",
+            RELATIVE_IMAGE_PATH_MARKDOWN_REGEX,
             self.readme_content,
             re.IGNORECASE | re.MULTILINE,
         )
         relative_images += re.findall(  # HTML image tag
-            r'(<img.*?src\s*=\s*"((?!http).*?)")',
+            RELATIVE_IMAGE_PATH_HTML_REGEX,
             self.readme_content,
             re.IGNORECASE | re.MULTILINE,
         )
@@ -449,7 +453,7 @@ class ReadMeValidator(BaseValidator):
             else:
                 if is_pack_readme and not re.match(
                         r'readme_images/.+\..+$',
-                    img[1]
+                        img[1]
                     ):
                         error_message, error_code = Errors.invalid_readme_image_error(
                             prefix + f"({relative_path})", error_type="pack_readme_relative_error"
@@ -490,12 +494,12 @@ class ReadMeValidator(BaseValidator):
         except InvalidGitRepositoryError:
             pass
         absolute_links = re.findall(
-            r"(\[?!\[.*\])\((https://.*)\)$",
+            ABSOLUTE_IMAGES_URL_MARKDOWN_REGEX,
             self.readme_content,
             re.IGNORECASE | re.MULTILINE,
         )
         absolute_links += re.findall(
-            r'(<img.*?src\s*=\s*"(https://.*?)")',
+            ABSOLUTE_IMAGES_URL_HTML_REGEX,
             self.readme_content,
             re.IGNORECASE | re.MULTILINE,
         )
@@ -506,9 +510,7 @@ class ReadMeValidator(BaseValidator):
             img_url = link[
                 1
             ].strip()  # striping in case there are whitespaces at the beginning/ending of url.
-            if is_pack_readme and (link[0].startswith('!')
-                                   or link[0].startswith('<img')) \
-                                   or re.findall(r'(\[?!\[.*\])\((https://.*)\)', link[0], re.IGNORECASE | re.MULTILINE):
+            if is_pack_readme:
                 error_message, error_code = Errors.invalid_readme_image_error(
                     prefix + f"({img_url})", error_type="pack_readme_absolute_error"
                 )

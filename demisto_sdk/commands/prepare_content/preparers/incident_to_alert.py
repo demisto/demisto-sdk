@@ -2,44 +2,56 @@ import re
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
+INCIDENT_TO_ALERT = {r"(?<!<-)incident(?!->)": "alert",
+                     r"(?<!<-)Incident(?!->)": "Alert",
+                     r"(?<!<-)incidents(?!->)": "alerts",
+                     r"(?<!<-)Incidents(?!->)": "Alerts"}
+
+REMOVE_WRAPPER_FROM_INCIDENT = {r"<-incident->": "incident",
+                                r"<-Incident->": "Incident",
+                                r"<-incidents->": "incidents",
+                                r"<-Incidents->": "Incidents"}
+
+
+def prepare_descriptions_and_names_helper(name_or_description_content: str, replace_incident_to_alert: bool):
+    if replace_incident_to_alert:
+        name_or_description_content = edit_names_and_descriptions_for_playbook(name_or_description_content,
+                                                                               replace_incident_to_alert)
+    return edit_names_and_descriptions_for_playbook(name_or_description_content, False)  # Here remove the wrapper
+
 
 def prepare_descriptions_and_names(data: dict, marketplace: MarketplaceVersions) -> dict:
     # Replace incidents to alerts only for XSIAM
     replace_incident_to_alert = marketplace == MarketplaceVersions.MarketplaceV2
 
-    for k, v in data.get("tasks", {}).items():
-        if description := v.get("task", {}).get("description", ""):
-            if replace_incident_to_alert:
-                description = name_or_description_incident_to_alert(description)
+    # Descriptions and names for all tasks
+    for task_key, task_value in data.get("tasks", {}).items():
 
-            remove_wrapper_from_incident(data, "description", description, k)
+        if description := task_value.get("task", {}).get("description", ""):
+            data['tasks'][task_key]['task']['description'] =\
+                prepare_descriptions_and_names_helper(description, replace_incident_to_alert)
 
-        if name := v.get("task", {}).get("name", ""):
-            if replace_incident_to_alert:
-                name = name_or_description_incident_to_alert(name)
+        if name := task_value.get("task", {}).get("name", ""):
+            data['tasks'][task_key]['task']['name'] = prepare_descriptions_and_names_helper(name,
+                                                                                            replace_incident_to_alert)
 
-            remove_wrapper_from_incident(data, "name", name, k)
-
+    # The external playbook's description
     if description := data.get("description"):
-        if replace_incident_to_alert:
-            description = name_or_description_incident_to_alert(description)
+        data['description'] = prepare_descriptions_and_names_helper(description, replace_incident_to_alert)
 
-        remove_wrapper_from_incident(data, "description", description)
-
+    # The external playbook's name
     if name := data.get("name"):
-        if replace_incident_to_alert:
-            name = name_or_description_incident_to_alert(name)
-
-        remove_wrapper_from_incident(data, "name", name)
+        data['name'] = prepare_descriptions_and_names_helper(name, replace_incident_to_alert)
 
     return data
 
 
-def name_or_description_incident_to_alert(name_or_description_field_content: str) -> str:
-    replacements = {r"(?<!<-)incident(?!->)": "alert",
-                    r"(?<!<-)Incident(?!->)": "Alert",
-                    r"(?<!<-)incidents(?!->)": "alerts",
-                    r"(?<!<-)Incidents(?!->)": "Alerts"}
+def edit_names_and_descriptions_for_playbook(name_or_description_field_content: str,
+                                             replace_incident_to_alert: bool) -> str:
+    if replace_incident_to_alert:
+        replacements = INCIDENT_TO_ALERT
+    else:
+        replacements = REMOVE_WRAPPER_FROM_INCIDENT
 
     new_content = name_or_description_field_content
 
@@ -49,25 +61,3 @@ def name_or_description_incident_to_alert(name_or_description_field_content: str
         )
 
     return new_content
-
-
-def remove_wrapper_from_incident(
-        data: dict,
-        name_or_description_field: str,
-        name_or_description_field_content: str,
-        task_key: str = None,
-):
-    replacements = {r"<-incident->": "incident",
-                    r"<-Incident->": "Incident",
-                    r"<-incidents->": "incidents",
-                    r"<-Incidents->": "Incidents"}
-    new_content = name_or_description_field_content
-    for pattern, replace_with in replacements.items():
-        new_content = re.sub(
-            pattern, replace_with, new_content
-        )
-
-    if task_key:
-        data["tasks"][task_key]["task"][name_or_description_field] = new_content
-    else:
-        data[name_or_description_field] = new_content

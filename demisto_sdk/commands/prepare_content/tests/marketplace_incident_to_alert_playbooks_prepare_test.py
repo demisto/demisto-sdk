@@ -27,7 +27,7 @@ def test_marketplace_version_is_xsiam():
     ) as yml_file:
         data = yaml.safe_load(yml_file)
 
-    MarketplaceIncidentToAlertPlaybooksPreparer.prepare(
+    data = MarketplaceIncidentToAlertPlaybooksPreparer.prepare(
         data, MarketplaceVersions.MarketplaceV2
     )
 
@@ -69,7 +69,7 @@ def test_marketplace_version_is_xsiam_2():
     ) as yml_file:
         data = yaml.safe_load(yml_file)
 
-    MarketplaceIncidentToAlertPlaybooksPreparer.prepare(
+    data = MarketplaceIncidentToAlertPlaybooksPreparer.prepare(
         data, MarketplaceVersions.MarketplaceV2
     )
 
@@ -98,7 +98,7 @@ def test_marketplace_version_is_xsoar():
     ) as yml_file:
         data = yaml.safe_load(yml_file)
 
-    MarketplaceIncidentToAlertPlaybooksPreparer.prepare(data)
+    data = MarketplaceIncidentToAlertPlaybooksPreparer.prepare(data)
 
     # Verify that an incident is not converted to an alert when it is not in XSIAM Marketplace
     assert (

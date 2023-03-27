@@ -24,8 +24,6 @@ class MarketplaceIncidentToAlertPlaybooksPreparer:
 
         """
 
-        prepare_descriptions_and_names(
-            data, marketplace
-        )
+        data = prepare_descriptions_and_names(data, marketplace)
 
         return data

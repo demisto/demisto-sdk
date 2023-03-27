@@ -3,7 +3,7 @@ import re
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 
-def prepare_descriptions_and_names(data: dict, marketplace: MarketplaceVersions):
+def prepare_descriptions_and_names(data: dict, marketplace: MarketplaceVersions) -> dict:
     # Replace incidents to alerts only for XSIAM
     replace_incident_to_alert = marketplace == MarketplaceVersions.MarketplaceV2
 
@@ -31,6 +31,8 @@ def prepare_descriptions_and_names(data: dict, marketplace: MarketplaceVersions)
             name = name_or_description_incident_to_alert(name)
 
         remove_wrapper_from_incident(data, "name", name)
+
+    return data
 
 
 def name_or_description_incident_to_alert(name_or_description_field_content: str) -> str:

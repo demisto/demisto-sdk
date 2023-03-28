@@ -2,10 +2,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
-from demisto_sdk.commands.common.constants import (
-    MARKETPLACE_MIN_VERSION,
-    MarketplaceVersions,
-)
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.content_graph.common import (
     PACK_CONTRIBUTORS_FILENAME,
@@ -107,9 +104,7 @@ class PackMetadataParser:
             "certified" if self.support.lower() in ["xsoar", "partner"] else ""
         )
         self.hidden: bool = metadata.get("hidden", False)
-        self.server_min_version: str = metadata.get(
-            "serverMinVersion", MARKETPLACE_MIN_VERSION
-        )
+        self.server_min_version: str = metadata.get("serverMinVersion", "")
         self.current_version: str = metadata["currentVersion"]
         self.tags: List[str] = metadata["tags"]
         self.categories: List[str] = metadata["categories"]

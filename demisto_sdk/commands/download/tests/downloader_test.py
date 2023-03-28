@@ -81,6 +81,7 @@ class Environment:
         self.SCRIPT_INSTANCE_PATH = None
         self.PLAYBOOK_INSTANCE_PATH = None
         self.LAYOUT_INSTANCE_PATH = None
+        self.LAYOUTSCONTAINER_INSTANCE_PATH = None
         self.PRE_PROCESS_RULES_INSTANCE_PATH = None
         self.LISTS_INSTANCE_PATH = None
         self.CUSTOM_CONTENT_SCRIPT_PATH = None
@@ -92,6 +93,7 @@ class Environment:
         self.SCRIPT_PACK_OBJECT = None
         self.PLAYBOOK_PACK_OBJECT = None
         self.LAYOUT_PACK_OBJECT = None
+        self.LAYOUTSCONTAINER_PACK_OBJECT = None
         self.LISTS_PACK_OBJECT = None
         self.JOBS_PACK_OBJECT = None
         self.JOBS_INSTANCE_PATH = None
@@ -110,11 +112,9 @@ class Environment:
         tests_path = self.tmp_path / "tests"
         tests_env_path = tests_path / "tests_env"
         tests_data_path = tests_path / "tests_data"
+        shutil.copytree(src="tests_env", dst=str(tests_env_path))
         shutil.copytree(
-            src="demisto_sdk/commands/download/tests/tests_env", dst=str(tests_env_path)
-        )
-        shutil.copytree(
-            src="demisto_sdk/commands/download/tests/tests_data",
+            src="tests_data",
             dst=str(tests_data_path),
         )
 
@@ -131,6 +131,9 @@ class Environment:
         )
         self.LAYOUT_INSTANCE_PATH = (
             f"{self.PACK_INSTANCE_PATH}/Layouts/layout-details-TestLayout.json"
+        )
+        self.LAYOUTSCONTAINER_INSTANCE_PATH = (
+            f"{self.PACK_INSTANCE_PATH}/Layouts/layoutscontainer-mytestlayout.json"
         )
         self.PRE_PROCESS_RULES_INSTANCE_PATH = (
             f"{self.PACK_INSTANCE_PATH}/PreProcessRules/preprocessrule-dummy.json"
@@ -244,6 +247,16 @@ class Environment:
                     "name": "Hello World Alert",
                     "id": "Hello World Alert",
                     "path": self.LAYOUT_INSTANCE_PATH,
+                    "file_ending": "json",
+                }
+            ]
+        }
+        self.LAYOUTSCONTAINER_PACK_OBJECT = {
+            "mylayout": [
+                {
+                    "name": "mylayout",
+                    "id": "mylayout",
+                    "path": self.LAYOUTSCONTAINER_INSTANCE_PATH,
                     "file_ending": "json",
                 }
             ]
@@ -640,6 +653,11 @@ class TestBuildPackContent:
                 "entity": LAYOUTS_DIR,
                 "path": "demisto_sdk/commands/download/tests/downloader_test.py",
                 "out": {},
+            },
+            {
+                "entity": LAYOUTS_DIR,
+                "path": env.LAYOUTSCONTAINER_INSTANCE_PATH,
+                "out": env.LAYOUTSCONTAINER_PACK_OBJECT,
             },
             {
                 "entity": PRE_PROCESS_RULES_DIR,

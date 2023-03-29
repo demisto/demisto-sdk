@@ -109,7 +109,6 @@ class PreCommitRunner:
         verbose: bool = False,
         show_diff_on_failure: bool = False,
     ) -> int:
-        # handle skipped hooks
         ret_val = 0
         precommit_env = os.environ.copy()
         skipped_hooks: set = SKIPPED_HOOKS

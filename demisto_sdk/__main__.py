@@ -1256,7 +1256,7 @@ def format(
     """
     from demisto_sdk.commands.format.format_module import format_manager
 
-    if file_paths:
+    if file_paths and not input:
         input = ",".join(file_paths)
 
     with ReadMeValidator.start_mdx_server():

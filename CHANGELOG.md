@@ -25,7 +25,6 @@
 * Added `GR105` validation to **validate** command to check that no duplicate IDs are used.
 * Added support for API Modules imported in API modules in the **unify** command.
 
-
 ## 1.10.6
 * Fixed an issue where running **validate** with the `-g` flag would skip some validations for old-formatted (unified) integration/script files.
 * Deprecated integrations and scripts will not run anymore when providing the **--all-packs** to the **lint** command.

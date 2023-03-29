@@ -298,7 +298,7 @@ class Environment:
             INTEGRATIONS_DIR: [self.INTEGRATION_PACK_OBJECT],
             SCRIPTS_DIR: [self.SCRIPT_PACK_OBJECT],
             PLAYBOOKS_DIR: [self.PLAYBOOK_PACK_OBJECT],
-            LAYOUTS_DIR: [self.LAYOUT_PACK_OBJECT],
+            LAYOUTS_DIR: [self.LAYOUT_PACK_OBJECT, self.LAYOUTSCONTAINER_PACK_OBJECT],
             PRE_PROCESS_RULES_DIR: [],
             LISTS_DIR: [],
             JOBS_DIR: [],

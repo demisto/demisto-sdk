@@ -2,6 +2,7 @@ import logging
 import os
 import shutil
 from pathlib import Path
+import traceback
 from typing import List
 
 from junitparser import JUnitXml
@@ -117,6 +118,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                 logger.error(
                     f"Failed to run test for {filename} in {docker_image}: {e}"
                 )
+                traceback.print_exc()
                 exit_code = 1
             finally:
                 # remove pytest.ini no matter the results

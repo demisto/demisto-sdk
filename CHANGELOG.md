@@ -1,6 +1,13 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where the **lint** command ran on `native:dev` supported content when passing the `--docker-image all` flag, instead it will run on `native:candidate`.
+* Added support for `native:candidate` as a docker image flag for **lint** command.
+* Fixed an issue where logs and messages would not show when using the **download** command.
+* Fixed an issue where the `server_min_version` field in metadata was an empty value when parsing packs without content items.
+
+## 1.11.0
+* **Note: Demisto-SDK will soon stop supporting Python 3.8**
 * Fixed an issue where using **download** on non-unicode content, merging them into existing files caused an error.
 * Changed an internal setting to allow writing non-ascii content (unicode) using `YAMLHandler` and `JSONHandler`.
 * Fixed an issue where an error message in **unify** was unclear for invalid input.
@@ -10,6 +17,7 @@
 * Changed **lint** to skip deprecated content, unless when using the `-i` flag.
 * Fixed an issue where **update-release-notes** failed when a new *Parsing Rule* was added to a pack.
 * Refactored the logging framework. Demisto-SDK logs will now be written to `.demist_sdk_debug.log` under the content path (when detected) or the current directory.
+* Added `GR105` validation to **validate** command to check that no duplicate IDs are used.
 * Added support for API Modules imported in API modules in the **unify** command.
 * Added **validate** check, to make sure every Python file has a corresponding unit test file.
 

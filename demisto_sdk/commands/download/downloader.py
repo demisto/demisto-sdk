@@ -131,7 +131,6 @@ class Downloader:
         item_type: str = "",
         **kwargs,
     ):
-        logging.disable(logging.CRITICAL)
         self.output_pack_path = output
         self.input_files = [input] if isinstance(input, str) else input
         self.regex = regex

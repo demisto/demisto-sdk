@@ -2051,7 +2051,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
         return 1
 
     if file_type == FileType.INTEGRATION:
-        print(f"Generating {file_type.value.lower()} documentation")
+        logger.info(f"Generating {file_type.value.lower()} documentation")
         use_cases = kwargs.get("use_cases")
         command_permissions = kwargs.get("command_permissions")
         return generate_integration_doc(
@@ -2068,7 +2068,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
             skip_breaking_changes=skip_breaking_changes,
         )
     elif file_type == FileType.SCRIPT:
-        print(f"Generating {file_type.value.lower()} documentation")
+        logger.info(f"Generating {file_type.value.lower()} documentation")
         return generate_script_doc(
             input_path=input_path,
             output=output_path,
@@ -2078,7 +2078,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
             insecure=insecure,
         )
     elif file_type == FileType.PLAYBOOK:
-        print(f"Generating {file_type.value.lower()} documentation")
+        logger.info(f"Generating {file_type.value.lower()} documentation")
         return generate_playbook_doc(
             input_path=input_path,
             output=output_path,

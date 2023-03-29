@@ -27,6 +27,7 @@ class InputArgument:
         execution: bool = False,
         options: Optional[list] = None,
         input_type: Optional[enum.EnumMeta] = None,
+        default_arg: bool = False,
     ):
         # if name is not provided convert class name to camel case
         self.name = (
@@ -36,7 +37,8 @@ class InputArgument:
         )
         self.description = description
         self.required = required
-        self.default = default
+        self.default_value = default  # Saving backwards compatibility
+        self.default = default_arg
         self.is_array = is_array
         self.secret = secret
         self.execution = execution

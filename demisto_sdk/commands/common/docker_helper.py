@@ -14,7 +14,12 @@ from docker.types import Mount
 from packaging.version import Version
 from requests import JSONDecodeError
 
-from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_PYTHON_VERSION,
+    TYPE_PWSH,
+    TYPE_PYTHON,
+    DEFAULT_PYTHON2_VERSION,
+)
 
 DOCKER_CLIENT = None
 logger = logging.getLogger("demisto-sdk")
@@ -29,7 +34,6 @@ CAN_MOUNT_FILES = bool(os.getenv("GITLAB_CI", False)) or (
 )
 
 PYTHON_IMAGE_REGEX = re.compile(r"[\d\w]+/python3?:(?P<python_version>[23]\.\d+)")
-DEFAULT_PYTHON_VERSION = "2.7.18"
 
 
 class DockerException(Exception):
@@ -329,9 +333,9 @@ def get_python_version_from_image(image: Optional[str]) -> Optional[Version]:
     if not image:
         # When no docker_image is specified, we use the default python version which is Python 2.7.18
         logger.debug(
-            f"No docker image specified, using default python version: {DEFAULT_PYTHON_VERSION}"
+            f"No docker image specified, using default python version: {DEFAULT_PYTHON2_VERSION}"
         )
-        return Version(DEFAULT_PYTHON_VERSION)
+        return Version(DEFAULT_PYTHON2_VERSION)
     if match := PYTHON_IMAGE_REGEX.match(image):
         return Version(match.group("python_version"))
     if ":" not in image:
@@ -347,8 +351,9 @@ def get_python_version_from_image(image: Optional[str]) -> Optional[Version]:
         env = _get_image_env(repo, digest, token)
         python_version_envs = [env for env in env if env.startswith("PYTHON_VERSION=")]
         if not python_version_envs:
-            return None
-        return Version(python_version_envs[0].split("=")[1])
+            # no python version available, use the default python version (python 3)
+            return Version(DEFAULT_PYTHON_VERSION)
+        return Version(python_version_envs[0].split("=")[1])  # we can assume that we have python version after the "="
     except Exception as e:
-        logger.error(f"Failed to get python version from docker hub: {e}")
-        return None
+        logger.error(f"Failed to get python version from docker hub for image {image}: {e}")
+        raise

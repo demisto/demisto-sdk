@@ -328,7 +328,9 @@ def _get_image_env(repo: str, digest: str, token: str) -> List[str]:
 def get_python_version_from_image(image: Optional[str]) -> Optional[Version]:
     if not image:
         # When no docker_image is specified, we use the default python version which is Python 2.7.18
-        logger.debug(f"No docker image specified, using default python version: {DEFAULT_PYTHON_VERSION}")
+        logger.debug(
+            f"No docker image specified, using default python version: {DEFAULT_PYTHON_VERSION}"
+        )
         return Version(DEFAULT_PYTHON_VERSION)
     if match := PYTHON_IMAGE_REGEX.match(image):
         return Version(match.group("python_version"))

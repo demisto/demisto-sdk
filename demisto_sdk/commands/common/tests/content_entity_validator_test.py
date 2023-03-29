@@ -258,10 +258,13 @@ def test_validate_readme_exists_not_checking_on_api_modules(repo):
     assert content_entity_validator.validate_readme_exists()
 
 
-@pytest.mark.parametrize("with_test, support_level, expected_result", [(True, "xsoar", True),
-                                                                       (False, "xsoar", False),
-                                                                       (False, "community", True)])
-def test_validate_unit_test_exists(repo, with_test: bool, support_level: str, expected_result: bool):
+@pytest.mark.parametrize(
+    "with_test, support_level, expected_result",
+    [(True, "xsoar", True), (False, "xsoar", False), (False, "community", True)],
+)
+def test_validate_unit_test_exists(
+    repo, with_test: bool, support_level: str, expected_result: bool
+):
     """
     Given:
     - A 'test pack' which contains / does not contain a 'test file'

@@ -643,6 +643,15 @@ class ContentEntityValidator(BaseValidator):
 
         """
         path = Path(self.file_path)
+        meta_data_path = Path(f"{path.parent.parent.parent}/pack_metadata.json")
+
+        # Validate just for xsoar and partner support
+        if meta_data_path.exists():
+            with open(meta_data_path) as file:
+                data = json.load(file)
+                if data.get("support", "") == "community":
+                    return True
+
         python_file_path = path.with_name(f"{path.stem}.py")
         unit_test_path = path.with_name(f"{path.stem}_test.py")
         if (

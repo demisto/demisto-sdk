@@ -681,8 +681,8 @@ def validate(ctx, config, file_paths: str, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
-    if file_paths:
-        # If file_paths is given as an argument, use it as the file_paths input (instead of the -i flag)
+    if file_paths and not kwargs["input"]:
+        # If file_paths is given as an argument, use it as the file_paths input (instead of the -i flag). If both, input wins.
         kwargs["input"] = ",".join(file_paths)
     run_with_mp = not kwargs.pop("no_multiprocessing")
     check_configuration_file("validate", kwargs)

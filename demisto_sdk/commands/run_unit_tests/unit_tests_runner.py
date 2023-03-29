@@ -53,7 +53,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                 f"docker-io.art.code.pan.run/{docker_image}"
                 for docker_image in docker_images
             ]
-        logger.info(docker_images)
+        logger.debug(f"{docker_images=}")
         for docker_image in docker_images:
             logger.info(f"Running test for {filename} using {docker_image=}")
             try:
@@ -99,7 +99,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                         integration_script.path.parent / ".report_pytest.xml"
                     ).exists():
                         raise Exception(
-                            f"No pytest report found. Logs: {container.logs()}"
+                            f"No pytest report found in {integration_script.path.parent}. Logs: {container.logs()}"
                         )
                     for suite in JUnitXml.fromfile(
                         integration_script.path.parent / ".report_pytest.xml"

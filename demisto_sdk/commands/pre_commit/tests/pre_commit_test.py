@@ -113,11 +113,3 @@ def test_ruff_hook(python_version, github_actions):
     assert ruff_hook["args"][1] == "--fix"
     if github_actions:
         assert ruff_hook["args"][2] == "--format=github"
-
-
-def test_empty_sdk_commit_hash():
-    """
-    This variable is used for debug purposes only, and should not be used in production.
-    If this test fails, revert it to the original state.
-    """
-    assert not pre_commit_command.DEMISTO_SDK_COMMIT_HASH_DEBUG

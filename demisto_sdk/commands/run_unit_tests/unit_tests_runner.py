@@ -9,7 +9,10 @@ from junitparser import JUnitXml
 import demisto_sdk.commands.common.docker_helper as docker_helper
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
-from demisto_sdk.commands.common.native_image import NativeImageConfig, ScriptIntegrationSupportedNativeImages
+from demisto_sdk.commands.common.native_image import (
+    NativeImageConfig,
+    ScriptIntegrationSupportedNativeImages,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
@@ -92,7 +95,8 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                 )
                 logger.debug(f"Running test in container {container.id}")
                 stream_docker_container_output(
-                    container.logs(stream=True), logger.info if verbose else logger.debug
+                    container.logs(stream=True),
+                    logger.info if verbose else logger.debug,
                 )
                 # wait for container to finish
                 container_exit_code = container.wait()["StatusCode"]

@@ -11,7 +11,6 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set
 
 import more_itertools
-from packaging.version import Version
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON_VERSION,
@@ -56,7 +55,7 @@ class PreCommitRunner:
 
     python_version_to_files: Dict[str, Set[Path]]
     demisto_sdk_commit_hash: str
-    
+
     def __post_init__(self):
         """
         We initialize the hooks and all_files for later use.
@@ -69,9 +68,9 @@ class PreCommitRunner:
 
         # changes the demisto-sdk revision to the latest release version (or the debug commit hash)
         # to debug, modify the DEMISTO_SDK_COMMIT_HASH_DEBUG variable to your demisto-sdk commit hash
-        self._get_repos(self.precommit_template)["https://github.com/demisto/demisto-sdk"][
-            "rev"
-        ] = self.demisto_sdk_commit_hash
+        self._get_repos(self.precommit_template)[
+            "https://github.com/demisto/demisto-sdk"
+        ]["rev"] = self.demisto_sdk_commit_hash
 
     @staticmethod
     def _get_repos(pre_commit_config: dict) -> dict:
@@ -182,6 +181,7 @@ class PreCommitRunner:
             return str(version)
         return None
 
+
 def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
     """This function groups the files to run pre-commit on by the python version.
 
@@ -224,7 +224,9 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
         ):
             continue
         integration_script_path = integration_script.path.parent
-        if python_version := get_python_version_from_image(integration_script.docker_image):
+        if python_version := get_python_version_from_image(
+            integration_script.docker_image
+        ):
             python_version_string = f"{python_version.major}.{python_version.minor}"
         python_versions_to_files[
             python_version_string or DEFAULT_PYTHON2_VERSION

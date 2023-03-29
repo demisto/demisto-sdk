@@ -3329,7 +3329,9 @@ def pre_commit(
     ),  # PathsParamType allows passing a list of paths
     help="The path of the content pack/file to validate specifically.",
 )
-@click.option("-v", "--verbose", is_flag=True,  default=False, help="Verbose output of unit tests")
+@click.option(
+    "-v", "--verbose", is_flag=True, default=False, help="Verbose output of unit tests"
+)
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @click.pass_context
 @logging_setup_decorator
@@ -3337,6 +3339,7 @@ def run_unit_tests(input: str, file_paths: Tuple[str, ...], verbose: bool):
     if input:
         file_paths = tuple(input.split(","))
     from demisto_sdk.commands.run_unit_tests.unit_tests_runner import unit_test_runner
+
     sys.exit(unit_test_runner(file_paths, verbose))
 
 

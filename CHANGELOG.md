@@ -3,6 +3,8 @@
 ## Unreleased
 * Fixed an issue where the **lint** command ran on `native:dev` supported content when passing the `--docker-image all` flag, instead it will run on `native:candidate`.
 * Added support for `native:candidate` as a docker image flag for **lint** command.
+* Fixed an issue where logs and messages would not show when using the **download** command.
+* Fixed an issue where the `server_min_version` field in metadata was an empty value when parsing packs without content items.
 * Fixed an issue where **generate-python-to-yml** generated input arguments as required even though required=False was specified.
 * Fixed an issue where **generate-python-to-yml** generated input arguments a default arguments when default=some_value was provided.
 

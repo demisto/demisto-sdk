@@ -167,7 +167,7 @@ class Runner:
                 if entry.type == self.ERROR_ENTRY_TYPE:
                     logger.info(f"[red]{entry.contents}[/red]\n")
                 else:
-                    print(f"{entry.contents}\n")
+                    logger.info(f"{entry.contents}\n")
 
             # and entries with `file_id`s defined, that is the fileID of the debug log file
             if entry.type == self.DEBUG_FILE_ENTRY_TYPE:
@@ -202,7 +202,7 @@ class Runner:
                         elif self.FULL_LOG_REGEX.match(line):
                             logger.info("[yellow]Full Integration Log:[/yellow]")
                         else:
-                            print(line)
+                            logger.info(line)
 
     def _return_context_dict_from_log(self, log_ids: list) -> dict:
         """

@@ -175,12 +175,6 @@ class PreCommitRunner:
         PRECOMMIT_PATH.unlink(missing_ok=True)
         return ret_val
 
-    @property
-    def python_version() -> Optional[str]:
-        if version := get_python_version_from_image(self.docker_image):
-            return str(version)
-        return None
-
 
 def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
     """This function groups the files to run pre-commit on by the python version.

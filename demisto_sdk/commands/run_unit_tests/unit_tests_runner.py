@@ -7,18 +7,13 @@ from typing import List
 from junitparser import JUnitXml
 
 import demisto_sdk.commands.common.docker_helper as docker_helper
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
-from demisto_sdk.commands.common.native_image import (
-    NativeImageConfig,
-    ScriptIntegrationSupportedNativeImages,
-)
+
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.lint.helpers import stream_docker_container_output
-from demisto_sdk.commands.lint.linter import DockerImageFlagOption
 
 logger = logging.getLogger("demisto-sdk")
 

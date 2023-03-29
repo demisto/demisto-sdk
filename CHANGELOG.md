@@ -5,6 +5,7 @@
 * Added support for `native:candidate` as a docker image flag for **lint** command.
 * Fixed an issue where logs and messages would not show when using the **download** command.
 * Fixed an issue where the `server_min_version` field in metadata was an empty value when parsing packs without content items.
+* Fixed an issue where the **openapi-codegen** failed due to erroneous log call.
 
 ## 1.11.0
 * **Note: Demisto-SDK will soon stop supporting Python 3.8**

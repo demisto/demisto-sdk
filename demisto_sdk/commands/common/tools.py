@@ -849,7 +849,7 @@ def get_entity_id_by_entity_type(data: dict, content_entity: str):
         if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
             return data.get("commonfields", {}).get("id", "")
         elif content_entity == LAYOUTS_DIR:
-            # typeId is for old format layouts, id is for layoutscontainers which
+            # typeId is for old format layouts, id is for layoutscontainers
             return data.get("typeId", "") or data.get("id", "")
         else:
             return data.get("id", "")

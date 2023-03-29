@@ -7,7 +7,7 @@
 * Fixed an issue where the `server_min_version` field in metadata was an empty value when parsing packs without content items.
 * Fixed an issue where **generate-python-to-yml** generated input arguments as required even though required=False was specified.
 * Fixed an issue where **generate-python-to-yml** generated input arguments a default arguments when default=some_value was provided.
-* Added the **pre-commit** command, to run pre-commit hooks on XSOAR content.
+* Added the **pre-commit** command, to improve code quality of XSOAR content.
 * Added the **run-unit-tests** command, to run unit tests of given content items inside their respective docker images.
 * Added support for filepath arguments in the **validate** and **format** commands.
 * Added pre-commit hooks for `validate`, `format`, `run-unit-tests` and `update-docker-image` commands.

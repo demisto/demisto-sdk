@@ -8,7 +8,6 @@ from junitparser import JUnitXml
 
 import demisto_sdk.commands.common.docker_helper as docker_helper
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
-
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,

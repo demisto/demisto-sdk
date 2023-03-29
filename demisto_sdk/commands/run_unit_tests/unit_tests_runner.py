@@ -1,8 +1,8 @@
 import logging
 import os
 import shutil
-from pathlib import Path
 import traceback
+from pathlib import Path
 from typing import List
 
 from junitparser import JUnitXml

@@ -3276,6 +3276,11 @@ def update_content_graph(
     is_flag=True,
     default=False,
 )
+@click.option(
+    "--sdk-ref",
+    help="The demisto-sdk ref to use for the pre-commit hooks",
+    default="",
+)
 @click.pass_context
 @logging_setup_decorator
 def pre_commit(
@@ -3290,6 +3295,7 @@ def pre_commit(
     native_images: bool,
     verbose: bool,
     show_diff_on_failure: bool,
+    sdk_ref: str,
     **kwargs,
 ):
     from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
@@ -3308,6 +3314,7 @@ def pre_commit(
             native_images,
             verbose,
             show_diff_on_failure,
+            sdk_ref=sdk_ref,
         )
     )
 

@@ -55,7 +55,8 @@ class PreCommitRunner:
     """This class is responsible of running pre-commit hooks."""
 
     python_version_to_files: Dict[str, Set[Path]]
-
+    demisto_sdk_commit_hash: str
+    
     def __post_init__(self):
         """
         We initialize the hooks and all_files for later use.
@@ -70,7 +71,7 @@ class PreCommitRunner:
         # to debug, modify the DEMISTO_SDK_COMMIT_HASH_DEBUG variable to your demisto-sdk commit hash
         self._get_repos(self.precommit_template)["https://github.com/demisto/demisto-sdk"][
             "rev"
-        ] = (DEMISTO_SDK_COMMIT_HASH_DEBUG or f"v{get_last_remote_release_version()}")
+        ] = self.demisto_sdk_commit_hash
 
     @staticmethod
     def _get_repos(pre_commit_config: dict) -> dict:
@@ -247,6 +248,7 @@ def pre_commit_manager(
     native_images: bool = False,
     verbose: bool = False,
     show_diff_on_failure: bool = False,
+    sdk_ref: Optional[str] = None,
 ) -> int:
     """Run pre-commit hooks .
 
@@ -271,7 +273,9 @@ def pre_commit_manager(
         git_diff = True
 
     files_to_run = preprocess_files(input_files, git_diff, all_files)
-    pre_commit_runner = PreCommitRunner(group_by_python_version(files_to_run))
+    if not sdk_ref:
+        sdk_ref = f"v{get_last_remote_release_version()}"
+    pre_commit_runner = PreCommitRunner(group_by_python_version(files_to_run), sdk_ref)
     return pre_commit_runner.run(
         unit_test,
         skip_hooks,

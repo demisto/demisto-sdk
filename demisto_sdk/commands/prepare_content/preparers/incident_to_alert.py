@@ -1,4 +1,5 @@
 import re
+from typing import Any, Dict
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
@@ -89,3 +90,31 @@ def edit_names_and_descriptions_for_playbook(
         new_content = re.sub(pattern, replace_with, new_content)
 
     return new_content
+
+
+def replace_playbook_access_fields_recursively(datum: Any) -> Any:
+
+    if isinstance(datum, list):
+        return [replace_playbook_access_fields_recursively(item) for item in datum]
+
+    elif isinstance(datum, dict):
+        for key, val in (datum.items()):
+            if isinstance(val, str):
+                if key in ['root', 'simple'] and 'incident' in val:
+                    # todo: check what the exact conditions should be
+                    val = val.replace('incident', 'alert')
+
+                if 'setIncident' in val:
+                    val = val.replace('setIncident', 'setAlert')
+
+                datum[key] = val
+
+            else:
+                datum[key] = replace_playbook_access_fields_recursively(val)
+
+    return datum
+
+
+def prepare_playbook_access_fields(data: dict) -> dict:
+    data = replace_playbook_access_fields_recursively(data)
+    return data

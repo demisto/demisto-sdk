@@ -12,8 +12,6 @@ class Playbook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ignore[
     def metadata_fields(self) -> Set[str]:
         return {"name", "description"}
 
-    def prepare_for_upload(
-        self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
-    ) -> dict:
-        data = super().prepare_for_upload(marketplace, **kwargs)
-        return MarketplaceIncidentToAlertPlaybooksPreparer.prepare(data, marketplace)
+    def prepare_for_upload(self, current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
+        data = super().prepare_for_upload(current_marketplace, **kwargs)
+        return MarketplaceIncidentToAlertPlaybooksPreparer.prepare(data, self.marketplaces)

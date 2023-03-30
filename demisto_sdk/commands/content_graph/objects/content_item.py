@@ -115,12 +115,10 @@ class ContentItem(BaseContent):
         with self.path.open() as f:
             return self.handler.load(f)
 
-    def prepare_for_upload(
-        self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
-    ) -> dict:
+    def prepare_for_upload(self, current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
         data = self.data
         logger.debug(f"preparing {self.path}")
-        return MarketplaceSuffixPreparer.prepare(data, marketplace)
+        return MarketplaceSuffixPreparer.prepare(data, self.marketplaces, current_marketplace)
 
     def summary(self, marketplace: Optional[MarketplaceVersions] = None) -> dict:
         """Summary of a content item (the most important metadata fields)
@@ -176,7 +174,7 @@ class ContentItem(BaseContent):
 
     def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)
-        data = self.prepare_for_upload(marketplace=marketplace)
+        data = self.prepare_for_upload(current_marketplace=marketplace)
         try:
             with (dir / self.normalize_name).open("w") as f:
                 self.handler.dump(data, f)

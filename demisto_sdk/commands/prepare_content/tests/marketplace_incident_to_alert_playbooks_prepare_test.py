@@ -2,6 +2,7 @@ import ruamel.yaml as yaml
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.prepare_content.preparers.incident_to_alert import prepare_playbook_access_fields
 from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_alert_playbooks_prepare import (
     MarketplaceIncidentToAlertPlaybooksPreparer,
 )
@@ -27,9 +28,7 @@ def test_marketplace_version_is_xsiam():
     ) as yml_file:
         data = yaml.safe_load(yml_file)
 
-    data = MarketplaceIncidentToAlertPlaybooksPreparer.prepare(
-        data, MarketplaceVersions.MarketplaceV2
-    )
+    data = MarketplaceIncidentToAlertPlaybooksPreparer.prepare(data, MarketplaceVersions.MarketplaceV2)
 
     # convert incident to alert for XSIAM
     assert (
@@ -69,9 +68,7 @@ def test_marketplace_version_is_xsiam_2():
     ) as yml_file:
         data = yaml.safe_load(yml_file)
 
-    data = MarketplaceIncidentToAlertPlaybooksPreparer.prepare(
-        data, MarketplaceVersions.MarketplaceV2
-    )
+    data = MarketplaceIncidentToAlertPlaybooksPreparer.prepare(data, MarketplaceVersions.MarketplaceV2)
 
     # convert incident/s to alert/s for XSIAM when needed and remove the wrapper without replacing to alert/s
     assert (
@@ -121,3 +118,15 @@ def test_marketplace_version_is_xsoar():
         data["tasks"]["7"]["task"]["description"]
         == "Review the incident to determine if the email that the user reported is malicious."
     )
+
+
+def test_dani():
+    with open(
+        # f"/Users/darkushin/dev/demisto/content/Packs/PrismaCloud/Playbooks/playbook-PCR_-_AWS_CloudTrail_Misconfig_v2.yml"
+        f"/Users/darkushin/dev/demisto/content/Packs/Jira/Playbooks/playbook-Mirror_Jira_Ticket.yml"
+    ) as yml_file:
+        data = yaml.safe_load(yml_file)
+
+    data = prepare_playbook_access_fields(data)
+    print('daniel')
+

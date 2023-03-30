@@ -12,14 +12,10 @@ class ParsingRule(ContentItemXSIAM, content_type=ContentType.PARSING_RULE):  # t
     def metadata_fields(self) -> Set[str]:
         return {"name", "description"}
 
-    def prepare_for_upload(
-        self,
-        marketplace: MarketplaceVersions = MarketplaceVersions.MarketplaceV2,
-        **kwargs
-    ) -> dict:
+    def prepare_for_upload(self, current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
         if not kwargs.get("unify_only"):
-            data = super().prepare_for_upload(marketplace)
+            data = super().prepare_for_upload(current_marketplace)
         else:
             data = self.data
-        data = RuleUnifier.unify(self.path, data, marketplace)
+        data = RuleUnifier.unify(self.path, data, current_marketplace)
         return data

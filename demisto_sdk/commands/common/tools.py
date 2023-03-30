@@ -68,6 +68,7 @@ from demisto_sdk.commands.common.constants import (
     MARKETPLACE_KEY_PACK_METADATA,
     MARKETPLACE_TO_CORE_PACKS_FILE,
     METADATA_FILE_NAME,
+    CONF_JSON_FILE_NAME,
     MODELING_RULES_DIR,
     NON_LETTERS_OR_NUMBERS_PATTERN,
     OFFICIAL_CONTENT_GRAPH_PATH,
@@ -1564,6 +1565,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.MODELING_RULE_SCHEMA
         elif LAYOUT_RULES_DIR in path.parts:
             return FileType.LAYOUT_RULE
+        elif path.name == CONF_JSON_FILE_NAME:
+            return FileType.CONF_JSON
 
     elif path.name.endswith("_image.png"):
         if path.name.endswith("Author_image.png"):

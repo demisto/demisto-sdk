@@ -69,7 +69,7 @@ repos:
 
       # those will be skipped by default, to run them use --force-run-hooks=validate,format
       - id: format
-        # update docker image to latest version
+        # update docker image to the latest version
         args: ["-ud"]
 
       - id: validate

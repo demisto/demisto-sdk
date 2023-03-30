@@ -119,9 +119,9 @@ class PreCommitRunner:
         if format and format in skipped_hooks:
             skipped_hooks.remove("format")
 
-        precommit_env["SKIP"] = ",".join(skipped_hooks)
-        precommit_env["PYTHONPATH"] = ":".join(str(path) for path in PYTHONPATH)
-        precommit_env["MYPYPATH"] = ":".join(str(path) for path in PYTHONPATH)
+        precommit_env["SKIP"] = ",".join(sorted(skipped_hooks))
+        precommit_env["PYTHONPATH"] = ":".join(str(path) for path in sorted(PYTHONPATH))
+        precommit_env["MYPYPATH"] = ":".join(str(path) for path in sorted(PYTHONPATH))
 
         for python_version, changed_files in self.python_version_to_files.items():
             precommit_config = deepcopy(self.precommit_template)

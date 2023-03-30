@@ -4,6 +4,7 @@
 * Fixed an issue where the **lint** command ran on `native:dev` supported content when passing the `--docker-image all` flag, instead it will run on `native:candidate`.
 * Added support for `native:candidate` as a docker image flag for **lint** command.
 * Fixed an issue where logs and messages would not show when using the **download** command.
+* Added support for creating a wrapper script and changing the script from an incident to an alert.
 
 ## 1.11.0
 * **Note: Demisto-SDK will soon stop supporting Python 3.8**

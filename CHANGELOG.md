@@ -10,6 +10,7 @@
 * Fixed an issue where running **openapi-codegen** resulted in false-positive error messages.
 * Fixed an issue where **generate-python-to-yml** generated input arguments as required even though required=False was specified.
 * Fixed an issue where **generate-python-to-yml** generated input arguments a default arguments when default=some_value was provided.
+* Fixed an issue in the **upload** command, where a prompt was not showing on the console.
 
 ## 1.11.0
 * **Note: Demisto-SDK will soon stop supporting Python 3.8**

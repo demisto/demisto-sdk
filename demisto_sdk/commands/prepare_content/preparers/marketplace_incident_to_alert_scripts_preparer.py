@@ -21,7 +21,7 @@ WRAPPER_SCRIPT = {
 class MarketplaceIncidentToAlertScriptsPreparer:
     @staticmethod
     def prepare(data: dict, marketplace: str) -> Tuple[dict, Optional[dict]]:
-        if not is_wrap(data) and data.get('name', '') != 'IncidentAddSystem':
+        if data.get('name', '') != 'IncidentAddSystem':
             return (data,)
         def fix_recursively(data: Any) -> Any:
             if isinstance(data, list):

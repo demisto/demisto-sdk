@@ -1542,6 +1542,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.LISTS
         elif path.parent.name == JOBS_DIR:
             return FileType.JOB
+        elif path.name == CONF_JSON_FILE_NAME:
+            return FileType.CONF_JSON
         elif INDICATOR_TYPES_DIR in path.parts:
             return FileType.REPUTATION
         elif XSIAM_DASHBOARDS_DIR in path.parts:
@@ -1566,8 +1568,6 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.MODELING_RULE_SCHEMA
         elif LAYOUT_RULES_DIR in path.parts:
             return FileType.LAYOUT_RULE
-        elif path.name == CONF_JSON_FILE_NAME:
-            return FileType.CONF_JSON
 
     elif path.name.endswith("_image.png"):
         if path.name.endswith("Author_image.png"):

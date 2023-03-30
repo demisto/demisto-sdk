@@ -11,7 +11,7 @@
 * Fixed an issue where **generate-python-to-yml** generated input arguments as required even though required=False was specified.
 * Fixed an issue where **generate-python-to-yml** generated input arguments a default arguments when default=some_value was provided.
 * Fixed a bug where **validate** returned error on playbook inputs with special characters.
-* 
+
 ## 1.11.0
 * **Note: Demisto-SDK will soon stop supporting Python 3.8**
 * Fixed an issue where using **download** on non-unicode content, merging them into existing files caused an error.

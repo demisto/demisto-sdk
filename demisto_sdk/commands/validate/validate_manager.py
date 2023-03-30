@@ -30,7 +30,10 @@ from demisto_sdk.commands.common.constants import (
     PathLevel,
 )
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
+from demisto_sdk.commands.common.content_constant_paths import (
+    CONTENT_PATH,
+    DEFAULT_ID_SET_PATH,
+)
 from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_ERRORS,
     FOUND_FILES_AND_IGNORED_ERRORS,
@@ -143,7 +146,6 @@ from demisto_sdk.commands.common.tools import (
     find_type,
     get_api_module_ids,
     get_api_module_integrations_set,
-    get_content_path,
     get_file,
     get_pack_ignore_file_path,
     get_pack_name,
@@ -223,7 +225,7 @@ class ValidateManager:
         self.run_with_multiprocessing = multiprocessing
         self.is_possible_validate_readme = (
             self.is_node_exist() or ReadMeValidator.is_docker_available()
-        )
+        )  # do we need to print?
 
         if json_file_path:
             self.json_file_path = (
@@ -344,7 +346,7 @@ class ValidateManager:
             bool: True if node exist, else False
         """
         # Check node exist
-        content_path = get_content_path()
+        content_path = CONTENT_PATH
         stdout, stderr, exit_code = run_command_os("node -v", cwd=content_path)  # type: ignore
         if exit_code:
             return False
@@ -911,7 +913,7 @@ class ValidateManager:
                 ReadMeValidator.add_node_env_vars()
                 if (
                     not ReadMeValidator.are_modules_installed_for_verify(
-                        get_content_path()  # type: ignore
+                        CONTENT_PATH  # type: ignore
                     )
                     and not ReadMeValidator.is_docker_available()
                 ):  # shows warning message

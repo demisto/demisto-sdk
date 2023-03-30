@@ -24,7 +24,11 @@ from demisto_sdk.commands.common.content_constant_paths import (
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
+from demisto_sdk.commands.common.logger import (
+    handle_deprecated_args,
+    logger,
+    logging_setup,
+)
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_last_remote_release_version,
@@ -46,7 +50,8 @@ from demisto_sdk.commands.test_content.test_modeling_rule import (
 from demisto_sdk.commands.upload.upload import upload_content_entity
 from demisto_sdk.utils.utils import check_configuration_file
 
-logger = logging.getLogger("demisto-sdk")
+# logger = logging.getLogger("demisto-sdk")
+# from demisto_sdk.commands.common.logger import logger
 
 json = JSON_Handler()
 
@@ -186,8 +191,8 @@ def main(ctx, config, version, release_notes, **kwargs):
         file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
         log_file_path=kwargs.get("log_file_path"),
     )
-    global logger
-    logger = logging.getLogger("demisto-sdk")
+    # global logger
+    # logger = logging.getLogger("demisto-sdk")
     handle_deprecated_args(ctx.args)
 
     config.configuration = Configuration()

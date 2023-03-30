@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import IO, Any, Dict, Iterable, Tuple
+from typing import IO, Any, Dict, Tuple
 
 import click
 import git

@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON_VERSION,
     INTEGRATIONS_DIR,
     SCRIPTS_DIR,
-    DEFAULT_PYTHON2_VERSION
+    DEFAULT_PYTHON2_VERSION,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.docker_helper import get_python_version_from_image

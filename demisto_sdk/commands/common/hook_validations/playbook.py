@@ -118,13 +118,12 @@ class PlaybookValidator(ContentEntityValidator):
         result: set = set()
         with open(self.file_path) as f:
             playbook_text = f.read()
-        # all_inputs_occurrences = re.findall(r"inputs\.[-\w ]+", playbook_text)
-        all_inputs_occurrences = re.findall(r"inputs\.(.*)", playbook_text)
+        all_inputs_occurrences = re.findall(r"inputs\.[-\W|\w ].*", playbook_text)
         for input in all_inputs_occurrences:
             input = input.strip()
-
-            if input and not input.startswith(" ") and input != '"':
-                result.add(input)
+            splitted = input.split(".")
+            if len(splitted) > 1 and splitted[1] and not splitted[1].startswith(" "):
+                result.add(splitted[1])
         return result
 
     def collect_all_inputs_from_inputs_section(self) -> Set[str]:

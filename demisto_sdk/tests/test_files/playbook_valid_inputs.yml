@@ -35,7 +35,7 @@ tasks:
     - - operator: isEqualString
         left:
           value:
-            simple: inputs.Is automated blocking activated?
+            simple: inputs.Is automated blocking activated ?
           iscontext: true
         right:
           value:
@@ -48,7 +48,7 @@ inputs:
   required: true
   description: ''
   playbookInputQuery:
-- key: Is automated blocking activated?
+- key: Is automated blocking activated ?
   value:
     simple: Administrator
   required: true

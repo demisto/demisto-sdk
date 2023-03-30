@@ -377,8 +377,6 @@ class BaseUpdate:
     @staticmethod
     def is_old_file(path: str, prev_ver: str) -> dict:
         """Check whether the file is in git repo or new file."""
-        if not is_file_from_content_repo(path)[0]:
-            return {}
         if path:
             data = get_remote_file(path, prev_ver)
             if not data:

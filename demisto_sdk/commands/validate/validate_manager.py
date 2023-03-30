@@ -225,7 +225,7 @@ class ValidateManager:
         self.run_with_multiprocessing = multiprocessing
         self.is_possible_validate_readme = (
             self.is_node_exist() or ReadMeValidator.is_docker_available()
-        )  # do we need to print?
+        )
 
         if json_file_path:
             self.json_file_path = (

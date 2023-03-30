@@ -70,11 +70,11 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     # precommit should not run on python2 files, unless test files
     assert mock_subprocess.call_count == 3 if not is_test else 4
 
-    should_skip = {"format", "validate"}
+    tests_we_should_skip = {"format", "validate"}
     if not is_test:
-        should_skip.add("run-unit-tests")
+        tests_we_should_skip.add("run-unit-tests")
     for m in mock_subprocess.call_args_list:
-        assert set(m.kwargs["env"]["SKIP"].split(",")) == should_skip
+        assert set(m.kwargs["env"]["SKIP"].split(",")) == tests_we_should_skip
 
 
 @pytest.mark.parametrize("python_version", ["3.8", "3.9", "3.10"])

@@ -45,10 +45,6 @@ SKIPPED_HOOKS = {"format", "validate"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
 
-# change to the latest demisto-sdk commit hash to debug
-DEMISTO_SDK_COMMIT_HASH_DEBUG = "c438943116c45cb67e6725220e7d5deaed73b802"
-
-
 @dataclass
 class PreCommitRunner:
     """This class is responsible of running pre-commit hooks."""
@@ -118,9 +114,9 @@ class PreCommitRunner:
             skipped_hooks.add("update-docker-image")
         if not unit_test and not native_images:
             skipped_hooks.add("run-unit-tests")
-        if validate:
+        if validate and validate in skipped_hooks:
             skipped_hooks.remove("validate")
-        if format:
+        if format and format in skipped_hooks:
             skipped_hooks.remove("format")
 
         precommit_env["SKIP"] = ",".join(skipped_hooks)
@@ -200,8 +196,8 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
             )
             if not find_path_index:
                 raise Exception(f"Could not find Integrations/Scripts path for {file}")
-            integration_script_path = Path(*file.parts[: next(find_path_index) + 1])
-            integrations_scripts_mapping[integration_script_path].add(file)
+            code_file_path = Path(*file.parts[: next(find_path_index) + 1])
+            integrations_scripts_mapping[code_file_path].add(file)
         else:
             infra_files.append(file)
 
@@ -216,7 +212,7 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
             integration_script, IntegrationScript
         ):
             continue
-        integration_script_path = integration_script.path.parent
+        code_file_path = integration_script.path.parent
         if python_version := get_python_version_from_image(
             integration_script.docker_image
         ):
@@ -224,7 +220,7 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
         python_versions_to_files[
             python_version_string or DEFAULT_PYTHON2_VERSION
         ].update(
-            integrations_scripts_mapping[integration_script_path]
+            integrations_scripts_mapping[code_file_path]
             | {integration_script.path}
         )
 

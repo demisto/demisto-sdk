@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import pytest
@@ -75,6 +76,8 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     tests_we_should_skip = {"format", "validate"}
     if not is_test:
         tests_we_should_skip.add("run-unit-tests")
+    if os.getenv("CI"):
+        tests_we_should_skip.add("update-docker-image")
     for m in mock_subprocess.call_args_list:
         assert set(m.kwargs["env"]["SKIP"].split(",")) == tests_we_should_skip
 

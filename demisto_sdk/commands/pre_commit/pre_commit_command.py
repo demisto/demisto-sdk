@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_PYTHON_VERSION,
     INTEGRATIONS_DIR,
     SCRIPTS_DIR,
+    DEFAULT_PYTHON2_VERSION
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH, PYTHONPATH
 from demisto_sdk.commands.common.docker_helper import get_python_version_from_image
@@ -36,7 +37,6 @@ yaml = YAML_Handler()
 json = JSON_Handler()
 
 IS_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS", False)
-DEFAULT_PYTHON2_VERSION = "2.7"
 
 PRECOMMIT_TEMPLATE_PATH = Path(__file__).parent / ".pre-commit-config_template.yaml"
 PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config.yaml"

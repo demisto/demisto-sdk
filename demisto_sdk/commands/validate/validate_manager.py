@@ -1758,10 +1758,9 @@ class ValidateManager:
             json_file_path=self.json_file_path,
         )
         return layout_rules_validator.is_valid_file(validate_rn=False)
-    
+
     def validate_conf_json(self):
-        conf_json_validator = ConfJsonValidator(
-        )
+        conf_json_validator = ConfJsonValidator()
         return conf_json_validator.is_valid_conf_json()
 
     def validate_xsiam_report(self, structure_validator, pack_error_ignore_list):
@@ -2508,7 +2507,7 @@ class ValidateManager:
             return irrelevant_file_output
 
         file_type = find_type(file_path)
-        
+
         if file_type == FileType.CONF_JSON:
             return file_path, "", True
 

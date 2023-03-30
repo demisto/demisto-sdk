@@ -566,7 +566,7 @@ BASIC_IN_ARG_DICT = {
     "name": "some_arg",
     "description": "some_description",
     "isArray": False,
-    "required": True,
+    "required": False,
     "secret": False,
 }
 
@@ -852,23 +852,35 @@ class TestCommandGeneration:
             ({"name": "some_input_arg"}, {"name": "some_input_arg"}),
             ({"description": "some desc"}, {"description": "some desc"}),
             ({"required": True}, {"required": True}),
-            (
-                {"default": True},
-                {"default": True, "defaultValue": True, "required": False},
-            ),
+            ({"required": False}, {"required": False}),
+            ({"default_arg": True}, {"default": True}),
+            ({"default_arg": False}, {"default": False}),
+            ({"default": 5}, {"defaultValue": 5}),
             ({"is_array": True}, {"isArray": True}),
+            ({"is_array": False}, {"isArray": False}),
             ({"secret": True}, {"secret": True}),
+            ({"secret": False}, {"secret": False}),
             ({"execution": True}, {"execution": True}),
+            (
+                {"execution": False},
+                {},
+            ),  # This is the default and won't persist to the yml.
             ({"options": ["a", "b"]}, {"auto": "PREDEFINED", "predefined": ["a", "b"]}),
         ],
         ids=[
             "name",
             "description",
-            "required",
-            "default",
-            "is_array",
-            "secret",
-            "execution",
+            "required=True",
+            "required=False",
+            "default=True",
+            "default=False",
+            "defaultValue",
+            "is_array=True",
+            "is_array=False",
+            "secret=True",
+            "secret=False",
+            "execution=True",
+            "execution=False",
             "options",
         ],
     )
@@ -944,7 +956,6 @@ class TestCommandGeneration:
                     "description": "some desc.",
                     "required": False,
                     "defaultValue": "5",
-                    "default": True,
                 },
             ),
             (
@@ -1038,11 +1049,21 @@ class TestCommandGeneration:
                 "\n        some_input_arg (hlem): some desc.\n",
                 {"name": "some_input_arg", "description": "some desc."},
             ),
+            (
+                "Some other description\n"
+                "\n    Args:"
+                "\n        some_input_arg: default argument. some desc.\n",
+                {
+                    "name": "some_input_arg",
+                    "description": "some desc.",
+                    "default": True,
+                },
+            ),
         ],
         ids=[
             "basic",
             "required",
-            "default",
+            "default_value",
             "secret",
             "execution",
             "options",
@@ -1053,6 +1074,7 @@ class TestCommandGeneration:
             "execution",
             "invalid",
             "invalid type",
+            "default",
         ],
     )
     def test_inputs_from_declaration(self, tmp_path, repo, docstring, expected_update):
@@ -1692,7 +1714,7 @@ class TestYMLGeneration:
                             "name": "classy_arg1",
                             "description": "some classy first arg.",
                             "isArray": False,
-                            "required": True,
+                            "required": False,
                             "secret": False,
                         },
                         {
@@ -1700,7 +1722,7 @@ class TestYMLGeneration:
                             "name": "classy_arg2",
                             "description": "some classy second arg.",
                             "isArray": False,
-                            "required": True,
+                            "required": False,
                             "secret": False,
                         },
                     ],
@@ -1727,7 +1749,7 @@ class TestYMLGeneration:
                             "name": "some_in1",
                             "description": "in one desc",
                             "isArray": False,
-                            "required": True,
+                            "required": False,
                             "secret": False,
                         },
                         {
@@ -1735,7 +1757,7 @@ class TestYMLGeneration:
                             "name": "some_in2",
                             "description": "in two desc",
                             "isArray": False,
-                            "required": True,
+                            "required": False,
                             "secret": False,
                         },
                     ],

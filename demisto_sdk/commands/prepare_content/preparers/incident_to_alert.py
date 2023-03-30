@@ -2,7 +2,7 @@ import re
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
-INCIDENT_TO_ALERT = {
+NOT_WRAPPED_RE_MAPPING = {
     rf"(?<!<-){key}(?!->)": value
     for key, value in {
         "incident": "alert",
@@ -14,7 +14,7 @@ INCIDENT_TO_ALERT = {
     }.items()
 }
 
-REMOVE_WRAPPER_FROM_INCIDENT = {
+WRAPPED_MAPPING = {
     rf"<-{key}->": key
     for key in (
         "incident",
@@ -79,9 +79,9 @@ def edit_names_and_descriptions_for_playbook(
     name_or_description_field_content: str, replace_incident_to_alert: bool
 ) -> str:
     if replace_incident_to_alert:
-        replacements = INCIDENT_TO_ALERT
+        replacements = NOT_WRAPPED_RE_MAPPING
     else:
-        replacements = REMOVE_WRAPPER_FROM_INCIDENT
+        replacements = WRAPPED_MAPPING
 
     new_content = name_or_description_field_content
 

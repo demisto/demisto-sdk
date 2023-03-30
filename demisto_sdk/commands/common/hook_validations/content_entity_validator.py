@@ -9,6 +9,7 @@ from typing import Optional
 import click
 from packaging import version
 
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -642,16 +643,12 @@ class ContentEntityValidator(BaseValidator):
            True if the unittest file exits False with an error otherwise
 
         """
-        path = Path(self.file_path)
-        meta_data_path = Path(f"{path.parent.parent.parent}/pack_metadata.json")
 
         # Validate just for xsoar and partner support
-        if meta_data_path.exists():
-            with open(meta_data_path) as file:
-                data = json.load(file)
-                if data.get("support", "") == "community":
-                    return True
+        if tools.get_pack_metadata(self.file_path).get("support", "") == "community":
+            return True
 
+        path = Path(self.file_path)
         python_file_path = path.with_name(f"{path.stem}.py")
         unit_test_path = path.with_name(f"{path.stem}_test.py")
         if (

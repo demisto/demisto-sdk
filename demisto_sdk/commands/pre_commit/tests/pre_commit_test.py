@@ -67,7 +67,7 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
         for obj in (incident_field, classifier)
     )
 
-    pre_commit.run(test=is_test)
+    pre_commit.run(unit_test=is_test)
 
     # precommit should not run on python2 files, unless test files
     assert mock_subprocess.call_count == 3 if not is_test else 4

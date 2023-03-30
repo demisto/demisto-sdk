@@ -14,6 +14,11 @@ repos:
       - id: name-tests-test
         files: .+_test.py$
 
+  - repo: https://github.com/hadialqattan/pycln
+    rev: v2.1.2
+    hooks:
+      - id: pycln
+      
   - repo: https://github.com/charliermarsh/ruff-pre-commit
     rev: "v0.0.259"
     hooks:

@@ -2037,7 +2037,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
         return 1
 
     if file_type == FileType.INTEGRATION:
-        print(f"Generating {file_type.value.lower()} documentation")
+        logger.info(f"Generating {file_type.value.lower()} documentation")
         use_cases = kwargs.get("use_cases")
         command_permissions = kwargs.get("command_permissions")
         return generate_integration_doc(
@@ -2054,7 +2054,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
             skip_breaking_changes=skip_breaking_changes,
         )
     elif file_type == FileType.SCRIPT:
-        print(f"Generating {file_type.value.lower()} documentation")
+        logger.info(f"Generating {file_type.value.lower()} documentation")
         return generate_script_doc(
             input_path=input_path,
             output=output_path,
@@ -2064,7 +2064,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
             insecure=insecure,
         )
     elif file_type == FileType.PLAYBOOK:
-        print(f"Generating {file_type.value.lower()} documentation")
+        logger.info(f"Generating {file_type.value.lower()} documentation")
         return generate_playbook_doc(
             input_path=input_path,
             output=output_path,
@@ -2635,7 +2635,7 @@ def openapi_codegen(ctx, **kwargs):
     integration.load_file()
     if not kwargs.get("config_file"):
         integration.save_config(integration.configuration, output_dir)
-        logger.info(f"Created configuration file in {output_dir}", "green")
+        logger.info(f"[green]Created configuration file in {output_dir}[/green]")
         if not kwargs.get("use_default", False):
             config_path = os.path.join(output_dir, f"{base_name}_config.json")
             command_to_run = (

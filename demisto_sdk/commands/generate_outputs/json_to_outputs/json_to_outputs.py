@@ -271,7 +271,7 @@ def json_to_outputs(
                 logger.info(f"[green]Outputs file was saved to :\n{output}[/green]")
         else:
             logger.info("[green]YAML Outputs[/green]\n\n")
-            print(yaml_output)
+            logger.info(yaml_output)
 
     except Exception as ex:
         if verbose:
@@ -299,4 +299,4 @@ def _parse_description_argument(descriptions: Optional[str]) -> Optional[dict]: 
             return parsed
 
     except (json.JSONDecodeError, TypeError):
-        print("Error decoding JSON descriptions, ignoring them.")
+        logger.error("Error decoding JSON descriptions, ignoring them.")

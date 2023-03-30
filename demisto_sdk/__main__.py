@@ -2636,7 +2636,7 @@ def openapi_codegen(ctx, **kwargs):
     integration.load_file()
     if not kwargs.get("config_file"):
         integration.save_config(integration.configuration, output_dir)
-        logger.info(f"Created configuration file in {output_dir}", "green")
+        logger.info(f"[green]Created configuration file in {output_dir}[/green]")
         if not kwargs.get("use_default", False):
             config_path = os.path.join(output_dir, f"{base_name}_config.json")
             command_to_run = (

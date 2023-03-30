@@ -15,10 +15,10 @@ from packaging.version import Version
 from requests import JSONDecodeError
 
 from demisto_sdk.commands.common.constants import (
+    DEFAULT_PYTHON2_VERSION,
     DEFAULT_PYTHON_VERSION,
     TYPE_PWSH,
     TYPE_PYTHON,
-    DEFAULT_PYTHON2_VERSION,
 )
 
 DOCKER_CLIENT = None
@@ -353,7 +353,11 @@ def get_python_version_from_image(image: Optional[str]) -> Optional[Version]:
         if not python_version_envs:
             # no python version available, use the default python version (python 3)
             return Version(DEFAULT_PYTHON_VERSION)
-        return Version(python_version_envs[0].split("=")[1])  # we can assume that we have python version after the "="
+        return Version(
+            python_version_envs[0].split("=")[1]
+        )  # we can assume that we have python version after the "="
     except Exception as e:
-        logger.error(f"Failed to get python version from docker hub for image {image}: {e}")
+        logger.error(
+            f"Failed to get python version from docker hub for image {image}: {e}"
+        )
         raise

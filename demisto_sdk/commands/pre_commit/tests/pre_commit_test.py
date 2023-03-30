@@ -55,7 +55,7 @@ def test_config_files(mocker, repo: Repo, is_test: bool):
     files_to_run = preprocess_files([Path(pack1.path)])
     assert files_to_run == set(Path(pack1.path).rglob("*"))
 
-    pre_commit = group_by_python_version(files_to_run)
+    pre_commit = pre_commit_command.PreCommitRunner(group_by_python_version(files_to_run), "")
     assert Path(script1.yml.path) in pre_commit.python_version_to_files["2.7"]
     assert Path(integration3.yml.path) in pre_commit.python_version_to_files["3.8"]
     assert Path(integration1.yml.path) in pre_commit.python_version_to_files["3.9"]

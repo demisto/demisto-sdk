@@ -45,6 +45,7 @@ SKIPPED_HOOKS = {"format", "validate"}
 
 INTEGRATION_SCRIPT_REGEX = re.compile(r"^Packs/.*/(?:Integrations|Scripts)/.*.yml$")
 
+
 @dataclass
 class PreCommitRunner:
     """This class is responsible of running pre-commit hooks."""
@@ -220,8 +221,7 @@ def group_by_python_version(files: Set[Path]) -> Dict[str, set]:
         python_versions_to_files[
             python_version_string or DEFAULT_PYTHON2_VERSION
         ].update(
-            integrations_scripts_mapping[code_file_path]
-            | {integration_script.path}
+            integrations_scripts_mapping[code_file_path] | {integration_script.path}
         )
 
     python_versions_to_files[DEFAULT_PYTHON_VERSION].update(infra_files)

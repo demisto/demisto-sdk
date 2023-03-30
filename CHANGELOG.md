@@ -10,6 +10,7 @@
 * Fixed an issue where running **openapi-codegen** resulted in false-positive error messages.
 * Fixed an issue where **generate-python-to-yml** generated input arguments as required even though required=False was specified.
 * Fixed an issue where **generate-python-to-yml** generated input arguments a default arguments when default=some_value was provided.
+* Fixed a bug where **validate** returned error on playbook inputs with special characters.
 * Fixed an issue where `conf.json` wasn't validated when modified.
 
 ## 1.11.0

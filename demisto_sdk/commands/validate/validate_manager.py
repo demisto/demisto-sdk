@@ -1098,7 +1098,7 @@ class ValidateManager:
             # This is temporarily - need to add a proper contributors validations
             return True
 
-        elif file_type == FileType.CONF_JSON:
+        elif file_type == FileType.CONF_JSON and not self.skip_conf_json:
             return self.validate_conf_json()
 
         else:
@@ -2509,7 +2509,7 @@ class ValidateManager:
 
         file_type = find_type(file_path)
         
-        if file_type == FileType.CONF_JSON and not self.skip_conf_json:
+        if file_type == FileType.CONF_JSON:
             return file_path, "", True
 
         if self.ignore_files_irrelevant_for_validation(

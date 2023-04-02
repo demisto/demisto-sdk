@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import IO, Any, Dict
+from typing import IO, Any, Dict, Tuple
 
 import click
 import git
@@ -603,7 +603,9 @@ def zip_packs(ctx, **kwargs) -> int:
 @click.option(
     "-i",
     "--input",
-    type=click.Path(exists=True, resolve_path=True),
+    type=PathsParamType(
+        exists=True, resolve_path=True
+    ),  # PathsParamType allows passing a list of paths
     help="The path of the content pack/file to validate specifically.",
 )
 @click.option(
@@ -671,13 +673,17 @@ def zip_packs(ctx, **kwargs) -> int:
     help="Run specific validations by stating the error codes.",
     is_flag=False,
 )
+@click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @pass_config
 @click.pass_context
 @logging_setup_decorator
-def validate(ctx, config, **kwargs):
+def validate(ctx, config, file_paths: str, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
+    if file_paths and not kwargs["input"]:
+        # If file_paths is given as an argument, use it as the file_paths input (instead of the -i flag). If both, input wins.
+        kwargs["input"] = ",".join(file_paths)
     run_with_mp = not kwargs.pop("no_multiprocessing")
     check_configuration_file("validate", kwargs)
     sys.path.append(config.configuration.env_dir)
@@ -1163,9 +1169,11 @@ def coverage_analyze(ctx, **kwargs):
 @click.option(
     "-i",
     "--input",
-    help="The path of the script yml file\n"
+    help="The path of the script yml file or a comma separated list\n"
     "If no input is specified, the format will be executed on all new/changed files.",
-    type=click.Path(exists=True, resolve_path=True),
+    type=PathsParamType(
+        exists=True, resolve_path=True
+    ),  # PathsParamType allows passing a list of paths
 )
 @click.option(
     "-o",
@@ -1222,11 +1230,12 @@ def coverage_analyze(ctx, **kwargs):
     help="The path of the id_set json file.",
     type=click.Path(exists=True, resolve_path=True),
 )
+@click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @click.pass_context
 @logging_setup_decorator
 def format(
     ctx,
-    input: Path,
+    input: str,
     output: Path,
     from_version: str,
     no_validate: bool,
@@ -1238,6 +1247,7 @@ def format(
     include_untracked: bool,
     add_tests: bool,
     id_set_path: str,
+    file_paths: Tuple[str, ...],
     **kwargs,
 ):
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
@@ -1245,6 +1255,9 @@ def format(
     genericmodule/genericdefinition.
     """
     from demisto_sdk.commands.format.format_module import format_manager
+
+    if file_paths and not input:
+        input = ",".join(file_paths)
 
     with ReadMeValidator.start_mdx_server():
         return format_manager(

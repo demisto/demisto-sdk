@@ -1368,6 +1368,10 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.MODELING_RULE: "6.10.0",
     FileType.LAYOUT_RULE: "6.10.0",
 }
+
+DEFAULT_PYTHON_VERSION = "3.10"
+DEFAULT_PYTHON2_VERSION = "2.7"
+
 # This constant below should always be two versions before the latest server version
 GENERAL_DEFAULT_FROMVERSION = "6.8.0"
 VERSION_5_5_0 = "5.5.0"

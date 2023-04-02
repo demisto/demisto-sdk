@@ -25,7 +25,6 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
     ) -> None:
         super().__init__(path, pack_marketplaces)
         self.is_test: bool = is_test_script
-        self.docker_image = self.yml_data.get("dockerimage")
         self.type = self.yml_data.get("subtype") or self.yml_data.get("type")
         self.tags: List[str] = self.yml_data.get("tags", [])
         if self.type == "python":
@@ -37,6 +36,10 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
     @property
     def description(self) -> Optional[str]:
         return self.yml_data.get("comment")
+
+    @property
+    def docker_image(self) -> str:
+        return self.yml_data.get("dockerimage", "")
 
     def connect_to_dependencies(self) -> None:
         """Creates USES_COMMAND_OR_SCRIPT mandatory relationships with the commands/scripts used.

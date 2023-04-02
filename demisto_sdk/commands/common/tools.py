@@ -680,6 +680,7 @@ def is_origin_content_repo():
         return False
 
 
+@lru_cache
 def get_last_remote_release_version():
     """
     Get latest release tag from PYPI.
@@ -2012,6 +2013,7 @@ def capital_case(st: str) -> str:
         return ""
 
 
+@lru_cache
 def get_last_release_version():
     """
     Get latest release tag (xx.xx.xx)

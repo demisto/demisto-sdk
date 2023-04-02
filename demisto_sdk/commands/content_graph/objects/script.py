@@ -45,14 +45,12 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
         ]
 
     def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
-        if marketplace == MarketplaceVersions.MarketplaceV2:
-            dir.mkdir(exist_ok=True, parents=True)
-            data = self.prepare_for_upload(marketplace=marketplace)
-            for data in MarketplaceIncidentToAlertScriptsPreparer.prepare(data, marketplace):
-                try:
-                    with (dir / f"script-{data['name']}.yml").open("w") as f:
-                        self.handler.dump(data, f)
-                except FileNotFoundError as e:
-                    logger.warning(f"Failed to dump {self.path} to {dir}: {e}")
-        else:
-            super().dump(dir, marketplace)
+        dir.mkdir(exist_ok=True, parents=True)
+        data = self.prepare_for_upload(marketplace=marketplace)
+        for data in MarketplaceIncidentToAlertScriptsPreparer.prepare(data, marketplace):
+            try:
+                print(f"script-{data['name']}.yml")
+                with (dir / f"script-{data['name']}.yml").open("w") as f:
+                    self.handler.dump(data, f)
+            except FileNotFoundError as e:
+                logger.warning(f"Failed to dump {self.path} to {dir}: {e}")

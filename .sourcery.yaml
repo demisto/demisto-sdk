@@ -1,0 +1,21 @@
+version: '1'
+
+ignore:
+- .git
+- venv
+- .venv
+- env
+- .env
+- .tox
+- node_modules
+- vendor
+
+rule_settings:
+  enable:
+  - default
+  disable: []
+  rule_types:
+  - refactoring
+  - suggestion
+  - comment
+  python_version: '3.8'

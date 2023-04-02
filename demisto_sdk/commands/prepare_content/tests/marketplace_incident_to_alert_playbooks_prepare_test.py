@@ -2,7 +2,6 @@ import ruamel.yaml as yaml
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.prepare_content.preparers.incident_to_alert import prepare_playbook_access_fields
 from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_alert_playbooks_prepare import (
     MarketplaceIncidentToAlertPlaybooksPreparer,
 )

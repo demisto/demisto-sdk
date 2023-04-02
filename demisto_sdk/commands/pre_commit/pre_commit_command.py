@@ -39,7 +39,7 @@ json = JSON_Handler()
 IS_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS", False)
 
 PRECOMMIT_TEMPLATE_PATH = Path(__file__).parent / ".pre-commit-config_template.yaml"
-PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config.yaml"
+PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config-content.yaml"
 
 SKIPPED_HOOKS = {"format", "validate"}
 
@@ -140,7 +140,10 @@ class PreCommitRunner:
                             "run-unit-tests",
                             "--files",
                             *changed_files,
+                            "-c",
+                            str(PRECOMMIT_PATH),
                             "-v" if verbose else "",
+                            
                         ],
                         env=precommit_env,
                         cwd=CONTENT_PATH,
@@ -159,6 +162,8 @@ class PreCommitRunner:
                         "run",
                         "--files",
                         *chunk,
+                        "-c",
+                        str(PRECOMMIT_PATH),
                         "-v" if verbose else "",
                         "--show-diff-on-failure" if show_diff_on_failure else "",
                     ],

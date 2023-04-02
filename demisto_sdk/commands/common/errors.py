@@ -33,6 +33,7 @@ ALLOWED_IGNORE_ERRORS = [
     "BA113",
     "BA116",
     "BA119",
+    "BA124",
     "DS107",
     "GF102",
     "IF100",

@@ -804,6 +804,9 @@ PACKS_PACK_META_FILE_NAME = "pack_metadata.json"
 PACKS_README_FILE_NAME = "README.md"
 PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
+METADATA_FILE_NAME = "pack_metadata.json"
+
+CONF_JSON_FILE_NAME = "conf.json"
 
 PYTHON_TEST_REGEXES = [PACKS_SCRIPT_TEST_PY_REGEX, PACKS_INTEGRATION_TEST_PY_REGEX]
 
@@ -1576,8 +1579,6 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = [
     "Tags",
     "blocked",
 ]
-
-METADATA_FILE_NAME = "pack_metadata.json"
 
 CONTEXT_OUTPUT_README_TABLE_HEADER = "| **Path** | **Type** | **Description** |"
 

@@ -46,6 +46,7 @@ from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST,
     API_MODULES_PACK,
     CLASSIFIERS_DIR,
+    CONF_JSON_FILE_NAME,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
     DEF_DOCKER,
@@ -1542,6 +1543,8 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.LISTS
         elif path.parent.name == JOBS_DIR:
             return FileType.JOB
+        elif path.name == CONF_JSON_FILE_NAME:
+            return FileType.CONF_JSON
         elif INDICATOR_TYPES_DIR in path.parts:
             return FileType.REPUTATION
         elif XSIAM_DASHBOARDS_DIR in path.parts:

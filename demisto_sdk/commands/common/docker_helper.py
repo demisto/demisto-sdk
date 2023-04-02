@@ -182,9 +182,10 @@ class DockerBase:
         )
         container.start()
         if container.wait(condition="exited").get("StatusCode") != 0:
+            container_logs = container.logs()
             raise docker.errors.BuildError(
-                reason=f"Installation script failed to run on container '{container.id}'.",
-                build_log=container.logs(),
+                reason=f"Installation script failed to run on container '{container.id}', {container_logs=}",
+                build_log=container_logs,
             )
         repository, tag = image.split(":")
         container.commit(

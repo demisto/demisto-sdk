@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict
+from typing import Any
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 

@@ -19,6 +19,11 @@ class IntegrationScriptParser(YAMLContentItemParser):
     def object_id(self) -> Optional[str]:
         return self.yml_data.get("commonfields", {}).get("id")
 
+    @property
+    @abstractmethod
+    def docker_image(self) -> str:
+        ...
+
     @abstractmethod
     def get_code(self) -> Optional[str]:
         pass

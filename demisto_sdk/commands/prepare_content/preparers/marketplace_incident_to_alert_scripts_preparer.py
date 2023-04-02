@@ -71,7 +71,6 @@ class MarketplaceIncidentToAlertScriptsPreparer:
         # Creating a wrapper script
         if (wrapper_script := create_wrapper_script(copy_data)):
             logging.debug(f"Created {wrapper_script['name']} script wrapper to {data['name']} script")
-            print(f"Created {wrapper_script['name']} script wrapper to {data['name']} script")
             return wrapper_script, data
 
         return (data,)
@@ -95,7 +94,7 @@ def create_wrapper_script(data: dict) -> dict:
         try:
             data['script'] = WRAPPER_SCRIPT[data['type']].replace(
                 '<original_script_name>',
-                replace_(data['name'])).replace(
+                replace_(data['name'], True)).replace(
                     'script_name',
                     data['name'])
         except Exception as e:
@@ -107,7 +106,6 @@ def create_wrapper_script(data: dict) -> dict:
 def is_need_wrap(data: dict) -> bool:
     for key in NOT_WRAPPED_RE_MAPPING.keys():
         if re.search(key, data['name']):
-            print(f"need wrapper for {data['name']}")
             return True
     return False
 

@@ -12,6 +12,7 @@
 * Fixed an issue where **generate-python-to-yml** generated input arguments a default arguments when default=some_value was provided.
 * Fixed a bug where **validate** returned error on playbook inputs with special characters.
 * Fixed an issue where `conf.json` wasn't validated when modified.
+* Fixed an issue in the **upload** command, where a prompt was not showing on the console.
 
 ## 1.11.0
 * **Note: Demisto-SDK will soon stop supporting Python 3.8**

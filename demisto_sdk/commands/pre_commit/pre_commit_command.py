@@ -171,7 +171,7 @@ class PreCommitRunner:
                 )
                 if response.returncode:
                     ret_val = 1
-                    
+
         # remove the config file in the end of the flow
         PRECOMMIT_PATH.unlink(missing_ok=True)
         return ret_val

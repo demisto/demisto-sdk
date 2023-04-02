@@ -3210,6 +3210,7 @@ def update_content_graph(
             output_path=output_path,
         )
 
+
 @main.command()
 @click.help_option("-h", "--help")
 @click.option(

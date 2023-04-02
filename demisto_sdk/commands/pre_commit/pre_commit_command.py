@@ -138,12 +138,11 @@ class PreCommitRunner:
                             "pre-commit",
                             "run",
                             "run-unit-tests",
-                            "--files",
-                            *changed_files,
                             "-c",
                             str(PRECOMMIT_PATH),
+                            "--files",
+                            *changed_files,
                             "-v" if verbose else "",
-                            
                         ],
                         env=precommit_env,
                         cwd=CONTENT_PATH,
@@ -160,12 +159,12 @@ class PreCommitRunner:
                     [
                         "pre-commit",
                         "run",
-                        "--files",
-                        *chunk,
                         "-c",
                         str(PRECOMMIT_PATH),
-                        "-v" if verbose else "",
                         "--show-diff-on-failure" if show_diff_on_failure else "",
+                        "--files",
+                        *chunk,
+                        "-v" if verbose else "",
                     ],
                     env=precommit_env,
                     cwd=CONTENT_PATH,
@@ -173,7 +172,7 @@ class PreCommitRunner:
                 if response.returncode:
                     ret_val = 1
         # remove the config file in the end of the file
-        PRECOMMIT_PATH.unlink(missing_ok=True)
+        # PRECOMMIT_PATH.unlink(missing_ok=True)
         return ret_val
 
 

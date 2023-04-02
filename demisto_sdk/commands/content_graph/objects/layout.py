@@ -24,7 +24,11 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
     def metadata_fields(self) -> Set[str]:
         return {"name", "description"}
 
-    def prepare_for_upload(self, current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
+    def prepare_for_upload(
+        self,
+        current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        **kwargs
+    ) -> dict:
         data = super().prepare_for_upload(current_marketplace, **kwargs)
         data["fromServerVersion"] = self.fromversion
         data["toServerVersion"] = self.toversion

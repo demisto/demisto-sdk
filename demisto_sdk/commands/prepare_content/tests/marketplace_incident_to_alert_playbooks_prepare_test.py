@@ -32,10 +32,14 @@ def test_marketplace_version_is_xsiam():
     ) as yml_file:
         data = yaml.safe_load(yml_file)
 
-    data = MarketplaceIncidentToAlertPlaybooksPreparer.prepare(data,
-                                                               current_marketplace=MarketplaceVersions.MarketplaceV2,
-                                                               supported_marketplaces=[MarketplaceVersions.XSOAR,
-                                                                                       MarketplaceVersions.MarketplaceV2])
+    data = MarketplaceIncidentToAlertPlaybooksPreparer.prepare(
+        data,
+        current_marketplace=MarketplaceVersions.MarketplaceV2,
+        supported_marketplaces=[
+            MarketplaceVersions.XSOAR,
+            MarketplaceVersions.MarketplaceV2,
+        ],
+    )
 
     # convert incident to alert for XSIAM in descriptions
     assert (
@@ -58,12 +62,18 @@ def test_marketplace_version_is_xsiam():
 
     # assert fields changed from incident to alert
     assert data["tasks"]["3"]["task"]["script"] == "Builtin|||setAlert"
-    assert data["tasks"]["3"]["task"]["scriptarguments"]["id"]["complex"]["root"] == "alert"
+    assert (
+        data["tasks"]["3"]["task"]["scriptarguments"]["id"]["complex"]["root"]
+        == "alert"
+    )
     assert data["tasks"]["6"]["message"]["body"]["simple"] == "${alert.id}"
     assert data["tasks"]["3"]["scriptarguments"]["type"]["simple"] == "alert"
 
     # assert fields did NOT change from incident to alert
-    assert data["tasks"]["3"]["scriptarguments"]["IncidentIDs"]["complex"]["root"] == "EmailCampaign.incidents"
+    assert (
+        data["tasks"]["3"]["scriptarguments"]["IncidentIDs"]["complex"]["root"]
+        == "EmailCampaign.incidents"
+    )
     assert data["outputs"][0]["contextPath"] == "incident.fieldname"
 
 
@@ -87,9 +97,11 @@ def test_marketplace_version_is_xsiam_2():
     ) as yml_file:
         data = yaml.safe_load(yml_file)
 
-    data = MarketplaceIncidentToAlertPlaybooksPreparer.prepare(data,
-                                                               current_marketplace=MarketplaceVersions.MarketplaceV2,
-                                                               supported_marketplaces=[MarketplaceVersions.MarketplaceV2])
+    data = MarketplaceIncidentToAlertPlaybooksPreparer.prepare(
+        data,
+        current_marketplace=MarketplaceVersions.MarketplaceV2,
+        supported_marketplaces=[MarketplaceVersions.MarketplaceV2],
+    )
 
     # convert incident/s to alert/s for XSIAM when needed and remove the wrapper without replacing to alert/s
     assert (
@@ -101,7 +113,10 @@ def test_marketplace_version_is_xsiam_2():
 
     # assert access fields did NOT change as this playbook is supported only in XSAIM and not both marketplaces
     assert data["tasks"]["3"]["task"]["script"] == "Builtin|||setIncident"
-    assert data["tasks"]["3"]["task"]["scriptarguments"]["id"]["complex"]["root"] == "incident"
+    assert (
+        data["tasks"]["3"]["task"]["scriptarguments"]["id"]["complex"]["root"]
+        == "incident"
+    )
 
 
 def test_marketplace_version_is_xsoar():
@@ -147,6 +162,9 @@ def test_marketplace_version_is_xsoar():
 
     # assert fields did NOT change from incident to alert
     assert data["tasks"]["3"]["task"]["script"] == "Builtin|||setIncident"
-    assert data["tasks"]["3"]["task"]["scriptarguments"]["id"]["complex"]["root"] == "incident"
+    assert (
+        data["tasks"]["3"]["task"]["scriptarguments"]["id"]["complex"]["root"]
+        == "incident"
+    )
     assert data["tasks"]["6"]["message"]["body"]["simple"] == "${incident.id}"
     assert data["tasks"]["3"]["scriptarguments"]["type"]["simple"] == "incident"

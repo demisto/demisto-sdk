@@ -79,7 +79,11 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             },  # for all commands, keep the name and description
         }
 
-    def prepare_for_upload(self, current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
+    def prepare_for_upload(
+        self,
+        current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        **kwargs,
+    ) -> dict:
         data = super().prepare_for_upload(current_marketplace, **kwargs)
 
         if supported_native_images := self.get_supported_native_images(

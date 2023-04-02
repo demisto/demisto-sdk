@@ -2,7 +2,8 @@ import logging
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.prepare_content.preparers.incident_to_alert import (
-    prepare_descriptions_and_names, prepare_playbook_access_fields,
+    prepare_descriptions_and_names,
+    prepare_playbook_access_fields,
 )
 
 logger = logging.getLogger("demisto-sdk")
@@ -10,8 +11,11 @@ logger = logging.getLogger("demisto-sdk")
 
 class MarketplaceIncidentToAlertPlaybooksPreparer:
     @staticmethod
-    def prepare(data: dict, current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
-                supported_marketplaces=None) -> dict:
+    def prepare(
+        data: dict,
+        current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        supported_marketplaces=None,
+    ) -> dict:
         """
         Iterate over all the given playbook's descriptions and names fields and if a description or a name field
         contains the word incident / incidents (without the wrapper), then replace it with alert / alerts just in case
@@ -27,11 +31,17 @@ class MarketplaceIncidentToAlertPlaybooksPreparer:
         """
 
         if supported_marketplaces is None:
-            supported_marketplaces = [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
+            supported_marketplaces = [
+                MarketplaceVersions.XSOAR,
+                MarketplaceVersions.MarketplaceV2,
+            ]
         data = prepare_descriptions_and_names(data, current_marketplace)
 
-        if current_marketplace == MarketplaceVersions.MarketplaceV2 and MarketplaceVersions.MarketplaceV2 in supported_marketplaces\
-                and len(supported_marketplaces) > 1:
+        if (
+            current_marketplace == MarketplaceVersions.MarketplaceV2
+            and MarketplaceVersions.MarketplaceV2 in supported_marketplaces
+            and len(supported_marketplaces) > 1
+        ):
             data = prepare_playbook_access_fields(data)
 
         return data

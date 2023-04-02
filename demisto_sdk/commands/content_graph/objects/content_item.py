@@ -115,10 +115,16 @@ class ContentItem(BaseContent):
         with self.path.open() as f:
             return self.handler.load(f)
 
-    def prepare_for_upload(self, current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
+    def prepare_for_upload(
+        self,
+        current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        **kwargs,
+    ) -> dict:
         data = self.data
         logger.debug(f"preparing {self.path}")
-        return MarketplaceSuffixPreparer.prepare(data, current_marketplace, self.marketplaces)
+        return MarketplaceSuffixPreparer.prepare(
+            data, current_marketplace, self.marketplaces
+        )
 
     def summary(self, marketplace: Optional[MarketplaceVersions] = None) -> dict:
         """Summary of a content item (the most important metadata fields)

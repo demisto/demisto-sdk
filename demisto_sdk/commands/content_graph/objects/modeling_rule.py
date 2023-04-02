@@ -12,7 +12,11 @@ class ModelingRule(ContentItemXSIAM, content_type=ContentType.MODELING_RULE):  #
     def metadata_fields(self) -> Set[str]:
         return {"name", "description"}
 
-    def prepare_for_upload(self, current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
+    def prepare_for_upload(
+        self,
+        current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        **kwargs
+    ) -> dict:
         if not kwargs.get("unify_only"):
             data = super().prepare_for_upload(current_marketplace)
         else:

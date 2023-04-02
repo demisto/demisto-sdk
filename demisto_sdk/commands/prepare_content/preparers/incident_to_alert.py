@@ -98,14 +98,14 @@ def replace_playbook_access_fields_recursively(datum: Any) -> Any:
         return [replace_playbook_access_fields_recursively(item) for item in datum]
 
     elif isinstance(datum, dict):
-        for key, val in (datum.items()):
+        for key, val in datum.items():
             if isinstance(val, str):
-                if key in ['root', 'simple'] and 'incident' in val:
-                    if '.incident' not in val:
-                        val = val.replace('incident', 'alert')
+                if key in ["root", "simple"] and "incident" in val:
+                    if ".incident" not in val:
+                        val = val.replace("incident", "alert")
 
-                if key == 'script' and val == 'Builtin|||setIncident':
-                    val = val.replace('setIncident', 'setAlert')
+                if key == "script" and val == "Builtin|||setIncident":
+                    val = val.replace("setIncident", "setAlert")
 
                 datum[key] = val
 

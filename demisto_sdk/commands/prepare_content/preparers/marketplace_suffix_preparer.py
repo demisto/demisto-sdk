@@ -12,8 +12,8 @@ class MarketplaceSuffixPreparer:
     }
 
     @staticmethod
-    def prepare(data: dict, supported_marketplaces: list,
-                current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR) -> dict:
+    def prepare(data: dict, current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+                supported_marketplaces=None) -> dict:
         """
         Iterate over all of the given content item fields and if there is a field with an alternative name,
         then use that value as the value of the original field (the corresponding one without the suffix).
@@ -25,6 +25,8 @@ class MarketplaceSuffixPreparer:
         Returns: A (possibliy) modified content item data
 
         """
+        if supported_marketplaces is None:
+            supported_marketplaces = [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
         if not (
             suffix := MarketplaceSuffixPreparer.MARKETPLACE_TO_SUFFIX.get(
                 current_marketplace, ""

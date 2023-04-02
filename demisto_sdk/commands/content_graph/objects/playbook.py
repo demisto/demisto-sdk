@@ -14,4 +14,5 @@ class Playbook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ignore[
 
     def prepare_for_upload(self, current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs) -> dict:
         data = super().prepare_for_upload(current_marketplace, **kwargs)
-        return MarketplaceIncidentToAlertPlaybooksPreparer.prepare(data, self.marketplaces)
+        return MarketplaceIncidentToAlertPlaybooksPreparer.prepare(data, current_marketplace=current_marketplace,
+                                                                   supported_marketplaces=self.marketplaces)

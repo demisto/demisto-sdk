@@ -25,6 +25,28 @@ tasks:
     note: false
     timertriggers: []
     ignoreworker: false
+  "3":
+    id: "3"
+    taskid: 1640dfa4-a4b1-4199-894e-560c6486f2ce
+    type: regular
+    task:
+      id: 1640dfa4-a4b1-4199-894e-560c6486f2ce
+      version: -1
+      name: name
+      description: Description
+      script: Builtin|||setIncident
+      scriptarguments:
+        coverage: { }
+        filter_data: { }
+        id:
+          complex:
+            root: incident
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+        - "7"
 system: true
 inputs:
 - key: Role

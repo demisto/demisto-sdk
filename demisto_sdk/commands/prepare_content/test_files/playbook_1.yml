@@ -47,7 +47,7 @@ tasks:
       email: {}
       roles:
         complex:
-          root: inputs.Role
+          root: incident
       username: {}
     reputationcalc: 1
     separatecontext: false
@@ -55,6 +55,86 @@ tasks:
     note: false
     timertriggers: []
     ignoreworker: false
+  "3":
+    id: "3"
+    taskid: 1640dfa4-a4b1-4199-894e-560c6486f2ce
+    type: regular
+    task:
+      id: 1640dfa4-a4b1-4199-894e-560c6486f2ce
+      version: -1
+      name: name
+      description: Description
+      script: Builtin|||setIncident
+      scriptarguments:
+        coverage: { }
+        filter_data: { }
+        id:
+          complex:
+            root: incident
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+        - "7"
+    scriptarguments:
+      CampaignIncidentType:
+        simple: Phishing Campaign
+      IncidentIDs:
+        complex:
+          root: EmailCampaign.incidents
+      type:
+        simple: incident
+    separatecontext: false
+    view: "{\n  \"position\": {\n    \"x\": 592.5,\n    \"y\": 1230\n  }\n}"
+    note: false
+    timertriggers: [ ]
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+
+  "6":
+    id: "6"
+    taskid: fdee1b8a-3337-49e1-8fef-d1409e5563fb
+    type: condition
+    task:
+      id: fdee1b8a-3337-49e1-8fef-d1409e5563fb
+      version: -1
+      name: Auto remediate?
+      description: Remediate automatically or manually update?
+      type: condition
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#default#':
+        - "8"
+      "Yes":
+        - "7"
+    separatecontext: false
+    view: "{\n  \"position\": {\n    \"x\": 592.5,\n    \"y\": 650\n  }\n}"
+    note: false
+    timertriggers: [ ]
+    ignoreworker: false
+    message:
+      to:
+      subject:
+      body:
+        simple: ${incident.id}
+      methods: [ ]
+      format: ""
+      bcc:
+      cc:
+      timings:
+        retriescount: 2
+        retriesinterval: 360
+        completeafterreplies: 1
+      replyOptions:
+        - "Yes"
+        - "No"
+    skipunavailable: false
+    quietmode: 0
   '7':
     id: '7'
     taskid: 89d7dd49-06a3-4397-8b72-f4428bf24805
@@ -101,4 +181,7 @@ inputs:
 
     In case of a malicious email, the "Block Indicators" sub-playbook will block all
     malicious indicators in the relevant integrations.'
-outputs: []
+outputs:
+- contextPath: incident.fieldname
+  description: Security group name.
+  type: string

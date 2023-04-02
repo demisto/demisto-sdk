@@ -101,10 +101,10 @@ def replace_playbook_access_fields_recursively(datum: Any) -> Any:
         for key, val in (datum.items()):
             if isinstance(val, str):
                 if key in ['root', 'simple'] and 'incident' in val:
-                    # todo: check what the exact conditions should be
-                    val = val.replace('incident', 'alert')
+                    if '.incident' not in val:
+                        val = val.replace('incident', 'alert')
 
-                if 'setIncident' in val:
+                if key == 'script' and val == 'Builtin|||setIncident':
                     val = val.replace('setIncident', 'setAlert')
 
                 datum[key] = val

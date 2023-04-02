@@ -15,7 +15,7 @@ def test_marketplace_version_is_xsiam():
         - A playbook which contains in its second task description the word incident, and in its third task name and
          description the word <-incident->. Also in the external description, contains three times the word incident.
          Additionally, multiple access fields that should be replaced from incident to alert.
-        - MarketplaceVersions.MarketplaceV2 (Which is XSIAM Marketplace version) as the current marketplace.
+        - MarketplaceVersions.MarketplaceV2 as the current marketplace.
         - [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2] as the supported marketplaces for this playbook.
 
         supported marketplaces for this playbook are the default ones.
@@ -80,8 +80,7 @@ def test_marketplace_version_is_xsiam():
 def test_marketplace_version_is_xsiam_2():
     """
     Given:
-        - A playbook which contains in the external description five times the word incident/s with or without
-         the wrapper.
+        - A playbook which contains the word incident/s (with or without a wrapper) in the external description five times.
         - MarketplaceVersions.MarketplaceV2 (Which is XSIAM Marketplace version) as the current marketplace.
         - MarketplaceVersions.MarketplaceV2 as the supported marketplaces for this playbook.
     When:

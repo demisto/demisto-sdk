@@ -14,7 +14,7 @@ class ModelingRule(ContentItemXSIAM, content_type=ContentType.MODELING_RULE):  #
 
     def prepare_for_upload(
         self,
-        current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        current_marketplace: MarketplaceVersions = MarketplaceVersions.MarketplaceV2,
         **kwargs
     ) -> dict:
         if not kwargs.get("unify_only"):

@@ -20,7 +20,7 @@ class XDRCTemplate(ContentItemXSIAM, content_type=ContentType.XDRC_TEMPLATE):
 
     def prepare_for_upload(
         self,
-        current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        current_marketplace: MarketplaceVersions = MarketplaceVersions.MarketplaceV2,
         **kwargs
     ) -> dict:
         data = super().prepare_for_upload(current_marketplace)

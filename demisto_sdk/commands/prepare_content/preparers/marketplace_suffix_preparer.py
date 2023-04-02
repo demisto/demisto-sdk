@@ -29,10 +29,7 @@ class MarketplaceSuffixPreparer:
 
         """
         if supported_marketplaces is None:
-            supported_marketplaces = [
-                MarketplaceVersions.XSOAR,
-                MarketplaceVersions.MarketplaceV2,
-            ]
+            supported_marketplaces = list(MarketplaceVersions)
         if not (
             suffix := MarketplaceSuffixPreparer.MARKETPLACE_TO_SUFFIX.get(
                 current_marketplace, ""

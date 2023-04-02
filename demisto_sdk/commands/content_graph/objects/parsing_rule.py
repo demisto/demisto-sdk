@@ -14,7 +14,7 @@ class ParsingRule(ContentItemXSIAM, content_type=ContentType.PARSING_RULE):  # t
 
     def prepare_for_upload(
         self,
-        current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        current_marketplace: MarketplaceVersions = MarketplaceVersions.MarketplaceV2,
         **kwargs
     ) -> dict:
         if not kwargs.get("unify_only"):

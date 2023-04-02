@@ -39,7 +39,7 @@ json = JSON_Handler()
 IS_GITHUB_ACTIONS = os.getenv("GITHUB_ACTIONS", False)
 
 PRECOMMIT_TEMPLATE_PATH = Path(__file__).parent / ".pre-commit-config_template.yaml"
-PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config.yaml"
+PRECOMMIT_PATH = CONTENT_PATH / ".pre-commit-config-content.yaml"
 
 SKIPPED_HOOKS = {"format", "validate"}
 
@@ -138,6 +138,8 @@ class PreCommitRunner:
                             "pre-commit",
                             "run",
                             "run-unit-tests",
+                            "-c",
+                            str(PRECOMMIT_PATH),
                             "--files",
                             *changed_files,
                             "-v" if verbose else "",
@@ -157,17 +159,20 @@ class PreCommitRunner:
                     [
                         "pre-commit",
                         "run",
+                        "-c",
+                        str(PRECOMMIT_PATH),
+                        "--show-diff-on-failure" if show_diff_on_failure else "",
                         "--files",
                         *chunk,
                         "-v" if verbose else "",
-                        "--show-diff-on-failure" if show_diff_on_failure else "",
                     ],
                     env=precommit_env,
                     cwd=CONTENT_PATH,
                 )
                 if response.returncode:
                     ret_val = 1
-        # remove the config file in the end of the file
+
+        # remove the config file in the end of the flow
         PRECOMMIT_PATH.unlink(missing_ok=True)
         return ret_val
 

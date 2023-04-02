@@ -11,6 +11,7 @@
 * Fixed an issue where **generate-python-to-yml** generated input arguments as required even though required=False was specified.
 * Fixed an issue where **generate-python-to-yml** generated input arguments a default arguments when default=some_value was provided.
 * Fixed a bug where **validate** returned error on playbook inputs with special characters.
+* Fixed an issue where **validate** did not properly check `conf.json` when the latter is modified.
 * Fixed an issue in the **upload** command, where a prompt was not showing on the console.
 
 ## 1.11.0

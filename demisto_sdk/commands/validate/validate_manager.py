@@ -518,7 +518,7 @@ class ValidateManager:
                 specific_validations=self.specific_validations
             ) as graph_validator:
                 all_packs_valid.add(graph_validator.is_valid_content_graph())
-                
+
         if not self.skip_conf_json:
             all_packs_valid.add(self.conf_json_validator.is_valid_conf_json())
 

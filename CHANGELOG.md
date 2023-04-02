@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue in the **download** command where layouts were overriden even without the `-f` option.
+* Fixed an issue where Demisto-SDK did not detect layout ID when using the **download** command.
 * Fixed an issue where the **lint** command ran on `native:dev` supported content when passing the `--docker-image all` flag, instead it will run on `native:candidate`.
 * Added support for `native:candidate` as a docker image flag for **lint** command.
 * Fixed an issue where logs and messages would not show when using the **download** command.
@@ -8,6 +10,9 @@
 * Fixed an issue where running **openapi-codegen** resulted in false-positive error messages.
 * Fixed an issue where **generate-python-to-yml** generated input arguments as required even though required=False was specified.
 * Fixed an issue where **generate-python-to-yml** generated input arguments a default arguments when default=some_value was provided.
+* Fixed a bug where **validate** returned error on playbook inputs with special characters.
+* Fixed an issue where **validate** did not properly check `conf.json` when the latter is modified.
+* Fixed an issue in the **upload** command, where a prompt was not showing on the console.
 
 ## 1.11.0
 * **Note: Demisto-SDK will soon stop supporting Python 3.8**

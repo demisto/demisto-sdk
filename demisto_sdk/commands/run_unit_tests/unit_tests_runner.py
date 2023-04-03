@@ -1,11 +1,12 @@
 import logging
 import os
 import shutil
+import sqlite3
 import traceback
 from pathlib import Path
 from typing import List
-import coverage
 
+import coverage
 from junitparser import JUnitXml
 
 import demisto_sdk.commands.common.docker_helper as docker_helper
@@ -15,7 +16,7 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
 from demisto_sdk.commands.coverage_analyze.helpers import coverage_files
-from demisto_sdk.commands.lint.helpers import coverage_report_editor, stream_docker_container_output
+from demisto_sdk.commands.lint.helpers import stream_docker_container_output
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -31,7 +32,31 @@ DEFAULT_DOCKER_IMAGE = "demisto/python:1.3-alpine"
 PYTEST_RUNNER = f"{(Path(__file__).parent / 'pytest_runner.sh')}"
 POWERSHELL_RUNNER = f"{(Path(__file__).parent / 'pwsh_test_runner.sh')}"
 
-from xunitmerge import merge_xunit
+
+def coverage_report_editor(coverage_file: Path, code_file_absolute_dir: Path):
+    """
+
+    Args:
+        coverage_file: the .coverage file this contains the coverage data in sqlite format.
+        code_file_absolute_path: the real absolute path to the measured code file.
+
+    Notes:
+        the .coverage files contain all the files list with their absolute path.
+        but our tests (pytest step) are running inside a docker container.
+        so we have to change the path to the correct one.
+    """
+    logger.info(f"Editing coverage report for {coverage_file}")
+    with sqlite3.connect(coverage_file) as sql_connection:
+        cursor = sql_connection.cursor()
+        files = cursor.execute("SELECT * FROM file").fetchall()
+        for id_, file in files:
+            file_name = Path(file).name
+            cursor.execute(
+                "UPDATE file SET path = ? WHERE id = ?",
+                (str(code_file_absolute_dir / file_name), id_),
+            )
+        sql_connection.commit()
+
 
 def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
     docker_client = docker_helper.init_global_docker_client()
@@ -117,7 +142,10 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                 else:
                     logger.info(f"All tests passed for {filename} in {docker_image}")
                 container.remove(force=True)
-                coverage_report_editor(integration_script.path.parent / ".coverage", integration_script.path.parent)
+                coverage_report_editor(
+                    integration_script.path.parent / ".coverage",
+                    integration_script.path.parent,
+                )
             except Exception as e:
                 logger.error(
                     f"Failed to run test for {filename} in {docker_image}: {e}"

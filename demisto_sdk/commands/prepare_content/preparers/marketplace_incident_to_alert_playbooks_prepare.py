@@ -1,4 +1,5 @@
 import logging
+from typing import Optional, List
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.prepare_content.preparers.incident_to_alert import (
@@ -14,7 +15,7 @@ class MarketplaceIncidentToAlertPlaybooksPreparer:
     def prepare(
         data: dict,
         current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
-        supported_marketplaces=None,
+        supported_marketplaces: Optional[List] = None,
     ) -> dict:
         """
         Iterate over all the given playbook's descriptions and names fields and if a description or a name field

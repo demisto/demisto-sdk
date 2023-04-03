@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Optional, List
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
@@ -15,7 +15,7 @@ class MarketplaceSuffixPreparer:
     def prepare(
         data: dict,
         current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
-        supported_marketplaces=None,
+        supported_marketplaces: Optional[List] = None,
     ) -> dict:
         """
         Iterate over all of the given content item fields and if there is a field with an alternative name,

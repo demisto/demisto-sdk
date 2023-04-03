@@ -5077,20 +5077,6 @@ files = [
 h11 = ">=0.9.0,<1"
 
 [[package]]
-name = "xunitmerge"
-version = "1.0.4"
-description = "Utility for merging multiple XUnit xml reports into a single xml report."
-category = "main"
-optional = false
-python-versions = "*"
-files = [
-    {file = "xunitmerge-1.0.4.tar.gz", hash = "sha256:24ec3b44e7bec5177445ed4fd46a1c0fe123991d5e8fa92bdf390a004f4280d2"},
-]
-
-[package.dependencies]
-six = "*"
-
-[[package]]
 name = "yamlordereddictloader"
 version = "0.4.0"
 description = "YAML loader and dump for PyYAML allowing to keep keys order."
@@ -5290,4 +5276,4 @@ build = ["gsutil"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.11"
-content-hash = "bcaa16634b02a82cf59449906ef83b583d157b1619c8775e42adbfd78803b75a"
+content-hash = "94e079e6bc0f11a0f7f0d6d483813661db351152487a2f0da5fb6a94ffb40181"

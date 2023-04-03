@@ -5,6 +5,7 @@ import re
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 logger = logging.getLogger("demisto-sdk")
 
+REGISTER_MODULE_LINE = r"register_module_line\('(.+)', (?:'start'|'end'), __line__\(\)\)"
 
 # A table for converting incident to alert
 NOT_WRAPPED_RE_MAPPING = {
@@ -70,6 +71,7 @@ class MarketplaceIncidentToAlertScriptsPreparer:
 
         # Creating a wrapper script
         if (wrapper_script := create_wrapper_script(copy_data)):
+            data = replace_register_module_line(data, wrapper_script)
             logging.debug(f"Created {wrapper_script['name']} script wrapper to {data['name']} script")
             return wrapper_script, data
 
@@ -126,3 +128,11 @@ def recursive_editing(data: Any, replace_incident_to_alert: bool = False) -> Any
         return data
     else:
         return data
+
+
+def replace_register_module_line(data: dict, wrapper_script: dict):
+    for state in ('start', 'end'):
+        data['script'] = data['script'].replace(
+            f"register_module_line('{wrapper_script['name']}', '{state}', __line__())",
+            f"register_module_line('{data['name']}', '{state}', __line__())")
+    return data

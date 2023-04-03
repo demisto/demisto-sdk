@@ -453,6 +453,24 @@ def test_insert_hierarchy_api_module(mocker):
     )
 
 
+def test_insert_pack_version_and_script_to_yml():
+    """
+    Given:
+     - A pack name
+
+    When:
+     - calling insert_pack_version
+
+    Then:
+     - Ensure the code returned contains the pack version in it
+    """
+    version_str = "### pack version: 1.0.3"
+    assert version_str not in DUMMY_SCRIPT
+    assert version_str in IntegrationScriptUnifier.insert_pack_version(
+        DUMMY_SCRIPT, version_str
+    )
+
+
 def get_generated_module_code(import_name, api_module_name):
     return (
         f"\n### GENERATED CODE ###"

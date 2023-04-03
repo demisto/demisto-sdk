@@ -18,6 +18,12 @@
 * Fixed a bug where **validate** returned error on playbook inputs with special characters.
 * Fixed an issue where **validate** did not properly check `conf.json` when the latter is modified.
 * Fixed an issue in the **upload** command, where a prompt was not showing on the console.
+* Fixed an issue where running **lint** failed installing dependencies in containers.
+* Added the **pre-commit** command, to improve code quality of XSOAR content.
+* Added the **run-unit-tests** command, to run unit tests of given content items inside their respective docker images.
+* Added support for filepath arguments in the **validate** and **format** commands.
+* Added pre-commit hooks for `validate`, `format`, `run-unit-tests` and `update-docker-image` commands.
+
 ## 1.11.0
 * **Note: Demisto-SDK will soon stop supporting Python 3.8**
 * Fixed an issue where using **download** on non-unicode content, merging them into existing files caused an error.

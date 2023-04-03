@@ -21,6 +21,11 @@ class IntegrationScriptParser(YAMLContentItemParser):
 
     @property
     @abstractmethod
+    def docker_image(self) -> str:
+        ...
+
+    @property
+    @abstractmethod
     def code(self) -> Optional[str]:
         pass
 

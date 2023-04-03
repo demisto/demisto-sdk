@@ -580,9 +580,9 @@ class ContributionConverter:
                             current_pack_version = get_pack_metadata(
                                 file_path=content_item_file_path
                             ).get("currentVersion", "0.0.0")
-                            if contributor_item_version != '0.0.0' and Version(current_pack_version) > Version(
-                                contributor_item_version
-                            ):
+                            if contributor_item_version != "0.0.0" and Version(
+                                current_pack_version
+                            ) > Version(contributor_item_version):
                                 self.contribution_items_version[content_item.name] = {
                                     "contribution_version": contributor_item_version,
                                     "latest_version": current_pack_version,

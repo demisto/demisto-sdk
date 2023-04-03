@@ -468,7 +468,7 @@ class ContributionConverter:
     @staticmethod
     def extract_pack_version(script):
         """
-        extract pack version from script if exists, returns 0.0.0 if version was not found.
+        extract the pack version from script if exists, returns 0.0.0 if version was not found.
         """
         if script:
             try:

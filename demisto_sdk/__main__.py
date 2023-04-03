@@ -153,7 +153,7 @@ def logging_setup_decorator(func, *args, **kwargs):
 
         handle_deprecated_args(get_context_arg(args).args)
 
-        return func(*args, **kwargs)
+        return func(**kwargs)
 
     return wrapper
 
@@ -280,7 +280,7 @@ def main(ctx, config, version, release_notes, **kwargs):
 @pass_config
 @click.pass_context
 @logging_setup_decorator
-def split(ctx, config, **kwargs):
+def split(config, **kwargs):
     """Split the code, image and description files from a Demisto integration or script yaml file
     to multiple files(To a package format - https://demisto.pan.dev/docs/package-dir).
     """
@@ -346,7 +346,7 @@ def split(ctx, config, **kwargs):
 @pass_config
 @click.pass_context
 @logging_setup_decorator
-def extract_code(ctx, config, **kwargs):
+def extract_code(config, **kwargs):
     """Extract code from a Demisto integration or script yaml file."""
     from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
@@ -419,12 +419,10 @@ def extract_code(ctx, config, **kwargs):
 )
 @click.pass_context
 @logging_setup_decorator
-def prepare_content(ctx, **kwargs):
+def prepare_content(**kwargs):
     """
     This command is used to prepare the content to be used in the platform.
     """
-    from demisto_sdk.commands.common.logger import logger
-
     if click.get_current_context().info_name == "unify":
         kwargs["unify_only"] = True
 
@@ -491,9 +489,8 @@ main.add_command(prepare_content, name="unify")
 )
 @click.pass_context
 @logging_setup_decorator
-def zip_packs(ctx, **kwargs) -> int:
+def zip_packs(**kwargs) -> int:
     """Generating zipped packs that are ready to be uploaded to Cortex XSOAR machine."""
-    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.upload.uploader import Uploader
     from demisto_sdk.commands.zip_packs.packs_zipper import (
         EX_FAIL,
@@ -682,7 +679,7 @@ def zip_packs(ctx, **kwargs) -> int:
 @pass_config
 @click.pass_context
 @logging_setup_decorator
-def validate(ctx, config, **kwargs):
+def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
     from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
@@ -846,7 +843,7 @@ def validate(ctx, config, **kwargs):
 )
 @click.pass_context
 @logging_setup_decorator
-def create_content_artifacts(ctx, **kwargs) -> int:
+def create_content_artifacts(**kwargs) -> int:
     """Generating the following artifacts:
     1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)
     2. content_packs - Contains all packs from Packs - Ignoring internal files (to_version >= 6.0.0).
@@ -854,7 +851,6 @@ def create_content_artifacts(ctx, **kwargs) -> int:
     4. content_all - Contains all from content_new and content_test.
     5. uploadable_packs - Contains zipped packs that are ready to be uploaded to Cortex XSOAR machine.
     """
-    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
         ArtifactsManager,
     )
@@ -901,11 +897,10 @@ def create_content_artifacts(ctx, **kwargs) -> int:
 @pass_config
 @click.pass_context
 @logging_setup_decorator
-def secrets(ctx, config, **kwargs):
+def secrets(config, **kwargs):
     """Run Secrets validator to catch sensitive data before exposing your code to public repository.
     Attach path to whitelist to allow manual whitelists.
     """
-    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.secrets.secrets import SecretsValidator
 
     check_configuration_file("secrets", kwargs)
@@ -1025,7 +1020,7 @@ def secrets(ctx, config, **kwargs):
 )
 @click.pass_context
 @logging_setup_decorator
-def lint(ctx, **kwargs):
+def lint(**kwargs):
     """Lint command will perform:
     1. Package in host checks - flake8, bandit, mypy, vulture.
     2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.
@@ -1033,7 +1028,6 @@ def lint(ctx, **kwargs):
     Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
     If no additional flags specifying the packs are given, will lint only changed files.
     """
-    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.lint.lint_manager import LintManager
 
     check_configuration_file("lint", kwargs)
@@ -1124,7 +1118,7 @@ def lint(ctx, **kwargs):
     type=str,
 )
 @click.pass_context
-def coverage_analyze(ctx, **kwargs):
+def coverage_analyze(**kwargs):
     logger = logging_setup(
         console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
         file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
@@ -1256,7 +1250,6 @@ def format(
     incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file/genericfield/generictype/
     genericmodule/genericdefinition.
     """
-    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.format.format_module import format_manager
 
     with ReadMeValidator.start_mdx_server():
@@ -1343,14 +1336,12 @@ def format(
 )
 @click.pass_context
 @logging_setup_decorator
-def upload(ctx, **kwargs):
+def upload(**kwargs):
     """Upload integration or pack to Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     * Note: Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up. *
     """
-    from demisto_sdk.commands.common.logger import logger
-
     return upload_content_entity(**kwargs)
 
 
@@ -1429,12 +1420,11 @@ def upload(ctx, **kwargs):
 )
 @click.pass_context
 @logging_setup_decorator
-def download(ctx, **kwargs):
+def download(**kwargs):
     """Download custom content from Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     """
-    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.download.downloader import Downloader
 
     check_configuration_file("download", kwargs)
@@ -1492,12 +1482,11 @@ def download(ctx, **kwargs):
 )
 @click.pass_context
 @logging_setup_decorator
-def xsoar_config_file_update(ctx, **kwargs):
+def xsoar_config_file_update(**kwargs):
     """Handle your XSOAR Configuration File.
     Add automatically all the installed MarketPlace Packs to the marketplace_packs section in XSOAR Configuration File.
     Add a Pack to both marketplace_packs and custom_packs sections in the Configuration File.
     """
-    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import (
         XSOARConfigFileUpdater,
     )
@@ -1550,12 +1539,11 @@ def xsoar_config_file_update(ctx, **kwargs):
 )
 @click.pass_context
 @logging_setup_decorator
-def run(ctx, **kwargs):
+def run(**kwargs):
     """Run integration command on remote Demisto instance in the playground.
     DEMISTO_BASE_URL environment variable should contain the Demisto base URL.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     """
-    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.run_cmd.runner import Runner
 
     check_configuration_file("run", kwargs)
@@ -1593,13 +1581,12 @@ def run(ctx, **kwargs):
 @click.option("--insecure", help="Skip certificate validation.", is_flag=True)
 @click.pass_context
 @logging_setup_decorator
-def run_playbook(ctx, **kwargs):
+def run_playbook(**kwargs):
     """Run a playbook in Demisto.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
     Example: DEMISTO_API_KEY=<API KEY> demisto-sdk run-playbook -p 'p_name' -u
     'https://demisto.local'.
     """
-    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
 
     check_configuration_file("run-playbook", kwargs)
@@ -1642,9 +1629,8 @@ def run_playbook(ctx, **kwargs):
 @click.option("--insecure", help="Skip certificate validation.", is_flag=True)
 @click.pass_context
 @logging_setup_decorator
-def run_test_playbook(ctx, **kwargs):
+def run_test_playbook(**kwargs):
     """Run a test playbooks in your instance."""
-    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.run_test_playbook.test_playbook_runner import (
         TestPlaybookRunner,
     )
@@ -1717,13 +1703,12 @@ def run_test_playbook(ctx, **kwargs):
 )
 @click.pass_context
 @logging_setup_decorator
-def generate_outputs(ctx, **kwargs):
+def generate_outputs(**kwargs):
     """Demisto integrations/scripts have a YAML file that defines them.
     Creating the YAML file is a tedious and error-prone task of manually copying outputs from the API result to the
     file/UI/PyCharm. This script auto generates the YAML for a command from the JSON result of the relevant API call
     In addition you can supply examples files and generate the context description directly in the YML from those examples.
     """
-    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.generate_outputs.generate_outputs import (
         run_generate_outputs,
     )
@@ -1799,7 +1784,7 @@ def generate_outputs(ctx, **kwargs):
 )
 @click.pass_context
 @logging_setup_decorator
-def generate_test_playbook(ctx, **kwargs):
+def generate_test_playbook(**kwargs):
     """Generate test playbook from integration or script"""
     from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import (
@@ -1878,12 +1863,11 @@ def generate_test_playbook(ctx, **kwargs):
 )
 @click.pass_context
 @logging_setup_decorator
-def init(ctx, **kwargs):
+def init(**kwargs):
     """Initialize a new Pack, Integration or Script.
     If the script/integration flags are not present, we will create a pack with the given name.
     Otherwise when using the flags we will generate a script/integration based on your selection.
     """
-    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.init.initiator import Initiator
 
     check_configuration_file("init", kwargs)
@@ -1968,7 +1952,7 @@ def init(ctx, **kwargs):
 )
 @click.pass_context
 @logging_setup_decorator
-def generate_docs(ctx, **kwargs):
+def generate_docs(**kwargs):
     """Generate documentation for integration, playbook or script from yaml file."""
     from demisto_sdk.commands.common.logger import logger
 
@@ -2134,9 +2118,8 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
 )
 @click.pass_context
 @logging_setup_decorator
-def create_id_set(ctx, **kwargs):
+def create_id_set(**kwargs):
     """Create the content dependency tree by ids."""
-    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
     from demisto_sdk.commands.find_dependencies.find_dependencies import (
         remove_dependencies_from_id_set,
@@ -2174,7 +2157,7 @@ def create_id_set(ctx, **kwargs):
 )
 @click.pass_context
 @logging_setup_decorator
-def merge_id_sets(ctx, **kwargs):
+def merge_id_sets(**kwargs):
     """Merge two id_sets"""
     from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
@@ -2257,7 +2240,7 @@ def merge_id_sets(ctx, **kwargs):
 )
 @click.pass_context
 @logging_setup_decorator
-def update_release_notes(ctx, **kwargs):
+def update_release_notes(**kwargs):
     """Auto-increment pack version and generate release notes template."""
     from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.update_release_notes.update_rn_manager import (
@@ -2366,7 +2349,7 @@ def update_release_notes(ctx, **kwargs):
 )
 @click.pass_context
 @logging_setup_decorator
-def find_dependencies(ctx, **kwargs):
+def find_dependencies(**kwargs):
     """Find pack dependencies and update pack metadata."""
     from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.find_dependencies.find_dependencies import (
@@ -2524,11 +2507,10 @@ def postman_codegen(
 )
 @click.pass_context
 @logging_setup_decorator
-def generate_integration(ctx, input: IO, output: Path, **kwargs):
+def generate_integration(input: IO, output: Path, **kwargs):
     """Generates a Cortex XSOAR integration from a config json file,
     which is generated by commands like postman-codegen
     """
-    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.generate_integration.code_generator import (
         IntegrationGeneratorConfig,
     )
@@ -2596,7 +2578,7 @@ def generate_integration(ctx, input: IO, output: Path, **kwargs):
 )
 @click.pass_context
 @logging_setup_decorator
-def openapi_codegen(ctx, **kwargs):
+def openapi_codegen(**kwargs):
     """Generates a Cortex XSOAR integration given an OpenAPI specification file.
     In the first run of the command, an integration configuration file is created, which can be modified.
     Then, the command is run a second time with the integration configuration to generate the actual integration files.
@@ -2758,14 +2740,13 @@ def openapi_codegen(ctx, **kwargs):
 )
 @click.pass_context
 @logging_setup_decorator
-def test_content(ctx, **kwargs):
+def test_content(**kwargs):
     """Configure instances for the integration needed to run tests_to_run tests.
     Run test module on each integration.
     create an investigation for each test.
     run test playbook on the created investigation using mock if possible.
     Collect the result and give a report.
     """
-    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.test_content.execute_test_content import (
         execute_test_content,
     )
@@ -2845,9 +2826,8 @@ def test_content(ctx, **kwargs):
 )
 @click.pass_context
 @logging_setup_decorator
-def doc_review(ctx, **kwargs):
+def doc_review(**kwargs):
     """Check the spelling in .md and .yml files as well as review release notes"""
-    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 
     doc_reviewer = DocReviewer(
@@ -2898,11 +2878,10 @@ def doc_review(ctx, **kwargs):
 )
 @click.pass_context
 @logging_setup_decorator
-def integration_diff(ctx, **kwargs):
+def integration_diff(**kwargs):
     """
     Checks for differences between two versions of an integration, and verified that the new version covered the old version.
     """
-    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.integration_diff.integration_diff_detector import (
         IntegrationDiffDetector,
     )
@@ -2946,11 +2925,10 @@ def integration_diff(ctx, **kwargs):
 )
 @click.pass_context
 @logging_setup_decorator
-def generate_yml_from_python(ctx, **kwargs):
+def generate_yml_from_python(**kwargs):
     """
     Checks for differences between two versions of an integration, and verified that the new version covered the old version.
     """
-    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.generate_yml_from_python.generate_yml import YMLGenerator
 
     yml_generator = YMLGenerator(
@@ -2982,12 +2960,11 @@ def generate_yml_from_python(ctx, **kwargs):
 @pass_config
 @click.pass_context
 @logging_setup_decorator
-def convert(ctx, config, **kwargs):
+def convert(config, **kwargs):
     """
     Convert the content of the pack/directory in the given input to be compatible with the version given by
     version command.
     """
-    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.convert.convert_manager import ConvertManager
 
     check_configuration_file("convert", kwargs)
@@ -3055,8 +3032,6 @@ def generate_unit_tests(
     This command is used to generate unit tests automatically from an  integration python code.
     Also supports generating unit tests for specific commands.
     """
-    from demisto_sdk.commands.common.logger import logger
-
     logging.getLogger("PYSCA").propagate = False
     from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import (
         run_generate_unit_tests,
@@ -3081,8 +3056,7 @@ def generate_unit_tests(
 @pass_config
 @click.pass_context
 @logging_setup_decorator
-def error_code(ctx, config, **kwargs):
-    from demisto_sdk.commands.common.logger import logger
+def error_code(config, **kwargs):
     from demisto_sdk.commands.error_code_info.error_code_info import (
         generate_error_code_information,
     )
@@ -3130,7 +3104,6 @@ def create_content_graph(
     output_path: Path = None,
     **kwargs,
 ):
-    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.content_graph.content_graph_commands import (
         create_content_graph as create_content_graph_command,
     )
@@ -3215,7 +3188,6 @@ def update_content_graph(
     output_path: Path = None,
     **kwargs,
 ):
-    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.content_graph.content_graph_commands import (
         update_content_graph as update_content_graph_command,
     )

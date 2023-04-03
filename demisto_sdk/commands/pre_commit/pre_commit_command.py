@@ -30,7 +30,6 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
-from demisto_sdk.commands.pre_commit.hooks.run_unit_tests import RunUnitTestHook
 
 logger = logging.getLogger("demisto-sdk")
 yaml = YAML_Handler()
@@ -88,13 +87,11 @@ class PreCommitRunner:
         self,
         pre_commit_config: dict,
         python_version: str,
-        native_images: bool,
     ) -> None:
         hooks = self._get_hooks(pre_commit_config)
         PyclnHook(hooks["pycln"]).prepare_hook(PYTHONPATH)
         RuffHook(hooks["ruff"]).prepare_hook(python_version, IS_GITHUB_ACTIONS)
         MypyHook(hooks["mypy"]).prepare_hook(python_version)
-        RunUnitTestHook(hooks["run-unit-tests"]).prepare_hook(native_images)
 
     def run(
         self,
@@ -149,7 +146,7 @@ class PreCommitRunner:
                     if response.returncode:
                         ret_val = response.returncode
                 continue
-            self.prepare_hooks(precommit_config, python_version, native_images)
+            self.prepare_hooks(precommit_config, python_version)
             with open(PRECOMMIT_PATH, "w") as f:
                 yaml.dump(precommit_config, f)
             # use chunks because OS does not support such large comments

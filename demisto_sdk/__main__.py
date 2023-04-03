@@ -3260,12 +3260,6 @@ def update_content_graph(
     default=False,
 )
 @click.option(
-    "--native-images",
-    help="Whether to run demisto-sdk test on native images",
-    is_flag=True,
-    default=False,
-)
-@click.option(
     "-v",
     "--verbose",
     help="Verbose output of pre-commit",
@@ -3294,7 +3288,6 @@ def pre_commit(
     skip: str,
     validate: bool,
     format: bool,
-    native_images: bool,
     verbose: bool,
     show_diff_on_failure: bool,
     sdk_ref: str,
@@ -3313,7 +3306,6 @@ def pre_commit(
             skip,
             validate,
             format,
-            native_images,
             verbose,
             show_diff_on_failure,
             sdk_ref=sdk_ref,

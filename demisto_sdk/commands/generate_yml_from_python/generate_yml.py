@@ -389,12 +389,15 @@ class MetadataToDict:
                 MetadataToDict.add_arg_metadata(
                     arg_name=argument.name,
                     description=argument.description if argument.description else "",
-                    default_value=argument.default if argument.default else None,
+                    default_value=argument.default_value
+                    if argument.default_value
+                    else None,
                     is_array=argument.is_array,
                     secret=argument.secret,
                     options=options,
                     execution=argument.execution,
                     required=argument.required,
+                    default=argument.default,
                 )
             )
 
@@ -427,6 +430,7 @@ class MetadataToDict:
                 secret = False
                 execution = False
                 required = False
+                default_arg = False
                 if (
                     arg_type
                     and inspect.isclass(arg_type)
@@ -464,6 +468,10 @@ class MetadataToDict:
                     execution = True
                     description = description.replace(" execution.", "")
                     description = description.replace("execution.", "")
+                if description and "default argument." in description:
+                    default_arg = True
+                    description = description.replace(" default argument.", "")
+                    description = description.replace("default argument.", "")
 
                 command_args.append(
                     MetadataToDict.add_arg_metadata(
@@ -476,6 +484,7 @@ class MetadataToDict:
                         options=options,
                         execution=execution,
                         required=required,
+                        default=default_arg,
                     )
                 )
 
@@ -491,6 +500,7 @@ class MetadataToDict:
         options: list = [],
         execution: bool = False,
         required: bool = False,
+        default: bool = False,
     ) -> dict:
         """Return a YML metadata dict of a command argument."""
         arg_metadata = {
@@ -499,15 +509,12 @@ class MetadataToDict:
             "description": arg_name,
             "required": required,
             "secret": False,
-            "default": True if default_value else False,
+            "default": default,
         }
         if description:
             arg_metadata["description"] = description
         if default_value:
-            arg_metadata["required"] = False
             arg_metadata["defaultValue"] = default_value
-        else:
-            arg_metadata["required"] = True
         if is_array:
             arg_metadata["isArray"] = True
         if options:

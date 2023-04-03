@@ -56,6 +56,7 @@ def coverage_report_editor(coverage_file: Path, code_file_absolute_dir: Path):
                 (str(code_file_absolute_dir / file_name), id_),
             )
         sql_connection.commit()
+        logger.info("Done editing coverage report")
 
 
 def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:

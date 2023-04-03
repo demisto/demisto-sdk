@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+* Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.
+* Contribution PRs that update outdated packs now display a warning message.
+
 ## 1.12.0
 * Added the **pre-commit** command, to improve code quality of XSOAR content.
 * Added the **run-unit-tests** command, to run unit tests of given content items inside their respective docker images.

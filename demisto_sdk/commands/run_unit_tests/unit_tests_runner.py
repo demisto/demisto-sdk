@@ -38,7 +38,7 @@ def coverage_report_editor(coverage_file: Path, code_file_absolute_dir: Path):
 
     Args:
         coverage_file: the .coverage file this contains the coverage data in sqlite format.
-        code_file_absolute_path: the real absolute path to the measured code file.
+        code_file_absolute_dir: the real absolute dir to the measured code file.
 
     Notes:
         the .coverage files contain all the files list with their absolute path.

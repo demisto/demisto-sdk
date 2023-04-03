@@ -1,6 +1,9 @@
 from abc import abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Set
+from tempfile import TemporaryDirectory
+from typing import TYPE_CHECKING, Callable, List, Optional, Set
+
+import demisto_client
 
 from demisto_sdk.commands.common.handlers import (
     JSON_Handler,
@@ -195,3 +198,26 @@ class ContentItem(BaseContent):
         id_set_entity["file_path"] = str(self.path)
         id_set_entity["pack"] = self.in_pack.object_id  # type: ignore[union-attr]
         return id_set_entity
+
+    def _client_upload_method(self, client: demisto_client) -> Optional[Callable]:
+        """
+        This attribute sets the method when the upload flow is only of the following form
+            >   with TemporaryDirectory("w") as f:
+            >       dir_path = Path(f)
+            >       self.dump(dir_path, marketplace=marketplace)
+            >       client.<<SOME_METHOD>>(file=dir_path / self.normalize_name)
+
+        When the flow is different, return None (defeault).
+        """
+        return None
+
+    def upload(self, client, marketplace: MarketplaceVersions) -> None:
+        if self._client_upload_method:
+            with TemporaryDirectory("w") as f:
+                dir_path = Path(f)
+                self.dump(dir_path, marketplace=marketplace)
+                self._client_upload_method(file=dir_path / self.normalize_name)  # type: ignore[call-arg]
+
+        raise NotImplementedError(
+            f"missing overriding upload method for {self.content_type}"
+        )

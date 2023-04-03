@@ -2,8 +2,10 @@ import logging
 import shutil
 from collections import defaultdict
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any, Generator, List, Optional
 
+import demisto_client
 from packaging.version import parse
 from pydantic import BaseModel, Field, validator
 
@@ -26,6 +28,7 @@ from demisto_sdk.commands.content_graph.common import (
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.content_item_xsiam import MustBeUploadedInZipException
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
 from demisto_sdk.commands.content_graph.objects.generic_definition import (
@@ -288,6 +291,26 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             logger.error(f"Failed dumping pack {self.name}: {e}")
             raise
 
+    def upload(
+        self, client: demisto_client, marketplace: MarketplaceVersions, zipped: bool
+    ):
+        logger.debug(f"Uploading pack {self.object_id}")
+        if zipped:
+            with TemporaryDirectory() as dir:
+                self.dump(Path(dir), marketplace)
+                logger.debug(f"Uploading zipped pack {self.object_id}")
+                client.upload_content_packs(file=dir)
+        else:  # uploads each separately
+            logger.debug(
+                f"Uploading all elements of pack {self.object_id} one by one, as -z was not specified"
+            )
+            for item in self.content_items:
+                try:
+                    logger.debug(f"Uploading pack {self.object_id}: {item.object_id}")
+                    item.upload(client, marketplace)
+                except MustBeUploadedInZipException:
+                    logger.debug(f"Cannot upload {item.content_type} {item.object_id} without the -z flag")
+    
     def handle_base_pack(self, path: Path):
         documentation_path = CONTENT_PATH / "Documentation"
         documentation_output = path / "Documentation"

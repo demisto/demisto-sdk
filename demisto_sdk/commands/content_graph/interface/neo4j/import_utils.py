@@ -12,6 +12,8 @@ json = JSON_Handler()
 
 logger = logging.getLogger("demisto-sdk")
 
+GRAPHML_FILE_SUFFIX = ".graphml"
+
 
 class Neo4jImportHandler:
     def __init__(self) -> None:
@@ -42,7 +44,7 @@ class Neo4jImportHandler:
         return [
             file.name
             for file in self.import_path.iterdir()
-            if file.suffix == ".graphml"
+            if file.suffix == GRAPHML_FILE_SUFFIX
         ]
 
     def ensure_data_uniqueness(self) -> None:
@@ -53,7 +55,7 @@ class Neo4jImportHandler:
     def _get_import_sources(self) -> Set[str]:
         sources: Set[str] = set()
         for filename in self.import_path.iterdir():
-            if "graphml" in filename.suffix:
+            if filename.suffix == GRAPHML_FILE_SUFFIX:
                 sources.add(filename.as_posix())
         return sources
 

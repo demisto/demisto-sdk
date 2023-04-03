@@ -33,19 +33,22 @@ PYTEST_RUNNER = f"{(Path(__file__).parent / 'pytest_runner.sh')}"
 POWERSHELL_RUNNER = f"{(Path(__file__).parent / 'pwsh_test_runner.sh')}"
 
 
-def coverage_report_editor(coverage_file: Path, code_file_absolute_dir: Path):
+def fix_coverage_report_path(integration_script_path: Path):
     """
 
     Args:
-        coverage_file: the .coverage file this contains the coverage data in sqlite format.
-        code_file_absolute_dir: the real absolute dir to the measured code file.
+        integration_script_path: The integration script (absolut file).
 
     Notes:
         the .coverage files contain all the files list with their absolute path.
         but our tests (pytest step) are running inside a docker container.
         so we have to change the path to the correct one.
     """
-    logger.info(f"Editing coverage report for {coverage_file}")
+    coverage_file = integration_script_path / ".coverage"
+    if not coverage_file.exists():
+        logger.debug(f"Skipping {integration_script_path} as it has no coverage report.")
+        return
+    logger.debug(f"Editing coverage report for {coverage_file}")
     with sqlite3.connect(coverage_file) as sql_connection:
         cursor = sql_connection.cursor()
         files = cursor.execute("SELECT * FROM file").fetchall()
@@ -53,10 +56,10 @@ def coverage_report_editor(coverage_file: Path, code_file_absolute_dir: Path):
             file_name = Path(file).name
             cursor.execute(
                 "UPDATE file SET path = ? WHERE id = ?",
-                (str(code_file_absolute_dir / file_name), id_),
+                (str(integration_script_path / file_name), id_),
             )
         sql_connection.commit()
-        logger.info("Done editing coverage report")
+        logger.debug("Done editing coverage report")
 
 
 def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
@@ -143,10 +146,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                 else:
                     logger.info(f"All tests passed for {filename} in {docker_image}")
                 container.remove(force=True)
-                coverage_report_editor(
-                    integration_script.path.parent / ".coverage",
-                    integration_script.path.parent,
-                )
+                fix_coverage_report_path(integration_script.path.parent)
             except Exception as e:
                 logger.error(
                     f"Failed to run test for {filename} in {docker_image}: {e}"

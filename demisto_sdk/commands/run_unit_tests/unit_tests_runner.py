@@ -33,22 +33,20 @@ PYTEST_RUNNER = f"{(Path(__file__).parent / 'pytest_runner.sh')}"
 POWERSHELL_RUNNER = f"{(Path(__file__).parent / 'pwsh_test_runner.sh')}"
 
 
-def fix_coverage_report_path(integration_script_dir: Path):
+def fix_coverage_report_path(code_directory: Path):
     """
 
     Args:
-        integration_script_path: The integration script (absolut file).
+        code_directory: The integration script (absolute file).
 
     Notes:
         the .coverage files contain all the files list with their absolute path.
         but our tests (pytest step) are running inside a docker container.
         so we have to change the path to the correct one.
     """
-    coverage_file = integration_script_dir / ".coverage"
+    coverage_file = code_directory / ".coverage"
     if not coverage_file.exists():
-        logger.debug(
-            f"Skipping {integration_script_dir} as it has no coverage report. Expected file at {coverage_file}"
-        )
+        logger.debug(f"Skipping {code_directory} as it does not contain a coverage report.")
         return
     logger.debug(f"Editing coverage report for {coverage_file}")
     with sqlite3.connect(coverage_file) as sql_connection:
@@ -58,7 +56,7 @@ def fix_coverage_report_path(integration_script_dir: Path):
             file_name = Path(file).name
             cursor.execute(
                 "UPDATE file SET path = ? WHERE id = ?",
-                (str(integration_script_dir / file_name), id_),
+                (str(code_directory / file_name), id_),
             )
         sql_connection.commit()
         logger.debug("Done editing coverage report")

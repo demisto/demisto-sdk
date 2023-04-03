@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER,
     FILETYPE_TO_DEFAULT_FROMVERSION,
     INTEGRATION_CATEGORIES,
+    MODULES,
     PACK_METADATA_DESC,
     PACK_METADATA_NAME,
     RN_CONTENT_ENTITY_WITH_STARS,
@@ -32,6 +33,7 @@ ALLOWED_IGNORE_ERRORS = [
     "BA113",
     "BA116",
     "BA119",
+    "BA124",
     "DS107",
     "GF102",
     "IF100",
@@ -92,6 +94,7 @@ ALLOWED_IGNORE_ERRORS = [
     "RN115",
     "MR104",
     "MR105",
+    "LO107",
 ]
 
 # predefined errors to be ignored in partner/community supported packs even if they do not appear in .pack-ignore
@@ -211,6 +214,11 @@ ERROR_CODE = {
     },
     "copyright_section_in_python_error": {
         "code": "BA119",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "missing_unit_test_file": {
+        "code": "BA124",
         "ui_applicable": False,
         "related_field": "",
     },
@@ -452,7 +460,6 @@ ERROR_CODE = {
     # ID - ID Set
     "id_set_conflicts": {"code": "ID100", "ui_applicable": False, "related_field": ""},
     # missing 101
-    "duplicated_id": {"code": "ID102", "ui_applicable": False, "related_field": ""},
     "no_id_set_file": {"code": "ID103", "ui_applicable": False, "related_field": ""},
     # IF - Incident Fields
     "invalid_incident_field_name": {
@@ -1200,6 +1207,16 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "pack_metadata_invalid_modules": {
+        "code": "PA135",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "pack_metadata_modules_for_non_xsiam": {
+        "code": "PA136",
+        "ui_applicable": False,
+        "related_field": "",
+    },
     # PB - Playbooks
     "playbook_cant_have_rolename": {
         "code": "PB100",
@@ -1778,6 +1795,11 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "duplicated_id": {
+        "code": "GR105",
+        "ui_applicable": False,
+        "related_field": "",
+    },
 }
 
 
@@ -2216,7 +2238,6 @@ class Errors:
         )
 
     @staticmethod
-    @error_code_decorator
     def error_starting_docker_mdx_server(line):
         return (
             f"Failed starting docker mdx server. stdout: {line}.\n"
@@ -2329,11 +2350,11 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def integration_is_deprecated_and_used(integration_name: str, commands_dict: dict):
-        erorr_str = f"{integration_name} integration contains deprecated commands that are being used by other entities:\n"
+        error_str = f"{integration_name} integration contains deprecated commands that are being used by other entities:\n"
         for command_name, command_usage_list in commands_dict.items():
             current_command_usage = "\n".join(command_usage_list)
-            erorr_str += f"{command_name} is being used in the following locations:\n{current_command_usage}\n"
-        return erorr_str
+            error_str += f"{command_name} is being used in the following locations:\n{current_command_usage}\n"
+        return error_str
 
     @staticmethod
     @error_code_decorator
@@ -2572,11 +2593,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def duplicated_id(obj_id):
-        return (
-            f"The ID {obj_id} already exists, please update the file or update the "
-            f"id_set.json toversion field of this id to match the old occurrence of this id"
-        )
+    def duplicated_id(obj_id, file_path):
+        return f"The ID '{obj_id}' already exists in {file_path}. Please update the file to have a unique ID."
 
     @staticmethod
     @error_code_decorator
@@ -3434,6 +3452,16 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def pack_metadata_invalid_modules():
+        return f"Module field should include some of the following options: {', '.join(MODULES)}."
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_modules_for_non_xsiam():
+        return "Module field can be added only for XSIAM packs (marketplacev2)."
+
+    @staticmethod
+    @error_code_decorator
     def pack_name_is_not_in_xsoar_standards(
         reason, excluded_words: Optional[List[str]] = None
     ):
@@ -3597,6 +3625,34 @@ class Errors:
     @error_code_decorator
     def wrong_version_reputations(object_id, version):
         return f"Reputation object with id {object_id} must have version {version}"
+
+    @staticmethod
+    @error_code_decorator
+    def readme_lint_errors(file, validations):
+        message_to_return = (
+            f"The {file} readme file is not linted properly. See the validations below"
+            f"\n{validations}"
+        )
+        return message_to_return
+
+    @staticmethod
+    @error_code_decorator
+    def description_lint_errors(rn_file_name, validations):
+        message_to_return = (
+            f"The {rn_file_name} description file is not linted properly. See the validations below"
+            f"\n{validations}"
+        )
+
+        return message_to_return
+
+    @staticmethod
+    @error_code_decorator
+    def release_notes_lint_errors(file_name, validations):
+        message_to_return = (
+            f"The {file_name} release notes file is not linted properly See the validations below"
+            f"\n{validations}"
+        )
+        return message_to_return
 
     @staticmethod
     @error_code_decorator
@@ -4200,6 +4256,11 @@ class Errors:
     @error_code_decorator
     def missing_readme_file(location: FileType):
         return f"{location.name} is missing a README file"
+
+    @staticmethod
+    @error_code_decorator
+    def missing_unit_test_file(path: Path):
+        return f"Missing {path.stem}_test.py unit test file for {path.name}."
 
     @staticmethod
     @error_code_decorator

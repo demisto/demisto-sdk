@@ -1,3 +1,4 @@
+import logging
 import os
 from os.path import join
 from pathlib import Path
@@ -14,7 +15,7 @@ from demisto_sdk.commands.update_release_notes.update_rn_manager import (
     UpdateReleaseNotesManager,
 )
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 UPDATE_RN_COMMAND = "update-release-notes"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
@@ -51,11 +52,12 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
     - Ensure message is printed when update release notes process finished.
     - Ensure the release motes content is valid and as expected.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     expected_rn = (
         "\n"
-        + "#### Integrations\n"
-        + "##### New: Azure Feed\n"
+        + "#### Integrations\n\n"
+        + "##### New: Azure Feed\n\n"
         + "- Azure.CloudIPs Feed Integration. (Available from Cortex XSOAR 5.5.0).\n"
     )
     added_files = {
@@ -95,11 +97,15 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
     assert result.exit_code == 0
     assert os.path.isfile(rn_path)
     assert not result.exception
-    assert (
-        "Changes were detected. Bumping FeedAzureValid to version: 1.0.1"
-        in result.stdout
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "Changes were detected. Bumping FeedAzureValid to version: 1.0.1",
+                "Finished updating release notes for FeedAzureValid.",
+            ]
+        ]
     )
-    assert "Finished updating release notes for FeedAzureValid." in result.stdout
 
     with open(rn_path) as f:
         rn = f.read()
@@ -119,9 +125,10 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
     - Ensure message is printed when update release notes process finished.
     - Ensure the release motes content is valid and as expected.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     expected_rn = (
-        "\n" + "#### Integrations\n" + "##### Azure Feed\n" + "- %%UPDATE_RN%%\n"
+        "\n" + "#### Integrations\n\n" + "##### Azure Feed\n\n" + "- %%UPDATE_RN%%\n"
     )
 
     modified_files = {
@@ -164,11 +171,15 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
     assert result.exit_code == 0
     assert os.path.isfile(rn_path)
     assert not result.exception
-    assert (
-        "Changes were detected. Bumping FeedAzureValid to version: 1.0.1"
-        in result.stdout
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "Changes were detected. Bumping FeedAzureValid to version: 1.0.1",
+                "Finished updating release notes for FeedAzureValid.",
+            ]
+        ]
     )
-    assert "Finished updating release notes for FeedAzureValid." in result.stdout
 
     with open(rn_path) as f:
         rn = f.read()
@@ -189,8 +200,9 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
     - Ensure message is printed when update release notes process finished.
     - Ensure the release motes content is valid and as expected.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
-    expected_rn = "\n" + "#### Incident Fields\n" + "- **City**\n"
+    expected_rn = "\n" + "#### Incident Fields\n\n" + "- **City**\n"
 
     runner = CliRunner(mix_stderr=False)
     modified_files = {
@@ -225,11 +237,15 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
     assert result.exit_code == 0
     assert os.path.isfile(rn_path)
     assert not result.exception
-    assert (
-        "Changes were detected. Bumping FeedAzureValid to version: 1.0.1"
-        in result.stdout
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "Changes were detected. Bumping FeedAzureValid to version: 1.0.1",
+                "Finished updating release notes for FeedAzureValid.",
+            ]
+        ]
     )
-    assert "Finished updating release notes for FeedAzureValid." in result.stdout
 
     with open(rn_path) as f:
         rn = f.read()
@@ -249,8 +265,11 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
     - Ensure message is printed when update release notes process finished.
     - Ensure the release motes content is valid and as expected.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
-    expected_rn = "\n" + "#### Integrations\n" + "##### VMware\n" + "- %%UPDATE_RN%%\n"
+    expected_rn = (
+        "\n" + "#### Integrations\n\n" + "##### VMware\n\n" + "- %%UPDATE_RN%%\n"
+    )
 
     runner = CliRunner(mix_stderr=False)
     old_files = {join(VMWARE_PACK_PATH, "Integrations", "integration-VMware.yml")}
@@ -279,8 +298,15 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join("Packs", "VMware")])
     assert result.exit_code == 0
     assert not result.exception
-    assert "Changes were detected. Bumping VMware to version: 1.0.1" in result.stdout
-    assert "Finished updating release notes for VMware." in result.stdout
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "Changes were detected. Bumping VMware to version: 1.0.1",
+                "Finished updating release notes for VMware.",
+            ]
+        ]
+    )
 
     assert os.path.isfile(rn_path)
     with open(rn_path) as f:
@@ -299,6 +325,8 @@ def test_update_release_notes_non_content_path(demisto_client, mocker):
     Then
     - Ensure an error is raised
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     runner = CliRunner(mix_stderr=False)
     mocker.patch.object(ValidateManager, "setup_git_params", return_value="")
     mocker.patch.object(
@@ -323,7 +351,10 @@ def test_update_release_notes_non_content_path(demisto_client, mocker):
 
     assert result.exit_code == 1
     assert result.exception
-    assert "You are not running" in result.stdout  # check error str is in stdout
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        "You are not running",
+    )
 
 
 def test_update_release_notes_existing(demisto_client, mocker):
@@ -339,20 +370,22 @@ def test_update_release_notes_existing(demisto_client, mocker):
     - Ensure message is printed when update release notes process finished.
     - Ensure the release motes content is valid and as expected.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     expected_rn = (
         "\n"
-        + "#### Integrations\n"
-        + "##### New: Azure Feed\n"
+        + "#### Integrations\n\n"
+        + "##### New: Azure Feed\n\n"
         + "- Azure.CloudIPs Feed Integration.\n"
         + "\n"
-        + "#### Incident Fields\n"
+        + "#### Incident Fields\n\n"
         + "- **City**\n\n"
     )
 
     input_rn = (
         "\n"
-        + "#### Integrations\n"
-        + "##### New: Azure Feed\n"
+        + "#### Integrations\n\n"
+        + "##### New: Azure Feed\n\n"
         + "- Azure.CloudIPs Feed Integration.\n"
     )
 
@@ -393,7 +426,10 @@ def test_update_release_notes_existing(demisto_client, mocker):
     assert result.exit_code == 0
     assert os.path.exists(rn_path)
     assert not result.exception
-    assert "Finished updating release notes for FeedAzureValid." in result.stdout
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        "Finished updating release notes for FeedAzureValid.",
+    )
 
     with open(rn_path) as f:
         rn = f.read()
@@ -415,6 +451,8 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
     - Ensure release notes file created with no errors for APIModule and related pack FeedTAXII:
     - Ensure message is printed when update release notes process finished.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     repo.setup_one_pack("ApiModules")
     api_module_pack = repo.packs[0]
     api_module_script_path = join(
@@ -489,11 +527,15 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
 
     assert result.exit_code == 0
     assert not result.exception
-    assert (
-        "Release notes are not required for the ApiModules pack since this pack is not versioned."
-        in result.stdout
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "Release notes are not required for the ApiModules pack since this pack is not versioned.",
+                "Changes were detected. Bumping FeedTAXII to version: 1.0.1",
+            ]
+        ]
     )
-    assert "Changes were detected. Bumping FeedTAXII to version: 1.0.1" in result.stdout
 
 
 def test_update_release_on_matadata_change(demisto_client, mocker, repo):
@@ -507,6 +549,8 @@ def test_update_release_on_matadata_change(demisto_client, mocker, repo):
     Then
     - Ensure not find changes which would belong in release notes .
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     pack = repo.create_pack("FeedAzureValid")
     pack.pack_metadata.write_json(
         open("demisto_sdk/tests/test_files/1.pack_metadata.json").read()
@@ -550,9 +594,14 @@ def test_update_release_on_matadata_change(demisto_client, mocker, repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [UPDATE_RN_COMMAND, "-g"])
     assert result.exit_code == 0
-    assert (
-        "No changes that require release notes were detected. If such changes were made, "
-        "please commit the changes and rerun the command" in result.stdout
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "No changes that require release notes were detected. If such changes were made, "
+                "please commit the changes and rerun the command",
+            ]
+        ]
     )
 
 
@@ -568,6 +617,8 @@ def test_update_release_notes_master_ahead_of_current(demisto_client, mocker, re
     - Ensure release notes file created with no errors
     - Ensure the new version is taken from master and not from local metadata file.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     modified_files = {
         join(AZURE_FEED_PACK_PATH, "IncidentFields", "incidentfield-city.json")
     }
@@ -596,11 +647,16 @@ def test_update_release_notes_master_ahead_of_current(demisto_client, mocker, re
         )
     assert result.exit_code == 0
     assert not result.exception
-    assert (
-        "Changes were detected. Bumping FeedAzureValid to version: 2.0.1"
-        in result.stdout
+
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "Changes were detected. Bumping FeedAzureValid to version: 2.0.1",
+                "Finished updating release notes for FeedAzureValid.",
+            ]
+        ]
     )
-    assert "Finished updating release notes for FeedAzureValid." in result.stdout
 
 
 def test_update_release_notes_master_unavailable(demisto_client, mocker, repo):
@@ -615,6 +671,7 @@ def test_update_release_notes_master_unavailable(demisto_client, mocker, repo):
     - Ensure release notes file created with no errors
     - Ensure the new version is taken from local metadata file.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     modified_files = {
         join(
@@ -650,14 +707,18 @@ def test_update_release_notes_master_unavailable(demisto_client, mocker, repo):
         )
     assert result.exit_code == 0
     assert not result.exception
-    assert (
-        "Changes were detected. Bumping FeedAzureValid to version: 1.1.1"
-        in result.stdout
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "Changes were detected. Bumping FeedAzureValid to version: 1.1.1",
+                "Finished updating release notes for FeedAzureValid.",
+            ]
+        ]
     )
-    assert "Finished updating release notes for FeedAzureValid." in result.stdout
 
 
-def test_force_update_release_no_pack_given(demisto_client, repo):
+def test_force_update_release_no_pack_given(demisto_client, repo, mocker):
     """
     Given
     - Nothing have changed.
@@ -668,9 +729,14 @@ def test_force_update_release_no_pack_given(demisto_client, repo):
     Then
     - Ensure that an error is printed.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     runner = CliRunner(mix_stderr=True)
-    result = runner.invoke(main, [UPDATE_RN_COMMAND, "--force"])
-    assert "Please add a specific pack in order to force" in result.stdout
+    runner.invoke(main, [UPDATE_RN_COMMAND, "--force"])
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        "Please add a specific pack in order to force",
+    )
 
 
 def test_update_release_notes_specific_version_invalid(demisto_client, repo):
@@ -705,6 +771,7 @@ def test_update_release_notes_specific_version_valid(demisto_client, mocker, rep
     - Ensure release notes file created with no errors
     - Ensure the new version is taken from local metadata file.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
     modified_files = {
         join(
@@ -741,11 +808,18 @@ def test_update_release_notes_specific_version_valid(demisto_client, mocker, rep
         )
     assert result.exit_code == 0
     assert not result.exception
-    assert (
-        "Changes were detected. Bumping FeedAzureValid to version: 4.0.0"
-        in result.stdout
+    for current_call in logger_info.call_args_list:
+        if type(current_call[0]) == tuple:
+            print(f"*** INFO *** {current_call[0][0]=}")
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "Changes were detected. Bumping FeedAzureValid to version: 4.0.0",
+                "Finished updating release notes for FeedAzureValid.",
+            ]
+        ]
     )
-    assert "Finished updating release notes for FeedAzureValid." in result.stdout
 
 
 def test_force_update_release(demisto_client, mocker, repo):
@@ -759,6 +833,8 @@ def test_force_update_release(demisto_client, mocker, repo):
     Then
     - Ensure that RN were updated.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+
     rn_path = join(THINKCANARY_RN_FOLDER, "1_0_1.md")
     if os.path.exists(rn_path):
         os.remove(rn_path)
@@ -785,12 +861,19 @@ def test_force_update_release(demisto_client, mocker, repo):
     )
 
     runner = CliRunner(mix_stderr=True)
-    result = runner.invoke(
+    runner.invoke(
         main, [UPDATE_RN_COMMAND, "-i", join("Packs", "ThinkCanary"), "--force"]
     )
-    assert "Bumping ThinkCanary to version: 1.0.1" in result.stdout
-    assert "Finished updating release notes for ThinkCanary." in result.stdout
+    assert all(
+        [
+            str_in_call_args_list(logger_info.call_args_list, current_str)
+            for current_str in [
+                "Bumping ThinkCanary to version: 1.0.1",
+                "Finished updating release notes for ThinkCanary.",
+            ]
+        ]
+    )
 
     with open(rn_path) as f:
         rn = f.read()
-    assert "##### ThinkCanary\n- %%UPDATE_RN%%\n" == rn
+    assert "##### ThinkCanary\n\n- %%UPDATE_RN%%\n" == rn

@@ -1,9 +1,8 @@
 import glob
-import json
 import os
 import shutil
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import git
 import pytest
@@ -16,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR,
     LAYOUTS_DIR,
+    MARKETPLACE_TO_CORE_PACKS_FILE,
     METADATA_FILE_NAME,
     PACKS_DIR,
     PACKS_PACK_IGNORE_FILE_NAME,
@@ -38,14 +38,14 @@ from demisto_sdk.commands.common.git_content_config import (
     GitCredentials,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
-    LOG_COLORS,
     MarketplaceTagParser,
     TagParser,
     arg_to_list,
     compare_context_path_in_yml_and_readme,
+    extract_field_from_mapping,
     field_to_cli_name,
     filter_files_by_type,
     filter_files_on_pack,
@@ -68,6 +68,7 @@ from demisto_sdk.commands.common.tools import (
     get_last_release_version,
     get_last_remote_release_version,
     get_latest_release_notes_text,
+    get_marketplace_to_core_packs,
     get_pack_metadata,
     get_relative_path_from_packs_dir,
     get_release_note_entries,
@@ -125,6 +126,9 @@ from TestSuite.test_tools import ChangeCWD
 
 GIT_ROOT = git_path()
 yaml = YAML_Handler()
+json = JSON_Handler()
+
+SENTENCE_WITH_UMLAUTS = "Nett hier. Aber waren Sie schon mal in Baden-Württemberg?"
 
 
 class TestGenericFunctions:
@@ -146,19 +150,23 @@ class TestGenericFunctions:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "suffix,dump_function", ((".json", json.dumps), (".yml", yaml.dumps))
+        "suffix,dumps_method", ((".json", json.dumps), (".yml", yaml.dumps))
     )
     def test_get_file_non_unicode(
-        tmp_path, suffix: str, dump_function: Callable[[Dict], Any]
+        tmp_path,
+        suffix: str,
+        dumps_method: Callable,
     ):
         """Tests reading a non-unicode file"""
-        text = "Nett hier. Aber waren Sie schon mal in Baden-Württemberg?"  # the umlaut is important
         path = (tmp_path / "non_unicode").with_suffix(suffix)
 
-        path.write_text(
-            dump_function({"text": text}, ensure_ascii=False), encoding="latin-1"
+        path.write_bytes(
+            dumps_method({"text": SENTENCE_WITH_UMLAUTS}, ensure_ascii=False).encode(
+                "latin-1"
+            )
         )
-        assert get_file(path, suffix) == {"text": text}
+        assert "ü" in path.read_text(encoding="latin-1")
+        assert get_file(path, suffix) == {"text": SENTENCE_WITH_UMLAUTS}
 
     @pytest.mark.parametrize(
         "file_name, prefix, result",
@@ -585,18 +593,6 @@ def test_capital_case():
     assert res == "Good_life-here V2"
     res = tools.capital_case("")
     assert res == ""
-
-
-class TestPrintColor:
-    def test_print_color(self, mocker):
-        mocker.patch("builtins.print")
-
-        tools.print_color("test", LOG_COLORS.GREEN)
-
-        print_args = print.call_args[0][0]
-        assert print_args == "{}{}{}".format(
-            LOG_COLORS.GREEN, "test", LOG_COLORS.NATIVE
-        )
 
 
 class TestReleaseVersion:
@@ -1888,6 +1884,10 @@ KEBAB_CASES = [
     ("Scan-File", "scan-file"),
     ("Scan- File", "scan-file"),
     ("Scan -File", "scan-file"),
+    ("Audit - 'X509 Sessions'", "audit-x509-sessions"),
+    ("Scan IPs", "scan-ips"),
+    ("URL Finder", "url-finder"),
+    ("1URL2 3Finder4 5", "1url2-3finder4-5"),
 ]
 
 
@@ -2488,3 +2488,45 @@ def test_find_type_by_path(path: Path, expected_type: Optional[FileType]):
 )
 def test_field_to_cliname(value: str, expected: str):
     assert field_to_cli_name(value) == expected
+
+
+def test_get_core_packs(mocker):
+    def mock_get_remote_file(full_file_path, git_content_config):
+        if MARKETPLACE_TO_CORE_PACKS_FILE[MarketplaceVersions.XSOAR] in full_file_path:
+            return {
+                "core_packs_list": ["Base", "CommonScripts", "Active_Directory_Query"]
+            }
+        elif (
+            MARKETPLACE_TO_CORE_PACKS_FILE[MarketplaceVersions.MarketplaceV2]
+            in full_file_path
+        ):
+            return {"core_packs_list": ["Base", "CommonScripts", "Core"]}
+        elif (
+            MARKETPLACE_TO_CORE_PACKS_FILE[MarketplaceVersions.XPANSE] in full_file_path
+        ):
+            return ["Base", "CommonScripts", "Core"]
+        return None
+
+    mocker.patch.object(tools, "get_remote_file", side_effect=mock_get_remote_file)
+    mp_to_core_packs = get_marketplace_to_core_packs()
+    assert len(mp_to_core_packs) == len(MarketplaceVersions)
+    for mp_core_packs in mp_to_core_packs.values():
+        assert "Base" in mp_core_packs
+
+
+@pytest.mark.parametrize(
+    "mapping_value, expected_output",
+    [
+        ("employeeid", "employeeid"),
+        ("${employeeid}", "employeeid"),
+        ("employeeid.hello", "employeeid"),
+        ("employeeid.[0].hi", "employeeid"),
+        ("${employeeid.hello}", "employeeid"),
+        ("${employeeid.[0]}", "employeeid"),
+        ("${.=1}", ""),
+        (".", ""),
+        ('"not a field"', ""),
+    ],
+)
+def test_extract_field_from_mapping(mapping_value, expected_output):
+    assert extract_field_from_mapping(mapping_value) == expected_output

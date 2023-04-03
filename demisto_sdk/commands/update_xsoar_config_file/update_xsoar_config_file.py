@@ -5,7 +5,8 @@ from typing import Dict, List
 import demisto_client
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -38,8 +39,8 @@ class XSOARConfigFileUpdater:
         add_all_marketplace_packs: bool = False,
         insecure: bool = False,
         file_path: str = XSOAR_CONFIG_FILE_JSON,
+        **kwargs,
     ):
-        logging.disable(logging.CRITICAL)
         self.pack_id = pack_id
         self.pack_data = pack_data
         self.add_marketplace_pack = add_marketplace_pack
@@ -82,14 +83,10 @@ class XSOARConfigFileUpdater:
         if self.add_marketplace_pack or self.add_custom_pack:
             if not self.pack_id:
                 is_valid_pack_structure = False
-                print_color(
-                    "Error: Missing option '-pi' / '--pack-id'.", LOG_COLORS.RED
-                )
+                logger.info("[red]Error: Missing option '-pi' / '--pack-id'.[/red]")
             if not self.pack_data:
                 is_valid_pack_structure = False
-                print_color(
-                    "Error: Missing option '-pd' / '--pack-data'.", LOG_COLORS.RED
-                )
+                logger.info("[red]Error: Missing option '-pd' / '--pack-data'.[/red]")
         return is_valid_pack_structure
 
     def add_all_installed_packs_to_config_file(self):

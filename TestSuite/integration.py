@@ -33,6 +33,9 @@ class Integration:
         self.code = File(
             self._tmpdir_integration_path / f"{self.name}.py", self._repo.path
         )
+        self.test = File(
+            self._tmpdir_integration_path / f"{self.name}_test.py", self._repo.path
+        )
         self.yml = YAML(
             self._tmpdir_integration_path / f"{self.name}.yml", self._repo.path
         )
@@ -62,6 +65,8 @@ class Integration:
             self.code.write(code)
         else:
             self.code.write("from CommonServerPython import *\n\n\n")
+
+        self.test.write("from CommonServerPython import *\n\n\n")
 
         if yml is None:
             yml = {}

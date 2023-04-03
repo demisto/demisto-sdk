@@ -20,7 +20,7 @@ import requests
 import urllib3
 from demisto_client.demisto_api import DefaultApi, Incident
 from demisto_client.demisto_api.rest import ApiException
-from slack import WebClient as SlackClient
+from slack_sdk import WebClient as SlackClient
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -1845,11 +1845,25 @@ class TestContext:
                 self=self.client, method="GET", path=f"/inv-playbook/{self.incident_id}"
             )
             investigation_playbook = ast.literal_eval(investigation_playbook_raw[0])
-        except ApiException:
-            self.build_context.logging_module.exception(
-                "Failed to get investigation playbook state, error trying to communicate with demisto server"
-            )
-            return PB_Status.FAILED
+        except ApiException as err:
+            self.build_context.logging_module.debug(f"{err=}", real_time=True)
+            self.build_context.logging_module.debug(f"{err.status=}", real_time=True)
+            if err.status == 401:
+                # resetting client due to possible session timeouts
+                self.server_context._configure_new_client()
+                self.build_context.logging_module.debug(
+                    f"new demisto_client created because of err: {err}", real_time=True
+                )
+                # after resetting client, playbook's state should still be in progress
+                return PB_Status.IN_PROGRESS
+            # if a different error other than 401 was returned, we log the exception and fail the test playbook.
+            else:
+                self.build_context.logging_module.exception(
+                    f"Failed to get investigation playbook state, "
+                    f"error trying to communicate with demisto server: {err}",
+                    real_time=True,
+                )
+                return PB_Status.FAILED
 
         try:
             state = investigation_playbook["state"]
@@ -2765,6 +2779,7 @@ class ServerContext:
             self.build_context.logging_module.info(
                 "Running mock-disabled tests", real_time=True
             )
+            self._configure_new_client()
             self._execute_unmockable_tests()
             if self.use_retries_mechanism:
                 self.build_context.logging_module.info(

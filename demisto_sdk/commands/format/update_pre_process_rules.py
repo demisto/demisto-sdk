@@ -1,7 +1,6 @@
+import logging
 import traceback
 from typing import Tuple
-
-import click
 
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
@@ -14,6 +13,8 @@ from demisto_sdk.commands.format.format_constants import (
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
+logger = logging.getLogger("demisto-sdk")
+
 
 class PreProcessRulesFormat(BaseUpdateJSON):
     def __init__(
@@ -23,7 +24,6 @@ class PreProcessRulesFormat(BaseUpdateJSON):
         path: str = "pre-process-rules",
         from_version: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
         **kwargs,
     ):
         super().__init__(
@@ -32,7 +32,6 @@ class PreProcessRulesFormat(BaseUpdateJSON):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            verbose=verbose,
             **kwargs,
         )
 
@@ -46,9 +45,7 @@ class PreProcessRulesFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n======= Updating file: {self.source_file} =======", fg="white"
-            )
+            logger.info(f"\n======= Updating file: {self.source_file} =======")
             super().update_json(
                 default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(
                     FileType.PRE_PROCESS_RULES
@@ -64,9 +61,7 @@ class PreProcessRulesFormat(BaseUpdateJSON):
                     )
                 )
             )
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.debug(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE

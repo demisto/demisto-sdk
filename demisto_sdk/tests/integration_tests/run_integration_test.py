@@ -1,3 +1,5 @@
+import logging
+
 import pytest
 from click.testing import CliRunner
 from demisto_client.demisto_api import DefaultApi
@@ -5,6 +7,7 @@ from demisto_client.demisto_api import DefaultApi
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.run_cmd.runner import Runner
+from TestSuite.test_tools import str_in_call_args_list
 
 DEBUG_FILE_PATH = (
     f"{git_path()}/demisto_sdk/commands/run_cmd/tests/test_data/kl-get-component.txt"
@@ -35,7 +38,9 @@ def set_environment_variables(monkeypatch):
     monkeypatch.delenv("DEMISTO_PASSWORD", raising=False)
 
 
-def test_integration_run_non_existing_command(mocker, set_environment_variables):
+def test_integration_run_non_existing_command(
+    mocker, monkeypatch, set_environment_variables
+):
     """
     Given
     - Non-existing command to run.
@@ -47,18 +52,28 @@ def test_integration_run_non_existing_command(mocker, set_environment_variables)
     Then
     - Ensure output is the appropriate error.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
     mocker.patch.object(DefaultApi, "investigation_add_entries_sync", return_value=None)
     mocker.patch.object(Runner, "_get_playground_id", return_value="pg_id")
-    result = CliRunner(
-        mix_stderr=False,
-    ).invoke(main, ["run", "-q", "!non-existing-command", "-D", "-v"])
+    result = CliRunner(mix_stderr=False,).invoke(
+        main,
+        [
+            "run",
+            "-q",
+            "!non-existing-command",
+            "-D",
+        ],
+    )
     assert 0 == result.exit_code
     assert not result.exception
-    assert "Command did not run, make sure it was written correctly." in result.output
-    assert not result.stderr
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        "Command did not run, make sure it was written correctly.",
+    )
 
 
-def test_json_to_outputs_flag(mocker, set_environment_variables):
+def test_json_to_outputs_flag(mocker, monkeypatch, set_environment_variables):
     """
     Given
     - kl-get-components command
@@ -69,6 +84,11 @@ def test_json_to_outputs_flag(mocker, set_environment_variables):
     Then
     - Ensure the json_to_outputs command is running correctly
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    monkeypatch.setenv("COLUMNS", "1000")
+
     # mocks to allow the command to run locally
     mocker.patch.object(Runner, "_get_playground_id", return_value="pg_id")
     mocker.patch.object(Runner, "_run_query", return_value=["123"])
@@ -80,13 +100,19 @@ def test_json_to_outputs_flag(mocker, set_environment_variables):
     run_result = CliRunner(
         mix_stderr=False,
     ).invoke(main, ["run", "-q", command, "--json-to-outputs", "-p", "Keylight", "-r"])
-    assert 0 == run_result.exit_code
-    assert not run_result.exception
-    assert YAML_OUTPUT in run_result.stdout
+
+    assert run_result.exit_code == 0
     assert not run_result.stderr
+    assert not run_result.exception
+
+    assert str_in_call_args_list(logger_info.call_args_list, YAML_OUTPUT)
+    assert logger_warning.call_count == 0
+    assert logger_error.call_count == 0
 
 
-def test_json_to_outputs_flag_fail_no_prefix(mocker, set_environment_variables):
+def test_json_to_outputs_flag_fail_no_prefix(
+    mocker, monkeypatch, set_environment_variables
+):
     """
     Given
     - kl-get-components command
@@ -97,6 +123,8 @@ def test_json_to_outputs_flag_fail_no_prefix(mocker, set_environment_variables):
     Then
     - Ensure the json_to_outputs command is failing due to no prefix argument provided.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
     # mocks to allow the command to run locally
     mocker.patch.object(Runner, "_get_playground_id", return_value="pg_id")
     mocker.patch.object(Runner, "_run_query", return_value=["123"])
@@ -109,8 +137,7 @@ def test_json_to_outputs_flag_fail_no_prefix(mocker, set_environment_variables):
         mix_stderr=False,
     ).invoke(main, ["run", "-q", command, "--json-to-outputs"])
     assert 1 == run_result.exit_code
-    assert (
-        "A prefix for the outputs is needed for this command. Please provide one"
-        in run_result.stdout
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        "A prefix for the outputs is needed for this command. Please provide one",
     )
-    assert not run_result.stderr

@@ -6,12 +6,14 @@ from demisto_sdk.commands.common.constants import (
     PACKS_INTEGRATION_YML_REGEX,
     FileType,
 )
-from demisto_sdk.commands.common.errors import FOUND_FILES_AND_ERRORS, Errors
+from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
+from demisto_sdk.commands.common.hook_validations.readme import mdx_server_is_up
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from demisto_sdk.commands.common.markdown_lint import run_markdownlint
 from demisto_sdk.commands.common.tools import find_type, get_yaml, os, re
 
 CONTRIBUTOR_DETAILED_DESC = "Contributed Integration"
@@ -29,15 +31,11 @@ class DescriptionValidator(BaseValidator):
         self,
         file_path: str,
         ignored_errors=None,
-        print_as_warnings=False,
-        suppress_print: bool = False,
         json_file_path: Optional[str] = None,
         specific_validations: Optional[List[str]] = None,
     ):
         super().__init__(
             ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
-            suppress_print=suppress_print,
             json_file_path=json_file_path,
             specific_validations=specific_validations,
         )
@@ -64,6 +62,7 @@ class DescriptionValidator(BaseValidator):
             not self.data_dictionary.get("detaileddescription")
             and ".md" in self.file_path
         ):
+            # self.has_markdown_lint_errors()
             self.is_valid_description_name()
             self.contains_contrib_details()
 
@@ -293,15 +292,29 @@ class DescriptionValidator(BaseValidator):
                 invalid_lines, yml_or_file
             )
 
-            # print only if the error is not already in the report
-            check_in_report = f"{integration_path} - [{error_code}]"
             if self.handle_error(
                 error_message,
                 error_code,
                 file_path=integration_path,
-                should_print=check_in_report not in FOUND_FILES_AND_ERRORS,
             ):
                 self._is_valid = False
                 return False
 
+        return True
+
+    # @error_codes("DS108")
+    def has_markdown_lint_errors(self):
+        with open(self.file_path) as f:
+            description_content = f.read()
+        if mdx_server_is_up():
+            markdown_response = run_markdownlint(description_content)
+            if markdown_response.has_errors:
+                error_message, error_code = Errors.description_lint_errors(
+                    self.file_path, markdown_response.validations
+                )
+                if self.handle_error(
+                    error_message, error_code, file_path=self.file_path
+                ):
+                    self._is_valid = False
+                    return False
         return True

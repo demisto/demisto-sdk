@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
 )
 from demisto_sdk.commands.common.tools import (
     get_all_content_objects_paths_in_dir,
-    get_core_pack_list,
+    get_marketplace_to_core_packs,
     get_pack_name,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
@@ -49,6 +49,7 @@ class GraphValidator(BaseValidator):
             self.validate_toversion_fields(),
             self.is_file_using_unknown_content(),
             self.is_file_display_name_already_exists(),
+            self.validate_duplicate_ids(),
         )
         return all(is_valid)
 
@@ -58,9 +59,28 @@ class GraphValidator(BaseValidator):
         is_valid.append(self.are_core_pack_dependencies_valid())
         return all(is_valid)
 
+    @error_codes("GR105")
+    def validate_duplicate_ids(self):
+        is_valid = True
+        for content_item, duplicates in self.graph.validate_duplicate_ids(
+            self.file_paths
+        ):
+            for duplicate in duplicates:
+                error_message, error_code = Errors.duplicated_id(
+                    content_item.object_id, duplicate.path
+                )
+                if self.handle_error(
+                    error_message,
+                    error_code,
+                    file_path=content_item.path,
+                    drop_line=True,
+                ):
+                    is_valid = False
+        return is_valid
+
     @error_codes("PA124")
     def are_core_pack_dependencies_valid(self):
-        """Validates that core packs don't depend on non-core packs.
+        """Validates, for each marketplace version, that its core packs don't depend on non-core packs.
         On `validate -a`, all core packs are checked.
 
         Note: if at the first-level dependency of core packs there are only core packs, for every
@@ -69,28 +89,30 @@ class GraphValidator(BaseValidator):
         """
         is_valid = True
 
-        core_pack_list = get_core_pack_list()
-        if not self.pack_ids:
-            pack_ids_to_check = core_pack_list
-        else:
-            pack_ids_to_check = [
-                pack_id for pack_id in self.pack_ids if pack_id in core_pack_list
-            ]
+        mp_to_core_packs = get_marketplace_to_core_packs()
+        for marketplace, mp_core_packs in mp_to_core_packs.items():
+            if not self.pack_ids:
+                pack_ids_to_check = list(mp_core_packs)
+            else:
+                pack_ids_to_check = [
+                    pack_id for pack_id in self.pack_ids if pack_id in mp_core_packs
+                ]
 
-        for core_pack_node in self.graph.find_core_packs_depend_on_non_core_packs(
-            pack_ids_to_check, core_pack_list
-        ):
-            non_core_pack_dependencies = [
-                relationship.content_item_to.object_id
-                for relationship in core_pack_node.depends_on
-            ]
-            error_message, error_code = Errors.invalid_core_pack_dependencies(
-                core_pack_node.object_id, non_core_pack_dependencies
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=core_pack_node.path
+            for core_pack_node in self.graph.find_core_packs_depend_on_non_core_packs(
+                pack_ids_to_check, marketplace, list(mp_core_packs)
             ):
-                is_valid = False
+                non_core_pack_dependencies = [
+                    relationship.content_item_to.object_id
+                    for relationship in core_pack_node.depends_on
+                    if not relationship.is_test
+                ]
+                error_message, error_code = Errors.invalid_core_pack_dependencies(
+                    core_pack_node.object_id, non_core_pack_dependencies
+                )
+                if self.handle_error(
+                    error_message, error_code, file_path=core_pack_node.path
+                ):
+                    is_valid = False
 
         return is_valid
 
@@ -102,7 +124,7 @@ class GraphValidator(BaseValidator):
         is_valid = True
         content_item: ContentItem
         for content_item in self.graph.find_uses_paths_with_invalid_marketplaces(
-            self.file_paths
+            self.pack_ids
         ):
             used_content_items = [
                 relationship.content_item_to.object_id
@@ -204,11 +226,29 @@ class GraphValidator(BaseValidator):
 
     @error_codes("GR103")
     def is_file_using_unknown_content(self):
-        """Validates that there is no usage of unknown content items."""
+        """Validates that there is no usage of unknown content items.
+        The validation runs twice:
+        1. Cases where a warning should be raised - if the using content item is a test playbook/test script,
+            or if the dependency is optional.
+        2. Cases where an error should be raised - the complementary case.
+        """
+        is_valid = [
+            self._find_unknown_content_uses(raises_error=False),
+            self._find_unknown_content_uses(raises_error=True),
+        ]
+        return all(is_valid)
+
+    def _find_unknown_content_uses(self, raises_error: bool) -> bool:
+        """Validates that there is no usage of unknown content items.
+        Note: if self.file_paths is empty, the validation runs on all files - in this case, returns a warning.
+        otherwise, returns an error iff raises_error is True.
+        """
 
         is_valid = True
         content_item: ContentItem
-        for content_item in self.graph.get_unknown_content_uses(self.file_paths):
+        for content_item in self.graph.get_unknown_content_uses(
+            self.file_paths, raises_error=raises_error
+        ):
             unknown_content_names = [
                 relationship.content_item_to.object_id or relationship.content_item_to.name  # type: ignore
                 for relationship in content_item.uses
@@ -217,7 +257,10 @@ class GraphValidator(BaseValidator):
                 content_item.name, unknown_content_names
             )
             if self.handle_error(
-                error_message, error_code, content_item.path, warning=True
+                error_message,
+                error_code,
+                content_item.path,
+                warning=not bool(self.file_paths) or not raises_error,
             ):
                 is_valid = False
 

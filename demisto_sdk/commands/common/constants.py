@@ -641,9 +641,8 @@ CORRELATION_RULES_YML_REGEX = (
 
 PARSING_RULES_DIR_REGEX = rf"{PACK_DIR_REGEX}/{PARSING_RULES_DIR}"
 PARSING_RULES_PACKAGE_REGEX = rf"{PARSING_RULES_DIR_REGEX}\/([^\\/]+)"
-PARSING_RULES_YML_REGEX = (
-    rf"{PARSING_RULES_PACKAGE_REGEX}/(?:parsingrule-)?([^/]+)\.yml"
-)
+PARSING_RULE_YML_REGEX = rf"{PARSING_RULES_PACKAGE_REGEX}/(?:parsingrule-)?([^/]+)\.yml"
+PARSING_RULE_RULES_REGEX = rf"{PARSING_RULES_PACKAGE_REGEX}\/([^/]+)\.xif"
 
 
 # Modeling Rules
@@ -741,6 +740,7 @@ PACK_METADATA_AUTHOR = "author"
 PACK_METADATA_URL = "url"
 PACK_METADATA_EMAIL = "email"
 PACK_METADATA_CATEGORIES = "categories"
+PACK_METADATA_MODULES = "modules"
 PACK_METADATA_TAGS = "tags"
 PACK_METADATA_CREATED = "created"
 PACK_METADATA_CERTIFICATION = "certification"
@@ -763,6 +763,7 @@ PACK_METADATA_FIELDS = (
     PACK_METADATA_KEYWORDS,
 )
 API_MODULES_PACK = "ApiModules"
+API_MODULE_FILE_SUFFIX = "ApiModule"
 API_MODULE_PY_REGEX = r"{}{}/{}/{}/([^/]+)/([^.]+)\.py".format(
     CAN_START_WITH_DOT_SLASH, PACKS_DIR, API_MODULES_PACK, SCRIPTS_DIR
 )
@@ -803,6 +804,9 @@ PACKS_PACK_META_FILE_NAME = "pack_metadata.json"
 PACKS_README_FILE_NAME = "README.md"
 PACKS_CONTRIBUTORS_FILE_NAME = "CONTRIBUTORS.json"
 AUTHOR_IMAGE_FILE_NAME = "Author_image.png"
+METADATA_FILE_NAME = "pack_metadata.json"
+
+CONF_JSON_FILE_NAME = "conf.json"
 
 PYTHON_TEST_REGEXES = [PACKS_SCRIPT_TEST_PY_REGEX, PACKS_INTEGRATION_TEST_PY_REGEX]
 
@@ -964,6 +968,9 @@ CHECKED_TYPES_REGEXES = [
     MODELING_RULE_YML_REGEX,
     MODELING_RULE_RULES_REGEX,
     MODELING_RULE_SCHEMA_REGEX,
+    # # Parsing Rules
+    PARSING_RULE_YML_REGEX,
+    PARSING_RULE_RULES_REGEX,
     PACKS_CLASSIFIER_JSON_REGEX,
     PACKS_CLASSIFIER_JSON_5_9_9_REGEX,
     PACKS_MAPPER_JSON_REGEX,
@@ -995,7 +1002,12 @@ PATHS_TO_VALIDATE: List[str] = sum([PYTHON_ALL_REGEXES, JSON_ALL_REPORTS_REGEXES
 
 PACKAGE_SCRIPTS_REGEXES = [PACKS_SCRIPT_PY_REGEX, PACKS_SCRIPT_YML_REGEX]
 
-PACKAGE_SUPPORTING_DIRECTORIES = [INTEGRATIONS_DIR, SCRIPTS_DIR, MODELING_RULES_DIR]
+PACKAGE_SUPPORTING_DIRECTORIES = [
+    INTEGRATIONS_DIR,
+    SCRIPTS_DIR,
+    MODELING_RULES_DIR,
+    PARSING_RULES_DIR,
+]
 
 IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_REGEX]
 
@@ -1240,7 +1252,7 @@ SCHEMA_TO_REGEX = {
     JOB: JSON_ALL_JOB_REGEXES,
     WIZARD: JSON_ALL_WIZARD_REGEXES,
     "correlationrule": [CORRELATION_RULES_YML_REGEX],
-    "parsingrule": [PARSING_RULES_YML_REGEX],
+    "parsingrule": [PARSING_RULE_YML_REGEX],
     "xsiamdashboard": [XSIAM_DASHBOARD_JSON_REGEX],
     "xsiamreport": [XSIAM_REPORT_JSON_REGEX],
     "trigger": [TRIGGER_JSON_REGEX],
@@ -1251,7 +1263,7 @@ SCHEMA_TO_REGEX = {
 EXTERNAL_PR_REGEX = r"^pull/(\d+)$"
 
 FILE_TYPES_PATHS_TO_VALIDATE = {"reports": JSON_ALL_REPORTS_REGEXES}
-DEPENDENCIES_DOCKER = "demisto/demisto-sdk-dependencies:1.0.0.36679"
+MDX_SERVER_DOCKER_IMAGE = "devdemisto/mdx_node_server:1.0.0.48264"
 DEF_DOCKER = "demisto/python:1.3-alpine"
 DEF_DOCKER_PWSH = "demisto/powershell:6.2.3.5563"
 
@@ -1339,6 +1351,7 @@ XSOAR_SUPPORT_URL = "https://www.paloaltonetworks.com/cortex"
 MARKETPLACE_LIVE_DISCUSSIONS = "https://live.paloaltonetworks.com/t5/cortex-xsoar-discussions/bd-p/Cortex_XSOAR_Discussions"
 EXCLUDED_DISPLAY_NAME_WORDS = ["partner", "community"]
 MARKETPLACES = ["xsoar", "marketplacev2"]
+MODULES = ["compliance"]
 
 # From Version constants
 FILETYPE_TO_DEFAULT_FROMVERSION = {
@@ -1355,6 +1368,10 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.MODELING_RULE: "6.10.0",
     FileType.LAYOUT_RULE: "6.10.0",
 }
+
+DEFAULT_PYTHON_VERSION = "3.10"
+DEFAULT_PYTHON2_VERSION = "2.7"
+
 # This constant below should always be two versions before the latest server version
 GENERAL_DEFAULT_FROMVERSION = "6.8.0"
 VERSION_5_5_0 = "5.5.0"
@@ -1563,8 +1580,6 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = [
     "blocked",
 ]
 
-METADATA_FILE_NAME = "pack_metadata.json"
-
 CONTEXT_OUTPUT_README_TABLE_HEADER = "| **Path** | **Type** | **Description** |"
 
 ARGUMENT_FIELDS_TO_CHECK = ["defaultValue", "required", "isArray"]
@@ -1674,6 +1689,13 @@ class MarketplaceVersions(str, Enum):
     XSOAR = "xsoar"
     MarketplaceV2 = "marketplacev2"
     XPANSE = "xpanse"
+
+
+MARKETPLACE_TO_CORE_PACKS_FILE: Dict[MarketplaceVersions, str] = {
+    MarketplaceVersions.XSOAR: "Tests/Marketplace/core_packs_list.json",
+    MarketplaceVersions.MarketplaceV2: "Tests/Marketplace/core_packs_mpv2_list.json",
+    MarketplaceVersions.XPANSE: "Tests/Marketplace/core_packs_xpanse_list.json",
+}
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {

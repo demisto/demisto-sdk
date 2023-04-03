@@ -1,8 +1,77 @@
 # Changelog
 
 ## Unreleased
-* Fixed an issue where **lint** failed when using the `-cdam` flag with changed dependant api modules due to partial file duplications filtering.
+* Fixed an issue in the **download** command where layouts were overriden even without the `-f` option.
+* Fixed an issue where Demisto-SDK did not detect layout ID when using the **download** command.
+* Fixed an issue where the **lint** command ran on `native:dev` supported content when passing the `--docker-image all` flag, instead it will run on `native:candidate`.
+* Added support for `native:candidate` as a docker image flag for **lint** command.
+* Fixed an issue where logs and messages would not show when using the **download** command.
+* Fixed an issue where the `server_min_version` field in metadata was an empty value when parsing packs without content items.
+* Fixed an issue where running **openapi-codegen** resulted in false-positive error messages.
+* Fixed an issue where **generate-python-to-yml** generated input arguments as required even though required=False was specified.
+* Fixed an issue where **generate-python-to-yml** generated input arguments a default arguments when default=some_value was provided.
+* Fixed a bug where **validate** returned error on playbook inputs with special characters.
+* Fixed an issue where **validate** did not properly check `conf.json` when the latter is modified.
+* Fixed an issue in the **upload** command, where a prompt was not showing on the console.
+* Added the **pre-commit** command, to improve code quality of XSOAR content.
+* Added the **run-unit-tests** command, to run unit tests of given content items inside their respective docker images.
+* Added support for filepath arguments in the **validate** and **format** commands.
+* Added pre-commit hooks for `validate`, `format`, `run-unit-tests` and `update-docker-image` commands.
 * Added integration configuration for *Cortex REST API* integration.
+## 1.11.0
+* **Note: Demisto-SDK will soon stop supporting Python 3.8**
+* Fixed an issue where using **download** on non-unicode content, merging them into existing files caused an error.
+* Changed an internal setting to allow writing non-ascii content (unicode) using `YAMLHandler` and `JSONHandler`.
+* Fixed an issue where an error message in **unify** was unclear for invalid input.
+* Fixed an issue where running **validate** failed with **is_valid_integration_file_path_in_folder** on integrations that use API modules.
+* Fixed an issue where **validate** failed with **is_valid_integration_file_path_in_folder** on integrations that use the `MSAPIModule`.
+* Added **validate** check for the `modules` field in `pack_metadata.json` files.
+* Changed **lint** to skip deprecated content, unless when using the `-i` flag.
+* Fixed an issue where **update-release-notes** failed when a new *Parsing Rule* was added to a pack.
+* Refactored the logging framework. Demisto-SDK logs will now be written to `.demist_sdk_debug.log` under the content path (when detected) or the current directory.
+* Added `GR105` validation to **validate** command to check that no duplicate IDs are used.
+* Added support for API Modules imported in API modules in the **unify** command.
+* Added **validate** check, to make sure every Python file has a corresponding unit test file.
+
+## 1.10.6
+* Fixed an issue where running **validate** with the `-g` flag would skip some validations for old-formatted (unified) integration/script files.
+* Deprecated integrations and scripts will not run anymore when providing the **--all-packs** to the **lint** command.
+* Fixed an issue where a pack `serverMinVersion` would be calculated by the minimal fromVersion of its content items.
+* Added the `--docker-image-target` flag to **lint** for testing native supported content with new images.
+
+## 1.10.5
+* Fixed an issue where running **run-test-playbook** would not use the `verify` parameter correctly. @ajoga
+* Added a newline at the end of README files generated in **generate-docs**.
+* Added the value `3` (out of bounds) to the `onChangeRepAlg` and `reputationCalc` fields under the `IncidentType` and `GenericType` schemas. **validate** will allow using it now.
+* Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
+* Fixed an issue where **validate** failed on Feed Integrations after adding the new *Collect/Connect* section field.
+* Fixed an issue where using **postman-codegen** failed converting strings containing digits to kebab-case.
+* Fixed an issue where the ***error-code*** command could not parse List[str] parameter.
+* Updated validation *LO107* to support more section types in XSIAM layouts.
+
+## 1.10.4
+* Added support for running **lint** in multiple native-docker images.
+
+## 1.10.3
+* Fixed an issue where running **format** would fail after running npm install.
+* Improved the graph validations in the **validate** command:
+  - GR100 will now run on all content items of changed packs.
+  - GR101 and GR102 will now catch invalid fromversion/toversion of files **using** the changed items.
+  - GR103 errors will raise a warning when using the *-a* flag, but an error if using the *-i* or *g* flags.
+* Fixed an issue where test-playbooks timed out.
+* Fixed an issue where making a change in a module using an ApiModule would cause lint to run on the ApiModule unnecessarily.
+* Fixed an issue where the `marketplace` field was not used when dumping pack zips.
+* Fixed a typo in the README content generated with **update-release-notes** for updating integrations.
+* Fixed an issue in **validate**, where using the `-gr` and `-i` flags did not run properly.
+* Added the `sectionorder` field to integration scheme.
+* Fixed an issue where in some occasions running of test-playbooks could receive session timeouts.
+* Fixed an issue where **validate** command failed on core pack dependencies validation because of test dependencies.
+
+## 1.10.2
+* Added markdown lint formatting for README files in the **format** command.
+* Fixed an issue where **lint** failed when using the `-cdam` flag with changed dependant api modules.
+* Fixed an issue in the **upload** command, where `json`-based content items were not unified correctly when using the `--zip` argument.
+* Added XPANSE core packs validations.
 
 ## 1.10.1
 * Fixed an issue where **update-content-graph** failed to execute.
@@ -21,7 +90,6 @@
 * Updated the default general `fromVersion` value on **format** to `6.8.0`
 * Fixed an issue where **lint** sometimes failed when using the `-cdam` flag due to wrong file duplications filtering.
 * Added the content graph to **validate**, use with the `--graph` flag.
-
 
 ## 1.9.0
 * Fixed an issue where the Slack notifier was using a deprecated argument.

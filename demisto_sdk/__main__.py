@@ -1234,7 +1234,6 @@ def coverage_analyze(**kwargs):
 @click.pass_context
 @logging_setup_decorator
 def format(
-    ctx,
     input: Path,
     output: Path,
     from_version: str,
@@ -2433,7 +2432,6 @@ def find_dependencies(**kwargs):
 @pass_config
 @click.pass_context
 def postman_codegen(
-    ctx,
     config,
     input: IO,
     output: Path,
@@ -3021,7 +3019,6 @@ def convert(config, **kwargs):
 @click.pass_context
 @logging_setup_decorator
 def generate_unit_tests(
-    ctx,
     input_path: str = "",
     commands: list = [],
     output_dir: str = "",
@@ -3101,7 +3098,6 @@ def error_code(config, **kwargs):
 @click.pass_context
 @logging_setup_decorator
 def create_content_graph(
-    ctx,
     marketplace: str = MarketplaceVersions.XSOAR,
     no_dependencies: bool = False,
     output_path: Path = None,
@@ -3181,7 +3177,6 @@ def create_content_graph(
 @click.pass_context
 @logging_setup_decorator
 def update_content_graph(
-    ctx,
     use_git: bool = False,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
     use_current: bool = False,

@@ -30,6 +30,7 @@
 * Refactored the logging framework. Demisto-SDK logs will now be written to `.demist_sdk_debug.log` under the content path (when detected) or the current directory.
 * Added `GR105` validation to **validate** command to check that no duplicate IDs are used.
 * Added support for API Modules imported in API modules in the **unify** command.
+* Added **validate** check, to make sure every Python file has a corresponding unit test file.
 
 ## 1.10.6
 * Fixed an issue where running **validate** with the `-g` flag would skip some validations for old-formatted (unified) integration/script files.

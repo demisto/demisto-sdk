@@ -18,6 +18,8 @@
 * Added the **run-unit-tests** command, to run unit tests of given content items inside their respective docker images.
 * Added support for filepath arguments in the **validate** and **format** commands.
 * Added pre-commit hooks for `validate`, `format`, `run-unit-tests` and `update-docker-image` commands.
+* Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.
+* Contribution PRs that update outdated packs now display a warning message.
 
 ## 1.11.0
 * **Note: Demisto-SDK will soon stop supporting Python 3.8**

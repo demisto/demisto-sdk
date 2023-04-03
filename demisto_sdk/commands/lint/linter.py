@@ -360,7 +360,7 @@ class Linter:
                 "DEMISTO_LINT_UPDATE_CERTS": os.getenv(
                     "DEMISTO_LINT_UPDATE_CERTS", "yes"
                 ),
-                "PYTHONDONTWRITEBYTECODE": "1"
+                "PYTHONDONTWRITEBYTECODE": "1",
             }
 
         lint_files = set()

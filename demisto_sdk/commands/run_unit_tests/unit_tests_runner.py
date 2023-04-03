@@ -46,7 +46,9 @@ def fix_coverage_report_path(code_directory: Path):
     """
     coverage_file = code_directory / ".coverage"
     if not coverage_file.exists():
-        logger.debug(f"Skipping {code_directory} as it does not contain a coverage report.")
+        logger.debug(
+            f"Skipping {code_directory} as it does not contain a coverage report."
+        )
         return
     logger.debug(f"Editing coverage report for {coverage_file}")
     with sqlite3.connect(coverage_file) as sql_connection:

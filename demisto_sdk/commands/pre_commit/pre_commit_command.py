@@ -102,7 +102,6 @@ class PreCommitRunner:
         skip_hooks: Optional[List[str]] = None,
         validate: bool = False,
         format: bool = False,
-        native_images: bool = False,
         verbose: bool = False,
         show_diff_on_failure: bool = False,
     ) -> int:
@@ -113,11 +112,11 @@ class PreCommitRunner:
         if os.getenv("CI"):
             # No reason to update the docker-image on CI, as we don't commit from the CI
             skipped_hooks.add("update-docker-image")
-        if not unit_test and not native_images:
+        if not unit_test:
             skipped_hooks.add("run-unit-tests")
-        if validate and validate in skipped_hooks:
+        if validate and "validate" in skipped_hooks:
             skipped_hooks.remove("validate")
-        if format and format in skipped_hooks:
+        if format and "format" in skipped_hooks:
             skipped_hooks.remove("format")
 
         precommit_env["SKIP"] = ",".join(sorted(skipped_hooks))
@@ -241,7 +240,6 @@ def pre_commit_manager(
     skip_hooks: Optional[List[str]] = None,
     validate: bool = False,
     format: bool = False,
-    native_images: bool = False,
     verbose: bool = False,
     show_diff_on_failure: bool = False,
     sdk_ref: Optional[str] = None,
@@ -277,7 +275,6 @@ def pre_commit_manager(
         skip_hooks,
         validate,
         format,
-        native_images,
         verbose,
         show_diff_on_failure,
     )

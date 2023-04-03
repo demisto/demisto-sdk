@@ -4,6 +4,7 @@ import shutil
 import traceback
 from pathlib import Path
 from typing import List
+import coverage
 
 from junitparser import JUnitXml
 
@@ -13,7 +14,8 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
-from demisto_sdk.commands.lint.helpers import stream_docker_container_output
+from demisto_sdk.commands.coverage_analyze.helpers import coverage_files
+from demisto_sdk.commands.lint.helpers import coverage_report_editor, stream_docker_container_output
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -29,6 +31,7 @@ DEFAULT_DOCKER_IMAGE = "demisto/python:1.3-alpine"
 PYTEST_RUNNER = f"{(Path(__file__).parent / 'pytest_runner.sh')}"
 POWERSHELL_RUNNER = f"{(Path(__file__).parent / 'pwsh_test_runner.sh')}"
 
+from xunitmerge import merge_xunit
 
 def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
     docker_client = docker_helper.init_global_docker_client()
@@ -114,6 +117,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                 else:
                     logger.info(f"All tests passed for {filename} in {docker_image}")
                 container.remove(force=True)
+                coverage_report_editor(integration_script.path.parent / ".coverage", integration_script.path.parent)
             except Exception as e:
                 logger.error(
                     f"Failed to run test for {filename} in {docker_image}: {e}"
@@ -125,4 +129,8 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                 shutil.rmtree(
                     integration_script.path.parent / ".pytest.ini", ignore_errors=True
                 )
+    cov = coverage.Coverage(data_file=CONTENT_PATH / ".coverage")
+    cov.combine(coverage_files())
+    cov.xml_report(outfile=str(CONTENT_PATH / "coverage.xml"))
+
     return exit_code

@@ -1,4 +1,5 @@
 # Changelog
+* Added `RN116` validation to **validate** command to check if a first level header exist in a RN.
 
 ## Unreleased
 * Fixed an issue in the **download** command where layouts were overriden even without the `-f` option.

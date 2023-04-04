@@ -3150,7 +3150,9 @@ def create_content_graph(
     help="Path to content graph zip file to import",
 )
 @click.option(
+    "-uc",
     "--use-current",
+    is_flag=True,
     help="Whether to use the current content graph to update",
     default=False,
 )
@@ -3258,12 +3260,6 @@ def update_content_graph(
     default=False,
 )
 @click.option(
-    "--native-images",
-    help="Whether to run demisto-sdk test on native images",
-    is_flag=True,
-    default=False,
-)
-@click.option(
     "-v",
     "--verbose",
     help="Verbose output of pre-commit",
@@ -3292,7 +3288,6 @@ def pre_commit(
     skip: str,
     validate: bool,
     format: bool,
-    native_images: bool,
     verbose: bool,
     show_diff_on_failure: bool,
     sdk_ref: str,
@@ -3311,7 +3306,6 @@ def pre_commit(
             skip,
             validate,
             format,
-            native_images,
             verbose,
             show_diff_on_failure,
             sdk_ref=sdk_ref,
@@ -3335,7 +3329,9 @@ def pre_commit(
 @click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @click.pass_context
 @logging_setup_decorator
-def run_unit_tests(input: str, file_paths: Tuple[str, ...], verbose: bool):
+def run_unit_tests(
+    ctx, input: str, file_paths: Tuple[str, ...], verbose: bool, **kwargs
+):
     if input:
         file_paths = tuple(input.split(","))
     from demisto_sdk.commands.run_unit_tests.unit_tests_runner import unit_test_runner

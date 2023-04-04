@@ -1,6 +1,14 @@
 # Changelog
 
 ## Unreleased
+* Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.
+* Contribution PRs that update outdated packs now display a warning message.
+
+## 1.12.0
+* Added the **pre-commit** command, to improve code quality of XSOAR content.
+* Added the **run-unit-tests** command, to run unit tests of given content items inside their respective docker images.
+* Added support for filepath arguments in the **validate** and **format** commands.
+* Added pre-commit hooks for `validate`, `format`, `run-unit-tests` and `update-docker-image` commands.
 * Fixed an issue in the **download** command where layouts were overriden even without the `-f` option.
 * Fixed an issue where Demisto-SDK did not detect layout ID when using the **download** command.
 * Fixed an issue where the **lint** command ran on `native:dev` supported content when passing the `--docker-image all` flag, instead it will run on `native:candidate`.
@@ -13,11 +21,9 @@
 * Fixed a bug where **validate** returned error on playbook inputs with special characters.
 * Fixed an issue where **validate** did not properly check `conf.json` when the latter is modified.
 * Fixed an issue in the **upload** command, where a prompt was not showing on the console.
-* Added the **pre-commit** command, to improve code quality of XSOAR content.
-* Added the **run-unit-tests** command, to run unit tests of given content items inside their respective docker images.
-* Added support for filepath arguments in the **validate** and **format** commands.
-* Added pre-commit hooks for `validate`, `format`, `run-unit-tests` and `update-docker-image` commands.
+* Fixed an issue where running **lint** failed installing dependencies in containers.
 * Added integration configuration for *Cortex REST API* integration.
+
 ## 1.11.0
 * **Note: Demisto-SDK will soon stop supporting Python 3.8**
 * Fixed an issue where using **download** on non-unicode content, merging them into existing files caused an error.

@@ -280,22 +280,21 @@ def add_tmp_lint_files(
             for lint_file in lint_files:
                 module_name = ""
                 data = lint_file.read_text()
-                module_match = re.search(module_regex, data)
-                if module_match:
-                    module_name = module_match.group(1)
-                    rel_api_path = (
-                        Path("Packs/ApiModules/Scripts")
-                        / module_name
-                        / f"{module_name}.py"
-                    )
-                    cur_path = pack_path / f"{module_name}.py"
-                    if content_repo:
-                        module_path = content_repo / rel_api_path
-                        shutil.copy(src=module_path, dst=cur_path)
-                    else:
-                        url = f"https://raw.githubusercontent.com/demisto/content/master/{rel_api_path}"
-                        api_content = requests.get(url=url, verify=False).content
-                        cur_path.write_bytes(api_content)
+                if module_match := re.findall(module_regex, data):
+                    for module_name in module_match:
+                        rel_api_path = (
+                            Path("Packs/ApiModules/Scripts")
+                            / module_name
+                            / f"{module_name}.py"
+                        )
+                        cur_path = pack_path / f"{module_name}.py"
+                        if content_repo:
+                            module_path = content_repo / rel_api_path
+                            shutil.copy(src=module_path, dst=cur_path)
+                        else:
+                            url = f"https://raw.githubusercontent.com/demisto/content/master/{rel_api_path}"
+                            api_content = requests.get(url=url, verify=False).content
+                            cur_path.write_bytes(api_content)
 
                     added_modules.append(cur_path)
         yield

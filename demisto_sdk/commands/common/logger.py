@@ -272,3 +272,6 @@ def set_demisto_handlers_to_logger(
 
 def get_log_file() -> Path:
     return current_log_file_path
+
+
+logging_setup()

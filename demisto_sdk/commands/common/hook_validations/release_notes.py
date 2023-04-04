@@ -179,14 +179,14 @@ class ReleaseNotesValidator(BaseValidator):
         Return:
             True if the RN has a first level header, False otherwise.
         """
-        first_level_header_index = re.search('\s#{4,4}\s', f"\n{self.latest_release_notes}")
+        first_level_header_index = re.search(
+            r"\s#{4,4}\s", f"\n{self.latest_release_notes}"
+        )
         if not first_level_header_index:
             (
                 error_message,
                 error_code,
-            ) = Errors.first_level_is_header_missing(
-                pack_name=self.pack_name
-            )
+            ) = Errors.first_level_is_header_missing(pack_name=self.pack_name)
             if self.handle_error(
                 error_message, error_code, self.release_notes_file_path
             ):
@@ -451,9 +451,7 @@ class ReleaseNotesValidator(BaseValidator):
         """
 
         validations = []
-        validations.append(
-                self.validate_first_level_header_exists()
-        )
+        validations.append(self.validate_first_level_header_exists())
         headers = self.extract_rn_headers()
         self.filter_rn_headers(headers=headers)
         for content_type, content_items in headers.items():

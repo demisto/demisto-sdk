@@ -838,10 +838,12 @@ def test_invalid_headers(mocker, repo, content, content_type, expected_result):
 
 @pytest.mark.parametrize(
     "rn_content, expected_result",
-    [("#### Scripts\n##### script_name\n- Some description.", True),
-     ("#### Scripts\n- Some description.", True),
-     ("##### script_name\n- Some description.", False),
-     ("- Some description.", False)]
+    [
+        ("#### Scripts\n##### script_name\n- Some description.", True),
+        ("#### Scripts\n- Some description.", True),
+        ("##### script_name\n- Some description.", False),
+        ("- Some description.", False),
+    ],
 )
 def test_validate_first_level_header_exists(mocker, rn_content, expected_result):
     """
@@ -861,8 +863,6 @@ def test_validate_first_level_header_exists(mocker, rn_content, expected_result)
     - Case 4: Should return False.
     """
     mocker.patch.object(ReleaseNotesValidator, "__init__", lambda a, b: None)
-    validator = get_validator(
-        rn_content
-    )
+    validator = get_validator(rn_content)
     results = validator.validate_first_level_header_exists()
     expected_result == results

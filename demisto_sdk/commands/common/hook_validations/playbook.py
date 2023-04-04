@@ -123,7 +123,10 @@ class PlaybookValidator(ContentEntityValidator):
             input = input.strip()
             splitted = input.split(".")
             if len(splitted) > 1 and splitted[1] and not splitted[1].startswith(" "):
-                result.add(splitted[1].replace('}', ''))
+                input_in_use = splitted[1]
+                if input_in_use.endswith('}'):
+                    input_in_use = input_in_use[:-1]
+                result.add(input_in_use)
         return result
 
     def collect_all_inputs_from_inputs_section(self) -> Set[str]:

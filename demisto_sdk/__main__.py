@@ -2362,8 +2362,8 @@ def update_release_notes(**kwargs):
     "dependency of the searched pack ",
     required=False,
 )
-@click.pass_context
 @logging_setup_decorator
+@click.pass_context
 def find_dependencies(**kwargs):
     """Find pack dependencies and update pack metadata."""
     from demisto_sdk.commands.common.logger import logger
@@ -2444,6 +2444,7 @@ def find_dependencies(**kwargs):
 )
 @pass_config
 @click.pass_context
+@logging_setup_decorator
 def postman_codegen(
     config,
     input: IO,
@@ -2456,11 +2457,7 @@ def postman_codegen(
     **kwargs,
 ):
     """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
-    logger = logging_setup(
-        console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
-        file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
-        log_file_path=kwargs.get("log_file_path") or None,
-    )
+    from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.postman_codegen.postman_codegen import (
         postman_to_autogen_configuration,
     )

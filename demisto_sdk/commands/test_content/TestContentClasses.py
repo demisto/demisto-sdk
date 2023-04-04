@@ -1569,7 +1569,7 @@ class Integration:
                     else param_conf["name"]
                 )
                 self.build_context.logging_module.info(f"%%%%% key: {key}")
-                if key == "credentials" or "creds_apikey":
+                if key == "credentials" or key == "creds_apikey":
                     credentials = params[key]
                     self.build_context.logging_module.info(
                         f"%%%%% credentials: {credentials}"

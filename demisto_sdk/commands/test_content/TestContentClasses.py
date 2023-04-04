@@ -1275,7 +1275,7 @@ class Integration:
                 )
                 self.configuration.params = {  # type: ignore
                     "url": server_url,
-                    "credentials": {
+                    "creds_apikey": {
                         "identifier": str(self.build_context.auth_id),
                         "password": self.build_context.api_key,
                     },
@@ -1284,7 +1284,7 @@ class Integration:
                 }
                 self.build_context.logging_module.info("*****")
                 self.build_context.logging_module.info(
-                    self.configuration.params["credentials"]["identifier"]
+                    self.configuration.params["creds_apikey"]["identifier"]
                 )
                 self.build_context.logging_module.info(self.configuration.params)
                 self.build_context.logging_module.info(self.configuration)

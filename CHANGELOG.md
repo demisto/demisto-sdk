@@ -1,6 +1,6 @@
 # Changelog
 
-# Unreleased
+## Unreleased
 
 ## 1.12.1
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.

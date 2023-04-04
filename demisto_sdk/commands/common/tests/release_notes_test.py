@@ -51,11 +51,11 @@ FILES_PATH = os.path.normpath(
 )
 nothing_in_rn = ""
 rn_not_filled_out = "%%UPDATE_RN%%"
-rn_filled_out = "#### Scripts\n##### tests\n-This are sample release notes"
+rn_filled_out = "This are sample release notes"
 diff_package = [
     (nothing_in_rn, False),
     (rn_not_filled_out, False),
-    (rn_filled_out, True),
+    (rn_filled_out, False),
 ]
 
 

@@ -17,7 +17,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import PackMetaDat
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.tools import src_root
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -292,7 +292,7 @@ def test_load_user_metadata_advanced(repo):
     assert pack_1_metadata.tags == ["tag1", "Use Case"]
 
 
-def test_load_user_metadata_no_metadata_file(repo, monkeypatch, caplog):
+def test_load_user_metadata_no_metadata_file(repo, monkeypatch, mocker):
     """
     When:
         - Dumping a pack with no pack_metadata file.
@@ -304,6 +304,8 @@ def test_load_user_metadata_no_metadata_file(repo, monkeypatch, caplog):
         - Verify that exceptions are written to the logger.
 
     """
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    monkeypatch.setenv("COLUMNS", "1000")
     import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata.pack_metadata as metadata_class
 
     metadata_class.logger = logger
@@ -326,10 +328,13 @@ def test_load_user_metadata_no_metadata_file(repo, monkeypatch, caplog):
     pack_1_metadata = content_object_pack.metadata
     pack_1_metadata.load_user_metadata("Pack1", "Pack Number 1", pack_1.path, logger)
 
-    assert "Pack Number 1 pack is missing pack_metadata.json file." in caplog.text
+    assert str_in_call_args_list(
+        logger_error.call_args_list,
+        "Pack Number 1 pack is missing pack_metadata.json file.",
+    )
 
 
-def test_load_user_metadata_invalid_price(repo, monkeypatch, caplog):
+def test_load_user_metadata_invalid_price(repo, monkeypatch, mocker):
     """
     When:
         - Dumping a pack with invalid price in pack_metadata file.
@@ -341,6 +346,8 @@ def test_load_user_metadata_invalid_price(repo, monkeypatch, caplog):
         - Verify that exceptions are written to the logger.
 
     """
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    monkeypatch.setenv("COLUMNS", "1000")
     import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata.pack_metadata as metadata_class
 
     metadata_class.logger = logger
@@ -362,12 +369,13 @@ def test_load_user_metadata_invalid_price(repo, monkeypatch, caplog):
     pack_1_metadata = content_object_pack.metadata
     pack_1_metadata.load_user_metadata("Pack1", "Pack Number 1", pack_1.path, logger)
 
-    assert (
-        "Pack Number 1 pack price is not valid. The price was set to 0." in caplog.text
+    assert str_in_call_args_list(
+        logger_error.call_args_list,
+        "Pack Number 1 pack price is not valid. The price was set to 0.",
     )
 
 
-def test_load_user_metadata_bad_pack_metadata_file(repo, monkeypatch, caplog):
+def test_load_user_metadata_bad_pack_metadata_file(repo, monkeypatch, mocker):
     """
     When:
         - Dumping a pack with invalid pack_metadata file.
@@ -379,6 +387,8 @@ def test_load_user_metadata_bad_pack_metadata_file(repo, monkeypatch, caplog):
         - Verify that exceptions are written to the logger.
 
     """
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    monkeypatch.setenv("COLUMNS", "1000")
     import demisto_sdk.commands.common.content.objects.pack_objects.pack_metadata.pack_metadata as metadata_class
 
     metadata_class.logger = logger
@@ -391,4 +401,6 @@ def test_load_user_metadata_bad_pack_metadata_file(repo, monkeypatch, caplog):
     pack_1_metadata = content_object_pack.metadata
     pack_1_metadata.load_user_metadata("Pack1", "Pack Number 1", pack_1.path, logger)
 
-    assert "Failed loading Pack Number 1 user metadata." in caplog.text
+    assert str_in_call_args_list(
+        logger_error.call_args_list, "Failed loading Pack Number 1 user metadata."
+    )

@@ -175,11 +175,9 @@ class ReleaseNotesValidator(BaseValidator):
     @error_codes("RN116")
     def validate_first_level_header_exists(self) -> bool:
         """
-            Validate that the release notes 1st headers (the content type) are a valid content entity.
-        Args:
-            content_type: (str) - The content type to validate.(e.g. Integrations, Playbooks, etc.)
+            Validate that the RN has a first level header.
         Return:
-            True if the content type is valid, False otherwise.
+            True if the RN has a first level header, False otherwise.
         """
         first_level_header_index = re.search('\s#{4,4}\s', f"\n{self.latest_release_notes}")
         if not first_level_header_index:

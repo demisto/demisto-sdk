@@ -17,7 +17,7 @@ from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.prepare_content.prepare_upload_manager import (
     PrepareUploadManager,
 )
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -355,7 +355,7 @@ def test_duplicate_file_failure(mock_git):
 
 
 @pytest.mark.parametrize("key, tool", [("some_key", False), ("", True)])
-def test_sign_packs_failure(repo, caplog, key, tool, monkeypatch):
+def test_sign_packs_failure(repo, key, tool, monkeypatch, mocker):
     """
     When:
         - Signing a pack.
@@ -368,6 +368,8 @@ def test_sign_packs_failure(repo, caplog, key, tool, monkeypatch):
         - Verify that exceptions are written to the logger.
 
     """
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    monkeypatch.setenv("COLUMNS", "1000")
     import demisto_sdk.commands.create_artifacts.content_artifacts_creator as cca
     from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
         ArtifactsManager,
@@ -375,7 +377,6 @@ def test_sign_packs_failure(repo, caplog, key, tool, monkeypatch):
     )
 
     cca.logger = logger
-    monkeypatch.setenv("COLUMNS", "1000")
 
     with ChangeCWD(repo.path):
         with temp_dir() as temp:
@@ -397,9 +398,10 @@ def test_sign_packs_failure(repo, caplog, key, tool, monkeypatch):
 
     sign_packs(artifact_manager)
 
-    assert (
+    assert str_in_call_args_list(
+        logger_error.call_args_list,
         "Failed to sign packs. In order to do so, you need to provide both signature_key and "
-        "sign_directory arguments." in caplog.text
+        "sign_directory arguments.",
     )
 
 

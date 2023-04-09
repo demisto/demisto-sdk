@@ -19,6 +19,11 @@ repos:
       rev: "22.12.0"
       hooks:
           - id: black
+    - repo: https://github.com/charliermarsh/ruff-pre-commit
+      rev: "v0.0.260"
+      hooks:
+        - id: ruff
+          args: [--fix, --exit-non-zero-on-fix]
     - repo: https://github.com/pre-commit/mirrors-mypy
       rev: v0.982
       hooks:

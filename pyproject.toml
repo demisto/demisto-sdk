@@ -155,7 +155,8 @@ ignore = [
 exclude = [
     "demisto_sdk/tests/test_files/",
     "demisto_sdk/commands/generate_unit_tests/tests/test_files/",
-    "demisto_sdk/commands/init/templates"
+    "demisto_sdk/commands/init/templates",
+    "demisto_sdk/commands/generate_yml_from_python/tests/generate_yml_from_python_test.py"
 ]
 
 select = [
@@ -163,8 +164,9 @@ select = [
     "E",
     "F",
     "I",
+    "PLE",
+    "RUF100",
     "W",
-    "PLE"
 ]
 
 target-version = "py38"

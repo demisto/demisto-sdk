@@ -6,7 +6,6 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-import conftest  # noqa: F401
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.legacy_git_tools import git_path

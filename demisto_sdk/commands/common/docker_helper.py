@@ -94,6 +94,7 @@ class DockerBase:
             TYPE_PYTHON: ["WORKDIR /devwork", 'ENTRYPOINT ["/bin/sh", "-c"]'],
         }
         self.requirements = self.tmp_dir / "requirements.txt"
+        self.requirements.unlink(missing_ok=True)
         self.requirements.touch()
         self._files_to_push_on_installation: FILES_SRC_TARGET = [
             (self.requirements, "/test-requirements.txt"),

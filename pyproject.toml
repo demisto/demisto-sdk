@@ -24,10 +24,8 @@ python = ">=3.8,<3.11"
 autopep8 = "^1.6.0"
 bandit = "^1.7.4"
 mypy = "^0.982"
-pylint = "2.12.2"
 vulture = "^2.3"
 beautifulsoup4 = "^4.11.1"
-flake8 = "^4.0.1"
 chardet = ">=4,<6"
 click = "^8.0.0"
 colorama = "^0.4.4"
@@ -150,3 +148,28 @@ profile = "black"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+ignore = [
+    "F403",
+    "F405",
+]
+
+line-length = 160
+
+exclude = [
+    "demisto_sdk/tests/test_files/",
+    "demisto_sdk/commands/generate_unit_tests/tests/test_files/",
+    "demisto_sdk/commands/init/templates"
+]
+
+select = [
+    "C9",
+    "E",
+    "F",
+    "W",
+    "PLE"
+]
+
+[tool.ruff.mccabe]
+max-complexity = 30

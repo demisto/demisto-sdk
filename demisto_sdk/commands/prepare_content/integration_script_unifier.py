@@ -424,7 +424,7 @@ class IntegrationScriptUnifier(Unifier):
                 if "// pack version:" in script_code
                 else f"\n// pack version: {pack_version}\n{script_code}"
             )
-        elif script_type == '.py':
+        elif script_type in {'.py', '.ps1'}:
             return (
                 script_code
                 if "### pack version:" in script_code

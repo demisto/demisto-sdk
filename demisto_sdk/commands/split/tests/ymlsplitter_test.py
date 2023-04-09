@@ -285,6 +285,42 @@ def test_extract_code(tmpdir):
         assert file_data[-1] == "\n"
 
 
+def test_extract_javascript_code(tmpdir):
+    extractor = YmlSplitter(
+        input=f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom-js.yml",
+        output=str(tmpdir.join("temp_code.js")),
+        file_type="integration",
+    )
+    assert (
+        "// pack version: 1.0.3"
+        in yaml.load(Path(extractor.input).read_text())["script"]["script"]
+    )
+
+    extractor.extract_code(extractor.output)
+    with open(extractor.output, "rb") as temp_code:
+        file_data = temp_code.read().decode("utf-8")
+        assert "// pack version: 1.0.3" not in file_data
+    os.remove(extractor.output)
+
+
+def test_extract_powershell_code(tmpdir):
+    extractor = YmlSplitter(
+        input=f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom-ps1.yml",
+        output=str(tmpdir.join("temp_code.ps1")),
+        file_type="integration",
+    )
+    assert (
+        "### pack version: 1.0.3"
+        in yaml.load(Path(extractor.input).read_text())["script"]["script"]
+    )
+
+    extractor.extract_code(extractor.output)
+    with open(extractor.output, "rb") as temp_code:
+        file_data = temp_code.read().decode("utf-8")
+        assert "### pack version: 1.0.3" not in file_data
+    os.remove(extractor.output)
+
+
 def test_extract_code__with_apimodule(tmpdir):
     """
     Given:

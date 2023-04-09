@@ -473,7 +473,8 @@ class ContributionConverter:
         if script:
             try:
                 pack_version_reg = ''
-                if script_type == 'python3':
+                # script type can be python2 or python3, javascript and powersell.
+                if 'python' in script_type or script_type == 'powershell':
                     pack_version_reg = re.search(
                         r"### pack version: (\d+\.\d+\.\d+)", script
                     )

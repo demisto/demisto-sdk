@@ -35,13 +35,21 @@ class ContentItemXSIAM(ContentItem, ABC):
         Uploadable XSIAM items should override this method.
         The rest will raise as default.
         """
-        raise MustBeUploadedInZipException(self)
+        raise NotIndivitudallyUploadedException(self)
 
 
-class MustBeUploadedInZipException(NotImplementedError):
+class NotUploadableException(NotImplementedError):
+    def __init__(self, item: ContentItem) -> None:
+        super().__init__(
+            f"This object ({item.content_type} {item.object_id}) cannot be uploaded"
+        )
+
+
+class NotIndivitudallyUploadedException(NotUploadableException):
     """
     Many XSIAM items must be uploaded as part of a pack.
     """
+
     def __init__(self, item: ContentItem) -> None:
         super().__init__(
             f"This object ({item.content_type} {item.object_id}) cannot be uploaded independently. "

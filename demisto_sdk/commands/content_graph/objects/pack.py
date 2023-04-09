@@ -28,7 +28,9 @@ from demisto_sdk.commands.content_graph.common import (
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-from demisto_sdk.commands.content_graph.objects.content_item_xsiam import MustBeUploadedInZipException
+from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
+    NotIndivitudallyUploadedException,
+)
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
 from demisto_sdk.commands.content_graph.objects.generic_definition import (
@@ -308,9 +310,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 try:
                     logger.debug(f"Uploading pack {self.object_id}: {item.object_id}")
                     item.upload(client, marketplace)
-                except MustBeUploadedInZipException:
-                    logger.debug(f"Cannot upload {item.content_type} {item.object_id} without the -z flag")
-    
+                except NotIndivitudallyUploadedException:
+                    logger.debug(
+                        f"Cannot upload {item.content_type} {item.object_id} without the -z flag"
+                    )
+
     def handle_base_pack(self, path: Path):
         documentation_path = CONTENT_PATH / "Documentation"
         documentation_output = path / "Documentation"

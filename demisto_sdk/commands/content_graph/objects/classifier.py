@@ -15,4 +15,4 @@ class Classifier(ContentItem, content_type=ContentType.CLASSIFIER):  # type: ign
         return {"name", "description"}
 
     def _client_upload_method(self, client: demisto_client) -> Optional[Callable]:
-        return demisto_client.import_classifier
+        return client.import_classifier

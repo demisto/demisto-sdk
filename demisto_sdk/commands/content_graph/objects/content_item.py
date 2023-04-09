@@ -216,7 +216,7 @@ class ContentItem(BaseContent):
             with TemporaryDirectory("w") as f:
                 dir_path = Path(f)
                 self.dump(dir_path, marketplace=marketplace)
-                self._client_upload_method(file=dir_path / self.normalize_name)  # type: ignore[call-arg]
+                self._client_upload_method(client)(dir_path / self.normalize_name)  # type: ignore[call-arg,misc]
 
         raise NotImplementedError(
             f"missing overriding upload method for {self.content_type}"

@@ -432,6 +432,7 @@ class IntegrationScriptUnifier(Unifier):
                 if "### pack version:" in script_code
                 else f"\n### pack version: {pack_version}\n{script_code}"
             )
+        return script_code
 
     @staticmethod
     def _get_api_module_code(module_name, module_path):

@@ -466,20 +466,20 @@ def test_insert_pack_version_and_script_to_yml():
     """
     version_str = "### pack version: 1.0.3"
     assert version_str not in DUMMY_SCRIPT
-    assert version_str in IntegrationScriptUnifier.insert_pack_version('.py',
-        DUMMY_SCRIPT, '1.0.3'
+    assert version_str in IntegrationScriptUnifier.insert_pack_version(
+        ".py", DUMMY_SCRIPT, "1.0.3"
     )
-    assert version_str in IntegrationScriptUnifier.insert_pack_version('.ps1',
-                                                                          DUMMY_SCRIPT, '1.0.3'
-                                                                          )
-    assert version_str not in IntegrationScriptUnifier.insert_pack_version('.js',
-                                                                       DUMMY_SCRIPT, '1.0.3'
-                                                                       )
+    assert version_str in IntegrationScriptUnifier.insert_pack_version(
+        ".ps1", DUMMY_SCRIPT, "1.0.3"
+    )
+    assert version_str not in IntegrationScriptUnifier.insert_pack_version(
+        ".js", DUMMY_SCRIPT, "1.0.3"
+    )
     version_str_js = "// pack version: 1.0.3"
     assert version_str_js not in DUMMY_SCRIPT
-    assert version_str_js in IntegrationScriptUnifier.insert_pack_version('.js',
-                                                                       DUMMY_SCRIPT, '1.0.3'
-                                                                       )
+    assert version_str_js in IntegrationScriptUnifier.insert_pack_version(
+        ".js", DUMMY_SCRIPT, "1.0.3"
+    )
 
 
 def get_generated_module_code(import_name, api_module_name):

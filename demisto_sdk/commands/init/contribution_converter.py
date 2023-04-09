@@ -472,13 +472,13 @@ class ContributionConverter:
         """
         if script:
             try:
-                pack_version_reg = ''
+                pack_version_reg = None
                 # script type can be python2 or python3, javascript and powersell.
-                if 'python' in script_type or script_type == 'powershell':
+                if "python" in script_type or script_type == "powershell":
                     pack_version_reg = re.search(
                         r"### pack version: (\d+\.\d+\.\d+)", script
                     )
-                elif script_type == 'javascript':
+                elif script_type == "javascript":
                     pack_version_reg = re.search(
                         r"// pack version: (\d+\.\d+\.\d+)", script
                     )
@@ -582,7 +582,9 @@ class ContributionConverter:
                         )
                         if isinstance(content_item, IntegrationScript):
                             script = content_item.code
-                            contributor_item_version = self.extract_pack_version(content_item.type, script)
+                            contributor_item_version = self.extract_pack_version(
+                                content_item.type, script
+                            )
                             current_pack_version = get_pack_metadata(
                                 file_path=content_item_file_path
                             ).get("currentVersion", "0.0.0")

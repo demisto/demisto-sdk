@@ -351,9 +351,9 @@ class YmlSplitter:
         """
         remove the auto-generated section headers if they exist.
         """
-        if script_type in ['.py', '.ps1']:
+        if script_type in [".py", ".ps1"]:
             script = re.sub(r"### pack version: \d+\.\d+\.\d+", "", script)
-        elif script_type == '.js':
+        elif script_type == ".js":
             script = re.sub(r"// pack version: \d+\.\d+\.\d+", "", script)
         return re.sub(
             r"register_module_line\('.+', '(?:start|end)', __line__\(\)\)\n", "", script

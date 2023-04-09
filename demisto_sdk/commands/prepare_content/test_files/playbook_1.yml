@@ -49,6 +49,8 @@ tasks:
         complex:
           root: incident
       username: {}
+      message:
+        simple: "*RRN*: ${incident.rrn}\n\n\n*Findings:*\n```\n${.=JSON.stringify(val.incident.prismacloudfindingsresults,null,2)}\n```\n\n*IAM Permissions*:\n``` \n${.=JSON.stringify(val.incident.prismacloudiamresults,null,2)}\n```\n"
     reputationcalc: 1
     separatecontext: false
     view: "{\n  \"position\": {\n    \"x\": 592.5,\n    \"y\": 1040\n  }\n}"

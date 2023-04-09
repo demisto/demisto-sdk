@@ -68,6 +68,7 @@ def test_marketplace_version_is_xsiam():
     )
     assert data["tasks"]["6"]["message"]["body"]["simple"] == "${alert.id}"
     assert data["tasks"]["3"]["scriptarguments"]["type"]["simple"] == "alert"
+    assert data["tasks"]["2"]["scriptarguments"]["message"]["simple"] == "*RRN*: ${alert.rrn}\n\n\n*Findings:*\n```\n${.=JSON.stringify(val.incident.prismacloudfindingsresults,null,2)}\n```\n\n*IAM Permissions*:\n``` \n${.=JSON.stringify(val.incident.prismacloudiamresults,null,2)}\n```\n"
 
     # assert fields did NOT change from incident to alert
     assert (

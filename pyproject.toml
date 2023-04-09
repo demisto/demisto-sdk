@@ -148,6 +148,7 @@ build-backend = "poetry.core.masonry.api"
 ignore = [
     "F403",
     "F405",
+    "E501",
 ]
 
 

@@ -157,7 +157,7 @@ def logging_setup_decorator(func, *args, **kwargs):
         if (
             args
             and func.__code__.co_argcount > 0
-            and len(args) > func.__code__.co_argcount
+            and len(args) >= func.__code__.co_argcount
         ):
             return func(*args[1 : 1 + func.__code__.co_argcount], **kwargs)
         else:

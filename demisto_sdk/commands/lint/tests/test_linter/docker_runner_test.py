@@ -95,7 +95,7 @@ class TestPytest:
         # Docker client mocking
         docker = linter.get_docker()
         mocker.patch.object(docker, "create_container")
-        docker.create_container('').wait.return_value = {
+        docker.create_container("").wait.return_value = {
             "StatusCode": exp_container_exit_code
         }
 

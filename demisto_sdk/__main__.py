@@ -154,7 +154,11 @@ def logging_setup_decorator(func, *args, **kwargs):
         if args:
             handle_deprecated_args(get_context_arg(args).args)
 
-        if args and func.__code__.co_argcount > 0:
+        if (
+            args
+            and func.__code__.co_argcount > 0
+            and len(args) > func.__code__.co_argcount
+        ):
             return func(*args[1 : 1 + func.__code__.co_argcount], **kwargs)
         else:
             return func(**kwargs)
@@ -2363,9 +2367,9 @@ def update_release_notes(**kwargs):
     "dependency of the searched pack ",
     required=False,
 )
-@logging_setup_decorator
 @click.pass_context
-def find_dependencies(placeholder=None, **kwargs):  # noqa: F841
+@logging_setup_decorator
+def find_dependencies(**kwargs):
     """Find pack dependencies and update pack metadata."""
     from demisto_sdk.commands.common.logger import logger
     from demisto_sdk.commands.find_dependencies.find_dependencies import (

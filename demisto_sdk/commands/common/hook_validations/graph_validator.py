@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import (
@@ -33,7 +33,8 @@ class GraphValidator(BaseValidator):
         )
         self.pack_ids: List[str] = []
         for file_path in self.file_paths:
-            if (pack_name := get_pack_name(file_path)) not in self.pack_ids:
+            pack_name: Optional[str] = get_pack_name(file_path)
+            if pack_name and pack_name not in self.pack_ids:
                 self.pack_ids.append(pack_name)
 
     def __enter__(self):

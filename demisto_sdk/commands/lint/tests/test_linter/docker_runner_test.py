@@ -1,9 +1,12 @@
-import pytest
 from dataclasses import dataclass
+
+import pytest
+
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 from demisto_sdk.commands.common.docker_helper import DockerBase
 from demisto_sdk.commands.lint import linter
 from demisto_sdk.commands.lint.linter import Linter
+
 
 @dataclass
 class Container:
@@ -21,6 +24,8 @@ class Container:
 
     def remove(self, **kwargs):
         return
+
+
 class TestPylint:
     def test_run_pylint_no_errors(self, mocker, linter_obj: Linter):
         # Expected values
@@ -66,7 +71,14 @@ class TestPylint:
         exp_output: str,
     ):
         # Docker client mocking
-        mocker.patch.object(DockerBase, "create_container", return_value=Container(_wait={"StatusCode": exp_container_exit_code}, _logs=exp_container_log.encode("utf-8")))
+        mocker.patch.object(
+            DockerBase,
+            "create_container",
+            return_value=Container(
+                _wait={"StatusCode": exp_container_exit_code},
+                _logs=exp_container_log.encode("utf-8"),
+            ),
+        )
         linter_obj._linter_to_commands()
 
         act_exit_code, act_output = linter_obj._docker_run_linter(
@@ -103,8 +115,11 @@ class TestPytest:
         )
 
         # Docker client mocking
-        mocker.patch.object(DockerBase, "create_container", return_value=Container(_wait={"StatusCode": exp_container_exit_code}))
-
+        mocker.patch.object(
+            DockerBase,
+            "create_container",
+            return_value=Container(_wait={"StatusCode": exp_container_exit_code}),
+        )
 
         # Docker related mocking
         mocker.patch.object(linter, "json")

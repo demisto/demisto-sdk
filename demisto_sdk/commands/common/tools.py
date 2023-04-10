@@ -108,7 +108,6 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
     urljoin,
 )
-from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.git_content_config import GitContentConfig, GitProvider
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
@@ -768,7 +767,7 @@ def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool =
     if clear_cache:
         get_file.cache_clear()
 
-    file_path = CONTENT_PATH.joinpath(file_path)
+    file_path = Path(get_content_path()).joinpath(file_path)  # type: ignore
 
     if not file_path.exists():
         raise FileNotFoundError(file_path)

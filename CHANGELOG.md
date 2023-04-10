@@ -7,6 +7,10 @@
 * Fixed an issue with **lint** to support `docker wait` command in all `Docker` versions.
 
 ## 1.12.0
+* Added the **pre-commit** command, to improve code quality of XSOAR content.
+* Added the **run-unit-tests** command, to run unit tests of given content items inside their respective docker images.
+* Added support for filepath arguments in the **validate** and **format** commands.
+* Added pre-commit hooks for `validate`, `format`, `run-unit-tests` and `update-docker-image` commands.
 * Fixed an issue in the **download** command where layouts were overriden even without the `-f` option.
 * Fixed an issue where Demisto-SDK did not detect layout ID when using the **download** command.
 * Fixed an issue where the **lint** command ran on `native:dev` supported content when passing the `--docker-image all` flag, instead it will run on `native:candidate`.
@@ -20,11 +24,6 @@
 * Fixed an issue where **validate** did not properly check `conf.json` when the latter is modified.
 * Fixed an issue in the **upload** command, where a prompt was not showing on the console.
 * Fixed an issue where running **lint** failed installing dependencies in containers.
-* Added the **pre-commit** command, to improve code quality of XSOAR content.
-* Added the **run-unit-tests** command, to run unit tests of given content items inside their respective docker images.
-* Added support for filepath arguments in the **validate** and **format** commands.
-* Added pre-commit hooks for `validate`, `format`, `run-unit-tests` and `update-docker-image` commands.
-
 
 ## 1.11.0
 * **Note: Demisto-SDK will soon stop supporting Python 3.8**

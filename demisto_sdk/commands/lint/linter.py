@@ -919,7 +919,7 @@ class Linter:
             str, str. image name to use and errors string.
         """
         log_prompt = f"{self._pack_name} - Image create"
-        docker = get_docker()
+        docker_base = get_docker()
         # Get requirements file for image
         requirements = []
 
@@ -944,7 +944,7 @@ class Linter:
             logger.info(
                 f"{log_prompt} - Trying to pull existing image {test_image_name}"
             )
-            test_image = docker.pull_image(test_image_name)
+            test_image = docker_base.pull_image(test_image_name)
         except (docker.errors.APIError, docker.errors.ImageNotFound):
             logger.info(f"{log_prompt} - Unable to find image {test_image_name}")
         # Creatng new image if existing image isn't found
@@ -958,7 +958,7 @@ class Linter:
                     "docker-io.art.code.pan.run/", ""
                 )
 
-                docker.create_image(
+                docker_base.create_image(
                     docker_base_image[0],
                     test_image_name_to_push,
                     container_type=self._pkg_lint_status["pack_type"],

@@ -360,7 +360,7 @@ class IntegrationScriptUnifier(Unifier):
         :return: The import string and the imported module name
         """
 
-        # General regex to find API module imports, for example: "from MicrosoftApiModule import *  # noqa: E402"
+        # General regex to find API module imports, for example: "from MicrosoftApiModule import *  # "
         module_regex = r"from ([\w\d]+ApiModule) import \*(?:  # noqa: E402)?"
 
         module_matches = re.finditer(module_regex, script_code)

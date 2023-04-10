@@ -34,7 +34,7 @@ from CommonServerPython import *
 
 def main():
     return_error('Not implemented.')
-​
+\u200b
 if __name__ in ('builtins', '__builtin__', '__main__'):
     main()
 """

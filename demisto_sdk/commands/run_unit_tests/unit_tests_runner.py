@@ -1,10 +1,12 @@
 import logging
 import os
 import shutil
+import sqlite3
 import traceback
 from pathlib import Path
 from typing import List
 
+import coverage
 from junitparser import JUnitXml
 
 import demisto_sdk.commands.common.docker_helper as docker_helper
@@ -13,6 +15,7 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
+from demisto_sdk.commands.coverage_analyze.helpers import coverage_files
 from demisto_sdk.commands.lint.helpers import stream_docker_container_output
 
 logger = logging.getLogger("demisto-sdk")
@@ -28,6 +31,37 @@ DEFAULT_DOCKER_IMAGE = "demisto/python:1.3-alpine"
 
 PYTEST_RUNNER = f"{(Path(__file__).parent / 'pytest_runner.sh')}"
 POWERSHELL_RUNNER = f"{(Path(__file__).parent / 'pwsh_test_runner.sh')}"
+
+
+def fix_coverage_report_path(code_directory: Path):
+    """
+
+    Args:
+        code_directory: The integration script (absolute file).
+
+    Notes:
+        the .coverage files contain all the files list with their absolute path.
+        but our tests (pytest step) are running inside a docker container.
+        so we have to change the path to the correct one.
+    """
+    coverage_file = code_directory / ".coverage"
+    if not coverage_file.exists():
+        logger.debug(
+            f"Skipping {code_directory} as it does not contain a coverage report."
+        )
+        return
+    logger.debug(f"Editing coverage report for {coverage_file}")
+    with sqlite3.connect(coverage_file) as sql_connection:
+        cursor = sql_connection.cursor()
+        files = cursor.execute("SELECT * FROM file").fetchall()
+        for id_, file in files:
+            file_name = Path(file).name
+            cursor.execute(
+                "UPDATE file SET path = ? WHERE id = ?",
+                (str(code_directory / file_name), id_),
+            )
+        sql_connection.commit()
+        logger.debug("Done editing coverage report")
 
 
 def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
@@ -114,6 +148,7 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                 else:
                     logger.info(f"All tests passed for {filename} in {docker_image}")
                 container.remove(force=True)
+                fix_coverage_report_path(integration_script.path.parent)
             except Exception as e:
                 logger.error(
                     f"Failed to run test for {filename} in {docker_image}: {e}"
@@ -125,4 +160,8 @@ def unit_test_runner(file_paths: List[Path], verbose: bool = False) -> int:
                 shutil.rmtree(
                     integration_script.path.parent / ".pytest.ini", ignore_errors=True
                 )
+    cov = coverage.Coverage(data_file=CONTENT_PATH / ".coverage")
+    cov.combine(coverage_files())
+    cov.xml_report(outfile=str(CONTENT_PATH / "coverage.xml"))
+
     return exit_code

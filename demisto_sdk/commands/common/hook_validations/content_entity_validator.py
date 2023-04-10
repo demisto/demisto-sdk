@@ -30,7 +30,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
-from demisto_sdk.commands.common.hook_validations.structure import (  # noqa:F401
+from demisto_sdk.commands.common.hook_validations.structure import (
     StructureValidator,
 )
 from demisto_sdk.commands.common.tools import (

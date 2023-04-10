@@ -1022,7 +1022,7 @@ class Linter:
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
-            container_status = container.wait(condition="exited")
+            container_status = container.wait()
             # Get container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
@@ -1113,7 +1113,7 @@ class Linter:
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # Waiting for container to be finished
-            container_status: dict = container.wait(condition="exited")
+            container_status: dict = container.wait()
             # Getting container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
@@ -1239,7 +1239,7 @@ class Linter:
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
-            container_status = container.wait(condition="exited")
+            container_status = container.wait()
             # Get container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
@@ -1330,7 +1330,7 @@ class Linter:
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
-            container_status = container.wait(condition="exited")
+            container_status = container.wait()
             # Get container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs

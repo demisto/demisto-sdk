@@ -3,6 +3,8 @@
 ## Unreleased
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.
 * Contribution PRs that update outdated packs now display a warning message.
+* Fixed stability issues with **lint** where incorrect cache was used.
+* Fixed an issue with **lint** to support `docker wait` command in all `Docker` versions.
 
 ## 1.12.0
 * Added the **pre-commit** command, to improve code quality of XSOAR content.

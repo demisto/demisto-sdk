@@ -194,7 +194,7 @@ class DockerBase:
             command="/install.sh",
         )
         container.start()
-        if container.wait(condition="exited").get("StatusCode") != 0:
+        if container.wait().get("StatusCode") != 0:
             container_logs = container.logs()
             raise docker.errors.BuildError(
                 reason=f"Installation script failed to run on container '{container.id}', {container_logs=}",

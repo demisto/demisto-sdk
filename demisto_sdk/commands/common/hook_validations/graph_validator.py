@@ -31,9 +31,10 @@ class GraphValidator(BaseValidator):
         self.file_paths: List[str] = git_files or get_all_content_objects_paths_in_dir(
             input_files
         )
-        self.pack_ids: List[str] = list(
-            {get_pack_name(file_path) for file_path in self.file_paths}
-        )
+        self.pack_ids: List[str] = []
+        for file_path in self.file_paths:
+            if (pack_name := get_pack_name(file_path)) not in self.pack_ids:
+                self.pack_ids.append(pack_name)
 
     def __enter__(self):
         return self

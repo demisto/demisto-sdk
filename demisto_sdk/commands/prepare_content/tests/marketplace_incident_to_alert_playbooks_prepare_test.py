@@ -72,7 +72,7 @@ def test_marketplace_version_is_xsiam():
         data["tasks"]["2"]["scriptarguments"]["message"]["simple"]
         == "*RRN*: ${alert.rrn}\n\n\n*Findings:*\n```\n${.=JSON.stringify(val.incident.prismacloudfindingsresults,"
         "null,2)}\n```\n\n*IAM Permissions*:\n``` \n${.=JSON.stringify(val.incident.prismacloudiamresults,null,"
-        "2)}\n```\n "
+        "2)}\n```\n"
     )
 
     # assert fields did NOT change from incident to alert

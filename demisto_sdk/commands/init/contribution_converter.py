@@ -466,7 +466,7 @@ class ContributionConverter:
                 )
 
     @staticmethod
-    def extract_pack_version(script: str) -> str:
+    def extract_pack_version(script: Optional[str]) -> str:
         """
         extract the pack version from script if exists, returns 0.0.0 if version was not found.
         """

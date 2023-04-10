@@ -286,6 +286,16 @@ def test_extract_code(tmpdir):
 
 
 def test_extract_javascript_code(tmpdir):
+    """
+        Given
+        a unified integration file of javascript format.
+
+        When
+        - Running the YmlSplitter extract_code function.
+
+        Then
+        - Ensure the "// pack version: ..." comment was removed successfully.
+    """
     extractor = YmlSplitter(
         input=f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom-js.yml",
         output=str(tmpdir.join("temp_code.js")),
@@ -297,9 +307,8 @@ def test_extract_javascript_code(tmpdir):
     )
 
     extractor.extract_code(extractor.output)
-    with open(extractor.output, "rb") as temp_code:
-        file_data = temp_code.read().decode("utf-8")
-        assert "// pack version: 1.0.3" not in file_data
+    file_data = Path(extractor.output).read_text()
+    assert "// pack version: 1.0.3" not in file_data
     os.remove(extractor.output)
 
 

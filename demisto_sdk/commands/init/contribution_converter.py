@@ -466,23 +466,15 @@ class ContributionConverter:
                 )
 
     @staticmethod
-    def extract_pack_version(script_type, script):
+    def extract_pack_version(script: str) -> str:
         """
         extract the pack version from script if exists, returns 0.0.0 if version was not found.
         """
         if script:
             try:
-                pack_version_reg = None
-                # script type can be python2 or python3, javascript and powersell.
-                if "python" in script_type or script_type == "powershell":
-                    pack_version_reg = re.search(
-                        r"### pack version: (\d+\.\d+\.\d+)", script
-                    )
-                elif script_type == "javascript":
-                    pack_version_reg = re.search(
-                        r"// pack version: (\d+\.\d+\.\d+)", script
-                    )
-                if pack_version_reg:
+                if pack_version_reg := re.search(
+                    r"(?:###|//) pack version: (\d+\.\d+\.\d+)", script
+                ):
                     return pack_version_reg.groups()[0]
             except Exception as e:
                 logging.warning(f"Failed extracting pack version from script: {e}")
@@ -583,7 +575,7 @@ class ContributionConverter:
                         if isinstance(content_item, IntegrationScript):
                             script = content_item.code
                             contributor_item_version = self.extract_pack_version(
-                                content_item.type, script
+                                script
                             )
                             current_pack_version = get_pack_metadata(
                                 file_path=content_item_file_path

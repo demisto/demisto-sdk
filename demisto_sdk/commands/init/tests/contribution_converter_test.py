@@ -677,45 +677,27 @@ def test_rearranging_before_conversion(zip_path: str, expected_directories: set)
 
 
 @pytest.mark.parametrize(
-    "input_script, output_version, script_type",
+    "input_script, output_version",
     [
         (
             "This is a test script\n the script contains a pack version\n ### pack version: 3.4.5  TEST TEST",
             "3.4.5",
-            "python3",
-        ),
-        (
-            "This is a test script\n the script contains a pack version\n ### pack version: 3.4.5  TEST TEST",
-            "3.4.5",
-            "python2",
-        ),
-        (
-            "This is a test script\n the script contains a pack version\n ### pack version: 3.4.5  TEST TEST",
-            "3.4.5",
-            "python",
         ),
         (
             "This is a test script\n the script does not contain a pack version\n ### TEST TEST",
             "0.0.0",
-            "python3",
-        ),
-        (
-            "This is a test script\n the script does not contain a pack version\n ### pack version: 3.4.5",
-            "3.4.5",
-            "powershell",
         ),
         (
             "This is a test js script\n the script does not contain a pack version\n // pack version: 3.4.5 TEST TEST",
             "3.4.5",
-            "javascript",
         ),
-        ("", "0.0.0", "javascript"),
+        ("", "0.0.0"),
     ],
 )
-def test_extract_pack_version(input_script: str, output_version: str, script_type: str):
+def test_extract_pack_version(input_script: str, output_version: str):
     contribution_converter = ContributionConverter()
     assert (
-        contribution_converter.extract_pack_version(script_type, input_script)
+        contribution_converter.extract_pack_version(input_script)
         == output_version
     )
 

@@ -206,7 +206,7 @@ class YmlSplitter:
                     code_file.write(". $PSScriptRoot\\CommonServerPowerShell.ps1\n")
                     self.lines_inserted_at_code_start += 1
             script = self.replace_imported_code(script, executed_from_contrib_converter)
-            script = self.replace_section_headers_code(ext, script)
+            script = self.replace_section_headers_code(script)
             code_file.write(script)
             if script and script[-1] != "\n":
                 # make sure files end with a new line (pyml seems to strip the last newline)
@@ -347,14 +347,11 @@ class YmlSplitter:
                 script = script.replace(match.group(), imported_line)
         return script
 
-    def replace_section_headers_code(self, script_type, script):
+    def replace_section_headers_code(self, script: str) -> str:
         """
         remove the auto-generated section headers if they exist.
         """
-        if script_type in [".py", ".ps1"]:
-            script = re.sub(r"### pack version: \d+\.\d+\.\d+", "", script)
-        elif script_type == ".js":
-            script = re.sub(r"// pack version: \d+\.\d+\.\d+", "", script)
+        script = re.sub(r"(?:###|//) pack version: (\d+\.\d+\.\d+)", script)
         return re.sub(
             r"register_module_line\('.+', '(?:start|end)', __line__\(\)\)\n", "", script
         )

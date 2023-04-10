@@ -966,9 +966,9 @@ class Linter:
                             test_image_name_to_push = test_image_name.replace(
                                 "docker-io.art.code.pan.run/", ""
                             )
-                            self._docker_client.images.push(test_image_name_to_push)
+                            docker_push_output = self._docker_client.images.push(test_image_name_to_push)
                             logger.info(
-                                f"{log_prompt} - Image {test_image_name_to_push} pushed to repository"
+                                f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository. Output = {docker_push_output}"
                             )
                             break
                         except (

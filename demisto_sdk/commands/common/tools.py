@@ -378,13 +378,18 @@ def get_marketplace_to_core_packs() -> Dict[MarketplaceVersions, Set[str]]:
     mp_to_core_packs: Dict[MarketplaceVersions, Set[str]] = {}
     for mp in MarketplaceVersions:
         # for backwards compatibility mp_core_packs can be a list, but we expect a dict.
-        mp_core_packs: Union[list, dict] = get_remote_file(
-            MARKETPLACE_TO_CORE_PACKS_FILE[mp],
-            git_content_config=GitContentConfig(
-                repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
-                git_provider=GitProvider.GitHub,
-            ),
-        )
+        try:
+            mp_core_packs: Union[list, dict] = get_file(
+                file_path=MARKETPLACE_TO_CORE_PACKS_FILE[mp], type_of_file="json"
+            )
+        except FileNotFoundError:
+            mp_core_packs = get_remote_file(
+                MARKETPLACE_TO_CORE_PACKS_FILE[mp],
+                git_content_config=GitContentConfig(
+                    repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
+                    git_provider=GitProvider.GitHub,
+                ),
+            )
         if isinstance(mp_core_packs, list):
             mp_to_core_packs[mp] = set(mp_core_packs)
         else:

@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, List
+from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.prepare_content.preparers.incident_to_alert import (

@@ -101,7 +101,9 @@ def replace_playbook_access_fields_recursively(datum: Any) -> Any:
         for key, val in datum.items():
             if isinstance(val, str):
                 if key in {"root", "simple"} and "incident" in val:
-                    val = re.sub(r"(?<!\.)\bincident\b", 'alert', val)  # values like 'X.incident' should not be replaced
+                    val = re.sub(
+                        r"(?<!\.)\bincident\b", "alert", val
+                    )  # values like 'X.incident' should not be replaced
 
                 if key == "script" and val == "Builtin|||setIncident":
                     val = val.replace("setIncident", "setAlert")

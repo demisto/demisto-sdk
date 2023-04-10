@@ -154,11 +154,7 @@ def logging_setup_decorator(func, *args, **kwargs):
         if args:
             handle_deprecated_args(get_context_arg(args).args)
 
-        if (
-            args
-            and func.__code__.co_argcount > 0
-            and len(args) >= func.__code__.co_argcount
-        ):
+        if args and func.__code__.co_argcount > 0:
             return func(*args[1 : 1 + func.__code__.co_argcount], **kwargs)
         else:
             return func(**kwargs)

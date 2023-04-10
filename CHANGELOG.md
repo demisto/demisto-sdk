@@ -5,6 +5,7 @@
 * Contribution PRs that update outdated packs now display a warning message.
 * Fixed stability issues with **lint** where incorrect cache was used.
 * Fixed an issue with **lint** to support `docker wait` command in all `Docker` versions.
+* Fixed an issue with **lint** to push the test docker image to `dockerhub`.
 
 ## 1.12.0
 * Added the **pre-commit** command, to improve code quality of XSOAR content.

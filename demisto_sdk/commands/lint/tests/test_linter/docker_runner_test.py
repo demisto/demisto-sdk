@@ -50,12 +50,13 @@ class TestPylint:
         exp_output: str,
     ):
         # Docker client mocking
-        mocker.patch.object(linter.get_docker(), "create_container")
+        docker = linter.get_docker()
+        mocker.patch.object(docker, "create_container")
         linter_obj._linter_to_commands()
-        linter.get_docker().create_container('').wait.return_value = {
+        docker.create_container().wait.return_value = {
             "StatusCode": exp_container_exit_code
         }
-        linter.get_docker().create_container('').logs.return_value = (
+        linter.get_docker().create_container().logs.return_value = (
             exp_container_log.encode("utf-8")
         )
         act_exit_code, act_output = linter_obj._docker_run_linter(
@@ -92,8 +93,9 @@ class TestPytest:
         )
 
         # Docker client mocking
-        mocker.patch.object(linter.get_docker(), "create_container")
-        linter.get_docker().create_container('').wait.return_value = {
+        docker = linter.get_docker()
+        mocker.patch.object(docker, "create_container")
+        docker.create_container('').wait.return_value = {
             "StatusCode": exp_container_exit_code
         }
 

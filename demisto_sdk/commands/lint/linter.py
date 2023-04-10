@@ -954,7 +954,9 @@ class Linter:
                 f"time"
             )
             try:
-                test_image_name_to_push = test_image_name.replace("docker-io.art.code.pan.run/", "")
+                test_image_name_to_push = test_image_name.replace(
+                    "docker-io.art.code.pan.run/", ""
+                )
 
                 docker.create_image(
                     docker_base_image[0],

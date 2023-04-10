@@ -221,3 +221,23 @@ class ContentItem(BaseContent):
         raise NotImplementedError(
             f"missing overriding upload method for {self.content_type}"
         )
+
+
+class NotUploadableException(NotImplementedError):
+    def __init__(self, item: ContentItem, description: Optional[str] = None) -> None:
+        description_suffix = f" {description}" if description else ""
+        super().__init__(
+            f"Object ({item.content_type} {item.object_id}) cannot be uploaded{description_suffix}"
+        )
+
+
+class NotIndivitudallyUploadedException(NotUploadableException):
+    """
+    Some XSIAM items must be uploaded as part of a pack.
+    """
+
+    def __init__(self, item: ContentItem):
+        super().__init__(
+            item,
+            description=" independently. Use the -z flag to upload the whole pack, zipped.",
+        )

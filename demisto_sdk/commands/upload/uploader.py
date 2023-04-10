@@ -52,13 +52,14 @@ json = JSON_Handler()
 
 # These are the class names of the objects in demisto_sdk.commands.common.content.objects
 UPLOAD_SUPPORTED_ENTITIES = [
+    # NOTE: THIS IS NO LONGER IN USE OR MAINAINED. SEE GRAPH OBJECTS INSTEAD
     FileType.INTEGRATION,
     FileType.BETA_INTEGRATION,
     FileType.SCRIPT,
     FileType.TEST_SCRIPT,
     FileType.PLAYBOOK,
     FileType.TEST_PLAYBOOK,
-    FileType.OLD_CLASSIFIER,
+    FileType.OLD_CLASSIFIER, # TODO check
     FileType.CLASSIFIER,
     FileType.MAPPER,
     FileType.INCIDENT_TYPE,

@@ -1,5 +1,6 @@
 from typing import Optional, Set
 
+import demisto_client
 from pydantic import Field
 
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -15,3 +16,6 @@ class IncidentType(ContentItem, content_type=ContentType.INCIDENT_TYPE):  # type
 
     def metadata_fields(self) -> Set[str]:
         return {"name", "playbook", "closure_script", "hours", "days", "week"}
+
+    def _client_upload_method(self, client: demisto_client) -> Optional[Callable]:
+        return client.import_incident_types_handler

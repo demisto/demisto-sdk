@@ -1,10 +1,13 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 
 from packaging.version import Version
 from pydantic import DirectoryPath
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.content_item import (
+    ContentItem,
+    NotIndivitudallyUploadedException,
+)
 
 
 class ContentItemXSIAM(ContentItem, ABC):
@@ -30,28 +33,10 @@ class ContentItemXSIAM(ContentItem, ABC):
             with open(file, "w") as f:
                 self.handler.dump(data, f)
 
+    @abstractmethod
     def upload(self, client, marketplace: MarketplaceVersions) -> None:
         """
         Uploadable XSIAM items should override this method.
         The rest will raise as default.
         """
         raise NotIndivitudallyUploadedException(self)
-
-
-class NotUploadableException(NotImplementedError):
-    def __init__(self, item: ContentItem) -> None:
-        super().__init__(
-            f"This object ({item.content_type} {item.object_id}) cannot be uploaded"
-        )
-
-
-class NotIndivitudallyUploadedException(NotUploadableException):
-    """
-    Many XSIAM items must be uploaded as part of a pack.
-    """
-
-    def __init__(self, item: ContentItem) -> None:
-        super().__init__(
-            f"This object ({item.content_type} {item.object_id}) cannot be uploaded independently. "
-            "Use the -z flag to upload the whole pack, zipped."
-        )

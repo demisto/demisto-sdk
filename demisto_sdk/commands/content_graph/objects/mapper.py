@@ -1,10 +1,11 @@
-from typing import Optional, Set
+from typing import Callable, Optional, Set
 
 from pydantic import Field
 
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
+import demisto_client
 
 class Mapper(ContentItem, content_type=ContentType.MAPPER):  # type: ignore[call-arg]
     type: Optional[str]
@@ -14,3 +15,7 @@ class Mapper(ContentItem, content_type=ContentType.MAPPER):  # type: ignore[call
 
     def metadata_fields(self) -> Set[str]:
         return {"name", "description"}
+
+
+    def _client_upload_method(self, client: demisto_client) -> Optional[Callable]:
+        pass # TODO

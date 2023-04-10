@@ -189,7 +189,7 @@ class ContentType(str, enum.Enum):
                         if tir_folder.is_dir() and not tir_folder.name.startswith("."):
                             yield tir_folder
 
-    # @property 
+    # @property
     # TODO: remove
     # def is_uploadable(self) -> bool:
     #     """

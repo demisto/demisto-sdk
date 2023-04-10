@@ -253,6 +253,16 @@ def test_extract_image(tmpdir):
 
 
 def test_extract_code(tmpdir):
+    """
+        Given
+        a unified integration file of python format.
+
+        When
+        - Running the YmlSplitter extract_code function.
+
+        Then
+        - Ensure that all lines that should have been removed have been removed.
+    """
     extractor = YmlSplitter(
         input=f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml",
         output=str(tmpdir.join("temp_code.py")),
@@ -313,6 +323,16 @@ def test_extract_javascript_code(tmpdir):
 
 
 def test_extract_powershell_code(tmpdir):
+    """
+        Given
+        a unified integration file of powershell format.
+
+        When
+        - Running the YmlSplitter extract_code function.
+
+        Then
+        - Ensure the "### pack version: ..." comment was removed successfully.
+    """
     extractor = YmlSplitter(
         input=f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom-ps1.yml",
         output=str(tmpdir.join("temp_code.ps1")),

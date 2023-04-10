@@ -456,13 +456,13 @@ def test_insert_hierarchy_api_module(mocker):
 def test_insert_pack_version_and_script_to_yml():
     """
     Given:
-     - A pack name
+     - A pack name.
 
     When:
-     - calling insert_pack_version
+     - calling insert_pack_version.
 
     Then:
-     - Ensure the code returned contains the pack version in it
+     - Ensure the code returned contains the pack version in it.
     """
     version_str = "### pack version: 1.0.3"
     assert version_str not in DUMMY_SCRIPT

@@ -695,6 +695,17 @@ def test_rearranging_before_conversion(zip_path: str, expected_directories: set)
     ],
 )
 def test_extract_pack_version(input_script: str, output_version: str):
+    """
+    Given:
+    - A text with/without the pack version in it.
+
+    When:
+    - Running extract_pack_version function.
+
+    Then:
+    - Ensure that pack version was extracted correctly.
+
+    """
     contribution_converter = ContributionConverter()
     assert (
         contribution_converter.extract_pack_version(input_script)

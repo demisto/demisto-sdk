@@ -974,6 +974,7 @@ class Linter:
                             logger.info(
                                 f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository. Output = {docker_push_output}"
                             )
+                            docker_base.pull_image(test_image_name)
                             break
                         except (
                             requests.exceptions.ConnectionError,

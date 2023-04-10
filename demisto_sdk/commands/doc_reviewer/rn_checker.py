@@ -3,6 +3,8 @@ from typing import List
 
 import click
 
+from demisto_sdk.commands.common.tools import MarketplaceTagParser
+
 
 def print_template_examples():
     click.secho("\nGeneral Pointers About Release Notes:", fg="bright_cyan")
@@ -120,6 +122,15 @@ class ReleaseNotesChecker:
         "stability and maintenance enhancements.",
     }
 
+    MP_TAGS = {
+        MarketplaceTagParser.XSOAR_INLINE_PREFIX,
+        MarketplaceTagParser.XSOAR_INLINE_SUFFIX,
+        MarketplaceTagParser.XSIAM_INLINE_PREFIX,
+        MarketplaceTagParser.XSIAM_INLINE_SUFFIX,
+        MarketplaceTagParser.XPANSE_INLINE_PREFIX,
+        MarketplaceTagParser.XPANSE_INLINE_SUFFIX,
+    }
+
     def __init__(
         self,
         rn_file_path: str = None,
@@ -182,7 +193,11 @@ class ReleaseNotesChecker:
         show_template_message = False
         is_new_content_item = False
 
+        line: str
         for line in self.file_content:
+            for tag in self.MP_TAGS:
+                line = line.replace(tag, "")
+
             line = line.lstrip(" -")
             line = line.rstrip()
 

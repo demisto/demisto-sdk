@@ -392,7 +392,7 @@ def test_check_support_status_partner_file(repo, mocker):
                 integration.yml.rel_path
             ]
             == PRESET_ERROR_TO_IGNORE["partner"]
-        )  # noqa: E501
+        )
 
 
 def test_check_support_status_community_file(repo, mocker):
@@ -422,7 +422,7 @@ def test_check_support_status_community_file(repo, mocker):
                 integration.yml.rel_path
             ]
             == PRESET_ERROR_TO_IGNORE["community"]
-        )  # noqa: E501
+        )
 
 
 class TestJsonOutput:

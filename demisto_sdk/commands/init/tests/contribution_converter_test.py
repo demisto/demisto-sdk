@@ -707,10 +707,7 @@ def test_extract_pack_version(input_script: str, output_version: str):
 
     """
     contribution_converter = ContributionConverter()
-    assert (
-        contribution_converter.extract_pack_version(input_script)
-        == output_version
-    )
+    assert contribution_converter.extract_pack_version(input_script) == output_version
 
 
 def test_create_contribution_items_version_note():

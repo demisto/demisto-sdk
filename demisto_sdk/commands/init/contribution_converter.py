@@ -574,9 +574,7 @@ class ContributionConverter:
                         )
                         if isinstance(content_item, IntegrationScript):
                             script = content_item.code
-                            contributor_item_version = self.extract_pack_version(
-                                script
-                            )
+                            contributor_item_version = self.extract_pack_version(script)
                             current_pack_version = get_pack_metadata(
                                 file_path=content_item_file_path
                             ).get("currentVersion", "0.0.0")

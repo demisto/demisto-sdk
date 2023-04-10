@@ -254,14 +254,14 @@ def test_extract_image(tmpdir):
 
 def test_extract_code(tmpdir):
     """
-        Given
-        a unified integration file of python format.
+    Given
+    a unified integration file of python format.
 
-        When
-        - Running the YmlSplitter extract_code function.
+    When
+    - Running the YmlSplitter extract_code function.
 
-        Then
-        - Ensure that all lines that should have been removed have been removed.
+    Then
+    - Ensure that all lines that should have been removed have been removed.
     """
     extractor = YmlSplitter(
         input=f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml",
@@ -297,14 +297,14 @@ def test_extract_code(tmpdir):
 
 def test_extract_javascript_code(tmpdir):
     """
-        Given
-        a unified integration file of javascript format.
+    Given
+    a unified integration file of javascript format.
 
-        When
-        - Running the YmlSplitter extract_code function.
+    When
+    - Running the YmlSplitter extract_code function.
 
-        Then
-        - Ensure the "// pack version: ..." comment was removed successfully.
+    Then
+    - Ensure the "// pack version: ..." comment was removed successfully.
     """
     extractor = YmlSplitter(
         input=f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom-js.yml",
@@ -324,14 +324,14 @@ def test_extract_javascript_code(tmpdir):
 
 def test_extract_powershell_code(tmpdir):
     """
-        Given
-        a unified integration file of powershell format.
+    Given
+    a unified integration file of powershell format.
 
-        When
-        - Running the YmlSplitter extract_code function.
+    When
+    - Running the YmlSplitter extract_code function.
 
-        Then
-        - Ensure the "### pack version: ..." comment was removed successfully.
+    Then
+    - Ensure the "### pack version: ..." comment was removed successfully.
     """
     extractor = YmlSplitter(
         input=f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom-ps1.yml",

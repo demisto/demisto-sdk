@@ -116,8 +116,7 @@ class YmlSplitter:
         self.extract_long_description(f"{output_path}/{base_name}_description.md")
         yaml_out = f"{output_path}/{base_name}.yml"
         logger.debug(f"Creating yml file: {yaml_out} ...")
-        with open(self.input) as yf:
-            yaml_obj = yaml.load(yf)
+        yaml_obj = get_yaml(self.input)
         script_obj = yaml_obj
 
         if self.file_type in ("modelingrule", "parsingrule"):
@@ -132,7 +131,7 @@ class YmlSplitter:
             if "samples" in yaml_obj:
                 self.extract_rule_schema_and_samples(f"{output_path}/{base_name}.json")
                 del yaml_obj["samples"]
-            with open(yaml_out, "w") as yf:
+            with open(yaml_out, "wb") as yf:
                 yaml.dump(yaml_obj, yf)
         else:
             code_file = f"{code_file}{TYPE_TO_EXTENSION[lang_type]}"
@@ -147,7 +146,7 @@ class YmlSplitter:
             if code_type == TYPE_PWSH and not yaml_obj.get("fromversion"):
                 logger.debug("Setting fromversion for PowerShell to: 5.5.0")
                 yaml_obj["fromversion"] = "5.5.0"
-            with open(yaml_out, "w") as yf:
+            with open(yaml_out, "wb") as yf:
                 yaml.dump(yaml_obj, yf)
             # check if there is a README and if found, set found_readme to True
             if self.readme:
@@ -194,7 +193,7 @@ class YmlSplitter:
         ext = TYPE_TO_EXTENSION[lang_type]
         code_file_path = code_file_path.with_suffix(ext)
         logger.debug(f"Extracting code to: {code_file_path} ...")
-        with open(code_file_path, "w") as code_file:
+        with open(code_file_path, "w", encoding="utf-8") as code_file:
             if lang_type == TYPE_PYTHON and self.demisto_mock:
                 code_file.write("import demistomock as demisto  # noqa: F401\n")
                 self.lines_inserted_at_code_start += 1

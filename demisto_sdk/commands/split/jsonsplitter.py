@@ -40,9 +40,7 @@ class JsonSplitter:
         self.logging = not no_logging
         self.autocreate_dir = not no_auto_create_dir
         self.new_module_file = new_module_file
-
-        with open(self.input, "rb") as json_file:
-            self.module_json_data = json.load(json_file)
+        self.module_json_data = get_json(self.input)
 
     def split_json(self):
         if self.logging:

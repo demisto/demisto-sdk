@@ -1,11 +1,11 @@
 from typing import Callable, Optional, Set
 
+import demisto_client
 from pydantic import Field
 
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
-import demisto_client
 
 class Widget(ContentItem, content_type=ContentType.WIDGET):  # type: ignore[call-arg]
     widget_type: str = Field(alias="widgetType")

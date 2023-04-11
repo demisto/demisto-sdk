@@ -1,11 +1,11 @@
-from typing import List, Optional, Set
+from typing import Callable, List, Optional, Set
 
+import demisto_client
 from pydantic import Field
 
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
-import demisto_client
 
 class IndicatorType(ContentItem, content_type=ContentType.INDICATOR_TYPE):  # type: ignore[call-arg]
     description: str = Field(alias="details")

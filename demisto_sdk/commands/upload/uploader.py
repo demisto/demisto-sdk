@@ -2,7 +2,8 @@ import ast
 import glob
 import logging
 import os
-from typing import List, Tuple, Union
+from pathlib import Path
+from typing import List, Optional, Tuple
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
@@ -30,20 +31,21 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.content.errors import ContentFactoryError
-from demisto_sdk.commands.common.content.objects.abstract_objects import (
-    JSONObject,
-    YAMLObject,
-)
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (
-    find_type,
     get_child_directories,
     get_demisto_version,
     get_file,
     get_parent_directory_name,
+)
+from demisto_sdk.commands.content_graph.objects.base_content import (
+    NotIndivitudallyUploadedException,
+    NotUploadableException,
+)
+from demisto_sdk.commands.content_graph.objects.content_item import (
+    ContentItem,
+    IncompatibleUploadVersionException,
 )
 
 logger = logging.getLogger("demisto-sdk")
@@ -59,7 +61,7 @@ UPLOAD_SUPPORTED_ENTITIES = [
     FileType.TEST_SCRIPT,
     FileType.PLAYBOOK,
     FileType.TEST_PLAYBOOK,
-    FileType.OLD_CLASSIFIER, # TODO check
+    FileType.OLD_CLASSIFIER,  # TODO check
     FileType.CLASSIFIER,
     FileType.MAPPER,
     FileType.INCIDENT_TYPE,
@@ -116,6 +118,7 @@ class Uploader:
         detached_files: bool = False,
         reattach: bool = False,
         override_existing: bool = False,
+        marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
         **kwargs,
     ):
         self.path = input
@@ -123,17 +126,16 @@ class Uploader:
             (not insecure) if insecure else None
         )  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
         self.client = demisto_client.configure(verify_ssl=verify)
-        self.successfully_uploaded_files: List[Tuple[str, str]] = []
-        self.failed_uploaded_files: List[Tuple[str, str, str]] = []
-        self.unuploaded_due_to_version: List[
-            Tuple[str, str, Version, Version, Version]
-        ] = []
+        self.successfully_uploaded: List[ContentItem] = []
+        self.failed_upload: List[Tuple[ContentItem, str]] = []
+        self.failed_upload_version_mismatch: List[ContentItem] = []
         self.demisto_version = get_demisto_version(self.client)
         self.pack_names = pack_names
         self.skip_upload_packs_validation = skip_validation
         self.is_files_to_detached = detached_files
         self.reattach_files = reattach
         self.override_existing = override_existing
+        self.marketplace = marketplace
 
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance."""
@@ -146,7 +148,9 @@ class Uploader:
         status_code = SUCCESS_RETURN_CODE
 
         if self.is_files_to_detached:
-            item_detacher = ItemDetacher(client=self.client)
+            item_detacher = ItemDetacher(
+                client=self.client, marketplace=self.marketplace
+            )
             list_detach_items_ids: list = item_detacher.detach_item_manager(
                 upload_file=True
             )
@@ -162,24 +166,24 @@ class Uploader:
         host = self.client.api_client.configuration.host
         logger.info(f"Using {host=}")
         logger.info(f"Uploading {self.path} ...")
-        if self.path is None or not os.path.exists(self.path):
+        if self.path is None or not (path := Path(self.path)).exists():
             logger.info(
                 f"[red]Error: Given input path: {self.path} does not exist[/red]"
             )
             return ERROR_RETURN_CODE
 
         # uploading a pack zip
-        elif self.path.endswith(".zip"):
+        elif path.suffix == ".zip":
             status_code = self.zipped_pack_uploader(
                 path=self.path, skip_validation=self.skip_upload_packs_validation
             )
 
         # Uploading a file
-        elif os.path.isfile(self.path):
-            status_code = self.file_uploader(self.path) or status_code
+        elif path.is_file():
+            status_code = self.upload_file(path) or status_code
 
         # Uploading an entity directory
-        elif os.path.isdir(self.path):
+        elif path.is_dir():
             parent_dir_name = get_parent_directory_name(self.path)
             if parent_dir_name in UNIFIED_ENTITIES_DIR:
                 status_code = self.unified_entity_uploader(self.path) or status_code
@@ -192,9 +196,9 @@ class Uploader:
             return status_code
 
         if (
-            not self.successfully_uploaded_files
-            and not self.failed_uploaded_files
-            and not self.unuploaded_due_to_version
+            not self.successfully_uploaded
+            and not self.failed_upload
+            and not self.failed_upload_version_mismatch
         ):
             # if not uploaded any file
             logger.info(
@@ -209,85 +213,66 @@ class Uploader:
             return ERROR_RETURN_CODE
 
         print_summary(
-            self.successfully_uploaded_files,
-            self.unuploaded_due_to_version,
-            self.failed_uploaded_files,
+            self.successfully_uploaded,
+            self.failed_upload_version_mismatch,
+            self.failed_upload,
         )
         return status_code
 
-    def file_uploader(self, path: str) -> int:
+    def upload_file(self, path: Path) -> int:
         """
         Upload a file.
         Args:
             path: The path of the file to upload. The rest of the parameters are taken from self.
 
-        Returns:
-
+        Raises:
+            NotIndivitudallyUploadedException (see exception class)
+            NotUploadableException
         """
+        if not path.exists():
+            raise NotUploadableException(
+                f"Path {path.absolute()} does not exist"
+            )  # TODO is this necessary?
+
+        content_item: Optional[ContentItem]
+        if (
+            content_item := ContentItem.from_path(path)
+        ) is None:  # type:ignore[assignment]
+            # failed parsing
+            raise RuntimeError(
+                f"Could not parse content from {path.absolute()}"
+            )  # TODO raise NotUploadable? Create new exception? Something else?
+
         try:
-            upload_object: Union[YAMLObject, JSONObject] = path_to_pack_object(path)
-        except ContentFactoryError:
-            file_name = os.path.split(path)[-1]
-            message = (
-                f"Cannot upload {path} as the file type is not supported for upload."
+            content_item.upload(
+                client=self.client,
+                marketplace=self.marketplace,
+                target_demisto_version=Version(str(self.demisto_version)),
             )
-            logger.debug(f"[red]{message}[/red]")
-            self.failed_uploaded_files.append((file_name, "Unknown", message))
+            self.successfully_uploaded.append(content_item)
+            logger.debug(
+                f"[green]Uploaded {content_item.content_type} {content_item.normalize_name}: successfully[/green]"
+            )
+            return SUCCESS_RETURN_CODE
+
+        except IncompatibleUploadVersionException as e:
+            logger.error(e)
+            self.failed_upload_version_mismatch.append(content_item)
             return ERROR_RETURN_CODE
 
-        file_name = upload_object.path.name  # type: ignore
+        except NotIndivitudallyUploadedException as e:
+            logger.error(e)
+            self.failed_upload.append((content_item, str(e)))
+            return ERROR_RETURN_CODE # TODO is this the right value?
 
-        entity_type = find_type(str(upload_object.path))
-        if entity_type in UPLOAD_SUPPORTED_ENTITIES:
-            if upload_object.from_version <= self.demisto_version <= upload_object.to_version:  # type: ignore
-                try:
-                    result = upload_object.upload(self.client)  # type: ignore
-                    if hasattr(result, "to_str"):
-                        logger.debug(f"Result:\n{result.to_str()}")
-                    else:
-                        logger.debug(f"Result:\n{result}")
-                    logger.debug(
-                        f"[green]Uploaded {entity_type} - '{os.path.basename(path)}': successfully[/green]"
-                    )
-                    self.successfully_uploaded_files.append(
-                        (file_name, entity_type.value)
-                    )
-                    return SUCCESS_RETURN_CODE
-                except Exception as err:
-                    message = parse_error_response(err, entity_type, file_name)
-                    self.failed_uploaded_files.append(
-                        (file_name, entity_type.value, message)
-                    )
-                    return ERROR_RETURN_CODE
-            else:
-                logger.debug(
-                    f"Input path {path} is not uploading due to version mismatch.\n"
-                    f"XSOAR version is: {self.demisto_version} while the file's version is "
-                    f"{upload_object.from_version} - {upload_object.to_version}",
-                )
-                self.unuploaded_due_to_version.append(
-                    (
-                        file_name,
-                        entity_type.value,
-                        self.demisto_version,  # type: ignore
-                        upload_object.from_version,
-                        upload_object.to_version,
-                    )
-                )
-                return ERROR_RETURN_CODE
-        else:
-            logger.debug(
-                f"\n[red]Error: Given input path: {path} is not uploadable. "
-                f"Input path should point to one of the following:\n"
-                f"  1. Pack\n"
-                f"  2. A content entity directory that is inside a pack. For example: an Integrations directory or "
-                f"a Layouts directory\n"
-                f"  3. Valid file that can be imported to Cortex XSOAR manually. "
-                f"For example a playbook: helloWorld.yml[/red]",
-            )
-            self.failed_uploaded_files.append(
-                (file_name, entity_type.value, "Unsuported file path/type")
-            )
+        except NotUploadableException as e:
+            logger.error(e)
+            self.failed_upload.append((content_item, str(e)))
+            return ERROR_RETURN_CODE
+
+        except Exception as e:
+            message = parse_error_response(e, content_item)
+            self.failed_upload.append((content_item, message))
             return ERROR_RETURN_CODE
 
     def unified_entity_uploader(self, path) -> int:
@@ -307,7 +292,7 @@ class Uploader:
             if not file.endswith("_unified.yml"):
                 yml_files.append(file)
         if len(yml_files) > 1:
-            self.failed_uploaded_files.append(
+            self.failed_upload.append(
                 (
                     path,
                     "Entity Folder",
@@ -317,11 +302,11 @@ class Uploader:
             )
             return ERROR_RETURN_CODE
         if not yml_files:
-            self.failed_uploaded_files.append(
+            self.failed_upload.append(
                 (path, "Entity Folder", "The folder does not contain a `.yml` file")
             )
             return ERROR_RETURN_CODE
-        return self.file_uploader(yml_files[0])
+        return self.upload_file(yml_files[0])
 
     def entity_dir_uploader(self, path: str) -> int:
         """
@@ -341,9 +326,9 @@ class Uploader:
         if dir_name in CONTENT_ENTITIES_DIRS:
             # upload json or yml files. Other files such as `.md`, `.png` should be ignored
             for file in glob.glob(f"{path}/*.yml"):
-                status_code = self.file_uploader(file) or status_code
+                status_code = self.upload_file(file) or status_code
             for file in glob.glob(f"{path}/*.json"):
-                status_code = self.file_uploader(file) or status_code
+                status_code = self.upload_file(file) or status_code
         return status_code
 
     def pack_uploader(self, path: str) -> int:
@@ -366,7 +351,7 @@ class Uploader:
 
             if self.notify_user_should_override_packs():
                 zipped_pack.upload(logger, self.client, skip_validation)
-                self.successfully_uploaded_files.extend(
+                self.successfully_uploaded.extend(
                     [(pack_name, FileType.PACK.value) for pack_name in self.pack_names]
                 )
                 return SUCCESS_RETURN_CODE
@@ -376,7 +361,7 @@ class Uploader:
         except (Exception, KeyboardInterrupt) as err:
             file_name = zipped_pack.path.name  # type: ignore
             message = parse_error_response(err, FileType.PACK.value, file_name)
-            self.failed_uploaded_files.append((file_name, FileType.PACK.value, message))
+            self.failed_upload.append((file_name, FileType.PACK.value, message))
             return ERROR_RETURN_CODE
 
     def notify_user_should_override_packs(self):
@@ -404,14 +389,14 @@ class Uploader:
                     f"Any changes made on {marketplace} will be lost.[red]"
                 )
                 if not self.override_existing:
-                    logger.info("[red]Are you sure you want to continue? Y/[N][/red]")
+                    logger.info("[red]Are you sure you want to continue? y/[N][/red]")
                     answer = str(input())
                     return answer in ["y", "Y", "yes"]
 
         return True
 
 
-def parse_error_response(error: ApiException, file_type: str, file_name: str):
+def parse_error_response(error: ApiException, content_item: ContentItem) -> str:
     """
     Parses error message from exception raised in call to client to upload a file
 
@@ -424,13 +409,13 @@ def parse_error_response(error: ApiException, file_type: str, file_name: str):
         if "[SSL: CERTIFICATE_VERIFY_FAILED]" in str(error.reason):
             message = (
                 "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self signed certificate.\n"
-                "Try running the command with --insecure flag."
+                "Run the command with the --insecure flag."
             )
 
         elif "Failed to establish a new connection:" in str(error.reason):
             message = (
                 "Failed to establish a new connection: Connection refused.\n"
-                "Try checking your BASE url configuration."
+                "Try checking the BASE_URL configuration."
             )
 
         elif error.reason in ("Bad Request", "Forbidden"):
@@ -439,11 +424,10 @@ def parse_error_response(error: ApiException, file_type: str, file_name: str):
 
             if error_body.get("status") == 403:
                 message += "\nTry checking your API key configuration."
-    logger.debug(str(f"\n[red]Upload {file_type}: {file_name} failed:[/red]"))
-    logger.debug(f"[red]{message}[/red]")
+
     if isinstance(error, KeyboardInterrupt):
         message = "Aborted due to keyboard interrupt."
-    return message
+    return f"\n[red]Upload {content_item.content_type}: {content_item.normalize_name} failed:\n{message}[/red]"
 
 
 def print_summary(
@@ -543,9 +527,12 @@ class ConfigFileParser:
 
 
 class ItemDetacher:
-    def __init__(self, client, file_path: str = "SystemPacks"):
+    def __init__(
+        self, client, marketplace: MarketplaceVersions, file_path: str = "SystemPacks"
+    ):
         self.file_path = file_path
         self.client = client
+        self.marketplace = marketplace
 
     DETACH_ITEM_TYPE_TO_ENDPOINT: dict = {
         "IncidentTypes": "/incidenttype/detach/:id/",
@@ -603,8 +590,7 @@ class ItemDetacher:
     def find_item_id_to_detach(self):
         file_type = self.find_item_type_to_detach(self.file_path)
         file_data = get_file(self.file_path, file_type)
-        file_id = file_data.get("id")
-        return file_id
+        return file_data.get("id")  # TODO get_id
 
     def detach_item_manager(self, upload_file: bool = False):
         detach_files_list: list = []
@@ -613,19 +599,18 @@ class ItemDetacher:
             for file in detach_files_list:
                 self.detach_item(file.get("file_id"), file_path=file.get("file_path"))
                 if upload_file:
-                    uploader = Uploader(input=file.get("file_path"))
-                    uploader.upload()
+                    Uploader(
+                        input=file.get("file_path"), marketplace=self.marketplace
+                    ).upload()
 
         elif os.path.isfile(self.file_path):
             file_id = self.find_item_id_to_detach()
             detach_files_list.append({"file_id": file_id, "file_path": self.file_path})
             self.detach_item(file_id=file_id, file_path=self.file_path)
             if upload_file:
-                uploader = Uploader(input=self.file_path)
-                uploader.upload()
+                Uploader(input=self.file_path, marketplace=self.marketplace).upload()
 
-        detached_items_ids = [file.get("file_id") for file in detach_files_list]
-        return detached_items_ids
+        return [file["file_id"] for file in detach_files_list]
 
 
 class ItemReattacher:

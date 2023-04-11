@@ -34,7 +34,7 @@ class ContentItemXSIAM(ContentItem, ABC):
                 self.handler.dump(data, f)
 
     @abstractmethod
-    def upload(self, client, marketplace: MarketplaceVersions) -> None:
+    def _upload(self, client, marketplace: MarketplaceVersions) -> None:
         """
         Uploadable XSIAM items should override this method.
         The rest will raise as default.

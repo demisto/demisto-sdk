@@ -4,6 +4,7 @@ from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Callable, List, Optional, Set
 
 import demisto_client
+from packaging.version import Version
 
 from demisto_sdk.commands.common.handlers import (
     JSON_Handler,
@@ -199,6 +200,7 @@ class ContentItem(BaseContent):
         id_set_entity["pack"] = self.in_pack.object_id  # type: ignore[union-attr]
         return id_set_entity
 
+    @abstractmethod
     def _client_upload_method(self, client: demisto_client) -> Optional[Callable]:
         """
         This attribute sets the method when the upload flow is only of the following form
@@ -207,11 +209,15 @@ class ContentItem(BaseContent):
             >       self.dump(dir_path, marketplace=marketplace)
             >       client.<<SOME_METHOD>>(file=dir_path / self.normalize_name)
 
-        When the flow is different, return None (defeault).
+        When the flow is different, return None (default).
         """
         return None
 
-    def upload(self, client, marketplace: MarketplaceVersions) -> None:
+    def _upload(self, client: demisto_client, marketplace: MarketplaceVersions) -> None:
+        """
+        Called once the version is validated. Implementation may differ between content items.
+        Most items use _client_upload_method, refer to its docstrings.
+        """
         if self._client_upload_method:
             with TemporaryDirectory("w") as f:
                 dir_path = Path(f)
@@ -222,9 +228,27 @@ class ContentItem(BaseContent):
             f"missing overriding upload method for {self.content_type}"
         )
 
+    def upload(
+        self,
+        client: demisto_client,
+        marketplace: MarketplaceVersions,
+        target_demisto_version: Version,
+    ) -> None:
+        """
+        The only upload-related function to be used - the rest are abstract.
+        This one checks for version compatibility and then calls _upload.
+        """
+        if not (
+            Version(self.fromversion)
+            <= target_demisto_version
+            <= Version(self.toversion)
+        ):
+            raise IncompatibleUploadVersionException(self, target_demisto_version)
+        self._upload(client, marketplace)
+
 
 class NotUploadableException(NotImplementedError):
-    def __init__(self, item: ContentItem, description: Optional[str] = None) -> None:
+    def __init__(self, item: BaseContent, description: Optional[str] = None) -> None:
         description_suffix = f" {description}" if description else ""
         super().__init__(
             f"Object ({item.content_type} {item.object_id}) cannot be uploaded{description_suffix}"
@@ -236,8 +260,26 @@ class NotIndivitudallyUploadedException(NotUploadableException):
     Some XSIAM items must be uploaded as part of a pack.
     """
 
-    def __init__(self, item: ContentItem):
+    def __init__(self, item: BaseContent):
         super().__init__(
             item,
             description=" independently. Use the -z flag to upload the whole pack, zipped.",
+        )
+
+
+class IncompatibleUploadVersionException(NotUploadableException):
+    def __init__(self, item: ContentItem, target: Version) -> None:
+        if target > Version(item.toversion):
+            message = f"to_version={item.toversion}"
+        elif target < Version(item.fromversion):
+            message = f"from_version={item.fromversion}"
+        else:
+            raise RuntimeError(
+                f"Invalid version comparison for {item.path} ({item.fromversion=}, {item.toversion=})"
+            )
+
+        super().__init__(
+            item,
+            f". Target version {target} mismatch: "
+            f"{item.content_type} {item.normalize_name} has {message}",
         )

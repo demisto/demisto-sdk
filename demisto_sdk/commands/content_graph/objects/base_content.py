@@ -3,8 +3,19 @@ import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Optional, Set, Type, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    Set,
+    Type,
+    cast,
+)
 
+from packaging.version import Version
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
 
@@ -148,6 +159,13 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     @abstractmethod
     def dump(self, path: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         pass
+
+    @abstractmethod
+    def upload(
+        self, client, marketplace: MarketplaceVersions, target_demisto_version: Version
+    ) -> None:
+        # should be implemented at the ContentItem level rather than here
+        raise NotImplementedError()
 
     def add_relationship(
         self, relationship_type: RelationshipType, relationship: "RelationshipData"

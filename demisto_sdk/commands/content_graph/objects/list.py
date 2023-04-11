@@ -16,7 +16,7 @@ class List(ContentItem, content_type=ContentType.LIST):  # type: ignore[call-arg
     def metadata_fields(self) -> Set[str]:
         return {"name"}
 
-    def upload(self, client, marketplace: MarketplaceVersions) -> None:
+    def _upload(self, client, marketplace: MarketplaceVersions) -> None:
         with TemporaryDirectory("w") as f:
             dir_path = Path(f)
             self.dump(dir_path, marketplace=marketplace)

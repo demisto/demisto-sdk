@@ -16,7 +16,7 @@ from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import parse
 
-from demisto_sdk.__main__ import main, upload
+from demisto_sdk.__main__ import _upload, main
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
@@ -114,9 +114,7 @@ def test_upload_script_positive(demisto_client_configure, mocker):
     mocker.patch.object(uploader, "client")
     uploader.upload()
 
-    assert [
-        (script_name, FileType.SCRIPT.value)
-    ] == uploader.successfully_uploaded_files
+    assert [(script_name, FileType.SCRIPT.value)] == uploader.successfully_uploaded
 
 
 def test_upload_playbook_positive(demisto_client_configure, mocker):
@@ -139,9 +137,7 @@ def test_upload_playbook_positive(demisto_client_configure, mocker):
     mocker.patch.object(uploader, "client")
     uploader.upload()
 
-    assert [
-        (playbook_name, FileType.PLAYBOOK.value)
-    ] == uploader.successfully_uploaded_files
+    assert [(playbook_name, FileType.PLAYBOOK.value)] == uploader.successfully_uploaded
 
 
 def test_upload_widget_positive(demisto_client_configure, mocker):
@@ -164,9 +160,7 @@ def test_upload_widget_positive(demisto_client_configure, mocker):
     mocker.patch.object(uploader, "client")
     uploader.upload()
 
-    assert [
-        (widget_name, FileType.WIDGET.value)
-    ] == uploader.successfully_uploaded_files
+    assert [(widget_name, FileType.WIDGET.value)] == uploader.successfully_uploaded
 
 
 def test_upload_dashboard_positive(demisto_client_configure, mocker):
@@ -191,7 +185,7 @@ def test_upload_dashboard_positive(demisto_client_configure, mocker):
 
     assert [
         ("upload_test_dashboard.json", FileType.DASHBOARD.value)
-    ] == uploader.successfully_uploaded_files
+    ] == uploader.successfully_uploaded
 
 
 def test_upload_layout_positive(demisto_client_configure, mocker):
@@ -222,9 +216,7 @@ def test_upload_layout_positive(demisto_client_configure, mocker):
     uploader.upload()
 
     assert not unify_mocker.called
-    assert [
-        (layout_name, FileType.LAYOUT.value)
-    ] == uploader.successfully_uploaded_files
+    assert [(layout_name, FileType.LAYOUT.value)] == uploader.successfully_uploaded
 
 
 def test_upload_layout_container_positive(demisto_client_configure, mocker):
@@ -256,7 +248,7 @@ def test_upload_layout_container_positive(demisto_client_configure, mocker):
     assert unify_mocker.called
     assert [
         (layout_name, FileType.LAYOUTS_CONTAINER.value)
-    ] == uploader.successfully_uploaded_files
+    ] == uploader.successfully_uploaded
 
 
 def test_upload_incident_type_positive(demisto_client_configure, mocker):
@@ -280,7 +272,7 @@ def test_upload_incident_type_positive(demisto_client_configure, mocker):
 
     assert [
         (incident_type_name, FileType.INCIDENT_TYPE.value)
-    ] == uploader.successfully_uploaded_files
+    ] == uploader.successfully_uploaded
 
 
 def test_upload_classifier_positive(demisto_client_configure, mocker):
@@ -304,7 +296,7 @@ def test_upload_classifier_positive(demisto_client_configure, mocker):
 
     assert [
         (classifier_name, FileType.OLD_CLASSIFIER.value)
-    ] == uploader.successfully_uploaded_files
+    ] == uploader.successfully_uploaded
 
 
 def test_upload_incident_field_positive(demisto_client_configure, mocker):
@@ -328,7 +320,7 @@ def test_upload_incident_field_positive(demisto_client_configure, mocker):
 
     assert [
         (incident_field_name, FileType.INCIDENT_FIELD.value)
-    ] == uploader.successfully_uploaded_files
+    ] == uploader.successfully_uploaded
 
 
 def test_upload_indicator_field_positive(demisto_client_configure, mocker):
@@ -350,7 +342,7 @@ def test_upload_indicator_field_positive(demisto_client_configure, mocker):
 
     assert [
         (indicator_field_name, FileType.INDICATOR_FIELD.value)
-    ] == uploader.successfully_uploaded_files
+    ] == uploader.successfully_uploaded
 
 
 def test_upload_reputation_positive(demisto_client_configure, mocker):
@@ -375,7 +367,7 @@ def test_upload_reputation_positive(demisto_client_configure, mocker):
 
     assert [
         (reputation_name, FileType.REPUTATION.value)
-    ] == uploader.successfully_uploaded_files
+    ] == uploader.successfully_uploaded
 
 
 def test_upload_report_positive(demisto_client_configure, mocker, repo):
@@ -398,9 +390,7 @@ def test_upload_report_positive(demisto_client_configure, mocker, repo):
         uploader = Uploader(input=report.path, insecure=False)
         mocker.patch.object(uploader, "client")
         uploader.upload()
-    assert [
-        (report.name, FileType.REPORT.value)
-    ] == uploader.successfully_uploaded_files
+    assert [(report.name, FileType.REPORT.value)] == uploader.successfully_uploaded
 
 
 def test_upload_incident_type_correct_file_change(demisto_client_configure, mocker):
@@ -522,7 +512,7 @@ def test_upload_an_integration_directory(demisto_client_configure, mocker):
 
     assert [
         (integration_yml_name, FileType.INTEGRATION.value)
-    ] == uploader.successfully_uploaded_files
+    ] == uploader.successfully_uploaded
 
 
 def test_upload_a_script_directory(demisto_client_configure, mocker):
@@ -551,7 +541,7 @@ def test_upload_a_script_directory(demisto_client_configure, mocker):
 
     assert [
         (uploaded_file_name, FileType.SCRIPT.value)
-    ] == uploader.successfully_uploaded_files
+    ] == uploader.successfully_uploaded
 
 
 def test_upload_incident_fields_directory(demisto_client_configure, mocker):
@@ -576,7 +566,7 @@ def test_upload_incident_fields_directory(demisto_client_configure, mocker):
     uploader = Uploader(input=incident_fields_path, insecure=False)
     mocker.patch.object(uploader, "client")
     assert uploader.upload() == 0
-    assert len(uploader.successfully_uploaded_files) == 3
+    assert len(uploader.successfully_uploaded) == 3
 
 
 def test_upload_pack(demisto_client_configure, mocker):
@@ -617,9 +607,7 @@ def test_upload_pack(demisto_client_configure, mocker):
         "upload_test_dashboard.json",
     ]
     assert status_code == 0
-    uploaded_objects = [
-        obj_pair[0] for obj_pair in uploader.successfully_uploaded_files
-    ]
+    uploaded_objects = [obj_pair[0] for obj_pair in uploader.successfully_uploaded]
     for entity in expected_entities:
         assert entity in uploaded_objects
 
@@ -667,7 +655,7 @@ def test_file_not_supported(demisto_client_configure, mocker):
     mocker.patch.object(uploader, "client")
     status_code = uploader.upload()
     assert status_code == 1
-    assert uploader.failed_uploaded_files[0][0] == "DummyScript.py"
+    assert uploader.failed_upload[0][0] == "DummyScript.py"
 
 
 def test_parse_error_response_ssl(demisto_client_configure, mocker):
@@ -957,7 +945,7 @@ class TestZippedPackUpload:
         )
 
         # run
-        click.Context(command=upload).invoke(upload, input=input)
+        click.Context(command=_upload).invoke(_upload, input=input)
 
         # validate
         disable_verification_call_args = (
@@ -994,7 +982,7 @@ class TestZippedPackUpload:
         mocker.patch.object(Uploader, "zipped_pack_uploader")
 
         # run
-        click.Context(command=upload).invoke(upload, input=TEST_PACK, zip=True)
+        click.Context(command=_upload).invoke(_upload, input=TEST_PACK, zip=True)
 
         # validate
         assert (
@@ -1024,7 +1012,7 @@ class TestZippedPackUpload:
         )
 
         # run
-        click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
+        click.Context(command=_upload).invoke(_upload, input=TEST_PACK_ZIP)
 
         # validate
         disable_verification_call_args = (
@@ -1064,7 +1052,7 @@ class TestZippedPackUpload:
         mock_api_client(mocker)
 
         # run
-        status = click.Context(command=upload).invoke(upload, input=input)
+        status = click.Context(command=_upload).invoke(_upload, input=input)
 
         # validate
         assert status == expected_ret_value
@@ -1088,7 +1076,7 @@ class TestZippedPackUpload:
         mocker.patch.object(API_CLIENT, "upload_content_packs")
 
         # run
-        status = click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
+        status = click.Context(command=_upload).invoke(_upload, input=TEST_PACK_ZIP)
 
         # validate
         assert status == 1
@@ -1124,7 +1112,7 @@ class TestZippedPackUpload:
         mocker.patch.object(API_CLIENT, "upload_content_packs")
 
         # run
-        status = click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
+        status = click.Context(command=_upload).invoke(_upload, input=TEST_PACK_ZIP)
 
         # validate
         assert status == 1
@@ -1154,7 +1142,7 @@ class TestZippedPackUpload:
         )
 
         # run
-        status = click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
+        status = click.Context(command=_upload).invoke(_upload, input=TEST_PACK_ZIP)
 
         # validate
 
@@ -1203,7 +1191,7 @@ class TestZippedPackUpload:
         mocker.patch.object(API_CLIENT, "upload_content_packs")
 
         # run
-        click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
+        click.Context(command=_upload).invoke(_upload, input=TEST_PACK_ZIP)
 
         # validate
         tools.update_server_configuration.call_count == exp_call_count
@@ -1253,8 +1241,8 @@ class TestZippedPackUpload:
         )
 
         # run
-        status_code = click.Context(command=upload).invoke(
-            upload,
+        status_code = click.Context(command=_upload).invoke(
+            _upload,
             input_config_file=f"{git_path()}/demisto_sdk/commands/upload/tests/data/xsoar_config.json",
         )
 
@@ -1303,7 +1291,7 @@ class TestZippedPackUpload:
         )
 
         # run
-        click.Context(command=upload).invoke(upload, input=input)
+        click.Context(command=_upload).invoke(_upload, input=input)
 
         skip_value = API_CLIENT.upload_content_packs.call_args[1]["skip_verify"]
         uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]["file"]
@@ -1336,7 +1324,7 @@ class TestZippedPackUpload:
         )
 
         # run
-        click.Context(command=upload).invoke(upload, input=input)
+        click.Context(command=_upload).invoke(_upload, input=input)
         uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]["file"]
 
         assert str(uploaded_file_path) == input
@@ -1369,7 +1357,9 @@ class TestZippedPackUpload:
         )
 
         # run
-        click.Context(command=upload).invoke(upload, input=input, skip_validation=True)
+        click.Context(command=_upload).invoke(
+            _upload, input=input, skip_validation=True
+        )
 
         skip_value = API_CLIENT.upload_content_packs.call_args[1]["skip_validation"]
         uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]["file"]
@@ -1402,7 +1392,7 @@ class TestZippedPackUpload:
         )
 
         # run
-        click.Context(command=upload).invoke(upload, input=input)
+        click.Context(command=_upload).invoke(_upload, input=input)
         uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]["file"]
 
         assert str(uploaded_file_path) == input
@@ -1460,8 +1450,8 @@ class TestZippedPackUpload:
         mocker.patch.object(Uploader, "zipped_pack_uploader")
 
         # run
-        click.Context(command=upload).invoke(
-            upload, input=TEST_XSIAM_PACK, xsiam=False, zip=True
+        click.Context(command=_upload).invoke(
+            _upload, input=TEST_XSIAM_PACK, xsiam=False, zip=True
         )
 
         zip_file_path = Uploader.zipped_pack_uploader.call_args[1]["path"]

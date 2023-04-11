@@ -293,7 +293,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             logger.error(f"Failed dumping pack {self.name}: {e}")
             raise
 
-    def upload(
+    def _upload(
         self, client: demisto_client, marketplace: MarketplaceVersions, zipped: bool
     ):
         logger.debug(f"Uploading pack {self.object_id}")
@@ -309,7 +309,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             for item in self.content_items:
                 try:
                     logger.debug(f"Uploading pack {self.object_id}: {item.object_id}")
-                    item.upload(client, marketplace)
+                    item._upload(client, marketplace)
                 except NotIndivitudallyUploadedException:
                     logger.debug(
                         f"Cannot upload {item.content_type} {item.object_id} without the -z flag"

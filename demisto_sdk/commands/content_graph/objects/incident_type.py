@@ -1,4 +1,4 @@
-from typing import Optional, Set
+from typing import Callable, Optional, Set
 
 import demisto_client
 from pydantic import Field

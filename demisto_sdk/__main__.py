@@ -500,6 +500,7 @@ def zip_packs(ctx, **kwargs) -> int:
     zip_all = kwargs.pop("zip_all", False) or should_upload
 
     if marketplace := kwargs.get("marketplace"):
+        # TODO can we remove this part?
         os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
 
     packs_zipper = PacksZipper(
@@ -508,7 +509,9 @@ def zip_packs(ctx, **kwargs) -> int:
     zip_path, unified_pack_names = packs_zipper.zip_packs()
 
     if should_upload and zip_path:
-        return Uploader(input=zip_path, pack_names=unified_pack_names).upload()
+        return Uploader(
+            input=zip_path, pack_names=unified_pack_names, marketplace=marketplace
+        ).upload()
 
     return EX_SUCCESS if zip_path is not None else EX_FAIL
 
@@ -1343,7 +1346,7 @@ def format(
 )
 @click.pass_context
 @logging_setup_decorator
-def upload(ctx, **kwargs):
+def _upload(ctx, **kwargs):
     """Upload integration or pack to Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.

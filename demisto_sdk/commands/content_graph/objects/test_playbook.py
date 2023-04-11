@@ -1,7 +1,5 @@
 from typing import Set
 
-import demisto_client
-
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 

@@ -98,6 +98,10 @@ class MapperValidator(ContentEntityValidator):
             for inc in old_incidents_types:
                 old_incident_fields = old_mapper[inc].get("internalMapping", {})
                 current_incident_fields = current_mapper[inc].get("internalMapping", {})
+                if old_incident_fields is None:
+                    old_incident_fields = {}
+                if current_incident_fields is None:
+                    current_incident_fields = {}
                 old_fields = {inc for inc in old_incident_fields}
                 current_fields = {inc for inc in current_incident_fields}
 

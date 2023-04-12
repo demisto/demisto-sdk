@@ -15,7 +15,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content.objects.abstract_objects import JSONObject
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import get_core_pack_list
+from demisto_sdk.commands.common.tools import get_core_pack_list, get_json
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 
 json = JSON_Handler()
@@ -525,7 +525,7 @@ class PackMetaData(JSONObject):
                 file_content["previewOnly"] = True
 
         new_metadata_path = os.path.join(dest_dir, "metadata.json")
-        with open(new_metadata_path, "w") as metadata_file:
+        with open(new_metadata_path, "w", encoding="utf-8") as metadata_file:
             json.dump(file_content, metadata_file, indent=4)
 
         return [Path(new_metadata_path)]
@@ -553,11 +553,10 @@ class PackMetaData(JSONObject):
             return None
 
         try:
-            with open(user_metadata_path) as user_metadata_file:
-                user_metadata = json.load(user_metadata_file)  # loading user metadata
-                # part of old packs are initialized with empty list
-                if isinstance(user_metadata, list):
-                    user_metadata = {}
+            user_metadata = get_json(user_metadata_path)  # loading user metadata
+            # part of old packs are initialized with empty list
+            if isinstance(user_metadata, list):
+                user_metadata = {}
 
             self.id = pack_id
             self.name = user_metadata.get("name", "")

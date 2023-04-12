@@ -6,7 +6,7 @@ import click
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, FileType
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import find_type, get_pack_name
+from demisto_sdk.commands.common.tools import find_type, get_pack_name, get_json
 
 json = JSON_Handler()
 
@@ -70,8 +70,7 @@ class GenericModuleUnifier:
             file_path = os.path.join(dashboards_dir_path, file_name)
             if find_type(file_path) == FileType.DASHBOARD:
                 # it's a dashboard
-                with open(file_path) as f:
-                    dashboard = json.load(f)
+                dashboard = get_json(file_path)
                 if dashboard.get("id") == dashboard_id:
                     # the searched dashboard was found
                     return dashboard
@@ -124,5 +123,5 @@ class GenericModuleUnifier:
                 "-f argument to True in order to overwrite the preexisting file."
             )
 
-        with open(self.dest_path, mode="w") as file:
+        with open(self.dest_path, mode="w", encoding="utf-8") as file:
             json.dump(unified_generic_module_json, file, indent=4)

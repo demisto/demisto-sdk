@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import get_pack_name, is_external_repository
+from demisto_sdk.commands.common.tools import get_pack_name, is_external_repository, get_json
 
 json = JSON_Handler()
 

@@ -112,7 +112,7 @@ class ContentItem(BaseContent):
 
     @property
     def data(self) -> dict:
-        with self.path.open() as f:
+        with self.path.open(encoding="utf-8") as f:
             return self.handler.load(f)
 
     def prepare_for_upload(

@@ -1,11 +1,17 @@
 import importlib
 import os
+import shutil
+from pathlib import Path
 
 import pytest
+
+from demisto_sdk.commands.common.constants import TYPE_PYTHON
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 from demisto_sdk.commands.lint.helpers import (
     generate_coverage_report,
     split_warnings_errors,
+    add_tmp_lint_files,
 )
 
 EXIT_CODES = {
@@ -251,6 +257,15 @@ def test_split_warnings_errors(
     assert error == output_error
     assert warning == output_warning
     assert other == output_other
+
+
+def test_add_tmp_lint_files(mocker):
+    mock_copy = mocker.patch.object(shutil, "copy", return_value=None)
+    content_repo = Path(f"{git_path()}/demisto_sdk/commands/lint/tests/test_data")
+    pack_path = Path(f"{git_path()}/demisto_sdk/commands/lint/tests/test_data/Packs/test_pack")
+    lint_files = [Path(f"{git_path()}/demisto_sdk/commands/lint/tests/test_data/Packs/test_pack/Integrations/test/test.py")]
+    with add_tmp_lint_files(content_repo=content_repo, pack_path=pack_path, lint_files=lint_files, modules={}, pack_type=TYPE_PYTHON):
+        assert mock_copy.call_count == 2
 
 
 class TestGenerateCoverageReport:

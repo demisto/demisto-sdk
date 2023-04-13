@@ -298,7 +298,7 @@ def add_tmp_lint_files(
                         )
                         copied_api_module_path.write_bytes(api_content)
 
-                added_modules.append(copied_api_module_path)
+                    added_modules.append(copied_api_module_path)
         yield
     except Exception as e:
         logger.error(f"add_tmp_lint_files unexpected exception: {str(e)}")

@@ -306,9 +306,9 @@ class PackUniqueFilesValidator(BaseValidator):
     def validate_pack_readme_images(self):
         # This validation does not checks on private repo
         if self.private_repo:
-            logging.debug(f"This is private repo - {self.private_repo=}")
+            logger.info(f"This is private repo - {self.private_repo=}")
             return True
-        logging.debug(f'{self.private_repo=}')
+        logger.info(f'{self.private_repo=}')
         readme_file_path = os.path.join(self.pack_path, self.readme_file)
         readme_validator = ReadMeValidator(
             readme_file_path,

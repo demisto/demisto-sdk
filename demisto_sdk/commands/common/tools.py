@@ -1893,12 +1893,12 @@ def is_external_repository() -> bool:
     try:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
         private_settings_path = os.path.join(git_repo.working_dir, ".private-repo-settings")  # type: ignore
-        logging.debug(
+        logger.info(
             f'{os.path.exists(private_settings_path)} - logging for whether the repo is private or not'
         )
         return os.path.exists(private_settings_path)
     except git.InvalidGitRepositoryError:
-        logging.debug(
+        logger.info(
             'logging for `git.InvalidGitRepositoryError` and return True'
         )
         return True

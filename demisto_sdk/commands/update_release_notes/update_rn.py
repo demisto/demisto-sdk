@@ -631,9 +631,7 @@ class UpdateRN:
             try:
                 run_command(f"git add {self.metadata_path}", exit_on_error=False)
             except RuntimeError:
-                logger.error(
-                    f"[red]Failed git-adding {self.metadata_path}[/red]"
-                )
+                logger.error(f"[red]Failed git-adding {self.metadata_path}[/red]")
 
     @staticmethod
     def check_rn_dir(rn_path: str):

@@ -269,8 +269,7 @@ class Uploader:
             self.failed_upload.append((content_item, message))
             return ERROR_RETURN_CODE
 
-
-    def unified_entity_uploader(self, path) -> int: # TODO remove?
+    def unified_entity_uploader(self, path) -> int:  # TODO remove?
         """
         Uploads unified entity folder
 

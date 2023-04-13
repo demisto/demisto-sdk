@@ -319,7 +319,7 @@ def test_extract_javascript_code(tmpdir):
     extractor.extract_code(extractor.output)
     file_data = Path(extractor.output).read_text()
     assert "// pack version: 1.0.3" not in file_data
-    os.remove(extractor.output)
+    Path(extractor.output).unlink()
 
 
 def test_extract_powershell_code(tmpdir):
@@ -347,7 +347,7 @@ def test_extract_powershell_code(tmpdir):
     with open(extractor.output, "rb") as temp_code:
         file_data = temp_code.read().decode("utf-8")
         assert "### pack version: 1.0.3" not in file_data
-    os.remove(extractor.output)
+    Path(extractor.output).unlink()
 
 
 def test_extract_code__with_apimodule(tmpdir):

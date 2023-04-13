@@ -50,7 +50,7 @@ def prepare_descriptions_and_names(
 
         if description := task_value.get("task", {}).get("description", ""):
             # Since it is a server key, we do not want to change it
-            if description != 'commands.local.cmd.set.incident':
+            if description != "commands.local.cmd.set.incident":
                 data["tasks"][task_key]["task"][
                     "description"
                 ] = prepare_descriptions_and_names_helper(

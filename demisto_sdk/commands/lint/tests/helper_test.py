@@ -258,11 +258,22 @@ def test_split_warnings_errors(
     assert other == output_other
 
 
-def test_add_tmp_lint_files(mocker):
+def test_add_tmp_lint_files(mocker, repo):
+    pack = repo.create_pack(name="ApiModules")
+    script1 = pack.create_script(code="# TEST1ApiModule")
+    script2 = pack.create_script(code="# TEST2ApiModule")
+    integration_code = "from TEST1ApiModule import *\nfrom TEST2ApiModule import *"
+    integration = pack.create_integration(name="test", code=integration_code)
+
     mock_copy = mocker.patch.object(shutil, "copy", return_value=None)
-    content_repo = Path(f"{git_path()}/demisto_sdk/commands/lint/tests/test_data")
-    pack_path = content_repo.joinpath("Packs", "test_pack")
-    lint_files = [pack_path.joinpath("Integrations", "test", "test.py")]
+    content_repo = Path(repo.path)
+    pack_path = Path(pack.path)
+    lint_files = [Path(integration.code.path)]
+
+
+    # content_repo = Path(f"{git_path()}/demisto_sdk/commands/lint/tests/test_data")
+    # pack_path = content_repo.joinpath("Packs", "test_pack")
+    # lint_files = [pack_path.joinpath("Integrations", "test", "test.py")]
     with add_tmp_lint_files(
         content_repo=content_repo,
         pack_path=pack_path,

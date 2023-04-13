@@ -26,7 +26,6 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         super().__init__(path, pack_marketplaces)
         self.script_info: Dict[str, Any] = self.yml_data.get("script", {})
         self.category = self.yml_data["category"]
-        self.docker_image = self.script_info.get("dockerimage", "")
         self.is_fetch = self.script_info.get("isfetch", False)
         self.is_fetch_events = self.script_info.get("isfetchevents", False)
         self.is_feed = self.script_info.get("feed", False)
@@ -42,6 +41,10 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
     @property
     def display_name(self) -> Optional[str]:
         return self.yml_data.get("display")
+
+    @property
+    def docker_image(self) -> str:
+        return self.script_info.get("dockerimage", "")
 
     def connect_to_commands(self) -> None:
         """Creates HAS_COMMAND relationships with the integration commands.
@@ -90,7 +93,8 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
                     default_incident_type, ContentType.INCIDENT_TYPE, is_mandatory=False
                 )
 
-    def get_code(self) -> Optional[str]:
+    @property
+    def code(self) -> Optional[str]:
         """Gets the integration code.
         If the integration is unified, then it is taken from the yml file.
         Otherwise, uses the Unifier object to get it.
@@ -106,7 +110,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
 
     def connect_to_api_modules(self) -> None:
         """Creates IMPORTS relationships with the API modules used in the integration."""
-        code = self.get_code()
+        code = self.code
         if not code:
             raise ValueError("Integration code is not available")
         api_modules = IntegrationScriptUnifier.check_api_module_imports(code).values()

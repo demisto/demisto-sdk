@@ -172,6 +172,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_api_token_in_credential_type(),
             self.are_common_outputs_with_description(),
             self.is_native_image_does_not_exist_in_yml(),
+            self.validate_unit_test_exists(),
         ]
 
         return all(answers)

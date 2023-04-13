@@ -1956,6 +1956,10 @@ def init(ctx, **kwargs):
     "--custom-image-path",
     help="A custom path to a playbook image. If not stated, a default link will be added to the file.",
 )
+@click.option(
+    "-rt", "--readme_template", help="The readme template that should be appended to the given README.md file",
+    type=click.Choice(["syslog", "xdrc", "http-collector"]),
+)
 @click.pass_context
 @logging_setup_decorator
 def generate_docs(ctx, **kwargs):
@@ -1971,8 +1975,8 @@ def generate_docs(ctx, **kwargs):
         return 1
 
     if input_path.is_file():
-        if input_path.suffix.lower() != ".yml":
-            logger.info(f"[red]input {input_path} is not a valid yml file.[/red]")
+        if input_path.suffix.lower() not in {".yml", ".md"}:
+            logger.info(f"[red]input {input_path} is not a valid yml or readme file.[/red]")
             return 1
         _generate_docs_for_file(kwargs)
 
@@ -1985,7 +1989,7 @@ def generate_docs(ctx, **kwargs):
 
     else:
         logger.info(
-            f"[red]Input {input_path} is neither a valid yml file, nor a folder named Playbooks."
+            f"[red]Input {input_path} is neither a valid yml file, nor a folder named Playbooks, nor a readme file."
         )
         return 1
 
@@ -2004,6 +2008,9 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
     from demisto_sdk.commands.generate_docs.generate_script_doc import (
         generate_script_doc,
     )
+    from demisto_sdk.commands.generate_docs.generate_readme_template import (
+        generate_readme_template,
+    )
 
     # Extract all the necessary arguments
     input_path: str = kwargs.get("input", "")
@@ -2016,6 +2023,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
     old_version: str = kwargs.get("old_version", "")
     skip_breaking_changes: bool = kwargs.get("skip_breaking_changes", False)
     custom_image_path: str = kwargs.get("custom_image_path", "")
+    readme_template: str = kwargs.get("readme_template", "")
 
     if command:
         if (
@@ -2036,8 +2044,8 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
             return 1
 
     file_type = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK]:
-        logger.info("[red]File is not an Integration, Script or a Playbook.[/red]")
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK, FileType.README]:
+        logger.info("[red]File is not an Integration, Script, Playbook or a README.[/red]")
         return 1
 
     if old_version and not os.path.isfile(old_version):
@@ -2086,6 +2094,14 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
             limitations=limitations,
             custom_image_path=custom_image_path,
         )
+    
+    elif file_type == FileType.README:
+        logger.info(f"Adding template to {file_type.value.lower()} file")
+        return generate_readme_template(
+            input_path=input_path,
+            readme_template=readme_template
+        )
+
     else:
         logger.info(f"[red]File type {file_type.value} is not supported.[/red]")
         return 1

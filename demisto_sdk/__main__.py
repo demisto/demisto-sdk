@@ -1958,7 +1958,7 @@ def init(ctx, **kwargs):
 )
 @click.option(
     "-rt",
-    "--readme_template",
+    "--readme-template",
     help="The readme template that should be appended to the given README.md file",
     type=click.Choice(["syslog", "xdrc", "http-collector"]),
 )
@@ -2048,12 +2048,12 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
             return 1
 
     file_type = find_type(kwargs.get("input", ""), ignore_sub_categories=True)
-    if file_type not in [
+    if file_type not in {
         FileType.INTEGRATION,
         FileType.SCRIPT,
         FileType.PLAYBOOK,
         FileType.README,
-    ]:
+    }:
         logger.info(
             "[red]File is not an Integration, Script, Playbook or a README.[/red]"
         )

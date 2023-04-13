@@ -35,3 +35,9 @@ XDRC = (
     "Configuration File* section (inside the relevant profile under the *XDR Collectors Profiles*).\n\n```\n<Add "
     "here the filebeat>\n```\n "
 )
+
+README_TEMPLATES = {
+    'syslog': SYSLOG,
+    'http-collector': HTTP_COLLECTOR,
+    'xdrc': XDRC
+}

@@ -65,7 +65,7 @@ class PrepareUploadManager:
             raise FileExistsError(
                 f"Output file {output} already exists. Use --force to overwrite."
             )
-        with output.open("w") as f:
+        with output.open("wb") as f:
             content_item.handler.dump(data, f)
 
         return output

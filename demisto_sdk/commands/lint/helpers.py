@@ -272,10 +272,10 @@ def add_tmp_lint_files(
                     added_modules.append(copied_api_module_path)
         if pack_type == TYPE_PYTHON:
             # Append empty so it will exists
-            copied_api_module_path = pack_path / "CommonServerUserPython.py"
-            if not copied_api_module_path.exists():
-                copied_api_module_path.touch()
-                added_modules.append(copied_api_module_path)
+            copied_common_server_python_path = pack_path / "CommonServerUserPython.py"
+            if not copied_common_server_python_path.exists():
+                copied_common_server_python_path.touch()
+                added_modules.append(copied_common_server_python_path)
 
             # Add API modules to directory if needed
             module_regex = r"from ([\w\d]+ApiModule) import \*(?:  # noqa: E402)?"

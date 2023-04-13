@@ -6,7 +6,6 @@ from pathlib import Path
 import pytest
 
 from demisto_sdk.commands.common.constants import TYPE_PYTHON
-from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.lint.helpers import (
     add_tmp_lint_files,
     generate_coverage_report,
@@ -260,8 +259,8 @@ def test_split_warnings_errors(
 
 def test_add_tmp_lint_files(mocker, repo):
     pack = repo.create_pack(name="ApiModules")
-    script1 = pack.create_script(code="# TEST1ApiModule")
-    script2 = pack.create_script(code="# TEST2ApiModule")
+    pack.create_script(code="# TEST1ApiModule")
+    pack.create_script(code="# TEST2ApiModule")
     integration_code = "from TEST1ApiModule import *\nfrom TEST2ApiModule import *"
     integration = pack.create_integration(name="test", code=integration_code)
 
@@ -270,10 +269,6 @@ def test_add_tmp_lint_files(mocker, repo):
     pack_path = Path(pack.path)
     lint_files = [Path(integration.code.path)]
 
-
-    # content_repo = Path(f"{git_path()}/demisto_sdk/commands/lint/tests/test_data")
-    # pack_path = content_repo.joinpath("Packs", "test_pack")
-    # lint_files = [pack_path.joinpath("Integrations", "test", "test.py")]
     with add_tmp_lint_files(
         content_repo=content_repo,
         pack_path=pack_path,

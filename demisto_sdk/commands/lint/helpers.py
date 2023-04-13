@@ -294,7 +294,7 @@ def add_tmp_lint_files(
                     else:
                         api_content = get_remote_file(
                             full_file_path=f"https://raw.githubusercontent.com/demisto/content/master/{api_code_path}",
-                             return_content=True
+                            return_content=True,
                         )
                         copied_api_module_path.write_bytes(api_content)
 

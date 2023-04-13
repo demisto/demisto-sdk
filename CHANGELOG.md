@@ -3,7 +3,7 @@
 ## Unreleased
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.
 * Contribution PRs that update outdated packs now display a warning message.
-* Fixed an issue where **lint** did not recognize multiple imports of ApiModules.
+* Fixed an issue where **lint** would not properly handle multiple ApiModules imports.
 
 ## 1.12.0
 * Added the **pre-commit** command, to improve code quality of XSOAR content.

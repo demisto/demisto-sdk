@@ -4,7 +4,10 @@ mapping:
     type: seq
     sequence:
       - include: templates_data_schema
-
+  widgets_data:
+    type: seq
+    sequence:
+      - type: map
 
 schema;templates_data_schema:
   type: map

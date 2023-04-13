@@ -2,7 +2,7 @@
 
 ## Unreleased
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.
-* Added support in the `<~XPANSE>` marketplace tag for release notes.
+* Added support for the `<~XPANSE>` marketplace tag in release notes.
 * Added support for marketplace tags in the **doc-review** command.
 * Contribution PRs that update outdated packs now display a warning message.
 

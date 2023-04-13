@@ -1,5 +1,6 @@
 import ast
 import glob
+import itertools
 import logging
 import os
 from pathlib import Path
@@ -40,12 +41,13 @@ from demisto_sdk.commands.common.tools import (
     get_parent_directory_name,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
-    NotIndivitudallyUploadedException,
-    NotUploadableException,
+    BaseContent,
 )
 from demisto_sdk.commands.content_graph.objects.content_item import (
     ContentItem,
     IncompatibleUploadVersionException,
+    NotIndivitudallyUploadedException,
+    NotUploadableException,
 )
 
 logger = logging.getLogger("demisto-sdk")
@@ -111,7 +113,7 @@ class Uploader:
 
     def __init__(
         self,
-        input: str,
+        input: Optional[Path],
         insecure: bool = False,
         pack_names: list = None,
         skip_validation: bool = False,
@@ -151,9 +153,7 @@ class Uploader:
             item_detacher = ItemDetacher(
                 client=self.client, marketplace=self.marketplace
             )
-            list_detach_items_ids: list = item_detacher.detach_item_manager(
-                upload_file=True
-            )
+            list_detach_items_ids: list = item_detacher.detach(upload_file=True)
 
             if self.reattach_files:
                 item_reattacher = ItemReattacher(client=self.client)
@@ -166,39 +166,38 @@ class Uploader:
         host = self.client.api_client.configuration.host
         logger.info(f"Using {host=}")
         logger.info(f"Uploading {self.path} ...")
-        if self.path is None or not (path := Path(self.path)).exists():
+        if self.path is None or not self.path.exists():
             logger.info(
                 f"[red]Error: Given input path: {self.path} does not exist[/red]"
             )
             return ERROR_RETURN_CODE
 
         # uploading a pack zip
-        elif path.suffix == ".zip":
+        elif self.path.suffix == ".zip":
             status_code = self.zipped_pack_uploader(
-                path=self.path, skip_validation=self.skip_upload_packs_validation
+                path=str(self.path), skip_validation=self.skip_upload_packs_validation
             )
 
         # Uploading a file
-        elif path.is_file():
-            status_code = self.upload_file(path) or status_code
+        elif self.path.is_file():
+            status_code = self.upload_file(self.path) or status_code
 
         # Uploading an entity directory
-        elif path.is_dir():
-            parent_dir_name = get_parent_directory_name(self.path)
-            if parent_dir_name in UNIFIED_ENTITIES_DIR:
-                status_code = self.unified_entity_uploader(self.path) or status_code
-            elif os.path.basename(self.path.rstrip("/")) in CONTENT_ENTITIES_DIRS:
+        elif self.path.is_dir():
+            if self.path.parent.name in CONTENT_ENTITIES_DIRS:
                 status_code = self.entity_dir_uploader(self.path) or status_code
             else:
-                status_code = self.pack_uploader(self.path) or status_code
+                status_code = self.upload_pack(self.path) or status_code
 
         if status_code == ABORTED_RETURN_CODE:
             return status_code
 
-        if (
-            not self.successfully_uploaded
-            and not self.failed_upload
-            and not self.failed_upload_version_mismatch
+        if not any(
+            (
+                self.successfully_uploaded,
+                self.failed_upload,
+                self.failed_upload_version_mismatch,
+            )
         ):
             # if not uploaded any file
             logger.info(
@@ -212,11 +211,7 @@ class Uploader:
             )
             return ERROR_RETURN_CODE
 
-        print_summary(
-            self.successfully_uploaded,
-            self.failed_upload_version_mismatch,
-            self.failed_upload,
-        )
+        self.print_summary()
         return status_code
 
     def upload_file(self, path: Path) -> int:
@@ -230,15 +225,14 @@ class Uploader:
             NotUploadableException
         """
         if not path.exists():
-            raise NotUploadableException(
+            raise RuntimeError(
                 f"Path {path.absolute()} does not exist"
             )  # TODO is this necessary?
 
-        content_item: Optional[ContentItem]
-        if (
-            content_item := ContentItem.from_path(path)
-        ) is None:  # type:ignore[assignment]
-            # failed parsing
+        content_item: ContentItem = BaseContent.from_path(
+            path
+        )  # type:ignore[assignment]
+        if content_item is None:
             raise RuntimeError(
                 f"Could not parse content from {path.absolute()}"
             )  # TODO raise NotUploadable? Create new exception? Something else?
@@ -263,7 +257,7 @@ class Uploader:
         except NotIndivitudallyUploadedException as e:
             logger.error(e)
             self.failed_upload.append((content_item, str(e)))
-            return ERROR_RETURN_CODE # TODO is this the right value?
+            return ERROR_RETURN_CODE  # TODO is this the right value?
 
         except NotUploadableException as e:
             logger.error(e)
@@ -275,7 +269,8 @@ class Uploader:
             self.failed_upload.append((content_item, message))
             return ERROR_RETURN_CODE
 
-    def unified_entity_uploader(self, path) -> int:
+
+    def unified_entity_uploader(self, path) -> int: # TODO remove?
         """
         Uploads unified entity folder
 
@@ -308,7 +303,7 @@ class Uploader:
             return ERROR_RETURN_CODE
         return self.upload_file(yml_files[0])
 
-    def entity_dir_uploader(self, path: str) -> int:
+    def entity_dir_uploader(self, path: Path) -> int:
         """
         Uploads an entity path directory
         Args:
@@ -319,29 +314,27 @@ class Uploader:
 
         """
         status_code = SUCCESS_RETURN_CODE
-        dir_name = os.path.basename(path.rstrip("/"))
-        if dir_name in UNIFIED_ENTITIES_DIR:
-            for entity_folder in glob.glob(f"{path}/*/"):
+        if (dir_name := Path.name) in UNIFIED_ENTITIES_DIR:
+            for entity_folder in path.glob("/*/"):  # TODO
                 status_code = self.unified_entity_uploader(entity_folder) or status_code
         if dir_name in CONTENT_ENTITIES_DIRS:
-            # upload json or yml files. Other files such as `.md`, `.png` should be ignored
-            for file in glob.glob(f"{path}/*.yml"):
-                status_code = self.upload_file(file) or status_code
-            for file in glob.glob(f"{path}/*.json"):
+            # Upload json or yml files.
+            # Other files such as `.md`, `.png` should be ignored
+            for file in itertools.chain(path.glob("*.yml"), path.glob("*.json")):
                 status_code = self.upload_file(file) or status_code
         return status_code
 
-    def pack_uploader(self, path: str) -> int:
+    def upload_pack(self, path: Path) -> int:
         status_code = SUCCESS_RETURN_CODE
         sorted_directories = sort_directories_based_on_dependencies(
             get_child_directories(path)
         )
         for entity_folder in sorted_directories:
-            if os.path.basename(entity_folder.rstrip("/")) in CONTENT_ENTITIES_DIRS:
+            if Path(entity_folder).name in CONTENT_ENTITIES_DIRS:
                 status_code = self.entity_dir_uploader(entity_folder) or status_code
         return status_code
 
-    def zipped_pack_uploader(self, path: str, skip_validation: bool) -> int:
+    def zipped_pack_uploader(self, path: str, skip_validation: bool) -> int:  # TODO
 
         zipped_pack = Pack(path)
 
@@ -395,6 +388,67 @@ class Uploader:
 
         return True
 
+    def print_summary(self) -> None:
+        """Prints uploaded files summary
+        Successful uploads grid based on `successfully_uploaded_files` attribute in green color
+        Failed uploads grid based on `failed_uploaded_files` attribute in red color
+        """
+        logger.info("\n\nUPLOAD SUMMARY:")
+        if self.successfully_uploaded:
+            logger.info("\n[green]SUCCESSFUL UPLOADS:[/green]")
+            logger.info(
+                "[green]"
+                + tabulate(
+                    (
+                        (item.normalize_name, item.content_type)
+                        for item in self.successfully_uploaded
+                    ),
+                    headers=["NAME", "TYPE"],
+                    tablefmt="fancy_grid",
+                )
+                + "[/green]\n"
+            )
+        if self.failed_upload_version_mismatch:
+            logger.info("\n[yellow]NOT UPLOADED DUE TO VERSION MISMATCH:[/yellow]")
+            logger.info(
+                "[yellow]"
+                + tabulate(
+                    (
+                        (
+                            item.normalize_name,
+                            item.content_type,
+                            self.demisto_version,
+                            item.fromversion,
+                            item.toversion,
+                        )
+                        for item in self.failed_upload_version_mismatch
+                    ),
+                    headers=[
+                        "NAME",
+                        "TYPE",
+                        "XSOAR Version",
+                        "FILE_FROM_VERSION",
+                        "FILE_TO_VERSION",
+                    ],
+                    tablefmt="fancy_grid",
+                )
+                + "[/yellow]\n"
+            )
+        if self.failed_upload:
+            logger.info("\n[red]FAILED UPLOADS:[/red]")
+            logger.info(
+                "[red]"
+                + tabulate(
+                    (
+                        (item.normalize_name, item.content_type, error)
+                        for item, error in self.failed_upload
+                    ),
+                    headers=["NAME", "TYPE", "ERROR"],
+                    tablefmt="fancy_grid",
+                )
+                + "[/red]\n"
+            )
+
 
 def parse_error_response(error: ApiException, content_item: ContentItem) -> str:
     """
@@ -428,55 +482,6 @@ def parse_error_response(error: ApiException, content_item: ContentItem) -> str:
     if isinstance(error, KeyboardInterrupt):
         message = "Aborted due to keyboard interrupt."
     return f"\n[red]Upload {content_item.content_type}: {content_item.normalize_name} failed:\n{message}[/red]"
-
-
-def print_summary(
-    successfully_uploaded_files, unuploaded_due_to_version, failed_uploaded_files
-):
-    """Prints uploaded files summary
-    Successful uploads grid based on `successfully_uploaded_files` attribute in green color
-    Failed uploads grid based on `failed_uploaded_files` attribute in red color
-    """
-    logger.info("\n\nUPLOAD SUMMARY:")
-    if successfully_uploaded_files:
-        logger.info("\n[green]SUCCESSFUL UPLOADS:[/green]")
-        logger.info(
-            "[green]"
-            + tabulate(
-                successfully_uploaded_files,
-                headers=["NAME", "TYPE"],
-                tablefmt="fancy_grid",
-            )
-            + "[/green]\n"
-        )
-    if unuploaded_due_to_version:
-        logger.info("\n[yellow]NOT UPLOADED DUE TO VERSION MISMATCH:[/yellow]")
-        logger.info(
-            "[yellow]"
-            + tabulate(
-                unuploaded_due_to_version,
-                headers=[
-                    "NAME",
-                    "TYPE",
-                    "XSOAR Version",
-                    "FILE_FROM_VERSION",
-                    "FILE_TO_VERSION",
-                ],
-                tablefmt="fancy_grid",
-            )
-            + "[/yellow]\n"
-        )
-    if failed_uploaded_files:
-        logger.info("\n[red]FAILED UPLOADS:[/red]")
-        logger.info(
-            "[red]"
-            + tabulate(
-                failed_uploaded_files,
-                headers=["NAME", "TYPE", "ERROR"],
-                tablefmt="fancy_grid",
-            )
-            + "[/red]\n"
-        )
 
 
 def sort_directories_based_on_dependencies(dir_list: list) -> list:
@@ -592,7 +597,7 @@ class ItemDetacher:
         file_data = get_file(self.file_path, file_type)
         return file_data.get("id")  # TODO get_id
 
-    def detach_item_manager(self, upload_file: bool = False):
+    def detach(self, upload_file: bool = False):
         detach_files_list: list = []
         if os.path.isdir(self.file_path):
             detach_files_list = self.extract_items_from_dir()
@@ -600,7 +605,10 @@ class ItemDetacher:
                 self.detach_item(file.get("file_id"), file_path=file.get("file_path"))
                 if upload_file:
                     Uploader(
-                        input=file.get("file_path"), marketplace=self.marketplace
+                        input=Path(raw_file_path)
+                        if (raw_file_path := file.get("file_path")) is not None
+                        else None,
+                        marketplace=self.marketplace,
                     ).upload()
 
         elif os.path.isfile(self.file_path):
@@ -608,7 +616,10 @@ class ItemDetacher:
             detach_files_list.append({"file_id": file_id, "file_path": self.file_path})
             self.detach_item(file_id=file_id, file_path=self.file_path)
             if upload_file:
-                Uploader(input=self.file_path, marketplace=self.marketplace).upload()
+                Uploader(
+                    input=Path(self.file_path) if self.file_path is not None else None,
+                    marketplace=self.marketplace,
+                ).upload()
 
         return [file["file_id"] for file in detach_files_list]
 

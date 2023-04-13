@@ -1563,7 +1563,7 @@ class TestItemDetacher:
         repo = repo.setup_one_pack(name="Pack")
         detached_items_ids = ItemDetacher(
             client=API_CLIENT, file_path=repo.path
-        ).detach_item_manager()
+        ).detach()
         assert len(detached_items_ids) == 8
         for file_id in detached_items_ids:
             assert file_id in [
@@ -1580,7 +1580,7 @@ class TestItemDetacher:
         detached_items_ids = ItemDetacher(
             client=API_CLIENT,
             file_path=f"{repo._pack_path}/Playbooks/Pack_playbook.yml",
-        ).detach_item_manager()
+        ).detach()
         assert len(detached_items_ids) == 1
         assert detached_items_ids == ["Pack_playbook"]
 

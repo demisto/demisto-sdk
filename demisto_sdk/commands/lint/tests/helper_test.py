@@ -261,14 +261,8 @@ def test_split_warnings_errors(
 def test_add_tmp_lint_files(mocker):
     mock_copy = mocker.patch.object(shutil, "copy", return_value=None)
     content_repo = Path(f"{git_path()}/demisto_sdk/commands/lint/tests/test_data")
-    pack_path = Path(
-        f"{git_path()}/demisto_sdk/commands/lint/tests/test_data/Packs/test_pack"
-    )
-    lint_files = [
-        Path(
-            f"{git_path()}/demisto_sdk/commands/lint/tests/test_data/Packs/test_pack/Integrations/test/test.py"
-        )
-    ]
+    pack_path = content_repo.joinpath('Packs', 'test_pack')
+    lint_files = [pack_path.joinpath('Integrations', 'test', 'test.py')]
     with add_tmp_lint_files(
         content_repo=content_repo,
         pack_path=pack_path,

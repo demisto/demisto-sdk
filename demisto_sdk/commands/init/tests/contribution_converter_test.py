@@ -676,6 +676,44 @@ def test_rearranging_before_conversion(zip_path: str, expected_directories: set)
     assert expected_directories == results
 
 
+@pytest.mark.parametrize(
+    "input_script, output_version",
+    [
+        (
+            "This is a test script\n the script contains a pack version\n ### pack version: 3.4.5  TEST TEST",
+            "3.4.5",
+        ),
+        (
+            "This is a test script\n the script does not contain a pack version\n ### TEST TEST",
+            "0.0.0",
+        ),
+        ("", "0.0.0"),
+    ],
+)
+def test_extract_pack_version(input_script: str, output_version: str):
+    contribution_converter = ContributionConverter()
+    assert contribution_converter.extract_pack_version(input_script) == output_version
+
+
+def test_create_contribution_items_version_note():
+    contribution_converter = ContributionConverter()
+    contribution_converter.contribution_items_version = {
+        "CortexXDRIR": {"contribution_version": "1.2.2", "latest_version": "1.2.4"},
+        "XDRScript": {"contribution_version": "1.2.2", "latest_version": "1.2.4"},
+    }
+    contribution_converter.create_contribution_items_version_note()
+    assert (
+        contribution_converter.contribution_items_version_note
+        == """> **Warning**
+> The changes in the contributed files were not made on the most updated pack versions
+> | **Item Name** | **Contribution Pack Version** | **Latest Pack Version**
+> | --------- | ------------------------- | -------------------
+> | CortexXDRIR | 1.2.2 | 1.2.4
+> | XDRScript | 1.2.2 | 1.2.4
+"""
+    )
+
+
 @pytest.mark.parametrize("contribution_converter", ["TestPack"], indirect=True)
 class TestEnsureUniquePackDirName:
     def test_ensure_unique_pack_dir_name_no_conflict(self, contribution_converter):

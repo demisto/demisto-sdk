@@ -84,7 +84,11 @@ def test_json_to_outputs_flag(mocker, monkeypatch, set_environment_variables):
     Then
     - Ensure the json_to_outputs command is running correctly
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    logger_warning = mocker.patch.object(logging.getLogger("demisto-sdk"), "warning")
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
     monkeypatch.setenv("COLUMNS", "1000")
+
     # mocks to allow the command to run locally
     mocker.patch.object(Runner, "_get_playground_id", return_value="pg_id")
     mocker.patch.object(Runner, "_run_query", return_value=["123"])
@@ -96,10 +100,14 @@ def test_json_to_outputs_flag(mocker, monkeypatch, set_environment_variables):
     run_result = CliRunner(
         mix_stderr=False,
     ).invoke(main, ["run", "-q", command, "--json-to-outputs", "-p", "Keylight", "-r"])
-    assert 0 == run_result.exit_code
-    assert not run_result.exception
-    assert YAML_OUTPUT in run_result.stdout
+
+    assert run_result.exit_code == 0
     assert not run_result.stderr
+    assert not run_result.exception
+
+    assert str_in_call_args_list(logger_info.call_args_list, YAML_OUTPUT)
+    assert logger_warning.call_count == 0
+    assert logger_error.call_count == 0
 
 
 def test_json_to_outputs_flag_fail_no_prefix(

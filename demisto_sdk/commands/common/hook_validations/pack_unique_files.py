@@ -304,6 +304,10 @@ class PackUniqueFilesValidator(BaseValidator):
         return False
 
     def validate_pack_readme_images(self):
+        # This validation does not checks on private repo
+        if self.private_repo:
+            return True
+
         readme_file_path = os.path.join(self.pack_path, self.readme_file)
         readme_validator = ReadMeValidator(
             readme_file_path,
@@ -321,6 +325,10 @@ class PackUniqueFilesValidator(BaseValidator):
 
     @error_codes("RM112")
     def validate_pack_readme_relative_urls(self):
+        # This validation does not checks on private repo
+        if self.private_repo:
+            return True
+
         readme_file_path = os.path.join(self.pack_path, self.readme_file)
         readme_validator = ReadMeValidator(
             readme_file_path,

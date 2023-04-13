@@ -288,7 +288,7 @@ def add_tmp_lint_files(
                         / f"{module_name}.py"
                     )
                     copied_api_module_path = pack_path / f"{module_name}.py"
-                    if content_repo:
+                    if content_repo:  # if working in a repo
                         module_path = content_repo / api_code_path
                         shutil.copy(src=module_path, dst=copied_api_module_path)
                     else:

@@ -272,10 +272,10 @@ def add_tmp_lint_files(
                     added_modules.append(copied_api_module_path)
         if pack_type == TYPE_PYTHON:
             # Append empty so it will exists
-            copied_api_module_path = pack_path / "CommonServerUserPython.py"
-            if not copied_api_module_path.exists():
-                copied_api_module_path.touch()
-                added_modules.append(copied_api_module_path)
+            copied_common_server_python_path = pack_path / "CommonServerUserPython.py"
+            if not copied_common_server_python_path.exists():
+                copied_common_server_python_path.touch()
+                added_modules.append(copied_common_server_python_path)
 
             # Add API modules to directory if needed
             module_regex = r"from ([\w\d]+ApiModule) import \*(?:  # noqa: E402)?"
@@ -288,13 +288,13 @@ def add_tmp_lint_files(
                         / f"{module_name}.py"
                     )
                     copied_api_module_path = pack_path / f"{module_name}.py"
-                    if content_repo:
+                    if content_repo:  # if working in a repo
                         module_path = content_repo / api_code_path
                         shutil.copy(src=module_path, dst=copied_api_module_path)
                     else:
-                        url = f"https://raw.githubusercontent.com/demisto/content/master/{api_code_path}"
                         api_content = get_remote_file(
-                            full_file_path=url, return_content=True
+                            full_file_path=f"https://raw.githubusercontent.com/demisto/content/master/{api_code_path}",
+                             return_content=True
                         )
                         copied_api_module_path.write_bytes(api_content)
 

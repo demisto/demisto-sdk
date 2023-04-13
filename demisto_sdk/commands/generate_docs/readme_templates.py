@@ -36,8 +36,4 @@ XDRC = (
     "here the filebeat>\n```\n "
 )
 
-README_TEMPLATES = {
-    'syslog': SYSLOG,
-    'http-collector': HTTP_COLLECTOR,
-    'xdrc': XDRC
-}
+README_TEMPLATES = {"syslog": SYSLOG, "http-collector": HTTP_COLLECTOR, "xdrc": XDRC}

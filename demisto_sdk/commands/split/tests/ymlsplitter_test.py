@@ -253,6 +253,16 @@ def test_extract_image(tmpdir):
 
 
 def test_extract_code(tmpdir):
+    """
+    Given
+    a unified integration file of python format.
+
+    When
+    - Running the YmlSplitter extract_code function.
+
+    Then
+    - Ensure that all lines that should have been removed have been removed.
+    """
     extractor = YmlSplitter(
         input=f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml",
         output=str(tmpdir.join("temp_code.py")),
@@ -283,6 +293,61 @@ def test_extract_code(tmpdir):
         assert "register_module_line" not in file_data
         assert "### pack version: 1.0.3" not in file_data
         assert file_data[-1] == "\n"
+
+
+def test_extract_javascript_code(tmpdir):
+    """
+    Given
+    a unified integration file of javascript format.
+
+    When
+    - Running the YmlSplitter extract_code function.
+
+    Then
+    - Ensure the "// pack version: ..." comment was removed successfully.
+    """
+    extractor = YmlSplitter(
+        input=f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom-js.yml",
+        output=str(tmpdir.join("temp_code.js")),
+        file_type="integration",
+    )
+    assert (
+        "// pack version: 1.0.3"
+        in yaml.load(Path(extractor.input).read_text())["script"]["script"]
+    )
+
+    extractor.extract_code(extractor.output)
+    file_data = Path(extractor.output).read_text()
+    assert "// pack version: 1.0.3" not in file_data
+    Path(extractor.output).unlink()
+
+
+def test_extract_powershell_code(tmpdir):
+    """
+    Given
+    a unified integration file of powershell format.
+
+    When
+    - Running the YmlSplitter extract_code function.
+
+    Then
+    - Ensure the "### pack version: ..." comment was removed successfully.
+    """
+    extractor = YmlSplitter(
+        input=f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom-ps1.yml",
+        output=str(tmpdir.join("temp_code.ps1")),
+        file_type="integration",
+    )
+    assert (
+        "### pack version: 1.0.3"
+        in yaml.load(Path(extractor.input).read_text())["script"]["script"]
+    )
+
+    extractor.extract_code(extractor.output)
+    with open(extractor.output, "rb") as temp_code:
+        file_data = temp_code.read().decode("utf-8")
+        assert "### pack version: 1.0.3" not in file_data
+    Path(extractor.output).unlink()
 
 
 def test_extract_code__with_apimodule(tmpdir):

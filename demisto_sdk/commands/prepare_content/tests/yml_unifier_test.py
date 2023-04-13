@@ -655,7 +655,7 @@ class TestMergeScriptPackageToYMLIntegration:
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
         export_yml_path = PrepareUploadManager.prepare_for_upload(
-            in_path=Path(self.export_dir_path), out_path=Path(self.test_dir_path)
+            input=Path(self.export_dir_path), output=Path(self.test_dir_path)
         )
 
         assert export_yml_path == Path(self.expected_yml_path)
@@ -701,8 +701,8 @@ class TestMergeScriptPackageToYMLIntegration:
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
         unified_yml = PrepareUploadManager.prepare_for_upload(
-            in_path=Path(self.export_dir_path),
-            out_path=Path(self.test_dir_path),
+            input=Path(self.export_dir_path),
+            output=Path(self.test_dir_path),
             marketplace=marketplace,
         )
 
@@ -759,7 +759,7 @@ class TestMergeScriptPackageToYMLIntegration:
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
         export_yml_path = PrepareUploadManager.prepare_for_upload(
-            Path(self.export_dir_path), out_path=Path(self.test_dir_path)
+            Path(self.export_dir_path), output=Path(self.test_dir_path)
         )
 
         assert export_yml_path == Path(self.expected_yml_path)
@@ -802,7 +802,7 @@ final test: hi
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
         export_yml_path = PrepareUploadManager.prepare_for_upload(
-            Path(self.export_dir_path), out_path=Path(self.test_dir_path)
+            Path(self.export_dir_path), output=Path(self.test_dir_path)
         )
 
         assert export_yml_path == Path(self.expected_yml_path)
@@ -873,7 +873,7 @@ class TestMergeScriptPackageToYMLScript:
             IntegrationScript, "get_supported_native_images", return_value=[]
         )
         export_yml_path = PrepareUploadManager.prepare_for_upload(
-            in_path=Path(self.export_dir_path), out_path=Path(self.test_dir_path)
+            input=Path(self.export_dir_path), output=Path(self.test_dir_path)
         )
 
         assert export_yml_path == Path(self.expected_yml_path)

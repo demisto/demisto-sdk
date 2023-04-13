@@ -1580,11 +1580,11 @@ def find_type_by_path(path: Union[str, Path] = "") -> Optional[FileType]:
             return FileType.XSIAM_REPORT_IMAGE
         return FileType.IMAGE
 
-    elif path.suffix == ".png" and DOC_FILES_DIR in path.parts:
-        return FileType.DOC_IMAGE
-
-    elif path.suffix == ".png" and README_IMAGES_DIR in path.parts:
-        return FileType.README_IMAGE
+    elif path.suffix == ".png":
+        if DOC_FILES_DIR in path.parts:
+            return FileType.DOC_IMAGE
+        elif README_IMAGES_DIR in path.parts:
+            return FileType.README_IMAGE
 
     elif path.suffix == ".ps1":
         return FileType.POWERSHELL_FILE
@@ -1893,8 +1893,14 @@ def is_external_repository() -> bool:
     try:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
         private_settings_path = os.path.join(git_repo.working_dir, ".private-repo-settings")  # type: ignore
+        logging.debug(
+            f'{os.path.exists(private_settings_path)} - logging for whether the repo is private or not'
+        )
         return os.path.exists(private_settings_path)
     except git.InvalidGitRepositoryError:
+        logging.debug(
+            'logging for `git.InvalidGitRepositoryError` and return True'
+        )
         return True
 
 

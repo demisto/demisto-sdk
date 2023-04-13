@@ -291,7 +291,7 @@ class IntegrationScriptUnifier(Unifier):
             "currentVersion", ""
         ):
             script_code = IntegrationScriptUnifier.insert_pack_version(
-                script_code, pack_version
+                script_type, script_code, pack_version
             )
 
         if script_type == ".py":
@@ -411,16 +411,28 @@ class IntegrationScriptUnifier(Unifier):
         return script_code
 
     @staticmethod
-    def insert_pack_version(script_code: str, pack_version: str) -> str:
+    def insert_pack_version(
+        script_type: str, script_code: str, pack_version: str
+    ) -> str:
         """
         Inserts the pack version to the script so it will be easy to know what was the contribution original pack version.
         :param script_code: The integration code
         :param pack_version: The pack version
         :return: The integration script with the pack version appended if needed, otherwise returns the original script
         """
-        if "### pack version:" in script_code:
-            return script_code
-        return f"\n### pack version: {pack_version}\n{script_code}"
+        if script_type == ".js":
+            return (
+                script_code
+                if "// pack version:" in script_code
+                else f"// pack version: {pack_version}\n{script_code}"
+            )
+        elif script_type in {".py", ".ps1"}:
+            return (
+                script_code
+                if "### pack version:" in script_code
+                else f"### pack version: {pack_version}\n{script_code}"
+            )
+        return script_code
 
     @staticmethod
     def _get_api_module_code(module_name, module_path):

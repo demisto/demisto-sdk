@@ -610,3 +610,13 @@ def test_validate_duplicate_id(repository: ContentDTO, mocker):
         logger_info.call_args_list,
         "[GR105] - The ID 'SamplePlaybook' already exists in",
     )
+
+
+def test_pack_ids_collection():
+    git_files = [
+        "Tests/conf.json",
+        "Packs/MicrosoftExchangeOnline/Integrations/EwsExtension/README.md",
+    ]
+    expected_pack_ids = ["MicrosoftExchangeOnline"]
+    with GraphValidator(should_update=False, git_files=git_files) as graph_validator:
+        assert graph_validator.pack_ids == expected_pack_ids

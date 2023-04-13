@@ -631,8 +631,8 @@ class UpdateRN:
             try:
                 run_command(f"git add {self.metadata_path}", exit_on_error=False)
             except RuntimeError:
-                logger.info(
-                    f"[yellow]Could not add the metadata file to git: {self.metadata_path}[/yellow]"
+                logger.error(
+                    f"[red]Failed git-adding {self.metadata_path}[/red]"
                 )
 
     @staticmethod

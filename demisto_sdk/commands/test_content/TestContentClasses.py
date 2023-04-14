@@ -1278,7 +1278,10 @@ class Integration:
             else:
                 self.configuration.params = {  # type: ignore
                     "url": "https://localhost",
-                    "apikey": self.build_context.api_key,
+                    "creds_apikey": {
+                        "identifier": '',
+                        "password": self.build_context.api_key,
+                    },
                     "insecure": True,
                 }
         elif integration_params:
@@ -1542,7 +1545,7 @@ class Integration:
                     if param_conf["display"] in params
                     else param_conf["name"]
                 )
-                if key == "credentials" or key == "creds_apikey":
+                if key == "credentials" or key == "creds_apikey ":
                     credentials = params[key]
                     param_value = {
                         "credential": "",

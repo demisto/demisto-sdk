@@ -1282,6 +1282,7 @@ class Integration:
                         "identifier": '',
                         "password": self.build_context.api_key,
                     },
+                    "auth_method": "Standard",
                     "insecure": True,
                 }
         elif integration_params:

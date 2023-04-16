@@ -166,7 +166,6 @@ select = [
     "PLE",
     "RUF100",
     "W",
-    "T20",
 ]
 
 target-version = "py38"

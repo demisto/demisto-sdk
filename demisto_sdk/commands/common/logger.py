@@ -12,6 +12,7 @@ LOG_FILE_NAME: str = "demisto_sdk_debug.log"
 
 LOG_FILE_PATH: Path = CONTENT_PATH / LOG_FILE_NAME
 current_log_file_path: Path = LOG_FILE_PATH
+current_log_file_path_notified: bool = False
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
@@ -141,6 +142,7 @@ def logging_setup(
     console_log_threshold=logging.INFO,
     file_log_threshold=logging.DEBUG,
     log_file_path=LOG_FILE_PATH,
+    notify_log_file_path=False,
 ) -> logging.Logger:
     """Init logger object for logging in demisto-sdk
         For more info - https://docs.python.org/3/library/logging.html
@@ -153,6 +155,8 @@ def logging_setup(
         logging.Logger: logger object
     """
     global logger
+    global current_log_file_path
+    global current_log_file_path_notified
 
     SUCCESS_LEVEL: int = 25
     if not hasattr(logging.getLoggerClass(), "success"):
@@ -207,7 +211,6 @@ def logging_setup(
     console_formatter = ColorConsoleFormatter()
     console_handler.setFormatter(fmt=console_formatter)
 
-    global current_log_file_path
     current_log_file_path = log_file_path if log_file_path else LOG_FILE_PATH
     if os.path.isdir(current_log_file_path):
         current_log_file_path = current_log_file_path / LOG_FILE_NAME
@@ -253,6 +256,12 @@ def logging_setup(
     demisto_logger: logging.Logger = logging.getLogger("demisto-sdk")
     set_demisto_handlers_to_logger(demisto_logger, console_handler, file_handler)
     demisto_logger.propagate = False
+
+    if notify_log_file_path and not current_log_file_path_notified:
+        demisto_logger.info(
+            f"[yellow]Log file location: {current_log_file_path}[/yellow]"
+        )
+        current_log_file_path_notified = True
 
     logger = demisto_logger
 

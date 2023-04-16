@@ -149,6 +149,7 @@ def logging_setup_decorator(func, *args, **kwargs):
             console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
             file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
             log_file_path=kwargs.get("log_file_path") or None,
+            notify_log_file_path=True,
         )
 
         if args:
@@ -191,6 +192,7 @@ def main(ctx, config, version, release_notes, **kwargs):
         console_log_threshold=kwargs.get("console_log_threshold", logging.INFO),
         file_log_threshold=kwargs.get("file_log_threshold", logging.DEBUG),
         log_file_path=kwargs.get("log_file_path"),
+        notify_log_file_path=False,
     )
     # global logger
     # logger = logging.getLogger("demisto-sdk")
@@ -1133,6 +1135,7 @@ def coverage_analyze(**kwargs):
         console_log_threshold=kwargs.get("console_log_threshold") or logging.INFO,
         file_log_threshold=kwargs.get("file_log_threshold") or logging.DEBUG,
         log_file_path=kwargs.get("log_file_path") or None,
+        notify_log_file_path=True,
     )
     from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
 

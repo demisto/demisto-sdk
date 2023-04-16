@@ -4,6 +4,10 @@
 ## Unreleased
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.
 * Contribution PRs that update outdated packs now display a warning message.
+* Added functionality to the logging framework:
+  * Added the ability to disable colors on console logs with the **DEMISTO_SDK_LOG_NO_COLORS** env variable.
+  * Printing the log file location.
+  * Writing runtime information to the log file: Python version, Working dir, Platform.
 
 ## 1.12.0
 * Added the **pre-commit** command, to improve code quality of XSOAR content.

@@ -103,7 +103,13 @@ class CircleCIClient:
         base_url: Optional[str] = None,
         verify: bool = True,
     ):
-        self.auth = HTTPBasicAuth(username=token or os.getenv("CCI_TOKEN"), password="")
+        token = token or os.getenv("CCI_TOKEN")
+        if isinstance(token, str):
+            logger.debug(f'{token[:3]}')
+        elif token is None:
+            logger.debug(f'token is None')
+
+        self.auth = HTTPBasicAuth(username=token, password="")
         self.base_url = base_url or API_BASE_URL
         self.verify = verify
 

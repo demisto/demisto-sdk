@@ -16,7 +16,7 @@ from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import parse
 
-from demisto_sdk.__main__ import _upload, main
+from demisto_sdk.__main__ import main, upload
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR,
@@ -945,7 +945,7 @@ class TestZippedPackUpload:
         )
 
         # run
-        click.Context(command=_upload).invoke(_upload, input=input)
+        click.Context(command=upload).invoke(upload, input=input)
 
         # validate
         disable_verification_call_args = (
@@ -982,7 +982,7 @@ class TestZippedPackUpload:
         mocker.patch.object(Uploader, "zipped_pack_uploader")
 
         # run
-        click.Context(command=_upload).invoke(_upload, input=TEST_PACK, zip=True)
+        click.Context(command=upload).invoke(upload, input=TEST_PACK, zip=True)
 
         # validate
         assert (
@@ -1012,7 +1012,7 @@ class TestZippedPackUpload:
         )
 
         # run
-        click.Context(command=_upload).invoke(_upload, input=TEST_PACK_ZIP)
+        click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
 
         # validate
         disable_verification_call_args = (
@@ -1052,7 +1052,7 @@ class TestZippedPackUpload:
         mock_api_client(mocker)
 
         # run
-        status = click.Context(command=_upload).invoke(_upload, input=input)
+        status = click.Context(command=upload).invoke(upload, input=input)
 
         # validate
         assert status == expected_ret_value
@@ -1076,7 +1076,7 @@ class TestZippedPackUpload:
         mocker.patch.object(API_CLIENT, "upload_content_packs")
 
         # run
-        status = click.Context(command=_upload).invoke(_upload, input=TEST_PACK_ZIP)
+        status = click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
 
         # validate
         assert status == 1
@@ -1112,7 +1112,7 @@ class TestZippedPackUpload:
         mocker.patch.object(API_CLIENT, "upload_content_packs")
 
         # run
-        status = click.Context(command=_upload).invoke(_upload, input=TEST_PACK_ZIP)
+        status = click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
 
         # validate
         assert status == 1
@@ -1142,7 +1142,7 @@ class TestZippedPackUpload:
         )
 
         # run
-        status = click.Context(command=_upload).invoke(_upload, input=TEST_PACK_ZIP)
+        status = click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
 
         # validate
 
@@ -1191,7 +1191,7 @@ class TestZippedPackUpload:
         mocker.patch.object(API_CLIENT, "upload_content_packs")
 
         # run
-        click.Context(command=_upload).invoke(_upload, input=TEST_PACK_ZIP)
+        click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
 
         # validate
         tools.update_server_configuration.call_count == exp_call_count
@@ -1241,8 +1241,8 @@ class TestZippedPackUpload:
         )
 
         # run
-        status_code = click.Context(command=_upload).invoke(
-            _upload,
+        status_code = click.Context(command=upload).invoke(
+            upload,
             input_config_file=f"{git_path()}/demisto_sdk/commands/upload/tests/data/xsoar_config.json",
         )
 
@@ -1291,7 +1291,7 @@ class TestZippedPackUpload:
         )
 
         # run
-        click.Context(command=_upload).invoke(_upload, input=input)
+        click.Context(command=upload).invoke(upload, input=input)
 
         skip_value = API_CLIENT.upload_content_packs.call_args[1]["skip_verify"]
         uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]["file"]
@@ -1324,7 +1324,7 @@ class TestZippedPackUpload:
         )
 
         # run
-        click.Context(command=_upload).invoke(_upload, input=input)
+        click.Context(command=upload).invoke(upload, input=input)
         uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]["file"]
 
         assert str(uploaded_file_path) == input
@@ -1357,9 +1357,7 @@ class TestZippedPackUpload:
         )
 
         # run
-        click.Context(command=_upload).invoke(
-            _upload, input=input, skip_validation=True
-        )
+        click.Context(command=upload).invoke(upload, input=input, skip_validation=True)
 
         skip_value = API_CLIENT.upload_content_packs.call_args[1]["skip_validation"]
         uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]["file"]
@@ -1392,7 +1390,7 @@ class TestZippedPackUpload:
         )
 
         # run
-        click.Context(command=_upload).invoke(_upload, input=input)
+        click.Context(command=upload).invoke(upload, input=input)
         uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]["file"]
 
         assert str(uploaded_file_path) == input
@@ -1450,8 +1448,8 @@ class TestZippedPackUpload:
         mocker.patch.object(Uploader, "zipped_pack_uploader")
 
         # run
-        click.Context(command=_upload).invoke(
-            _upload, input=TEST_XSIAM_PACK, xsiam=False, zip=True
+        click.Context(command=upload).invoke(
+            upload, input=TEST_XSIAM_PACK, xsiam=False, zip=True
         )
 
         zip_file_path = Uploader.zipped_pack_uploader.call_args[1]["path"]

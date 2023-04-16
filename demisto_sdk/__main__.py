@@ -1346,7 +1346,7 @@ def format(
 )
 @click.pass_context
 @logging_setup_decorator
-def _upload(ctx, **kwargs):
+def upload(ctx, **kwargs):
     """Upload integration or pack to Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
     DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.

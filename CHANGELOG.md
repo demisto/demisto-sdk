@@ -7,6 +7,7 @@
 * Improved caching and stability for **lint**.
 * Fixed an issue where **validate** would fail when playbook inputs contain Transform Language (DT).
 * Added a new **validate** check, making sure a first level header exist in release notes (RN116)
+* Fixed an issue where **lint** would not properly handle multiple ApiModules imports.
 
 ## 1.12.0
 * Added the **pre-commit** command, to improve code quality of XSOAR content.

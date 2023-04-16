@@ -258,6 +258,16 @@ def test_split_warnings_errors(
 
 
 def test_add_tmp_lint_files(mocker, repo):
+    """
+    Given:
+        - A pack that contains two modules and an integration that imports those two modules.
+
+    When:
+        - Running add_tmp_lint_files on the given input.
+
+    Then:
+        - Ensure both modules are copied by the command shutil.copy.
+    """
     pack = repo.create_pack(name="ApiModules")
     pack.create_script(code="# TEST1ApiModule")
     pack.create_script(code="# TEST2ApiModule")

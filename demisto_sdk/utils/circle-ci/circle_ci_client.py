@@ -105,9 +105,9 @@ class CircleCIClient:
     ):
         token = token or os.getenv("CCI_TOKEN")
         if isinstance(token, str):
-            logger.debug(f"{token[:3]}")
+            raise Exception("Token is a string")
         elif token is None:
-            logger.debug("token is None")
+            raise Exception("Token is None")
 
         self.auth = HTTPBasicAuth(username=token, password="")
         self.base_url = base_url or API_BASE_URL

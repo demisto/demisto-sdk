@@ -16,10 +16,10 @@ repos:
           - id: name-tests-test
             exclude: test_tools.py|demisto_sdk/commands/download/tests/tests_env/.*|demisto_sdk/commands/create_artifacts/tests/data|demisto_sdk/commands/common/content/tests/objects/pack_objects/script/script_test/TestNotUnifiedScript|demisto_sdk/commands/common/content/tests/objects/pack_objects/integration/integration_test/TestNotUnifiedIntegration|demisto_sdk/commands/test_content/tests/DemistoClientMock
     - repo: https://github.com/charliermarsh/ruff-pre-commit
-      rev: "v0.0.260"
+      rev: "v0.0.261"
       hooks:
         - id: ruff
-          args: [--fix, --exit-non-zero-on-fix]
+          args: [--fix, --exit-non-zero-on-fix, --verbose]
     - repo: https://github.com/psf/black
       rev: "22.12.0"
       hooks:

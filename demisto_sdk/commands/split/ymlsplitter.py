@@ -347,10 +347,11 @@ class YmlSplitter:
                 script = script.replace(match.group(), imported_line)
         return script
 
-    def replace_section_headers_code(self, script):
+    def replace_section_headers_code(self, script: str) -> str:
         """
         remove the auto-generated section headers if they exist.
         """
+        script = re.sub(r"(?:###|//) pack version: (\d+\.\d+\.\d+)", "", script)
         return re.sub(
             r"register_module_line\('.+', '(?:start|end)', __line__\(\)\)\n", "", script
         )

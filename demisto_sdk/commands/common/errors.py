@@ -33,6 +33,7 @@ ALLOWED_IGNORE_ERRORS = [
     "BA113",
     "BA116",
     "BA119",
+    "BA124",
     "DS107",
     "GF102",
     "IF100",
@@ -214,6 +215,11 @@ ERROR_CODE = {
     },
     "copyright_section_in_python_error": {
         "code": "BA119",
+        "ui_applicable": False,
+        "related_field": "",
+    },
+    "missing_unit_test_file": {
+        "code": "BA124",
         "ui_applicable": False,
         "related_field": "",
     },
@@ -4265,6 +4271,11 @@ class Errors:
     @error_code_decorator
     def missing_readme_file(location: FileType):
         return f"{location.name} is missing a README file"
+
+    @staticmethod
+    @error_code_decorator
+    def missing_unit_test_file(path: Path):
+        return f"Missing {path.stem}_test.py unit test file for {path.name}."
 
     @staticmethod
     @error_code_decorator

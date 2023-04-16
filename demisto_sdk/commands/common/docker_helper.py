@@ -188,7 +188,7 @@ class DockerBase:
         logger.debug(f"Trying to pull image {base_image}")
         self.pull_image(base_image)
         container = self.create_container(
-            image=base_image.replace("docker-io.art.code.pan.run/", ""),
+            image=base_image,
             files_to_push=self.installation_files(container_type),
             command="/install.sh",
         )

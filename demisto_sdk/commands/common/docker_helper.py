@@ -200,6 +200,7 @@ class DockerBase:
                 build_log=container_logs,
             )
         repository, tag = image.split(":")
+        repository = repository.replace("docker-io.art.code.pan.run/", "")
         container.commit(
             repository=repository, tag=tag, changes=self.changes[container_type]
         )

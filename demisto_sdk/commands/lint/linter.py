@@ -954,13 +954,9 @@ class Linter:
                 f"time"
             )
             try:
-                test_image_name_to_push = test_image_name.replace(
-                    "docker-io.art.code.pan.run/", ""
-                )
-
                 docker_base.create_image(
                     docker_base_image[0],
-                    test_image_name_to_push,
+                    test_image_name,
                     container_type=self._pkg_lint_status["pack_type"],
                     install_packages=pip_requirements,
                 )
@@ -968,9 +964,10 @@ class Linter:
                 if self._docker_hub_login:
                     for _ in range(2):
                         try:
-                            docker_push_output = self._docker_client.images.push(
-                                test_image_name_to_push
+                            test_image_name_to_push = test_image_name.replace(
+                                "docker-io.art.code.pan.run/", ""
                             )
+                            docker_push_output = self._docker_client.images.push(test_image_name_to_push)
                             logger.info(
                                 f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository. Output = {docker_push_output}"
                             )

@@ -3,7 +3,12 @@ from typing import Optional, Tuple
 
 import click
 
-from demisto_sdk.commands.common.constants import TYPE_JS, TYPE_PWSH
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION,
+    TYPE_JS,
+    TYPE_PWSH,
+    FileType,
+)
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.tools import is_iron_bank_pack, server_version_compare
 from demisto_sdk.commands.format.format_constants import (
@@ -117,7 +122,9 @@ class ScriptYMLFormat(BaseUpdateYML):
                 f"\n================= Updating file {self.source_file} =================",
                 fg="bright_blue",
             )
-            super().update_yml()
+            super().update_yml(
+                default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION[FileType.SCRIPT],
+            )
             self.update_tests()
             self.update_docker_image()
             self.save_yml_to_destination_file()

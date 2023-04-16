@@ -1293,6 +1293,52 @@ class TestFormatting:
             == playbook_yml.data["tasks"]["2"]["taskid"]
         )
 
+    def test_format_valid_fromversion_for_playbook(self, repo):
+        """
+        Given
+            - A playbook file with a valid fromversion value 5.0.0
+        When
+            - Run run_format
+        Then
+            - Ensure that the fromversion value does not change.
+        """
+        pack = repo.create_pack("pack")
+        playbook = pack.create_playbook("DummyPlaybook")
+        playbook.create_default_playbook()
+        playbook_data = playbook.yml.read_dict()
+        playbook_data["fromversion"] = "5.0.0"
+        playbook.yml.write_dict(playbook_data)
+        playbook_yml = PlaybookYMLFormat(
+            SOURCE_FORMAT_PLAYBOOK_COPY, path="", assume_yes=True
+        )
+
+        with ChangeCWD(repo.path):
+            playbook_yml.run_format()
+            assert playbook_yml.data.get("fromversion") == "5.0.0"
+
+    def test_format_invalid_fromversion_for_playbook(self, repo):
+        """
+        Given
+            - A playbook file with an invalid fromversion value 3.0.0
+        When
+            - Run run_format
+        Then
+            - Ensure that the fromversion value changes to the default.
+        """
+        pack = repo.create_pack("pack")
+        playbook = pack.create_playbook("DummyPlaybook")
+        playbook.create_default_playbook()
+        playbook_data = playbook.yml.read_dict()
+        playbook_data["fromversion"] = "3.0.0"
+        playbook.yml.write_dict(playbook_data)
+        playbook_yml = PlaybookYMLFormat(
+            SOURCE_FORMAT_PLAYBOOK_COPY, path="", assume_yes=True
+        )
+
+        with ChangeCWD(repo.path):
+            playbook_yml.run_format()
+            assert playbook_yml.data.get("fromversion") == GENERAL_DEFAULT_FROMVERSION
+
     def test_check_for_subplaybook_usages(self, repo):
         """
         Given

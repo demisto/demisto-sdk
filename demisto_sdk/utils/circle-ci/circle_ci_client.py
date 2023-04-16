@@ -103,7 +103,7 @@ class CircleCIClient:
         base_url: Optional[str] = None,
         verify: bool = True,
     ):  # sourcery skip: raise-specific-error
-        token = token or os.getenv("CIRCLE_TOKEN")
+        token = token or os.getenv("CCI_TOKEN")
         if isinstance(token, str):
             raise Exception("Token is a string")
         elif token is None:

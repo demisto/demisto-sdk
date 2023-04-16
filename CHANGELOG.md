@@ -1,11 +1,12 @@
 # Changelog
-* Added a new **validate** check, making sure a first level header exist in release notes (RN116)
 
 ## Unreleased
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.
 * Added a message showing the output path when **prepare-content** is called.
 * Contribution PRs that update outdated packs now display a warning message.
+* Improved caching and stability for **lint**.
 * Fixed an issue where **validate** would fail when playbook inputs contain Transform Language (DT).
+* Added a new **validate** check, making sure a first level header exist in release notes (RN116)
 * Fixed an issue where **lint** would not properly handle multiple ApiModules imports.
 
 ## 1.12.0

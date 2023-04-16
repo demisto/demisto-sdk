@@ -919,6 +919,7 @@ class Linter:
             str, str. image name to use and errors string.
         """
         log_prompt = f"{self._pack_name} - Image create"
+        docker_base = get_docker()
         # Get requirements file for image
         requirements = []
 
@@ -943,7 +944,7 @@ class Linter:
             logger.info(
                 f"{log_prompt} - Trying to pull existing image {test_image_name}"
             )
-            test_image = get_docker().pull_image(test_image_name)
+            test_image = docker_base.pull_image(test_image_name)
         except (docker.errors.APIError, docker.errors.ImageNotFound):
             logger.info(f"{log_prompt} - Unable to find image {test_image_name}")
         # Creatng new image if existing image isn't found
@@ -953,7 +954,7 @@ class Linter:
                 f"time"
             )
             try:
-                get_docker().create_image(
+                docker_base.create_image(
                     docker_base_image[0],
                     test_image_name,
                     container_type=self._pkg_lint_status["pack_type"],
@@ -966,9 +967,11 @@ class Linter:
                             test_image_name_to_push = test_image_name.replace(
                                 "docker-io.art.code.pan.run/", ""
                             )
-                            self._docker_client.images.push(test_image_name_to_push)
+                            docker_push_output = self._docker_client.images.push(
+                                test_image_name_to_push
+                            )
                             logger.info(
-                                f"{log_prompt} - Image {test_image_name_to_push} pushed to repository"
+                                f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository. Output = {docker_push_output}"
                             )
                             break
                         except (
@@ -1022,7 +1025,7 @@ class Linter:
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
-            container_status = container.wait(condition="exited")
+            container_status = container.wait()
             # Get container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
@@ -1113,7 +1116,7 @@ class Linter:
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # Waiting for container to be finished
-            container_status: dict = container.wait(condition="exited")
+            container_status: dict = container.wait()
             # Getting container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
@@ -1239,7 +1242,7 @@ class Linter:
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
-            container_status = container.wait(condition="exited")
+            container_status = container.wait()
             # Get container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
@@ -1330,7 +1333,7 @@ class Linter:
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
-            container_status = container.wait(condition="exited")
+            container_status = container.wait()
             # Get container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs

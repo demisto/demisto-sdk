@@ -232,7 +232,7 @@ class DocReviewer:
             self.files.append(file_path)
 
     @staticmethod
-    def print_unknown_words(unknown_words):
+    def print_unknown_words(unknown_words: Dict[Tuple[str, str], List[str]) -> None:
         for (word, sub_word), corrections in unknown_words.items():
             correction_text = f" - did you mean: {corrections}" if corrections else ""
 
@@ -414,7 +414,7 @@ class DocReviewer:
         """remove leading and trailing punctuation"""
         return word.strip(string.punctuation)
 
-    def suggest_if_misspelled(self, word):
+    def suggest_if_misspelled(self, word: str) -> Optional[str]:
         if word.isalpha() and self.spellchecker.unknown([word]):
             candidates = set(list(self.spellchecker.candidates(word))[:5])
             # Don't suggest the misspelled word as its own correction, in this case the returned set will be
@@ -436,14 +436,12 @@ class DocReviewer:
             sub_words.extend(self.camel_case_split(word))
         else:
             # The word isn't kebab-case or CamelCase, so we check its own spelling
-            suggestions = self.suggest_if_misspelled(word)
-            if suggestions is not None:
+            if (suggestions := self.suggest_if_misspelled(word)) is not None:
                 self.unknown_words[(word, None)] = suggestions
 
         for sub_word in set(sub_words):
             sub_word = self.remove_punctuation(sub_word)
-            suggestions = self.suggest_if_misspelled(sub_word)
-            if suggestions is not None:
+            if suggestions := self.suggest_if_misspelled(sub_word):
                 self.unknown_words[(word, sub_word)] = suggestions
 
     def check_md_file(self, file_path):

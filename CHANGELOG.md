@@ -3,7 +3,9 @@
 
 ## Unreleased
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.
+* Added a message showing the output path when **prepare-content** is called.
 * Contribution PRs that update outdated packs now display a warning message.
+* Fixed an issue where **validate** would fail when playbook inputs contain Transform Language (DT).
 * Added functionality to the logging framework:
   * Added the ability to disable colors on console logs with the **DEMISTO_SDK_LOG_NO_COLORS** env variable.
   * Printing the log file location.

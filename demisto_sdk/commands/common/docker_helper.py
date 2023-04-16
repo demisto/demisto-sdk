@@ -205,7 +205,9 @@ class DockerBase:
         )
         if os.getenv("GITLAB_CI"):
             container.commit(
-                repository=repository.replace("docker-io.art.code.pan.run/", ""), tag=tag, changes=self.changes[container_type]
+                repository=repository.replace("docker-io.art.code.pan.run/", ""),
+                tag=tag,
+                changes=self.changes[container_type],
             )
         return image
 

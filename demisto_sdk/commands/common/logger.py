@@ -208,9 +208,6 @@ def logging_setup(
                 message = message.replace(key, escapes[key])
             return message
 
-    console_formatter = ColorConsoleFormatter()
-    console_handler.setFormatter(fmt=console_formatter)
-
     current_log_file_path = log_file_path if log_file_path else LOG_FILE_PATH
     if os.path.isdir(current_log_file_path):
         current_log_file_path = current_log_file_path / LOG_FILE_NAME
@@ -241,6 +238,11 @@ def logging_setup(
             for key in escapes:
                 message = message.replace(key, "")
             return message
+
+    if os.getenv("DEMISTO_SDK_LOG_NO_COLORS", "False") == "True":
+        console_handler.setFormatter(fmt=NoColorFileFormatter())
+    else:
+        console_handler.setFormatter(fmt=ColorConsoleFormatter())
 
     file_formatter = NoColorFileFormatter()
     file_handler.setFormatter(fmt=file_formatter)

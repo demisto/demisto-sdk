@@ -296,19 +296,6 @@ class UpdateRN:
                 self.write_metadata_to_file(new_metadata)
             self.create_markdown(rn_path, rn_string, changed_files)
             self.build_rn_config_file(new_version)
-            try:
-                run_command(f"git add {rn_path}", exit_on_error=False)
-            except RuntimeError:
-                logger.info(
-                    f"[yellow]Could not add the release note files to git: {rn_path}[/yellow]"
-                )
-            if self.is_bc and self.bc_path:
-                try:
-                    run_command(f"git add {self.bc_path}", exit_on_error=False)
-                except RuntimeError:
-                    logger.info(
-                        f"[yellow]Could not add the release note config file to git: {rn_path}[/yellow]"
-                    )
             if self.existing_rn_changed:
                 logger.info(
                     f"[green]Finished updating release notes for {self.pack}.[/green]"
@@ -641,6 +628,10 @@ class UpdateRN:
                 logger.info(
                     f"[green]Updated pack metadata version at path : {self.metadata_path}[/green]"
                 )
+            try:
+                run_command(f"git add {self.metadata_path}", exit_on_error=False)
+            except RuntimeError:
+                logger.error(f"[red]Failed git-adding {self.metadata_path}[/red]")
 
     @staticmethod
     def check_rn_dir(rn_path: str):

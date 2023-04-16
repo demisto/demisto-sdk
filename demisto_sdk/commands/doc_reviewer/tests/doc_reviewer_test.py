@@ -742,7 +742,7 @@ def test_check_word_functionality(word, is_invalid_word, no_camelcase):
     """
     doc_reviewer = DocReviewer(no_camel_case=no_camelcase)
     doc_reviewer.check_word(word=word)
-    unknown_words_set = set(map(lambda key_word: key_word[0], doc_reviewer.unknown_words.keys()))
+    unknown_words_set = {key_word[0] for key_word in doc_reviewer.unknown_words.keys()}
     if is_invalid_word:
         assert word in unknown_words_set
     else:
@@ -871,7 +871,7 @@ def test_adding_known_words_from_pack(
         )
         assert doc_reviewer.run_doc_review() == review_success
         assert len(doc_reviewer.files) > 0
-        assert set(map(lambda key_word: key_word[0], doc_reviewer.unknown_words.keys())) == unknown_words
+        assert {key_word[0] for key_word in doc_reviewer.unknown_words.keys()} == unknown_words
 
 
 @pytest.mark.parametrize(

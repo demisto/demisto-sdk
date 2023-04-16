@@ -5,7 +5,7 @@ import string
 import sys
 from configparser import ConfigParser
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict, Set
 
 import click
 import nltk
@@ -114,7 +114,7 @@ class DocReviewer:
         Args:
             file_path: The path of the file within the pack
 
-        Return (the known words file path or '' if it was not found, list of known words)
+        Return the known words file path or '' if it was not found, list of known words
         """
         file_path_obj = Path(file_path)
         if "Packs" in file_path_obj.parts:
@@ -198,7 +198,8 @@ class DocReviewer:
     def gather_all_changed_files(self):
         modified = self.git_util.modified_files(prev_ver=self.prev_ver)  # type: ignore[union-attr]
         added = self.git_util.added_files(prev_ver=self.prev_ver)  # type: ignore[union-attr]
-        renamed = self.git_util.renamed_files(prev_ver=self.prev_ver, get_only_current_file_names=True)  # type: ignore[union-attr]
+        renamed = self.git_util.renamed_files(prev_ver=self.prev_ver,
+                                              get_only_current_file_names=True)  # type: ignore[union-attr]
 
         return modified.union(added).union(renamed)  # type: ignore[arg-type]
 
@@ -232,7 +233,7 @@ class DocReviewer:
             self.files.append(file_path)
 
     @staticmethod
-    def print_unknown_words(unknown_words: Dict[Tuple[str, str], List[str]) -> None:
+    def print_unknown_words(unknown_words: Dict[Tuple[str, str], Tuple[str]]) -> None:
         for (word, sub_word), corrections in unknown_words.items():
             correction_text = f" - did you mean: {corrections}" if corrections else ""
 
@@ -391,7 +392,7 @@ class DocReviewer:
             # reasonably sized "brown" and "webtext" dicts.
             # to avoid SSL download error we disable SSL connection.
             try:
-                _create_unverified_https_context = ssl._create_unverified_context
+                _create_unverified_https_context = ssl._create_unverified_context  # noqa
             except AttributeError:
                 pass
             else:
@@ -414,7 +415,7 @@ class DocReviewer:
         """remove leading and trailing punctuation"""
         return word.strip(string.punctuation)
 
-    def suggest_if_misspelled(self, word: str) -> Optional[str]:
+    def suggest_if_misspelled(self, word: str) -> Optional[Set]:
         if word.isalpha() and self.spellchecker.unknown([word]):
             candidates = set(list(self.spellchecker.candidates(word))[:5])
             # Don't suggest the misspelled word as its own correction, in this case the returned set will be
@@ -441,7 +442,7 @@ class DocReviewer:
 
         for sub_word in set(sub_words):
             sub_word = self.remove_punctuation(sub_word)
-            if suggestions := self.suggest_if_misspelled(sub_word):
+            if (suggestions := self.suggest_if_misspelled(sub_word)) is not None:
                 self.unknown_words[(word, sub_word)] = suggestions
 
     def check_md_file(self, file_path):

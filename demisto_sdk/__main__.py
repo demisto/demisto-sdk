@@ -10,6 +10,7 @@ from typing import IO, Any, Dict, Iterable, Tuple
 import click
 import git
 import typer
+import itertools
 from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration

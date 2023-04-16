@@ -466,20 +466,18 @@ class ContributionConverter:
                 )
 
     @staticmethod
-    def extract_pack_version(script):
+    def extract_pack_version(script: Optional[str]) -> str:
         """
         extract the pack version from script if exists, returns 0.0.0 if version was not found.
         """
         if script:
             try:
-                pack_version_reg = re.search(
-                    r"### pack version: (\d+\.\d+\.\d+)", script
-                )
-                if pack_version_reg:
+                if pack_version_reg := re.search(
+                    r"(?:###|//) pack version: (\d+\.\d+\.\d+)", script
+                ):
                     return pack_version_reg.groups()[0]
             except Exception as e:
                 logging.warning(f"Failed extracting pack version from script: {e}")
-                pass
         return "0.0.0"
 
     def create_contribution_items_version_note(self):

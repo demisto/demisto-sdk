@@ -6,6 +6,7 @@
 * Added a message showing the output path when **prepare-content** is called.
 * Contribution PRs that update outdated packs now display a warning message.
 * Fixed an issue where **validate** would fail when playbook inputs contain Transform Language (DT).
+* Fixed an issue where **lint** would not properly handle multiple ApiModules imports.
 
 ## 1.12.0
 * Added the **pre-commit** command, to improve code quality of XSOAR content.

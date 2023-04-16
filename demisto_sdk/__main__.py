@@ -46,9 +46,6 @@ from demisto_sdk.commands.test_content.test_modeling_rule import (
 from demisto_sdk.commands.upload.upload import upload_content_entity
 from demisto_sdk.utils.utils import check_configuration_file
 
-# logger = logging.getLogger("demisto-sdk")
-# from demisto_sdk.commands.common.logger import logger
-
 json = JSON_Handler()
 
 # Third party packages
@@ -194,8 +191,6 @@ def main(ctx, config, version, release_notes, **kwargs):
         log_file_path=kwargs.get("log_file_path"),
         notify_log_file_path=False,
     )
-    # global logger
-    # logger = logging.getLogger("demisto-sdk")
     handle_deprecated_args(ctx.args)
     from demisto_sdk.commands.common.logger import logger
 

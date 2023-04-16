@@ -57,8 +57,6 @@ from demisto_sdk.commands.common.content_constant_paths import (
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import JSON_Handler
-
-# logger = logging.getLogger("demisto-sdk")
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,

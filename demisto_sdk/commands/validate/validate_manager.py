@@ -267,18 +267,12 @@ class ValidateManager:
 
         self.deprecation_validator = DeprecationValidator(id_set_file=self.id_set_file)
 
-        try:
+        if self.use_git:
             self.git_util = GitUtil(repo=Content.git())
             self.branch_name = self.git_util.get_current_git_branch_or_hash()
-        except (InvalidGitRepositoryError, TypeError):
-            # if we are using git - fail the validation by raising the exception.
-            if self.use_git:
-                raise
-            # if we are not using git - simply move on.
-            else:
-                logger.info("Unable to connect to git")
-                self.git_util = None  # type: ignore[assignment]
-                self.branch_name = ""
+        else:
+            self.git_util = None  # type: ignore[assignment]
+            self.branch_name = ""
 
         if prev_ver and not prev_ver.startswith("origin"):
             self.prev_ver = self.setup_prev_ver("origin/" + prev_ver)
@@ -426,7 +420,8 @@ class ValidateManager:
     def run_validation_on_specific_files(self):
         """Run validations only on specific files"""
         files_validation_result = set()
-        self.setup_git_params()
+        if self.use_git:
+            self.setup_git_params()
         files_to_validate = self.file_path.split(",")
 
         if self.validate_graph:
@@ -788,7 +783,8 @@ class ValidateManager:
         if (
             file_type in self.skipped_file_types
             or self.is_skipped_file(file_path)
-            or self.git_util._is_file_git_ignored(file_path)
+            or self.use_git
+            and self.git_util._is_file_git_ignored(file_path)
             or self.detect_file_level(file_path)
             in (PathLevel.PACKAGE, PathLevel.CONTENT_ENTITY_DIR)
         ):

@@ -23,6 +23,7 @@ from demisto_sdk.commands.common.tools import (
     arg_to_list,
     find_type,
     get_mp_tag_parser,
+    get_pack_metadata,
     get_pack_name,
     get_yaml,
     get_yml_paths_in_dir,
@@ -286,6 +287,12 @@ class IntegrationScriptUnifier(Unifier):
         script_code = IntegrationScriptUnifier.insert_module_code(
             script_code, imports_to_names
         )
+        if pack_version := get_pack_metadata(file_path=str(package_path)).get(
+            "currentVersion", ""
+        ):
+            script_code = IntegrationScriptUnifier.insert_pack_version(
+                script_type, script_code, pack_version
+            )
 
         if script_type == ".py":
             clean_code = IntegrationScriptUnifier.clean_python_code(script_code)
@@ -353,7 +360,7 @@ class IntegrationScriptUnifier(Unifier):
         :return: The import string and the imported module name
         """
 
-        # General regex to find API module imports, for example: "from MicrosoftApiModule import *  # noqa: E402"
+        # General regex to find API module imports, for example: "from MicrosoftApiModule import *  # "
         module_regex = r"from ([\w\d]+ApiModule) import \*(?:  # noqa: E402)?"
 
         module_matches = re.finditer(module_regex, script_code)
@@ -401,6 +408,30 @@ class IntegrationScriptUnifier(Unifier):
             )
 
             script_code = script_code.replace(module_import, module_code)
+        return script_code
+
+    @staticmethod
+    def insert_pack_version(
+        script_type: str, script_code: str, pack_version: str
+    ) -> str:
+        """
+        Inserts the pack version to the script so it will be easy to know what was the contribution original pack version.
+        :param script_code: The integration code
+        :param pack_version: The pack version
+        :return: The integration script with the pack version appended if needed, otherwise returns the original script
+        """
+        if script_type == ".js":
+            return (
+                script_code
+                if "// pack version:" in script_code
+                else f"// pack version: {pack_version}\n{script_code}"
+            )
+        elif script_type in {".py", ".ps1"}:
+            return (
+                script_code
+                if "### pack version:" in script_code
+                else f"### pack version: {pack_version}\n{script_code}"
+            )
         return script_code
 
     @staticmethod

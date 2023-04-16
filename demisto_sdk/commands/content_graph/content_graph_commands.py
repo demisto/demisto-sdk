@@ -7,7 +7,11 @@ import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.tools import download_content_graph
-from demisto_sdk.commands.content_graph.common import NEO4J_DATABASE_HTTP
+from demisto_sdk.commands.content_graph.common import (
+    NEO4J_DATABASE_HTTP,
+    NEO4J_PASSWORD,
+    NEO4J_USERNAME,
+)
 from demisto_sdk.commands.content_graph.content_graph_builder import ContentGraphBuilder
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 
@@ -35,7 +39,8 @@ def create_content_graph(
         output_path = output_path / marketplace.value
     content_graph_interface.export_graph(output_path)
     logger.info(
-        f"Successfully created the content graph. UI representation is available at {NEO4J_DATABASE_HTTP}"
+        f"Successfully created the content graph. UI representation is available at {NEO4J_DATABASE_HTTP} "
+        f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
     )
 
 
@@ -83,7 +88,8 @@ def update_content_graph(
         output_path = output_path / marketplace.value
     content_graph_interface.export_graph(output_path)
     logger.info(
-        f"Successfully updated the content graph. UI representation is available at {NEO4J_DATABASE_HTTP}"
+        f"Successfully updated the content graph. UI representation is available at {NEO4J_DATABASE_HTTP} "
+        f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
     )
 
 

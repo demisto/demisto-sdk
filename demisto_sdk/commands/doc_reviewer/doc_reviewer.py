@@ -5,7 +5,7 @@ import string
 import sys
 from configparser import ConfigParser
 from pathlib import Path
-from typing import List, Optional, Tuple, Dict, Set
+from typing import Dict, List, Optional, Set, Tuple
 
 import click
 import nltk
@@ -241,9 +241,7 @@ class DocReviewer:
                     f"  - {sub_word} in {word}{correction_text}", fg="bright_red"
                 )
             else:
-                click.secho(
-                    f"  - {word}{correction_text}", fg="bright_red"
-                )
+                click.secho(f"  - {word}{correction_text}", fg="bright_red")
         click.secho(
             "If these are not misspelled consider adding them to a known_words file:\n"
             "  Pack related words: content/Packs/<PackName>/.pack-ignore under the [known_words] section.\n"
@@ -391,7 +389,7 @@ class DocReviewer:
             # reasonably sized "brown" and "webtext" dicts.
             # to avoid SSL download error we disable SSL connection.
             try:
-                _create_unverified_https_context = ssl._create_unverified_context  # noqa
+                _create_unverified_https_context = ssl._create_unverified_context
             except AttributeError:
                 pass
             else:

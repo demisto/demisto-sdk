@@ -871,7 +871,9 @@ def test_adding_known_words_from_pack(
         )
         assert doc_reviewer.run_doc_review() == review_success
         assert len(doc_reviewer.files) > 0
-        assert {key_word[0] for key_word in doc_reviewer.unknown_words.keys()} == unknown_words
+        assert {
+            key_word[0] for key_word in doc_reviewer.unknown_words.keys()
+        } == unknown_words
 
 
 @pytest.mark.parametrize(

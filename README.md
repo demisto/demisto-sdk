@@ -16,13 +16,13 @@ The library uses python 3.8+.
 3. **Connect demisto-sdk with Cortex XSOAR server** - In order that demisto-sdk and Cortex XSOAR server communicate, perfrom the following steps:
 
    1. Get an API key for Cortex XSOAR/XSIAM-server - `Settings` -> `Integrations` -> `API keys` -> `Get your Key` (copy it)
-   2. Add the following parameters to your environment. You can also use a [.env file](https://pypi.org/project/python-dotenv/), the demisto-sdk will automatically load that file.:
+   2. Set the following environment variables, or place an [.env file](https://pypi.org/project/python-dotenv/) at the root of the content pack:
 
       ```bash
       export DEMISTO_BASE_URL=<http or https>://<demisto-server url or ip>:<port>
       export DEMISTO_API_KEY=<API key>
       ```
-      To use on Cortex XSIAM the `XSIAM_AUTH_ID` environment variable should also be set.
+      To use on Cortex XSIAM or Cortex XSOAR 8.x the `XSIAM_AUTH_ID` environment variable should also be set.
       ```bash
       export XSIAM_AUTH_ID=<auth id>
       ```

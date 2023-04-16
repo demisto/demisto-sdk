@@ -1259,9 +1259,7 @@ def handle_author_image(pack, pack_report, artifact_manager, **kwargs):
         pack.author_image.dump(artifact_manager.content_packs_path / pack.id)
 
 
-def dump_pack(
-    artifact_manager: ArtifactsManager, pack: Pack
-) -> ArtifactsReport:  # noqa: C901
+def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport:
     """Dumping content/Packs/<pack_id>/ into:
             1. content_test
             2. content_new

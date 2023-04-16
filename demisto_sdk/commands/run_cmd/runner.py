@@ -230,7 +230,7 @@ class Runner:
                             while not self.HUMAN_READABLE_HEADER.match(line):
                                 context = context + line
                                 line = log_info.readline()
-                            context = re.sub(r"\(val\..+\)", "", context)  # noqa: W605
+                            context = re.sub(r"\(val\..+\)", "", context)
                             try:
                                 temp_dict = json.loads(context)
                                 if temp_dict:

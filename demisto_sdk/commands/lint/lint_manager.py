@@ -214,7 +214,7 @@ class LintManager:
                 ]
                 logger.debug(
                     "Test requirements successfully collected for python 3:\n"
-                    f" {facts[f'requirements_3']}"
+                    f" {facts['requirements_3']}"
                 )
             python2_requirements = pipfile_dir / "pipfile_python2/dev-requirements.txt"
             facts["requirements_2"] = python2_requirements.read_text().strip().split("\n")  # type: ignore

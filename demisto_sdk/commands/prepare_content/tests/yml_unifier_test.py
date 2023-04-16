@@ -34,7 +34,7 @@ from CommonServerPython import *
 
 def main():
     return_error('Not implemented.')
-​
+\u200b
 if __name__ in ('builtins', '__builtin__', '__main__'):
     main()
 """
@@ -456,18 +456,29 @@ def test_insert_hierarchy_api_module(mocker):
 def test_insert_pack_version_and_script_to_yml():
     """
     Given:
-     - A pack name
+     - A pack name.
 
     When:
-     - calling insert_pack_version
+     - calling insert_pack_version.
 
     Then:
-     - Ensure the code returned contains the pack version in it
+     - Ensure the code returned contains the pack version in it.
     """
     version_str = "### pack version: 1.0.3"
     assert version_str not in DUMMY_SCRIPT
     assert version_str in IntegrationScriptUnifier.insert_pack_version(
-        DUMMY_SCRIPT, version_str
+        ".py", DUMMY_SCRIPT, "1.0.3"
+    )
+    assert version_str in IntegrationScriptUnifier.insert_pack_version(
+        ".ps1", DUMMY_SCRIPT, "1.0.3"
+    )
+    assert version_str not in IntegrationScriptUnifier.insert_pack_version(
+        ".js", DUMMY_SCRIPT, "1.0.3"
+    )
+    version_str_js = "// pack version: 1.0.3"
+    assert version_str_js not in DUMMY_SCRIPT
+    assert version_str_js in IntegrationScriptUnifier.insert_pack_version(
+        ".js", DUMMY_SCRIPT, "1.0.3"
     )
 
 

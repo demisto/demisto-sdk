@@ -225,12 +225,12 @@ class BaseValidator:
             self.predefined_deprecated_ignored_errors.get(file_name)
             or self.predefined_deprecated_ignored_errors.get(rel_file_path)
             or []
-        )  # noqa: E501
+        )
         predefined_by_support_ignored_errors = (
             self.predefined_by_support_ignored_errors.get(file_path)
             or self.predefined_by_support_ignored_errors.get(rel_file_path)
             or []
-        )  # noqa: E501
+        )
 
         is_error_not_allowed_in_pack_ignore = self.is_error_not_allowed_in_pack_ignore(
             error_code=error_code, ignored_errors_pack_ignore=ignored_errors_pack_ignore

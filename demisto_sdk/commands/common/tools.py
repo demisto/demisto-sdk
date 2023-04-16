@@ -795,6 +795,8 @@ def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool =
 
 
 def get_yaml(file_path, cache_clear=False):
+    if cache_clear:
+        get_file.cache_clear()
     return get_file(file_path, "yml", clear_cache=cache_clear)
 
 

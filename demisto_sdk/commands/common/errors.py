@@ -92,6 +92,7 @@ ALLOWED_IGNORE_ERRORS = [
     "RN113",
     "RN114",
     "RN115",
+    "RN116",
     "MR104",
     "MR105",
     "LO107",
@@ -1503,6 +1504,11 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "first_level_is_header_missing": {
+        "code": "RN116",
+        "ui_applicable": False,
+        "related_field": "",
+    },
     # RP - Reputations (Indicator Types)
     "wrong_version_reputations": {
         "code": "RP100",
@@ -2900,6 +2906,15 @@ class Errors:
         else:
             error = f'Did not find content items headers under "{content_type}" - might be duo to invalid format.\n{error}'
         return error
+
+    @staticmethod
+    @error_code_decorator
+    def first_level_is_header_missing(pack_name):
+        error = (
+            f'Please use "demisto-sdk update-release-notes -i Packs/{pack_name}"\n'
+            "For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes"
+        )
+        return f"The following RN is missing a first level header.\n{error}"
 
     @staticmethod
     @error_code_decorator

@@ -1,4 +1,5 @@
 # Changelog
+* Added a new **validate** check, making sure a first level header exist in release notes (RN116)
 
 ## Unreleased
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.

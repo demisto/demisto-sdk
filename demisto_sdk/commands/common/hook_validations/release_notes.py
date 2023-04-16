@@ -180,7 +180,7 @@ class ReleaseNotesValidator(BaseValidator):
             True if the RN has a first level header, False otherwise.
         """
         first_level_header_index = re.search(
-            r"\s#{4,4}\s", f"\n{self.latest_release_notes}"
+            r"\s#{4}\B", f"\n{self.latest_release_notes}"
         )
         if not first_level_header_index:
             (

@@ -17,4 +17,4 @@ class Mapper(ContentItem, content_type=ContentType.MAPPER):  # type: ignore[call
         return {"name", "description"}
 
     def _client_upload_method(self, client: demisto_client) -> Optional[Callable]:
-        pass  # TODO
+        return client.import_classifier

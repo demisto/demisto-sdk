@@ -260,6 +260,14 @@ def logging_setup(
     demisto_logger.propagate = False
 
     if notify_log_file_path and not current_log_file_path_notified:
+        import sys
+
+        demisto_logger.debug(f"Python version: {sys.version}")
+        demisto_logger.debug(f"Working dir: {os.getcwd()}")
+        import platform
+
+        demisto_logger.debug(f"Platform: {platform.system()}")
+
         demisto_logger.info(
             f"[yellow]Log file location: {current_log_file_path}[/yellow]"
         )

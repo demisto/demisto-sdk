@@ -1,10 +1,11 @@
 import ast
+import contextlib
 import glob
 import itertools
 import logging
 import os
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
@@ -35,10 +36,8 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (
-    get_child_directories,
     get_demisto_version,
     get_file,
-    get_parent_directory_name,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
@@ -115,7 +114,7 @@ class Uploader:
         self,
         input: Optional[Path],
         insecure: bool = False,
-        pack_names: list = None,
+        pack_names: Optional[List[str]] = None,
         skip_validation: bool = False,
         detached_files: bool = False,
         reattach: bool = False,
@@ -132,10 +131,10 @@ class Uploader:
         self.failed_upload: List[Tuple[ContentItem, str]] = []
         self.failed_upload_version_mismatch: List[ContentItem] = []
         self.demisto_version = get_demisto_version(self.client)
-        self.pack_names = pack_names
+        self.pack_names: List[str] = pack_names or []
         self.skip_upload_packs_validation = skip_validation
-        self.is_files_to_detached = detached_files
-        self.reattach_files = reattach
+        self.should_detach_files = detached_files
+        self.should_reattach_files = reattach
         self.override_existing = override_existing
         self.marketplace = marketplace
 
@@ -147,50 +146,37 @@ class Uploader:
             )
             return ERROR_RETURN_CODE
 
-        status_code = SUCCESS_RETURN_CODE
-
-        if self.is_files_to_detached:
+        if self.should_detach_files:
             item_detacher = ItemDetacher(
                 client=self.client, marketplace=self.marketplace
             )
-            list_detach_items_ids: list = item_detacher.detach(upload_file=True)
+            detached_items_ids = item_detacher.detach(upload_file=True)
 
-            if self.reattach_files:
-                item_reattacher = ItemReattacher(client=self.client)
-                item_reattacher.reattach_item_manager(
-                    detached_files_ids=list_detach_items_ids
+            if self.should_reattach_files:
+                ItemReattacher(client=self.client).reattach(
+                    detached_files_ids=detached_items_ids
                 )
 
-            if not self.path:
+            if not self.path:  # Nothing to upload
                 return SUCCESS_RETURN_CODE
-        host = self.client.api_client.configuration.host
-        logger.info(f"Using {host=}")
-        logger.info(f"Uploading {self.path} ...")
-        if self.path is None or not self.path.exists():
-            logger.info(
-                f"[red]Error: Given input path: {self.path} does not exist[/red]"
+
+        logger.info(
+            f"Uploading {self.path} to {self.client.api_client.configuration.host}..."
+        )
+
+        if not self.path or not self.path.exists():
+            logger.error(
+                f"[red]input path: {self.path} does not exist[/red]"
             )
             return ERROR_RETURN_CODE
 
-        # uploading a pack zip
-        elif self.path.suffix == ".zip":
-            status_code = self.zipped_pack_uploader(
-                path=str(self.path), skip_validation=self.skip_upload_packs_validation
-            )
-
-        # Uploading a file
-        elif self.path.is_file():
-            status_code = self.upload_file(self.path) or status_code
-
-        # Uploading an entity directory
-        elif self.path.is_dir():
-            if self.path.parent.name in CONTENT_ENTITIES_DIRS:
-                status_code = self.entity_dir_uploader(self.path) or status_code
+        try:
+            if self.path.is_dir() and self.path.parent.name in CONTENT_ENTITIES_DIRS:
+                success = self.upload_entity_dir(self.path)
             else:
-                status_code = self.upload_pack(self.path) or status_code
-
-        if status_code == ABORTED_RETURN_CODE:
-            return status_code
+                success = self.upload_file(self.path)
+        except KeyboardInterrupt:
+            return ABORTED_RETURN_CODE
 
         if not any(
             (
@@ -212,30 +198,29 @@ class Uploader:
             return ERROR_RETURN_CODE
 
         self.print_summary()
-        return status_code
+        return SUCCESS_RETURN_CODE if success else ERROR_RETURN_CODE
 
-    def upload_file(self, path: Path) -> int:
+    def upload_file(self, path: Path) -> bool:
         """
         Upload a file.
         Args:
-            path: The path of the file to upload. The rest of the parameters are taken from self.
+            path: The path of the file to upload.
+
+        Returns:
+            bool: whether the item is uploaded succesfully.
 
         Raises:
             NotIndivitudallyUploadedException (see exception class)
             NotUploadableException
         """
-        if not path.exists():
-            raise RuntimeError(
-                f"Path {path.absolute()} does not exist"
-            )  # TODO is this necessary?
-
-        content_item: ContentItem = BaseContent.from_path(
+        content_item: Union[ContentItem, Pack] = BaseContent.from_path(
             path
         )  # type:ignore[assignment]
         if content_item is None:
-            raise RuntimeError(
-                f"Could not parse content from {path.absolute()}"
-            )  # TODO raise NotUploadable? Create new exception? Something else?
+            raise ValueError(
+                f"cannot parse {path.absolute()}, see errors above."
+            )  # error is logged in Basecontent.from_path
+        # TODO raise NotUploadable? Create new exception? Something else?
 
         try:
             content_item.upload(
@@ -247,114 +232,46 @@ class Uploader:
             logger.debug(
                 f"[green]Uploaded {content_item.content_type} {content_item.normalize_name}: successfully[/green]"
             )
-            return SUCCESS_RETURN_CODE
+            return True
+        except KeyboardInterrupt:
+            raise  # the functinos calling this one have a special return code for manual interruption
 
         except IncompatibleUploadVersionException as e:
             logger.error(e)
             self.failed_upload_version_mismatch.append(content_item)
-            return ERROR_RETURN_CODE
-
-        except NotIndivitudallyUploadedException as e:
-            logger.error(e)
-            self.failed_upload.append((content_item, str(e)))
-            return ERROR_RETURN_CODE  # TODO is this the right value?
+            return False
 
         except NotUploadableException as e:
             logger.error(e)
             self.failed_upload.append((content_item, str(e)))
-            return ERROR_RETURN_CODE
+            return False
 
         except Exception as e:
-            message = parse_error_response(e, content_item)
+            message = f"unknown: {e}"
+            with contextlib.suppress(Exception):
+                message = parse_error_response(e, content_item)
             self.failed_upload.append((content_item, message))
-            return ERROR_RETURN_CODE
+            return False
 
-    def unified_entity_uploader(self, path) -> int:  # TODO remove?
-        """
-        Uploads unified entity folder
-
-        Args:
-            path: the folder path of a unified entity in the format `Pack/{Pack_Name}/Integration/{Integration_Name}`
-
-        Returns:
-            status code
-        """
-        if get_parent_directory_name(path) not in UNIFIED_ENTITIES_DIR:
-            return ERROR_RETURN_CODE
-        yml_files = []
-        for file in glob.glob(f"{path}/*.yml"):
-            if not file.endswith("_unified.yml"):
-                yml_files.append(file)
-        if len(yml_files) > 1:
-            self.failed_upload.append(
-                (
-                    path,
-                    "Entity Folder",
-                    "The folder contains more than one `.yml` file "
-                    "(not including `_unified.yml`)",
-                )
-            )
-            return ERROR_RETURN_CODE
-        if not yml_files:
-            self.failed_upload.append(
-                (path, "Entity Folder", "The folder does not contain a `.yml` file")
-            )
-            return ERROR_RETURN_CODE
-        return self.upload_file(yml_files[0])
-
-    def entity_dir_uploader(self, path: Path) -> int:
+    def upload_entity_dir(self, path: Path) -> bool:
         """
         Uploads an entity path directory
         Args:
             path: an entity path in the following format `Packs/{Pack_Name}/{Entity_Type}`
 
         Returns:
-            The status code of the operation.
+            Whether the upload succeeded.
 
         """
-        status_code = SUCCESS_RETURN_CODE
-        if (dir_name := Path.name) in UNIFIED_ENTITIES_DIR:
-            for entity_folder in path.glob("/*/"):  # TODO
-                status_code = self.unified_entity_uploader(entity_folder) or status_code
-        if dir_name in CONTENT_ENTITIES_DIRS:
-            # Upload json or yml files.
-            # Other files such as `.md`, `.png` should be ignored
+        success = True
+        if path.name in CONTENT_ENTITIES_DIRS:
             for file in itertools.chain(path.glob("*.yml"), path.glob("*.json")):
-                status_code = self.upload_file(file) or status_code
-        return status_code
+                if file.stem.endswith("_unified"):
+                    continue  # TODO yes? no? error?
+                if not self.upload_file(file):
+                    success = False
 
-    def upload_pack(self, path: Path) -> int:
-        status_code = SUCCESS_RETURN_CODE
-        sorted_directories = sort_directories_based_on_dependencies(
-            get_child_directories(path)
-        )
-        for entity_folder in sorted_directories:
-            if Path(entity_folder).name in CONTENT_ENTITIES_DIRS:
-                status_code = self.entity_dir_uploader(entity_folder) or status_code
-        return status_code
-
-    def zipped_pack_uploader(self, path: str, skip_validation: bool) -> int:  # TODO
-
-        zipped_pack = Pack(path)
-
-        try:
-            if not self.pack_names:
-                self.pack_names = [zipped_pack.path.stem]
-
-            if self.notify_user_should_override_packs():
-                zipped_pack.upload(logger, self.client, skip_validation)
-                self.successfully_uploaded.extend(
-                    [(pack_name, FileType.PACK.value) for pack_name in self.pack_names]
-                )
-                return SUCCESS_RETURN_CODE
-
-            return ABORTED_RETURN_CODE
-
-        except (Exception, KeyboardInterrupt) as err:
-            file_name = zipped_pack.path.name  # type: ignore
-            message = parse_error_response(err, FileType.PACK.value, file_name)
-            self.failed_upload.append((file_name, FileType.PACK.value, message))
-            return ERROR_RETURN_CODE
+        return success
 
     def notify_user_should_override_packs(self):
         """Notify the user about possible overridden packs."""
@@ -362,28 +279,23 @@ class Uploader:
         response = self.client.generic_request(
             "/contentpacks/metadata/installed", "GET"
         )
-        installed_packs = eval(response[0])
-        if installed_packs:
+        if installed_packs := eval(response[0]):
             installed_packs = {pack["name"] for pack in installed_packs}
-            common_packs = installed_packs & set(self.pack_names)  # type: ignore
-            if common_packs:
+            if common_packs := installed_packs.intersection(self.pack_names):
                 pack_names = "\n".join(common_packs)
-                marketplace = (
-                    os.environ.get(
-                        ENV_DEMISTO_SDK_MARKETPLACE, MarketplaceVersions.XSOAR
-                    )
-                    .lower()
+                product = (
+                    self.marketplace.lower()
                     .replace(MarketplaceVersions.MarketplaceV2, "XSIAM")
                     .upper()
                 )
                 logger.debug(
                     f"[red]This command will overwrite the following packs:\n{pack_names}.\n"
-                    f"Any changes made on {marketplace} will be lost.[red]"
+                    f"Any changes made on {product} will be lost.[red]"
                 )
                 if not self.override_existing:
                     logger.info("[red]Are you sure you want to continue? y/[N][/red]")
                     answer = str(input())
-                    return answer in ["y", "Y", "yes"]
+                    return answer in {"y", "Y", "yes"}
 
         return True
 
@@ -596,7 +508,7 @@ class ItemDetacher:
         file_data = get_file(self.file_path, file_type)
         return file_data.get("id")  # TODO get_id
 
-    def detach(self, upload_file: bool = False):
+    def detach(self, upload_file: bool = False) -> List[str]:
         detach_files_list: list = []
         if os.path.isdir(self.file_path):
             detach_files_list = self.extract_items_from_dir()
@@ -663,7 +575,7 @@ class ItemReattacher:
         except Exception as e:
             raise Exception(f"Exception raised when fetching custom content:\n{e}")
 
-    def reattach_item_manager(self, detached_files_ids=None):
+    def reattach(self, detached_files_ids=None):
         if not self.file_path and detached_files_ids:
             all_files: dict = self.download_all_detach_supported_items()
             for item_type, item_list in all_files.items():

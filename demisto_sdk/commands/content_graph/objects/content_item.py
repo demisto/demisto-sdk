@@ -233,6 +233,7 @@ class ContentItem(BaseContent):
         client: demisto_client,
         marketplace: MarketplaceVersions,
         target_demisto_version: Version,
+        **kwargs,
     ) -> None:
         """
         The only upload-related function to be used - the rest are abstract.

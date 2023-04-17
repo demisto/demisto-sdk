@@ -3480,3 +3480,24 @@ def get_pack_paths_from_files(file_paths: Iterable[str]) -> list:
     """Returns the pack paths from a list/set of files"""
     pack_paths = {f"Packs/{get_pack_name(file_path)}" for file_path in file_paths}
     return list(pack_paths)
+
+
+def parse_marketplace_kwargs(kwargs: dict) -> MarketplaceVersions:
+    marketplace = kwargs.get("marketplace")
+    is_xsiam = kwargs.get("is_xsiam")
+
+    if marketplace and is_xsiam:
+        raise ValueError(
+            "The arguments `marketplace` and `is_xsiam` cannot be used at the same time, remove one of them."
+        )
+
+    if is_xsiam:
+        return MarketplaceVersions.MarketplaceV2
+
+    if marketplace:
+        return MarketplaceVersions(marketplace)
+
+    logger.debug(
+        "neither marketplace nor is_xsiam provided, using default marketplace=XSOAR"
+    )
+    return MarketplaceVersions.XSOAR  # default

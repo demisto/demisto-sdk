@@ -499,9 +499,11 @@ def zip_packs(ctx, **kwargs) -> int:
     should_upload = kwargs.pop("upload", False)
     zip_all = kwargs.pop("zip_all", False) or should_upload
 
-    if marketplace := kwargs.get("marketplace"):
-        # TODO can we remove this part?
-        os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
+    marketplace = (
+        MarketplaceVersions(raw_marketplace)
+        if (raw_marketplace := kwargs.get("marketplace"))
+        else MarketplaceVersions.XSOAR
+    )
 
     packs_zipper = PacksZipper(
         zip_all=zip_all, pack_paths=kwargs.pop("input"), quiet_mode=zip_all, **kwargs

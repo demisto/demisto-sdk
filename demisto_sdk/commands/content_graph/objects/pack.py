@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any, Generator, List, Optional
 
 import demisto_client
-from packaging.version import parse
+from packaging.version import Version, parse
 from pydantic import BaseModel, Field, validator
 
 from demisto_sdk.commands.common.constants import (
@@ -293,27 +293,59 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             logger.error(f"Failed dumping pack {self.name}: {e}")
             raise
 
-    def _upload(
-        self, client: demisto_client, marketplace: MarketplaceVersions, zipped: bool
+    def upload(
+        self,
+        client: demisto_client,
+        marketplace: MarketplaceVersions,
+        target_demisto_version: Version,
+        **kwargs,
     ):
-        logger.debug(f"Uploading pack {self.object_id}")
-        if zipped:
-            with TemporaryDirectory() as dir:
-                self.dump(Path(dir), marketplace)
-                logger.debug(f"Uploading zipped pack {self.object_id}")
-                client.upload_content_packs(file=dir)
-        else:  # uploads each separately
-            logger.debug(
-                f"Uploading all elements of pack {self.object_id} one by one, as -z was not specified"
+        ...  # TODO
+        if kwargs["zipped"]:  # using [] as it must be provided
+            self._upload_zipped(client=client, marketplace=marketplace)
+        else:
+            self._upload_unzipped(
+                client=client,
+                marketplace=marketplace,
+                target_demisto_version=target_demisto_version,
             )
-            for item in self.content_items:
-                try:
-                    logger.debug(f"Uploading pack {self.object_id}: {item.object_id}")
-                    item._upload(client, marketplace)
-                except NotIndivitudallyUploadedException:
-                    logger.debug(
-                        f"Cannot upload {item.content_type} {item.object_id} without the -z flag"
-                    )
+
+    def _upload_zipped(
+        self,
+        client: demisto_client,
+        marketplace: MarketplaceVersions,  # TODO use marketplace or remove
+    ):
+        # this should only be called from Pack.upload
+        logger.debug(f"Uploading zipped pack {self.object_id}")
+        with TemporaryDirectory() as dir:
+            client.upload_content_packs(file=(Path(dir) / f"{self.object_id}.zip"))
+
+    def _upload_unzipped(
+        self,
+        client: demisto_client,
+        marketplace: MarketplaceVersions,
+        target_demisto_version: Version,
+    ):
+        # this should only be called from Pack.upload
+        logger.debug(
+            f"Uploading pack {self.object_id} element-by-element, as -z was not specified"
+        )
+        for item in self.content_items:
+            try:
+                logger.debug(
+                    f"uploading pack {self.object_id}: {item.content_type} {item.object_id}"
+                )
+                item.upload(
+                    client=client,
+                    marketplace=marketplace,
+                    target_demisto_version=target_demisto_version,
+                )
+            except NotIndivitudallyUploadedException:
+                logger.warning(
+                    f"pack {self.object_id}: {item.content_type} {item.normalize_name} cannot be uploaded without the -z flag"
+                )
+                if marketplace == MarketplaceVersions.MarketplaceV2:
+                    raise # many XSIAM content types must be uploaded zipped.
 
     def handle_base_pack(self, path: Path):
         documentation_path = CONTENT_PATH / "Documentation"

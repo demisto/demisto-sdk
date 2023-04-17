@@ -15,6 +15,7 @@ from typing import (
     cast,
 )
 
+import demisto_client
 from packaging.version import Version
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
@@ -162,7 +163,11 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
 
     @abstractmethod
     def upload(
-        self, client, marketplace: MarketplaceVersions, target_demisto_version: Version
+        self,
+        client: demisto_client,
+        marketplace: MarketplaceVersions,
+        target_demisto_version: Version,
+        **kwargs,
     ) -> None:
         # should be implemented at the ContentItem level rather than here
         raise NotImplementedError()

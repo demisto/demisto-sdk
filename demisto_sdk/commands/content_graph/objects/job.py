@@ -3,6 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Set
 
+import demisto_client
 from pydantic import Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -18,7 +19,7 @@ class Job(ContentItem, content_type=ContentType.JOB):  # type: ignore[call-arg]
     def metadata_fields(self) -> Set[str]:
         return {"name", "description"}
 
-    def _upload(self, client, marketplace: MarketplaceVersions):
+    def _upload(self, client: demisto_client, marketplace: MarketplaceVersions):
         with TemporaryDirectory("w") as f:
             dir_path = Path(f)
             self.dump(dir_path, marketplace=marketplace)

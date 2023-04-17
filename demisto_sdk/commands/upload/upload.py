@@ -1,12 +1,14 @@
-import os
+import logging
 import shutil
 import tempfile
 
 from demisto_sdk.commands.common.constants import (
-    ENV_DEMISTO_SDK_MARKETPLACE,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.tools import parse_marketplace_kwargs
 from demisto_sdk.utils.utils import check_configuration_file
+
+logger = logging.getLogger("demisto-sdk")
 
 
 def upload_content_entity(**kwargs):
@@ -16,13 +18,7 @@ def upload_content_entity(**kwargs):
     keep_zip = kwargs.pop("keep_zip")
     is_zip = kwargs.pop("zip", False)
     config_file_path = kwargs.pop("input_config_file")
-
-    marketplace = (
-        MarketplaceVersions.MarketplaceV2
-        if kwargs.pop("is_xsiam", False)
-        else MarketplaceVersions.XSOAR
-    )
-    os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.value.lower()
+    marketplace: MarketplaceVersions = parse_marketplace_kwargs(kwargs)
 
     if is_zip or config_file_path:
         if is_zip:

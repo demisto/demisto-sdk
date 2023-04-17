@@ -3,11 +3,10 @@ import logging.config
 import os.path
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Optional
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 
-logger: Optional[logging.Logger] = None
+logger: logging.Logger = logging.getLogger("demisto-sdk")
 
 LOG_FILE_NAME: str = "demisto_sdk_debug.log"
 

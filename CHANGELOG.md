@@ -6,6 +6,7 @@
 * Contribution PRs that update outdated packs now display a warning message.
 * Fixed an issue when kebab-case has a misspelling in one of the sub words, the suggestion might be confusing.
 * Improved caching and stability for **lint**.
+* Added support for *.xif* files in the **secrets** command.
 * Fixed an issue where **validate** would fail when playbook inputs contain Transform Language (DT).
 * Added a new **validate** check, making sure a first level header exist in release notes (RN116)
 * Fixed an issue where **lint** would not properly handle multiple ApiModules imports.

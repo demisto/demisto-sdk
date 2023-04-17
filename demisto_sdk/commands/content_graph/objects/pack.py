@@ -4,7 +4,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Generator, List, Optional
 
-from packaging.version import parse
+from packaging.version import Version
 from pydantic import BaseModel, Field, validator
 
 from demisto_sdk.commands.common.constants import (
@@ -208,7 +208,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         min_content_items_version = MARKETPLACE_MIN_VERSION
         if content_items:
             min_content_items_version = str(
-                min(parse(content_item.fromversion) for content_item in content_items)
+                min(Version(content_item.fromversion) for content_item in content_items)
             )
         self.server_min_version = self.server_min_version or min_content_items_version
         self.content_items = PackContentItems(**content_item_dct)

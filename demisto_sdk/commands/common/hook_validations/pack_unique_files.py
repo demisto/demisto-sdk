@@ -12,7 +12,7 @@ from typing import Dict, List, Set, Tuple
 
 from dateutil import parser
 from git import GitCommandError, Repo
-from packaging.version import parse
+from packaging.version import Version
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
@@ -905,7 +905,7 @@ class PackUniqueFilesValidator(BaseValidator):
         if not rn_version:
             self._add_error(Errors.missing_release_notes_for_pack(self.pack), self.pack)
             return False
-        if parse(rn_version) != parse(current_version):
+        if Version(rn_version) != Version(current_version):
             self._add_error(
                 Errors.pack_metadata_version_diff_from_rn(
                     self.pack, rn_version, current_version

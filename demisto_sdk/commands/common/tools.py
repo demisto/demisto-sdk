@@ -37,7 +37,7 @@ import requests
 import urllib3
 from bs4.dammit import UnicodeDammit
 from git.types import PathLike
-from packaging.version import LegacyVersion, Version, parse
+from packaging.version import Version
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
 from ruamel.yaml.comments import CommentedSeq
@@ -2315,7 +2315,7 @@ def open_id_set_file(id_set_path):
         return id_set
 
 
-def get_demisto_version(client: demisto_client) -> Union[Version, LegacyVersion]:
+def get_demisto_version(client: demisto_client) -> Version:
     """
     Args:
         demisto_client: A configured demisto_client instance
@@ -2326,12 +2326,12 @@ def get_demisto_version(client: demisto_client) -> Union[Version, LegacyVersion]
     try:
         resp = client.generic_request("/about", "GET")
         about_data = json.loads(resp[0].replace("'", '"'))
-        return parse(about_data.get("demistoVersion"))  # type: ignore
+        return Version(about_data.get("demistoVersion")) 
     except Exception:
         logger.warning(
             "Could not parse Xsoar version, please make sure the environment is properly configured."
         )
-        return parse("0")
+        return Version("0")
 
 
 def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:

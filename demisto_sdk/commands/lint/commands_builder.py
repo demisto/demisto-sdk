@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from typing import List, Optional
 
-from packaging.version import parse
+from packaging.version import Version
 
 from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import base_msg
 from demisto_sdk.commands.lint.resources.pylint_plugins.certified_partner_level_checker import (
@@ -252,11 +252,8 @@ def build_pylint_command(
     # TODO: remove when pylint will update its version to support py3.9
 
     if docker_version:
-        py_ver = parse(docker_version)
-        major = py_ver.major  # type: ignore
-        minor = py_ver.minor  # type: ignore
-
-        if major == 3 and minor >= 9:
+        py_ver = Version(docker_version)
+        if py_ver.major == 3 and py_ver.minor >= 9:
             disable.append("unsubscriptable-object")
     command += f" --disable={','.join(disable)}"
     # Disable specific errors

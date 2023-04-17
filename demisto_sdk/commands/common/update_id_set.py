@@ -2616,7 +2616,7 @@ def merge_id_sets(
     return united_id_set, []
 
 
-def re_create_id_set(  # noqa: C901
+def re_create_id_set(
     id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH,
     pack_to_create=None,
     objects_to_create: list = None,

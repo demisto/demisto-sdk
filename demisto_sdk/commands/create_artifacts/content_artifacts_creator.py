@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from shutil import make_archive, rmtree
 from typing import Callable, Dict, List, Optional, Union
 
-from packaging.version import parse
+from packaging.version import Version
 from pebble import ProcessFuture, ProcessPool
 from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
 
@@ -75,7 +75,7 @@ from .artifacts_report import ArtifactsReport, ObjectReport
 # Global variables #
 ####################
 
-FIRST_MARKETPLACE_VERSION = parse("6.0.0")
+FIRST_MARKETPLACE_VERSION = Version("6.0.0")
 IGNORED_PACKS = ["ApiModules"]
 IGNORED_TEST_PLAYBOOKS_DIR = "Deprecated"
 
@@ -311,7 +311,7 @@ class ArtifactsManager:
 
 class ContentItemsHandler:
     def __init__(self, id_set=None, alternate_fields=False):
-        self.server_min_version = parse("1.0.0")
+        self.server_min_version = Version("1.0.0")
         self.content_items: Dict[ContentItems, List] = {
             ContentItems.SCRIPTS: [],
             ContentItems.PLAYBOOKS: [],

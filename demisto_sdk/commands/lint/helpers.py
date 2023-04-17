@@ -20,7 +20,7 @@ import docker.errors
 import git
 import requests
 from docker.models.containers import Container
-from packaging.version import parse
+from packaging.version import Version
 
 # Local packages
 from demisto_sdk.commands.common.constants import (
@@ -208,7 +208,7 @@ def add_typing_module(lint_files: List[Path], python_version: str):
     back_lint_files: List[Path] = []
     try:
         # Add typing import if needed to python version 2 packages
-        py_ver = parse(python_version).major  # type: ignore
+        py_ver = Version(python_version).major  # type: ignore
         if py_ver < 3:
             for lint_file in lint_files:
                 data = lint_file.read_text(encoding="utf-8")
@@ -342,7 +342,7 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
         logger.debug(f"{log_prompt} - Container finished running. {py_num=}")
 
         # Get python version
-        py_num = parse(py_num.decode("utf-8")).base_version
+        py_num = Version(py_num.decode("utf-8")).base_version
 
     except Exception:
         logger.exception(

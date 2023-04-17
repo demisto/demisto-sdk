@@ -14,7 +14,7 @@ import docker.models.containers
 import git
 import requests.exceptions
 import urllib3.exceptions
-from packaging.version import parse
+from packaging.version import Version
 from wcmatch.pathlib import NEGATE, Path
 
 from demisto_sdk.commands.common.constants import (
@@ -556,7 +556,7 @@ class Linter:
                 elif (
                     lint_check == "mypy"
                     and not no_mypy
-                    and parse(self._facts["python_version"]).major >= 3  # type: ignore[union-attr]
+                    and Version(self._facts["python_version"]).major >= 3
                 ):
                     # mypy does not support python2 now
                     exit_code, output = self._run_mypy(
@@ -607,7 +607,7 @@ class Linter:
             if self._facts["is_long_running"]:
                 myenv["LONGRUNNING"] = "True"
 
-            py_ver = parse(py_num).major  # type: ignore
+            py_ver = Version(py_num).major
             if py_ver < 3:
                 myenv["PY2"] = "True"
             myenv["is_script"] = str(self._facts["is_script"])
@@ -924,7 +924,7 @@ class Linter:
         requirements = []
 
         if docker_base_image[1] != -1:
-            py_ver = parse(docker_base_image[1]).major  # type: ignore
+            py_ver = Version(docker_base_image[1]).major
             if py_ver == 2:
                 requirements = self._req_2
             elif py_ver == 3:

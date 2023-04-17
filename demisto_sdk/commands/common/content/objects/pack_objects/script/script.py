@@ -2,7 +2,7 @@ import tempfile
 from typing import Union
 
 import demisto_client
-from packaging.version import parse
+from packaging.version import Version
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import SCRIPT, TEST_PLAYBOOKS_DIR, FileType
@@ -32,7 +32,7 @@ class Script(YAMLContentUnifiedObject):
                 unified_files = self._unify(dir)
                 for file in unified_files:
                     if (str(file)[-7:] == "_45.yml") == (
-                        get_demisto_version(client) < parse("4.6.0")
+                        get_demisto_version(client) < Version("4.6.0")
                     ):
                         # The above condition checks that the file ends in `_45.yml' and the version is 4.5 or less
                         # or that the file doesn't end in `_45.yml` and the version is higher than 4.5

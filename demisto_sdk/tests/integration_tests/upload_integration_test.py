@@ -5,7 +5,7 @@ from os.path import join
 
 import pytest
 from click.testing import CliRunner
-from packaging.version import parse
+from packaging.version import Version
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
@@ -28,15 +28,15 @@ def demisto_client(mocker):
     )
     mocker.patch(
         "demisto_sdk.commands.upload.uploader.get_demisto_version",
-        return_value=parse("6.0.0"),
+        return_value=Version("6.0.0"),
     )
     mocker.patch(
         "demisto_sdk.commands.common.content.objects.pack_objects.integration.integration.get_demisto_version",
-        return_value=parse("6.0.0"),
+        return_value=Version("6.0.0"),
     )
     mocker.patch(
         "demisto_sdk.commands.common.content.objects.pack_objects.script.script.get_demisto_version",
-        return_value=parse("6.0.0"),
+        return_value=Version("6.0.0"),
     )
     mocker.patch("click.secho")
 
@@ -101,7 +101,7 @@ def test_zipped_pack_upload_positive(repo, mocker, demisto_client):
 
     mocker.patch(
         "demisto_sdk.commands.common.content.objects.pack_objects.pack.get_demisto_version",
-        return_value=parse(GENERAL_DEFAULT_FROMVERSION),
+        return_value=Version(GENERAL_DEFAULT_FROMVERSION),
     )
 
     runner = CliRunner(mix_stderr=False)

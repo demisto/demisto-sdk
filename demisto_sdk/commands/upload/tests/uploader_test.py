@@ -14,7 +14,7 @@ import pytest
 from click.testing import CliRunner
 from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
-from packaging.version import parse
+from packaging.version import Version
 
 from demisto_sdk.__main__ import main, upload
 from demisto_sdk.commands.common import constants
@@ -71,15 +71,15 @@ if not hasattr(inspect, "_orig_findsource"):
 def demisto_client_configure(mocker):
     mocker.patch(
         "demisto_sdk.commands.upload.uploader.get_demisto_version",
-        return_value=parse("6.0.0"),
+        return_value=Version("6.0.0"),
     )
     mocker.patch(
         "demisto_sdk.commands.common.content.objects.pack_objects.integration.integration.get_demisto_version",
-        return_value=parse("6.0.0"),
+        return_value=Version("6.0.0"),
     )
     mocker.patch(
         "demisto_sdk.commands.common.content.objects.pack_objects.script.script.get_demisto_version",
-        return_value=parse("6.0.0"),
+        return_value=Version("6.0.0"),
     )
     mocker.patch("builtins.print")
 
@@ -913,7 +913,7 @@ API_CLIENT = DefaultApi()
 
 def mock_api_client(mocker):
     mocker.patch.object(demisto_client, "configure", return_value=API_CLIENT)
-    mocker.patch.object(uploader, "get_demisto_version", return_value=parse("6.0.0"))
+    mocker.patch.object(uploader, "get_demisto_version", return_value=Version("6.0.0"))
 
 
 class TestZippedPackUpload:

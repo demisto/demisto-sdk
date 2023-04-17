@@ -58,13 +58,13 @@ class TestSecrets:
 
     @classmethod
     def setup_class(cls):
-        print("Setups TestSecrets class")
+        print("Setups TestSecrets class")  # noqa: T201
         if not os.path.exists(TestSecrets.TEMP_DIR):
             os.mkdir(TestSecrets.TEMP_DIR)
 
     @classmethod
     def teardown_class(cls):
-        print("Tearing down TestSecrets class")
+        print("Tearing down TestSecrets class")  # noqa: T201
         if os.path.exists(TestSecrets.TEMP_DIR):
             shutil.rmtree(TestSecrets.TEMP_DIR, ignore_errors=False, onerror=None)
 

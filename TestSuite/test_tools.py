@@ -1,8 +1,6 @@
 import os
 from typing import List, Tuple
 
-from demisto_sdk.commands.common.logger import logger
-
 
 def get_test_suite_path():
     """Gets root of Demisto-SDK Test Suite folder (For assets management)
@@ -55,7 +53,7 @@ def str_in_call_args_list(
         for current_call in filter(None, call_args_list)
     )
     if not ret_value:
-        logger.info(f"Could not find {required_str=}")
+        print(f"Could not find {required_str=}")  # noqa: T201
     return ret_value
 
 

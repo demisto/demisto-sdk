@@ -56,7 +56,7 @@ class TestIDSetCreator:
             elif os.path.isdir(self.file_path):
                 shutil.rmtree(self.file_path)
         except Exception as err:
-            print(f"Failed to delete {self.file_path}. Reason: {err}")
+            print(f"Failed to delete {self.file_path}. Reason: {err}")  # noqa: T201
 
     def test_create_id_set_output(self):
         id_set_creator = IDSetCreator(self.file_path)

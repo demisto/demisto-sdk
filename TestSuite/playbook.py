@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import Optional
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.logger import logger
 from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YAML
@@ -78,7 +77,7 @@ class Playbook:
         ) as task_yml_file:
             task = yaml.load(task_yml_file)
         if not task:
-            logger.info(
+            print(  # noqa: T201
                 "Cannot read task from "
                 + task_filename
                 + ", not adding task to playbook"

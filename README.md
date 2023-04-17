@@ -70,15 +70,6 @@ demisto-sdk <command> <args>
 For more information, run `demisto-sdk -h`.
 For more information on a specific command execute `demisto-sdk <command> -h`.
 
-#### Logging
-
-The SDK supports the standard Python logging framework.
-In addition, the various SDK commands support the following command line parameters:
-
-- `--console_log_threshold`: The minimum logging level that will be output to the console. The default value is `INFO`. You can use `DEBUG` for a more verbose output.
-- `--file_log_threshold`: The minimum logging level that will be output to the log file. The default value is `DEBUG`.
-- `--log_file_path`: The full path to the log file. The default value is `[content-path]/demisto_sdk_debug.log`.
-
 ### Version Check
 
 `demisto-sdk` will check against the GitHub repository releases for a new version every time it runs and will issue a warning if you are not using the latest and greatest. If you wish to skip this check you can set the environment variable: `DEMISTO_SDK_SKIP_VERSION_CHECK`. For example:

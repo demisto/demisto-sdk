@@ -2326,7 +2326,7 @@ def get_demisto_version(client: demisto_client) -> Version:
     try:
         resp = client.generic_request("/about", "GET")
         about_data = json.loads(resp[0].replace("'", '"'))
-        return Version(about_data.get("demistoVersion")) 
+        return Version(about_data.get("demistoVersion"))
     except Exception:
         logger.warning(
             "Could not parse Xsoar version, please make sure the environment is properly configured."

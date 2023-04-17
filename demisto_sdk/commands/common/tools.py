@@ -113,7 +113,6 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 
 logger = logging.getLogger("demisto-sdk")
-# from demisto_sdk.commands.common.logger import logger
 
 json = JSON_Handler()
 yaml = YAML_Handler()

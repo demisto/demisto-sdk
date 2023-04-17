@@ -300,16 +300,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         target_demisto_version: Version,
         **kwargs,
     ):
-        ...  # TODO remove
-        # if kwargs["zipped"]:  # using [] as it must be provided
-        self._upload_zipped(client=client, marketplace=marketplace)
-        # else:
-        # TODO do we ever want to upload without zipping?
-        #     self._upload_unzipped(
-        #         client=client,
-        #         marketplace=marketplace,
-        #         target_demisto_version=target_demisto_version,
-        #     )
+        if kwargs["zipped"]:  # using [] as it must be provided
+            self._upload_zipped(client=client, marketplace=marketplace)
+        else:
+            self._upload_unzipped(
+                client=client,
+                marketplace=marketplace,
+                target_demisto_version=target_demisto_version,
+            )
 
     def _upload_zipped(
         self,

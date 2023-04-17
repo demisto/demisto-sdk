@@ -16,7 +16,7 @@ def upload_content_entity(**kwargs):
     from demisto_sdk.commands.zip_packs.packs_zipper import EX_FAIL, PacksZipper
 
     keep_zip = kwargs.pop("keep_zip")
-    is_zip = kwargs.pop("zip", False)
+    is_zip = kwargs.get("zip", False)
     config_file_path = kwargs.pop("input_config_file")
     marketplace: MarketplaceVersions = parse_marketplace_kwargs(kwargs)
 

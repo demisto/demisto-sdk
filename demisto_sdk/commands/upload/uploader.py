@@ -218,18 +218,28 @@ class Uploader:
                 f"cannot parse {path.absolute()}, see errors above."
             )  # error is logged in Basecontent.from_path
         # TODO raise NotUploadable? Create new exception? Something else?
-
+        zipped = path.suffix == ".zip"
         try:
             content_item.upload(
                 client=self.client,
                 marketplace=self.marketplace,
                 target_demisto_version=Version(str(self.demisto_version)),
-                zipped=isinstance(content_item, Pack),  # TODO
+                zipped=zipped,  # only used for Pack
             )
-            self.successfully_uploaded.append(content_item)
-            logger.debug(
-                f"[green]Uploaded {content_item.content_type} {content_item.normalize_name}: successfully[/green]"
+
+            # upon reaching this row, the upload is surely successful
+            uploaded_succesfully = (
+                iter(content_item.content_items)
+                if (isinstance(content_item, Pack) and not zipped)
+                # packs uploaded unzipped are uploaded item by item, we have to extract the item details here
+                else (content_item,)
             )
+
+            self.successfully_uploaded.extend(uploaded_succesfully)
+            for item_uploaded_successfully in uploaded_succesfully:
+                logger.debug(
+                    f"[green]Uploaded {item_uploaded_successfully.content_type} {item_uploaded_successfully.normalize_name}: successfully[/green]"
+                )
             return True
         except KeyboardInterrupt:
             raise  # the functinos calling this one have a special return code for manual interruption

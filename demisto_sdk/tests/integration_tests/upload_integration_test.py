@@ -94,16 +94,6 @@ def test_zipped_pack_upload_positive(repo, mocker, demisto_client):
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     pack = repo.setup_one_pack(name="test-pack")
 
-    mocker.patch(
-        "demisto_sdk.commands.upload.uploader.Uploader.notify_user_should_override_packs",
-        return_value=True,
-    )
-
-    mocker.patch(
-        "demisto_sdk.commands.common.content.objects.pack_objects.pack.get_demisto_version",
-        return_value=parse(GENERAL_DEFAULT_FROMVERSION),
-    )
-
     runner = CliRunner(mix_stderr=False)
     with tempfile.TemporaryDirectory() as dir:
         with ChangeCWD(pack.repo_path):
@@ -130,7 +120,7 @@ def test_zipped_pack_upload_positive(repo, mocker, demisto_client):
         # validate yml based content entities are being unified before getting zipped
         assert "nativeimage" in integration_content.get("script", {})
 
-    assert result.exit_code == 0
+    assert result.exit_code == 0, logger_info.call_args_list
 
     assert all(
         [

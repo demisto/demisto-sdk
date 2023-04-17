@@ -277,7 +277,7 @@ class BaseUpdateYML(BaseUpdate):
         try:
             conf_json_content = self._load_conf_file()
         except FileNotFoundError:
-            logger.info(
+            logger.debug(
                 f"[yellow]Unable to find {CONF_PATH} - skipping update.[/yellow]"
             )
             return

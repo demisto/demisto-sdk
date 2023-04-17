@@ -866,7 +866,7 @@ class PackUniqueFilesValidator(BaseValidator):
                     for tag_marketplace in tag_marketplaces:
                         pack_tags[tag_marketplace].append(tag_data[1])
                 except KeyError:
-                    logger.info(
+                    logger.warning(
                         "[yellow]You have non-approved tag prefix in the pack metadata tags, cannot validate all tags until it is fixed."
                         f' Valid tag prefixes are: { ", ".join(marketplaces)}.[/yellow]'
                     )

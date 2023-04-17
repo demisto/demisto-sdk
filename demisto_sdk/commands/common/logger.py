@@ -6,7 +6,8 @@ from pathlib import Path
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 
-logger: logging.Logger = logging.getLogger("")
+# logger: logging.Logger = logging.getLogger("")
+logger: logging.Logger = logging.getLogger("demisto-sdk")
 
 CONSOLE_HANDLER = "console-handler"
 FILE_HANDLER = "file-handler"

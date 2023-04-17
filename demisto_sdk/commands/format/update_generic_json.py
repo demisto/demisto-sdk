@@ -187,7 +187,7 @@ class BaseUpdateJSON(BaseUpdate):
                     )
                 )
             )
-            logger.debug(
+            logger.error(
                 f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
             )
             return ERROR_RETURN_CODE

@@ -3,6 +3,7 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
+from demisto_sdk.commands.common.logger import logger
 from TestSuite.conf_json import ConfJSON
 from TestSuite.docker_native_image_config import DockerNativeImageConfiguration
 from TestSuite.global_secrets import GlobalSecrets
@@ -278,7 +279,7 @@ class Repo:
                 f"{name}_trigger",
                 {"trigger_id": "trigger_id", "trigger_name": "trigger_name"},
             )
-            print("parsing done")
+            logger.info("parsing done")
         return pack
 
     def setup_content_repo(

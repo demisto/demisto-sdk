@@ -1,6 +1,5 @@
 import ast
 import io
-import logging
 import os
 import re
 import shutil
@@ -36,6 +35,7 @@ from demisto_sdk.commands.common.constants import (
     UUID_REGEX,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_child_directories,
@@ -54,8 +54,6 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
-
-logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -412,8 +410,8 @@ class Downloader:
                     path.write_text(string_to_write)
 
                 except Exception as e:
-                    print(f"encountered exception {type(e)}: {e}")
-                    print("trying to write with encoding=utf8")
+                    logger.info(f"encountered exception {type(e)}: {e}")
+                    logger.info("trying to write with encoding=utf8")
                     path.write_text(string_to_write, encoding="utf8")
             return True
 

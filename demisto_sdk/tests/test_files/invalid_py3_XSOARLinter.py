@@ -1,4 +1,5 @@
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 json = JSON_Handler()
 
 import time
@@ -857,7 +858,7 @@ def split_fields(fields: str = '') -> dict:
     Returns:
         dic_fields object for request.
     """
-    print('tests')
+    logger.info('tests')
     dic_fields = {}
     if fields:
         if '=' not in fields:

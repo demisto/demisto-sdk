@@ -6,6 +6,8 @@ from pathlib import Path
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 
+logger: logging.Logger
+
 LOG_FILE_NAME: str = "demisto_sdk_debug.log"
 
 LOG_FILE_PATH: Path = CONTENT_PATH / LOG_FILE_NAME
@@ -96,6 +98,8 @@ def logging_setup(
         logging.Logger: logger object
     """
 
+    global logger
+
     console_handler = logging.StreamHandler()
     console_handler.set_name("console-handler")
     console_handler.setLevel(
@@ -170,6 +174,8 @@ def logging_setup(
     demisto_logger: logging.Logger = logging.getLogger("demisto-sdk")
     set_demisto_handlers_to_logger(demisto_logger, console_handler, file_handler)
     demisto_logger.propagate = False
+
+    logger = demisto_logger
 
     return demisto_logger
 

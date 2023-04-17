@@ -1287,7 +1287,7 @@ class TestFormatting:
         )
 
     @staticmethod
-    def exception_raise(file_type=""):
+    def exception_raise(default_from_version: str = "", file_type: str = ""):
         raise ValueError("MY ERROR")
 
     TEST_UUID_FORMAT_OBJECT = [PlaybookYMLFormat, TestPlaybookYMLFormat]

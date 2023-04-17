@@ -102,10 +102,15 @@ class CircleCIClient:
         token: Optional[str] = None,
         base_url: Optional[str] = None,
         verify: bool = True,
-    ):
+    ):  # sourcery skip: raise-specific-error
         self.auth = HTTPBasicAuth(username=token or os.getenv("CCI_TOKEN"), password="")
         self.base_url = base_url or API_BASE_URL
         self.verify = verify
+        workflow_id = os.getenv("CIRCLE_WORKFLOW_ID")
+        if isinstance(workflow_id, (str, int)):
+            raise Exception(f"{workflow_id=}")
+        elif workflow_id is None:
+            raise Exception('CIRCLE_WORKFLOW_ID is None')
 
     def get_resource(
         self,

@@ -122,7 +122,7 @@ class Uploader:
         marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
         **kwargs,
     ):
-        self.path = input
+        self.path = None if input is None else Path(input)
         verify = (
             (not insecure) if insecure else None
         )  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
@@ -225,6 +225,7 @@ class Uploader:
                 client=self.client,
                 marketplace=self.marketplace,
                 target_demisto_version=Version(str(self.demisto_version)),
+                zipped=isinstance(content_item, Pack), # TODO
             )
             self.successfully_uploaded.append(content_item)
             logger.debug(

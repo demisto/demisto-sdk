@@ -300,7 +300,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         target_demisto_version: Version,
         **kwargs,
     ):
-        ...  # TODO
+        ...  # TODO remove
         if kwargs["zipped"]:  # using [] as it must be provided
             self._upload_zipped(client=client, marketplace=marketplace)
         else:

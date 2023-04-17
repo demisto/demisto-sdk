@@ -16,4 +16,4 @@ class IncidentField(ContentItem, content_type=ContentType.INCIDENT_FIELD):  # ty
         return {"name", "field_type", "description"}
 
     def _client_upload_method(self, client: demisto_client) -> Optional[Callable]:
-        return client.client.import_incident_fields
+        return client.import_incident_fields

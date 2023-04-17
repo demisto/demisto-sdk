@@ -69,23 +69,26 @@ class PackContentItems:
         yield from vars(self).values()
 
     def append(self, obj: ContentItemParser) -> None:
-        """Appends a content item by iterating the content item lists
-        until the correct list is found, and appends to it.
+        """
+        Appends the object to the list with the same content_type.
 
         Args:
-            obj (ContentItemParser): The conten item to append.
+            obj (ContentItemParser): The content item to append.
 
         Raises:
             NotAContentItemException: If did not find any matching content item list.
         """
-        for content_item_list in self.iter_lists():
-            try:
-                content_item_list.append(obj)
-                break
-            except TypeError:
-                continue
-        else:
-            raise NotAContentItemException
+        try:
+            next(  # TODO use more_itertools first_where
+                filter(
+                    lambda some_list: some_list.content_type == obj.content_type,
+                    self.iter_lists(),
+                ),
+            ).append(obj)
+        except StopIteration as e:
+            raise NotAContentItemException(
+                f"Could not find list of {obj.content_type} items"
+            ) from e
 
 
 class PackMetadataParser:

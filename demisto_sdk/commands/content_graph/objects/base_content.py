@@ -161,7 +161,6 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     def dump(self, path: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         pass
 
-    @abstractmethod
     def upload(
         self,
         client: demisto_client,

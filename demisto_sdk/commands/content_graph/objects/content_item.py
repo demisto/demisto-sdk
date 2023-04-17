@@ -200,7 +200,6 @@ class ContentItem(BaseContent):
         id_set_entity["pack"] = self.in_pack.object_id  # type: ignore[union-attr]
         return id_set_entity
 
-    @abstractmethod
     def _client_upload_method(self, client: demisto_client) -> Optional[Callable]:
         """
         This attribute sets the method when the upload flow is only of the following form
@@ -218,15 +217,14 @@ class ContentItem(BaseContent):
         Called once the version is validated. Implementation may differ between content items.
         Most items use _client_upload_method, refer to its docstrings.
         """
-        if self._client_upload_method:
-            with TemporaryDirectory("w") as f:
-                dir_path = Path(f)
-                self.dump(dir_path, marketplace=marketplace)
-                self._client_upload_method(client)(dir_path / self.normalize_name)  # type: ignore[call-arg,misc]
-
-        raise NotImplementedError(
-            f"missing overriding upload method for {self.content_type}"
-        )
+        if (upload_method := self._client_upload_method(client=client)) is None:
+            raise NotImplementedError(
+                f"missing overriding upload method for {self.content_type}"
+            )
+        with TemporaryDirectory("w") as f:
+            dir_path = Path(f)
+            self.dump(dir_path, marketplace=marketplace)
+            upload_method(dir_path / self.normalize_name)  # type: ignore[call-arg,misc]
 
     def upload(
         self,

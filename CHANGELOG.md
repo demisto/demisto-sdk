@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.
 * Added a message showing the output path when **prepare-content** is called.
 * Contribution PRs that update outdated packs now display a warning message.

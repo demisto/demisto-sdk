@@ -102,13 +102,7 @@ class CircleCIClient:
         token: Optional[str] = None,
         base_url: Optional[str] = None,
         verify: bool = True,
-    ):  # sourcery skip: raise-specific-error
-        token = token or os.getenv("CIRCLE_TOKEN")
-        if isinstance(token, str):
-            raise Exception("Token is a string")
-        elif token is None:
-            raise Exception("Token is None")
-
+    ):
         self.auth = HTTPBasicAuth(username=token, password="")
         self.base_url = base_url or API_BASE_URL
         self.verify = verify

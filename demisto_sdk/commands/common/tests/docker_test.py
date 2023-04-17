@@ -673,7 +673,9 @@ class TestDockerImage:
                 ],
             )
             docker_image_validator = mock_docker_image_validator()
-            print(docker_image_validator.is_docker_image_deprecated("demisto/aiohttp"))  # noqa: T201
+            print(  # noqa: T201
+                docker_image_validator.is_docker_image_deprecated("demisto/aiohttp")
+            )
             assert (
                 "demisto/aiohttp",
                 "Use the demisto/py3-tools docker image instead.",

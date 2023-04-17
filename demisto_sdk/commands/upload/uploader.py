@@ -165,9 +165,7 @@ class Uploader:
         )
 
         if not self.path or not self.path.exists():
-            logger.error(
-                f"[red]input path: {self.path} does not exist[/red]"
-            )
+            logger.error(f"[red]input path: {self.path} does not exist[/red]")
             return ERROR_RETURN_CODE
 
         try:
@@ -273,7 +271,7 @@ class Uploader:
 
         return success
 
-    def notify_user_should_override_packs(self):
+    def notify_user_should_override_packs(self):  # TODO is used?
         """Notify the user about possible overridden packs."""
 
         response = self.client.generic_request(
@@ -306,59 +304,50 @@ class Uploader:
         """
         logger.info("\n\nUPLOAD SUMMARY:")
         if self.successfully_uploaded:
-            logger.info("\n[green]SUCCESSFUL UPLOADS:[/green]")
-            logger.info(
-                "[green]"
-                + tabulate(
-                    (
-                        (item.normalize_name, item.content_type)
-                        for item in self.successfully_uploaded
-                    ),
-                    headers=["NAME", "TYPE"],
-                    tablefmt="fancy_grid",
-                )
-                + "[/green]\n"
+            uploaded_str = tabulate(
+                (
+                    (item.normalize_name, item.content_type)
+                    for item in self.successfully_uploaded
+                ),
+                headers=["NAME", "TYPE"],
+                tablefmt="fancy_grid",
             )
+
+            logger.info(f"\n[green]SUCCESSFUL UPLOADS:\n{uploaded_str}[/green]")
         if self.failed_upload_version_mismatch:
-            logger.info("\n[yellow]NOT UPLOADED DUE TO VERSION MISMATCH:[/yellow]")
-            logger.info(
-                "[yellow]"
-                + tabulate(
+            version_mismatch_str = tabulate(
+                (
                     (
-                        (
-                            item.normalize_name,
-                            item.content_type,
-                            self.demisto_version,
-                            item.fromversion,
-                            item.toversion,
-                        )
-                        for item in self.failed_upload_version_mismatch
-                    ),
-                    headers=[
-                        "NAME",
-                        "TYPE",
-                        "XSOAR Version",
-                        "FILE_FROM_VERSION",
-                        "FILE_TO_VERSION",
-                    ],
-                    tablefmt="fancy_grid",
-                )
-                + "[/yellow]\n"
+                        item.normalize_name,
+                        item.content_type,
+                        self.demisto_version,
+                        item.fromversion,
+                        item.toversion,
+                    )
+                    for item in self.failed_upload_version_mismatch
+                ),
+                headers=[
+                    "NAME",
+                    "TYPE",
+                    "XSOAR Version",
+                    "FILE_FROM_VERSION",
+                    "FILE_TO_VERSION",
+                ],
+                tablefmt="fancy_grid",
+            )
+            logger.info(
+                f"\n[yellow]NOT UPLOADED DUE TO VERSION MISMATCH:\n{version_mismatch_str}[/yellow]"
             )
         if self.failed_upload:
-            logger.info("\n[red]FAILED UPLOADS:[/red]")
-            logger.info(
-                "[red]"
-                + tabulate(
-                    (
-                        (item.normalize_name, item.content_type, error)
-                        for item, error in self.failed_upload
-                    ),
-                    headers=["NAME", "TYPE", "ERROR"],
-                    tablefmt="fancy_grid",
-                )
-                + "[/red]\n"
+            failed_upload_str = tabulate(
+                (
+                    (item.normalize_name, item.content_type, error)
+                    for item, error in self.failed_upload
+                ),
+                headers=["NAME", "TYPE", "ERROR"],
+                tablefmt="fancy_grid",
             )
+            logger.info(f"\n[red]FAILED UPLOADS:{failed_upload_str}[/red]")
 
 
 def parse_error_response(error: ApiException, content_item: ContentItem) -> str:
@@ -393,28 +382,6 @@ def parse_error_response(error: ApiException, content_item: ContentItem) -> str:
     if isinstance(error, KeyboardInterrupt):
         message = "Aborted due to keyboard interrupt."
     return f"\n[red]Upload {content_item.content_type}: {content_item.normalize_name} failed:\n{message}[/red]"
-
-
-def sort_directories_based_on_dependencies(dir_list: list) -> list:
-    """
-    Sorts given list of directories based on logic order of content entities that depend on each other.
-    If a given directory does not appear in the CONTENT_ENTITY_UPLOAD_ORDER list it will be ignored
-
-    Args:
-        dir_list (List): List of directories to sort
-
-    Returns:
-        List. The sorted list of directories.
-    """
-    srt = {item: index for index, item in enumerate(CONTENT_ENTITY_UPLOAD_ORDER)}
-    dir_list_copy = dir_list.copy()
-    for dir_path in dir_list_copy:
-        if os.path.basename(dir_path) not in CONTENT_ENTITY_UPLOAD_ORDER:
-            dir_list.remove(dir_path)
-    dir_list.sort(
-        key=lambda item: srt.get(os.path.basename(item))  # type: ignore[arg-type, return-value]
-    )
-    return dir_list
 
 
 class ConfigFileParser:

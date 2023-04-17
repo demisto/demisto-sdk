@@ -33,7 +33,6 @@ from demisto_sdk.commands.common.constants import (
     FileType,
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (
     get_demisto_version,
@@ -45,9 +44,9 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
 from demisto_sdk.commands.content_graph.objects.content_item import (
     ContentItem,
     IncompatibleUploadVersionException,
-    NotIndivitudallyUploadedException,
     NotUploadableException,
 )
+from demisto_sdk.commands.content_graph.objects.pack import Pack
 
 logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
@@ -127,9 +126,9 @@ class Uploader:
             (not insecure) if insecure else None
         )  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
         self.client = demisto_client.configure(verify_ssl=verify)
-        self.successfully_uploaded: List[ContentItem] = []
-        self.failed_upload: List[Tuple[ContentItem, str]] = []
-        self.failed_upload_version_mismatch: List[ContentItem] = []
+        self.successfully_uploaded: List[Union[ContentItem, Pack]] = []
+        self.failed_upload: List[Tuple[Union[ContentItem, Pack], str]] = []
+        self.failed_upload_version_mismatch: List[Union[ContentItem, Pack]] = []
         self.demisto_version = get_demisto_version(self.client)
         self.pack_names: List[str] = pack_names or []
         self.skip_upload_packs_validation = skip_validation
@@ -225,7 +224,7 @@ class Uploader:
                 client=self.client,
                 marketplace=self.marketplace,
                 target_demisto_version=Version(str(self.demisto_version)),
-                zipped=isinstance(content_item, Pack), # TODO
+                zipped=isinstance(content_item, Pack),  # TODO
             )
             self.successfully_uploaded.append(content_item)
             logger.debug(

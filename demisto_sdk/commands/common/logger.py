@@ -6,7 +6,10 @@ from pathlib import Path
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 
-logger: logging.Logger = logging.getLogger("demisto-sdk")
+logger: logging.Logger = logging.getLogger("")
+
+CONSOLE_HANDLER = "console-handler"
+FILE_HANDLER = "file-handler"
 
 LOG_FILE_NAME: str = "demisto_sdk_debug.log"
 
@@ -82,6 +85,26 @@ escapes = {
 }
 
 
+def get_handler_by_name(logger: logging.Logger, handler_name: str):
+    for current_handler in logger.handlers:
+        if current_handler.get_name == handler_name:
+            return current_handler
+    return None
+
+
+def set_demisto_logger(demisto_logger: logging.Logger):
+    global logger
+
+    # logger_file_handler: RotatingFileHandler = get_handler_by_name(logger, FILE_HANDLER)
+    # demisto_logger_file_handler: RotatingFileHandler = get_handler_by_name(demisto_logger, FILE_HANDLER)
+    # if get_handler_by_name(logger, CONSOLE_HANDLER) != get_handler_by_name(demisto_logger, CONSOLE_HANDLER) \
+    #     or logger_file_handler != demisto_logger_file_handler \
+    #     or logger_file_handler.baseFilename != demisto_logger_file_handler.baseFilename:
+    #     logger = demisto_logger
+
+    logger = demisto_logger
+
+
 def logging_setup(
     console_log_threshold=logging.INFO,
     file_log_threshold=logging.DEBUG,
@@ -101,7 +124,7 @@ def logging_setup(
     global logger
 
     console_handler = logging.StreamHandler()
-    console_handler.set_name("console-handler")
+    console_handler.set_name(CONSOLE_HANDLER)
     console_handler.setLevel(
         console_log_threshold if console_log_threshold else logging.INFO
     )
@@ -138,7 +161,7 @@ def logging_setup(
         maxBytes=1048576,
         backupCount=10,
     )
-    file_handler.set_name("file-handler")
+    file_handler.set_name(FILE_HANDLER)
     file_handler.setLevel(file_log_threshold if file_log_threshold else logging.DEBUG)
 
     class NoColorFileFormatter(logging.Formatter):
@@ -175,7 +198,7 @@ def logging_setup(
     set_demisto_handlers_to_logger(demisto_logger, console_handler, file_handler)
     demisto_logger.propagate = False
 
-    logger = demisto_logger
+    set_demisto_logger(demisto_logger)
 
     return demisto_logger
 

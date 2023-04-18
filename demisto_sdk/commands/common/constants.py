@@ -1355,6 +1355,9 @@ MODULES = ["compliance"]
 
 # From Version constants
 FILETYPE_TO_DEFAULT_FROMVERSION = {
+    FileType.INTEGRATION: "4.5.0",
+    FileType.SCRIPT: "4.5.0",
+    FileType.PLAYBOOK: "4.5.0",
     FileType.WIZARD: "6.8.0",
     FileType.JOB: "6.8.0",
     FileType.PRE_PROCESS_RULES: "6.8.0",

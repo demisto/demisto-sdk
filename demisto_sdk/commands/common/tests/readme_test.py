@@ -349,8 +349,8 @@ def test_copyright_sections(integration, file_input):
             "getting started and learn how to build an integration",
         ),
         (
-            "In this readme template all required notes should be replaced.\n# %%UPDATE_README%% <Product Name>",
-            "%%UPDATE_README%%",
+            "In this readme template all required notes should be replaced.\n# %%UPDATE%% <Product Name>",
+            "%%UPDATE%%",
         ),
     ],
 )

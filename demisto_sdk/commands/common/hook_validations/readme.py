@@ -63,7 +63,7 @@ SECTIONS = [
 USER_FILL_SECTIONS = [
     "FILL IN REQUIRED PERMISSIONS HERE",
     "version xx",
-    "%%UPDATE_README%%",
+    "%%UPDATE%%",
 ]
 
 REQUIRED_MDX_PACKS = [

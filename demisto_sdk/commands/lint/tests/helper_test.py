@@ -297,10 +297,12 @@ class TestGenerateCoverageReport:
         mocker.patch("os.path.exists", return_value=True)
 
     def test_generate_coverage_report_with_report(self, mocker):
-        mock_report = mocker.patch.object(self.coverage.Coverage, "report")
-        self.mock_path_exists(mocker)
-        generate_coverage_report()
-        mock_report.assert_called_once()
+        # sourcery skip: raise-specific-error
+        raise Exception("Just for Slack notification")
+        # mock_report = mocker.patch.object(self.coverage.Coverage, "report")
+        # self.mock_path_exists(mocker)
+        # generate_coverage_report()
+        # mock_report.assert_called_once()
 
     def test_generate_coverage_report_with_html(self, mocker):
         mock_html_report = mocker.patch.object(self.coverage.Coverage, "html_report")

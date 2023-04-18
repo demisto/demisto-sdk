@@ -3,6 +3,8 @@ import glob
 import io
 import logging
 
+import foo
+
 import os
 import re
 import shlex

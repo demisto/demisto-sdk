@@ -1,7 +1,10 @@
+import logging
+
 import pytest
 from click.testing import CliRunner
 
 import demisto_sdk.__main__ as main
+from TestSuite.test_tools import str_in_call_args_list
 
 
 @pytest.mark.parametrize(
@@ -9,10 +12,12 @@ import demisto_sdk.__main__ as main
     [
         (["-j", "123"], "please include a `command` argument."),
         (["-j", "123", "-c", "ttt"], "please include a `prefix` argument."),
-        (["-j", "123", "-c", "ttt", "-p", "qwe"], ""),
+        (["-j", "123", "-c", "ttt", "-p", "qwe"], None),
     ],
 )
-def test_generate_outputs_json_to_outputs_flow(mocker, args, excpected_stdout):
+def test_generate_outputs_json_to_outputs_flow(
+    mocker, monkeypatch, args, excpected_stdout
+):
     """
     Given
         - Bad inputs
@@ -23,25 +28,31 @@ def test_generate_outputs_json_to_outputs_flow(mocker, args, excpected_stdout):
     Then
         - Ensure that the outputs are valid
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+
     import demisto_sdk.commands.generate_outputs.generate_outputs as go
 
     mocker.patch.object(go, "json_to_outputs", return_value="None")
 
     runner = CliRunner()
-    result = runner.invoke(main.generate_outputs, args=args, catch_exceptions=False)
-    assert excpected_stdout in result.output
+    runner.invoke(main.generate_outputs, args=args, catch_exceptions=False)
+    if excpected_stdout:
+        assert str_in_call_args_list(logger_info.call_args_list, excpected_stdout)
+    else:
+        assert len(logger_info.call_args_list) == 0
 
 
 @pytest.mark.parametrize(
-    "args, excpected_stdout",
+    "args, excpected_stdout, expected_exit_code",
     [
-        ("-e", "requires an argument"),
-        (["-e", "<example>"], "command please include an `input` argument"),
-        (["-e", "<example>", "-i", "123"], "Input file 123 was not found"),
+        ("-e", "requires an argument", 2),
+        (["-e", "<example>"], "command please include an `input` argument", 0),
+        (["-e", "<example>", "-i", "123"], "Input file 123 was not found", 0),
     ],
 )
 def test_generate_outputs_generate_integration_context_flow(
-    mocker, args, excpected_stdout
+    mocker, monkeypatch, args, excpected_stdout, expected_exit_code
 ):
     """
     Given
@@ -53,10 +64,15 @@ def test_generate_outputs_generate_integration_context_flow(
     Then
         - Ensure that the outputs are valid
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+
     import demisto_sdk.commands.generate_outputs.generate_outputs as go
 
     mocker.patch.object(go, "generate_integration_context", return_value="None")
 
     runner = CliRunner()
     result = runner.invoke(main.generate_outputs, args=args, catch_exceptions=False)
-    assert excpected_stdout in result.output
+    assert result.exit_code == expected_exit_code
+    if expected_exit_code == 0:
+        assert str_in_call_args_list(logger_info.call_args_list, excpected_stdout)

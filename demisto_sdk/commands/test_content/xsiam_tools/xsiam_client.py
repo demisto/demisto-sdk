@@ -12,7 +12,7 @@ import requests
 from pydantic import BaseModel, Field, HttpUrl, SecretStr, validator
 from pydantic.fields import ModelField
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("demisto-sdk")
 
 
 class XsiamApiClientConfig(BaseModel):

@@ -19,6 +19,8 @@ def initiate_linter(
     integration_path,
     docker_engine=False,
     docker_image_flag=linter.DockerImageFlagOption.FROM_YML.value,
+    all_packs=False,
+    docker_image_target="",
 ):
     return linter.Linter(
         content_repo=demisto_content,
@@ -28,6 +30,8 @@ def initiate_linter(
         docker_engine=docker_engine,
         docker_timeout=60,
         docker_image_flag=docker_image_flag,
+        all_packs=all_packs,
+        docker_image_target=docker_image_target,
     )
 
 
@@ -151,23 +155,32 @@ class TestDockerImagesCollection:
         assert runner._facts["images"][0][1] == exp_py_num
 
     @pytest.mark.parametrize(
-        argnames="docker_image_flag, exp_images ",
+        argnames="docker_image_flag, exp_images, native_target_img ",
         argvalues=[
             (
                 linter.DockerImageFlagOption.NATIVE_GA.value,
                 "demisto/py3-native:8.2.0.12345",
+                "",
             ),
             (
                 linter.DockerImageFlagOption.NATIVE_MAINTENANCE.value,
                 "demisto/py3-native:8.1.0.12345",
+                "",
             ),
             (
                 linter.DockerImageFlagOption.NATIVE_DEV.value,
                 "demisto/py3-native:8.3.0.12345",
+                "",
             ),
             (
                 linter.DockerImageFlagOption.FROM_YML.value,
                 "demisto/py3-tools:1.0.0.42258",
+                "",
+            ),
+            (
+                linter.DockerImageFlagOption.NATIVE_CANDIDATE.value,
+                "demisto/py3-native:8.2.1.12345",
+                "",
             ),
             (
                 linter.DockerImageFlagOption.ALL_IMAGES.value,
@@ -175,14 +188,20 @@ class TestDockerImagesCollection:
                     "demisto/py3-tools:1.0.0.42258",
                     "demisto/py3-native:8.1.0.12345",
                     "demisto/py3-native:8.2.0.12345",
-                    "demisto/py3-native:8.3.0.12345",
+                    "demisto/py3-native:8.2.1.12345",
                 ],
+                "",
             ),
-            ("demisto/py3-tools:1.0.0.40800", "demisto/py3-tools:1.0.0.40800"),
+            ("demisto/py3-tools:1.0.0.40800", "demisto/py3-tools:1.0.0.40800", ""),
+            (
+                linter.DockerImageFlagOption.NATIVE_TARGET.value,
+                "demisto/py3-tools:1.0.0.40800",
+                "demisto/py3-tools:1.0.0.40800",
+            ),
         ],
     )
     def test_docker_images_according_to_docker_image_flag(
-        self, mocker, pack, docker_image_flag, exp_images
+        self, mocker, pack, docker_image_flag, exp_images, native_target_img
     ):
         """
         This test checks that the docker images to run lint on determined according to the docker image flag.
@@ -195,6 +214,7 @@ class TestDockerImagesCollection:
                 4. Docker image flag = "from-yml"
                 5. Docker image flag = "all"
                 6. Docker image flag = a specific docker image from Docker Hub (demisto/py3-tools:1.0.0.40800)
+                7. Docker image flag = "native:target", Docker target = a specific docker image from Docker Hub
         When
             - running the linter.
         Then
@@ -205,6 +225,7 @@ class TestDockerImagesCollection:
                 4. The docker image that is defined in the integration's yml file.
                 5. All 4 images from tests: 1-4.
                 6. The specific docker image form docker hub that was set as the flag (demisto/py3-tools:1.0.0.40800).
+                7. The specific docker image form docker hub that was set as the flag (demisto/py3-tools:1.0.0.40800).
         """
         # Mock:
         native_image_latest_tag = "8.3.0.12345"
@@ -243,6 +264,7 @@ class TestDockerImagesCollection:
                 test_integration.path,
                 True,
                 docker_image_flag=docker_image_flag,
+                docker_image_target=native_target_img,
             )
             runner._gather_facts(modules={})
 
@@ -253,6 +275,7 @@ class TestDockerImagesCollection:
         else:  # more than one image ('all' flag)
             for img in actual_image:
                 assert img[0] in exp_images
+            assert len(actual_image) == len(exp_images)
 
     @pytest.mark.parametrize(
         argnames="docker_image_flag, exp_versioned_native_image_name",
@@ -260,6 +283,8 @@ class TestDockerImagesCollection:
             (linter.DockerImageFlagOption.NATIVE_GA.value, "native:8.2"),
             (linter.DockerImageFlagOption.NATIVE_MAINTENANCE.value, "native:8.1"),
             (linter.DockerImageFlagOption.NATIVE_DEV.value, "native:dev"),
+            (linter.DockerImageFlagOption.NATIVE_TARGET.value, "native:dev"),
+            (linter.DockerImageFlagOption.NATIVE_CANDIDATE.value, "native:candidate"),
         ],
     )
     def test_docker_images_key_not_exists_in_yml(
@@ -274,6 +299,7 @@ class TestDockerImagesCollection:
                 1. Docker image flag = "native:ga"
                 2. Docker image flag = "native:maintenance"
                 3. Docker image flag = "native:dev"
+                4. Docker image flag = "native:target"
         When
             - running the linter.
         Then
@@ -346,13 +372,73 @@ class TestDockerImagesCollection:
             f" {invalid_docker_image}" in log_error.call_args_list[0][0][0]
         )
 
+    def test_invalid_docker_image_as_docker_image_target(self, mocker, pack):
+        """
+        This test checks that if an invalid docker image was given as the docker image flag, the linter will try to
+        run the unit test on it and will write suitable logs.
+
+        Given
+            - An invalid docker image (for example a docker image that doesn't exist in Docker Hub).
+        When
+            - running the linter with --di native:target --dit invalid_docker_image
+        Then
+            - Ensure that a suitable log was written.
+        """
+        # Mock:
+        log_error = mocker.patch.object(logger, "error")
+
+        # Crete integration to test on:
+        integration_name = "TestIntegration"
+        docker_image_yml = "demisto/py3-tools:1.0.0.42258"
+        integration_yml = {
+            "commonfields": {"id": integration_name, "version": -1},
+            "name": integration_name,
+            "display": integration_name,
+            "description": f"this is an integration {integration_name}",
+            "category": "category",
+            "script": {
+                "type": "python",
+                "subtype": "python3",
+                "script": "",
+                "commands": [],
+                "dockerimage": docker_image_yml,
+            },
+        }
+        test_integration = pack.create_integration(
+            name=integration_name, yml=integration_yml
+        )
+        from demisto_sdk.commands.lint.helpers import get_python_version_from_image
+
+        get_python_version_from_image.cache_clear()
+
+        # Run lint:
+        invalid_docker_image = "demisto/blabla:1.0.0.40800"
+        with ChangeCWD(pack.repo_path):
+            runner = initiate_linter(
+                pack.repo_path,
+                test_integration.path,
+                True,
+                docker_image_flag=linter.DockerImageFlagOption.NATIVE_TARGET.value,
+                docker_image_target=invalid_docker_image,
+            )
+            runner._gather_facts(modules={})
+
+        # Verify docker images:
+        assert runner._facts["images"][0][0] == invalid_docker_image
+        assert (
+            f"Get python version from image {invalid_docker_image} - Failed detecting Python version for image"
+            f" {invalid_docker_image}" in log_error.call_args_list[0][0][0]
+        )
+
     @pytest.mark.parametrize(
         argnames="docker_image_flag, exp_versioned_native_image_name",
         argvalues=[
             (linter.DockerImageFlagOption.NATIVE_GA.value, "native:8.2"),
             (linter.DockerImageFlagOption.NATIVE_MAINTENANCE.value, "native:8.1"),
             (linter.DockerImageFlagOption.NATIVE_DEV.value, "native:dev"),
+            (linter.DockerImageFlagOption.NATIVE_TARGET.value, "native:dev"),
             (linter.DockerImageFlagOption.ALL_IMAGES.value, "native:dev"),
+            (linter.DockerImageFlagOption.NATIVE_CANDIDATE.value, "native:candidate"),
         ],
     )
     def test_integration_not_supported_by_requested_native_image(
@@ -370,11 +456,12 @@ class TestDockerImagesCollection:
                 2. Docker image flag = "native:maintenance"
                 3. Docker image flag = "native:dev"
                 4. Docker image flag = "all"
+                5. Docker image flag = "native:candidate"
         When
             - running the linter.
         Then
             -
-                1-3. Ensure that the docker images list is empty, and suitable logs (skipping) were written.
+                1-3, 5. Ensure that the docker images list is empty, and suitable logs (skipping) were written.
                 4. Ensure that the docker image is only the docker image from the integration yml.
         """
         # Mock:
@@ -465,7 +552,7 @@ class TestDockerImagesCollection:
         # Verify docker images:
         expected_err_msg = (
             f"The requested native image: '{docker_image_flag}' is not supported. "
-            f"The possible options are: 'native:ga', 'native:maintenance' and 'native:dev'. "
+            f"The possible options are: 'native:ga', 'native:maintenance', 'native:dev' and 'native:target'. "
             f"For supported native image versions please see: 'Tests/docker_native_image_config.json'"
         )
         assert runner._facts["images"] == []
@@ -581,6 +668,77 @@ class TestTestsCollection:
         runner = initiate_linter(demisto_content, integration_path, True)
         runner._gather_facts(modules={})
         assert not runner._facts["test"]
+
+    @pytest.mark.parametrize(
+        argnames="all_packs, should_skip",
+        argvalues=[
+            (True, True),
+            (False, False),
+        ],
+    )
+    def test_deprecated_integration(
+        self,
+        mocker,
+        demisto_content: Callable,
+        create_integration: Callable,
+        all_packs: bool,
+        should_skip: bool,
+    ):
+        """
+        Given:
+        - Case A: run all packs flag and deprecated integration
+        - Case B: do not run on all packs and deprecated integration
+
+        When:
+        - calling gather facts
+
+        Then:
+        - Case A: gather facts should indicate integration is skipped
+        - Case B: gather father should indicate integration is not skipped
+        """
+        mocker.patch.object(linter.Linter, "_update_support_level")
+        integration_path: Path = create_integration(
+            content_path=demisto_content, is_deprecated=True
+        )
+        runner = initiate_linter(
+            demisto_content, integration_path, True, all_packs=all_packs
+        )
+        assert should_skip == runner._gather_facts(modules={})
+
+    @pytest.mark.parametrize(
+        argnames="all_packs, should_skip",
+        argvalues=[
+            (True, True),
+            (False, False),
+        ],
+    )
+    def test_deprecated_script(
+        self,
+        mocker,
+        demisto_content: Callable,
+        script,
+        all_packs,
+        should_skip,
+    ):
+        """
+        Given:
+        - Case A: run all packs flag and deprecated script
+        - Case B: do not run on all packs and deprecated script
+
+        When:
+        - calling gather facts
+
+        Then:
+        - Case A: gather facts should indicate script is skipped
+        - Case B: gather father should indicate script is not skipped
+        """
+        script.yml.update({"deprecated": True})
+        mocker.patch.object(linter.Linter, "_update_support_level")
+        runner = initiate_linter(
+            demisto_content, script.path, True, all_packs=all_packs
+        )
+
+        assert should_skip == runner._gather_facts(modules={})
 
 
 class TestLintFilesCollection:

@@ -3,11 +3,13 @@ import os
 import re
 from abc import abstractmethod
 from distutils.version import LooseVersion
+from pathlib import Path
 from typing import Optional
 
 import click
 from packaging import version
 
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -28,7 +30,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
 )
-from demisto_sdk.commands.common.hook_validations.structure import (  # noqa:F401
+from demisto_sdk.commands.common.hook_validations.structure import (
     StructureValidator,
 )
 from demisto_sdk.commands.common.tools import (
@@ -52,16 +54,12 @@ class ContentEntityValidator(BaseValidator):
         self,
         structure_validator: StructureValidator,
         ignored_errors: Optional[dict] = None,
-        print_as_warnings: bool = False,
         skip_docker_check: bool = False,
-        suppress_print: bool = False,
         json_file_path: Optional[str] = None,
         oldest_supported_version: Optional[str] = None,
     ) -> None:
         super().__init__(
             ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
-            suppress_print=suppress_print,
             json_file_path=json_file_path,
             specific_validations=structure_validator.specific_validations,
         )
@@ -634,4 +632,38 @@ class ContentEntityValidator(BaseValidator):
         ):
             return False
 
+        return True
+
+    @error_codes("BA124")
+    def validate_unit_test_exists(self) -> bool:
+        """
+        Validates Python files have a matching unit-test file next to them.
+
+        Return:
+           True if the unittest file exits False with an error otherwise
+
+        """
+
+        # Validate just for xsoar and partner support
+        if tools.get_pack_metadata(self.file_path).get("support", "") == "community":
+            return True
+
+        path = Path(self.file_path)
+        python_file_path = path.with_name(f"{path.stem}.py")
+        unit_test_path = path.with_name(f"{path.stem}_test.py")
+        if (
+            path.suffix == ".yml"
+            and python_file_path.exists()
+            and not unit_test_path.exists()
+        ):
+            error_message, error_code = Errors.missing_unit_test_file(path)
+            if self.handle_error(
+                error_message,
+                error_code,
+                file_path=self.file_path,
+                suggested_fix="Write unit tests to ensure code quality and correctness."
+                " See https://xsoar.pan.dev/docs/integrations/unit-testing#write-your-unit-tests"
+                " for more information.",
+            ):
+                return False
         return True

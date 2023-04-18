@@ -1,6 +1,9 @@
+import logging
 import os
 import shutil
+from io import TextIOWrapper
 from pathlib import Path
+from typing import Callable, Tuple
 from unittest.mock import patch
 
 import pytest
@@ -40,11 +43,19 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
 )
-from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import get_child_files, get_json, get_yaml
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.tests.tools_test import SENTENCE_WITH_UMLAUTS
+from demisto_sdk.commands.common.tools import (
+    get_child_files,
+    get_file,
+    get_json,
+    get_yaml,
+)
 from demisto_sdk.commands.download.downloader import Downloader
+from TestSuite.test_tools import str_in_call_args_list
 
 yaml = YAML_Handler()
+json = JSON_Handler()
 
 
 def ordered(obj):
@@ -70,6 +81,7 @@ class Environment:
         self.SCRIPT_INSTANCE_PATH = None
         self.PLAYBOOK_INSTANCE_PATH = None
         self.LAYOUT_INSTANCE_PATH = None
+        self.LAYOUTSCONTAINER_INSTANCE_PATH = None
         self.PRE_PROCESS_RULES_INSTANCE_PATH = None
         self.LISTS_INSTANCE_PATH = None
         self.CUSTOM_CONTENT_SCRIPT_PATH = None
@@ -81,6 +93,7 @@ class Environment:
         self.SCRIPT_PACK_OBJECT = None
         self.PLAYBOOK_PACK_OBJECT = None
         self.LAYOUT_PACK_OBJECT = None
+        self.LAYOUTSCONTAINER_PACK_OBJECT = None
         self.LISTS_PACK_OBJECT = None
         self.JOBS_PACK_OBJECT = None
         self.JOBS_INSTANCE_PATH = None
@@ -120,6 +133,9 @@ class Environment:
         )
         self.LAYOUT_INSTANCE_PATH = (
             f"{self.PACK_INSTANCE_PATH}/Layouts/layout-details-TestLayout.json"
+        )
+        self.LAYOUTSCONTAINER_INSTANCE_PATH = (
+            f"{self.PACK_INSTANCE_PATH}/Layouts/layoutscontainer-mytestlayout.json"
         )
         self.PRE_PROCESS_RULES_INSTANCE_PATH = (
             f"{self.PACK_INSTANCE_PATH}/PreProcessRules/preprocessrule-dummy.json"
@@ -237,6 +253,16 @@ class Environment:
                 }
             ]
         }
+        self.LAYOUTSCONTAINER_PACK_OBJECT = {
+            "mylayout": [
+                {
+                    "name": "mylayout",
+                    "id": "mylayout",
+                    "path": self.LAYOUTSCONTAINER_INSTANCE_PATH,
+                    "file_ending": "json",
+                }
+            ]
+        }
         self.PRE_PROCESS_RULES_PACK_OBJECT = {
             "DummyPreProcessRule": [
                 {
@@ -272,7 +298,7 @@ class Environment:
             INTEGRATIONS_DIR: [self.INTEGRATION_PACK_OBJECT],
             SCRIPTS_DIR: [self.SCRIPT_PACK_OBJECT],
             PLAYBOOKS_DIR: [self.PLAYBOOK_PACK_OBJECT],
-            LAYOUTS_DIR: [self.LAYOUT_PACK_OBJECT],
+            LAYOUTS_DIR: [self.LAYOUT_PACK_OBJECT, self.LAYOUTSCONTAINER_PACK_OBJECT],
             PRE_PROCESS_RULES_DIR: [],
             LISTS_DIR: [],
             JOBS_DIR: [],
@@ -529,7 +555,8 @@ class TestFlagHandlers:
             (False, False, False, False, True, False, "Some Regex", True, ""),
         ],
     )
-    def test_verify_flags(self, system, it, lf, a, o, i, r, res, err, capsys):
+    def test_verify_flags(self, system, it, lf, a, o, i, r, res, err, mocker):
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         with patch.object(Downloader, "__init__", lambda x, y, z: None):
             downloader = Downloader("", "")
             downloader.list_files = lf
@@ -540,9 +567,8 @@ class TestFlagHandlers:
             downloader.download_system_item = system
             downloader.system_item_type = it
             answer = downloader.verify_flags()
-            stdout, _ = capsys.readouterr()
             if err:
-                assert err in stdout
+                assert str_in_call_args_list(logger_info.call_args_list, err)
             assert answer is res
 
     def test_handle_all_custom_content_flag(self, tmp_path):
@@ -555,18 +581,22 @@ class TestFlagHandlers:
             custom_content_names = [cco["name"] for cco in env.CUSTOM_CONTENT]
             assert ordered(custom_content_names) == ordered(downloader.input_files)
 
-    def test_handle_list_files_flag(self, capsys, tmp_path):
+    def test_handle_list_files_flag(self, tmp_path, mocker):
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         env = Environment(tmp_path)
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader("", "")
             downloader.custom_content_temp_dir = env.CUSTOM_CONTENT_BASE_PATH
             downloader.list_files = True
             answer = downloader.handle_list_files_flag()
-            stdout, _ = capsys.readouterr()
             list_files = [[cco["name"], cco["type"]] for cco in env.CUSTOM_CONTENT]
             for file in list_files:
-                assert file[0] in stdout
-                assert file[1] in stdout
+                assert all(
+                    [
+                        str_in_call_args_list(logger_info.call_args_list, file[0]),
+                        str_in_call_args_list(logger_info.call_args_list, file[1]),
+                    ]
+                )
             assert answer
 
     def test_handle_list_files_flag_error(self, mocker, tmp_path):
@@ -625,6 +655,11 @@ class TestBuildPackContent:
                 "entity": LAYOUTS_DIR,
                 "path": "demisto_sdk/commands/download/tests/downloader_test.py",
                 "out": {},
+            },
+            {
+                "entity": LAYOUTS_DIR,
+                "path": env.LAYOUTSCONTAINER_INSTANCE_PATH,
+                "out": env.LAYOUTSCONTAINER_PACK_OBJECT,
             },
             {
                 "entity": PRE_PROCESS_RULES_DIR,
@@ -751,9 +786,7 @@ class TestPackHierarchy:
 
 
 class TestMergeExistingFile:
-    def test_merge_and_extract_existing_file_corrupted_dir(
-        self, tmp_path, mocker, capsys
-    ):
+    def test_merge_and_extract_existing_file_corrupted_dir(self, tmp_path, mocker):
         """
         Given
             - The integration exist in output pack, the directory is corrupted
@@ -765,6 +798,7 @@ class TestMergeExistingFile:
         Then
             - Ensure integration is downloaded successfully
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         env = Environment(tmp_path)
         mocker.patch.object(
             Downloader, "get_corresponding_pack_file_object", return_value={}
@@ -772,25 +806,20 @@ class TestMergeExistingFile:
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader("", "")
             downloader.output_pack_path = env.PACK_INSTANCE_PATH
-            downloader.log_verbose = False
             downloader.pack_content = env.PACK_CONTENT
             downloader.run_format = False
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
-            downloader.log_verbose = False
             downloader.merge_and_extract_existing_file(
                 env.INTEGRATION_CUSTOM_CONTENT_OBJECT
             )
-            stdout, _ = capsys.readouterr()
-            assert "Merged" in stdout
+            assert str_in_call_args_list(logger_info.call_args_list, "Merged")
 
     def test_merge_and_extract_existing_file_js(self, tmp_path):
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader("", "")
-            downloader.log_verbose = False
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
-            downloader.log_verbose = False
             downloader.files_not_downloaded = []
             downloader.pack_content = {
                 entity: list() for entity in CONTENT_ENTITIES_DIRS
@@ -813,12 +842,10 @@ class TestMergeExistingFile:
 
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader("", "")
-            downloader.log_verbose = False
             downloader.pack_content = env.PACK_CONTENT
             downloader.run_format = False
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
-            downloader.log_verbose = False
             downloader.merge_and_extract_existing_file(
                 env.INTEGRATION_CUSTOM_CONTENT_OBJECT
             )
@@ -877,7 +904,6 @@ class TestMergeExistingFile:
             downloader.run_format = False
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
-            downloader.log_verbose = False
             for param in parameters:
                 downloader.merge_existing_file(
                     param["custom_content_object"], param["ending"]
@@ -1281,3 +1307,77 @@ def test_replace_uuids(original_string, uuids_to_name_map, expected_string):
     downloader = Downloader(output="", input="", regex="", all_custom_content=True)
     final_string = downloader.replace_uuids(original_string, uuids_to_name_map)
     assert final_string == expected_string
+
+
+@pytest.mark.parametrize("source_is_unicode", (True, False))
+@pytest.mark.parametrize(
+    "suffix,dumps_method,write_method,fields",
+    (
+        (
+            ".json",
+            json.dumps,
+            lambda f, data: json.dump(data, f),
+            ("fromVersion", "toVersion"),
+        ),
+        (
+            ".yml",
+            yaml.dumps,
+            lambda f, data: yaml.dump(data, f),
+            ("fromversion", "toversion"),
+        ),
+    ),
+)
+def test_safe_write_unicode_to_non_unicode(
+    tmp_path: Path,
+    suffix: str,
+    dumps_method: Callable,
+    write_method: Callable[[TextIOWrapper, dict], None],
+    source_is_unicode: bool,
+    fields: Tuple[
+        str, str
+    ],  # not all field names are merged, and they depend on the file type
+) -> None:
+    """
+    Given: A format to check (yaml/json), with its writing method
+    When: Calling Downloader.update_data
+    Then:
+        1. Make sure that dowloading unicode content into a non-unicode file works (result should be all unicode)
+        2. Make sure that dowloading non-unicode content into a unicode file works (result should be all unicode)
+    """
+    from demisto_sdk.commands.download.downloader import Downloader
+
+    non_unicode_path = (tmp_path / "non_unicode").with_suffix(suffix)
+    with non_unicode_path.open("wb") as f:
+        f.write(
+            dumps_method({fields[0]: SENTENCE_WITH_UMLAUTS}).encode(
+                "latin-1", "backslashreplace"
+            )
+        )
+    assert "ü" in non_unicode_path.read_text(
+        encoding="latin-1"
+    )  # assert it was written as latin-1
+
+    unicode_path = (tmp_path / "unicode").with_suffix(suffix)
+    with open(unicode_path, "w") as f:
+        write_method(f, {fields[1]: SENTENCE_WITH_UMLAUTS})
+    assert "ü" in unicode_path.read_text(
+        encoding="utf-8"
+    )  # assert the content was written as unicode
+
+    source, dest = (
+        (unicode_path, non_unicode_path)
+        if source_is_unicode
+        else (
+            non_unicode_path,
+            unicode_path,
+        )
+    )
+
+    Downloader.update_data(
+        output_path=str(dest), file_path_to_read=str(source), file_ending=suffix[1:]
+    )
+
+    # make sure the two files were merged correctly
+    result = get_file(dest, suffix)
+    assert set(result.keys()) == set(fields)
+    assert set(result.values()) == {SENTENCE_WITH_UMLAUTS}

@@ -207,6 +207,7 @@ class Pack:
         description: Optional[str] = None,
         changelog: Optional[str] = None,
         image: Optional[bytes] = None,
+        docker_image: Optional[str] = None,
         create_unified=False,
     ) -> Integration:
         if name is None:
@@ -216,14 +217,16 @@ class Pack:
                 "commonfields": {"id": name, "version": -1},
                 "name": name,
                 "display": name,
-                "description": f"this is an integration {name}",
+                "description": description or f"this is an integration {name}",
                 "category": "category",
                 "script": {
                     "type": "python",
                     "subtype": "python3",
                     "script": "",
                     "commands": [],
+                    "dockerimage": docker_image,
                 },
+                "configuration": [],
             }
         if image is None:
             with open(
@@ -246,6 +249,7 @@ class Pack:
         description: str = "",
         changelog: str = "",
         image: bytes = b"",
+        docker_image: Optional[str] = None,
         create_unified=False,
     ) -> Script:
         if name is None:
@@ -257,6 +261,7 @@ class Pack:
                 "comment": f"this is script {name}",
                 "type": "python",
                 "subtype": "python3",
+                "dockerimage": docker_image,
                 "script": "-",
             }
         script = Script(

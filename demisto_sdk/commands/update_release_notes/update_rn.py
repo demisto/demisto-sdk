@@ -3,6 +3,7 @@ This script is used to create a release notes template
 """
 import copy
 import errno
+import logging
 import os
 import re
 from distutils.version import LooseVersion
@@ -33,7 +34,6 @@ from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PA
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (
-    LOG_COLORS,
     find_type,
     get_api_module_ids,
     get_api_module_integrations_set,
@@ -45,11 +45,10 @@ from demisto_sdk.commands.common.tools import (
     get_remote_file,
     get_yaml,
     pack_name_to_path,
-    print_color,
-    print_error,
-    print_warning,
     run_command,
 )
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -188,9 +187,9 @@ class UpdateRN:
 
         def validate_new_path(expected_path: str):
             if not Path(expected_path).exists():
-                print_warning(
-                    f"file {file_path} implies the existence of {str(expected_path)}, which is missing. "
-                    f"Did you mistype {file_path}?"
+                logger.info(
+                    f"[yellow]file {file_path} implies the existence of {str(expected_path)}, which is missing. "
+                    f"Did you mistype {file_path}?[/yellow]"
                 )
 
         if file_path.endswith("_image.png"):
@@ -226,8 +225,8 @@ class UpdateRN:
             try:
                 return existing_rn_abs_path.read_text()
             except Exception as e:
-                print_error(
-                    f"Failed to load the previous release notes file content: {e}"
+                logger.info(
+                    f"[red]Failed to load the previous release notes file content: {e}[/red]"
                 )
         return ""
 
@@ -239,9 +238,9 @@ class UpdateRN:
             Whether the RN was updated successfully or not
         """
         if self.pack in IGNORED_PACK_NAMES:
-            print_warning(
-                f"Release notes are not required for the {self.pack} pack since this pack"
-                f" is not versioned."
+            logger.info(
+                f"[yellow]Release notes are not required for the {self.pack} pack since this pack"
+                f" is not versioned.[/yellow]"
             )
             return False
 
@@ -297,44 +296,29 @@ class UpdateRN:
                 self.write_metadata_to_file(new_metadata)
             self.create_markdown(rn_path, rn_string, changed_files)
             self.build_rn_config_file(new_version)
-            try:
-                run_command(f"git add {rn_path}", exit_on_error=False)
-            except RuntimeError:
-                print_warning(f"Could not add the release note files to git: {rn_path}")
-            if self.is_bc and self.bc_path:
-                try:
-                    run_command(f"git add {self.bc_path}", exit_on_error=False)
-                except RuntimeError:
-                    print_warning(
-                        f"Could not add the release note config file to git: {rn_path}"
-                    )
             if self.existing_rn_changed:
-                print_color(
-                    f"Finished updating release notes for {self.pack}.",
-                    LOG_COLORS.GREEN,
+                logger.info(
+                    f"[green]Finished updating release notes for {self.pack}.[/green]"
                 )
                 if not self.text:
-                    print_color(
-                        f"\nNext Steps:\n - Please review the "
+                    logger.info(
+                        f"\n[green]Next Steps:\n - Please review the "
                         f"created release notes found at {rn_path} and document any changes you "
                         f"made by replacing '%%UPDATE_RN%%'.\n - Commit "
                         f"the new release notes to your branch.\nFor information regarding proper"
                         f" format of the release notes, please refer to "
-                        f"https://xsoar.pan.dev/docs/integrations/changelog",
-                        LOG_COLORS.GREEN,
+                        f"https://xsoar.pan.dev/docs/integrations/changelog[/green]"
                     )
                 return True
             else:
-                print_color(
-                    f"No changes to {self.pack} pack files were detected from the previous time "
+                logger.info(
+                    f"[green]No changes to {self.pack} pack files were detected from the previous time "
                     "this command was run. The release notes have not been "
-                    "changed.",
-                    LOG_COLORS.GREEN,
+                    "changed.[/green]"
                 )
         else:
-            print_color(
-                "No changes which would belong in release notes were detected.",
-                LOG_COLORS.YELLOW,
+            logger.info(
+                "[yellow]No changes which would belong in release notes were detected.[/yellow]"
             )
         return False
 
@@ -363,11 +347,10 @@ class UpdateRN:
         bc_file_data["breakingChangesNotes"] = bc_file_data.get("breakingChangesNotes")
         with open(bc_file_path, "w") as f:
             f.write(json.dumps(bc_file_data))
-        print_color(
-            f"Finished creating config file for RN version {new_version}.\n"
+        logger.info(
+            f"[green]Finished creating config file for RN version {new_version}.\n"
             "If you wish only specific text to be shown as breaking changes, please fill the "
-            "`breakingChangesNotes` field with the appropriate breaking changes text.",
-            LOG_COLORS.GREEN,
+            "`breakingChangesNotes` field with the appropriate breaking changes text.[/green]"
         )
 
     def get_new_version_and_metadata(self) -> Tuple[str, dict]:
@@ -385,13 +368,12 @@ class UpdateRN:
                 self.specific_version, self.pre_release
             )
             if self.is_force:
-                print_color(
-                    f"Bumping {self.pack} to version: {new_version}", LOG_COLORS.NATIVE
+                logger.info(
+                    f"Bumping {self.pack} to version: {new_version}",
                 )
             else:
-                print_color(
+                logger.info(
                     f"Changes were detected. Bumping {self.pack} to version: {new_version}",
-                    LOG_COLORS.NATIVE,
                 )
         else:
             new_metadata = self.get_pack_metadata()
@@ -406,8 +388,8 @@ class UpdateRN:
             Whether the pack metadata exists
         """
         if not os.path.isfile(self.metadata_path):
-            print_error(
-                f'"{self.metadata_path}" file does not exist, create one in the root of the pack'
+            logger.info(
+                f'[red]"{self.metadata_path}" file does not exist, create one in the root of the pack[/red]'
             )
             return False
 
@@ -427,9 +409,9 @@ class UpdateRN:
         try:
             master_metadata = get_remote_file(self.metadata_path, tag=self.main_branch)
         except Exception as e:
-            print_error(
-                f"master branch is unreachable.\n The reason is:{e} \n "
-                f"The updated version will be taken from local metadata file instead of master"
+            logger.info(
+                f"[red]master branch is unreachable.\n The reason is:{e} \n "
+                f"The updated version will be taken from local metadata file instead of master[/red]"
             )
         if master_metadata:
             master_current_version = master_metadata.get("currentVersion", "0.0.0")
@@ -583,10 +565,9 @@ class UpdateRN:
             else self.get_pack_metadata().get("currentVersion", "99.99.99")
         )
         if specific_version:
-            print_color(
+            logger.info(
                 f"Bumping {self.pack} to the version {specific_version}. If you need to update"
                 f" the release notes a second time, please remove the -v flag.",
-                LOG_COLORS.NATIVE,
             )
             data_dictionary["currentVersion"] = specific_version
             return specific_version, data_dictionary
@@ -644,10 +625,13 @@ class UpdateRN:
         if self._does_pack_metadata_exist():
             with open(self.metadata_path, "w") as file_path:
                 json.dump(metadata_dict, file_path, indent=4)
-                print_color(
-                    f"Updated pack metadata version at path : {self.metadata_path}",
-                    LOG_COLORS.GREEN,
+                logger.info(
+                    f"[green]Updated pack metadata version at path : {self.metadata_path}[/green]"
                 )
+            try:
+                run_command(f"git add {self.metadata_path}", exit_on_error=False)
+            except RuntimeError:
+                logger.error(f"[red]Failed git-adding {self.metadata_path}[/red]")
 
     @staticmethod
     def check_rn_dir(rn_path: str):
@@ -891,8 +875,8 @@ class UpdateRN:
                 f"{content_parts[1]}"
             )
         else:
-            print_warning(
-                f"Could not parse release notes {new_rn} by header type: {header_by_type}"
+            logger.info(
+                f"[yellow]Could not parse release notes {new_rn} by header type: {header_by_type}[/yellow]"
             )
         return new_rn
 
@@ -909,7 +893,9 @@ class UpdateRN:
 
         """
         if os.path.exists(release_notes_path) and self.update_type is not None:
-            print_warning(f"Release notes were found at {release_notes_path}. Skipping")
+            logger.info(
+                f"[yellow]Release notes were found at {release_notes_path}. Skipping[/yellow]"
+            )
         elif self.update_type is None and self.specific_version is None:
             current_rn = get_latest_release_notes_text(release_notes_path)
             updated_rn = self.update_existing_rn(current_rn, changed_files)
@@ -964,7 +950,9 @@ def get_file_description(path, file_type) -> str:
     The file description if exists otherwise returns %%UPDATE_RN%%
     """
     if not os.path.isfile(path):
-        print_warning(f'Cannot get file description: "{path}" file does not exist')
+        logger.info(
+            f'[yellow]Cannot get file description: "{path}" file does not exist[/yellow]'
+        )
         return ""
 
     elif file_type in (
@@ -972,6 +960,7 @@ def get_file_description(path, file_type) -> str:
         FileType.INTEGRATION,
         FileType.CORRELATION_RULE,
         FileType.MODELING_RULE,
+        FileType.PARSING_RULE,
     ):
         yml_file = get_yaml(path)
         return yml_file.get("description", "")
@@ -1020,9 +1009,9 @@ def update_api_modules_dependents_rn(
     total_updated_packs: set = set()
     if not id_set_path:
         if not os.path.isfile(DEFAULT_ID_SET_PATH):
-            print_error(
-                "Failed to update integrations dependent on the APIModule pack - no id_set.json is "
-                "available. Please run `demisto-sdk create-id-set` to generate it, and rerun this command."
+            logger.info(
+                "[red]Failed to update integrations dependent on the APIModule pack - no id_set.json is "
+                "available. Please run `demisto-sdk create-id-set` to generate it, and rerun this command.[/red]"
             )
             return total_updated_packs
         id_set_path = DEFAULT_ID_SET_PATH
@@ -1030,9 +1019,9 @@ def update_api_modules_dependents_rn(
         id_set = json.load(conf_file)
     api_module_set = get_api_module_ids(added)
     api_module_set = api_module_set.union(get_api_module_ids(modified))
-    print_warning(
-        f"Changes were found in the following APIModules: {api_module_set}, updating all dependent "
-        f"integrations."
+    logger.info(
+        f"[yellow]Changes were found in the following APIModules: {api_module_set}, updating all dependent "
+        f"integrations.[/yellow]"
     )
     integrations = get_api_module_integrations_set(
         api_module_set, id_set.get("integrations", [])
@@ -1073,8 +1062,8 @@ def check_docker_image_changed(main_branch: str, packfile: str) -> Optional[str]
         if any(["is outside repository" in exp for exp in e.args]):
             return None
         else:
-            print_warning(
-                f"skipping docker image check, Encountered the following error:\n{e.args[0]}"
+            logger.info(
+                f"[yellow]skipping docker image check, Encountered the following error:\n{e.args[0]}[/yellow]"
             )
             return None
     else:
@@ -1101,6 +1090,8 @@ def get_from_version_at_update_rn(path: str) -> Optional[str]:
 
     """
     if not os.path.isfile(path):
-        print_warning(f'Cannot get file fromversion: "{path}" file does not exist')
+        logger.info(
+            f'[yellow]Cannot get file fromversion: "{path}" file does not exist[/yellow]'
+        )
         return None
     return get_from_version(path)

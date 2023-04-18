@@ -28,6 +28,7 @@ class IntegrationScript(ContentItem):
     docker_image: Optional[str]
     description: Optional[str]
     is_unified: bool = Field(False, exclude=True)
+    code: Optional[str] = Field(None, exclude=True)
 
     def prepare_for_upload(
         self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs

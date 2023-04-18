@@ -1,16 +1,14 @@
 import html
+import logging
 import os.path
 import re
 from typing import Dict, List, Tuple
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (
-    LOG_COLORS,
-    print_color,
-    print_warning,
-    run_command,
-)
+from demisto_sdk.commands.common.tools import run_command
 from demisto_sdk.commands.run_cmd.runner import Runner
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -36,7 +34,7 @@ def save_output(path, file_name, content):
     with open(output, mode="w", encoding="utf8") as doc_file:
         doc_file.write(content)
     add_file_to_git(output)
-    print_color(f"Output file was saved to :\n{output}", LOG_COLORS.GREEN)
+    logger.info(f"[green]Output file was saved to :\n{output}[/green]")
 
 
 def generate_section(title, data=""):
@@ -379,4 +377,6 @@ def add_file_to_git(file_path: str):
     try:
         run_command(f"git add {file_path}", exit_on_error=False)
     except RuntimeError:
-        print_warning(f"Could not add the following file to git: {file_path}")
+        logger.info(
+            f"[yellow]Could not add the following file to git: {file_path}[/yellow]"
+        )

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import (
@@ -31,9 +31,11 @@ class GraphValidator(BaseValidator):
         self.file_paths: List[str] = git_files or get_all_content_objects_paths_in_dir(
             input_files
         )
-        self.pack_ids: List[str] = list(
-            {get_pack_name(file_path) for file_path in self.file_paths}
-        )
+        self.pack_ids: List[str] = []
+        for file_path in self.file_paths:
+            pack_name: Optional[str] = get_pack_name(file_path)
+            if pack_name and pack_name not in self.pack_ids:
+                self.pack_ids.append(pack_name)
 
     def __enter__(self):
         return self
@@ -49,6 +51,7 @@ class GraphValidator(BaseValidator):
             self.validate_toversion_fields(),
             self.is_file_using_unknown_content(),
             self.is_file_display_name_already_exists(),
+            self.validate_duplicate_ids(),
         )
         return all(is_valid)
 
@@ -57,6 +60,25 @@ class GraphValidator(BaseValidator):
         is_valid = []
         is_valid.append(self.are_core_pack_dependencies_valid())
         return all(is_valid)
+
+    @error_codes("GR105")
+    def validate_duplicate_ids(self):
+        is_valid = True
+        for content_item, duplicates in self.graph.validate_duplicate_ids(
+            self.file_paths
+        ):
+            for duplicate in duplicates:
+                error_message, error_code = Errors.duplicated_id(
+                    content_item.object_id, duplicate.path
+                )
+                if self.handle_error(
+                    error_message,
+                    error_code,
+                    file_path=content_item.path,
+                    drop_line=True,
+                ):
+                    is_valid = False
+        return is_valid
 
     @error_codes("PA124")
     def are_core_pack_dependencies_valid(self):
@@ -207,13 +229,28 @@ class GraphValidator(BaseValidator):
     @error_codes("GR103")
     def is_file_using_unknown_content(self):
         """Validates that there is no usage of unknown content items.
+        The validation runs twice:
+        1. Cases where a warning should be raised - if the using content item is a test playbook/test script,
+            or if the dependency is optional.
+        2. Cases where an error should be raised - the complementary case.
+        """
+        is_valid = [
+            self._find_unknown_content_uses(raises_error=False),
+            self._find_unknown_content_uses(raises_error=True),
+        ]
+        return all(is_valid)
+
+    def _find_unknown_content_uses(self, raises_error: bool) -> bool:
+        """Validates that there is no usage of unknown content items.
         Note: if self.file_paths is empty, the validation runs on all files - in this case, returns a warning.
-        otherwise, returns an error.
+        otherwise, returns an error iff raises_error is True.
         """
 
         is_valid = True
         content_item: ContentItem
-        for content_item in self.graph.get_unknown_content_uses(self.file_paths):
+        for content_item in self.graph.get_unknown_content_uses(
+            self.file_paths, raises_error=raises_error
+        ):
             unknown_content_names = [
                 relationship.content_item_to.object_id or relationship.content_item_to.name  # type: ignore
                 for relationship in content_item.uses
@@ -225,7 +262,7 @@ class GraphValidator(BaseValidator):
                 error_message,
                 error_code,
                 content_item.path,
-                warning=not bool(self.file_paths),
+                warning=not bool(self.file_paths) or not raises_error,
             ):
                 is_valid = False
 

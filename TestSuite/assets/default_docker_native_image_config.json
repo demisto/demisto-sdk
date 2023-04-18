@@ -31,7 +31,16 @@
            "tesseract",
            "tld"
          ]
-      }
+      },
+     "native:candidate": {
+       "supported_docker_images":[
+           "python3",
+           "py3-tools",
+           "chromium",
+           "tld"
+         ],
+       "docker_ref": "demisto/py3-native:8.2.1.12345"
+     }
    },
    "ignored_content_items":[
       {
@@ -55,10 +64,18 @@
            "native:8.1",
            "native:8.2"
          ]
+      },
+     {
+         "id":"TimeComponents",
+         "reason":"this is just a test",
+         "ignored_native_images":[
+           "native:candidate"
+         ]
       }
    ],
    "flags_versions_mapping": {
       "native:dev" : "native:dev",
+      "native:candidate": "native:candidate",
       "native:ga" : "native:8.2",
       "native:maintenance" : "native:8.1"
    }

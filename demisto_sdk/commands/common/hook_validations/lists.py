@@ -13,16 +13,9 @@ DEFAULT_VERSION = -1
 
 class ListsValidator(ContentEntityValidator):
     def __init__(
-        self,
-        structure_validator,
-        ignored_errors=False,
-        print_as_warnings=False,
-        json_file_path=None,
-        **kwargs
+        self, structure_validator, ignored_errors=False, json_file_path=None, **kwargs
     ):
-        super().__init__(
-            structure_validator, ignored_errors, print_as_warnings, **kwargs
-        )
+        super().__init__(structure_validator, ignored_errors, **kwargs)
         self.from_version = self.current_file.get("fromVersion")
         self.to_version = self.current_file.get("toVersion")
         self.version = self.current_file.get("version")

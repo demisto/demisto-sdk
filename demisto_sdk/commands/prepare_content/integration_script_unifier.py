@@ -1,6 +1,7 @@
 import base64
 import copy
 import glob
+import logging
 import os
 import re
 from pathlib import Path
@@ -19,17 +20,17 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (
-    LOG_COLORS,
     arg_to_list,
     find_type,
     get_mp_tag_parser,
+    get_pack_metadata,
     get_pack_name,
     get_yaml,
     get_yml_paths_in_dir,
-    print_color,
-    print_warning,
 )
 from demisto_sdk.commands.prepare_content.unifier import Unifier
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -66,7 +67,7 @@ class IntegrationScriptUnifier(Unifier):
         image_prefix: str = DEFAULT_IMAGE_PREFIX,
         **kwargs,
     ):
-        print(f"Unifying package: {path}")
+        logger.info(f"Unifying package: {path}")
         if path.parent.name in {"Integrations", "Scripts"}:
             return data
         package_path = path.parent
@@ -82,8 +83,8 @@ class IntegrationScriptUnifier(Unifier):
         try:
             IntegrationScriptUnifier.get_code_file(package_path, script_type)
         except ValueError:
-            print_warning(
-                f"No code file found for {path}, assuming it is already unified"
+            logger.info(
+                f"[yellow]No code file found for {path}, assuming it is already unifiedyellow[/yellow]"
             )
             return data
         yml_unified = copy.deepcopy(data)
@@ -122,7 +123,7 @@ class IntegrationScriptUnifier(Unifier):
                 yml_unified, custom, is_script_package
             )
 
-        print_color(f"Created unified yml: {path.name}", LOG_COLORS.GREEN)
+        logger.info(f"[green]Created unified yml: {path.name}[/green]")
         return yml_unified
 
     @staticmethod
@@ -286,6 +287,12 @@ class IntegrationScriptUnifier(Unifier):
         script_code = IntegrationScriptUnifier.insert_module_code(
             script_code, imports_to_names
         )
+        if pack_version := get_pack_metadata(file_path=str(package_path)).get(
+            "currentVersion", ""
+        ):
+            script_code = IntegrationScriptUnifier.insert_pack_version(
+                script_type, script_code, pack_version
+            )
 
         if script_type == ".py":
             clean_code = IntegrationScriptUnifier.clean_python_code(script_code)
@@ -304,18 +311,18 @@ class IntegrationScriptUnifier(Unifier):
 
         if is_script_package:
             if yml_data.get("script", "") not in ("", "-"):
-                print_warning(
-                    f"Script section is not empty in package {package_path}."
-                    f"It should be blank or a dash(-)."
+                logger.info(
+                    f"[yellow]Script section is not empty in package {package_path}."
+                    f"It should be blank or a dash(-).[/yellow]"
                 )
 
             yml_unified["script"] = FoldedScalarString(clean_code)
 
         else:
             if yml_data["script"].get("script", "") not in ("", "-"):
-                print_warning(
-                    f"Script section is not empty in package {package_path}."
-                    f"It should be blank or a dash(-)."
+                logger.info(
+                    f"[yellow]Script section is not empty in package {package_path}."
+                    f"It should be blank or a dash(-).[/yellow]"
                 )
 
             yml_unified["script"]["script"] = FoldedScalarString(clean_code)
@@ -353,7 +360,7 @@ class IntegrationScriptUnifier(Unifier):
         :return: The import string and the imported module name
         """
 
-        # General regex to find API module imports, for example: "from MicrosoftApiModule import *  # noqa: E402"
+        # General regex to find API module imports, for example: "from MicrosoftApiModule import *  # "
         module_regex = r"from ([\w\d]+ApiModule) import \*(?:  # noqa: E402)?"
 
         module_matches = re.finditer(module_regex, script_code)
@@ -381,6 +388,14 @@ class IntegrationScriptUnifier(Unifier):
                 module_name, module_path
             )
 
+            # handles cases where ApiModuleA imports ApiModuleB
+            tmp_imports_to_names = IntegrationScriptUnifier.check_api_module_imports(
+                module_code
+            )
+            module_code = IntegrationScriptUnifier.insert_module_code(
+                module_code, tmp_imports_to_names
+            )
+
             # the wrapper numbers represents the number of generated lines added
             # before (negative) or after (positive) the registration line
             module_code = (
@@ -393,6 +408,30 @@ class IntegrationScriptUnifier(Unifier):
             )
 
             script_code = script_code.replace(module_import, module_code)
+        return script_code
+
+    @staticmethod
+    def insert_pack_version(
+        script_type: str, script_code: str, pack_version: str
+    ) -> str:
+        """
+        Inserts the pack version to the script so it will be easy to know what was the contribution original pack version.
+        :param script_code: The integration code
+        :param pack_version: The pack version
+        :return: The integration script with the pack version appended if needed, otherwise returns the original script
+        """
+        if script_type == ".js":
+            return (
+                script_code
+                if "// pack version:" in script_code
+                else f"// pack version: {pack_version}\n{script_code}"
+            )
+        elif script_type in {".py", ".ps1"}:
+            return (
+                script_code
+                if "### pack version:" in script_code
+                else f"### pack version: {pack_version}\n{script_code}"
+            )
         return script_code
 
     @staticmethod

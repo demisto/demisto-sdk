@@ -1,11 +1,12 @@
 import logging
 
+from pathlib import Path
 from demisto_sdk.commands.generate_docs.readme_templates import README_TEMPLATES
 
 logger = logging.getLogger("demisto-sdk")
 
 
-def generate_readme_template(input_path: str, readme_template: str):
+def generate_readme_template(input_path: Path, readme_template: str):
     with open(input_path, "a") as file_object:
         template = README_TEMPLATES.get(readme_template, "")
         if not template:

@@ -30,6 +30,7 @@ from demisto_sdk.commands.common.tools import (
     get_last_remote_release_version,
     get_release_note_entries,
     is_external_repository,
+    parse_marketplace_kwargs,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface,
@@ -498,12 +499,7 @@ def zip_packs(ctx, **kwargs) -> int:
     # if upload is true - all zip packs will be compressed to one zip file
     should_upload = kwargs.pop("upload", False)
     zip_all = kwargs.pop("zip_all", False) or should_upload
-
-    marketplace = (
-        MarketplaceVersions(raw_marketplace)
-        if (raw_marketplace := kwargs.get("marketplace"))
-        else MarketplaceVersions.XSOAR
-    )
+    marketplace = parse_marketplace_kwargs(kwargs)
 
     packs_zipper = PacksZipper(
         zip_all=zip_all, pack_paths=kwargs.pop("input"), quiet_mode=zip_all, **kwargs

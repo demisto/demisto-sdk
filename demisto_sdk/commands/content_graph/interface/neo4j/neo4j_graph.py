@@ -1,4 +1,3 @@
-import logging
 import os
 from multiprocessing import Pool
 from pathlib import Path
@@ -9,6 +8,7 @@ from neo4j import Driver, GraphDatabase, Session, graph
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.cpu_count import cpu_count
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_URL,
     NEO4J_PASSWORD,
@@ -72,8 +72,6 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
-
-logger = logging.getLogger("demisto-sdk")
 
 
 def _parse_node(element_id: int, node: dict) -> BaseContent:

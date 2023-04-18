@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import List, Optional
@@ -6,6 +5,7 @@ from typing import List, Optional
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import download_content_graph
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_HTTP,
@@ -14,8 +14,6 @@ from demisto_sdk.commands.content_graph.common import (
 )
 from demisto_sdk.commands.content_graph.content_graph_builder import ContentGraphBuilder
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
-
-logger = logging.getLogger("demisto-sdk")
 
 
 def create_content_graph(

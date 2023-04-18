@@ -1,16 +1,15 @@
 import ast
-import logging
 import re
 import tempfile
 
 import demisto_client
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import (
     json_to_outputs,
 )
 
-logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
 
 

@@ -100,7 +100,7 @@ def generate_desc_with_spinner(command_output_path, insecure, output):
 
 
 def generate_desc(input_ctx, prob_check=False, insecure=False):
-    # logger = logging.getLogger("demisto-sdk")
+    # from demisto_sdk.commands.common.logger import logger
     # logger.setLevel(logging.ERROR)
 
     prompt = get_current_prompt()

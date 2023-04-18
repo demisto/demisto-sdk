@@ -1,6 +1,5 @@
 import gzip
 import json
-import logging
 import os
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -12,7 +11,7 @@ import requests
 from pydantic import BaseModel, Field, HttpUrl, SecretStr, validator
 from pydantic.fields import ModelField
 
-logger = logging.getLogger("demisto-sdk")
+from demisto_sdk.commands.common.logger import logger
 
 
 class XsiamApiClientConfig(BaseModel):
@@ -154,7 +153,7 @@ class XsiamApiClient(XsiamApiInterface):
         files = {"file": file_path}
         response = self._session.post(endpoint, files=files, headers=header_params)
         response.raise_for_status()
-        logging.info(
+        logger.info(
             f"All packs from file {zip_path} were successfully installed on server {self.base_url}"
         )
 

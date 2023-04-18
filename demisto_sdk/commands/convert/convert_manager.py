@@ -1,11 +1,8 @@
-import logging
-
 import click
 
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.convert.dir_convert_managers import *  # lgtm [py/polluting-import]
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class ConvertManager:

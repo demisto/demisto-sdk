@@ -2,7 +2,6 @@
 This is module to store the git configuration of the content repo
 """
 import enum
-import logging
 import os
 from functools import lru_cache
 from typing import Optional, Tuple
@@ -16,8 +15,7 @@ import requests
 
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
-
-logger = logging.getLogger("demisto-sdk")
+from demisto_sdk.commands.common.logger import logger
 
 json = JSON_Handler()
 

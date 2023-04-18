@@ -1,4 +1,3 @@
-import logging
 import os
 import uuid
 from typing import Tuple
@@ -7,6 +6,7 @@ from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import PLAYBOOK, FileType
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_yaml,
@@ -21,8 +21,6 @@ from demisto_sdk.commands.format.format_constants import (
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class BasePlaybookYMLFormat(BaseUpdateYML):

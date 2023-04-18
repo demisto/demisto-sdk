@@ -1,7 +1,6 @@
 import copy
 import glob
 import itertools
-import logging
 import os
 import re
 import time
@@ -58,6 +57,7 @@ from demisto_sdk.commands.common.content_constant_paths import (
 )
 from demisto_sdk.commands.common.cpu_count import cpu_count
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_current_repo,
@@ -71,8 +71,6 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.prepare_content.integration_script_unifier import (
     IntegrationScriptUnifier,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 

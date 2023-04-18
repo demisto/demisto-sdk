@@ -1,7 +1,7 @@
 import argparse
 import glob
 import io
-import logging
+
 import os
 import re
 import shlex
@@ -112,7 +112,7 @@ from demisto_sdk.commands.common.git_content_config import GitContentConfig, Git
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 
-logger = logging.getLogger("demisto-sdk")
+from demisto_sdk.commands.common.logger import logger
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -907,7 +907,7 @@ def get_from_version(file_path):
         )
 
         if not from_version:
-            logging.warning(
+            logger.warning(
                 f'fromversion/fromVersion was not found in {data_dictionary.get("id", "")}'
             )
             return ""

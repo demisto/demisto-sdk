@@ -179,7 +179,6 @@ class Linter:
         else:
             try:
                 self._yml_file = next(yml_file)  # type: ignore
-                self._pack_name = self._yml_file.stem
             except StopIteration:
                 logger.info(
                     f"{self._pack_abs_dir} - Skipping no yaml file found {yml_file}"
@@ -295,6 +294,8 @@ class Linter:
             if not isinstance(yml_obj, dict):
                 self._pkg_lint_status["errors"].append("Unable to parse package yml")
                 return True
+            self._pack_name = yml_obj.get("commonfields", {}).get("id") or self._yml_file.stem
+
             script_obj = (
                 yml_obj.get("script", {})
                 if isinstance(yml_obj.get("script"), dict)

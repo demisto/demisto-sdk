@@ -274,7 +274,7 @@ class IncompatibleUploadVersionException(NotUploadableException):
             message = f"from_version={item.fromversion}"
         else:
             raise RuntimeError(
-                f"Invalid version comparison for {item.path} ({item.fromversion=}, {item.toversion=})"
+                f"Invalid version comparison for {item.path} ({item.fromversion=}, {item.toversion=}, {target=})"
             )
 
         super().__init__(

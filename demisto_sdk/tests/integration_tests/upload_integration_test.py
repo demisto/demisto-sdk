@@ -8,7 +8,6 @@ from click.testing import CliRunner
 from packaging.version import parse
 
 from demisto_sdk.__main__ import main
-from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list

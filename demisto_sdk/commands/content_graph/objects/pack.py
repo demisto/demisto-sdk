@@ -344,7 +344,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                     f"pack {self.object_id}: {item.content_type} {item.normalize_name} cannot be uploaded without the -z flag"
                 )
                 if marketplace == MarketplaceVersions.MarketplaceV2:
-                    raise # many XSIAM content types must be uploaded zipped.
+                    raise  # many XSIAM content types must be uploaded zipped.
 
     def handle_base_pack(self, path: Path):
         documentation_path = CONTENT_PATH / "Documentation"

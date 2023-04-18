@@ -3511,7 +3511,7 @@ def get_pack_paths_from_files(file_paths: Iterable[str]) -> list:
 
 def parse_marketplace_kwargs(kwargs: Dict[str, Any]) -> MarketplaceVersions:
     """
-    Supports both the `marketplace` argument and `is_xsiam`. 
+    Supports both the `marketplace` argument and `is_xsiam`.
     Raises an error when both are supplied.
     """
     marketplace = kwargs.get("marketplace")

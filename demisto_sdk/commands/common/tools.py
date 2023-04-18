@@ -1,6 +1,7 @@
 import argparse
 import glob
 import io
+import logging
 
 import os
 import re
@@ -112,7 +113,7 @@ from demisto_sdk.commands.common.git_content_config import GitContentConfig, Git
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 
-from demisto_sdk.commands.common.logger import logger
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 yaml = YAML_Handler()

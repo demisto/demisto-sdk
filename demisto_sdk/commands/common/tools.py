@@ -767,7 +767,9 @@ def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool =
     if clear_cache:
         get_file.cache_clear()
 
-    file_path = Path(file_path).absolute()
+    file_path = Path(file_path)  # type: ignore[arg-type]
+    if not file_path.exists():
+        file_path = Path(get_content_path()) / file_path  # type: ignore[arg-type]
 
     if not file_path.exists():
         raise FileNotFoundError(file_path)

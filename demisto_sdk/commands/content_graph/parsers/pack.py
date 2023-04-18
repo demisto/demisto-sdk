@@ -2,6 +2,8 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
+import more_itertools
+
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.content_graph.common import (
@@ -78,17 +80,19 @@ class PackContentItems:
         Raises:
             NotAContentItemException: If did not find any matching content item list.
         """
-        try:
-            next(  # TODO use more_itertools first_where
-                filter(
-                    lambda some_list: some_list.content_type == obj.content_type,
-                    self.iter_lists(),
-                ),
-            ).append(obj)
-        except StopIteration as e:
-            raise NotAContentItemException(
-                f"Could not find list of {obj.content_type} items"
-            ) from e
+        if (
+            suitable_list := more_itertools.first_true(
+                self.iter_lists(),
+                pred=lambda some_list: some_list.content_type == obj.content_type,
+                default=None,
+            )
+            is not None
+        ):
+            suitable_list.append(obj)  # type:ignore[attr-defined]
+
+        raise NotAContentItemException(
+            f"Could not find list of {obj.content_type} items"
+        )
 
 
 class PackMetadataParser:

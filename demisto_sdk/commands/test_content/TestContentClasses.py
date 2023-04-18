@@ -1265,7 +1265,13 @@ class Integration:
             for conf in integration_params
         ]
         if self.name == "Core REST API":
+            self.build_context.logging_module.debug(
+                "**DEBUG** IN Core REST API"
+            )
             if IS_XSIAM:
+                self.build_context.logging_module.debug(
+                    "**DEBUG** IN XSIAM"
+                )
                 self.configuration.params = {  # type: ignore
                     "url": server_url,
                     "creds_apikey": {
@@ -1276,6 +1282,9 @@ class Integration:
                     "insecure": True,
                 }
             else:
+                self.build_context.logging_module.debug(
+                    "**DEBUG** IN XSOAR < 8"
+                )
                 self.configuration.params = {  # type: ignore
                     "url": "https://localhost",
                     "creds_apikey": {

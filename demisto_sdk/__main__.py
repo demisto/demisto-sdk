@@ -1999,8 +1999,8 @@ def generate_docs(ctx, **kwargs):
 
         return 0
 
-    except Exception as err:
-        logger.error(err)
+    except Exception:
+        logger.exception("Failed generating docs")
         sys.exit(1)
 
 
@@ -2118,8 +2118,8 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
         else:
             raise Exception(f"[red]File type {file_type.value} is not supported.[/red]")
 
-    except Exception as err:
-        logger.error(err)
+    except Exception:
+        logger.exception(f"Failed generating docs for {input_path}")
         sys.exit(1)
 
 

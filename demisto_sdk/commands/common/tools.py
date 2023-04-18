@@ -1349,7 +1349,7 @@ def get_pack_ignore_content(pack_name: str) -> Union[ConfigParser, None]:
                 f"Error when retrieving the content of {_pack_ignore_file_path}\n{err=}"
             )
             return None
-    click.secho(f"{_pack_ignore_file_path} does not exist for pack {pack_name}")
+    logger.error(f"{_pack_ignore_file_path} does not exist for pack {pack_name}")
     return None
 
 

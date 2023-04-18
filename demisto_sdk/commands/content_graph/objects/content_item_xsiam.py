@@ -1,4 +1,4 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 
 import demisto_client
 from packaging.version import Version
@@ -34,7 +34,6 @@ class ContentItemXSIAM(ContentItem, ABC):
             with open(file, "w") as f:
                 self.handler.dump(data, f)
 
-    @abstractmethod
     def _upload(self, client: demisto_client, marketplace: MarketplaceVersions) -> None:
         """
         Uploadable XSIAM items should override this method.

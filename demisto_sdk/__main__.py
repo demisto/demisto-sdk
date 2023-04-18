@@ -1973,11 +1973,15 @@ def generate_docs(ctx, **kwargs):
             raise Exception(f"[red]input {input_path_str} does not exist[/red]")
 
         if (output_path := kwargs.get("output")) and not Path(output_path).is_dir():
-            raise Exception(f"[red]Output directory {output_path} is not a directory.[/red]")
+            raise Exception(
+                f"[red]Output directory {output_path} is not a directory.[/red]"
+            )
 
         if input_path.is_file():
             if input_path.suffix.lower() not in {".yml", ".md"}:
-                raise Exception(f"[red]input {input_path} is not a valid yml or readme file.[/red]")
+                raise Exception(
+                    f"[red]input {input_path} is not a valid yml or readme file.[/red]"
+                )
 
             _generate_docs_for_file(kwargs)
 
@@ -2059,7 +2063,9 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
             )
 
         if old_version and not os.path.isfile(old_version):
-            raise Exception(f"[red]Input old version file {old_version} was not found.[/red]")
+            raise Exception(
+                f"[red]Input old version file {old_version} was not found.[/red]"
+            )
 
         if old_version and not old_version.lower().endswith(".yml"):
             raise Exception(

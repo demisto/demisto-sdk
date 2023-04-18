@@ -4,7 +4,6 @@ import pathlib
 import shutil
 from collections import Counter
 from copy import deepcopy
-from pathlib import Path
 from typing import Dict, Optional
 from unittest import mock
 
@@ -2694,9 +2693,7 @@ def test_handle_existing_rn_version_path(mocker, repo):
         Ensure the function does not sets should delete existing rn property to True when paths are identical.
     """
     pack = repo.create_pack("test")
-    mocker.patch.object(
-        Path, "absolute", return_value=f"{str(pack.path)}/ReleaseNotes/1_0_1.md"
-    )
+    mocker.patch.object(UpdateRN, "CONTENT_PATH", return_value=repo.path)
     pack.create_release_notes(version="1_0_1")
     client = UpdateRN(
         pack_path=str(pack.path),

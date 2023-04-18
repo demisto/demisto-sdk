@@ -162,10 +162,16 @@ class MarketplaceTagParser:
     XSOAR_SUFFIX = "\n</~XSOAR>\n"
     XSOAR_INLINE_PREFIX = "<~XSOAR>"
     XSOAR_INLINE_SUFFIX = "</~XSOAR>"
+
     XSIAM_PREFIX = "<~XSIAM>\n"
     XSIAM_SUFFIX = "\n</~XSIAM>\n"
     XSIAM_INLINE_PREFIX = "<~XSIAM>"
     XSIAM_INLINE_SUFFIX = "</~XSIAM>"
+
+    XPANSE_PREFIX = "<~XPANSE>\n"
+    XPANSE_SUFFIX = "\n</~XPANSE>\n"
+    XPANSE_INLINE_PREFIX = "<~XPANSE>"
+    XPANSE_INLINE_SUFFIX = "</~XPANSE>"
 
     def __init__(self, marketplace: str = MarketplaceVersions.XSOAR.value):
         self.marketplace = marketplace
@@ -185,6 +191,14 @@ class MarketplaceTagParser:
             tag_prefix=self.XSIAM_INLINE_PREFIX,
             tag_suffix=self.XSIAM_INLINE_SUFFIX,
         )
+        self._xpanse_parser = TagParser(
+            tag_prefix=self.XPANSE_PREFIX,
+            tag_suffix=self.XPANSE_SUFFIX,
+        )
+        self._xpanse_inline_parser = TagParser(
+            tag_prefix=self.XPANSE_INLINE_PREFIX,
+            tag_suffix=self.XPANSE_INLINE_SUFFIX,
+        )
 
     @property
     def marketplace(self):
@@ -197,19 +211,28 @@ class MarketplaceTagParser:
         self._should_remove_xsiam_text = (
             marketplace != MarketplaceVersions.MarketplaceV2.value
         )
+        self._should_remove_xpanse_text = (
+            marketplace != MarketplaceVersions.XPANSE.value
+        )
 
     def parse_text(self, text):
         # the order of parse is important. inline should always be checked after paragraph tag
-        # xsoar->xsoar_inline->xsiam->xsiam_inline
-        return self._xsiam_inline_parser.parse(
-            remove_tag=self._should_remove_xsiam_text,
-            text=self._xsiam_parser.parse(
-                remove_tag=self._should_remove_xsiam_text,
-                text=self._xsoar_inline_parser.parse(
-                    remove_tag=self._should_remove_xsoar_text,
-                    text=self._xsoar_parser.parse(
-                        remove_tag=self._should_remove_xsoar_text,
-                        text=text,
+        # xsoar->xsoar_inline->xsiam->xsiam_inline->xpanse->xpanse_inline
+        return self._xpanse_inline_parser.parse(
+            remove_tag=self._should_remove_xpanse_text,
+            text=self._xpanse_parser.parse(
+                remove_tag=self._should_remove_xpanse_text,
+                text=self._xsiam_inline_parser.parse(
+                    remove_tag=self._should_remove_xsiam_text,
+                    text=self._xsiam_parser.parse(
+                        remove_tag=self._should_remove_xsiam_text,
+                        text=self._xsoar_inline_parser.parse(
+                            remove_tag=self._should_remove_xsoar_text,
+                            text=self._xsoar_parser.parse(
+                                remove_tag=self._should_remove_xsoar_text,
+                                text=text,
+                            ),
+                        ),
                     ),
                 ),
             ),
@@ -767,7 +790,9 @@ def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool =
     if clear_cache:
         get_file.cache_clear()
 
-    file_path = Path(file_path).absolute()
+    file_path = Path(file_path)  # type: ignore[arg-type]
+    if not file_path.exists():
+        file_path = Path(get_content_path()) / file_path  # type: ignore[arg-type]
 
     if not file_path.exists():
         raise FileNotFoundError(file_path)

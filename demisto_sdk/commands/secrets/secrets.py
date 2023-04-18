@@ -68,6 +68,7 @@ TEXT_FILE_TYPES = {
     ".pdf",
     ".html",
     ".ps1",
+    ".xif",
 }
 SKIP_FILE_TYPE_ENTROPY_CHECKS = {".eml"}
 SKIP_DEMISTO_TYPE_ENTROPY_CHECKS = {"playbook-"}

@@ -19,11 +19,6 @@ from packaging.version import parse
 from demisto_sdk.__main__ import main, upload
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import (
-    CLASSIFIERS_DIR,
-    INTEGRATIONS_DIR,
-    LAYOUTS_DIR,
-    SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR,
     FileType,
 )
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import (
@@ -34,17 +29,17 @@ from demisto_sdk.commands.common.content.objects.pack_objects.pack import (
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yml_paths_in_dir, src_root
+from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
+from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.test_content import tools
 from demisto_sdk.commands.upload import uploader
 from demisto_sdk.commands.upload.uploader import (
     ItemDetacher,
     Uploader,
     parse_error_response,
-    print_summary,
-    sort_directories_based_on_dependencies,
 )
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
@@ -733,35 +728,6 @@ def test_parse_error_response_forbidden(demisto_client_configure, mocker):
     assert message == "Error message\nTry checking your API key configuration."
 
 
-def test_sort_directories_based_on_dependencies(demisto_client_configure):
-    """
-    Given
-        - An empty (no given input path) Uploader object
-        - List of non-sorted (based on dependencies) content directories
-
-    When
-        - Running sort_directories_based_on_dependencies on the list
-
-    Then
-        - Ensure a sorted listed of the directories is returned
-    """
-    dir_list = [
-        TEST_PLAYBOOKS_DIR,
-        INTEGRATIONS_DIR,
-        SCRIPTS_DIR,
-        CLASSIFIERS_DIR,
-        LAYOUTS_DIR,
-    ]
-    sorted_dir_list = sort_directories_based_on_dependencies(dir_list)
-    assert sorted_dir_list == [
-        INTEGRATIONS_DIR,
-        SCRIPTS_DIR,
-        TEST_PLAYBOOKS_DIR,
-        CLASSIFIERS_DIR,
-        LAYOUTS_DIR,
-    ]
-
-
 def test_print_summary_successfully_uploaded_files(
     demisto_client_configure, mocker, caplog, monkeypatch
 ):
@@ -779,10 +745,8 @@ def test_print_summary_successfully_uploaded_files(
     monkeypatch.setenv("COLUMNS", "1000")
 
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-
-    successfully_uploaded_files = [("SomeIntegrationName", "Integration")]
-
-    print_summary(successfully_uploaded_files, [], [])
+    uploader = Uploader(None)
+    uploader.successfully_uploaded = [Integration(name="SomeIntegrationName")]
     expected_upload_summary_title = "\n\nUPLOAD SUMMARY:"
     expected_successfully_uploaded_files_title = "SUCCESSFUL UPLOADS:"
     expected_successfully_uploaded_files_array = [
@@ -825,9 +789,8 @@ def test_print_summary_failed_uploaded_files(demisto_client_configure, mocker):
         - Ensure uploaded failure message is printed as expected
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-
-    failed_uploaded_files = [("SomeScriptName", "Script", "Some Error")]
-    print_summary([], [], failed_uploaded_files)
+    uploader = Uploader(None)
+    uploader.failed_upload = [(Script(name="SomeScriptName"), "Some Error")]
     expected_upload_summary_title = "\n\nUPLOAD SUMMARY:"
     expected_failed_uploaded_files_title = "FAILED UPLOADS:"
     expected_failed_uploaded_files = """╒════════════════╤════════╤════════════╕
@@ -865,8 +828,14 @@ def test_print_summary_unuploaded_files(demisto_client_configure, mocker):
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
-    unploaded_files = [("SomeScriptName", "Script", "6.0.0", "0.0.0", "5.0.0")]
-    print_summary([], unploaded_files, [])
+    uploader = Uploader(None)
+    uploader.failed_upload_version_mismatch = [
+        (
+            Script(
+                name="SomeScriptName",
+            )
+        )
+    ]
     expected_upload_summary_title = "\n\nUPLOAD SUMMARY:"
     expected_failed_uploaded_files_title = "NOT UPLOADED DUE TO VERSION MISMATCH:"
     expected_failed_uploaded_files = """╒════════════════╤════════╤═════════════════╤═════════════════════╤═══════════════════╕

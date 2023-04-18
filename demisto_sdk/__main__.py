@@ -202,7 +202,7 @@ def main(ctx, config, version, release_notes, **kwargs):
 
     dotenv.load_dotenv(Path(get_content_path()) / ".env", override=True)  # type: ignore # load .env file from the cwd
     if (
-        not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK") or version
+        not os.getenv("DEMISTO_SDK_SKIP_VERSION_CHECK") or not os.getenv("CI") or version
     ):  # If the key exists/called to version
         try:
             __version__ = get_distribution("demisto-sdk").version

@@ -63,7 +63,7 @@ class BaseUpdate:
         assume_yes: bool = False,
         interactive: bool = True,
         clear_cache: bool = False,
-        use_git: bool = False,
+        use_git: bool = True,
         **kwargs,
     ):
         self.source_file = input

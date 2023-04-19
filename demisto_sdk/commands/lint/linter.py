@@ -1007,6 +1007,11 @@ class Linter:
             )
             if system_is_not_darwin or not_connetion_broken:
                 raise
+        except Exception as exc:
+            logger.exception(
+                f"Didn't remove container {container_name}. Got an Exception {exc}"
+            )
+            raise exc
 
     def _docker_run_linter(
         self, linter: str, test_image: str, keep_container: bool

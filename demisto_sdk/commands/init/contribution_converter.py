@@ -443,7 +443,7 @@ class ContributionConverter:
                         del_unified=(not self.create_new),
                         source_mapping=files_to_source_mapping,
                     )
-
+            logger.info('self.create_contribution_items_version_note()')
             self.create_contribution_items_version_note()
 
             if self.create_new:
@@ -470,11 +470,14 @@ class ContributionConverter:
         """
         extract the pack version from script if exists, returns 0.0.0 if version was not found.
         """
+        logger.info('extract_pack_version')
         if script:
             try:
+                logger.info('extract_pack_version in script')
                 if pack_version_reg := re.search(
                     r"(?:###|//) pack version: (\d+\.\d+\.\d+)", script
                 ):
+                    logger.info(f'found.. {pack_version_reg.groups()[0]}')
                     return pack_version_reg.groups()[0]
             except Exception as e:
                 logging.warning(f"Failed extracting pack version from script: {e}")
@@ -485,6 +488,7 @@ class ContributionConverter:
         creates note that can be paste on the created PR containing the
         contributed item versions.
         """
+        logger.info(self.contribution_items_version)
         if self.contribution_items_version:
             self.contribution_items_version_note = "> **Warning**\n"
             self.contribution_items_version_note += (
@@ -501,6 +505,7 @@ class ContributionConverter:
                     f"> | {item_name} | {item_versions.get('contribution_version', '')} | "
                     f"{item_versions.get('latest_version', '')}\n"
                 )
+        logger.info(self.contribution_items_version_note)
 
     def content_item_to_package_format(
         self,
@@ -578,9 +583,12 @@ class ContributionConverter:
                             current_pack_version = get_pack_metadata(
                                 file_path=content_item_file_path
                             ).get("currentVersion", "0.0.0")
+                            logger.info(f'contributor_item_version.. {contributor_item_version}')
+                            logger.info(f'current_pack_version.. {current_pack_version}')
                             if contributor_item_version != "0.0.0" and Version(
                                 current_pack_version
                             ) > Version(contributor_item_version):
+                                logger.info('in')
                                 self.contribution_items_version[content_item.name] = {
                                     "contribution_version": contributor_item_version,
                                     "latest_version": current_pack_version,

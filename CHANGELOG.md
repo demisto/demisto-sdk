@@ -3,6 +3,7 @@
 ## Unreleased
 * Added support for the `<~XPANSE>` marketplace tag in release notes.
 * Added support for marketplace tags in the **doc-review** command.
+* Added **generate-unit-tests** documentation to the repo README. 
 
 ## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.
@@ -14,7 +15,6 @@
 * Fixed an issue where **validate** would fail when playbook inputs contain Transform Language (DT).
 * Added a new **validate** check, making sure a first level header exist in release notes (RN116)
 * Fixed an issue where **lint** would not properly handle multiple ApiModules imports.
-
 
 ## 1.12.0
 * Added the **pre-commit** command, to improve code quality of XSOAR content.
@@ -65,7 +65,6 @@
 * Fixed an issue where using **postman-codegen** failed converting strings containing digits to kebab-case.
 * Fixed an issue where the ***error-code*** command could not parse List[str] parameter.
 * Updated validation *LO107* to support more section types in XSIAM layouts.
-* Added **generate-unit-tests** documentation to the repo README. 
 
 ## 1.10.4
 * Added support for running **lint** in multiple native-docker images.

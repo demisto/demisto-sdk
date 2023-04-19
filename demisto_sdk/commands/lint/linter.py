@@ -1002,7 +1002,7 @@ class Linter:
             # see: https://github.com/docker/docker-py/issues/2696#issuecomment-721322548
             system_is_not_darwin = platform.system() != "Darwin"
             not_connetion_broken = "Connection broken" not in str(err)
-            logger.info(
+            logger.warning(
                 f"Didn't remove container {container_name} as it wasn't found, {system_is_not_darwin=}, {not_connetion_broken=}"
             )
             if system_is_not_darwin or not_connetion_broken:

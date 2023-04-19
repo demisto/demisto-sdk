@@ -20,6 +20,7 @@ from demisto_sdk.__main__ import main, upload
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import (
     FileType,
+    MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import (
     DELETE_VERIFY_KEY_ACTION,
@@ -1453,7 +1454,9 @@ class TestItemDetacher:
         )
 
         ItemDetacher.detach_item(
-            ItemDetacher(API_CLIENT), file_id="file", file_path="Scripts/file_path"
+            ItemDetacher(API_CLIENT, marketplace=MarketplaceVersions.XSOAR),
+            file_id="file",
+            file_path="Scripts/file_path",
         )
 
         assert logger_info.call_count == 1
@@ -1465,7 +1468,9 @@ class TestItemDetacher:
     def test_extract_items_from_dir(self, mocker, repo):
         repo = repo.setup_one_pack(name="Pack")
         list_items = ItemDetacher(
-            client=API_CLIENT, file_path=repo.path
+            client=API_CLIENT,
+            file_path=repo.path,
+            marketplace=MarketplaceVersions.XSOAR,
         ).extract_items_from_dir()
         assert len(list_items) == 8
         for item in list_items:
@@ -1487,9 +1492,9 @@ class TestItemDetacher:
     )
     def test_is_valid_file_for_detach(self, file_path, res):
         assert (
-            ItemDetacher(client=API_CLIENT).is_valid_file_for_detach(
-                file_path=file_path
-            )
+            ItemDetacher(
+                client=API_CLIENT, marketplace=MarketplaceVersions.XSOAR
+            ).is_valid_file_for_detach(file_path=file_path)
             == res
         )
 
@@ -1504,9 +1509,9 @@ class TestItemDetacher:
     )
     def test_find_item_type_to_detach(self, file_path, res):
         assert (
-            ItemDetacher(client=API_CLIENT).find_item_type_to_detach(
-                file_path=file_path
-            )
+            ItemDetacher(
+                client=API_CLIENT, marketplace=MarketplaceVersions.XSOAR
+            ).find_item_type_to_detach(file_path=file_path)
             == res
         )
 
@@ -1516,7 +1521,9 @@ class TestItemDetacher:
         playbook1.create_default_playbook()
         assert (
             ItemDetacher(
-                client=API_CLIENT, file_path=f"{playbook1.path}/MyPlay1.yml"
+                client=API_CLIENT,
+                file_path=f"{playbook1.path}/MyPlay1.yml",
+                marketplace=MarketplaceVersions.XSOAR,
             ).find_item_id_to_detach()
             == "sample playbook"
         )
@@ -1531,7 +1538,9 @@ class TestItemDetacher:
 
         repo = repo.setup_one_pack(name="Pack")
         detached_items_ids = ItemDetacher(
-            client=API_CLIENT, file_path=repo.path
+            client=API_CLIENT,
+            file_path=repo.path,
+            marketplace=MarketplaceVersions.XSOAR,
         ).detach()
         assert len(detached_items_ids) == 8
         for file_id in detached_items_ids:
@@ -1549,6 +1558,7 @@ class TestItemDetacher:
         detached_items_ids = ItemDetacher(
             client=API_CLIENT,
             file_path=f"{repo._pack_path}/Playbooks/Pack_playbook.yml",
+            marketplace=MarketplaceVersions.XSOAR,
         ).detach()
         assert len(detached_items_ids) == 1
         assert detached_items_ids == ["Pack_playbook"]

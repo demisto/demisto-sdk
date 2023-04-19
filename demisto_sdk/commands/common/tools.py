@@ -710,27 +710,23 @@ def get_last_remote_release_version():
 
     :return: tag
     """
-    if not os.environ.get(
-        "CI"
-    ):  # Check only when no on CI. If you want to disable it - use `DEMISTO_SDK_SKIP_VERSION_CHECK` environment variable
-        try:
-            pypi_request = requests.get(SDK_PYPI_VERSION, verify=False, timeout=5)
-            pypi_request.raise_for_status()
-            pypi_json = pypi_request.json()
-            version = pypi_json.get("info", {}).get("version", "")
-            return version
-        except Exception as exc:
-            exc_msg = str(exc)
-            if isinstance(exc, requests.exceptions.ConnectionError):
-                exc_msg = (
-                    f'{exc_msg[exc_msg.find(">") + 3:-3]}.\n'
-                    f"This may happen if you are not connected to the internet."
-                )
-            logger.info(
-                f"[yellow]Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}[/yellow]"
+    try:
+        pypi_request = requests.get(SDK_PYPI_VERSION, verify=False, timeout=5)
+        pypi_request.raise_for_status()
+        pypi_json = pypi_request.json()
+        version = pypi_json.get("info", {}).get("version", "")
+        return version
+    except Exception as exc:
+        exc_msg = str(exc)
+        if isinstance(exc, requests.exceptions.ConnectionError):
+            exc_msg = (
+                f'{exc_msg[exc_msg.find(">") + 3:-3]}.\n'
+                f"This may happen if you are not connected to the internet."
             )
-
-    return ""
+        logger.info(
+            f"[yellow]Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}[/yellow]"
+        )
+        return ""
 
 
 def _read_file(file_path: Path) -> str:

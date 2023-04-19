@@ -990,13 +990,22 @@ class Linter:
 
     def _docker_remove_container(self, container_name: str):
         try:
+            logger.info(f"Trying to remove container {container_name}")
             container = self._docker_client.containers.get(container_name)
+            logger.info(f"Found container {container_name=}, {container.id=}")
             container.remove(force=True)
+            logger.info(f"Successfully removed container {container_name}")
         except docker.errors.NotFound:
+            logger.info(f"Didn't remove container {container_name} as it wasn't found")
             pass
         except requests.exceptions.ChunkedEncodingError as err:
             # see: https://github.com/docker/docker-py/issues/2696#issuecomment-721322548
-            if platform.system() != "Darwin" or "Connection broken" not in str(err):
+            system_is_not_darwin = platform.system() != "Darwin"
+            not_connetion_broken = "Connection broken" not in str(err)
+            logger.info(
+                f"Didn't remove container {container_name} as it wasn't found, {system_is_not_darwin=}, {not_connetion_broken=}"
+            )
+            if system_is_not_darwin or not_connetion_broken:
                 raise
 
     def _docker_run_linter(

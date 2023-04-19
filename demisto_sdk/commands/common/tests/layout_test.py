@@ -174,3 +174,22 @@ class TestLayoutValidator:
         structure = mock_structure("layout.json", layout)
         validator = LayoutsContainerValidator(structure)
         assert not validator.is_valid_layout(validate_rn=False)
+
+    @pytest.mark.parametrize(
+        "layout_json, id_set_json, is_circle, expected_result", IS_INCIDENT_FIELD_EXIST
+    )
+    def test_is_valid_layout_container_with_incident_field(
+        self, repo, layout_json, id_set_json, is_circle, expected_result
+    ):
+        """
+        Given: A layouts container with incident_field (configured/not) in id_set.
+        When: Running is_valid_layout.
+        Then: Return True if configured and false otherwise.
+        """
+        repo.id_set.write_json(id_set_json)
+        structure = mock_structure("layout.json", layout_json)
+        validator = LayoutsContainerValidator(structure)
+        assert (
+            validator.is_valid_layout(id_set_file=id_set_json, is_circle=is_circle)
+            == expected_result
+        )

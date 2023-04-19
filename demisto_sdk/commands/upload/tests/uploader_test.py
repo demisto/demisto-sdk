@@ -672,7 +672,9 @@ def test_parse_error_response_ssl(demisto_client_configure, mocker):
     """
 
     script = BaseContent.from_path(
-        Path(f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.py")
+        Path(
+            f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.py"
+        )
     )
     api_exception = ApiException(reason="[SSL: CERTIFICATE_VERIFY_FAILED]")
     message = parse_error_response(error=api_exception, content_item=script)

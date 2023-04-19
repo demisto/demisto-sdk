@@ -46,9 +46,6 @@ from demisto_sdk.commands.content_graph.objects.content_item import (
     NotUploadableException,
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.parsers.content_item import (
-    NotAContentItemException,
-)
 
 logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()

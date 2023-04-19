@@ -4,6 +4,7 @@
 * Added support for the `<~XPANSE>` marketplace tag in release notes.
 * Added support for marketplace tags in the **doc-review** command.
 * Updated the logs shown during lint when running in docker.
+* Added **generate-unit-tests** documentation to the repo README. 
 * Added the `hiddenpassword` field to the integration schema, allowing **validate** to run on integrations with username-only inputs.
 
 ## 1.13.0

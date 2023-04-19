@@ -3,6 +3,7 @@
 ## Unreleased
 * Added support for the `<~XPANSE>` marketplace tag in release notes.
 * Added support for marketplace tags in the **doc-review** command.
+* Fixed an issue where the **hiddenpassword** field was not recognized as a valid field.
 
 ## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.

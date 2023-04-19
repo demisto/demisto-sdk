@@ -1,3 +1,4 @@
+import logging
 from contextlib import contextmanager
 from pathlib import Path
 from shutil import rmtree
@@ -11,6 +12,7 @@ from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import (
     XSOARConfigFileUpdater,
 )
+from TestSuite.test_tools import str_in_call_args_list
 
 json = JSON_Handler()
 
@@ -202,7 +204,7 @@ class TestXSOARConfigFileUpdater:
         pack_id,
         pack_data,
         expected_path,
-        capsys,
+        mocker,
         err,
         expected_outputs,
     ):
@@ -216,6 +218,7 @@ class TestXSOARConfigFileUpdater:
             - validate the Error massage when the argument us missing
             - validate the xsoar_config file output is as expected
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         with temp_dir() as tmp_output_dir:
             click.Context(command=xsoar_config_file_update).invoke(
@@ -227,9 +230,8 @@ class TestXSOARConfigFileUpdater:
             )
             assert Path(f"{tmp_output_dir}/{expected_path}").exists()
 
-            stdout, _ = capsys.readouterr()
             if err:
-                assert err in stdout
+                assert str_in_call_args_list(logger_info.call_args_list, err)
 
             try:
                 with open(f"{tmp_output_dir}/{expected_path}") as config_file:
@@ -258,7 +260,7 @@ class TestXSOARConfigFileUpdater:
         pack_id,
         pack_data,
         expected_path,
-        capsys,
+        mocker,
         err,
         expected_outputs,
     ):
@@ -272,6 +274,7 @@ class TestXSOARConfigFileUpdater:
             - validate the Error massage when the argument us missing
             - validate the xsoar_config file output is as expected
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         with temp_dir() as tmp_output_dir:
             click.Context(command=xsoar_config_file_update).invoke(
@@ -283,9 +286,8 @@ class TestXSOARConfigFileUpdater:
             )
             assert Path(f"{tmp_output_dir}/{expected_path}").exists()
 
-            stdout, _ = capsys.readouterr()
             if err:
-                assert err in stdout
+                assert str_in_call_args_list(logger_info.call_args_list, err)
 
             try:
                 with open(f"{tmp_output_dir}/{expected_path}") as config_file:
@@ -310,7 +312,13 @@ class TestXSOARConfigFileUpdater:
         ],
     )
     def test_verify_flags(
-        self, add_custom_pack, pack_id, pack_data, err, exit_code, capsys
+        self,
+        add_custom_pack,
+        pack_id,
+        pack_data,
+        err,
+        exit_code,
+        mocker,
     ):
         """
         Given:
@@ -321,6 +329,7 @@ class TestXSOARConfigFileUpdater:
             - validate the error code is as expected.
             - validate the Error massage when the argument us missing
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         self.add_custom_pack = add_custom_pack
         self.pack_id = pack_id
         self.pack_data = pack_data
@@ -330,9 +339,8 @@ class TestXSOARConfigFileUpdater:
         error_code = config_file.verify_flags()
         assert error_code == exit_code
 
-        stdout, _ = capsys.readouterr()
         if err:
-            assert err in stdout
+            assert str_in_call_args_list(logger_info.call_args_list, err)
 
     @pytest.mark.parametrize(
         argnames="add_custom_pack, add_market_place_pack, pack_id, pack_data, exit_code",

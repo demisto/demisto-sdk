@@ -1,3 +1,4 @@
+import logging
 from distutils.version import LooseVersion
 from typing import Dict, List
 from unittest.mock import patch
@@ -9,6 +10,7 @@ from demisto_sdk.commands.common.hook_validations.field_base_validator import (
     GroupFieldTypes,
 )
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from TestSuite.test_tools import str_in_call_args_list
 
 INDICATOR_GROUP_NUMBER = 2
 INCIDENT_GROUP_NUMBER = 0
@@ -19,6 +21,12 @@ class TestFieldValidator:
         "cliName": "sanityname",
         "name": "sanity name",
         "id": "incident",
+        "content": True,
+    }
+
+    GOOD_NAME_1 = {
+        "cliName": "sanityname",
+        "name": "Alerting feature",
         "content": True,
     }
 
@@ -40,13 +48,7 @@ class TestFieldValidator:
         "content": True,
     }
 
-    GOOD_NAME_4 = {
-        "cliName": "sanityname",
-        "name": "Alerting feature",
-        "content": True,
-    }
-
-    BAD_NAME_5 = {
+    BAD_NAME_4 = {
         "cliName": "sanity name",
         "name": "INciDeNts",
         "content": True,
@@ -54,17 +56,16 @@ class TestFieldValidator:
 
     INPUTS_NAMES = [
         (NAME_SANITY_FILE, False),
+        (GOOD_NAME_1, False),
         (BAD_NAME_1, True),
         (BAD_NAME_2, True),
         (BAD_NAME_3, True),
-        (GOOD_NAME_4, False),
-        (BAD_NAME_5, True),
+        (BAD_NAME_4, True),
     ]
 
     @pytest.mark.parametrize("current_file, answer", INPUTS_NAMES)
-    def test_is_valid_name_sanity(self, current_file, answer):
-        import os
-        import sys
+    def test_is_valid_name_sanity(self, current_file, answer, mocker):
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
 
         with patch.object(StructureValidator, "__init__", lambda a, b: None):
             structure = StructureValidator("")
@@ -78,17 +79,9 @@ class TestFieldValidator:
             validator = FieldBaseValidator(structure, set(), set())
             validator.current_file = current_file
 
-            with open("file", "w") as temp_out:
-                old_stdout = sys.stdout
-                sys.stdout = temp_out
-                validator.is_valid_name()
-                sys.stdout = old_stdout
+            validator.is_valid_name()
 
-            with open("file") as temp_out:
-                output = temp_out.read()
-                assert ("IF100" in str(output)) is answer
-            # remove the temp file
-            os.system("rm -rf file")
+            assert str_in_call_args_list(logger_info.call_args_list, "IF100") is answer
 
     CONTENT_1 = {"content": True}
 

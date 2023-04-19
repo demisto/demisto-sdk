@@ -15,7 +15,13 @@ from demisto_sdk.commands.content_graph.parsers.yaml_content_item import (
 )
 
 LIST_COMMANDS = ["Builtin|||setList", "Builtin|||getList"]
-IGNORED_FIELDS = ["retry-count"]
+IGNORED_FIELDS = [
+    "appendTags",
+    "addLabels",
+    "appendMultiSelect",
+    "retry-count",
+    "retry-interval",
+]
 
 
 class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
@@ -90,16 +96,19 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
         """
         if command := task.get("task", {}).get("script"):
             if "setIncident" in command:
-                for incident_field in get_fields_by_script_argument(task):
-                    self.add_dependency_by_id(
-                        incident_field, ContentType.INCIDENT_FIELD, is_mandatory=False
-                    )
+                for indicator_field in get_fields_by_script_argument(task):
+                    if indicator_field and indicator_field not in IGNORED_FIELDS:
+                        self.add_dependency_by_id(
+                            indicator_field,
+                            ContentType.INCIDENT_FIELD,
+                            is_mandatory=False,
+                        )
 
             elif "setIndicator" in command:
-                for incident_field in get_fields_by_script_argument(task):
-                    if incident_field not in IGNORED_FIELDS:
+                for indicator_field in get_fields_by_script_argument(task):
+                    if indicator_field and indicator_field not in IGNORED_FIELDS:
                         self.add_dependency_by_id(
-                            incident_field,
+                            indicator_field,
                             ContentType.INDICATOR_FIELD,
                             is_mandatory=False,
                         )

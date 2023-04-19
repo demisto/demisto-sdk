@@ -71,6 +71,7 @@ outputs:
   description: ''
   type: String
 """
+import logging
 import os
 import sys
 from typing import Dict, Optional
@@ -78,7 +79,8 @@ from typing import Dict, Optional
 import dateparser
 
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.tools import LOG_COLORS, print_color, print_error
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -179,7 +181,8 @@ def parse_json(
         data = json.loads(data)
     except ValueError as ex:
         if verbose:
-            print_error(str(ex))
+            # TODO Handle this verbose
+            logger.info(f"[red]{ex}[/red]")
 
         raise ValueError("Invalid input JSON")
 
@@ -210,8 +213,7 @@ def parse_json(
 
         arg_json.append(jsonise(key, value, description))
 
-    if verbose:
-        print(f"JSON before converting to YAML: {arg_json}")
+    logger.debug(f"JSON before converting to YAML: {arg_json}")
 
     outputs = {"name": command_name.lstrip("!"), "arguments": [], "outputs": arg_json}
 
@@ -266,16 +268,16 @@ def json_to_outputs(
             with open(output, "w") as yf:
                 yf.write(yaml_output)
 
-                print_color(f"Outputs file was saved to :\n{output}", LOG_COLORS.GREEN)
+                logger.info(f"[green]Outputs file was saved to :\n{output}[/green]")
         else:
-            print_color("YAML Outputs\n\n", LOG_COLORS.GREEN)
-            print(yaml_output)
+            logger.info("[green]YAML Outputs[/green]\n\n")
+            logger.info(yaml_output)
 
     except Exception as ex:
         if verbose:
             raise
         else:
-            print_error(f"Error: {str(ex)}")
+            logger.info(f"[red]Error: {str(ex)}[/red]")
             sys.exit(1)
 
 
@@ -297,4 +299,4 @@ def _parse_description_argument(descriptions: Optional[str]) -> Optional[dict]: 
             return parsed
 
     except (json.JSONDecodeError, TypeError):
-        print("Error decoding JSON descriptions, ignoring them.")
+        logger.error("Error decoding JSON descriptions, ignoring them.")

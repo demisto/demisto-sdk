@@ -1,3 +1,4 @@
+import logging
 import os
 from os.path import join
 
@@ -15,7 +16,7 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 json = JSON_Handler()
 
@@ -44,7 +45,9 @@ DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = (
         ({"file_name": ["RM", "SC"]}, "SC102"),  # SC102 can not be ignored
     ],
 )
-def test_handle_error_on_unignorable_error_codes(mocker, ignored_errors, error_code):
+def test_handle_error_on_unignorable_error_codes(
+    mocker, monkeypatch, ignored_errors, error_code
+):
     """
     Given
     - error code which is not allowed to be ignored.
@@ -59,28 +62,27 @@ def test_handle_error_on_unignorable_error_codes(mocker, ignored_errors, error_c
     - Ensure that the un-ignorable errors are in FOUND_FILES_AND_ERRORS list.
     - Ensure that the un-ignorable errors are not in FOUND_FILES_AND_IGNORED_ERRORS list.
     """
-    import click
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
 
     base_validator = BaseValidator(ignored_errors=ignored_errors)
     expected_error = (
         f"[ERROR]: file_name: [{error_code}] can not be ignored in .pack-ignore\n"
     )
 
-    click_mock = mocker.patch.object(click, "secho")
     result = base_validator.handle_error(
         error_message="",
         error_code=error_code,
         file_path="file_name",
         suggested_fix="fix",
     )
-    assert result == expected_error
-    assert click_mock.called
-    assert click_mock.call_args.args[0] == expected_error
+    assert expected_error in result
+    assert str_in_call_args_list(logger_info.call_args_list, expected_error)
     assert f"file_name - [{error_code}]" in FOUND_FILES_AND_ERRORS
     assert f"file_name - [{error_code}]" not in FOUND_FILES_AND_IGNORED_ERRORS
 
 
-def test_handle_error(mocker):
+def test_handle_error(mocker, caplog):
     """
     Given
     - An ignore errors list associated with a file.
@@ -95,8 +97,6 @@ def test_handle_error(mocker):
     - Ensure non ignored errors are in FOUND_FILES_AND_ERRORS list.
     - Ensure ignored error are not in FOUND_FILES_AND_ERRORS and in FOUND_FILES_AND_IGNORED_ERRORS
     """
-    import click
-
     base_validator = BaseValidator(
         ignored_errors={"file_name": ["BA101"]}, print_as_warnings=True
     )
@@ -117,7 +117,6 @@ def test_handle_error(mocker):
     )
     assert "path/to/file_name - [IN101]" in FOUND_FILES_AND_ERRORS
 
-    click_mock = mocker.patch.object(click, "secho")
     formatted_error = base_validator.handle_error(
         "ignore-file-specific", "BA101", "path/to/file_name"
     )
@@ -125,8 +124,7 @@ def test_handle_error(mocker):
     assert "path/to/file_name - [BA101]" not in FOUND_FILES_AND_ERRORS
     assert "path/to/file_name - [BA101]" in FOUND_FILES_AND_IGNORED_ERRORS
     assert (
-        click_mock.call_args_list[0][0][0]
-        == "[WARNING]: path/to/file_name: [BA101] - ignore-file-specific\n"
+        "[WARNING]: path/to/file_name: [BA101] - ignore-file-specific\n" in caplog.text
     )
 
     formatted_error = base_validator.handle_error(
@@ -390,7 +388,7 @@ def test_check_support_status_partner_file(repo, mocker):
                 integration.yml.rel_path
             ]
             == PRESET_ERROR_TO_IGNORE["partner"]
-        )  # noqa: E501
+        )
 
 
 def test_check_support_status_community_file(repo, mocker):
@@ -420,7 +418,7 @@ def test_check_support_status_community_file(repo, mocker):
                 integration.yml.rel_path
             ]
             == PRESET_ERROR_TO_IGNORE["community"]
-        )  # noqa: E501
+        )
 
 
 class TestJsonOutput:

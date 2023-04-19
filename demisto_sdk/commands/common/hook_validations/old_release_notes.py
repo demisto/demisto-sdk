@@ -32,14 +32,10 @@ class OldReleaseNotesValidator(BaseValidator):
         self,
         file_path,
         ignored_errors=None,
-        print_as_warnings=False,
-        suppress_print=False,
         specific_validations=None,
     ):
         super().__init__(
             ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
-            suppress_print=suppress_print,
             specific_validations=specific_validations,
         )
         self.file_path = file_path

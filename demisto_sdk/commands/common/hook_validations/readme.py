@@ -165,15 +165,11 @@ class ReadMeValidator(BaseValidator):
         self,
         file_path: str,
         ignored_errors=None,
-        print_as_warnings=False,
-        suppress_print=False,
         json_file_path=None,
         specific_validations=None,
     ):
         super().__init__(
             ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
-            suppress_print=suppress_print,
             json_file_path=json_file_path,
             specific_validations=specific_validations,
         )
@@ -340,9 +336,6 @@ class ReadMeValidator(BaseValidator):
             list: List of the errors found
         """
         error_list = []
-        # If error was found, print it only if its not a pack readme. For pack readme, the PackUniqueFilesValidator
-        # class handles the errors and printing.
-        should_print_error = not is_pack_readme
         relative_urls = get_relative_urls(self.readme_content)
         for url_link in relative_urls:
             # striping in case there are whitespaces at the beginning/ending of url.
@@ -354,7 +347,6 @@ class ReadMeValidator(BaseValidator):
                     error_message,
                     error_code,
                     file_path=self.file_path,
-                    should_print=should_print_error,
                 )
                 # if error is None it should be ignored
                 if formatted_error:
@@ -432,9 +424,6 @@ class ReadMeValidator(BaseValidator):
         error_list = []
         error_code: str = ""
         error_message: str = ""
-        # If error was found, print it only if its not a pack readme. For pack readme, the PackUniqueFilesValidator
-        # class handles the errors and printing.
-        should_print_error = not is_pack_readme
         relative_images = re.findall(
             r"(\!\[.*?\])\(((?!http).*?)\)$",
             self.readme_content,
@@ -476,7 +465,6 @@ class ReadMeValidator(BaseValidator):
                     error_message,
                     error_code,
                     file_path=self.file_path,
-                    should_print=should_print_error,
                 )
                 # if error is None it should be ignored
                 if formatted_error:
@@ -499,10 +487,6 @@ class ReadMeValidator(BaseValidator):
             working_branch_name = GitUtil().get_current_git_branch_or_hash()
         except InvalidGitRepositoryError:
             pass
-        should_print_error = (
-            not is_pack_readme
-        )  # pack readme errors are handled and printed during the pack unique
-        # files validation.
         absolute_links = re.findall(
             r"(!\[.*\])\((https://.*)\)$",
             self.readme_content,
@@ -555,7 +539,6 @@ class ReadMeValidator(BaseValidator):
                     error_message,
                     error_code,
                     file_path=self.file_path,
-                    should_print=should_print_error,
                 )
                 if formatted_error:
                     error_list.append(formatted_error)

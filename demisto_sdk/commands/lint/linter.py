@@ -6,7 +6,7 @@ import os
 import platform
 import traceback
 from enum import Enum
-from typing import Any, Dict, List, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 import docker
 import docker.errors
@@ -84,6 +84,8 @@ class DockerImageFlagOption(Enum):
     NATIVE_GA = "native:ga"
     NATIVE_MAINTENANCE = "native:maintenance"
     ALL_IMAGES = "all"
+    NATIVE_TARGET = "native:target"
+    NATIVE_CANDIDATE = "native:candidate"
 
 
 class Linter:
@@ -97,6 +99,7 @@ class Linter:
         docker_engine(bool):  Whether docker engine detected by docker-sdk.
         docker_timeout(int): Timeout for docker requests.
         docker_image_flag(str): Indicates the desirable docker image to run lint on (default value is 'from-yml).
+        all_packs (bool): Indicates whether all the packs should go through lint
     """
 
     def __init__(
@@ -108,6 +111,9 @@ class Linter:
         docker_engine: bool,
         docker_timeout: int,
         docker_image_flag: str = DockerImageFlagOption.FROM_YML.value,
+        all_packs: bool = False,
+        docker_image_target: str = "",
+        use_git: bool = False,
     ):
         self._req_3 = req_3
         self._req_2 = req_2
@@ -119,6 +125,7 @@ class Linter:
         self._pack_name = None
         self.docker_timeout = docker_timeout
         self.docker_image_flag = docker_image_flag
+        self.docker_image_target = docker_image_target
         # Docker client init
         if docker_engine:
             self._docker_client: docker.DockerClient = init_global_docker_client(
@@ -180,6 +187,8 @@ class Linter:
                 self._pkg_lint_status["errors"].append(
                     "Unable to find yml file in package"
                 )
+        self._all_packs = all_packs
+        self._use_git = use_git
 
     @timer(group_name="lint")
     def run_pack(
@@ -283,12 +292,20 @@ class Linter:
         try:
             script_obj: Dict = {}
             yml_obj: Dict = YAML_Handler().load(self._yml_file)
-            if isinstance(yml_obj, dict):
-                script_obj = (
-                    yml_obj.get("script", {})
-                    if isinstance(yml_obj.get("script"), dict)
-                    else yml_obj
+            if not isinstance(yml_obj, dict):
+                self._pkg_lint_status["errors"].append("Unable to parse package yml")
+                return True
+            script_obj = (
+                yml_obj.get("script", {})
+                if isinstance(yml_obj.get("script"), dict)
+                else yml_obj
+            )
+            # if the script/integration is deprecated and the -a or -g flag
+            if (self._all_packs or self._use_git) and yml_obj.get("deprecated"):
+                logger.info(
+                    f"skipping lint for {self._pack_name} because its deprecated. To lint it, use the -i flag."
                 )
+                return True
             self._facts["is_script"] = (
                 True if "Scripts" in self._yml_file.parts else False
             )
@@ -320,6 +337,7 @@ class Linter:
                     script_obj=script_obj,
                     script_id=yml_obj_id,
                     docker_image_flag=docker_image,
+                    docker_image_target=self.docker_image_target,
                 )
                 images.extend(temp_images)
                 images = list(set(images))
@@ -342,6 +360,7 @@ class Linter:
                 "DEMISTO_LINT_UPDATE_CERTS": os.getenv(
                     "DEMISTO_LINT_UPDATE_CERTS", "yes"
                 ),
+                "PYTHONDONTWRITEBYTECODE": "1",
             }
 
         lint_files = set()
@@ -900,6 +919,7 @@ class Linter:
             str, str. image name to use and errors string.
         """
         log_prompt = f"{self._pack_name} - Image create"
+        docker_base = get_docker()
         # Get requirements file for image
         requirements = []
 
@@ -924,7 +944,7 @@ class Linter:
             logger.info(
                 f"{log_prompt} - Trying to pull existing image {test_image_name}"
             )
-            test_image = get_docker().pull_image(test_image_name)
+            test_image = docker_base.pull_image(test_image_name)
         except (docker.errors.APIError, docker.errors.ImageNotFound):
             logger.info(f"{log_prompt} - Unable to find image {test_image_name}")
         # Creatng new image if existing image isn't found
@@ -934,7 +954,7 @@ class Linter:
                 f"time"
             )
             try:
-                get_docker().create_image(
+                docker_base.create_image(
                     docker_base_image[0],
                     test_image_name,
                     container_type=self._pkg_lint_status["pack_type"],
@@ -947,9 +967,11 @@ class Linter:
                             test_image_name_to_push = test_image_name.replace(
                                 "docker-io.art.code.pan.run/", ""
                             )
-                            self._docker_client.images.push(test_image_name_to_push)
+                            docker_push_output = self._docker_client.images.push(
+                                test_image_name_to_push
+                            )
                             logger.info(
-                                f"{log_prompt} - Image {test_image_name_to_push} pushed to repository"
+                                f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository. Output = {docker_push_output}"
                             )
                             break
                         except (
@@ -1003,7 +1025,7 @@ class Linter:
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
-            container_status = container.wait(condition="exited")
+            container_status = container.wait()
             # Get container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
@@ -1094,7 +1116,7 @@ class Linter:
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # Waiting for container to be finished
-            container_status: dict = container.wait(condition="exited")
+            container_status: dict = container.wait()
             # Getting container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
@@ -1220,7 +1242,7 @@ class Linter:
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
-            container_status = container.wait(condition="exited")
+            container_status = container.wait()
             # Get container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
@@ -1311,7 +1333,7 @@ class Linter:
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
-            container_status = container.wait(condition="exited")
+            container_status = container.wait()
             # Get container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
@@ -1389,8 +1411,8 @@ class Linter:
 
     def _check_native_image_flag(self, docker_image_flag):
         """
-        Gets a native docker image flag and verify that it is one of the following: 'native:ga', 'native:maintenance'
-        or 'native:dev'.
+        Gets a native docker image flag and verify that it is one of the following: 'native:ga', 'native:maintenance',
+        'native:dev' or 'native:target'.
         If it isn't, raises a suitable exception.
         Args:
             docker_image_flag (str): Requested docker image flag.
@@ -1401,10 +1423,12 @@ class Linter:
             DockerImageFlagOption.NATIVE_DEV.value,
             DockerImageFlagOption.NATIVE_GA.value,
             DockerImageFlagOption.NATIVE_MAINTENANCE.value,
+            DockerImageFlagOption.NATIVE_TARGET.value,
+            DockerImageFlagOption.NATIVE_CANDIDATE.value,
         ):
             err_msg = (
                 f"The requested native image: '{docker_image_flag}' is not supported. The possible options are: "
-                f"'native:ga', 'native:maintenance' and 'native:dev'. For supported native image"
+                f"'native:ga', 'native:maintenance', 'native:dev' and 'native:target'. For supported native image"
                 f" versions please see: 'Tests/{NATIVE_IMAGE_FILE_NAME}'"
             )
             logger.error(
@@ -1529,20 +1553,20 @@ class Linter:
             if self._is_native_image_support_script(
                 native_image, supported_native_images, script_id
             ):
-
-                if native_image == DockerImageFlagOption.NATIVE_DEV.value:
-                    #  Get native latest from Docker Hub
-                    native_image_ref = self._get_dev_native_image(script_id)
-                else:  # versioned native image
+                # When running lint --di all, do not run native:dev
+                if native_image != DockerImageFlagOption.NATIVE_DEV.value:
                     native_image_ref = self._get_versioned_native_image(native_image)
-
-                if native_image_ref:
-                    imgs.append(native_image_ref)
+                    if native_image_ref:
+                        imgs.append(native_image_ref)
 
         return imgs
 
     def _get_docker_images_for_lint(
-        self, script_obj: Dict, script_id: str, docker_image_flag: str
+        self,
+        script_obj: Dict,
+        script_id: str,
+        docker_image_flag: str,
+        docker_image_target: Optional[str],
     ) -> List[str]:
         """Gets a yml as dict of the current integration/script that lint runs on, and a flag indicates on which docker
          images lint should run.
@@ -1564,7 +1588,7 @@ class Linter:
             - If docker_image_flag is 'all', lint will run on:
                 1. Native GA - the native image of the current server version.
                 2. Native Maintenance - the native image of the previous server version.
-                3. Native Dev - The latest tag of the native image for Docker Hub.
+                3. Native Candidate - the candidate of the next GA version (the last dev version that was checked).
                 4. The docker images that appear in the YML file of the integration/script that lint runs on.
 
             - If the docker_image_flag is a specific docker image tag, lint will try to run on it.
@@ -1572,6 +1596,8 @@ class Linter:
             script_obj (dict): A yml dict of the integration/script that lint runs on.
             script_id (str): The ID of the integration/script that lint runs on.
             docker_image_flag (str): A flag indicates on which docker images lint should run.
+            docker_image_target (Optional[str]): The docker image to test native supported content on.
+                                       Must be used with docker_image_flag native-target
         Returns:
             List. A list of all desirable docker images references.
         """
@@ -1613,15 +1639,27 @@ class Linter:
 
             self._check_native_image_flag(docker_image_flag)
 
+            image_support = docker_image_flag
+            if docker_image_flag == DockerImageFlagOption.NATIVE_TARGET.value:
+                image_support = DockerImageFlagOption.NATIVE_DEV.value
+
             if native_image := self._get_native_image_name_from_config_file(
-                docker_image_flag
+                image_support
             ):
 
                 if self._is_native_image_support_script(
                     native_image, supported_native_images, script_id
                 ):  # Integration/Script is supported by the requested native image
+                    native_image_ref: Optional[str] = ""
 
-                    if docker_image_flag == DockerImageFlagOption.NATIVE_DEV.value:
+                    if (
+                        docker_image_flag == DockerImageFlagOption.NATIVE_TARGET.value
+                        and docker_image_target
+                    ):
+                        # Desirable docker image to run is the target image only on native supported content.
+                        native_image_ref = docker_image_target
+
+                    elif docker_image_flag == DockerImageFlagOption.NATIVE_DEV.value:
                         # Desirable docker image to run on is the dev native image - get the latest tag from Docker Hub
                         native_image_ref = self._get_dev_native_image(script_id)
 

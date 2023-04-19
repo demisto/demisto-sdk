@@ -4,7 +4,6 @@ import pathlib
 import shutil
 from collections import Counter
 from copy import deepcopy
-from pathlib import Path
 from typing import Dict, Optional
 from unittest import mock
 
@@ -1912,16 +1911,15 @@ class TestRNUpdateUnit:
         Then:
             - Call print_error with the appropriate error message
         """
-        import demisto_sdk.commands.update_release_notes.update_rn
+        import logging
+
         from demisto_sdk.commands.update_release_notes.update_rn import (
             update_api_modules_dependents_rn,
         )
 
         if os.path.exists(DEFAULT_ID_SET_PATH):
             os.remove(DEFAULT_ID_SET_PATH)
-        print_error_mock = mocker.patch.object(
-            demisto_sdk.commands.update_release_notes.update_rn, "print_error"
-        )
+        print_error_mock = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         update_api_modules_dependents_rn(
             pre_release="", update_type="", added="", modified="", id_set_path=None
         )
@@ -2695,9 +2693,7 @@ def test_handle_existing_rn_version_path(mocker, repo):
         Ensure the function does not sets should delete existing rn property to True when paths are identical.
     """
     pack = repo.create_pack("test")
-    mocker.patch.object(
-        Path, "absolute", return_value=f"{str(pack.path)}/ReleaseNotes/1_0_1.md"
-    )
+    mocker.patch.object(UpdateRN, "CONTENT_PATH", return_value=repo.path)
     pack.create_release_notes(version="1_0_1")
     client = UpdateRN(
         pack_path=str(pack.path),

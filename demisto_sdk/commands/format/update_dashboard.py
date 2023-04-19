@@ -1,6 +1,5 @@
+import logging
 from typing import Tuple
-
-import click
 
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
@@ -8,6 +7,8 @@ from demisto_sdk.commands.format.format_constants import (
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class DashboardJSONFormat(BaseUpdateJSON):
@@ -25,7 +26,6 @@ class DashboardJSONFormat(BaseUpdateJSON):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
         **kwargs,
     ):
         super().__init__(
@@ -34,15 +34,13 @@ class DashboardJSONFormat(BaseUpdateJSON):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            verbose=verbose,
             **kwargs,
         )
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             super().update_json()
             self.default_description()
@@ -50,11 +48,9 @@ class DashboardJSONFormat(BaseUpdateJSON):
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.debug(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE
 
     def default_description(self):

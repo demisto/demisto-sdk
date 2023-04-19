@@ -36,16 +36,12 @@ class DockerImageValidator(BaseValidator):
         is_modified_file,
         is_integration,
         ignored_errors=None,
-        print_as_warnings=False,
-        suppress_print: bool = False,
         json_file_path: Optional[str] = None,
         is_iron_bank: bool = False,
         specific_validations: list = None,
     ):
         super().__init__(
             ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
-            suppress_print=suppress_print,
             json_file_path=json_file_path,
             specific_validations=specific_validations,
         )

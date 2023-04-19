@@ -1,9 +1,8 @@
 import glob
-import json
 import os
 import shutil
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Callable, List, Optional, Union
 
 import git
 import pytest
@@ -39,14 +38,14 @@ from demisto_sdk.commands.common.git_content_config import (
     GitCredentials,
 )
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
-    LOG_COLORS,
     MarketplaceTagParser,
     TagParser,
     arg_to_list,
     compare_context_path_in_yml_and_readme,
+    extract_field_from_mapping,
     field_to_cli_name,
     filter_files_by_type,
     filter_files_on_pack,
@@ -127,6 +126,9 @@ from TestSuite.test_tools import ChangeCWD
 
 GIT_ROOT = git_path()
 yaml = YAML_Handler()
+json = JSON_Handler()
+
+SENTENCE_WITH_UMLAUTS = "Nett hier. Aber waren Sie schon mal in Baden-Württemberg?"
 
 
 class TestGenericFunctions:
@@ -148,19 +150,23 @@ class TestGenericFunctions:
 
     @staticmethod
     @pytest.mark.parametrize(
-        "suffix,dump_function", ((".json", json.dumps), (".yml", yaml.dumps))
+        "suffix,dumps_method", ((".json", json.dumps), (".yml", yaml.dumps))
     )
     def test_get_file_non_unicode(
-        tmp_path, suffix: str, dump_function: Callable[[Dict], Any]
+        tmp_path,
+        suffix: str,
+        dumps_method: Callable,
     ):
         """Tests reading a non-unicode file"""
-        text = "Nett hier. Aber waren Sie schon mal in Baden-Württemberg?"  # the umlaut is important
         path = (tmp_path / "non_unicode").with_suffix(suffix)
 
-        path.write_text(
-            dump_function({"text": text}, ensure_ascii=False), encoding="latin-1"
+        path.write_bytes(
+            dumps_method({"text": SENTENCE_WITH_UMLAUTS}, ensure_ascii=False).encode(
+                "latin-1"
+            )
         )
-        assert get_file(path, suffix) == {"text": text}
+        assert "ü" in path.read_text(encoding="latin-1")
+        assert get_file(path, suffix) == {"text": SENTENCE_WITH_UMLAUTS}
 
     @pytest.mark.parametrize(
         "file_name, prefix, result",
@@ -587,18 +593,6 @@ def test_capital_case():
     assert res == "Good_life-here V2"
     res = tools.capital_case("")
     assert res == ""
-
-
-class TestPrintColor:
-    def test_print_color(self, mocker):
-        mocker.patch("builtins.print")
-
-        tools.print_color("test", LOG_COLORS.GREEN)
-
-        print_args = print.call_args[0][0]
-        assert print_args == "{}{}{}".format(
-            LOG_COLORS.GREEN, "test", LOG_COLORS.NATIVE
-        )
 
 
 class TestReleaseVersion:
@@ -2256,15 +2250,17 @@ class TestMarketplaceTagParser:
 ### Sections:
 {MARKETPLACE_TAG_PARSER.XSOAR_PREFIX} - XSOAR PARAGRAPH{MARKETPLACE_TAG_PARSER.XSOAR_SUFFIX}
 {MARKETPLACE_TAG_PARSER.XSIAM_PREFIX} - XSIAM PARAGRAPH{MARKETPLACE_TAG_PARSER.XSIAM_SUFFIX}
+{MARKETPLACE_TAG_PARSER.XPANSE_PREFIX} - XPANSE PARAGRAPH{MARKETPLACE_TAG_PARSER.XPANSE_SUFFIX}
 ### Inline:
 {MARKETPLACE_TAG_PARSER.XSOAR_INLINE_PREFIX}xsoar inline text{MARKETPLACE_TAG_PARSER.XSOAR_INLINE_SUFFIX}
-{MARKETPLACE_TAG_PARSER.XSIAM_INLINE_PREFIX}xsiam inline text{MARKETPLACE_TAG_PARSER.XSIAM_INLINE_SUFFIX}"""
+{MARKETPLACE_TAG_PARSER.XSIAM_INLINE_PREFIX}xsiam inline text{MARKETPLACE_TAG_PARSER.XSIAM_INLINE_SUFFIX}
+{MARKETPLACE_TAG_PARSER.XPANSE_INLINE_PREFIX}xpanse inline text{MARKETPLACE_TAG_PARSER.XPANSE_INLINE_SUFFIX}"""
 
     def test_invalid_marketplace_version(self):
         """
         Given:
             - Invalid marketplace version
-            - Text with XSOAR tags and XSIAM tags
+            - Text with XSOAR, XPANSE and XSIAM tags
         When:
             - Calling MarketplaceTagParser.parse_text()
         Then:
@@ -2276,10 +2272,13 @@ class TestMarketplaceTagParser:
         assert "### Inline:" in actual
         assert self.MARKETPLACE_TAG_PARSER.XSOAR_PREFIX not in actual
         assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XPANSE_PREFIX not in actual
         assert "XSOAR" not in actual
         assert "xsoar" not in actual
         assert "XSIAM" not in actual
         assert "xsiam" not in actual
+        assert "XPANSE" not in actual
+        assert "xpanse" not in actual
 
     def test_xsoar_marketplace_version(self):
         """
@@ -2289,7 +2288,7 @@ class TestMarketplaceTagParser:
         When:
             - Calling MarketplaceTagParser.parse_text()
         Then:
-            - Remove all XSIAM tags and their text, and keep XSOAR text with tags
+            - Remove all XSIAM and XPANSE tags and their text, and keep XSOAR text with tags
         """
         self.MARKETPLACE_TAG_PARSER.marketplace = MarketplaceVersions.XSOAR.value
         actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
@@ -2299,18 +2298,21 @@ class TestMarketplaceTagParser:
         assert "xsoar" in actual
         assert self.MARKETPLACE_TAG_PARSER.XSOAR_PREFIX not in actual
         assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XPANSE_PREFIX not in actual
         assert "XSIAM" not in actual
         assert "xsiam" not in actual
+        assert "XPANSE" not in actual
+        assert "xpanse" not in actual
 
     def test_xsiam_marketplace_version(self):
         """
         Given:
             - xsiam marketplace version
-            - Text with XSOAR tags and XSIAM tags
+            - Text with XSOAR, XPANSE and XSIAM tags
         When:
             - Calling MarketplaceTagParser.parse_text()
         Then:
-            - Remove all XSOAR tags and their text, and keep XSIAM text with tags
+            - Remove all XSOAR and XPANSE tags and their text, and keep XSIAM text with tags
         """
         self.MARKETPLACE_TAG_PARSER.marketplace = (
             MarketplaceVersions.MarketplaceV2.value
@@ -2320,10 +2322,37 @@ class TestMarketplaceTagParser:
         assert "### Inline:" in actual
         assert "XSOAR" not in actual
         assert "xsoar" not in actual
+        assert "XPANSE" not in actual
+        assert "xpanse" not in actual
         assert self.MARKETPLACE_TAG_PARSER.XSOAR_PREFIX not in actual
         assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XPANSE_PREFIX not in actual
         assert "XSIAM" in actual
         assert "xsiam" in actual
+
+    def test_xpanse_marketplace_version(self):
+        """
+        Given:
+            - xpanse marketplace version
+            - Text with XSOAR, XPANSE and XSIAM tags
+        When:
+            - Calling MarketplaceTagParser.parse_text()
+        Then:
+            - Remove all XSOAR and XSIAM tags and their text, and keep XPANSE text with tags
+        """
+        self.MARKETPLACE_TAG_PARSER.marketplace = MarketplaceVersions.XPANSE.value
+        actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
+        assert "### Sections:" in actual
+        assert "### Inline:" in actual
+        assert "XSOAR" not in actual
+        assert "xsoar" not in actual
+        assert "XSIAM" not in actual
+        assert "xsiam" not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSOAR_PREFIX not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XPANSE_PREFIX not in actual
+        assert "XPANSE" in actual
+        assert "xpanse" in actual
 
 
 @pytest.mark.parametrize(
@@ -2518,3 +2547,21 @@ def test_get_core_packs(mocker):
     assert len(mp_to_core_packs) == len(MarketplaceVersions)
     for mp_core_packs in mp_to_core_packs.values():
         assert "Base" in mp_core_packs
+
+
+@pytest.mark.parametrize(
+    "mapping_value, expected_output",
+    [
+        ("employeeid", "employeeid"),
+        ("${employeeid}", "employeeid"),
+        ("employeeid.hello", "employeeid"),
+        ("employeeid.[0].hi", "employeeid"),
+        ("${employeeid.hello}", "employeeid"),
+        ("${employeeid.[0]}", "employeeid"),
+        ("${.=1}", ""),
+        (".", ""),
+        ('"not a field"', ""),
+    ],
+)
+def test_extract_field_from_mapping(mapping_value, expected_output):
+    assert extract_field_from_mapping(mapping_value) == expected_output

@@ -62,6 +62,7 @@ from demisto_sdk.commands.common.update_id_set import (
     re_create_id_set,
     should_skip_item_by_mp,
 )
+from TestSuite.test_tools import str_in_call_args_list
 from TestSuite.utils import IsEqualFunctions
 
 json = JSON_Handler()
@@ -207,7 +208,7 @@ class TestPacksMetadata:
         assert (f"adding {pack_metadata_path} to id_set" in captured.out) == print_logs
 
     @staticmethod
-    def test_process_packs_exception_thrown(capsys, mocker):
+    def test_process_packs_exception_thrown(mocker):
         """
         Given
             - A pack metadata file path.
@@ -216,12 +217,14 @@ class TestPacksMetadata:
         Then
             - Handle the exceptions gracefully.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
         with pytest.raises(FileNotFoundError):
             get_pack_metadata_data("Pack_Path", True)
-        captured = capsys.readouterr()
 
-        assert "Failed to process Pack_Path, Error:" in captured.out
+        assert str_in_call_args_list(
+            logger_info.call_args_list, "Failed to process Pack_Path, Error:"
+        )
 
 
 class TestDuplicates:
@@ -3335,7 +3338,7 @@ class TestJob:
     @pytest.mark.parametrize("print_logs", (True, False))
     @pytest.mark.parametrize("is_feed", (True, False))
     def test_process_jobs_file_nonexistent(
-        capsys, repo, is_feed: bool, print_logs: bool, mocker
+        repo, is_feed: bool, print_logs: bool, mocker
     ):
         """
         Given
@@ -3346,6 +3349,7 @@ class TestJob:
         Then
             - Verify output to logs.
         """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mocker.patch.object(uis, "should_skip_item_by_mp", return_value=False)
 
         pack = repo.create_pack()
@@ -3361,7 +3365,9 @@ class TestJob:
                 MarketplaceVersions.XSOAR.value,
                 print_logs,
             )
-        assert f"failed to process job {job_json_path}" in capsys.readouterr().out
+        assert str_in_call_args_list(
+            logger_info.call_args_list, f"failed to process job {job_json_path}"
+        )
 
 
 class TestWizard:

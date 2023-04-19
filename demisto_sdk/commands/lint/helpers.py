@@ -31,6 +31,8 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 
 # Python2 requirements
+from demisto_sdk.commands.common.tools import get_remote_file
+
 PYTHON2_REQ = ["flake8", "vulture"]
 
 # Define check exit code if failed
@@ -264,40 +266,39 @@ def add_tmp_lint_files(
             pwsh_module = TYPE_PWSH == pack_type and module.suffix == ".ps1"
             python_module = TYPE_PYTHON == pack_type and module.suffix == ".py"
             if pwsh_module or python_module:
-                cur_path = pack_path / module.name
-                if not cur_path.exists():
-                    cur_path.write_bytes(content)
-                    added_modules.append(cur_path)
+                copied_api_module_path = pack_path / module.name
+                if not copied_api_module_path.exists():
+                    copied_api_module_path.write_bytes(content)
+                    added_modules.append(copied_api_module_path)
         if pack_type == TYPE_PYTHON:
             # Append empty so it will exists
-            cur_path = pack_path / "CommonServerUserPython.py"
-            if not cur_path.exists():
-                cur_path.touch()
-                added_modules.append(cur_path)
+            copied_common_server_python_path = pack_path / "CommonServerUserPython.py"
+            if not copied_common_server_python_path.exists():
+                copied_common_server_python_path.touch()
+                added_modules.append(copied_common_server_python_path)
 
             # Add API modules to directory if needed
             module_regex = r"from ([\w\d]+ApiModule) import \*(?:  # noqa: E402)?"
             for lint_file in lint_files:
-                module_name = ""
                 data = lint_file.read_text()
-                module_match = re.search(module_regex, data)
-                if module_match:
-                    module_name = module_match.group(1)
-                    rel_api_path = (
+                for module_name in re.findall(module_regex, data):
+                    api_code_path = (
                         Path("Packs/ApiModules/Scripts")
                         / module_name
                         / f"{module_name}.py"
                     )
-                    cur_path = pack_path / f"{module_name}.py"
-                    if content_repo:
-                        module_path = content_repo / rel_api_path
-                        shutil.copy(src=module_path, dst=cur_path)
+                    copied_api_module_path = pack_path / f"{module_name}.py"
+                    if content_repo:  # if working in a repo
+                        module_path = content_repo / api_code_path
+                        shutil.copy(src=module_path, dst=copied_api_module_path)
                     else:
-                        url = f"https://raw.githubusercontent.com/demisto/content/master/{rel_api_path}"
-                        api_content = requests.get(url=url, verify=False).content
-                        cur_path.write_bytes(api_content)
+                        api_content = get_remote_file(
+                            full_file_path=f"https://raw.githubusercontent.com/demisto/content/master/{api_code_path}",
+                            return_content=True,
+                        )
+                        copied_api_module_path.write_bytes(api_content)
 
-                    added_modules.append(cur_path)
+                    added_modules.append(copied_api_module_path)
         yield
     except Exception as e:
         logger.error(f"add_tmp_lint_files unexpected exception: {str(e)}")
@@ -522,7 +523,7 @@ def coverage_report_editor(coverage_file, code_file_absolute_path):
         cursor = sql_connection.cursor()
         index = cursor.execute("SELECT count(*) FROM file").fetchall()[0][0]
         if not index == 1:
-            logger.debug("unexpected file list in coverage report")
+            logger.warning("unexpected file list in coverage report")
         else:
             cursor.execute(
                 "UPDATE file SET path = ? WHERE id = ?", (code_file_absolute_path, 1)

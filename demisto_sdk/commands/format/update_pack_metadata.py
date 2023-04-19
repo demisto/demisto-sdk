@@ -1,8 +1,6 @@
 import logging
 import os
 
-import click
-
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
@@ -22,7 +20,6 @@ class PackMetadataJsonFormat(BaseUpdateJSON):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
         clear_cache: bool = False,
         **kwargs,
     ):
@@ -32,7 +29,6 @@ class PackMetadataJsonFormat(BaseUpdateJSON):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            verbose=verbose,
             clear_cache=clear_cache,
             **kwargs,
         )
@@ -49,20 +45,17 @@ class PackMetadataJsonFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} =================",
-                fg="bright_blue",
+            logger.info(
+                f"\n[blue]================= Updating file {self.source_file} =================[/bright_blue]"
             )
             self.deprecate_pack()
             self.save_json_to_destination_file(encode_html_chars=False)
             return SUCCESS_RETURN_CODE
 
         except Exception as err:
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.debug(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE
 
     def deprecate_pack(self):

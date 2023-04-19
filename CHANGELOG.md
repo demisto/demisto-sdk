@@ -3,7 +3,8 @@
 ## Unreleased
 * Added support for the `<~XPANSE>` marketplace tag in release notes.
 * Added support for marketplace tags in the **doc-review** command.
-* Added **generate-unit-tests** documentation to the repo README. 
+* Updated the logs shown during lint when running in docker.
+* Added the `hiddenpassword` field to the integration schema, allowing **validate** to run on integrations with username-only inputs.
 
 ## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.
@@ -15,6 +16,7 @@
 * Fixed an issue where **validate** would fail when playbook inputs contain Transform Language (DT).
 * Added a new **validate** check, making sure a first level header exist in release notes (RN116)
 * Fixed an issue where **lint** would not properly handle multiple ApiModules imports.
+
 
 ## 1.12.0
 * Added the **pre-commit** command, to improve code quality of XSOAR content.

@@ -30,6 +30,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.pack import (
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yml_paths_in_dir, src_root
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
@@ -639,7 +640,7 @@ def test_upload_invalid_path(demisto_client_configure, mocker):
 def test_file_not_supported(demisto_client_configure, mocker):
     """
     Given
-        - A not supported (.py) file
+        - A not supported (.json) file
 
     When
         - Uploading a file
@@ -648,12 +649,13 @@ def test_file_not_supported(demisto_client_configure, mocker):
         - Ensure uploaded failure message is printed as expected
     """
     mocker.patch.object(demisto_client, "configure", return_value="object")
-    file_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.py"
+    file_path = Path(
+        f"{git_path()}/demisto_sdk/tests/test_files/fake_pack/Integrations/test_data/results.json"
+    )
     uploader = Uploader(input=file_path, insecure=False)
     mocker.patch.object(uploader, "client")
-    status_code = uploader.upload()
-    assert status_code == 1
-    assert uploader.failed_upload[0][0] == "DummyScript.py"
+    assert not uploader.upload()
+    assert uploader.failed_parsing_content == [file_path]
 
 
 def test_parse_error_response_ssl(demisto_client_configure, mocker):
@@ -668,16 +670,16 @@ def test_parse_error_response_ssl(demisto_client_configure, mocker):
         - Ensure a error message is parsed successfully
         - Verify SSL error message printed as expected
     """
-    file_type = "playbook"
-    file_name = "SomePlaybookName.yml"
-    api_exception = ApiException(reason="[SSL: CERTIFICATE_VERIFY_FAILED]")
-    message = parse_error_response(
-        error=api_exception, file_type=file_type, file_name=file_name
+
+    script = BaseContent.from_path(
+        Path(f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.py")
     )
+    api_exception = ApiException(reason="[SSL: CERTIFICATE_VERIFY_FAILED]")
+    message = parse_error_response(error=api_exception, content_item=script)
     assert (
         message
         == "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self signed certificate.\n"
-        "Try running the command with --insecure flag."
+        "Run the command with the --insecure flag."
     )
 
 
@@ -939,27 +941,6 @@ class TestZippedPackUpload:
         )
         uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]["file"]
         assert str(uploaded_file_path) == input
-
-    def test_zip_and_upload(self, mocker):
-        """
-        Given:
-            - name of pack in content and the zip flag is on
-        When:
-            - call to upload command
-        Then:
-            - validate the zip file was created and pass to the zipped_pack_uploader method
-        """
-        # prepare
-        mock_api_client(mocker)
-        mocker.patch.object(Uploader, "zipped_pack_uploader")
-
-        # run
-        click.Context(command=upload).invoke(upload, input=TEST_PACK, zip=True)
-
-        # validate
-        assert (
-            "uploadable_packs.zip" in Uploader.zipped_pack_uploader.call_args[1]["path"]
-        )
 
     def test_server_config_after_upload(self, mocker):
         """

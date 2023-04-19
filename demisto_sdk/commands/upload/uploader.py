@@ -46,6 +46,9 @@ from demisto_sdk.commands.content_graph.objects.content_item import (
     NotUploadableException,
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.parsers.content_item import (
+    NotAContentItemException,
+)
 
 logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
@@ -128,6 +131,7 @@ class Uploader:
         self.successfully_uploaded: List[Union[ContentItem, Pack]] = []
         self.failed_upload: List[Tuple[Union[ContentItem, Pack], str]] = []
         self.failed_upload_version_mismatch: List[Union[ContentItem, Pack]] = []
+        self.failed_parsing_content: List[Path] = []
         self.demisto_version = get_demisto_version(self.client)
         self.pack_names: List[str] = pack_names or []
         self.skip_upload_packs_validation = skip_validation
@@ -179,6 +183,7 @@ class Uploader:
                 self.successfully_uploaded,
                 self.failed_upload,
                 self.failed_upload_version_mismatch,
+                self.failed_parsing_content,
             )
         ):
             # if not uploaded any file
@@ -213,9 +218,8 @@ class Uploader:
             path
         )  # type:ignore[assignment]
         if content_item is None:
-            raise ValueError(
-                f"cannot parse {path.absolute()}, see errors above."
-            )  # error is logged in Basecontent.from_path
+            self.failed_parsing_content.append(path)
+            return False
         # TODO raise NotUploadable? Create new exception? Something else?
         zipped = path.suffix == ".zip"
         try:
@@ -347,6 +351,13 @@ class Uploader:
             logger.info(
                 f"\n[yellow]NOT UPLOADED DUE TO VERSION MISMATCH:\n{version_mismatch_str}[/yellow]"
             )
+        if self.failed_parsing_content:
+            failed_parsing_str = tabulate(
+                ((path.name, path) for path in self.failed_parsing_content),
+                headers=("FILE_NAME", "PATH"),
+                tablefmt="fancy_grid",
+            )
+            logger.info(f"\n[red]FAILED PARSING CONTENT:{failed_parsing_str}[/red]")
         if self.failed_upload:
             failed_upload_str = tabulate(
                 (
@@ -359,13 +370,11 @@ class Uploader:
             logger.info(f"\n[red]FAILED UPLOADS:{failed_upload_str}[/red]")
 
 
-def parse_error_response(error: ApiException, content_item: ContentItem) -> str:
+def parse_error_response(error: ApiException) -> str:
     """
     Parses error message from exception raised in call to client to upload a file
 
     error (ApiException): The exception which was raised in call in to client
-    file_type (str): The file type which was attempted to be uploaded
-    file_name (str): The file name which was attempted to be uploaded
     """
     message = error
     if hasattr(error, "reason"):
@@ -390,7 +399,7 @@ def parse_error_response(error: ApiException, content_item: ContentItem) -> str:
 
     if isinstance(error, KeyboardInterrupt):
         message = "Aborted due to keyboard interrupt."
-    return f"\n[red]Upload {content_item.content_type}: {content_item.normalize_name} failed:\n{message}[/red]"
+    return message
 
 
 class ConfigFileParser:

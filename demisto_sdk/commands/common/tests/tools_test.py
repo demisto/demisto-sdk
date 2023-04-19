@@ -1005,7 +1005,7 @@ def test_get_pack_ignore_content(pack: Pack, pack_ignore_content: str, expected_
 
     pack.pack_ignore.write_text(pack_ignore_content)
     with ChangeCWD(pack.repo_path):
-        assert type(get_pack_ignore_content(pack.name)) == type(expected_object)
+        assert type(get_pack_ignore_content(pack.name)) is type(expected_object)
 
 
 @pytest.mark.parametrize(

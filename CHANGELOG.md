@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* The **lint** command will not use network by default when running unit-tests anymore.
 
 ## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.

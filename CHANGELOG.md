@@ -2,6 +2,10 @@
 
 ## Unreleased
 * The **lint** command will not use network by default when running unit-tests anymore.
+* Added support for the `<~XPANSE>` marketplace tag in release notes.
+* Added support for marketplace tags in the **doc-review** command.
+* Updated the logs shown during lint when running in docker.
+* Added the `hiddenpassword` field to the integration schema, allowing **validate** to run on integrations with username-only inputs.
 
 ## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.

@@ -205,8 +205,7 @@ class Linter:
                 ignored_integrations_scripts_ids = config[
                     TESTS_REQUIRE_NETWORK_PACK_IGNORE
                 ]
-                _id = get_id(self._yml_file_content)
-                if _id in ignored_integrations_scripts_ids:
+                if get_id(self._yml_file_content) in ignored_integrations_scripts_ids:
                     return False
         return True
 

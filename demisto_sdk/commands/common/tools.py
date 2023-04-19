@@ -1366,11 +1366,11 @@ def get_pack_ignore_content(pack_name: str) -> Union[ConfigParser, None]:
             config.read(_pack_ignore_file_path)
             return config
         except MissingSectionHeaderError as err:
-            logger.error(
-                f"Error when retrieving the content of {_pack_ignore_file_path}\n{err=}"
+            logger.exception(
+                f"Error when retrieving the content of {_pack_ignore_file_path}"
             )
             return None
-    logger.info(
+    logger.warning(
         f"[red]Could not find pack-ignore file at path {_pack_ignore_file_path} for pack {pack_name}[/red]"
     )
     return None
@@ -1404,16 +1404,17 @@ def get_ignore_pack_skipped_tests(
     # pack_ignore_path = get_pack_ignore_file_path(pack_name)
     if pack_name in modified_packs and (config := get_pack_ignore_content(pack_name)):
         # go over every file in the config
-        for section in config.sections():
-            if section.startswith("file:"):
-                # given section is of type file
-                file_name: str = section[5:]
-                for key in config[section]:
-                    if key == "ignore":
-                        # group ignore codes to a list
-                        file_name_to_ignore_dict[file_name] = str(
-                            config[section][key]
-                        ).split(",")
+        for section in filter(
+            lambda section: section.startswith("file:"), config.sections()
+        ):
+            # given section is of type file
+            file_name: str = section[5:]
+            for key in config[section]:
+                if key == "ignore":
+                    # group ignore codes to a list
+                    file_name_to_ignore_dict[file_name] = str(
+                        config[section][key]
+                    ).split(",")
 
     for file_name, ignore_list in file_name_to_ignore_dict.items():
         if any(ignore_code == "auto-test" for ignore_code in ignore_list):
@@ -3532,19 +3533,15 @@ def get_id(file_content: Dict) -> Union[str, None]:
     Returns:
         str: the ID of the content item in case found, None otherwise.
     """
-    if "commonfields" in file_content.keys():
+    if "commonfields" in file_content:
         return file_content.get("commonfields", {}).get("id")
-    elif "dashboards_data" in file_content.keys():
+    elif "dashboards_data" in file_content:
         return file_content.get("dashboards_data", [{}])[0].get("global_id")
-    elif "templates_data" in file_content.keys():
+    elif "templates_data" in file_content:
         return file_content.get("templates_data", [{}])[0].get("global_id")
-    elif "global_rule_id" in file_content.keys():
-        return file_content.get("global_rule_id")
-    elif "trigger_id" in file_content.keys():
-        return file_content.get("trigger_id")
-    elif "content_global_id" in file_content.keys():
-        return file_content.get("content_global_id")
-    elif "rule_id" in file_content.keys():
-        return file_content.get("rule_id")
-    else:
-        return file_content.get("id")
+
+    for key in ("global_rule_id", "trigger_id", "content_global_id", "rule_id"):
+        if key in file_content:
+            return file_content[key]
+
+    return file_content.get("id")

@@ -2660,14 +2660,15 @@ class ValidateManager:
         if pack_name:
             if config := get_pack_ignore_content(pack_name):
                 # create file specific ignored errors list
-                for section in config.sections():
-                    if section.startswith("file:"):
-                        file_name = section[5:]
-                        ignored_errors_list[file_name] = []
-                        for key in config[section]:
-                            self.add_ignored_errors_to_list(
-                                config, section, key, ignored_errors_list[file_name]
-                            )
+                for section in filter(
+                    lambda section: section.startswith("file:"), config.sections()
+                ):
+                    file_name = section[5:]
+                    ignored_errors_list[file_name] = []
+                    for key in config[section]:
+                        self.add_ignored_errors_to_list(
+                            config, section, key, ignored_errors_list[file_name]
+                        )
 
         return ignored_errors_list
 

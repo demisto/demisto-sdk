@@ -1353,7 +1353,7 @@ def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str = ""):
         pack_id = get_pack_name(file_path)
         return {pack_id: pack_data}
 
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(f"[red]Failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
 
@@ -1788,7 +1788,7 @@ def process_integration(
                 if print_logs:
                     print(f"adding {file_path} to id_set")
                 res.append(get_integration_data(file_path, packs=packs))
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(f"[red]failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
 
@@ -1845,7 +1845,7 @@ def process_script(
             if print_logs:
                 print(f"adding {file_path} to id_set")
             res.append(get_script_data(yml_path, script_code=code, packs=packs))
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(f"[red]failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
 
@@ -1886,7 +1886,7 @@ def process_incident_fields(
             if print_logs:
                 print(f"adding {file_path} to id_set")
             res.append(get_incident_field_data(file_path, incident_types, packs=packs))
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(f"[red]failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
     return res, excluded_items_from_id_set
@@ -1937,7 +1937,7 @@ def process_indicator_types(
             res.append(
                 get_indicator_type_data(file_path, all_integrations, packs=packs)
             )
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(f"[red]failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
 
@@ -1985,7 +1985,7 @@ def process_generic_items(
             if print_logs:
                 print(f"adding {file_path} to id_set")
             res.append(get_generic_type_data(file_path, packs=packs))
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(f"[red]failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
     return res, excluded_items_from_id_set
@@ -2015,7 +2015,7 @@ def process_jobs(
             if print_logs:
                 print(f"adding {file_path} to id_set")
             result.append(get_job_data(file_path, packs=packs))
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(f"[red]failed to process job {file_path}, Error: {str(exp)}[/red]")
         raise
     return result
@@ -2045,7 +2045,7 @@ def process_wizards(
             if print_logs:
                 print(f"adding {file_path} to id_set")
             result.append(get_wizard_data(file_path, packs=packs))
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(
             f"[red]failed to process wizard {file_path}, Error: {str(exp)}[/red]"
         )
@@ -2094,7 +2094,7 @@ def process_layoutscontainers(
             print(f"adding {file_path} to id_set")
         result.append(layout_data)
 
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(
             f"[red]failed to process layoutcontainer {file_path}, Error: {str(exp)}[/red]"
         )
@@ -2179,7 +2179,7 @@ def process_general_items(
                 if print_logs:
                     print(f"adding {file_path} to id_set")
                 res.append(data_extraction_func(file_path, packs=packs))
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(f"[red]failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
 
@@ -2214,7 +2214,7 @@ def process_test_playbook_path(
             script = get_script_data(file_path, packs=packs)
         if find_type(file_path) == FileType.TEST_PLAYBOOK:
             playbook = get_playbook_data(file_path, packs=packs)
-    except Exception as exp:  # noqa
+    except Exception as exp:
         logger.info(f"[red]failed to process {file_path}, Error: {str(exp)}[/red]")
         raise
 

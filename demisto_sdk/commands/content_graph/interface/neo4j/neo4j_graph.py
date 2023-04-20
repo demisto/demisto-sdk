@@ -33,13 +33,10 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies imp
     get_all_level_packs_dependencies,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export import (
-    export_to_csv,
-    import_csv,
+    export_graphml,
+    import_graphml,
     merge_duplicate_commands,
     merge_duplicate_content_items,
-    post_export_write_queries,
-    post_import_write_queries,
-    pre_export_write_queries,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import (
     create_indexes,
@@ -275,7 +272,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         """
         nodes = filter(lambda node: node.id not in self._id_to_obj, nodes)
         if not nodes:
-            logger.debug(
+            logger.debug(  # noqa: PLE1205
                 "No nodes to parse packs because all of them in mapping",
                 self._id_to_obj,
             )
@@ -487,27 +484,26 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.execute_write(remove_server_nodes)
 
     def import_graph(self, imported_path: Optional[Path] = None) -> None:
-        """Imports CSV files to neo4j, by:
-        1. Dropping the constraints (we temporarily allow creating duplicate nodes from different repos)
-        2. Preparing the CSV files for import and importing them
-        3. Running serveral DB queries to fix the imported data
+        """Imports GraphML files to neo4j, by:
+        1. Preparing the GraphML files for import
+        2. Dropping the constraints (we temporarily allow creating duplicate nodes from different repos)
+        3. Import the GraphML files
         4. Merging duplicate nodes (conmmands/content items)
         5. Recreating the constraints
+        6. Remove empty properties
 
         Args:
             external_import_paths (List[Path]): A list of external repositories' import paths.
             imported_path (Path): The path to import the graph from.
         """
-        logger.info("Importing graph from CSV files...")
+        logger.info("Importing graph from GraphML files...")
         self._import_handler.extract_files_from_path(imported_path)
         self._import_handler.ensure_data_uniqueness()
-        node_files = self._import_handler.get_nodes_files()
-        relationship_files = self._import_handler.get_relationships_files()
-        if node_files and relationship_files:
+        graphml_filenames = self._import_handler.get_graphml_filenames()
+        if graphml_filenames:
             with self.driver.session() as session:
                 session.execute_write(drop_constraints)
-                session.execute_write(import_csv, node_files, relationship_files)
-                session.execute_write(post_import_write_queries)
+                session.execute_write(import_graphml, graphml_filenames)
                 session.execute_write(merge_duplicate_commands)
                 session.execute_write(merge_duplicate_content_items)
                 session.execute_write(create_constraints)
@@ -516,9 +512,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def export_graph(self, output_path: Optional[Path] = None) -> None:
         self.clean_import_dir()
         with self.driver.session() as session:
-            session.execute_write(pre_export_write_queries)
-            session.execute_write(export_to_csv, self.repo_path.name)
-            session.execute_write(post_export_write_queries)
+            session.execute_write(export_graphml, self.repo_path.name)
         self.dump_metadata()
         if output_path:
             self.zip_import_dir(output_path)

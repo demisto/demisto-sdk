@@ -360,6 +360,7 @@ class Linter:
                 "DEMISTO_LINT_UPDATE_CERTS": os.getenv(
                     "DEMISTO_LINT_UPDATE_CERTS", "yes"
                 ),
+                "PYTHONDONTWRITEBYTECODE": "1",
             }
 
         lint_files = set()
@@ -918,6 +919,7 @@ class Linter:
             str, str. image name to use and errors string.
         """
         log_prompt = f"{self._pack_name} - Image create"
+        docker_base = get_docker()
         # Get requirements file for image
         requirements = []
 
@@ -942,7 +944,7 @@ class Linter:
             logger.info(
                 f"{log_prompt} - Trying to pull existing image {test_image_name}"
             )
-            test_image = get_docker().pull_image(test_image_name)
+            test_image = docker_base.pull_image(test_image_name)
         except (docker.errors.APIError, docker.errors.ImageNotFound):
             logger.info(f"{log_prompt} - Unable to find image {test_image_name}")
         # Creatng new image if existing image isn't found
@@ -952,7 +954,7 @@ class Linter:
                 f"time"
             )
             try:
-                get_docker().create_image(
+                docker_base.create_image(
                     docker_base_image[0],
                     test_image_name,
                     container_type=self._pkg_lint_status["pack_type"],
@@ -965,9 +967,11 @@ class Linter:
                             test_image_name_to_push = test_image_name.replace(
                                 "docker-io.art.code.pan.run/", ""
                             )
-                            self._docker_client.images.push(test_image_name_to_push)
+                            docker_push_output = self._docker_client.images.push(
+                                test_image_name_to_push
+                            )
                             logger.info(
-                                f"{log_prompt} - Image {test_image_name_to_push} pushed to repository"
+                                f"{log_prompt} - Trying to push Image {test_image_name_to_push} to repository. Output = {docker_push_output}"
                             )
                             break
                         except (
@@ -986,14 +990,29 @@ class Linter:
 
     def _docker_remove_container(self, container_name: str):
         try:
+            logger.info(f"Trying to remove container {container_name}")
             container = self._docker_client.containers.get(container_name)
+            logger.info(f"Found container {container_name=}, {container.id=}")
             container.remove(force=True)
+            logger.info(f"Successfully removed container {container_name}")
         except docker.errors.NotFound:
+            logger.info(f"Didn't remove container {container_name} as it wasn't found")
             pass
         except requests.exceptions.ChunkedEncodingError as err:
             # see: https://github.com/docker/docker-py/issues/2696#issuecomment-721322548
-            if platform.system() != "Darwin" or "Connection broken" not in str(err):
+            system_is_not_darwin = platform.system() != "Darwin"
+            not_connetion_broken = "Connection broken" not in str(err)
+            logger.info(
+                f"Didn't remove container {container_name} as it wasn't found, {system_is_not_darwin=}, {not_connetion_broken=}"
+            )
+            if system_is_not_darwin or not_connetion_broken:
                 raise
+        except Exception:
+            logger.exception(
+                f"Exception when trying to remove the container {container_name}.",
+                exc_info=True,
+            )
+            raise
 
     def _docker_run_linter(
         self, linter: str, test_image: str, keep_container: bool
@@ -1021,7 +1040,7 @@ class Linter:
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
-            container_status = container.wait(condition="exited")
+            container_status = container.wait()
             # Get container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
@@ -1112,7 +1131,7 @@ class Linter:
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # Waiting for container to be finished
-            container_status: dict = container.wait(condition="exited")
+            container_status: dict = container.wait()
             # Getting container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
@@ -1238,7 +1257,7 @@ class Linter:
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
-            container_status = container.wait(condition="exited")
+            container_status = container.wait()
             # Get container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
@@ -1329,7 +1348,7 @@ class Linter:
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
-            container_status = container.wait(condition="exited")
+            container_status = container.wait()
             # Get container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs

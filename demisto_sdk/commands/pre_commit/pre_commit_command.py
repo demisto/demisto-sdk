@@ -30,7 +30,6 @@ from demisto_sdk.commands.content_graph.objects.integration_script import (
 from demisto_sdk.commands.pre_commit.hooks.mypy import MypyHook
 from demisto_sdk.commands.pre_commit.hooks.pycln import PyclnHook
 from demisto_sdk.commands.pre_commit.hooks.ruff import RuffHook
-from demisto_sdk.commands.pre_commit.hooks.run_unit_tests import RunUnitTestHook
 
 logger = logging.getLogger("demisto-sdk")
 yaml = YAML_Handler()
@@ -88,13 +87,11 @@ class PreCommitRunner:
         self,
         pre_commit_config: dict,
         python_version: str,
-        native_images: bool,
     ) -> None:
         hooks = self._get_hooks(pre_commit_config)
         PyclnHook(hooks["pycln"]).prepare_hook(PYTHONPATH)
         RuffHook(hooks["ruff"]).prepare_hook(python_version, IS_GITHUB_ACTIONS)
         MypyHook(hooks["mypy"]).prepare_hook(python_version)
-        RunUnitTestHook(hooks["run-unit-tests"]).prepare_hook(native_images)
 
     def run(
         self,
@@ -102,7 +99,6 @@ class PreCommitRunner:
         skip_hooks: Optional[List[str]] = None,
         validate: bool = False,
         format: bool = False,
-        native_images: bool = False,
         verbose: bool = False,
         show_diff_on_failure: bool = False,
     ) -> int:
@@ -113,11 +109,11 @@ class PreCommitRunner:
         if os.getenv("CI"):
             # No reason to update the docker-image on CI, as we don't commit from the CI
             skipped_hooks.add("update-docker-image")
-        if not unit_test and not native_images:
+        if not unit_test:
             skipped_hooks.add("run-unit-tests")
-        if validate and validate in skipped_hooks:
+        if validate and "validate" in skipped_hooks:
             skipped_hooks.remove("validate")
-        if format and format in skipped_hooks:
+        if format and "format" in skipped_hooks:
             skipped_hooks.remove("format")
 
         precommit_env["SKIP"] = ",".join(sorted(skipped_hooks))
@@ -150,7 +146,7 @@ class PreCommitRunner:
                     if response.returncode:
                         ret_val = response.returncode
                 continue
-            self.prepare_hooks(precommit_config, python_version, native_images)
+            self.prepare_hooks(precommit_config, python_version)
             with open(PRECOMMIT_PATH, "w") as f:
                 yaml.dump(precommit_config, f)
             # use chunks because OS does not support such large comments
@@ -241,7 +237,6 @@ def pre_commit_manager(
     skip_hooks: Optional[List[str]] = None,
     validate: bool = False,
     format: bool = False,
-    native_images: bool = False,
     verbose: bool = False,
     show_diff_on_failure: bool = False,
     sdk_ref: Optional[str] = None,
@@ -277,7 +272,6 @@ def pre_commit_manager(
         skip_hooks,
         validate,
         format,
-        native_images,
         verbose,
         show_diff_on_failure,
     )

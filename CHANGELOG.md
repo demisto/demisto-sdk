@@ -1,6 +1,29 @@
 # Changelog
 
 ## Unreleased
+* Added support for the `<~XPANSE>` marketplace tag in release notes.
+* Added support for marketplace tags in the **doc-review** command.
+* Updated the logs shown during lint when running in docker.
+* Added **generate-unit-tests** documentation to the repo README.
+* Added the `hiddenpassword` field to the integration schema, allowing **validate** to run on integrations with username-only inputs.
+
+## 1.13.0
+* Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.
+* Added a message showing the output path when **prepare-content** is called.
+* Contribution PRs that update outdated packs now display a warning message.
+* Fixed an issue when kebab-case has a misspelling in one of the sub words, the suggestion might be confusing.
+* Improved caching and stability for **lint**.
+* Added support for *.xif* files in the **secrets** command.
+* Fixed an issue where **validate** would fail when playbook inputs contain Transform Language (DT).
+* Added a new **validate** check, making sure a first level header exist in release notes (RN116)
+* Fixed an issue where **lint** would not properly handle multiple ApiModules imports.
+
+
+## 1.12.0
+* Added the **pre-commit** command, to improve code quality of XSOAR content.
+* Added the **run-unit-tests** command, to run unit tests of given content items inside their respective docker images.
+* Added support for filepath arguments in the **validate** and **format** commands.
+* Added pre-commit hooks for `validate`, `format`, `run-unit-tests` and `update-docker-image` commands.
 * Fixed an issue in the **download** command where layouts were overriden even without the `-f` option.
 * Fixed an issue where Demisto-SDK did not detect layout ID when using the **download** command.
 * Fixed an issue where the **lint** command ran on `native:dev` supported content when passing the `--docker-image all` flag, instead it will run on `native:candidate`.
@@ -13,11 +36,8 @@
 * Fixed a bug where **validate** returned error on playbook inputs with special characters.
 * Fixed an issue where **validate** did not properly check `conf.json` when the latter is modified.
 * Fixed an issue in the **upload** command, where a prompt was not showing on the console.
-* Added the **pre-commit** command, to improve code quality of XSOAR content.
-* Added the **run-unit-tests** command, to run unit tests of given content items inside their respective docker images.
-* Added support for filepath arguments in the **validate** and **format** commands.
-* Added pre-commit hooks for `validate`, `format`, `run-unit-tests` and `update-docker-image` commands.
-* Added support for creating a wrapper script and modifying the script from an incident to an alert.
+* Fixed an issue where running **lint** failed installing dependencies in containers.
+
 ## 1.11.0
 * **Note: Demisto-SDK will soon stop supporting Python 3.8**
 * Fixed an issue where using **download** on non-unicode content, merging them into existing files caused an error.
@@ -31,6 +51,7 @@
 * Refactored the logging framework. Demisto-SDK logs will now be written to `.demist_sdk_debug.log` under the content path (when detected) or the current directory.
 * Added `GR105` validation to **validate** command to check that no duplicate IDs are used.
 * Added support for API Modules imported in API modules in the **unify** command.
+* Added **validate** check, to make sure every Python file has a corresponding unit test file.
 
 ## 1.10.6
 * Fixed an issue where running **validate** with the `-g` flag would skip some validations for old-formatted (unified) integration/script files.

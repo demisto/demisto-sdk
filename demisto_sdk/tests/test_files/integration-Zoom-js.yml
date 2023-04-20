@@ -25,191 +25,196 @@ configuration:
   required: false
 script:
   script: |
-    ### pack version: 1.0.3
-    register_module_line('Zoom', 'start', __line__())
-    import datetime
-    import jwt
-    import requests
-    import json
-    import shutil
-    from zipfile import ZipFile
+    // pack version: 1.0.3
+    var server = params.url.replace(/[\/]+$/, '') + '/' + params.apiVersion + '/';
 
-    if not demisto.getParam('proxy'):
-        del os.environ['HTTP_PROXY']
-        del os.environ['HTTPS_PROXY']
-        del os.environ['http_proxy']
-        del os.environ['https_proxy']
-
-
-    def get_jwt(apiKey, apiSecret):
-        """
-        Encode the JWT token given the api ket and secret
-        """
-        tt = datetime.datetime.now()
-        expire_time = int(tt.strftime('%s')) + 5000
-        payload  = {
-            'iss': apiKey,
-            'exp': expire_time
-        }
-        encoded = jwt.encode(payload, apiSecret, algorithm='HS256')
-        return encoded
-
-
-    URL = 'https://api.zoom.us/v2/'
-    ACCESS_TOKEN = get_jwt(demisto.getParam('apiKey'), demisto.getParam('apiSecret'))
-    PARAMS = {'access_token': ACCESS_TOKEN}
-    HEADERS = {'Content-Type': 'application/json', 'Accept': 'application/json'}
-
-
-    def return_error(data):
-        """
-        Return error as result and exit
-        """
-        demisto.results({
-            'Type': entryTypes['error'],
-            'ContentsFormat': formats['text'],
-            'Contents' : data
-        })
-        sys.exit(0)
-
-
-    if demisto.command() == 'test-module':
-        res = requests.get(URL + 'users', headers=HEADERS, params=PARAMS)
-        if res.status_code == requests.codes.ok:
-            demisto.results('ok')
-        else:
-            return_error('Error testing [%d] - %s' % (res.status_code, res.text))
-
-    elif demisto.command() == 'zoom-create-user':
-        ut = demisto.getArg('user_type')
-        user_type = 1  # Basic
-        if ut == 'Pro':
-            user_type = 2
-        elif ut == 'Corporate':
-            user_type = 3
-        res = requests.post(URL + 'users', headers=HEADERS, params=PARAMS, json={
-            'action': 'create',
-            'user_info': {
-                'email': demisto.getArg('email'),
-                'type': user_type,
-                'first_name': demisto.getArg('first_name'),
-                'last_name': demisto.getArg('last_name')
+    var doReq = function(method, path, parameters, cookies) {
+        var result = http(
+            server + path + (method === 'GET' && parameters ? encodeToURLQuery(parameters) : ''),
+            {
+                Headers: {'Content-Type': ['application/json'], 'Accept': ['application/json']},
+                Method: method,
+                Body: method == 'POST' && parameters ? JSON.stringify(parameters) : '',
+                Username: params.accessID,
+                Password: params.accessKey,
+                Cookies: cookies
+            },
+            params.insecure,
+            params.useproxy
+        );
+        if (result.StatusCode < 200 || result.StatusCode > 299) {
+            var errObj;
+            try {
+                errObj = JSON.parse(result.Body);
+            } catch (ex) {
+                // Ignore this - we will just throw the status code back
             }
-        })
-        if res.status_code == requests.codes.created:
-            data = res.json()
-            demisto.results({
-                'Type': entryTypes['note'],
-                'ContentsFormat': formats['json'],
-                'Contents': data,
-                'HumanReadable': 'User created successfully with ID %s' % data.get('id'),
-                'EntryContext': {'Zoom.User': data}
-            })
-        else:
-            return_error('User creation failed: [%d] - %s' % (res.status_code, res.text))
-
-    elif demisto.command() == 'zoom-list-users':
-        params = {
-            'access_token': ACCESS_TOKEN,
-            'status': demisto.getArg('status'),
-            'page_size': demisto.getArg('page-size'),
-            'page_number': demisto.getArg('page-number')
+            if (errObj) {
+                throw 'Status: ' + result.StatusCode + '\nID: ' + errObj.id + '\nCode: ' + errObj.code + '\nMessage: ' + errObj.message;
+            }
+            throw 'Failed to perform request ' + path + ', request status code: ' + result.StatusCode;
         }
-        res = requests.get(URL + 'users', headers=HEADERS, params=params)
-        if res.status_code == requests.codes.ok:
-            data = res.json()
-            md = tableToMarkdown('Users', data.get('users'), ['id', 'first_name', 'last_name', 'email', 'type'])
-            md += '\n' + tableToMarkdown('Metadata', [data], ['page_count', 'page_number', 'page_size', 'total_records'])
-            demisto.results({
-                'Type': entryTypes['note'],
-                'ContentsFormat': formats['json'],
-                'Contents': data,
-                'HumanReadable': md,
-                'EntryContext': {
-                    'Zoom.User': data.get('users'),
-                    'Zoom.Metadata': {
-                        'Count': data.get('page_count'),
-                        'Number': data.get('page_number'),
-                        'Size': data.get('page_size'),
-                        'Total': data.get('total_records')
-                    }
+        if (result.Body === '') {
+            throw 'No content received.';
+        }
+        var obj;
+        try {
+            obj = JSON.parse(result.Body);
+        } catch (ex) {
+            throw 'Error parsing reply - ' + result.Body + ' - ' + ex;
+        }
+        return {body: result.Body, obj: obj, statusCode: result.StatusCode, cookies: result.Cookies};
+    };
+
+    var search = function(query, from, to, limit, offset, timezone, maxTimeToWaitForResults, byReceiptTime, sleep, waitForSearchComplete) {
+        var p = {query: query};
+        if (from) {
+            p.from = from;
+        }
+        if (to) {
+            p.to = to;
+        }
+        if (timezone) {
+            p.timeZone = timezone;
+        }
+        if (byReceiptTime) {
+            p.byReceiptTime = byReceiptTime;
+        }
+        // Create the job
+        var res = doReq('POST', 'search/jobs', p, null);
+        try {
+            var done = false;
+            var stat;
+            // Wait for results based on parameters
+            for (var i=0; i<maxTimeToWaitForResults / sleep; i++) {
+                wait(sleep);
+                stat = doReq('GET', 'search/jobs/' + res.obj.id, null, res.cookies);
+                if (stat.obj.state === 'DONE GATHERING RESULTS' || (!waitForSearchComplete && stat.obj.messageCount > (offset + 1) * limit)) {
+                    done = true;
+                    break;
                 }
-            })
-        else:
-            return_error('User creation failed: [%d] - %s' % (res.status_code, res.text))
-
-    elif demisto.command() == 'zoom-delete-user':
-        params = {
-            'access_token': ACCESS_TOKEN,
-            'action': demisto.getArg('action')
-        }
-        res = requests.delete(URL + 'users/' + demisto.getArg('user'), headers=HEADERS, params=params)
-        if res.status_code == requests.codes.no_content:
-            demisto.results('User %s deleted successfully' % demisto.getArg('user'))
-        else:
-            return_error('User creation failed: [%d] - %s' % (res.status_code, res.text))
-
-    elif demisto.command() == 'zoom-create-meeting':
-        auto_recording = "none"
-        if (demisto.getArg('auto_record_meeting') == 'yes'):
-            auto_recording = "cloud"
-        params = {
-            'type': 1,
-            'topic': demisto.getArg('topic'),
-            'settings': {
-                'join_before_host': True,
-                'auto_recording': auto_recording
+                if (stat.obj.state === 'CANCELLED') {
+                    throw 'Job ' + res.obj.id + ' was cancelled';
+                }
+            }
+            if (done) {
+                var results = {};
+                if (stat.obj.messageCount > 0) {
+                    var msg = doReq('GET', 'search/jobs/' + res.obj.id + '/messages', {offset: offset, limit: limit}, res.cookies);
+                    results.messages = msg.obj.messages.map(function(m) {return m.map;});
+                }
+                if (stat.obj.recordCount > 0) {
+                    var rec = doReq('GET', 'search/jobs/' + res.obj.id + '/records', {offset: offset, limit: limit}, res.cookies);
+                    results.records = rec.obj.records.map(function(m) {return m.map;});
+                }
+                return results;
+            }
+            throw 'Timeout while waiting for job ' + res.obj.id;
+        } finally {
+            try {
+                doReq('DELETE', 'search/jobs/' + res.obj.id, null, res.cookies);
+            } catch (ex) {
+                logInfo('SumoLogic error deleting job - ' + ex);
             }
         }
-        if (demisto.args()['type'] == 'Scheduled'):
-            params.update({
-                'type': 2,
-                'start_time': demisto.getArg('start-time'),
-                'timezone': demisto.getArg('timezone'),
-            })
-        res = requests.post(URL + "users/%s/meetings" % demisto.getArg('user'), headers=HEADERS, params=PARAMS, json=params)
-        if res.status_code == requests.codes.created:
-            data = res.json()
-            md = 'Meeting created successfully.\nStart it [here](%s) and join [here](%s).' % (data.get('start_url'), data.get('join_url'))
-            demisto.results({
-                'Type': entryTypes['note'],
-                'ContentsFormat': formats['json'],
-                'Contents': data,
-                'HumanReadable': md,
-                'EntryContext': {'Zoom.Meeting': data}
-            })
-        else:
-            return_error('Meeting creation failed: [%d] - %s' % (res.status_code, res.text))
+    };
 
-    elif demisto.command() == 'zoom-fetch-recording':
-        meeting = demisto.getArg('meeting_id')
-        res = requests.get(URL + 'meetings/%s/recordings' % meeting, headers=HEADERS, params=PARAMS)
-        if res.status_code == requests.codes.ok:
-            data = res.json()
-            recording_files = data['recording_files']
-            for file in recording_files:
-                download_url = file['download_url']
-                r = requests.get(download_url, stream=True)
-                if r.status_code < 200 or r.status_code > 299:
-                    return_error('Unable to download recording for meeting %s: [%d] - %s' % (meeting, r.status_code, r.text))
+    var a2i = function(v, d) {
+        return v ? parseInt(v) : d;
+    };
 
-                filename = 'recording_%s_%s.mp4' % (meeting, file['id'])
-                with open(filename, 'wb') as f:
-                    r.raw.decode_content = True
-                    shutil.copyfileobj(r.raw, f)
+    var defaultLimit = 100, defaultSleep = 3, defaultTimeout = 180, defaultSearchTimeout = 10;
 
-                demisto.results(file_result_existing_file(filename))
-                rf = requests.delete(URL + 'meetings/%s/recordings/%s' % (meeting, file['id']), headers=HEADERS, params=PARAMS)
-                if rf.status_code == requests.codes.no_content:
-                    demisto.results('File ' + filename + ' was moved to trash.')
-                else:
-                    demisto.results('Failed to delete file ' + filename + '.')
-        else:
-            return_error('Download of recording failed: [%d] - %s' % (res.status_code, res.text))
-    else:
-        return_error('Unrecognized command: ' + demisto.command())
-    register_module_line('Zoom', 'end', __line__())
-  type: python
+    switch (command) {
+        // This is the call made when pressing the integration test button.
+        case 'test-module':
+            doReq('GET', 'collectors', {limit: '3'}, null);
+            return 'ok';
+        case 'fetch-incidents':
+            if (!params.fetchQuery) {
+                throw 'No fetch query defined, not doing SumoLogic fetch';
+            }
+            var now = (new Date()).getTime();
+            var lastRun = getLastRun();
+            if (!lastRun || !lastRun.time) {
+                lastRun = {time: now - parseInt(params.firstFetch) * 1000};
+                setLastRun({time: now});
+            }
+
+            if (params.fetchDelay) {
+                if (now < lastRun.time + parseInt(params.fetchDelay) * 1000) {
+                    return JSON.stringify([]);
+                }
+            }
+
+            var s = search(params.fetchQuery, lastRun.time, now, a2i(params.limit, defaultLimit), 0, params.timeZone, a2i(params.maxTimeout, 180), false,
+                a2i(params.sleepBetweenChecks, defaultSleep), params.fetchRecords);
+            var incidents = [];
+
+            if (!params.fetchRecords && s.messages) {
+                for (var i=0; i<s.messages.length; i++) {
+                    var incident = {name: 'Incident from SumoLogic' + s.messages[i]._messageid,
+                        details: s.messages[i]._raw, labels: [], rawJSON: JSON.stringify(s.messages[i])};
+                    var props = Object.getOwnPropertyNames(s.messages[i]);
+                    for (var j=0; j<props.length; j++) {
+                        if (props[j] !== '_raw') {
+                            incident.labels.push({type: props[j], value: s.messages[i][props[j]]});
+                        }
+                    }
+                    incidents.push(incident);
+                }
+            }
+
+            if (params.fetchRecords && s.records) {
+                for (var i=0; i<s.records.length; i++) {
+                    var incident = {name: 'Incident from SumoLogic',
+                        details: JSON.stringify(s.records[i]), labels: [], rawJSON: JSON.stringify(s.records[i])};
+                    var props = Object.getOwnPropertyNames(s.records[i]);
+                    for (var j=0; j<props.length; j++) {
+                        if (props[j] !== '_raw') {
+                            incident.labels.push({type: props[j], value: s.records[i][props[j]]});
+                        }
+                    }
+                    incidents.push(incident);
+                }
+            }
+            setLastRun({time: now});
+            return JSON.stringify(incidents);
+        case 'search':
+            query = args.query
+            var httpIndex = query.indexOf('http')
+            if (httpIndex != -1) {
+                var httpSubstring = query.substring(httpIndex)
+                var whitespaceIndex = httpSubstring.indexOf(' ')
+                var url = httpSubstring.substring(0, whitespaceIndex)
+                url = url.replace(/=/g, '\\\\=')
+                var beforeHttp = query.substring(0, httpIndex)
+                var afterWhitespace = query.substring(httpIndex + whitespaceIndex)
+                query = beforeHttp + url + afterWhitespace
+            }
+            var headers = 'headers' in args ? argToList(args.headers) : undefined;
+            var waitForSearchComplete = args.waitForSearchComplete == 'true';
+            var s = search(query, args.from, args.to, a2i(args.limit, defaultLimit), a2i(args.offset, 0), args.timezone,
+                a2i(args.maxTimeToWaitForResults, defaultSearchTimeout) * 60, args.byReceiptTime, a2i(params.sleepBetweenChecks, defaultSleep),
+                waitForSearchComplete);
+            var md = '';
+            var ec = {};
+            if (s.messages && s.messages.length > 0) {
+                md = tableToMarkdown('SumoLogic Search Messages', s.messages, headers) + '\n';
+                ec.Search = {Messages: s.messages.length > defaultLimit ? s.messages.slice(0, defaultLimit) : s.messages};
+            }
+            if (s.records && s.records.length > 0) {
+                md += tableToMarkdown('SumoLogic Search Records', s.records, headers);
+                ec.Search = {Records: s.records.length > defaultLimit ? s.records.slice(0, defaultLimit) : s.records};
+            }
+            if (!md) {
+                md = 'No results found';
+            }
+            return {Type: entryTypes.note, Contents: s, ContentsFormat: formats.json, HumanReadable: md, EntryContext: ec};
+        default:
+            return {Type: entryTypes.error, Contents: 'Unknown command - ' + command, ContentsFormat: formats.text};
+    }
+  type: javascript
   commands:
   - name: zoom-create-user
     arguments:

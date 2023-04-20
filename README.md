@@ -16,13 +16,13 @@ The library uses python 3.8+.
 3. **Connect demisto-sdk with Cortex XSOAR server** - In order that demisto-sdk and Cortex XSOAR server communicate, perfrom the following steps:
 
    1. Get an API key for Cortex XSOAR/XSIAM-server - `Settings` -> `Integrations` -> `API keys` -> `Get your Key` (copy it)
-   2. Add the following parameters to your environment. You can also use a [.env file](https://pypi.org/project/python-dotenv/), the demisto-sdk will automatically load that file.:
+   2. Set the following environment variables, or place an [.env file](https://pypi.org/project/python-dotenv/) at the root of the content pack:
 
       ```bash
       export DEMISTO_BASE_URL=<http or https>://<demisto-server url or ip>:<port>
       export DEMISTO_API_KEY=<API key>
       ```
-      To use on Cortex XSIAM the `XSIAM_AUTH_ID` environment variable should also be set.
+      To use on Cortex XSIAM or Cortex XSOAR 8.x the `XSIAM_AUTH_ID` environment variable should also be set.
       ```bash
       export XSIAM_AUTH_ID=<auth id>
       ```
@@ -85,26 +85,27 @@ export DEMISTO_SDK_SKIP_VERSION_CHECK=yes
 Supported commands:
 
 1. [init](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/init/README.md)
-1. [Validate](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/validate/README.md)
-1. [Lint](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/lint/README.md)
-1. [Secrets](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/secrets/README.md)
-2. [Unify](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/prepare_content/README.md#Unify)
-3. [Prepare-Content](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/prepare_content/README.md#prepare-content)
-4. [Split](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/split/README.md)
-5. [Format](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/format/README.md)
-6. [Run](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_cmd/README.md)
-7. [Run-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_playbook/README.md)
-8. [Upload](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/upload/README.md)
-9. [Download](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/download/README.md)
-10. [Generate-docs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_docs/README.md)
-11. [Generate-test-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_test_playbook/README.md)
-12. [Generate-outputs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_outputs/README.md)
-13. [Update-release-notes](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/update_release_notes/README.md)
-14. [Zip-packs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/zip_packs/README.md)
-15. [openapi-codegen](https://xsoar.pan.dev/docs/integrations/openapi-codegen)
-16. [postman-codegen](https://xsoar.pan.dev/docs/integrations/postman-codegen)
-17. [generate-integration](https://xsoar.pan.dev/docs/integrations/code-generator)
-18. [generate-yml-from-python](https://xsoar.pan.dev/docs/integrations/yml-from-python-code-gen)
+2. [Validate](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/validate/README.md)
+3. [Lint](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/lint/README.md)
+4. [Secrets](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/secrets/README.md)
+5. [Unify](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/prepare_content/README.md#Unify)
+6. [Prepare-Content](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/prepare_content/README.md#prepare-content)
+7. [Split](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/split/README.md)
+8. [Format](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/format/README.md)
+9. [Run](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_cmd/README.md)
+10. [Run-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/run_playbook/README.md)
+11. [Upload](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/upload/README.md)
+12. [Download](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/download/README.md)
+13. [Generate-docs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_docs/README.md)
+14. [Generate-test-playbook](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_test_playbook/README.md)
+15. [Generate-outputs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_outputs/README.md)
+16. [Update-release-notes](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/update_release_notes/README.md)
+17. [Zip-packs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/zip_packs/README.md)
+18. [openapi-codegen](https://xsoar.pan.dev/docs/integrations/openapi-codegen)
+19. [postman-codegen](https://xsoar.pan.dev/docs/integrations/postman-codegen)
+20. [generate-integration](https://xsoar.pan.dev/docs/integrations/code-generator)
+21. [generate-yml-from-python](https://xsoar.pan.dev/docs/integrations/yml-from-python-code-gen)
+22. [generate-unit-tests](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_unit_tests/README.md)
 ---
 
 ### Customizable command configuration

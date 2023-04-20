@@ -19,11 +19,11 @@ yaml = YAML_Handler()
 
 def load_json(file_path: str):
     full_path = (TEST_DATA_PATH / file_path).as_posix()
-    with open(full_path, mode="r") as f:
+    with open(full_path) as f:
         return json.load(f)
 
 
 def load_yaml(file_path: str):
     full_path = (TEST_DATA_PATH / file_path).as_posix()
-    with open(full_path, mode="r") as f:
+    with open(full_path) as f:
         return yaml.load(f)

@@ -1,9 +1,13 @@
 import importlib
 import os
+import shutil
+from pathlib import Path
 
 import pytest
 
+from demisto_sdk.commands.common.constants import TYPE_PYTHON
 from demisto_sdk.commands.lint.helpers import (
+    add_tmp_lint_files,
     generate_coverage_report,
     split_warnings_errors,
 )
@@ -251,6 +255,38 @@ def test_split_warnings_errors(
     assert error == output_error
     assert warning == output_warning
     assert other == output_other
+
+
+def test_add_tmp_lint_files(mocker, repo):
+    """
+    Given:
+        - A pack that contains two modules and an integration that imports those two modules.
+
+    When:
+        - Running add_tmp_lint_files on the given input.
+
+    Then:
+        - Ensure both modules are copied by the command shutil.copy.
+    """
+    pack = repo.create_pack(name="ApiModules")
+    pack.create_script(code="# TEST1ApiModule")
+    pack.create_script(code="# TEST2ApiModule")
+    integration_code = "from TEST1ApiModule import *\nfrom TEST2ApiModule import *"
+    integration = pack.create_integration(name="test", code=integration_code)
+
+    mock_copy = mocker.patch.object(shutil, "copy", return_value=None)
+    content_repo = Path(repo.path)
+    pack_path = Path(pack.path)
+    lint_files = [Path(integration.code.path)]
+
+    with add_tmp_lint_files(
+        content_repo=content_repo,
+        pack_path=pack_path,
+        lint_files=lint_files,
+        modules={},
+        pack_type=TYPE_PYTHON,
+    ):
+        assert mock_copy.call_count == 2
 
 
 class TestGenerateCoverageReport:

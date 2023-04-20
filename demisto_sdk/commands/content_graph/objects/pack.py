@@ -340,9 +340,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                     target_demisto_version=target_demisto_version,
                 )
             except NotIndivitudallyUploadedException:
-                logger.warning(
-                    f"pack {self.object_id}: {item.content_type} {item.normalize_name} cannot be uploaded without the -z flag"
-                )
                 if marketplace == MarketplaceVersions.MarketplaceV2:
                     raise  # many XSIAM content types must be uploaded zipped.
 

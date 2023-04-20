@@ -12,14 +12,14 @@ SYSLOG = (
 )
 
 HTTP_COLLECTOR = (
-    "\n# %%UPDATE%% <Product Name>\nThis pack includes Cortex XSIAM content.\n\n### Collect Events from "
-    "%%UPDATE%% <product> (XSIAM)\n%%UPDATE%% <General specifications>\n\n**On XSIAM:**\n\n1. Navigate "
-    "to **Settings** -> **Data Sources** -> **Add Data Source**.\n2. From the Type dropdown list, select Custom "
-    "Integrations.\n3. Click **Custom - HTTP based Collector**.\n4. Click **Connect**.\n5. Set the following "
-    "values:\n   - Name as ``\n   - Compression as ``\n   - Log Format as ``\n   - Vendor as ``\n   - Product as "
-    "``\n6. Creating a new HTTP Log Collector will allow you to generate a unique token, please save it since it will "
-    "be used later.\n7. Click the 3 dots sign next to the newly created instance and copy the API Url, it will also "
-    "be used later.\n\n**On %%UPDATE%% <product>:**\n\n %%UPDATE%% <reference to "
+    "\n# %%UPDATE%% <Product Name>\nThis pack includes Cortex XSIAM content.\n\n### Collect Events from %%UPDATE%% "
+    "<product> (XSIAM)\n%%UPDATE%% <General specifications>\n\n**On XSIAM:**\n\n1. Navigate to **Settings** -> **Data "
+    "Sources** -> **Add Data Source**.\n2. From the Type dropdown list, select Custom Integrations.\n3. Click "
+    "**Custom - HTTP based Collector**.\n4. Click **Connect**.\n5. Set the following values:\n   - Name as "
+    "%%UPDATE%%``\n   - Compression as %%UPDATE%%``\n   - Log Format as %%UPDATE%%``\n   - Vendor as %%UPDATE%%``\n   "
+    "- Product as %%UPDATE%%``\n6. Creating a new HTTP Log Collector will allow you to generate a unique token, "
+    "please save it since it will be used later.\n7. Click the 3 dots sign next to the newly created instance and "
+    "copy the API Url, it will also be used later.\n\n**On %%UPDATE%% <product>:**\n\n %%UPDATE%% <reference to "
     "docs>\n\n<u>Guidelines:</u>\n1. \n "
 )
 

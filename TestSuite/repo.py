@@ -84,7 +84,7 @@ class Repo:
         shutil.rmtree(self.path, ignore_errors=True)
 
     def setup_one_pack(
-        self, name, marketplaces: List[str] = DEFAULT_MARKETPLACES
+        self, name: Optional[str] = None, marketplaces: List[str] = DEFAULT_MARKETPLACES
     ) -> Pack:
         """Sets up a new pack in the repo, and includes one per each content entity.
 

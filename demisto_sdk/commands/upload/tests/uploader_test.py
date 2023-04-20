@@ -29,7 +29,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.pack import (
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_yml_paths_in_dir, src_root
+from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
@@ -38,11 +38,12 @@ from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.test_content import tools
 from demisto_sdk.commands.upload import uploader
 from demisto_sdk.commands.upload.uploader import (
+    SUCCESS_RETURN_CODE,
     ItemDetacher,
     Uploader,
     parse_error_response,
 )
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from TestSuite.test_tools import str_in_call_args_list
 
 json = JSON_Handler()
 
@@ -85,79 +86,104 @@ def demisto_client_configure(mocker):
 
 
 @pytest.mark.parametrize(
-    "path_end",
+    "path_end,item_count",
     (
-        "content_repo_example/Integrations/Securonix/",
-        "Packs/DummyPack/Scripts/",
+        ("content_repo_example/Integrations/Securonix/", 1),
+        ("Packs/DummyPack/Scripts/DummyScript", 1),
+        ("Packs/DummyPack/IncidentFields", 3),
     ),
 )
-def test_upload_folder(demisto_client_configure, mocker, path_end: str):
+def test_upload_folder(
+    demisto_client_configure, mocker, path_end: str, item_count: int
+):
     mocker.patch.object(demisto_client, "configure", return_value="object")
-    path = Path(f"{git_path()}/demisto_sdk/tests/test_files/") / path_end
-    uploader = Uploader(input=path, insecure=False)
+    path = Path(f"{git_path()}/demisto_sdk/tests/test_files/", path_end)
+    uploader = Uploader(path)
     with patch.object(uploader, "client", return_value="ok"):
-        assert uploader.upload(path)
+        assert (
+            uploader.upload() == SUCCESS_RETURN_CODE
+        ), f"failed uploading {path.parts[-2:]}"
+    assert len(uploader.successfully_uploaded) == item_count
+
+
+@pytest.mark.parametrize(
+    "test_name,path",
+    [
+        (
+            "integration-yml",
+            "demisto_sdk/tests/test_files/content_repo_example/Integrations/Securonix/Securonix.yml",
+        ),
+        (
+            "integration-py",
+            "demisto_sdk/tests/test_files/content_repo_example/Integrations/Securonix/Securonix.py",
+        ),
+        (
+            "script-yml-unified",
+            "demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/DummyScriptUnified.yml",
+        ),
+        (
+            "playbook",
+            "demisto_sdk/tests/test_files/Packs/CortexXDR/Playbooks/Cortex_XDR_Incident_Handling.yml",
+        ),
+        (
+            "widget",
+            "demisto_sdk/tests/test_files/Packs/DummyPack/Widgets/widget-ActiveIncidentsByRole.json",
+        ),
+        (
+            "dashboard",
+            "demisto_sdk/tests/test_files/Packs/DummyPack/Dashboards/upload_test_dashboard.json",
+        ),
+        (
+            "layout",
+            "demisto_sdk/tests/test_files/Packs/DummyPack/Layouts/layout-details-test_bla-V2.json",
+        ),
+        (
+            "layoutscontainer",
+            "demisto_sdk/tests/test_files/Packs/DummyPack/Layouts/layoutscontainer-test.json",
+        ),
+        (
+            "incident-type",
+            "demisto_sdk/tests/test_files/Packs/DummyPack/IncidentTypes/incidenttype-Hello_World_Alert.json",
+        ),
+        (
+            "classifier-old",
+            "demisto_sdk/tests/test_files/Packs/DummyPack/Classifiers/classifier-aws_sns_test_classifier.json",
+        ),
+        (
+            "incident-field",
+            "demisto_sdk/tests/test_files/Packs/CortexXDR/IncidentFields/XDR_Alert_Count.json",
+        ),
+        (
+            "indicator-field",
+            "demisto_sdk/tests/test_files/Packs/CortexXDR/IndicatorFields/dns.json",
+        ),
+        (
+            "indicator-type",
+            "demisto_sdk/tests/test_files/Packs/CortexXDR/IndicatorTypes/SampleIndicatorType.json",
+        ),
+    ],
+)
+def test_upload_single_positive(mocker, test_name: str, path: str):
+    """
+    Given
+        - A path to a content item
+
+    When
+        - Uploading the content item
+
+    Then
+        - Ensure it is uploaded successfully
+    """
+    mocker.patch.object(demisto_client, "configure", return_value="object")
+    mock_api_client(mocker)
+    path = Path(git_path(), path)
+    assert path.exists()
+    assert BaseContent.from_path(path) is not None, f"Failed parsing {path.absolute()}"
+    uploader = Uploader(input=path)
+    mocker.patch.object(uploader, "client")
+    uploader.upload()
+
     assert uploader.successfully_uploaded == [BaseContent.from_path(path)]
-
-@pytest.mark.parametrize("path_end",[
-    "test_files/Packs/CortexXDR/Playbooks/Cortex_XDR_Incident_Handling.yml",
-    "content_repo_example/Integrations/Securonix/Securonix_unified.yml"
-                                         ])
-def test_upload_single_positive(mocker, content_path:str):
-    """
-    Given
-        - A playbook named Cortex_XDR_Incident_Handling to upload
-
-    When
-        - Uploading a playbook
-
-    Then
-        - Ensure playbook is uploaded successfully
-        - Ensure success upload message is printed as expected
-    """
-    mocker.patch.object(demisto_client, "configure", return_value="object")
-    mock_api_client(mocker)
-    path = Path(f"{git_path()}/demisto_sdk/tests/", path)
-    content_item = BaseContent.from_path(Path(content_path))
-    uploader = Uploader(input=content_item.path, insecure=False)
-    mocker.patch.object(uploader, "client")
-    uploader.upload()
-    assert uploader.successfully_uploaded == [content_item]
-
-
-def test_upload_widget_positive(demisto_client_configure, mocker):
-    """
-    Given
-        - A widget named ActiveIncidentsByRole to upload
-
-    When
-        - Uploading a widget
-
-    Then
-        - Ensure widget is uploaded successfully
-        - Ensure success upload message is printed as expected
-    """
-        mocker.patch.object(demisto_client, "configure", return_value="object")
-    mock_api_client(mocker)
-    playbook = BaseContent.from_path(
-        Path(
-            f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/Playbooks/Cortex_XDR_Incident_Handling.yml"
-        )
-    )
-    uploader = Uploader(input=playbook.path, insecure=False)
-    mocker.patch.object(uploader, "client")
-    uploader.upload()
-    assert uploader.successfully_uploaded == [playbook]
-
-    mocker.patch.object(demisto_client, "configure", return_value="object")
-
-    widget_name = "widget-ActiveIncidentsByRole.json"
-    widget_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Widgets/{widget_name}"
-    uploader = Uploader(input=widget_path, insecure=False)
-    mocker.patch.object(uploader, "client")
-    uploader.upload()
-
-    assert [(widget_name, FileType.WIDGET.value)] == uploader.successfully_uploaded
 
 
 def test_upload_dashboard_positive(demisto_client_configure, mocker):
@@ -183,211 +209,6 @@ def test_upload_dashboard_positive(demisto_client_configure, mocker):
     assert [
         ("upload_test_dashboard.json", FileType.DASHBOARD.value)
     ] == uploader.successfully_uploaded
-
-
-def test_upload_layout_positive(demisto_client_configure, mocker):
-    """
-    Given
-        - A layout named layout-details-test_bla-V2 to upload
-
-    When
-        - Uploading a layout
-
-    Then
-        - Ensure layout is uploaded successfully
-        - Ensure success upload message is printed as expected
-        - Ensure that _unify isn't called.
-    """
-    from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import (
-        LayoutObject,
-    )
-
-    mocker.patch.object(demisto_client, "configure", return_value="object")
-    unify_mocker = mocker.patch.object(LayoutObject, "_unify")
-
-    layout_name = "layout-details-test_bla-V2.json"
-    layout_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Layouts/{layout_name}"
-
-    uploader = Uploader(input=layout_path, insecure=False)
-    mocker.patch.object(uploader, "client")
-    uploader.upload()
-
-    assert not unify_mocker.called
-    assert [(layout_name, FileType.LAYOUT.value)] == uploader.successfully_uploaded
-
-
-def test_upload_layout_container_positive(demisto_client_configure, mocker):
-    """
-    Given
-        - layout container
-
-    When
-        - Uploading a layout-container
-
-    Then
-        - Ensure layout-container is uploaded successfully
-        - Ensure that _unify is called.
-    """
-    from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import (
-        LayoutObject,
-    )
-
-    mocker.patch.object(demisto_client, "configure", return_value="object")
-    unify_mocker = mocker.patch.object(LayoutObject, "_unify")
-
-    layout_name = "layoutscontainer-test.json"
-    layout_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Layouts/{layout_name}"
-
-    uploader = Uploader(input=layout_path, insecure=False)
-    mocker.patch.object(uploader, "client")
-    uploader.upload()
-
-    assert unify_mocker.called
-    assert [
-        (layout_name, FileType.LAYOUTS_CONTAINER.value)
-    ] == uploader.successfully_uploaded
-
-
-def test_upload_incident_type_positive(demisto_client_configure, mocker):
-    """
-    Given
-        - An incident type named Hello_World_Alert to upload
-
-    When
-        - Uploading incident type
-
-    Then
-        - Ensure incident type is uploaded successfully
-        - Ensure success upload message is printed as expected
-    """
-    mocker.patch.object(demisto_client, "configure", return_value="object")
-    incident_type_name = "incidenttype-Hello_World_Alert.json"
-    incident_type_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/IncidentTypes/{incident_type_name}"
-    uploader = Uploader(input=incident_type_path, insecure=False)
-    mocker.patch.object(uploader, "client")
-    uploader.upload()
-
-    assert [
-        (incident_type_name, FileType.INCIDENT_TYPE.value)
-    ] == uploader.successfully_uploaded
-
-
-def test_upload_classifier_positive(demisto_client_configure, mocker):
-    """
-    Given
-        - A classifier type named XDR_Alert_Count to upload
-
-    When
-        - Uploading classifier
-
-    Then
-        - Ensure classifier is uploaded successfully
-        - Ensure success upload message is printed as expected
-    """
-    mocker.patch.object(demisto_client, "configure", return_value="object")
-    classifier_name = "classifier-aws_sns_test_classifier.json"
-    classifier_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Classifiers/{classifier_name}"
-    uploader = Uploader(input=classifier_path, insecure=False)
-    mocker.patch.object(uploader, "client")
-    uploader.upload()
-
-    assert [
-        (classifier_name, FileType.OLD_CLASSIFIER.value)
-    ] == uploader.successfully_uploaded
-
-
-def test_upload_incident_field_positive(demisto_client_configure, mocker):
-    """
-    Given
-        - An incident field named XDR_Alert_Count to upload
-
-    When
-        - Uploading incident field
-
-    Then
-        - Ensure incident field is uploaded successfully
-        - Ensure success upload message is printed as expected
-    """
-    mocker.patch.object(demisto_client, "configure", return_value="object")
-    incident_field_name = "XDR_Alert_Count.json"
-    incident_field_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/IncidentFields/{incident_field_name}"
-    uploader = Uploader(input=incident_field_path, insecure=False)
-    mocker.patch.object(uploader, "client")
-    uploader.upload()
-
-    assert [
-        (incident_field_name, FileType.INCIDENT_FIELD.value)
-    ] == uploader.successfully_uploaded
-
-
-def test_upload_indicator_field_positive(demisto_client_configure, mocker):
-    """
-    Given
-        - An indicator field named DNS to upload
-    When
-        - Uploading indicator field
-    Then
-        - Ensure indicator field is uploaded successfully
-        - Ensure success upload message is printed as expected
-    """
-    mocker.patch.object(demisto_client, "configure", return_value="object")
-    indicator_field_name = "dns.json"
-    indicator_field_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/IndicatorFields/{indicator_field_name}"
-    uploader = Uploader(input=indicator_field_path, insecure=False)
-    mocker.patch.object(uploader, "client")
-    uploader.upload()
-
-    assert [
-        (indicator_field_name, FileType.INDICATOR_FIELD.value)
-    ] == uploader.successfully_uploaded
-
-
-def test_upload_reputation_positive(demisto_client_configure, mocker):
-    """
-    Given
-        - A reputation named SampleIndicatorType to upload
-
-    When
-        - Uploading a reputation
-
-    Then
-        - Ensure reputation is uploaded successfully
-        - Ensure success upload message is printed as expected
-    """
-    mocker.patch.object(demisto_client, "configure", return_value="object")
-
-    reputation_name = "SampleIndicatorType.json"
-    reputation_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/IndicatorTypes/{reputation_name}"
-    uploader = Uploader(input=reputation_path, insecure=False)
-    mocker.patch.object(uploader, "client")
-    uploader.upload()
-
-    assert [
-        (reputation_name, FileType.REPUTATION.value)
-    ] == uploader.successfully_uploaded
-
-
-def test_upload_report_positive(demisto_client_configure, mocker, repo):
-    """
-    Given
-        - A report to upload
-
-    When
-        - Uploading a report
-
-    Then
-        - Ensure report is uploaded successfully
-        - Ensure success upload message is printed as expected
-    """
-    mocker.patch.object(demisto_client, "configure", return_value="object")
-    pack = repo.create_pack("pack")
-    report = pack.create_report("test-report")
-    report.write_json({"id": "dummy-report", "orientation": "portrait"})
-    with ChangeCWD(repo.path):
-        uploader = Uploader(input=report.path, insecure=False)
-        mocker.patch.object(uploader, "client")
-        uploader.upload()
-    assert [(report.name, FileType.REPORT.value)] == uploader.successfully_uploaded
 
 
 def test_upload_incident_type_correct_file_change(demisto_client_configure, mocker):
@@ -483,89 +304,6 @@ def test_upload_incident_field_correct_file_change(demisto_client_configure, moc
     assert json.loads(DATA)["incidentFields"][0] == incident_field_data
 
 
-def test_upload_an_integration_directory(demisto_client_configure, mocker):
-    """
-    Given
-        - An integration directory called UploadTest
-
-    When
-        - Uploading an integration
-
-    Then
-        - Ensure integration is uploaded successfully
-        - Ensure success upload message is printed as expected
-    """
-    mocker.patch.object(demisto_client, "configure", return_value="object")
-    mocker.patch.object(
-        IntegrationScript, "get_supported_native_images", return_value=[]
-    )
-    integration_dir_name = "UploadTest"
-    integration_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Integrations/{integration_dir_name}"
-    uploader = Uploader(input=integration_path, insecure=False)
-    mocker.patch.object(uploader, "client")
-    uploader.upload()
-    _, integration_yml_name = get_yml_paths_in_dir(integration_path)
-    integration_yml_name = integration_yml_name.split("/")[-1]
-
-    assert [
-        (integration_yml_name, FileType.INTEGRATION.value)
-    ] == uploader.successfully_uploaded
-
-
-def test_upload_a_script_directory(demisto_client_configure, mocker):
-    """
-    Given
-        - A script directory called DummyScript
-
-    When
-        - Uploading an script
-
-    Then
-        - Ensure script is uploaded successfully
-        - Ensure success upload message is printed as expected
-    """
-    mocker.patch.object(demisto_client, "configure", return_value="object")
-    mocker.patch.object(
-        IntegrationScript, "get_supported_native_images", return_value=[]
-    )
-    script_dir_name = "DummyScript"
-    scripts_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/{script_dir_name}"
-    uploader = Uploader(input=scripts_path, insecure=False)
-    mocker.patch.object(uploader, "client")
-    uploader.upload()
-    _, script_yml_name = get_yml_paths_in_dir(scripts_path)
-    uploaded_file_name = script_yml_name.split("/")[-1]
-
-    assert [
-        (uploaded_file_name, FileType.SCRIPT.value)
-    ] == uploader.successfully_uploaded
-
-
-def test_upload_incident_fields_directory(demisto_client_configure, mocker):
-    """
-    Given
-        - An incident fields directory called DummyScript
-
-    When
-        - Uploading incident fields
-
-    Then
-        - Ensure incident fields are uploaded successfully
-        - Ensure status code is as expected
-        - Ensure amount of messages is as expected
-    """
-    mocker.patch.object(demisto_client, "configure", return_value="object")
-    mocker.patch("click.secho")
-    dir_name = "IncidentFields"
-    incident_fields_path = (
-        f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/{dir_name}/"
-    )
-    uploader = Uploader(input=incident_fields_path, insecure=False)
-    mocker.patch.object(uploader, "client")
-    assert uploader.upload() == 0
-    assert len(uploader.successfully_uploaded) == 3
-
-
 def test_upload_pack(demisto_client_configure, mocker):
     """
     Given
@@ -633,6 +371,7 @@ def test_upload_invalid_path(demisto_client_configure, mocker):
     )
     script_dir_uploader = Uploader(input=script_dir_path, insecure=False)
     assert script_dir_uploader.upload() == 1
+
 
 def test_file_not_supported(demisto_client_configure, mocker):
     """

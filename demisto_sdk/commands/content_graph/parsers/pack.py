@@ -2,8 +2,6 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional
 
-import more_itertools
-
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.content_graph.common import (

@@ -80,15 +80,10 @@ class PackContentItems:
         Raises:
             NotAContentItemException: If did not find any matching content item list.
         """
-        if (
-            suitable_list := more_itertools.first_true(
-                self.iter_lists(),
-                pred=lambda some_list: some_list.content_type == obj.content_type,
-                default=None,
-            )
-            is not None
-        ):
-            suitable_list.append(obj)  # type:ignore[attr-defined]
+        for item_list in self.iter_lists():
+            if item_list.content_type == obj.content_type:
+                item_list.append(obj)
+                return
 
         raise NotAContentItemException(
             f"Could not find list of {obj.content_type} items"

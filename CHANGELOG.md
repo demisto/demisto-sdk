@@ -7,6 +7,7 @@
 * Fixed an issue where **validate** showed errors twice.
 * Added **generate-unit-tests** documentation to the repo README.
 * Added the `hiddenpassword` field to the integration schema, allowing **validate** to run on integrations with username-only inputs.
+* Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
 
 ## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.

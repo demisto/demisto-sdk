@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 from unittest.mock import mock_open
 
+import pytest
+
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
@@ -252,7 +254,10 @@ def test_extract_image(tmpdir):
         assert image == DEFAULT_IMAGE_BASE64
 
 
-def test_extract_code(tmpdir):
+@pytest.mark.parametrize(
+    argnames="file_type", argvalues=[("integration"), ("betaintegration")]
+)
+def test_extract_code(tmpdir, file_type):
     """
     Given
     a unified integration file of python format.
@@ -266,7 +271,7 @@ def test_extract_code(tmpdir):
     extractor = YmlSplitter(
         input=f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml",
         output=str(tmpdir.join("temp_code.py")),
-        file_type="integration",
+        file_type=file_type,
     )
     assert (
         "### pack version: 1.0.3"
@@ -295,7 +300,10 @@ def test_extract_code(tmpdir):
         assert file_data[-1] == "\n"
 
 
-def test_extract_javascript_code(tmpdir):
+@pytest.mark.parametrize(
+    argnames="file_type", argvalues=[("integration"), ("betaintegration")]
+)
+def test_extract_javascript_code(tmpdir, file_type):
     """
     Given
     a unified integration file of javascript format.
@@ -309,7 +317,7 @@ def test_extract_javascript_code(tmpdir):
     extractor = YmlSplitter(
         input=f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom-js.yml",
         output=str(tmpdir.join("temp_code.js")),
-        file_type="integration",
+        file_type=file_type,
     )
     assert (
         "// pack version: 1.0.3"
@@ -322,7 +330,10 @@ def test_extract_javascript_code(tmpdir):
     Path(extractor.output).unlink()
 
 
-def test_extract_powershell_code(tmpdir):
+@pytest.mark.parametrize(
+    argnames="file_type", argvalues=[("integration"), ("betaintegration")]
+)
+def test_extract_powershell_code(tmpdir, file_type):
     """
     Given
     a unified integration file of powershell format.
@@ -336,7 +347,7 @@ def test_extract_powershell_code(tmpdir):
     extractor = YmlSplitter(
         input=f"{git_path()}/demisto_sdk/tests/test_files/integration-Zoom-ps1.yml",
         output=str(tmpdir.join("temp_code.ps1")),
-        file_type="integration",
+        file_type=file_type,
     )
     assert (
         "### pack version: 1.0.3"
@@ -350,7 +361,10 @@ def test_extract_powershell_code(tmpdir):
     Path(extractor.output).unlink()
 
 
-def test_extract_code__with_apimodule(tmpdir):
+@pytest.mark.parametrize(
+    argnames="file_type", argvalues=[("integration"), ("betaintegration")]
+)
+def test_extract_code__with_apimodule(tmpdir, file_type):
     """
     Given:
         - A unified YML which ApiModule code is auto-generated there
@@ -362,7 +376,7 @@ def test_extract_code__with_apimodule(tmpdir):
     extractor = YmlSplitter(
         input=f"{git_path()}/demisto_sdk/tests/test_files/integration-EDL.yml",
         output=str(tmpdir.join("temp_code.py")),
-        file_type="integration",
+        file_type=file_type,
     )
 
     extractor.extract_code(extractor.output)
@@ -399,11 +413,14 @@ def test_extract_code_modules_old_format(tmpdir):
         assert "def nginx_log_process(nginx_process: subprocess.Popen):" in file_data
 
 
-def test_extract_code_pwsh(tmpdir):
+@pytest.mark.parametrize(
+    argnames="file_type", argvalues=[("integration"), ("betaintegration")]
+)
+def test_extract_code_pwsh(tmpdir, file_type):
     extractor = YmlSplitter(
         input=f"{git_path()}/demisto_sdk/tests/test_files/integration-powershell_ssh_remote.yml",
         output=str(tmpdir.join("temp_code")),
-        file_type="integration",
+        file_type=file_type,
     )
 
     extractor.extract_code(extractor.output)
@@ -446,12 +463,15 @@ def test_get_output_path_empty_output():
     assert res == input_path.parent
 
 
-def test_extract_to_package_format_pwsh(tmpdir):
+@pytest.mark.parametrize(
+    argnames="file_type", argvalues=[("integration"), ("betaintegration")]
+)
+def test_extract_to_package_format_pwsh(tmpdir, file_type):
     out = tmpdir.join("Integrations")
     extractor = YmlSplitter(
         input=f"{git_path()}/demisto_sdk/tests/test_files/integration-powershell_ssh_remote.yml",
         output=str(out),
-        file_type="integration",
+        file_type=file_type,
     )
     assert extractor.extract_to_package_format() == 0
     # check code

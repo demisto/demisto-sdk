@@ -403,7 +403,7 @@ class Uploader:
                     f"Any changes made on {marketplace} will be lost.[red]"
                 )
                 if not self.override_existing:
-                    logger.debug("[red]Are you sure you want to continue? Y/[N][/red]")
+                    logger.info("[red]Are you sure you want to continue? Y/[N][/red]")
                     answer = str(input())
                     return answer in ["y", "Y", "yes"]
 

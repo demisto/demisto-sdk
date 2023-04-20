@@ -1101,6 +1101,9 @@ class ValidateManager:
             # This is temporarily - need to add a proper contributors validations
             return True
 
+        elif file_type == FileType.CONF_JSON and not self.skip_conf_json:
+            return self.validate_conf_json()
+
         else:
             return self.file_type_not_supported(
                 file_type, file_path, pack_error_ignore_list
@@ -1758,6 +1761,10 @@ class ValidateManager:
             json_file_path=self.json_file_path,
         )
         return layout_rules_validator.is_valid_file(validate_rn=False)
+
+    def validate_conf_json(self):
+        conf_json_validator = ConfJsonValidator()
+        return conf_json_validator.is_valid_conf_json()
 
     def validate_xsiam_report(self, structure_validator, pack_error_ignore_list):
         xsiam_report_validator = XSIAMReportValidator(
@@ -2503,6 +2510,9 @@ class ValidateManager:
             return irrelevant_file_output
 
         file_type = find_type(file_path)
+
+        if file_type == FileType.CONF_JSON:
+            return file_path, "", True
 
         if self.ignore_files_irrelevant_for_validation(
             file_path, check_metadata_files=check_metadata_files

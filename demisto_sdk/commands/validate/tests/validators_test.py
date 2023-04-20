@@ -1515,12 +1515,13 @@ class TestValidators:
             - running validate_no_old_format on the files
         Then:
             - return a False as the files are invalid
-            - assert the handle_error function is called for each file (and 1 for not finding the id set file)
+            - assert the handle_error function is called for each file
         """
         handle_error_mock = mocker.patch.object(
             BaseValidator, "handle_error", return_value="not-a-non-string"
         )
-        validate_manager = ValidateManager()
+        # silence_init_prints=True to avoid printing the id_set.json not found error
+        validate_manager = ValidateManager(silence_init_prints=True)
         old_format_files = {
             f"{git_path()}/demisto_sdk/tests/test_files/script-valid.yml",
             f"{git_path()}/demisto_sdk/tests/test_files/integration-test.yml",

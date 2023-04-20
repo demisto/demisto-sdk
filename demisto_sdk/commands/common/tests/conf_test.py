@@ -267,16 +267,11 @@ def test_has_unittests(mocker, integration, has_tests):
 
     mocker.patch.object(ConfJsonValidator, "load_conf_file", return_value={})
     validator = ConfJsonValidator()
-    test_file = None
-    try:
-        if has_tests:
-            test_file: Path = Path(integration.path) / (integration.name + "_test.py")
-            test_file.touch()
-        res = validator.has_unittest(integration.yml.path)
-        assert res == has_tests
-    finally:
-        if test_file:
-            test_file.unlink()  # Remove the file
+    if not has_tests:
+        test_file: Path = Path(integration.path) / (integration.name + "_test.py")
+        test_file.unlink()
+    res = validator.has_unittest(integration.yml.path)
+    assert res == has_tests
 
 
 def test_get_test_path(mocker, integration):

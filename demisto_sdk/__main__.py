@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import IO, Any, Dict
+from typing import IO, Any, Dict, Iterable, Tuple
 
 import click
 import git
@@ -603,7 +603,9 @@ def zip_packs(ctx, **kwargs) -> int:
 @click.option(
     "-i",
     "--input",
-    type=click.Path(exists=True, resolve_path=True),
+    type=PathsParamType(
+        exists=True, resolve_path=True
+    ),  # PathsParamType allows passing a list of paths
     help="The path of the content pack/file to validate specifically.",
 )
 @click.option(
@@ -671,13 +673,17 @@ def zip_packs(ctx, **kwargs) -> int:
     help="Run specific validations by stating the error codes.",
     is_flag=False,
 )
+@click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @pass_config
 @click.pass_context
 @logging_setup_decorator
-def validate(ctx, config, **kwargs):
+def validate(ctx, config, file_paths: str, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
+    if file_paths and not kwargs["input"]:
+        # If file_paths is given as an argument, use it as the file_paths input (instead of the -i flag). If both, input wins.
+        kwargs["input"] = ",".join(file_paths)
     run_with_mp = not kwargs.pop("no_multiprocessing")
     check_configuration_file("validate", kwargs)
     sys.path.append(config.configuration.env_dir)
@@ -1163,9 +1169,11 @@ def coverage_analyze(ctx, **kwargs):
 @click.option(
     "-i",
     "--input",
-    help="The path of the script yml file\n"
+    help="The path of the script yml file or a comma separated list\n"
     "If no input is specified, the format will be executed on all new/changed files.",
-    type=click.Path(exists=True, resolve_path=True),
+    type=PathsParamType(
+        exists=True, resolve_path=True
+    ),  # PathsParamType allows passing a list of paths
 )
 @click.option(
     "-o",
@@ -1222,11 +1230,12 @@ def coverage_analyze(ctx, **kwargs):
     help="The path of the id_set json file.",
     type=click.Path(exists=True, resolve_path=True),
 )
+@click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
 @click.pass_context
 @logging_setup_decorator
 def format(
     ctx,
-    input: Path,
+    input: str,
     output: Path,
     from_version: str,
     no_validate: bool,
@@ -1238,6 +1247,7 @@ def format(
     include_untracked: bool,
     add_tests: bool,
     id_set_path: str,
+    file_paths: Tuple[str, ...],
     **kwargs,
 ):
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
@@ -1245,6 +1255,9 @@ def format(
     genericmodule/genericdefinition.
     """
     from demisto_sdk.commands.format.format_module import format_manager
+
+    if file_paths and not input:
+        input = ",".join(file_paths)
 
     with ReadMeValidator.start_mdx_server():
         return format_manager(
@@ -3137,7 +3150,9 @@ def create_content_graph(
     help="Path to content graph zip file to import",
 )
 @click.option(
+    "-uc",
     "--use-current",
+    is_flag=True,
     help="Whether to use the current content graph to update",
     default=False,
 )
@@ -3196,6 +3211,132 @@ def update_content_graph(
             dependencies=not no_dependencies,
             output_path=output_path,
         )
+
+
+@main.command()
+@click.help_option("-h", "--help")
+@click.option(
+    "-i",
+    "--input",
+    help="The path to the input file to run the command on.",
+    multiple=True,
+    type=click.Path(path_type=Path),
+)
+@click.option(
+    "-g",
+    "--git-diff",
+    help="Whether to use git to determine which files to run on",
+    is_flag=True,
+    default=False,
+)
+@click.option(
+    "-a",
+    "--all-files",
+    help="Whether to run on all files",
+    is_flag=True,
+    default=False,
+)
+@click.option(
+    "-ut",
+    "--unit-test",
+    help="Whether to run unit tests for content items",
+    is_flag=True,
+    default=False,
+)
+@click.option(
+    "--skip",
+    help="A comma separated list of precommit hooks to skip",
+)
+@click.option(
+    "--validate",
+    help="Whether to run demisto-sdk validate",
+    is_flag=True,
+    default=False,
+)
+@click.option(
+    "--format",
+    help="Whether to run demisto-sdk format",
+    is_flag=True,
+    default=False,
+)
+@click.option(
+    "-v",
+    "--verbose",
+    help="Verbose output of pre-commit",
+    is_flag=True,
+    default=False,
+)
+@click.option(
+    "--show-diff-on-failure",
+    help="Show diff on failure",
+    is_flag=True,
+    default=False,
+)
+@click.option(
+    "--sdk-ref",
+    help="The demisto-sdk ref to use for the pre-commit hooks",
+    default="",
+)
+@click.pass_context
+@logging_setup_decorator
+def pre_commit(
+    ctx,
+    input: Iterable[Path],
+    git_diff: bool,
+    all_files: bool,
+    unit_test: bool,
+    skip: str,
+    validate: bool,
+    format: bool,
+    verbose: bool,
+    show_diff_on_failure: bool,
+    sdk_ref: str,
+    **kwargs,
+):
+    from demisto_sdk.commands.pre_commit.pre_commit_command import pre_commit_manager
+
+    if skip:
+        skip = skip.split(",")  # type: ignore[assignment]
+    sys.exit(
+        pre_commit_manager(
+            input,
+            git_diff,
+            all_files,
+            unit_test,
+            skip,
+            validate,
+            format,
+            verbose,
+            show_diff_on_failure,
+            sdk_ref=sdk_ref,
+        )
+    )
+
+
+@main.command(short_help="Run unit tests in a docker for integrations and scripts")
+@click.help_option("-h", "--help")
+@click.option(
+    "-i",
+    "--input",
+    type=PathsParamType(
+        exists=True, resolve_path=True
+    ),  # PathsParamType allows passing a list of paths
+    help="The path of the content pack/file to validate specifically.",
+)
+@click.option(
+    "-v", "--verbose", is_flag=True, default=False, help="Verbose output of unit tests"
+)
+@click.argument("file_paths", nargs=-1, type=click.Path(exists=True, resolve_path=True))
+@click.pass_context
+@logging_setup_decorator
+def run_unit_tests(
+    ctx, input: str, file_paths: Tuple[str, ...], verbose: bool, **kwargs
+):
+    if input:
+        file_paths = tuple(input.split(","))
+    from demisto_sdk.commands.run_unit_tests.unit_tests_runner import unit_test_runner
+
+    sys.exit(unit_test_runner(file_paths, verbose))
 
 
 @main.result_callback()

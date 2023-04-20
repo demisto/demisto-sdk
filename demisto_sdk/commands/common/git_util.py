@@ -26,6 +26,9 @@ class GitUtil:
         else:
             self.repo = repo
 
+    def get_all_files(self) -> Set[Path]:
+        return set(map(Path, self.repo.git.ls_files().split("\n")))
+
     def modified_files(
         self,
         prev_ver: str = "",
@@ -494,7 +497,19 @@ class GitUtil:
 
         return extracted_paths
 
-    def _get_all_changed_files(self, prev_ver: str) -> Set[Path]:
+    def _get_staged_files(self) -> Set[Path]:
+        """Get only staged files
+
+        Returns:
+            Set[Path]: The staged files to return
+        """
+        return {
+            Path(item)
+            for item in self.repo.git.diff("--cached", "--name-only").split("\n")
+            if item
+        }
+
+    def _get_all_changed_files(self, prev_ver: str = "") -> Set[Path]:
         """Get all the files changed in the current branch without status distinction.
         Args:
             prev_ver (str): The base branch against which the comparison is made.

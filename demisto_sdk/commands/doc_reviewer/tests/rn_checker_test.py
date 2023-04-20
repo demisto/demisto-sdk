@@ -82,6 +82,11 @@ from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
             True,
         ),
         (["##### New: script", "Blah.", "##### script", "Blah."], False),
+        ([
+                "#### Indicator Fields",
+                "- New: **Indicator Field**",
+
+        ], True)
     ],
 )
 def test_release_notes_templates(file_content, expected_result):

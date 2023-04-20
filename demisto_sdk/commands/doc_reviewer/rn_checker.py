@@ -201,7 +201,7 @@ class ReleaseNotesChecker:
             line = line.lstrip(" -")
             line = line.rstrip()
 
-            if line.startswith(("##### New:", "- New: ")):
+            if line.startswith(("##### New:", "- New: ", "New:")):
                 is_new_content_item = True
                 continue
 

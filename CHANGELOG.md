@@ -3,7 +3,10 @@
 ## Unreleased
 * Added support for the `<~XPANSE>` marketplace tag in release notes.
 * Added support for marketplace tags in the **doc-review** command.
-* Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
+* Updated the logs shown during lint when running in docker.
+* Fixed an issue where **validate** showed errors twice.
+* Added **generate-unit-tests** documentation to the repo README.
+* Added the `hiddenpassword` field to the integration schema, allowing **validate** to run on integrations with username-only inputs.
 
 ## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.

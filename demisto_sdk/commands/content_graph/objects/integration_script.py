@@ -31,14 +31,18 @@ class IntegrationScript(ContentItem):
     code: Optional[str] = Field(None, exclude=True)
 
     def prepare_for_upload(
-        self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
+        self,
+        current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        **kwargs,
     ) -> dict:
         if not kwargs.get("unify_only"):
-            data = super().prepare_for_upload(marketplace)
+            data = super().prepare_for_upload(current_marketplace)
         else:
             data = self.data
 
-        data = IntegrationScriptUnifier.unify(self.path, data, marketplace, **kwargs)
+        data = IntegrationScriptUnifier.unify(
+            self.path, data, current_marketplace, **kwargs
+        )
         return data
 
     def get_supported_native_images(

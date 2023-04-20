@@ -119,11 +119,15 @@ class ContentItem(BaseContent):
             return self.handler.load(f)
 
     def prepare_for_upload(
-        self, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR, **kwargs
+        self,
+        current_marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+        **kwargs,
     ) -> dict:
         data = self.data
         logger.debug(f"preparing {self.path}")
-        return MarketplaceSuffixPreparer.prepare(data, marketplace)
+        return MarketplaceSuffixPreparer.prepare(
+            data, current_marketplace, self.marketplaces
+        )
 
     def summary(self, marketplace: Optional[MarketplaceVersions] = None,
                 incident_to_alert: bool = False) -> dict:
@@ -185,7 +189,7 @@ class ContentItem(BaseContent):
 
     def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)
-        data = self.prepare_for_upload(marketplace=marketplace)
+        data = self.prepare_for_upload(current_marketplace=marketplace)
         try:
             with (dir / self.normalize_name).open("w") as f:
                 self.handler.dump(data, f)

@@ -323,9 +323,9 @@ def test_upload_pack(demisto_client_configure, mocker):
         IntegrationScript, "get_supported_native_images", return_value=[]
     )
     pack_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack"
-    uploader = Uploader(input=pack_path, insecure=False)
+    uploader = Uploader(pack_path)
     mocker.patch.object(uploader, "client")
-    status_code = uploader.upload()
+
     expected_entities = [
         "DummyIntegration.yml",
         "UploadTest.yml",
@@ -342,10 +342,10 @@ def test_upload_pack(demisto_client_configure, mocker):
         "layout-details-test_bla-V2.json",
         "upload_test_dashboard.json",
     ]
-    assert status_code == 0
-    uploaded_objects = [obj_pair[0] for obj_pair in uploader.successfully_uploaded]
-    for entity in expected_entities:
-        assert entity in uploaded_objects
+    assert uploader.upload() == 0
+    assert {
+        content_item.path.name for content_item in uploader.successfully_uploaded
+    } == set(expected_entities)
 
 
 def test_upload_invalid_path(demisto_client_configure, mocker):

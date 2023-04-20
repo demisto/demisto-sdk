@@ -257,7 +257,7 @@ class Uploader:
         except Exception as e:
             message = f"unknown: {e}"
             with contextlib.suppress(Exception):
-                message = parse_error_response(e, content_item)
+                message = parse_error_response(e)
             self.failed_upload.append((content_item, message))
             return False
 
@@ -272,7 +272,7 @@ class Uploader:
 
         """
         success = True
-        if path.name in CONTENT_ENTITIES_DIRS:
+        if path.parent.name in CONTENT_ENTITIES_DIRS:
             for file in itertools.chain(path.glob("*.yml"), path.glob("*.json")):
                 if file.stem.endswith("_unified"):
                     continue  # TODO yes? no? error?
@@ -384,7 +384,7 @@ def parse_error_response(error: ApiException) -> str:
         elif "Failed to establish a new connection:" in str(error.reason):
             message = (
                 "Failed to establish a new connection: Connection refused.\n"
-                "Try checking the BASE_URL configuration."
+                "Check the BASE url configuration."
             )
 
         elif error.reason in ("Bad Request", "Forbidden"):
@@ -393,7 +393,8 @@ def parse_error_response(error: ApiException) -> str:
 
             if error_body.get("status") == 403:
                 message += "\nTry checking your API key configuration."
-
+        else:
+            message = error.reason
     if isinstance(error, KeyboardInterrupt):
         message = "Aborted due to keyboard interrupt."
     return message

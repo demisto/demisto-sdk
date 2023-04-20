@@ -62,6 +62,9 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_TEST_PLAYBOOK,
     TEST_PLAYBOOK_PATH,
 )
+from TestSuite.pack import Pack
+from TestSuite.playbook import Playbook
+from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 yaml = YAML_Handler()
@@ -970,6 +973,49 @@ class TestFormatting:
         os.remove(DESTINATION_FORMAT_TEST_PLAYBOOK)
         os.rmdir(TEST_PLAYBOOK_PATH)
 
+    @pytest.mark.parametrize(
+        "initial_fromversion, is_existing_file, expected_fromversion",
+        [
+            ("5.0.0", False, GENERAL_DEFAULT_FROMVERSION),
+            ("5.0.0", True, "5.0.0"),
+            ("3.0.0", False, GENERAL_DEFAULT_FROMVERSION),
+            ("3.0.0", True, "3.0.0"),
+            (None, False, GENERAL_DEFAULT_FROMVERSION),
+            (None, True, GENERAL_DEFAULT_FROMVERSION),
+        ],
+    )
+    def test_format_valid_fromversion_for_playbook(
+        self,
+        mocker,
+        repo: Repo,
+        initial_fromversion: str,
+        is_existing_file: bool,
+        expected_fromversion: str,
+    ):
+        """
+        Given
+            - A playbook file with a fromversion value `initial_fromversion`
+        When
+            - Run run_format()
+        Then
+            - Ensure that the formatted fromversion equals `expected_fromversion`.
+        """
+        pack: Pack = repo.create_pack("pack")
+        playbook: Playbook = pack.create_playbook("DummyPlaybook")
+        playbook.create_default_playbook()
+        playbook_data = playbook.yml.read_dict()
+        playbook_data["fromversion"] = initial_fromversion
+        playbook.yml.write_dict(playbook_data)
+        if is_existing_file:
+            mocker.patch.object(BaseUpdate, "is_old_file", return_value=playbook_data)
+
+        with ChangeCWD(repo.path):
+            formatter = PlaybookYMLFormat(
+                input=playbook.yml.path, path=PLAYBOOK_SCHEMA_PATH, assume_yes=True
+            )
+            formatter.run_format()
+            assert formatter.data.get("fromversion") == expected_fromversion
+
     @patch("builtins.input", lambda *args: "no")
     def test_update_tests_on_integration_with_test_playbook(self):
         """
@@ -1241,7 +1287,7 @@ class TestFormatting:
         )
 
     @staticmethod
-    def exception_raise(file_type=""):
+    def exception_raise(default_from_version: str = "", file_type: str = ""):
         raise ValueError("MY ERROR")
 
     TEST_UUID_FORMAT_OBJECT = [PlaybookYMLFormat, TestPlaybookYMLFormat]

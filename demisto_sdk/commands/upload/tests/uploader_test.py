@@ -98,6 +98,7 @@ def test_upload_folder(
 ):
     mocker.patch.object(demisto_client, "configure", return_value="object")
     path = Path(f"{git_path()}/demisto_sdk/tests/test_files/", path_end)
+    assert path.exists()
     uploader = Uploader(path)
     with patch.object(uploader, "client", return_value="ok"):
         assert (

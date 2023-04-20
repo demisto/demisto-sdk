@@ -1902,7 +1902,6 @@ class ValidateManager:
             self.id_set_validations
         )
         if pack_errors:
-            logger.info(f"[red]{pack_errors}[/red]")
             files_valid = False
 
         # check author image

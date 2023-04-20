@@ -180,3 +180,22 @@ The development environment is connected to the branch you are currently using i
 Contributions are welcome and appreciated.
 For information regarding contributing, press [here](CONTRIBUTION.md).
 For release guide, press [here](docs/release_guide.md)
+
+---
+
+## Internet Connection
+
+An internet connection is required for the following commands to work properly:
+
+1. [Validate](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/validate/README.md)
+2. [Format](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/format/README.md)
+3. [Generate-outputs](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/generate_outputs/README.md)
+
+
+Note that the following commands may work partially without an internet connection:
+
+1. [Lint](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/lint/README.md)
+2. [openapi-codegen](https://xsoar.pan.dev/docs/integrations/openapi-codegen)
+3. [postman-codegen](https://xsoar.pan.dev/docs/integrations/postman-codegen)
+
+---

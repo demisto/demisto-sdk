@@ -1794,6 +1794,11 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
+    "multiple_script_with_same_name": {
+        "code": "GR106",
+        "ui_applicable": False,
+        "related_field": "",
+    }
 }
 
 
@@ -4475,3 +4480,10 @@ class Errors:
         content_name: str, pack_display_names: List[str]
     ):
         return f"Pack '{content_name}' has a duplicate display_name as: {', '.join(pack_display_names)} "
+
+    @staticmethod
+    @error_code_decorator
+    def multiple_script_with_same_name(
+        script_name: str
+    ):
+        return f"Script '{script_name}' already exist in the repo."

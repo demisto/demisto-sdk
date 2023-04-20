@@ -3480,3 +3480,18 @@ def get_pack_paths_from_files(file_paths: Iterable[str]) -> list:
     """Returns the pack paths from a list/set of files"""
     pack_paths = {f"Packs/{get_pack_name(file_path)}" for file_path in file_paths}
     return list(pack_paths)
+
+
+def replace_incident_to_alerts(value: str) -> str:
+    TABLE_INCIDENT_TO_ALERT = {
+        'incident': 'alert',
+        'incidents': 'alerts',
+        'Incident': 'Alert',
+        'Incidents': 'Alerts',
+        'INCIDENT': 'ALERT',
+        'INCIDENTS': 'ALERTS'
+    }
+    new_value = value
+    for pattern, replace_with in TABLE_INCIDENT_TO_ALERT.items():
+        new_value = re.sub(pattern, replace_with, new_value)
+    return new_value

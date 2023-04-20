@@ -1,6 +1,6 @@
 import logging
 import copy
-from typing import Any, Tuple, Optional
+from typing import Any
 import re
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 logger = logging.getLogger("demisto-sdk")
@@ -34,15 +34,18 @@ WRAPPED_MAPPING = {
 
 # A table for creating the wrapper script content
 WRAPPER_SCRIPT = {
-    'python': "register_module_line('<script_name>', 'start', __line__())\n\n" \
-              "return demisto.executeCommand('<original_script_name>', demisto.args())\n\n" \
+    'python': "register_module_line('<script_name>', 'start', __line__())\n\n"
+              "return demisto.executeCommand('<original_script_name>', demisto.args())\n\n"
               "register_module_line('<script_name>', 'end', __line__())",
     'javascript': "return executeCommand('<original_script_name>', args)\n"
 }
 
+
 class MarketplaceIncidentToAlertScriptsPreparer:
     @staticmethod
-    def prepare(data: dict, marketplace: MarketplaceVersions) -> Tuple[dict, Optional[dict]]:
+    def prepare(data: dict,
+                marketplace: MarketplaceVersions,
+                incident_to_alert: bool) -> tuple:
         """
         Checks whether the script needs conversion from incident to alert,
 
@@ -55,66 +58,59 @@ class MarketplaceIncidentToAlertScriptsPreparer:
 
         Otherwise:
             returns a tuple with the script as is.
-        
+
         Args:
             data (dict): dictionary of the script.
         Returns:
             Tuple[dict, Optional[dict]]: A tuple of two scripts, the wrapper script and the modified original script.
         """
-        
-        # Checks whether it is necessary to make changes to the script and create a wrapper script
-        replace_incident_to_alert: bool = marketplace == MarketplaceVersions.MarketplaceV2
-
-        copy_data = copy.deepcopy(data)
-        data = recursive_editing(data, replace_incident_to_alert)
-        logging.debug(f"Script preparation {data['name']} completed")
+        scripts_preparation = []
 
         # Creating a wrapper script
-        if (wrapper_script := create_wrapper_script(copy_data)):
-            data = replace_register_module_line(data, wrapper_script)
-            logging.debug(f"Created {wrapper_script['name']} script wrapper to {data['name']} script")
-            return wrapper_script, data
+        if incident_to_alert:
+            scripts_preparation.append(create_wrapper_script(data))
 
-        return (data,)
+        # Handling the incident word in the script
+        scripts_preparation.append(editing_script(data, incident_to_alert))
+        logging.debug(f"Script preparation {data['name']} completed")
+
+        return tuple(scripts_preparation)
 
 
 """
 HELPER FUNCTIONS
 """
-def replace_(data: str, replace_incident_to_alert: bool = False):
-    if replace_incident_to_alert:
+
+
+def handling_for_incident_word(data: str, incident_to_alert: bool = False):
+    if incident_to_alert:
         for pattern, replace_with in NOT_WRAPPED_RE_MAPPING.items():
             data = re.sub(pattern, replace_with, data)
 
     for pattern, replace_with in WRAPPED_MAPPING.items():
-            data = re.sub(pattern, replace_with, data)
+        data = re.sub(pattern, replace_with, data)
     return data
 
 
 def create_wrapper_script(data: dict) -> dict:
-    if is_need_wrap(data):
-        try:
-            data['script'] = WRAPPER_SCRIPT[data['type']].replace(
-                '<original_script_name>',
-                replace_(data['name'], True)).replace(
-                    'script_name',
-                    data['name'])
-        except Exception as e:
-            logging.error(f'Failed to create the wrapper script: {e}')
 
-        return data
+    copy_data = copy.deepcopy(data)
+    try:
+        copy_data['script'] = WRAPPER_SCRIPT[copy_data['type']].replace(
+            '<original_script_name>',
+            handling_for_incident_word(copy_data['name'], True)).replace(
+                'script_name',
+                copy_data['name'])
+    except Exception as e:
+        logging.error(f'Failed to create the wrapper script: {e}')
 
-
-def is_need_wrap(data: dict) -> bool:
-    for key in NOT_WRAPPED_RE_MAPPING.keys():
-        if re.search(key, data['name']):
-            return True
-    return False
+    logging.debug(f"Created {copy_data['name']} script wrapper to {data['name']} script")
+    return copy_data
 
 
-def recursive_editing(data: Any, replace_incident_to_alert: bool = False) -> Any:
+def recursive_editing(data: Any, incident_to_alert: bool = False) -> Any:
     if isinstance(data, list):
-        return [recursive_editing(item, replace_incident_to_alert) for item in data]
+        return [recursive_editing(item, incident_to_alert) for item in data]
     if isinstance(data, dict):
         for key in tuple(
             data.keys()
@@ -122,17 +118,25 @@ def recursive_editing(data: Any, replace_incident_to_alert: bool = False) -> Any
             value = data[key]
             if isinstance(value, str):
                 if key in ('name', 'id', 'comment', 'description'):
-                    data[key] = replace_(value, replace_incident_to_alert)
+                    data[key] = handling_for_incident_word(value, incident_to_alert)
             else:
-                data[key] = recursive_editing(value, replace_incident_to_alert)
+                data[key] = recursive_editing(value, incident_to_alert)
         return data
     else:
         return data
 
 
-def replace_register_module_line(data: dict, wrapper_script: dict):
+def replace_register_module_line(data: dict):
+    new_name = handling_for_incident_word(data['name'])
     for state in ('start', 'end'):
         data['script'] = data['script'].replace(
-            f"register_module_line('{wrapper_script['name']}', '{state}', __line__())",
-            f"register_module_line('{data['name']}', '{state}', __line__())")
+            f"register_module_line('{data['name']}', '{state}', __line__())",
+            f"register_module_line('{new_name}', '{state}', __line__())")
+
     return data
+
+
+def editing_script(data: dict, incident_to_alert: bool) -> dict:
+    if incident_to_alert:
+        data = replace_register_module_line(data)
+    return recursive_editing(data, incident_to_alert)

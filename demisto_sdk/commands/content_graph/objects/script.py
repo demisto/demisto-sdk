@@ -16,6 +16,7 @@ logger = logging.getLogger("demisto-sdk")
 
 class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignore[call-arg]
     tags: List[str]
+    skip_prepare: List[str]
 
     def metadata_fields(self) -> Set[str]:
         return {"name", "description", "tags"}
@@ -47,10 +48,20 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
     def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)
         data = self.prepare_for_upload(marketplace=marketplace)
-        for data in MarketplaceIncidentToAlertScriptsPreparer.prepare(data, marketplace):
+
+        for data in MarketplaceIncidentToAlertScriptsPreparer.prepare(
+                data, marketplace, self.is_incident_to_alert(marketplace)):
             try:
-                print(f"script-{data['name']}.yml")
                 with (dir / f"script-{data['name']}.yml").open("w") as f:
                     self.handler.dump(data, f)
             except FileNotFoundError as e:
                 logger.warning(f"Failed to dump {self.path} to {dir}: {e}")
+
+    def is_incident_to_alert(self, marketplace: MarketplaceVersions) -> bool:
+        return all(
+            (
+                marketplace == MarketplaceVersions.MarketplaceV2,
+                'incident' in self.data.get('name', '').lower(),
+                'script name incident to alert' not in self.skip_prepare,
+            )
+        )

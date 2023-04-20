@@ -24,6 +24,9 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
     MarketplaceSuffixPreparer,
 )
+from demisto_sdk.commands.common.tools import (
+    replace_incident_to_alerts
+)
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -122,7 +125,8 @@ class ContentItem(BaseContent):
         logger.debug(f"preparing {self.path}")
         return MarketplaceSuffixPreparer.prepare(data, marketplace)
 
-    def summary(self, marketplace: Optional[MarketplaceVersions] = None) -> dict:
+    def summary(self, marketplace: Optional[MarketplaceVersions] = None,
+                incident_to_alert: bool = False) -> dict:
         """Summary of a content item (the most important metadata fields)
 
         Args:
@@ -139,6 +143,11 @@ class ContentItem(BaseContent):
                 )
             if "name" in summary_res:
                 summary_res["name"] = data.get("name_x2") or self.name
+
+            if incident_to_alert:
+                summary_res['name'] = replace_incident_to_alerts(summary_res.get("name", ""))
+                summary_res['description'] = replace_incident_to_alerts(summary_res.get('description', ""))
+
         return summary_res
 
     @abstractmethod
@@ -195,3 +204,6 @@ class ContentItem(BaseContent):
         id_set_entity["file_path"] = str(self.path)
         id_set_entity["pack"] = self.in_pack.object_id  # type: ignore[union-attr]
         return id_set_entity
+
+    def is_incident_to_alert(self, marketplace: MarketplaceVersions) -> bool:
+        return False

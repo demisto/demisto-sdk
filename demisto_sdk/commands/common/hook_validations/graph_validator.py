@@ -50,6 +50,7 @@ class GraphValidator(BaseValidator):
             self.is_file_using_unknown_content(),
             self.is_file_display_name_already_exists(),
             self.validate_duplicate_ids(),
+            self.is_file_name_already_exists(),
         )
         return all(is_valid)
 
@@ -281,6 +282,27 @@ class GraphValidator(BaseValidator):
                     error_code,
                 ) = Errors.multiple_packs_with_same_display_name(
                     content_id, duplicate_names_id
+                )
+                if self.handle_error(error_message, error_code, ""):
+                    is_valid = False
+
+        return is_valid
+
+    @error_codes("GR106")
+    def is_file_name_already_exists(self):
+        """
+        Validate that there are no duplicate names of scripts when the name included `alert` in the repo
+        """
+        is_valid = True
+        query_results = self.graph.get_duplicate_file_name(self.file_paths)
+
+        if query_results:
+            for script_name in query_results:
+                (
+                    error_message,
+                    error_code,
+                ) = Errors.multiple_script_with_same_name(
+                    script_name
                 )
                 if self.handle_error(error_message, error_code, ""):
                     is_valid = False

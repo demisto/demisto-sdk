@@ -220,12 +220,18 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         )
         metadata["contentItems"] = {}
         for content_item in self.content_items:
-            try:
+
+            if content_item.content_type == ContentType.TEST_PLAYBOOK:
+                continue
+            if content_item.is_incident_to_alert(marketplace):
                 metadata["contentItems"].setdefault(
                     content_item.content_type.server_name, []
-                ).append(content_item.summary(marketplace))
-            except NotImplementedError as e:
-                logger.debug(f"Could not add {content_item.name} to pack metadata: {e}")
+                ).append(content_item.summary(marketplace, incident_to_alert=True))
+
+            metadata["contentItems"].setdefault(
+                content_item.content_type.server_name, []
+            ).append(content_item.summary(marketplace))
+
         with open(path, "w") as f:
             json.dump(metadata, f, indent=4)
 

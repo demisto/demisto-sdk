@@ -1,7 +1,12 @@
 import re
+import copy
+import logging
 from typing import Any
 
+
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+
+logger = logging.getLogger("demisto-sdk")
 
 NOT_WRAPPED_RE_MAPPING = {
     rf"(?<!<-){key}(?!->)": value
@@ -26,6 +31,18 @@ WRAPPED_MAPPING = {
         "INCIDENTS",
     )
 }
+
+WRAPPER_SCRIPT = {
+    'python': "register_module_line('<script_name>', 'start', __line__())\n\n"
+              "return demisto.executeCommand('<original_script_name>', demisto.args())\n\n"
+              "register_module_line('<script_name>', 'end', __line__())",
+    'javascript': "return executeCommand('<original_script_name>', args)\n"
+}
+
+
+"""
+PLAYBOOK HELPER FUNCTIONS
+"""
 
 
 def prepare_descriptions_and_names_helper(
@@ -121,3 +138,69 @@ def replace_playbook_access_fields_recursively(datum: Any) -> Any:
 def prepare_playbook_access_fields(data: dict) -> dict:
     data = replace_playbook_access_fields_recursively(data)
     return data
+
+
+"""
+SCRIPT HELPER FUNCTIONS
+"""
+
+
+def edit_ids_names_and_descriptions_for_script(data: str, incident_to_alert: bool = False):
+    if incident_to_alert:
+        for pattern, replace_with in NOT_WRAPPED_RE_MAPPING.items():
+            data = re.sub(pattern, replace_with, data)
+
+    for pattern, replace_with in WRAPPED_MAPPING.items():
+        data = re.sub(pattern, replace_with, data)
+    return data
+
+
+def create_wrapper_script(data: dict) -> dict:
+
+    copy_data = copy.deepcopy(data)
+    try:
+        copy_data['script'] = WRAPPER_SCRIPT[copy_data['type']].replace(
+            '<original_script_name>',
+            edit_ids_names_and_descriptions_for_script(copy_data['name'], True)).replace(
+                'script_name',
+                copy_data['name'])
+    except Exception as e:
+        logger.error(f'Failed to create the wrapper script: {e}')
+
+    logger.debug(f"Created {copy_data['name']} script wrapper to {data['name']} script")
+
+    return copy_data
+
+
+def replace_script_access_fields_recursively(data: Any, incident_to_alert: bool = False) -> Any:
+    if isinstance(data, list):
+        return [replace_script_access_fields_recursively(item, incident_to_alert) for item in data]
+    if isinstance(data, dict):
+        for key in tuple(
+            data.keys()
+        ):
+            value = data[key]
+            if isinstance(value, str):
+                if key in ('name', 'id', 'comment', 'description'):
+                    data[key] = edit_ids_names_and_descriptions_for_script(value, incident_to_alert)
+            else:
+                data[key] = replace_script_access_fields_recursively(value, incident_to_alert)
+        return data
+    else:
+        return data
+
+
+def replace_register_module_line_for_script(data: dict):
+    new_name = edit_ids_names_and_descriptions_for_script(data['name'])
+    for state in ('start', 'end'):
+        data['script'] = data['script'].replace(
+            f"register_module_line('{data['name']}', '{state}', __line__())",
+            f"register_module_line('{new_name}', '{state}', __line__())")
+
+    return data
+
+
+def prepare_script_access_fields(data: dict, incident_to_alert: bool) -> dict:
+    if incident_to_alert:
+        data = replace_register_module_line_for_script(data)
+    return replace_script_access_fields_recursively(data, incident_to_alert)

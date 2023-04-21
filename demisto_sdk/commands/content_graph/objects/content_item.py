@@ -149,8 +149,12 @@ class ContentItem(BaseContent):
                 summary_res["name"] = data.get("name_x2") or self.name
 
             if incident_to_alert:
-                summary_res['name'] = replace_incident_to_alerts(summary_res.get("name", ""))
-                summary_res['description'] = replace_incident_to_alerts(summary_res.get('description', ""))
+                summary_res['name'] = replace_incident_to_alerts(
+                    summary_res.get("name", "")
+                )
+                summary_res['description'] = replace_incident_to_alerts(
+                    summary_res.get('description', "")
+                )
 
         return summary_res
 

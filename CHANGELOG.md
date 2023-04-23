@@ -9,7 +9,7 @@
 * Added **generate-unit-tests** documentation to the repo README.
 * Added the `hiddenpassword` field to the integration schema, allowing **validate** to run on integrations with username-only inputs.
 * Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
-* Fixed an issue where **validate** passed a layouts container with incident fields not present in `id_set.json` even when `--post-commit` was indicated.
+* Fixed an issue where **validate** didn't recognize layouts with incident fields missing from `id_set.json` even when `--post-commit` was indicated.
 
 ## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.

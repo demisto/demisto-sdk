@@ -367,7 +367,7 @@ class Uploader:
                 headers=("FILE_NAME", "PATH"),
                 tablefmt="fancy_grid",
             )
-            logger.info(f"\n[red]FAILED PARSING CONTENT:{failed_parsing_str}[/red]")
+            logger.info(f"\n[red]FAILED PARSING CONTENT:\n{failed_parsing_str}[/red]")
         if self.failed_upload:
             failed_upload_str = tabulate(
                 (
@@ -377,7 +377,7 @@ class Uploader:
                 headers=["NAME", "TYPE", "ERROR"],
                 tablefmt="fancy_grid",
             )
-            logger.info(f"\n[red]FAILED UPLOADS:{failed_upload_str}[/red]")
+            logger.info(f"\n[red]FAILED UPLOADS:\n{failed_upload_str}[/red]")
 
 
 def parse_error_response(error: ApiException) -> str:

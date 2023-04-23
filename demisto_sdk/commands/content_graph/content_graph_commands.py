@@ -1,4 +1,5 @@
 import logging
+import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import List, Optional
@@ -104,6 +105,9 @@ def extract_remote_import_files(
         builder (ContentGraphBuilder)
 
     """
+    if os.getenv("GITLAB_CI"):
+        logger.info("Running in GitLab CI, will create a new graph")
+        return
     try:
         with NamedTemporaryFile() as temp_file:
             official_content_graph = download_content_graph(Path(temp_file.name))

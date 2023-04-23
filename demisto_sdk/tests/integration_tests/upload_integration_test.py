@@ -40,7 +40,7 @@ def demisto_client(mocker):
     mocker.patch("click.secho")
 
 
-def test_integration_upload_pack_positive(demisto_client, repo, mocker):
+def test_integration_upload_pack_positive(demisto_client, mocker):
     """
     Given
     - Content pack named FeedAzure to upload.

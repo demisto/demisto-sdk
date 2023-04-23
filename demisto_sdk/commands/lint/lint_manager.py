@@ -257,10 +257,11 @@ class LintManager:
             sys.exit(1)
         # Validating docker engine connection
         logger.debug("creating docker client from env")
-        docker_client: docker.DockerClient = init_global_docker_client(
-            log_prompt="LintManager"
-        )
+
         try:
+            docker_client: docker.DockerClient = init_global_docker_client(
+                log_prompt="LintManager"
+            )
             logger.debug("pinging docker daemon")
             docker_client.ping()
         except (

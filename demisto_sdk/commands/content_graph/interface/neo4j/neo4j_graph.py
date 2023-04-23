@@ -61,7 +61,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.validations impo
     validate_fromversion,
     validate_marketplaces,
     validate_multiple_packs_with_same_display_name,
-    validate_multiple_file_with_same_name,
+    validate_multiple_script_with_same_name,
     validate_toversion,
     validate_unknown_content,
 )
@@ -360,15 +360,15 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             )
             return results
 
-    def get_duplicate_file_name(
+    def get_duplicate_script_name_included_incident(
         self, file_paths: List[str]
     ) -> List[Tuple[str, List[str]]]:
         with self.driver.session() as session:
             results = session.execute_read(
-                validate_multiple_file_with_same_name, file_paths
+                validate_multiple_script_with_same_name, file_paths
             )
         return results
-    
+
     def validate_duplicate_ids(
         self, file_paths: List[str]
     ) -> List[Tuple[BaseContent, List[BaseContent]]]:

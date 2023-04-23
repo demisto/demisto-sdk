@@ -1,4 +1,3 @@
-import re
 from typing import List, Tuple
 
 from neo4j import Transaction, graph
@@ -19,15 +18,9 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     versioned,
 )
 
-
-TABLE_RE_MAPPING = {
-    'alert': 'incident',
-    'alerts': 'incidents',
-    'Alert': 'Incident',
-    'Alerts': 'Incidents',
-    'ALERT': 'INCIDENT',
-    'ALERTS': 'INCIDENTS'
-}
+from demisto_sdk.commands.common.tools import (
+    replace_alert_to_incident
+)
 
 
 def validate_unknown_content(
@@ -160,8 +153,7 @@ RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
     ]
 
 
-# validate multiple script with same name when changing script name includes alert
-def validate_multiple_file_with_same_name(
+def validate_multiple_script_with_same_name(
     tx: Transaction, file_paths: List[str]
 ) -> List[Tuple[str, List[str]]]:
     query = f"""// Returns all scripts that have the word 'alert' in their name
@@ -173,30 +165,23 @@ WHERE toLower(a.name) contains "alert"
     query += """
     RETURN a.name AS a_name
     """
-    
-    def _replace(script_name: list) -> list:
-        new_name = script_name
-        for pattern, replace_with in TABLE_RE_MAPPING.items():
-            new_name = re.sub(pattern, replace_with, new_name)
-        return new_name
 
     content_item_names = [
-        # replace the name of the script by TABLE_RE_MAPPING table.
-        _replace(item.get("a_name"))
+        # replace the name of the script.
+        replace_alert_to_incident(item.get("a_name"))
         for item in run_query(tx, query)
     ]
-    
+
     query = f"""// Returns script names if they match the replaced name
 MATCH (b:{ContentType.SCRIPT})
 WHERE b.name in {content_item_names}
+AND NOT 'script name incident to alert' IN b.skip_prepare
 RETURN b.name AS b_name
 """
     return [
         item.get('b_name')
         for item in run_query(tx, query)
     ]
-    
-    
 
 
 def validate_core_packs_dependencies(

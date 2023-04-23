@@ -261,7 +261,20 @@ def repository(mocker) -> ContentDTO:
             [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
         )
     )
+    pack1.content_items.script.append(
+        mock_script(
+            "setIncident",
+            [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
+        )
+    )
     pack2.content_items.script.append(mock_script("TestApiModule"))
+    pack2.content_items.script.append(
+        mock_script(
+            "getIncidents",
+            marketplaces=[MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
+            skip_prepare=['script name incident to alert']
+        )
+    )
     pack2.content_items.classifier.append(mock_classifier("SampleClassifier2"))
     pack2.content_items.test_playbook.append(mock_test_playbook())
     pack3.content_items.playbook.append(
@@ -276,6 +289,9 @@ def repository(mocker) -> ContentDTO:
         mock_playbook("SamplePlaybook2", [MarketplaceVersions.XSOAR], "6.8.0", "6.5.0")
     )
     pack3.content_items.script.append(mock_script("SampleScript2"))
+    pack3.content_items.script.append(mock_script(name='setAlert'))
+    pack3.content_items.script.append(mock_script(name='getAlert'))
+    pack3.content_items.script.append(mock_script(name='getAlerts'))
     pack4.content_items.playbook.append(mock_playbook("SamplePlaybook"))
     repository.packs.extend([pack1, pack2, pack3, pack4])
     mocker.patch(
@@ -359,7 +375,11 @@ def mock_playbook(
     )
 
 
-def mock_script(name, marketplaces=[MarketplaceVersions.XSOAR]):
+def mock_script(
+        name,
+        marketplaces=[MarketplaceVersions.XSOAR],
+        skip_prepare=[]
+):
     return Script(
         id=name,
         content_type=ContentType.SCRIPT,
@@ -375,6 +395,7 @@ def mock_script(name, marketplaces=[MarketplaceVersions.XSOAR]):
         docker_image="mock:docker",
         tags=[],
         is_test=False,
+        skip_prepare=skip_prepare,
     )
 
 
@@ -538,6 +559,38 @@ def test_is_file_display_name_already_exists(repository: ContentDTO, mocker):
             logger_info.call_args_list,
             f"Pack 'SamplePack{i if i != 1 else ''}' has a duplicate display_name",
         )
+
+
+def test_validate_script_name_is_not_already_exist_as_system_script(repository: ContentDTO, mocker):
+    """
+    Given
+    - A content repo
+    When
+    - running the vaidation "validate_script_name_is_not_already_exist_as_system_script"
+    Then
+    - Validate the existance of duplicate script names
+    """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    with GraphValidator(should_update=False) as graph_validator:
+        create_content_graph(graph_validator.graph)
+        is_valid = graph_validator.validate_script_name_is_not_already_exist_as_system_script()
+
+    assert not is_valid
+
+    assert str_in_call_args_list(
+        logger_info.call_args_list,
+        "Script 'setAlert' already exist in the repo.",
+    )
+
+    assert not str_in_call_args_list(
+        logger_info.call_args_list,
+        "Script 'getAlert' already exist in the repo.",
+    )
+
+    assert not str_in_call_args_list(
+        logger_info.call_args_list,
+        "Script 'getAlerts' already exist in the repo.",
+    )
 
 
 def test_are_marketplaces_relationships_paths_valid(

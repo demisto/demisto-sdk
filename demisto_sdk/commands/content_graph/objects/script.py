@@ -51,19 +51,27 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
         dir.mkdir(exist_ok=True, parents=True)
         data = self.prepare_for_upload(marketplace=marketplace)
 
+        # Keeps the original name of the script to redefine it at the end of the dump process
+        original_name = self.name
         for data in MarketplaceIncidentToAlertScriptsPreparer.prepare(
                 data, marketplace, self.is_incident_to_alert(marketplace)):
+
+            # Sets the name of the script to the new name so that it will be normalized
+            self.name = data.get("name")
             try:
-                with (dir / f"script-{data['name']}.yml").open("w") as f:
+                with (dir / self.normalize_name).open("w") as f:
                     self.handler.dump(data, f)
             except FileNotFoundError as e:
                 logger.warning(f"Failed to dump {self.path} to {dir}: {e}")
+
+        # Redefines the script name to the original name to continue the prepare process
+        self.name = original_name
 
     def is_incident_to_alert(self, marketplace: MarketplaceVersions) -> bool:
         return all(
             (
                 marketplace == MarketplaceVersions.MarketplaceV2,
-                'incident' in self.data.get('name', '').lower(),
+                'incident' in self.name.lower(),
                 'script name incident to alert' not in self.skip_prepare,
             )
         )

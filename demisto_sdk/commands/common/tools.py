@@ -3518,3 +3518,18 @@ def replace_incident_to_alerts(value: str) -> str:
     for pattern, replace_with in TABLE_INCIDENT_TO_ALERT.items():
         new_value = re.sub(pattern, replace_with, new_value)
     return new_value
+
+
+def replace_alert_to_incident(value: str) -> str:
+    TABLE_ALERT_TO_INCIDENT = {
+        'alert': 'incident',
+        'alerts': 'incidents',
+        'Alert': 'Incident',
+        'Alerts': 'Incidents',
+        'ALERT': 'INCIDENT',
+        'ALERTS': 'INCIDENTS'
+    }
+    new_value = value
+    for pattern, replace_with in TABLE_ALERT_TO_INCIDENT.items():
+        new_value = re.sub(pattern, replace_with, new_value)
+    return new_value

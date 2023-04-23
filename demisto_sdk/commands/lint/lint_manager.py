@@ -15,6 +15,7 @@ import urllib3.exceptions
 from packaging.version import Version
 from wcmatch.pathlib import Path, PosixPath
 
+import demisto_sdk
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK,
     PACKS_PACK_META_FILE_NAME,
@@ -266,6 +267,7 @@ class LintManager:
             docker_client.ping()
         except (
             docker.errors.DockerException,
+            demisto_sdk.commands.common.docker_helper.DockerException,
             requests.exceptions.ConnectionError,
             urllib3.exceptions.ProtocolError,
             docker.errors.APIError,

@@ -266,11 +266,6 @@ class LayoutsContainerValidator(LayoutBaseValidator):
             error_message, error_code = Errors.invalid_incident_field_in_layout(
                 invalid_incident_fields
             )
-            # logger.info(f"content_fields_objs {content_fields_objs}")
-            logger.info(
-                f"content_fields {content_fields[0]} len: {len(content_fields)}"
-            )
-            # logger.info(f"content_fields_objs dir {dir(content_fields_objs[0])}")
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True

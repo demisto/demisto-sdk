@@ -1,3 +1,4 @@
+import dataclasses
 from unittest.mock import patch
 
 import pytest
@@ -7,6 +8,14 @@ from demisto_sdk.commands.common.hook_validations.layout import (
     LayoutValidator,
 )
 from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
+    Neo4jContentGraphInterface,
+)
+
+
+@dataclasses.dataclass
+class MockContentField:
+    cli_name: str
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):
@@ -21,6 +30,14 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.branch_name = ""
         structure.specific_validations = None
         return structure
+
+
+def mock_graph(mocker):
+    mocker.patch.object(Neo4jContentGraphInterface, "__init__", return_value=None)
+    mocker.patch.object(
+        Neo4jContentGraphInterface, "__enter__", return_value=Neo4jContentGraphInterface
+    )
+    mocker.patch.object(Neo4jContentGraphInterface, "__exit__", return_value=None)
 
 
 class TestLayoutValidator:
@@ -61,16 +78,37 @@ class TestLayoutValidator:
         "IndicatorFields": [{"fields": {"name": "name"}}],
     }
 
-    IS_INCIDENT_FIELD_EXIST = [
-        (LAYOUT_WITH_VALID_INCIDENT_FIELD, ID_SET_WITH_INCIDENT_FIELD, True, True),
-        (LAYOUT_WITH_VALID_INCIDENT_FIELD, ID_SET_WITHOUT_INCIDENT_FIELD, True, False),
+    GRAPH_INCIDENT_FIELDS_WITH_INCIDENT_FIELD = [
+        [MockContentField(cli_name="Incident Field")],
+        [MockContentField(cli_name="Indicator Field")],
+    ]
+
+    GRAPH_INCIDENT_FIELDS_WITHOUT_INCIDENT_FIELD = [
+        [MockContentField(cli_name="Other Incident Field")],
+        [MockContentField(cli_name="Other Indicator Field")],
+    ]
+
+    IS_INCIDENT_FIELD_EXIST_GRAPH = [
+        (
+            LAYOUT_WITH_VALID_INCIDENT_FIELD,
+            GRAPH_INCIDENT_FIELDS_WITH_INCIDENT_FIELD,
+            True,
+            True,
+        ),
+        (
+            LAYOUT_WITH_VALID_INCIDENT_FIELD,
+            GRAPH_INCIDENT_FIELDS_WITHOUT_INCIDENT_FIELD,
+            True,
+            False,
+        ),
     ]
 
     @pytest.mark.parametrize(
-        "layout_json, id_set_json, is_circle, expected_result", IS_INCIDENT_FIELD_EXIST
+        "layout_json, content_fields, is_circle, expected_result",
+        IS_INCIDENT_FIELD_EXIST_GRAPH,
     )
     def test_layout_is_incident_field_exist_in_content(
-        self, repo, layout_json, id_set_json, is_circle, expected_result
+        self, mocker, layout_json, content_fields, is_circle, expected_result
     ):
         """
         Given
@@ -81,33 +119,36 @@ class TestLayoutValidator:
         Then
         - validating that incident fields exist in id_set.
         """
-        repo.id_set.write_json(id_set_json)
+        # repo.id_set.write_json(id_set_json)
+        mock_graph(mocker)
+        mocker.patch.object(
+            Neo4jContentGraphInterface, "search", side_effect=content_fields
+        )
         structure = mock_structure("", layout_json)
         validator = LayoutValidator(structure)
-        assert (
-            validator.is_incident_field_exist(id_set_json, is_circle) == expected_result
-        )
+        assert validator.is_incident_field_exist(is_circle) == expected_result
 
-    IS_INCIDENT_FIELD_EXIST = [
+    IS_INCIDENT_FIELD_EXIST_LAYOUTS_CONTAINER_GRAPH = [
         (
             LAYOUT_CONTAINER_WITH_VALID_INCIDENT_FIELD,
-            ID_SET_WITH_INCIDENT_FIELD,
+            GRAPH_INCIDENT_FIELDS_WITH_INCIDENT_FIELD,
             True,
             True,
         ),
         (
             LAYOUT_CONTAINER_WITH_VALID_INCIDENT_FIELD,
-            ID_SET_WITHOUT_INCIDENT_FIELD,
+            GRAPH_INCIDENT_FIELDS_WITHOUT_INCIDENT_FIELD,
             True,
             False,
         ),
     ]
 
     @pytest.mark.parametrize(
-        "layout_json, id_set_json, is_circle, expected_result", IS_INCIDENT_FIELD_EXIST
+        "layout_json, content_fields, is_circle, expected_result",
+        IS_INCIDENT_FIELD_EXIST_LAYOUTS_CONTAINER_GRAPH,
     )
     def test_layout_container_is_incident_field_exist_in_content(
-        self, repo, layout_json, id_set_json, is_circle, expected_result
+        self, mocker, layout_json, content_fields, is_circle, expected_result
     ):
         """
         Given
@@ -118,12 +159,13 @@ class TestLayoutValidator:
         Then
         - validating that incident fields exist in id_set.
         """
-        repo.id_set.write_json(id_set_json)
-        structure = mock_structure("", layout_json)
-        validator = LayoutsContainerValidator(structure)
-        assert (
-            validator.is_incident_field_exist(id_set_json, is_circle) == expected_result
+        mock_graph(mocker)
+        mocker.patch.object(
+            Neo4jContentGraphInterface, "search", side_effect=content_fields
         )
+        structure = mock_structure("layout.json", layout_json)
+        validator = LayoutsContainerValidator(structure)
+        assert validator.is_incident_field_exist(is_circle) == expected_result
 
     IS_VALID_MPV2 = [
         (LAYOUT_CONTAINER_WITH_INVALID_TYPES, False),

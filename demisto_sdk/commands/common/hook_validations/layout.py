@@ -4,6 +4,7 @@ from distutils.version import LooseVersion
 from typing import Dict, List
 
 import click
+import logging
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -25,7 +26,21 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 
+from demisto_sdk.commands.content_graph.content_graph_commands import (
+    update_content_graph,
+)
+from demisto_sdk.commands.content_graph.common import (
+    ContentType,
+)
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
+    Neo4jContentGraphInterface,
+)
+
+
 FROM_VERSION_LAYOUTS_CONTAINER = "6.0.0"
+
+# Local packages
+logger = logging.getLogger("demisto-sdk")
 
 
 class LayoutBaseValidator(ContentEntityValidator, ABC):
@@ -235,7 +250,12 @@ class LayoutsContainerValidator(LayoutBaseValidator):
             )
             return True
 
-        content_fields = self.get_fields_from_id_set(id_set_file=id_set_file)
+        with Neo4jContentGraphInterface() as graph:
+            logger.info("Updating graph...")
+            update_content_graph(graph, use_git=True, dependencies=True)
+
+            content_fields = graph.search(content_type=ContentType.INCIDENT_FIELD)
+
         invalid_incident_fields = []
 
         layout_container_items = [

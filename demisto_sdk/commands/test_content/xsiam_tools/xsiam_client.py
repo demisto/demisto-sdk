@@ -251,6 +251,7 @@ class XsiamApiClient(XsiamApiInterface):
             )
             response.raise_for_status()
         else:
+            logger.info("Still processing. Please wait...")
             response.raise_for_status()
 
     def get_xql_query_result(self, execution_id: str, timeout: int = 300):

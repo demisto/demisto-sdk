@@ -222,7 +222,9 @@ def check_dataset_exists(
     for i in range(timeout // interval):
         logger.debug(f"Check #{i+1}...")
         try:
-            execution_id = xsiam_client.start_xql_query(query, print_req_error=(i+1 == timeout // interval))
+            execution_id = xsiam_client.start_xql_query(
+                query, print_req_error=(i + 1 == timeout // interval)
+            )
             results = xsiam_client.get_xql_query_result(execution_id)
             if results:
                 logger.info(

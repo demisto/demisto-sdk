@@ -1,6 +1,7 @@
 import glob
 import os
 import shutil
+from configparser import ConfigParser
 from pathlib import Path
 from typing import Callable, List, Optional, Union
 
@@ -950,6 +951,61 @@ def test_get_ignore_pack_tests__ignore_missing_test(tmpdir, mocker):
         fake_pack_name, {fake_pack_name}, {}
     )
     assert len(ignore_test_set) == 0
+
+
+@pytest.mark.parametrize(
+    argnames="pack_ignore_content, expected_object",
+    argvalues=[
+        (
+            "[file:README.md]\nignore=RM106\n\n[known_words]\ntest1\ntest2\n\n[tests_require_network]\ntest",
+            ConfigParser(),
+        ),
+        (
+            "[known_words]\ntest1\ntest2\n\n[tests_require_network]\ntest",
+            ConfigParser(),
+        ),
+        (
+            "[file:README.md]\nignore=RM106\n\n[tests_require_network]\ntest",
+            ConfigParser(),
+        ),
+        (
+            "[file:README.md]\nignore=RM106\n\n[known_words]\ntest1\ntest2",
+            ConfigParser(),
+        ),
+        ("", ConfigParser()),
+        ("test", None),
+        ("test[dssa]sdf", None),
+    ],
+)
+def test_get_pack_ignore_content(pack: Pack, pack_ignore_content: str, expected_object):
+    """
+    Given
+    - Case a: full valid .pack-ignore content
+    - Case b: valid .pack-ignore content without validations sections
+    - Case c: valid .pack-ignore content without known words section
+    - Case d: valid .pack-ignore content without tests_require_network section
+    - Case e: empty .pack-ignore
+    - case f: invalid .pack-ignore file
+    - case g: another version of invalid .pack-ignore file
+
+    When
+    - executing get_pack_ignore_content function
+
+    Then:
+    - Case a: ConfigParser is returned
+    - Case b: ConfigParser is returned
+    - Case c: ConfigParser is returned
+    - Case d: ConfigParser is returned
+    - Case e: ConfigParser is returned
+    - case f: None is returned
+    - case g: None is returned
+
+    """
+    from demisto_sdk.commands.common.tools import get_pack_ignore_content
+
+    pack.pack_ignore.write_text(pack_ignore_content)
+    with ChangeCWD(pack.repo_path):
+        assert type(get_pack_ignore_content(pack.name)) is type(expected_object)
 
 
 @pytest.mark.parametrize(

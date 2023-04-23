@@ -3534,7 +3534,7 @@ def get_id(file_content: Dict) -> Union[str, None]:
         str: the ID of the content item in case found, None otherwise.
     """
     if "commonfields" in file_content:
-        return file_content.get("commonfields", {}).get("id")
+        return file_content["commonfields"].get("id")
     elif "dashboards_data" in file_content:
         return file_content.get("dashboards_data", [{}])[0].get("global_id")
     elif "templates_data" in file_content:

@@ -504,10 +504,10 @@ workflows:
       - waiter:
           filters:
             branches:
-              only: updtae_slack_notifier
+              only: master
       - slack-notifier:
           requires:
             - waiter
           filters:
             branches:
-              only: updtae_slack_notifier  # notifies when a post-merge build fails
+              only: master  # notifies when a post-merge build fails

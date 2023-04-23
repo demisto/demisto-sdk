@@ -38,8 +38,13 @@ def initiate_linter(
 class TestYamlParse:
     def test_valid_yaml_key_script_is_dict(
         self, demisto_content, create_integration: Callable, mocker
-    ):  # sourcery skip: raise-specific-error
-        raise Exception("Checking slack notify")
+    ):
+        integration_path: Path = create_integration(
+            content_path=demisto_content, type_script_key=True
+        )
+        mocker.patch.object(linter.Linter, "_update_support_level")
+        runner = initiate_linter(demisto_content, integration_path)
+        assert not runner._gather_facts(modules={})
 
     def test_valid_yaml_key_script_is_not_dict(
         self, demisto_content: Callable, create_integration: Callable, mocker

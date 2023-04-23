@@ -171,7 +171,7 @@ class Uploader:
             if self.path.is_dir() and self.path.parent.name in CONTENT_ENTITIES_DIRS:
                 success = self.upload_entity_dir(self.path)
             else:
-                success = self._upload_single(self.path)
+                success = self.upload_single(self.path)
         except KeyboardInterrupt:
             return ABORTED_RETURN_CODE
 
@@ -198,7 +198,7 @@ class Uploader:
         self.print_summary()
         return SUCCESS_RETURN_CODE if success else ERROR_RETURN_CODE
 
-    def _upload_single(self, path: Path) -> bool:
+    def upload_single(self, path: Path) -> bool:
         """
         Upload a content item, or a pack.
 
@@ -274,7 +274,7 @@ class Uploader:
             for file in itertools.chain(path.glob("*.yml"), path.glob("*.json")):
                 if file.stem.endswith("_unified"):
                     continue  # TODO yes? no? error?
-                if not self._upload_single(file):
+                if not self.upload_single(file):
                     success = False
 
         return success

@@ -26,9 +26,6 @@ from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
 )
-from demisto_sdk.commands.content_graph.content_graph_commands import (
-    update_content_graph,
-)
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
     Neo4jContentGraphInterface,
 )
@@ -160,7 +157,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         super().__init__(
             structure_validator,
             oldest_supported_version=LAYOUTS_CONTAINERS_OLDEST_SUPPORTED_VERSION,
-            **kwargs
+            **kwargs,
         )
 
     def is_valid_layout(self, validate_rn=True, is_circle=False) -> bool:
@@ -236,11 +233,11 @@ class LayoutsContainerValidator(LayoutBaseValidator):
             return True
 
         with Neo4jContentGraphInterface() as graph:
-            logger.info("Updating graph...")
-            update_content_graph(graph, use_git=True, dependencies=True)
+            content_fields_objs = graph.search(content_type=ContentType.INCIDENT_FIELD)
 
-            content_fields = graph.search(content_type=ContentType.INCIDENT_FIELD)
-
+        content_fields = [
+            content_fields_obj.cli_name for content_fields_obj in content_fields_objs
+        ]
         invalid_incident_fields = []
 
         layout_container_items = [
@@ -262,6 +259,9 @@ class LayoutsContainerValidator(LayoutBaseValidator):
             error_message, error_code = Errors.invalid_incident_field_in_layout(
                 invalid_incident_fields
             )
+            logger.info(f"content_fields_objs {content_fields_objs}")
+            logger.info(f"content_fields {content_fields}")
+            logger.info(f"content_fields_objs dir {dir(content_fields_objs[0])}")
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
@@ -377,9 +377,6 @@ class LayoutValidator(LayoutBaseValidator):
             return True
 
         with Neo4jContentGraphInterface() as graph:
-            logger.info("Updating graph...")
-            update_content_graph(graph, use_git=True, dependencies=True)
-
             content_fields = graph.search(content_type=ContentType.INCIDENT_FIELD)
 
         invalid_incident_fields = []

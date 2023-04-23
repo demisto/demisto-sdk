@@ -4,8 +4,6 @@ from abc import ABC, abstractmethod
 from distutils.version import LooseVersion
 from typing import Dict, List
 
-import click
-
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION,
@@ -228,14 +226,11 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         return True
 
     @error_codes("LO104")
-    def is_incident_field_exist(
-        self, id_set_file: Dict[str, List], is_circle: bool
-    ) -> bool:
+    def is_incident_field_exist(self, is_circle: bool) -> bool:
         """
         Check if the incident fields which are part of the layout actually exist in the content items (id set).
 
         Args:
-            id_set_file (dict): content of the id set file.
             is_circle (bool): whether running on circle CI or not, True if yes, False if not.
 
         Returns:
@@ -243,13 +238,6 @@ class LayoutsContainerValidator(LayoutBaseValidator):
                 True if there aren't.
         """
         if not is_circle:
-            return True
-
-        if not id_set_file:
-            click.secho(
-                "Skipping mapper incident field validation. Could not read id_set.json.",
-                fg="yellow",
-            )
             return True
 
         with Neo4jContentGraphInterface() as graph:
@@ -395,15 +383,13 @@ class LayoutValidator(LayoutBaseValidator):
         if not is_circle:
             return True
 
-        if not id_set_file:
-            click.secho(
-                "Skipping mapper incident field validation. Could not read id_set.json.",
-                fg="yellow",
-            )
-            return True
+        with Neo4jContentGraphInterface() as graph:
+            logger.info("Updating graph...")
+            update_content_graph(graph, use_git=True, dependencies=True)
+
+            content_fields = graph.search(content_type=ContentType.INCIDENT_FIELD)
 
         invalid_incident_fields = []
-        content_fields = self.get_fields_from_id_set(id_set_file=id_set_file)
 
         layout = self.current_file.get("layout", {})
         layout_sections = layout.get("sections", [])

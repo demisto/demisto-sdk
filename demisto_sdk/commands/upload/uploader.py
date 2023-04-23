@@ -329,23 +329,23 @@ class Uploader:
         Successful uploads grid based on `successfully_uploaded_files` attribute in green color
         Failed uploads grid based on `failed_uploaded_files` attribute in red color
         """
-        logger.info("\n\nUPLOAD SUMMARY:")
+        logger.info("UPLOAD SUMMARY:\n")
         if self.successfully_uploaded:
             uploaded_str = tabulate(
                 (
-                    (item.normalize_name, item.content_type)
+                    (item.path.name, item.content_type)
                     for item in self.successfully_uploaded
                 ),
                 headers=["NAME", "TYPE"],
                 tablefmt="fancy_grid",
             )
 
-            logger.info(f"\n[green]SUCCESSFUL UPLOADS:\n{uploaded_str}[/green]")
+            logger.info(f"[green]SUCCESSFUL UPLOADS:\n{uploaded_str}\n[/green]")
         if self.failed_upload_version_mismatch:
             version_mismatch_str = tabulate(
                 (
                     (
-                        item.normalize_name,
+                        item.path.name,
                         item.content_type,
                         self.demisto_version,
                         item.fromversion,
@@ -363,7 +363,7 @@ class Uploader:
                 tablefmt="fancy_grid",
             )
             logger.info(
-                f"\n[yellow]NOT UPLOADED DUE TO VERSION MISMATCH:\n{version_mismatch_str}[/yellow]"
+                f"[yellow]NOT UPLOADED DUE TO VERSION MISMATCH:\n{version_mismatch_str}\n[/yellow]"
             )
         if self.failed_parsing_content:
             failed_parsing_str = tabulate(
@@ -374,17 +374,17 @@ class Uploader:
                 headers=("FILE_NAME", "PATH", "REASON"),
                 tablefmt="fancy_grid",
             )
-            logger.info(f"\n[red]FAILED PARSING CONTENT:\n{failed_parsing_str}[/red]")
+            logger.info(f"[red]FAILED PARSING CONTENT:\n{failed_parsing_str}\n[/red]")
         if self.failed_upload:
             failed_upload_str = tabulate(
                 (
-                    (item.normalize_name, item.content_type, error)
+                    (item.path.name, item.content_type, error)
                     for item, error in self.failed_upload
                 ),
                 headers=["NAME", "TYPE", "ERROR"],
                 tablefmt="fancy_grid",
             )
-            logger.info(f"\n[red]FAILED UPLOADS:\n{failed_upload_str}[/red]")
+            logger.info(f"[red]FAILED UPLOADS:\n{failed_upload_str}\n[/red]")
 
 
 def parse_error_response(error: ApiException) -> str:
@@ -393,31 +393,32 @@ def parse_error_response(error: ApiException) -> str:
 
     error (ApiException): The exception which was raised in call in to client
     """
-    message = error
+    if isinstance(error, KeyboardInterrupt):
+        return "Aborted due to keyboard interrupt."
+
     if hasattr(error, "reason"):
-        if "[SSL: CERTIFICATE_VERIFY_FAILED]" in str(error.reason):
-            message = (
+        reason = str(error.reason)
+        if "[SSL: CERTIFICATE_VERIFY_FAILED]" in reason:
+            return (
                 "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self signed certificate.\n"
                 "Run the command with the --insecure flag."
             )
 
-        elif "Failed to establish a new connection:" in str(error.reason):
-            message = (
+        elif "Failed to establish a new connection:" in reason:
+            return (
                 "Failed to establish a new connection: Connection refused.\n"
                 "Check the BASE url configuration."
             )
 
-        elif error.reason in ("Bad Request", "Forbidden"):
-            error_body = json.loads(error.body)
-            message = error_body.get("error")
+        elif reason in ("Bad Request", "Forbidden"):
+            error_body = json.loads(error.body)  # type:ignore[attr-defined]
+            message = error_body.get("error", "")
 
             if error_body.get("status") == 403:
                 message += "\nTry checking your API key configuration."
-        else:
-            message = error.reason
-    if isinstance(error, KeyboardInterrupt):
-        message = "Aborted due to keyboard interrupt."
-    return message
+            return message
+        return reason
+    return str(error)
 
 
 class ConfigFileParser:

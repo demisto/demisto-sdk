@@ -65,13 +65,14 @@ def test_integration_upload_pack_positive(demisto_client, repo, mocker):
             str_in_call_args_list(logger_info.call_args_list, current_str)
             for current_str in [
                 "SUCCESSFUL UPLOADS:",
-                "│ FeedAzure.yml                              │ integration   │",
-                "│ FeedAzure_test.yml                         │ playbook      │",
-                "│ just_a_test_script.yml                     │ testscript    │",
-                "│ playbook-FeedAzure_test_copy_no_prefix.yml │ testplaybook  │",
-                "│ script-prefixed_automation.yml             │ testscript    │",
-                "│ FeedAzure_test.yml                         │ testplaybook  │",
-                "│ incidentfield-city.json                    │ incidentfield │",
+                "│ NAME                                       │ TYPE          │",
+                "│ incidentfield-city.json                    │ IncidentField │",
+                "│ FeedAzure.yml                              │ Integration   │",
+                "│ FeedAzure_test.yml                         │ Playbook      │",
+                "│ just_a_test_script.yml                     │ Script        │",
+                "│ script-prefixed_automation.yml             │ Script        │",
+                "│ playbook-FeedAzure_test_copy_no_prefix.yml │ TestPlaybook  │",
+                "│ FeedAzure_test.yml                         │ TestPlaybook  │",
             ]
         ]
     )

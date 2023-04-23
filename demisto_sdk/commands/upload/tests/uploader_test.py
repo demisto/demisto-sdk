@@ -404,26 +404,24 @@ def test_file_not_supported(demisto_client_configure, mocker):
 
 
 @pytest.mark.parametrize(
-    "reason,expected_message",
+    "exc,expected_message",
     [
         (
-            "[SSL: CERTIFICATE_VERIFY_FAILED]",
+            ApiException(reason="[SSL: CERTIFICATE_VERIFY_FAILED]"),
             "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self signed certificate.\nRun the command with the --insecure flag.",
         ),
         (
-            "Failed to establish a new connection:",
+            ApiException(reason="Failed to establish a new connection:"),
             "Failed to establish a new connection: Connection refused.\n"
             "Check the BASE url configuration.",
         ),
         (
-            json.dumps({"status": 403, "error": "Error message"}),
+            ApiException(body=json.dumps({"status": 403, "error": "Error message"})),
             "Error message\nTry checking your API key configuration.",
         ),
     ],
 )
-def test_parse_error_response(
-    demisto_client_configure, mocker, reason: str, expected_message: str
-):
+def test_parse_error_response(exc: ApiException, expected_message: str):
     """
     Given
         - An API exception is raised
@@ -435,7 +433,7 @@ def test_parse_error_response(
         - Ensure a error message is parsed successfully
         - Verify the outcome is as expected
     """
-    assert parse_error_response(ApiException(reason=reason)) == expected_message
+    assert parse_error_response(exc) == expected_message
 
 
 def test_print_summary_successfully_uploaded_files(

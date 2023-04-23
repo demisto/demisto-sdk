@@ -1351,6 +1351,31 @@ def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # 
     return None, None
 
 
+def get_pack_ignore_content(pack_name: str) -> Union[ConfigParser, None]:
+    """
+    Args:
+        pack_name: a pack name from which to get the pack ignore config.
+
+    Returns:
+        ConfigParser | None: config parser object in case of success, None otherwise.
+    """
+    _pack_ignore_file_path = Path(get_pack_ignore_file_path(pack_name))
+    if _pack_ignore_file_path.exists():
+        try:
+            config = ConfigParser(allow_no_value=True)
+            config.read(_pack_ignore_file_path)
+            return config
+        except MissingSectionHeaderError as err:
+            logger.exception(
+                f"Error when retrieving the content of {_pack_ignore_file_path}"
+            )
+            return None
+    logger.warning(
+        f"[red]Could not find pack-ignore file at path {_pack_ignore_file_path} for pack {pack_name}[/red]"
+    )
+    return None
+
+
 def get_ignore_pack_skipped_tests(
     pack_name: str, modified_packs: set, id_set: dict
 ) -> set:
@@ -1376,27 +1401,20 @@ def get_ignore_pack_skipped_tests(
     file_name_to_ignore_dict: Dict[str, List[str]] = {}
     test_playbooks = id_set.get("TestPlaybooks", {})
 
-    pack_ignore_path = get_pack_ignore_file_path(pack_name)
-    if pack_name in modified_packs:
-        if os.path.isfile(pack_ignore_path):
-            try:
-                # read pack_ignore using ConfigParser
-                config = ConfigParser(allow_no_value=True)
-                config.read(pack_ignore_path)
-
-                # go over every file in the config
-                for section in config.sections():
-                    if section.startswith("file:"):
-                        # given section is of type file
-                        file_name: str = section[5:]
-                        for key in config[section]:
-                            if key == "ignore":
-                                # group ignore codes to a list
-                                file_name_to_ignore_dict[file_name] = str(
-                                    config[section][key]
-                                ).split(",")
-            except MissingSectionHeaderError:
-                pass
+    # pack_ignore_path = get_pack_ignore_file_path(pack_name)
+    if pack_name in modified_packs and (config := get_pack_ignore_content(pack_name)):
+        # go over every file in the config
+        for section in filter(
+            lambda section: section.startswith("file:"), config.sections()
+        ):
+            # given section is of type file
+            file_name: str = section[5:]
+            for key in config[section]:
+                if key == "ignore":
+                    # group ignore codes to a list
+                    file_name_to_ignore_dict[file_name] = str(
+                        config[section][key]
+                    ).split(",")
 
     for file_name, ignore_list in file_name_to_ignore_dict.items():
         if any(ignore_code == "auto-test" for ignore_code in ignore_list):
@@ -3503,3 +3521,27 @@ def get_pack_paths_from_files(file_paths: Iterable[str]) -> list:
     """Returns the pack paths from a list/set of files"""
     pack_paths = {f"Packs/{get_pack_name(file_path)}" for file_path in file_paths}
     return list(pack_paths)
+
+
+def get_id(file_content: Dict) -> Union[str, None]:
+    """
+    Get ID from a dict based content object.
+
+    Args:
+        file_content: the content of the file.
+
+    Returns:
+        str: the ID of the content item in case found, None otherwise.
+    """
+    if "commonfields" in file_content:
+        return file_content["commonfields"].get("id")
+    elif "dashboards_data" in file_content:
+        return file_content["dashboards_data"][0].get("global_id")
+    elif "templates_data" in file_content:
+        return file_content["templates_data"][0].get("global_id")
+
+    for key in ("global_rule_id", "trigger_id", "content_global_id", "rule_id"):
+        if key in file_content:
+            return file_content[key]
+
+    return file_content.get("id")

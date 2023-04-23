@@ -201,6 +201,7 @@ class TestRunLintInContainer:
             test_xml="",
             keep_container=False,
             no_coverage=True,
+            should_disable_network=True,
         )
         assert linter_obj._pkg_lint_status.get("exit_code") == 0b0
         if not no_test and pack_type == TYPE_PYTHON:

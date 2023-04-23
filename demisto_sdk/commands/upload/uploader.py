@@ -221,9 +221,10 @@ class Uploader:
             path  # Accepts a file or a folder of one content item
         )  # type:ignore[assignment]
         if content_item is None:
-            reason = ""
             if find_type(str(path)) == FileType.LAYOUT:
                 reason = "Deprecated type - use LayoutContainer instead"
+            else:
+                reason = ""
             self.failed_parsing_content.append((path, reason))
             return False
 

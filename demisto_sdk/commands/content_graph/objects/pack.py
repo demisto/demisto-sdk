@@ -342,6 +342,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             except NotIndivitudallyUploadedException:
                 if marketplace == MarketplaceVersions.MarketplaceV2:
                     raise  # many XSIAM content types must be uploaded zipped.
+                logger.warning(
+                    f"Not uploading pack {self.object_id}: {item.content_type} {item.object_id} as it was not indivudally uploaded"
+                )
 
     def handle_base_pack(self, path: Path):
         documentation_path = CONTENT_PATH / "Documentation"

@@ -344,14 +344,13 @@ def test_upload_pack(demisto_client_configure, mocker):
         "layoutscontainer-test.json",
         "upload_test_dashboard.json",
         "DummyXDRCTemplate.json",
-        
     ]
     assert uploader.upload() == SUCCESS_RETURN_CODE
     assert {
         content_item.path.name for content_item in uploader.successfully_uploaded
     } == set(expected_entities)
 
-    assert uploader.failed_parsing_content == [ # TODO
+    assert uploader.failed_parsing_content == [  # TODO
         (Path("layout-details-test_bla-V2.json", "foo"))
     ]
 

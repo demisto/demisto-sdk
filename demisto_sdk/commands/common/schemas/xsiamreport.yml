@@ -19,10 +19,6 @@ schema;templates_data_schema:
     report_name:
       type: str
       required: true
-    default_template_id:
-      type: number
-      required: true
-      allowempty: True
     layout:
       type: seq
       required: true
@@ -50,7 +46,7 @@ schema;layout_data_schema:
     data:
       type: map
       required: true
-      allowempty: True
+      allowempty: true
 
 schema;widgets_data_schema:
   type: map
@@ -62,14 +58,14 @@ schema;widgets_data_schema:
       required: false
     creation_time:
       type: number
-      required: true
+      required: false
     description:
       type: str
       required: false
     data:
       type: map
       required: false
-      allowempty: True
+      allowempty: true
     support_time_range:
       type: bool
       required: false

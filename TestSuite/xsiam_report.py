@@ -24,7 +24,6 @@ class XSIAMReport(JSONBased):
                     {
                         "global_id": self.name,
                         "report_name": self.name,
-                        "default_template_id": None,
                         "layout": [
                             {
                                 "id": "row-1768",

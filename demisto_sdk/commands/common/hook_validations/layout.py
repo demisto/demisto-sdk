@@ -2,7 +2,7 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from distutils.version import LooseVersion
-from typing import Dict, List
+from typing import List
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -18,7 +18,6 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
 )
 from demisto_sdk.commands.common.tools import (
     LAYOUT_CONTAINER_FIELDS,
-    get_all_incident_and_indicator_fields_from_id_set,
     get_invalid_incident_fields_from_layout,
     get_item_marketplaces,
 )
@@ -119,18 +118,30 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
         return non_existent_incident_fields
 
     @staticmethod
-    def get_fields_from_id_set(id_set_file: Dict[str, List]) -> List[str]:
+    def get_fields_from_graph() -> List[str]:
         """
-        Get all the available layout fields from the id set.
-
-        Args:
-            id_set_file (dict): content of the id set file.
+        Get all the available layout fields from graph.
 
         Returns:
-            list[str]: available indicator/incident fields from the id set file.
+            list[str]: available indicator/incident fields from graph.
         """
+        with Neo4jContentGraphInterface() as graph:
+            incident_fields_objs = graph.search(content_type=ContentType.INCIDENT_FIELD)
+            indicator_fields_objs = graph.search(
+                content_type=ContentType.INDICATOR_FIELD
+            )
+
+        incident_field_ids = [
+            incident_fields_obj.cli_name for incident_fields_obj in incident_fields_objs
+        ]
+        indicator_fields_ids = [
+            indicator_fields_obj.cli_name
+            for indicator_fields_obj in indicator_fields_objs
+        ]
+        content_field_ids = incident_field_ids + indicator_fields_ids
+
         return (
-            get_all_incident_and_indicator_fields_from_id_set(id_set_file, "layout")
+            content_field_ids
             + [field.lower() for field in BUILT_IN_FIELDS]
             + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
         )
@@ -232,12 +243,8 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         if not is_circle:
             return True
 
-        with Neo4jContentGraphInterface() as graph:
-            content_fields_objs = graph.search(content_type=ContentType.INCIDENT_FIELD)
+        content_fields = self.get_fields_from_graph()
 
-        content_fields = [
-            content_fields_obj.cli_name for content_fields_obj in content_fields_objs
-        ]
         invalid_incident_fields = []
 
         layout_container_items = [
@@ -259,9 +266,11 @@ class LayoutsContainerValidator(LayoutBaseValidator):
             error_message, error_code = Errors.invalid_incident_field_in_layout(
                 invalid_incident_fields
             )
-            logger.info(f"content_fields_objs {content_fields_objs}")
-            logger.info(f"content_fields {content_fields}")
-            logger.info(f"content_fields_objs dir {dir(content_fields_objs[0])}")
+            # logger.info(f"content_fields_objs {content_fields_objs}")
+            logger.info(
+                f"content_fields {content_fields[0]} len: {len(content_fields)}"
+            )
+            # logger.info(f"content_fields_objs dir {dir(content_fields_objs[0])}")
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
@@ -366,7 +375,6 @@ class LayoutValidator(LayoutBaseValidator):
         Check if the incident fields which are part of the layout actually exist in the content items (id set).
 
         Args:
-            id_set_file (dict): content of the id set file.
             is_circle (bool): whether running on circle CI or not, True if yes, False if not.
 
         Returns:
@@ -376,8 +384,7 @@ class LayoutValidator(LayoutBaseValidator):
         if not is_circle:
             return True
 
-        with Neo4jContentGraphInterface() as graph:
-            content_fields = graph.search(content_type=ContentType.INCIDENT_FIELD)
+        content_fields = self.get_fields_from_graph()
 
         invalid_incident_fields = []
 

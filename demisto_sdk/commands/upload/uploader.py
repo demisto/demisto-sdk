@@ -5,7 +5,7 @@ import itertools
 import logging
 import os
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import Iterable, List, Optional, Tuple, Union
 
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
@@ -127,7 +127,7 @@ class Uploader:
         self.client = demisto_client.configure(verify_ssl=verify)
         self.successfully_uploaded: List[Union[ContentItem, Pack]] = []
         self.failed_upload: List[Tuple[Union[ContentItem, Pack], str]] = []
-        self.failed_upload_version_mismatch: List[Union[ContentItem, Pack]] = []
+        self.failed_upload_version_mismatch: List[ContentItem] = []
         self.failed_parsing_content: List[Path] = []
         self.demisto_version = get_demisto_version(self.client)
         self.pack_names: List[str] = pack_names or []
@@ -168,10 +168,18 @@ class Uploader:
             return ERROR_RETURN_CODE
 
         try:
-            if self.path.is_dir() and self.path.parent.name in CONTENT_ENTITIES_DIRS:
-                success = self.upload_entity_dir(self.path)
+            if self.path.is_dir() and (
+                (
+                    self.path.name in CONTENT_ENTITIES_DIRS
+                    or (
+                        self.path.name in UNIFIED_ENTITIES_DIR
+                        and self.path.parent.name in CONTENT_ENTITIES_DIRS
+                    )
+                )
+            ):
+                success = self._upload_entity_dir(self.path)
             else:
-                success = self.upload_single(self.path)
+                success = self._upload_single(self.path)
         except KeyboardInterrupt:
             return ABORTED_RETURN_CODE
 
@@ -198,7 +206,7 @@ class Uploader:
         self.print_summary()
         return SUCCESS_RETURN_CODE if success else ERROR_RETURN_CODE
 
-    def upload_single(self, path: Path) -> bool:
+    def _upload_single(self, path: Path) -> bool:
         """
         Upload a content item, or a pack.
 
@@ -210,12 +218,12 @@ class Uploader:
             NotUploadableException
         """
         content_item: Union[ContentItem, Pack] = BaseContent.from_path(
-            path
+            path  # Accepts a file or a folder of one content item
         )  # type:ignore[assignment]
         if content_item is None:
             self.failed_parsing_content.append(path)
             return False
-        # TODO raise NotUploadable? Create new exception? Something else?
+
         zipped = path.suffix == ".zip"
         try:
             content_item.upload(
@@ -244,6 +252,9 @@ class Uploader:
 
         except IncompatibleUploadVersionException as e:
             logger.error(e)
+            assert isinstance(
+                content_item, ContentItem
+            ), "Cannot compare version for pack"
             self.failed_upload_version_mismatch.append(content_item)
             return False
 
@@ -259,25 +270,29 @@ class Uploader:
             self.failed_upload.append((content_item, message))
             return False
 
-    def upload_entity_dir(self, path: Path) -> bool:
+    def _upload_entity_dir(self, path: Path) -> bool:
         """
         Uploads an entity path directory
         Args:
-            path: an entity path in the following format `Packs/{Pack_Name}/{Entity_Type}`
+            path: an entity path in the following formats:
+                `.../Packs/{Pack_Name}/{Entity_Type}/[optional: entity name]`
 
         Returns:
             Whether the upload succeeded.
 
         """
-        success = True
-        if path.parent.name in CONTENT_ENTITIES_DIRS:
-            for file in itertools.chain(path.glob("*.yml"), path.glob("*.json")):
-                if file.stem.endswith("_unified"):
-                    continue  # TODO yes? no? error?
-                if not self.upload_single(file):
-                    success = False
+        if not set(path.parts[-2:]).intersection(CONTENT_ENTITIES_DIRS):
+            # neither the last, nor second-last are a content entity dir
+            raise ValueError(f"Invalid entity dir path: {path}")
 
-        return success
+        to_upload: Iterable[Path]
+        if path.name in {SCRIPTS_DIR, INTEGRATIONS_DIR}:
+            # These folders have another level of content
+            to_upload = filter(lambda p: p.is_dir(), path.iterdir())
+        else:
+            to_upload = itertools.chain(path.glob("*.yml"), path.glob("*.json"))
+
+        return all(self._upload_single(item) for item in to_upload)
 
     def notify_user_should_override_packs(self):  # TODO is used?
         """Notify the user about possible overridden packs."""

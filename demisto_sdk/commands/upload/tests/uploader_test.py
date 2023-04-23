@@ -89,6 +89,8 @@ def demisto_client_configure(mocker):
     "path_end,item_count",
     (
         ("content_repo_example/Integrations/Securonix/", 1),
+        ("content_repo_example/Integrations", 1),
+        ("Packs/DummyPack/Scripts", 1),
         ("Packs/DummyPack/Scripts/DummyScript", 1),
         ("Packs/DummyPack/IncidentFields", 3),
     ),
@@ -103,7 +105,7 @@ def test_upload_folder(
     with patch.object(uploader, "client", return_value="ok"):
         assert (
             uploader.upload() == SUCCESS_RETURN_CODE
-        ), f"failed uploading {path.parts[-2:]}"
+        ), f"failed uploading {'/'.join(path.parts[-2:])}"
     assert len(uploader.successfully_uploaded) == item_count
 
 

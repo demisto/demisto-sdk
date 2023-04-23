@@ -5,6 +5,7 @@
 * Added support for marketplace tags in the **doc-review** command.
 * Updated the logs shown during lint when running in docker.
 * Added the `hiddenpassword` field to the integration schema, allowing **validate** to run on integrations with username-only inputs.
+* Fixed an issue where **validate** passed a layouts container with incident fields not present in `id_set.json` even when `--post-commit` was indicated.
 
 ## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.

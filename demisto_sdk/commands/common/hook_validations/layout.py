@@ -159,7 +159,11 @@ class LayoutsContainerValidator(LayoutBaseValidator):
     ) -> bool:
         return all(
             [
-                super().is_valid_layout(),
+                super().is_valid_layout(
+                    validate_rn=validate_rn,
+                    id_set_file=id_set_file,
+                    is_circle=is_circle,
+                ),
                 self.is_id_equals_name(),
                 self.is_valid_mpv2_layout(),
             ]

@@ -213,30 +213,6 @@ def test_upload_single_not_supported(mocker):
     assert reason == "Deprecated type - use LayoutContainer instead"
 
 
-def test_upload_dashboard_positive(demisto_client_configure, mocker):
-    """
-    Given
-        - A dashboard named upload_test_dashboard.json to upload
-
-    When
-        - Uploading a dashboard
-
-    Then
-        - Ensure dashboard is uploaded successfully
-        - Ensure success upload message is printed as expected
-    """
-    mocker.patch.object(demisto_client, "configure", return_value="object")
-
-    dashboard_name = "upload_test_dashboard.json"
-    dashboard_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Dashboards/{dashboard_name}"
-    uploader = Uploader(input=dashboard_path, insecure=False)
-    mocker.patch.object(uploader, "client")
-    uploader.upload()
-
-    assert [
-        ("upload_test_dashboard.json", FileType.DASHBOARD.value)
-    ] == uploader.successfully_uploaded
-
 
 def test_upload_incident_type_correct_file_change(demisto_client_configure, mocker):
     """

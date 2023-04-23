@@ -265,6 +265,7 @@ class LintManager:
             logger.debug("pinging docker daemon")
             docker_client.ping()
         except (
+            docker.errors.DockerException,
             requests.exceptions.ConnectionError,
             urllib3.exceptions.ProtocolError,
             docker.errors.APIError,

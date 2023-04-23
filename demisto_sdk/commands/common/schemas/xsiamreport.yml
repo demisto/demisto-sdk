@@ -19,6 +19,20 @@ schema;templates_data_schema:
     report_name:
       type: str
       required: true
+    report_description:
+      type: str
+      required: false
+    default_template_id:
+      type: number
+      required: false
+    time_frame:
+      mapping:
+        relativeTime:
+          type: number
+          required: true
+    time_offset:
+      type: number
+      required: true
     layout:
       type: seq
       required: true

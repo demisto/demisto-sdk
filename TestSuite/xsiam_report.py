@@ -24,6 +24,10 @@ class XSIAMReport(JSONBased):
                     {
                         "global_id": self.name,
                         "report_name": self.name,
+                        "report_description": None,
+                        "default_template_id": None,
+                        "time_frame": {"relativeTime": 86400000},
+                        "time_offset": 7200,
                         "layout": [
                             {
                                 "id": "row-1768",

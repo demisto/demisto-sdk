@@ -343,9 +343,15 @@ def test_upload_incident_field_with_error(demisto_client_configure, mocker):
         - Ensure no incident fields uploaded
         - Ensure uploaded failure message is printed as expected
     """
-    from demisto_sdk.commands.common.content.objects.pack_objects.incident_field.incident_field import IncidentField
+    from demisto_sdk.commands.common.content.objects.pack_objects.incident_field.incident_field import (
+        IncidentField,
+    )
 
-    mocker.patch.object(IncidentField, "upload", return_value={'error': 'Failed to upload the field XDR_Alert_Count.json'})
+    mocker.patch.object(
+        IncidentField,
+        "upload",
+        return_value={"error": "Failed to upload the field XDR_Alert_Count.json"},
+    )
     mocker.patch.object(demisto_client, "configure", return_value="object")
     incident_field_name = "XDR_Alert_Count.json"
     incident_field_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/IncidentFields/{incident_field_name}"
@@ -357,7 +363,9 @@ def test_upload_incident_field_with_error(demisto_client_configure, mocker):
     assert len(uploader.successfully_uploaded_files) == 0
     assert status_code == 1
     assert uploader.failed_uploaded_files[0][0] == "XDR_Alert_Count.json"
-    assert str_in_call_args_list(logger_info.call_args_list, 'Failed to upload the field XDR_Alert_Count.json')
+    assert str_in_call_args_list(
+        logger_info.call_args_list, "Failed to upload the field XDR_Alert_Count.json"
+    )
 
 
 def test_upload_indicator_field_positive(demisto_client_configure, mocker):

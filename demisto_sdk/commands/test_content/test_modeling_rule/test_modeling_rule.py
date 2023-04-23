@@ -120,8 +120,8 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
                     )
                     if result_val != val:
                         logger.error(
-                            f'[red][bold]{key}[/bold] --- "{result_val}" != "{val}"[/red]\n'
-                            f'[red][bold]{key}[/bold] --- Received value type: "{type(result_val)}" '
+                            f'[red][bold]{key}[/bold] --- "{result_val}" != "{val}"\n'
+                            f'[bold]{key}[/bold] --- Received value type: "{type(result_val)}" '
                             f'!=  Expected value type: "{type(val)}"[/red]',
                             extra={"markup": True},
                         )

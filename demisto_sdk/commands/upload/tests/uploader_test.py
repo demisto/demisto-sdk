@@ -138,10 +138,6 @@ def test_upload_folder(
             "demisto_sdk/tests/test_files/Packs/DummyPack/Dashboards/upload_test_dashboard.json",
         ),
         (
-            "layout",
-            "demisto_sdk/tests/test_files/Packs/DummyPack/Layouts/layout-details-test_bla-V2.json",
-        ),
-        (
             "layoutscontainer",
             "demisto_sdk/tests/test_files/Packs/DummyPack/Layouts/layoutscontainer-test.json",
         ),
@@ -178,7 +174,6 @@ def test_upload_single_positive(mocker, test_name: str, path: str):
     Then
         - Ensure it is uploaded successfully
     """
-    mocker.patch.object(demisto_client, "configure", return_value="object")
     mock_api_client(mocker)
     path = Path(git_path(), path)
     assert path.exists()
@@ -188,6 +183,34 @@ def test_upload_single_positive(mocker, test_name: str, path: str):
     uploader.upload()
 
     assert uploader.successfully_uploaded == [BaseContent.from_path(path)]
+
+
+def test_upload_single_not_supported(mocker):
+    """
+    Given
+            An Uploader
+    When
+            Attempting to upload a layout of an old format
+    Then
+            Make sure an appropriate error is shown
+    """
+    mocker.patch.object(demisto_client, "configure", return_value="object")
+    mock_api_client(mocker)
+
+    path = Path(
+        git_path(),
+        "demisto_sdk/tests/test_files/Packs/DummyPack/Layouts/layout-details-test_bla-V2.json",
+    )
+    assert path.exists()
+    assert BaseContent.from_path(path) is None
+    uploader = Uploader(input=path)
+
+    uploader.upload()
+
+    assert len(uploader.failed_parsing_content) == 1
+    failed_path, reason = uploader.failed_parsing_content[0]
+    assert failed_path == path
+    assert reason == "Deprecated type - use LayoutContainer instead"
 
 
 def test_upload_dashboard_positive(demisto_client_configure, mocker):
@@ -1040,14 +1063,13 @@ class TestZippedPackUpload:
         """
         # prepare
         mock_api_client(mocker)
-        mocker.patch.object(API_CLIENT, "upload_content_packs")
-        mocker.patch.object(
-            tools, "update_server_configuration", return_value=(None, None, {})
-        )
-        mocker.patch.object(Pack, "is_server_version_ge", return_value=False)
-        mocker.patch.object(
-            Uploader, "notify_user_should_override_packs", return_value=True
-        )
+        # mocker.patch.object(
+        #     tools, "update_server_configuration", return_value=(None, None, {})
+        # )
+        # mocker.patch.object(Pack, "is_server_version_ge", return_value=False)
+        # mocker.patch.object(
+        #     Uploader, "notify_user_should_override_packs", return_value=True
+        # )
 
         # run
         click.Context(command=upload).invoke(upload, input=input)

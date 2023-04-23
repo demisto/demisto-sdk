@@ -34,6 +34,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (
+    find_type,
     get_demisto_version,
     get_file,
 )
@@ -128,7 +129,7 @@ class Uploader:
         self.successfully_uploaded: List[Union[ContentItem, Pack]] = []
         self.failed_upload: List[Tuple[Union[ContentItem, Pack], str]] = []
         self.failed_upload_version_mismatch: List[ContentItem] = []
-        self.failed_parsing_content: List[Path] = []
+        self.failed_parsing_content: List[Tuple[Path, str]] = []
         self.demisto_version = get_demisto_version(self.client)
         self.pack_names: List[str] = pack_names or []
         self.skip_upload_packs_validation = skip_validation
@@ -159,14 +160,13 @@ class Uploader:
             if not self.path:  # Nothing to upload
                 return SUCCESS_RETURN_CODE
 
-        logger.info(
-            f"Uploading {self.path} to {self.client.api_client.configuration.host}..."
-        )
-
         if not self.path or not self.path.exists():
             logger.error(f"[red]input path: {self.path} does not exist[/red]")
             return ERROR_RETURN_CODE
 
+        logger.info(
+            f"Uploading {self.path} to {self.client.api_client.configuration.host}..."
+        )
         try:
             if self.path.is_dir() and (
                 (
@@ -221,7 +221,10 @@ class Uploader:
             path  # Accepts a file or a folder of one content item
         )  # type:ignore[assignment]
         if content_item is None:
-            self.failed_parsing_content.append(path)
+            reason = ""
+            if find_type(str(path)) == FileType.LAYOUT:
+                reason = "Deprecated type - use LayoutContainer instead"
+            self.failed_parsing_content.append((path, reason))
             return False
 
         zipped = path.suffix == ".zip"
@@ -363,8 +366,11 @@ class Uploader:
             )
         if self.failed_parsing_content:
             failed_parsing_str = tabulate(
-                ((path.name, path) for path in self.failed_parsing_content),
-                headers=("FILE_NAME", "PATH"),
+                (
+                    (path.name, path, reason)
+                    for path, reason in self.failed_parsing_content
+                ),
+                headers=("FILE_NAME", "PATH", "REASON"),
                 tablefmt="fancy_grid",
             )
             logger.info(f"\n[red]FAILED PARSING CONTENT:\n{failed_parsing_str}[/red]")

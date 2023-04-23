@@ -369,7 +369,8 @@ def test_extract_powershell_code(tmpdir, file_type):
 def test_extract_code__with_apimodule(tmpdir, file_type):
     """
     Given:
-        - A unified YML which ApiModule code is auto-generated there
+        Case 1: A unified integration YML which ApiModule code is auto-generated there
+        Case 2: A unified beta-integration YML which ApiModule code is auto-generated there
     When:
         - run YmlSpltter on this code
     Then:

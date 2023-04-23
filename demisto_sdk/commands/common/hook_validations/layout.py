@@ -53,9 +53,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
             "toVersion", DEFAULT_CONTENT_ITEM_TO_VERSION
         )
 
-    def is_valid_layout(
-        self, validate_rn=True, id_set_file=None, is_circle=False
-    ) -> bool:
+    def is_valid_layout(self, validate_rn=True, is_circle=False) -> bool:
         """Check whether the layout is valid or not.
 
         Returns:
@@ -69,7 +67,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
                 self.is_valid_to_version(),
                 self.is_to_version_higher_than_from_version(),
                 self.is_valid_file_path(),
-                self.is_incident_field_exist(id_set_file, is_circle),
+                self.is_incident_field_exist(is_circle),
             ]
         )
 
@@ -153,7 +151,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
         pass
 
     @abstractmethod
-    def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
+    def is_incident_field_exist(self, is_circle) -> bool:
         pass
 
 
@@ -165,14 +163,11 @@ class LayoutsContainerValidator(LayoutBaseValidator):
             **kwargs
         )
 
-    def is_valid_layout(
-        self, validate_rn=True, id_set_file=None, is_circle=False
-    ) -> bool:
+    def is_valid_layout(self, validate_rn=True, is_circle=False) -> bool:
         return all(
             [
                 super().is_valid_layout(
                     validate_rn=validate_rn,
-                    id_set_file=id_set_file,
                     is_circle=is_circle,
                 ),
                 self.is_id_equals_name(),
@@ -366,9 +361,7 @@ class LayoutValidator(LayoutBaseValidator):
         return True
 
     @error_codes("LO104")
-    def is_incident_field_exist(
-        self, id_set_file: Dict[str, List], is_circle: bool
-    ) -> bool:
+    def is_incident_field_exist(self, is_circle: bool) -> bool:
         """
         Check if the incident fields which are part of the layout actually exist in the content items (id set).
 

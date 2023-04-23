@@ -1641,7 +1641,7 @@ class ValidateManager:
             json_file_path=self.json_file_path,
         )
         return layout_validator.is_valid_layout(
-            validate_rn=False, id_set_file=self.id_set_file, is_circle=self.is_circle
+            validate_rn=False, is_circle=self.is_circle
         )
 
     def validate_layoutscontainer(self, structure_validator, pack_error_ignore_list):
@@ -1651,7 +1651,7 @@ class ValidateManager:
             json_file_path=self.json_file_path,
         )
         return layout_validator.is_valid_layout(
-            validate_rn=False, id_set_file=self.id_set_file, is_circle=self.is_circle
+            validate_rn=False, is_circle=self.is_circle
         )
 
     def validate_pre_process_rule(self, structure_validator, pack_error_ignore_list):

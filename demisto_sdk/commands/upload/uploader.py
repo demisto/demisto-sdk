@@ -241,6 +241,12 @@ class Uploader:
             if upload_object.from_version <= self.demisto_version <= upload_object.to_version:  # type: ignore
                 try:
                     result = upload_object.upload(self.client)  # type: ignore
+
+                    if type(result) == dict and result.get("error"):
+                        error = result.get("error")
+                        self.failed_uploaded_files.append((file_name, entity_type.value, error))
+                        return ERROR_RETURN_CODE
+                    
                     if hasattr(result, "to_str"):
                         logger.debug(f"Result:\n{result.to_str()}")
                     else:

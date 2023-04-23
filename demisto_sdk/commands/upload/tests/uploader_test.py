@@ -20,7 +20,6 @@ from packaging.version import Version
 from demisto_sdk.__main__ import main, upload
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import (
-    FileType,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import (
@@ -213,7 +212,6 @@ def test_upload_single_not_supported(mocker):
     assert reason == "Deprecated type - use LayoutContainer instead"
 
 
-
 def test_upload_incident_type_correct_file_change(demisto_client_configure, mocker):
     """
     Given
@@ -249,13 +247,14 @@ def test_upload_incident_type_correct_file_change(demisto_client_configure, mock
 
     mocker.patch.object(demisto_client, "configure", return_value=demisto_client_mocker)
 
-    incident_type_name = "incidenttype-Hello_World_Alert.json"
-    incident_type_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/IncidentTypes/{incident_type_name}"
-    uploader = Uploader(input=incident_type_path, insecure=False)
+    path = Path(
+        f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/IncidentTypes/incidenttype-Hello_World_Alert.json"
+    )
+    uploader = Uploader(input=path, insecure=False)
     uploader.client.import_incident_types_handler = MagicMock(side_effect=save_file)
     uploader.upload()
 
-    with open(incident_type_path) as json_file:
+    with open(path) as json_file:
         incident_type_data = json.load(json_file)
 
     assert json.loads(DATA)[0] == incident_type_data
@@ -295,16 +294,17 @@ def test_upload_incident_field_correct_file_change(demisto_client_configure, moc
             pass
 
     mocker.patch.object(demisto_client, "configure", return_value=demisto_client_mocker)
-    incident_field_name = "XDR_Alert_Count.json"
-    incident_field_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/IncidentFields/{incident_field_name}"
-    uploader = Uploader(input=incident_field_path, insecure=False)
+    path = Path(
+        f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/IncidentFields/XDR_Alert_Count.json"
+    )
+    uploader = Uploader(input=path, insecure=False)
     uploader.client.import_incident_fields = MagicMock(side_effect=save_file)
     uploader.upload()
 
-    with open(incident_field_path) as json_file:
+    with open(path) as json_file:
         incident_field_data = json.load(json_file)
 
-    assert json.loads(DATA)["incidentFields"][0] == incident_field_data
+    assert json.loads(DATA)["incidentFields"] == incident_field_data
 
 
 def test_upload_pack(demisto_client_configure, mocker):
@@ -324,8 +324,8 @@ def test_upload_pack(demisto_client_configure, mocker):
     mocker.patch.object(
         IntegrationScript, "get_supported_native_images", return_value=[]
     )
-    pack_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack"
-    uploader = Uploader(pack_path)
+    path = Path(f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack")
+    uploader = Uploader(path)
     mocker.patch.object(uploader, "client")
 
     expected_entities = [
@@ -341,13 +341,19 @@ def test_upload_pack(demisto_client_configure, mocker):
         "incidentfield-Hello_World_Status.json",
         "classifier-aws_sns_test_classifier.json",
         "widget-ActiveIncidentsByRole.json",
-        "layout-details-test_bla-V2.json",
+        "layoutscontainer-test.json",
         "upload_test_dashboard.json",
+        "DummyXDRCTemplate.json",
+        
     ]
-    assert uploader.upload() == 0
+    assert uploader.upload() == SUCCESS_RETURN_CODE
     assert {
         content_item.path.name for content_item in uploader.successfully_uploaded
     } == set(expected_entities)
+
+    assert uploader.failed_parsing_content == [ # TODO
+        (Path("layout-details-test_bla-V2.json", "foo"))
+    ]
 
 
 def test_upload_invalid_path(demisto_client_configure, mocker):

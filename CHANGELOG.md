@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-* The **lint** command will not use network by default when running unit-tests anymore.
+* **lint** now prevents unit-tests from accessing online resources in runtime.
 * Added support for the `<~XPANSE>` marketplace tag in release notes.
 * Added support for marketplace tags in the **doc-review** command.
 * Updated the logs shown during lint when running in docker.

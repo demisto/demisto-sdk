@@ -38,6 +38,7 @@ from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.test_content import tools
 from demisto_sdk.commands.upload import uploader
 from demisto_sdk.commands.upload.uploader import (
+    ERROR_RETURN_CODE,
     SUCCESS_RETURN_CODE,
     ItemDetacher,
     Uploader,
@@ -398,8 +399,8 @@ def test_file_not_supported(demisto_client_configure, mocker):
     )
     uploader = Uploader(input=file_path, insecure=False)
     mocker.patch.object(uploader, "client")
-    assert not uploader.upload()
-    assert uploader.failed_parsing_content == [file_path]
+    assert uploader.upload() == ERROR_RETURN_CODE
+    assert uploader.failed_parsing_content == [(file_path, "")]
 
 
 @pytest.mark.parametrize(

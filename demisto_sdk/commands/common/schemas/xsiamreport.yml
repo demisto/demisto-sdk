@@ -7,7 +7,8 @@ mapping:
   widgets_data:
     type: seq
     sequence:
-      - type: map
+      - include: widgets_data_schema
+
 
 schema;templates_data_schema:
   type: map
@@ -18,6 +19,10 @@ schema;templates_data_schema:
     report_name:
       type: str
       required: true
+    default_template_id:
+      type: number
+      required: true
+      allowempty: True
     layout:
       type: seq
       required: true
@@ -36,7 +41,6 @@ schema;layout_schema:
       sequence:
         - include: layout_data_schema
 
-
 schema;layout_data_schema:
   type: map
   mapping:
@@ -47,3 +51,29 @@ schema;layout_data_schema:
       type: map
       required: true
       allowempty: True
+
+schema;widgets_data_schema:
+  type: map
+  mapping:
+    widget_key:
+      type: str
+    title:
+      type: str
+      required: false
+    creation_time:
+      type: number
+      required: true
+    description:
+      type: str
+      required: false
+    data:
+      type: map
+      required: false
+      allowempty: True
+    support_time_range:
+      type: bool
+      required: false
+    additional_info:
+      type: map
+      required: false
+      allowempty: true

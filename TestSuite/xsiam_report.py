@@ -19,5 +19,43 @@ class XSIAMReport(JSONBased):
 
     def create_default_xsiam_report(self):
         self.write_json(
-            {"templates_data": [{"global_id": self.name, "report_name": self.name}]}
+            {
+                "templates_data": [
+                    {
+                        "global_id": self.name,
+                        "report_name": self.name,
+                        "default_template_id": None,
+                        "layout": [
+                            {
+                                "id": "row-1768",
+                                "data": [
+                                    {
+                                        "key": "xql_1668676732415",
+                                        "data": {
+                                            "type": "Custom XQL",
+                                            "width": 50,
+                                            "height": 434,
+                                            "phrase": 'datamodel \r\n|filter xdm.observer.vendor="mock vendor"',
+                                            "time_frame": {"relativeTime": 2592000000},
+                                            "viewOptions": {
+                                                "type": "map",
+                                                "commands": [
+                                                    {
+                                                        "command": {
+                                                            "op": "=",
+                                                            "name": "header",
+                                                            "value": '"Cloud Regions"',
+                                                        }
+                                                    }
+                                                ],
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                        ],
+                    }
+                ],
+                "widgets_data": [],
+            }
         )

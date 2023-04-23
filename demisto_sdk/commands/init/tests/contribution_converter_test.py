@@ -720,11 +720,24 @@ def test_create_contribution_items_version_note():
     assert (
         contribution_converter.contribution_items_version_note
         == """> **Warning**
-> The changes in the contributed files were not made on the most updated pack versions
-> | **Item Name** | **Contribution Pack Version** | **Latest Pack Version**
-> | --------- | ------------------------- | -------------------
-> | CortexXDRIR | 1.2.2 | 1.2.4
-> | XDRScript | 1.2.2 | 1.2.4
+    > The changes in the contributed files were not made on the most updated pack versions
+    > | **Item Name** | **Contribution Pack Version** | **Latest Pack Version**
+    > | --------- | ------------------------- | -------------------
+    > | CortexXDRIR | 1.2.2 | 1.2.4
+    > | XDRScript | 1.2.2 | 1.2.4
+    > **For the reviewer:**
+    > 1. Compare the code of this PR with the latest version of the pack, make sure to understand what are the changes 
+    that the contributor intended to contribute, and **solve the conflicts in accordance**.
+    > 2. If improvements are needed, instruct the contributor to edit the code through the **Github Code-Space** and
+     **Not through the XSOAR UI**.
+    > **For the Contributor:** 
+    > In case you are requested by your reviewer to improve the code and make changes, please submit them through the
+     **Github Code-Space** and **Not through the XSOAR UI**.> To use the Github Code-Space please do as follow:
+    > 1. Click on the **'Code'** button in the right upper corner of this PR.
+    > 2. Click **'Create codespace on Transformers'**.
+    > 3. Click **'Authorize and continue'**.
+    > 4. Wait until your code-space environment will be generated, once it is, you can edit your code.
+    > 5. Commit and push your changes to the head branch of the PR.
 """
     )
 

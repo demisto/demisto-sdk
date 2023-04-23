@@ -503,7 +503,7 @@ class ContributionConverter:
                 )
 
             self.contribution_items_version_note += (
-                "> **For the reviewer:**\n "
+                "> **For the reviewer:**\n"
                 "> 1. Compare the code of this PR with the latest version of the pack, make sure to understand what are"
                 " the changes that the contributor intended to contribute, and **solve the conflicts in accordance**.\n"
                 "> 2. If improvements are needed, instruct the contributor to edit the code through the **Github "
@@ -511,9 +511,9 @@ class ContributionConverter:
             )
 
             self.contribution_items_version_note += (
-                f"> **For the Contributor:** {self.gh_user}\n "
+                f"> **For the Contributor:** @{self.gh_user}\n"
                 f"> In case you are requested by your reviewer to improve the code and make changes, please submit them"
-                f"through the **Github Code-Space** and **Not through the XSOAR UI**."
+                f" through the **Github Code-Space** and **Not through the XSOAR UI**."
                 f"> To use the Github Code-Space please do as follow:\n"
                 f"> 1. Click on the **'Code'** button in the right upper corner of this PR.\n"
                 f"> 2. Click **'Create codespace on Transformers'**.\n"

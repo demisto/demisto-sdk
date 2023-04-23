@@ -118,7 +118,6 @@ class PreCommitRunner:
 
         precommit_env["SKIP"] = ",".join(sorted(skipped_hooks))
         precommit_env["PYTHONPATH"] = ":".join(str(path) for path in sorted(PYTHONPATH))
-        precommit_env["MYPYPATH"] = ":".join(str(path) for path in sorted(PYTHONPATH))
 
         for python_version, changed_files in self.python_version_to_files.items():
             precommit_config = deepcopy(self.precommit_template)

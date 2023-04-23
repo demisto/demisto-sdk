@@ -3536,9 +3536,9 @@ def get_id(file_content: Dict) -> Union[str, None]:
     if "commonfields" in file_content:
         return file_content["commonfields"].get("id")
     elif "dashboards_data" in file_content:
-        return file_content.get("dashboards_data", [{}])[0].get("global_id")
+        return file_content["dashboards_data"][0].get("global_id")
     elif "templates_data" in file_content:
-        return file_content.get("templates_data", [{}])[0].get("global_id")
+        return file_content["templates_data"][0].get("global_id")
 
     for key in ("global_rule_id", "trigger_id", "content_global_id", "rule_id"):
         if key in file_content:

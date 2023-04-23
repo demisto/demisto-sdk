@@ -36,6 +36,9 @@ from demisto_sdk.commands.common.hook_validations.readme import (
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.MDXServer import start_local_MDX_server
 from demisto_sdk.commands.common.tools import get_yaml
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import (
+    Neo4jContentGraphInterface,
+)
 from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (
@@ -114,6 +117,14 @@ VALID_SCRIPT_PATH = join(
 CONF_JSON_MOCK = {
     "tests": [{"integrations": "AzureFeed", "playbookID": "AzureFeed - Test"}]
 }
+
+
+def mock_graph(mocker):
+    mocker.patch.object(Neo4jContentGraphInterface, "__init__", return_value=None)
+    mocker.patch.object(
+        Neo4jContentGraphInterface, "__enter__", return_value=Neo4jContentGraphInterface
+    )
+    mocker.patch.object(Neo4jContentGraphInterface, "__exit__", return_value=None)
 
 
 class MyRepo:
@@ -3166,6 +3177,9 @@ class TestLayoutValidation:
             name="layoutscontainer-test", prefix="", content=layoutscontainer_copy
         )
 
+        mock_graph(mocker)
+        mocker.patch.object(Neo4jContentGraphInterface, "search", side_effect=[[], []])
+
         id_set = copy.deepcopy(EMPTY_ID_SET)
         id_set["scripts"].append(
             {
@@ -3300,6 +3314,9 @@ class TestLayoutValidation:
         layout = pack._create_json_based(
             name="layout-test", prefix="", content=layout_copy
         )
+
+        mock_graph(mocker)
+        mocker.patch.object(Neo4jContentGraphInterface, "search", side_effect=[[], []])
 
         id_set = copy.deepcopy(EMPTY_ID_SET)
         id_set["scripts"].append(

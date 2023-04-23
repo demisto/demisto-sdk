@@ -2,6 +2,7 @@ import inspect
 import logging
 import re
 import shutil
+import tempfile
 import zipfile
 from functools import wraps
 from io import BytesIO
@@ -1091,7 +1092,7 @@ class TestZippedPackUpload:
     #     assert 'Triggers/' in xsiam_pack_files
     #     assert 'XSIAMDashboards/' in xsiam_pack_files
     @pytest.mark.parametrize(argnames="is_cleanup", argvalues=[True, False])
-    def test_upload_xsiam_pack_to_xsoar(self, mocker, is_cleanup):
+    def test_upload_xsiam_pack_to_xsoar(self, mocker, is_cleanup: bool):
         """
         Given:
             - XSIAM pack to upload to XSOAR
@@ -1102,27 +1103,29 @@ class TestZippedPackUpload:
         """
         if not is_cleanup:
             mocker.patch.object(shutil, "rmtree")
-        # prepare
         mock_api_client(mocker)
-        mocker.patch.object(Uploader, "zipped_pack_uploader")
 
-        # run
-        click.Context(command=upload).invoke(
-            upload, input=TEST_XSIAM_PACK, xsiam=False, zip=True
-        )
+        with tempfile.TemporaryDirectory() as dir:
+            zip_path = Path(dir, "uploadable_packs.zip")
 
-        zip_file_path = Uploader.zipped_pack_uploader.call_args[1]["path"]
-        assert "uploadable_packs.zip" in zip_file_path
-        if is_cleanup:
-            assert not Path.exists(Path(zip_file_path)), "zip should be cleaned up"
-            return
-        with zipfile.ZipFile(zip_file_path, "r") as zfile:
-            for name in zfile.namelist():
-                if re.search(r"\.zip$", name) is not None:
-                    # We have a zip within a zip
-                    zfiledata = BytesIO(zfile.read(name))
-                    with zipfile.ZipFile(zfiledata) as xsiamzipfile:
-                        xsiam_pack_files = xsiamzipfile.namelist()
+            click.Context(command=upload).invoke(
+                upload,
+                input=TEST_XSIAM_PACK,
+                xsiam=False,
+                zip=True,
+                keep_zip=dir,
+                output=Path(dir),
+            )
+
+            assert zip_path.exists() == (not is_cleanup)
+
+            with zipfile.ZipFile(zip_path, "r") as zfile:
+                for name in zfile.namelist():
+                    if re.search(r"\.zip$", name) is not None:
+                        # We have a zip within a zip
+                        zfiledata = BytesIO(zfile.read(name))
+                        with zipfile.ZipFile(zfiledata) as xsiamzipfile:
+                            xsiam_pack_files = xsiamzipfile.namelist()
 
         # XSIAM entities are not supposed to get upload to XSOAR
         assert "Triggers/" not in xsiam_pack_files

@@ -32,7 +32,7 @@ repos:
     hooks:
       - id: mypy
         name: mypy
-        entry: poetry run mypy
+        entry: mypy
         language: python
         types: [python]
         args:

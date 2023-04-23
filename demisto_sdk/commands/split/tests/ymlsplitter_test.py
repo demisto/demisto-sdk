@@ -260,7 +260,8 @@ def test_extract_image(tmpdir):
 def test_extract_code(tmpdir, file_type):
     """
     Given
-    a unified integration file of python format.
+        Case 1: a unified integration file of python format.
+        Case 2: a unified beta-integration file of python format.
 
     When
     - Running the YmlSplitter extract_code function.
@@ -306,7 +307,8 @@ def test_extract_code(tmpdir, file_type):
 def test_extract_javascript_code(tmpdir, file_type):
     """
     Given
-    a unified integration file of javascript format.
+    Case 1: a unified integration file of javascript format.
+    Case 2: a unified beta-integration file of javascript format.
 
     When
     - Running the YmlSplitter extract_code function.
@@ -336,8 +338,8 @@ def test_extract_javascript_code(tmpdir, file_type):
 def test_extract_powershell_code(tmpdir, file_type):
     """
     Given
-    a unified integration file of powershell format.
-
+    Case 1: a unified integration file of powershell format.
+    Case 2: a unified beta-integration file of powershell format.
     When
     - Running the YmlSplitter extract_code function.
 

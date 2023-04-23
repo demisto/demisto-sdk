@@ -120,7 +120,9 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
                     )
                     if result_val != val:
                         logger.error(
-                            f'[red][bold]{key}[/bold] --- "{result_val}" != "{val}"[/red]',
+                            f'[red][bold]{key}[/bold] --- "{result_val}" != "{val}"[/red]\n'
+                            f'[red][bold]{key}[/bold] --- Received value type: "{type(result_val)}" '
+                            f'!=  Expected value type: "{type(val)}"[/red]',
                             extra={"markup": True},
                         )
                         errors = True
@@ -220,7 +222,7 @@ def check_dataset_exists(
     for i in range(timeout // interval):
         logger.debug(f"Check #{i+1}...")
         try:
-            execution_id = xsiam_client.start_xql_query(query)
+            execution_id = xsiam_client.start_xql_query(query, print_req_error=(i+1 == timeout // interval))
             results = xsiam_client.get_xql_query_result(execution_id)
             if results:
                 logger.info(

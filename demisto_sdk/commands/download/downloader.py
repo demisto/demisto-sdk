@@ -389,6 +389,7 @@ class Downloader:
                     if (
                         "automation-" in member.name.lower()
                         or "integration-" in member.name.lower()
+                        or "layout-" in member.name.lower()
                     ):
                         scripts_id_name = self.map_script(
                             string_to_write, scripts_id_name

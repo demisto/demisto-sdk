@@ -1055,7 +1055,7 @@ class TestValidators:
         test_file = os.path.join(files_path, "fake_pack/.pack-ignore")
 
         mocker.patch.object(
-            demisto_sdk.commands.validate.validate_manager,
+            demisto_sdk.commands.validate.validate_manager.tools,
             "get_pack_ignore_file_path",
             return_value=test_file,
         )

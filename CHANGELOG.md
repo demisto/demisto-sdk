@@ -1,10 +1,14 @@
 # Changelog
 
 ## Unreleased
+* **lint** now prevents unit-tests from accessing online resources in runtime.
 * Added support for the `<~XPANSE>` marketplace tag in release notes.
 * Added support for marketplace tags in the **doc-review** command.
 * Updated the logs shown during lint when running in docker.
+* Fixed an issue where **validate** showed errors twice.
+* Added **generate-unit-tests** documentation to the repo README.
 * Added the `hiddenpassword` field to the integration schema, allowing **validate** to run on integrations with username-only inputs.
+* Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
 * Fixed an issue where **validate** passed a layouts container with incident fields not present in `id_set.json` even when `--post-commit` was indicated.
 
 ## 1.13.0

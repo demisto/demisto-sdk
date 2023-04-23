@@ -145,6 +145,7 @@ from demisto_sdk.commands.common.tools import (
     get_api_module_integrations_set,
     get_content_path,
     get_file,
+    get_pack_ignore_content,
     get_pack_ignore_file_path,
     get_pack_name,
     get_pack_names_from_files,
@@ -1901,7 +1902,6 @@ class ValidateManager:
             self.id_set_validations
         )
         if pack_errors:
-            logger.info(f"[red]{pack_errors}[/red]")
             files_valid = False
 
         # check author image
@@ -2657,29 +2657,17 @@ class ValidateManager:
     def get_error_ignore_list(self, pack_name):
         ignored_errors_list: dict = {}
         if pack_name:
-            pack_ignore_path = get_pack_ignore_file_path(pack_name)
-
-            if os.path.isfile(pack_ignore_path):
-                try:
-                    config = ConfigParser(allow_no_value=True)
-                    config.read(pack_ignore_path)
-
-                    # create file specific ignored errors list
-                    for section in config.sections():
-                        if section.startswith("file:"):
-                            file_name = section[5:]
-                            ignored_errors_list[file_name] = []
-                            for key in config[section]:
-                                self.add_ignored_errors_to_list(
-                                    config, section, key, ignored_errors_list[file_name]
-                                )
-
-                except MissingSectionHeaderError:
-                    pass
-            else:
-                logger.info(
-                    f"[red]Could not find pack-ignore file at path {pack_ignore_path}[/red]"
-                )
+            if config := get_pack_ignore_content(pack_name):
+                # create file specific ignored errors list
+                for section in filter(
+                    lambda section: section.startswith("file:"), config.sections()
+                ):
+                    file_name = section[5:]
+                    ignored_errors_list[file_name] = []
+                    for key in config[section]:
+                        self.add_ignored_errors_to_list(
+                            config, section, key, ignored_errors_list[file_name]
+                        )
 
         return ignored_errors_list
 

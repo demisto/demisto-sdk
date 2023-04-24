@@ -727,7 +727,7 @@ def test_create_contribution_items_version_note():
 > | XDRScript | 1.2.2 | 1.2.4
 >
 > **For the Reviewer:**
-> 1. Compare the code of this PR with the latest version of the pack, make sure to understand what are the changes that the contributor intended to contribute, and **solve the conflicts in accordance**.
+> 1. Compare the code of this PR with the latest version of the pack. Make sure you understand the changes the contributor intended to contribute, and **solve the conflicts accordingly**.
 > 2. In case improvements are needed, instruct the contributor to edit the code through the **GitHub Codespaces** and **Not through the XSOAR UI**.
 >
 > **For the Contributor:**

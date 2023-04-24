@@ -735,7 +735,7 @@ def test_create_contribution_items_version_note():
 > In case you are requested by your reviewer to improve the code or to make changes, submit them through the **GitHub Codespaces** and **Not through the XSOAR UI**.
 >
 > **To use the GitHub Codespaces, do the following:**
-> 1. Click on the **'Code'** button in the right upper corner of this PR.
+> 1. Click the **'Code'** button in the right upper corner of this PR.
 > 2. Click **'Create codespace on Transformers'**.
 > 3. Click **'Authorize and continue'**.
 > 4. Wait until your Codespace environment is generated, once it is, you can edit your code.

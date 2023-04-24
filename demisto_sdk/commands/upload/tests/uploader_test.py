@@ -477,12 +477,12 @@ class TestPrintSummary:
         assert (
             "\n".join(
                 (
-                    "SUCCESSFUL UPLOADS:\n",
+                    "[green]SUCCESSFUL UPLOADS:\n",
                     "╒═════════════════╤════════╕",
                     "│ NAME            │ TYPE   │",
                     "╞═════════════════╪════════╡",
                     "│ DummyScript.yml │ Script │",
-                    "╘═════════════════╧════════╛",
+                    "╘═════════════════╧════════╛[/green]",
                 )
             )
             in logged

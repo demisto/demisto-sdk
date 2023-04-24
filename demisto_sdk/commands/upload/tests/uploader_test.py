@@ -16,7 +16,6 @@ from click.testing import CliRunner
 from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version
-from requests import Response
 
 from demisto_sdk.__main__ import main, upload
 from demisto_sdk.commands.common import constants
@@ -32,10 +31,10 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
-from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.test_content import tools
 from demisto_sdk.commands.upload import uploader
 from demisto_sdk.commands.upload.uploader import (
@@ -45,13 +44,13 @@ from demisto_sdk.commands.upload.uploader import (
     Uploader,
     parse_error_response,
 )
-from TestSuite.test_tools import str_in_call_args_list
+from TestSuite.test_tools import flatten_call_args, str_in_call_args_list
 
 json = JSON_Handler()
 
 
 DATA = ""
-DUMMY_SCRIPT_OBJECT = BaseContent.from_path(
+DUMMY_SCRIPT_OBJECT: ContentItem = BaseContent.from_path(
     Path(
         f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.py"
     )
@@ -395,18 +394,13 @@ def test_file_not_supported(demisto_client_configure, mocker):
         - Ensure uploaded failure message is printed as expected
     """
     mocker.patch.object(demisto_client, "configure", return_value="object")
-    file_path = Path(
+    path = Path(
         f"{git_path()}/demisto_sdk/tests/test_files/fake_pack/Integrations/test_data/results.json"
     )
-    uploader = Uploader(input=file_path, insecure=False)
+    uploader = Uploader(input=path)
     mocker.patch.object(uploader, "client")
     assert uploader.upload() == ERROR_RETURN_CODE
-    assert uploader.failed_parsing == [(file_path, "")]
-
-
-_403_RESPONSE = Response()
-_403_RESPONSE._content = json.dumps({"status": 403, "error": "Error message"})
-_403_RESPONSE.status_code = 403
+    assert uploader.failed_parsing == [(path, "")]
 
 
 @pytest.mark.parametrize(
@@ -508,92 +502,87 @@ def test_print_summary_successfully_uploaded_files(
     )
 
 
-def test_print_summary_failed_uploaded_files(demisto_client_configure, mocker):
+class TestPrintSummary:
+    def test_print_summary_failed_uploaded_files(demisto_client_configure, mocker):
+        """
+        Given
+            - A uploaded script named SomeScriptName which failed to upload
+
+        When
+            - Printing summary of uploaded files
+
+        Then
+            - Ensure uploaded failure message is printed as expected
+        """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        mock_api_client(mocker)
+        uploader = Uploader(None)
+        uploader.failed_upload = [(DUMMY_SCRIPT_OBJECT, "Some Error")]
+        uploader.print_summary()
+
+        assert logger_info.call_count == 2
+        logged = flatten_call_args(logger_info.call_args_list)
+
+        assert "UPLOAD SUMMARY:\n" in logged
+        assert (
+            logged[1]
+            == """[red]FAILED UPLOADS:
+╒═════════════════╤════════╤════════════╕
+│ NAME            │ TYPE   │ ERROR      │
+╞═════════════════╪════════╪════════════╡
+│ DummyScript.yml │ Script │ Some Error │
+╘═════════════════╧════════╧════════════╛
+[/red]"""
+        )
+
+    def test_print_summary_not_uploaded(demisto_client_configure, mocker, repo):
+        """
+        Given
+            - A uploaded script named SomeScriptName which did not upload due to version mismatch
+
+        When
+            - Printing summary of uploaded files
+
+        Then
+            - Ensure uploaded unuploaded message is printed as expected
+        """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        mock_api_client(mocker)
+
+        pack = repo.create_pack()
+        script = pack.create_script()
+        script.yml.update({"fromversion": "0.0.0", "toversion": "1.2.3"})
+        path = Path(script.path)
+
+        uploader = Uploader(path)
+        assert uploader.demisto_version == Version("6.0.0")
+        assert not uploader.upload()
+        assert uploader.failed_upload_version_mismatch == [BaseContent.from_path(path)]
+
+        expected_upload_summary_title = "\n\nUPLOAD SUMMARY:"
+        expected_failed_uploaded_files_title = "NOT UPLOADED DUE TO VERSION MISMATCH:"
+        expected_failed_uploaded_files = """'\n[yellow]NOT UPLOADED DUE TO VERSION MISMATCH:
+        ╒════════════════════╤════════╤═════════════════╤═════════════════════╤═══════════════════╕
+        │ NAME               │ TYPE   │ XSOAR Version   │ FILE_FROM_VERSION   │ FILE_TO_VERSION   │
+        ╞════════════════════╪════════╪═════════════════╪═════════════════════╪═══════════════════╡
+        │ script-script0.yml │ Script │ 6.0.0           │ 0.0.0               │ 1.2.3             │
+        ╘════════════════════╧════════╧═════════════════╧═════════════════════╧═══════════════════╛[/yellow]'
     """
-    Given
-        - A uploaded script named SomeScriptName which failed to upload
-
-    When
-        - Printing summary of uploaded files
-
-    Then
-        - Ensure uploaded failure message is printed as expected
-    """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    uploader = Uploader(None)
-    uploader.failed_upload = [(Script(name="SomeScriptName"), "Some Error")]
-    expected_upload_summary_title = "\n\nUPLOAD SUMMARY:"
-    expected_failed_uploaded_files_title = "FAILED UPLOADS:"
-    expected_failed_uploaded_files = """╒════════════════╤════════╤════════════╕
-│ NAME           │ TYPE   │ ERROR      │
-╞════════════════╪════════╪════════════╡
-│ SomeScriptName │ Script │ Some Error │
-╘════════════════╧════════╧════════════╛"""
-    # verify exactly 3 calls to secho
-    assert logger_info.call_count == 3
-    assert all(
-        [
-            str_in_call_args_list(
-                logger_info.call_args_list, expected_upload_summary_title
-            ),
-            str_in_call_args_list(
-                logger_info.call_args_list, expected_failed_uploaded_files_title
-            ),
-            str_in_call_args_list(
-                logger_info.call_args_list, expected_failed_uploaded_files
-            ),
-        ]
-    )
-
-
-def test_print_summary_not_uploaded(demisto_client_configure, mocker, repo):
-    """
-    Given
-        - A uploaded script named SomeScriptName which did not upload due to version mismatch
-
-    When
-        - Printing summary of uploaded files
-
-    Then
-        - Ensure uploaded unuploaded message is printed as expected
-    """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    mock_api_client(mocker)
-
-    pack = repo.create_pack()
-    script = pack.create_script()
-    script.yml.update({"fromversion": "0.0.0", "toversion": "1.2.3"})
-    path = Path(script.path)
-
-    uploader = Uploader(path)
-    assert uploader.demisto_version == Version("6.0.0")
-    assert not uploader.upload()
-    assert uploader.failed_upload_version_mismatch == [BaseContent.from_path(path)]
-
-    expected_upload_summary_title = "\n\nUPLOAD SUMMARY:"
-    expected_failed_uploaded_files_title = "NOT UPLOADED DUE TO VERSION MISMATCH:"
-    expected_failed_uploaded_files = """'\n[yellow]NOT UPLOADED DUE TO VERSION MISMATCH:
-    ╒════════════════════╤════════╤═════════════════╤═════════════════════╤═══════════════════╕
-    │ NAME               │ TYPE   │ XSOAR Version   │ FILE_FROM_VERSION   │ FILE_TO_VERSION   │
-    ╞════════════════════╪════════╪═════════════════╪═════════════════════╪═══════════════════╡
-    │ script-script0.yml │ Script │ 6.0.0           │ 0.0.0               │ 1.2.3             │
-    ╘════════════════════╧════════╧═════════════════╧═════════════════════╧═══════════════════╛[/yellow]'
-"""
-    # verify exactly 3 calls to secho
-    assert logger_info.call_count == 3
-    assert all(
-        [
-            str_in_call_args_list(
-                logger_info.call_args_list, expected_upload_summary_title
-            ),
-            str_in_call_args_list(
-                logger_info.call_args_list, expected_failed_uploaded_files_title
-            ),
-            str_in_call_args_list(
-                logger_info.call_args_list, expected_failed_uploaded_files
-            ),
-        ]
-    )
+        # verify exactly 3 calls to secho
+        assert logger_info.call_count == 3
+        assert all(
+            [
+                str_in_call_args_list(
+                    logger_info.call_args_list, expected_upload_summary_title
+                ),
+                str_in_call_args_list(
+                    logger_info.call_args_list, expected_failed_uploaded_files_title
+                ),
+                str_in_call_args_list(
+                    logger_info.call_args_list, expected_failed_uploaded_files
+                ),
+            ]
+        )
 
 
 TEST_DATA = src_root() / "commands" / "upload" / "tests" / "data"

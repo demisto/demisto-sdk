@@ -96,3 +96,7 @@ When the graph update is completed, it will be available in http://localhost:747
 * **-lp, --log-path**
 
     Path to store all levels of logs.
+
+## Environment Variables
+
+DEMISTO_SDK_CREATE_GRAPH - Whether to create the content graph instead of updating it. Will be used in all commands which use the content graph.

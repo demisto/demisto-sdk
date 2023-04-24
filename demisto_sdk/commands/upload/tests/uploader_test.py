@@ -207,8 +207,8 @@ def test_upload_single_not_supported(mocker):
 
     uploader.upload()
 
-    assert len(uploader.failed_parsing_content) == 1
-    failed_path, reason = uploader.failed_parsing_content[0]
+    assert len(uploader.failed_parsing) == 1
+    failed_path, reason = uploader.failed_parsing[0]
     assert failed_path == path
     assert reason == "Deprecated type - use LayoutContainer instead"
 
@@ -351,7 +351,7 @@ def test_upload_pack(demisto_client_configure, mocker):
         content_item.path.name for content_item in uploader.successfully_uploaded
     } == set(expected_entities)
 
-    assert uploader.failed_parsing_content == [  # TODO
+    assert uploader.failed_parsing == [  # TODO
         (Path("layout-details-test_bla-V2.json", "foo"))
     ]
 
@@ -400,7 +400,7 @@ def test_file_not_supported(demisto_client_configure, mocker):
     uploader = Uploader(input=file_path, insecure=False)
     mocker.patch.object(uploader, "client")
     assert uploader.upload() == ERROR_RETURN_CODE
-    assert uploader.failed_parsing_content == [(file_path, "")]
+    assert uploader.failed_parsing == [(file_path, "")]
 
 
 @pytest.mark.parametrize(

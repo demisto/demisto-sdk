@@ -29,7 +29,7 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
-    NotIndivitudallyUploadedException,
+    NotIndivitudallyUploadableException,
 )
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
@@ -339,7 +339,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                     marketplace=marketplace,
                     target_demisto_version=target_demisto_version,
                 )
-            except NotIndivitudallyUploadedException:
+            except NotIndivitudallyUploadableException:
                 if marketplace == MarketplaceVersions.MarketplaceV2:
                     raise  # many XSIAM content types must be uploaded zipped.
                 logger.warning(

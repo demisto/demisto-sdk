@@ -129,7 +129,7 @@ class Uploader:
         self.successfully_uploaded: List[Union[ContentItem, Pack]] = []
         self.failed_upload: List[Tuple[Union[ContentItem, Pack], str]] = []
         self.failed_upload_version_mismatch: List[ContentItem] = []
-        self.failed_parsing_content: List[Tuple[Path, str]] = []
+        self.failed_parsing: List[Tuple[Path, str]] = []
         self.demisto_version = get_demisto_version(self.client)
         self.pack_names: List[str] = pack_names or []
         self.skip_upload_packs_validation = skip_validation
@@ -188,7 +188,7 @@ class Uploader:
                 self.successfully_uploaded,
                 self.failed_upload,
                 self.failed_upload_version_mismatch,
-                self.failed_parsing_content,
+                self.failed_parsing,
             )
         ):
             # if not uploaded any file
@@ -225,7 +225,7 @@ class Uploader:
                 reason = "Deprecated type - use LayoutContainer instead"
             else:
                 reason = ""
-            self.failed_parsing_content.append((path, reason))
+            self.failed_parsing.append((path, reason))
             return False
 
         zipped = path.suffix == ".zip"
@@ -365,12 +365,9 @@ class Uploader:
             logger.info(
                 f"[yellow]NOT UPLOADED DUE TO VERSION MISMATCH:\n{version_mismatch_str}\n[/yellow]"
             )
-        if self.failed_parsing_content:
+        if self.failed_parsing:
             failed_parsing_str = tabulate(
-                (
-                    (path.name, path, reason)
-                    for path, reason in self.failed_parsing_content
-                ),
+                ((path.name, path, reason) for path, reason in self.failed_parsing),
                 headers=("FILE_NAME", "PATH", "REASON"),
                 tablefmt="fancy_grid",
             )

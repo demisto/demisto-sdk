@@ -168,7 +168,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         target_demisto_version: Version,
         **kwargs,
     ) -> None:
-        # should be implemented at the ContentItem level rather than here
+        # should be implemented at the ContentItem/Pack level rather than here
         raise NotImplementedError()
 
     def add_relationship(

@@ -210,7 +210,7 @@ class ContentItem(BaseContent):
 
         When the flow is different, return None (default).
         """
-        return None
+        raise NotImplementedError
 
     def _upload(self, client: demisto_client, marketplace: MarketplaceVersions) -> None:
         """
@@ -254,7 +254,7 @@ class NotUploadableException(NotImplementedError):
         )
 
 
-class NotIndivitudallyUploadedException(NotUploadableException):
+class NotIndivitudallyUploadableException(NotUploadableException):
     """
     Some XSIAM items must be uploaded as part of a pack.
     """

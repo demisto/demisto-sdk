@@ -738,7 +738,7 @@ def test_create_contribution_items_version_note():
 > 1. Click the **'Code'** button in the right upper corner of this PR.
 > 2. Click **'Create codespace on Transformers'**.
 > 3. Click **'Authorize and continue'**.
-> 4. Wait until your Codespace environment is generated, once it is, you can edit your code.
+> 4. Wait until your Codespace environment is generated. When it is, you can edit your code.
 > 5. Commit and push your changes to the head branch of the PR.
 """
     )

@@ -41,23 +41,16 @@ class ChangeCWD:
 
 
 def iter_flatten_call_args(
-    call_args: CallArgs, filter_falsy: bool = False
+    call_args: CallArgs,
 ) -> Generator:
     for arg in call_args:
         if isinstance(arg, tuple):
-            if filter_falsy and not arg[0]:
-                continue
-
             if isinstance(arg[0], tuple):  # nested tuple
-                if filter_falsy and not arg[0][0]:
-                    continue
                 yield arg[0][0]
             else:
                 yield arg[0]
 
         elif isinstance(arg, str):
-            if filter_falsy and not arg:
-                continue
             yield arg
         else:
             raise ValueError("Unexpected call arg type")

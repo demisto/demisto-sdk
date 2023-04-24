@@ -356,33 +356,28 @@ def test_upload_pack(demisto_client_configure, mocker):
     ]
 
 
-def test_upload_invalid_path(demisto_client_configure, mocker):
-    class ConfigurationMock:
-        host = "host"
+def test_upload_invalid_path(mocker):
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    mocker.patch.object(demisto_client, "configure", return_value="object")
 
-    class demisto_client_mocker:
-        class ConfigurationMock:
-            host = "host"
-
-        class ApiClientMock:
-            configuration = ConfigurationMock()
-
-        api_client = ApiClientMock()
-
-        def import_incident_fields(self, file):
-            pass
-
-    mocker.patch.object(
-        demisto_client, "configure", return_value=demisto_client_mocker()
-    )
-    script_dir_path = (
+    path = Path(
         f"{git_path()}/demisto_sdk/tests/test_files/content_repo_not_exists/Scripts/"
     )
-    script_dir_uploader = Uploader(input=script_dir_path, insecure=False)
-    assert script_dir_uploader.upload() == 1
+    uploader = Uploader(input=path, insecure=False)
+    assert uploader.upload() == ERROR_RETURN_CODE
+    assert not any(
+        (
+            uploader.failed_parsing,
+            uploader.failed_upload,
+            uploader.failed_upload_version_mismatch,
+        )
+    )
+    assert flatten_call_args(logger_error.call_args_list) == (
+        f"[red]input path: {path.resolve()} does not exist[/red]",
+    )
 
 
-def test_file_not_supported(demisto_client_configure, mocker):
+def test_upload_file_not_supported(mocker):
     """
     Given
         - A not supported (.json) file
@@ -453,56 +448,46 @@ def test_parse_error_response__exception(reason: str):
     )
 
 
-def test_print_summary_successfully_uploaded_files(
-    demisto_client_configure, mocker, caplog, monkeypatch
-):
-    """
-    Given
-        - An empty (no given input path) Uploader object
-        - A successfully uploaded integration named SomeIntegrationName
-
-    When
-        - Printing summary of uploaded files
-
-    Then
-        - Ensure uploaded successfully message is printed as expected
-    """
-    monkeypatch.setenv("COLUMNS", "1000")
-
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    uploader = Uploader(None)
-    uploader.successfully_uploaded = [DUMMY_SCRIPT_OBJECT]
-    expected_upload_summary_title = "\n\nUPLOAD SUMMARY:"
-    expected_successfully_uploaded_files_title = "SUCCESSFUL UPLOADS:"
-    expected_successfully_uploaded_files_array = [
-        "╒═════════════════════╤═════════════╕",
-        "│ NAME                │ TYPE        │",
-        "╞═════════════════════╪═════════════╡",
-        "│ SomeIntegrationName │ Integration │",
-        "╘═════════════════════╧═════════════╛",
-    ]
-
-    expected_successfully_uploaded_files = "\n".join(
-        expected_successfully_uploaded_files_array
-    )
-    # verify exactly 3 calls to secho
-    assert logger_info.call_count == 3
-    assert all(
-        [
-            str_in_call_args_list(
-                logger_info.call_args_list, expected_upload_summary_title
-            ),
-            str_in_call_args_list(
-                logger_info.call_args_list, expected_successfully_uploaded_files_title
-            ),
-            str_in_call_args_list(
-                logger_info.call_args_list, expected_successfully_uploaded_files
-            ),
-        ]
-    )
-
-
 class TestPrintSummary:
+    def test_print_summary_successfully_uploaded_files(
+        demisto_client_configure,
+        mocker,
+    ):
+        """
+        Given
+            - An uploader object with one successfully-uploaded object
+
+        When
+            - Printing summary of uploaded files
+
+        Then
+            - Ensure uploaded successfully message is printed as expected
+        """
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        mock_api_client(mocker)
+
+        uploader = Uploader(None)
+        uploader.successfully_uploaded = [DUMMY_SCRIPT_OBJECT]
+        uploader.print_summary()
+
+        logged = flatten_call_args(logger_info.call_args_list)
+        assert len(logged) == 2
+
+        assert "UPLOAD SUMMARY:\n" in logged
+        assert (
+            "\n".join(
+                (
+                    "SUCCESSFUL UPLOADS:\n",
+                    "╒═════════════════╤════════╕",
+                    "│ NAME            │ TYPE   │",
+                    "╞═════════════════╪════════╡",
+                    "│ DummyScript.yml │ Script │",
+                    "╘═════════════════╧════════╛",
+                )
+            )
+            in logged
+        )
+
     def test_print_summary_failed_uploaded(demisto_client_configure, mocker):
         """
         Given
@@ -516,6 +501,7 @@ class TestPrintSummary:
         """
         logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
         mock_api_client(mocker)
+
         uploader = Uploader(None)
         uploader.failed_upload = [(DUMMY_SCRIPT_OBJECT, "Some Error")]
         uploader.print_summary()
@@ -524,15 +510,16 @@ class TestPrintSummary:
         logged = flatten_call_args(logger_info.call_args_list)
 
         assert "UPLOAD SUMMARY:\n" in logged
-        assert (
-            logged[1]
-            == """[red]FAILED UPLOADS:
-╒═════════════════╤════════╤════════════╕
-│ NAME            │ TYPE   │ ERROR      │
-╞═════════════════╪════════╪════════════╡
-│ DummyScript.yml │ Script │ Some Error │
-╘═════════════════╧════════╧════════════╛
-[/red]"""
+        assert logged[1] == "\n".join(
+            (
+                "[red]FAILED UPLOADS:",
+                "╒═════════════════╤════════╤════════════╕",
+                "│ NAME            │ TYPE   │ ERROR      │",
+                "╞═════════════════╪════════╪════════════╡",
+                "│ DummyScript.yml │ Script │ Some Error │",
+                "╘═════════════════╧════════╧════════════╛",
+                "[/red]",
+            )
         )
 
     def test_print_summary_version_mismatch(demisto_client_configure, mocker, repo):
@@ -567,13 +554,16 @@ class TestPrintSummary:
         )
         assert "UPLOAD SUMMARY:\n" in logged
         assert (
-            """[yellow]NOT UPLOADED DUE TO VERSION MISMATCH:
-╒═════════════╤════════╤═════════════════╤═════════════════════╤═══════════════════╕
-│ NAME        │ TYPE   │ XSOAR Version   │ FILE_FROM_VERSION   │ FILE_TO_VERSION   │
-╞═════════════╪════════╪═════════════════╪═════════════════════╪═══════════════════╡
-│ script0.yml │ Script │ 6.0.0           │ 0.0.0               │ 1.2.3             │
-╘═════════════╧════════╧═════════════════╧═════════════════════╧═══════════════════╛
-[/yellow]"""
+            "\n".join(
+                (
+                    "[yellow]NOT UPLOADED DUE TO VERSION MISMATCH:",
+                    "╒═════════════╤════════╤═════════════════╤═════════════════════╤═══════════════════╕",
+                    "│ NAME        │ TYPE   │ XSOAR Version   │ FILE_FROM_VERSION   │ FILE_TO_VERSION   │",
+                    "╞═════════════╪════════╪═════════════════╪═════════════════════╪═══════════════════╡",
+                    "│ script0.yml │ Script │ 6.0.0           │ 0.0.0               │ 1.2.3             │",
+                    "╘═════════════╧════════╧═════════════════╧═════════════════════╧═══════════════════╛[/yellow]",
+                )
+            )
             in logged
         )
 

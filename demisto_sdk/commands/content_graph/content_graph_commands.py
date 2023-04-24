@@ -105,8 +105,8 @@ def extract_remote_import_files(
         builder (ContentGraphBuilder)
 
     """
-    if os.getenv("DEMISTO_SDK_CREATE_GRAPH"):
-        logger.info("DEMISTO_SDK_CREATE_GRAPH is set. Will create a new graph")
+    if os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE"):
+        logger.info("DEMISTO_SDK_GRAPH_FORCE_CREATE is set. Will create a new graph")
         builder.create_graph()
         return
     try:

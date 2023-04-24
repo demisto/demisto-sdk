@@ -413,10 +413,10 @@ class UpdateRN:
         master_metadata = None
         try:
             master_metadata = get_remote_file(self.metadata_path, tag=self.main_branch)
-        except Exception as e:
-            logger.info(
-                f"[red]master branch is unreachable.\n The reason is:{e} \n "
-                f"The updated version will be taken from local metadata file instead of master[/red]"
+        except Exception:
+            logger.exception(
+                "[red]master branch is unreachable.\n"
+                "The updated version will be taken from local metadata file instead of master[/red]"
             )
         if master_metadata:
             master_current_version = master_metadata.get("currentVersion", "0.0.0")

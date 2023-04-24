@@ -13,6 +13,7 @@
 * Improved logs and error handling in the **modeling-rules test** command.
 * Fixed an issue where **download** command failed when running on a beta integration.
 * Added support for code importing multi-level ApiModules to **lint**.
+* Added toVersion and fromVersion to XSIAM content items schema.
 
 ## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.

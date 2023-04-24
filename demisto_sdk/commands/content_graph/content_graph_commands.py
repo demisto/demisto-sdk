@@ -137,10 +137,6 @@ def extract_remote_import_files(
         builder (ContentGraphBuilder)
 
     """
-    if os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE"):
-        logger.info("DEMISTO_SDK_GRAPH_FORCE_CREATE is set. Will create a new graph")
-        builder.create_graph()
-        return
     try:
         with NamedTemporaryFile() as temp_file:
             official_content_graph = download_content_graph(Path(temp_file.name))

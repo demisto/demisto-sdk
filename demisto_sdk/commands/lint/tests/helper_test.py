@@ -1,6 +1,5 @@
 import importlib
 import os
-import shutil
 from pathlib import Path
 
 import pytest
@@ -257,7 +256,7 @@ def test_split_warnings_errors(
     assert other == output_other
 
 
-def test_add_tmp_lint_files(mocker, repo):
+def test_add_tmp_lint_files(repo):
     """
     Given:
         - A pack that contains two modules and an integration that imports those two modules.
@@ -269,12 +268,11 @@ def test_add_tmp_lint_files(mocker, repo):
         - Ensure both modules are copied by the command shutil.copy.
     """
     pack = repo.create_pack(name="ApiModules")
-    pack.create_script(code="# TEST1ApiModule")
-    pack.create_script(code="# TEST2ApiModule")
+    pack.create_script(name="TEST1ApiModule", code="# TEST1ApiModule")
+    pack.create_script(name="TEST2ApiModule", code="# TEST2ApiModule")
     integration_code = "from TEST1ApiModule import *\nfrom TEST2ApiModule import *"
     integration = pack.create_integration(name="test", code=integration_code)
 
-    mock_copy = mocker.patch.object(shutil, "copy", return_value=None)
     content_repo = Path(repo.path)
     pack_path = Path(pack.path)
     lint_files = [Path(integration.code.path)]
@@ -286,10 +284,13 @@ def test_add_tmp_lint_files(mocker, repo):
         modules={},
         pack_type=TYPE_PYTHON,
     ):
-        assert mock_copy.call_count == 2
+        assert all(
+            (pack_path / module).exists()
+            for module in ["TEST1ApiModule.py", "TEST2ApiModule.py"]
+        )
 
 
-def test_add_tmp_lint_files__multi_level_api_modules(mocker, repo):
+def test_add_tmp_lint_files__multi_level_api_modules(repo):
     """
     Given:
         - A pack that contains an integration that imports multi level ApiModules.
@@ -301,7 +302,7 @@ def test_add_tmp_lint_files__multi_level_api_modules(mocker, repo):
         - Ensure entire hierarchy of the ApiModules are copied.
     """
     pack = repo.create_pack(name="ApiModules")
-    pack.create_script(name="BaseAPiModule", code="# base ApiModule")
+    pack.create_script(name="BaseApiModule", code="# base ApiModule")
     pack.create_script(name="SubApiModule", code="from BaseApiModule import *")
     pack.create_script(name="SubSubApiModule", code="from SubApiModule import *")
     integration_code = "from SubSubApiModule import *"
@@ -320,7 +321,7 @@ def test_add_tmp_lint_files__multi_level_api_modules(mocker, repo):
     ):
         assert all(
             (pack_path / module).exists()
-            for module in ["BaseAPiModule.py", "SubApiModule.py", "SubSubApiModule.py"]
+            for module in ["BaseApiModule.py", "SubApiModule.py", "SubSubApiModule.py"]
         )
 
 

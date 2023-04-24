@@ -62,7 +62,7 @@ PY_CHCEKS = ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture", "pytest", "p
 # Line break
 RL = "\n"
 
-IMPORT_API_MODULE_REGEX = r"from ([\w\d]+ApiModule) import \*(?:  # noqa: E402)?"
+IMPORT_API_MODULE_REGEX = r"from (\w+ApiModule) import \*(?:  # noqa: E402)?"
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -279,8 +279,8 @@ def add_tmp_lint_files(
                 copied_common_server_python_path.touch()
                 added_modules.append(copied_common_server_python_path)
 
-            added_api_modules = add_api_modules(lint_files, content_repo, pack_path)
-            added_modules.extend(added_api_modules)
+            api_modules = add_api_modules(lint_files, content_repo, pack_path)
+            added_modules.extend(api_modules)
 
         yield
     except Exception as e:
@@ -288,11 +288,13 @@ def add_tmp_lint_files(
         raise
 
 
-def add_api_modules(module_list: List[Path], content_repo: Path, pack_path: Path):
+def add_api_modules(
+    module_list: List[Path], content_repo: Path, pack_path: Path
+) -> List[Path]:
     """Add API modules to directory if needed
     Args:
         modules_list(list): Modules that might import Api Modules
-        content_repo(Path): Repository object
+        content_repo(Path): Absolute path of the repository
         pack_path(Path): Absolute path of pack
     Returns:
         list[Path]: Paths of the added ApiModules
@@ -318,6 +320,7 @@ def add_api_modules(module_list: List[Path], content_repo: Path, pack_path: Path
                 copied_api_module_path.write_bytes(api_content)
 
             added_modules.append(copied_api_module_path)
+    # if there is added_modules - we recursively check for ApiModules imported by them
     return (
         added_modules + add_api_modules(added_modules, content_repo, pack_path)
         if added_modules

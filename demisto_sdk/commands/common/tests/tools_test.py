@@ -64,6 +64,7 @@ from demisto_sdk.commands.common.tools import (
     get_file_displayed_name,
     get_file_version_suffix_if_exists,
     get_files_in_dir,
+    get_from_version,
     get_ignore_pack_skipped_tests,
     get_item_marketplaces,
     get_last_release_version,
@@ -2621,3 +2622,21 @@ def test_get_core_packs(mocker):
 )
 def test_extract_field_from_mapping(mapping_value, expected_output):
     assert extract_field_from_mapping(mapping_value) == expected_output
+
+
+@pytest.mark.parametrize(
+    "returned_yml, res_from_version",
+    [
+        ({"fromversion": "6.1.0"}, "6.1.0"),
+        (
+            ["item1, item2"],
+            pytest.param(
+                0,
+                marks=pytest.mark.xfail(reason="yml file returned is not of type dict"),
+            ),
+        ),
+    ],
+)
+def test_get_from_version(returned_yml, res_from_version, mocker):
+    mocker.patch.object(tools, "get_yaml", return_value=returned_yml)
+    assert get_from_version("fake_file_path.yml") == res_from_version

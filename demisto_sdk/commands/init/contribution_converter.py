@@ -518,7 +518,7 @@ class ContributionConverter:
                 f"them through the **GitHub Codespaces** and **Not through the XSOAR UI**.\n"
                 f">\n"
                 f"> **To use the GitHub Codespaces, do the following:**\n"
-                f"> 1. Click on the **'Code'** button in the right upper corner of this PR.\n"
+                f"> 1. Click the **'Code'** button in the right upper corner of this PR.\n"
                 f"> 2. Click **'Create codespace on Transformers'**.\n"
                 f"> 3. Click **'Authorize and continue'**.\n"
                 f"> 4. Wait until your Codespace environment is generated, once it is, you can edit your code.\n"

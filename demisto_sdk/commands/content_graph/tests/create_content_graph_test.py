@@ -111,6 +111,7 @@ def mock_script(name: str = "SampleScript"):
         docker_image="mock:docker",
         tags=[],
         is_test=False,
+        skip_prepare=[],
     )
 
 

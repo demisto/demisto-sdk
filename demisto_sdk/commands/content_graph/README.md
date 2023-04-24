@@ -99,4 +99,4 @@ When the graph update is completed, it will be available in http://localhost:747
 
 ## Environment Variables
 
-DEMISTO_SDK_CREATE_GRAPH - Whether to create the content graph instead of updating it. Will be used in all commands which use the content graph.
+DEMISTO_SDK_GRAPH_FORCE_CREATE - Whether to create the content graph instead of updating it. Will be used in all commands which use the content graph.

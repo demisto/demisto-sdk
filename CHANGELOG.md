@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Improved the warning message displayed for Contribution PRs editing outdated code.
 * **lint** now prevents unit-tests from accessing online resources in runtime.
 * Added support for the `<~XPANSE>` marketplace tag in release notes.
 * Added support for marketplace tags in the **doc-review** command.

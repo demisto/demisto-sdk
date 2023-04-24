@@ -514,7 +514,7 @@ class ContributionConverter:
             self.contribution_items_version_note += (
                 f">\n"
                 f"> **For the Contributor:**\n @{self.gh_user}\n"
-                f"> In case you are requested by your reviewer to improve the code or to make changes, please submit "
+                f"> In case you are requested by your reviewer to improve the code or to make changes, submit "
                 f"them through the **GitHub Codespaces** and **Not through the XSOAR UI**.\n"
                 f">\n"
                 f"> **To use the GitHub Codespaces please do as follow:**\n"

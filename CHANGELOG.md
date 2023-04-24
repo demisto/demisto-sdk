@@ -1,5 +1,4 @@
 # Changelog
-* Fixed an issue where **lint** would not properly handle imports of multi level ApiModules.
 
 ## Unreleased
 * **lint** now prevents unit-tests from accessing online resources in runtime.
@@ -11,6 +10,7 @@
 * Added the `hiddenpassword` field to the integration schema, allowing **validate** to run on integrations with username-only inputs.
 * Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
 * Improved logs and error handling in the **modeling-rules test** command.
+* Fixed an issue where **lint** would not properly handle imports of multi level ApiModules.
 
 ## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.

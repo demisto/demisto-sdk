@@ -517,7 +517,7 @@ class ContributionConverter:
                 f"> In case you are requested by your reviewer to improve the code or to make changes, submit "
                 f"them through the **GitHub Codespaces** and **Not through the XSOAR UI**.\n"
                 f">\n"
-                f"> **To use the GitHub Codespaces please do as follow:**\n"
+                f"> **To use the GitHub Codespaces, do the following:**\n"
                 f"> 1. Click on the **'Code'** button in the right upper corner of this PR.\n"
                 f"> 2. Click **'Create codespace on Transformers'**.\n"
                 f"> 3. Click **'Authorize and continue'**.\n"

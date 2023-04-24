@@ -11,7 +11,7 @@
 * Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
 * Improved logs and error handling in the **modeling-rules test** command.
 * Fixed an issue where **download** command failed when running on a beta integration.
-* Added the `DEMISTO_SDK_GRAPH_FORCE_CREATE` environment variable. Use it to force the SDK to recreate the graph, rather than update it. 
+* Added the `DEMISTO_SDK_GRAPH_FORCE_CREATE` environment variable. Use it to force the SDK to recreate the graph, rather than update it.
 
 ## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.

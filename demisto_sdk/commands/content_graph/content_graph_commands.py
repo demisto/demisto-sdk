@@ -71,7 +71,14 @@ def update_content_graph(
         logger.info("DEMISTO_SDK_CREATE_GRAPH is set. Will create a new graph")
         builder.create_graph()
     else:
-        _download_and_update_graph(content_graph_interface, builder, use_git, imported_path, use_current, packs_to_update)
+        _download_and_update_graph(
+            content_graph_interface,
+            builder,
+            use_git,
+            imported_path,
+            use_current,
+            packs_to_update,
+        )
     if dependencies:
         content_graph_interface.create_pack_dependencies()
     if output_path:
@@ -82,7 +89,8 @@ def update_content_graph(
         f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
     )
 
-def _download_and_update_graph(    
+
+def _download_and_update_graph(
     content_graph_interface: ContentGraphInterface,
     builder: ContentGraphBuilder,
     use_git: bool = False,
@@ -105,7 +113,7 @@ def _download_and_update_graph(
     if not use_current:
         content_graph_interface.clean_import_dir()
         if not imported_path:
-                # getting the graph from remote, so we need to clean the import dir
+            # getting the graph from remote, so we need to clean the import dir
             extract_remote_import_files(content_graph_interface, builder)
 
     if use_git and (commit := content_graph_interface.commit):

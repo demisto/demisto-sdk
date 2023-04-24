@@ -5,6 +5,7 @@
 * Added support for marketplace tags in the **doc-review** command.
 * Updated the logs shown during lint when running in docker.
 * Added **generate-unit-tests** documentation to the repo README.
+* Fixed an issue where **validate** did not fail when xif files had wrong naming.
 * Added the `hiddenpassword` field to the integration schema, allowing **validate** to run on integrations with username-only inputs.
 
 ## 1.13.0

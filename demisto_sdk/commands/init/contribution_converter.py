@@ -521,7 +521,7 @@ class ContributionConverter:
                 f"> 1. Click the **'Code'** button in the right upper corner of this PR.\n"
                 f"> 2. Click **'Create codespace on Transformers'**.\n"
                 f"> 3. Click **'Authorize and continue'**.\n"
-                f"> 4. Wait until your Codespace environment is generated, once it is, you can edit your code.\n"
+                f"> 4. Wait until your Codespace environment is generated. When it is, you can edit your code.\n"
                 f"> 5. Commit and push your changes to the head branch of the PR.\n"
             )
 

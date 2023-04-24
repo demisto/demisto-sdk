@@ -507,21 +507,21 @@ class ContributionConverter:
                 "> **For the Reviewer:**\n"
                 "> 1. Compare the code of this PR with the latest version of the pack, make sure to understand what are"
                 " the changes that the contributor intended to contribute, and **solve the conflicts in accordance**.\n"
-                "> 2. In case improvements are needed, instruct the contributor to edit the code through the **Github "
-                "Code-Space** and **Not through the XSOAR UI**.\n"
+                "> 2. In case improvements are needed, instruct the contributor to edit the code through the "
+                "**GitHub Codespaces** and **Not through the XSOAR UI**.\n"
             )
 
             self.contribution_items_version_note += (
                 f">\n"
                 f"> **For the Contributor:**\n @{self.gh_user}\n"
                 f"> In case you are requested by your reviewer to improve the code or to make changes, please submit "
-                f"them through the **Github Code-Space** and **Not through the XSOAR UI**.\n"
+                f"them through the **GitHub Codespaces** and **Not through the XSOAR UI**.\n"
                 f">\n"
-                f"> **To use the Github Code-Space please do as follow:**\n"
+                f"> **To use the GitHub Codespaces please do as follow:**\n"
                 f"> 1. Click on the **'Code'** button in the right upper corner of this PR.\n"
                 f"> 2. Click **'Create codespace on Transformers'**.\n"
                 f"> 3. Click **'Authorize and continue'**.\n"
-                f"> 4. Wait until your code-space environment is generated, once it is, you can edit your code.\n"
+                f"> 4. Wait until your Codespace environment is generated, once it is, you can edit your code.\n"
                 f"> 5. Commit and push your changes to the head branch of the PR.\n"
             )
 

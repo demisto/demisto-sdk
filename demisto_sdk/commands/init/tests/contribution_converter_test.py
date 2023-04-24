@@ -728,17 +728,17 @@ def test_create_contribution_items_version_note():
 >
 > **For the Reviewer:**
 > 1. Compare the code of this PR with the latest version of the pack, make sure to understand what are the changes that the contributor intended to contribute, and **solve the conflicts in accordance**.
-> 2. In case improvements are needed, instruct the contributor to edit the code through the **Github Code-Space** and **Not through the XSOAR UI**.
+> 2. In case improvements are needed, instruct the contributor to edit the code through the **GitHub Codespaces** and **Not through the XSOAR UI**.
 >
 > **For the Contributor:**
  @
-> In case you are requested by your reviewer to improve the code or to make changes, please submit them through the **Github Code-Space** and **Not through the XSOAR UI**.
+> In case you are requested by your reviewer to improve the code or to make changes, please submit them through the **GitHub Codespaces** and **Not through the XSOAR UI**.
 >
-> **To use the Github Code-Space please do as follow:**
+> **To use the GitHub Codespaces please do as follow:**
 > 1. Click on the **'Code'** button in the right upper corner of this PR.
 > 2. Click **'Create codespace on Transformers'**.
 > 3. Click **'Authorize and continue'**.
-> 4. Wait until your code-space environment is generated, once it is, you can edit your code.
+> 4. Wait until your Codespace environment is generated, once it is, you can edit your code.
 > 5. Commit and push your changes to the head branch of the PR.
 """
     )

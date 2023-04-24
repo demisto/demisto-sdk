@@ -55,7 +55,7 @@ def update_content_graph(
     dependencies: bool = True,
     output_path: Optional[Path] = None,
 ) -> None:
-    """This function creates a new content graph database in neo4j from the content path
+    """This function updates a new content graph database in neo4j from the content path
     Args:
         content_graph_interface (ContentGraphInterface): The content graph interface.
         marketplace (MarketplaceVersions): The marketplace to update.
@@ -66,13 +66,46 @@ def update_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
+    builder = ContentGraphBuilder(content_graph_interface)
+    if os.getenv("DEMISTO_SDK_CREATE_GRAPH"):
+        logger.info("DEMISTO_SDK_CREATE_GRAPH is set. Will create a new graph")
+        builder.create_graph()
+    else:
+        _download_and_update_graph(content_graph_interface, builder, use_git, imported_path, use_current, packs_to_update)
+    if dependencies:
+        content_graph_interface.create_pack_dependencies()
+    if output_path:
+        output_path = output_path / marketplace.value
+    content_graph_interface.export_graph(output_path)
+    logger.info(
+        f"Successfully updated the content graph. UI representation is available at {NEO4J_DATABASE_HTTP} "
+        f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
+    )
+
+def _download_and_update_graph(    
+    content_graph_interface: ContentGraphInterface,
+    builder: ContentGraphBuilder,
+    use_git: bool = False,
+    imported_path: Optional[Path] = None,
+    use_current: bool = False,
+    packs_to_update: Optional[List[str]] = None,
+):
+    """This function downloads the graph from the bucket, determines the packs to update and updates the graph.
+    Args:
+        content_graph_interface (ContentGraphInterface): The content graph interface.
+        builder (ContentGraphBuilder): The content graph builder.
+        use_git (bool): Whether to use git to get the packs to update.
+        imported_path (Path): The path to the imported graph.
+        use_current (bool): Whether to use the current graph.
+        packs_to_update (List[str]): The packs to update.
+    """
     if packs_to_update is None:
         packs_to_update = []
-    builder = ContentGraphBuilder(content_graph_interface)
+
     if not use_current:
         content_graph_interface.clean_import_dir()
         if not imported_path:
-            # getting the graph from remote, so we need to clean the import dir
+                # getting the graph from remote, so we need to clean the import dir
             extract_remote_import_files(content_graph_interface, builder)
 
     if use_git and (commit := content_graph_interface.commit):
@@ -83,15 +116,6 @@ def update_content_graph(
     packs_str = "\n".join([f"- {p}" for p in packs_to_update])
     logger.info(f"Updating the following packs:\n{packs_str}")
     builder.update_graph(packs_to_update)
-    if dependencies:
-        content_graph_interface.create_pack_dependencies()
-    if output_path:
-        output_path = output_path / marketplace.value
-    content_graph_interface.export_graph(output_path)
-    logger.info(
-        f"Successfully updated the content graph. UI representation is available at {NEO4J_DATABASE_HTTP} "
-        f"(username: {NEO4J_USERNAME}, password: {NEO4J_PASSWORD})"
-    )
 
 
 def extract_remote_import_files(

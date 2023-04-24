@@ -402,8 +402,8 @@ class TestCreateContentGraph:
         assert Path.exists(
             tmp_path / "TestPack" / "Integrations" / "integration-integration_0.yml"
         )
-        assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script0.yml")
-        assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script1.yml")
+        assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-SampleScript.yml")
+        assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-TestApiModule.yml")
         assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-getIncident.yml")
         assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-getAlert.yml")
         assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-setIncident.yml")

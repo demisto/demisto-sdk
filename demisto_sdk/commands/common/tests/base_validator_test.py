@@ -4,7 +4,6 @@ from os.path import join
 
 import pytest
 
-from TestSuite.pack import Pack
 from demisto_sdk.commands.common.constants import PACK_METADATA_SUPPORT
 from demisto_sdk.commands.common.errors import (
     FOUND_FILES_AND_ERRORS,
@@ -17,6 +16,7 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
+from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 json = JSON_Handler()
@@ -646,7 +646,7 @@ def test_content_items_naming(repo):
         """
         if creation_def in (pack.create_parsing_rule, pack.create_modeling_rule):
             invalid_rule = creation_def("test_rule")
-            xif_path = invalid_rule.rules.path.split('/')
+            xif_path = invalid_rule.rules.path.split("/")
             xif_path[-1] = "test_invalid_rule.xif"
             invalid_rule.rules.path = "/".join(xif_path)
             return invalid_rule
@@ -657,7 +657,7 @@ def test_content_items_naming(repo):
         pack.create_xsiam_dashboard("test_dashboard").path,
         pack.create_xsiam_report("test_report").path,
         create_invalid_rule(pack, pack.create_parsing_rule).rules.path,
-        create_invalid_rule(pack, pack.create_modeling_rule).rules.path
+        create_invalid_rule(pack, pack.create_modeling_rule).rules.path,
     ]
 
     valid_entities_paths = [

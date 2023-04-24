@@ -506,7 +506,7 @@ class ContributionConverter:
                 ">\n"
                 "> **For the Reviewer:**\n"
                 "> 1. Compare the code of this PR with the latest version of the pack. Make sure you understand"
-                " the changes that the contributor intended to contribute, and **solve the conflicts in accordance**.\n"
+                " the changes the contributor intended to contribute, and **solve the conflicts accordingly**.\n"
                 "> 2. In case improvements are needed, instruct the contributor to edit the code through the "
                 "**GitHub Codespaces** and **Not through the XSOAR UI**.\n"
             )

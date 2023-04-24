@@ -1,3 +1,4 @@
+import logging
 import math
 import os
 import string
@@ -19,15 +20,13 @@ from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (
-    LOG_COLORS,
     find_type,
     get_pack_name,
     is_file_path_in_pack,
-    print_color,
-    print_error,
-    print_warning,
     run_command,
 )
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -69,6 +68,7 @@ TEXT_FILE_TYPES = {
     ".pdf",
     ".html",
     ".ps1",
+    ".xif",
 }
 SKIP_FILE_TYPE_ENTROPY_CHECKS = {".eml"}
 SKIP_DEMISTO_TYPE_ENTROPY_CHECKS = {"playbook-"}
@@ -164,7 +164,7 @@ class SecretsValidator:
                     "For more information about whitelisting visit: "
                     "https://xsoar.pan.dev/docs/concepts/demisto-sdk#secrets"
                 )
-                print_error(secrets_found_string)
+                logger.info(f"[red]{secrets_found_string}[/red]")
         return secret_to_location_mapping
 
     def reformat_secrets_output(self, secrets_list):
@@ -342,7 +342,7 @@ class SecretsValidator:
                 )
             except re.error as err:
                 error_string = f"Could not use secrets with item: {item}"
-                print_error(error_string)
+                logger.info(f"[red]{error_string}[/red]")
                 raise re.error(error_string, str(err))
         return file_content
 
@@ -512,11 +512,11 @@ class SecretsValidator:
                         PACKS_DIR, pack_name, white_list_line[5:]
                     )
                     if not os.path.isfile(os.path.join(white_list_line)):
-                        print_warning(
-                            f"{white_list_line} not found.\n"
+                        logger.info(
+                            f"[yellow]{white_list_line} not found.\n"
                             "please add the file name in the following format\n"
                             "file:[Scripts|Integrations|Playbooks]/name/file.example\n"
-                            "e.g. file:Scripts/HelloWorldScript/HelloWorldScript.py"
+                            "e.g. file:Scripts/HelloWorldScript/HelloWorldScript.py[/yellow]"
                         )
                     files_white_list.append(white_list_line)
                 else:
@@ -575,8 +575,8 @@ class SecretsValidator:
                 file_contents = soup.text
                 return file_contents
         except Exception as ex:
-            print_error(
-                f"Unable to parse the following file {file_path} due to error {ex}"
+            logger.info(
+                f"[red]Unable to parse the following file {file_path} due to error {ex}[/red]"
             )
             raise
 
@@ -619,15 +619,15 @@ class SecretsValidator:
         return branch_name_reg.group(1)
 
     def find_secrets(self):
-        print_color("Starting secrets detection", LOG_COLORS.GREEN)
+        logger.info("[green]Starting secrets detection[/green]")
         is_circle = self.is_circle
         branch_name = self.get_branch_name()
         secrets_found = self.get_secrets(branch_name, is_circle)
         if secrets_found:
             return True
         else:
-            print_color(
-                "Finished validating secrets, no secrets were found.", LOG_COLORS.GREEN
+            logger.info(
+                "[green]Finished validating secrets, no secrets were found.[/green]"
             )
             return False
 

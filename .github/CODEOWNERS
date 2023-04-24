@@ -1,6 +1,6 @@
 # Validations
-demisto-sdk/demisto_sdk/commands/validate/validate_manager.py @idovandijk
-demisto_sdk/commands/common/hook_validations/ @idovandijk
+demisto-sdk/demisto_sdk/commands/validate/validate_manager.py @idovandijk @YuvHayun
+demisto_sdk/commands/common/hook_validations/ @idovandijk @YuvHayun
 
 # VS Code plugin
 .vscode/ @ilaner

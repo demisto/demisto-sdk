@@ -1,3 +1,5 @@
+import logging
+
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
@@ -8,7 +10,7 @@ from demisto_sdk.commands.common.hook_validations.integration import (
     IntegrationValidator,
 )
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 
 class MyRepo:
@@ -18,7 +20,7 @@ class MyRepo:
         return "remote_path"
 
 
-def test_conf_file_custom(mocker, repo):
+def test_conf_file_custom(mocker, monkeypatch, repo):
     """
     Given
     - a content repo with a pack and integration.
@@ -31,6 +33,9 @@ def test_conf_file_custom(mocker, repo):
     - Ensure validate runs on the specific file when the conf file is not in place.
     - Ensure validate runs on all files after the conf file is in place.
     """
+    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+    monkeypatch.setenv("COLUMNS", "1000")
+
     mocker.patch.object(tools, "is_external_repository", return_value=True)
     mocker.patch.object(IntegrationValidator, "is_valid_category", return_value=True)
     mocker.patch.object(ValidateManager, "setup_git_params", return_value=True)
@@ -47,14 +52,34 @@ def test_conf_file_custom(mocker, repo):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         # pre-conf file - see validate fail on docker related issue
-        res = runner.invoke(main, f"validate -i {integration.yml.path}")
-        assert "================= Validating file " in res.stdout
-        assert "DO106" in res.stdout
+        runner.invoke(main, f"validate -i {integration.yml.path}")
+        assert all(
+            [
+                str_in_call_args_list(
+                    logger_info.call_args_list,
+                    "================= Validating file ",
+                ),
+                str_in_call_args_list(
+                    logger_info.call_args_list,
+                    "DO106",
+                ),
+            ]
+        )
 
     repo.make_file(".demisto-sdk-conf", "[validate]\nno_docker_checks=True")
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         # post-conf file - see validate not fail on docker related issue as we are skipping
-        res = runner.invoke(main, f"validate -i {integration.yml.path}")
-        assert "================= Validating file " in res.stdout
-        assert "DO106" not in res.stdout
+        runner.invoke(main, f"validate -i {integration.yml.path}")
+        assert all(
+            [
+                str_in_call_args_list(
+                    logger_info.call_args_list,
+                    "================= Validating file ",
+                ),
+                str_in_call_args_list(
+                    logger_info.call_args_list,
+                    "DO106",
+                ),
+            ]
+        )

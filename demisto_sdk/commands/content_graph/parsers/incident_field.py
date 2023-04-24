@@ -36,16 +36,20 @@ class IncidentFieldParser(
     def connect_to_dependencies(self) -> None:
         """Collects incident types used as optional dependencies, and scripts as mandatory dependencies."""
         for associated_type in set(self.json_data.get("associatedTypes") or []):
-            self.add_dependency_by_name(
-                associated_type, ContentType.INCIDENT_TYPE, is_mandatory=False
-            )
+            if associated_type:
+                self.add_dependency_by_name(
+                    associated_type, ContentType.INCIDENT_TYPE, is_mandatory=False
+                )
 
         for system_associated_type in set(
             self.json_data.get("systemAssociatedTypes") or []
         ):
-            self.add_dependency_by_name(
-                system_associated_type, ContentType.INCIDENT_TYPE, is_mandatory=False
-            )
+            if system_associated_type:
+                self.add_dependency_by_name(
+                    system_associated_type,
+                    ContentType.INCIDENT_TYPE,
+                    is_mandatory=False,
+                )
 
         if script := self.json_data.get("script"):
             self.add_dependency_by_id(script, ContentType.SCRIPT)

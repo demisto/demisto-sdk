@@ -5,7 +5,7 @@ import string
 import sys
 from configparser import ConfigParser
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import click
 import nltk
@@ -114,7 +114,7 @@ class DocReviewer:
         Args:
             file_path: The path of the file within the pack
 
-        Return (the known words file path or '' if it was not found, list of known words)
+        Return the known words file path or '' if it was not found, list of known words
         """
         file_path_obj = Path(file_path)
         if "Packs" in file_path_obj.parts:
@@ -232,14 +232,16 @@ class DocReviewer:
             self.files.append(file_path)
 
     @staticmethod
-    def print_unknown_words(unknown_words):
-        for word, corrections in unknown_words.items():
-            if corrections:
+    def print_unknown_words(unknown_words: Dict[Tuple[str, str], Tuple[str]]) -> None:
+        for (word, sub_word), corrections in unknown_words.items():
+            correction_text = f" - did you mean: {corrections}" if corrections else ""
+
+            if sub_word:
                 click.secho(
-                    f"  - {word} - did you mean: {corrections}", fg="bright_red"
+                    f"  - {sub_word} in {word}{correction_text}", fg="bright_red"
                 )
             else:
-                click.secho(f"  - {word}", fg="bright_red")
+                click.secho(f"  - {word}{correction_text}", fg="bright_red")
         click.secho(
             "If these are not misspelled consider adding them to a known_words file:\n"
             "  Pack related words: content/Packs/<PackName>/.pack-ignore under the [known_words] section.\n"
@@ -383,7 +385,7 @@ class DocReviewer:
 
         if self.expand_dictionary:
             # nltk - natural language tool kit - is a large package containing several dictionaries.
-            # to use it we need to download one of it's dictionaries - we will use the
+            # to use it we need to download one of its dictionaries - we will use the
             # reasonably sized "brown" and "webtext" dicts.
             # to avoid SSL download error we disable SSL connection.
             try:
@@ -410,6 +412,15 @@ class DocReviewer:
         """remove leading and trailing punctuation"""
         return word.strip(string.punctuation)
 
+    def suggest_if_misspelled(self, word: str) -> Optional[Set]:
+        if word.isalpha() and self.spellchecker.unknown([word]):
+            candidates = set(list(self.spellchecker.candidates(word))[:5])
+            # Don't suggest the misspelled word as its own correction, in this case the returned set will be
+            # empty indicating a misspelled word with no suggestion.
+            candidates.discard(word)
+            return candidates
+        return None
+
     def check_word(self, word):
         """Check if a word is legal"""
         # check camel cases
@@ -422,25 +433,18 @@ class DocReviewer:
         elif not self.no_camel_case and self.is_camel_case(word):
             sub_words.extend(self.camel_case_split(word))
         else:
-            sub_words.append(word)
+            # The word isn't kebab-case or CamelCase, so we check its own spelling
+            if (suggestions := self.suggest_if_misspelled(word)) is not None:
+                self.unknown_words[(word, None)] = suggestions
 
-        self.unknown_words[word] = set()
-        for sub_word in sub_words:
+        for sub_word in set(sub_words):
             sub_word = self.remove_punctuation(sub_word)
-            if sub_word.isalpha() and self.spellchecker.unknown([sub_word]):
-                self.unknown_words[word].update(
-                    list(self.spellchecker.candidates(sub_word))[:5]
-                )
-
-        if not self.unknown_words[word]:
-            del self.unknown_words[word]
-        elif word in self.unknown_words[word]:
-            # Do not suggest the same word as a correction.
-            self.unknown_words[word].remove(word)
+            if (suggestions := self.suggest_if_misspelled(sub_word)) is not None:
+                self.unknown_words[(word, sub_word)] = suggestions
 
     def check_md_file(self, file_path):
         """Runs spell check on .md file. Adds unknown words to given unknown_words set.
-        Also if RN file will review it and add it to malformed RN file set if needed.
+        Also, if RN file will review it and add it to malformed RN file set if needed.
         """
         pack_object: TextObject = path_to_pack_object(file_path)
         md_file_lines = pack_object.to_str().split("\n")

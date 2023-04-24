@@ -1,21 +1,16 @@
 import ast
+import logging
 import re
 import tempfile
 
 import demisto_client
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (
-    LOG_COLORS,
-    print_color,
-    print_error,
-    print_v,
-    print_warning,
-)
 from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import (
     json_to_outputs,
 )
 
+logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
 
 
@@ -29,7 +24,6 @@ class Runner:
     """Used to run a command on Demisto and print the results.
     Attributes:
         query (str): The query to execute.
-        log_verbose (bool): Whether to output a detailed response.
         debug (str): Holds the path of the debug log file (or '-' if the logs will be printed in stdout).
         debug_path (str): The path in which you will save the debug file.
         client (DefaultApi): Demisto-SDK client object.
@@ -51,13 +45,12 @@ class Runner:
         insecure: bool = False,
         debug: str = None,
         debug_path: str = None,
-        verbose: bool = False,
         json_to_outputs: bool = False,
         prefix: str = "",
         raw_response: bool = False,
+        **kwargs,
     ):
         self.query = query if query.startswith("!") else f"!{query}"
-        self.log_verbose = verbose
         self.debug = debug
         self.debug_path = debug_path
         verify = (
@@ -79,18 +72,18 @@ class Runner:
             log_ids = self._run_query(playground_id)
         except DemistoRunTimeError as err:
             log_ids = None
-            print_error(str(err))
+            logger.info(f"[red]{err}[/red]")
 
         if self.debug:
             if not log_ids:
-                print_warning("Entry with debug log not found")
+                logger.info("[yellow]Entry with debug log not found[/yellow]")
             else:
                 self._export_debug_log(log_ids)
 
         if self.json2outputs:
             if not self.prefix:
-                print_error(
-                    "A prefix for the outputs is needed for this command. Please provide one"
+                logger.info(
+                    "[red]A prefix for the outputs is needed for this command. Please provide one[/red]"
                 )
                 return 1
             else:
@@ -106,7 +99,9 @@ class Runner:
                         command = self.query.split(" ")[0]
                         json_to_outputs(command, json=file_path, prefix=self.prefix)
                 else:
-                    print_error("Could not extract raw output as JSON from command")
+                    logger.info(
+                        "[red]Could not extract raw output as JSON from command[/red]"
+                    )
                     return 1
 
     def _get_playground_id(self):
@@ -140,7 +135,7 @@ class Runner:
 
         result = playgrounds[0].id
 
-        print_v(f"Playground ID: {result}", self.log_verbose)
+        logger.debug(f"Playground ID: {result}")
 
         return result
 
@@ -166,13 +161,13 @@ class Runner:
         for entry in answer:
             # answer should have entries with `contents` - the readable output of the command
             if entry.parent_content:
-                print_color("### Command:", LOG_COLORS.YELLOW)
+                logger.info("[yellow]### Command:[/yellow]")
             if entry.contents:
-                print_color("## Readable Output", LOG_COLORS.YELLOW)
+                logger.info("[yellow]## Readable Output[/yellow]")
                 if entry.type == self.ERROR_ENTRY_TYPE:
-                    print_error(f"{entry.contents}\n")
+                    logger.info(f"[red]{entry.contents}[/red]\n")
                 else:
-                    print(f"{entry.contents}\n")
+                    logger.info(f"{entry.contents}\n")
 
             # and entries with `file_id`s defined, that is the fileID of the debug log file
             if entry.type == self.DEBUG_FILE_ENTRY_TYPE:
@@ -193,22 +188,21 @@ class Runner:
                     with open(result, "r+") as log_info:
                         for line in log_info:
                             output_file.write(line.encode("utf-8"))
-            print_color(
-                f"Debug Log successfully exported to {self.debug_path}",
-                LOG_COLORS.GREEN,
+            logger.info(
+                f"[green]Debug Log successfully exported to {self.debug_path}[/green]"
             )
         else:
-            print_color("## Detailed Log", LOG_COLORS.YELLOW)
+            logger.info("[yellow]## Detailed Log[/yellow]")
             for log_id in log_ids:
                 result = self.client.download_file(log_id)
                 with open(result, "r+") as log_info:
                     for line in log_info:
                         if self.SECTIONS_HEADER_REGEX.match(line):
-                            print_color(line, LOG_COLORS.YELLOW)
+                            logger.info(f"[yellow]{line}[/yello]")
                         elif self.FULL_LOG_REGEX.match(line):
-                            print_color("Full Integration Log:", LOG_COLORS.YELLOW)
+                            logger.info("[yellow]Full Integration Log:[/yellow]")
                         else:
-                            print(line)
+                            logger.info(line)
 
     def _return_context_dict_from_log(self, log_ids: list) -> dict:
         """
@@ -236,7 +230,7 @@ class Runner:
                             while not self.HUMAN_READABLE_HEADER.match(line):
                                 context = context + line
                                 line = log_info.readline()
-                            context = re.sub(r"\(val\..+\)", "", context)  # noqa: W605
+                            context = re.sub(r"\(val\..+\)", "", context)
                             try:
                                 temp_dict = json.loads(context)
                                 if temp_dict:
@@ -275,9 +269,8 @@ class Runner:
                                 except Exception:
                                     pass
                             output_file.write(line.encode("utf-8"))
-            print_color(
-                f"Debug Log successfully exported to {self.debug_path}",
-                LOG_COLORS.GREEN,
+            logger.info(
+                f"[green]Debug Log successfully exported to {self.debug_path}[/green]"
             )
             return temp_dict
 

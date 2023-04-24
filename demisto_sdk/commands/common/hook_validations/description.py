@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_INTEGRATION_YML_REGEX,
     FileType,
 )
-from demisto_sdk.commands.common.errors import FOUND_FILES_AND_ERRORS, Errors
+from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator,
     error_codes,
@@ -31,15 +31,11 @@ class DescriptionValidator(BaseValidator):
         self,
         file_path: str,
         ignored_errors=None,
-        print_as_warnings=False,
-        suppress_print: bool = False,
         json_file_path: Optional[str] = None,
         specific_validations: Optional[List[str]] = None,
     ):
         super().__init__(
             ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
-            suppress_print=suppress_print,
             json_file_path=json_file_path,
             specific_validations=specific_validations,
         )
@@ -296,13 +292,10 @@ class DescriptionValidator(BaseValidator):
                 invalid_lines, yml_or_file
             )
 
-            # print only if the error is not already in the report
-            check_in_report = f"{integration_path} - [{error_code}]"
             if self.handle_error(
                 error_message,
                 error_code,
                 file_path=integration_path,
-                should_print=check_in_report not in FOUND_FILES_AND_ERRORS,
             ):
                 self._is_valid = False
                 return False

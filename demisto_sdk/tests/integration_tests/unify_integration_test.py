@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 
@@ -208,6 +209,7 @@ class TestIntegrationScriptUnifier:
                 assert unified_yml_data.get("script").get("nativeimage") == [
                     "8.1",
                     "8.2",
+                    "candidate",
                 ]
 
     def test_add_custom_section_flag(self, repo):
@@ -235,7 +237,11 @@ class TestIntegrationScriptUnifier:
             ) as unified_yml:
                 unified_yml_data = yaml.load(unified_yml)
                 assert unified_yml_data.get("name") == "sample_scriptTest"
-                assert unified_yml_data.get("nativeimage") == ["8.1", "8.2"]
+                assert unified_yml_data.get("nativeimage") == [
+                    "8.1",
+                    "8.2",
+                    "candidate",
+                ]
 
     def test_ignore_native_image_integration(self, repo):
         """
@@ -288,7 +294,7 @@ class TestIntegrationScriptUnifier:
 
 
 class TestLayoutUnifer:
-    def test_layout_unify(self, repo):
+    def test_layout_unify(self, repo, mocker, monkeypatch):
         """
         Given:
             - layout that has 'fromVersion' field and 'toVersion' filed.
@@ -304,6 +310,11 @@ class TestLayoutUnifer:
             - make sure the 'fromServerVersion' and 'fromVersion' are the same.
             - make sure the 'toVersion' and 'toServerVersion' are the same.
         """
+        logger_warning = mocker.patch.object(
+            logging.getLogger("demisto-sdk"), "warning"
+        )
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+        monkeypatch.setenv("COLUMNS", "1000")
 
         pack = repo.create_pack("test")
         layout = pack.create_layoutcontainer(
@@ -323,8 +334,11 @@ class TestLayoutUnifer:
                 main, [UNIFY_CMD, "-i", f"{layout.path}", "-o", output]
             )
 
+            assert result.exit_code == 0
             assert not result.exception
-            assert not result.stderr
+
+            assert logger_warning.call_count == 0
+            assert logger_error.call_count == 0
 
             with open(Path(output).name) as updated_layout:
                 layout_data = json.load(updated_layout)

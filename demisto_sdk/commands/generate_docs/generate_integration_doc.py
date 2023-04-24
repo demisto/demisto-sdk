@@ -1,3 +1,4 @@
+import logging
 import os.path
 import re
 from pathlib import Path
@@ -13,13 +14,7 @@ from demisto_sdk.commands.common.default_additional_info_loader import (
     load_default_additional_info_dict,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (
-    LOG_COLORS,
-    get_yaml,
-    print_color,
-    print_error,
-    print_warning,
-)
+from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.generate_docs.common import (
     add_lines,
     build_example_dict,
@@ -32,6 +27,8 @@ from demisto_sdk.commands.generate_docs.common import (
 from demisto_sdk.commands.integration_diff.integration_diff_detector import (
     IntegrationDiffDetector,
 )
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -56,9 +53,7 @@ def append_or_replace_command_in_docs(
     errs = list()
     if re.findall(regexp, old_docs, flags=re.DOTALL):
         new_docs = re.sub(regexp, new_doc_section, old_docs, flags=re.DOTALL)
-        print_color(
-            "New command docs has been replaced in README.md.", LOG_COLORS.GREEN
-        )
+        logger.info("[green]New command docs has been replaced in README.md.[/green]")
     else:
         if command_name in old_docs:
             errs.append(
@@ -70,9 +65,7 @@ def append_or_replace_command_in_docs(
             # Remove trailing '\n'
             old_docs = old_docs[:-1]
         new_docs = f"{old_docs}\n{new_doc_section}"
-        print_color(
-            "New command docs has been added to the README.md.", LOG_COLORS.GREEN
-        )
+        logger.info("[green]New command docs has been added to the README.md.[/green]")
     return new_docs, errs
 
 
@@ -85,7 +78,6 @@ def generate_integration_doc(
     command_permissions: Optional[str] = None,
     limitations: Optional[str] = None,
     insecure: bool = False,
-    verbose: bool = False,
     command: Optional[str] = None,
     old_version: str = "",
     skip_breaking_changes: bool = False,
@@ -102,7 +94,6 @@ def generate_integration_doc(
         command_permissions: permissions per command
         limitations: limitations description
         insecure: should use insecure
-        verbose: verbose (debug mode)
         command: specific command to generate docs for
         is_contribution: Check if the content item is a new integration contribution or not.
 
@@ -219,16 +210,13 @@ def generate_integration_doc(
         save_output(output, "README.md", doc_text)
 
         if errors:
-            print_warning("Possible Errors:")
+            logger.info("[yellow]Possible Errors:[/yellow]")
             for error in errors:
-                print_warning(error)
+                logger.info(f"[yellow]{error}[/yellow]")
 
     except Exception as ex:
-        if verbose:
-            raise
-        else:
-            print_error(f"Error: {str(ex)}")
-            return
+        logger.info(f"[red]Error: {str(ex)}[/red]")
+        raise
 
 
 # Setup integration on Demisto
@@ -446,7 +434,7 @@ def generate_commands_section(
             command_dict = list(filter(lambda cmd: cmd["name"] == command, commands))[0]
         except IndexError:
             err = f"Could not find the command `{command}` in the .yml file."
-            print_error(err)
+            logger.info("[red]{err}[/red]")
             raise IndexError(err)
         return generate_single_command_section(
             command_dict, example_dict, command_permissions_dict
@@ -781,8 +769,8 @@ def get_command_examples(commands_examples_input, specific_commands):
         with open(commands_examples_input) as examples_file:
             command_examples = examples_file.read().splitlines()
     else:
-        print_warning(
-            "failed to open commands file, using commands as comma seperated list"
+        logger.info(
+            "[yellow]failed to open commands file, using commands as comma seperated list[/yellow]"
         )
         command_examples = commands_examples_input.split(",")
 

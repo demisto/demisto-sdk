@@ -12,7 +12,7 @@ import requests
 from pydantic import BaseModel, Field, HttpUrl, SecretStr, validator
 from pydantic.fields import ModelField
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("demisto-sdk")
 
 
 class XsiamApiClientConfig(BaseModel):
@@ -246,7 +246,7 @@ class XsiamApiClient(XsiamApiInterface):
             )
             response.raise_for_status()
 
-    def start_xql_query(self, query: str):
+    def start_xql_query(self, query: str, print_req_error: bool = True):
         body = {"request_data": {"query": query}}
         endpoint = urljoin(self.base_url, "public_api/v1/xql/start_xql_query/")
         logger.info(f"Starting xql query:\nendpoint={endpoint}\n{query=}")
@@ -257,10 +257,13 @@ class XsiamApiClient(XsiamApiInterface):
         if response.status_code in range(200, 300):
             execution_id: str = data.get("reply", "")
             return execution_id
-        else:
+        elif print_req_error:
             logger.error(
                 f'Failed to start xql query "{query}" - with status code {response.status_code}\n{pformat(data)}'
             )
+            response.raise_for_status()
+        else:
+            logger.info("Still processing. Please wait...")
             response.raise_for_status()
 
     def get_xql_query_result(self, execution_id: str, timeout: int = 300):

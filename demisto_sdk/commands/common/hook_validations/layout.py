@@ -30,19 +30,10 @@ FROM_VERSION_LAYOUTS_CONTAINER = "6.0.0"
 
 class LayoutBaseValidator(ContentEntityValidator, ABC):
     def __init__(
-        self,
-        structure_validator,
-        ignored_errors=False,
-        print_as_warnings=False,
-        json_file_path=None,
-        **kwargs
+        self, structure_validator, ignored_errors=False, json_file_path=None, **kwargs
     ):
         super().__init__(
-            structure_validator,
-            ignored_errors,
-            print_as_warnings,
-            json_file_path=json_file_path,
-            **kwargs
+            structure_validator, ignored_errors, json_file_path=json_file_path, **kwargs
         )
         self.from_version = self.current_file.get(
             "fromVersion", DEFAULT_CONTENT_ITEM_FROM_VERSION
@@ -287,7 +278,6 @@ class LayoutsContainerValidator(LayoutBaseValidator):
             "team",
             "droppedIncidents",
             "todoTasks",
-            "invTimeline",
         ]
         invalid_tabs = ["canvas", "evidenceBoard", "relatedIncidents"]
         invalid_types_contained = []
@@ -305,12 +295,6 @@ class LayoutsContainerValidator(LayoutBaseValidator):
                         invalid_types_contained.append(tab.get("type"))
                     sections = tab.get("sections", [])
                     for section in sections:
-                        if "queryType" in section.keys() and "type" in section.keys():
-                            if (
-                                section.get("queryType") == "script"
-                                and section.get("type") == "dynamic"
-                            ):
-                                invalid_types_contained.append(section.get("type"))
                         if (
                             "type" in section.keys()
                             and section.get("type") in invalid_sections

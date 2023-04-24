@@ -1,21 +1,24 @@
+import logging
 from typing import Optional, Tuple
 
 import click
 
-from demisto_sdk.commands.common.constants import TYPE_JS, TYPE_PWSH
-from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
-from demisto_sdk.commands.common.tools import (
-    LOG_COLORS,
-    is_iron_bank_pack,
-    print_color,
-    server_version_compare,
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION,
+    TYPE_JS,
+    TYPE_PWSH,
+    FileType,
 )
+from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+from demisto_sdk.commands.common.tools import is_iron_bank_pack, server_version_compare
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class ScriptYMLFormat(BaseUpdateYML):
@@ -34,7 +37,6 @@ class ScriptYMLFormat(BaseUpdateYML):
         from_version: str = "",
         no_validate: bool = False,
         update_docker: bool = False,
-        verbose: bool = False,
         add_tests: bool = False,
         **kwargs,
     ):
@@ -44,7 +46,6 @@ class ScriptYMLFormat(BaseUpdateYML):
             path,
             from_version,
             no_validate,
-            verbose=verbose,
             add_tests=add_tests,
             **kwargs,
         )
@@ -64,16 +65,14 @@ class ScriptYMLFormat(BaseUpdateYML):
             script_obj (dict): script object
         """
         if script_obj.get("type") == TYPE_JS:
-            print_color(
-                "Skipping docker image update as this is a Javascript automation.",
-                LOG_COLORS.YELLOW,
+            logger.info(
+                "[yellow]Skipping docker image update as this is a Javascript automation.[/yellow]"
             )
             return
         dockerimage = script_obj.get("dockerimage")
         if not dockerimage:  # default image -> nothing to do
-            print_color(
-                "Skipping docker image update as default docker image is being used.",
-                LOG_COLORS.YELLOW,
+            logger.info(
+                "[yellow]Skipping docker image update as default docker image is being used.[/yellow]"
             )
             return
         image_name = dockerimage.split(":")[0]
@@ -123,17 +122,17 @@ class ScriptYMLFormat(BaseUpdateYML):
                 f"\n================= Updating file {self.source_file} =================",
                 fg="bright_blue",
             )
-            super().update_yml()
+            super().update_yml(
+                default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION[FileType.SCRIPT],
+            )
             self.update_tests()
             self.update_docker_image()
             self.save_yml_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.info(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:

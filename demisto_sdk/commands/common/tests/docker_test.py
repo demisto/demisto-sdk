@@ -1,3 +1,4 @@
+import logging
 import os
 from unittest import mock
 
@@ -7,7 +8,7 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
-from TestSuite.test_tools import ChangeCWD
+from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 RETURN_ERROR_TARGET = "GetDockerImageLatestTag.return_error"
 
@@ -76,7 +77,6 @@ def mock_docker_image_validator():
         docker_image_validator.file_path = "PATH"
         docker_image_validator.ignored_errors = {}
         docker_image_validator.checked_files = set()
-        docker_image_validator.suppress_print = False
         docker_image_validator.json_file_path = ""
         docker_image_validator.specific_validations = None
         docker_image_validator.predefined_deprecated_ignored_errors = {}
@@ -376,7 +376,9 @@ class TestDockerImage:
 
         assert docker_image_validator.is_docker_image_valid() is True
 
-    def test_non_existing_docker(self, integration, capsys, requests_mock, mocker):
+    def test_non_existing_docker(self, integration, requests_mock, mocker, monkeypatch):
+        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        monkeypatch.setenv("COLUMNS", "1000")
         docker_image = "demisto/nonexistingdocker:1.4.0"
         integration.yml.write_dict(
             {
@@ -406,10 +408,13 @@ class TestDockerImage:
         with ChangeCWD(integration.repo_path):
             validator = DockerImageValidator(integration.yml.path, True, True)
             assert validator.is_docker_image_valid() is False
-            captured = capsys.readouterr()
             assert validator.is_valid is False
-            assert error in captured.out
-            assert code in captured.out
+            assert all(
+                [
+                    str_in_call_args_list(logger_info.call_args_list, error),
+                    str_in_call_args_list(logger_info.call_args_list, code),
+                ]
+            )
 
     class TestIronBankDockerParse:
         def test_get_latest_commit(self, integration, requests_mock):

@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import shutil
@@ -6,10 +7,11 @@ import traceback
 import zipfile
 from collections import defaultdict
 from datetime import datetime
+from pathlib import Path
 from string import punctuation
 from typing import Dict, List, Optional, Union
 
-import click
+from packaging.version import Version
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
@@ -29,13 +31,17 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (
-    LOG_COLORS,
     capital_case,
     find_type,
     get_child_directories,
     get_child_files,
     get_content_path,
     get_display_name,
+    get_pack_metadata,
+)
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.integration_script import (
+    IntegrationScript,
 )
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
@@ -49,6 +55,8 @@ from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.update_release_notes.update_rn_manager import (
     UpdateReleaseNotesManager,
 )
+
+logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -125,6 +133,8 @@ class ContributionConverter:
         self.gh_user = gh_user
         self.contrib_conversion_errs: List[str] = []
         self.create_new = create_new
+        self.contribution_items_version: Dict[str, Dict[str, str]] = {}
+        self.contribution_items_version_note = ""
         base_dir = base_dir or get_content_path()  # type: ignore
         self.packs_dir_path = os.path.join(base_dir, "Packs")  # type: ignore
         if not os.path.isdir(self.packs_dir_path):
@@ -205,9 +215,8 @@ class ContributionConverter:
             str: A unique pack directory name
         """
         while os.path.exists(os.path.join(self.packs_dir_path, pack_dir)):
-            click.echo(
-                f"Modifying pack name because pack {pack_dir} already exists in the content repo",
-                color=LOG_COLORS.NATIVE,
+            logger.info(
+                f"Modifying pack name because pack {pack_dir} already exists in the content repo"
             )
             if (
                 len(pack_dir) >= 2
@@ -218,7 +227,7 @@ class ContributionConverter:
                 pack_dir = pack_dir[:-1] + str(int(pack_dir[-1]) + 1)
             else:
                 pack_dir += "V2"
-            click.echo(f'New pack name is "{pack_dir}"', color=LOG_COLORS.NATIVE)
+            logger.info(f'New pack name is "{pack_dir}"')
         return pack_dir
 
     def unpack_contribution_to_dst_pack_directory(self) -> None:
@@ -294,7 +303,7 @@ class ContributionConverter:
 
     def format_converted_pack(self) -> None:
         """Runs the demisto-sdk's format command on the pack converted from the contribution zipfile"""
-        click.echo(
+        logger.info(
             f"Executing 'format' on the restructured contribution zip new/modified files at {self.pack_dir_path}"
         )
         from_version = "6.0.0" if self.create_new else ""
@@ -302,7 +311,6 @@ class ContributionConverter:
             from_version=from_version,
             no_validate=True,
             update_docker=True,
-            verbose=True,
             assume_yes=True,
             include_untracked=True,
             interactive=False,
@@ -410,9 +418,8 @@ class ContributionConverter:
                     # create pack metadata file
                     with zipfile.ZipFile(self.contribution) as zipped_contrib:
                         with zipped_contrib.open("metadata.json") as metadata_file:
-                            click.echo(
-                                f"Pulling relevant information from {metadata_file.name}",
-                                color=LOG_COLORS.NATIVE,
+                            logger.info(
+                                f"Pulling relevant information from {metadata_file.name}"
                             )
                             metadata = json.loads(metadata_file.read())
                             self.create_metadata_file(metadata)
@@ -437,24 +444,86 @@ class ContributionConverter:
                         source_mapping=files_to_source_mapping,
                     )
 
+            self.create_contribution_items_version_note()
+
             if self.create_new:
                 self.generate_readmes_for_new_content_pack(is_contribution=True)
 
             # format
             self.format_converted_pack()
         except Exception as e:
-            click.echo(
+            logger.info(
                 f"Creating a Pack from the contribution zip failed with error: {e}\n {traceback.format_exc()}",
-                color=LOG_COLORS.RED,
+                "red",
             )
         finally:
             if self.contrib_conversion_errs:
-                click.echo(
+                logger.info(
                     "The following errors occurred while converting unified content YAMLs to package structure:"
                 )
-                click.echo(
+                logger.info(
                     textwrap.indent("\n".join(self.contrib_conversion_errs), "\t")
                 )
+
+    @staticmethod
+    def extract_pack_version(script: Optional[str]) -> str:
+        """
+        extract the pack version from script if exists, returns 0.0.0 if version was not found.
+        """
+        if script:
+            try:
+                if pack_version_reg := re.search(
+                    r"(?:###|//) pack version: (\d+\.\d+\.\d+)", script
+                ):
+                    return pack_version_reg.groups()[0]
+            except Exception as e:
+                logging.warning(f"Failed extracting pack version from script: {e}")
+        return "0.0.0"
+
+    def create_contribution_items_version_note(self):
+        """
+        creates note that can be paste on the created PR containing the
+        contributed item versions.
+        """
+        if self.contribution_items_version:
+            self.contribution_items_version_note = "> **Warning**\n"
+            self.contribution_items_version_note += (
+                "> The changes in the contributed files were not made on the "
+                "most updated pack versions\n"
+            )
+            self.contribution_items_version_note += "> | **Item Name** | **Contribution Pack Version** | **Latest Pack Version**\n"
+            self.contribution_items_version_note += (
+                "> | --------- | ------------------------- | -------------------\n"
+            )
+
+            for item_name, item_versions in self.contribution_items_version.items():
+                self.contribution_items_version_note += (
+                    f"> | {item_name} | {item_versions.get('contribution_version', '')} | "
+                    f"{item_versions.get('latest_version', '')}\n"
+                )
+
+            self.contribution_items_version_note += (
+                ">\n"
+                "> **For the Reviewer:**\n"
+                "> 1. Compare the code of this PR with the latest version of the pack. Make sure you understand"
+                " the changes the contributor intended to contribute, and **solve the conflicts accordingly**.\n"
+                "> 2. In case improvements are needed, instruct the contributor to edit the code through the "
+                "**GitHub Codespaces** and **Not through the XSOAR UI**.\n"
+            )
+
+            self.contribution_items_version_note += (
+                f">\n"
+                f"> **For the Contributor:**\n @{self.gh_user}\n"
+                f"> In case you are requested by your reviewer to improve the code or to make changes, submit "
+                f"them through the **GitHub Codespaces** and **Not through the XSOAR UI**.\n"
+                f">\n"
+                f"> **To use the GitHub Codespaces, do the following:**\n"
+                f"> 1. Click the **'Code'** button in the right upper corner of this PR.\n"
+                f"> 2. Click **'Create codespace on Transformers'**.\n"
+                f"> 3. Click **'Authorize and continue'**.\n"
+                f"> 4. Wait until your Codespace environment is generated. When it is, you can edit your code.\n"
+                f"> 5. Commit and push your changes to the head branch of the PR.\n"
+            )
 
     def content_item_to_package_format(
         self,
@@ -522,6 +591,28 @@ class ContributionConverter:
                             file_type=file_type,
                             output=content_item_dir,
                         )
+                    try:
+                        content_item = BaseContent.from_path(
+                            Path(content_item_file_path)
+                        )
+                        if isinstance(content_item, IntegrationScript):
+                            script = content_item.code
+                            contributor_item_version = self.extract_pack_version(script)
+                            current_pack_version = get_pack_metadata(
+                                file_path=content_item_file_path
+                            ).get("currentVersion", "0.0.0")
+                            if contributor_item_version != "0.0.0" and Version(
+                                current_pack_version
+                            ) > Version(contributor_item_version):
+                                self.contribution_items_version[content_item.name] = {
+                                    "contribution_version": contributor_item_version,
+                                    "latest_version": current_pack_version,
+                                }
+
+                    except Exception as e:
+                        logging.warning(
+                            f"Could not parse {content_item_file_path} contribution item version: {e}.",
+                        )
                     extractor.extract_to_package_format(
                         executed_from_contrib_converter=True
                     )
@@ -549,7 +640,7 @@ class ContributionConverter:
         Create empty 'README.md', '.secrets-ignore', and '.pack-ignore' files that are expected
         to be in the base directory of a pack
         """
-        click.echo("Creating pack base files", color=LOG_COLORS.NATIVE)
+        logger.info("Creating pack base files")
         fp = open(os.path.join(self.pack_dir_path, "README.md"), "a")
         fp.close()
 

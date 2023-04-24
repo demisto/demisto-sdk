@@ -120,7 +120,7 @@ class CircleCIClient:
         return requests.get(
             url=f"{self.base_url}/{api_version}/{url}",
             verify=self.verify,
-            auth=self.auth,
+            # auth=self.auth,
             params=params,
             stream=stream,
         )

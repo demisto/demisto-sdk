@@ -53,7 +53,10 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
             )
 
         for field in self.get_field_ids_recursively():
-            self.add_dependency_by_id(field, dependency_field_type, is_mandatory=False)
+            if field:
+                self.add_dependency_by_id(
+                    field, dependency_field_type, is_mandatory=False
+                )
 
     def get_field_ids_recursively(self) -> Set[str]:
         """Recursively iterates over the layout json data to extract all fieldId items.
@@ -71,7 +74,9 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
             elif isinstance(current_object, dict):
                 for key, value in current_object.items():
                     if key == "fieldId" and isinstance(value, str):
-                        values.add(value.replace("incident_", ""))
+                        values.add(
+                            value.replace("incident_", "").replace("indicator_", "")
+                        )
                     else:
                         get_values(value)
 

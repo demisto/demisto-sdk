@@ -1,0 +1,6 @@
+fromversion: 6.10.0
+id: test_test_modeling_rule
+name: Test Test Modeling Rule
+rules: ''
+schema: ''
+tags: test

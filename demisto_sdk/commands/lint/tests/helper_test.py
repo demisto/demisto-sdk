@@ -1,9 +1,12 @@
 import importlib
 import os
+from pathlib import Path
 
 import pytest
 
+from demisto_sdk.commands.common.constants import TYPE_PYTHON
 from demisto_sdk.commands.lint.helpers import (
+    add_tmp_lint_files,
     generate_coverage_report,
     split_warnings_errors,
 )
@@ -251,6 +254,75 @@ def test_split_warnings_errors(
     assert error == output_error
     assert warning == output_warning
     assert other == output_other
+
+
+def test_add_tmp_lint_files(repo):
+    """
+    Given:
+        - A pack that contains two modules and an integration that imports those two modules.
+
+    When:
+        - Running add_tmp_lint_files on the given input.
+
+    Then:
+        - Ensure both modules are copied by the command shutil.copy.
+    """
+    pack = repo.create_pack(name="ApiModules")
+    pack.create_script(name="TEST1ApiModule", code="# TEST1ApiModule")
+    pack.create_script(name="TEST2ApiModule", code="# TEST2ApiModule")
+    integration_code = "from TEST1ApiModule import *\nfrom TEST2ApiModule import *"
+    integration = pack.create_integration(name="test", code=integration_code)
+
+    content_repo = Path(repo.path)
+    pack_path = Path(pack.path)
+    lint_files = [Path(integration.code.path)]
+
+    with add_tmp_lint_files(
+        content_repo=content_repo,
+        pack_path=pack_path,
+        lint_files=lint_files,
+        modules={},
+        pack_type=TYPE_PYTHON,
+    ):
+        assert all(
+            (pack_path / module).exists()
+            for module in ["TEST1ApiModule.py", "TEST2ApiModule.py"]
+        )
+
+
+def test_add_tmp_lint_files__multi_level_api_modules(repo):
+    """
+    Given:
+        - A pack that contains an integration that imports multi level ApiModules.
+
+    When:
+        - Running add_tmp_lint_files on the given input.
+
+    Then:
+        - Ensure entire hierarchy of the ApiModules are copied.
+    """
+    pack = repo.create_pack(name="ApiModules")
+    pack.create_script(name="BaseApiModule", code="# base ApiModule")
+    pack.create_script(name="SubApiModule", code="from BaseApiModule import *")
+    pack.create_script(name="SubSubApiModule", code="from SubApiModule import *")
+    integration_code = "from SubSubApiModule import *"
+    integration = pack.create_integration(name="test", code=integration_code)
+
+    content_repo = Path(repo.path)
+    pack_path = Path(pack.path)
+    lint_files = [Path(integration.code.path)]
+
+    with add_tmp_lint_files(
+        content_repo=content_repo,
+        pack_path=pack_path,
+        lint_files=lint_files,
+        modules={},
+        pack_type=TYPE_PYTHON,
+    ):
+        assert all(
+            (pack_path / module).exists()
+            for module in ["BaseApiModule.py", "SubApiModule.py", "SubSubApiModule.py"]
+        )
 
 
 class TestGenerateCoverageReport:

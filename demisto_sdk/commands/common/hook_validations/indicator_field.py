@@ -69,7 +69,6 @@ class IndicatorFieldValidator(FieldBaseValidator):
         self,
         structure_validator,
         ignored_errors=False,
-        print_as_warnings=False,
         json_file_path=None,
         **kwargs,
     ):
@@ -78,7 +77,6 @@ class IndicatorFieldValidator(FieldBaseValidator):
             self.FIELD_TYPES,
             self.PROHIBITED_CLI_NAMES,
             ignored_errors,
-            print_as_warnings,
             json_file_path=json_file_path,
             **kwargs,
         )

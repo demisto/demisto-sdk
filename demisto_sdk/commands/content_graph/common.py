@@ -14,7 +14,7 @@ NEO4J_DATABASE_URL = os.getenv(
     "DEMISTO_SDK_NEO4J_DATABASE_URL", "bolt://127.0.0.1:7687"
 )
 NEO4J_USERNAME = os.getenv("DEMISTO_SDK_NEO4J_USERNAME", "neo4j")
-NEO4J_PASSWORD = os.getenv("DEMISTO_SDK_NEO4J_PASSWORD", "test")
+NEO4J_PASSWORD = os.getenv("DEMISTO_SDK_NEO4J_PASSWORD", "contentgraph")
 
 NEO4J_FOLDER = "neo4j-data"
 
@@ -120,6 +120,8 @@ class ContentType(str, enum.Enum):
     def by_path(cls, path: Path) -> "ContentType":
         for idx, folder in enumerate(path.parts):
             if folder == PACKS_FOLDER:
+                if len(path.parts) <= idx + 2:
+                    raise ValueError("Invalid content path.")
                 content_type_dir = path.parts[idx + 2]
                 break
         else:
@@ -294,6 +296,7 @@ SERVER_CONTENT_ITEMS = {
         "dbotMirrorTags",
         "dbotMirrorLastSync",
         "timestamp",
+        "slaField",
     ],
     ContentType.INDICATOR_FIELD: [
         "name",
@@ -330,6 +333,10 @@ SERVER_CONTENT_ITEMS = {
         "indicatortype",
         "aggregatedReliability",
         "starttime",
+        "indicatorIDs",
+        "indicatorsValues",
+        "verdict",
+        "reputation",
     ],
     ContentType.SCRIPT: [
         "getAPIKeyFromLicense",
@@ -526,6 +533,17 @@ SERVER_CONTENT_ITEMS = {
         "Stringify",
         "append",
         "ConvertKeysToTableFieldFormat",
+        # XSIAM scripts aliases
+        "setAlert",
+        "setAlertReminder",
+        "createNewAlert",
+        "getAlerts",
+        "associateIndicatorToAlert",
+        "unAssociateIndicatorToAlert",
+        "linkAlerts",
+        "relatedAlerts",
+        "associateIndicatorsToAlert",
+        "unAssociateIndicatorsFromAlert",
     ],
     ContentType.COMMAND: [
         # activedir-login integration commands

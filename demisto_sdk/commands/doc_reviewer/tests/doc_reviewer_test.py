@@ -742,10 +742,11 @@ def test_check_word_functionality(word, is_invalid_word, no_camelcase):
     """
     doc_reviewer = DocReviewer(no_camel_case=no_camelcase)
     doc_reviewer.check_word(word=word)
+    unknown_words_set = {key_word[0] for key_word in doc_reviewer.unknown_words.keys()}
     if is_invalid_word:
-        assert word in doc_reviewer.unknown_words
+        assert word in unknown_words_set
     else:
-        assert word not in doc_reviewer.unknown_words
+        assert word not in unknown_words_set
 
 
 @pytest.mark.parametrize(
@@ -759,7 +760,7 @@ def test_check_word_functionality(word, is_invalid_word, no_camelcase):
         ),
         (
             "Added the nomnomone, nomnomtwo.",
-            {"nomnomtwo": set()},
+            {("nomnomtwo", None): set()},
             [{"nomnomone", "killaone"}],
             False,
         ),
@@ -779,7 +780,7 @@ def test_having_two_known_words_files(
     Then:
         - Ensure the review result is appropriate.
         - Make sure a review has taken place.
-        - Enusure the unknown words are as expected.
+        - Ensure the unknown words are as expected.
     """
     pack = repo.create_pack("test_pack")
     rn_file = pack.create_release_notes(version="1_0_0", content=file_content)
@@ -851,7 +852,7 @@ def test_adding_known_words_from_pack(
     Then:
         - Ensure the review result is appropriate.
         - Make sure a review has taken place.
-        - Enusure the unknown words are as expected.
+        - Ensure the unknown words are as expected.
     """
     pack = repo.create_pack("test_pack")
     rn_file = pack.create_release_notes(version="1_0_0", content=file_content)
@@ -870,7 +871,9 @@ def test_adding_known_words_from_pack(
         )
         assert doc_reviewer.run_doc_review() == review_success
         assert len(doc_reviewer.files) > 0
-        assert set(doc_reviewer.unknown_words.keys()) == unknown_words
+        assert {
+            key_word[0] for key_word in doc_reviewer.unknown_words.keys()
+        } == unknown_words
 
 
 @pytest.mark.parametrize(
@@ -890,7 +893,7 @@ def test_adding_known_words_from_pack(
         (
             "Added the nomnomone, nomnomtwo.",
             "Added the killa.",
-            [{"nomnomtwo": set()}],
+            [{("nomnomtwo", None): set()}],
             [["nomnomone", "killaone"]],
             False,
             1,
@@ -900,7 +903,7 @@ def test_adding_known_words_from_pack(
         (
             "Added the nomnomone, nomnomtwo.",
             "Added the killa, killatwo.",
-            [{"killatwo": set()}, {"nomnomtwo": set()}],
+            [{("killatwo", None): set()}, {("nomnomtwo", None): set()}],
             [["nomnomone", "killaone"]],
             False,
             2,
@@ -942,7 +945,7 @@ def test_having_two_file_paths_same_pack(
     Then:
         - Ensure the review result is appropriate.
         - Make sure a review has taken place.
-        - Enusure the unknown words are as expected for each file.
+        - Ensure the unknown words are as expected for each file.
     """
     pack = repo.create_pack("first_test_pack")
     first_rn_file = pack.create_release_notes(
@@ -997,7 +1000,7 @@ def test_having_two_file_paths_same_pack(
         (
             "Added the nomnomone, nomnomtwo.",
             "Added the killaone.",
-            [{"nomnomtwo": set()}],
+            [{("nomnomtwo", None): set()}],
             [["nomnomone", "killaone"]],
             False,
             1,
@@ -1008,7 +1011,7 @@ def test_having_two_file_paths_same_pack(
         (
             "Added the nomnomone, nomnomtwo.",
             "Added the killaone, killatwo.",
-            [{"killatwo": set()}, {"nomnomtwo": set()}],
+            [{("killatwo", None): set()}, {("nomnomtwo", None): set()}],
             [["nomnomone", "killaone"]],
             False,
             2,
@@ -1019,7 +1022,7 @@ def test_having_two_file_paths_same_pack(
         (
             "Added the nomnomone, nomnomtwo.",
             "Added the killaone, killatwo.",
-            [{"nomnomtwo": set()}, {"killaone": set()}],
+            [{("nomnomtwo", None): set()}, {("killaone", None): set()}],
             [],
             False,
             2,
@@ -1064,7 +1067,7 @@ def test_having_two_file_paths_different_pack(
     Then:
         - Ensure the review result is appropriate.
         - Make sure a review has taken place.
-        - Enusure the unknown words are as expected for each file.
+        - Ensure the unknown words are as expected for each file.
     """
     first_pack = repo.create_pack("first_test_pack")
     second_pack = repo.create_pack("second_test_pack")
@@ -1119,7 +1122,7 @@ def test_having_two_file_paths_different_pack(
         (
             "Added the nomnomone, nomnomtwo.",
             "Added the killa.",
-            [{"nomnomtwo": set()}],
+            [{("nomnomtwo", None): set()}],
             [["nomnomone", "killaone"]],
             False,
             1,
@@ -1129,7 +1132,7 @@ def test_having_two_file_paths_different_pack(
         (
             "Added the nomnomone, nomnomtwo.",
             "Added the killa, killatwo.",
-            [{"killatwo": set()}, {"nomnomtwo": set()}],
+            [{("killatwo", None): set()}, {("nomnomtwo", None): set()}],
             [["nomnomone", "killaone"]],
             False,
             2,
@@ -1161,7 +1164,7 @@ def test_having_two_file_paths_not_same_pack(
     Then:
         - Ensure the review result is appropriate.
         - Make sure a review has taken place.
-        - Enusure the unknown words are as expected for each file.
+        - Ensure the unknown words are as expected for each file.
     """
     pack = repo.create_pack("first_test_pack")
     first_rn_file = pack.create_release_notes(

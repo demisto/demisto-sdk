@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where **lint** would not properly handle imports of multi level ApiModules.
 
 ## Unreleased
 * **lint** now prevents unit-tests from accessing online resources in runtime.

@@ -289,6 +289,41 @@ def test_add_tmp_lint_files(mocker, repo):
         assert mock_copy.call_count == 2
 
 
+def test_add_tmp_lint_files__multi_level_api_modules(mocker, repo):
+    """
+    Given:
+        - A pack that contains an integration that imports multi level ApiModules.
+
+    When:
+        - Running add_tmp_lint_files on the given input.
+
+    Then:
+        - Ensure entire hierarchy of the ApiModules are copied.
+    """
+    pack = repo.create_pack(name="ApiModules")
+    pack.create_script(name="BaseAPiModule", code="# base ApiModule")
+    pack.create_script(name="SubApiModule", code="from BaseApiModule import *")
+    pack.create_script(name="SubSubApiModule", code="from SubApiModule import *")
+    integration_code = "from SubSubApiModule import *"
+    integration = pack.create_integration(name="test", code=integration_code)
+
+    content_repo = Path(repo.path)
+    pack_path = Path(pack.path)
+    lint_files = [Path(integration.code.path)]
+
+    with add_tmp_lint_files(
+        content_repo=content_repo,
+        pack_path=pack_path,
+        lint_files=lint_files,
+        modules={},
+        pack_type=TYPE_PYTHON,
+    ):
+        assert all(
+            (pack_path / module).exists()
+            for module in ["BaseAPiModule.py", "SubApiModule.py", "SubSubApiModule.py"]
+        )
+
+
 class TestGenerateCoverageReport:
     coverage = importlib.import_module("coverage")
 

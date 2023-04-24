@@ -167,6 +167,7 @@ def create_wrapper_script(data: dict) -> dict:
     except Exception as e:
         logger.error(f'Failed to create the wrapper script: {e}')
 
+    copy_data = set_deprecated_true_for_old_script(copy_data)
     logger.debug(f"Created {copy_data['name']} script wrapper to {data['name']} script")
 
     return copy_data
@@ -191,12 +192,20 @@ def replace_script_access_fields_recursively(data: Any, incident_to_alert: bool 
 
 
 def replace_register_module_line_for_script(data: dict):
-    new_name = edit_ids_names_and_descriptions_for_script(data['name'])
+    new_name = edit_ids_names_and_descriptions_for_script(
+        data['name'],
+        incident_to_alert=True
+    )
     for state in ('start', 'end'):
         data['script'] = data['script'].replace(
             f"register_module_line('{data['name']}', '{state}', __line__())",
             f"register_module_line('{new_name}', '{state}', __line__())")
 
+    return data
+
+
+def set_deprecated_true_for_old_script(data: dict):
+    data['deprecated'] = True
     return data
 
 

@@ -15,22 +15,20 @@ class MarketplaceIncidentToAlertScriptsPreparer:
                 current_marketplace: MarketplaceVersions,
                 incident_to_alert: bool) -> tuple:
         """
-        Checks whether the script needs conversion from incident to alert,
+        For each script iterate over all the given script's descriptions comments ids
+        and names fields and if a comment or a description or a name or an id field
+        contains the word incident / incidents (without the wrapper),
+        then replace it with alert / alerts just in case of XSIAM Marketplace. ( `incident_to_alert` = True )
+        In any case (for all Marketplaces) remove the wrapper (<-incident-> to incident, <-incidents-> to incidents).
 
-        If so:
-            1. Changes the existing script so that incident is converted to alert
-               (for example: id: incidentState -> id: alertState),
-               the changes are made only under the keys `id`, `name`, `description` and `comment`.
-
-            2. Creates a script that wraps the script that changed.
-
-        Otherwise:
-            returns a tuple with the script as is.
-
+        Aditionaly
         Args:
-            data (dict): dictionary of the script.
+            data: content item data
+            current_marketplace: the destination marketplace.
+            incident_to_alert: A boolean flag that determines whether a new script and a wrapper script should be created.
+
         Returns:
-            Tuple[dict, Optional[dict]]: A tuple of two scripts, the wrapper script and the modified original script.
+            Tuple[dict]: A tuple of two scripts, the wrapper script and the modified original script.
         """
         scripts_preparation = []
 

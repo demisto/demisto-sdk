@@ -1149,6 +1149,7 @@ class TestParsersAndModels:
         assert model.docker_image == "demisto/python3:3.8.3.8715"
         assert model.tags == ["transformer"]
         assert not model.is_test
+        assert model.skip_prepare == []
 
     def test_test_playbook_parser(self, pack: Pack):
         """

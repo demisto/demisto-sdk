@@ -351,6 +351,11 @@ class TestCreateContentGraph:
         )
         script = pack.create_script()
         api_module = pack.create_script()
+        pack.create_script(name='getIncident')
+        pack.create_script(
+            name='setIncident',
+            skip_prepare=['script name incident to alert']
+        )
         script.create_default_script("SampleScript")
         api_module.create_default_script("TestApiModule")
 
@@ -361,17 +366,17 @@ class TestCreateContentGraph:
         with ContentGraphInterface() as interface:
             create_content_graph(interface, output_path=tmp_path)
             packs = interface.search(
-                marketplace=MarketplaceVersions.XSOAR, content_type=ContentType.PACK
+                marketplace=MarketplaceVersions.MarketplaceV2, content_type=ContentType.PACK
             )
             integrations = interface.search(
-                marketplace=MarketplaceVersions.XSOAR,
+                marketplace=MarketplaceVersions.MarketplaceV2,
                 content_type=ContentType.INTEGRATION,
             )
-            all_content_items = interface.search(marketplace=MarketplaceVersions.XSOAR)
-            content_cto = interface.marshal_graph(MarketplaceVersions.XSOAR)
+            all_content_items = interface.search(marketplace=MarketplaceVersions.MarketplaceV2)
+            content_cto = interface.marshal_graph(MarketplaceVersions.MarketplaceV2)
         assert len(packs) == 1
         assert len(integrations) == 1
-        assert len(all_content_items) == 8
+        assert len(all_content_items) == 10
         returned_pack = packs[0]
         assert returned_pack.object_id == "TestPack"
         # make sure that data from pack_metadata.json updated
@@ -389,9 +394,9 @@ class TestCreateContentGraph:
         returned_scripts = {
             script.object_id for script in packs[0].content_items.script
         }
-        assert returned_scripts == {"SampleScript", "TestApiModule"}
+        assert returned_scripts == {'SampleScript', 'TestApiModule', 'getIncident', 'setIncident'}
         with ChangeCWD(repo.path):
-            content_cto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
+            content_cto.dump(tmp_path, MarketplaceVersions.MarketplaceV2, zip=False)
         assert Path.exists(tmp_path / "TestPack")
         assert Path.exists(tmp_path / "TestPack" / "metadata.json")
         assert Path.exists(
@@ -399,6 +404,10 @@ class TestCreateContentGraph:
         )
         assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script0.yml")
         assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script1.yml")
+        assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-getIncident.yml")
+        assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-getAlert.yml")
+        assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-setIncident.yml")
+        assert not Path.exists(tmp_path / "TestPack" / "Scripts" / "script-setAlert.yml")
 
         # make sure that the output file zip is created
         assert Path.exists(tmp_path / "xsoar.zip")

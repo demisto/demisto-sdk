@@ -732,7 +732,7 @@ def test_create_contribution_items_version_note():
 >
 > **For the Contributor:**
  @
-> In case you are requested by your reviewer to improve the code or to make changes, please submit them through the **GitHub Codespaces** and **Not through the XSOAR UI**.
+> In case you are requested by your reviewer to improve the code or to make changes, submit them through the **GitHub Codespaces** and **Not through the XSOAR UI**.
 >
 > **To use the GitHub Codespaces please do as follow:**
 > 1. Click on the **'Code'** button in the right upper corner of this PR.

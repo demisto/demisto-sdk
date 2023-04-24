@@ -503,7 +503,7 @@ def test_print_summary_successfully_uploaded_files(
 
 
 class TestPrintSummary:
-    def test_print_summary_failed_uploaded_files(demisto_client_configure, mocker):
+    def test_print_summary_failed_uploaded(demisto_client_configure, mocker):
         """
         Given
             - A uploaded script named SomeScriptName which failed to upload
@@ -535,7 +535,7 @@ class TestPrintSummary:
 [/red]"""
         )
 
-    def test_print_summary_not_uploaded(demisto_client_configure, mocker, repo):
+    def test_print_summary_version_mismatch(demisto_client_configure, mocker, repo):
         """
         Given
             - A uploaded script named SomeScriptName which did not upload due to version mismatch
@@ -556,32 +556,25 @@ class TestPrintSummary:
 
         uploader = Uploader(path)
         assert uploader.demisto_version == Version("6.0.0")
-        assert not uploader.upload()
+        assert uploader.upload() == ERROR_RETURN_CODE
         assert uploader.failed_upload_version_mismatch == [BaseContent.from_path(path)]
 
-        expected_upload_summary_title = "\n\nUPLOAD SUMMARY:"
-        expected_failed_uploaded_files_title = "NOT UPLOADED DUE TO VERSION MISMATCH:"
-        expected_failed_uploaded_files = """'\n[yellow]NOT UPLOADED DUE TO VERSION MISMATCH:
-        ╒════════════════════╤════════╤═════════════════╤═════════════════════╤═══════════════════╕
-        │ NAME               │ TYPE   │ XSOAR Version   │ FILE_FROM_VERSION   │ FILE_TO_VERSION   │
-        ╞════════════════════╪════════╪═════════════════╪═════════════════════╪═══════════════════╡
-        │ script-script0.yml │ Script │ 6.0.0           │ 0.0.0               │ 1.2.3             │
-        ╘════════════════════╧════════╧═════════════════╧═════════════════════╧═══════════════════╛[/yellow]'
-    """
-        # verify exactly 3 calls to secho
-        assert logger_info.call_count == 3
-        assert all(
-            [
-                str_in_call_args_list(
-                    logger_info.call_args_list, expected_upload_summary_title
-                ),
-                str_in_call_args_list(
-                    logger_info.call_args_list, expected_failed_uploaded_files_title
-                ),
-                str_in_call_args_list(
-                    logger_info.call_args_list, expected_failed_uploaded_files
-                ),
-            ]
+        logged = flatten_call_args(logger_info.call_args_list)
+        assert len(logged) == 3
+        assert (
+            f"Uploading {path.absolute()} to {uploader.client.api_client.configuration.host}..."
+            in logged
+        )
+        assert "UPLOAD SUMMARY:\n" in logged
+        assert (
+            """[yellow]NOT UPLOADED DUE TO VERSION MISMATCH:
+╒═════════════╤════════╤═════════════════╤═════════════════════╤═══════════════════╕
+│ NAME        │ TYPE   │ XSOAR Version   │ FILE_FROM_VERSION   │ FILE_TO_VERSION   │
+╞═════════════╪════════╪═════════════════╪═════════════════════╪═══════════════════╡
+│ script0.yml │ Script │ 6.0.0           │ 0.0.0               │ 1.2.3             │
+╘═════════════╧════════╧═════════════════╧═════════════════════╧═══════════════════╛
+[/yellow]"""
+            in logged
         )
 
 

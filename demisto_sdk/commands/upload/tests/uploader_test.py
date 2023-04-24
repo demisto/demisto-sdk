@@ -16,6 +16,7 @@ from click.testing import CliRunner
 from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version
+from requests import Response
 
 from demisto_sdk.__main__ import main, upload
 from demisto_sdk.commands.common import constants
@@ -403,6 +404,11 @@ def test_file_not_supported(demisto_client_configure, mocker):
     assert uploader.failed_parsing == [(file_path, "")]
 
 
+_403_RESPONSE = Response()
+_403_RESPONSE._content = json.dumps({"status": 403, "error": "Error message"})
+_403_RESPONSE.status_code = 403
+
+
 @pytest.mark.parametrize(
     "exc,expected_message",
     [
@@ -414,10 +420,6 @@ def test_file_not_supported(demisto_client_configure, mocker):
             ApiException(reason="Failed to establish a new connection:"),
             "Failed to establish a new connection: Connection refused.\n"
             "Check the BASE url configuration.",
-        ),
-        (
-            ApiException(body=json.dumps({"status": 403, "error": "Error message"})),
-            "Error message\nTry checking your API key configuration.",
         ),
     ],
 )
@@ -434,6 +436,27 @@ def test_parse_error_response(exc: ApiException, expected_message: str):
         - Verify the outcome is as expected
     """
     assert parse_error_response(exc) == expected_message
+
+
+@pytest.mark.parametrize("reason", ("Bad Request", "Forbidden"))
+def test_parse_error_response__exception(reason: str):
+    """
+    Given
+        - An API exception is raised
+
+    When
+        - Parsing error response
+
+    Then
+        - Ensure a error message is parsed successfully
+        - Verify the outcome is as expected
+    """
+    api_exception = ApiException(reason=reason)
+    api_exception.body = json.dumps({"status": 403, "error": "Error message"})
+    assert (
+        parse_error_response(api_exception)
+        == "Error message\nTry checking your API key configuration."
+    )
 
 
 def test_print_summary_successfully_uploaded_files(

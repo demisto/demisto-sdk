@@ -408,7 +408,7 @@ def parse_error_response(error: ApiException) -> str:
             )
 
         elif reason in ("Bad Request", "Forbidden"):
-            error_body = json.loads(error.body)  # type:ignore[attr-defined]
+            error_body = json.loads(error.body)
             message = error_body.get("error", "")
 
             if error_body.get("status") == 403:

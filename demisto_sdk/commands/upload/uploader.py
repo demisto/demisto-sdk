@@ -146,6 +146,10 @@ class Uploader:
             )
             return ERROR_RETURN_CODE
 
+        if not self.path or not self.path.exists():
+            logger.error(f"[red]input path: {self.path} does not exist[/red]")
+            return ERROR_RETURN_CODE
+
         if self.should_detach_files:
             item_detacher = ItemDetacher(
                 client=self.client, marketplace=self.marketplace
@@ -160,29 +164,17 @@ class Uploader:
             if not self.path:  # Nothing to upload
                 return SUCCESS_RETURN_CODE
 
-        if not self.path or not self.path.exists():
-            logger.error(f"[red]input path: {self.path} does not exist[/red]")
-            return ERROR_RETURN_CODE
-
         logger.info(
             f"Uploading {self.path} to {self.client.api_client.configuration.host}..."
         )
+
         try:
-            if self.path.is_dir() and (
-                (
-                    self.path.name in CONTENT_ENTITIES_DIRS
-                    or (
-                        self.path.name in UNIFIED_ENTITIES_DIR
-                        and self.path.parent.name in CONTENT_ENTITIES_DIRS
-                    )
-                )
-            ):
+            if self.path.is_dir() and is_uploadable_dir(self.path):
                 success = self._upload_entity_dir(self.path)
             else:
                 success = self._upload_single(self.path)
         except KeyboardInterrupt:
             return ABORTED_RETURN_CODE
-
         if not any(
             (
                 self.successfully_uploaded,
@@ -191,22 +183,20 @@ class Uploader:
                 self.failed_parsing,
             )
         ):
-            # if not uploaded any file
-            logger.info(
+            # Nothing was uploaded, nor collected as error
+            logger.error(
                 f"\n[red]Error: Given input path: {self.path} is not uploadable. "
                 f"Input path should point to one of the following:\n"
                 f"  1. Pack\n"
-                f"  2. A content entity directory that is inside a pack. For example: an Integrations directory or "
-                f"a Layouts directory\n"
-                f"  3. Valid file that can be imported to Cortex XSOAR manually. "
-                f"For example a playbook: helloWorld.yml[/red]"
+                f"  2. A content entity directory that is inside a pack, e.g. Integrations"
+                f"  3. Valid file that can be imported to Cortex XSOAR manually.[/red]"
             )
             return ERROR_RETURN_CODE
 
         self.print_summary()
         return SUCCESS_RETURN_CODE if success else ERROR_RETURN_CODE
 
-    def _upload_single(self, path: Path) -> bool:
+    def _upload_single(self, path: Path, zipped: bool = False) -> bool:
         """
         Upload a content item, or a pack.
 
@@ -228,19 +218,18 @@ class Uploader:
             self.failed_parsing.append((path, reason))
             return False
 
-        zipped = path.suffix == ".zip"
         try:
             content_item.upload(
                 client=self.client,
                 marketplace=self.marketplace,
                 target_demisto_version=Version(str(self.demisto_version)),
-                zipped=zipped,  # only used for Pack
+                zipped=zipped,  # only used for Packs
             )
 
             # upon reaching this row, the upload is surely successful
             uploaded_succesfully = (
                 iter(content_item.content_items)
-                if (isinstance(content_item, Pack) and not zipped)
+                if (isinstance(content_item, Pack) and not zipped)  # TODO not zipped?
                 # packs uploaded unzipped are uploaded item by item, we have to extract the item details here
                 else (content_item,)
             )
@@ -297,6 +286,21 @@ class Uploader:
             to_upload = itertools.chain(path.glob("*.yml"), path.glob("*.json"))
 
         return all(self._upload_single(item) for item in to_upload)
+
+    def _upload_from_zip(self, path: Path) -> bool:
+        """
+        Uploads a zip containing pack folders
+
+        """
+        ...
+        # success = True
+        # with tempfile.TemporaryDirectory() as dir: # TODO
+        #     zipfile.ZipFile(path).extractall(dir)
+
+        #     for pack_folder in filter(lambda x: x.is_dir(), Path(dir).iterdir()):
+        #         if not self._upload_single(pack_folder, zipped=True):
+        #             success = False
+        # return success
 
     def notify_user_should_override_packs(self):  # TODO is used?
         """Notify the user about possible overridden packs."""
@@ -589,3 +593,13 @@ class ItemReattacher:
                     item_id = item.get("id")
                     if item_id and item_id not in detached_files_ids:
                         self.reattach_item(item_id, item_type)
+
+
+def is_uploadable_dir(path: Path):
+    return path.is_dir() and (
+        path.name in CONTENT_ENTITIES_DIRS
+        or (
+            path.name in UNIFIED_ENTITIES_DIR
+            and path.parent.name in CONTENT_ENTITIES_DIRS
+        )
+    )

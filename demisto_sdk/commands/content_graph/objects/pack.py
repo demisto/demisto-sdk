@@ -13,7 +13,13 @@ from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
     MARKETPLACE_MIN_VERSION,
+    PACK_VERIFY_KEY,
     MarketplaceVersions,
+)
+from demisto_sdk.commands.common.content.objects.pack_objects.pack import (
+    DELETE_VERIFY_KEY_ACTION,
+    SET_VERIFY_KEY_ACTION,
+    TURN_VERIFICATION_ERROR_MSG,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -61,6 +67,7 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
+from demisto_sdk.commands.test_content import tools
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
@@ -300,8 +307,13 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         target_demisto_version: Version,
         **kwargs,
     ):
-        if kwargs["zipped"]:  # using [] as it must be provided
-            self._upload_zipped(client=client, marketplace=marketplace)
+        if kwargs["zipped"]:
+            self._upload_zipped(
+                client=client,
+                marketplace=marketplace,
+                target_demisto_version=target_demisto_version,
+                skip_validations=kwargs["skip_validations"],
+            )
         else:
             self._upload_unzipped(
                 client=client,
@@ -312,12 +324,74 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     def _upload_zipped(
         self,
         client: demisto_client,
+        target_demisto_version: Version,
+        skip_validations: bool,
         marketplace: MarketplaceVersions,  # TODO use marketplace or remove
-    ):
+    ) -> dict:
         # this should only be called from Pack.upload
         logger.debug(f"Uploading zipped pack {self.object_id}")
-        with TemporaryDirectory() as dir:
-            client.upload_content_packs(file=(Path(dir) / f"{self.object_id}.zip"))
+
+        def _upload_zipped_before_6_5_0() -> dict:
+            logger.info("Turn off the server verification for signed packs")
+
+            _, _, previous_configuration = tools.update_server_configuration(
+                client=client,
+                server_configuration={PACK_VERIFY_KEY: "false"},
+                error_msg="Can not turn off the pack verification",
+            )
+            try:
+                logger.info("Uploading...")
+                return client.upload_content_packs(file=self.path)
+            finally:
+                try:
+                    if (
+                        prev_key_val := previous_configuration.get(PACK_VERIFY_KEY)
+                    ) is not None:
+                        config_keys_to_update = {PACK_VERIFY_KEY: prev_key_val}
+                        config_keys_to_delete = None
+                    else:
+                        config_keys_to_update = None
+                        config_keys_to_delete = {PACK_VERIFY_KEY}
+
+                    logger.info("Setting the server verification to be as previously")
+                    logger.debug(f"{config_keys_to_delete=}, {config_keys_to_update=}")
+                    tools.update_server_configuration(
+                        client=client,
+                        server_configuration=config_keys_to_update,
+                        config_keys_to_delete=config_keys_to_delete,
+                        error_msg="Can not turn on the pack verification",
+                    )
+                    logger.debug("set server configurations back successfully")
+
+                except (Exception, KeyboardInterrupt) as e:
+                    action = (
+                        DELETE_VERIFY_KEY_ACTION
+                        if prev_key_val is None
+                        else SET_VERIFY_KEY_ACTION.format(prev_key_val)
+                    )
+                    error_message = TURN_VERIFICATION_ERROR_MSG.format(action=action)
+                    logger.exception(error_message)
+                    raise Exception(error_message) from e
+
+        def _upload_zipped() -> dict:
+            # Supports v6.5.0 or newer
+            server_kwargs = {"skip_verify": "true"}
+
+            if skip_validations and target_demisto_version >= Version("6.6.0"):
+                server_kwargs["skip_validations"] = "true"
+
+            with TemporaryDirectory() as dir:
+                self.dump(Path(dir), marketplace=marketplace)
+                return client.upload_content_packs(
+                    file=dir,
+                    skip_verify="true",
+                    **server_kwargs,
+                )
+
+        if target_demisto_version < Version("6.5.0"):
+            return _upload_zipped_before_6_5_0()
+        else:
+            return _upload_zipped()
 
     def _upload_unzipped(
         self,

@@ -3,18 +3,20 @@ import logging
 from copy import deepcopy
 from pprint import pformat
 from subprocess import STDOUT, CalledProcessError, check_output
+from typing import Dict, Optional, Set
 
 import demisto_client
 
 from demisto_sdk.commands.test_content.constants import SSH_USER
 
+logger = logging.getLogger("demisto-sdk")
+
 
 def update_server_configuration(
-    client,
-    server_configuration,
-    error_msg,
-    logging_manager=logging,
-    config_keys_to_delete=None,
+    client: demisto_client,
+    server_configuration: Optional[Dict],
+    error_msg: str,
+    config_keys_to_delete: Optional[Set[str]] = None,
 ):
     """updates server configuration
 
@@ -22,7 +24,6 @@ def update_server_configuration(
         client (demisto_client): The configured client to use.
         server_configuration (dict): The server configuration to be added
         error_msg (str): The error message
-        logging_manager (logging.Logger): Logging manager object
         config_keys_to_delete (set): The server configuration keys to be deleted
 
     Returns:
@@ -34,7 +35,7 @@ def update_server_configuration(
         self=client, path="/system/config", method="GET"
     )
     system_conf = ast.literal_eval(system_conf_response[0]).get("sysConf", {})
-    logging_manager.debug(f"Current server configurations are {pformat(system_conf)}")
+    logger.debug(f"Current server configurations are {pformat(system_conf)}")
 
     prev_system_conf = deepcopy(system_conf)
 
@@ -50,22 +51,22 @@ def update_server_configuration(
         self=client, path="/system/config", method="POST", body=data
     )
 
-    logging_manager.debug(f"Updating server configurations with {pformat(system_conf)}")
+    logger.debug(f"Updating server configurations with {pformat(system_conf)}")
 
     try:
         result_object = ast.literal_eval(response_data)
-        logging_manager.debug(
+        logger.debug(
             f"Updated server configurations with response: {pformat(result_object)}"
         )
     except ValueError as err:
-        logging_manager.exception(
+        logger.exception(
             f"failed to parse response from demisto. response is {response_data}.\nError:\n{err}"
         )
         return
 
     if status_code >= 300 or status_code < 200:
         message = result_object.get("message", "")
-        logging_manager.error(f"{error_msg} {status_code}\n{message}")
+        logger.error(f"{error_msg} {status_code}\n{message}")
     return response_data, status_code, prev_system_conf
 
 

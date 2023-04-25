@@ -175,7 +175,7 @@ WHERE toLower(a.name) contains "alert"
     query = f"""// Returns script names if they match the replaced name
 MATCH (b:{ContentType.SCRIPT})
 WHERE b.name in {content_item_names}
-AND NOT 'script name incident to alert' IN b.skip_prepare
+AND NOT 'script-name-incident-to-alert' IN b.skip_prepare
 RETURN b.name AS b_name
 """
     return [

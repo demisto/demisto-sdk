@@ -111,7 +111,7 @@ mapping:
     type: seq
     sequence:
       - type: str
-        enum: ['script name incident to alert']
+        enum: ['script-name-incident-to-alert']
 
 # script->args
 schema;argument_schema:

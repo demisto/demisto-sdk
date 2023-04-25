@@ -1806,7 +1806,7 @@ ERROR_CODE = {
         "ui_applicable": False,
         "related_field": "",
     },
-    "multiple_script_with_same_name": {
+    "duplicated_script_name": {
         "code": "GR106",
         "ui_applicable": False,
         "related_field": "",
@@ -4509,7 +4509,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def multiple_script_with_same_name(
+    def duplicated_script_name(
         script_name: str
     ):
-        return f"Script '{script_name}' already exist in the repo."
+        return f"A script named {script_name} already exists in the repo."

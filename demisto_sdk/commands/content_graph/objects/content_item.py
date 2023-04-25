@@ -214,4 +214,15 @@ class ContentItem(BaseContent):
         return id_set_entity
 
     def is_incident_to_alert(self, marketplace: MarketplaceVersions) -> bool:
+        """
+        As long as the content item does not have an implementation of the `is_incident_to_alert` function,
+        the return value will always be false,
+        Namely, there is no need for special preparation of an incident to alert for the content item.
+
+        Args:
+            marketplace (MarketplaceVersions): the destination marketplace.
+
+        Returns:
+            bool: False
+        """
         return False

@@ -68,10 +68,21 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
         self.path = original_path
 
     def is_incident_to_alert(self, marketplace: MarketplaceVersions) -> bool:
+        """
+        Checks whether the script needs the preparation
+        of an `incident to alert`,
+        and this affects the `metadata.json` and the `dump` process of the script.
+
+        Args:
+            marketplace (MarketplaceVersions): the destination marketplace.
+
+        Returns:
+            bool: True if all conditions are true otherwise False
+        """
         return all(
             (
                 marketplace == MarketplaceVersions.MarketplaceV2,
                 'incident' in self.name.lower(),
-                'script name incident to alert' not in self.skip_prepare,
+                'script-name-incident-to-alert' not in self.skip_prepare,
             )
         )

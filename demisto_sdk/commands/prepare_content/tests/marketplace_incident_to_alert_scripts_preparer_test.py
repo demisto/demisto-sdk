@@ -45,29 +45,18 @@ def create_script_for_test(tmp_path, repo):
     [
         (
             True,
-            ((0, 'setIncident'), (1, 'setAlert')),
+            ('setIncident', 'setAlert'),
             (
-                (
-                    0,
-                    COMMENT_INCIDENT_CONSTANT
-                ),
-                (
-                    1,
-                    COMMENT_ALERT_CONSTANT
-                )
+                COMMENT_INCIDENT_CONSTANT,
+                COMMENT_ALERT_CONSTANT
             ),
-            ((0, True), (1, False))
+            (True, False)
         ),
         (
             False,
-            ((0, 'setIncident'),),
-            (
-                (
-                    0,
-                    COMMENT_INCIDENT_CONSTANT
-                ),
-            ),
-            ((0, False),)
+            ('setIncident',),
+            (COMMENT_INCIDENT_CONSTANT,),
+            (False,),
         ),
     ]
 )
@@ -101,17 +90,17 @@ def test_marketplace_incident_to_alert_scripts_preparer(
 
     assert isinstance(data, tuple)
 
-    for i, script_name in expected_names:
+    for i, script_name in enumerate(expected_names, start=0):
         assert (
             data[i].get('name') == script_name
         )
 
-    for i, comment in expected_comments:
+    for i, comment in enumerate(expected_comments, start=0):
         assert (
             data[i]['comment'] == comment
         )
 
-    for i, is_deprecated in expected_deprecated:
+    for i, is_deprecated in enumerate(expected_deprecated, start=0):
         assert (
             data[i]['deprecated'] == is_deprecated
         )

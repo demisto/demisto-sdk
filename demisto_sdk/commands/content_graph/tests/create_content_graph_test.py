@@ -351,10 +351,10 @@ class TestCreateContentGraph:
         )
         script = pack.create_script()
         api_module = pack.create_script()
-        pack.create_script(name='getIncident')
+        pack.create_script(name="getIncident")
         pack.create_script(
-            name='setIncident',
-            skip_prepare=['script name incident to alert']
+            name="setIncident",
+            skip_prepare=["script-name-incident-to-alert"]
         )
         script.create_default_script("SampleScript")
         api_module.create_default_script("TestApiModule")
@@ -394,20 +394,20 @@ class TestCreateContentGraph:
         returned_scripts = {
             script.object_id for script in packs[0].content_items.script
         }
-        assert returned_scripts == {'SampleScript', 'TestApiModule', 'getIncident', 'setIncident'}
+        assert returned_scripts == {"SampleScript", "TestApiModule", "getIncident", "setIncident"}
         with ChangeCWD(repo.path):
             content_cto.dump(tmp_path, MarketplaceVersions.MarketplaceV2, zip=False)
-        assert Path.exists(tmp_path / "TestPack")
-        assert Path.exists(tmp_path / "TestPack" / "metadata.json")
-        assert Path.exists(
+        assert (tmp_path / "TestPack").exists()
+        assert (tmp_path / "TestPack" / "metadata.json").exists()
+        assert (
             tmp_path / "TestPack" / "Integrations" / "integration-integration_0.yml"
-        )
-        assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-SampleScript.yml")
-        assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-TestApiModule.yml")
-        assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-getIncident.yml")
-        assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-getAlert.yml")
-        assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-setIncident.yml")
-        assert not Path.exists(tmp_path / "TestPack" / "Scripts" / "script-setAlert.yml")
+        ).exists()
+        assert (tmp_path / "TestPack" / "Scripts" / "script-SampleScript.yml").exists()
+        assert (tmp_path / "TestPack" / "Scripts" / "script-TestApiModule.yml").exists()
+        assert (tmp_path / "TestPack" / "Scripts" / "script-getIncident.yml").exists()
+        assert (tmp_path / "TestPack" / "Scripts" / "script-getAlert.yml").exists()
+        assert (tmp_path / "TestPack" / "Scripts" / "script-setIncident.yml").exists()
+        assert not (tmp_path / "TestPack" / "Scripts" / "script-setAlert.yml").exists()
 
         # make sure that the output file zip is created
         assert Path.exists(tmp_path / "xsoar.zip")

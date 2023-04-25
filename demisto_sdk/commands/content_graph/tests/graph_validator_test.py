@@ -272,7 +272,7 @@ def repository(mocker) -> ContentDTO:
         mock_script(
             "getIncidents",
             marketplaces=[MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
-            skip_prepare=['script name incident to alert']
+            skip_prepare=['script-name-incident-to-alert']
         )
     )
     pack2.content_items.classifier.append(mock_classifier("SampleClassifier2"))
@@ -564,16 +564,16 @@ def test_is_file_display_name_already_exists(repository: ContentDTO, mocker):
 def test_validate_script_name_is_not_already_exist_as_system_script(repository: ContentDTO, mocker):
     """
     Given
-    - A content repo
+        - A content repo
     When
-    - running the vaidation "validate_script_name_is_not_already_exist_as_system_script"
+        - running the vaidation "validate_script_name_is_not_already_exist_as_system_script"
     Then
-    - Validate the existance of duplicate script names
+        - Validate the existance of duplicate script names
     """
     logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
     with GraphValidator(should_update=False) as graph_validator:
         create_content_graph(graph_validator.graph)
-        is_valid = graph_validator.validate_script_name_is_not_already_exist_as_system_script()
+        is_valid = graph_validator.validate_unique_script_name()
 
     assert not is_valid
 

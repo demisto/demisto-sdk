@@ -222,6 +222,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         for content_item in self.content_items:
 
             if content_item.content_type == ContentType.TEST_PLAYBOOK:
+                logger.debug(f"Skip loading the {content_item.name} test playbook into metadata.json")
                 continue
             if content_item.is_incident_to_alert(marketplace):
                 metadata["contentItems"].setdefault(

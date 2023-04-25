@@ -207,9 +207,8 @@ def replace_register_module_line_for_script(data: dict):
 def set_deprecated_for_scripts(data: dict, old_script: bool):
     if old_script:
         data['deprecated'] = True
-    else:
-        if 'deprecated' not in data:
-            data['deprecated'] = False
+    elif 'deprecated' not in data:
+        data['deprecated'] = False
     return data
 
 

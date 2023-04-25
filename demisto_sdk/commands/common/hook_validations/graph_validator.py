@@ -53,7 +53,7 @@ class GraphValidator(BaseValidator):
             self.is_file_using_unknown_content(),
             self.is_file_display_name_already_exists(),
             self.validate_duplicate_ids(),
-            self.validate_script_name_is_not_already_exist_as_system_script(),
+            self.validate_unique_script_name(),
         )
         return all(is_valid)
 
@@ -292,7 +292,7 @@ class GraphValidator(BaseValidator):
         return is_valid
 
     @error_codes("GR106")
-    def validate_script_name_is_not_already_exist_as_system_script(self):
+    def validate_unique_script_name(self):
         """
         Validate that there are no duplicate names of scripts
         when the script name included `alert`.
@@ -307,7 +307,7 @@ class GraphValidator(BaseValidator):
                 (
                     error_message,
                     error_code,
-                ) = Errors.multiple_script_with_same_name(
+                ) = Errors.duplicated_script_name(
                     replace_incident_to_alerts(script_name)
                 )
                 if self.handle_error(error_message, error_code, ""):

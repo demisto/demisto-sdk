@@ -255,6 +255,15 @@ SDK_PYPI_VERSION = r"https://pypi.org/pypi/demisto-sdk/json"
 
 SUFFIX_TO_REMOVE = ("_dev", "_copy")
 
+TABLE_INCIDENT_TO_ALERT = {
+        'incident': 'alert',
+        'incidents': 'alerts',
+        'Incident': 'Alert',
+        'Incidents': 'Alerts',
+        'INCIDENT': 'ALERT',
+        'INCIDENTS': 'ALERTS'
+    }
+
 
 def generate_xsiam_normalized_name(file_name, prefix):
     if file_name.startswith(f"external-{prefix}-"):
@@ -3539,14 +3548,7 @@ def replace_incident_to_alerts(value: str) -> str:
 
 
 def replace_alert_to_incident(value: str) -> str:
-    TABLE_ALERT_TO_INCIDENT = {
-        'alert': 'incident',
-        'alerts': 'incidents',
-        'Alert': 'Incident',
-        'Alerts': 'Incidents',
-        'ALERT': 'INCIDENT',
-        'ALERTS': 'INCIDENTS'
-    }
+    TABLE_ALERT_TO_INCIDENT = {v: k for k, v in TABLE_INCIDENT_TO_ALERT.items()}
     new_value = value
     for pattern, replace_with in TABLE_ALERT_TO_INCIDENT.items():
         new_value = re.sub(pattern, replace_with, new_value)

@@ -10,6 +10,10 @@ from packaging.version import parse
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
+from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.content_graph.objects.script import Script
 from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
 
 UPLOAD_CMD = "upload"
@@ -56,24 +60,35 @@ def test_integration_upload_pack_positive(demisto_client, mocker):
     pack_path = join(
         DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure"
     )
+    for content_class in (
+        IncidentField,
+        Integration,
+        Playbook,
+        Script,
+        Playbook,
+    ):
+        mocker.patch.object(
+            content_class,
+            "_client_upload_method",
+            return_value=lambda path: ({}, 200, "Headers"),
+        )
+
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
     assert result.exit_code == 0
 
     assert all(
-        [
-            str_in_call_args_list(logger_info.call_args_list, current_str)
-            for current_str in [
-                "SUCCESSFUL UPLOADS:",
-                "│ NAME                                       │ TYPE          │",
-                "│ incidentfield-city.json                    │ IncidentField │",
-                "│ FeedAzure.yml                              │ Integration   │",
-                "│ FeedAzure_test.yml                         │ Playbook      │",
-                "│ just_a_test_script.yml                     │ Script        │",
-                "│ script-prefixed_automation.yml             │ Script        │",
-                "│ playbook-FeedAzure_test_copy_no_prefix.yml │ TestPlaybook  │",
-                "│ FeedAzure_test.yml                         │ TestPlaybook  │",
-            ]
+        str_in_call_args_list(logger_info.call_args_list, current_str)
+        for current_str in [
+            "SUCCESSFUL UPLOADS:",
+            "│ NAME                                       │ TYPE          │",
+            "│ incidentfield-city.json                    │ IncidentField │",
+            "│ FeedAzure.yml                              │ Integration   │",
+            "│ FeedAzure_test.yml                         │ Playbook      │",
+            "│ just_a_test_script.yml                     │ Script        │",
+            "│ script-prefixed_automation.yml             │ Script        │",
+            "│ playbook-FeedAzure_test_copy_no_prefix.yml │ TestPlaybook  │",
+            "│ FeedAzure_test.yml                         │ TestPlaybook  │",
         ]
     )
 

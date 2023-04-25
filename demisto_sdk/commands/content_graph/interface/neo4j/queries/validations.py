@@ -155,10 +155,11 @@ RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
 
 def validate_multiple_script_with_same_name(
     tx: Transaction, file_paths: List[str]
-) -> List[Tuple[str, List[str]]]:
+) -> List[str]:
     query = f"""// Returns all scripts that have the word 'alert' in their name
 MATCH (a:{ContentType.SCRIPT})
 WHERE toLower(a.name) contains "alert"
+AND 'marketplacev2' IN a.marketplaces
 """
     if file_paths:
         query += f"AND a.path in {file_paths}"
@@ -176,6 +177,7 @@ WHERE toLower(a.name) contains "alert"
 MATCH (b:{ContentType.SCRIPT})
 WHERE b.name in {content_item_names}
 AND NOT 'script-name-incident-to-alert' IN b.skip_prepare
+AND 'marketplacev2' IN a.marketplaces
 RETURN b.name AS b_name
 """
     return [

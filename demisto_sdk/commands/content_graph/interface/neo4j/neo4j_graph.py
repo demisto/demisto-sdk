@@ -362,7 +362,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def get_duplicate_script_name_included_incident(
         self, file_paths: List[str]
-    ) -> List[Tuple[str, List[str]]]:
+    ) -> List[str]:
         with self.driver.session() as session:
             results = session.execute_read(
                 validate_multiple_script_with_same_name, file_paths

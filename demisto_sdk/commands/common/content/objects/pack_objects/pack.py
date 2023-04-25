@@ -12,6 +12,7 @@ from demisto_sdk.commands.common.constants import (
     CONNECTIONS_DIR,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
+    DELETE_VERIFY_KEY_ACTION_FORMAT,
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
     DOC_FILES_DIR,
@@ -37,9 +38,11 @@ from demisto_sdk.commands.common.constants import (
     RELEASE_NOTES_DIR,
     REPORTS_DIR,
     SCRIPTS_DIR,
+    SET_VERIFY_KEY_ACTION_FORMAT,
     TEST_PLAYBOOKS_DIR,
     TOOLS_DIR,
     TRIGGER_DIR,
+    TURN_VERIFICATION_ERROR_MSG_FORMAT,
     WIDGETS_DIR,
     WIZARDS_DIR,
     XDRC_TEMPLATE_DIR,
@@ -93,11 +96,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.tools import get_demisto_version, is_object_in_id_set
 from demisto_sdk.commands.test_content import tools
-
-TURN_VERIFICATION_ERROR_MSG = "Can not set the pack verification configuration key,\nIn the server - go to Settings -> troubleshooting\
- and manually {action}."
-DELETE_VERIFY_KEY_ACTION = f'delete the key "{PACK_VERIFY_KEY}"'
-SET_VERIFY_KEY_ACTION = f'set the key "{PACK_VERIFY_KEY}" to ' + "{}"
 
 
 class Pack:
@@ -623,8 +621,10 @@ class Pack:
                 )
             except (Exception, KeyboardInterrupt):
                 action = (
-                    DELETE_VERIFY_KEY_ACTION
+                    DELETE_VERIFY_KEY_ACTION_FORMAT
                     if prev_key_val is None
-                    else SET_VERIFY_KEY_ACTION.format(prev_key_val)
+                    else SET_VERIFY_KEY_ACTION_FORMAT.format(prev_key_val)
                 )
-                raise Exception(TURN_VERIFICATION_ERROR_MSG.format(action=action))
+                raise Exception(
+                    TURN_VERIFICATION_ERROR_MSG_FORMAT.format(action=action)
+                )

@@ -433,8 +433,8 @@ class TestPlaybook:
                 update_server_configuration(
                     client=client,
                     server_configuration=server_context.prev_system_conf,
-                    logging_manager=self.build_context.logging_module,
                     error_msg="Failed to set server keys",
+                    logging_manager=self.build_context.logging_module,
                 )
                 server_context.prev_system_conf = {}
                 updated = True

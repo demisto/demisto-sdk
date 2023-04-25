@@ -12,14 +12,12 @@ from pydantic import BaseModel, Field, validator
 from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
+    DELETE_VERIFY_KEY_ACTION_FORMAT,
     MARKETPLACE_MIN_VERSION,
     PACK_VERIFY_KEY,
+    SET_VERIFY_KEY_ACTION_FORMAT,
+    TURN_VERIFICATION_ERROR_MSG_FORMAT,
     MarketplaceVersions,
-)
-from demisto_sdk.commands.common.content.objects.pack_objects.pack import (
-    DELETE_VERIFY_KEY_ACTION,
-    SET_VERIFY_KEY_ACTION,
-    TURN_VERIFICATION_ERROR_MSG,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -367,11 +365,13 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
 
                 except (Exception, KeyboardInterrupt) as e:
                     action = (
-                        DELETE_VERIFY_KEY_ACTION
+                        DELETE_VERIFY_KEY_ACTION_FORMAT
                         if prev_key_val is None
-                        else SET_VERIFY_KEY_ACTION.format(prev_key_val)
+                        else SET_VERIFY_KEY_ACTION_FORMAT.format(prev_key_val)
                     )
-                    error_message = TURN_VERIFICATION_ERROR_MSG.format(action=action)
+                    error_message = TURN_VERIFICATION_ERROR_MSG_FORMAT.format(
+                        action=action
+                    )
                     logger.exception(error_message)
                     raise Exception(error_message) from e
 

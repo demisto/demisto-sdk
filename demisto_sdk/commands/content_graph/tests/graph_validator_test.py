@@ -561,12 +561,12 @@ def test_is_file_display_name_already_exists(repository: ContentDTO, mocker):
         )
 
 
-def test_validate_script_name_is_not_already_exist_as_system_script(repository: ContentDTO, mocker):
+def test_validate_unique_script_name(repository: ContentDTO, mocker):
     """
     Given
         - A content repo
     When
-        - running the vaidation "validate_script_name_is_not_already_exist_as_system_script"
+        - running the vaidation "validate_unique_script_name"
     Then
         - Validate the existance of duplicate script names
     """
@@ -579,17 +579,17 @@ def test_validate_script_name_is_not_already_exist_as_system_script(repository: 
 
     assert str_in_call_args_list(
         logger_info.call_args_list,
-        "Script 'setAlert' already exist in the repo.",
+        "A script named setAlert already exists in the repo.",
     )
 
     assert not str_in_call_args_list(
         logger_info.call_args_list,
-        "Script 'getAlert' already exist in the repo.",
+        "A script named getAlert already exists in the repo.",
     )
 
     assert not str_in_call_args_list(
         logger_info.call_args_list,
-        "Script 'getAlerts' already exist in the repo.",
+        "A script named getAlerts already exists in the repo.",
     )
 
 

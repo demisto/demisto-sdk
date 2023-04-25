@@ -1,16 +1,19 @@
 # Changelog
 
 ## Unreleased
+* Improved the warning message displayed for Contribution PRs editing outdated code.
 * **lint** now prevents unit-tests from accessing online resources in runtime.
 * Added support for the `<~XPANSE>` marketplace tag in release notes.
 * Added support for marketplace tags in the **doc-review** command.
 * Updated the logs shown during lint when running in docker.
 * Fixed an issue where **validate** showed errors twice.
 * Added **generate-unit-tests** documentation to the repo README.
+* Fixed an issue where **validate** did not fail when xif files had wrong naming.
 * Added the `hiddenpassword` field to the integration schema, allowing **validate** to run on integrations with username-only inputs.
 * Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
 * Improved logs and error handling in the **modeling-rules test** command.
 * Fixed an issue where **download** command failed when running on a beta integration.
+* Added support for code importing multi-level ApiModules to **lint**.
 
 ## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.

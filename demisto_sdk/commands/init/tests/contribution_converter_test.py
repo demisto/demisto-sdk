@@ -725,6 +725,21 @@ def test_create_contribution_items_version_note():
 > | --------- | ------------------------- | -------------------
 > | CortexXDRIR | 1.2.2 | 1.2.4
 > | XDRScript | 1.2.2 | 1.2.4
+>
+> **For the Reviewer:**
+> 1. Compare the code of this PR with the latest version of the pack. Make sure you understand the changes the contributor intended to contribute, and **solve the conflicts accordingly**.
+> 2. In case improvements are needed, instruct the contributor to edit the code through the **GitHub Codespaces** and **Not through the XSOAR UI**.
+>
+> **For the Contributor:**
+ @
+> In case you are requested by your reviewer to improve the code or to make changes, submit them through the **GitHub Codespaces** and **Not through the XSOAR UI**.
+>
+> **To use the GitHub Codespaces, do the following:**
+> 1. Click the **'Code'** button in the right upper corner of this PR.
+> 2. Click **'Create codespace on Transformers'**.
+> 3. Click **'Authorize and continue'**.
+> 4. Wait until your Codespace environment is generated. When it is, you can edit your code.
+> 5. Commit and push your changes to the head branch of the PR.
 """
     )
 

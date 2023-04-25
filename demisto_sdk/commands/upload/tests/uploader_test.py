@@ -20,6 +20,8 @@ from packaging.version import Version
 from demisto_sdk.__main__ import main, upload
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import (
+    DELETE_VERIFY_KEY_ACTION_FORMAT,
+    TURN_VERIFICATION_ERROR_MSG_FORMAT,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
@@ -30,10 +32,6 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
-)
-from demisto_sdk.commands.content_graph.objects.pack import (
-    DELETE_VERIFY_KEY_ACTION,
-    TURN_VERIFICATION_ERROR_MSG_FORMAT,
 )
 from demisto_sdk.commands.test_content import tools
 from demisto_sdk.commands.upload import uploader
@@ -776,7 +774,7 @@ class TestZippedPackUpload:
         assert status == 1
         assert API_CLIENT.upload_content_packs.call_count == 1
         exp_err_msg = TURN_VERIFICATION_ERROR_MSG_FORMAT.format(
-            action=DELETE_VERIFY_KEY_ACTION
+            action=DELETE_VERIFY_KEY_ACTION_FORMAT
         )
         assert str(uploader.parse_error_response.call_args[0][0]) == exp_err_msg
 

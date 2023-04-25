@@ -16,6 +16,7 @@ def update_server_configuration(
     client: demisto_client,
     server_configuration: Optional[Dict],
     error_msg: str,
+    logging_manager=logger,
     config_keys_to_delete: Optional[Set[str]] = None,
 ):
     """updates server configuration
@@ -35,7 +36,7 @@ def update_server_configuration(
         self=client, path="/system/config", method="GET"
     )
     system_conf = ast.literal_eval(system_conf_response[0]).get("sysConf", {})
-    logger.debug(f"Current server configurations are {pformat(system_conf)}")
+    logging_manager.debug(f"Current server configurations are {pformat(system_conf)}")
 
     prev_system_conf = deepcopy(system_conf)
 
@@ -51,22 +52,22 @@ def update_server_configuration(
         self=client, path="/system/config", method="POST", body=data
     )
 
-    logger.debug(f"Updating server configurations with {pformat(system_conf)}")
+    logging_manager.debug(f"Updating server configurations with {pformat(system_conf)}")
 
     try:
         result_object = ast.literal_eval(response_data)
-        logger.debug(
+        logging_manager.debug(
             f"Updated server configurations with response: {pformat(result_object)}"
         )
     except ValueError as err:
-        logger.exception(
+        logging_manager.exception(
             f"failed to parse response from demisto. response is {response_data}.\nError:\n{err}"
         )
         return
 
     if status_code >= 300 or status_code < 200:
         message = result_object.get("message", "")
-        logger.error(f"{error_msg} {status_code}\n{message}")
+        logging_manager.error(f"{error_msg} {status_code}\n{message}")
     return response_data, status_code, prev_system_conf
 
 

@@ -337,6 +337,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             _, _, previous_configuration = tools.update_server_configuration(
                 client=client,
                 server_configuration={PACK_VERIFY_KEY: "false"},
+                logging_manager=logger,
                 error_msg="Can not turn off the pack verification",
             )
             try:
@@ -359,6 +360,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                         client=client,
                         server_configuration=config_keys_to_update,
                         config_keys_to_delete=config_keys_to_delete,
+                        logging_manager=logger,
                         error_msg="Can not turn on the pack verification",
                     )
                     logger.debug("set server configurations back successfully")

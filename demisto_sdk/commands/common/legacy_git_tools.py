@@ -1,3 +1,4 @@
+import functools
 import os
 import re
 from pathlib import Path
@@ -23,7 +24,7 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
-
+@functools.lru_cache()
 def git_path() -> str:
     git_path = run_command("git rev-parse --show-toplevel")
     return git_path.replace("\n", "")

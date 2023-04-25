@@ -502,19 +502,17 @@ class TestPrintSummary:
         logged = flatten_call_args(logger_info.call_args_list)
         assert len(logged) == 2
 
-        assert "UPLOAD SUMMARY:\n" in logged
-        assert (
-            "\n".join(
-                (
-                    "[green]SUCCESSFUL UPLOADS:\n",
-                    "╒═════════════════╤════════╕",
-                    "│ NAME            │ TYPE   │",
-                    "╞═════════════════╪════════╡",
-                    "│ DummyScript.yml │ Script │",
-                    "╘═════════════════╧════════╛[/green]",
-                )
+        assert logged[0] == "UPLOAD SUMMARY:\n"
+        assert logged[1] == "\n".join(
+            (
+                "[green]SUCCESSFUL UPLOADS:",
+                "╒═════════════════╤════════╕",
+                "│ NAME            │ TYPE   │",
+                "╞═════════════════╪════════╡",
+                "│ DummyScript.yml │ Script │",
+                "╘═════════════════╧════════╛",
+                "[/green]",
             )
-            in logged
         )
 
     def test_print_summary_failed_uploaded(self, demisto_client_configure, mocker):
@@ -538,7 +536,7 @@ class TestPrintSummary:
         assert logger_info.call_count == 2
         logged = flatten_call_args(logger_info.call_args_list)
 
-        assert "UPLOAD SUMMARY:\n" in logged
+        assert logged[0] == "UPLOAD SUMMARY:\n"
         assert logged[1] == "\n".join(
             (
                 "[red]FAILED UPLOADS:",
@@ -583,7 +581,7 @@ class TestPrintSummary:
             f"Uploading {path.absolute()} to {uploader.client.api_client.configuration.host}..."
             in logged
         )
-        assert "UPLOAD SUMMARY:\n" in logged
+        assert "UPLOAD SUMMARY:\n" == logged[1]
         assert (
             "\n".join(
                 (
@@ -592,7 +590,8 @@ class TestPrintSummary:
                     "│ NAME        │ TYPE   │ XSOAR Version   │ FILE_FROM_VERSION   │ FILE_TO_VERSION   │",
                     "╞═════════════╪════════╪═════════════════╪═════════════════════╪═══════════════════╡",
                     "│ script0.yml │ Script │ 6.0.0           │ 0.0.0               │ 1.2.3             │",
-                    "╘═════════════╧════════╧═════════════════╧═════════════════════╧═══════════════════╛[/yellow]",
+                    "╘═════════════╧════════╧═════════════════╧═════════════════════╧═══════════════════╛",
+                    "[/yellow]",
                 )
             )
             in logged

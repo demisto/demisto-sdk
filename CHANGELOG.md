@@ -8,6 +8,7 @@
 * Updated the logs shown during lint when running in docker.
 * Fixed an issue where **validate** showed errors twice.
 * Added **generate-unit-tests** documentation to the repo README.
+* Fixed an issue where **validate** did not fail when xif files had wrong naming.
 * Added the `hiddenpassword` field to the integration schema, allowing **validate** to run on integrations with username-only inputs.
 * Fixed an issue where **doc-review** required dot suffixes in release notes describing new content.
 * Improved logs and error handling in the **modeling-rules test** command.

@@ -356,7 +356,7 @@ def test_upload_pack(demisto_client_configure, mocker):
     path = Path(f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack")
     uploader = Uploader(path)
     mocker.patch.object(uploader, "client")
-
+    mocked_upload_method = mocker.patch.object(ContentItem, "upload")
     expected_entities = [
         "DummyIntegration.yml",
         "UploadTest.yml",
@@ -378,7 +378,7 @@ def test_upload_pack(demisto_client_configure, mocker):
     assert {
         content_item.path.name for content_item in uploader.successfully_uploaded
     } == set(expected_entities)
-
+    assert mocked_upload_method.call_count == len(expected_entities)
     assert uploader.failed_parsing == [  # TODO
         (Path("layout-details-test_bla-V2.json", "foo"))
     ]

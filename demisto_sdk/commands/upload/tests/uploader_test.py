@@ -448,6 +448,7 @@ def test_parse_error_response__exception(reason: str):
 
 class TestPrintSummary:
     def test_print_summary_successfully_uploaded_files(
+        self,
         demisto_client_configure,
         mocker,
     ):
@@ -486,7 +487,7 @@ class TestPrintSummary:
             in logged
         )
 
-    def test_print_summary_failed_uploaded(demisto_client_configure, mocker):
+    def test_print_summary_failed_uploaded(self, demisto_client_configure, mocker):
         """
         Given
             - A uploaded script named SomeScriptName which failed to upload
@@ -520,7 +521,9 @@ class TestPrintSummary:
             )
         )
 
-    def test_print_summary_version_mismatch(demisto_client_configure, mocker, repo):
+    def test_print_summary_version_mismatch(
+        self, demisto_client_configure, mocker, repo
+    ):
         """
         Given
             - A uploaded script named SomeScriptName which did not upload due to version mismatch

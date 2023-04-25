@@ -97,6 +97,14 @@ def demisto_client_configure(mocker):
 def test_upload_folder(
     demisto_client_configure, mocker, path_end: str, item_count: int
 ):
+    """
+    Given
+            A path to a content item folder
+    When
+            Instantiating an uploader with this path, and calling upload
+    Then
+            Make sure the expected count of content items have their _upload method called
+    """
     mocker.patch.object(demisto_client, "configure", return_value="object")
     mock_upload = mocker.patch.object(
         ContentItem,

@@ -577,12 +577,11 @@ class TestPrintSummary:
 
         logged = flatten_call_args(logger_info.call_args_list)
         assert len(logged) == 3
-        assert (
+        assert logged[0] == (
             f"Uploading {path.absolute()} to {uploader.client.api_client.configuration.host}..."
-            in logged
         )
-        assert "UPLOAD SUMMARY:\n" == logged[1]
-        assert (
+        assert logged[1] == "UPLOAD SUMMARY:\n"
+        assert logged[2] == (
             "\n".join(
                 (
                     "[yellow]NOT UPLOADED DUE TO VERSION MISMATCH:",
@@ -594,7 +593,6 @@ class TestPrintSummary:
                     "[/yellow]",
                 )
             )
-            in logged
         )
 
 

@@ -90,13 +90,13 @@ def upload_zipped_pack(
     """
 
     def _upload_pre_6_5_0() -> bool:
-        logger.info("Turn off the server verification for signed packs")
+        logger.info("Disabling server verification for signed packs")
 
         _, _, previous_configuration = tools.update_server_configuration(
             client=client,
             server_configuration={PACK_VERIFY_KEY: "false"},
             logging_manager=logger,
-            error_msg="Can not turn off the pack verification",
+            error_msg="Can not disable the pack verification",
         )
         try:
             logger.info("Uploading...")
@@ -104,6 +104,10 @@ def upload_zipped_pack(
             if status_code > 299:
                 raise FailedUploadException(Path(path), data, status_code)
             return True
+
+        except Exception:
+            logger.exception("Failed uploading pack")
+            raise
 
         finally:
             try:

@@ -639,10 +639,8 @@ class TestZippedPackUpload:
 
     """
 
-    @pytest.mark.parametrize(
-        argnames="input", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
-    )
-    def test_upload_zipped_packs(self, mocker, input):
+    @pytest.mark.parametrize("path", [Path(TEST_PACK_ZIP), Path(CONTENT_PACKS_ZIP)])
+    def test_upload_zipped_packs(self, mocker, path: Path):
         """
         Given:
             - zipped pack or zip of pack zips to upload
@@ -654,25 +652,23 @@ class TestZippedPackUpload:
         """
         # prepare
         mock_api_client(mocker)
-        mocker.patch.object(API_CLIENT, "upload_content_packs")
-        mocker.patch.object(Pack, "is_server_version_ge", return_value=False)
         mocker.patch.object(
+            API_CLIENT, "upload_content_packs", return_value=({}, 200, "")
+        )
+        mock_update_server_config = mocker.patch.object(
             tools, "update_server_configuration", return_value=(None, None, {})
         )
         mocker.patch.object(
-            Uploader, "notify_user_should_override_packs", return_value=True
+            Uploader, "notify_user_should_override_packs", return_value=True  # TODO
         )
 
         # run
-        click.Context(command=upload).invoke(upload, input=input)
+        uploader = Uploader(path)
+        assert uploader.upload() == SUCCESS_RETURN_CODE
 
         # validate
-        disable_verification_call_args = (
-            tools.update_server_configuration.call_args_list[0][1]
-        )
-        enable_verification_call_args = (
-            tools.update_server_configuration.call_args_list[1][1]
-        )
+        disable_verification_call_args = mock_update_server_config.call_args_list[0][1]
+        enable_verification_call_args = mock_update_server_config.call_args_list[1][1]
 
         assert (
             disable_verification_call_args["server_configuration"][
@@ -684,8 +680,9 @@ class TestZippedPackUpload:
             constants.PACK_VERIFY_KEY
             in enable_verification_call_args["config_keys_to_delete"]
         )
-        uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]["file"]
-        assert str(uploaded_file_path) == input
+        assert API_CLIENT.upload_content_packs.call_args[1]["file"] == path
+        assert len(uploader.successfully_uploaded) == 1
+        assert uploader.successfully_uploaded[0].path == path
 
     def test_server_config_after_upload(self, mocker):
         """

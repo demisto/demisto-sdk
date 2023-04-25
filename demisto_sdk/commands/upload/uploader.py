@@ -4,7 +4,9 @@ import glob
 import itertools
 import logging
 import os
+import zipfile
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Iterable, List, Optional, Tuple, Union
 
 import demisto_client
@@ -127,10 +129,15 @@ class Uploader:
             (not insecure) if insecure else None
         )  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
         self.client = demisto_client.configure(verify_ssl=verify)
+
         self.successfully_uploaded: List[Union[ContentItem, Pack]] = []
+        self.successfully_uploaded_zipped_packs: List[str] = []
+
         self.failed_upload: List[Tuple[Union[ContentItem, Pack], str]] = []
         self.failed_upload_version_mismatch: List[ContentItem] = []
+        self.failed_upload_zipped_packs: List[str] = []
         self.failed_parsing: List[Tuple[Path, str]] = []
+
         self.demisto_version = get_demisto_version(self.client)
         self.pack_names: List[str] = pack_names or []
         self.skip_upload_packs_validation = skip_validation
@@ -138,6 +145,49 @@ class Uploader:
         self.should_reattach_files = reattach
         self.override_existing = override_existing
         self.marketplace = marketplace
+
+    def _upload_zipped(self, path: Path, marketplace: MarketplaceVersions) -> bool:
+        """
+        Upload a zipped pack to the remote Cortex XSOAR instance.
+        Args:
+            path (Path): The path of the zipped pack to upload.
+            marketplace (MarketplaceVersions): The marketplace version to upload to.
+        Returns:
+            bool: True if the upload was successful, False otherwise.
+        """
+
+        def _parse_internal_pack_names(zip_path: Path) -> Iterable[str]:
+            # returns the names of first-level folders under the zip, each represents a pack
+            try:
+                with TemporaryDirectory() as temp_dir:
+                    zipfile.ZipFile(zip_path).extractall(temp_dir)
+                    yield from (
+                        str(item) for item in Path(temp_dir).iterdir() if item.is_dir()
+                    )
+            except Exception:
+                logger.warning(
+                    f"could not extract pack names from {zip_path}", exc_info=True
+                )
+                yield str(zip_path)
+
+        pack_names = _parse_internal_pack_names(path)
+
+        try:
+            if upload_zipped_pack(
+                path=path,
+                client=self.client,
+                target_demisto_version=Version(str(self.demisto_version)),
+                marketplace=marketplace,
+                skip_validations=True,  # TODO
+            ):
+                self.successfully_uploaded_zipped_packs.extend(pack_names)
+                return True
+
+        except Exception:
+            logger.exception(f"Failed uploading {pack_names}")
+            self.failed_upload_zipped_packs.extend(pack_names)
+
+        return False
 
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance."""
@@ -178,17 +228,20 @@ class Uploader:
                     skip_validations=True,  # TODO skip_validations
                     marketplace=self.marketplace,
                 )
-            if self.path.is_dir() and is_uploadable_dir(self.path):
+            elif self.path.is_dir() and is_uploadable_dir(self.path):
                 success = self._upload_entity_dir(self.path)
             else:
                 success = self._upload_single(self.path)
         except KeyboardInterrupt:
             return ABORTED_RETURN_CODE
+
         if self.failed_parsing and not any(
             (
                 self.successfully_uploaded,
+                self.successfully_uploaded_zipped_packs,
                 self.failed_upload,
                 self.failed_upload_version_mismatch,
+                self.failed_upload_zipped_packs,
             )
         ):
             # Nothing was uploaded, nor collected as error
@@ -347,17 +400,27 @@ class Uploader:
         Failed uploads grid based on `failed_uploaded_files` attribute in red color
         """
         logger.info("UPLOAD SUMMARY:\n")
+
         if self.successfully_uploaded:
             uploaded_str = tabulate(
                 (
-                    (item.path.name, item.content_type)
-                    for item in self.successfully_uploaded
+                    itertools.chain(
+                        (
+                            (item.path.name, item.content_type)
+                            for item in self.successfully_uploaded
+                        ),
+                        (
+                            (item, "Pack")
+                            for item in self.successfully_uploaded_zipped_packs
+                        ),
+                    )
                 ),
                 headers=["NAME", "TYPE"],
                 tablefmt="fancy_grid",
             )
 
             logger.info(f"[green]SUCCESSFUL UPLOADS:\n{uploaded_str}\n[/green]")
+
         if self.failed_upload_version_mismatch:
             version_mismatch_str = tabulate(
                 (
@@ -382,6 +445,7 @@ class Uploader:
             logger.info(
                 f"[yellow]NOT UPLOADED DUE TO VERSION MISMATCH:\n{version_mismatch_str}\n[/yellow]"
             )
+
         if self.failed_parsing:
             failed_parsing_str = tabulate(
                 ((path.name, path, reason) for path, reason in self.failed_parsing),
@@ -392,8 +456,18 @@ class Uploader:
         if self.failed_upload:
             failed_upload_str = tabulate(
                 (
-                    (item.path.name, item.content_type, error)
-                    for item, error in self.failed_upload
+                    itertools.chain(
+                        (
+                            (item.path.name, item.content_type, error)
+                            for item, error in self.failed_upload
+                        ),
+                        (
+                            (
+                                (item, "Pack", "see logs above")
+                                for item in self.failed_upload_zipped_packs
+                            )
+                        ),
+                    )
                 ),
                 headers=["NAME", "TYPE", "ERROR"],
                 tablefmt="fancy_grid",

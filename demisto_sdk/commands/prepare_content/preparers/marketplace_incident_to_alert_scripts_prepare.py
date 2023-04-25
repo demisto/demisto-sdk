@@ -15,13 +15,19 @@ class MarketplaceIncidentToAlertScriptsPreparer:
                 current_marketplace: MarketplaceVersions,
                 incident_to_alert: bool) -> tuple:
         """
-        For each script iterate over all the given script's descriptions comments ids
-        and names fields and if a comment or a description or a name or an id field
-        contains the word incident / incidents (without the wrapper),
-        then replace it with alert / alerts just in case of XSIAM Marketplace. ( `incident_to_alert` = True )
-        In any case (for all Marketplaces) remove the wrapper (<-incident-> to incident, <-incidents-> to incidents).
+        Two cases in which script preparation is needed:
+        - incident_to_alert is false:
+            Iterate on the fields name description comment and id,
+            and removes if there is a wrapper for the word incident such as <-incident->.
+        - incident_to_alert is true:
+            Apart from the above preparation,
+            two scripts will be created,
+            1. The existing script so that in the name, description, comment and id fields
+               the word `incident` will be replaced by `alert` when the word `incident` is not wrapped like this <-incident->.
+               
+            2. A wrapper script that will call the script with the new name,
+               all the fields of the script will remain as they are and the word incident will not be replaced.
 
-        Aditionaly
         Args:
             data: content item data
             current_marketplace: the destination marketplace.

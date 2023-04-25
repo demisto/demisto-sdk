@@ -33,13 +33,15 @@ def create_script_for_test(tmp_path, repo):
     script.create_default_script(name='setIncident')
     data = script.yml.read_dict()
     data['comment'] = COMMENT_INCIDENT_CONSTANT
+    data['deprecated'] = False
     return data
 
 
 @pytest.mark.parametrize(
     'incident_to_alert,'
     'expected_names, '
-    'expected_comments',
+    'expected_comments, '
+    'expected_deprecated',
     [
         (
             True,
@@ -53,7 +55,8 @@ def create_script_for_test(tmp_path, repo):
                     1,
                     COMMENT_ALERT_CONSTANT
                 )
-            )
+            ),
+            ((0, True), (1, False))
         ),
         (
             False,
@@ -63,7 +66,8 @@ def create_script_for_test(tmp_path, repo):
                     0,
                     COMMENT_INCIDENT_CONSTANT
                 ),
-            )
+            ),
+            ((0, False),)
         ),
     ]
 )
@@ -73,6 +77,7 @@ def test_marketplace_incident_to_alert_scripts_preparer(
         incident_to_alert,
         expected_names,
         expected_comments,
+        expected_deprecated,
         ):
     """
     Given:
@@ -104,4 +109,9 @@ def test_marketplace_incident_to_alert_scripts_preparer(
     for i, comment in expected_comments:
         assert (
             data[i]['comment'] == comment
+        )
+
+    for i, is_deprecated in expected_deprecated:
+        assert (
+            data[i]['deprecated'] == is_deprecated
         )

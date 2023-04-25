@@ -98,6 +98,10 @@ def test_upload_folder(
     demisto_client_configure, mocker, path_end: str, item_count: int
 ):
     mocker.patch.object(demisto_client, "configure", return_value="object")
+    mock_upload = mocker.patch.object(
+        ContentItem,
+        "_upload",
+    )
     path = Path(f"{git_path()}/demisto_sdk/tests/test_files/", path_end)
     assert path.exists()
     uploader = Uploader(path)
@@ -106,6 +110,7 @@ def test_upload_folder(
             uploader.upload() == SUCCESS_RETURN_CODE
         ), f"failed uploading {'/'.join(path.parts[-2:])}"
     assert len(uploader.successfully_uploaded) == item_count
+    assert mock_upload.call_count == item_count
 
 
 @pytest.mark.parametrize(

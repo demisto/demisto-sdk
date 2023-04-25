@@ -14,7 +14,9 @@ from demisto_sdk.commands.content_graph.objects.incident_field import IncidentFi
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
-from TestSuite.test_tools import ChangeCWD, str_in_call_args_list
+from demisto_sdk.commands.upload.tests.uploader_test import mock_upload_method
+from demisto_sdk.commands.upload.uploader import ERROR_RETURN_CODE
+from TestSuite.test_tools import ChangeCWD, flatten_call_args, str_in_call_args_list
 
 UPLOAD_CMD = "upload"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
@@ -67,11 +69,7 @@ def test_integration_upload_pack_positive(demisto_client, mocker):
         Script,
         Playbook,
     ):
-        mocker.patch.object(
-            content_class,
-            "_client_upload_method",
-            return_value=lambda path: ({}, 200, "Headers"),
-        )
+        mock_upload_method(mocker, content_class)
 
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
@@ -185,24 +183,17 @@ def test_integration_upload_script_invalid_path(demisto_client, tmp_path, mocker
     - Ensure upload fails due to invalid path.
     - Ensure failure upload message is printed.
     """
-    logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
-    invalid_scripts_dir = tmp_path / "Script" / "InvalidScript"
-    invalid_scripts_dir.mkdir(parents=True)
+    logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
+    path = tmp_path / "Script" / "InvalidScript"
+    path.mkdir(parents=True)
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(
-        main, [UPLOAD_CMD, "-i", str(invalid_scripts_dir), "--insecure"]
-    )
-    assert result.exit_code == 1
-    for current_call in logger_info.call_args_list:
-        if type(current_call[0]) == tuple:
-            print(f"*** INFO *** {current_call[0][0]=}")
-    assert str_in_call_args_list(
-        logger_info.call_args_list,
-        f"""Error: Given input path: {str(invalid_scripts_dir)} is not uploadable. Input path should point to one of the following:
-  1. Pack
-  2. A content entity directory that is inside a pack. For example: an Integrations directory or a Layouts directory
-  3. Valid file that can be imported to Cortex XSOAR manually. For example a playbook: helloWorld.yml""",
-    )
+
+    result = runner.invoke(main, [UPLOAD_CMD, "-i", str(path), "--insecure"])
+    logged_errors = flatten_call_args(logger_error.call_args_list)
+
+    assert result.exit_code == ERROR_RETURN_CODE
+    assert str(path) in logged_errors[0]
+    assert "Nothing to upload: the" in logged_errors[1]
 
 
 def test_integration_upload_pack_invalid_connection_params(mocker):

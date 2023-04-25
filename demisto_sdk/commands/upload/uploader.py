@@ -184,21 +184,23 @@ class Uploader:
                 success = self._upload_single(self.path)
         except KeyboardInterrupt:
             return ABORTED_RETURN_CODE
-        if not any(
+        if self.failed_parsing and not any(
             (
                 self.successfully_uploaded,
                 self.failed_upload,
                 self.failed_upload_version_mismatch,
-                self.failed_parsing,
             )
         ):
             # Nothing was uploaded, nor collected as error
             logger.error(
-                f"\n[red]Error: Given input path: {self.path} is not uploadable. "
-                f"Input path should point to one of the following:\n"
-                f"  1. Pack\n"
-                f"  2. A content entity directory that is inside a pack, e.g. Integrations"
-                f"  3. Valid file that can be imported to Cortex XSOAR manually.[/red]"
+                "\n".join(
+                    (
+                        "[red]Nothing to upload: the input path should point to one of the following:",
+                        "\t1. A Pack",
+                        "\t2. A content entity directory that is inside a pack, e.g. Integrations",
+                        "\t3. A valid content item file, that can be imported to Cortex XSOAR manually.[/red]",
+                    )
+                )
             )
             return ERROR_RETURN_CODE
 
@@ -386,7 +388,7 @@ class Uploader:
                 headers=("FILE_NAME", "PATH", "REASON"),
                 tablefmt="fancy_grid",
             )
-            logger.info(f"[red]FAILED PARSING CONTENT:\n{failed_parsing_str}\n[/red]")
+            logger.info(f"[red]FAILED PARSING CONTENT:\n{failed_parsing_str}[/red]")
         if self.failed_upload:
             failed_upload_str = tabulate(
                 (

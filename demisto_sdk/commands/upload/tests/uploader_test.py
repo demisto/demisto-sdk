@@ -7,6 +7,7 @@ import zipfile
 from functools import wraps
 from io import BytesIO
 from pathlib import Path
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import click
@@ -56,6 +57,14 @@ from demisto_sdk.commands.upload.uploader import (
 from TestSuite.test_tools import flatten_call_args, str_in_call_args_list
 
 json = JSON_Handler()
+
+
+def mock_upload_method(mocker: Any, class_: ContentItem):
+    return mocker.patch.object(
+        class_,
+        "_client_upload_method",
+        return_value=lambda path: ({}, 200, "Headers"),
+    )
 
 
 DATA = ""
@@ -196,19 +205,22 @@ def test_upload_single_positive(mocker, path: str, content_class: ContentItem):
     Then
         - Ensure its _client_upload_method is called once
     """
+    # prepare
     mock_api_client(mocker)
+
     assert content_class._client_upload_method is not None
-    mocked_client_upload_method = mocker.patch.object(
-        content_class,
-        "_client_upload_method",
-        return_value=lambda path: ({}, 200, "Headers"),
-    )
+    mocked_client_upload_method = mock_upload_method(mocker, content_class)
+
     path = Path(git_path(), path)
     assert path.exists()
     assert BaseContent.from_path(path) is not None, f"Failed parsing {path.absolute()}"
+
     uploader = Uploader(input=path)
     mocker.patch.object(uploader, "client")
+
+    # run
     uploader.upload()
+
     assert len(uploader.successfully_uploaded) == 1
     assert mocked_client_upload_method.called_once()
 

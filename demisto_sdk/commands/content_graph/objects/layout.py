@@ -36,5 +36,6 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
         data["toServerVersion"] = self.toversion
         return data
 
-    def _client_upload_method(self, client: demisto_client) -> Optional[Callable]:
+    @classmethod
+    def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.import_layout

@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Set
+from typing import Callable, Set
 
 import demisto_client
 
@@ -10,5 +10,6 @@ class Playbook(ContentItem, content_type=ContentType.PLAYBOOK):  # type: ignore[
     def metadata_fields(self) -> Set[str]:
         return {"name", "description"}
 
-    def _client_upload_method(self, client: demisto_client) -> Optional[Callable]:
+    @classmethod
+    def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.import_playbook

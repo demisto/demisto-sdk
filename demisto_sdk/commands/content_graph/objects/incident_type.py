@@ -17,5 +17,6 @@ class IncidentType(ContentItem, content_type=ContentType.INCIDENT_TYPE):  # type
     def metadata_fields(self) -> Set[str]:
         return {"name", "playbook", "closure_script", "hours", "days", "week"}
 
-    def _client_upload_method(self, client: demisto_client) -> Optional[Callable]:
+    @classmethod
+    def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.import_incident_types_handler

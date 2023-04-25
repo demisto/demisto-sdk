@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, List, Optional, Set
+from typing import Callable, List, Set
 
 import demisto_client
 
@@ -43,5 +43,6 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
             if r.content_item_to.database_id == r.source_id
         ]
 
-    def _client_upload_method(self, client: demisto_client) -> Optional[Callable]:
+    @classmethod
+    def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.import_script

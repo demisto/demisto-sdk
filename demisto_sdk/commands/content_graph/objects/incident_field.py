@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Set
+from typing import Callable, Set
 
 import demisto_client
 from pydantic import Field
@@ -15,5 +15,6 @@ class IncidentField(ContentItem, content_type=ContentType.INCIDENT_FIELD):  # ty
     def metadata_fields(self) -> Set[str]:
         return {"name", "field_type", "description"}
 
-    def _client_upload_method(self, client: demisto_client) -> Optional[Callable]:
+    @classmethod
+    def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.import_incident_fields

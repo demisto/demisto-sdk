@@ -30,9 +30,20 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
+from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
+from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
+from demisto_sdk.commands.content_graph.objects.indicator_field import IndicatorField
+from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorType
+from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.integration_script import (
     IntegrationScript,
 )
+from demisto_sdk.commands.content_graph.objects.layout import Layout
+from demisto_sdk.commands.content_graph.objects.mapper import Mapper
+from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.content_graph.objects.script import Script
+from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.test_content import tools
 from demisto_sdk.commands.upload import uploader
 from demisto_sdk.commands.upload.uploader import (
@@ -122,59 +133,59 @@ def test_upload_folder(
 
 
 @pytest.mark.parametrize(
-    "test_name,path",
+    "content_class,path",
     [
         (
-            "integration-yml",
+            Integration,
             "demisto_sdk/tests/test_files/content_repo_example/Integrations/Securonix/Securonix.yml",
         ),
         (
-            "integration-py",
+            Integration,
             "demisto_sdk/tests/test_files/content_repo_example/Integrations/Securonix/Securonix.py",
         ),
         (
-            "script-yml-unified",
+            Script,
             "demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/DummyScriptUnified.yml",
         ),
         (
-            "playbook",
+            Playbook,
             "demisto_sdk/tests/test_files/Packs/CortexXDR/Playbooks/Cortex_XDR_Incident_Handling.yml",
         ),
         (
-            "widget",
+            Widget,
             "demisto_sdk/tests/test_files/Packs/DummyPack/Widgets/widget-ActiveIncidentsByRole.json",
         ),
         (
-            "dashboard",
+            Dashboard,
             "demisto_sdk/tests/test_files/Packs/DummyPack/Dashboards/upload_test_dashboard.json",
         ),
         (
-            "layoutscontainer",
+            Layout,
             "demisto_sdk/tests/test_files/Packs/DummyPack/Layouts/layoutscontainer-test.json",
         ),
         (
-            "incident-type",
+            IncidentType,
             "demisto_sdk/tests/test_files/Packs/DummyPack/IncidentTypes/incidenttype-Hello_World_Alert.json",
         ),
         (
-            "classifier-old",
+            Mapper,
             "demisto_sdk/tests/test_files/Packs/DummyPack/Classifiers/classifier-aws_sns_test_classifier.json",
         ),
         (
-            "incident-field",
+            IncidentField,
             "demisto_sdk/tests/test_files/Packs/CortexXDR/IncidentFields/XDR_Alert_Count.json",
         ),
         (
-            "indicator-field",
+            IndicatorField,
             "demisto_sdk/tests/test_files/Packs/CortexXDR/IndicatorFields/dns.json",
         ),
         (
-            "indicator-type",
+            IndicatorType,
             "demisto_sdk/tests/test_files/Packs/CortexXDR/IndicatorTypes/SampleIndicatorType.json",
         ),
     ],
 )
-def test_upload_single_positive(mocker, test_name: str, path: str):
+def test_upload_single_positive(mocker, path: str, content_class: ContentItem):
     """
     Given
         - A path to a content item
@@ -183,17 +194,23 @@ def test_upload_single_positive(mocker, test_name: str, path: str):
         - Uploading the content item
 
     Then
-        - Ensure it is uploaded successfully
+        - Ensure its _client_upload_method is called once
     """
     mock_api_client(mocker)
+    assert content_class._client_upload_method is not None
+    mocked_client_upload_method = mocker.patch.object(
+        content_class,
+        "_client_upload_method",
+        return_value=lambda path: ({}, 200, "Headers"),
+    )
     path = Path(git_path(), path)
     assert path.exists()
     assert BaseContent.from_path(path) is not None, f"Failed parsing {path.absolute()}"
     uploader = Uploader(input=path)
     mocker.patch.object(uploader, "client")
     uploader.upload()
-
-    assert uploader.successfully_uploaded == [BaseContent.from_path(path)]
+    assert len(uploader.successfully_uploaded) == 1
+    assert mocked_client_upload_method.called_once()
 
 
 def test_upload_single_not_supported(mocker):

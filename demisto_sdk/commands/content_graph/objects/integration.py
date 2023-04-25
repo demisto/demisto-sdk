@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, Callable, List, Optional
+from typing import TYPE_CHECKING, Callable, List
 
 import demisto_client
 
@@ -97,5 +97,6 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
 
         return data
 
-    def _client_upload_method(self, client: demisto_client) -> Optional[Callable]:
+    @classmethod
+    def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.integration_upload

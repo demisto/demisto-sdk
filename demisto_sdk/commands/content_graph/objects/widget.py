@@ -14,5 +14,6 @@ class Widget(ContentItem, content_type=ContentType.WIDGET):  # type: ignore[call
     def metadata_fields(self) -> Set[str]:
         return {"name", "data_type", "widget_type"}
 
-    def _client_upload_method(self, client: demisto_client) -> Optional[Callable]:
+    @classmethod
+    def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.import_widget

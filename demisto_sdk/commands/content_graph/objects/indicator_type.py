@@ -18,5 +18,6 @@ class IndicatorType(ContentItem, content_type=ContentType.INDICATOR_TYPE):  # ty
     def metadata_fields(self) -> Set[str]:
         return {"details", "reputation_script_name", "enhancement_script_names"}
 
-    def _client_upload_method(self, client: demisto_client) -> Optional[Callable]:
+    @classmethod
+    def _client_upload_method(cls, client: demisto_client) -> Callable:
         return client.import_reputation_handler  # TODO check file name

@@ -43,10 +43,11 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
 )
 from demisto_sdk.commands.content_graph.objects.content_item import (
     ContentItem,
+    FailedUploadException,
     IncompatibleUploadVersionException,
     NotUploadableException,
 )
-from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.pack import Pack, upload_zipped_pack
 
 logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
@@ -169,6 +170,14 @@ class Uploader:
         )
 
         try:
+            if self.path.suffix == ".zip":
+                success = upload_zipped_pack(
+                    path=self.path,
+                    client=self.client,
+                    target_demisto_version=Version(str(self.demisto_version)),
+                    skip_validations=True,  # TODO skip_validations
+                    marketplace=self.marketplace,
+                )
             if self.path.is_dir() and is_uploadable_dir(self.path):
                 success = self._upload_entity_dir(self.path)
             else:
@@ -198,7 +207,7 @@ class Uploader:
 
     def _upload_single(self, path: Path, zipped: bool = False) -> bool:
         """
-        Upload a content item, or a pack.
+        Upload a content item, a pack, or a zip containing packs.
 
         Returns:
             bool: whether the item is uploaded succesfully.
@@ -208,13 +217,14 @@ class Uploader:
             NotUploadableException
         """
         content_item: Union[ContentItem, Pack] = BaseContent.from_path(
-            path  # Accepts a file or a folder of one content item
+            path
         )  # type:ignore[assignment]
         if content_item is None:
-            if find_type(str(path)) == FileType.LAYOUT:
-                reason = "Deprecated type - use LayoutContainer instead"
-            else:
-                reason = ""
+            reason = (
+                "Deprecated type - use LayoutContainer instead"
+                if find_type(str(path)) == FileType.LAYOUT
+                else "unknown"
+            )
             self.failed_parsing.append((path, reason))
             return False
 
@@ -226,7 +236,7 @@ class Uploader:
                 zipped=zipped,  # only used for Packs
             )
 
-            # upon reaching this row, the upload is surely successful
+            # upon reaching this line, the upload is surely successful
             uploaded_succesfully = (
                 iter(content_item.content_items)
                 if (isinstance(content_item, Pack) and not zipped)  # TODO not zipped?
@@ -237,9 +247,10 @@ class Uploader:
             self.successfully_uploaded.extend(uploaded_succesfully)
             for item_uploaded_successfully in uploaded_succesfully:
                 logger.debug(
-                    f"[green]Uploaded {item_uploaded_successfully.content_type} {item_uploaded_successfully.normalize_name}: successfully[/green]"
+                    f"Uploaded {item_uploaded_successfully.content_type} {item_uploaded_successfully.normalize_name} successfully"
                 )
             return True
+
         except KeyboardInterrupt:
             raise  # the functinos calling this one have a special return code for manual interruption
 
@@ -247,20 +258,20 @@ class Uploader:
             logger.error(e)
             assert isinstance(
                 content_item, ContentItem
-            ), "Cannot compare version for pack"
+            ), "Cannot compare version for Pack items, only ContentItems"
             self.failed_upload_version_mismatch.append(content_item)
             return False
 
-        except NotUploadableException as e:
-            logger.error(e)
-            self.failed_upload.append((content_item, str(e)))
-            return False
-
-        except Exception as e:
+        except ApiException as e:
             message = f"unknown: {e}"
             with contextlib.suppress(Exception):
                 message = parse_error_response(e)
             self.failed_upload.append((content_item, message))
+            return False
+
+        except (FailedUploadException, NotUploadableException, Exception) as e:
+            logger.error(str(e))
+            self.failed_upload.append((content_item, str(e)))
             return False
 
     def _upload_entity_dir(self, path: Path) -> bool:

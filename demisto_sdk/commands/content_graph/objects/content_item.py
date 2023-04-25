@@ -24,7 +24,10 @@ from pydantic import DirectoryPath, validator
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.base_content import (
+    BaseContent,
+    FailedUploadException,
+)
 from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
     MarketplaceSuffixPreparer,
 )
@@ -214,7 +217,8 @@ class ContentItem(BaseContent):
 
     def _upload(self, client: demisto_client, marketplace: MarketplaceVersions) -> None:
         """
-        Called once the version is validated. Implementation may differ between content items.
+        Called once the version is validated.
+        Implementation may differ between content items.
         Most items use _client_upload_method, refer to its docstrings.
         """
         if (upload_method := self._client_upload_method(client=client)) is None:
@@ -224,7 +228,15 @@ class ContentItem(BaseContent):
         with TemporaryDirectory("w") as f:
             dir_path = Path(f)
             self.dump(dir_path, marketplace=marketplace)
-            upload_method(dir_path / self.normalize_name)  # type: ignore[call-arg,misc]
+            data, status_code, _ = upload_method(
+                dir_path / self.normalize_name
+            )  # third output is headers
+            if status_code > 299:
+                raise FailedUploadException(
+                    path=self.path,
+                    response_body=data,
+                    status_code=status_code,
+                )
 
     def upload(
         self,

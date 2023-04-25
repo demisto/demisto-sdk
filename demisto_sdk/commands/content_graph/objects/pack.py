@@ -29,7 +29,11 @@ from demisto_sdk.commands.content_graph.common import (
     Relationships,
     RelationshipType,
 )
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.base_content import (
+    BaseContent,
+    FailedUploadException,
+    FailedUploadMultipleException,
+)
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
@@ -72,6 +76,85 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
+
+
+def upload_zipped_pack(
+    path: Path,
+    client: demisto_client,
+    skip_validations: bool,
+    target_demisto_version: Version,
+    marketplace: MarketplaceVersions,  # TODO
+) -> bool:
+    """
+    Used to upload an existing zip file
+    """
+
+    def _upload_pre_6_5_0() -> bool:
+        logger.info("Turn off the server verification for signed packs")
+
+        _, _, previous_configuration = tools.update_server_configuration(
+            client=client,
+            server_configuration={PACK_VERIFY_KEY: "false"},
+            logging_manager=logger,
+            error_msg="Can not turn off the pack verification",
+        )
+        try:
+            logger.info("Uploading...")
+            data, status_code, _ = client.upload_content_packs(file=path)
+            if status_code > 299:
+                raise FailedUploadException(Path(path), data, status_code)
+            return True
+
+        finally:
+            try:
+                if (
+                    prev_key_val := previous_configuration.get(PACK_VERIFY_KEY)
+                ) is not None:
+                    config_keys_to_update = {PACK_VERIFY_KEY: prev_key_val}
+                    config_keys_to_delete = None
+                else:
+                    config_keys_to_update = None
+                    config_keys_to_delete = {PACK_VERIFY_KEY}
+
+                logger.info("Setting the server verification to be as previously")
+                logger.debug(f"{config_keys_to_delete=}, {config_keys_to_update=}")
+                tools.update_server_configuration(
+                    client=client,
+                    server_configuration=config_keys_to_update,
+                    config_keys_to_delete=config_keys_to_delete,
+                    logging_manager=logger,
+                    error_msg="Can not turn on the pack verification",
+                )
+                logger.debug("set server configurations back successfully")
+
+            except (Exception, KeyboardInterrupt) as e:
+                action = (
+                    DELETE_VERIFY_KEY_ACTION_FORMAT
+                    if prev_key_val is None
+                    else SET_VERIFY_KEY_ACTION_FORMAT.format(prev_key_val)
+                )
+                error_message = TURN_VERIFICATION_ERROR_MSG_FORMAT.format(action=action)
+                logger.exception(error_message)
+                raise Exception(error_message) from e
+
+    def _upload_post_6_5_0() -> bool:
+        server_kwargs = {"skip_verify": "true"}
+
+        if skip_validations and target_demisto_version >= Version("6.6.0"):
+            server_kwargs["skip_validations"] = "true"
+
+        data, status_code, _ = client.upload_content_packs(
+            file=path,
+            skip_verify="true",
+            **server_kwargs,
+        )
+        if status_code > 299:
+            raise FailedUploadException(Path(path), data, status_code)
+        return True
+
+    if target_demisto_version >= Version("6.5.0"):
+        return _upload_post_6_5_0()
+    return _upload_pre_6_5_0()
 
 
 class PackContentItems(BaseModel):
@@ -289,7 +372,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             except FileNotFoundError:
                 logger.debug(f'No such file {self.path / "Author_image.png"}')
             if self.object_id == BASE_PACK:
-                self.handle_base_pack(path)
+                self._copy_base_pack_docs(path)
 
             pack_files = "\n".join([str(f) for f in path.iterdir()])
             logger.info(f"Dumped pack {self.name}.")
@@ -306,105 +389,51 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         **kwargs,
     ):
         if kwargs["zipped"]:
-            self._upload_zipped(
+            self._zip_and_upload(
                 client=client,
                 marketplace=marketplace,
                 target_demisto_version=target_demisto_version,
                 skip_validations=kwargs["skip_validations"],
             )
         else:
-            self._upload_unzipped(
+            self._upload_item_by_item(
                 client=client,
                 marketplace=marketplace,
                 target_demisto_version=target_demisto_version,
             )
 
-    def _upload_zipped(
+    def _zip_and_upload(
         self,
         client: demisto_client,
         target_demisto_version: Version,
         skip_validations: bool,
-        marketplace: MarketplaceVersions,  # TODO use marketplace or remove
-    ) -> dict:
+        marketplace: MarketplaceVersions,
+    ) -> bool:
         # this should only be called from Pack.upload
         logger.debug(f"Uploading zipped pack {self.object_id}")
 
-        def _upload_zipped_before_6_5_0() -> dict:
-            logger.info("Turn off the server verification for signed packs")
-
-            _, _, previous_configuration = tools.update_server_configuration(
+        with TemporaryDirectory() as dir:
+            dir_path = Path(dir)
+            self.dump(dir_path, marketplace=marketplace)
+            return upload_zipped_pack(
+                path=dir_path,
                 client=client,
-                server_configuration={PACK_VERIFY_KEY: "false"},
-                logging_manager=logger,
-                error_msg="Can not turn off the pack verification",
+                target_demisto_version=target_demisto_version,
+                skip_validations=skip_validations,
+                marketplace=marketplace,
             )
-            try:
-                logger.info("Uploading...")
-                return client.upload_content_packs(file=self.path)
-            finally:
-                try:
-                    if (
-                        prev_key_val := previous_configuration.get(PACK_VERIFY_KEY)
-                    ) is not None:
-                        config_keys_to_update = {PACK_VERIFY_KEY: prev_key_val}
-                        config_keys_to_delete = None
-                    else:
-                        config_keys_to_update = None
-                        config_keys_to_delete = {PACK_VERIFY_KEY}
 
-                    logger.info("Setting the server verification to be as previously")
-                    logger.debug(f"{config_keys_to_delete=}, {config_keys_to_update=}")
-                    tools.update_server_configuration(
-                        client=client,
-                        server_configuration=config_keys_to_update,
-                        config_keys_to_delete=config_keys_to_delete,
-                        logging_manager=logger,
-                        error_msg="Can not turn on the pack verification",
-                    )
-                    logger.debug("set server configurations back successfully")
-
-                except (Exception, KeyboardInterrupt) as e:
-                    action = (
-                        DELETE_VERIFY_KEY_ACTION_FORMAT
-                        if prev_key_val is None
-                        else SET_VERIFY_KEY_ACTION_FORMAT.format(prev_key_val)
-                    )
-                    error_message = TURN_VERIFICATION_ERROR_MSG_FORMAT.format(
-                        action=action
-                    )
-                    logger.exception(error_message)
-                    raise Exception(error_message) from e
-
-        def _upload_zipped() -> dict:
-            # Supports v6.5.0 or newer
-            server_kwargs = {"skip_verify": "true"}
-
-            if skip_validations and target_demisto_version >= Version("6.6.0"):
-                server_kwargs["skip_validations"] = "true"
-
-            with TemporaryDirectory() as dir:
-                self.dump(Path(dir), marketplace=marketplace)
-                return client.upload_content_packs(
-                    file=dir,
-                    skip_verify="true",
-                    **server_kwargs,
-                )
-
-        if target_demisto_version < Version("6.5.0"):
-            return _upload_zipped_before_6_5_0()
-        else:
-            return _upload_zipped()
-
-    def _upload_unzipped(
+    def _upload_item_by_item(
         self,
         client: demisto_client,
         marketplace: MarketplaceVersions,
         target_demisto_version: Version,
-    ):
+    ) -> bool:
         # this should only be called from Pack.upload
         logger.debug(
             f"Uploading pack {self.object_id} element-by-element, as -z was not specified"
         )
+        failures = []
         for item in self.content_items:
             try:
                 logger.debug(
@@ -421,10 +450,19 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
                 logger.warning(
                     f"Not uploading pack {self.object_id}: {item.content_type} {item.object_id} as it was not indivudally uploaded"
                 )
+            except FailedUploadException as e:
+                failures.append(e)
 
-    def handle_base_pack(self, path: Path):
+        if failures:
+            if len(failures) == 1:
+                raise failures[0]
+            raise FailedUploadMultipleException(failures)
+
+        return True
+
+    def _copy_base_pack_docs(self, destination_path: Path):
         documentation_path = CONTENT_PATH / "Documentation"
-        documentation_output = path / "Documentation"
+        documentation_output = destination_path / "Documentation"
         documentation_output.mkdir(exist_ok=True, parents=True)
         shutil.copy(
             documentation_path / "doc-howto.json",

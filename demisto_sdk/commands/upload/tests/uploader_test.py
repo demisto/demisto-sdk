@@ -255,9 +255,8 @@ def test_upload_incident_type_correct_file_change(demisto_client_configure, mock
 
     def save_file(file):
         global DATA
-        with open(file) as f:
-            DATA = f.read()
-        return
+        DATA = Path(file).read_text()
+        return ({}, 200, "")
 
     class ConfigurationMock:
         host = "host"
@@ -303,9 +302,8 @@ def test_upload_incident_field_correct_file_change(demisto_client_configure, moc
 
     def save_file(file):
         global DATA
-        with open(file) as f:
-            DATA = f.read()
-        return
+        DATA = Path(file).read_text()
+        return ({}, 200, "")
 
     class ConfigurationMock:
         host = "host"
@@ -327,8 +325,10 @@ def test_upload_incident_field_correct_file_change(demisto_client_configure, moc
         f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/IncidentFields/XDR_Alert_Count.json"
     )
     uploader = Uploader(input=path, insecure=False)
-    uploader.client.import_incident_fields = MagicMock(side_effect=save_file)
-    uploader.upload()
+    uploader.client.import_incident_fields = MagicMock(
+        side_effect=save_file,
+    )
+    assert uploader.upload() == SUCCESS_RETURN_CODE
 
     with open(path) as json_file:
         incident_field_data = json.load(json_file)

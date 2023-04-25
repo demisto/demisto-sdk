@@ -405,7 +405,7 @@ def test_upload_invalid_path(mocker):
     )
 
 
-def test_upload_file_not_supported(mocker):
+def test_upload_single_unsupported_file(mocker):
     """
     Given
         - A not supported (.json) file
@@ -423,7 +423,7 @@ def test_upload_file_not_supported(mocker):
     uploader = Uploader(input=path)
     mocker.patch.object(uploader, "client")
     assert uploader.upload() == ERROR_RETURN_CODE
-    assert uploader.failed_parsing == [(path, "")]
+    assert uploader.failed_parsing == [(path, "unknown")]
 
 
 @pytest.mark.parametrize(

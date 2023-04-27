@@ -145,11 +145,10 @@ def upload_zipped_pack(
         server_kwargs = {"skip_verify": "true"}
 
         if skip_validations and target_demisto_version >= Version("6.6.0"):
-            server_kwargs["skip_validations"] = "true"
+            server_kwargs["skip_validation"] = "true"
 
         data, status_code, _ = client.upload_content_packs(
             file=path,
-            skip_verify="true",
             **server_kwargs,
         )
         if status_code > 299:

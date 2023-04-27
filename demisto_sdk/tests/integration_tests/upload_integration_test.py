@@ -14,8 +14,13 @@ from demisto_sdk.commands.content_graph.objects.incident_field import IncidentFi
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.script import Script
-from demisto_sdk.commands.upload.tests.uploader_test import mock_upload_method
-from demisto_sdk.commands.upload.uploader import ERROR_RETURN_CODE
+from demisto_sdk.commands.upload.tests.uploader_test import (
+    mock_upload_method,
+)
+from demisto_sdk.commands.upload.uploader import (
+    ERROR_RETURN_CODE,
+    SUCCESS_RETURN_CODE,
+)
 from TestSuite.test_tools import ChangeCWD, flatten_call_args, str_in_call_args_list
 
 UPLOAD_CMD = "upload"
@@ -43,7 +48,6 @@ def demisto_client(mocker):
         "demisto_sdk.commands.common.content.objects.pack_objects.script.script.get_demisto_version",
         return_value=parse("6.0.0"),
     )
-    mocker.patch("click.secho")
 
 
 def test_integration_upload_pack_positive(demisto_client, mocker):
@@ -124,8 +128,7 @@ def test_zipped_pack_upload_positive(repo, mocker, demisto_client):
             layout_content = json.load(file)
 
         # validate json based content entities are being unified before getting zipped
-        assert "fromServerVersion" in layout_content
-        assert "toServerVersion" in layout_content
+        assert {"fromServerVersion", "toServerVersion"}.issubset(layout_content.keys())
 
         with open(f"{dir}/Integrations/integration-test-pack_integration.yml") as file:
             integration_content = yaml.load(file)
@@ -133,16 +136,18 @@ def test_zipped_pack_upload_positive(repo, mocker, demisto_client):
         # validate yml based content entities are being unified before getting zipped
         assert "nativeimage" in integration_content.get("script", {})
 
-    assert result.exit_code == 0, logger_info.call_args_list
+    logged = flatten_call_args(logger_info.call_args_list)
 
-    assert all(
-        [
-            str_in_call_args_list(logger_info.call_args_list, current_str)
-            for current_str in [
-                "SUCCESSFUL UPLOADS:",
-                "╒═══════════╤════════╕\n│ NAME      │ TYPE   │\n╞═══════════╪════════╡\n│ test-pack │ pack   │\n╘═══════════╧════════╛",
-            ]
-        ]
+    assert result.exit_code == SUCCESS_RETURN_CODE
+    assert logged[-1] == "\n".join(
+        (
+            "SUCCESSFUL UPLOADS:",
+            "╒═══════════╤════════╕",
+            "│ NAME      │ TYPE   │",
+            "╞═══════════╪════════╡",
+            "│ test-pack │ pack   │",
+            "╘═══════════╧════════╛",
+        )
     )
 
 

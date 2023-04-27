@@ -289,9 +289,24 @@ def repository(mocker) -> ContentDTO:
         mock_playbook("SamplePlaybook2", [MarketplaceVersions.XSOAR], "6.8.0", "6.5.0")
     )
     pack3.content_items.script.append(mock_script("SampleScript2"))
-    pack3.content_items.script.append(mock_script(name='setAlert'))
-    pack3.content_items.script.append(mock_script(name='getAlert'))
-    pack3.content_items.script.append(mock_script(name='getAlerts'))
+    pack3.content_items.script.append(
+        mock_script(
+            'setAlert',
+            [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
+        )
+    )
+    pack3.content_items.script.append(
+        mock_script(
+            'getAlert',
+            [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
+        )
+    )
+    pack3.content_items.script.append(
+        mock_script(
+            'getAlerts',
+            [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
+        )
+    )
     pack4.content_items.playbook.append(mock_playbook("SamplePlaybook"))
     repository.packs.extend([pack1, pack2, pack3, pack4])
     mocker.patch(
@@ -587,6 +602,7 @@ def test_validate_unique_script_name(repository: ContentDTO, mocker):
         "A script named getAlert already exists in the repo.",
     )
 
+    # Ensure that the script-name-incident-to-alert ignore is working
     assert not str_in_call_args_list(
         logger_info.call_args_list,
         "A script named getAlerts already exists in the repo.",

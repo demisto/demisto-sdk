@@ -1,6 +1,7 @@
 import glob
 import os
 import shutil
+from configparser import ConfigParser
 from pathlib import Path
 from typing import Callable, List, Optional, Union
 
@@ -950,6 +951,61 @@ def test_get_ignore_pack_tests__ignore_missing_test(tmpdir, mocker):
         fake_pack_name, {fake_pack_name}, {}
     )
     assert len(ignore_test_set) == 0
+
+
+@pytest.mark.parametrize(
+    argnames="pack_ignore_content, expected_object",
+    argvalues=[
+        (
+            "[file:README.md]\nignore=RM106\n\n[known_words]\ntest1\ntest2\n\n[tests_require_network]\ntest",
+            ConfigParser(),
+        ),
+        (
+            "[known_words]\ntest1\ntest2\n\n[tests_require_network]\ntest",
+            ConfigParser(),
+        ),
+        (
+            "[file:README.md]\nignore=RM106\n\n[tests_require_network]\ntest",
+            ConfigParser(),
+        ),
+        (
+            "[file:README.md]\nignore=RM106\n\n[known_words]\ntest1\ntest2",
+            ConfigParser(),
+        ),
+        ("", ConfigParser()),
+        ("test", None),
+        ("test[dssa]sdf", None),
+    ],
+)
+def test_get_pack_ignore_content(pack: Pack, pack_ignore_content: str, expected_object):
+    """
+    Given
+    - Case a: full valid .pack-ignore content
+    - Case b: valid .pack-ignore content without validations sections
+    - Case c: valid .pack-ignore content without known words section
+    - Case d: valid .pack-ignore content without tests_require_network section
+    - Case e: empty .pack-ignore
+    - case f: invalid .pack-ignore file
+    - case g: another version of invalid .pack-ignore file
+
+    When
+    - executing get_pack_ignore_content function
+
+    Then:
+    - Case a: ConfigParser is returned
+    - Case b: ConfigParser is returned
+    - Case c: ConfigParser is returned
+    - Case d: ConfigParser is returned
+    - Case e: ConfigParser is returned
+    - case f: None is returned
+    - case g: None is returned
+
+    """
+    from demisto_sdk.commands.common.tools import get_pack_ignore_content
+
+    pack.pack_ignore.write_text(pack_ignore_content)
+    with ChangeCWD(pack.repo_path):
+        assert type(get_pack_ignore_content(pack.name)) is type(expected_object)
 
 
 @pytest.mark.parametrize(
@@ -2250,15 +2306,17 @@ class TestMarketplaceTagParser:
 ### Sections:
 {MARKETPLACE_TAG_PARSER.XSOAR_PREFIX} - XSOAR PARAGRAPH{MARKETPLACE_TAG_PARSER.XSOAR_SUFFIX}
 {MARKETPLACE_TAG_PARSER.XSIAM_PREFIX} - XSIAM PARAGRAPH{MARKETPLACE_TAG_PARSER.XSIAM_SUFFIX}
+{MARKETPLACE_TAG_PARSER.XPANSE_PREFIX} - XPANSE PARAGRAPH{MARKETPLACE_TAG_PARSER.XPANSE_SUFFIX}
 ### Inline:
 {MARKETPLACE_TAG_PARSER.XSOAR_INLINE_PREFIX}xsoar inline text{MARKETPLACE_TAG_PARSER.XSOAR_INLINE_SUFFIX}
-{MARKETPLACE_TAG_PARSER.XSIAM_INLINE_PREFIX}xsiam inline text{MARKETPLACE_TAG_PARSER.XSIAM_INLINE_SUFFIX}"""
+{MARKETPLACE_TAG_PARSER.XSIAM_INLINE_PREFIX}xsiam inline text{MARKETPLACE_TAG_PARSER.XSIAM_INLINE_SUFFIX}
+{MARKETPLACE_TAG_PARSER.XPANSE_INLINE_PREFIX}xpanse inline text{MARKETPLACE_TAG_PARSER.XPANSE_INLINE_SUFFIX}"""
 
     def test_invalid_marketplace_version(self):
         """
         Given:
             - Invalid marketplace version
-            - Text with XSOAR tags and XSIAM tags
+            - Text with XSOAR, XPANSE and XSIAM tags
         When:
             - Calling MarketplaceTagParser.parse_text()
         Then:
@@ -2270,10 +2328,13 @@ class TestMarketplaceTagParser:
         assert "### Inline:" in actual
         assert self.MARKETPLACE_TAG_PARSER.XSOAR_PREFIX not in actual
         assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XPANSE_PREFIX not in actual
         assert "XSOAR" not in actual
         assert "xsoar" not in actual
         assert "XSIAM" not in actual
         assert "xsiam" not in actual
+        assert "XPANSE" not in actual
+        assert "xpanse" not in actual
 
     def test_xsoar_marketplace_version(self):
         """
@@ -2283,7 +2344,7 @@ class TestMarketplaceTagParser:
         When:
             - Calling MarketplaceTagParser.parse_text()
         Then:
-            - Remove all XSIAM tags and their text, and keep XSOAR text with tags
+            - Remove all XSIAM and XPANSE tags and their text, and keep XSOAR text with tags
         """
         self.MARKETPLACE_TAG_PARSER.marketplace = MarketplaceVersions.XSOAR.value
         actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
@@ -2293,18 +2354,21 @@ class TestMarketplaceTagParser:
         assert "xsoar" in actual
         assert self.MARKETPLACE_TAG_PARSER.XSOAR_PREFIX not in actual
         assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XPANSE_PREFIX not in actual
         assert "XSIAM" not in actual
         assert "xsiam" not in actual
+        assert "XPANSE" not in actual
+        assert "xpanse" not in actual
 
     def test_xsiam_marketplace_version(self):
         """
         Given:
             - xsiam marketplace version
-            - Text with XSOAR tags and XSIAM tags
+            - Text with XSOAR, XPANSE and XSIAM tags
         When:
             - Calling MarketplaceTagParser.parse_text()
         Then:
-            - Remove all XSOAR tags and their text, and keep XSIAM text with tags
+            - Remove all XSOAR and XPANSE tags and their text, and keep XSIAM text with tags
         """
         self.MARKETPLACE_TAG_PARSER.marketplace = (
             MarketplaceVersions.MarketplaceV2.value
@@ -2314,10 +2378,37 @@ class TestMarketplaceTagParser:
         assert "### Inline:" in actual
         assert "XSOAR" not in actual
         assert "xsoar" not in actual
+        assert "XPANSE" not in actual
+        assert "xpanse" not in actual
         assert self.MARKETPLACE_TAG_PARSER.XSOAR_PREFIX not in actual
         assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XPANSE_PREFIX not in actual
         assert "XSIAM" in actual
         assert "xsiam" in actual
+
+    def test_xpanse_marketplace_version(self):
+        """
+        Given:
+            - xpanse marketplace version
+            - Text with XSOAR, XPANSE and XSIAM tags
+        When:
+            - Calling MarketplaceTagParser.parse_text()
+        Then:
+            - Remove all XSOAR and XSIAM tags and their text, and keep XPANSE text with tags
+        """
+        self.MARKETPLACE_TAG_PARSER.marketplace = MarketplaceVersions.XPANSE.value
+        actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
+        assert "### Sections:" in actual
+        assert "### Inline:" in actual
+        assert "XSOAR" not in actual
+        assert "xsoar" not in actual
+        assert "XSIAM" not in actual
+        assert "xsiam" not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSOAR_PREFIX not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XPANSE_PREFIX not in actual
+        assert "XPANSE" in actual
+        assert "xpanse" in actual
 
 
 @pytest.mark.parametrize(

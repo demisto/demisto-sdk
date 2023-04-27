@@ -37,6 +37,7 @@ from demisto_sdk.commands.common.tools import (
     find_type,
     get_api_module_ids,
     get_api_module_integrations_set,
+    get_content_path,
     get_display_name,
     get_from_version,
     get_json,
@@ -127,6 +128,8 @@ def get_deprecated_rn(path: str, file_type):
 
 
 class UpdateRN:
+    CONTENT_PATH = Path(get_content_path())  # type: ignore[arg-type]
+
     def __init__(
         self,
         pack_path: str,
@@ -153,7 +156,9 @@ class UpdateRN:
         self.modified_files_in_pack = set()
         for file_path in modified_files_in_pack:
             self.modified_files_in_pack.add(
-                self.change_image_or_desc_file_path(file_path)
+                self.change_image_or_desc_file_path(
+                    (self.CONTENT_PATH / file_path).as_posix()
+                )
             )
 
         self.added_files = added_files
@@ -217,8 +222,8 @@ class UpdateRN:
             The content of the rn
         """
         if self.existing_rn_version_path:
-            existing_rn_abs_path = Path(self.existing_rn_version_path).absolute()
-            rn_path_abs_path = Path(rn_path).absolute()
+            existing_rn_abs_path = self.CONTENT_PATH / self.existing_rn_version_path
+            rn_path_abs_path = self.CONTENT_PATH / rn_path
             self.should_delete_existing_rn = str(existing_rn_abs_path) != str(
                 rn_path_abs_path
             )
@@ -296,19 +301,6 @@ class UpdateRN:
                 self.write_metadata_to_file(new_metadata)
             self.create_markdown(rn_path, rn_string, changed_files)
             self.build_rn_config_file(new_version)
-            try:
-                run_command(f"git add {rn_path}", exit_on_error=False)
-            except RuntimeError:
-                logger.info(
-                    f"[yellow]Could not add the release note files to git: {rn_path}[/yellow]"
-                )
-            if self.is_bc and self.bc_path:
-                try:
-                    run_command(f"git add {self.bc_path}", exit_on_error=False)
-                except RuntimeError:
-                    logger.info(
-                        f"[yellow]Could not add the release note config file to git: {rn_path}[/yellow]"
-                    )
             if self.existing_rn_changed:
                 logger.info(
                     f"[green]Finished updating release notes for {self.pack}.[/green]"
@@ -421,10 +413,10 @@ class UpdateRN:
         master_metadata = None
         try:
             master_metadata = get_remote_file(self.metadata_path, tag=self.main_branch)
-        except Exception as e:
-            logger.info(
-                f"[red]master branch is unreachable.\n The reason is:{e} \n "
-                f"The updated version will be taken from local metadata file instead of master[/red]"
+        except Exception:
+            logger.exception(
+                f"[red]Failed fetching {self.metadata_path} from remote master branch."
+                "Using the local version (if exists), instead[/red]",
             )
         if master_metadata:
             master_current_version = master_metadata.get("currentVersion", "0.0.0")
@@ -641,6 +633,10 @@ class UpdateRN:
                 logger.info(
                     f"[green]Updated pack metadata version at path : {self.metadata_path}[/green]"
                 )
+            try:
+                run_command(f"git add {self.metadata_path}", exit_on_error=False)
+            except RuntimeError:
+                logger.error(f"[red]Failed git-adding {self.metadata_path}[/red]")
 
     @staticmethod
     def check_rn_dir(rn_path: str):

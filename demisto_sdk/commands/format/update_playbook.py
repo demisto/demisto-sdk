@@ -5,7 +5,11 @@ from typing import Tuple
 
 from git import InvalidGitRepositoryError
 
-from demisto_sdk.commands.common.constants import PLAYBOOK, FileType
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION,
+    PLAYBOOK,
+    FileType,
+)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.tools import (
     find_type,
@@ -102,7 +106,10 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
 
     def run_format(self) -> int:
         self.update_playbook_usages()
-        super().update_yml(file_type=PLAYBOOK)
+        super().update_yml(
+            default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION[FileType.PLAYBOOK],
+            file_type=PLAYBOOK,
+        )
         self.add_description()
         self.update_task_uuid()
         self.save_yml_to_destination_file()

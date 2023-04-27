@@ -42,13 +42,13 @@ def test_docker_images_to_supported_native_images(native_image_config):
     - make sure each docker image is getting mapped correctly
     """
     assert native_image_config.docker_images_to_native_images_mapping == {
-        "python3": ["native:8.1", "native:8.2", "native:dev"],
-        "py3-tools": ["native:8.1", "native:8.2", "native:dev"],
+        "python3": ["native:8.1", "native:8.2", "native:dev", "native:candidate"],
+        "py3-tools": ["native:8.1", "native:8.2", "native:dev", "native:candidate"],
         "unzip": ["native:8.1", "native:8.2", "native:dev"],
-        "chromium": ["native:8.1", "native:8.2", "native:dev"],
+        "chromium": ["native:8.1", "native:8.2", "native:dev", "native:candidate"],
         "tesseract": ["native:8.1", "native:8.2", "native:dev"],
         "pan-os-python": ["native:8.2"],
-        "tld": ["native:8.1", "native:dev"],
+        "tld": ["native:8.1", "native:dev", "native:candidate"],
     }
 
 
@@ -93,9 +93,10 @@ class TestScriptIntegrationSupportedNativeImages:
             (
                 "Prisma Cloud Compute",
                 "demisto/python3:3.10.1.25933",
-                ["8.1", "8.2"],
+                ["8.1", "8.2", "candidate"],
             ),
             ("SSDeepSimilarity", "demisto/ssdeep:1.0.0.23743", []),
+            ("TimeComponents", "demisto/python3:3.10.1.25933", ["8.1", "8.2"]),
         ],
     )
     def test_get_supported_native_image_versions(
@@ -110,8 +111,9 @@ class TestScriptIntegrationSupportedNativeImages:
         - Case A: a script that its docker-image is supported in 8.1 and 8.2, but should be ignored in 8.1.
         - Case B: an integration that its docker-image is supported only in 8.2, but should also be ignored in 8.2
         - Case C: an integration that its docker-image is supported in 8.1 and 8.2, but should be ignored in both.
-        - Case D: an integration that its docker image is supported in 8.1 and 8.2 and should not be ignored.
+        - Case D: an integration that its docker image is supported in 8.1, 8.2 and candidate and should not be ignored.
         - Case E: an integration that its docker image is not supported in any native image.
+        - Case F: an integration not supported only by candidate.
 
         When
         - getting the supported native images

@@ -1,7 +1,6 @@
+import logging
 import traceback
 from typing import Tuple
-
-import click
 
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION,
@@ -16,6 +15,8 @@ from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 MIN_FROM_VERSION_LISTS = "6.5.0"
 
+logger = logging.getLogger("demisto-sdk")
+
 
 class ListsFormat(BaseUpdateJSON):
     def __init__(
@@ -25,7 +26,6 @@ class ListsFormat(BaseUpdateJSON):
         path: str = "list",
         from_version: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
         **kwargs,
     ):
         super().__init__(
@@ -34,7 +34,6 @@ class ListsFormat(BaseUpdateJSON):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            verbose=verbose,
             **kwargs,
         )
 
@@ -48,9 +47,7 @@ class ListsFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n======= Updating file: {self.source_file} =======", fg="white"
-            )
+            logger.info(f"\n======= Updating file: {self.source_file} =======")
             super().update_json(
                 default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.LISTS)
             )
@@ -64,9 +61,7 @@ class ListsFormat(BaseUpdateJSON):
                     )
                 )
             )
-            if self.verbose:
-                click.secho(
-                    f"\nFailed to update file {self.source_file}. Error: {err}",
-                    fg="red",
-                )
+            logger.debug(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE

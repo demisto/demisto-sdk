@@ -20,7 +20,7 @@ import requests
 import urllib3
 from demisto_client.demisto_api import DefaultApi, Incident
 from demisto_client.demisto_api.rest import ApiException
-from slack import WebClient as SlackClient
+from slack_sdk import WebClient as SlackClient
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -1820,7 +1820,7 @@ class TestContext:
         try:
             state = investigation_playbook["state"]
             return state
-        except Exception:  # noqa: E722
+        except Exception:
             # setting state to `in progress` in XSIAM build,
             # Because `investigation_playbook` returned empty if xsiam investigation is still in progress.
             if IS_XSIAM:

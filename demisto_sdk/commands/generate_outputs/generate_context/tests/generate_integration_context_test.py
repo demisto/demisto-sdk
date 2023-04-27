@@ -192,7 +192,7 @@ def test_generate_integration_context(mocker, tmpdir):
         raise AssertionError(f"command {command_name} is not found in yml_data")
 
     generate_integration_context.generate_integration_context(
-        filename, FAKE_EXAMPLES_FILE, verbose=False
+        filename, FAKE_EXAMPLES_FILE
     )
 
     # Check we have new data

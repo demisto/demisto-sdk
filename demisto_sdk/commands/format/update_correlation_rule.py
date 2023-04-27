@@ -9,7 +9,6 @@ class CorrelationRuleYMLFormat(BaseUpdateYML):
         path: str = "",
         from_version: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
         **kwargs,
     ):
         super().__init__(
@@ -18,7 +17,6 @@ class CorrelationRuleYMLFormat(BaseUpdateYML):
             path=path,
             from_version=from_version,
             no_validate=no_validate,
-            verbose=verbose,
             **kwargs,
         )
         if isinstance(self.data, list) and len(self.data) == 1:

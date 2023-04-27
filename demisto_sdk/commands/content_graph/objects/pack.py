@@ -234,6 +234,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
         self.content_items = PackContentItems(**content_item_dct)
 
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
+        self.server_min_version = self.server_min_version or MARKETPLACE_MIN_VERSION
         self.enhance_pack_properties(marketplace)
 
         excluded_fields_from_metadata = {

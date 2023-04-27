@@ -24,7 +24,6 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.scheme_name = namedtuple("scheme_name", "value")(value="genericfield")
         structure.checked_files = set()
         structure.ignored_errors = dict()
-        structure.suppress_print = True
         structure.json_file_path = None
         structure.specific_validations = None
         structure.predefined_deprecated_ignored_errors = {}

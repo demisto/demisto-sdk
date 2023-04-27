@@ -108,7 +108,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
     ]
 
     header_params = {
-        "Accept": "application/json",  # noqa: E501
+        "Accept": "application/json",
         "Accept-Encoding": "gzip, deflate, br",
         "Content-Type": "application/json",
     }

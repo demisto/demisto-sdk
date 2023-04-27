@@ -1,6 +1,5 @@
+import logging
 from typing import Optional, Tuple
-
-import click
 
 from demisto_sdk.commands.common.hook_validations.readme import (
     ReadmeUrl,
@@ -8,13 +7,14 @@ from demisto_sdk.commands.common.hook_validations.readme import (
     mdx_server_is_up,
 )
 from demisto_sdk.commands.common.markdown_lint import run_markdownlint
-from demisto_sdk.commands.common.tools import print_error, print_warning
 from demisto_sdk.commands.format.format_constants import (
     ERROR_RETURN_CODE,
     SKIP_RETURN_CODE,
     SUCCESS_RETURN_CODE,
 )
 from demisto_sdk.commands.format.update_generic import BaseUpdate
+
+logger = logging.getLogger("demisto-sdk")
 
 
 class ReadmeFormat(BaseUpdate):
@@ -32,7 +32,6 @@ class ReadmeFormat(BaseUpdate):
         output: str = "",
         path: str = "",
         no_validate: bool = False,
-        verbose: bool = False,
         **kwargs,
     ):
         super().__init__(
@@ -40,7 +39,6 @@ class ReadmeFormat(BaseUpdate):
             output=output,
             path=path,
             no_validate=no_validate,
-            verbose=verbose,
             **kwargs,
         )
         with open(self.source_file) as f:
@@ -52,7 +50,7 @@ class ReadmeFormat(BaseUpdate):
         old_link = relative_url.get_full_link()
         new_link = relative_url.get_new_link(new_url)
         self.readme_content = str.replace(self.readme_content, old_link, new_link)
-        click.secho(f"Replaced {relative_url.get_url()} with {new_url}")
+        logger.info(f"Replaced {relative_url.get_url()} with {new_url}")
 
     def get_new_url_from_user(self, readme_url: ReadmeUrl) -> Optional[str]:
         """Given we found a relative url, the user has the following options-
@@ -71,18 +69,16 @@ class ReadmeFormat(BaseUpdate):
         if self.assume_yes:
             return f"https://{old_url}"
         else:
-            click.secho(
-                f"Should https:// be added to the following address? [Y/n]\n {readme_url.get_url()}",
-                fg="red",
+            logger.info(
+                f"[red]Should https:// be added to the following address? [Y/n]\n {readme_url.get_url()}[/red]"
             )
             user_answer = input()
             if user_answer.lower()[0] == "y":
                 new_address = f"https://{old_url}"
             else:
-                click.secho(
-                    "Would you like to change the relative address to something else?\n"
-                    " Enter the new address or leave empty to skip:",
-                    fg="red",
+                logger.info(
+                    "[red]Would you like to change the relative address to something else?\n"
+                    " Enter the new address or leave empty to skip:[/red]"
                 )
                 user_answer = input()
                 if user_answer and user_answer.lower() not in ["n", "no"]:
@@ -100,9 +96,8 @@ class ReadmeFormat(BaseUpdate):
         relative_urls = get_relative_urls(self.readme_content)
 
         if relative_urls:
-            click.secho(
-                "Relative urls were found and are not supported within README.",
-                fg="red",
+            logger.info(
+                "[red]Relative urls were found and are not supported within README.[/red]"
             )
         for url in relative_urls:
             new_address = self.get_new_url_from_user(url)
@@ -111,26 +106,25 @@ class ReadmeFormat(BaseUpdate):
 
     def save_md_to_destination_file(self):
         """Safely saves formatted data to destination file."""
-        if self.source_file != self.output_file and self.verbose:
-            click.secho(
-                f"Saving output description file to {self.output_file} \n", fg="white"
-            )
+        if self.source_file != self.output_file:
+            logger.debug(f"Saving output description file to {self.output_file} \n")
         with open(self.output_file, "w") as f:
             f.write(self.readme_content)
         f.close()
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f"\n================= Updating file {self.source_file} ================= ",
-                fg="bright_blue",
+            logger.info(
+                f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             self.relative_url_format()
             self.fix_lint_markdown()
             self.save_md_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            print_error(f"\nFailed to update file {self.source_file}. Error: {err}")
+            logger.info(
+                f"\n[red]Failed to update file {self.source_file}. Error: {err}[/red]"
+            )
             return ERROR_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:
@@ -151,14 +145,14 @@ class ReadmeFormat(BaseUpdate):
                     fix=True,
                 )
                 if response.validations:
-                    print_warning(
-                        f"Markdown lint was not able to fix the following "
-                        f"markdown validations for file {self.source_file}.\n{response.validations}"
+                    logger.info(
+                        f"[yellow]Markdown lint was not able to fix the following "
+                        f"markdown validations for file {self.source_file}.\n{response.validations}[/yellow]"
                     )
                 if response.fixed_text and response.fixed_text != self.readme_content:
-                    click.secho(f"Received markdown fixes for file {self.source_file}")
+                    logger.info(f"Received markdown fixes for file {self.source_file}")
                     self.readme_content = response.fixed_text
             else:
-                click.secho(f"Markdownlint skipping {self.source_file} with no content")
+                logger.info(f"Markdownlint skipping {self.source_file} with no content")
         else:
-            click.secho("Skipping markdownlint as node server is not up")
+            logger.info("Skipping markdownlint as node server is not up")

@@ -104,6 +104,7 @@ The SDK assumes the following playbooks as type TestPlaybook:
 * Incident Types
 * Layouts
 * Classifiers
+* Lists
 
 ### Not Supported
 Integrations / Scripts written in JavaScript.

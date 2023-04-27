@@ -676,6 +676,74 @@ def test_rearranging_before_conversion(zip_path: str, expected_directories: set)
     assert expected_directories == results
 
 
+@pytest.mark.parametrize(
+    "input_script, output_version",
+    [
+        (
+            "This is a test script\n the script contains a pack version\n ### pack version: 3.4.5  TEST TEST",
+            "3.4.5",
+        ),
+        (
+            "This is a test script\n the script does not contain a pack version\n ### TEST TEST",
+            "0.0.0",
+        ),
+        (
+            "This is a test js script\n the script does not contain a pack version\n // pack version: 3.4.5 TEST TEST",
+            "3.4.5",
+        ),
+        ("", "0.0.0"),
+    ],
+)
+def test_extract_pack_version(input_script: str, output_version: str):
+    """
+    Given:
+    - A text with/without the pack version in it.
+
+    When:
+    - Running extract_pack_version function.
+
+    Then:
+    - Ensure that pack version was extracted correctly.
+
+    """
+    contribution_converter = ContributionConverter()
+    assert contribution_converter.extract_pack_version(input_script) == output_version
+
+
+def test_create_contribution_items_version_note():
+    contribution_converter = ContributionConverter()
+    contribution_converter.contribution_items_version = {
+        "CortexXDRIR": {"contribution_version": "1.2.2", "latest_version": "1.2.4"},
+        "XDRScript": {"contribution_version": "1.2.2", "latest_version": "1.2.4"},
+    }
+    contribution_converter.create_contribution_items_version_note()
+    assert (
+        contribution_converter.contribution_items_version_note
+        == """> **Warning**
+> The changes in the contributed files were not made on the most updated pack versions
+> | **Item Name** | **Contribution Pack Version** | **Latest Pack Version**
+> | --------- | ------------------------- | -------------------
+> | CortexXDRIR | 1.2.2 | 1.2.4
+> | XDRScript | 1.2.2 | 1.2.4
+>
+> **For the Reviewer:**
+> 1. Compare the code of this PR with the latest version of the pack. Make sure you understand the changes the contributor intended to contribute, and **solve the conflicts accordingly**.
+> 2. In case improvements are needed, instruct the contributor to edit the code through the **GitHub Codespaces** and **Not through the XSOAR UI**.
+>
+> **For the Contributor:**
+ @
+> In case you are requested by your reviewer to improve the code or to make changes, submit them through the **GitHub Codespaces** and **Not through the XSOAR UI**.
+>
+> **To use the GitHub Codespaces, do the following:**
+> 1. Click the **'Code'** button in the right upper corner of this PR.
+> 2. Click **'Create codespace on Transformers'**.
+> 3. Click **'Authorize and continue'**.
+> 4. Wait until your Codespace environment is generated. When it is, you can edit your code.
+> 5. Commit and push your changes to the head branch of the PR.
+"""
+    )
+
+
 @pytest.mark.parametrize("contribution_converter", ["TestPack"], indirect=True)
 class TestEnsureUniquePackDirName:
     def test_ensure_unique_pack_dir_name_no_conflict(self, contribution_converter):

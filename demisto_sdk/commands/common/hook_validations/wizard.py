@@ -20,14 +20,12 @@ class WizardValidator(ContentEntityValidator):
         self,
         structure_validator,
         ignored_errors=False,
-        print_as_warnings=False,
         json_file_path=None,
         **kwargs,
     ):
         super().__init__(
             structure_validator,
             ignored_errors,
-            print_as_warnings,
             json_file_path=json_file_path,
             oldest_supported_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(
                 FileType.WIZARD

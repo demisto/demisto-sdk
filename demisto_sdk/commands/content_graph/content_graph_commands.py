@@ -70,9 +70,11 @@ def update_content_graph(
         packs_to_update = []
     if os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE"):
         logger.info("DEMISTO_SDK_GRAPH_FORCE_CREATE is set. Will create a new graph")
-        create_content_graph(content_graph_interface, marketplace, dependencies, output_path)
+        create_content_graph(
+            content_graph_interface, marketplace, dependencies, output_path
+        )
         return
-    
+
     builder = ContentGraphBuilder(content_graph_interface)
     if not use_current:
         content_graph_interface.clean_import_dir()

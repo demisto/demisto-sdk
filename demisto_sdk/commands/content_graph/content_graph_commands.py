@@ -102,42 +102,6 @@ def update_content_graph(
     )
 
 
-def _download_and_update_graph(
-    content_graph_interface: ContentGraphInterface,
-    builder: ContentGraphBuilder,
-    use_git: bool = False,
-    imported_path: Optional[Path] = None,
-    use_current: bool = False,
-    packs_to_update: Optional[List[str]] = None,
-):
-    """This function downloads the graph from the bucket, determines the packs to update and updates the graph.
-    Args:
-        content_graph_interface (ContentGraphInterface): The content graph interface.
-        builder (ContentGraphBuilder): The content graph builder.
-        use_git (bool): Whether to use git to get the packs to update.
-        imported_path (Path): The path to the imported graph.
-        use_current (bool): Whether to use the current graph.
-        packs_to_update (List[str]): The packs to update.
-    """
-    if packs_to_update is None:
-        packs_to_update = []
-
-    if not use_current:
-        content_graph_interface.clean_import_dir()
-        if not imported_path:
-            # getting the graph from remote, so we need to clean the import dir
-            extract_remote_import_files(content_graph_interface, builder)
-
-    if use_git and (commit := content_graph_interface.commit):
-        packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
-
-    content_graph_interface.import_graph(imported_path)
-
-    packs_str = "\n".join([f"- {p}" for p in packs_to_update])
-    logger.info(f"Updating the following packs:\n{packs_str}")
-    builder.update_graph(packs_to_update)
-
-
 def extract_remote_import_files(
     content_graph_interface: ContentGraphInterface, builder: ContentGraphBuilder
 ) -> None:

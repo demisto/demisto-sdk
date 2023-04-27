@@ -67,8 +67,8 @@ def update_content_graph(
         output_path (Path): The path to export the graph zip to.
     """
     builder = ContentGraphBuilder(content_graph_interface)
-    if os.getenv("DEMISTO_SDK_CREATE_GRAPH"):
-        logger.info("DEMISTO_SDK_CREATE_GRAPH is set. Will create a new graph")
+    if os.getenv("DEMISTO_SDK_FORCE_CREATE_GRAPH"):
+        logger.info("DEMISTO_SDK_FORCE_CREATE_GRAPH is set. Will create a new graph")
         builder.create_graph()
     else:
         _download_and_update_graph(

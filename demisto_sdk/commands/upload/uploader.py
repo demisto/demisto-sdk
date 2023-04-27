@@ -6,7 +6,6 @@ import logging
 import os
 import zipfile
 from pathlib import Path
-from tempfile import TemporaryDirectory
 from typing import Iterable, List, Optional, Tuple, Union
 
 import demisto_client
@@ -130,12 +129,14 @@ class Uploader:
         )  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
         self.client = demisto_client.configure(verify_ssl=verify)
 
-        self.successfully_uploaded: List[Union[ContentItem, Pack]] = []
-        self.successfully_uploaded_zipped_packs: List[str] = []
+        self._successfully_uploaded_content_items: List[Union[ContentItem, Pack]] = []
+        self._successfully_uploaded_zipped_packs: List[str] = []
 
-        self.failed_upload: List[Tuple[Union[ContentItem, Pack], str]] = []
-        self.failed_upload_version_mismatch: List[ContentItem] = []
-        self.failed_upload_zipped_packs: List[str] = []
+        self._failed_upload_content_items: List[
+            Tuple[Union[ContentItem, Pack], str]
+        ] = []
+        self._failed_upload_version_mismatch: List[ContentItem] = []
+        self._failed_upload_zipped_packs: List[str] = []
         self.failed_parsing: List[Tuple[Path, str]] = []
 
         self.demisto_version = get_demisto_version(self.client)
@@ -146,29 +147,22 @@ class Uploader:
         self.override_existing = override_existing
         self.marketplace = marketplace
 
-    def _upload_zipped(self, path: Path, marketplace: MarketplaceVersions) -> bool:
+    def _upload_zipped(self, path: Path) -> bool:
         """
         Upload a zipped pack to the remote Cortex XSOAR instance.
         Args:
             path (Path): The path of the zipped pack to upload.
-            marketplace (MarketplaceVersions): The marketplace version to upload to.
         Returns:
             bool: True if the upload was successful, False otherwise.
         """
 
         def _parse_internal_pack_names(zip_path: Path) -> Iterable[str]:
             # returns the names of first-level folders under the zip, each represents a pack
-            try:
-                with TemporaryDirectory() as temp_dir:
-                    zipfile.ZipFile(zip_path).extractall(temp_dir)
-                    yield from (
-                        str(item) for item in Path(temp_dir).iterdir() if item.is_dir()
-                    )
-            except Exception:
-                logger.warning(
-                    f"could not extract pack names from {zip_path}", exc_info=True
-                )
-                yield str(zip_path)
+            return tuple(
+                item[:-4]
+                for item in zipfile.ZipFile(zip_path).namelist()
+                if item.endswith(".zip")
+            )
 
         pack_names = _parse_internal_pack_names(path)
 
@@ -177,15 +171,15 @@ class Uploader:
                 path=path,
                 client=self.client,
                 target_demisto_version=Version(str(self.demisto_version)),
-                marketplace=marketplace,
+                marketplace=self.marketplace,
                 skip_validations=True,  # TODO
             ):
-                self.successfully_uploaded_zipped_packs.extend(pack_names)
+                self._successfully_uploaded_zipped_packs.extend(pack_names)
                 return True
 
         except Exception:
             logger.exception(f"Failed uploading {pack_names}")
-            self.failed_upload_zipped_packs.extend(pack_names)
+            self._failed_upload_zipped_packs.extend(pack_names)
 
         return False
 
@@ -221,13 +215,7 @@ class Uploader:
 
         try:
             if self.path.suffix == ".zip":
-                success = upload_zipped_pack(
-                    path=self.path,
-                    client=self.client,
-                    target_demisto_version=Version(str(self.demisto_version)),
-                    skip_validations=True,  # TODO skip_validations
-                    marketplace=self.marketplace,
-                )
+                success = self._upload_zipped(self.path)
             elif self.path.is_dir() and is_uploadable_dir(self.path):
                 success = self._upload_entity_dir(self.path)
             else:
@@ -237,11 +225,11 @@ class Uploader:
 
         if self.failed_parsing and not any(
             (
-                self.successfully_uploaded,
-                self.successfully_uploaded_zipped_packs,
-                self.failed_upload,
-                self.failed_upload_version_mismatch,
-                self.failed_upload_zipped_packs,
+                self._successfully_uploaded_content_items,
+                self._successfully_uploaded_zipped_packs,
+                self._failed_upload_content_items,
+                self._failed_upload_version_mismatch,
+                self._failed_upload_zipped_packs,
             )
         ):
             # Nothing was uploaded, nor collected as error
@@ -299,7 +287,7 @@ class Uploader:
                 else (content_item,)
             )
 
-            self.successfully_uploaded.extend(uploaded_succesfully)
+            self._successfully_uploaded_content_items.extend(uploaded_succesfully)
             for item_uploaded_successfully in uploaded_succesfully:
                 logger.debug(
                     f"Uploaded {item_uploaded_successfully.content_type} {item_uploaded_successfully.normalize_name} successfully"
@@ -314,19 +302,19 @@ class Uploader:
             assert isinstance(
                 content_item, ContentItem
             ), "Cannot compare version for Pack items, only ContentItems"
-            self.failed_upload_version_mismatch.append(content_item)
+            self._failed_upload_version_mismatch.append(content_item)
             return False
 
         except ApiException as e:
             message = f"unknown: {e}"
             with contextlib.suppress(Exception):
                 message = parse_error_response(e)
-            self.failed_upload.append((content_item, message))
+            self._failed_upload_content_items.append((content_item, message))
             return False
 
         except (FailedUploadException, NotUploadableException, Exception) as e:
             logger.error(str(e))
-            self.failed_upload.append((content_item, str(e)))
+            self._failed_upload_content_items.append((content_item, str(e)))
             return False
 
     def _upload_entity_dir(self, path: Path) -> bool:
@@ -374,7 +362,7 @@ class Uploader:
         response = self.client.generic_request(
             "/contentpacks/metadata/installed", "GET"
         )
-        if installed_packs := eval(response[0]):
+        if installed_packs := eval(response[0]):  # TODO json loads
             installed_packs = {pack["name"] for pack in installed_packs}
             if common_packs := installed_packs.intersection(self.pack_names):
                 pack_names = "\n".join(common_packs)
@@ -401,17 +389,20 @@ class Uploader:
         """
         logger.info("UPLOAD SUMMARY:\n")
 
-        if self.successfully_uploaded:
+        if (
+            self._successfully_uploaded_content_items
+            or self._successfully_uploaded_zipped_packs
+        ):
             uploaded_str = tabulate(
                 (
                     itertools.chain(
                         (
                             (item.path.name, item.content_type)
-                            for item in self.successfully_uploaded
+                            for item in self._successfully_uploaded_content_items
                         ),
                         (
                             (item, "Pack")
-                            for item in self.successfully_uploaded_zipped_packs
+                            for item in self._successfully_uploaded_zipped_packs
                         ),
                     )
                 ),
@@ -421,7 +412,7 @@ class Uploader:
 
             logger.info(f"[green]SUCCESSFUL UPLOADS:\n{uploaded_str}\n[/green]")
 
-        if self.failed_upload_version_mismatch:
+        if self._failed_upload_version_mismatch:
             version_mismatch_str = tabulate(
                 (
                     (
@@ -431,7 +422,7 @@ class Uploader:
                         item.fromversion,
                         item.toversion,
                     )
-                    for item in self.failed_upload_version_mismatch
+                    for item in self._failed_upload_version_mismatch
                 ),
                 headers=[
                     "NAME",
@@ -453,18 +444,19 @@ class Uploader:
                 tablefmt="fancy_grid",
             )
             logger.info(f"[red]FAILED PARSING CONTENT:\n{failed_parsing_str}[/red]")
-        if self.failed_upload:
+
+        if self._failed_upload_content_items or self._failed_upload_zipped_packs:
             failed_upload_str = tabulate(
                 (
                     itertools.chain(
                         (
                             (item.path.name, item.content_type, error)
-                            for item, error in self.failed_upload
+                            for item, error in self._failed_upload_content_items
                         ),
                         (
                             (
                                 (item, "Pack", "see logs above")
-                                for item in self.failed_upload_zipped_packs
+                                for item in self._failed_upload_zipped_packs
                             )
                         ),
                     )

@@ -136,12 +136,13 @@ def test_zipped_pack_upload_positive(repo, mocker, demisto_client_mock):
     assert result.exit_code == SUCCESS_RETURN_CODE
     assert logged[-1] == "\n".join(
         (
-            "SUCCESSFUL UPLOADS:",
+            "[green]SUCCESSFUL UPLOADS:",
             "╒═══════════╤════════╕",
             "│ NAME      │ TYPE   │",
             "╞═══════════╪════════╡",
-            "│ test-pack │ pack   │",
+            "│ test-pack │ Pack   │",
             "╘═══════════╧════════╛",
+            "[/green]",
         )
     )
 

@@ -137,7 +137,7 @@ def test_upload_folder(
         assert (
             uploader.upload() == SUCCESS_RETURN_CODE
         ), f"failed uploading {'/'.join(path.parts[-2:])}"
-    assert len(uploader.successfully_uploaded) == item_count
+    assert len(uploader._successfully_uploaded_content_items) == item_count
     assert mock_upload.call_count == item_count
 
 
@@ -221,7 +221,7 @@ def test_upload_single_positive(mocker, path: str, content_class: ContentItem):
     # run
     uploader.upload()
 
-    assert len(uploader.successfully_uploaded) == 1
+    assert len(uploader._successfully_uploaded_content_items) == 1
     assert mocked_client_upload_method.called_once()
 
 
@@ -388,7 +388,8 @@ def test_upload_pack(demisto_client_configure, mocker):
     ]
     assert uploader.upload() == SUCCESS_RETURN_CODE
     assert {
-        content_item.path.name for content_item in uploader.successfully_uploaded
+        content_item.path.name
+        for content_item in uploader._successfully_uploaded_content_items
     } == set(expected_entities)
     assert mocked_upload_method.call_count == len(expected_entities)
     assert uploader.failed_parsing == [  # TODO
@@ -408,8 +409,8 @@ def test_upload_invalid_path(mocker):
     assert not any(
         (
             uploader.failed_parsing,
-            uploader.failed_upload,
-            uploader.failed_upload_version_mismatch,
+            uploader._failed_upload_content_items,
+            uploader._failed_upload_version_mismatch,
         )
     )
     assert flatten_call_args(logger_error.call_args_list) == (
@@ -508,7 +509,7 @@ class TestPrintSummary:
         mock_api_client(mocker)
 
         uploader = Uploader(None)
-        uploader.successfully_uploaded = [DUMMY_SCRIPT_OBJECT]
+        uploader._successfully_uploaded_content_items = [DUMMY_SCRIPT_OBJECT]
         uploader.print_summary()
 
         logged = flatten_call_args(logger_info.call_args_list)
@@ -542,7 +543,7 @@ class TestPrintSummary:
         mock_api_client(mocker)
 
         uploader = Uploader(None)
-        uploader.failed_upload = [(DUMMY_SCRIPT_OBJECT, "Some Error")]
+        uploader._failed_upload_content_items = [(DUMMY_SCRIPT_OBJECT, "Some Error")]
         uploader.print_summary()
 
         assert logger_info.call_count == 2
@@ -585,7 +586,7 @@ class TestPrintSummary:
         uploader = Uploader(path)
         assert uploader.demisto_version == Version("6.0.0")
         assert uploader.upload() == ERROR_RETURN_CODE
-        assert uploader.failed_upload_version_mismatch == [BaseContent.from_path(path)]
+        assert uploader._failed_upload_version_mismatch == [BaseContent.from_path(path)]
 
         logged = flatten_call_args(logger_info.call_args_list)
         assert len(logged) == 3
@@ -681,8 +682,8 @@ class TestZippedPackUpload:
             in enable_verification_call_args["config_keys_to_delete"]
         )
         assert API_CLIENT.upload_content_packs.call_args[1]["file"] == path
-        assert len(uploader.successfully_uploaded) == 1
-        assert uploader.successfully_uploaded[0].path == path
+        assert len(uploader._successfully_uploaded_content_items) == 1
+        assert uploader._successfully_uploaded_content_items[0].path == path
 
     def test_server_config_after_upload(self, mocker):
         """

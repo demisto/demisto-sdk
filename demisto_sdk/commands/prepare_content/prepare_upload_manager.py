@@ -70,5 +70,7 @@ class PrepareUploadManager:
         with output.open("w") as f:
             content_item.handler.dump(data, f)
 
-        logger.info(f"[green]Output saved in: {str(output.absolute())}[/green]")
+        logger.info(
+            f"[green]Output saved in: {str(output.absolute())}[/green]"
+        )  # TODO silence?
         return output

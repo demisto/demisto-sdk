@@ -66,19 +66,29 @@ def update_content_graph(
         dependencies (bool): Whether to create the dependencies.
         output_path (Path): The path to export the graph zip to.
     """
+    if packs_to_update is None:
+        packs_to_update = []
+    if os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE"):
+        logger.info("DEMISTO_SDK_GRAPH_FORCE_CREATE is set. Will create a new graph")
+        create_content_graph(content_graph_interface, marketplace, dependencies, output_path)
+        return
+    
     builder = ContentGraphBuilder(content_graph_interface)
-    if os.getenv("DEMISTO_SDK_CREATE_GRAPH"):
-        logger.info("DEMISTO_SDK_CREATE_GRAPH is set. Will create a new graph")
-        builder.create_graph()
-    else:
-        _download_and_update_graph(
-            content_graph_interface,
-            builder,
-            use_git,
-            imported_path,
-            use_current,
-            packs_to_update,
-        )
+    if not use_current:
+        content_graph_interface.clean_import_dir()
+        if not imported_path:
+            # getting the graph from remote, so we need to clean the import dir
+            extract_remote_import_files(content_graph_interface, builder)
+
+    if use_git and (commit := content_graph_interface.commit):
+        packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
+
+    content_graph_interface.import_graph(imported_path)
+
+    packs_str = "\n".join([f"- {p}" for p in packs_to_update])
+    logger.info(f"Updating the following packs:\n{packs_str}")
+    builder.update_graph(packs_to_update)
+
     if dependencies:
         content_graph_interface.create_pack_dependencies()
     if output_path:

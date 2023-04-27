@@ -387,9 +387,9 @@ class Downloader:
                 if extracted_file:
                     string_to_write = extracted_file.read().decode("utf-8")
                     if (
-                        "automation-" in member.name.lower()
-                        or "integration-" in member.name.lower()
-                        or "layout-" in member.name.lower()
+                        member.name.lower().startswith("playbook-")
+                        or member.name.lower().startswith("integration-")
+                        or member.name.lower().startswith("layout-")
                     ):
                         scripts_id_name = self.map_script(
                             string_to_write, scripts_id_name

@@ -3541,6 +3541,9 @@ def replace_incident_to_alerts(value: str) -> str:
         'INCIDENT': 'ALERT',
         'INCIDENTS': 'ALERTS'
     }
+    if not isinstance(value, str):
+        return value
+
     new_value = value
     for pattern, replace_with in TABLE_INCIDENT_TO_ALERT.items():
         new_value = re.sub(pattern, replace_with, new_value)
@@ -3548,6 +3551,10 @@ def replace_incident_to_alerts(value: str) -> str:
 
 
 def replace_alert_to_incident(value: str) -> str:
+
+    if not isinstance(value, str):
+        return value
+
     TABLE_ALERT_TO_INCIDENT = {v: k for k, v in TABLE_INCIDENT_TO_ALERT.items()}
     new_value = value
     for pattern, replace_with in TABLE_ALERT_TO_INCIDENT.items():

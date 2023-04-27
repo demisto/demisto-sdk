@@ -341,21 +341,6 @@ class Uploader:
 
         return all(self._upload_single(item) for item in to_upload)
 
-    def _upload_from_zip(self, path: Path) -> bool:
-        """
-        Uploads a zip containing pack folders
-
-        """
-        ...
-        # success = True
-        # with tempfile.TemporaryDirectory() as dir: # TODO
-        #     zipfile.ZipFile(path).extractall(dir)
-
-        #     for pack_folder in filter(lambda x: x.is_dir(), Path(dir).iterdir()):
-        #         if not self._upload_single(pack_folder, zipped=True):
-        #             success = False
-        # return success
-
     def notify_user_should_override_packs(self):  # TODO is used?
         """Notify the user about possible overridden packs."""
 

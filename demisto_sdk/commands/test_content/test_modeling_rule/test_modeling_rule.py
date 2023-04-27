@@ -482,14 +482,14 @@ def validate_modeling_rule(
                     f"[yellow]Skipping test data file generation for {mrule_dir}[/yellow]",
                     extra={"markup": True},
                 )
-                logger.warning(
+                logger.error(
                     f"[yellow]Please create a test data file for {mrule_dir} and then rerun,[/yellow]",
                     extra={"markup": True},
                 )
                 printr(execd_cmd)
                 raise typer.Abort()
         else:
-            logger.warning(
+            logger.error(
                 f"[yellow]Please create a test data file for {mrule_dir} and then rerun,[/yellow]",
                 extra={"markup": True},
             )

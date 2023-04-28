@@ -121,8 +121,8 @@ class PackContentItems(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
-        orm_mode = True
-        allow_population_by_field_name = True
+        from_attributes = True
+        populate_by_name = True
 
 
 class PackMetadata(BaseModel):

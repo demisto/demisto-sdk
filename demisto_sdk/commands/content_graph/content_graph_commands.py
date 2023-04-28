@@ -82,10 +82,12 @@ def update_content_graph(
             # getting the graph from remote, so we need to clean the import dir
             extract_remote_import_files(content_graph_interface, builder)
 
-    if use_git and (commit := content_graph_interface.commit):
-        packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
 
     content_graph_interface.import_graph(imported_path)
+    
+    if use_git and (commit := content_graph_interface.commit):
+        logger.info(f"Using git to get the packs to update from commit {commit}")
+        packs_to_update.extend(GitUtil().get_all_changed_pack_ids(commit))
 
     packs_str = "\n".join([f"- {p}" for p in packs_to_update])
     logger.info(f"Updating the following packs:\n{packs_str}")

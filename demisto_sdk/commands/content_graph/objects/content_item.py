@@ -39,11 +39,11 @@ class ContentItem(BaseContent):
     description: Optional[str]
     is_test: bool = False
 
-    @field_validator("path")
-    def validate_path(cls, v: Path) -> Path:
-        if v.is_absolute():
-            return v
-        return CONTENT_PATH / v
+    # @field_validator("path")
+    # def validate_path(cls, v: Path) -> Path:
+    #     if v.is_absolute():
+    #         return v
+    #     return CONTENT_PATH / v
 
     @property
     def in_pack(self) -> Optional["Pack"]:

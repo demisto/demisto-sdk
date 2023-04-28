@@ -160,11 +160,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         None, alias="contentItems", exclude=True
     )
 
-    @field_validator("path")
-    def validate_path(cls, v: Path) -> Path:
-        if v.is_absolute():
-            return v
-        return CONTENT_PATH / v
+    # @field_validator("path")
+    # def validate_path(cls, v: Path) -> Path:
+    #     if v.is_absolute():
+    #         return v
+    #     return CONTENT_PATH / v
 
     @property
     def depends_on(self) -> List["RelationshipData"]:

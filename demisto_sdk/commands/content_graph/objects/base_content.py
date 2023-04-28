@@ -64,7 +64,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     node_id: str
     marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
 
-    relationships_data: Dict[RelationshipType, Set["RelationshipData"]] = Field(
+    relationships_data: Dict[RelationshipType, Set[Any]] = Field(
         defaultdict(set), exclude=True, repr=False
     )
     
@@ -95,8 +95,8 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         """
 
         json_dct = json.loads(self.json(exclude={"commands"}))
-        if "path" in json_dct and Path(json_dct["path"]).is_absolute():
-            json_dct["path"] = Path(json_dct["path"]).relative_to(CONTENT_PATH).as_posix()  # type: ignore
+        if (path := json_dct.get("path")) and (path := Path(path)).is_absolute():
+            json_dct["path"] = path.relative_to(CONTENT_PATH).as_posix()  # type: ignore
         json_dct["content_type"] = self.content_type
         return json_dct
 

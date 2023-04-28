@@ -90,11 +90,10 @@ def _parse_node(element_id: int, node: dict) -> BaseContent:
     if node.get("not_in_repository"):
         obj = UnknownContent.parse_obj(node)
 
-    else:
-        model = content_type_to_model.get(content_type)
-        if not model:
-            raise NoModelException(f"No model for {content_type}")
+    elif model := content_type_to_model.get(content_type):
         obj = model.parse_obj(node)
+    else:
+        raise NoModelException(f"No model for {content_type}")
     obj.database_id = element_id
     return obj
 
@@ -276,13 +275,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 self._id_to_obj,
             )
             return
-        with Pool(processes=cpu_count()) as pool:
-            results = pool.starmap(
-                _parse_node, ((node.id, dict(node.items())) for node in nodes)
-            )
-            for result in results:
-                assert result.database_id is not None
-                self._id_to_obj[result.database_id] = result
+        for node in nodes:
+            base_content = _parse_node(node.id, dict(node.items()))
+            assert base_content.database_id is not None
+            self._id_to_obj[base_content.database_id] = base_content
 
     def _search(
         self,

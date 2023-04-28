@@ -4,6 +4,8 @@ from pydantic import BaseModel
 
 from demisto_sdk.commands.content_graph.common import RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.pack import PackContentItems
+from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
 
 class RelationshipData(BaseModel):
@@ -44,3 +46,5 @@ class RelationshipData(BaseModel):
         return hash(self) == hash(__o)
 
 BaseContent.model_rebuild()
+ContentDTO.model_rebuild()
+PackContentItems.model_rebuild()

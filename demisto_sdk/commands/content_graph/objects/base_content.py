@@ -64,7 +64,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     node_id: str
     marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
 
-    relationships_data: Dict[RelationshipType, Set["RelationshipData"]] = Field(
+    relationships_data: Dict[RelationshipType, Set[Any]] = Field(
         defaultdict(set), exclude=True, repr=False
     )
 
@@ -74,21 +74,6 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         )
         orm_mode = True  # allows using from_orm() method
         allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
-
-    def __getstate__(self):
-        """Needed to for the object to be pickled correctly (to use multiprocessing)"""
-        dict_copy = self.__dict__.copy()
-
-        # This avoids circular references when pickling store only the first level relationships.
-        # Remove when updating to pydantic 2
-        for _, relationship_data in dict_copy["relationships_data"].items():
-            for r in relationship_data:
-                r.content_item_to.relationships_data = defaultdict(set)
-
-        return {
-            "__dict__": dict_copy,
-            "__fields_set__": self.__fields_set__,
-        }
 
     @property
     def normalize_name(self) -> str:

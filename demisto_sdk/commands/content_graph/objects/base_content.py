@@ -69,7 +69,6 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     )
     
     def model_post_init(self, __context: Any) -> None:
-        BaseContent.content_type = ContentType(self.content_type)
         self.marketplaces = [MarketplaceVersions(marketplace) for marketplace in self.marketplaces]
 
     class Config:

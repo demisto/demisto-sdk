@@ -91,6 +91,7 @@ def _parse_node(element_id: int, node: dict) -> BaseContent:
         obj = UnknownContent.model_construct(**node)
 
     elif model := content_type_to_model.get(content_type):
+        node.pop("content_type", None)
         obj = model.model_construct(**node)
     else:
         raise NoModelException(f"No model for {content_type}")

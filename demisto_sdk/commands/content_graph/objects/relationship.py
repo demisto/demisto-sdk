@@ -42,3 +42,5 @@ class RelationshipData(BaseModel):
     def __eq__(self, __o: object) -> bool:
         """This is needed to check if the relationship already exists"""
         return hash(self) == hash(__o)
+
+BaseContent.model_rebuild()

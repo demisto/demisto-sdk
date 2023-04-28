@@ -64,7 +64,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     node_id: str
     marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
 
-    relationships_data: Dict[RelationshipType, Set[Any]] = Field(
+    relationships_data: Dict[RelationshipType, Set["RelationshipData"]] = Field(
         defaultdict(set), exclude=True, repr=False
     )
 
@@ -74,7 +74,8 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         )
         from_attributes = True  # allows using from_orm() method
         populate_by_name = True  # when loading from orm, ignores the aliases and uses the property name
-
+        undefined_types_warning = False
+        
     @property
     def normalize_name(self) -> str:
         # if has name attribute, return it, otherwise return the object id
@@ -141,7 +142,6 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             # skip adding circular dependency
             return
         self.relationships_data[relationship_type].add(relationship)
-
 
 class UnknownContent(BaseContent):
     """A model for non-existing content items used by existing content items."""

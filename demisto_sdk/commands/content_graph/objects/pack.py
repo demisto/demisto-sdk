@@ -123,6 +123,7 @@ class PackContentItems(BaseModel):
         arbitrary_types_allowed = True
         from_attributes = True
         populate_by_name = True
+        undefined_types_warning = False
 
 
 class PackMetadata(BaseModel):

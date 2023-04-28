@@ -67,6 +67,10 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     relationships_data: Dict[RelationshipType, Set["RelationshipData"]] = Field(
         defaultdict(set), exclude=True, repr=False
     )
+    
+    def model_post_init(self, __context: Any) -> None:
+        BaseContent.content_type = ContentType(self.content_type)
+        self.marketplaces = [MarketplaceVersions(marketplace) for marketplace in self.marketplaces]
 
     class Config:
         arbitrary_types_allowed = (

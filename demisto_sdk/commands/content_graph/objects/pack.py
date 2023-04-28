@@ -206,6 +206,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             content_item_dct[c.content_type.value].append(c)
 
         # If there is no server_min_version, set it to the minimum of its content items fromversion
+        if not hasattr(self, "server_min_version"):
+            self.server_min_version = None
+            
         min_content_items_version = MARKETPLACE_MIN_VERSION
         if content_items:
             min_content_items_version = str(

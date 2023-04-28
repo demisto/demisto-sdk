@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Generator, List, Optional
 
 from packaging.version import parse
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from demisto_sdk.commands.common.constants import (
     BASE_PACK,
@@ -159,7 +159,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         PackContentItems(), alias="contentItems", exclude=True
     )
 
-    @validator("path", always=True)
+    @field_validator("path")
     def validate_path(cls, v: Path) -> Path:
         if v.is_absolute():
             return v

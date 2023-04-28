@@ -48,3 +48,4 @@ class ContentDTO(BaseModel):
     class Config:
         from_attributes = True
         populate_by_name = True
+        undefined_types_warning = False

@@ -156,8 +156,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)
 
-    content_items: PackContentItems = Field(
-        PackContentItems(), alias="contentItems", exclude=True
+    content_items: Optional[PackContentItems] = Field(
+        None, alias="contentItems", exclude=True
     )
 
     @field_validator("path")

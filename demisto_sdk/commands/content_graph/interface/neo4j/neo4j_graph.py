@@ -88,10 +88,10 @@ def _parse_node(element_id: int, node: dict) -> BaseContent:
     obj: BaseContent
     content_type = node.get("content_type", "")
     if node.get("not_in_repository"):
-        obj = UnknownContent.parse_obj(node)
+        obj = UnknownContent.model_construct(**node)
 
     elif model := content_type_to_model.get(content_type):
-        obj = model.parse_obj(node)
+        obj = model.model_construct(**node)
     else:
         raise NoModelException(f"No model for {content_type}")
     obj.database_id = element_id

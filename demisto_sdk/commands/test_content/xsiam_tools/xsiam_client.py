@@ -7,6 +7,7 @@ from pathlib import Path
 from pprint import pformat
 from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin
+from pydantic_core.core_schema import FieldValidationInfo
 
 import requests
 from pydantic import BaseModel, Field, HttpUrl, SecretStr, field_validator
@@ -33,7 +34,7 @@ class XsiamApiClientConfig(BaseModel):
     )
 
     @field_validator("base_url", "api_key", "auth_id")
-    def validate_client_config(cls, v, info):
+    def validate_client_config(cls, v, info: FieldValidationInfo):
         if not v:
             raise ValueError(
                 f"XSIAM client configuration is not complete: value was not passed for {info.field_name} and"
@@ -42,10 +43,10 @@ class XsiamApiClientConfig(BaseModel):
         return v
 
     @field_validator("collector_token")
-    def validate_client_config_token(cls, v, values, info):
+    def validate_client_config_token(cls, v, info: FieldValidationInfo):
         if not v:
             other_token_name = "token"
-            if not values.get(other_token_name):
+            if not info.data.get(other_token_name):
                 raise ValueError(
                     f'XSIAM client configuration is not complete: you must set one of "{info.field_name}" or '
                     f'"{other_token_name}" either explicitly on the command line or via their associated '

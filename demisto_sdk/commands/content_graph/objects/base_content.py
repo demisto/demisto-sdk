@@ -46,7 +46,7 @@ class BaseContentMetaclass(ModelMetaclass):
         Returns:
             BaseContent: The model class.
         """
-        super_cls: BaseContentMetaclass = super().__new__(cls, name, bases, namespace)
+        super_cls: Type[BaseContentMetaclass] = super().__new__(cls, name, bases, namespace)
         # for type checking
         model_cls: Type["BaseContent"] = cast(Type["BaseContent"], super_cls)
         if content_type:
@@ -72,8 +72,8 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         arbitrary_types_allowed = (
             True  # allows having custom classes for properties in model
         )
-        orm_mode = True  # allows using from_orm() method
-        allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
+        from_attributes = True  # allows using from_orm() method
+        populate_by_name = True  # when loading from orm, ignores the aliases and uses the property name
 
     @property
     def normalize_name(self) -> str:

@@ -57,7 +57,7 @@ class ContentGraphBuilder:
         repository_parser = RepositoryParser(
             self.content_graph.repo_path, packs_to_parse
         )
-        return ContentDTO.from_orm(repository_parser)
+        return ContentDTO.model_validate(repository_parser)
 
     def _collect_nodes_and_relationships_from_model(
         self, content_dto: ContentDTO

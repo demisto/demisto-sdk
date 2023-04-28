@@ -160,6 +160,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         None, alias="contentItems", exclude=True
     )
 
+    def model_post_init(self, __context: Any) -> None:
+        self.path = Path(self.path)
     # @field_validator("path")
     # def validate_path(cls, v: Path) -> Path:
     #     if v.is_absolute():

@@ -70,7 +70,6 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     
     def model_post_init(self, __context: Any) -> None:
         self.marketplaces = [MarketplaceVersions(marketplace) for marketplace in self.marketplaces]
-
     class Config:
         arbitrary_types_allowed = (
             True  # allows having custom classes for properties in model

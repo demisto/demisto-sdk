@@ -39,6 +39,8 @@ class ContentItem(BaseContent):
     description: Optional[str]
     is_test: bool = False
 
+    def model_post_init(self, __context):
+        self.path = Path(self.path)
     # @field_validator("path")
     # def validate_path(cls, v: Path) -> Path:
     #     if v.is_absolute():

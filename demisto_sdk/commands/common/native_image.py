@@ -36,14 +36,14 @@ class NativeImageConfig(Singleton, BaseModel):
     flags_versions_mapping: Dict[str, str] = {}
     docker_images_to_native_images_mapping: Dict[str, List] = {}
 
-    def __init__(
-        self, native_image_config_file_path: str = f"Tests/{NATIVE_IMAGE_FILE_NAME}"
-    ):
-        super().__init__(**self.load(native_image_config_file_path))
-        self.docker_images_to_native_images_mapping = (
-            self.__docker_images_to_native_images_support()
+    @classmethod
+    def from_path(cls, native_image_config_file_path: str):
+        native_image_config = NativeImageConfig(cls.load(native_image_config_file_path))
+        native_image_config.docker_images_to_native_images_mapping = (
+            native_image_config.__docker_images_to_native_images_support()
         )
-
+        return native_image_config
+        
     def __docker_images_to_native_images_support(self):
         """
         Map all the docker images from the native image configuration file into the native-images which support it.
@@ -190,4 +190,4 @@ def file_to_native_image_config(
     """
     Converts the native image file to NativeImageConfig object.
     """
-    return NativeImageConfig(native_image_config_file_path)
+    return NativeImageConfig.from_path(native_image_config_file_path)

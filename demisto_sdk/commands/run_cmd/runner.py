@@ -97,8 +97,7 @@ class Runner:
                         f.seek(0)
                         file_path = f.name
                         command = self.query.split(" ")[0]
-                        json_to_outputs(command, json=file_path,
-                                        prefix=self.prefix)
+                        json_to_outputs(command, json=file_path, prefix=self.prefix)
                 else:
                     logger.info(
                         "[red]Could not extract raw output as JSON from command[/red]"
@@ -107,13 +106,13 @@ class Runner:
 
     def _get_playground_id(self):
         """Retrieves Playground ID from the remote Demisto instance."""
+
         def playground_filter(page: int = 0):
             return {"filter": {"type": [9], "page": page}}
 
         answer = self.client.search_investigations(filter=playground_filter())
         if answer.total == 0:
-            raise RuntimeError(
-                "No playgrounds were detected in the environment.")
+            raise RuntimeError("No playgrounds were detected in the environment.")
         elif answer.total == 1:
             result = answer.data[0].id
         else:
@@ -134,11 +133,14 @@ class Runner:
             playgrounds = list(filter(filter_by_creating_user_id, answer.data))
 
             for i in range(int((answer.total - 1) / len(answer.data))):
-                playgrounds.extend(filter(
-                    filter_by_creating_user_id,
-                    self.client.search_investigations(
-                        filter=playground_filter(i + 1)).data
-                ))
+                playgrounds.extend(
+                    filter(
+                        filter_by_creating_user_id,
+                        self.client.search_investigations(
+                            filter=playground_filter(i + 1)
+                        ).data,
+                    )
+                )
 
             if len(playgrounds) != 1:
                 raise RuntimeError(
@@ -162,8 +164,7 @@ class Runner:
         """
         update_entry = {"investigationId": playground_id, "data": self.query}
 
-        answer = self.client.investigation_add_entries_sync(
-            update_entry=update_entry)
+        answer = self.client.investigation_add_entries_sync(update_entry=update_entry)
         if not answer:
             raise DemistoRunTimeError(
                 "Command did not run, make sure it was written correctly."
@@ -213,8 +214,7 @@ class Runner:
                         if self.SECTIONS_HEADER_REGEX.match(line):
                             logger.info(f"[yellow]{line}[/yello]")
                         elif self.FULL_LOG_REGEX.match(line):
-                            logger.info(
-                                "[yellow]Full Integration Log:[/yellow]")
+                            logger.info("[yellow]Full Integration Log:[/yellow]")
                         else:
                             logger.info(line)
 
@@ -301,8 +301,7 @@ class Runner:
 
         # execute the command in playground
         update_entry = {"investigationId": playground_id, "data": command}
-        res = self.client.investigation_add_entries_sync(
-            update_entry=update_entry)
+        res = self.client.investigation_add_entries_sync(update_entry=update_entry)
 
         body = {"query": "${.}"}
         context = self.client.generic_request(

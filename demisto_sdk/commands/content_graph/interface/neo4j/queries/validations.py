@@ -169,8 +169,8 @@ AND 'marketplacev2' IN a.marketplaces
 
     content_item_names = {
         # replace the name of the script.
-        replace_alert_to_incident(item.get("a_name")): path
-        for item, path in run_query(tx, query)
+        replace_alert_to_incident(item["a_name"]): item["a_path"]
+        for item in run_query(tx, query)
     }
 
     query = f"""// Returns script names if they match the replaced name
@@ -181,7 +181,7 @@ AND 'marketplacev2' IN b.marketplaces
 RETURN b.name AS b_name
 """
     return {
-        item.get('b_name'): content_item_names[item['b_name']]
+        item['b_name']: content_item_names[item['b_name']]
         for item in run_query(tx, query)
     }
 

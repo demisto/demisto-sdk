@@ -63,7 +63,7 @@ class JobJSONFormat(BaseUpdateJSON):
             return SUCCESS_RETURN_CODE
 
         except Exception as err:
-            logger.info(
+            logger.exception(
                 "".join(
                     traceback.format_exception(
                         etype=type(err), value=err, tb=err.__traceback__

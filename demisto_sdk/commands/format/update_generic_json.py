@@ -180,7 +180,7 @@ class BaseUpdateJSON(BaseUpdate):
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            logger.info(
+            logger.exception(
                 "".join(
                     traceback.format_exception(
                         type(err), value=err, tb=err.__traceback__

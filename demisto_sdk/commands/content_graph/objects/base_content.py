@@ -83,16 +83,16 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         dict_copy = self.__dict__.copy()
 
         # This avoids circular references when pickling store only the first level relationships.
-        # Remove when updating to pydantic 2
         relationships_data_copy = dict_copy["relationships_data"].copy()
         dict_copy["relationships_data"] = defaultdict(set)
         for _, relationship_data in relationships_data_copy.items():
             for r in relationship_data:
                 # override the relationships_data of the content item to avoid circular references
+                r: RelationshipData  # type: ignore[no-redef]
                 r_copy = r.copy()
                 content_item_to_copy = r_copy.content_item_to.copy()
                 r_copy.content_item_to = content_item_to_copy
-                r_copy.relationships_data = defaultdict(set)
+                content_item_to_copy.relationships_data = defaultdict(set)
                 dict_copy["relationships_data"][r.relationship_type].add(r_copy)
 
         return {

@@ -172,11 +172,10 @@ AND 'marketplacev2' IN a.marketplaces
         replace_alert_to_incident(item["a_name"]): item["a_path"]
         for item in run_query(tx, query)
     }
-    content_item_names = list(content_item_names_and_paths.keys())
 
     query = f"""// Returns script names if they match the replaced name
 MATCH (b:{ContentType.SCRIPT})
-WHERE b.name in {content_item_names}
+WHERE b.name in {list(content_item_names_and_paths.keys())}
 AND NOT 'script-name-incident-to-alert' IN b.skip_prepare
 AND 'marketplacev2' IN b.marketplaces
 RETURN b.name AS b_name

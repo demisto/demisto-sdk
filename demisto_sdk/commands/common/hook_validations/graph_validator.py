@@ -303,7 +303,7 @@ class GraphValidator(BaseValidator):
         )
 
         if query_results:
-            for script_name, file_path in query_results:
+            for script_name, file_path in query_results.items():
                 (
                     error_message,
                     error_code,

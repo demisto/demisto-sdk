@@ -2629,10 +2629,12 @@ def test_extract_field_from_mapping(mapping_value, expected_output):
     [
         ({"fromversion": "6.1.0"}, "6.1.0"),
         (
-            ["item1, item2"],
             pytest.param(
-                0,
-                marks=pytest.mark.xfail(reason="yml file returned is not of type dict"),
+                ["item1, item2"],
+                marks=pytest.mark.xfail(
+                    raises=ValueError,
+                    reason="yml file returned is not of type dict"
+                ),
             ),
         ),
     ],

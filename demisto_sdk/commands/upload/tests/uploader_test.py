@@ -965,34 +965,35 @@ class TestZippedPackUpload:
         assert "uploadable_packs.zip" in str(uploaded_file_path)
 
     @pytest.mark.parametrize(
-        argnames="input", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
+        argnames="path", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
     )
-    def test_upload_with_skip_verify(self, mocker, input):
+    @pytest.mark.parametrize("version", ("6.5.0", "6.6.0", "6.10.0"))
+    def test_upload_with_skip_verify(self, mocker, path: Path, version: str):
         """
         Given:
             - zipped pack or zip of pack zips to upload
         When:
-            - call to upload command
+            - call to upload command with client >=6.5.0
         Then:
             - validate the upload_content_packs in the api client was called correct
               and the skip_verify arg is "true"
         """
         # prepare
         mock_api_client(mocker)
-        mocker.patch.object(API_CLIENT, "upload_content_packs")
-        mocker.patch.object(Pack, "is_server_version_ge", return_value=True)
         mocker.patch.object(
-            Uploader, "notify_user_should_override_packs", return_value=True
+            uploader, "get_demisto_version", return_value=Version(version)
         )
-
+        # mocker.patch.object( # TODO
+        #     Uploader, "notify_user_should_override_packs", return_value=True
+        # )
+        mock_upload_content_packs = mocker.patch.object(
+            API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
+        )
         # run
-        click.Context(command=upload).invoke(upload, input=input)
-
-        skip_value = API_CLIENT.upload_content_packs.call_args[1]["skip_verify"]
-        uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]["file"]
-
-        assert str(uploaded_file_path) == input
-        assert skip_value == "true"
+        click.Context(command=upload).invoke(upload, input=path)
+        assert mock_upload_content_packs.call_count == 1
+        assert mock_upload_content_packs.call_args[1]["file"] == str(path)
+        assert mock_upload_content_packs.call_args[1]["skip_verify"] == "true"
 
     @pytest.mark.parametrize(
         argnames="input", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
@@ -1014,6 +1015,7 @@ class TestZippedPackUpload:
             tools, "update_server_configuration", return_value=(None, None, {})
         )
         mocker.patch.object(Pack, "is_server_version_ge", return_value=False)
+
         mocker.patch.object(
             Uploader, "notify_user_should_override_packs", return_value=True
         )
@@ -1105,7 +1107,7 @@ class TestZippedPackUpload:
         # run
         click.Context(command=upload).invoke(upload, input=path)
         assert mock_upload_content_packs.call_args[1]["file"] == str(path)
-        assert API_CLIENT.upload_content_packs.call_args[1].get("skip_validate") is None
+        assert mock_upload_content_packs.call_args[1].get("skip_validate") is None
 
     # def test_upload_xsiam_pack_to_xsiam(self, mocker):
     #     """

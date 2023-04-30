@@ -38,7 +38,7 @@ class NativeImageConfig(Singleton, BaseModel):
 
     @classmethod
     def from_path(cls, native_image_config_file_path: str):
-        native_image_config = NativeImageConfig(cls.load(native_image_config_file_path))
+        native_image_config = NativeImageConfig(**cls.load(native_image_config_file_path))
         native_image_config.docker_images_to_native_images_mapping = (
             native_image_config.__docker_images_to_native_images_support()
         )

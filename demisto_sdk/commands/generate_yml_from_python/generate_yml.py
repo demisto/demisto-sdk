@@ -2,7 +2,6 @@
 import datetime
 import importlib.util
 import inspect
-import logging
 import os
 import re
 import traceback
@@ -14,6 +13,7 @@ from unittest import mock
 import click
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import write_yml
 from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
     CommandMetadata,
@@ -22,8 +22,6 @@ from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import
     OutputArgument,
     YMLMetadataCollector,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 yaml = YAML_Handler()
 

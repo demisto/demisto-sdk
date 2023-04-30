@@ -2,7 +2,6 @@ import ast
 import contextlib
 import glob
 import itertools
-import logging
 import os
 import zipfile
 from pathlib import Path
@@ -34,6 +33,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_demisto_version,
@@ -50,7 +50,6 @@ from demisto_sdk.commands.content_graph.objects.content_item import (
 )
 from demisto_sdk.commands.content_graph.objects.pack import Pack, upload_zipped_pack
 
-logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
 
 

@@ -1,8 +1,8 @@
-import logging
 import os
 import random
 
 from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     get_from_version,
     get_yaml,
@@ -19,8 +19,6 @@ from demisto_sdk.commands.generate_docs.common import (
     save_output,
     string_escape_md,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 
 def generate_script_doc(

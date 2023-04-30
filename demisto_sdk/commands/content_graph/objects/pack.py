@@ -1,4 +1,3 @@
-import logging
 import shutil
 from collections import defaultdict
 from pathlib import Path
@@ -17,6 +16,7 @@ from demisto_sdk.commands.common.constants import (
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import MarketplaceTagParser
 from demisto_sdk.commands.content_graph.common import (
     PACK_METADATA_FILENAME,
@@ -69,7 +69,6 @@ from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
-logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
 
 

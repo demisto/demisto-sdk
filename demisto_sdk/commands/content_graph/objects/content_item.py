@@ -17,12 +17,11 @@ if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
     from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 
-import logging
-
 from pydantic import DirectoryPath, validator
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
@@ -31,8 +30,6 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
 from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
     MarketplaceSuffixPreparer,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class ContentItem(BaseContent):

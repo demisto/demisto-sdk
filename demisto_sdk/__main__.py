@@ -124,7 +124,7 @@ def logging_setup_decorator(func, *args, **kwargs):
         for arg in args:
             if type(arg) == click.core.Context:
                 return arg
-        print(
+        print(  # noqa: T201
             "Error: Cannot find the Context arg. Is the command configured correctly?"
         )
         return None

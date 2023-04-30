@@ -1073,9 +1073,10 @@ class TestZippedPackUpload:
         assert upload_call_args["file"] == str(path)
 
     @pytest.mark.parametrize(
-        argnames="input", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
+        argnames="path", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
     )
-    def test_upload_without_skip_validate(self, mocker, input):
+    @pytest.mark.parametrize("version", ("6.4.9", "6.5.0", "6.6.0", "6.10.0"))
+    def test_upload_without_skip_validate(self, mocker, path: Path, version: str):
         """
         Given:
             - zipped pack or zip of pack zips to upload
@@ -1086,26 +1087,25 @@ class TestZippedPackUpload:
               and the skip_validate arg is None
         """
         # prepare
-        mock_api_client(mocker)
-        # mocker.patch.object(
-        #     tools, "update_server_configuration", return_value=(None, None, {})
-        # )
-        # mocker.patch.object(Pack, "is_server_version_ge", return_value=False)
-        # mocker.patch.object(
+        mocker.patch.object(demisto_client, "configure", return_value=API_CLIENT)
+        mocker.patch.object(
+            uploader, "get_demisto_version", return_value=Version(version)
+        )
+        mock_upload_content_packs = mocker.patch.object(
+            API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
+        )
+
+        mocker.patch.object(
+            tools, "update_server_configuration", return_value=(None, None, {})
+        )
+        # mocker.patch.object( # TODO
         #     Uploader, "notify_user_should_override_packs", return_value=True
         # )
 
         # run
-        click.Context(command=upload).invoke(upload, input=input)
-        uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]["file"]
-
-        assert str(uploaded_file_path) == input
-
-        try:
-            skip_value = API_CLIENT.upload_content_packs.call_args[1]["skip_validate"]
-        except KeyError:
-            skip_value = None
-        assert not skip_value
+        click.Context(command=upload).invoke(upload, input=path)
+        assert mock_upload_content_packs.call_args[1]["file"] == str(path)
+        assert API_CLIENT.upload_content_packs.call_args[1].get("skip_validate") is None
 
     # def test_upload_xsiam_pack_to_xsiam(self, mocker):
     #     """

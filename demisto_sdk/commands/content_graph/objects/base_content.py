@@ -88,18 +88,11 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         dict_copy["relationships_data"] = defaultdict(set)
         for _, relationship_data in relationships_data_copy.items():
             for r in relationship_data:
-                from demisto_sdk.commands.content_graph.objects.relationship import (
-                    RelationshipData,
-                )  # noqa: F402
-
                 # override the relationships_data of the content item to avoid circular references
-                r_copy = RelationshipData.model_construct(**r.dict())
-                content_item_to_dict = r_copy.content_item_to.__dict__.copy()
-                content_item_to_dict["relationships_data"] = defaultdict(set)
-                content_item_to = content_type_to_model[
-                    r_copy.content_item_to.content_type
-                ].model_construct(**content_item_to_dict)
-                r_copy.content_item_to = content_item_to
+                r_copy = r.copy()
+                content_item_to_copy = r_copy.content_item_to.copy()
+                r_copy.content_item_to = content_item_to_copy
+                r_copy.relationships_data = defaultdict(set)
                 dict_copy["relationships_data"][r.relationship_type].add(r_copy)
 
         return {

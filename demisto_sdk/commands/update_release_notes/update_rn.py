@@ -549,7 +549,7 @@ class UpdateRN:
             data_dictionary = get_json(self.metadata_path, cache_clear=True)
         except FileNotFoundError as e:
             raise FileNotFoundError(
-                f"Pack {self.pack} metadata file, was not found. Please verify the pack name is correct, and that the file exsits."
+                f"The metadata file of pack {self.pack} was not found. Please verify the pack name is correct, and that the file exsits."
             ) from e
         return data_dictionary
 

@@ -4514,5 +4514,5 @@ class Errors:
         existing_script_name: str,
     ):
         return f"The {script_name} script name is invalid," \
-               f"There is already a script with a similar name {existing_script_name}" \
-                "Please change the name of the script"
+               f" There is already a script with a similar name {existing_script_name}" \
+                " Please change the name of the script."

@@ -7,7 +7,7 @@ import zipfile
 from functools import wraps
 from io import BytesIO
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 from unittest.mock import MagicMock, patch
 
 import click
@@ -614,8 +614,6 @@ CONTENT_PACKS_ZIP = str(TEST_DATA / "content_packs.zip")
 TEST_PACK_ZIP = str(TEST_DATA / "TestPack.zip")
 TEST_PACK = "Packs/TestPack"
 TEST_XSIAM_PACK = "Packs/TestXSIAMPack"
-INVALID_ZIP = "invalid_zip"
-INVALID_ZIP_ERROR = "Error: Given input path: {path} does not exist"
 API_CLIENT = DefaultApi()
 
 
@@ -732,9 +730,9 @@ class TestZippedPackUpload:
         )
 
     @pytest.mark.parametrize(
-        argnames="input, expected_ret_value", argvalues=[(INVALID_ZIP, 1), (None, 1)]
+        argnames="path", argvalues=(Path("invalid_zip_path"), None)
     )
-    def test_upload_invalid_zip_path(self, mocker, input, expected_ret_value):
+    def test_upload_invalid_zip_path(self, mocker, path: Optional[Path]):
         """
         Given:
             - invalid path in the input argument
@@ -744,17 +742,18 @@ class TestZippedPackUpload:
             - validate the error msg
         """
         # prepare
-        logger_info = mocker.patch.object(logging.getLogger("demisto-sdk"), "info")
+        logger_error = mocker.patch.object(logging.getLogger("demisto-sdk"), "error")
         mock_api_client(mocker)
 
         # run
-        status = click.Context(command=upload).invoke(upload, input=input)
+        status = click.Context(command=upload).invoke(upload, input=path)
 
         # validate
-        assert status == expected_ret_value
-        assert str_in_call_args_list(
-            logger_info.call_args_list, INVALID_ZIP_ERROR.format(path=input)
-        )
+        assert status == ERROR_RETURN_CODE
+
+        logged = flatten_call_args(logger_error.call_args_list)
+        assert len(logged) == 1
+        assert f"input path: {path} does not exist" in logged[0]
 
     def test_error_in_disable_pack_verification(self, mocker):
         """

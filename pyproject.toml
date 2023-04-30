@@ -176,3 +176,7 @@ target-version = "py38"
 
 [tool.ruff.mccabe]
 max-complexity = 30
+
+[tool.ruff.flake8-tidy-imports]
+[tool.ruff.flake8-tidy-imports.banned-api]
+"logging".msg = "The logging framework is banned. Please use demisto_sdk.commands.common.logger."

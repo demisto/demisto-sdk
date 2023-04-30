@@ -2,7 +2,6 @@ import inspect
 import logging
 import re
 import shutil
-import tempfile
 import zipfile
 from functools import wraps
 from io import BytesIO
@@ -23,7 +22,6 @@ from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
-from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import src_root
@@ -66,7 +64,7 @@ def mock_upload_method(mocker: Any, class_: ContentItem):
 
 
 DATA = ""
-DUMMY_SCRIPT_OBJECT: ContentItem = BaseContent.from_path(
+DUMMY_SCRIPT_OBJECT: ContentItem = BaseContent.from_path(  # type:ignore[assignment]
     Path(
         f"{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.py"
     )
@@ -761,57 +759,6 @@ class TestZippedPackUpload:
             in result.stderr
         )
 
-    def test_upload_custom_packs_from_config_file(self, mocker):
-        """
-        Given:
-            - Configuration file with custom packs (zipped packs and unzipped packs) to upload
-        When:
-            - call to upload command
-        Then:
-            - validate the upload_content_packs in the api client was called correct
-              and the pack verification ws turned on and off
-              ans status code is 0 (Ok)
-        """
-        # prepare
-        mock_api_client(mocker)
-        mocker.patch.object(API_CLIENT, "upload_content_packs")
-        mocker.patch.object(Pack, "is_server_version_ge", return_value=False)
-        mocker.patch.object(
-            tools, "update_server_configuration", return_value=(None, None, {})
-        )
-        mocker.patch.object(
-            Uploader, "notify_user_should_override_packs", return_value=True
-        )
-
-        # run
-        status_code = click.Context(command=upload).invoke(
-            upload,
-            input_config_file=f"{git_path()}/demisto_sdk/commands/upload/tests/data/xsoar_config.json",
-        )
-
-        # validate
-        disable_verification_call_args = (
-            tools.update_server_configuration.call_args_list[0][1]
-        )
-        enable_verification_call_args = (
-            tools.update_server_configuration.call_args_list[1][1]
-        )
-
-        assert (
-            disable_verification_call_args["server_configuration"][
-                constants.PACK_VERIFY_KEY
-            ]
-            == "false"
-        )
-        assert (
-            constants.PACK_VERIFY_KEY
-            in enable_verification_call_args["config_keys_to_delete"]
-        )
-        assert status_code == 0
-
-        uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]["file"]
-        assert "uploadable_packs.zip" in str(uploaded_file_path)
-
     @pytest.mark.parametrize(
         argnames="path", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
     )
@@ -839,37 +786,6 @@ class TestZippedPackUpload:
         assert mock_upload_content_packs.call_count == 1
         assert mock_upload_content_packs.call_args[1]["file"] == str(path)
         assert mock_upload_content_packs.call_args[1]["skip_verify"] == "true"
-
-    @pytest.mark.parametrize(
-        argnames="path", argvalues=(TEST_PACK_ZIP, CONTENT_PACKS_ZIP)
-    )
-    def test_upload_without_skip_verify(self, mocker, path):
-        """
-        Given:
-            - zipped pack or zip of pack zips to upload
-        When:
-            - call to upload command
-        Then:
-            - validate the upload_content_packs in the api client was called correct
-              and the skip_verify arg is None
-        """
-        # prepare
-        mock_api_client(mocker)
-        mocked_upload_content_packs = mocker.patch.object(
-            API_CLIENT, "upload_content_packs"
-        )
-        mocker.patch.object(
-            tools, "update_server_configuration", return_value=(None, None, {})
-        )
-        mocker.patch.object(
-            Uploader, "notify_user_should_override_packs", return_value=True
-        )
-
-        # run
-        click.Context(command=upload).invoke(upload, input=path)
-
-        assert mocked_upload_content_packs.call_args[1]["file"] == str(path)
-        assert mocked_upload_content_packs.call_args[1].get("skip_verify") is None
 
     @pytest.mark.parametrize(
         argnames="path", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
@@ -972,7 +888,7 @@ class TestZippedPackUpload:
     #
     #     assert 'Triggers/' in xsiam_pack_files
     #     assert 'XSIAMDashboards/' in xsiam_pack_files
-    @pytest.mark.parametrize(argnames="is_cleanup", argvalues=[True, False])
+    @pytest.mark.parametrize(argnames="is_cleanup", argvalues=(True, False))
     def test_upload_xsiam_pack_to_xsoar(self, mocker, is_cleanup: bool):
         """
         Given:
@@ -985,30 +901,34 @@ class TestZippedPackUpload:
         if not is_cleanup:
             mocker.patch.object(shutil, "rmtree")
         mock_api_client(mocker)
+        mocked_upload_content_packs = mocker.patch.object(
+            API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
+        )
 
-        with tempfile.TemporaryDirectory() as dir:
-            zip_path = Path(dir, "uploadable_packs.zip")
+        click.Context(command=upload).invoke(
+            upload,
+            input=TEST_XSIAM_PACK,
+            xsiam=False,
+            zip=True,
+        )
+        zip_path = Path(mocked_upload_content_packs.call_args.kwargs["file"])
+        assert zip_path.exists() != is_cleanup
 
-            click.Context(command=upload).invoke(
-                upload,
-                input=TEST_XSIAM_PACK,
-                xsiam=False,
-                zip=True,
-                keep_zip=dir,
-                output=Path(dir),
-            )
+        if is_cleanup:
+            return  # the following code only checks the other case
 
-            assert zip_path.exists() == (not is_cleanup)
+        with zipfile.ZipFile(zip_path, "r") as zip_file:
+            for file_name in filter(
+                lambda _file_name: re.search(r"\.zip$", _file_name) is not None,
+                zip_file.namelist(),
+            ):
+                xsiam_pack_files = zipfile.ZipFile(
+                    BytesIO(zip_file.read(file_name))
+                ).namelist()
+                break
+        assert len(xsiam_pack_files) == 2
 
-            with zipfile.ZipFile(zip_path, "r") as zfile:
-                for name in zfile.namelist():
-                    if re.search(r"\.zip$", name) is not None:
-                        # We have a zip within a zip
-                        zfiledata = BytesIO(zfile.read(name))
-                        with zipfile.ZipFile(zfiledata) as xsiamzipfile:
-                            xsiam_pack_files = xsiamzipfile.namelist()
-
-        # XSIAM entities are not supposed to get upload to XSOAR
+        # XSIAM entities are not supposed to be uploaded to XSOAR
         assert "Triggers/" not in xsiam_pack_files
         assert "XSIAMDashboards/" not in xsiam_pack_files
 

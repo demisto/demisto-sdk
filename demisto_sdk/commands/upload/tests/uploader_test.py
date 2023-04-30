@@ -1038,10 +1038,11 @@ class TestZippedPackUpload:
         """
         Given:
             - zipped pack or zip of pack zips to upload
+            - demisto version >=6.5.0
         When:
-            - call to upload command
+            - call to upload command with skip_validation=True
         Then:
-            - validate the upload_content_packs in the api client was called correct
+            - validate the upload_content_packs in the api client was called correctly
               and the skip_validate arg is "true"
         """
         # prepare

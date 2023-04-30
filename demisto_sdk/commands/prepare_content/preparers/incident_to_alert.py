@@ -34,7 +34,7 @@ WRAPPED_MAPPING = {
 
 WRAPPER_SCRIPT = {
     'python': "register_module_line('<script_name>', 'start', __line__())\n\n"
-              "return demisto.executeCommand('<original_script_name>', demisto.args())\n\n"
+              "return_results(demisto.executeCommand('<original_script_name>', demisto.args()))\n\n"
               "register_module_line('<script_name>', 'end', __line__())",
     'javascript': "return executeCommand('<original_script_name>', args)\n"
 }

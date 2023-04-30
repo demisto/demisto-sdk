@@ -84,5 +84,6 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
                 marketplace == MarketplaceVersions.MarketplaceV2,
                 'incident' in self.name.lower(),
                 'script-name-incident-to-alert' not in self.skip_prepare,
+                not self.deprecated,
             )
         )

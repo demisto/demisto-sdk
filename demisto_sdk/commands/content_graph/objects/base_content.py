@@ -98,6 +98,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         return {
             "__dict__": dict_copy,
             "__fields_set__": self.__fields_set__,
+            "__pydantic_fields_set__": self.__pydantic_fields_set__,
         }
 
     @property

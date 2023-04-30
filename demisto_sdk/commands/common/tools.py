@@ -921,7 +921,7 @@ def get_from_version(file_path):
     )
 
     if not isinstance(data_dictionary, dict):
-        return ValueError("yml file returned is not of type dict")
+        raise ValueError("yml file returned is not of type dict")
 
     if data_dictionary:
         from_version = (

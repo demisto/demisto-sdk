@@ -2624,21 +2624,14 @@ def test_extract_field_from_mapping(mapping_value, expected_output):
     assert extract_field_from_mapping(mapping_value) == expected_output
 
 
-@pytest.mark.parametrize(
-    "returned_yml, res_from_version",
-    [
-        ({"fromversion": "6.1.0"}, "6.1.0"),
-        (
-            pytest.param(
-                ["item1, item2"],
-                marks=pytest.mark.xfail(
-                    raises=ValueError,
-                    reason="yml file returned is not of type dict"
-                ),
-            ),
-        ),
-    ],
-)
-def test_get_from_version(returned_yml, res_from_version, mocker):
-    mocker.patch.object(tools, "get_yaml", return_value=returned_yml)
-    assert get_from_version("fake_file_path.yml") == res_from_version
+def test_get_from_version(mocker):
+    mocker.patch.object(tools, "get_yaml", return_value={"fromversion": "6.1.0"})
+    assert get_from_version("fake_file_path.yml") == "6.1.0"
+
+
+def test_get_from_version_error(mocker):
+    mocker.patch.object(tools, "get_yaml", return_value=["item1, item2"])
+    with pytest.raises(ValueError) as e:
+        get_from_version("fake_file_path.yml")
+
+    assert str(e.value) == "yml file returned is not of type dict"

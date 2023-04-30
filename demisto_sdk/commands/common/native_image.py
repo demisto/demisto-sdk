@@ -17,7 +17,7 @@ logger = logging.getLogger("demisto-sdk")
 
 class NativeImage(BaseModel):
     supported_docker_images: List[str]
-    docker_ref: Optional[str]
+    docker_ref: Optional[str] = None
 
 
 class IgnoredContentItem(BaseModel):
@@ -30,7 +30,7 @@ def _extract_native_image_version_for_server(native_image: str) -> str:
     return native_image.replace("native:", "")
 
 
-class NativeImageConfig(Singleton, BaseModel):
+class NativeImageConfig(BaseModel):
     native_images: Dict[str, NativeImage]
     ignored_content_items: List[IgnoredContentItem]
     flags_versions_mapping: Dict[str, str] = {}

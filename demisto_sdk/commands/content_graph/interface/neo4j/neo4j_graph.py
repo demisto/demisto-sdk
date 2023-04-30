@@ -218,7 +218,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                     relationship_type=rel.type,
                     source_id=rel.start_node.id,
                     target_id=rel.end_node.id,
-                    content_item_to=Neo4jContentGraphInterface._id_to_obj[node_to.id].__deepcopy__(),
+                    content_item_to=Neo4jContentGraphInterface._id_to_obj[node_to.id],
                     is_direct=True,
                     **rel,
                 ),

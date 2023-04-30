@@ -77,7 +77,36 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
         from_attributes = True  # allows using from_orm() method
         populate_by_name = True  # when loading from orm, ignores the aliases and uses the property name
         undefined_types_warning = False
-        
+    
+    def __getstate__(self):
+        """Needed to for the object to be pickled correctly (to use multiprocessing)"""
+        dict_copy = self.__dict__.copy()
+
+        # This avoids circular references when pickling store only the first level relationships.
+        # Remove when updating to pydantic 2
+        relationships_data_copy = dict_copy["relationships_data"].copy()
+        dict_copy["relationships_data"] = defaultdict(set)
+        for _, relationship_data in relationships_data_copy.items():
+            for r in relationship_data:
+                from demisto_sdk.commands.content_graph.objects.relationship import (
+                    RelationshipData,
+                )  # noqa: F402
+
+                # override the relationships_data of the content item to avoid circular references
+                r_copy = RelationshipData.model_construct(**r.dict())
+                content_item_to_dict = r_copy.content_item_to.__dict__.copy()
+                content_item_to_dict["relationships_data"] = defaultdict(set)
+                content_item_to = content_type_to_model[
+                    r_copy.content_item_to.content_type
+                ].model_construct(**content_item_to_dict)
+                r_copy.content_item_to = content_item_to
+                dict_copy["relationships_data"][r.relationship_type].add(r_copy)
+
+        return {
+            "__dict__": dict_copy,
+            "__fields_set__": self.__fields_set__,
+        }
+
     @property
     def normalize_name(self) -> str:
         # if has name attribute, return it, otherwise return the object id

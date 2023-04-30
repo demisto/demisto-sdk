@@ -383,6 +383,12 @@ class UpdateRN:
         else:
             new_metadata = self.get_pack_metadata()
             new_version = new_metadata.get("currentVersion", "99.99.99")
+
+        if self.master_version == "0.0.0" and new_version == "1.0.0":
+            raise ValueError(
+                "Release notes do not need to be updated for version '1.0.0'."
+            )
+
         return new_version, new_metadata
 
     def _does_pack_metadata_exist(self) -> bool:
@@ -543,7 +549,7 @@ class UpdateRN:
             data_dictionary = get_json(self.metadata_path, cache_clear=True)
         except FileNotFoundError as e:
             raise FileNotFoundError(
-                f"Pack {self.pack} was not found. Please verify the pack name is correct."
+                f"Pack {self.pack} metadata file, was not found. Please verify the pack name is correct, and that the file exsits."
             ) from e
         return data_dictionary
 

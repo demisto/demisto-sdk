@@ -2726,3 +2726,30 @@ def test_get_file_description(path, file_type, expected_results):
         Ensure the function extracted the information from the right field.
     """
     assert get_file_description(path, file_type) == expected_results
+
+
+def test_no_release_notes_for_first_version(mocker):
+    """
+    Given:
+        - an empty dict of changed items
+    When:
+        - we want to produce release notes template for a pack where only the pack_metadata file changed
+    Then:
+        - return a markdown string
+    """
+    mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
+    mocker.patch.object(UpdateRN, "is_bump_required", return_value=False)
+    mocker.patch.object(
+        UpdateRN, "get_pack_metadata", return_value={"currentVersion": "1.0.0"}
+    )
+    update_rn = UpdateRN(
+        pack_path="Packs/HelloWorld",
+        update_type="minor",
+        modified_files_in_pack=set(),
+        added_files=set(),
+        pack_metadata_only=True,
+    )
+
+    with pytest.raises(ValueError) as e:
+        update_rn.get_new_version_and_metadata()
+        assert str(e) == "Release notes do not need to be updated for version '1.0.0'."

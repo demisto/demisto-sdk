@@ -1,6 +1,7 @@
 import logging
 import shutil
 import tempfile
+from pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
@@ -24,8 +25,7 @@ def upload_content_entity(**kwargs):
         if is_zip:
             pack_path = kwargs["input"]
         else:
-            config_file_to_parse = ConfigFileParser(config_file_path=config_file_path)
-            pack_path = config_file_to_parse.parse_file()
+            pack_path = ConfigFileParser(path=Path(config_file_path)).custom_packs_paths
             kwargs["detached_files"] = True
 
         output_zip_path = keep_zip or tempfile.mkdtemp()

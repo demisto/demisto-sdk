@@ -21,8 +21,6 @@ from packaging.version import Version
 from demisto_sdk.__main__ import main, upload
 from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import (
-    DELETE_VERIFY_KEY_ACTION_FORMAT,
-    TURN_VERIFICATION_ERROR_MSG_FORMAT,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
@@ -584,7 +582,7 @@ class TestPrintSummary:
         path = Path(script.path)
 
         uploader = Uploader(path)
-        assert uploader.demisto_version == Version("6.0.0")
+        assert uploader.demisto_version == Version("6.6.0")
         assert uploader.upload() == ERROR_RETURN_CODE
         assert uploader._failed_upload_version_mismatch == [BaseContent.from_path(path)]
 
@@ -601,7 +599,7 @@ class TestPrintSummary:
                     "╒═════════════╤════════╤═════════════════╤═════════════════════╤═══════════════════╕",
                     "│ NAME        │ TYPE   │ XSOAR Version   │ FILE_FROM_VERSION   │ FILE_TO_VERSION   │",
                     "╞═════════════╪════════╪═════════════════╪═════════════════════╪═══════════════════╡",
-                    "│ script0.yml │ Script │ 6.0.0           │ 0.0.0               │ 1.2.3             │",
+                    "│ script0.yml │ Script │ 6.6.0           │ 0.0.0               │ 1.2.3             │",
                     "╘═════════════╧════════╧═════════════════╧═════════════════════╧═══════════════════╛",
                     "[/yellow]",
                 )
@@ -617,9 +615,9 @@ TEST_XSIAM_PACK = "Packs/TestXSIAMPack"
 API_CLIENT = DefaultApi()
 
 
-def mock_api_client(mocker):
+def mock_api_client(mocker, version: str = "6.6.0"):
     mocker.patch.object(demisto_client, "configure", return_value=API_CLIENT)
-    mocker.patch.object(uploader, "get_demisto_version", return_value=Version("6.6.0"))
+    mocker.patch.object(uploader, "get_demisto_version", return_value=Version(version))
 
 
 class TestZippedPackUpload:
@@ -683,52 +681,6 @@ class TestZippedPackUpload:
         assert len(uploader._successfully_uploaded_content_items) == 1
         assert uploader._successfully_uploaded_content_items[0].path == path
 
-    def test_server_config_after_upload(self, mocker):
-        """
-        Given:
-            - zipped pack to upload
-        When:
-            - call to update server configuration
-        Then:
-            - validate the origin configs are set to server configuration after upload
-        """
-        # prepare
-        mock_api_client(mocker)
-        mocker.patch.object(API_CLIENT, "upload_content_packs")
-        mocker.patch.object(Pack, "is_server_version_ge", return_value=False)
-        mocker.patch.object(
-            tools,
-            "update_server_configuration",
-            return_value=(None, None, {constants.PACK_VERIFY_KEY: "prev_val"}),
-        )
-        mocker.patch.object(
-            Uploader, "notify_user_should_override_packs", return_value=True
-        )
-
-        # run
-        click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
-
-        # validate
-        disable_verification_call_args = (
-            tools.update_server_configuration.call_args_list[0][1]
-        )
-        enable_verification_call_args = (
-            tools.update_server_configuration.call_args_list[1][1]
-        )
-
-        assert (
-            disable_verification_call_args["server_configuration"][
-                constants.PACK_VERIFY_KEY
-            ]
-            == "false"
-        )
-        assert (
-            enable_verification_call_args["server_configuration"][
-                constants.PACK_VERIFY_KEY
-            ]
-            == "prev_val"
-        )
-
     @pytest.mark.parametrize(
         argnames="path", argvalues=(Path("invalid_zip_path"), None)
     )
@@ -754,110 +706,6 @@ class TestZippedPackUpload:
         logged = flatten_call_args(logger_error.call_args_list)
         assert len(logged) == 1
         assert f"input path: {path} does not exist" in logged[0]
-
-    def test_error_in_disable_pack_verification(self, mocker):
-        """
-        Given:
-            - error occurred when try to disable the pack verification
-        When:
-            - upload zipped pack
-        Then:
-            - validate the result status are 1 (error) and the upload_content_packs was not called
-        """
-
-        # prepare
-        mock_api_client(mocker)
-        mocker.patch.object(tools, "update_server_configuration", new=exception_raiser)
-        mocker.patch.object(API_CLIENT, "upload_content_packs")
-
-        # run
-        status = click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
-
-        # validate
-        assert status == 1
-        assert API_CLIENT.upload_content_packs.call_count == 0
-
-    def test_error_in_enable_pack_verification(self, mocker):
-        """
-        Given:
-            - error occurred when try to enable again the pack verification
-        When:
-            - run the upload for zipped pack
-        Then:
-            - validate DefaultApi.upload_content_packs was called (as the error occurred after that)
-              and validate the detailed error message
-        """
-
-        # prepare
-        def conditional_exception_raiser(**kwargs):
-            # raise exception only when try to enable again the pack verification
-            if kwargs.pop("config_keys_to_delete", None):
-                raise Exception()
-            return None, None, {}
-
-        mock_api_client(mocker)
-        mocker.patch.object(uploader, "parse_error_response")
-        mocker.patch.object(Pack, "is_server_version_ge", return_value=False)
-        mocker.patch.object(
-            tools, "update_server_configuration", new=conditional_exception_raiser
-        )
-        mocker.patch.object(
-            Uploader, "notify_user_should_override_packs", return_value=True
-        )
-        mocker.patch.object(API_CLIENT, "upload_content_packs")
-
-        # run
-        status = click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
-
-        # validate
-        assert status == 1
-        assert API_CLIENT.upload_content_packs.call_count == 1
-        exp_err_msg = TURN_VERIFICATION_ERROR_MSG_FORMAT.format(
-            action=DELETE_VERIFY_KEY_ACTION_FORMAT
-        )
-        assert str(uploader.parse_error_response.call_args[0][0]) == exp_err_msg
-
-    def test_error_in_upload_to_marketplace(self, mocker):
-        """
-        Given:
-            - error occurred when try to upload the zip to marketplace
-        When:
-            - run the upload for zipped pack
-        Then:
-            - validate the status result are 1 (error) and the pack verification was enabled again
-        """
-        mock_api_client(mocker)
-        mocker.patch.object(
-            tools, "update_server_configuration", return_value=(None, None, {})
-        )
-        mocker.patch.object(Pack, "is_server_version_ge", return_value=False)
-        mocker.patch.object(API_CLIENT, "upload_content_packs", new=exception_raiser)
-        mocker.patch.object(
-            Uploader, "notify_user_should_override_packs", return_value=True
-        )
-
-        # run
-        status = click.Context(command=upload).invoke(upload, input=TEST_PACK_ZIP)
-
-        # validate
-
-        disable_verification_call_args = (
-            tools.update_server_configuration.call_args_list[0][1]
-        )
-        enable_verification_call_args = (
-            tools.update_server_configuration.call_args_list[1][1]
-        )
-        assert status == 1
-        assert (
-            disable_verification_call_args["server_configuration"][
-                constants.PACK_VERIFY_KEY
-            ]
-            == "false"
-        )
-        assert (
-            constants.PACK_VERIFY_KEY
-            in enable_verification_call_args["config_keys_to_delete"]
-        )
 
     @pytest.mark.parametrize(
         argnames="user_answer, exp_call_count", argvalues=[("y", 1), ("n", 0)]
@@ -979,10 +827,7 @@ class TestZippedPackUpload:
               and the skip_verify arg is "true"
         """
         # prepare
-        mock_api_client(mocker)
-        mocker.patch.object(
-            uploader, "get_demisto_version", return_value=Version(version)
-        )
+        mock_api_client(mocker, version)
         # mocker.patch.object( # TODO
         #     Uploader, "notify_user_should_override_packs", return_value=True
         # )
@@ -996,9 +841,9 @@ class TestZippedPackUpload:
         assert mock_upload_content_packs.call_args[1]["skip_verify"] == "true"
 
     @pytest.mark.parametrize(
-        argnames="input", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
+        argnames="path", argvalues=(TEST_PACK_ZIP, CONTENT_PACKS_ZIP)
     )
-    def test_upload_without_skip_verify(self, mocker, input):
+    def test_upload_without_skip_verify(self, mocker, path):
         """
         Given:
             - zipped pack or zip of pack zips to upload
@@ -1010,27 +855,21 @@ class TestZippedPackUpload:
         """
         # prepare
         mock_api_client(mocker)
-        mocker.patch.object(API_CLIENT, "upload_content_packs")
+        mocked_upload_content_packs = mocker.patch.object(
+            API_CLIENT, "upload_content_packs"
+        )
         mocker.patch.object(
             tools, "update_server_configuration", return_value=(None, None, {})
         )
-        mocker.patch.object(Pack, "is_server_version_ge", return_value=False)
-
         mocker.patch.object(
             Uploader, "notify_user_should_override_packs", return_value=True
         )
 
         # run
-        click.Context(command=upload).invoke(upload, input=input)
-        uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]["file"]
+        click.Context(command=upload).invoke(upload, input=path)
 
-        assert str(uploaded_file_path) == input
-
-        try:
-            skip_value = API_CLIENT.upload_content_packs.call_args[1]["skip_verify"]
-        except KeyError:
-            skip_value = None
-        assert not skip_value
+        assert mocked_upload_content_packs.call_args[1]["file"] == str(path)
+        assert mocked_upload_content_packs.call_args[1].get("skip_verify") is None
 
     @pytest.mark.parametrize(
         argnames="path", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
@@ -1048,10 +887,7 @@ class TestZippedPackUpload:
               and the skip_validate arg is "true"
         """
         # prepare
-        mocker.patch.object(demisto_client, "configure", return_value=API_CLIENT)
-        mocker.patch.object(
-            uploader, "get_demisto_version", return_value=Version(version)
-        )
+        mock_api_client(mocker, version)
 
         mocker.patch.object(
             tools, "update_server_configuration", return_value=(None, None, {})
@@ -1077,7 +913,7 @@ class TestZippedPackUpload:
     @pytest.mark.parametrize(
         argnames="path", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
     )
-    @pytest.mark.parametrize("version", ("6.4.9", "6.5.0", "6.6.0", "6.10.0"))
+    @pytest.mark.parametrize("version", ("6.5.0", "6.6.0", "6.10.0"))
     def test_upload_without_skip_validate(self, mocker, path: Path, version: str):
         """
         Given:
@@ -1089,10 +925,7 @@ class TestZippedPackUpload:
               and the skip_validate arg is None
         """
         # prepare
-        mocker.patch.object(demisto_client, "configure", return_value=API_CLIENT)
-        mocker.patch.object(
-            uploader, "get_demisto_version", return_value=Version(version)
-        )
+        mock_api_client(mocker, version)
         mock_upload_content_packs = mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
         )

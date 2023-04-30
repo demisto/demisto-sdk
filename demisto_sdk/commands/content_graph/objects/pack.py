@@ -12,11 +12,7 @@ from pydantic import BaseModel, Field, validator
 from demisto_sdk.commands.common.constants import (
     BASE_PACK,
     CONTRIBUTORS_README_TEMPLATE,
-    DELETE_VERIFY_KEY_ACTION_FORMAT,
     MARKETPLACE_MIN_VERSION,
-    PACK_VERIFY_KEY,
-    SET_VERIFY_KEY_ACTION_FORMAT,
-    TURN_VERIFICATION_ERROR_MSG_FORMAT,
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
@@ -69,7 +65,6 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
-from demisto_sdk.commands.test_content import tools
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
@@ -88,76 +83,23 @@ def upload_zipped_pack(
     """
     Used to upload an existing zip file
     """
-
-    def _upload_pre_6_5_0() -> bool:
-        logger.info("Disabling server verification for signed packs")
-
-        _, _, previous_configuration = tools.update_server_configuration(
-            client=client,
-            server_configuration={PACK_VERIFY_KEY: "false"},
-            logging_manager=logger,
-            error_msg="Can not disable the pack verification",
+    if target_demisto_version < Version("6.5.0"):
+        raise RuntimeError(
+            "Uploading packs to XSOAR versions earlier than 6.5.0 is no longer supported."
+            "Use older versions of the Demisto-SDK for that (<=1.13.0)"
         )
-        try:
-            logger.info("Uploading...")
-            data, status_code, _ = client.upload_content_packs(file=str(path))
-            if status_code > 299:
-                raise FailedUploadException(Path(path), data, status_code)
-            return True
+    server_kwargs = {"skip_verify": "true"}
 
-        except Exception:
-            logger.exception("Failed uploading pack")
-            raise
+    if skip_validations and target_demisto_version >= Version("6.6.0"):
+        server_kwargs["skip_validation"] = "true"
 
-        finally:
-            try:
-                if (
-                    prev_key_val := previous_configuration.get(PACK_VERIFY_KEY)
-                ) is not None:
-                    config_keys_to_update = {PACK_VERIFY_KEY: prev_key_val}
-                    config_keys_to_delete = None
-                else:
-                    config_keys_to_update = None
-                    config_keys_to_delete = {PACK_VERIFY_KEY}
-
-                logger.info("Setting the server verification to be as previously")
-                logger.debug(f"{config_keys_to_delete=}, {config_keys_to_update=}")
-                tools.update_server_configuration(
-                    client=client,
-                    server_configuration=config_keys_to_update,
-                    config_keys_to_delete=config_keys_to_delete,
-                    logging_manager=logger,
-                    error_msg="Can not turn on the pack verification",
-                )
-                logger.debug("set server configurations back successfully")
-
-            except (Exception, KeyboardInterrupt) as e:
-                action = (
-                    DELETE_VERIFY_KEY_ACTION_FORMAT
-                    if prev_key_val is None
-                    else SET_VERIFY_KEY_ACTION_FORMAT.format(prev_key_val)
-                )
-                error_message = TURN_VERIFICATION_ERROR_MSG_FORMAT.format(action=action)
-                logger.exception(error_message)
-                raise Exception(error_message) from e
-
-    def _upload_post_6_5_0() -> bool:
-        server_kwargs = {"skip_verify": "true"}
-
-        if skip_validations and target_demisto_version >= Version("6.6.0"):
-            server_kwargs["skip_validation"] = "true"
-
-        data, status_code, _ = client.upload_content_packs(
-            file=str(path),
-            **server_kwargs,
-        )
-        if status_code > 299:
-            raise FailedUploadException(Path(path), data, status_code)
-        return True
-
-    if target_demisto_version >= Version("6.5.0"):
-        return _upload_post_6_5_0()
-    return _upload_pre_6_5_0()
+    data, status_code, _ = client.upload_content_packs(
+        file=str(path),
+        **server_kwargs,
+    )
+    if status_code > 299:
+        raise FailedUploadException(Path(path), data, status_code)
+    return True
 
 
 class PackContentItems(BaseModel):

@@ -263,7 +263,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             return
         try:
             path.mkdir(exist_ok=True, parents=True)
-            for content_item in self.content_items:
+            for content_item in self.content_items or ():
                 folder = content_item.content_type.as_folder
                 if (
                     content_item.content_type == ContentType.SCRIPT

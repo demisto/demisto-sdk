@@ -156,13 +156,16 @@ class Uploader:
             bool: True if the upload was successful, False otherwise.
         """
 
-        def _parse_internal_pack_names(zip_path: Path) -> Iterable[str]:
-            # returns the names of first-level folders under the zip, each represents a pack
-            return tuple(
-                item[:-4]
-                for item in zipfile.ZipFile(zip_path).namelist()
-                if item.endswith(".zip")
-            )
+        def _parse_internal_pack_names(zip_path: Path) -> Tuple[str, ...]:
+            with zipfile.ZipFile(zip_path) as zip_file:
+                file_names = zip_file.namelist()
+
+                if "pack_metadata.json" in file_names:  # single pack
+                    with zip_file.open("pack_metadata.json") as pack_metadata:
+                        return json.load(pack_metadata).get("name") or ()
+
+            # multiple packs, zipped
+            return tuple(item[:-4] for item in file_names if item.endswith(".zip"))
 
         pack_names = _parse_internal_pack_names(path)
 

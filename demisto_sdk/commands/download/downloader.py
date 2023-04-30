@@ -410,8 +410,7 @@ class Downloader:
                     path.write_text(string_to_write)
 
                 except Exception as e:
-                    logger.info(f"encountered exception {type(e)}: {e}")
-                    logger.info("trying to write with encoding=utf8")
+                    logger.exception(f"encountered exception, trying to write with encoding=utf8")
                     path.write_text(string_to_write, encoding="utf8")
             return True
 

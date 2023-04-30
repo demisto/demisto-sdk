@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 from neo4j import Transaction, graph
 
@@ -155,7 +155,7 @@ RETURN a.object_id AS a_object_id, collect(b.object_id) AS b_object_ids
 
 def validate_multiple_script_with_same_name(
     tx: Transaction, file_paths: List[str]
-) -> List[str]:
+) -> Dict[str, str]:
     query = f"""// Returns all scripts that have the word 'alert' in their name
 MATCH (a:{ContentType.SCRIPT})
 WHERE toLower(a.name) contains "alert"
@@ -164,26 +164,26 @@ AND 'marketplacev2' IN a.marketplaces
     if file_paths:
         query += f"AND a.path in {file_paths}"
     query += """
-    RETURN a.name AS a_name
+    RETURN a.name AS a_name, a.path AS a_path
     """
 
-    content_item_names = [
+    content_item_names = {
         # replace the name of the script.
-        replace_alert_to_incident(item.get("a_name"))
-        for item in run_query(tx, query)
-    ]
+        replace_alert_to_incident(item.get("a_name")): path
+        for item, path in run_query(tx, query)
+    }
 
     query = f"""// Returns script names if they match the replaced name
 MATCH (b:{ContentType.SCRIPT})
-WHERE b.name in {content_item_names}
+WHERE b.name in {content_item_names.keys()}
 AND NOT 'script-name-incident-to-alert' IN b.skip_prepare
 AND 'marketplacev2' IN b.marketplaces
 RETURN b.name AS b_name
 """
-    return [
-        item.get('b_name')
+    return {
+        item.get('b_name'): content_item_names[item['b_name']]
         for item in run_query(tx, query)
-    ]
+    }
 
 
 def validate_core_packs_dependencies(

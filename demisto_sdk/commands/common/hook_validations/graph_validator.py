@@ -303,7 +303,7 @@ class GraphValidator(BaseValidator):
         )
 
         if query_results:
-            for script_name in query_results:
+            for script_name, file_path in query_results:
                 (
                     error_message,
                     error_code,
@@ -314,7 +314,7 @@ class GraphValidator(BaseValidator):
                 if self.handle_error(
                     error_message,
                     error_code,
-                    f"{replace_incident_to_alerts(script_name)}.yml"
+                    file_path,
                 ):
                     is_valid = False
 

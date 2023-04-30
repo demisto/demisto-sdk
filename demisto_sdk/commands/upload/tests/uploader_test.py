@@ -610,8 +610,8 @@ class TestPrintSummary:
 
 
 TEST_DATA = src_root() / "commands" / "upload" / "tests" / "data"
-CONTENT_PACKS_ZIP = str(TEST_DATA / "content_packs.zip")
-TEST_PACK_ZIP = str(TEST_DATA / "TestPack.zip")
+CONTENT_PACKS_ZIP = TEST_DATA / "content_packs.zip"
+TEST_PACK_ZIP = TEST_DATA / "TestPack.zip"
 TEST_PACK = "Packs/TestPack"
 TEST_XSIAM_PACK = "Packs/TestXSIAMPack"
 API_CLIENT = DefaultApi()
@@ -1031,9 +1031,9 @@ class TestZippedPackUpload:
         assert not skip_value
 
     @pytest.mark.parametrize(
-        argnames="input", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
+        argnames="path", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
     )
-    def test_upload_with_skip_validation(self, mocker, input):
+    def test_upload_with_skip_validation(self, mocker, path: Path):
         """
         Given:
             - zipped pack or zip of pack zips to upload
@@ -1045,20 +1045,27 @@ class TestZippedPackUpload:
         """
         # prepare
         mock_api_client(mocker)
-        mocker.patch.object(API_CLIENT, "upload_content_packs")
+        mock_update_server_configuration = mocker.patch.object(
+            tools, "update_server_configuration", return_value=(None, None, {})
+        )
+        mock_upload_content_packs = mocker.patch.object(
+            API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
+        )
         mocker.patch.object(Pack, "is_server_version_ge", return_value=True)
         mocker.patch.object(
             Uploader, "notify_user_should_override_packs", return_value=True
         )
 
         # run
-        click.Context(command=upload).invoke(upload, input=input, skip_validation=True)
+        result = click.Context(command=upload).invoke(
+            upload, input=path, skip_validation=True
+        )
 
-        skip_value = API_CLIENT.upload_content_packs.call_args[1]["skip_validation"]
-        uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]["file"]
-
-        assert str(uploaded_file_path) == input
-        assert skip_value == "true"
+        assert result == SUCCESS_RETURN_CODE
+        assert (
+            mock_update_server_configuration.call_args[1]["skip_validation"] == "true"
+        )
+        assert mock_upload_content_packs.call_args[1]["file"] == str(path)
 
     @pytest.mark.parametrize(
         argnames="input", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]

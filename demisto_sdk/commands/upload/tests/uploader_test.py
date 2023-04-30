@@ -619,7 +619,7 @@ API_CLIENT = DefaultApi()
 
 def mock_api_client(mocker):
     mocker.patch.object(demisto_client, "configure", return_value=API_CLIENT)
-    mocker.patch.object(uploader, "get_demisto_version", return_value=Version("6.0.0"))
+    mocker.patch.object(uploader, "get_demisto_version", return_value=Version("6.6.0"))
 
 
 class TestZippedPackUpload:
@@ -1033,7 +1033,8 @@ class TestZippedPackUpload:
     @pytest.mark.parametrize(
         argnames="path", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]
     )
-    def test_upload_with_skip_validation(self, mocker, path: Path):
+    @pytest.mark.parametrize("version", ("6.6.0", "6.10.0"))
+    def test_upload_with_skip_validation(self, mocker, path: Path, version: str):
         """
         Given:
             - zipped pack or zip of pack zips to upload
@@ -1044,17 +1045,20 @@ class TestZippedPackUpload:
               and the skip_validate arg is "true"
         """
         # prepare
-        mock_api_client(mocker)
-        mock_update_server_configuration = mocker.patch.object(
+        mocker.patch.object(demisto_client, "configure", return_value=API_CLIENT)
+        mocker.patch.object(
+            uploader, "get_demisto_version", return_value=Version(version)
+        )
+
+        mocker.patch.object(
             tools, "update_server_configuration", return_value=(None, None, {})
         )
         mock_upload_content_packs = mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, None)
         )
-        mocker.patch.object(Pack, "is_server_version_ge", return_value=True)
-        mocker.patch.object(
-            Uploader, "notify_user_should_override_packs", return_value=True
-        )
+        # mocker.patch.object( # TODO
+        #     Uploader, "notify_user_should_override_packs", return_value=True
+        # )
 
         # run
         result = click.Context(command=upload).invoke(
@@ -1062,10 +1066,10 @@ class TestZippedPackUpload:
         )
 
         assert result == SUCCESS_RETURN_CODE
-        assert (
-            mock_update_server_configuration.call_args[1]["skip_validation"] == "true"
-        )
-        assert mock_upload_content_packs.call_args[1]["file"] == str(path)
+
+        upload_call_args = mock_upload_content_packs.call_args[1]
+        assert upload_call_args["skip_validation"] == "true"
+        assert upload_call_args["file"] == str(path)
 
     @pytest.mark.parametrize(
         argnames="input", argvalues=[TEST_PACK_ZIP, CONTENT_PACKS_ZIP]

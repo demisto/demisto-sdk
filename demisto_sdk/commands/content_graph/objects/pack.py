@@ -100,7 +100,7 @@ def upload_zipped_pack(
         )
         try:
             logger.info("Uploading...")
-            data, status_code, _ = client.upload_content_packs(file=path)
+            data, status_code, _ = client.upload_content_packs(file=str(path))
             if status_code > 299:
                 raise FailedUploadException(Path(path), data, status_code)
             return True
@@ -148,7 +148,7 @@ def upload_zipped_pack(
             server_kwargs["skip_validation"] = "true"
 
         data, status_code, _ = client.upload_content_packs(
-            file=path,
+            file=str(path),
             **server_kwargs,
         )
         if status_code > 299:

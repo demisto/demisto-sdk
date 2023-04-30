@@ -1,9 +1,9 @@
-import logging
 from typing import Any, Dict, Iterable, List, Optional
 
 from neo4j import Transaction, graph
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     SERVER_CONTENT_ITEMS,
     ContentType,
@@ -13,8 +13,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     run_query,
     to_neo4j_map,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 NESTING_LEVEL = 5
 

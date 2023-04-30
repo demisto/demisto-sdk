@@ -1516,14 +1516,14 @@ def test_suppress_stdout(capsys):
         - Ensure that messages are not printed to console while suppress_stdout is enabled.
         - Ensure that messages are printed to console when suppress_stdout is disabled.
     """
-    print("You can see this")
+    print("You can see this")  # noqa: T201
     captured = capsys.readouterr()
     assert captured.out == "You can see this\n"
     with tools.suppress_stdout():
-        print("You cannot see this")
+        print("You cannot see this")  # noqa: T201
         captured = capsys.readouterr()
     assert captured.out == ""
-    print("And you can see this again")
+    print("And you can see this again")  # noqa: T201
     captured = capsys.readouterr()
     assert captured.out == "And you can see this again\n"
 
@@ -1545,7 +1545,7 @@ def test_suppress_stdout_exception(capsys):
         with tools.suppress_stdout():
             2 / 0
     assert str(excinfo.value) == "division by zero"
-    print("After error prints are enabled again.")
+    print("After error prints are enabled again.")  # noqa: T201
     captured = capsys.readouterr()
     assert captured.out == "After error prints are enabled again.\n"
 

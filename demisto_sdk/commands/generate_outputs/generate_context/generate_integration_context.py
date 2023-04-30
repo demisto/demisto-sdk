@@ -1,6 +1,6 @@
-import logging
 from typing import Dict, List, Optional
 
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_yaml, write_yml
 from demisto_sdk.commands.generate_docs.common import build_example_dict
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
@@ -9,8 +9,6 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import (
 from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import (
     parse_json,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 
 def dict_from_outputs_str(command: str, outputs: str):

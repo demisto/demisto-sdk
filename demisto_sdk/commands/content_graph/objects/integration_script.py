@@ -25,7 +25,7 @@ logger = logging.getLogger("demisto-sdk")
 
 class IntegrationScript(ContentItem):
     type: str
-    docker_image: Optional[str]
+    docker_image: Optional[str] = None
     description: Optional[str]
     is_unified: bool = Field(False, exclude=True)
     code: Optional[str] = Field(None, exclude=True)

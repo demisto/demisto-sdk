@@ -225,7 +225,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             exclude={"path", "node_id", "content_type", "excluded_dependencies"}
         )
         metadata["contentItems"] = {}
-        for content_item in self.content_items:
+        for content_item in self.content_items or ():
             try:
                 metadata["contentItems"].setdefault(
                     content_item.content_type.server_name, []

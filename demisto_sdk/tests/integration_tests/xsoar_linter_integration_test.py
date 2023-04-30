@@ -48,6 +48,7 @@ files = [
         True,
         1,
         [
+            "Print is found, Please remove all prints from the code.",
             "Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug",
             "test-module command is not implemented in the python file, it is essential for every"
             " integration. Please add it to your code. For more information see: "

@@ -6,7 +6,6 @@ from pathlib import Path
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 
-# logger: logging.Logger = logging.getLogger("")
 logger: logging.Logger = logging.getLogger("demisto-sdk")
 
 CONSOLE_HANDLER = "console-handler"
@@ -95,14 +94,6 @@ def get_handler_by_name(logger: logging.Logger, handler_name: str):
 
 def set_demisto_logger(demisto_logger: logging.Logger):
     global logger
-
-    # logger_file_handler: RotatingFileHandler = get_handler_by_name(logger, FILE_HANDLER)
-    # demisto_logger_file_handler: RotatingFileHandler = get_handler_by_name(demisto_logger, FILE_HANDLER)
-    # if get_handler_by_name(logger, CONSOLE_HANDLER) != get_handler_by_name(demisto_logger, CONSOLE_HANDLER) \
-    #     or logger_file_handler != demisto_logger_file_handler \
-    #     or logger_file_handler.baseFilename != demisto_logger_file_handler.baseFilename:
-    #     logger = demisto_logger
-
     logger = demisto_logger
 
 

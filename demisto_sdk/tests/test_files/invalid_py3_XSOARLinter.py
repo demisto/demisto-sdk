@@ -858,7 +858,7 @@ def split_fields(fields: str = '') -> dict:
     Returns:
         dic_fields object for request.
     """
-    logger.info('tests')
+    print('tests')
     dic_fields = {}
     if fields:
         if '=' not in fields:

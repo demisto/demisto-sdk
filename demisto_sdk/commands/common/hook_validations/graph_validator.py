@@ -308,9 +308,14 @@ class GraphValidator(BaseValidator):
                     error_message,
                     error_code,
                 ) = Errors.duplicated_script_name(
-                    replace_incident_to_alerts(script_name)
+                    replace_incident_to_alerts(script_name),
+                    script_name
                 )
-                if self.handle_error(error_message, error_code, f"{script_name}.yml"):
+                if self.handle_error(
+                    error_message,
+                    error_code,
+                    f"{replace_incident_to_alerts(script_name)}.yml"
+                ):
                     is_valid = False
 
         return is_valid

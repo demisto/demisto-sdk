@@ -4510,6 +4510,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def duplicated_script_name(
-        script_name: str
+        script_name: str,
+        existing_script_name: str,
     ):
-        return f"A script named {script_name} already exists in the repo."
+        return f"The {script_name} script name is invalid," \
+               f"There is already a script with a similar name {existing_script_name}" \
+                "Please change the name of the script"

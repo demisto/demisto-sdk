@@ -483,14 +483,14 @@ def validate_modeling_rule(
                     extra={"markup": True},
                 )
                 logger.error(
-                    f"[yellow]Please create a test data file for {mrule_dir} and then rerun,[/yellow]",
+                    f"[red]Please create a test data file for {mrule_dir} and then rerun,[/red]",
                     extra={"markup": True},
                 )
                 printr(execd_cmd)
                 raise typer.Abort()
         else:
             logger.error(
-                f"[yellow]Please create a test data file for {mrule_dir} and then rerun,[/yellow]",
+                f"[red]Please create a test data file for {mrule_dir} and then rerun,[/red]",
                 extra={"markup": True},
             )
             printr(execd_cmd)

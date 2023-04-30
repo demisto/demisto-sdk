@@ -33,7 +33,7 @@ repos:
       - id: mypy
         name: mypy
         entry: mypy
-        language: system
+        language: python
         types: [python]
         args:
           [
@@ -45,7 +45,7 @@ repos:
             # this will be replaced by the python version in the runtime
             --python-version=3.10,
           ]
-        exclude: .*_test.py$
+        exclude: "test_data|tests_data|.venv|.*_test.py$|infrastructure_tests"
 
       - id: is-circle-changed
         name: is-circle-changed

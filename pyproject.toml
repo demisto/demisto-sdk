@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.12.0"
+version = "1.13.0"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -149,6 +149,7 @@ ignore = [
     "F403",
     "F405",
     "E501",
+    "W293",  # handled by Black
 ]
 
 
@@ -168,6 +169,7 @@ select = [
     "RUF100",
     "T20",
     "W",
+    "T10",
 ]
 
 target-version = "py38"

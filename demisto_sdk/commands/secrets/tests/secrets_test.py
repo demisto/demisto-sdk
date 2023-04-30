@@ -39,6 +39,7 @@ class TestSecrets:
     TEST_PY_FILE = TEST_BASE_PATH + "fake_integration.py"
     TEST_WHITELIST_FILE_PACKS = TEST_BASE_PATH + "fake.secrets-ignore"
     TEST_WHITELIST_FILE = TEST_BASE_PATH + "fake_secrets_white_list.json"
+    TEST_XIF_FILE = os.path.join(FILES_PATH, "modeling_rules.xif")
     TEST_BASE_64_STRING = "OCSn7JGqKehoyIyMCm7gPFjKXpawXvh2M32" * 20 + " sade"
     WHITE_LIST_FILE_NAME = "secrets_white_list.json"
     FILE_HASH_LIST = [
@@ -81,7 +82,7 @@ class TestSecrets:
 
     def test_search_potential_secrets__no_secrets_found(self):
         secret_to_location = self.validator.search_potential_secrets(
-            [self.TEST_YML_FILE]
+            [self.TEST_YML_FILE, self.TEST_XIF_FILE]
         )
         assert not secret_to_location
 

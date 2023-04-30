@@ -414,6 +414,8 @@ class BaseValidator:
             FileType.MODELING_RULE,
             FileType.PARSING_RULE,
             FileType.XIF_FILE,
+            FileType.MODELING_RULE_XIF,
+            FileType.PARSING_RULE_XIF,
         }:
             if file_name != dir_name:
                 return False

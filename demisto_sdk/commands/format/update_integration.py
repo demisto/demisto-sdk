@@ -6,9 +6,11 @@ from demisto_sdk.commands.common.constants import (
     BANG_COMMAND_NAMES,
     BETA_INTEGRATION,
     FEED_REQUIRED_PARAMS,
+    FILETYPE_TO_DEFAULT_FROMVERSION,
     INCIDENT_FETCH_REQUIRED_PARAMS,
     INTEGRATION,
     TYPE_PWSH,
+    FileType,
     MarketplaceVersions,
     ParameterType,
 )
@@ -253,7 +255,10 @@ class IntegrationYMLFormat(BaseUpdateYML):
                 f"\n[blue]================= Updating file {self.source_file} =================[/blue]"
             )
             super().update_yml(
-                file_type=BETA_INTEGRATION if self.is_beta else INTEGRATION
+                default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION[
+                    FileType.INTEGRATION
+                ],
+                file_type=BETA_INTEGRATION if self.is_beta else INTEGRATION,
             )
             self.update_tests()
             self.update_conf_json("integration")

@@ -878,7 +878,7 @@ class TestRNUpdate:
             update_rn.bump_version_number()
         assert (
             "The metadata file of pack HelloWorld was not found. \
-                Please verify the pack name is correct, and that the file exsits."
+                Please verify the pack name is correct, and that the file exists."
             in execinfo.value.args[0]
         )
 

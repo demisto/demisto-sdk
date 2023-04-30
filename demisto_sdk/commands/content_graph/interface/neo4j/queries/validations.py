@@ -172,7 +172,7 @@ AND 'marketplacev2' IN a.marketplaces
         replace_alert_to_incident(item["a_name"]): item["a_path"]
         for item in run_query(tx, query)
     }
-    content_item_names = content_item_names_and_paths.keys()
+    content_item_names = list(content_item_names_and_paths.keys())
 
     query = f"""// Returns script names if they match the replaced name
 MATCH (b:{ContentType.SCRIPT})

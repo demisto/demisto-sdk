@@ -1,7 +1,6 @@
 # STD python packages
 import copy
 import hashlib
-import logging
 import os
 import platform
 import traceback
@@ -32,6 +31,7 @@ from demisto_sdk.commands.common.docker_helper import (
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.native_image import (
     NativeImageConfig,
     ScriptIntegrationSupportedNativeImages,
@@ -79,8 +79,6 @@ json = JSON_Handler()
 # 3-rd party packages
 
 # Local packages
-
-logger = logging.getLogger("demisto-sdk")
 
 NATIVE_IMAGE_DOCKER_NAME = "demisto/py3-native"
 
@@ -1090,7 +1088,7 @@ class Linter:
                 logger.info(f"{log_prompt} - Successfully finished")
             # Keeping container if needed or remove it
             if keep_container:
-                print(f"{log_prompt} - container name {container_name}")
+                logger.info(f"{log_prompt} - container name {container_name}")
                 container.commit(repository=container_name.lower(), tag=linter)
             else:
                 try:
@@ -1228,7 +1226,7 @@ class Linter:
                 exit_code = FAIL
             # Remove container if not needed
             if keep_container:
-                print(f"{log_prompt} - Container name {container_name}")
+                logger.info(f"{log_prompt} - Container name {container_name}")
                 container.commit(repository=container_name.lower(), tag="pytest")
             else:
                 try:
@@ -1300,7 +1298,7 @@ class Linter:
                 logger.info(f"{log_prompt} - Successfully finished")
             # Keeping container if needed or remove it
             if keep_container:
-                print(f"{log_prompt} - container name {container_name}")
+                logger.info(f"{log_prompt} - container name {container_name}")
                 container.commit(repository=container_name.lower(), tag="pwsh_analyze")
             else:
                 try:
@@ -1391,7 +1389,7 @@ class Linter:
                 logger.info(f"{log_prompt} - Successfully finished")
             # Keeping container if needed or remove it
             if keep_container:
-                print(f"{log_prompt} - container name {container_name}")
+                logger.info(f"{log_prompt} - container name {container_name}")
                 container.commit(repository=container_name.lower(), tag="pwsh_test")
             else:
                 try:

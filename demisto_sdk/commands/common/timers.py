@@ -1,5 +1,5 @@
 # STD python packages
-import logging
+
 import time
 from collections import defaultdict, namedtuple
 from dataclasses import astuple, dataclass
@@ -13,9 +13,7 @@ from typing import Dict, Optional, Sequence
 from tabulate import tabulate
 
 # Local packages
-from demisto_sdk.commands.common.logger import Colors
-
-logger = logging.getLogger("demisto-sdk")
+from demisto_sdk.commands.common.logger import Colors, logger
 
 StatInfo = namedtuple("StatInfo", ["total_time", "call_count", "avg_time"])
 

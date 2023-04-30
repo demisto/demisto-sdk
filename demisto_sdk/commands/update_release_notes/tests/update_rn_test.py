@@ -2732,11 +2732,11 @@ def test_get_file_description(path, file_type, expected_results):
 def test_no_release_notes_for_first_version(mocker):
     """
     Given:
-        - an empty dict of changed items
+        - Changes made in the content repo.
     When:
-        - we want to produce release notes template for a pack where only the pack_metadata file changed
-    Then:
-        - return a markdown string
+        - runing update release notes for the first version of the pack (1.0.0).
+    Then
+        - validate the a proper error message is raised.
     """
     mocker.patch.object(UpdateRN, "get_master_version", return_value="0.0.0")
     mocker.patch.object(UpdateRN, "is_bump_required", return_value=False)

@@ -1,4 +1,5 @@
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 json = JSON_Handler()
 
 import time

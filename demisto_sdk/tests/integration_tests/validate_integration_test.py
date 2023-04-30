@@ -4637,7 +4637,7 @@ class TestAllFilesValidator:
                 ],
                 catch_exceptions=False,
             )
-            print(result.stdout)
+            print(result.stdout)  # noqa: T201
 
         assert all(
             [

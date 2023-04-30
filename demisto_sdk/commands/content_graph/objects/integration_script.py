@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from typing import List, Optional
 
@@ -9,6 +8,7 @@ from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.native_image import (
     ScriptIntegrationSupportedNativeImages,
     file_to_native_image_config,
@@ -19,8 +19,6 @@ from demisto_sdk.commands.prepare_content.integration_script_unifier import (
 )
 
 yaml = YAML_Handler()
-
-logger = logging.getLogger("demisto-sdk")
 
 
 class IntegrationScript(ContentItem):

@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 import shutil
@@ -30,6 +29,7 @@ from demisto_sdk.commands.common.constants import (
     FileType,
 )
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     capital_case,
     find_type,
@@ -55,8 +55,6 @@ from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.update_release_notes.update_rn_manager import (
     UpdateReleaseNotesManager,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -477,7 +475,7 @@ class ContributionConverter:
                 ):
                     return pack_version_reg.groups()[0]
             except Exception as e:
-                logging.warning(f"Failed extracting pack version from script: {e}")
+                logger.warning(f"Failed extracting pack version from script: {e}")
         return "0.0.0"
 
     def create_contribution_items_version_note(self):
@@ -610,7 +608,7 @@ class ContributionConverter:
                                 }
 
                     except Exception as e:
-                        logging.warning(
+                        logger.warning(
                             f"Could not parse {content_item_file_path} contribution item version: {e}.",
                         )
                     extractor.extract_to_package_format(

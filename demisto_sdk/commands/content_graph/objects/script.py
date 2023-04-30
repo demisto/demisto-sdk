@@ -1,7 +1,7 @@
-import logging
 from typing import List, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import (
@@ -11,7 +11,6 @@ from demisto_sdk.commands.prepare_content.preparers.marketplace_incident_to_aler
     MarketplaceIncidentToAlertScriptsPreparer
 )
 from pydantic import DirectoryPath
-logger = logging.getLogger("demisto-sdk")
 
 
 class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignore[call-arg]

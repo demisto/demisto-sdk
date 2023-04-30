@@ -3,7 +3,6 @@ This script is used to create a release notes template
 """
 import copy
 import errno
-import logging
 import os
 import re
 from distutils.version import LooseVersion
@@ -33,6 +32,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
 from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_api_module_ids,
@@ -48,8 +48,6 @@ from demisto_sdk.commands.common.tools import (
     pack_name_to_path,
     run_command,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -413,10 +411,10 @@ class UpdateRN:
         master_metadata = None
         try:
             master_metadata = get_remote_file(self.metadata_path, tag=self.main_branch)
-        except Exception as e:
-            logger.info(
-                f"[red]master branch is unreachable.\n The reason is:{e} \n "
-                f"The updated version will be taken from local metadata file instead of master[/red]"
+        except Exception:
+            logger.exception(
+                f"[red]Failed fetching {self.metadata_path} from remote master branch."
+                "Using the local version (if exists), instead[/red]",
             )
         if master_metadata:
             master_current_version = master_metadata.get("currentVersion", "0.0.0")

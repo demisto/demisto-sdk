@@ -3,7 +3,6 @@ import subprocess
 from distutils.version import LooseVersion
 from typing import Any, Dict, Iterator, Optional, Union
 
-import demisto_client
 import regex
 from wcmatch.pathlib import Path
 
@@ -12,7 +11,6 @@ from demisto_sdk.commands.common.constants import (
     CONNECTIONS_DIR,
     CORRELATION_RULES_DIR,
     DASHBOARDS_DIR,
-    DELETE_VERIFY_KEY_ACTION_FORMAT,
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
     DOC_FILES_DIR,
@@ -31,18 +29,15 @@ from demisto_sdk.commands.common.constants import (
     LISTS_DIR,
     MODELING_RULES_DIR,
     PACK_NAME_DEPRECATED_REGEX,
-    PACK_VERIFY_KEY,
     PARSING_RULES_DIR,
     PLAYBOOKS_DIR,
     PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR,
     REPORTS_DIR,
     SCRIPTS_DIR,
-    SET_VERIFY_KEY_ACTION_FORMAT,
     TEST_PLAYBOOKS_DIR,
     TOOLS_DIR,
     TRIGGER_DIR,
-    TURN_VERIFICATION_ERROR_MSG_FORMAT,
     WIDGETS_DIR,
     WIZARDS_DIR,
     XDRC_TEMPLATE_DIR,
@@ -96,7 +91,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
 from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_demisto_version, is_object_in_id_set
-from demisto_sdk.commands.test_content import tools
 
 
 class Pack:
@@ -562,70 +556,3 @@ class Pack:
     def is_server_version_ge(self, client, server_version_to_check):
         server_version = get_demisto_version(client)
         return LooseVersion(server_version.base_version) >= LooseVersion(server_version_to_check)  # type: ignore
-
-    def upload(
-        self, logger: logging.Logger, client: demisto_client, skip_validation: bool
-    ):
-        """
-        Upload the pack zip to demisto_client,
-        from 6.5 server version we have the option to use skip_verify arg instead of server configuration.
-        Args:
-            logger (logging.Logger): System logger already initialized.
-            client: The demisto_client object of the desired XSOAR machine to upload to.
-            skip_validation: if true will skip upload packs validation.
-        Returns:
-            The result of the upload command from demisto_client
-        """
-        if self.is_server_version_ge(client, "6.6.0") and skip_validation:
-            try:
-                logger.info("Uploading...")
-                return client.upload_content_packs(
-                    file=self.path, skip_verify="true", skip_validation="true"
-                )  # type: ignore
-
-            except Exception as err:
-                raise Exception(f"Failed to upload pack, error: {err}")
-
-        if self.is_server_version_ge(client, "6.5.0"):
-            try:
-                logger.info("Uploading...")
-                return client.upload_content_packs(file=self.path, skip_verify="true")  # type: ignore
-
-            except Exception as err:
-                raise Exception(f"Failed to upload pack, error: {err}")
-
-        # the flow are - turn off the sign check -> upload -> turn back the check to be as previously
-        logger.info("Turn off the server verification for signed packs")
-        _, _, prev_conf = tools.update_server_configuration(
-            client=client,
-            server_configuration={PACK_VERIFY_KEY: "false"},
-            error_msg="Can not turn off the pack verification",
-        )
-        try:
-            logger.info("Uploading...")
-            return client.upload_content_packs(file=self.path)  # type: ignore
-        finally:
-            config_keys_to_update = None
-            config_keys_to_delete = None
-            try:
-                prev_key_val = prev_conf.get(PACK_VERIFY_KEY, None)
-                if prev_key_val is not None:
-                    config_keys_to_update = {PACK_VERIFY_KEY: prev_key_val}
-                else:
-                    config_keys_to_delete = {PACK_VERIFY_KEY}
-                logger.info("Setting the server verification to be as previously")
-                tools.update_server_configuration(
-                    client=client,
-                    server_configuration=config_keys_to_update,
-                    config_keys_to_delete=config_keys_to_delete,
-                    error_msg="Can not turn on the pack verification",
-                )
-            except (Exception, KeyboardInterrupt):
-                action = (
-                    DELETE_VERIFY_KEY_ACTION_FORMAT
-                    if prev_key_val is None
-                    else SET_VERIFY_KEY_ACTION_FORMAT.format(prev_key_val)
-                )
-                raise Exception(
-                    TURN_VERIFICATION_ERROR_MSG_FORMAT.format(action=action)
-                )

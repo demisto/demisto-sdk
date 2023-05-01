@@ -155,16 +155,31 @@ class Uploader:
             bool: True if the upload was successful, False otherwise.
         """
 
-        def _parse_internal_pack_names(zip_path: Path) -> Tuple[str, ...]:
-            with zipfile.ZipFile(zip_path) as zip_file:
-                file_names = zip_file.namelist()
+        def _parse_internal_pack_names(zip_path: Path) -> Optional[Tuple[str, ...]]:
+            """
+            A zip can be
+            1. A single pack (just the pack folder zipped); in this case, we parse the name from the pack_metatada.json file
+            2. Multiple zipped packs (each in its own .zip file); in this case, we use the names of the inner zips as pack names
 
-                if "pack_metadata.json" in file_names:  # single pack
-                    with zip_file.open("pack_metadata.json") as pack_metadata:
-                        return json.load(pack_metadata).get("name") or ()
+            On failure to parse, returns None.
+            """
+            try:
+                with zipfile.ZipFile(zip_path) as zip_file:
+                    file_names = zip_file.namelist()
 
-            # multiple packs, zipped
-            return tuple(item[:-4] for item in file_names if item.endswith(".zip"))
+                    if "pack_metadata.json" in file_names:  # single pack
+                        with zip_file.open("pack_metadata.json") as pack_metadata:
+                            return json.load(pack_metadata).get("name")
+
+                # multiple packs, zipped
+                return (
+                    tuple(item[:-4] for item in file_names if item.endswith(".zip"))
+                    or None
+                )
+
+            except Exception:
+                logger.debug(f"failed extracting pack names from {zip_path}")
+                return None
 
         pack_names = _parse_internal_pack_names(path) or (path.name,)
 
@@ -207,9 +222,6 @@ class Uploader:
                 ItemReattacher(client=self.client).reattach(
                     detached_files_ids=detached_items_ids
                 )
-
-            if not self.path:  # Nothing to upload
-                return SUCCESS_RETURN_CODE
 
         logger.info(
             f"Uploading {self.path} to {self.client.api_client.configuration.host}..."

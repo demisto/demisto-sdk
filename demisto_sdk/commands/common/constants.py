@@ -1794,8 +1794,3 @@ class ParameterType(Enum):
 NO_TESTS_DEPRECATED = "No tests (deprecated)"
 NATIVE_IMAGE_FILE_NAME = "docker_native_image_config.json"
 TESTS_REQUIRE_NETWORK_PACK_IGNORE = "tests_require_network"
-
-TURN_VERIFICATION_ERROR_MSG_FORMAT = "Can not set the pack verification configuration key,\nIn the server - go to Settings -> troubleshooting\
- and manually {action}."
-DELETE_VERIFY_KEY_ACTION_FORMAT = f'delete the key "{PACK_VERIFY_KEY}"'
-SET_VERIFY_KEY_ACTION_FORMAT = f'set the key "{PACK_VERIFY_KEY}" to ' + "{}"

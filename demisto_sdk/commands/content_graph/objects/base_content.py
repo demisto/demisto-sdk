@@ -1,5 +1,4 @@
 import json
-import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from pathlib import Path
@@ -13,6 +12,7 @@ from demisto_sdk.commands.common.constants import (
     MARKETPLACE_MIN_VERSION,
     MarketplaceVersions,
 )
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import get_content_path
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
@@ -20,8 +20,6 @@ from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
-
-logger = logging.getLogger("demisto-sdk")
 
 content_type_to_model: Dict[ContentType, Type["BaseContent"]] = {}
 

@@ -181,3 +181,21 @@ The development environment is connected to the branch you are currently using i
 Contributions are welcome and appreciated.
 For information regarding contributing, press [here](CONTRIBUTION.md).
 For release guide, press [here](docs/release_guide.md)
+
+---
+
+## Internet Connection
+
+An internet connection is required for the following commands to work properly:
+
+1. [Format](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/format/README.md)
+2. [Validate](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/validate/README.md)
+3. [Update-release-notes](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/update_release_notes/README.md)
+
+
+Note that the following commands may work partially without an internet connection:
+
+1. [Download](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/download/README.md) - will fail when using the '-fmt, --run-format' argument.
+2. [Lint](https://github.com/demisto/demisto-sdk/blob/master/demisto_sdk/commands/lint/README.md) - will fail when creating the image.
+
+---

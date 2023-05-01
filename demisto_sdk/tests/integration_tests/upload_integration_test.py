@@ -190,7 +190,7 @@ def test_integration_upload_script_invalid_path(demisto_client, tmp_path, mocker
     assert result.exit_code == 1
     for current_call in logger_info.call_args_list:
         if type(current_call[0]) == tuple:
-            print(f"*** INFO *** {current_call[0][0]=}")
+            print(f"*** INFO *** {current_call[0][0]=}")  # noqa: T201
     assert str_in_call_args_list(
         logger_info.call_args_list,
         f"""Error: Given input path: {str(invalid_scripts_dir)} is not uploadable. Input path should point to one of the following:

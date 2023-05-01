@@ -1,6 +1,7 @@
 import glob
 import os
 import shutil
+from configparser import ConfigParser
 from pathlib import Path
 from typing import Callable, List, Optional, Union
 
@@ -63,6 +64,7 @@ from demisto_sdk.commands.common.tools import (
     get_file_displayed_name,
     get_file_version_suffix_if_exists,
     get_files_in_dir,
+    get_from_version,
     get_ignore_pack_skipped_tests,
     get_item_marketplaces,
     get_last_release_version,
@@ -953,6 +955,61 @@ def test_get_ignore_pack_tests__ignore_missing_test(tmpdir, mocker):
 
 
 @pytest.mark.parametrize(
+    argnames="pack_ignore_content, expected_object",
+    argvalues=[
+        (
+            "[file:README.md]\nignore=RM106\n\n[known_words]\ntest1\ntest2\n\n[tests_require_network]\ntest",
+            ConfigParser(),
+        ),
+        (
+            "[known_words]\ntest1\ntest2\n\n[tests_require_network]\ntest",
+            ConfigParser(),
+        ),
+        (
+            "[file:README.md]\nignore=RM106\n\n[tests_require_network]\ntest",
+            ConfigParser(),
+        ),
+        (
+            "[file:README.md]\nignore=RM106\n\n[known_words]\ntest1\ntest2",
+            ConfigParser(),
+        ),
+        ("", ConfigParser()),
+        ("test", None),
+        ("test[dssa]sdf", None),
+    ],
+)
+def test_get_pack_ignore_content(pack: Pack, pack_ignore_content: str, expected_object):
+    """
+    Given
+    - Case a: full valid .pack-ignore content
+    - Case b: valid .pack-ignore content without validations sections
+    - Case c: valid .pack-ignore content without known words section
+    - Case d: valid .pack-ignore content without tests_require_network section
+    - Case e: empty .pack-ignore
+    - case f: invalid .pack-ignore file
+    - case g: another version of invalid .pack-ignore file
+
+    When
+    - executing get_pack_ignore_content function
+
+    Then:
+    - Case a: ConfigParser is returned
+    - Case b: ConfigParser is returned
+    - Case c: ConfigParser is returned
+    - Case d: ConfigParser is returned
+    - Case e: ConfigParser is returned
+    - case f: None is returned
+    - case g: None is returned
+
+    """
+    from demisto_sdk.commands.common.tools import get_pack_ignore_content
+
+    pack.pack_ignore.write_text(pack_ignore_content)
+    with ChangeCWD(pack.repo_path):
+        assert type(get_pack_ignore_content(pack.name)) is type(expected_object)
+
+
+@pytest.mark.parametrize(
     argnames="arg, expected_result",
     argvalues=[
         ["a1,b2,c3", ["a1", "b2", "c3"]],
@@ -1459,14 +1516,14 @@ def test_suppress_stdout(capsys):
         - Ensure that messages are not printed to console while suppress_stdout is enabled.
         - Ensure that messages are printed to console when suppress_stdout is disabled.
     """
-    print("You can see this")
+    print("You can see this")  # noqa: T201
     captured = capsys.readouterr()
     assert captured.out == "You can see this\n"
     with tools.suppress_stdout():
-        print("You cannot see this")
+        print("You cannot see this")  # noqa: T201
         captured = capsys.readouterr()
     assert captured.out == ""
-    print("And you can see this again")
+    print("And you can see this again")  # noqa: T201
     captured = capsys.readouterr()
     assert captured.out == "And you can see this again\n"
 
@@ -1488,7 +1545,7 @@ def test_suppress_stdout_exception(capsys):
         with tools.suppress_stdout():
             2 / 0
     assert str(excinfo.value) == "division by zero"
-    print("After error prints are enabled again.")
+    print("After error prints are enabled again.")  # noqa: T201
     captured = capsys.readouterr()
     assert captured.out == "After error prints are enabled again.\n"
 
@@ -2565,3 +2622,16 @@ def test_get_core_packs(mocker):
 )
 def test_extract_field_from_mapping(mapping_value, expected_output):
     assert extract_field_from_mapping(mapping_value) == expected_output
+
+
+def test_get_from_version(mocker):
+    mocker.patch.object(tools, "get_yaml", return_value={"fromversion": "6.1.0"})
+    assert get_from_version("fake_file_path.yml") == "6.1.0"
+
+
+def test_get_from_version_error(mocker):
+    mocker.patch.object(tools, "get_yaml", return_value=["item1, item2"])
+    with pytest.raises(ValueError) as e:
+        get_from_version("fake_file_path.yml")
+
+    assert str(e.value) == "yml file returned is not of type dict"

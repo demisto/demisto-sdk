@@ -170,7 +170,7 @@ def create_wrapper_script(data: dict) -> dict:
     copy_data = set_deprecated_for_scripts(copy_data, old_script=True)
     logger.debug(f"Created {copy_data['name']} script wrapper to {data['name']} script")
 
-    return copy_data
+    return replace_script_access_fields_recursively(copy_data)
 
 
 def replace_script_access_fields_recursively(data: Any, incident_to_alert: bool = False) -> Any:

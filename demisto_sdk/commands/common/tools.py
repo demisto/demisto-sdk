@@ -2,6 +2,7 @@ import argparse
 import glob
 import io
 import logging
+
 import os
 import re
 import shlex
@@ -285,7 +286,7 @@ def get_yml_paths_in_dir(project_dir: str, error_msg: str = "") -> Tuple[list, s
     yml_files = glob.glob(os.path.join(project_dir, "*.yml"))
     if not yml_files:
         if error_msg:
-            print(error_msg)
+            logger.info(error_msg)
         return [], ""
     return yml_files, yml_files[0]
 
@@ -747,7 +748,7 @@ def _read_file(file_path: Path) -> str:
             return UnicodeDammit(file_path.read_bytes()).unicode_markup
 
         except UnicodeDecodeError:
-            print(f"could not auto-detect encoding for file {file_path}")
+            logger.info(f"could not auto-detect encoding for file {file_path}")
             raise
 
 
@@ -920,6 +921,9 @@ def get_from_version(file_path):
         get_yaml(file_path) if file_path.endswith("yml") else get_json(file_path)
     )
 
+    if not isinstance(data_dictionary, dict):
+        raise ValueError("yml file returned is not of type dict")
+
     if data_dictionary:
         from_version = (
             data_dictionary.get("fromversion")
@@ -928,7 +932,7 @@ def get_from_version(file_path):
         )
 
         if not from_version:
-            logging.warning(
+            logger.warning(
                 f'fromversion/fromVersion was not found in {data_dictionary.get("id", "")}'
             )
             return ""
@@ -1471,7 +1475,7 @@ def get_python_version(docker_image):
             docker_image,
             "python",
             "-c",
-            "import sys;print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))",
+            "import sys;logger.info('{}.{}'.format(sys.version_info[0], sys.version_info[1]))",
         ],
         text=True,
         stderr=DEVNULL,
@@ -1888,7 +1892,7 @@ def find_type(
                 if _id.startswith("indicator"):
                     return FileType.INDICATOR_FIELD
             else:
-                print(
+                logger.info(
                     f'The file {path} could not be recognized, please update the "id" to be a string'
                 )
 
@@ -2875,8 +2879,8 @@ def suppress_stdout():
     Example of use:
 
         with suppress_stdout():
-            print('This message will not be printed')
-        print('This message will be printed')
+            logger.info('This message will not be printed')
+        logger.info('This message will be printed')
     """
     with open(os.devnull, "w") as devnull:
         try:
@@ -2912,11 +2916,11 @@ def get_definition_name(path: str, pack_path: str) -> Optional[str]:
                 if cur_id == definition_id:
                     return def_file_dictionary["name"]
 
-        print("Was unable to find the file for definitionId " + definition_id)
+        logger.info("Was unable to find the file for definitionId " + definition_id)
         return None
 
     except (FileNotFoundError, AttributeError):
-        print(
+        logger.info(
             "Error while retrieving definition name for definitionId "
             + definition_id
             + "\n Check file structure and make sure all relevant fields are entered properly"

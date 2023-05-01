@@ -1930,7 +1930,7 @@ class TestIsFetchParamsExist:
         for i, t in enumerate(self.validator.current_file["configuration"]):
             if t["name"] == "incidentType":
                 del self.validator.current_file["configuration"][i]["name"]
-        print(self.validator.current_file["configuration"])
+        print(self.validator.current_file["configuration"])  # noqa: T201
         assert (
             self.validator.is_valid_fetch() is False
         ), "is_valid_fetch() returns True instead False"

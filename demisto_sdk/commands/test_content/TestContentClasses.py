@@ -960,6 +960,8 @@ class BuildContext:
             "Server 6.6": "6.6.0",
             "Server 6.8": "6.8.0",
             "Server 6.9": "6.9.0",
+            "Server 6.10": "6.10.0",
+            "Server 6.11": "6.11.0",
             "Server Master": default_version,
             "XSIAM 1.2": "6.9.0",
             "XSIAM Master": default_version,

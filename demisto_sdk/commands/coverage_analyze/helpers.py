@@ -1,5 +1,4 @@
 import io
-import logging
 import os
 import sqlite3
 from datetime import datetime, timedelta
@@ -10,6 +9,7 @@ import requests
 
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 
 json = JSON_Handler()
 
@@ -20,9 +20,6 @@ EXCLUDED_LINES = [
     r"^\s*\"{3}([\s\S]*?)\"{3}",
     r"^\s*'{3}([\s\S]*?)'{3}",
 ]
-
-
-logger = logging.getLogger("demisto-sdk")
 
 
 def fix_file_path(coverage_file: str, code_file_absolute_path: str):

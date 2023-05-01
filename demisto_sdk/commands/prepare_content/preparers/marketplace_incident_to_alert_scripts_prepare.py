@@ -24,7 +24,7 @@ class MarketplaceIncidentToAlertScriptsPreparer:
             two scripts will be created,
             1. The existing script so that in the name, description, comment and id fields
                the word `incident` will be replaced by `alert` when the word `incident` is not wrapped like this <-incident->.
-               
+
             2. A wrapper script that will call the script with the new name,
                all the fields of the script will remain as they are and the word incident will not be replaced.
 

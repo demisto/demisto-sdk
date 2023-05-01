@@ -95,7 +95,6 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
             "__fields_set__": self.__fields_set__,
         }
 
-
     @property
     def normalize_name(self) -> str:
         # if has name attribute, return it, otherwise return the object id

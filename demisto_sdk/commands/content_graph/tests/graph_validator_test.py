@@ -594,24 +594,24 @@ def test_validate_unique_script_name(repository: ContentDTO, mocker):
 
     assert str_in_call_args_list(
         logger_info.call_args_list,
-        "The setAlert script name is invalid,"
-        " There is already a script with a similar name setIncident"
-        " Please change the name of the script.",
+        "The setAlert script name is invalid,\n"
+        "There is already a script with a similar name setIncident\n"
+        "Please change the name of the script.",
     )
 
     assert not str_in_call_args_list(
         logger_info.call_args_list,
-        "The getAlert script name is invalid,"
-        " There is already a script with a similar name getIncident"
-        " Please change the name of the script.",
+        "The getAlert script name is invalid,\n"
+        "There is already a script with a similar name getIncident\n"
+        "Please change the name of the script.",
     )
 
     # Ensure that the script-name-incident-to-alert ignore is working
     assert not str_in_call_args_list(
         logger_info.call_args_list,
-        "The getAlerts script name is invalid,"
-        " There is already a script with a similar name getIncidents"
-        " Please change the name of the script.",
+        "The getAlerts script name is invalid,\n"
+        "There is already a script with a similar name getIncidents\n"
+        "Please change the name of the script.",
     )
 
 

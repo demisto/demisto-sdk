@@ -137,7 +137,7 @@ class Uploader:
 
                     if "pack_metadata.json" in file_names:  # single pack
                         with zip_file.open("pack_metadata.json") as pack_metadata:
-                            return json.load(pack_metadata).get("name")
+                            return (json.load(pack_metadata).get("name"),)
 
                 # multiple packs, zipped
                 return (

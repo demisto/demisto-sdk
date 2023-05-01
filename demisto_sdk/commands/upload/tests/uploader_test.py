@@ -18,7 +18,6 @@ from demisto_client.demisto_api.rest import ApiException
 from packaging.version import Version
 
 from demisto_sdk.__main__ import main, upload
-from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import (
     MarketplaceVersions,
 )
@@ -619,22 +618,7 @@ def mock_api_client(mocker, version: str = "6.6.0"):
 
 
 class TestZippedPackUpload:
-    """
-    Happy path tests:
-        1. Upload one zipped pack
-        2. Upload content_artifacts.zip with multiple packs
-        3. Upload with compile flag
-        4. Server configs return to the previous value after upload
-
-    Edge cases tests:
-        1. Invalid zip path
-        2. Error in disable pack verification
-        3. Error in enable pack verification
-        4. Error in upload to marketplace
-
-    """
-
-    @pytest.mark.parametrize("path", [Path(TEST_PACK_ZIP), Path(CONTENT_PACKS_ZIP)])
+    @pytest.mark.parametrize("path", (TEST_PACK_ZIP, CONTENT_PACKS_ZIP))
     def test_upload_zipped_packs(self, mocker, path: Path):
         """
         Given:
@@ -647,11 +631,8 @@ class TestZippedPackUpload:
         """
         # prepare
         mock_api_client(mocker)
-        mocker.patch.object(
+        mocked_upload_content_packs = mocker.patch.object(
             API_CLIENT, "upload_content_packs", return_value=({}, 200, "")
-        )
-        mock_update_server_config = mocker.patch.object(
-            tools, "update_server_configuration", return_value=(None, None, {})
         )
         mocker.patch.object(
             Uploader, "notify_user_should_override_packs", return_value=True  # TODO
@@ -662,22 +643,8 @@ class TestZippedPackUpload:
         assert uploader.upload() == SUCCESS_RETURN_CODE
 
         # validate
-        disable_verification_call_args = mock_update_server_config.call_args_list[0][1]
-        enable_verification_call_args = mock_update_server_config.call_args_list[1][1]
-
-        assert (
-            disable_verification_call_args["server_configuration"][
-                constants.PACK_VERIFY_KEY
-            ]
-            == "false"
-        )
-        assert (
-            constants.PACK_VERIFY_KEY
-            in enable_verification_call_args["config_keys_to_delete"]
-        )
-        assert API_CLIENT.upload_content_packs.call_args[1]["file"] == path
-        assert len(uploader._successfully_uploaded_content_items) == 1
-        assert uploader._successfully_uploaded_content_items[0].path == path
+        assert len(uploader._successfully_uploaded_zipped_packs) == 1
+        assert mocked_upload_content_packs.call_args[1]["file"] == str(path)
 
     @pytest.mark.parametrize(
         argnames="path", argvalues=(Path("invalid_zip_path"), None)

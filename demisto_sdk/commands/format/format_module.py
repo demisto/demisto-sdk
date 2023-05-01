@@ -200,7 +200,6 @@ def format_manager(
                     deprecate=deprecate,
                     add_tests=add_tests,
                     id_set_path=id_set_path,
-                    use_git=use_git,
                 )
                 if err_res:
                     log_list.extend([(err_res, "red")])

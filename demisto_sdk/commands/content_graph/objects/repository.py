@@ -1,4 +1,3 @@
-import logging
 import shutil
 import time
 from multiprocessing.pool import Pool
@@ -10,9 +9,8 @@ from pydantic import BaseModel, DirectoryPath
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.content_constant_paths import CONTENT_PATH
 from demisto_sdk.commands.common.cpu_count import cpu_count
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-
-logger = logging.getLogger("demisto-sdk")
 
 USE_FUTURE = True  # toggle this for better debugging
 

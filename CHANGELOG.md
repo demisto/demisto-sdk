@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue when trying to fetch remote files when not under the content repo.
 
 ## Unreleased
 * Improved the warning message displayed for Contribution PRs editing outdated code.
@@ -30,7 +31,6 @@
 * Fixed an issue where **validate** would fail when playbook inputs contain Transform Language (DT).
 * Added a new **validate** check, making sure a first level header exist in release notes (RN116)
 * Fixed an issue where **lint** would not properly handle multiple ApiModules imports.
-* Fixed an issue when trying to fetch remote files when not under the content repo.
 
 
 ## 1.12.0

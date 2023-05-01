@@ -66,7 +66,6 @@ class BaseUpdateYML(BaseUpdate):
         add_tests: bool = True,
         interactive: bool = True,
         clear_cache: bool = False,
-        use_git: bool = False,
     ):
         super().__init__(
             input=input,
@@ -77,7 +76,6 @@ class BaseUpdateYML(BaseUpdate):
             assume_yes=assume_yes,
             interactive=interactive,
             clear_cache=clear_cache,
-            use_git=use_git,
         )
         self.id_and_version_location = self.get_id_and_version_path_object()
         self.deprecate = deprecate

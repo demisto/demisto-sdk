@@ -61,27 +61,18 @@ class BaseUpdate:
         assume_yes: bool = False,
         interactive: bool = True,
         clear_cache: bool = False,
-        use_git: bool = True,
         **kwargs,
     ):
         self.source_file = input
         self.source_file_type = find_type(self.source_file)
         self.output_file = self.set_output_file_path(output)
-        self.use_git = use_git
-        _, self.relative_content_path = (
-            is_file_from_content_repo(self.output_file) if use_git else "",
-            "",
-        )
+        _, self.relative_content_path = is_file_from_content_repo(self.output_file)
         self.prev_ver = prev_ver
-        self.old_file = (
-            self.is_old_file(
-                self.relative_content_path
-                if self.relative_content_path
-                else self.output_file,
-                self.prev_ver,
-            )
-            if use_git
-            else {}
+        self.old_file = self.is_old_file(
+            self.relative_content_path
+            if self.relative_content_path
+            else self.output_file,
+            self.prev_ver,
         )
         self.schema_path = path
         self.schema = self.get_schema()
@@ -99,7 +90,6 @@ class BaseUpdate:
                 skip_pack_rn_validation=True,
                 check_is_unskipped=False,
                 validate_id_set=False,
-                use_git=use_git,
             )
 
         if not self.source_file:
@@ -425,7 +415,7 @@ class BaseUpdate:
             return SKIP_RETURN_CODE
         else:
             self.validate_manager.file_path = self.output_file
-            if self.use_git and self.is_old_file(self.output_file, self.prev_ver):
+            if self.is_old_file(self.output_file, self.prev_ver):
                 validation_result = self.validate_manager.run_validation_using_git()
             else:
                 validation_result = (

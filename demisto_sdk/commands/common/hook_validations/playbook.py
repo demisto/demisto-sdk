@@ -1,8 +1,6 @@
 import re
 from typing import Dict, Set
 
-import click
-
 from demisto_sdk.commands.common.constants import (
     DEPRECATED_DESC_REGEX,
     DEPRECATED_NO_REPLACE_DESC_REGEX,
@@ -564,9 +562,8 @@ class PlaybookValidator(ContentEntityValidator):
         """
 
         if not id_set_file:
-            click.secho(
-                "Skipping playbook script id validation. Could not read id_set.json.",
-                fg="yellow",
+            logger.info(
+                "[yellow]Skipping playbook script id validation. Could not read id_set.json.[/yellow]"
             )
             return True
 

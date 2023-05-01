@@ -220,6 +220,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         self.content_items = PackContentItems(**content_item_dct)
 
     def dump_metadata(self, path: Path, marketplace: MarketplaceVersions) -> None:
+        if not hasattr(self, "server_min_version"):
+            self.server_min_version = None
         self.server_min_version = self.server_min_version or MARKETPLACE_MIN_VERSION
         metadata = self.dict(
             exclude={"path", "node_id", "content_type", "excluded_dependencies"}

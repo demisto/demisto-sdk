@@ -52,14 +52,14 @@ def find_fixed_issue_in_body(body_text, is_merged):
     # If the PR is merged, we only send issues that should be closed by it.
     # Assuming If the PR was merged, all the related links were fetched when the PR last edited.
     fixed_issue = [
-        {"link": link, "id": issue_id} for link, issue_id in fixed_jira_issues
+        {"link": link, "id": issue_id, "action": 'fixes'} for link, issue_id in fixed_jira_issues
     ]
     related_issue = []
 
     if not is_merged:
         print("Not merging, getting related issues.")
         related_issue = [
-            {"link": link, "id": issue_id} for link, issue_id in related_jira_issue
+            {"link": link, "id": issue_id, "action": 'relates'} for link, issue_id in related_jira_issue
         ]
 
     return fixed_issue + related_issue
@@ -99,7 +99,7 @@ def trigger_generic_webhook(options):
     print(f"found issues in PR: {issues_in_pr}")
 
     body = {
-        "name": GENERIC_WEBHOOK_NAME,
+        "name": f'{GENERIC_WEBHOOK_NAME} - #{pr_num}',
         "raw_json": {
             "PullRequestNum": pr_num,
             "closeIssue": "true"

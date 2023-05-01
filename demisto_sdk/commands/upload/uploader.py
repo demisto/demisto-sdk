@@ -659,11 +659,10 @@ class ItemReattacher:
                         self.reattach_item(item_id, item_type)
 
 
-def is_uploadable_dir(path: Path):
-    return path.is_dir() and (
-        path.name in CONTENT_ENTITIES_DIRS
-        or (
-            path.name in UNIFIED_ENTITIES_DIR
-            and path.parent.name in CONTENT_ENTITIES_DIRS
-        )
+def is_uploadable_dir(path: Path) -> bool:
+    if not path.is_dir():
+        raise ValueError(f"{path} is not a directory")
+
+    return path.name in CONTENT_ENTITIES_DIRS or (
+        path.name in UNIFIED_ENTITIES_DIR and path.parent.name in CONTENT_ENTITIES_DIRS
     )

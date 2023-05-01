@@ -11,6 +11,7 @@ from demisto_sdk.commands.common.handlers import (
     XSOAR_Handler,
     YAML_Handler,
 )
+from demisto_sdk.commands.content_graph.objects.exceptions import FailedUploadException
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -25,7 +26,6 @@ from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
-    FailedUploadException,
 )
 from demisto_sdk.commands.prepare_content.preparers.marketplace_suffix_preparer import (
     MarketplaceSuffixPreparer,
@@ -226,7 +226,7 @@ class ContentItem(BaseContent):
                 f"missing overriding upload method for {self.content_type}"
             ) from e
 
-        with TemporaryDirectory("w") as f:
+        with TemporaryDirectory() as f:
             dir_path = Path(f)
             self.dump(dir_path, marketplace=marketplace)
             data, status_code, _ = upload_method(

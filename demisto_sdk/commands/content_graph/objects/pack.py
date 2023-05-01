@@ -27,8 +27,6 @@ from demisto_sdk.commands.content_graph.common import (
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent,
-    FailedUploadException,
-    FailedUploadMultipleException,
 )
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -37,6 +35,10 @@ from demisto_sdk.commands.content_graph.objects.content_item_xsiam import (
 )
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
+from demisto_sdk.commands.content_graph.objects.exceptions import (
+    FailedUploadException,
+    FailedUploadMultipleException,
+)
 from demisto_sdk.commands.content_graph.objects.generic_definition import (
     GenericDefinition,
 )
@@ -71,6 +73,8 @@ if TYPE_CHECKING:
 
 json = JSON_Handler()
 
+MINIMAL_UPLOAD_SUPPORTED_VERSION = Version("6.5.0")
+
 
 def upload_zipped_pack(
     path: Path,
@@ -82,7 +86,7 @@ def upload_zipped_pack(
     """
     Used to upload an existing zip file
     """
-    if target_demisto_version < Version("6.5.0"):
+    if target_demisto_version < MINIMAL_UPLOAD_SUPPORTED_VERSION:
         raise RuntimeError(
             "Uploading packs to XSOAR versions earlier than 6.5.0 is no longer supported."
             "Use older versions of the Demisto-SDK for that (<=1.13.0)"

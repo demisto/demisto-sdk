@@ -189,31 +189,6 @@ class ContentType(str, enum.Enum):
                         if tir_folder.is_dir() and not tir_folder.name.startswith("."):
                             yield tir_folder
 
-    # @property
-    # TODO: remove
-    # def is_uploadable(self) -> bool:
-    #     """
-    #     Uploadable items override this method with `return True`.
-    #     """
-    #     return False
-    #     return self in {
-    #         ContentType.INTEGRATION,
-    #         ContentType.SCRIPT,
-    #         ContentType.PLAYBOOK,
-    #         ContentType.TEST_PLAYBOOK,
-    #         ContentType.INCIDENT_TYPE,
-    #         ContentType.INCIDENT_FIELD,
-    #         ContentType.INDICATOR_TYPE,
-    #         ContentType.INDICATOR_FIELD,
-    #         ContentType.CLASSIFIER,
-    #         ContentType.WIDGET,
-    #         ContentType.LAYOUT,
-    #         ContentType.LIST,
-    #         ContentType.JOB,
-    #         ContentType.DASHBOARD,
-    #         ContentType.REPORT,
-    #     }
-
 
 class Relationships(dict):
     def add(self, relationship: RelationshipType, **kwargs):

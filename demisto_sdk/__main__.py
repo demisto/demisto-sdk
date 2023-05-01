@@ -215,7 +215,9 @@ def main(ctx, config, version, release_notes, **kwargs):
             )
         else:
             last_release = get_last_remote_release_version()
-            logger.info(f"[yellow]You are using demisto-sdk {__version__}.[/yellow]")
+            logger.info(
+                f"[yellow]You are using custom demisto-sdk {__version__}.[/yellow]"
+            )
             if last_release and __version__ != last_release:
                 logger.info(
                     f"[yellow]however version {last_release} is available.\n"

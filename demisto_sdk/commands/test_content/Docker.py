@@ -239,7 +239,7 @@ class Docker:
             list: List of dictionaries with parsed container memory statistics.
         """
         cmd = cls._build_stats_cmd(server_ip, docker_images)
-        logging_module.info(f'docker stats command: {cmd}')
+        logging_module.info(f"docker stats command: {cmd}")
         stdout, stderr = cls.run_shell_command(cmd)
 
         if stderr:

@@ -16,6 +16,7 @@
 * Added the `DEMISTO_SDK_GRAPH_FORCE_CREATE` environment variable. Use it to force the SDK to recreate the graph, rather than update it.
 * Added support for code importing multi-level ApiModules to **lint**.
 * Added a validation that the **modeling-rules test** command will fail if no test data file exist.
+* Updated the `XSIAMReport` schema.
 * Standardized repo-wide logging. All logs are now created in one logger instance.
 * Improved the clarity of error messages for cases where yml files cannot be parsed as a dictionary.
 * Fixed an issue where **update-release-notes** generated release notes for packs in their initial version (1.0.0).

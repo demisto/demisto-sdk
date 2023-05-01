@@ -19,6 +19,7 @@
 * Standardized repo-wide logging. All logs are now created in one logger instance.
 * Improved the clarity of error messages for cases where yml files cannot be parsed as a dictionary.
 * Fixed an issue where **update-release-notes** generated release notes for packs in their initial version (1.0.0).
+* Fixed an issue where **validate** failed on playbooks with valid inputs, since it did not collect the playbook inputs occurrences properly.
 
 ## 1.13.0
 * Added the pack version to the code files when calling **unify**. The same value is removed when calling **split**.

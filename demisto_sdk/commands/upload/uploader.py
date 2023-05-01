@@ -13,22 +13,9 @@ from packaging.version import Version
 from tabulate import tabulate
 
 from demisto_sdk.commands.common.constants import (
-    CLASSIFIERS_DIR,
     CONTENT_ENTITIES_DIRS,
-    DASHBOARDS_DIR,
-    INCIDENT_FIELDS_DIR,
-    INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR,
-    INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR,
-    JOBS_DIR,
-    LAYOUTS_DIR,
-    LISTS_DIR,
-    PLAYBOOKS_DIR,
-    REPORTS_DIR,
     SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR,
-    WIDGETS_DIR,
     FileType,
     MarketplaceVersions,
 )
@@ -79,25 +66,6 @@ UPLOAD_SUPPORTED_ENTITIES = [
 ]
 
 
-UNIFIED_ENTITIES_DIR = [INTEGRATIONS_DIR, SCRIPTS_DIR]
-
-CONTENT_ENTITY_UPLOAD_ORDER = [
-    INTEGRATIONS_DIR,
-    SCRIPTS_DIR,
-    PLAYBOOKS_DIR,
-    TEST_PLAYBOOKS_DIR,
-    INCIDENT_TYPES_DIR,
-    INCIDENT_FIELDS_DIR,
-    INDICATOR_FIELDS_DIR,
-    INDICATOR_TYPES_DIR,
-    CLASSIFIERS_DIR,
-    WIDGETS_DIR,
-    LAYOUTS_DIR,
-    LISTS_DIR,
-    JOBS_DIR,
-    DASHBOARDS_DIR,
-    REPORTS_DIR,
-]
 SUCCESS_RETURN_CODE = 0
 ERROR_RETURN_CODE = 1
 ABORTED_RETURN_CODE = 2
@@ -664,5 +632,6 @@ def is_uploadable_dir(path: Path) -> bool:
         raise ValueError(f"{path} is not a directory")
 
     return path.name in CONTENT_ENTITIES_DIRS or (
-        path.name in UNIFIED_ENTITIES_DIR and path.parent.name in CONTENT_ENTITIES_DIRS
+        path.name in {INTEGRATIONS_DIR, SCRIPTS_DIR}
+        and path.parent.name in CONTENT_ENTITIES_DIRS
     )

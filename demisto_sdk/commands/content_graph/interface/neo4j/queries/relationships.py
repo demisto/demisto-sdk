@@ -1,9 +1,9 @@
-import logging
 from typing import Any, Dict, List
 
 from neo4j import Transaction
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     Neo4jRelationshipResult,
@@ -158,9 +158,6 @@ ON CREATE
     SET target.not_in_repository = true
 MERGE (source)-[r:{relationship}]->(target)
 RETURN count(r) AS relationships_merged"""
-
-
-logger = logging.getLogger("demisto-sdk")
 
 
 def create_relationships(

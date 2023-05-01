@@ -634,7 +634,6 @@ class TestPlaybookValidator:
     @pytest.mark.parametrize("playbook_json, expected_result", IS_CONDITIONAL_INPUTS)
     def test_is_condition_branches_handled(self, playbook_json, expected_result):
         structure = mock_structure("", playbook_json)
-        print(f"*** {playbook_json=}")
         validator = PlaybookValidator(structure)
         assert validator.is_condition_branches_handled() is expected_result
 

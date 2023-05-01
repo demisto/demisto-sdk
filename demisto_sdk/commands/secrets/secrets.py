@@ -1,4 +1,3 @@
-import logging
 import math
 import os
 import string
@@ -19,14 +18,13 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import (
     find_type,
     get_pack_name,
     is_file_path_in_pack,
     run_command,
 )
-
-logger = logging.getLogger("demisto-sdk")
 
 json = JSON_Handler()
 
@@ -189,13 +187,13 @@ class SecretsValidator:
                 prev_ver = self.git_util.handle_prev_ver()[1]
             if not prev_ver.startswith("origin"):
                 prev_ver = "origin/" + prev_ver
-            print(f"Running secrets validation against {prev_ver}")
+            logger.info(f"Running secrets validation against {prev_ver}")
 
             changed_files_string = run_command(
                 f"git diff --name-status {prev_ver}...{branch_name}"
             )
         else:
-            print("Running secrets validation on all changes")
+            logger.info("Running secrets validation on all changes")
             changed_files_string = run_command(
                 "git diff --name-status --no-merges HEAD"
             )
@@ -259,7 +257,7 @@ class SecretsValidator:
             # Skip white listed files
 
             if file_path in files_white_list:
-                print(
+                logger.info(
                     f"Skipping secrets detection for file: {file_path} as it is white listed"
                 )
                 continue
@@ -544,7 +542,7 @@ class SecretsValidator:
             file_contents = self.ignore_base64(file_contents)
             return file_contents
         except Exception as ex:
-            print(f"Failed opening file: {file_path}. Exception: {ex}")
+            logger.info(f"Failed opening file: {file_path}. Exception: {ex}")
             raise
 
     @staticmethod
@@ -556,7 +554,7 @@ class SecretsValidator:
             pdf_reader = PyPDF2.PdfFileReader(pdf_file_obj)
             num_pages = pdf_reader.numPages
         except PyPDF2.errors.PdfReadError:
-            print(
+            logger.error(
                 f"ERROR: Could not parse PDF file in path: {file_path} - ***Review Manually***"
             )
             return file_contents

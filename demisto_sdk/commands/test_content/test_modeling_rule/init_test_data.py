@@ -1,4 +1,3 @@
-import logging
 import traceback
 from io import StringIO
 from pathlib import Path
@@ -9,11 +8,14 @@ import typer
 from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
     ModelingRule,
 )
-from demisto_sdk.commands.common.logger import handle_deprecated_args, logging_setup
+from demisto_sdk.commands.common.logger import (
+    handle_deprecated_args,
+    logger,
+    logging_setup,
+)
 from demisto_sdk.commands.test_content.xsiam_tools.test_data import EventLog, TestData
 
 app = typer.Typer()
-logger = logging.getLogger("demisto-sdk")
 
 
 @app.command(

@@ -1,4 +1,4 @@
-import logging
+import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import List, Optional
@@ -6,6 +6,7 @@ from typing import List, Optional
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.common.tools import download_content_graph
 from demisto_sdk.commands.content_graph.common import (
     NEO4J_DATABASE_HTTP,
@@ -14,8 +15,6 @@ from demisto_sdk.commands.content_graph.common import (
 )
 from demisto_sdk.commands.content_graph.content_graph_builder import ContentGraphBuilder
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
-
-logger = logging.getLogger("demisto-sdk")
 
 
 def create_content_graph(
@@ -54,7 +53,7 @@ def update_content_graph(
     dependencies: bool = True,
     output_path: Optional[Path] = None,
 ) -> None:
-    """This function creates a new content graph database in neo4j from the content path
+    """This function updates a new content graph database in neo4j from the content path
     Args:
         content_graph_interface (ContentGraphInterface): The content graph interface.
         marketplace (MarketplaceVersions): The marketplace to update.
@@ -67,6 +66,13 @@ def update_content_graph(
     """
     if packs_to_update is None:
         packs_to_update = []
+    if os.getenv("DEMISTO_SDK_GRAPH_FORCE_CREATE"):
+        logger.info("DEMISTO_SDK_GRAPH_FORCE_CREATE is set. Will create a new graph")
+        create_content_graph(
+            content_graph_interface, marketplace, dependencies, output_path
+        )
+        return
+
     builder = ContentGraphBuilder(content_graph_interface)
     if not use_current:
         content_graph_interface.clean_import_dir()
@@ -82,6 +88,7 @@ def update_content_graph(
     packs_str = "\n".join([f"- {p}" for p in packs_to_update])
     logger.info(f"Updating the following packs:\n{packs_str}")
     builder.update_graph(packs_to_update)
+
     if dependencies:
         content_graph_interface.create_pack_dependencies()
     if output_path:

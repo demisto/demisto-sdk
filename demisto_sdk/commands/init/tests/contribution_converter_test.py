@@ -768,7 +768,7 @@ class TestEnsureUniquePackDirName:
         crb_crvrt = contribution_converter
         assert crb_crvrt.name == pack_name
         assert crb_crvrt.dir_name == pack_name
-        print(f"crb_crvrt.pack_dir_path={crb_crvrt.pack_dir_path}")
+        print(f"crb_crvrt.pack_dir_path={crb_crvrt.pack_dir_path}")  # noqa: T201
         assert os.path.isdir(crb_crvrt.pack_dir_path)
 
     def test_ensure_unique_pack_dir_name_with_conflict(self, contribution_converter):
